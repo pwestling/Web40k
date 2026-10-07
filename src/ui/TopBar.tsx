@@ -2,7 +2,7 @@ import { useState } from "react";
 import { systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
-import { useCanControl, useStore } from "../store";
+import { useCanControl, useJoining, useStore } from "../store";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
 
@@ -11,7 +11,9 @@ export function TopBar() {
   const game = useGame();
   const { dispatch, scrub, role } = useStore();
   const canControl = useCanControl();
-  const live = scrub === null && role !== "spectator";
+  // Someone still joining watches until seated: no Start battle, no "place your units".
+  const joining = useJoining();
+  const live = scrub === null && role !== "spectator" && !joining;
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => a.seat! - b.seat!);
@@ -117,6 +119,8 @@ export function TopBar() {
                   </>
                 ) : live ? (
                   "Place your units in your zone"
+                ) : joining ? (
+                  "Joining the game…"
                 ) : (
                   "Players are deploying"
                 )}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Player } from "../core";
-import { useStore } from "../store";
+import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
 import { RulesLine } from "./Packages";
 
@@ -11,6 +11,7 @@ import { RulesLine } from "./Packages";
 export function RoomCard() {
   const { roomId, mode, net, session, game } = useStore();
   const [copied, setCopied] = useState(false);
+  const joining = useJoining();
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 2000);
@@ -34,7 +35,7 @@ export function RoomCard() {
           {mode === "local" ? " (this browser)" : ""}
         </span>
         <button
-          className={waiting && !copied ? "primary" : copied ? "on" : ""}
+          className={waiting && !joining && !copied ? "primary" : copied ? "on" : ""}
           onClick={() => {
             void navigator.clipboard?.writeText(location.href);
             setCopied(true);
@@ -70,7 +71,13 @@ export function RoomCard() {
             )}
           </li>
         ))}
-        {waiting && <li className="muted">Waiting for an opponent to join…</li>}
+        {joining ? (
+          <li className="muted">
+            Joining {(net?.hostId && game.players[net.hostId]?.name) || "the host"}'s game…
+          </li>
+        ) : (
+          waiting && <li className="muted">Waiting for an opponent to join…</li>
+        )}
         {watching > 0 && (
           <li className="muted">
             {watching} watching{net?.role === "spectator" ? " (you included)" : ""}

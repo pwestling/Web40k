@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { undoneSeqs, type GameRecord } from "../core";
+import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
@@ -124,16 +124,7 @@ export function Hud() {
       </div>
       <GameSettings />
 
-      {role === "client" && !amSeated && seated.length >= 2 && (
-        <div className="claim">
-          <p className="muted">Both seats are taken. Rejoining? Take back your seat:</p>
-          {seated.map((p) => (
-            <button key={p.id} onClick={() => dispatch({ type: "player/claim", player: p.id })}>
-              Play as {p.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {role === "client" && !amSeated && seated.length >= 2 && <RejoinCard seated={seated} />}
 
       {/* During the battle, setup tools and the dice tray fold away to keep the panel slim. */}
       {mine.length > 0 &&
@@ -210,4 +201,41 @@ function downloadReplay(record: GameRecord) {
   a.download = `open-battle-${new Date().toISOString().slice(0, 16).replace(":", "")}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/**
+ * A player back from a closed tab finds both seats taken: offer the seat whose
+ * player has gone (never one whose player is still connected), or watching.
+ */
+function RejoinCard({ seated }: { seated: Player[] }) {
+  const { net, dispatch, start, mode, roomId } = useStore();
+  const free = seated.filter((p) => !net?.peers.includes(p.id) && p.id !== net?.hostId);
+  const watch = () =>
+    start({
+      role: "spectator",
+      mode,
+      roomId: roomId ?? undefined,
+      name: localStorage.getItem("open-battle:name") ?? "",
+    });
+  return (
+    <div className="claim">
+      {free.length ? (
+        <>
+          <p className="muted">This game is already under way. Rejoining?</p>
+          {free.map((p) => (
+            <button
+              key={p.id}
+              className="primary"
+              onClick={() => dispatch({ type: "player/claim", player: p.id })}
+            >
+              Rejoin as {p.name}
+            </button>
+          ))}
+        </>
+      ) : (
+        <p className="muted">Both players are here.</p>
+      )}
+      <button onClick={watch}>Watch</button>
+    </div>
+  );
 }

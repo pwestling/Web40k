@@ -366,6 +366,17 @@ export const useStore = create<Store>((set, get) => ({
 }));
 
 /** Who this browser plays as, for permissions. Hotseat controls everything. */
+/** A player who has joined a room but isn't seated yet (sorting out rules packages, or still connecting). */
+export function useJoining(): boolean {
+  return useStore(
+    (s) =>
+      s.mode !== "hotseat" &&
+      s.role === "client" &&
+      !!s.session &&
+      s.game.players[s.session.selfId]?.seat === undefined,
+  );
+}
+
 export function useCanControl(): (owner: PlayerId) => boolean {
   const mode = useStore((s) => s.mode);
   const role = useStore((s) => s.role);

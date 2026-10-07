@@ -259,6 +259,7 @@ function Scene() {
   } = useStore();
   const canControl = useCanControl();
   const [drag, setDrag] = useState<Drag | null>(null);
+  const [hoverModel, setHoverModel] = useState<string | null>(null);
   const [templateDrag, setTemplateDrag] = useState(false);
   const dragRef = useRef<Drag | null>(null);
   useLayoutEffect(() => {
@@ -268,6 +269,12 @@ function Scene() {
   const { width, depth } = game.table;
   const cameraReset = useStore((s) => s.cameraReset);
   const live = scrub === null;
+
+  // A drag clears the hover tooltip (and hover rings) until it ends.
+  const dragging = drag !== null;
+  useEffect(() => {
+    if (dragging) setUi({ hoverUnit: null });
+  }, [dragging, setUi]);
 
   // Track the pointer on a horizontal plane while dragging, wherever it is.
   useEffect(() => {
@@ -629,7 +636,6 @@ function Scene() {
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
 
   // Every model on the table as drawn this frame (dragged ones where they're held).
-  const [hoverModel, setHoverModel] = useState<string | null>(null);
   const modelDraws = useMemo(
     () =>
       Object.values(game.models).flatMap((model): ModelDraw[] => {
@@ -747,15 +753,17 @@ function Scene() {
 
       <ModelInstances
         draws={modelDraws}
-        hovered={hoverModel}
+        hovered={drag ? null : hoverModel}
         onDown={(model, shift) => onModelDown(model, shift)}
         onHover={(model) => {
+          // No hover tooltips mid-drag: they would sit on the drag's own label.
+          if (dragRef.current) return;
           setHoverModel(model?.id ?? null);
           setUi({ hoverUnit: model?.unitId ?? null });
         }}
       />
       {modelDraws.map((d) =>
-        d.model.id === hoverModel ||
+        (d.model.id === hoverModel && !drag) ||
         (!!d.model.unitId && d.model.unitId === selected) ||
         incoherent.has(d.model.id) ||
         (d.model.woundsLost ?? 0) > 0 ? (
@@ -764,7 +772,7 @@ function Scene() {
             draw={d}
             selected={!!d.model.unitId && d.model.unitId === selected}
             incoherent={incoherent.has(d.model.id)}
-            hover={d.model.id === hoverModel}
+            hover={d.model.id === hoverModel && !drag}
             unitName={d.model.unitId ? game.units[d.model.unitId]?.name : undefined}
           />
         ) : null,
