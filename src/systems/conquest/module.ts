@@ -1,5 +1,6 @@
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
+import { characterActions } from "./characters";
 import { conquestFunctions, conquestProcedures } from "./command";
 import { CommandPanel } from "./CommandPanel";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
@@ -15,6 +16,7 @@ export const conquestModule: GameModule<SystemModule> = {
   system: conquest,
   procedures: { ...conquestProcedures, ...moraleProcedures },
   functions: conquestFunctions,
+  actions: characterActions,
   app: {
     sample: conquestSample,
     layout: (t) => conquestLayout(t.width, t.depth),

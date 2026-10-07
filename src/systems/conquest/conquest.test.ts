@@ -264,4 +264,29 @@ describe("Conquest", () => {
     }
     expect(tested).toBe(true);
   });
+
+  it("a character joins a regiment's front rank", () => {
+    let s = setup();
+    const marshal = unitNamed(s, "Marshal of the March");
+    const spears = unitNamed(s, "Shieldwall Spears");
+    const front = s.models[spears.modelIds[0]!]!;
+    // Just in front of the Spears (seat 0 faces -y).
+    s = applyEvent(s, {
+      type: "models/move",
+      moves: [{ id: marshal.modelIds[0]!, to: { x: front.position.x, y: front.position.y - 2.5 } }],
+    });
+    s = play(
+      s,
+      { type: "script/start", procedure: "joinRegiment", args: { unit: marshal.id, target: spears.id } },
+      "p1",
+    );
+    expect(s.units[marshal.id]).toBeUndefined();
+    const joined = s.units[spears.id]!;
+    expect(joined.name).toBe("Shieldwall Spears + Marshal of the March");
+    expect(joined.modelIds).toHaveLength(7);
+    expect(joined.modelIds[1]).toBe(marshal.modelIds[0]);
+    // Front rank: the first three slots stand level with each other, the character among them.
+    const ys = joined.modelIds.slice(0, 3).map((id) => s.models[id]!.position.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(0.01);
+  });
 });

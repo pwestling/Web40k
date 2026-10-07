@@ -18,7 +18,7 @@ type Stats = Record<"M" | "V" | "C" | "A" | "W" | "R" | "D", number> & {
   Cleave?: number;
   Support?: number;
   Impact?: number;
-  Type: "Infantry" | "Cavalry" | "Brute" | "Monster";
+  Type: "Infantry" | "Cavalry" | "Brute" | "Monster" | "Character";
   Class: "Light" | "Medium" | "Heavy";
 };
 
@@ -27,7 +27,12 @@ const chars = (s: Stats): Record<string, string> =>
 
 /** A regiment of `stands`, three wide (or fewer), the command stand first so it leads the front rank. */
 function regiment(name: string, stands: number, stats: Stats, points: number): ImportedUnit {
-  const base = stats.Type === "Infantry" ? INFANTRY : stats.Type === "Monster" ? MONSTER : CAVALRY;
+  const base =
+    stats.Type === "Infantry" || stats.Type === "Character"
+      ? INFANTRY
+      : stats.Type === "Monster"
+        ? MONSTER
+        : CAVALRY;
   const models = Array.from({ length: stands }, (_, i) => ({
     profile: { name: i === 0 && stands > 1 ? `${name} command` : name, chars: chars(stats) },
     weapons: [],
@@ -62,6 +67,12 @@ function ironmarch(): ImportedRoster {
       210,
     ),
     regiment(
+      "Marshal of the March",
+      1,
+      { M: 5, V: 1, C: 4, A: 5, W: 5, R: 4, D: 3, Type: "Character", Class: "Medium" },
+      90,
+    ),
+    regiment(
       "Iron Riders",
       3,
       { M: 8, V: 1, C: 3, A: 4, W: 4, R: 3, D: 4, Cleave: 1, Impact: 2, Type: "Cavalry", Class: "Heavy" },
@@ -90,6 +101,12 @@ function ashen(): ImportedRoster {
       4,
       { M: 9, V: 0, C: 3, A: 3, W: 5, R: 2, D: 2, E: 2, Impact: 1, Type: "Brute", Class: "Medium" },
       170,
+    ),
+    regiment(
+      "Hollow Cantor",
+      1,
+      { M: 5, V: 0, C: 3, A: 4, W: 5, R: 4, D: 2, E: 1, Type: "Character", Class: "Medium" },
+      80,
     ),
     regiment(
       "Ossuary Colossus",
