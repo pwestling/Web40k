@@ -156,7 +156,12 @@ function* strike(ctx: Ctx, atk: Unit, def: Unit): Generator<Command, number, unk
  * first missile weapon. To hit is 7 - BS, worse by one per modifier
  * (`penalties`), and 7+ needs a 6 then a 4+, 5+ or 6+; 10+ can't hit.
  */
-function* shoot(ctx: Ctx, shooter: Unit, target: Unit, penalties: string[]): Generator<Command, number, unknown> {
+function* shoot(
+  ctx: Ctx,
+  shooter: Unit,
+  target: Unit,
+  penalties: string[],
+): Generator<Command, number, unknown> {
   const view = ctx.view;
   const state = view.state;
   const weapon = Object.values(shooter.sheet?.weapons ?? {}).find((w) => w.kind === "ranged");
@@ -226,7 +231,13 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
   if (!from || inches <= 0) return;
   const away = awayFrom(state, u, unitCentre(state, from));
   const move = fleeMove(state, u, away, inches);
-  if (move) yield ctx.emit((turn ? move : { ...move, turn: 0, how: "drag" }) as unknown as { type: string } & Record<string, unknown>);
+  if (move)
+    yield ctx.emit(
+      (turn ? move : { ...move, turn: 0, how: "drag" }) as unknown as { type: string } & Record<
+        string,
+        unknown
+      >,
+    );
 }
 
 /** The unit flees 2D6" from `from` and is marked fleeing. */
@@ -238,7 +249,12 @@ function* flee(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generato
 }
 
 /** Falls back in good order: moves like a fleeing unit (2D6, lowest discarded), then rallies at once. */
-function* fallBack(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
+function* fallBack(
+  ctx: Ctx,
+  u: Unit,
+  from: Unit | undefined,
+  why: string,
+): Generator<Command, void, unknown> {
   const r = (yield ctx.roll(FALL_BACK_DICE, "fall back roll", u.id)) as Roll;
   const inches = Math.max(...r.rolls);
   yield* moveAway(ctx, unitOf(ctx.view, u.id), from, inches, true);
@@ -246,7 +262,11 @@ function* fallBack(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Gene
 }
 
 /** Leadership test: 2D6 equal to or under Leadership. */
-function* leadershipTest(ctx: Ctx, u: Unit, label: string): Generator<Command, { roll: Roll; ld: number }, unknown> {
+function* leadershipTest(
+  ctx: Ctx,
+  u: Unit,
+  label: string,
+): Generator<Command, { roll: Roll; ld: number }, unknown> {
   const state = ctx.view.state;
   const { ld } = leadership(state, u);
   const roll = (yield ctx.roll("2d6", `${label} (${ldLabel(state, u)})`, u.id)) as Roll;
@@ -335,7 +355,8 @@ export const combat: CodeProcedure = function* (ctx, args) {
       if (rb) add(rb, `ranks +${rb}`);
     }
     if (hasStandard(state, u)) add(1, "standard +1");
-    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? ""))) add(1, "battle standard +1");
+    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? "")))
+      add(1, "battle standard +1");
     const arc = inArc(state, other, u);
     if (arc === "rear") add(2, "rear +2");
     else if (arc === "left" || arc === "right") add(1, "flank +1");
@@ -351,7 +372,13 @@ export const combat: CodeProcedure = function* (ctx, args) {
     [a, b],
     [b, a],
   ] as const) {
-    const fought: Fought = { round: now.round, seat: now.activeSeat, phase: ctx.view.phase, against: other.id, result };
+    const fought: Fought = {
+      round: now.round,
+      seat: now.activeSeat,
+      phase: ctx.view.phase,
+      against: other.id,
+      result,
+    };
     yield ctx.set(`fought:${u.id}`, fought);
   }
   if (sa.s === sb.s) {
@@ -397,7 +424,9 @@ export const combat: CodeProcedure = function* (ctx, args) {
   }
   const t = yield* leadershipTest(ctx, won, "restraint");
   yield ctx.note(
-    t.roll.total <= t.ld ? `${winner.name} restrains and may reform` : `${winner.name} fails to restrain and ${verb}`,
+    t.roll.total <= t.ld
+      ? `${winner.name} restrains and may reform`
+      : `${winner.name} fails to restrain and ${verb}`,
   );
 };
 
@@ -429,14 +458,19 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
   ];
   const pick = yield ctx.ask(
     owner(target),
-    `${charger.name} charges ${target.name}. ${options.map((o) => o.label.split(" at ")[0]).join(", ").replace(/, ([^,]*)$/, " or $1")}?`,
+    `${charger.name} charges ${target.name}. ${options
+      .map((o) => o.label.split(" at ")[0])
+      .join(", ")
+      .replace(/, ([^,]*)$/, " or $1")}?`,
     options,
   );
   if (pick === "hold") yield ctx.note(`${target.name} holds`);
   if (pick === "shoot") {
     const n = yield* shoot(ctx, target, charger, ["stand and shoot"]);
     if (n) yield* casualties(ctx, unitOf(ctx.view, charger.id), n);
-    yield ctx.note(`${target.name} stands and shoots (${n} unsaved ${n === 1 ? "wound" : "wounds"}), then holds`);
+    yield ctx.note(
+      `${target.name} stands and shoots (${n} unsaved ${n === 1 ? "wound" : "wounds"}), then holds`,
+    );
   }
   if (pick === "flee") yield* flee(ctx, target, charger, "won't face the charge");
 };
@@ -510,16 +544,20 @@ export const towActions: CodeAction[] = [
       const done = foughtNow(view, id);
       if (done) return `Fought this phase: ${done.result}`;
       if (fightTargets(view, id).length) return true;
-      return enemies(view, id, CONTACT).length ? "The enemy in contact is fleeing" : "Not in base contact with an enemy";
+      return enemies(view, id, CONTACT).length
+        ? "The enemy in contact is fleeing"
+        : "Not in base contact with an enemy";
     },
-    targets: (view, actor) => fightTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
+    targets: (view, actor) =>
+      fightTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
     run: combat,
   },
   {
     id: "panic",
     name: "Panic test",
     by: "unit",
-    available: (view, actor) => (view.state.units[actor.unitId ?? ""]?.status?.fleeing ? "Already fleeing" : true),
+    available: (view, actor) =>
+      view.state.units[actor.unitId ?? ""]?.status?.fleeing ? "Already fleeing" : true,
     run: panic,
   },
 ];

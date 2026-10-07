@@ -434,7 +434,11 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
  * per unit. Module bookkeeping and status flags stay out (the notes say what
  * they mean), and so does the waiting question, which the question panel asks.
  */
-function scriptLines(event: Extract<LoggedEvent["event"], { type: "script/step" }>, before: GameState, game: GameState) {
+function scriptLines(
+  event: Extract<LoggedEvent["event"], { type: "script/step" }>,
+  before: GameState,
+  game: GameState,
+) {
   const unitName = (id: string) => game.units[id]?.name ?? "a unit";
   const by = event.script?.by ?? "";
   const lines: string[] = [];

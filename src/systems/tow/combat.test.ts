@@ -188,7 +188,10 @@ describe("The Old World combat as code", () => {
       return ids.reduce((a, id) => a + s.models[id]!.position.y, 0) / ids.length;
     };
     const y0 = y(t.s);
-    t.play({ type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: warband } }, "p1");
+    t.play(
+      { type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: warband } },
+      "p1",
+    );
     t.play({ type: "script/answer", answer: "flee" }, "p2", 9);
     const step = t.events.at(-1)!;
     const roll = step.type === "script/step" && step.events.find((e) => e.type === "dice/roll");
@@ -222,12 +225,16 @@ describe("The Old World combat as code", () => {
     const { t, spears, warband } = setup();
     toPhase(t, "combat");
     t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 3);
-    if (t.s.script?.waiting) t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player, 4);
+    if (t.s.script?.waiting)
+      t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player, 4);
     const fight = towActions.find((a) => a.id === "combat")!;
     const view = gameView(t.s, "tow-hand");
     expect(fight.available(view, { unitId: spears } as never)).toMatch(/^Fought this phase/);
     expect(fight.available(view, { unitId: warband } as never)).toMatch(/^Fought this phase/);
-    const record = { initial: createInitialState(), events: [] as { seq: number; by: string; at: number; event: GameEvent }[] };
+    const record = {
+      initial: createInitialState(),
+      events: [] as { seq: number; by: string; at: number; event: GameEvent }[],
+    };
     // Rebuild a record from the table's events, as the host logs them.
     let state = createInitialState();
     t.events.forEach((event, i) => {
