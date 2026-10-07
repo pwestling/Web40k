@@ -1100,6 +1100,7 @@ label.file.button input {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
 .odds {
   color: #93c5fd;
 }
