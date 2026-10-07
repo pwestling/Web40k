@@ -175,8 +175,17 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} moved an objective`;
     case "unit/height":
       return `${who} set ${unitName(event.id)} height to ${event.height ?? "default"}"`;
-    case "settings/set":
-      return `${who} changed table settings`;
+    case "settings/set": {
+      const st = event.settings;
+      const parts = [
+        st.cover && `cover ${st.cover === "hit" ? "−1 to hit" : "+1 to save"}`,
+        st.los &&
+          `line of sight: ${st.los === "heights" ? "stand-in heights" : st.los === "footprint" ? "footprints" : "true"}`,
+        st.visionArc !== undefined && `vision ${st.visionArc >= 360 ? "all around" : `${st.visionArc}° arc`}`,
+        st.modelsBlock !== undefined && `models ${st.modelsBlock ? "block" : "don't block"} sight`,
+      ].filter(Boolean);
+      return `${who} set ${parts.join(", ") || "game settings"}`;
+    }
     case "unit/attach":
       return `${who} attached ${unitName(event.id)} to ${unitName(event.to)}`;
     case "unit/remove":

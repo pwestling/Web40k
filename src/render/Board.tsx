@@ -521,12 +521,12 @@ function Scene() {
           const z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m)));
           return (
             <Html
+              zIndexRange={LABEL_Z}
               key={`plate-${u.id}`}
               position={[x, z + (losFrom ? 2.4 : 1), y]}
               center
               className="plate"
               style={{ borderColor: game.players[u.owner]?.color ?? "#999" }}
-              zIndexRange={[10, 0]}
             >
               {u.name}
             </Html>
@@ -579,6 +579,7 @@ function Scene() {
       ))}
       {sightLabels.map((l) => (
         <Html
+          zIndexRange={LABEL_Z}
           key={l.unitId}
           position={[l.at.x, l.z + 1.2, l.at.y]}
           center
@@ -600,6 +601,9 @@ function Scene() {
     </>
   );
 }
+
+/** Labels over the table stay under the UI panels (z-index 20 and up). */
+const LABEL_Z: [number, number] = [9, 0];
 
 const SIGHT_COLORS = { full: "#22c55e", partial: "#facc15", none: "#ef4444" };
 
@@ -669,7 +673,7 @@ function MoveLabel({
 
 function SimpleLabel({ at, text, className = "ruler" }: { at: Vec2; text: string; className?: string }) {
   return (
-    <Html position={[at.x, 2.5, at.y]} center className={className}>
+    <Html zIndexRange={LABEL_Z} position={[at.x, 2.5, at.y]} center className={className}>
       {text}
     </Html>
   );
@@ -801,7 +805,7 @@ function Terrain({
         ),
       )}
       {selected && (
-        <Html position={[0, 0.5, 0]} center className="ruler">
+        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler">
           {piece.name} · {piece.category}
         </Html>
       )}
@@ -1001,13 +1005,13 @@ function ModelBase({
         </mesh>
       )}
       {hover && (
-        <Html position={[0, height + 1.8, 0]} center className="ruler">
+        <Html zIndexRange={LABEL_Z} position={[0, height + 1.8, 0]} center className="ruler">
           {unitName && unitName !== model.label ? `${unitName}: ${model.label}` : model.label}
           {wounds > 1 ? ` (${left}/${wounds} W)` : ""}
         </Html>
       )}
       {wounds > 1 && left < wounds && (
-        <Html position={[0, height + 0.9, 0]} center className="wounds">
+        <Html zIndexRange={LABEL_Z} position={[0, height + 0.9, 0]} center className="wounds">
           {`${left}/${wounds}`}
         </Html>
       )}

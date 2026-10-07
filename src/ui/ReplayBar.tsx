@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
-import { buildLog } from "./gameLog";
+import { buildLog, type LogItem } from "./gameLog";
 
 /** How long playback lingers on an event: dice and phase changes get time to read. */
 function pace(record: GameRecord, seq: number): number {
@@ -10,6 +10,19 @@ function pace(record: GameRecord, seq: number): number {
   if (type.startsWith("turn/")) return 900;
   if (type === "unit/add") return 150;
   return 450;
+}
+
+/** Phase changes on the replay track, with the first one of each round marked "R1", "R2"... */
+function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string }[] {
+  const out: { seq: number; text: string; round?: string }[] = [];
+  let lastRound: string | undefined;
+  for (const l of log) {
+    if (l.kind !== "header") continue;
+    const r = /^Round (\d+)/.exec(l.text)?.[1];
+    out.push({ seq: Number(l.key), text: l.text, ...(r && r !== lastRound ? { round: r } : {}) });
+    lastRound = r;
+  }
+  return out;
 }
 
 /**
@@ -23,15 +36,19 @@ export function ReplayBar() {
   const last = record.events.at(-1)?.seq ?? 0;
   const pos = scrub ?? last;
   const log = useMemo(() => buildLog(record), [record]);
-  const marks = useMemo(
-    () =>
-      log.flatMap((l) =>
-        l.kind === "header" ? [{ seq: Number(l.key), text: l.text, round: /Command$/.test(l.text) }] : [],
-      ),
-    [log],
-  );
+  // Phase changes, with the first one of each round marked "R1", "R2"...
+  const marks = useMemo(() => phaseMarks(log), [log]);
   const phase = [...marks].reverse().find((m) => m.seq <= pos);
-  const now = [...log].reverse().find((l) => l.kind === "line" && l.seq <= pos && !l.undone);
+  // The latest action in the current phase, or that the phase has just begun.
+  const latest = [...log]
+    .reverse()
+    .find((l) => l.kind === "line" && l.seq <= pos && l.seq > (phase?.seq ?? -1) && !l.undone);
+  const now =
+    latest?.kind === "line"
+      ? latest.text
+      : phase
+        ? `${phase.text.split(" · ").at(-1)} phase began`
+        : undefined;
 
   useEffect(() => {
     if (!playing) return;
@@ -69,7 +86,7 @@ export function ReplayBar() {
       {captioned && (phase || now) && (
         <div className="caption">
           {phase && <span className="when">{phase.text}</span>}
-          {now?.kind === "line" && <span>{now.text}</span>}
+          {now && <span>{now}</span>}
         </div>
       )}
       <div className="replaybar">
@@ -98,7 +115,9 @@ export function ReplayBar() {
                 className={`tick ${m.round ? "round" : ""}`}
                 style={{ left: `${(m.seq / last) * 100}%` }}
                 title={m.text}
-              />
+              >
+                {m.round && <span className="label">R{m.round}</span>}
+              </span>
             ))}
         </div>
         <span className="muted where">

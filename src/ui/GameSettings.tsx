@@ -1,3 +1,4 @@
+import type { GameSettings as Settings } from "../core";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 
@@ -7,7 +8,12 @@ export function GameSettings() {
   const { dispatch, role, scrub } = useStore();
   const { cover, modelsBlock } = game.settings;
   const los = game.settings.los ?? "true";
-  const editable = game.turn.round === 0 && role !== "spectator" && scrub === null;
+  const editable = role !== "spectator" && scrub === null;
+  // Once the battle has started, changing a rule takes a confirm (and shows in the log).
+  const change = (settings: Partial<Settings>) => {
+    if (game.turn.round > 0 && !confirm("The battle has started. Change this rule for both players?")) return;
+    dispatch({ type: "settings/set", settings });
+  };
   return (
     <details className="settings">
       <summary>Game settings</summary>
@@ -15,12 +21,7 @@ export function GameSettings() {
         <>
           <label>
             Cover{" "}
-            <select
-              value={cover}
-              onChange={(e) =>
-                dispatch({ type: "settings/set", settings: { cover: e.target.value as "hit" | "save" } })
-              }
-            >
+            <select value={cover} onChange={(e) => change({ cover: e.target.value as "hit" | "save" })}>
               <option value="hit">−1 to hit</option>
               <option value="save">+1 to save</option>
             </select>
@@ -29,12 +30,7 @@ export function GameSettings() {
             Line of sight{" "}
             <select
               value={los}
-              onChange={(e) =>
-                dispatch({
-                  type: "settings/set",
-                  settings: { los: e.target.value as "true" | "heights" | "footprint" },
-                })
-              }
+              onChange={(e) => change({ los: e.target.value as "true" | "heights" | "footprint" })}
             >
               <option value="true">True line of sight</option>
               <option value="heights">Stand-in heights</option>
@@ -59,9 +55,7 @@ export function GameSettings() {
             <select
               value={game.settings.visionArc ?? 360}
               // 360 rather than "missing", so the change survives being sent to peers as JSON.
-              onChange={(e) =>
-                dispatch({ type: "settings/set", settings: { visionArc: Number(e.target.value) } })
-              }
+              onChange={(e) => change({ visionArc: Number(e.target.value) })}
             >
               <option value={360}>All around</option>
               <option value={180}>In a 180° front arc</option>
@@ -72,9 +66,7 @@ export function GameSettings() {
             <input
               type="checkbox"
               checked={modelsBlock}
-              onChange={(e) =>
-                dispatch({ type: "settings/set", settings: { modelsBlock: e.target.checked } })
-              }
+              onChange={(e) => change({ modelsBlock: e.target.checked })}
             />
             Other units' models block line of sight
           </label>

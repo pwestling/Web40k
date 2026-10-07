@@ -63,6 +63,7 @@ hr {
   width: 100%;
 }
 .panel {
+  z-index: 20;
   position: absolute;
   padding: 10px 12px;
   background: rgb(17 19 24 / 90%);
@@ -188,6 +189,7 @@ label.file.button.small {
 
 /* Top bar */
 .topbar {
+  z-index: 20;
   position: absolute;
   top: 8px;
   left: 50%;
@@ -383,7 +385,7 @@ details p {
   position: fixed;
   inset: 0;
   background: rgb(0 0 0 / 50%);
-  z-index: 10;
+  z-index: 50;
 }
 .modal {
   top: 50%;
@@ -392,10 +394,12 @@ details p {
   width: min(560px, calc(100vw - 32px));
   max-height: 80vh;
   overflow-y: auto;
+  z-index: 51;
 }
 
 /* Replay bar */
 .replaybar {
+  z-index: 20;
   position: absolute;
   bottom: 10px;
   left: 50%;
@@ -429,10 +433,18 @@ details p {
   pointer-events: none;
 }
 .replaybar .tick.round {
-  top: -6px;
-  width: 2px;
-  height: 10px;
+  top: -7px;
+  width: 3px;
+  height: 14px;
   background: #e5e7eb;
+}
+.replaybar .tick .label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: #d1d5db;
 }
 .replaybar .where {
   min-width: 9em;
@@ -440,6 +452,7 @@ details p {
   white-space: nowrap;
 }
 .caption {
+  z-index: 20;
   position: absolute;
   bottom: 58px;
   left: 50%;
@@ -518,6 +531,7 @@ details p {
   border-radius: 6px;
 }
 .eye-exit {
+  z-index: 20;
   position: absolute;
   top: 110px;
   left: 50%;
@@ -569,6 +583,7 @@ details p {
   color: #f87171;
 }
 .legend {
+  z-index: 20;
   position: absolute;
   bottom: 64px;
   left: 12px;
