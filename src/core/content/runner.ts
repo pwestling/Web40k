@@ -13,6 +13,7 @@ import {
   type ModelView,
   type UnitView,
 } from "./runtime";
+import { blockSlots } from "../regiment";
 import type { Effect, EffectAction, Expr, GameSystem, Id, Procedure, RuleDef, RuleRef, Step } from "./schema";
 
 /**
@@ -960,6 +961,7 @@ function allocationOrder(
   const models = unit.models
     .map((m) => (woundsLost?.has(m.id) ? { ...m, woundsLost: woundsLost.get(m.id)! } : m))
     .filter((m) => !m.destroyed && (Number(m.W ?? 1) || 1) - m.woundsLost > 0);
+  if (step.formation === "rearRankFirst" && !chosen?.length) return rearRankFirst(env, unit, models);
   if (chosen?.length) {
     // The chooser's declared order wins; models it left out keep their place after.
     const rank = (m: ModelView) => {
@@ -983,6 +985,24 @@ function allocationOrder(
     .map((m, i) => ({ m, i, k: key(m) }))
     .sort((a, b) => a.k - b.k || a.i - b.i)
     .map((x) => x.m);
+}
+
+/**
+ * Casualties come off the back of a block so the front rank stays full:
+ * rank and file from the rear forwards, then the command models and
+ * characters (any model whose profile isn't the unit's commonest one). A
+ * model that has already lost wounds takes the next one.
+ */
+function rearRankFirst(env: RunEnv, unit: UnitView, models: ModelView[]): ModelView[] {
+  const source = env.state.units[unit.id];
+  const slots = source ? blockSlots(env.state, source) : models.map((m) => m.id);
+  const profile = (m: ModelView) => env.state.models[m.id]?.profile?.name ?? "";
+  const counts = new Map<string, number>();
+  for (const m of models) counts.set(profile(m), (counts.get(profile(m)) ?? 0) + 1);
+  const common = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const rank = (m: ModelView) =>
+    (m.woundsLost > 0 ? 0 : 2) + (profile(m) === common ? 0 : 4) - slots.indexOf(m.id) / (slots.length + 1);
+  return [...models].sort((a, b) => rank(a) - rank(b));
 }
 
 function runDamage(

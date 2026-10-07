@@ -421,7 +421,10 @@ function rangeNote(
 
 /** Whether a preview has a dice step that can't succeed. */
 const cannotSucceed = (preview: { plans: Record<string, StepPlan> } | null) =>
-  !!preview && Object.values(preview.plans).some((p) => p.kind === "test" && !p.skip && p.target === null);
+  !!preview &&
+  Object.values(preview.plans).some(
+    (p) => p.kind === "test" && !p.skip && p.target === null && p.passOn !== "failures",
+  );
 
 /** Choose the weapon and target for a procedure action such as Fire, with the numbers it will use. */
 export function ActionSetup({ draft }: { draft: AttackDraft & { action: string } }) {
@@ -598,7 +601,7 @@ function describePlan(plan: StepPlan | undefined): string | null {
   if (plan.kind !== "test") return null;
   if (plan.skip) return "skipped";
   const dice = `${plan.dicePerInput > 1 ? `${plan.dicePerInput}×` : ""}${plan.sumOf > 1 ? plan.sumOf : ""}d${plan.sides}${plan.keep && plan.dicePerInput > 1 ? ` keep ${plan.keep}` : ""}`;
-  if (plan.target === null) return `${dice}: can't succeed`;
+  if (plan.target === null) return plan.passOn === "failures" ? "no save" : `${dice}: can't succeed`;
   // A target of 0 means each die is judged against the roll it answers (opposed saves).
   const vs =
     plan.target === 0
@@ -633,9 +636,11 @@ export function ProcedurePanel() {
       : undefined;
   // A step that couldn't succeed says why, e.g. "out of range", rather than a bare "0 of 3".
   const whyNone = (r: StepRecord) =>
-    r.plan.kind === "test" && r.plan.target === null
-      ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
-      : undefined;
+    r.plan.kind === "test" && r.plan.target === null && r.plan.passOn === "failures"
+      ? "no save possible"
+      : r.plan.kind === "test" && r.plan.target === null
+        ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
+        : undefined;
   const lost = run.outcomes.filter((o) => o.kind === "wounds").length;
   const destroyed = run.outcomes.some((o) => o.kind === "destroy");
   const statuses = [

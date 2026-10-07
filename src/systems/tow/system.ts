@@ -1,4 +1,120 @@
-import type { GameSystem } from "../../core/content";
+import type { Effect, Expr, GameSystem, Procedure } from "../../core/content";
+
+const ref = (r: string): Expr => ({ ref: r });
+
+/** The weapon's Strength, or the shooter's when the weapon has none. */
+const strength: Expr = {
+  if: { cmp: ">", a: ref("weapon.wS"), b: 0 },
+  then: ref("weapon.wS"),
+  else: ref("attacker.S"),
+};
+
+/**
+ * Shooting: to hit from Ballistic Skill (7 - BS, at least 2+), where each
+ * penalty raises the number needed and 7+ means a 6 followed by 4+ (8+ a 6
+ * then 5+, 9+ a 6 then 6+, 10+ can't hit); to wound from Strength against
+ * Toughness; then armour (worsened by AP), ward and regeneration saves.
+ * Casualties come off the rear rank. From general knowledge of the game,
+ * unverified against the rules index.
+ */
+const shooting: Procedure = {
+  id: "shoot",
+  name: "Shooting",
+  params: ["attacker", "weapon", "target"],
+  steps: [
+    // The front rank shoots; extra ranks (volley fire, hills) are added by hand for now.
+    {
+      kind: "pool",
+      id: "attacks",
+      count: { op: "min", args: [{ count: "attacker.models" }, ref("attacker.files")] },
+    },
+    {
+      kind: "test",
+      id: "hit",
+      compare: "atLeast",
+      target: { op: "max", args: [2, { op: "-", args: [7, ref("attacker.BS")] }] },
+      impossibleIf: { cmp: ">=", a: { op: "-", args: [7, ref("attacker.BS")] }, b: 10 },
+      alwaysFail: [1],
+      roller: "attacker",
+      overflow: { followUp: { op: "-", args: [ref("test.target"), 3] } },
+    },
+    {
+      kind: "test",
+      id: "wound",
+      compare: "atLeast",
+      target: {
+        op: "min",
+        args: [
+          6,
+          { op: "max", args: [2, { op: "-", args: [{ op: "+", args: [4, ref("target.T")] }, strength] }] },
+        ],
+      },
+      impossibleIf: { cmp: ">=", a: { op: "-", args: [ref("target.T"), strength] }, b: 4 },
+      alwaysFail: [1],
+      roller: "attacker",
+    },
+    {
+      kind: "test",
+      id: "armour",
+      compare: "atLeast",
+      target: { op: "-", args: [ref("target.armour"), ref("weapon.AP")] },
+      impossibleIf: { cmp: ">", a: { op: "-", args: [ref("target.armour"), ref("weapon.AP")] }, b: 6 },
+      alwaysFail: [1],
+      roller: "defender",
+      passOn: "failures",
+    },
+    {
+      kind: "test",
+      id: "ward",
+      compare: "atLeast",
+      target: ref("target.ward"),
+      impossibleIf: { not: { cmp: ">", a: ref("target.ward"), b: 0 } },
+      alwaysFail: [1],
+      roller: "defender",
+      passOn: "failures",
+    },
+    {
+      kind: "test",
+      id: "regeneration",
+      compare: "atLeast",
+      target: ref("target.regen"),
+      impossibleIf: { not: { cmp: ">", a: ref("target.regen"), b: 0 } },
+      alwaysFail: [1],
+      roller: "defender",
+      passOn: "failures",
+    },
+    { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
+    { kind: "damage", id: "damage", amount: 1, spillover: false },
+  ],
+};
+
+const beforeHit: Effect["when"] = { event: "step.before", where: { is: "event.step", value: "hit" } };
+
+/** To-hit penalties; each raises the score needed by one (unverified). */
+const shootingModifiers: Effect[] = [
+  {
+    id: "Long range",
+    when: beforeHit,
+    if: {
+      cmp: ">",
+      a: { query: { kind: "distance", from: "attacker", to: "target" } },
+      b: { op: "/", args: [ref("weapon.range"), 2] },
+    },
+    do: [{ do: "modifyTarget", by: 1 }],
+  },
+  {
+    id: "Moved and shot",
+    when: beforeHit,
+    if: { hasFlag: "attacker", flag: "moved" },
+    do: [{ do: "modifyTarget", by: 1 }],
+  },
+  {
+    id: "Cover",
+    when: beforeHit,
+    if: { query: { kind: "cover", from: "attacker", to: "target" } },
+    do: [{ do: "modifyTarget", by: 1 }],
+  },
+];
 
 /**
  * Rank-and-flank IGOUGO play in the style of Warhammer: The Old World, set up
@@ -31,7 +147,44 @@ export const oldWorld: GameSystem = {
     { id: "A", name: "Attacks", of: "model", type: "number" },
     { id: "Ld", name: "Leadership", of: "model", type: "number" },
     { id: "US", name: "Unit strength", of: "model", type: "number", default: 1 },
-    { id: "range", name: "Range", of: "weapon", type: "distance", aliases: ["Range"] },
+    {
+      id: "armour",
+      name: "Armour save",
+      short: "Sv",
+      of: "model",
+      type: "target",
+      aliases: ["Sv", "Armour"],
+      default: 7,
+    },
+    {
+      id: "ward",
+      name: "Ward save",
+      short: "Ward",
+      of: "model",
+      type: "target",
+      aliases: ["Ward"],
+      default: 0,
+    },
+    {
+      id: "regen",
+      name: "Regeneration save",
+      short: "Regen",
+      of: "model",
+      type: "target",
+      aliases: ["Regeneration"],
+      default: 0,
+    },
+    { id: "range", name: "Range", short: "Rng", of: "weapon", type: "distance", aliases: ["Range"] },
+    {
+      id: "wS",
+      name: "Weapon strength",
+      short: "S",
+      of: "weapon",
+      type: "number",
+      aliases: ["S", "Strength"],
+      default: 0,
+    },
+    { id: "AP", name: "Armour piercing", of: "weapon", type: "number", aliases: ["AP"], default: 0 },
   ],
   weaponKinds: ["missile", "combat"],
   unitShape: { kind: "ranked", minFiles: 1, manoeuvres: ["wheel", "reform", "turn", "march"] },
@@ -54,8 +207,9 @@ export const oldWorld: GameSystem = {
     { id: "building", name: "Building", cover: true, blocksSight: true },
   ],
   rules: [],
-  procedures: [],
-  actions: [],
+  procedures: [shooting],
+  actions: [{ id: "shoot", name: "Shoot", by: "unit", side: "active", procedure: "shoot" }],
+  coreEffects: shootingModifiers,
   turn: {
     rounds: 6,
     initiative: "rollOff",
@@ -65,7 +219,7 @@ export const oldWorld: GameSystem = {
         segments: [
           { kind: "phase", id: "strategy", name: "Strategy" },
           { kind: "phase", id: "movement", name: "Movement" },
-          { kind: "phase", id: "shooting", name: "Shooting" },
+          { kind: "phase", id: "shooting", name: "Shooting", actions: ["shoot"] },
           { kind: "phase", id: "combat", name: "Combat" },
         ],
       },

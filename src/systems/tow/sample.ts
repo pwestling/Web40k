@@ -1,4 +1,4 @@
-import type { BaseShape } from "../../core";
+import type { BaseShape, WeaponProfile } from "../../core";
 import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
 
 /**
@@ -28,7 +28,20 @@ function regiment(
   stats: Stats,
   points: number,
   extra: { name: string; stats: Stats; base?: BaseShape }[] = [],
+  weapon?: { name: string; range: number; S?: number; AP?: number },
 ): ImportedUnit {
+  const weapons: Record<string, WeaponProfile> = weapon
+    ? {
+        missile: {
+          id: "missile",
+          name: weapon.name,
+          kind: "ranged" as const,
+          chars: { Range: `${weapon.range}"`, S: String(weapon.S ?? 0), AP: String(weapon.AP ?? 0) },
+          keywords: [],
+        },
+      }
+    : {};
+  const carried = weapon ? ["missile"] : [];
   const leaders = extra.map((e) => ({
     profile: { name: e.name, chars: chars(e.stats) },
     weapons: [],
@@ -36,12 +49,12 @@ function regiment(
   }));
   const troops = Array.from({ length: count - extra.length }, () => ({
     profile: { name, chars: chars(stats) },
-    weapons: [],
+    weapons: carried,
   }));
   return {
     name,
     base,
-    sheet: { weapons: {}, abilities: [], keywords: [], points },
+    sheet: { weapons, abilities: [], keywords: [], points },
     models: [...leaders, ...troops],
   };
 }
@@ -58,7 +71,7 @@ function marchwardens(): ImportedRoster {
       { name: "Spear Sergeant", stats: { ...spear, A: 2 } },
       { name: "Standard Bearer", stats: spear },
     ]),
-    regiment("Fen Bowmen", 15, FOOT, bow, 120),
+    regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
     regiment("Riders of the Downs", 6, HORSE, rider, 130, [{ name: "Banner Rider", stats: rider }]),
     regiment(
       "Siege Engine",
@@ -81,7 +94,7 @@ function reavers(): ImportedRoster {
     ]),
     regiment("Tusk Brutes", 6, BRUTE, brute, 210),
     regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90),
-    regiment("Reaver Slingers", 10, FOOT, raider, 60),
+    regiment("Reaver Slingers", 10, FOOT, raider, 60, [], { name: "Sling", range: 18, S: 3 }),
   ];
   return { name: "Reaver Horde", points: total(units), units, warnings: [] };
 }

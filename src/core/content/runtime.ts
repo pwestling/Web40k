@@ -58,6 +58,8 @@ export interface UnitView {
   /** Models still on the table. */
   models: ModelView[];
   startingStrength: number;
+  /** Models in the front rank: a ranked block's files, or every model for skirmishers. */
+  files: number;
   /** The unit's characteristics are its first model's, as most games read them. */
   [characteristic: string]: unknown;
 }
@@ -235,6 +237,15 @@ export function modelView(
   return applyContinuous(system, view, opts.rules);
 }
 
+function majority(state: GameState, models: ModelView[]): ModelView | undefined {
+  const counts = new Map<string, number>();
+  const name = (m: ModelView) => state.models[m.id]?.profile?.name ?? "";
+  for (const m of models) counts.set(name(m), (counts.get(name(m)) ?? 0) + 1);
+  let best = models[0];
+  for (const m of models) if ((counts.get(name(m)) ?? 0) > (counts.get(name(best!)) ?? 0)) best = m;
+  return best;
+}
+
 export function unitView(state: GameState, system: GameSystem, unit: Unit, opts: ViewOptions = {}): UnitView {
   const models = unit.modelIds.flatMap((id) => {
     const m = state.models[id];
@@ -242,7 +253,8 @@ export function unitView(state: GameState, system: GameSystem, unit: Unit, opts:
   });
   const rules = [...system.rules, ...(opts.rules ?? [])];
   const flags = unitFlags(unit);
-  const first = models[0];
+  // Read from the commonest profile (most games use the majority's Toughness), else the first model.
+  const first = majority(state, models);
   const chars = first
     ? Object.fromEntries(
         system.characteristics.filter((c) => c.of === "model").map((c) => [c.id, first[c.id]]),
@@ -260,6 +272,7 @@ export function unitView(state: GameState, system: GameSystem, unit: Unit, opts:
     flags,
     rules: bindRules(rules, abilityTexts(unit), "unit"),
     models,
+    files: unit.formation.kind === "ranked" ? Math.min(unit.formation.files, models.length) : models.length,
     startingStrength: unit.modelIds.length,
   };
   Object.defineProperty(view, "source", { value: unit, enumerable: false });
