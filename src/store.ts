@@ -97,6 +97,8 @@ interface Store {
   director: boolean;
   /** Front, flank and rear arcs of the selected (and hovered) regiment. */
   arcs: boolean;
+  /** The after-game stats screen: open, closed, or null to open it on its own when the battle ends. */
+  stats: boolean | null;
   set(
     patch: Partial<
       Pick<
@@ -115,6 +117,7 @@ interface Store {
         | "rangeWeapon"
         | "director"
         | "arcs"
+        | "stats"
       >
     >,
   ): void;
@@ -217,6 +220,7 @@ export const useStore = create<Store>((set, get) => ({
   ranges: null,
   rangeWeapon: null,
   director: false,
+  stats: null,
   net: null,
   packagesWaived: {},
   seatAgain: null,
@@ -285,6 +289,7 @@ export const useStore = create<Store>((set, get) => ({
       scrub: null,
       // Spectators start with the camera following the action.
       director: role === "spectator",
+      stats: null,
       packagesWaived: {},
       seatAgain: () => takeSeat(),
     });
@@ -352,7 +357,16 @@ export const useStore = create<Store>((set, get) => ({
     get().session?.leave();
     // Replays open where the battle starts, not on the empty deployment table.
     const scrub = replayIntro(record).startSeq;
-    set({ session: null, role: "spectator", record, scrub, selected: null, draft: null, director: true });
+    set({
+      session: null,
+      role: "spectator",
+      record,
+      scrub,
+      selected: null,
+      draft: null,
+      director: true,
+      stats: null,
+    });
   },
 
   dispatch(intent, as) {

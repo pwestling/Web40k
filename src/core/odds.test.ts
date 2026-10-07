@@ -36,6 +36,8 @@ describe("odds", () => {
     expect(passChance(test(7))).toBeCloseTo(1 / 6); // a 6 always passes
     expect(passChance(test(3, { reroll: "failed" }))).toBeCloseTo(4 / 6 + (2 / 6) * (4 / 6));
     expect(passChance(test(3, { reroll: "ones" }))).toBeCloseTo(4 / 6 + (1 / 6) * (4 / 6));
+    // The Old World's 7+: a 6, then 4+ on a second die.
+    expect(passChance(test(7, { alwaysPass: [] }), 4)).toBeCloseTo((1 / 6) * (3 / 6));
     expect(
       passChance(test(4, { dicePerInput: 2, keep: "highest", alwaysFail: [], alwaysPass: [] })),
     ).toBeCloseTo(0.75);

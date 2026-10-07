@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
 import { readGame, replayIntro } from "./highlights";
+import { biggestSwings, gameStats } from "../core/stats";
 
 /** How far past a round's end (in events) its card still comes up. */
 const RECENT = 40;
@@ -14,6 +15,9 @@ export function RoundCard() {
   const scrub = useStore((s) => s.scrub);
   const pos = scrub ?? record.events.at(-1)?.seq ?? 0;
   const { rounds } = useMemo(() => readGame(record), [record]);
+  // Watchers get the round's biggest swing against the odds.
+  const watching = useStore((s) => s.role === "spectator");
+  const swings = useMemo(() => (watching ? biggestSwings(gameStats(record).runs) : null), [watching, record]);
   const current = rounds.findLast((r) => r.seq <= pos && pos - r.seq < RECENT);
   const [closed, setClosed] = useState<number[]>([]);
   const seq = current?.seq;
@@ -23,6 +27,8 @@ export function RoundCard() {
     return () => clearTimeout(t);
   }, [seq]);
   if (!current || closed.includes(current.seq)) return null;
+  const swing = swings?.get(current.round);
+  const delta = swing ? swing.actual - swing.expected : 0;
   return (
     <div className="round-card" role="status">
       <div className="head">
@@ -50,6 +56,11 @@ export function RoundCard() {
           </span>
         </div>
       ))}
+      {swing && Math.abs(delta) >= 0.5 && (
+        <span className="swing-line">
+          Biggest swing: {swing.title}, {Math.abs(delta).toFixed(1)} {delta > 0 ? "above" : "below"} expected
+        </span>
+      )}
     </div>
   );
 }

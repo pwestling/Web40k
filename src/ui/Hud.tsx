@@ -6,6 +6,8 @@ import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
 import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
+import { battleOver } from "./StatsScreen";
+import { useGame } from "./hooks";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -28,6 +30,8 @@ export function Hud() {
     set,
   } = useStore();
   const canControl = useCanControl();
+  // The table on screen (a replay's scrub point), which decides whether stats are showing.
+  const shown = useGame();
   const [count, setCount] = useState(2);
   const [sides, setSides] = useState(6);
   const [collapsed, setCollapsed] = useState(false);
@@ -196,7 +200,12 @@ export function Hud() {
             ),
           )}
       </ol>
-      <button onClick={() => downloadReplay(record)}>Download replay</button>
+      <div className="row">
+        <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
+          Stats
+        </button>
+        <button onClick={() => downloadReplay(record)}>Download replay</button>
+      </div>
     </div>
   );
 }

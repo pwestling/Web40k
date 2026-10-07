@@ -9,6 +9,7 @@ import { ScriptPanel } from "./ui/ScriptPanel";
 import { ReactionPrompt } from "./ui/SystemPanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { ReplayTitle, RoundCard } from "./ui/RoundCard";
+import { StatsScreen } from "./ui/StatsScreen";
 import { PackageCards } from "./ui/Packages";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TopBar } from "./ui/TopBar";
@@ -89,6 +90,7 @@ export function App() {
           <ReplayBar />
           <RoundCard />
           <ReplayTitle />
+          <StatsScreen />
           <PackageCards />
           {reacting && <ReactionPrompt />}
           {showSight && (

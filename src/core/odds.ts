@@ -1,6 +1,7 @@
 import type { Step } from "./content/schema";
 import { parseDiceSum, type DiceSum } from "./content/runtime";
 import type { StepPlan, StepRecord, TestPlan } from "./content/runner";
+import { evaluate } from "./content/expr";
 
 /**
  * Exact odds for a procedure, from the numbers a preview works out for each
@@ -106,19 +107,25 @@ function rollDist(plan: TestPlan): Dist {
 /**
  * The chance one input passes a test, as the runner judges it: critical and
  * always-pass faces, always-fail faces, the modifier, then one re-roll.
- * Null when the target depends on each input (opposed rolls).
+ * `followUp` is the roll needed on a second die when the target is above
+ * the die's maximum (The Old World's 7+). Null when the target depends on
+ * each input (opposed rolls).
  */
-export function passChance(plan: TestPlan): number | null {
+export function passChance(plan: TestPlan, followUp?: number): number | null {
   if (plan.skip) return 1;
   if (plan.target === 0) return null;
   const dist = rollDist(plan);
+  const max = plan.sides * plan.sumOf;
+  const overflow =
+    followUp !== undefined && plan.compare === "atLeast" && plan.target !== null && plan.target > max;
+  const need = overflow ? max : plan.target;
   const judge = (natural: number): boolean => {
-    if (plan.target === null || natural === 0) return false;
+    if (need === null || natural === 0) return false;
     const critical = plan.criticalOn !== null && natural >= plan.criticalOn;
     if (plan.alwaysFail.includes(natural)) return false;
     if (critical || plan.alwaysPass.includes(natural)) return true;
     const value = natural + plan.modifier;
-    return plan.compare === "atLeast" ? value >= plan.target : value <= plan.target;
+    return plan.compare === "atLeast" ? value >= need : value <= need;
   };
   let first = 0;
   let again = 0;
@@ -131,7 +138,23 @@ export function passChance(plan: TestPlan): number | null {
   });
   // A re-rolled die passes with the same chance as a fresh one; "ones" may re-roll a pass.
   const rerolledPasses = plan.reroll === "ones" ? (dist[1] ?? 0) * (judge(1) ? 1 : 0) : 0;
-  return first - rerolledPasses + again * first;
+  const passed = first - rerolledPasses + again * first;
+  if (!overflow) return passed;
+  // The follow-up die fails on a 1 whatever it needs.
+  const faces = Math.max(0, plan.sides - Math.max(2, followUp!) + 1);
+  return passed * (faces / plan.sides);
+}
+
+/** The follow-up roll a step needs for a target above the die's maximum, if it has one. */
+export function followUpNeed(step: Step | undefined, plan: StepPlan | undefined): number | undefined {
+  if (!step || step.kind !== "test" || !step.overflow || plan?.kind !== "test" || plan.target === null)
+    return undefined;
+  try {
+    const v = evaluate(step.overflow.followUp, { scope: { test: { target: plan.target } } });
+    return typeof v === "number" ? v : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface StepOdds {
@@ -180,7 +203,7 @@ export function procedureOdds(
         return out;
       }
     } else if (plan.kind === "test") {
-      const p = passChance(plan);
+      const p = passChance(plan, followUpNeed(step, plan));
       if (p === null) {
         out.complete = false;
         return out;
@@ -278,9 +301,12 @@ function slainDist(
  * expected to, from the step's own plan. Null for steps without dice or
  * whose odds can't be worked out.
  */
-export function recordLuck(record: StepRecord): { rolled: number; actual: number; expected: number } | null {
+export function recordLuck(
+  record: StepRecord,
+  step?: Step,
+): { rolled: number; actual: number; expected: number } | null {
   if (record.plan.kind !== "test" || !record.dice?.length) return null;
-  const p = passChance(record.plan);
+  const p = passChance(record.plan, followUpNeed(step, record.plan));
   if (p === null) return null;
   const rolled = record.dice.length;
   const actual = record.dice.filter((d) => d.success).length;
