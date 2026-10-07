@@ -23,9 +23,53 @@ pnpm install
 pnpm dev          # http://localhost:5173
 ```
 
-Click **Solo** to play locally, or **Host** to create a room and open the same URL in another browser
-(or send it to a friend) and click **Join**, or **Watch** to spectate. Drag your own models to move them; the label shows how far
-they have moved in inches.
+### Playing a game
+
+1. **Pick how to play.** _Play on this screen_ is hotseat: one browser, both sides. _Host online_ creates
+   a room; send the page URL to your opponent, who clicks _Join_ (anyone else can _Watch_). Tick _Same
+   browser_ to play between two tabs with no network at all.
+2. **Bring armies.** _Import army list_ reads a BattleScribe or New Recruit roster (`.ros`, `.rosz`, or
+   New Recruit's JSON export). Check the guessed base sizes, then deploy. _Sample army_ loads one of two
+   small made-up armies for trying things out. Units appear in your deployment zone.
+3. **Deploy**, choose who goes first in the top bar, and press _Start battle_.
+4. **Play the turn.** The top bar tracks round, active player and phase, and gives both players 1 CP
+   each Command phase. VP and CP have +/- buttons.
+   - Click a model to select its unit and see its datasheet. Drag to move the whole unit; Shift-drag
+     moves one model. The label shows the distance moved this phase against what is allowed (M plus
+     any advance roll; the charge roll in the Charge phase; 3" in the Fight phase). Models out of
+     coherency get a red ring; enemies' engagement range shows while you drag.
+   - _Advance_, _Charge_ and _Battle-shock test_ roll the dice and record the result on the unit.
+   - _Shoot_ or _Fight_ on a weapon opens the attack panel. Pick a target (from the list, or click it on
+     the table). The panel works out models in range, attacks (rapid fire, blast), hit/wound/save
+     targets (S vs T, AP, cover, invulnerable saves), keywords (sustained, lethal, devastating,
+     twin-linked, anti, torrent, melta, heavy, lance) and feel no pain. Every number can be changed
+     before declaring. Then roll each step, or _Roll everything_. Damage goes on the target's models
+     automatically (wounded models first) and slain models leave the table.
+   - Objectives show who controls them (OC within 3"). Ruin walls block line of sight and ruin
+     footprints give cover, as a simplified check.
+5. **Fix anything by hand.** Rules are advisory: wounds, statuses, CP and VP can all be edited, and
+   _Undo_ takes back your last action. The game autosaves in the host's browser (_Resume last game_
+   in the lobby) and the replay bar scrubs back through everything that happened.
+
+### Connecting over the internet
+
+Browsers find each other through public Nostr relays by default; after that, game data goes directly
+between them over WebRTC. If that is unreliable, run your own small signalling relay:
+
+```sh
+pnpm relay        # ws://localhost:8787 (set PORT to change)
+```
+
+and open the app with `?signal=wss://your-relay-host` (the parameter is kept on invite links), or build
+with `VITE_SIGNAL_URL=wss://your-relay-host`. A page served over https needs a `wss://` relay, so put it
+behind TLS (any reverse proxy, or a host such as Fly.io or Render). Players behind strict NATs may also
+need a TURN server: `?turn=turn:host:3478&turnUser=u&turnPass=p`, or `VITE_TURN_URL`, `VITE_TURN_USER`
+and `VITE_TURN_PASS` at build time.
+
+### Hosting
+
+Every push to `main` builds the site to the `gh-pages` branch. To serve it, set the repository's
+**Settings → Pages → Source** to "Deploy from a branch" and pick `gh-pages`.
 
 | Command          | What it does                           |
 | ---------------- | -------------------------------------- |
@@ -35,6 +79,7 @@ they have moved in inches.
 | `pnpm lint`      | ESLint                                 |
 | `pnpm format`    | Prettier                               |
 | `pnpm build`     | Production build into `dist/` (static) |
+| `pnpm relay`     | Self-hosted signalling relay           |
 
 ## Stack
 
@@ -67,7 +112,9 @@ src/
   net/     Transport interface, Trystero (WebRTC) and in-memory implementations,
            and the Session that keeps peers in sync.
   render/  React Three Fiber scene: table, bases, drag-to-move, rulers.
-  ui/      HTML overlay: lobby, players, dice, log.
+  systems/ Game-specific code. wh40k/ has the roster importer, attack
+           suggestions, coherency, objectives and the table layout.
+  ui/      HTML overlay: lobby, top bar, datasheet, attack panel, log.
   store.ts Zustand store wiring a Session to React.
 ```
 

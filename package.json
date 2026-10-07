@@ -18,12 +18,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "relay": "node server/relay.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@trystero-p2p/nostr": "^0.26.0",
+    "@trystero-p2p/ws-relay": "0.26.0",
     "fast-xml-parser": "^5.11.2",
     "fflate": "^0.8.3",
     "react": "^19.3.0",

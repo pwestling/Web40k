@@ -1,15 +1,33 @@
-import { joinRoom, selfId, type JsonValue } from "@trystero-p2p/nostr";
+import { joinRoom as joinNostr, selfId as nostrSelfId, type JsonValue } from "@trystero-p2p/nostr";
+import { joinRoom as joinWsRelay, selfId as wsSelfId } from "@trystero-p2p/ws-relay";
+import { netConfig, type NetConfig } from "./config";
 import type { NetMessage, Transport } from "./transport";
 
 const APP_ID = "open-battle-dev";
 
 /**
- * WebRTC transport. Trystero finds peers through public Nostr relays (only
- * the WebRTC handshake goes through them); game data then flows directly
- * between browsers. No server of our own is needed.
+ * WebRTC transport. Trystero finds peers through a signalling relay (public
+ * Nostr relays by default, or a self-hosted WebSocket relay); game data then
+ * flows directly between browsers.
  */
-export function trysteroTransport(roomId: string, password?: string): Transport {
-  const room = joinRoom({ appId: APP_ID, password }, roomId);
+export function trysteroTransport(
+  roomId: string,
+  password?: string,
+  config: NetConfig = netConfig(),
+): Transport {
+  const turnConfig = config.turn.length ? config.turn : undefined;
+  const room = config.signal.length
+    ? joinWsRelay({ appId: APP_ID, password, turnConfig, relayConfig: { urls: config.signal } }, roomId)
+    : joinNostr(
+        {
+          appId: APP_ID,
+          password,
+          turnConfig,
+          ...(config.nostr.length ? { relayConfig: { urls: config.nostr } } : {}),
+        },
+        roomId,
+      );
+  const selfId = config.signal.length ? wsSelfId : nostrSelfId;
   const channel = room.makeAction<JsonValue>("msg");
 
   return {

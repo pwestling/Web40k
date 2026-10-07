@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { GameRecord } from "../core";
+import { NET_PARAMS } from "../net/config";
 import { loadSavedGame, useStore, type Mode } from "../store";
 
 export function Lobby() {
@@ -15,6 +16,8 @@ export function Lobby() {
   const linkTo = (roomId: string) => {
     const q = new URLSearchParams({ room: roomId });
     if (sameBrowser) q.set("local", "1");
+    // Keep relay settings so an invite link connects the same way.
+    for (const k of NET_PARAMS) if (params.get(k)) q.set(k, params.get(k)!);
     history.replaceState(null, "", `?${q}`);
   };
 
