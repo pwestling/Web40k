@@ -287,6 +287,8 @@ export function WatchEffects() {
   const focus = useRef<Focus | null>(null);
   const lastAction = useRef(0);
   const overview = useRef(true);
+  // Effect keys must never repeat: a replay rewound and played again reaches the same seqs.
+  const nextKey = useRef(0);
 
   // New events are picked up each frame (not in an effect, to keep renders cheap).
   useFrame(() => {
@@ -294,18 +296,22 @@ export function WatchEffects() {
     const prev = last.current;
     if (prev === input.current) return;
     last.current = input.current;
-    if (shownSeq <= prev.seq || shownSeq - prev.seq > 6) return;
+    if (shownSeq <= prev.seq || shownSeq - prev.seq > 6) {
+      // A jump: what was showing belongs to another moment.
+      if (shownSeq !== prev.seq) setEffects((old) => (old.length ? [] : old));
+      return;
+    }
     const events = record.events.filter((e) => e.seq > prev.seq && e.seq <= shownSeq).map((e) => e.event);
     const now = performance.now();
     const fresh: Effect[] = [];
-    for (const [i, event] of events.entries())
-      fresh.push(...effectsFor(event, prev.game, game, now, `${shownSeq}-${i}`));
+    for (const event of events)
+      fresh.push(...effectsFor(event, prev.game, game, now, `${nextKey.current++}`));
     // Casualties: models destroyed since the last frame fade out where they stood.
     for (const m of Object.values(game.models))
       if (m.destroyed && prev.game.models[m.id] && !prev.game.models[m.id]!.destroyed)
         fresh.push({
           kind: "ghost",
-          key: `ghost-${m.id}-${shownSeq}`,
+          key: `ghost-${m.id}-${nextKey.current++}`,
           start: now,
           model: prev.game.models[m.id]!,
         });

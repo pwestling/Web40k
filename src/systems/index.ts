@@ -1,10 +1,11 @@
-import { DEFAULT_SYSTEM, type Layout, type Table } from "../core";
+import { DEFAULT_SYSTEM, type GameState, type Layout, type Table, type Unit } from "../core";
 import { registerSystem } from "../core/content";
 import { fsdLayout, FSD_CATEGORIES } from "./fsd/layout";
 import { fsdSample } from "./fsd/sample";
 import { oldWorld } from "./tow/system";
 import { towLayout, TOW_CATEGORIES } from "./tow/layout";
 import { towSample } from "./tow/sample";
+import { towRanks } from "./tow/troops";
 import { standardLayout } from "./wh40k/layout";
 import type { ImportedRoster } from "./wh40k/roster";
 import { sampleRoster } from "./wh40k/sample";
@@ -25,6 +26,8 @@ export interface SystemModule {
    * other systems use the generic actions and procedure panels.
    */
   dedicatedUi?: boolean;
+  /** Rank width and rank bonus cap for a regiment (rank-and-flank systems); else the system's constants. */
+  rankRules?(game: GameState, unit: Unit): { width: number; maxBonus: number };
 }
 
 // Systems defined here rather than in core/content register themselves.
@@ -45,6 +48,7 @@ const MODULES: Record<string, SystemModule> = {
     sample: towSample,
     layout: (t) => towLayout(t.width, t.depth),
     templateCategory: TOW_CATEGORIES,
+    rankRules: towRanks,
   },
 };
 

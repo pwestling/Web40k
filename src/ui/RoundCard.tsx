@@ -57,10 +57,13 @@ export function RoundCard() {
 /** A replay's title card: who played what, how long, and how bloody. */
 export function ReplayTitle() {
   const record = useStore((s) => s.record);
+  const scrub = useStore((s) => s.scrub);
   const isReplay = useStore((s) => s.session === null && s.role === "spectator");
   const intro = useMemo(() => replayIntro(record), [record]);
   // Closed per replay: a newly opened replay gets its card again.
   const [closedFor, setClosedFor] = useState<unknown>(null);
+  // Playing or scrubbing away from the start closes it for good.
+  if (isReplay && closedFor !== record && scrub !== null && scrub !== intro.startSeq) setClosedFor(record);
   useEffect(() => {
     if (!isReplay) return;
     const t = setTimeout(() => setClosedFor(record), 8000);

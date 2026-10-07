@@ -115,13 +115,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         continue;
       }
     }
-    items.push({
-      kind: "line",
-      key,
-      seq: logged.seq,
-      text: describe(logged, before, state),
-      undone: skipped,
-    });
+    const text = describe(logged, before, state);
+    // Bookkeeping events (an empty description) stay out of the log.
+    if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });
   }
   return items;
 }
@@ -258,10 +254,21 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "unit/form": {
       const name = unitName(event.id);
       const f = event.formation;
+      const cost = event.distance ? ` (${Number(event.distance.toFixed(1))}")` : "";
       if (event.how === "order")
-        return `${who} put ${name} in ${f.kind === "ranked" ? `${f.order ?? "close"} order` : "skirmish order"}`;
-      if (event.how === "turn") return `${who} turned ${name}`;
-      return `${who} reformed ${name}${f.kind === "ranked" ? ` ${f.files} wide` : ""}`;
+        return f.kind === "ranked"
+          ? `${who} put ${name} in ${f.order ?? "close"} order`
+          : `${who} sent ${name} out as skirmishers`;
+      if (event.how === "turn") {
+        const id = game.units[event.id]?.modelIds[0] ?? "";
+        const from = before.models[id]?.facing ?? 0;
+        const to = game.models[id]?.facing ?? from;
+        const d = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+        const way = Math.abs(Math.abs(d) - Math.PI) < 0.1 ? "about" : d > 0 ? "left" : "right";
+        return `${who} turned ${name} ${way}${cost}`;
+      }
+      const wide = f.kind === "ranked" ? ` ${f.files} wide` : "";
+      return `${who} ${event.how === "redress" ? "redressed" : "reformed"} ${name}${wide}${cost}`;
     }
     case "model/move":
       return `${who} ${moveText(before, game, [event.id])}`;
@@ -276,6 +283,13 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         event.moves.map((m) => m.id),
       )}`;
     case "unit/status":
+      if (event.key === "marching")
+        return event.value ? `${unitName(event.id)} is marching` : `${unitName(event.id)} stopped marching`;
+      if (event.key === "disrupted")
+        return event.value
+          ? `${unitName(event.id)} is disrupted`
+          : `${unitName(event.id)} is no longer disrupted`;
+      if (event.key === "lastFiles") return "";
       return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
     case "model/wounds":
       return `${who} set wounds on ${game.models[event.id]?.label ?? "a model"}${event.destroyed ? " (destroyed)" : ""}`;

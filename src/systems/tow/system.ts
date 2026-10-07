@@ -7,9 +7,9 @@ import type { GameSystem } from "../../core/content";
  * apply the results. No rules text, profiles or points: players bring those.
  *
  * Checked against the community rules index (tow.whfb.app): the 72" x 48"
- * table, the phase order, the 90 degree vision arc and the terrain types.
- * The manoeuvre costs and march distance below are from general knowledge of
- * the game and unverified; they only drive advisory warnings.
+ * table, the phase order, the 90 degree vision arc, the terrain types, and
+ * (2026-10-07, by the Old World gaps thread) the manoeuvre costs, march
+ * block and rank rules below. They only drive advisory warnings.
  */
 export const oldWorld: GameSystem = {
   id: "tow-hand",
@@ -31,6 +31,7 @@ export const oldWorld: GameSystem = {
     { id: "A", name: "Attacks", of: "model", type: "number" },
     { id: "Ld", name: "Leadership", of: "model", type: "number" },
     { id: "US", name: "Unit strength", of: "model", type: "number", default: 1 },
+    { id: "Troop", name: "Troop type", of: "model", type: "text", aliases: ["Troop type", "Type"] },
     { id: "range", name: "Range", of: "weapon", type: "distance", aliases: ["Range"] },
   ],
   weaponKinds: ["missile", "combat"],
@@ -72,19 +73,20 @@ export const oldWorld: GameSystem = {
     ],
   },
   constants: {
-    /** Models a rank needs to count towards the rank bonus (close order). */
+    /** Models a rank needs to count towards the rank bonus; by troop type (see troops.ts), this is the default. */
     rankWidth: 5,
-    /** Most the rank bonus can be. */
-    maxRankBonus: 3,
+    /** Most the rank bonus can be (infantry); by troop type in troops.ts. */
+    maxRankBonus: 2,
     /** A march is double Movement... */
     marchMultiple: 2,
-    /** ...and isn't allowed this close to an enemy without a Leadership test. */
+    /** ...and needs a Leadership test this close to an enemy that isn't fleeing. */
     marchBlock: 8,
-    /** Share of Movement a 90 or 180 degree turn costs (unverified). */
+    /** Share of Movement each 90 degrees of turn costs (180 degrees: twice this). */
     turnCost: 0.25,
-    /** Share of Movement a reform costs (unverified). */
-    reformCost: 0.5,
-    /** Minimum frontage for a close-order rank to count. */
-    minFiles: 1,
+    /** Share of Movement a reform costs: all of it; the unit moves no further. */
+    reformCost: 1,
+    /** Share of Movement redressing the ranks costs, changing the frontage by up to `redressMax` models. */
+    redressCost: 0.5,
+    redressMax: 5,
   },
 };
