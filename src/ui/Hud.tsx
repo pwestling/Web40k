@@ -1,3 +1,4 @@
+import { bundleReplay } from "./replayFile";
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty } from "./gameLog";
@@ -204,14 +205,15 @@ export function Hud() {
         <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
           Stats
         </button>
-        <button onClick={() => downloadReplay(record)}>Download replay</button>
+        <button onClick={() => void downloadReplay(record)}>Download replay</button>
       </div>
     </div>
   );
 }
 
-function downloadReplay(record: GameRecord) {
-  const blob = new Blob([JSON.stringify(record)], { type: "application/json" });
+/** The record, with the figures, terrain models and rules packages it uses, as a file. */
+async function downloadReplay(record: GameRecord) {
+  const blob = new Blob([JSON.stringify(await bundleReplay(record))], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `open-battle-${new Date().toISOString().slice(0, 16).replace(":", "")}.json`;

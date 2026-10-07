@@ -472,8 +472,10 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   };
   return (
     <div className="round-card package-card" role="alertdialog" aria-label="Rules packages">
-      {replay ? (
+      {replay && missing.length ? (
         <strong>This replay used rules that aren't on this device</strong>
+      ) : replay ? (
+        <strong>This replay brought its rules with it</strong>
       ) : missing.some((p) => !otherVersion(library, p)) ? (
         <strong>This game uses rules you don't have</strong>
       ) : missing.length ? (
