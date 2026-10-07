@@ -81,7 +81,9 @@ function statsOf(p: RProfile): Characteristics {
   const out: Characteristics = {};
   for (const c of p.chars) {
     const k = STAT_KEYS[key(c.name)];
-    if (k && c.value !== "") out[k] = c.value;
+    if (!k || c.value === "") continue;
+    // Some lists write a skill the model doesn't have (a beast's BS) as 0 rather than "-".
+    out[k] = (k === "WS" || k === "BS") && c.value.trim() === "0" ? "-" : c.value;
   }
   return out;
 }

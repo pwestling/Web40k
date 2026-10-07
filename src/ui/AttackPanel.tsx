@@ -14,7 +14,6 @@ import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
-import { useActionReport } from "./odds";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 
 /**
@@ -203,7 +202,11 @@ function SpecEditor({
       {s.inRange === 0 && spec.kind === "ranged" && (
         <p className="warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
       )}
-      {s.inRange === 0 || s.visible === 0 ? (
+      {s.inRange === 0 && spec.kind === "ranged" ? (
+        <button disabled title="No model has the target in range, so there are no attacks to roll">
+          Declare attack
+        </button>
+      ) : s.inRange === 0 || s.visible === 0 ? (
         <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
           Declare anyway
         </button>
@@ -213,19 +216,6 @@ function SpecEditor({
         </button>
       )}
     </div>
-  );
-}
-
-/** After the dice: what the attack came to against its odds (never shown before the roll). */
-function ReportLine({ report }: { report: string | null }) {
-  if (!report) return null;
-  return (
-    <p
-      className="odds"
-      title="Against the exact odds before the roll; sustained, lethal and devastating extras aren't counted"
-    >
-      {report.charAt(0).toUpperCase() + report.slice(1)}
-    </p>
   );
 }
 
@@ -251,7 +241,6 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const target = game.units[spec.targetUnitId];
   const canAct = live && role !== "spectator";
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
-  const report = useActionReport(attack.stage === "done");
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
   const roll = () => dispatch({ type: "attack/roll" }, roller);
@@ -297,7 +286,6 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         </Stage>
       )}
       {attack.damage && <DamageSummary game={game} attack={attack} />}
-      <ReportLine report={report} />
       {live && target && (attack.stage === "save" || attack.stage === "damage") && !attack.damage && (
         <WoundOrder attack={attack} />
       )}

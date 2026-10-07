@@ -202,9 +202,12 @@ export function Hud() {
           )}
       </ol>
       <div className="row">
-        <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
-          Stats
-        </button>
+        {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
+        {(battleOver(shown) || !session) && (
+          <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
+            Stats
+          </button>
+        )}
         <button onClick={() => void downloadReplay(record)}>Download replay</button>
       </div>
     </div>

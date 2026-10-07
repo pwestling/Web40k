@@ -1,8 +1,6 @@
 import { findProcedure, previewRun, procedureEnv, type RoleRef, type StartOptions } from "../core/content";
-import { useMemo } from "react";
 import { procedureOdds, targetModels, type Odds } from "../core/odds";
-import { gameStats, type RunSwing } from "../core/stats";
-import { useStore } from "../store";
+import type { RunSwing } from "../core/stats";
 
 export { targetModels };
 import { ATTACK_PROCEDURE, specToRun } from "../core/attack";
@@ -87,18 +85,4 @@ export function liveOdds(game: GameState): { odds: Odds | null; title: string } 
 export function swingResult(r: RunSwing): string {
   const verb = r.measure !== "damage" && r.expected >= 1.05 ? "were" : "was";
   return `${r.actual} ${r.measure} where ${r.expected.toFixed(1)} ${verb} expected`;
-}
-
-/**
- * The after-action report for the roll that just finished, from the log:
- * the latest run against the odds it had before it was rolled. Shown only
- * once the dice are in, never before.
- */
-export function useActionReport(done: boolean): string | null {
-  const record = useStore((s) => s.record);
-  return useMemo(() => {
-    if (!done) return null;
-    const run = gameStats(record).runs.at(-1);
-    return run ? swingResult(run) : null;
-  }, [done, record]);
 }

@@ -16,8 +16,8 @@ export function RoundCard() {
   const scrub = useStore((s) => s.scrub);
   const pos = scrub ?? record.events.at(-1)?.seq ?? 0;
   const { rounds } = useMemo(() => readGame(record), [record]);
-  // Watchers get the round's biggest swing against the odds.
-  const watching = useStore((s) => s.role === "spectator");
+  // Replay viewers get the round's biggest swing against the odds; nothing like it shows during play.
+  const watching = useStore((s) => s.role === "spectator" && s.session === null);
   const swings = useMemo(() => (watching ? biggestSwings(gameStats(record).runs) : null), [watching, record]);
   const current = rounds.findLast((r) => r.seq <= pos && pos - r.seq < RECENT);
   const [closed, setClosed] = useState<number[]>([]);

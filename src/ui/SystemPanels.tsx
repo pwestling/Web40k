@@ -21,7 +21,6 @@ import { modelHeight, type Ability, type GameState, type Unit } from "../core";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
-import { useActionReport } from "./odds";
 import { eyeView, rotateUnit } from "./UnitCard";
 
 /**
@@ -668,8 +667,6 @@ export function ProcedurePanel() {
   const game = useGame();
   const { dispatch, role, scrub } = useStore();
   const proc = game.procedure;
-  // After the dice: what the run came to against its odds (never shown before the roll).
-  const report = useActionReport(!!proc?.run.done);
   if (!proc) return null;
   const system = systemOf(game);
   const steps = findProcedure(system, proc.run.procedure).steps;
@@ -714,11 +711,6 @@ export function ProcedurePanel() {
         .map((r, i) => (
           <RecordRow key={i} record={r} why={whyNone(r)} />
         ))}
-      {report && (
-        <p className="odds" title="Against the exact odds before the roll; per-die rules aren't counted">
-          {report.charAt(0).toUpperCase() + report.slice(1)}
-        </p>
-      )}
       {run.pending && (
         <div className="stage">
           <span className="label">{label(run.pending.step)}</span>

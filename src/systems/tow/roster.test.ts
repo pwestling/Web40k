@@ -209,3 +209,18 @@ describe("Old World roster import, catalogue shape", async () => {
     expect(herd!.models.map((m) => m.profile.name).slice(0, 2)).toEqual(["Standard Bearer", "Herder"]);
   });
 });
+
+describe("skills a model doesn't have", () => {
+  it("reads a WS or BS of 0 as none", async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<roster name="Beasts" xmlns="http://www.battlescribe.net/schema/rosterSchema"><forces><force name="Main" catalogueName="Test"><selections>
+  <selection name="Bog Beast" type="model" number="1">
+    <categories><category name="Monsters"/></categories>
+    <profiles>${stats("Bog Beast", "Model", ["7", "4", "0", "6", "5", "6", "2", "5", "7"])}</profiles>
+  </selection>
+</selections></force></forces></roster>`;
+    const roster = await importTowRoster("b.ros", new TextEncoder().encode(xml));
+    const chars = roster.units[0]!.models[0]!.profile.chars;
+    expect([chars.WS, chars.BS, chars.S]).toEqual(["4", "-", "6"]);
+  });
+});
