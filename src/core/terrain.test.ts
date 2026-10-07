@@ -100,6 +100,27 @@ describe("line of sight", () => {
     expect(low.obscuredBy.map((p) => p.id)).toEqual(["w"]);
   });
 
+  it("uses an imported hull instead of the boxes when a piece has one", () => {
+    const a = model("a", 0, -3);
+    const b = model("b", 0, 3);
+    // A 4"-wide, 4"-tall vertical quad across the line of fire, as two triangles.
+    const quad = [-2, 0, 0, 2, 0, 0, 2, 0, 4, -2, 0, 0, 2, 0, 4, -2, 0, 4];
+    const hulled = { ...wallPiece(0.1), hull: quad };
+    expect(modelSight(table([wallPiece(0.1)], [a, b]), a, b).fully).toBe(true);
+    expect(modelSight(table([hulled], [a, b]), a, b).visible).toBe(false);
+  });
+
+  it("uses a model's imported bands for its height and what it hides", () => {
+    // A thin 6"-tall model: tall enough to be seen over a 4" wall.
+    const tall = { ...model("b", 0, 3), height: undefined, bands: [{ r: 0.3, z0: 0, z1: 6 }] };
+    const a = { ...model("a", 0, -3), height: 5 };
+    const s = modelSight(table([wallPiece(4)], [a, tall]), a, tall);
+    expect(s.visible).toBe(true);
+    expect(s.fully).toBe(false);
+    const short = model("c", 0, 3);
+    expect(modelSight(table([wallPiece(4)], [a, short]), a, short).visible).toBe(false);
+  });
+
   it("lets a model on a high floor see over a wall", () => {
     const shooter = model("a", 0, -3, 6);
     const target = model("b", 0, 3);

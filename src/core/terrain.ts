@@ -109,6 +109,7 @@ export function stepLevel(terrain: TerrainPiece[], p: Vec2, z: number, dir: 1 | 
 /** Default miniature height from its base, until players set one. */
 export function modelHeight(model: Model): number {
   if (model.height) return model.height;
+  if (model.bands?.length) return Math.max(...model.bands.map((b) => b.z1));
   const { width, depth } = baseSizeInches(model.base);
   if (model.base.shape === "rect") return Math.min(3.5, 1 + Math.max(width, depth) * 0.3);
   return Math.min(5, 1.1 + (Math.min(width, depth) / 2) * 1.6);
@@ -157,6 +158,10 @@ export function sightBlockedBy(terrain: TerrainPiece[], a: Vec3, b: Vec3): Terra
     if (segmentPointDistance2D(a, b, piece.position) > r) continue;
     const la = { ...toLocal(piece, a), z: a.z };
     const lb = { ...toLocal(piece, b), z: b.z };
+    if (piece.hull) {
+      if (segmentHitsMesh(la, lb, piece.hull)) return piece;
+      continue;
+    }
     for (const s of piece.solids) {
       if (!blocksSight(s)) continue;
       const min = { x: s.x - s.w / 2, y: s.y - s.d / 2, z: s.z };
@@ -165,6 +170,52 @@ export function sightBlockedBy(terrain: TerrainPiece[], a: Vec3, b: Vec3): Terra
     }
   }
   return null;
+}
+
+/** Whether the segment a→b crosses any triangle of a flat [x,y,z,...] list (Möller–Trumbore). */
+export function segmentHitsMesh(a: Vec3, b: Vec3, tris: number[]): boolean {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const dz = b.z - a.z;
+  for (let i = 0; i + 8 < tris.length; i += 9) {
+    const [x0, y0, z0, x1, y1, z1, x2, y2, z2] = tris.slice(i, i + 9) as [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ];
+    const e1x = x1 - x0,
+      e1y = y1 - y0,
+      e1z = z1 - z0;
+    const e2x = x2 - x0,
+      e2y = y2 - y0,
+      e2z = z2 - z0;
+    const px = dy * e2z - dz * e2y;
+    const py = dz * e2x - dx * e2z;
+    const pz = dx * e2y - dy * e2x;
+    const det = e1x * px + e1y * py + e1z * pz;
+    if (Math.abs(det) < 1e-12) continue;
+    const inv = 1 / det;
+    const tx = a.x - x0,
+      ty = a.y - y0,
+      tz = a.z - z0;
+    const u = (tx * px + ty * py + tz * pz) * inv;
+    if (u < 0 || u > 1) continue;
+    const qx = ty * e1z - tz * e1y;
+    const qy = tz * e1x - tx * e1z;
+    const qz = tx * e1y - ty * e1x;
+    const v = (dx * qx + dy * qy + dz * qz) * inv;
+    if (v < 0 || u + v > 1) continue;
+    const t = (e2x * qx + e2y * qy + e2z * qz) * inv;
+    // Ignore the very ends, as for boxes.
+    if (t > 0.001 && t < 0.999) return true;
+  }
+  return false;
 }
 
 /** Whether the segment passes over a piece's footprint, low enough to be "through" it. */
