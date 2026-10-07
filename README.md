@@ -71,9 +71,19 @@ src/
   store.ts Zustand store wiring a Session to React.
 ```
 
-**Content is imported, not shipped.** The repo contains no unit stats, points or rules text. Players
-import that data at runtime (for example from [BSData](https://github.com/BSData)), and rules are
-encoded as data so the engine can automate them. The schema for this is being designed separately.
+**Rules are data.** The repo contains no unit stats, points or rules text. Game-specific rules come
+in two layers (`src/core/content/schema.ts`):
+
+- A `GameSystem` describes how a game plays: characteristics, dice procedures (such as hit, wound,
+  save, damage), turn structure (IGOUGO phases or alternating activations), statuses, resources,
+  actions, keyword rules written as "when X, if Y, do Z" effects, and advisory checks such as
+  coherency.
+- A `ContentPack` holds the units, models and weapons, imported by players at runtime (for example
+  converted from [BSData](https://github.com/BSData)). A `Roster` is one player's army.
+
+Rule checks are advisory: they warn and players decide. Anything not yet expressible becomes a
+`manual` reminder. `src/core/content/examples/` has draft systems for 40k-style, Old World-style,
+Conquest-style and dice-placement games, to keep the schema honest about being generic.
 
 **Units and bases.** One world unit is one inch; the default table is 60" × 44". Base sizes are kept in
 millimetres, as they are printed, and can be round, oval or rectangular, with a facing. Skirmish units
