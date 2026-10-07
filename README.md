@@ -1,7 +1,11 @@
 # Web40k
 
 An open source, browser-based, peer-to-peer tabletop for playing Warhammer 40,000. Think Tabletop
-Simulator, but built around 40k: inch-based measuring, round bases, units, dice pools and phases.
+Simulator, but built around 40k: inch-based measuring, bases, units, dice pools and phases.
+
+40k is the primary target, but the engine is deliberately generic. The test for that is whether the same
+engine can also run rank-and-file games such as Warhammer: The Old World and Conquest: The Last Argument
+of Kings.
 
 No install and no game server: one player hosts, shares a link, and the browsers talk to each other
 directly over WebRTC.
@@ -47,9 +51,13 @@ they have moved in inches.
 
 ```
 src/
-  core/    Pure game rules and state: types, intents → events, reducer, geometry.
-           No DOM, three.js or network imports, so it is unit-testable and
-           identical on every peer.
+  core/    Generic engine: state, intents → events, reducer, base geometry
+           (round/oval/rect, edge-to-edge distance), ranked formations, dice
+           expressions, the content schema and effect evaluation. No DOM,
+           three.js or network imports, so it is unit-testable and identical
+           on every peer.
+  systems/ One module per game system (currently 40k): characteristics,
+           phases, turn structure and system-specific mechanics.
   net/     Transport interface, Trystero (WebRTC) and in-memory implementations,
            and the Session that keeps peers in sync.
   render/  React Three Fiber scene: table, bases, drag-to-move, rulers.
@@ -57,15 +65,17 @@ src/
   store.ts Zustand store wiring a Session to React.
 ```
 
-**Content is imported, not shipped.** The engine knows about bases, inches, dice and the attack
-sequence, but contains no unit stats, points or rules text. Players import a `ContentPack`
-(`src/core/content/schema.ts`), for example converted from [BSData](https://github.com/BSData). Rules
+**Systems and content are separate.** A `GameSystem` (`src/core/system.ts`) describes a game's
+characteristics, phases, turn structure (player turns or alternating unit activations) and default
+formation (skirmish or ranked). The repo contains no unit stats, points or rules text: players import a
+`ContentPack` (`src/core/content.ts`), for example converted from [BSData](https://github.com/BSData). Rules
 are encoded as data so the engine can automate them: weapon keywords are typed, and abilities are lists
 of effects ("when the attacker makes a hit roll, if the target is a VEHICLE, re-roll ones"). Anything not
 yet expressible becomes a `manual` reminder shown to players.
 
-**Units.** One world unit is one inch; the table is 60" × 44" (Strike Force). Base sizes are kept in
-millimetres, as they are printed.
+**Units and bases.** One world unit is one inch; the default table is 60" × 44". Base sizes are kept in
+millimetres, as they are printed, and can be round, oval or rectangular, with a facing. Skirmish units
+(40k) place models freely; ranked units are rigid blocks that move, wheel and pivot together.
 
 **Sync model.** The host is authoritative. A player's action is sent as an _intent_; the host turns it
 into a fully resolved _event_ (this is where dice are rolled), applies it, and broadcasts it with a

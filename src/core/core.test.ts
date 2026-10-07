@@ -4,17 +4,21 @@ import {
   baseToBaseDistance,
   createInitialState,
   mmToInches,
+  rankedOffsets,
   resolveIntent,
+  type BaseShape,
   type Model,
 } from "./index";
 
-const model = (id: string, x: number, y: number, baseMm = 32): Model => ({
+const round32: BaseShape = { shape: "round", diameterMm: 32 };
+
+const model = (id: string, x: number, y: number, base: BaseShape = round32, facing = 0): Model => ({
   id,
   owner: "p1",
   label: id,
   position: { x, y },
-  facing: 0,
-  baseMm,
+  facing,
+  base,
 });
 
 describe("reducer", () => {
@@ -36,6 +40,32 @@ describe("reducer", () => {
     });
     expect(s.log).toEqual([{ kind: "roll", seq: 1, roll: { by: "p1", sides: 6, results: [1, 6] } }]);
   });
+
+  it("wheels a ranked unit as one block around its front-left corner", () => {
+    const base: BaseShape = { shape: "rect", widthMm: 25.4, depthMm: 25.4 };
+    const models = rankedOffsets(4, 2, base).map((o, i) => model(`m${i}`, o.x, o.y, base));
+    let s = applyEvent(createInitialState(), {
+      type: "unit/add",
+      unit: { id: "u", owner: "p1", name: "Regiment", modelIds: [], formation: { kind: "ranked", files: 2 } },
+      models,
+    });
+    // The front rank is 2" wide with its left corner at (-1, 0). Wheel left 90°:
+    // the right end swings forward and the unit ends up facing -x.
+    s = applyEvent(s, {
+      type: "unit/move",
+      id: "u",
+      pivot: { x: -1, y: 0 },
+      turn: -Math.PI / 2,
+      delta: { x: 0, y: 0 },
+    });
+
+    expect(s.models.m0!.position.x).toBeCloseTo(-0.5);
+    expect(s.models.m0!.position.y).toBeCloseTo(0.5);
+    expect(s.models.m1!.position.x).toBeCloseTo(-0.5);
+    expect(s.models.m1!.position.y).toBeCloseTo(1.5);
+    expect(s.models.m0!.facing).toBeCloseTo(-Math.PI / 2);
+    expect(s.units.u?.modelIds).toEqual(["m0", "m1", "m2", "m3"]);
+  });
 });
 
 describe("resolveIntent", () => {
@@ -54,9 +84,23 @@ describe("resolveIntent", () => {
 });
 
 describe("geometry", () => {
-  it("measures base to base in inches", () => {
-    // Two 25.4mm (1") bases 3" apart centre to centre are 2" apart edge to edge.
-    expect(baseToBaseDistance(model("a", 0, 0, 25.4), model("b", 3, 0, 25.4))).toBeCloseTo(2);
+  const inch: BaseShape = { shape: "round", diameterMm: 25.4 };
+  const square: BaseShape = { shape: "rect", widthMm: 25.4, depthMm: 25.4 };
+
+  it("measures round bases edge to edge in inches", () => {
+    expect(baseToBaseDistance(model("a", 0, 0, inch), model("b", 3, 0, inch))).toBeCloseTo(2);
     expect(mmToInches(50.8)).toBeCloseTo(2);
+  });
+
+  it("measures rectangular bases, respecting facing", () => {
+    expect(baseToBaseDistance(model("a", 0, 0, square), model("b", 3, 0, square))).toBeCloseTo(2);
+    // Rotated 45°, the corner sticks out by (√2 - 1) / 2".
+    const turned = model("b", 3, 0, square, Math.PI / 4);
+    expect(baseToBaseDistance(model("a", 0, 0, square), turned)).toBeCloseTo(2 - (Math.SQRT2 - 1) / 2);
+    expect(baseToBaseDistance(model("a", 0, 0, square), model("b", 0.5, 0.5, square))).toBe(0);
+  });
+
+  it("measures between a round and a rectangular base", () => {
+    expect(baseToBaseDistance(model("a", 0, 0, inch), model("b", 0, 3, square))).toBeCloseTo(2, 2);
   });
 });

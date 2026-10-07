@@ -22,20 +22,45 @@ export interface Player {
   color: string;
 }
 
+/**
+ * Base footprint. Width runs along the model's facing-perpendicular axis
+ * (its frontage); depth runs front to back.
+ */
+export type BaseShape =
+  | { shape: "round"; diameterMm: number }
+  | { shape: "oval"; widthMm: number; depthMm: number }
+  | { shape: "rect"; widthMm: number; depthMm: number };
+
 export interface Model {
   id: ModelId;
   owner: PlayerId;
   label: string;
   /** Centre of the base on the table, in inches. (0,0) is the table centre. */
   position: Vec2;
-  /** Facing in radians. */
+  /** Facing in radians; 0 faces +y (towards the far table edge). */
   facing: number;
-  /** Round base diameter in millimetres (e.g. 32, 40). */
-  baseMm: number;
-  /** Units group models for coherency, shooting and charging. */
-  unitId?: string;
-  /** Points at a Datasheet in an imported ContentPack, when the model has one. */
-  datasheetId?: string;
+  base: BaseShape;
+  /** The unit this model belongs to, if any. */
+  unitId?: UnitId;
+}
+
+export type UnitId = string;
+
+/**
+ * How a unit's models are arranged. Skirmish units (40k) place models freely
+ * and check coherency; ranked units (The Old World, Conquest) are rigid
+ * blocks laid out in ranks and files that move, wheel and pivot together.
+ */
+export type Formation = { kind: "skirmish" } | { kind: "ranked"; files: number };
+
+export interface Unit {
+  id: UnitId;
+  owner: PlayerId;
+  name: string;
+  modelIds: ModelId[];
+  formation: Formation;
+  /** Points at a UnitType in an imported ContentPack, when the unit has one. */
+  unitTypeId?: string;
 }
 
 export interface DiceRoll {
@@ -59,6 +84,7 @@ export interface GameState {
   seq: number;
   table: Table;
   players: Record<PlayerId, Player>;
+  units: Record<UnitId, Unit>;
   models: Record<ModelId, Model>;
   log: LogEntry[];
 }
@@ -67,5 +93,5 @@ export interface GameState {
 export const STRIKE_FORCE_TABLE: Table = { width: 60, depth: 44 };
 
 export function createInitialState(table: Table = STRIKE_FORCE_TABLE): GameState {
-  return { seq: 0, table, players: {}, models: {}, log: [] };
+  return { seq: 0, table, players: {}, units: {}, models: {}, log: [] };
 }

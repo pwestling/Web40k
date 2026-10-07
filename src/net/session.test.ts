@@ -25,7 +25,7 @@ describe("Session", () => {
         label: "Trooper",
         position: { x: 0, y: 0 },
         facing: 0,
-        baseMm: 32,
+        base: { shape: "round", diameterMm: 32 },
       },
     });
 

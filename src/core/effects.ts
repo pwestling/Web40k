@@ -1,36 +1,18 @@
-import type { Condition, Effect, RollKind, Weapon, Keyword } from "./schema";
+import type { Condition, Effect, Keyword, Weapon } from "./content";
+import type { GameSystem } from "./system";
 
-/**
- * Generic attack-sequence mechanics. These encode how numbers interact, not
- * any rules text, so they live in the engine rather than in content.
- */
-
-/** Wound roll needed for strength S against toughness T. */
-export function woundTarget(strength: number, toughness: number): number {
-  if (strength >= toughness * 2) return 2;
-  if (strength > toughness) return 3;
-  if (strength === toughness) return 4;
-  if (strength * 2 <= toughness) return 6;
-  return 5;
-}
-
-/** Save needed after AP, using the invulnerable save if it is better. Null means no save possible. */
-export function saveTarget(save: number, ap: number, invulnerable?: number): number | null {
-  const armour = save - ap; // AP is stored as a negative number, e.g. -2.
-  const best = Math.min(armour, invulnerable ?? Infinity);
-  return best > 6 ? null : Math.max(2, best);
-}
-
-/** Hit and wound rolls can be modified by at most ±1 in total. */
-export const MAX_ROLL_MODIFIER = 1;
+export type Arc = "front" | "flank" | "rear";
 
 export interface RollContext {
-  roll: RollKind;
+  roll: string;
   side: "attacker" | "defender" | "self";
+  phase?: string;
   weapon?: Weapon;
   selfKeywords: Keyword[];
   targetKeywords: Keyword[];
   distance?: number;
+  /** Which arc of the target the attacker is in, for systems with facing. */
+  arc?: Arc;
   remainedStationary?: boolean;
   charged?: boolean;
 }
@@ -43,7 +25,7 @@ export interface RollModifiers {
 }
 
 /** Fold every applicable effect into the modifiers for one roll. */
-export function rollModifiers(effects: Effect[], ctx: RollContext): RollModifiers {
+export function rollModifiers(system: GameSystem, effects: Effect[], ctx: RollContext): RollModifiers {
   const out: RollModifiers = { modifier: 0, reroll: null, criticalOn: 6, reminders: [] };
   for (const effect of effects) {
     const { when } = effect;
@@ -65,9 +47,8 @@ export function rollModifiers(effects: Effect[], ctx: RollContext): RollModifier
         break;
     }
   }
-  if (ctx.roll === "hit" || ctx.roll === "wound") {
-    out.modifier = Math.max(-MAX_ROLL_MODIFIER, Math.min(MAX_ROLL_MODIFIER, out.modifier));
-  }
+  const cap = system.rollModifierCaps?.[ctx.roll];
+  if (cap !== undefined) out.modifier = Math.max(-cap, Math.min(cap, out.modifier));
   return out;
 }
 
@@ -80,11 +61,15 @@ function conditionHolds(c: Condition, ctx: RollContext): boolean {
     case "weaponType":
       return ctx.weapon?.type === c.type;
     case "weaponHasKeyword":
-      return ctx.weapon?.keywords.some((k) => k.kind === c.weaponKeyword) ?? false;
+      return ctx.weapon?.keywords.some((k) => k.name === c.name) ?? false;
+    case "phase":
+      return ctx.phase === c.phase;
     case "withinRange":
       return ctx.distance !== undefined && ctx.distance <= c.inches;
     case "withinHalfRange":
       return ctx.distance !== undefined && !!ctx.weapon && ctx.distance <= ctx.weapon.range / 2;
+    case "inArc":
+      return ctx.arc === c.arc;
     case "remainedStationary":
       return ctx.remainedStationary ?? false;
     case "charged":

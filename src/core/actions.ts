@@ -1,4 +1,4 @@
-import type { DiceRoll, Model, ModelId, Player, PlayerId, Vec2 } from "./types";
+import type { DiceRoll, Model, ModelId, Player, PlayerId, Unit, UnitId, Vec2 } from "./types";
 
 /**
  * An Intent is what a player asks for. Only the host turns intents into
@@ -10,6 +10,8 @@ export type Intent =
   | { type: "model/add"; model: Model }
   | { type: "model/move"; id: ModelId; to: Vec2; facing?: number }
   | { type: "model/remove"; id: ModelId }
+  | { type: "unit/add"; unit: Unit; models: Model[] }
+  | UnitMove
   | { type: "dice/roll"; count: number; sides: number };
 
 /** Events are fully resolved and deterministic. */
@@ -18,7 +20,20 @@ export type GameEvent =
   | { type: "model/add"; model: Model }
   | { type: "model/move"; id: ModelId; to: Vec2; facing?: number }
   | { type: "model/remove"; id: ModelId }
+  | { type: "unit/add"; unit: Unit; models: Model[] }
+  | UnitMove
   | { type: "dice/roll"; roll: DiceRoll };
+
+/** Move every model in a unit as one rigid block: rotate by `turn` radians
+ * around `pivot`, then translate by `delta`. A ranked unit's wheel is a turn
+ * around a front corner; a 40k "move the whole squad" is a pure translation. */
+export interface UnitMove {
+  type: "unit/move";
+  id: UnitId;
+  pivot: Vec2;
+  turn: number;
+  delta: Vec2;
+}
 
 export type Rng = () => number;
 

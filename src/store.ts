@@ -1,5 +1,15 @@
 import { create } from "zustand";
-import { createInitialState, type GameState, type Intent, type Model, type Player } from "./core";
+import {
+  createInitialState,
+  rankedOffsets,
+  rotate,
+  type BaseShape,
+  type GameState,
+  type Intent,
+  type Model,
+  type Player,
+  type Unit,
+} from "./core";
 import { createLoopbackNetwork } from "./net/loopback";
 import { Session, type Role } from "./net/session";
 import { trysteroTransport } from "./net/trystero";
@@ -29,14 +39,16 @@ export const useStore = create<Store>((set, get) => ({
     const player: Player = { id: session.selfId, name, color };
     if (role === "host") {
       session.dispatch({ type: "player/join", player });
-      for (const model of demoSquad(player, -20)) session.dispatch({ type: "model/add", model });
+      session.dispatch(demoSkirmishUnit(player, -20));
+      // Solo play gets both demo units so both movement styles can be tried.
+      if (!roomId) session.dispatch(demoRankedUnit(player, 20));
     } else {
       // Wait for the host's snapshot before announcing ourselves.
       const unsubscribe = useStore.subscribe((s) => {
         if (s.game.seq === 0) return;
         unsubscribe();
         session.dispatch({ type: "player/join", player });
-        for (const model of demoSquad(player, 20)) session.dispatch({ type: "model/add", model });
+        session.dispatch(demoRankedUnit(player, 20));
       });
     }
   },
@@ -46,14 +58,50 @@ export const useStore = create<Store>((set, get) => ({
   },
 }));
 
-/** Placeholder models so there is something to push around. */
-function demoSquad(owner: Player, x: number): Model[] {
-  return Array.from({ length: 5 }, (_, i) => ({
-    id: `${owner.id}-${i}`,
+/** Placeholder units so there is something to push around: a loose squad of
+ * round bases, and a ranked block of square bases to show both styles. */
+function demoSkirmishUnit(owner: Player, x: number): Intent {
+  const unitId = `${owner.id}-squad`;
+  const base: BaseShape = { shape: "round", diameterMm: 32 };
+  const models: Model[] = Array.from({ length: 5 }, (_, i) => ({
+    id: `${unitId}-${i}`,
     owner: owner.id,
     label: `Model ${i + 1}`,
     position: { x, y: (i - 2) * 2 },
-    facing: 0,
-    baseMm: 32,
+    facing: Math.PI / 2,
+    base,
   }));
+  const unit: Unit = {
+    id: unitId,
+    owner: owner.id,
+    name: "Squad",
+    modelIds: [],
+    formation: { kind: "skirmish" },
+  };
+  return { type: "unit/add", unit, models };
+}
+
+function demoRankedUnit(owner: Player, x: number): Intent {
+  const unitId = `${owner.id}-regiment`;
+  const base: BaseShape = { shape: "rect", widthMm: 25, depthMm: 25 };
+  const facing = -Math.PI / 2; // Facing -x, towards the other player.
+  const models: Model[] = rankedOffsets(15, 5, base).map((offset, i) => {
+    const p = rotate(offset, facing);
+    return {
+      id: `${unitId}-${i}`,
+      owner: owner.id,
+      label: `Model ${i + 1}`,
+      position: { x: x + p.x, y: p.y },
+      facing,
+      base,
+    };
+  });
+  const unit: Unit = {
+    id: unitId,
+    owner: owner.id,
+    name: "Regiment",
+    modelIds: [],
+    formation: { kind: "ranked", files: 5 },
+  };
+  return { type: "unit/add", unit, models };
 }

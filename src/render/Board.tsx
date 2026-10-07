@@ -1,7 +1,7 @@
 import { Html, OrbitControls } from "@react-three/drei";
 import { Canvas, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
-import { baseRadiusInches, distance, type Model, type Vec2 } from "../core";
+import { baseSizeInches, distance, type Model, type UnitId, type Vec2 } from "../core";
 import { useStore } from "../store";
 
 /**
@@ -21,7 +21,8 @@ export function Board() {
 
 function Scene() {
   const { game, session, dispatch } = useStore();
-  const [drag, setDrag] = useState<{ id: string; from: Vec2; to: Vec2 } | null>(null);
+  // Dragging a model in a ranked unit drags the whole block.
+  const [drag, setDrag] = useState<{ id: string; unitId?: UnitId; from: Vec2; to: Vec2 } | null>(null);
   const { width, depth } = game.table;
 
   const onTableMove = (e: ThreeEvent<PointerEvent>) => {
@@ -33,7 +34,12 @@ function Scene() {
   useEffect(() => {
     if (!drag) return;
     const drop = () => {
-      dispatch({ type: "model/move", id: drag.id, to: drag.to });
+      if (drag.unitId) {
+        const delta = { x: drag.to.x - drag.from.x, y: drag.to.y - drag.from.y };
+        dispatch({ type: "unit/move", id: drag.unitId, pivot: drag.from, turn: 0, delta });
+      } else {
+        dispatch({ type: "model/move", id: drag.id, to: drag.to });
+      }
       setDrag(null);
     };
     window.addEventListener("pointerup", drop);
@@ -51,7 +57,13 @@ function Scene() {
 
       {Object.values(game.models).map((model) => {
         const owner = game.players[model.owner];
-        const position = drag?.id === model.id ? drag.to : model.position;
+        const dragged = drag && (drag.id === model.id || (drag.unitId && drag.unitId === model.unitId));
+        const position = dragged
+          ? {
+              x: model.position.x + drag.to.x - drag.from.x,
+              y: model.position.y + drag.to.y - drag.from.y,
+            }
+          : model.position;
         return (
           <ModelBase
             key={model.id}
@@ -59,7 +71,11 @@ function Scene() {
             position={position}
             color={owner?.color ?? "#999"}
             draggable={model.owner === session?.selfId}
-            onGrab={() => setDrag({ id: model.id, from: model.position, to: model.position })}
+            onGrab={() => {
+              const unit = model.unitId ? game.units[model.unitId] : undefined;
+              const unitId = unit?.formation.kind === "ranked" ? unit.id : undefined;
+              setDrag({ id: model.id, unitId, from: model.position, to: model.position });
+            }}
           />
         );
       })}
@@ -109,25 +125,36 @@ interface ModelBaseProps {
 }
 
 function ModelBase({ model, position, color, draggable, onGrab }: ModelBaseProps) {
-  const r = baseRadiusInches(model);
+  const { width, depth } = baseSizeInches(model.base);
+  const r = Math.min(width, depth) / 2;
   return (
-    <group position={[position.x, 0, position.y]}>
+    <group position={[position.x, 0, position.y]} rotation-y={model.facing}>
       <mesh
         castShadow
         position-y={0.1}
+        // Oval bases are a unit cylinder stretched to size.
+        scale={model.base.shape === "rect" ? 1 : [width / 2, 1, depth / 2]}
         onPointerDown={(e) => {
           if (!draggable) return;
           e.stopPropagation();
           onGrab();
         }}
       >
-        <cylinderGeometry args={[r, r, 0.2, 32]} />
+        {model.base.shape === "rect" ? (
+          <boxGeometry args={[width * 0.98, 0.2, depth * 0.98]} />
+        ) : (
+          <cylinderGeometry args={[1, 1, 0.2, 32]} />
+        )}
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* Stand-in for the miniature until real models are loaded. */}
+      {/* Stand-in for the miniature until real models are loaded; the nub shows facing. */}
       <mesh castShadow position-y={0.2 + 0.6} raycast={() => null}>
         <capsuleGeometry args={[r * 0.45, 0.6, 4, 12]} />
         <meshStandardMaterial color="#cbd5e1" />
+      </mesh>
+      <mesh position={[0, 0.25, depth / 2 - 0.1]} raycast={() => null}>
+        <boxGeometry args={[0.15, 0.1, 0.2]} />
+        <meshStandardMaterial color="white" />
       </mesh>
     </group>
   );
