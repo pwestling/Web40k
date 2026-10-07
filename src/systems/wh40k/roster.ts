@@ -32,6 +32,8 @@ export interface ImportedUnit {
   sheet: UnitSheet;
   models: ImportedModel[];
   base: BaseShape;
+  /** Characteristics the roster left blank, for the player to fill in before deploying. */
+  missing?: string[];
 }
 
 export interface ImportedRoster {
@@ -45,13 +47,13 @@ export interface ImportedRoster {
 // Normalised tree
 // ---------------------------------------------------------------------------
 
-interface RProfile {
+export interface RProfile {
   name: string;
   typeName: string;
   chars: { name: string; value: string }[];
 }
 
-interface RNode {
+export interface RNode {
   name: string;
   type: string;
   number: number;
@@ -62,12 +64,12 @@ interface RNode {
   selections: RNode[];
 }
 
-interface RForce {
+export interface RForce {
   selections: RNode[];
   forces: RForce[];
 }
 
-interface RRoster {
+export interface RRoster {
   name: string;
   pts?: number;
   forces: RForce[];
@@ -225,8 +227,11 @@ function parseJson(json: string, warnings: string[]): RRoster | undefined {
   return toRoster(root);
 }
 
+/** Turns the normalised roster tree into units; each system brings its own. */
+export type RosterExtractor = (roster: RRoster, warnings: string[]) => ImportedUnit[];
+
 /** Parse roster text, auto-detecting XML or JSON. */
-export function parseRosterText(input: string): ImportedRoster {
+export function parseRosterText(input: string, extract: RosterExtractor = extractUnits): ImportedRoster {
   const warnings: string[] = [];
   // trim() also strips a leading byte-order mark.
   const src = input.trim();
@@ -235,13 +240,17 @@ export function parseRosterText(input: string): ImportedRoster {
   else if (src.startsWith("{") || src.startsWith("[")) roster = parseJson(src, warnings);
   else warnings.push("Unrecognised roster format: expected BattleScribe XML or New Recruit JSON.");
   if (!roster) return { name: "", units: [], warnings };
-  const units = extractUnits(roster, warnings);
+  const units = extract(roster, warnings);
   if (units.length === 0) warnings.push("No units found in roster.");
   return { name: roster.name, points: roster.pts, units, warnings };
 }
 
 /** Parse an uploaded roster file (`.ros`, `.rosz`, `.json`, or anything sniffable). */
-export async function parseRosterFile(fileName: string, data: Uint8Array): Promise<ImportedRoster> {
+export async function parseRosterFile(
+  fileName: string,
+  data: Uint8Array,
+  extract: RosterExtractor = extractUnits,
+): Promise<ImportedRoster> {
   const ext = /\.([a-z0-9]+)$/i.exec(fileName)?.[1]?.toLowerCase() ?? "";
   const isZip = data.length >= 4 && data[0] === 0x50 && data[1] === 0x4b && data[2] === 0x03;
   const pre: string[] = [];
@@ -272,7 +281,7 @@ export async function parseRosterFile(fileName: string, data: Uint8Array): Promi
     if (ext === "rosz") pre.push(`${fileName} is not a zip archive; reading it as plain text.`);
     textContent = decode(data);
   }
-  const result = parseRosterText(textContent);
+  const result = parseRosterText(textContent, extract);
   result.warnings.unshift(...pre);
   return result;
 }
@@ -305,7 +314,7 @@ function nearestUnitProfile(node: RNode): RProfile | undefined {
   return undefined;
 }
 
-function walk(node: RNode, visit: (n: RNode) => void): void {
+export function walk(node: RNode, visit: (n: RNode) => void): void {
   visit(node);
   for (const c of node.selections) walk(c, visit);
 }
@@ -320,7 +329,7 @@ function collectUnits(force: RForce, out: RNode[]): void {
 }
 
 /** Model-group selections under `node`, not recursing into a model. */
-function modelGroups(node: RNode, out: RNode[] = []): RNode[] {
+export function modelGroups(node: RNode, out: RNode[] = []): RNode[] {
   for (const c of node.selections) {
     if (c.type === "model") out.push(c);
     else modelGroups(c, out);

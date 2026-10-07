@@ -14,6 +14,7 @@ import { playerActions, poolUsed, type PlayerActionTaken } from "./content/playe
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
+import { startScript, stepScript, type ModuleSet, type ScriptStep } from "./script";
 import type {
   DiceRoll,
   GameSettings,
@@ -149,7 +150,11 @@ export type Intent =
   | { type: "unit/reserve"; id: UnitId; reserve: boolean }
   /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
-  | { type: "undo"; seq: number };
+  | { type: "undo"; seq: number }
+  /** Run a game module's code procedure (core/script.ts). */
+  | { type: "script/start"; procedure: string; args?: Record<string, unknown> }
+  /** Answer the question the running code procedure is waiting on. */
+  | { type: "script/answer"; answer: string };
 
 /** Events are fully resolved and deterministic. */
 export type GameEvent =
@@ -230,7 +235,9 @@ export type GameEvent =
   | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves: { id: ModelId; to: Vec2 }[] }
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   /** Takes back an earlier event. It stays in the log, marked as undone. */
-  | { type: "undo"; seq: number };
+  | { type: "undo"; seq: number }
+  | ScriptStep
+  | ModuleSet;
 
 /** Move every model in a unit as one rigid block: rotate by `turn` radians
  * around `pivot`, then translate by `delta`. A ranked unit's wheel is a turn
@@ -285,8 +292,21 @@ export function resolveIntent(
   from: PlayerId,
   rng: Rng = Math.random,
   state?: GameState,
+  /** The state as it stood after an earlier event; code procedures replay from it. */
+  history?: (seq: number) => GameState,
 ): GameEvent | null {
   switch (intent.type) {
+    case "script/start": {
+      if (!state || state.script || !state.players[from]) return null;
+      return startScript(state, intent.procedure, intent.args ?? {}, from, rng);
+    }
+    case "script/answer": {
+      const script = state?.script;
+      if (!state || !script?.waiting || !history) return null;
+      if (script.waiting.player !== from) return null;
+      if (!script.waiting.options.some((o) => o.id === intent.answer)) return null;
+      return stepScript(script, history(script.startSeq), rng, intent.answer);
+    }
     case "dice/roll": {
       const count = Math.floor(intent.count);
       const sides = Math.floor(intent.sides);

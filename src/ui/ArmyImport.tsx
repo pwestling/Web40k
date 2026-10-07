@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
@@ -66,7 +66,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const load = async (file: File) => {
     setBusy(true);
     try {
-      setRoster(await parseRosterFile(file.name, new Uint8Array(await file.arrayBuffer())));
+      const read = systemModule(game.system).importRoster ?? parseRosterFile;
+      setRoster(await read(file.name, new Uint8Array(await file.arrayBuffer())));
     } finally {
       setBusy(false);
     }
@@ -81,6 +82,22 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
     setRoster(null);
     setFiles({});
+  };
+
+  /** Fill a characteristic the list left out, for every model of the unit that lacks it. */
+  const setStat = (i: number, k: string, value: string) => {
+    if (!roster) return;
+    const units = roster.units.slice();
+    const u = units[i]!;
+    const blank = (m: (typeof u.models)[number]) =>
+      !m.profile.chars[k] || m.profile.chars[k] === u.models[0]?.profile.chars[k];
+    units[i] = {
+      ...u,
+      models: u.models.map((m) =>
+        blank(m) ? { ...m, profile: { ...m.profile, chars: { ...m.profile.chars, [k]: value } } } : m,
+      ),
+    };
+    setRoster({ ...roster, units });
   };
 
   const ownerSeat = players.find((p) => p.id === owner)?.seat ?? 0;
@@ -134,52 +151,76 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               </thead>
               <tbody>
                 {roster.units.map((u, i) => (
-                  <tr key={i}>
-                    <td>{u.name}</td>
-                    <td>{u.models.length}</td>
-                    <td>
-                      <select
-                        value={baseKey(u.base)}
-                        onChange={(e) => {
-                          const units = roster.units.slice();
-                          units[i] = { ...u, base: JSON.parse(e.target.value) as BaseShape };
-                          setRoster({ ...roster, units });
-                        }}
-                      >
-                        {!BASES.some((b) => baseKey(b.base) === baseKey(u.base)) && (
-                          <option value={baseKey(u.base)}>{JSON.stringify(u.base)}</option>
-                        )}
-                        {BASES.map((b) => (
-                          <option key={b.label} value={baseKey(b.base)}>
-                            {b.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    {ranked && (
+                  <Fragment key={i}>
+                    <tr>
+                      <td>{u.name}</td>
+                      <td>{u.models.length}</td>
                       <td>
-                        <input
-                          type="number"
-                          className="frontage"
-                          aria-label={`${u.name} frontage`}
-                          min={1}
-                          max={u.models.length}
-                          value={frontage(i, u.models.length)}
-                          onChange={(e) =>
-                            setFiles({
-                              ...files,
-                              [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
-                            })
-                          }
-                        />
+                        <select
+                          value={baseKey(u.base)}
+                          onChange={(e) => {
+                            const units = roster.units.slice();
+                            units[i] = { ...u, base: JSON.parse(e.target.value) as BaseShape };
+                            setRoster({ ...roster, units });
+                          }}
+                        >
+                          {!BASES.some((b) => baseKey(b.base) === baseKey(u.base)) && (
+                            <option value={baseKey(u.base)}>{JSON.stringify(u.base)}</option>
+                          )}
+                          {BASES.map((b) => (
+                            <option key={b.label} value={baseKey(b.base)}>
+                              {b.label}
+                            </option>
+                          ))}
+                        </select>
                       </td>
+                      {ranked && (
+                        <td>
+                          <input
+                            type="number"
+                            className="frontage"
+                            aria-label={`${u.name} frontage`}
+                            min={1}
+                            max={u.models.length}
+                            value={frontage(i, u.models.length)}
+                            onChange={(e) =>
+                              setFiles({
+                                ...files,
+                                [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
+                              })
+                            }
+                          />
+                        </td>
+                      )}
+                    </tr>
+                    {u.missing && u.missing.length > 0 && (
+                      <tr className="missing-stats">
+                        <td colSpan={ranked ? 4 : 3}>
+                          <span className="warn small">Not in the list, fill in: </span>
+                          {u.missing.map((k) => (
+                            <label key={k} className="stat-input">
+                              {k}{" "}
+                              <input
+                                aria-label={`${u.name} ${k}`}
+                                className={k === "Troop" ? "" : "frontage"}
+                                placeholder={k === "Troop" ? "Regular Infantry" : ""}
+                                value={u.models[0]?.profile.chars[k] ?? ""}
+                                onChange={(e) => setStat(i, k, e.target.value)}
+                              />
+                            </label>
+                          ))}
+                        </td>
+                      </tr>
                     )}
-                  </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
             <p className="muted">
-              Bases are a guess from keywords and wounds; check them against your models.
+              {ranked
+                ? "Bases are a guess from each unit's troop type"
+                : "Bases are a guess from keywords and wounds"}
+              ; check them against your models.
             </p>
             <div className="row">
               <button className="primary" disabled={!roster.units.length} onClick={deploy}>

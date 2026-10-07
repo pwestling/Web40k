@@ -5,6 +5,7 @@ import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
+import { applyEventRef } from "./script";
 import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
 
 /**
@@ -359,6 +360,14 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       return endReaction(state, event.run ?? null);
     case "procedure/set":
       return setRun(state, event.run);
+    case "script/step": {
+      const after = event.events.reduce(applyEvent, state);
+      return { ...after, script: event.script };
+    }
+    case "module/set": {
+      const mine = { ...state.modules?.[event.module], [event.key]: event.value };
+      return { ...state, modules: { ...state.modules, [event.module]: mine } };
+    }
     case "procedure/clear": {
       const cleared = { ...state, procedure: null };
       return event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
@@ -463,3 +472,5 @@ function figureBands(m: Model, event: Extract<GameEvent, { type: "unit/figure" }
     })),
   ].slice(0, 4);
 }
+
+applyEventRef.fn = applyEvent;

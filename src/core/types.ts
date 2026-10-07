@@ -10,6 +10,7 @@
 
 import type { AttackState } from "./attack";
 import type { ProcedureRun } from "./content/runner";
+import type { ScriptState } from "./script";
 
 export type PlayerId = string;
 export type ModelId = string;
@@ -291,6 +292,10 @@ export interface GameState {
   packages?: GamePackages;
   /** A change of rules packages waiting for every seated player to accept. */
   packageProposal?: PackageProposal;
+  /** The code procedure running, if any (core/script.ts). */
+  script?: ScriptState | null;
+  /** Game modules' own state: module id → key → value. */
+  modules?: Record<string, Record<string, unknown>>;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }

@@ -385,6 +385,16 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${unitName(event.id)} may move up to ${event.inches}" (${event.flag})`;
     case "attack/allocate":
       return `${who} chose the order their models take wounds`;
+    case "script/step": {
+      // A code procedure's effects, each described as if logged on its own.
+      const parts = event.events.map((e) => describe({ by, event: e, seq: 0, at: 0 }, before, game));
+      if (event.error) parts.push(`stopped: ${event.error}`);
+      if (event.script?.waiting)
+        parts.push(`${nameOf(event.script.waiting.player)} to choose: ${event.script.waiting.question}`);
+      return parts.join(" · ") || `${who} continued ${event.script?.procedure ?? "a rule"}`;
+    }
+    case "module/set":
+      return `${who}: ${event.key} updated`;
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }
