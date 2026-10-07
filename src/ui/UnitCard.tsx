@@ -294,7 +294,7 @@ export function UnitCard() {
         <p className="muted small">{unit.sheet.keywords.join(", ")}</p>
       )}
 
-      <FigurePicker models={all} unitName={unit.name} />
+      <FigurePicker unit={unit} models={all} editable={mine} />
 
       <details>
         <summary>Models and wounds</summary>

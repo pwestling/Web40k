@@ -1,6 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { transformPositions } from "./formation";
+import { baseSizeInches } from "./geometry";
 import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
 
 /** Unit flags that last one turn; cleared when their owner's turn begins. */
@@ -159,6 +160,19 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         if (!m) continue;
         const { height: _old, ...rest } = m;
         models[id] = event.height ? { ...rest, height: event.height } : rest;
+      }
+      return { ...state, models };
+    }
+    case "unit/figure": {
+      const unit = state.units[event.id];
+      if (!unit) return state;
+      const keys = new Set(event.keys);
+      const models = { ...state.models };
+      for (const id of unit.modelIds) {
+        const m = models[id];
+        if (!m || !keys.has(m.profile?.name ?? m.label)) continue;
+        const { figure: _f, bands: _b, ...rest } = m;
+        models[id] = event.figure ? { ...rest, figure: event.figure, bands: figureBands(m, event) } : rest;
       }
       return { ...state, models };
     }
@@ -332,4 +346,26 @@ function playerName(state: GameState, player: Player): string {
   if (!taken.has(base)) return base;
   if (!taken.has(fallback) && base !== fallback) return fallback;
   for (let i = 2; ; i++) if (!taken.has(`${base} (${i})`)) return `${base} (${i})`;
+}
+
+/** Thickness of a miniature's base, which the figure stands on. */
+export const BASE_THICKNESS = 0.2;
+
+/**
+ * Sight bands for a model wearing a figure: its base, then the figure's
+ * bands scaled and lifted onto the base. At most four in all.
+ */
+function figureBands(m: Model, event: Extract<GameEvent, { type: "unit/figure" }>): Model["bands"] {
+  if (!event.bands?.length || !event.figure) return undefined;
+  const { width, depth } = baseSizeInches(m.base);
+  const s = event.figure.scale;
+  const round = (v: number) => Math.round(v * 1000) / 1000;
+  return [
+    { r: round(Math.min(width, depth) / 2), z0: 0, z1: BASE_THICKNESS },
+    ...event.bands.map((b) => ({
+      r: round(b.r * s),
+      z0: round(BASE_THICKNESS + b.z0 * s),
+      z1: round(BASE_THICKNESS + b.z1 * s),
+    })),
+  ].slice(0, 4);
 }

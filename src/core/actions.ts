@@ -5,10 +5,12 @@ import type {
   GameSettings,
   GameState,
   Model,
+  ModelFigure,
   ModelId,
   Objective,
   Player,
   PlayerId,
+  SightBand,
   TerrainPiece,
   Unit,
   UnitId,
@@ -49,6 +51,12 @@ export type Intent =
   | { type: "terrain/remove"; id: string }
   | { type: "objective/move"; id: string; to: Vec2 }
   | { type: "unit/height"; id: UnitId; height: number | null }
+  /**
+   * Dress the models in a unit whose profile (or label) is in `keys` with an
+   * uploaded figure, or back to stand-ins with null. `bands` is the figure's
+   * shape from its feet up, before scaling; each model adds its own base.
+   */
+  | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }
@@ -82,6 +90,12 @@ export type GameEvent =
   | { type: "terrain/remove"; id: string }
   | { type: "objective/move"; id: string; to: Vec2 }
   | { type: "unit/height"; id: UnitId; height: number | null }
+  /**
+   * Dress the models in a unit whose profile (or label) is in `keys` with an
+   * uploaded figure, or back to stand-ins with null. `bands` is the figure's
+   * shape from its feet up, before scaling; each model adds its own base.
+   */
+  | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }

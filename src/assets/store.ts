@@ -1,17 +1,9 @@
 import { create } from "zustand";
-import type { Model } from "../core";
+import type { Model, ModelFigure, UnitId } from "../core";
+import { useStore } from "../store";
 import { getCached, putCached } from "./cache";
 import type { ImportRequest, ImportResponse } from "./worker";
 import type { AssetKind, ModelAsset } from "./types";
-
-/** Which uploaded model stands in for a profile, and how it sits on the base. */
-export interface Binding {
-  asset: string;
-  /** Extra turn in radians, for sculpts that don't face +z. */
-  yaw: number;
-  /** Multiplier on the auto-detected size. */
-  scale: number;
-}
 
 /**
  * Models are dressed by profile name ("Line Trooper"), so one upload covers
@@ -29,32 +21,13 @@ export function unitKeys(models: Pick<Model, "profile" | "label">[]): string[] {
 interface AssetStore {
   /** Processed assets loaded in this browser, by file hash. */
   assets: Record<string, ModelAsset>;
-  bindings: Record<string, Binding>;
-  /** Imports in progress or failed, by binding key. */
+  /** Imports in progress or failed, by unit id. */
   status: Record<string, string>;
-  /** Import a file and dress every profile in `keys` with it. */
-  importFor(keys: string[], file: File, kind?: AssetKind): Promise<void>;
-  setBinding(key: string, patch: Partial<Binding> | null): void;
-  /** Add an already-processed asset (benchmarks, and later assets from peers). */
+  /** Simplify a file (or fetch it from this browser's cache). Null if it failed; `status` says why. */
+  importFile(file: File, statusKey: string, kind?: AssetKind): Promise<ModelAsset | null>;
+  /** Import a file and give it to the models in `keys` of a unit, for everyone in the game. */
+  dressUnit(unitId: UnitId, keys: string[], file: File): Promise<void>;
   addAsset(asset: ModelAsset): void;
-}
-
-const BINDINGS_KEY = "open-battle:bindings";
-
-function loadBindings(): Record<string, Binding> {
-  try {
-    return JSON.parse(localStorage.getItem(BINDINGS_KEY) ?? "{}") as Record<string, Binding>;
-  } catch {
-    return {};
-  }
-}
-
-function saveBindings(bindings: Record<string, Binding>) {
-  try {
-    localStorage.setItem(BINDINGS_KEY, JSON.stringify(bindings));
-  } catch {
-    // Storage blocked: bindings last for this session only.
-  }
 }
 
 let worker: Worker | null = null;
@@ -95,17 +68,14 @@ async function hash(bytes: ArrayBuffer): Promise<string> {
 
 export const useAssets = create<AssetStore>((set, get) => ({
   assets: {},
-  bindings: loadBindings(),
   status: {},
 
-  async importFor(keys, file, kind = "miniature") {
+  async importFile(file, statusKey, kind = "miniature") {
     const setStatus = (text: string | null) =>
       set((s) => {
         const status = { ...s.status };
-        for (const key of keys) {
-          if (text === null) delete status[key];
-          else status[key] = text;
-        }
+        if (text === null) delete status[statusKey];
+        else status[statusKey] = text;
         return { status };
       });
     setStatus(`Reading ${file.name}…`);
@@ -117,23 +87,24 @@ export const useAssets = create<AssetStore>((set, get) => ({
       const result = await runImport({ id, name: file.name, kind, bytes });
       if (!result.ok) {
         setStatus(`Couldn't import ${file.name}: ${result.error}`);
-        return;
+        return null;
       }
       asset = result.asset;
       void putCached(asset);
     }
     get().addAsset(asset);
     setStatus(null);
-    for (const key of keys)
-      get().setBinding(key, { asset: asset.id, yaw: get().bindings[key]?.yaw ?? 0, scale: 1 });
+    return asset;
   },
 
-  setBinding(key, patch) {
-    const bindings = { ...get().bindings };
-    if (patch === null) delete bindings[key];
-    else bindings[key] = { asset: "", yaw: 0, scale: 1, ...bindings[key], ...patch };
-    saveBindings(bindings);
-    set({ bindings });
+  async dressUnit(unitId, keys, file) {
+    const asset = await get().importFile(file, unitId);
+    if (!asset) return;
+    const { game, dispatch } = useStore.getState();
+    const unit = game.units[unitId];
+    if (!unit) return;
+    const figure: ModelFigure = { asset: asset.id, name: asset.name, yaw: 0, scale: 1 };
+    dispatch({ type: "unit/figure", id: unitId, keys, figure, bands: asset.figure?.bands }, unit.owner);
   },
 
   addAsset(asset) {
@@ -141,13 +112,15 @@ export const useAssets = create<AssetStore>((set, get) => ({
   },
 }));
 
-/** Load the assets this browser's saved bindings point at. */
-export async function restoreBoundAssets() {
-  const { bindings, assets, addAsset } = useAssets.getState();
-  const ids = new Set(Object.values(bindings).map((b) => b.asset));
-  for (const id of ids) {
-    if (assets[id]) continue;
-    const asset = await getCached(id);
-    if (asset) addAsset(asset);
-  }
+/** Change how a unit's figure sits (turn, size) or take it off (null), for everyone. */
+export function restyleUnit(unitId: UnitId, keys: string[], patch: Partial<ModelFigure> | null) {
+  const { game, dispatch } = useStore.getState();
+  const unit = game.units[unitId];
+  const current = unit?.modelIds
+    .map((id) => game.models[id])
+    .find((m) => m && keys.includes(bindingKey(m)))?.figure;
+  if (!unit || !current) return;
+  const figure = patch === null ? null : { ...current, ...patch };
+  const bands = useAssets.getState().assets[current.asset]?.figure?.bands;
+  dispatch({ type: "unit/figure", id: unitId, keys, figure, bands }, unit.owner);
 }

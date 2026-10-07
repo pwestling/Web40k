@@ -11,7 +11,7 @@ import {
   type LoggedEvent,
   type Rng,
 } from "../core";
-import type { Transport } from "./transport";
+import type { SideMessage, Transport } from "./transport";
 
 /** Spectators receive the game like clients but never send intents. */
 export type Role = "host" | "client" | "spectator";
@@ -42,6 +42,8 @@ export class Session {
   private readonly onChange: SessionOptions["onChange"];
   private readonly rng: Rng;
   private readonly now: () => number;
+  private onSide: ((message: SideMessage, from: string) => void) | null = null;
+  private onPeer: ((peerId: string) => void) | null = null;
 
   constructor({ transport, role, onChange, record, rng, now }: SessionOptions) {
     this.transport = transport;
@@ -55,9 +57,14 @@ export class Session {
     // Non-hosts greet every peer they meet; only the host answers.
     transport.onPeerJoin((peerId) => {
       if (this.role !== "host") this.transport.send({ t: "hello" }, peerId);
+      this.onPeer?.(peerId);
     });
 
     transport.onMessage((message, from) => {
+      if (message.t.startsWith("asset/")) {
+        this.onSide?.(message as SideMessage, from);
+        return;
+      }
       if (this.role === "host") {
         if (message.t === "intent") this.hostApply(message.intent, from);
         if (message.t === "hello") this.transport.send({ t: "record", record: this.record }, from);
@@ -95,6 +102,20 @@ export class Session {
   dispatch(intent: Intent, as?: string): void {
     if (this.role === "host") this.hostApply(intent, as ?? this.selfId);
     else if (this.role === "client" && this.hostId) this.transport.send({ t: "intent", intent }, this.hostId);
+  }
+
+  /** Receive side-channel messages (see SideMessage) and hear when peers connect. Null to stop. */
+  listenSide(
+    onSide: ((message: SideMessage, from: string) => void) | null,
+    onPeer: ((peerId: string) => void) | null = null,
+  ): void {
+    this.onSide = onSide;
+    this.onPeer = onPeer;
+  }
+
+  /** Send a side-channel message to one peer, or everyone. */
+  sendSide(message: SideMessage, to?: string): void {
+    this.transport.send(message, to);
   }
 
   leave(): void {

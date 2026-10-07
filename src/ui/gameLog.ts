@@ -173,6 +173,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} removed terrain`;
     case "objective/move":
       return `${who} moved an objective`;
+    case "unit/figure":
+      return event.figure
+        ? `${who} gave ${unitName(event.id)} the figure ${event.figure.name}`
+        : `${who} took the figure off ${unitName(event.id)}`;
     case "unit/height":
       return `${who} set ${unitName(event.id)} height to ${event.height ?? "default"}"`;
     case "settings/set": {

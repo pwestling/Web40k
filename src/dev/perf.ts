@@ -7,7 +7,7 @@
  *   await openBattlePerf.measure()             // frame times and what the GPU drew
  */
 import type { WebGLRenderer } from "three";
-import { bindingKey, useAssets } from "../assets/store";
+import { unitKeys, useAssets } from "../assets/store";
 import { processMesh, ready, weld } from "../assets/pipeline";
 import { synthMiniature } from "../assets/synth";
 import type { ModelAsset } from "../assets/types";
@@ -50,36 +50,44 @@ export const perf = {
    */
   async dress(sourceTriangles: number, raw = false) {
     await ready;
-    const { game } = useStore.getState();
-    const { addAsset, setBinding } = useAssets.getState();
-    const keys = [...new Set(Object.values(game.models).map(bindingKey))];
-    const times: number[] = [];
+    const { game, dispatch } = useStore.getState();
+    const { addAsset } = useAssets.getState();
+    const keys = unitKeys(Object.values(game.models));
+    const assets = new Map<string, ModelAsset>();
     keys.forEach((key, i) => {
       // Slightly different sculpts so every profile is its own asset.
       const mesh = synthMiniature(sourceTriangles * (1 + i * 0.01));
       const id = `synth-${sourceTriangles}-${raw ? "raw" : "lod"}-${i}`;
-      let asset: ModelAsset;
+      let asset = processMesh(mesh, { id, name: key, kind: "miniature" });
       if (raw) {
         const welded = weld(mesh);
-        const full = processMesh(mesh, { id, name: key, kind: "miniature" });
-        const scale = full.stats.unitScale;
-        welded.positions.forEach((v, j) => (welded.positions[j] = v * scale));
-        asset = { ...full, lods: [welded] };
-      } else {
-        asset = processMesh(mesh, { id, name: key, kind: "miniature" });
+        welded.positions.forEach((v, j) => (welded.positions[j] = v * asset.stats.unitScale));
+        asset = { ...asset, lods: [welded] };
       }
-      times.push(asset.stats.ms);
       addAsset(asset);
-      setBinding(key, { asset: id, yaw: 0, scale: 1 });
+      assets.set(key, asset);
     });
+    for (const unit of Object.values(game.units)) {
+      for (const key of unitKeys(unit.modelIds.flatMap((id) => game.models[id] ?? []))) {
+        const asset = assets.get(key)!;
+        const figure = { asset: asset.id, name: key, yaw: 0, scale: 1 };
+        dispatch(
+          { type: "unit/figure", id: unit.id, keys: [key], figure, bands: asset.figure?.bands },
+          unit.owner,
+        );
+      }
+    }
     await frame();
-    return { profiles: keys.length, pipelineMs: times };
+    return { profiles: keys.length, pipelineMs: [...assets.values()].map((a) => a.stats.ms) };
   },
 
-  /** Clear every figure binding. */
+  /** Take every figure off. */
   undress() {
-    const { bindings, setBinding } = useAssets.getState();
-    for (const key of Object.keys(bindings)) setBinding(key, null);
+    const { game, dispatch } = useStore.getState();
+    for (const unit of Object.values(game.units)) {
+      const keys = unitKeys(unit.modelIds.flatMap((id) => game.models[id] ?? []));
+      dispatch({ type: "unit/figure", id: unit.id, keys, figure: null }, unit.owner);
+    }
   },
 
   /** Frame times over `frames` frames, and the last frame's draw stats. */

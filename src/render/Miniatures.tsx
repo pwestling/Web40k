@@ -14,8 +14,8 @@ import {
   Vector3,
 } from "three";
 import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
-import type { Model, Vec2 } from "../core";
-import { bindingKey, useAssets, type Binding } from "../assets/store";
+import type { Model, ModelFigure, Vec2 } from "../core";
+import { useAssets } from "../assets/store";
 import type { ModelAsset } from "../assets/types";
 
 /** Top of the plastic base the figure stands on (see ModelBase). */
@@ -35,22 +35,21 @@ const shadowMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite:
 
 interface Entry {
   model: Model;
-  binding: Binding;
+  binding: ModelFigure;
 }
 
 /** Figure height in inches for each model that has an uploaded figure. */
 export function useFigureHeights(models: Model[]): Record<string, number> {
-  const bindings = useAssets((s) => s.bindings);
   const assets = useAssets((s) => s.assets);
   return useMemo(() => {
     const out: Record<string, number> = {};
     for (const m of models) {
-      const b = bindings[bindingKey(m)];
-      const asset = b && assets[b.asset];
-      if (asset) out[m.id] = asset.bounds.max[1] * b.scale;
+      // Until a peer's figure arrives, the model keeps its stand-in.
+      const asset = m.figure && assets[m.figure.asset];
+      if (asset) out[m.id] = asset.bounds.max[1] * m.figure!.scale;
     }
     return out;
-  }, [models, bindings, assets]);
+  }, [models, assets]);
 }
 
 /**
@@ -67,19 +66,18 @@ export function Miniatures({
   /** Base heights above the table (standing on terrain floors), by model id. */
   heights: Record<string, number>;
 }) {
-  const bindings = useAssets((s) => s.bindings);
   const assets = useAssets((s) => s.assets);
   const groups = useMemo(() => {
     const g = new Map<string, Entry[]>();
     for (const model of models) {
-      const binding = bindings[bindingKey(model)];
+      const binding = model.figure;
       if (!binding || !assets[binding.asset]) continue;
       const list = g.get(binding.asset) ?? [];
       list.push({ model, binding });
       g.set(binding.asset, list);
     }
     return g;
-  }, [models, bindings, assets]);
+  }, [models, assets]);
 
   return (
     <>

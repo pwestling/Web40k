@@ -100,6 +100,21 @@ export interface Model {
    * it the model is one cylinder of its base size.
    */
   bands?: SightBand[];
+  /** An uploaded 3D figure standing on the base (see src/assets). Display only; `bands` carries its shape for rules. */
+  figure?: ModelFigure;
+}
+
+/**
+ * Which uploaded figure a model wears. `asset` is the SHA-256 of the file;
+ * peers fetch the processed meshes from whoever has them.
+ */
+export interface ModelFigure {
+  asset: string;
+  /** File name, for the card. */
+  name: string;
+  /** Extra turn in radians, for sculpts that don't face forward. */
+  yaw: number;
+  scale: number;
 }
 
 export interface SightBand {

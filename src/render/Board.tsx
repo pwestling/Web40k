@@ -32,6 +32,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
+import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
 
 /**
@@ -39,6 +40,7 @@ import { unitKeys, useAssets } from "../assets/store";
  * Game-state Vec2 {x, y} maps to world (x, 0, y).
  */
 export function Board() {
+  useAssetSharing();
   return (
     <Canvas shadows>
       <color attach="background" args={["#111318"]} />
@@ -83,7 +85,7 @@ function FigureDrop() {
         const unit = model?.unitId ? game.units[model.unitId] : undefined;
         const models = unit ? unit.modelIds.flatMap((id) => game.models[id] ?? []) : model ? [model] : [];
         if (unit) select(unit.id);
-        void useAssets.getState().importFor(unitKeys(models), file);
+        if (unit) void useAssets.getState().dressUnit(unit.id, unitKeys(models), file);
         return;
       }
     };
