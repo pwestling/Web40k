@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { systemOf, type GameState } from "../core";
+import { rareMoments, systemOf, type GameState } from "../core";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -38,6 +38,7 @@ export function StatsScreen() {
     return () => removeEventListener("keydown", onKey);
   }, [open]);
   const data = useMemo(() => (open ? gameStats(record) : null), [open, record]);
+  const moments = useMemo(() => (open ? rareMoments(record) : []), [open, record]);
   if (!open || !data) return null;
   const close = () => set({ stats: false });
   const owners = new Map(data.players.map((p) => [p.id, p]));
@@ -68,6 +69,20 @@ export function StatsScreen() {
           ))}
         </div>
       </section>
+
+      {moments.length > 0 && (
+        <section>
+          <h4>Moments</h4>
+          <ul className="moments">
+            {moments.map((m) => (
+              <li key={m.seq}>
+                <span className="rare-star">★</span> Round {m.round} · <strong>{m.title}</strong>
+                {m.unitName && <> · {m.unitName}</>}: {m.line}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h4>Units</h4>

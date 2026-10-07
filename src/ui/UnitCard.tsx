@@ -28,7 +28,7 @@ import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
-import { useGame } from "./hooks";
+import { useGame, useRareStars } from "./hooks";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
 const FLAGS: [string, string][] = [
@@ -135,6 +135,7 @@ export function UnitCard() {
   const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, rangeWeapon, set } = useStore();
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
+  const stars = useRareStars(selected);
   if (!unit) return null;
   // Systems without panels of their own get the card built from their data.
   if (!systemModule(game.system).dedicatedUi)
@@ -173,7 +174,19 @@ export function UnitCard() {
   return (
     <div className="panel unitcard">
       <div className="row spread">
-        <h2 style={{ color: owner?.color }}>{unit.name}</h2>
+        <h2 style={{ color: owner?.color }}>
+          {unit.name}
+          {stars.map((m) => (
+            <span
+              key={m.seq}
+              className="rare-star"
+              title={`${m.title}, round ${m.round}: ${m.line.split(" · ")[0]}`}
+            >
+              {" "}
+              ★
+            </span>
+          ))}
+        </h2>
         <button onClick={() => select(null)}>✕</button>
       </div>
       <p className="muted">

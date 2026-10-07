@@ -24,3 +24,4 @@ export {
   type TurnSlot,
 } from "./content/turn";
 export * from "./rolls";
+export * from "./rare";

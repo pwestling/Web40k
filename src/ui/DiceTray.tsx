@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { lastSeq, rollsIn, type GameState, type TrayRoll } from "../core";
+import { lastSeq, rareOf, rollsIn, type GameState, type RareOutcome, type TrayRoll } from "../core";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
-import { chime, click, scoop, sting, thump, useSound } from "./sound";
+import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
 
 /**
@@ -21,6 +21,8 @@ export function DiceTray() {
   const scrub = useStore((s) => s.scrub);
   const pos = scrub ?? lastSeq(record);
   const prev = useRef<{ pos: number; state: GameState; initial: unknown } | null>(null);
+  // Actions that already had their rare moment (one per action).
+  const called = useRef(new Set<string>());
 
   useEffect(() => {
     if (!ref.current) return;
@@ -34,9 +36,19 @@ export function DiceTray() {
     // Only steps forward a few events at a time: live play, or a replay playing. Not jumps or a new game.
     if (!p || p.initial !== record.initial || pos <= p.pos || pos - p.pos > 8) return;
     const events = record.events.filter((e) => e.seq > p.pos && e.seq <= pos).map((e) => e.event);
-    for (const roll of rollsIn(p.state, shown, events, pos)) {
+    const rolls = rollsIn(p.state, shown, events, pos);
+    let rare = rareOf(rolls, shown, pos);
+    const action = rare && `${rare.chain ?? rare.rollId}@${rare.round}`;
+    if (action && called.current.has(action)) rare = null;
+    else if (action) called.current.add(action);
+    for (const roll of rolls) {
       const color = (roll.by && shown.players[roll.by]?.color) || (roll.defender ? "#d9584e" : "#7fb0df");
-      stage.current?.play(roll, color, stakesOf(roll, p.state, shown));
+      stage.current?.play(
+        roll,
+        color,
+        stakesOf(roll, p.state, shown),
+        rare?.rollId === roll.id ? rare : null,
+      );
     }
   }, [pos, shown, record]);
 
@@ -93,7 +105,7 @@ class Stage {
     this.root.innerHTML = "";
   }
 
-  play(roll: TrayRoll, color: string, stakes: Stakes | null) {
+  play(roll: TrayRoll, color: string, stakes: Stakes | null, rare: RareOutcome | null) {
     this.waiting++;
     this.queue = this.queue.then(async () => {
       this.waiting--;
@@ -101,6 +113,7 @@ class Stage {
       const fast = this.waiting > 0 || useSound.getState().fast;
       try {
         await this.roll(roll, color, stakes, fast);
+        if (rare) await this.moment(rare);
       } catch {
         // A roll that can't be staged is still in the panel and the log.
       }
@@ -162,6 +175,43 @@ class Stage {
       if (/slain/i.test(stakes.big)) thump(0, 0.6);
       await wait(this.skip ? 400 : 1400);
     }
+    this.lingerThenHide();
+  }
+
+  /**
+   * Against all odds: a beat of silence, the table goes dark around the dice
+   * that did it, a boom and a chord (a comic womp for cursed dice), and the
+   * title with its one number. The unit's bases pulse on the table too.
+   */
+  private async moment(rare: RareOutcome) {
+    clearTimeout(this.hideTimer);
+    this.show();
+    await wait(this.skip ? 0 : 450);
+    this.root.classList.add("legendary");
+    this.dice.forEach((d) => d.el.classList.add("legend"));
+    if (rare.lucky) legendSting();
+    else womp();
+    this.banner.innerHTML = "";
+    const big = div("big");
+    big.textContent = rare.title;
+    const small = div("small");
+    small.textContent = rare.line;
+    this.banner.append(big, small);
+    this.banner.className = `tray-banner on legend ${rare.lucky ? "" : "cursed"}`;
+    if (rare.unitId)
+      useStore.getState().set({
+        moment: {
+          unitId: rare.unitId,
+          title: rare.title,
+          line: rare.line,
+          lucky: rare.lucky,
+          at: Date.now(),
+        },
+      });
+    this.skip = false;
+    const end = Date.now() + (reduced() ? 1500 : 3000);
+    while (Date.now() < end && !this.skip) await wait(100);
+    this.root.classList.remove("legendary");
     this.lingerThenHide();
   }
 

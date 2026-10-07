@@ -191,3 +191,13 @@ export function legendSting() {
   );
   burst(a, t + 0.5, { freq: 7000, q: 1, dur: 1.4, gain: 0.05 });
 }
+
+/** Cursed dice: a soft, comic descending "womp womp", never a boom. */
+export function womp() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  [392, 370, 349, 262].forEach((f, i) =>
+    tone(a, t + i * 0.32, { freq: f, to: f * 0.94, dur: i === 3 ? 0.9 : 0.3, gain: 0.09, type: "triangle" }),
+  );
+}

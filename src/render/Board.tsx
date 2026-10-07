@@ -42,6 +42,7 @@ import { ModelInstances, type ModelDraw } from "./ModelInstances";
 import { Trails, useTween, WatchEffects } from "./Watch";
 import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
+import { Moment } from "./Moment";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
@@ -782,6 +783,7 @@ function Scene() {
       <Miniatures models={onTable} positions={shown} heights={shownZ} />
       <Trails trails={trails} />
       <WatchEffects />
+      <Moment />
       {/* One label per unit: its name plate, with the line of sight answer as a second line. */}
       {unitLabels.map((l) => (
         <Html

@@ -99,6 +99,8 @@ interface Store {
   arcs: boolean;
   /** The after-game stats screen: open, closed, or null to open it on its own when the battle ends. */
   stats: boolean | null;
+  /** A rare outcome being celebrated on the table (PX-2): the unit, its title and line. Display only. */
+  moment: { unitId: string; title: string; line: string; lucky: boolean; at: number } | null;
   set(
     patch: Partial<
       Pick<
@@ -118,6 +120,7 @@ interface Store {
         | "director"
         | "arcs"
         | "stats"
+        | "moment"
       >
     >,
   ): void;
@@ -221,6 +224,7 @@ export const useStore = create<Store>((set, get) => ({
   rangeWeapon: null,
   director: false,
   stats: null,
+  moment: null,
   net: null,
   packagesWaived: {},
   seatAgain: null,
@@ -290,6 +294,7 @@ export const useStore = create<Store>((set, get) => ({
       // Spectators start with the camera following the action.
       director: role === "spectator",
       stats: null,
+      moment: null,
       packagesWaived: {},
       seatAgain: () => takeSeat(),
     });
@@ -366,6 +371,7 @@ export const useStore = create<Store>((set, get) => ({
       draft: null,
       director: true,
       stats: null,
+      moment: null,
     });
   },
 

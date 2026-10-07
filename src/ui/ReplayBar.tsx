@@ -1,3 +1,4 @@
+import { rareMoments } from "../core";
 import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
@@ -42,6 +43,8 @@ export function ReplayBar() {
   // Phase changes, with the first one of each round marked "R1", "R2"...
   const marks = useMemo(() => phaseMarks(log), [log]);
   const { highlights } = useMemo(() => readGame(record), [record]);
+  // Against all odds: rare outcomes, starred on the track.
+  const moments = useMemo(() => rareMoments(record), [record]);
   // Rules changes both players agreed to, marked ◆ on the track.
   const rulesChanges = useMemo(
     () => log.flatMap((l) => (l.kind === "header" && l.rules ? [{ seq: Number(l.key), text: l.text }] : [])),
@@ -141,6 +144,19 @@ export function ReplayBar() {
                 onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
               >
                 {ICONS[h.kind]}
+              </button>
+            ))}
+          {last > 0 &&
+            moments.map((m) => (
+              <button
+                key={`rare-${m.seq}`}
+                className="highlight rare"
+                style={{ left: `${(m.seq / last) * 100}%` }}
+                title={`${m.title}: ${m.line}`}
+                aria-label={`Replay: ${m.title}`}
+                onClick={() => setScrub(m.seq >= last && session ? null : m.seq)}
+              >
+                ★
               </button>
             ))}
           {last > 0 &&

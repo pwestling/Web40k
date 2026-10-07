@@ -1431,3 +1431,93 @@ p.odds {
 .topbar .sound-toggle {
   padding: 0 4px;
 }
+/* Against all odds (PX-2): the table goes dark around the dice that did it. */
+.dice-tray .felt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+  background: radial-gradient(ellipse at 50% 50%, transparent 20%, #000000d0 75%);
+}
+.dice-tray.legendary .felt::before {
+  opacity: 1;
+}
+.dice-tray .die.legend {
+  z-index: 3;
+}
+.dice-tray .die.legend .body {
+  animation: tray-legend 1.4s ease-in-out infinite;
+  box-shadow:
+    inset 0 -3px 0 #0005,
+    inset 0 2px 0 #fff6,
+    0 0 0 2px #e0b354,
+    0 0 28px 6px color-mix(in srgb, #e0b354 80%, transparent);
+}
+@keyframes tray-legend {
+  50% {
+    filter: brightness(1.25);
+  }
+}
+.dice-tray .tray-banner.legend .big {
+  color: #e0b354;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  white-space: nowrap;
+}
+.dice-tray .tray-banner.legend .small {
+  color: #e0b354;
+  font-variant-numeric: tabular-nums;
+}
+.dice-tray .tray-banner.legend.cursed .big {
+  color: #c9a0dc;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dice-tray .die.legend .body {
+    animation: none;
+  }
+}
+.moment-title div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: moment-in 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.moment-title strong {
+  font-weight: 900;
+  font-size: 26px;
+  text-transform: uppercase;
+  color: #e0b354;
+  text-shadow: 0 3px 14px #000c;
+}
+.moment-title span {
+  font-size: 13px;
+  color: #e0b354;
+  text-shadow: 0 2px 6px #000;
+}
+.moment-title .cursed strong,
+.moment-title .cursed span {
+  color: #c9a0dc;
+}
+@keyframes moment-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+.rare-star {
+  color: #e0b354;
+}
+.replaybar .highlight.rare {
+  color: #e0b354;
+}
+.stats-screen .moments {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}

@@ -1,6 +1,7 @@
 import type { GameEvent } from "./actions";
 import { findProcedure, type ProcedureRun, type RoleRef, type StepRecord } from "./content/runner";
 import { getSystem } from "./content/systems";
+import { followUpNeed, passChance } from "./odds";
 import type { GameState, PlayerId } from "./types";
 
 /**
@@ -24,6 +25,8 @@ export interface TrayRoll {
   chain?: string;
   /** For a summed test: whether it passed. */
   passed?: boolean;
+  /** Each die's chance to pass before it was rolled (re-rolls included), for tests judged die by die. */
+  p?: number;
   /** A test's target, and whether it is roll-high (3+) or roll-under. */
   need?: number | null;
   compare?: "atLeast" | "atMost";
@@ -146,6 +149,7 @@ function recordRoll(state: GameState, run: ProcedureRun, r: StepRecord, id: stri
     passOn: plan.passOn,
     need: plan.target,
     compare: plan.compare,
+    p: summed ? undefined : (passChance(plan, followUpNeed(step, plan)) ?? undefined),
   };
 }
 
