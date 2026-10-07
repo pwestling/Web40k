@@ -392,6 +392,8 @@ export interface Template {
   at: Vec2;
   to?: Vec2;
   label?: string;
+  /** Where it was before its last scatter, to draw the path. */
+  from?: Vec2;
 }
 
 /** A measurement between two points, either of which may be a model (measured from its base edge). */

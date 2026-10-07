@@ -958,3 +958,9 @@ input.frontage {
   align-items: center;
   gap: 8px;
 }
+.topbar .ask {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}

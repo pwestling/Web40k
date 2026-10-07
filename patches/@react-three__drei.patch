@@ -1,0 +1,14 @@
+diff --git a/web/Html.js b/web/Html.js
+index 81d68b7f4e9893a7d0b436a398bb38883d333374..02cf3847fe9f4e858651a8ca4fb6deb32747fa9c 100644
+--- a/web/Html.js
++++ b/web/Html.js
+@@ -152,7 +152,8 @@ const Html = /* @__PURE__ */React.forwardRef(({
+         if (prepend) target.prepend(el);else target.appendChild(el);
+       }
+       return () => {
+-        if (target) target.removeChild(el);
++        // Open Battle patch: on a replay jump the label can already be detached.
++        if (target && el.parentNode === target) target.removeChild(el);
+         currentRoot.unmount();
+       };
+     }

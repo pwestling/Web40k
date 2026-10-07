@@ -1,0 +1,2 @@
+patchedDependencies:
+  "@react-three/drei": patches/@react-three__drei.patch

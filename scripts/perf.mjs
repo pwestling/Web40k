@@ -20,7 +20,10 @@ const executablePath =
   ["/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "/opt/pw-browsers/chromium"].find(existsSync);
 
 // Its own process group, so stopping it also stops the vite process npx starts.
-const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "pipe", detached: true });
+const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], {
+  stdio: "pipe",
+  detached: true,
+});
 await new Promise((resolve, reject) => {
   server.stdout.on("data", (d) => String(d).includes("localhost") && resolve());
   server.on("exit", reject);

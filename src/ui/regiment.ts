@@ -13,7 +13,7 @@ import {
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 
-const SPECIAL = new Set(["door", "flee", "pursue"]);
+const SPECIAL = new Set(["charge", "door", "flee", "pursue"]);
 
 /**
  * Movement a block has used this phase: the sum of its moves, wheels, turns

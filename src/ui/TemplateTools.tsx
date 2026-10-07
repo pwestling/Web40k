@@ -1,5 +1,5 @@
-import { blockFrame, templateHits, unitCentre, type Vec2 } from "../core";
-import { useStore } from "../store";
+import { blockFrame, templateHits, unitCentre, type GameState, type Unit, type Vec2 } from "../core";
+import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { useGame } from "./hooks";
 
@@ -12,6 +12,7 @@ export function TemplateTools() {
   const game = useGame();
   const { dispatch, selected } = useStore();
   const live = useStore((s) => s.scrub === null && s.role !== "spectator");
+  const canControl = useCanControl();
   const mod = systemModule(game.system);
   if (!mod.templates?.length && !mod.specialDice?.length) return null;
   const dice = mod.specialDice ?? [];
@@ -19,10 +20,19 @@ export function TemplateTools() {
   const sel = selected ? game.units[selected] : undefined;
   const templates = Object.values(game.templates ?? {});
 
+  // A blast lands on the target: the selected unit when it's an enemy, else the
+  // enemy nearest the selected unit (the shooter). Flames and lines start at
+  // the shooter and point at the target.
+  const own = sel && canControl(sel.owner) ? sel : undefined;
+  const target = own ? nearestEnemy(game, own) : sel;
   const place = (kind: NonNullable<typeof mod.templates>[number]) => {
-    const frame = sel ? blockFrame(game, sel) : null;
-    const at: Vec2 = sel ? (frame?.front ?? unitCentre(game, sel)) : { x: 0, y: 0 };
-    const facing = frame?.facing ?? (sel ? (game.models[sel.modelIds[0] ?? ""]?.facing ?? 0) : 0);
+    const frame = own ? blockFrame(game, own) : null;
+    const goal = target ? unitCentre(game, target) : { x: 0, y: 0 };
+    const at: Vec2 = kind.shape === "circle" || !own ? goal : (frame?.front ?? unitCentre(game, own));
+    const dx = goal.x - at.x;
+    const dy = goal.y - at.y;
+    const len = Math.hypot(dx, dy);
+    const facing = len > 0.01 ? Math.atan2(dx, dy) : (frame?.facing ?? 0);
     const to = { x: at.x + Math.sin(facing) * kind.size, y: at.y + Math.cos(facing) * kind.size };
     const id = `${kind.id}-${game.seq + 1}`;
     dispatch({
@@ -33,7 +43,7 @@ export function TemplateTools() {
         shape: kind.shape,
         size: kind.size,
         label: kind.label,
-        at: kind.shape === "circle" && sel ? unitCentre(game, sel) : at,
+        at,
         ...(kind.shape === "circle" ? {} : { to }),
         ...(kind.width ? { width: kind.width } : {}),
       },
@@ -49,7 +59,7 @@ export function TemplateTools() {
           {(mod.templates ?? []).map((k) => (
             <button
               key={k.id}
-              title={sel ? `Lay it on ${sel.name}` : "Lay it mid-table"}
+              title={target ? `Lay it on ${target.name}` : "Lay it mid-table (select a unit to aim it)"}
               onClick={() => place(k)}
             >
               {k.label}
@@ -61,14 +71,16 @@ export function TemplateTools() {
         <ul className="template-list">
           {templates.map((t) => {
             const hits = templateHits(game, t);
-            const full = hits.reduce((a, h) => a + h.full, 0);
-            const partial = hits.reduce((a, h) => a + h.partial, 0);
             return (
               <li key={t.id}>
-                <strong>{t.label ?? "Template"}</strong>{" "}
-                <span className="muted">
-                  {t.shape === "line" ? `${partial} touched` : `${full} under, ${partial} partly`}
-                </span>
+                <strong>{t.label ?? "Template"}</strong>
+                {hits.length === 0 && <span className="muted"> · no models under it</span>}
+                {hits.map((h) => (
+                  <div key={h.unitId ?? "-"} className="muted small">
+                    {h.unitId ? (game.units[h.unitId]?.name ?? "?") : "Models"}:{" "}
+                    {t.shape === "line" ? `${h.partial} touched` : `${h.full} under, ${h.partial} partly`}
+                  </div>
+                ))}
                 {live && (
                   <span className="row">
                     {t.shape === "circle" && scatterDice && (
@@ -120,4 +132,17 @@ export function TemplateTools() {
       <p className="muted small">Drag a template to move it; drag its round handle to aim it.</p>
     </details>
   );
+}
+
+function nearestEnemy(game: GameState, unit: Unit): Unit | undefined {
+  const c = unitCentre(game, unit);
+  let best: { u: Unit; d: number } | undefined;
+  for (const u of Object.values(game.units)) {
+    if (u.owner === unit.owner || !u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed))
+      continue;
+    const p = unitCentre(game, u);
+    const d = Math.hypot(p.x - c.x, p.y - c.y);
+    if (!best || d < best.d) best = { u, d };
+  }
+  return best?.u;
 }

@@ -53,7 +53,7 @@ describe("deployChecks", () => {
     const record = log(events);
     const checks = deployChecks(record, stateAt(record), "p1");
     const by = Object.fromEntries(checks.map((c) => [c.unit.id, c]));
-    expect(by.a).toMatchObject({ untouched: true, outside: false });
+    expect(by.a).toMatchObject({ untouched: false, outside: false });
     expect(by.b).toMatchObject({ untouched: false, outside: true });
   });
 

@@ -183,7 +183,12 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       if (!t) return state;
       const dx = event.to.x - t.at.x;
       const dy = event.to.y - t.at.y;
-      const moved = { ...t, at: event.to, ...(t.to ? { to: { x: t.to.x + dx, y: t.to.y + dy } } : {}) };
+      const moved = {
+        ...t,
+        at: event.to,
+        from: t.at,
+        ...(t.to ? { to: { x: t.to.x + dx, y: t.to.y + dy } } : {}),
+      };
       return { ...state, templates: { ...state.templates, [t.id]: moved } };
     }
     case "objective/move":

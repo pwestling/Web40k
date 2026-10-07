@@ -57,7 +57,7 @@ export function Templates({ onDragging }: { onDragging: (on: boolean) => void })
       setHeld(null);
       onDragging(false);
       if (!g || !p || Math.hypot(p.x - g.grab.x, p.y - g.grab.y) < 0.1) return;
-      const { by: _by, ...template } = dragged(g, p);
+      const { by: _by, from: _from, ...template } = dragged(g, p);
       dispatch({ type: "template/set", id: g.id, template });
     };
     window.addEventListener("pointermove", move);
@@ -134,6 +134,25 @@ function TemplateMark({
   };
   return (
     <group>
+      {t.from && (
+        <Line
+          points={[
+            [t.from.x, 0.1, t.from.y],
+            [t.at.x, 0.1, t.at.y],
+          ]}
+          color={color}
+          lineWidth={1.5}
+          dashed
+          dashSize={0.5}
+          gapSize={0.3}
+        />
+      )}
+      {t.from && (
+        <mesh position={[t.from.x, 0.1, t.from.y]}>
+          <cylinderGeometry args={[0.25, 0.25, 0.05, 12]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {shape ? (
         <mesh
           rotation-x={-Math.PI / 2}

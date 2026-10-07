@@ -1,5 +1,5 @@
 import type { UnitMove } from "./actions";
-import { baseSizeInches, rotate } from "./geometry";
+import { baseOutline, baseSizeInches, polygonDistance, rotate } from "./geometry";
 import { arcOf, blockCentre, blockCorners, blockFrame, blockModels, type Arc } from "./regiment";
 import type { GameState, Unit, Vec2 } from "./types";
 
@@ -206,4 +206,15 @@ export function pursue(state: GameState, pursuer: Unit, quarry: Unit, inches: nu
     moved,
     gap: caught ? 0 : Number.isFinite(hit) ? hit - inches : Infinity,
   };
+}
+
+/** Closest base-to-base gap between two units' standing models (0 when touching). */
+export function unitGap(state: GameState, a: Unit, b: Unit): number {
+  let best = Infinity;
+  const bs = blockModels(state, b).map((m) => baseOutline(m));
+  for (const m of blockModels(state, a)) {
+    const outline = baseOutline(m);
+    for (const o of bs) best = Math.min(best, polygonDistance(outline, o));
+  }
+  return best;
 }

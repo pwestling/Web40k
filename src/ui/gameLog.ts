@@ -228,9 +228,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const name = (event.label ?? t?.label ?? "template").toLowerCase();
       if (event.scatter.toLowerCase() === "hit") return `${who} rolled a hit: the ${name} stays put`;
       const inches = Number(event.distance);
-      if (!inches)
-        return `${who} scattered the ${name}: ${event.scatter}, ${event.distance} (it doesn't move)`;
-      return `${who} scattered the ${name} ${inches}" (${event.scatter})`;
+      if (!inches) return `${who} rolled ${event.distance} for the ${name}: it doesn't move`;
+      const { width, depth } = game.table;
+      const off = Math.abs(event.to.x) > width / 2 || Math.abs(event.to.y) > depth / 2;
+      return `${who} scattered the ${name} ${inches}" towards the ${bearing(event.angle)}${off ? ", off the table" : ""}`;
     }
     case "ruler/set": {
       const r = event.ruler;
@@ -269,6 +270,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${(event.distance ?? 0).toFixed(1)}")`;
       const inches = `${(event.distance ?? 0).toFixed(1)}"`;
       if (event.how === "door") return `${who} closed the door: ${name} lined up with its target (${inches})`;
+      if (event.how === "charge") return `${name} charged ${inches}`;
       if (event.how === "flee") return `${name} fled ${inches}`;
       if (event.how === "pursue") return `${name} pursued ${inches}`;
       if (event.how === "forward")
@@ -406,4 +408,17 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
   }
   flush();
   return out;
+}
+
+/**
+ * A scatter direction as seen on screen from the default view: seat 0's edge
+ * (+y) is at the bottom, +x to the right.
+ */
+export function bearing(facing: number): string {
+  const dx = Math.sin(facing);
+  const dy = Math.cos(facing);
+  const names = ["right", "bottom-right", "bottom", "bottom-left", "left", "top-left", "top", "top-right"];
+  const a = Math.atan2(dy, dx); // 0 = right, pi/2 = down the screen (+y)
+  const i = Math.round(a / (Math.PI / 4));
+  return names[((i % 8) + 8) % 8]!;
 }

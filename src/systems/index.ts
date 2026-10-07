@@ -37,6 +37,8 @@ export interface SystemModule {
   scatter?: { direction: string; distance: string };
   /** Dice rolled for a flee or pursuit, e.g. "2D6". */
   fleeDice?: string;
+  /** The charge roll: these dice, keeping the highest or adding them, plus the unit's Movement. */
+  chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
 }
 
 export interface TemplateKind {
@@ -78,6 +80,7 @@ const MODULES: Record<string, SystemModule> = {
     specialDice: TOW_DICE,
     scatter: { direction: "scatter", distance: "artillery" },
     fleeDice: "2D6",
+    chargeRoll: { count: 2, sides: 6, keep: "highest" },
   },
 };
 

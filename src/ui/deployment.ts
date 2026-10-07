@@ -2,7 +2,7 @@ import { undoneSeqs, type GameRecord, type GameState, type PlayerId, type Unit, 
 
 export interface DeployCheck {
   unit: Unit;
-  /** Not moved by hand since it arrived on the table. */
+  /** Not moved by hand since it arrived on the table, and not standing in its zone. */
   untouched: boolean;
   /** Some of its models stand outside its player's deployment zone. */
   outside: boolean;
@@ -54,7 +54,9 @@ export function deployChecks(record: GameRecord, game: GameState, player: Player
         !reserve &&
         zones.length > 0 &&
         models.some((m) => !zones.some((z) => insidePolygon(m.position, z.points)));
-      return { unit, untouched: !reserve && !touched.has(unit.id), outside, reserve };
+      // A unit already standing in its zone counts as placed; with no zones, only a hand move does.
+      const inZone = zones.length > 0 && !outside && models.length > 0;
+      return { unit, untouched: !reserve && !inZone && !touched.has(unit.id), outside, reserve };
     });
 }
 
