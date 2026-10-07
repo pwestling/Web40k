@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Player } from "../core";
 import { useStore } from "../store";
 import { deployChecks } from "./deployment";
+import { RulesLine } from "./Packages";
 
 /**
  * The room: a big invite button, and who is here: each player (connected,
@@ -42,6 +43,7 @@ export function RoomCard() {
           {copied ? "Copied ✓" : "Copy invite link"}
         </button>
       </div>
+      <RulesLine />
       <ul className="people">
         {seated.map((p) => (
           <li key={p.id}>

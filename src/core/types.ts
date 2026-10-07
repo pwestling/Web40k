@@ -287,6 +287,10 @@ export interface GameState {
   ruler?: Ruler | null;
   /** Blast, flame and line templates on the table, by id. */
   templates?: Record<string, Template>;
+  /** The code this game runs: the latest game/packages event. */
+  packages?: GamePackages;
+  /** A change of rules packages waiting for every seated player to accept. */
+  packageProposal?: PackageProposal;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }
@@ -394,6 +398,32 @@ export interface Template {
   label?: string;
   /** Where it was before its last scatter, to draw the path. */
   from?: Vec2;
+}
+
+/** A rules package as a game names it: identity is the hash of its bytes. */
+export interface PackageRef {
+  id: string;
+  name: string;
+  version: string;
+  author?: string;
+  hash: string;
+  bytes: number;
+}
+
+export interface GamePackages {
+  /** App version + commit: covers the reducer and the built-in modules. */
+  app: string;
+  system: { id: string; builtIn: boolean };
+  packages: PackageRef[];
+  /** Seats that accepted, for a change made mid-game. */
+  agreed?: PlayerId[];
+}
+
+export interface PackageProposal {
+  by: PlayerId;
+  packages: PackageRef[];
+  accepted: PlayerId[];
+  declined: PlayerId[];
 }
 
 /** A measurement between two points, either of which may be a model (measured from its base edge). */

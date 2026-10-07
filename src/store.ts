@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useLibrary } from "./packages/library";
 import {
   createInitialState,
   createRecord,
@@ -241,6 +242,9 @@ export const useStore = create<Store>((set, get) => ({
       role,
       record: record ?? (role === "client" ? room?.record : undefined),
       resumed,
+      // A peer missing one of the game's rules packages can't host it.
+      ready: (state) =>
+        (state.packages?.packages ?? []).every((p) => !!useLibrary.getState().packages[p.hash]),
       onChange: (game, rec) => {
         // A session that was replaced (left) may still call back; ignore it.
         if (get().session !== session) return;

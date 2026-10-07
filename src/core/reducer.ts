@@ -174,6 +174,30 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "player/resync":
       return state;
+    case "game/packages": {
+      const { type: _t, ...packages } = event;
+      const { packageProposal: _p, ...rest } = state;
+      return { ...rest, packages };
+    }
+    case "packages/propose":
+      return {
+        ...state,
+        packageProposal: { by: event.by, packages: event.packages, accepted: [event.by], declined: [] },
+      };
+    case "packages/withdraw": {
+      const { packageProposal: _p, ...rest } = state;
+      return rest;
+    }
+    case "packages/accept":
+    case "packages/decline": {
+      const p = state.packageProposal;
+      if (!p) return state;
+      const accepted = p.accepted.filter((id) => id !== event.player);
+      const declined = p.declined.filter((id) => id !== event.player);
+      if (event.type === "packages/accept") accepted.push(event.player);
+      else declined.push(event.player);
+      return { ...state, packageProposal: { ...p, accepted, declined } };
+    }
     case "template/set": {
       const { [event.id]: _old, ...rest } = state.templates ?? {};
       return { ...state, templates: event.template ? { ...rest, [event.id]: event.template } : rest };

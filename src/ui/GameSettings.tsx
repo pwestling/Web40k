@@ -1,6 +1,7 @@
 import type { GameSettings as Settings } from "../core";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
+import { GamePackagesSettings } from "./Packages";
 
 /** Rule options for this game. Set during deployment; shown read-only once the battle starts. */
 export function GameSettings() {
@@ -17,6 +18,7 @@ export function GameSettings() {
   return (
     <details className="settings">
       <summary>Game settings</summary>
+      <GamePackagesSettings editable={editable} />
       {editable ? (
         <>
           <label>

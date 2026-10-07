@@ -53,6 +53,11 @@ export interface SessionOptions {
   graceMs?: number;
   /** Told when this peer's role, the host or the connected peers change. */
   onNet?: (status: NetStatus) => void;
+  /**
+   * Whether this peer holds every rules package the game names, so it could
+   * take over as host. Peers that aren't ready never win an election.
+   */
+  ready?: (state: GameState) => boolean;
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
@@ -93,7 +98,8 @@ export class Session {
   private role: Role;
   private resumed: boolean;
   private migrating = false;
-  private readonly peers = new Map<string, { role?: Role; seq?: number }>();
+  private readonly peers = new Map<string, { role?: Role; seq?: number; ready?: boolean }>();
+  private readonly isReady: (state: GameState) => boolean;
   private queue: Intent[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
   private left = false;
@@ -103,16 +109,31 @@ export class Session {
   private readonly rng: Rng;
   private readonly now: () => number;
   private readonly graceMs: number;
-  private onSide: ((message: SideMessage, from: string) => void) | null = null;
+  /** Side-channel listeners by owner (figures, rules packages). */
+  private readonly side = new Map<
+    string,
+    { onSide: (message: SideMessage, from: string) => void; onPeer: ((peerId: string) => void) | null }
+  >();
   /** States at recent checkpoints, hashed lazily (off the hot path). */
   private readonly checks = new Map<number, { state: GameState; hash?: number }>();
   /** Host: the checkpoint whose hash rides on the next event sent. */
   private pendingCheck: number | null = null;
   private desync: NetStatus["desync"] = null;
   private desyncs = 0;
-  private onPeer: ((peerId: string) => void) | null = null;
 
-  constructor({ transport, role, onChange, record, rng, now, resumed, graceMs, onNet }: SessionOptions) {
+  constructor({
+    transport,
+    role,
+    onChange,
+    record,
+    rng,
+    now,
+    resumed,
+    graceMs,
+    onNet,
+    ready,
+  }: SessionOptions) {
+    this.isReady = ready ?? (() => true);
     this.transport = transport;
     this.role = role;
     this.resumed = !!resumed && role === "host";
@@ -129,8 +150,8 @@ export class Session {
       if (!this.peers.has(peerId)) this.peers.set(peerId, {});
       // Hosts say so; everyone else says how much log it holds (used to pick a new host).
       if (this.role === "host") this.announce(peerId);
-      else this.transport.send({ t: "sync", seq: lastSeq(this.record), role: this.role }, peerId);
-      this.onPeer?.(peerId);
+      else this.transport.send(this.sync(), peerId);
+      for (const l of this.side.values()) l.onPeer?.(peerId);
       this.notify();
     });
 
@@ -186,9 +207,10 @@ export class Session {
   listenSide(
     onSide: ((message: SideMessage, from: string) => void) | null,
     onPeer: ((peerId: string) => void) | null = null,
+    key = "assets",
   ): void {
-    this.onSide = onSide;
-    this.onPeer = onPeer;
+    if (onSide) this.side.set(key, { onSide, onPeer });
+    else this.side.delete(key);
   }
 
   /** Send a side-channel message to one peer, or everyone. */
@@ -223,8 +245,8 @@ export class Session {
   }
 
   private receive(message: NetMessage, from: string): void {
-    if (message.t.startsWith("asset/")) {
-      this.onSide?.(message as SideMessage, from);
+    if (message.t.startsWith("asset/") || message.t.startsWith("package/")) {
+      for (const l of this.side.values()) l.onSide(message as SideMessage, from);
       return;
     }
     switch (message.t) {
@@ -233,7 +255,7 @@ export class Session {
         if (this.role === "host") this.catchUp(from, message.seq, message.tail);
         return;
       case "sync":
-        this.peers.set(from, { role: message.role, seq: message.seq });
+        this.peers.set(from, { role: message.role, seq: message.seq, ready: message.ready !== false });
         return;
       case "intent":
         if (this.role !== "host") return;
@@ -356,9 +378,12 @@ export class Session {
   /** The host has gone: tell everyone how much log we hold, wait, then pick the new host. */
   private startMigration(): void {
     this.migrating = true;
-    if (this.role !== "spectator")
-      this.transport.send({ t: "sync", seq: lastSeq(this.record), role: this.role });
+    if (this.role !== "spectator") this.transport.send(this.sync());
     this.schedule();
+  }
+
+  private sync(): NetMessage {
+    return { t: "sync", seq: lastSeq(this.record), role: this.role, ready: this.isReady(this.state) };
   }
 
   private schedule(): void {
@@ -369,10 +394,12 @@ export class Session {
   private elect(): void {
     this.timer = null;
     if (this.left || this.hostId !== null || this.role === "host") return;
+    // Only a peer holding every rules package can host; if none can, the room waits.
     const candidates = [...this.peers.entries()]
-      .filter(([, p]) => p.role === "client")
+      .filter(([, p]) => p.role === "client" && p.ready !== false)
       .map(([id, p]) => ({ id, seq: p.seq ?? 0 }));
-    if (this.role === "client") candidates.push({ id: this.selfId, seq: lastSeq(this.record) });
+    if (this.role === "client" && this.isReady(this.state))
+      candidates.push({ id: this.selfId, seq: lastSeq(this.record) });
     const best = candidates.reduce<{ id: string; seq: number } | null>(
       (a, c) => (a === null || beats(c, a) ? c : a),
       null,
@@ -387,8 +414,7 @@ export class Session {
       return;
     }
     // Waiting on someone else (or on a player to come back): ask again later.
-    if (this.role !== "spectator")
-      this.transport.send({ t: "sync", seq: lastSeq(this.record), role: this.role });
+    if (this.role !== "spectator") this.transport.send(this.sync());
     this.schedule();
   }
 

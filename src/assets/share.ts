@@ -84,6 +84,8 @@ async function receive(message: SideMessage, from: string) {
       );
     return;
   }
+  // Rules packages share this channel (src/packages/share.ts).
+  if (message.t !== "asset/part") return;
   // Only take parts for figures we asked for, and from one sender at a time.
   const { id, part, parts, data } = message;
   if (!asked.has(id) || useAssets.getState().assets[id]) return;

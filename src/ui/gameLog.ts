@@ -215,6 +215,26 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} removed terrain`;
     case "player/ready":
       return `${game.players[event.player]?.name ?? who} is ${event.ready ? "ready" : "not ready yet"}`;
+    case "game/packages": {
+      const was = before.packages;
+      const names = (ps: { name: string; version: string }[]) =>
+        ps.map((p) => `${p.name} ${p.version}`).join(", ");
+      if (event.agreed && was) {
+        const changes = describePackageChange(was.packages, event.packages);
+        return `Rules changed: ${changes || "packages updated"} (${event.agreed.length === 2 ? "both players agreed" : event.agreed.length > 2 ? "all players agreed" : "agreed"})`;
+      }
+      return event.packages.length
+        ? `Rules packages: ${names(event.packages)}`
+        : "Rules packages: none (built-in rules only)";
+    }
+    case "packages/propose":
+      return `${who} proposed changing the rules: ${describePackageChange(game.packages?.packages ?? [], event.packages) || "no change"}`;
+    case "packages/accept":
+      return `${game.players[event.player]?.name ?? who} accepted the rules change`;
+    case "packages/decline":
+      return `${game.players[event.player]?.name ?? who} declined the rules change`;
+    case "packages/withdraw":
+      return `${who} withdrew the rules change`;
     case "player/resync":
       return `${game.players[event.player]?.name ?? who} resynced from the host`;
     case "template/set": {
@@ -421,4 +441,19 @@ export function bearing(facing: number): string {
   const a = Math.atan2(dy, dx); // 0 = right, pi/2 = down the screen (+y)
   const i = Math.round(a / (Math.PI / 4));
   return names[((i % 8) + 8) % 8]!;
+}
+
+/** "Old World Factions 1.2 → 1.3, + Overwatch macros 0.1, − Old House Rules 2.0". */
+export function describePackageChange(
+  from: { id: string; name: string; version: string; hash: string }[],
+  to: { id: string; name: string; version: string; hash: string }[],
+): string {
+  const parts: string[] = [];
+  for (const p of to) {
+    const old = from.find((o) => o.id === p.id);
+    if (!old) parts.push(`+ ${p.name} ${p.version}`);
+    else if (old.hash !== p.hash) parts.push(`${p.name} ${old.version} → ${p.version}`);
+  }
+  for (const o of from) if (!to.some((p) => p.id === o.id)) parts.push(`− ${o.name} ${o.version}`);
+  return parts.join(", ");
 }

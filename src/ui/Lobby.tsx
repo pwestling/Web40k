@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM, type GameRecord } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
+import { PackageLibrary } from "./Packages";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Rejoin once per page load (effects run twice in development). */
@@ -91,6 +92,7 @@ export function Lobby() {
           ))}
         </select>
       </label>
+      <PackageLibrary system={system} />
       <button
         className="primary"
         onClick={() => {

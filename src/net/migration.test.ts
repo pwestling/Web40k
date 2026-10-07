@@ -22,7 +22,7 @@ function spied(t: Transport, got: string[]): Transport {
 
 type Net = ReturnType<typeof createLoopbackNetwork>;
 
-function join(net: Net, id: string, role: Role, record?: GameRecord, resumed = false) {
+function join(net: Net, id: string, role: Role, record?: GameRecord, resumed = false, ready = true) {
   const got: string[] = [];
   const net$: { status?: NetStatus } = {};
   const session = new Session({
@@ -33,6 +33,7 @@ function join(net: Net, id: string, role: Role, record?: GameRecord, resumed = f
     onNet: (s) => (net$.status = s),
     ...(record ? { record } : {}),
     resumed,
+    ready: () => ready,
   });
   return { session, got, net: net$ };
 }
@@ -138,6 +139,20 @@ describe("reconnect and host migration", () => {
     expect(b.net.status).toMatchObject({ role: "client", hostId: "a" });
     b.session.dispatch({ type: "dice/roll", count: 1, sides: 6 });
     expect(bytes(a.session.log)).toBe(bytes(b.session.log));
+  });
+
+  it("never hands the room to a peer missing the game's rules packages", async () => {
+    const net = createLoopbackNetwork();
+    const h = join(net, "h", "host");
+    const b = join(net, "b", "client");
+    const a = join(net, "a", "client", undefined, false, false);
+    await settle();
+    h.session.dispatch({ type: "dice/roll", count: 1, sides: 6 });
+    h.session.leave();
+    await settle();
+    // "a" has the lower id but lacks a package, so "b" takes over.
+    expect(b.net.status?.role).toBe("host");
+    expect(a.net.status).toMatchObject({ role: "client", hostId: "b" });
   });
 
   it("lets a returning host take the room back when its log is at least as long", async () => {

@@ -23,7 +23,8 @@ export type NetMessage =
   /** "I am the host": sent to each peer met, and when taking over a room. */
   | { t: "host"; seq: number; resumed?: boolean }
   /** A peer's log length and role, shared while choosing a new host. */
-  | { t: "sync"; seq: number; role: "host" | "client" | "spectator" }
+  /** `ready`: it holds every rules package the game names, so it could become host. */
+  | { t: "sync"; seq: number; role: "host" | "client" | "spectator"; ready?: boolean }
   /** A host standing down in favour of `to`. */
   | { t: "yield"; to: string }
   | SideMessage;
@@ -34,7 +35,10 @@ export type NetMessage =
  */
 export type SideMessage =
   | { t: "asset/want"; id: string }
-  | { t: "asset/part"; id: string; part: number; parts: number; data: string };
+  | { t: "asset/part"; id: string; part: number; parts: number; data: string }
+  /** Rules packages, by the SHA-256 of their bytes (src/packages/share.ts). */
+  | { t: "package/want"; hash: string }
+  | { t: "package/part"; hash: string; part: number; parts: number; data: string };
 
 /** Minimal peer-to-peer channel the session needs. Implemented over WebRTC by
  * `trysteroTransport` and in memory by `createLoopbackNetwork` for tests. */

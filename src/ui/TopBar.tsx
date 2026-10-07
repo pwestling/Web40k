@@ -4,6 +4,7 @@ import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
+import { NetBanner } from "./NetBanner";
 
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
@@ -223,6 +224,8 @@ export function TopBar() {
           </span>
         )}
       </div>
+      {/* Below the phase tracker, however the bar wraps. */}
+      <NetBanner />
     </div>
   );
 }

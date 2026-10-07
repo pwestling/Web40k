@@ -18,8 +18,9 @@ export function NetBanner() {
   const desyncSeq = net?.desync?.seq ?? null;
   const since = useMemo(() => {
     if (desyncSeq === null) return null;
-    const line = buildLog(record).find((l) => l.kind === "line" && l.seq === desyncSeq);
-    return line?.kind === "line" ? line.text : null;
+    // The newest log line up to the mismatch, or the phase header when it was a phase change.
+    const items = buildLog(record, desyncSeq).filter((l) => l.text);
+    return items.at(-1)?.text ?? null;
   }, [desyncSeq, record]);
   if (!net || mode === "hotseat") return null;
   if (net.migrating)

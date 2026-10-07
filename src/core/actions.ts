@@ -27,6 +27,8 @@ import type {
   Ruler,
   SightBand,
   Template,
+  GamePackages,
+  PackageRef,
   TerrainPiece,
   Unit,
   UnitId,
@@ -75,6 +77,13 @@ export type Intent =
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
+  /** Name the code this game runs (the host, before the battle; or after everyone agreed). */
+  | ({ type: "game/packages" } & GamePackages)
+  /** Ask the seated players to change the game's packages mid-game. */
+  | { type: "packages/propose"; packages: PackageRef[] }
+  | { type: "packages/accept" }
+  | { type: "packages/decline" }
+  | { type: "packages/withdraw" }
   | { type: "template/set"; id: string; template: Omit<Template, "by"> | null }
   /**
    * Scatter a template: roll `scatter` (a face named "hit" leaves it where it
@@ -163,6 +172,11 @@ export type GameEvent =
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/resync"; player: PlayerId }
+  | ({ type: "game/packages" } & GamePackages)
+  | { type: "packages/propose"; by: PlayerId; packages: PackageRef[] }
+  | { type: "packages/accept"; player: PlayerId }
+  | { type: "packages/decline"; player: PlayerId }
+  | { type: "packages/withdraw"; player: PlayerId }
   | { type: "template/set"; id: string; template: Template | null }
   | {
       type: "template/scatter";
@@ -362,6 +376,12 @@ export function resolveIntent(
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
     case "player/resync":
       return { type: "player/resync", player: from };
+    case "packages/propose":
+      return { type: "packages/propose", by: from, packages: intent.packages };
+    case "packages/accept":
+    case "packages/decline":
+    case "packages/withdraw":
+      return state?.packageProposal ? { type: intent.type, player: from } : null;
     case "template/set":
       return {
         type: "template/set",

@@ -133,7 +133,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
           {chargeRange !== null && (
             <span className={door.distance > chargeRange + 0.05 ? "warn" : "muted small"}>
               range {fmt(chargeRange)} ({chargeDie} + M {move})
-              {door.distance > chargeRange + 0.05 ? ": too short" : ""}
+              {door.distance > chargeRange + 0.05 ? " · too short" : " · reaches ✓"}
             </span>
           )}
         </div>
