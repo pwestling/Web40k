@@ -1,6 +1,10 @@
 import { DEFAULT_SYSTEM, type Layout, type Table } from "../core";
+import { registerSystem } from "../core/content";
 import { fsdLayout, FSD_CATEGORIES } from "./fsd/layout";
 import { fsdSample } from "./fsd/sample";
+import { oldWorld } from "./tow/system";
+import { towLayout, TOW_CATEGORIES } from "./tow/layout";
+import { towSample } from "./tow/sample";
 import { standardLayout } from "./wh40k/layout";
 import type { ImportedRoster } from "./wh40k/roster";
 import { sampleRoster } from "./wh40k/sample";
@@ -23,6 +27,9 @@ export interface SystemModule {
   dedicatedUi?: boolean;
 }
 
+// Systems defined here rather than in core/content register themselves.
+registerSystem(oldWorld);
+
 const MODULES: Record<string, SystemModule> = {
   [DEFAULT_SYSTEM]: {
     sample: sampleRoster,
@@ -33,6 +40,11 @@ const MODULES: Record<string, SystemModule> = {
     sample: fsdSample,
     layout: (t) => fsdLayout(t.width, t.depth),
     templateCategory: FSD_CATEGORIES,
+  },
+  [oldWorld.id]: {
+    sample: towSample,
+    layout: (t) => towLayout(t.width, t.depth),
+    templateCategory: TOW_CATEGORIES,
   },
 };
 

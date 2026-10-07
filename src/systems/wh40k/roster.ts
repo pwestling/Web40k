@@ -23,6 +23,8 @@ export interface ImportedModel {
   profile: { name: string; chars: Characteristics };
   /** Keys of `sheet.weapons`; a key repeats if the model carries two. */
   weapons: string[];
+  /** Its own base, when it differs from the unit's (a character on a bigger base). */
+  base?: BaseShape;
 }
 
 export interface ImportedUnit {

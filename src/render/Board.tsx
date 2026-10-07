@@ -16,6 +16,7 @@ import {
   type Ruler,
   type TerrainPiece,
   type Vec2,
+  isBlock,
 } from "../core";
 import {
   aliveModels,
@@ -37,6 +38,7 @@ import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
 import { Trails, useTween, WatchEffects } from "./Watch";
+import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
 
@@ -319,6 +321,17 @@ function Scene() {
             ...(d.fromModel ? { fromModel: d.fromModel } : {}),
             ...(toModel && toModel.id !== d.fromModel ? { toModel: toModel.id } : {}),
           },
+        });
+      } else if (d.kind === "models" && d.unitId && isBlock(useStore.getState().game.units[d.unitId])) {
+        // A regiment moves as one rigid block.
+        dispatch({
+          type: "unit/move",
+          id: d.unitId,
+          pivot: d.grab,
+          turn: 0,
+          delta: { x: dx, y: dy },
+          how: "drag",
+          distance: Math.hypot(dx, dy),
         });
       } else if (d.kind === "models") {
         dispatch({
@@ -821,7 +834,11 @@ function Scene() {
         <SightLine key={i} shooter={l.shooter} target={l.target} state={l.state} />
       ))}
 
-      {drag?.moved && dragUnit && (
+      <BlockArcs />
+      {drag?.moved && dragUnit && isBlock(dragUnit) && (
+        <BlockMoveLabel game={game} unit={dragUnit} grab={drag.grab} at={drag.to} />
+      )}
+      {drag?.moved && dragUnit && !isBlock(dragUnit) && (
         <MoveLabel game={game} unitId={dragUnit.id} positions={positions} heights={heights} at={drag.to} />
       )}
       {drag?.moved && drag.kind === "models" && !dragUnit && (

@@ -23,6 +23,7 @@ import {
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
+import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
 import { FigurePicker } from "./FigurePicker";
 import { useGame } from "./hooks";
@@ -134,7 +135,12 @@ export function UnitCard() {
   const unit = selected ? game.units[selected] : undefined;
   if (!unit) return null;
   // Systems without panels of their own get the card built from their data.
-  if (!systemModule(game.system).dedicatedUi) return <SystemUnitCard unit={unit} />;
+  if (!systemModule(game.system).dedicatedUi)
+    return (
+      <SystemUnitCard unit={unit}>
+        <RegimentPanel unit={unit} />
+      </SystemUnitCard>
+    );
   const owner = game.players[unit.owner];
   const mine = canControl(unit.owner) && scrub === null;
   const alive = aliveModels(game, unit);
