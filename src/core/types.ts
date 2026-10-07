@@ -59,8 +59,6 @@ export interface Unit {
   name: string;
   modelIds: ModelId[];
   formation: Formation;
-  /** Points at a UnitType in an imported ContentPack, when the unit has one. */
-  unitTypeId?: string;
 }
 
 export interface DiceRoll {

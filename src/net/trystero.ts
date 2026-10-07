@@ -1,7 +1,7 @@
 import { joinRoom, selfId, type JsonValue } from "@trystero-p2p/nostr";
 import type { NetMessage, Transport } from "./transport";
 
-const APP_ID = "web40k-dev";
+const APP_ID = "open-battle-dev";
 
 /**
  * WebRTC transport. Trystero finds peers through public Nostr relays (only

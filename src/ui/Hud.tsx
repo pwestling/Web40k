@@ -14,7 +14,7 @@ export function Lobby() {
 
   return (
     <div className="panel lobby">
-      <h1>Web40k</h1>
+      <h1>Open Battle</h1>
       <label>
         Name <input value={name} onChange={(e) => setName(e.target.value)} />
       </label>
