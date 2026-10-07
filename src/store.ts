@@ -85,6 +85,8 @@ interface Store {
   rangeWeapon: string | null;
   /** Director camera: follows the latest action (moves, shots, charges). */
   director: boolean;
+  /** Front, flank and rear arcs of the selected (and hovered) regiment. */
+  arcs: boolean;
   set(
     patch: Partial<
       Pick<
@@ -101,6 +103,7 @@ interface Store {
         | "ranges"
         | "rangeWeapon"
         | "director"
+        | "arcs"
       >
     >,
   ): void;
@@ -170,6 +173,7 @@ export const useStore = create<Store>((set, get) => ({
   ranges: null,
   rangeWeapon: null,
   director: false,
+  arcs: true,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),

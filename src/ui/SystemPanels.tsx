@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   actionTargets,
   findProcedure,
@@ -37,7 +37,7 @@ const fmt = (n: number, sys: GameSystem) => {
   return `${Number(n.toFixed(1))}${u === '"' ? u : ` ${u}`}`;
 };
 
-export function SystemUnitCard({ unit }: { unit: Unit }) {
+export function SystemUnitCard({ unit, children }: { unit: Unit; children?: ReactNode }) {
   const game = useGame();
   const { select, dispatch, scrub, losFrom, set } = useStore();
   const canControl = useCanControl();
@@ -73,6 +73,7 @@ export function SystemUnitCard({ unit }: { unit: Unit }) {
         {owner?.name} · {alive.length}/{all.length} {all.length === 1 ? "model" : "bases"}
         {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
       </p>
+      {children}
       {(statuses.length > 0 || flags.length > 0) && (
         <div className="chips">
           {statuses.map((s) => (

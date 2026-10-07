@@ -108,18 +108,26 @@ export function blockToLocal(frame: BlockFrame, p: Vec2): Vec2 {
   return rotate({ x: p.x - frame.front.x, y: p.y - frame.front.y }, -frame.facing);
 }
 
+/**
+ * Which way local +x points, seen from above the table: `rotate` turns the
+ * forward axis so that local +x lands on the block's left (and a positive
+ * turn swings it to the left). Left and right in this file go through this.
+ */
+export const BLOCK_LEFT = 1;
+
 export function blockCorners(frame: BlockFrame): {
   frontLeft: Vec2;
   frontRight: Vec2;
   rearLeft: Vec2;
   rearRight: Vec2;
 } {
-  const w = frame.width / 2;
+  // Seen from above, the block's local +x is on its left (see BLOCK_LEFT).
+  const w = (frame.width / 2) * BLOCK_LEFT;
   return {
-    frontLeft: blockToWorld(frame, { x: -w, y: 0 }),
-    frontRight: blockToWorld(frame, { x: w, y: 0 }),
-    rearLeft: blockToWorld(frame, { x: -w, y: -frame.depth }),
-    rearRight: blockToWorld(frame, { x: w, y: -frame.depth }),
+    frontLeft: blockToWorld(frame, { x: w, y: 0 }),
+    frontRight: blockToWorld(frame, { x: -w, y: 0 }),
+    rearLeft: blockToWorld(frame, { x: w, y: -frame.depth }),
+    rearRight: blockToWorld(frame, { x: -w, y: -frame.depth }),
   };
 }
 
@@ -142,7 +150,7 @@ export function arcOf(frame: BlockFrame, p: Vec2): Arc {
   const behind = -frame.depth - l.y;
   if (behind >= 0 && side <= behind) return "rear";
   if (side <= 0) return "front";
-  return l.x < 0 ? "left" : "right";
+  return l.x * BLOCK_LEFT > 0 ? "left" : "right";
 }
 
 /**
@@ -211,7 +219,8 @@ export function forwardMove(frame: BlockFrame, unitId: UnitId, distance: number)
 /**
  * A wheel: the block swings around one front corner, `angle` radians
  * (positive towards its right, pivoting on the right corner). It costs the
- * distance the outside front corner travels.
+ * distance the outside front corner travels. A positive turn in table space
+ * swings to the left, hence the sign flip.
  */
 export function wheelMove(frame: BlockFrame, unitId: UnitId, angle: number): UnitMove {
   const c = blockCorners(frame);
@@ -220,7 +229,7 @@ export function wheelMove(frame: BlockFrame, unitId: UnitId, angle: number): Uni
     type: "unit/move",
     id: unitId,
     pivot,
-    turn: angle,
+    turn: -angle,
     delta: { x: 0, y: 0 },
     how: "wheel",
     distance: frame.width * Math.abs(angle),

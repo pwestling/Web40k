@@ -820,4 +820,39 @@ details p {
   gap: 4px 10px;
   align-items: center;
   margin: 4px 0;
+
+/* Regiment blocks: the manoeuvre panel and arc labels. */
+.regiment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+  padding-top: 6px;
+  border-top: 1px solid #2d3340;
+}
+.regiment h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.regiment p {
+  margin: 0;
+}
+.regiment .row {
+  align-items: center;
+  flex-wrap: wrap;
+}
+input.frontage {
+  width: 4em;
+}
+.small {
+  font-size: 0.8rem;
+}
+.arc-label {
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: #e5e7eb;
+  text-shadow: 0 1px 2px #000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }

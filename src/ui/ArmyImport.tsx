@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BaseShape, PlayerId } from "../core";
+import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { systemModule } from "../systems";
@@ -22,6 +22,21 @@ const BASES: { label: string; base: BaseShape }[] = [
     label: `${w}×${d}mm oval`,
     base: { shape: "oval", widthMm: w!, depthMm: d! } as BaseShape,
   })),
+  // Square and rectangular bases for rank-and-flank games.
+  ...[
+    [20, 20],
+    [25, 25],
+    [30, 30],
+    [40, 40],
+    [50, 50],
+    [25, 50],
+    [30, 60],
+    [50, 75],
+    [50, 100],
+  ].map(([w, d]) => ({
+    label: w === d ? `${w}mm square` : `${w}×${d}mm`,
+    base: { shape: "rect", widthMm: w!, depthMm: d! } as BaseShape,
+  })),
   ...[
     [70, 105],
     [90, 150],
@@ -43,6 +58,10 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const [roster, setRoster] = useState<ImportedRoster | null>(null);
   const [owner, setOwner] = useState<PlayerId>(players[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
+  // Rank-and-flank systems deploy units as blocks; the player picks each frontage.
+  const ranked = systemOf(game).unitShape.kind === "ranked";
+  const [files, setFiles] = useState<Record<number, number>>({});
+  const frontage = (i: number, models: number) => files[i] ?? Math.min(models, models >= 10 ? 5 : models);
 
   const load = async (file: File) => {
     setBusy(true);
@@ -56,9 +75,12 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const deploy = () => {
     if (!roster) return;
     const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
-    for (const intent of spawnIntents(game, owner, roster.units, prefix, roster.name))
-      dispatch(intent, owner);
+    const units = ranked
+      ? roster.units.map((u, i) => ({ ...u, files: frontage(i, u.models.length) }))
+      : roster.units;
+    for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
     setRoster(null);
+    setFiles({});
   };
 
   const ownerSeat = players.find((p) => p.id === owner)?.seat ?? 0;
@@ -107,6 +129,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                   <th>Unit</th>
                   <th>Models</th>
                   <th>Base</th>
+                  {ranked && <th title="Models in the front rank">Frontage</th>}
                 </tr>
               </thead>
               <tbody>
@@ -133,6 +156,24 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                         ))}
                       </select>
                     </td>
+                    {ranked && (
+                      <td>
+                        <input
+                          type="number"
+                          className="frontage"
+                          aria-label={`${u.name} frontage`}
+                          min={1}
+                          max={u.models.length}
+                          value={frontage(i, u.models.length)}
+                          onChange={(e) =>
+                            setFiles({
+                              ...files,
+                              [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
+                            })
+                          }
+                        />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

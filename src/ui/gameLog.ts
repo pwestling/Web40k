@@ -246,8 +246,23 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} attached ${unitName(event.id)} to ${unitName(event.to)}`;
     case "unit/remove":
       return `${who} removed ${unitName(event.id)}`;
-    case "unit/move":
+    case "unit/move": {
+      const name = unitName(event.id);
+      const deg = Math.round((Math.abs(event.turn) * 180) / Math.PI);
+      if (event.how === "wheel")
+        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${(event.distance ?? 0).toFixed(1)}")`;
+      if (event.how === "forward")
+        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${Math.abs(event.distance ?? 0).toFixed(1)}"`;
       return `${who} ${moveText(before, game, game.units[event.id]?.modelIds ?? [])}`;
+    }
+    case "unit/form": {
+      const name = unitName(event.id);
+      const f = event.formation;
+      if (event.how === "order")
+        return `${who} put ${name} in ${f.kind === "ranked" ? `${f.order ?? "close"} order` : "skirmish order"}`;
+      if (event.how === "turn") return `${who} turned ${name}`;
+      return `${who} reformed ${name}${f.kind === "ranked" ? ` ${f.files} wide` : ""}`;
+    }
     case "model/move":
       return `${who} ${moveText(before, game, [event.id])}`;
     case "models/move":

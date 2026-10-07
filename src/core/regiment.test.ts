@@ -75,10 +75,10 @@ describe("regiment blocks", () => {
     expect(wheel.distance).toBeCloseTo(5 * (Math.PI / 2));
     s = applyEvent(s, wheel);
     const after = blockFrame(s, s.units.u!)!;
-    // The pivot corner stays put; the block now faces its old right.
+    // The pivot corner stays put; the block now faces its old right (local -x).
     expect(blockCorners(after).frontRight.x).toBeCloseTo(pivot.x);
     expect(blockCorners(after).frontRight.y).toBeCloseTo(pivot.y);
-    expect(Math.sin(after.facing)).toBeCloseTo(1);
+    expect(Math.sin(after.facing)).toBeCloseTo(-1);
   });
 
   it("reforms to a new frontage around the same centre, casualties to the back", () => {
@@ -107,10 +107,10 @@ describe("regiment blocks", () => {
     const s = block(10, 5);
     const f = blockFrame(s, s.units.u!)!;
     expect(arcOf(f, { x: 0, y: 5 })).toBe("front");
-    // Just outside the front-right corner's 45 degree line.
-    expect(arcOf(f, { x: 4, y: 1 })).toBe("right");
+    // Just outside the front-left corner's 45 degree line (local +x is the block's left).
+    expect(arcOf(f, { x: 4, y: 1 })).toBe("left");
     expect(arcOf(f, { x: 3.4, y: 1 })).toBe("front");
-    expect(arcOf(f, { x: -6, y: -1 })).toBe("left");
+    expect(arcOf(f, { x: -6, y: -1 })).toBe("right");
     expect(arcOf(f, { x: 0, y: -6 })).toBe("rear");
   });
 });

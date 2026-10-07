@@ -1,5 +1,7 @@
 import {
   baseSizeInches,
+  blockOffsets,
+  rotate,
   type BaseShape,
   type Characteristics,
   type GameState,
@@ -14,8 +16,10 @@ import {
 export interface SpawnableUnit {
   name: string;
   sheet: UnitSheet;
-  models: { profile: { name: string; chars: Characteristics }; weapons: string[] }[];
+  models: { profile: { name: string; chars: Characteristics }; weapons: string[]; base?: BaseShape }[];
   base: BaseShape;
+  /** Deploy as a ranked block this many models wide (rank-and-flank games). */
+  files?: number;
 }
 
 const GAP = 0.6;
@@ -44,6 +48,7 @@ export function spawnIntents(
     });
 
   return units.map((u, ui) => {
+    if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, hx, hy, sign, army);
     const size = baseSizeInches(u.base);
     const step = Math.max(size.width, size.depth) + GAP;
     const perRow = Math.max(1, Math.min(u.models.length, 5));
@@ -79,6 +84,61 @@ export function spawnIntents(
     };
     return { type: "unit/add", unit, models } satisfies Intent;
   });
+}
+
+/**
+ * A ranked block `files` wide, front rank towards the enemy, in the first
+ * clear spot from the owner's table edge. Models keep their order, so
+ * characters and command models listed first stand in the front rank.
+ */
+function blockIntent(
+  u: SpawnableUnit,
+  files: number,
+  owner: PlayerId,
+  seat: number,
+  unitId: string,
+  taken: { x: number; y: number; r: number }[],
+  hx: number,
+  hy: number,
+  sign: number,
+  army?: string,
+): Intent {
+  const bases = u.models.map((m) => m.base ?? u.base);
+  const f = Math.max(1, Math.min(Math.floor(files), bases.length));
+  const offsets = blockOffsets(bases, f);
+  const sizes = bases.map(baseSizeInches);
+  const width = Math.max(...offsets.map((o, i) => Math.abs(o.x) + sizes[i]!.width / 2)) * 2;
+  const depth = Math.max(...offsets.map((o, i) => -o.y + sizes[i]!.depth / 2));
+  const spot = findSpot(taken, width, depth, hx, hy, sign);
+  // Seat 0 sits on the +y edge and faces -y (facing pi); seat 1 the other way.
+  const facing = seat === 0 ? Math.PI : 0;
+  const back = rotate({ x: 0, y: depth / 2 }, facing);
+  const front = { x: spot.x + back.x, y: spot.y + back.y };
+  const models: Model[] = u.models.map((m, i) => {
+    const o = rotate(offsets[i]!, facing);
+    const size = sizes[i]!;
+    taken.push({ x: front.x + o.x, y: front.y + o.y, r: Math.max(size.width, size.depth) / 2 });
+    return {
+      id: `${unitId}-${i}`,
+      owner,
+      label: m.profile.name,
+      position: { x: front.x + o.x, y: front.y + o.y },
+      facing,
+      base: bases[i]!,
+      profile: m.profile,
+      weapons: m.weapons,
+    };
+  });
+  const unit: Unit = {
+    id: unitId,
+    owner,
+    name: u.name,
+    modelIds: [],
+    formation: { kind: "ranked", files: f, order: "close" },
+    sheet: u.sheet,
+    ...(army ? { army } : {}),
+  };
+  return { type: "unit/add", unit, models } satisfies Intent;
 }
 
 /** Scan from the back edge inwards, left to right, for an empty rectangle. */
