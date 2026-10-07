@@ -2,7 +2,16 @@ import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
 import { Color, type Group } from "three";
-import { baseSizeInches, modelHeight, type GameState, type Model, type Vec2 } from "../core";
+import {
+  applyEvent,
+  baseSizeInches,
+  modelHeight,
+  undoneSeqs,
+  type GameRecord,
+  type GameState,
+  type Model,
+  type Vec2,
+} from "../core";
 
 /**
  * PX-3d: slain models tip over where they stood, lie still a moment, then
@@ -48,6 +57,28 @@ export function slotOf(game: GameState, model: Model): Vec2 {
   return pileSlot(game, model.owner, Math.max(0, i));
 }
 
+/**
+ * The battle round each model was slain in, read back from the log up to
+ * `upto` (undone events skipped). Only worked out when a pile's list is opened.
+ */
+export function roundsLost(record: GameRecord, upto: number): Map<string, number> {
+  const undone = undoneSeqs(record, upto);
+  const lost = new Map<string, number>();
+  let state = record.initial;
+  for (const { seq, event } of record.events) {
+    if (seq > upto) break;
+    if (undone.has(seq)) continue;
+    const before = state.models;
+    state = applyEvent(state, event);
+    if (state.models === before) continue;
+    for (const m of Object.values(state.models)) {
+      if (m.destroyed && !before[m.id]?.destroyed) lost.set(m.id, state.turn.round);
+      else if (!m.destroyed) lost.delete(m.id);
+    }
+  }
+  return lost;
+}
+
 const faded = (c: string) => `#${new Color(c).lerp(new Color("#52525b"), 0.45).getHexString()}`;
 
 /** A stand-in figure on its base, standing up along +y from its base centre. */
@@ -75,12 +106,31 @@ function Figure({ model, color }: { model: Model; color: string }) {
 }
 
 /** Each player's pile: the slain lying in rows, "14 models · 210 pts" over it, click for the list. */
-export function CasualtyPiles({ game, arriving }: { game: GameState; arriving: ReadonlySet<string> }) {
+export function CasualtyPiles({
+  game,
+  record,
+  upto,
+  arriving,
+}: {
+  game: GameState;
+  record: GameRecord;
+  /** The last event shown. */
+  upto: number;
+  arriving: ReadonlySet<string>;
+}) {
   const owners = Object.values(game.players).filter((p) => p.seat !== undefined);
   return (
     <>
       {owners.map((p) => (
-        <Pile key={p.id} game={game} owner={p.id} color={p.color} arriving={arriving} />
+        <Pile
+          key={p.id}
+          game={game}
+          record={record}
+          upto={upto}
+          owner={p.id}
+          color={p.color}
+          arriving={arriving}
+        />
       ))}
     </>
   );
@@ -88,11 +138,15 @@ export function CasualtyPiles({ game, arriving }: { game: GameState; arriving: R
 
 function Pile({
   game,
+  record,
+  upto,
   owner,
   color,
   arriving,
 }: {
   game: GameState;
+  record: GameRecord;
+  upto: number;
   owner: string;
   color: string;
   arriving: ReadonlySet<string>;
@@ -102,15 +156,31 @@ function Pile({
   const tint = useMemo(() => faded(color), [color]);
   const summary = useMemo(() => {
     let pts = 0;
-    const units = new Map<string, number>();
+    for (const m of dead) {
+      const u = m.unitId ? game.units[m.unitId] : undefined;
+      if (u) pts += (u.sheet?.points ?? 0) / Math.max(1, u.modelIds.length);
+    }
+    return { pts: Math.round(pts) };
+  }, [dead, game.units]);
+  // Which units, how many, and in which rounds: read from the log only while the list is open.
+  const units = useMemo(() => {
+    if (!open) return [];
+    const lost = roundsLost(record, upto);
+    const by = new Map<string, { id: string; name: string; n: number; rounds: Set<number> }>();
     for (const m of dead) {
       const u = m.unitId ? game.units[m.unitId] : undefined;
       if (!u) continue;
-      units.set(u.name, (units.get(u.name) ?? 0) + 1);
-      pts += (u.sheet?.points ?? 0) / Math.max(1, u.modelIds.length);
+      const row = by.get(u.id) ?? { id: u.id, name: u.name, n: 0, rounds: new Set<number>() };
+      row.n++;
+      const r = lost.get(m.id);
+      if (r !== undefined) row.rounds.add(r);
+      by.set(u.id, row);
     }
-    return { pts: Math.round(pts), units: [...units] };
-  }, [dead, game.units]);
+    return [...by.values()].map((row) => ({
+      ...row,
+      when: [...row.rounds].sort((a, b) => a - b),
+    }));
+  }, [open, record, upto, dead, game.units]);
   if (!dead.length) return null;
   const side = sideOf(game, owner);
   const label = pileSlot(game, owner, 0);
@@ -136,9 +206,15 @@ function Pile({
         </button>
         {open && (
           <ul>
-            {summary.units.map(([name, n]) => (
-              <li key={name}>
-                {name} × {n}
+            {units.map((u) => (
+              <li key={u.id}>
+                {u.name} × {u.n}
+                {u.when.length > 0 && (
+                  <span className="muted">
+                    {" "}
+                    · round{u.when.length > 1 ? "s" : ""} {u.when.join(", ")}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

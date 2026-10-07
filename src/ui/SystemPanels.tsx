@@ -24,6 +24,7 @@ import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
+import { useCharged } from "../render/charges";
 
 /**
  * Panels for any game system, built from its data: a unit card with the
@@ -119,6 +120,9 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const weapons = Object.values(unit.sheet?.weapons ?? {});
   const first = alive[0] ?? all[0];
   const raw = readCharacteristics(system, "model", first?.profile?.chars);
+  // A charge that struck home this round stays on the card with its distance (PX-3c).
+  const charged = useCharged(unit.id);
+  const chargedText = charged !== null ? `Charged ${fmt(charged / scale, system)}` : null;
 
   return (
     <div className="panel unitcard">
@@ -132,7 +136,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       </p>
       {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
       {children}
-      {(statuses.length > 0 || flags.length > 0) && (
+      {(statuses.length > 0 || flags.length > 0 || chargedText) && (
         <div className="chips">
           {statuses.map((s) => (
             <button
@@ -144,14 +148,17 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                 dispatch({ type: "unit/status", id: unit.id, key: s.id, value: null }, unit.owner)
               }
             >
-              {s.name}
+              {s.id === "charged" && chargedText ? chargedText : s.name}
             </button>
           ))}
           {flags.map((f) => (
             <span key={f} className="chip on">
-              {f === "reserves" ? "In reserve" : f}
+              {f === "reserves" ? "In reserve" : f === "charged" && chargedText ? chargedText : f}
             </span>
           ))}
+          {chargedText && !statuses.some((s) => s.id === "charged") && !flags.includes("charged") && (
+            <span className="chip on charged">{chargedText}</span>
+          )}
         </div>
       )}
       {allowance !== null && (

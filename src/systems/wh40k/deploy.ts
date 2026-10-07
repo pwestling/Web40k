@@ -10,6 +10,7 @@ import {
   type PlayerId,
   type Unit,
   type UnitSheet,
+  type Vec2,
 } from "../../core";
 
 /** What the importer produces for one unit (see roster.ts). */
@@ -43,6 +44,7 @@ export function spawnIntents(
   const sign = seat === 0 ? 1 : -1;
   const hx = state.table.width / 2;
   const hy = state.table.depth / 2;
+  const zone = state.zones.find((z) => z.seat === seat)?.points;
   const taken: { x: number; y: number; r: number }[] = Object.values(state.models)
     .filter((m) => !m.destroyed)
     .map((m) => {
@@ -51,14 +53,16 @@ export function spawnIntents(
     });
 
   return units.map((u, ui) => {
-    if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, hx, hy, sign, army);
+    // Spread across the zone: each unit looks first at its own share of the width.
+    const where: Where = { hx, hy, sign, zone, prefer: (ui + 0.5) / units.length };
+    if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, where, army);
     const size = baseSizeInches(u.base);
     const step = Math.max(size.width, size.depth) + GAP;
     const perRow = Math.max(1, Math.min(u.models.length, 5));
     const rows = Math.ceil(u.models.length / perRow);
     const blockW = perRow * step;
     const blockD = rows * step;
-    const spot = findSpot(taken, blockW, blockD, hx, hy, sign);
+    const spot = findSpot(taken, blockW, blockD, where);
     const unitId = `${idPrefix}-${ui}`;
     const models: Model[] = u.models.map((m, i) => {
       const x = spot.x - blockW / 2 + step * ((i % perRow) + 0.5);
@@ -101,9 +105,7 @@ function blockIntent(
   seat: number,
   unitId: string,
   taken: { x: number; y: number; r: number }[],
-  hx: number,
-  hy: number,
-  sign: number,
+  where: Where,
   army?: string,
 ): Intent {
   const bases = u.models.map((m) => m.base ?? u.base);
@@ -113,7 +115,7 @@ function blockIntent(
   const width = Math.max(...offsets.map((o, i) => Math.abs(o.x) + sizes[i]!.width / 2)) * 2;
   const depth = Math.max(...offsets.map((o, i) => -o.y + sizes[i]!.depth / 2));
   // Blocks start a few inches in from the edge with room between them to wheel.
-  const spot = findSpot(taken, width, depth, hx, hy, sign, BLOCK_INSET, BLOCK_GAP);
+  const spot = findSpot(taken, width, depth, where, BLOCK_INSET, BLOCK_GAP);
   // Seat 0 sits on the +y edge and faces -y (facing pi); seat 1 the other way.
   const facing = seat === 0 ? Math.PI : 0;
   const back = rotate({ x: 0, y: depth / 2 }, facing);
@@ -145,25 +147,72 @@ function blockIntent(
   return { type: "unit/add", unit, models } satisfies Intent;
 }
 
-/** Scan from the back edge inwards, left to right, for an empty rectangle. */
+/**
+ * Scan from the back edge inwards, left to right, for an empty rectangle:
+ * inside the deployment zone when there is one and the unit fits in it,
+ * else anywhere on the owner's half.
+ */
 function findSpot(
   taken: { x: number; y: number; r: number }[],
   w: number,
   d: number,
-  hx: number,
-  hy: number,
-  sign: number,
+  { hx, hy, sign, zone, prefer }: Where,
   inset = 0.5,
   gap = GAP / 2,
 ): { x: number; y: number } {
-  for (let depth = d / 2 + inset; depth < hy; depth += 1) {
-    for (let x = -hx + w / 2 + inset; x <= hx - w / 2 - inset; x += 1) {
-      const y = sign * (hy - depth);
-      const clear = taken.every(
-        (t) => Math.abs(t.x - x) > w / 2 + t.r + gap || Math.abs(t.y - y) > d / 2 + t.r + gap,
+  // Across a row, nearest the preferred spot first.
+  const across = (lo: number, hi: number, step: number) => {
+    const xs: number[] = [];
+    for (let x = lo; x <= hi; x += step) xs.push(x);
+    const want = lo + (hi - lo) * prefer;
+    return xs.sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+  };
+  const clear = (x: number, y: number) =>
+    taken.every((t) => Math.abs(t.x - x) > w / 2 + t.r + gap || Math.abs(t.y - y) > d / 2 + t.r + gap);
+  if (zone && zone.length >= 3) {
+    const xs = zone.map((p) => p.x);
+    const ys = zone.map((p) => p.y);
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    // Corners and edge midpoints, kept a little in from the zone's line.
+    const fits = (x: number, y: number) => {
+      const a = w / 2 + 0.1;
+      const b = d / 2 + 0.1;
+      return [-1, 0, 1].every((i) =>
+        [-1, 0, 1].every((j) => insidePolygon({ x: x + i * a, y: y + j * b }, zone)),
       );
-      if (clear) return { x, y };
+    };
+    // From the zone's edge-most row inwards.
+    for (let k = d / 2 + inset; k <= y1 - y0 - d / 2; k += 0.5) {
+      const y = sign > 0 ? y1 - k : y0 + k;
+      for (const x of across(x0 + w / 2 + inset, x1 - w / 2 - inset, 0.5))
+        if (fits(x, y) && clear(x, y)) return { x, y };
+    }
+  }
+  for (let depth = d / 2 + inset; depth < hy; depth += 1) {
+    for (const x of across(-hx + w / 2 + inset, hx - w / 2 - inset, 1)) {
+      const y = sign * (hy - depth);
+      if (clear(x, y)) return { x, y };
     }
   }
   return { x: 0, y: sign * (hy - d / 2) };
+}
+
+/** Where a unit may go: the table's half-size, the owner's side and zone, and a preferred share (0-1) of the width. */
+interface Where {
+  hx: number;
+  hy: number;
+  sign: number;
+  zone: Vec2[] | undefined;
+  prefer: number;
+}
+
+/** Whether a point lies inside a polygon (even-odd rule). */
+function insidePolygon(p: Vec2, poly: Vec2[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i]!;
+    const b = poly[j]!;
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
 }

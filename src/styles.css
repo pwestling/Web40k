@@ -520,8 +520,22 @@ details p {
     transform: scale(1.08);
   }
 }
+/* A charge roll that only just makes it, or only just misses (PX-3e). */
+.charge .tense {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: #fde68a;
+  background: rgb(180 83 9 / 90%);
+  animation: ruler-near 0.6s ease-in-out infinite alternate;
+}
+.chip.charged {
+  border-color: #b45309;
+  color: #fde68a;
+}
 @media (prefers-reduced-motion: reduce) {
-  .ruler.near {
+  .ruler.near,
+  .charge .tense {
     animation: none;
   }
 }
@@ -1785,7 +1799,7 @@ button.rare-star:hover {
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
-  animation: charge-stamp 2.6s ease-out forwards;
+  animation: charge-stamp 2.6s ease-out both;
 }
 .charge-stamp.short {
   border-color: #71717a;

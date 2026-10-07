@@ -76,6 +76,8 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const chargeDie = charge ? (chargeDice.keep === "highest" ? charge.keep : charge.total) : 0;
   const chargeRange = charge ? chargeDie + move : null;
   const short = !!door && chargeRange !== null && door.distance > chargeRange + 0.05;
+  // Within half an inch either way, the roll against the distance gets tense (PX-3e).
+  const tense = !!door && chargeRange !== null && Math.abs(door.distance - chargeRange) <= 0.5;
   const roll = (label: RollKind) => {
     setTyped(null);
     if (label === "charge roll") {
@@ -138,8 +140,9 @@ export function ChargePanel({ unit }: { unit: Unit }) {
             Charge into its {ARC_EDGE[door.arc]} ({fmt(door.distance)})
           </button>
           {chargeRange !== null && (
-            <span className={short ? "warn" : "muted small"}>
-              range {fmt(chargeRange)} ({chargeDie} + M {move}){short ? " · too short" : " · reaches ✓"}
+            <span className={`${short ? "warn" : "muted small"}${tense ? " tense" : ""}`}>
+              needs {fmt(door.distance)} of {fmt(chargeRange)} ({chargeDie} + M {move})
+              {short ? " · too short" : " · reaches ✓"}
             </span>
           )}
         </div>

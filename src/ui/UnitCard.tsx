@@ -1,4 +1,5 @@
 import { CodeActions } from "./CodeActions";
+import { useCharged } from "../render/charges";
 import {
   levelsAt,
   maxWounds,
@@ -136,6 +137,7 @@ export function UnitCard() {
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
   const stars = useRareStars(selected);
+  const charged = useCharged(selected ?? "");
   if (!unit) return null;
   // Systems without panels of their own get the card built from their data.
   if (!systemModule(game.system).dedicatedUi)
@@ -207,6 +209,7 @@ export function UnitCard() {
         ))}
         {typeof status.advance === "number" && <span className="chip on">Advanced +{status.advance}"</span>}
         {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
+        {charged !== null && <span className="chip on charged">Charged {charged.toFixed(1)}"</span>}
       </div>
       <CoreAbilities unit={unit} />
       <CodeActions unit={unit} />

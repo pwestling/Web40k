@@ -8,6 +8,7 @@ import {
   type AttackState,
   baseSizeInches,
   phaseName,
+  stateAt,
   type GameEvent,
   type GameState,
   type Model,
@@ -15,6 +16,7 @@ import {
 } from "../core";
 import { useHold } from "../ui/hold";
 import { jolt, pickUp, setDown } from "./feel";
+import { markCharge } from "./charges";
 import { CasualtyPiles, slotOf, Topple, TOPPLE_MS } from "./Casualties";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
@@ -29,6 +31,9 @@ import { useGame } from "../ui/hooks";
  */
 
 const TWEEN_MS = 350;
+/** A charge move is quicker and speeds up into contact, then holds a moment before the blow lands (PX-3c). */
+export const CHARGE_TWEEN_MS = 250;
+const HIT_STOP_MS = 60;
 /** How long a trail takes to fade once another unit moves. */
 const TRAIL_FADE_MS = 700;
 const EFFECT_MS = 1600;
@@ -69,7 +74,7 @@ export function useTween(
   }, [positions, heights, dragging]);
   const seen = useRef<Input>(initial);
   const drawn = useRef<Frame>({ p: positions, z: heights });
-  const anim = useRef<{ from: Frame; start: number; moved: string[] } | null>(null);
+  const anim = useRef<{ from: Frame; start: number; moved: string[]; charge: boolean } | null>(null);
   const settleUntil = useRef(0);
   const [frame, setFrame] = useState<Frame>({ p: positions, z: heights });
   const [trails, setTrails] = useState<Trail[]>([]);
@@ -116,7 +121,7 @@ export function useTween(
           show(cur);
           setTrails([]);
         } else {
-          anim.current = { from, start: now, moved };
+          anim.current = { from, start: now, moved, charge: shownChargeHits() };
           // A move always reads as picked up, carried and set down (feel.ts).
           pickUp(moved, now, false);
           // The last move's trail stays until the next one, then fades.
@@ -142,8 +147,9 @@ export function useTween(
     }
     const a = anim.current;
     if (!a) return;
-    const t = Math.min(1, (now - a.start) / TWEEN_MS);
-    const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+    const t = Math.min(1, (now - a.start) / (a.charge ? CHARGE_TWEEN_MS : TWEEN_MS));
+    // A charge accelerates into contact; any other move eases in and out.
+    const e = a.charge ? t * t : t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
     const p: Record<string, Vec2> = {};
     const z: Record<string, number> = {};
     for (const id of Object.keys(cur.p)) {
@@ -247,7 +253,16 @@ type Effect =
   | { kind: "burst"; key: string; start: number; at: [number, number, number]; text: string }
   | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; to: Vec2; color: string }
   /** "Charged 7.2"" over a charge that struck home, or a grey "Short by 2"" (PX-3c). */
-  | { kind: "stamp"; key: string; start: number; at: [number, number, number]; text: string; fail: boolean };
+  | {
+      kind: "stamp";
+      key: string;
+      start: number;
+      /** Held back until the charge reaches contact. */
+      delay: number;
+      at: [number, number, number];
+      text: string;
+      fail: boolean;
+    };
 
 const centre = (models: Model[]): { x: number; y: number; z: number } => {
   const n = Math.max(1, models.length);
@@ -322,7 +337,8 @@ export function WatchEffects() {
       if (shownSeq !== prev.seq) setEffects((old) => (old.length ? [] : old));
       return;
     }
-    const events = record.events.filter((e) => e.seq > prev.seq && e.seq <= shownSeq).map((e) => e.event);
+    const logged = record.events.filter((e) => e.seq > prev.seq && e.seq <= shownSeq);
+    const events = logged.map((e) => e.event);
     const now = performance.now();
     const fresh: Effect[] = [];
     for (const event of events)
@@ -345,18 +361,24 @@ export function WatchEffects() {
       });
     });
     // A charge striking home: the target jolts, the camera nudges, a stamp says how far (PX-3c).
-    for (const event of events) {
+    for (const { event, seq, by } of logged) {
       const c = chargeFor(event, prev.game, game);
       if (!c) continue;
+      // The blow lands once the charge tween reaches contact and holds for a beat; a
+      // move this player dragged into place has no tween, so it lands straight away.
+      const contact = draggedHere(event, by) ? 0 : CHARGE_TWEEN_MS;
+      const hit = contact + HIT_STOP_MS;
       if (c.target) {
-        jolt(c.target.ids, c.target.dir, now + 60);
-        setTimeout(clash, 60);
-        nudge.current = { start: now + 60, x: c.target.dir.x, y: c.target.dir.y };
+        jolt(c.target.ids, c.target.dir, now + hit);
+        setTimeout(clash, hit);
+        nudge.current = { start: now + hit, x: c.target.dir.x, y: c.target.dir.y };
+        if (c.unitId) markCharge(c.unitId, { seq, round: game.turn.round, distance: c.distance });
       }
       fresh.push({
         kind: "stamp",
         key: `stamp-${nextKey.current++}`,
         start: now,
+        delay: contact,
         at: [c.at.x, c.at.z + 1.6, c.at.y],
         text: c.target ? `Charged ${c.distance.toFixed(1)}"` : `Short by ${c.gap.toFixed(1)}"`,
         fail: !c.target,
@@ -457,6 +479,7 @@ export function WatchEffects() {
             center
             zIndexRange={[9, 0]}
             className={e.fail ? "charge-stamp short" : "charge-stamp"}
+            style={{ animationDelay: `${e.delay}ms` }}
           >
             {e.text}
           </Html>
@@ -468,7 +491,7 @@ export function WatchEffects() {
           <Topple key={e.key} model={e.model} color={e.color} from={e.from} to={e.to} start={e.start} />
         ),
       )}
-      <CasualtyPiles game={game} arriving={arriving} />
+      <CasualtyPiles game={game} record={record} upto={shownSeq} arriving={arriving} />
     </>
   );
 }
@@ -587,6 +610,23 @@ function blowFrom(game: GameState, victim: Model | undefined): Vec2 | null {
   return best?.position ?? null;
 }
 
+/** Whether the newest event on show is a charge that reaches an enemy, so its tween slams home. */
+function shownChargeHits(): boolean {
+  const { record, scrub, game } = useStore.getState();
+  const held = useHold.getState().held;
+  const upto = scrub ?? (held !== null ? held - 1 : Infinity);
+  const logged = record.events.findLast((e) => e.seq <= upto);
+  if (!logged || (logged.event.type !== "unit/move" && logged.event.type !== "models/move")) return false;
+  const state = upto === Infinity ? game : stateAt(record, upto);
+  return !!chargeFor(logged.event, state, state)?.target;
+}
+
+/** A move this player made by dragging: it is already where it was dropped, with no tween. */
+function draggedHere(event: GameEvent, by: string): boolean {
+  const { scrub, mode, session } = useStore.getState();
+  return event.type === "models/move" && scrub === null && (mode === "hotseat" || by === session?.selfId);
+}
+
 const reducedMotion = () =>
   typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -600,6 +640,7 @@ export function chargeFor(
   before: GameState,
   after: GameState,
 ): {
+  unitId: string;
   at: { x: number; y: number; z: number };
   distance: number;
   gap: number;
@@ -642,11 +683,12 @@ export function chargeFor(
   }
   const at = centre(mine);
   if (!hit || !Number.isFinite(gap)) return null;
-  if (gap > 1.05) return { at, distance, gap: Math.max(0, gap - 1), target: null };
+  if (gap > 1.05) return { unitId, at, distance, gap: Math.max(0, gap - 1), target: null };
   const struck = hit.unitId ? alive(after, hit.unitId) : [hit];
   const c = centre(struck);
   const len = Math.hypot(c.x - at.x, c.y - at.y) || 1;
   return {
+    unitId,
     at,
     distance,
     gap: 0,

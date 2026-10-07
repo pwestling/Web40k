@@ -5,16 +5,19 @@ import {
   CapsuleGeometry,
   Color,
   CylinderGeometry,
+  CanvasTexture,
   Euler,
   InstancedMesh,
   Matrix4,
+  MeshBasicMaterial,
   MeshStandardMaterial,
+  PlaneGeometry,
   Quaternion,
   Vector3,
   type BufferGeometry,
 } from "three";
 import { baseSizeInches, type Model, type Vec2 } from "../core";
-import { feelActive, poseOf } from "./feel";
+import { feelActive, poseOf, type Pose } from "./feel";
 
 /** One model as drawn: where it stands and how it looks. */
 export interface ModelDraw {
@@ -57,6 +60,34 @@ const standInMaterial = {
   round: new MeshStandardMaterial({ color: "#cbd5e1" }),
 };
 const pickMaterial = new MeshStandardMaterial({ visible: false });
+
+/** A soft dark blob, darkest in the middle, fading to nothing at the rim. */
+function blobTexture(): CanvasTexture | null {
+  if (typeof document === "undefined") return null;
+  const n = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = n;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const g = ctx.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+  g.addColorStop(0, "rgba(0,0,0,1)");
+  g.addColorStop(0.55, "rgba(0,0,0,0.75)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, n, n);
+  return new CanvasTexture(canvas);
+}
+// The base's contact shadow: a flat square, laid on the table, under every base.
+const shadowPlane = new PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const shadowMaterial = new MeshBasicMaterial({
+  map: blobTexture(),
+  color: "#000000",
+  transparent: true,
+  opacity: 0.7,
+  depthWrite: false,
+  polygonOffset: true,
+  polygonOffsetFactor: -2,
+});
 
 /** Stand-ins can't be scaled from one shape (capsule ends would stretch), so they're grouped by size. */
 function standInKey(d: ModelDraw): string {
@@ -130,6 +161,18 @@ export function ModelInstances({ draws, hovered, onDown, onHover }: Props) {
   return (
     <>
       <Instances
+        geometry={shadowPlane}
+        material={shadowMaterial}
+        list={draws}
+        grounded
+        place={(d, pose) => {
+          // Stays on the table when the model is lifted, spreading a little (PX-3a).
+          const { width, depth } = baseSizeInches(d.model.base);
+          const k = 1.6 + (pose?.lift ?? 0) * 0.8;
+          return s.set(width * k, 1, depth * k);
+        }}
+      />
+      <Instances
         geometry={roundBase}
         material={baseMaterial}
         list={round}
@@ -187,21 +230,24 @@ function Instances({
   geometry,
   material,
   list,
+  grounded = false,
   castShadow = false,
   hovered,
   handlers,
   place,
 }: {
   geometry: BufferGeometry;
-  material: MeshStandardMaterial;
+  material: MeshStandardMaterial | MeshBasicMaterial;
   list: ModelDraw[];
+  /** Laid on the table: follows the model across it but not up off it. */
+  grounded?: boolean;
   castShadow?: boolean;
   /** Bases only: tint the hovered target. Colors come from the owner. */
   hovered?: string | null;
   /** Pick handlers; without them the mesh ignores the pointer. */
   handlers?: Handlers;
   /** Sets the scale `s` for one model (and may nudge the position `p`, already rotated by `q`). */
-  place: (d: ModelDraw) => Vector3;
+  place: (d: ModelDraw, pose: Pose | null) => Vector3;
 }) {
   const ref = useRef<InstancedMesh>(null);
   // Capacity in powers of two, so the mesh isn't rebuilt every time a model dies or arrives.
@@ -213,11 +259,12 @@ function Instances({
       q.setFromAxisAngle(up, d.model.facing);
       // Held, landing or settling (feel.ts): lifted, leaning, squashed.
       const pose = poseOf(d.model.id, now);
-      if (pose && (pose.tiltX || pose.tiltZ))
+      if (!grounded && pose && (pose.tiltX || pose.tiltZ))
         q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
-      p.set(d.position.x + (pose?.dx ?? 0), d.z + (pose?.lift ?? 0), d.position.y + (pose?.dy ?? 0));
-      const scale = place(d);
-      if (pose) scale.y *= pose.squash;
+      const lift = grounded ? 0.005 : (pose?.lift ?? 0);
+      p.set(d.position.x + (pose?.dx ?? 0), d.z + lift, d.position.y + (pose?.dy ?? 0));
+      const scale = place(d, pose);
+      if (pose && !grounded) scale.y *= pose.squash;
       m4.compose(p, q, scale);
       mesh.setMatrixAt(i, m4);
       if (colors && hovered !== undefined)
