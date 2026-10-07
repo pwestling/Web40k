@@ -24,6 +24,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { SystemUnitCard } from "./SystemPanels";
+import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { useGame } from "./hooks";
 
@@ -185,13 +186,14 @@ export function UnitCard() {
         {typeof status.advance === "number" && <span className="chip on">Advanced +{status.advance}"</span>}
         {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
       </div>
+      <CoreAbilities unit={unit} />
       <p className="muted">
-        {game.turn.round > 0 && allowed !== null && (
+        {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
           <span className={moved > allowed + 0.05 ? "warn" : ""}>
             Moved {moved.toFixed(1)}" of {allowed}" this phase.{" "}
           </span>
         )}
-        {mine && game.turn.round > 0 && allowed !== null && moved > allowed + 0.05 && (
+        {mine && (game.turn.round > 0 || !!status.scouting) && allowed !== null && moved > allowed + 0.05 && (
           <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
             Snap back to {allowed}"
           </button>
@@ -380,23 +382,7 @@ export function UnitCard() {
             "
           </label>
         )}
-        {mine && (
-          <select
-            value=""
-            onChange={(e) =>
-              e.target.value && dispatch({ type: "unit/attach", id: unit.id, to: e.target.value }, as)
-            }
-          >
-            <option value="">Attach to unit (leaders)…</option>
-            {Object.values(game.units)
-              .filter((u) => u.owner === unit.owner && u.id !== unit.id)
-              .map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-          </select>
-        )}
+        {mine && <AttachSelect unit={unit} />}
         {mine && (
           <button
             className="danger"

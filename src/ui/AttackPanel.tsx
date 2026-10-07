@@ -9,7 +9,9 @@ import {
   weaponReach,
   type AttackSuggestion,
 } from "../systems/wh40k/rules";
-import { useStore, type AttackDraft } from "../store";
+import { attackReminders } from "../core/content/player";
+import { useCanControl, useStore, type AttackDraft } from "../store";
+import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 
@@ -269,6 +271,12 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         </Stage>
       )}
       {attack.damage && <DamageSummary game={game} attack={attack} />}
+      {live && target && (attack.stage === "save" || attack.stage === "damage") && !attack.damage && (
+        <WoundOrder attack={attack} />
+      )}
+      {attacker && target && (
+        <Reminders items={attackReminders(game, attacker.id, target.id, spec.kind)} live={live} />
+      )}
       {canAct && (
         <div className="row">
           {attack.stage !== "done" && (
@@ -369,4 +377,67 @@ function DamageSummary({ game, attack }: { game: GameState; attack: AttackState 
       </span>
     </div>
   );
+}
+
+/**
+ * The defender declares which models take wounds first (characters last,
+ * a wounded model first). Shown before damage; anyone sees the order.
+ */
+function WoundOrder({ attack }: { attack: AttackState }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const canControl = useCanControl();
+  const target = game.units[attack.spec.targetUnitId];
+  if (!target) return null;
+  const alive = aliveModels(game, target);
+  // Attached leaders come last in the unit already; a wounded model goes first.
+  const fallback = [...alive].sort(
+    (a, b) => Number((b.woundsLost ?? 0) > 0) - Number((a.woundsLost ?? 0) > 0),
+  );
+  const chosen = attack.run?.overrides?.allocate?.order;
+  const order = chosen
+    ? [
+        ...chosen.flatMap((id) => alive.filter((m) => m.id === id)),
+        ...alive.filter((m) => !chosen.includes(m.id)),
+      ]
+    : fallback;
+  const mine = canControl(target.owner);
+  const wounded = order.findIndex((m) => (m.woundsLost ?? 0) > 0);
+  const toFront = (id: string) =>
+    dispatch(
+      { type: "attack/allocate", order: [id, ...order.map((m) => m.id).filter((x) => x !== id)] },
+      target.owner,
+    );
+  return (
+    <div className="stage wound-order">
+      <span className="label">Wounds go to</span>
+      <span className="chips">
+        {order.slice(0, 12).map((m, i) => (
+          <button
+            key={m.id}
+            className={`chip ${i === 0 ? "on" : ""}`}
+            disabled={!mine || i === 0}
+            title={mine ? "Take wounds on this model first" : undefined}
+            onClick={() => toFront(m.id)}
+          >
+            {i + 1}. {m.label}
+            {(m.woundsLost ?? 0) > 0 ? ` (${woundsLeft(m)} W left)` : ""}
+          </button>
+        ))}
+        {order.length > 12 && <span className="muted">+{order.length - 12} more</span>}
+      </span>
+      <span className="result">
+        {wounded > 0 ? (
+          <span className="warn">A model that has already lost wounds should take the next one.</span>
+        ) : mine && !chosen ? (
+          <span className="muted">Defender: click a model to put it first.</span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
+function woundsLeft(m: { woundsLost?: number; profile?: { chars: Record<string, string> } }): number {
+  const w = Number.parseInt(m.profile?.chars.W ?? "1", 10) || 1;
+  return w - (m.woundsLost ?? 0);
 }

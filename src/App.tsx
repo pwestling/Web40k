@@ -4,6 +4,7 @@ import { useStore } from "./store";
 import { AttackPanel } from "./ui/AttackPanel";
 import { Hud } from "./ui/Hud";
 import { Lobby } from "./ui/Lobby";
+import { PlayPanel } from "./ui/PlayPanel";
 import { ReactionPrompt } from "./ui/SystemPanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { RoundCard } from "./ui/RoundCard";
@@ -79,6 +80,8 @@ export function App() {
         <>
           <TopBar />
           <Hud />
+          {/* Before the right-hand panels, so CSS can shorten them while it's open. */}
+          {!editing && <PlayPanel />}
           {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           <ReplayBar />
           <RoundCard />

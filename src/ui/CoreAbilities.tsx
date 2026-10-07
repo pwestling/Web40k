@@ -1,0 +1,134 @@
+import { lookupRules, unitView } from "../core/content/runtime";
+import { systemOf } from "../core/content/turn";
+import type { GameState, Unit } from "../core";
+import { useCanControl, useStore } from "../store";
+import { aliveModels, unitDistance } from "../systems/wh40k/rules";
+import { useGame } from "./hooks";
+
+/** Rule ids the unit's imported abilities bound to, with their parameters. */
+function boundRules(game: GameState, unit: Unit) {
+  const system = systemOf(game);
+  const view = unitView(game, system, unit);
+  return lookupRules(system, [...view.rules, ...(view.models[0]?.rules ?? [])]);
+}
+
+/**
+ * One line of buttons for the core abilities the engine knows from the
+ * imported roster: reserves for deep strike, the scout move before the
+ * battle, and which abilities apply on their own.
+ */
+export function CoreAbilities({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const canControl = useCanControl();
+  const mine = canControl(unit.owner);
+  const rules = boundRules(game, unit);
+  const has = (id: string) => rules.find((r) => r.def.id === id);
+  const status = unit.status ?? {};
+  const deploying = game.turn.round === 0;
+  const scouts = has("scouts");
+  const scoutInches = Number(scouts?.param.x ?? 6);
+  const enemies = Object.values(game.units).filter((u) => u.owner !== unit.owner);
+  const nearest = status.arrived
+    ? unitDistance(
+        aliveModels(game, unit),
+        enemies.flatMap((u) => aliveModels(game, u)),
+      )
+    : Infinity;
+  const automatic = [
+    ...new Set(
+      rules
+        .filter((r) => r.def.effects.some((e) => e.when.event !== "action.declared"))
+        .map((r) => r.def.name),
+    ),
+  ];
+  if (!has("deepStrike") && !scouts && !automatic.length) return null;
+  return (
+    <div className="core-abilities small">
+      {has("deepStrike") && mine && deploying && !status.reserves && (
+        <button
+          className="small"
+          onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: true }, unit.owner)}
+        >
+          Deep Strike: set up in reserves
+        </button>
+      )}
+      {status.reserves && (
+        <span>
+          In reserves.{" "}
+          {mine && !deploying && (
+            <button
+              className="small"
+              title='Then drag the unit onto the table, more than 9" from every enemy model'
+              onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: false }, unit.owner)}
+            >
+              Arrive
+            </button>
+          )}
+        </span>
+      )}
+      {status.arrived && (
+        <span className={nearest <= 9 ? "warn" : "muted"}>
+          Arrived from reserves:{" "}
+          {nearest <= 9
+            ? `within 9" of an enemy (${nearest.toFixed(1)}")`
+            : 'set up more than 9" from enemies'}
+          .
+        </span>
+      )}
+      {scouts && mine && deploying && !status.scouting && (
+        <button
+          className="small"
+          title="Measured from where the unit stands now"
+          onClick={() =>
+            dispatch(
+              { type: "unit/specialMove", id: unit.id, inches: scoutInches, flag: "scouting" },
+              unit.owner,
+            )
+          }
+        >
+          Scout move ({scoutInches}")
+        </button>
+      )}
+      {automatic.length > 0 && <span className="muted">Automatic: {automatic.join(", ")}</span>}
+    </div>
+  );
+}
+
+/** Unit names listed by a Leader ability ("can be attached to the following units: ..."). */
+export function leaderOf(unit: Unit): string[] {
+  const text = unit.sheet?.abilities.find((a) => /^leader\b/i.test(a.name))?.text ?? "";
+  const list = text.split(/following units?:/i)[1];
+  if (!list) return [];
+  return list
+    .split(/[■•\n,]/)
+    .map((s) => s.replace(/\*/g, "").trim())
+    .filter((s) => s && s.length < 60 && !/^this model/i.test(s));
+}
+
+/** Attach a leader to a unit, suggesting the units its Leader ability names. */
+export function AttachSelect({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const names = leaderOf(unit).map((n) => n.toLowerCase());
+  const fits = (u: Unit) => names.some((n) => u.name.toLowerCase().startsWith(n));
+  const own = Object.values(game.units)
+    .filter((u) => u.owner === unit.owner && u.id !== unit.id)
+    .sort((a, b) => Number(fits(b)) - Number(fits(a)));
+  return (
+    <select
+      value=""
+      onChange={(e) =>
+        e.target.value && dispatch({ type: "unit/attach", id: unit.id, to: e.target.value }, unit.owner)
+      }
+    >
+      <option value="">{names.length ? "Lead a unit (Leader)…" : "Attach to unit (leaders)…"}</option>
+      {own.map((u) => (
+        <option key={u.id} value={u.id}>
+          {u.name}
+          {names.length ? (fits(u) ? " ★ can lead" : "") : ""}
+        </option>
+      ))}
+    </select>
+  );
+}

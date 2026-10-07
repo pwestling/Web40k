@@ -751,3 +751,73 @@ details p {
   grid-column: 1 / -1;
   font-size: 0.8rem;
 }
+
+/* Stratagems and ability reminders (PlayPanel). */
+.play {
+  right: 12px;
+  bottom: 60px;
+  width: 400px;
+  max-height: 34vh;
+  overflow-y: auto;
+  gap: 6px;
+  z-index: 19;
+}
+.play.collapsed {
+  width: auto;
+}
+.play:not(.collapsed) ~ .unitcard,
+.play:not(.collapsed) ~ .attack {
+  max-height: calc(66vh - 136px);
+}
+.play .stratagems {
+  border-top: 1px solid #2d3340;
+  padding-top: 4px;
+}
+.play .stratagems p {
+  margin: 2px 0;
+}
+.play .stratagem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0;
+}
+.play .stratagem.row {
+  flex-direction: row;
+  align-items: center;
+}
+.play input[type="number"] {
+  width: 3em;
+}
+.reminders {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+.reminders li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.reminders li.applied {
+  opacity: 0.6;
+}
+.reminders details p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+.wound-order .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.core-abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+  margin: 4px 0;
+}
