@@ -1,13 +1,14 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plane, Raycaster, Vector2, Vector3, type Object3D } from "three";
+import { CanvasTexture, Plane, Raycaster, RepeatWrapping, Vector2, Vector3, type Object3D } from "three";
 import {
   baseSizeInches,
   maxWounds,
   modelHeight,
   settleZ,
   standInHeight,
+  footprintVisibility,
   type GameState,
   type Model,
   type TerrainPiece,
@@ -44,6 +45,7 @@ export function Board() {
       <ambientLight intensity={0.7} />
       <directionalLight position={[20, 40, 10]} intensity={1.3} castShadow shadow-mapSize={[2048, 2048]} />
       <Cameras />
+      <CameraFit />
       <Scene />
       <FigureDrop />
       {import.meta.env.DEV && <PerfProbe />}
@@ -136,6 +138,46 @@ function Cameras() {
   // The tiny z offset keeps the camera's up vector defined and puts the
   // player's own edge at the bottom of the screen.
   return <OrthographicCamera key={reset} makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
+}
+
+/**
+ * Centre the table in the space between the side panels rather than the
+ * whole window, by shifting the camera's view. Measures the panels a few
+ * times a second, so it follows them opening, closing and resizing.
+ */
+function CameraFit() {
+  const camera = useThree((s) => s.camera);
+  const size = useThree((s) => s.size);
+  const view = useStore((s) => s.view);
+  const [shift, setShift] = useState(0);
+  useEffect(() => {
+    if (view === "eye") return;
+    const measure = () => {
+      const left = document.querySelector(".hud")?.getBoundingClientRect();
+      const right = document.querySelector(".unitcard, .attack, .terrainpanel")?.getBoundingClientRect();
+      const l = left ? left.right : 0;
+      const r = right ? size.width - right.left : 0;
+      setShift(Math.round((l - r) / 2));
+    };
+    measure();
+    const t = setInterval(measure, 300);
+    return () => clearInterval(t);
+  }, [view, size.width]);
+  useEffect(() => {
+    const cam = camera as Object3D & {
+      setViewOffset?: (fw: number, fh: number, x: number, y: number, w: number, h: number) => void;
+      clearViewOffset?: () => void;
+      updateProjectionMatrix?: () => void;
+    };
+    if (!cam.setViewOffset || view === "eye" || !shift) return;
+    cam.setViewOffset(size.width, size.height, -shift, 0, size.width, size.height);
+    cam.updateProjectionMatrix?.();
+    return () => {
+      cam.clearViewOffset?.();
+      cam.updateProjectionMatrix?.();
+    };
+  }, [camera, size, shift, view]);
+  return null;
 }
 
 type Drag = {
@@ -395,6 +437,42 @@ function Scene() {
     return { sightLines: lines, sightLabels: labels };
   }, [game, draft, losFrom, hoverUnit]);
 
+  // Unit labels, nudged upwards where they would overlap a neighbour's.
+  const unitLabels = useMemo(() => {
+    const sightOf = new Map(sightLabels.map((l) => [l.unitId, l]));
+    const out: {
+      unitId: string;
+      x: number;
+      y: number;
+      z: number;
+      name?: string;
+      color: string;
+      sight?: (typeof sightLabels)[number];
+    }[] = [];
+    if (view === "eye") return out;
+    for (const u of Object.values(game.units)) {
+      const models = aliveModels(game, u);
+      const sight = sightOf.get(u.id);
+      if (!models.length || (!plates && !sight)) continue;
+      const n = models.length;
+      const x = models.reduce((a, m) => a + positions[m.id]!.x, 0) / n;
+      const y = models.reduce((a, m) => a + positions[m.id]!.y, 0) / n;
+      let z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m))) + 1;
+      while (out.some((o) => Math.abs(o.x - x) < 5 && Math.abs(o.y - y) < 3 && Math.abs(o.z - z) < 1.6))
+        z += 1.6;
+      out.push({
+        unitId: u.id,
+        x,
+        y,
+        z,
+        ...(plates ? { name: u.name } : {}),
+        color: game.players[u.owner]?.color ?? "#999",
+        ...(sight ? { sight } : {}),
+      });
+    }
+    return out;
+  }, [game, positions, heights, plates, sightLabels, view]);
+
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
 
@@ -448,6 +526,7 @@ function Scene() {
           xray={xray}
           editable={canEdit}
           selected={editing && t.id === selectedTerrain}
+          footprint={game.settings.los === "footprint" ? footprintVisibility(t) : null}
           standIn={
             (t.sight ?? game.settings.los) === "heights" && (xray || editing) ? standInHeight(t) : null
           }
@@ -509,29 +588,20 @@ function Scene() {
       })}
 
       <Miniatures models={onTable} positions={positions} heights={heights} />
-      {/* One name plate per unit, and an outline around the unit under the mouse. */}
-      {plates &&
-        view !== "eye" &&
-        Object.values(game.units).map((u) => {
-          const models = aliveModels(game, u);
-          if (!models.length) return null;
-          const n = models.length;
-          const x = models.reduce((a, m) => a + positions[m.id]!.x, 0) / n;
-          const y = models.reduce((a, m) => a + positions[m.id]!.y, 0) / n;
-          const z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m)));
-          return (
-            <Html
-              zIndexRange={LABEL_Z}
-              key={`plate-${u.id}`}
-              position={[x, z + (losFrom ? 2.4 : 1), y]}
-              center
-              className="plate"
-              style={{ borderColor: game.players[u.owner]?.color ?? "#999" }}
-            >
-              {u.name}
-            </Html>
-          );
-        })}
+      {/* One label per unit: its name plate, with the line of sight answer as a second line. */}
+      {unitLabels.map((l) => (
+        <Html
+          zIndexRange={LABEL_Z}
+          key={`plate-${l.unitId}`}
+          position={[l.x, l.z, l.y]}
+          center
+          className="plate"
+          style={{ borderColor: l.color }}
+        >
+          {l.name && <div>{l.name}</div>}
+          {l.sight && <div className={`sightlabel ${l.sight.state}`}>{l.sight.text}</div>}
+        </Html>
+      ))}
       {hoverUnit &&
         game.units[hoverUnit] &&
         aliveModels(game, game.units[hoverUnit]).map((m) => (
@@ -576,17 +646,6 @@ function Scene() {
 
       {sightLines.map((l, i) => (
         <SightLine key={i} shooter={l.shooter} target={l.target} state={l.state} />
-      ))}
-      {sightLabels.map((l) => (
-        <Html
-          zIndexRange={LABEL_Z}
-          key={l.unitId}
-          position={[l.at.x, l.z + 1.2, l.at.y]}
-          center
-          className={`sightlabel ${l.state}`}
-        >
-          {l.text}
-        </Html>
       ))}
 
       {drag?.moved && dragUnit && (
@@ -722,6 +781,76 @@ function ZoneShape({ points, color }: { points: Vec2[]; color: string }) {
   );
 }
 
+/** Diagonal stripes, for obscuring footprints. */
+let hatch: CanvasTexture | null = null;
+function hatchTexture(): CanvasTexture {
+  if (hatch) return hatch;
+  const c = document.createElement("canvas");
+  c.width = c.height = 32;
+  const g = c.getContext("2d")!;
+  g.strokeStyle = "#fff";
+  g.lineWidth = 6;
+  for (const o of [-32, 0, 32]) {
+    g.beginPath();
+    g.moveTo(o, 32);
+    g.lineTo(o + 32, 0);
+    g.stroke();
+  }
+  hatch = new CanvasTexture(c);
+  hatch.wrapS = hatch.wrapT = RepeatWrapping;
+  return hatch;
+}
+
+export const FOOTPRINT_COLORS = { open: "#e5e7eb", obscuring: "#facc15", blocking: "#ef4444" };
+
+/** Footprint line of sight: clear outline for open, stripes for obscuring, solid for blocking. */
+function FootprintTint({
+  width,
+  depth,
+  kind,
+  strong,
+}: {
+  width: number;
+  depth: number;
+  kind: "open" | "obscuring" | "blocking";
+  strong: boolean;
+}) {
+  const map = useMemo(() => {
+    if (kind !== "obscuring") return null;
+    const t = hatchTexture().clone();
+    t.repeat.set(width / 1.5, depth / 1.5);
+    t.needsUpdate = true;
+    return t;
+  }, [kind, width, depth]);
+  const outline = useMemo(() => {
+    const [w, d] = [width / 2, depth / 2];
+    return new Float32Array([-w, 0, -d, w, 0, -d, w, 0, -d, w, 0, d, w, 0, d, -w, 0, d, -w, 0, d, -w, 0, -d]);
+  }, [width, depth]);
+  const color = FOOTPRINT_COLORS[kind];
+  return (
+    <group position-y={0.05}>
+      {kind !== "open" && (
+        <mesh rotation-x={-Math.PI / 2} raycast={() => null}>
+          <planeGeometry args={[width, depth]} />
+          <meshBasicMaterial
+            color={color}
+            {...(map ? { map } : {})}
+            transparent
+            opacity={(kind === "blocking" ? 0.35 : 0.5) * (strong ? 1.6 : 1)}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+      <lineSegments raycast={() => null}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[outline, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} />
+      </lineSegments>
+    </group>
+  );
+}
+
 const CATEGORY_COLORS: Record<TerrainPiece["category"], string> = {
   exposed: "#6f6450",
   light: "#6b6257",
@@ -735,6 +864,7 @@ function Terrain({
   editable,
   selected,
   standIn,
+  footprint,
   onDown,
 }: {
   piece: TerrainPiece;
@@ -743,6 +873,8 @@ function Terrain({
   selected: boolean;
   /** Stand-in height to draw as a see-through block, in "heights" line of sight. */
   standIn: number | null;
+  /** Sight class to tint the footprint with, in "footprint" line of sight. */
+  footprint: "open" | "obscuring" | "blocking" | null;
   onDown: () => void;
 }) {
   const handlers = editable
@@ -764,6 +896,7 @@ function Terrain({
           <meshBasicMaterial color="#38bdf8" transparent opacity={0.15} depthWrite={false} />
         </mesh>
       )}
+      {footprint && <FootprintTint width={piece.width} depth={piece.depth} kind={footprint} strong={xray} />}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial

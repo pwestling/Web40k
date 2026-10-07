@@ -28,6 +28,7 @@ export function Hud() {
   const [count, setCount] = useState(2);
   const [sides, setSides] = useState(6);
   const [collapsed, setCollapsed] = useState(false);
+  const [dice, setDice] = useState(false);
   const undone = undoneSeqs(record);
   // Starting the battle (or any later phase change) locks the terrain again.
   const round = liveGame.turn.round;
@@ -121,9 +122,32 @@ export function Hud() {
         <p className="muted">Waiting for an opponent to join…</p>
       )}
 
-      {mine.length > 0 && <ArmyImport players={mine} />}
+      {/* During the battle, setup tools and the dice tray fold away to keep the panel slim. */}
+      {mine.length > 0 &&
+        (round === 0 ? (
+          <ArmyImport players={mine} />
+        ) : (
+          <details className="fold">
+            <summary>Add an army</summary>
+            <ArmyImport players={mine} />
+          </details>
+        ))}
 
       {role !== "spectator" && (
+        <div className="row">
+          <button
+            disabled={!lastOwn}
+            title={lastOwn ? "Take back your last action" : ""}
+            onClick={() => lastOwn && dispatch({ type: "undo", seq: lastOwn.seq })}
+          >
+            Undo
+          </button>
+          <button className={dice ? "on" : ""} onClick={() => setDice(!dice)}>
+            Dice
+          </button>
+        </div>
+      )}
+      {role !== "spectator" && dice && (
         <div className="row">
           <input
             type="number"
@@ -139,13 +163,6 @@ export function Hud() {
             ))}
           </select>
           <button onClick={() => dispatch({ type: "dice/roll", count, sides })}>Roll</button>
-          <button
-            disabled={!lastOwn}
-            title={lastOwn ? `Undo #${lastOwn.seq}` : ""}
-            onClick={() => lastOwn && dispatch({ type: "undo", seq: lastOwn.seq })}
-          >
-            Undo
-          </button>
         </div>
       )}
       <ol className="log">

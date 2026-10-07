@@ -52,6 +52,9 @@ export function App() {
   const attacking = useStore((s) => s.game.attack !== null || (s.draft !== null && s.scrub === null));
   const view = useStore((s) => s.view);
   const losFrom = useStore((s) => s.losFrom);
+  const footprints = useStore(
+    (s) => s.game.settings.los === "footprint" && (s.xray || s.editing) && s.session !== null,
+  );
   const showSight = useStore((s) => s.losFrom !== null || !!s.draft?.targetId);
   const setView = useStore((s) => s.setView);
   useEffect(() => {
@@ -73,6 +76,13 @@ export function App() {
               <span className="partial">Partly visible or in cover</span>
               <span className="none">Hidden</span>
               {losFrom && <span className="muted">Hover an enemy unit for its sight lines</span>}
+            </div>
+          )}
+          {footprints && (
+            <div className="legend terrain-legend">
+              <span className="open">Open</span>
+              <span className="obscuring">Obscuring: cover</span>
+              <span className="blocking">Blocking: no sight</span>
             </div>
           )}
           {view === "eye" && (

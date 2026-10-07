@@ -154,7 +154,7 @@ label.file.button.small {
   top: 64px;
   left: 12px;
   width: 300px;
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
 }
 .hud.collapsed {
@@ -600,4 +600,24 @@ details p {
 .settings label {
   display: block;
   margin: 4px 0;
+}
+.plate .sightlabel {
+  padding: 0;
+  background: none;
+}
+.settings[open] {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.terrain-legend {
+  bottom: 96px;
+}
+.terrain-legend .open {
+  color: #e5e7eb;
+}
+.terrain-legend .obscuring {
+  color: #facc15;
+}
+.terrain-legend .blocking {
+  color: #f87171;
 }
