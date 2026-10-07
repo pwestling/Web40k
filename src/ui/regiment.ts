@@ -13,6 +13,8 @@ import {
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 
+const SPECIAL = new Set(["door", "flee", "pursue"]);
+
 /**
  * Movement a block has used this phase: the sum of its moves, wheels, turns
  * and reforms since the phase began, read from the log (undone ones skipped).
@@ -24,7 +26,9 @@ export function blockMoveUsed(record: GameRecord, unitId: string, uptoSeq = Infi
     if (seq > uptoSeq) break;
     if (undone.has(seq) || event.type === "undo") continue;
     if (event.type.startsWith("turn/")) used = 0;
-    else if ((event.type === "unit/move" || event.type === "unit/form") && event.id === unitId)
+    else if (event.type === "unit/form" && event.id === unitId) used += Math.abs(event.distance ?? 0);
+    // Charges, flight and pursuit are their own moves, not part of the Movement used.
+    else if (event.type === "unit/move" && event.id === unitId && !SPECIAL.has(event.how ?? ""))
       used += Math.abs(event.distance ?? 0);
   }
   return used;

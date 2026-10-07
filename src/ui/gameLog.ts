@@ -265,6 +265,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const deg = Math.round((Math.abs(event.turn) * 180) / Math.PI);
       if (event.how === "wheel")
         return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${(event.distance ?? 0).toFixed(1)}")`;
+      const inches = `${(event.distance ?? 0).toFixed(1)}"`;
+      if (event.how === "door") return `${who} closed the door: ${name} lined up with its target (${inches})`;
+      if (event.how === "flee") return `${name} fled ${inches}`;
+      if (event.how === "pursue") return `${name} pursued ${inches}`;
       if (event.how === "forward")
         return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${Math.abs(event.distance ?? 0).toFixed(1)}"`;
       return `${who} ${moveText(before, game, game.units[event.id]?.modelIds ?? [])}`;
@@ -307,6 +311,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         return event.value
           ? `${unitName(event.id)} is disrupted`
           : `${unitName(event.id)} is no longer disrupted`;
+      if (event.key === "fleeing")
+        return event.value ? `${unitName(event.id)} is fleeing` : `${unitName(event.id)} rallied`;
       if (event.key === "lastFiles") return "";
       return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
     case "model/wounds":

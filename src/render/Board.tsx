@@ -39,6 +39,7 @@ import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
 import { Trails, useTween, WatchEffects } from "./Watch";
+import { Templates } from "./Templates";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
@@ -255,6 +256,7 @@ function Scene() {
   } = useStore();
   const canControl = useCanControl();
   const [drag, setDrag] = useState<Drag | null>(null);
+  const [templateDrag, setTemplateDrag] = useState(false);
   const dragRef = useRef<Drag | null>(null);
   useLayoutEffect(() => {
     dragRef.current = drag;
@@ -628,7 +630,7 @@ function Scene() {
       {/* Remount on view change so the controls bind to the new camera. */}
       <OrbitControls
         key={`${view}-${eye?.modelId ?? ""}-${cameraReset}-${width}x${depth}`}
-        enabled={!drag}
+        enabled={!drag && !templateDrag}
         enableRotate={view !== "top"}
         // Never lower than about 25 degrees above the table, so the camera can't end up level with it.
         maxPolarAngle={view === "eye" ? Math.PI : (65 * Math.PI) / 180}
@@ -855,6 +857,7 @@ function Scene() {
       ))}
 
       <BlockArcs />
+      <Templates onDragging={setTemplateDrag} />
       {drag?.moved && dragUnit && isBlock(dragUnit) && (
         <BlockMoveLabel game={game} unit={dragUnit} grab={drag.grab} at={drag.to} />
       )}

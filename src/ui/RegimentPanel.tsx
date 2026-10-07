@@ -10,6 +10,7 @@ import {
   type Unit,
 } from "../core";
 import { useCanControl, useStore } from "../store";
+import { ChargePanel } from "./ChargePanel";
 import { useGame } from "./hooks";
 import { blockMoveUsed, blockSummary, moveBudget, offTable, type MoveBudget } from "./regiment";
 
@@ -106,6 +107,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             </button>
           </div>
         )}
+        <ChargePanel unit={unit} />
       </div>
     );
   }
@@ -303,6 +305,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           )}
         </>
       )}
+      <ChargePanel unit={unit} />
     </div>
   );
 }

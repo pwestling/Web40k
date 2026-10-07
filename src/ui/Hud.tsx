@@ -5,6 +5,7 @@ import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
 import { DeployTray, RoomCard } from "./Room";
+import { TemplateTools } from "./TemplateTools";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -180,6 +181,7 @@ export function Hud() {
           <button onClick={() => dispatch({ type: "dice/roll", count, sides })}>Roll</button>
         </div>
       )}
+      <TemplateTools />
       <ol className="log">
         {collapseEmpty(log)
           .slice(-60)

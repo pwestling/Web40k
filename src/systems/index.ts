@@ -6,6 +6,7 @@ import { oldWorld } from "./tow/system";
 import { towLayout, TOW_CATEGORIES } from "./tow/layout";
 import { towSample } from "./tow/sample";
 import { towRanks } from "./tow/troops";
+import { TOW_DICE, TOW_TEMPLATES } from "./tow/templates";
 import { standardLayout } from "./wh40k/layout";
 import type { ImportedRoster } from "./wh40k/roster";
 import { sampleRoster } from "./wh40k/sample";
@@ -28,6 +29,30 @@ export interface SystemModule {
   dedicatedUi?: boolean;
   /** Rank width and rank bonus cap for a regiment (rank-and-flank systems); else the system's constants. */
   rankRules?(game: GameState, unit: Unit): { width: number; maxBonus: number };
+  /** Templates players can lay on the table (blasts, flames, lines). */
+  templates?: TemplateKind[];
+  /** Dice with named faces (scatter, artillery), rolled from the dice tray. */
+  specialDice?: SpecialDie[];
+  /** How a template scatters: the direction die (a face named "hit" stays put) and the distance die. */
+  scatter?: { direction: string; distance: string };
+  /** Dice rolled for a flee or pursuit, e.g. "2D6". */
+  fleeDice?: string;
+}
+
+export interface TemplateKind {
+  id: string;
+  label: string;
+  shape: "circle" | "flame" | "line";
+  /** Diameter, or length for flames and lines. */
+  size: number;
+  /** A flame's width at its round end. */
+  width?: number;
+}
+
+export interface SpecialDie {
+  id: string;
+  name: string;
+  faces: string[];
 }
 
 // Systems defined here rather than in core/content register themselves.
@@ -49,6 +74,10 @@ const MODULES: Record<string, SystemModule> = {
     layout: (t) => towLayout(t.width, t.depth),
     templateCategory: TOW_CATEGORIES,
     rankRules: towRanks,
+    templates: TOW_TEMPLATES,
+    specialDice: TOW_DICE,
+    scatter: { direction: "scatter", distance: "artillery" },
+    fleeDice: "2D6",
   },
 };
 
