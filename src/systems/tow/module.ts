@@ -4,6 +4,7 @@ import { towLayout, TOW_CATEGORIES } from "./layout";
 import { towSample } from "./sample";
 import { oldWorld } from "./system";
 import { TOW_DICE, TOW_TEMPLATES } from "./templates";
+import { importTowRoster } from "./roster";
 import { towRanks } from "./troops";
 
 /** Rank and flank in the style of The Old World. Combat, reactions and break tests come as code procedures. */
@@ -14,6 +15,7 @@ export const towModule: GameModule<SystemModule> = {
   system: oldWorld,
   app: {
     sample: towSample,
+    importRoster: importTowRoster,
     layout: (t) => towLayout(t.width, t.depth),
     templateCategory: TOW_CATEGORIES,
     rankRules: towRanks,

@@ -7,6 +7,8 @@ import type { ImportedRoster } from "./wh40k/roster";
  * system's terrain categories. Rules live in the module's `system` (data) and code hooks; see src/sdk.
  */
 export interface SystemModule {
+  /** Read an exported army list; 40k's BattleScribe reader when missing. */
+  importRoster?(fileName: string, data: Uint8Array): Promise<ImportedRoster>;
   /** Sample army for a seat. */
   sample(seat: 0 | 1): ImportedRoster;
   layout(table: Table): Layout;

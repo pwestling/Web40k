@@ -1066,3 +1066,12 @@ label.file.button input {
   border-left: none;
   padding-left: 0;
 }
+.import-units .missing-stats td {
+  padding-bottom: 6px;
+}
+.import-units .stat-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 6px;
+}
