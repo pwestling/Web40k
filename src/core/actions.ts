@@ -165,7 +165,7 @@ export type Intent =
   | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
   /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
-  | { type: "undo"; seq: number }
+  | { type: "undo"; seq: number; also?: number[] }
   /** Run a game module's code procedure (core/script.ts). */
   | { type: "script/start"; procedure: string; args?: Record<string, unknown> }
   /** Answer the question the running code procedure is waiting on. */
@@ -260,8 +260,11 @@ export type GameEvent =
   /** Reveal a committed secret: every peer checks the value and salt against the commitment. */
   | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
-  /** Takes back an earlier event. It stays in the log, marked as undone. */
-  | { type: "undo"; seq: number }
+  /**
+   * Takes back an earlier event (and `also` these, taken back with it: a
+   * whole attack, say). They stay in the log, marked as undone.
+   */
+  | { type: "undo"; seq: number; also?: number[] }
   | ScriptStep
   | ModuleSet
   /** A data procedure's table changes, run from code (`ctx.run`). */

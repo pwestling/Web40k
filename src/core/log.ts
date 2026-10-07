@@ -38,7 +38,7 @@ export function undoneSeqs(record: GameRecord, uptoSeq = Infinity): Set<number> 
   const undone = new Set<number>();
   for (const { seq, event } of record.events) {
     if (seq > uptoSeq) break;
-    if (event.type === "undo") undone.add(event.seq);
+    if (event.type === "undo") for (const s of [event.seq, ...(event.also ?? [])]) undone.add(s);
   }
   return undone;
 }
@@ -67,7 +67,8 @@ export function resolveLogged(
   now: number,
   state: GameState = stateAt(record),
 ): LoggedEvent | null {
-  if (intent.type === "undo" && !canUndo(record, intent.seq)) return null;
+  if (intent.type === "undo" && ![intent.seq, ...(intent.also ?? [])].every((s) => canUndo(record, s)))
+    return null;
   const event = resolveIntent(intent, by, rng, state, (seq) => stateAt(record, seq));
   return event && { seq: lastSeq(record) + 1, by, at: now, event };
 }

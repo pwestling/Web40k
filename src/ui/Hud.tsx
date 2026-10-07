@@ -3,7 +3,7 @@ import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
-import { buildLog, collapseEmpty } from "./gameLog";
+import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
@@ -67,6 +67,7 @@ export function Hud() {
         e.event.type !== "layout/set" &&
         !undone.has(e.seq),
     );
+  const takeBack = lastOwn ? undoGroup(record, lastOwn.seq, undone, liveGame) : null;
   const amSeated = mode === "hotseat" || seated.some((p) => p.id === selfId);
 
   if (collapsed)
@@ -166,9 +167,16 @@ export function Hud() {
       {role !== "spectator" && (
         <div className="row">
           <button
-            disabled={!lastOwn}
-            title={lastOwn ? "Take back your last action" : ""}
-            onClick={() => lastOwn && dispatch({ type: "undo", seq: lastOwn.seq })}
+            disabled={!takeBack}
+            title={takeBack ? `Take back ${takeBack.what ?? "your last action"}` : ""}
+            onClick={() =>
+              takeBack &&
+              dispatch({
+                type: "undo",
+                seq: takeBack.seq,
+                ...(takeBack.also.length ? { also: takeBack.also } : {}),
+              })
+            }
           >
             Undo
           </button>

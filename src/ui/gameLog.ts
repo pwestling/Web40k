@@ -177,6 +177,28 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       continue;
     }
     if (event.type !== "undo") moveLine = null;
+    if (event.type === "undo") {
+      // Say what was taken back (UX 130): an attack by name, else the line it made.
+      const who = state.players[logged.by]?.name ?? "Someone";
+      const line = items.find((i) => i.kind === "line" && i.seq === event.seq);
+      const declared = record.events.find((e) => e.seq === event.seq)?.event;
+      const what =
+        declared?.type === "attack/declare"
+          ? undoGroup(record, event.seq, new Set(), state).what
+          : line?.kind === "line"
+            ? line.text
+            : null;
+      items.push({
+        kind: "line",
+        key,
+        seq: logged.seq,
+        text: what
+          ? `${who} took back ${declared?.type === "attack/declare" ? what : `“${what}”`}`
+          : `${who} took back an action`,
+        undone: false,
+      });
+      continue;
+    }
     let text = describe(logged, before, state);
     if (event.type === "game/system" && isPlaceholder(event.system))
       text = `Game: ${packageName ?? event.system}, its rules aren't loaded yet`;
@@ -672,3 +694,42 @@ export function describePackageChange(
   for (const o of from) if (!to.some((p) => p.id === o.id)) parts.push(`− ${o.name} ${o.version}`);
   return parts.join(", ");
 }
+
+const ATTACK_STEPS = new Set(["attack/roll", "attack/allocate", "attack/clear"]);
+
+/**
+ * What one Undo takes back (UX 130): the last event, or, when it belongs to
+ * an attack, the whole attack from its declaration, casualties and all.
+ */
+export function undoGroup(
+  record: GameRecord,
+  seq: number,
+  undone: ReadonlySet<number>,
+  /** For the units' names. */
+  game: GameState,
+): { seq: number; also: number[]; what: string | null } {
+  const i = record.events.findIndex((e) => e.seq === seq);
+  const last = record.events[i];
+  if (!last || !(ATTACK_STEPS.has(last.event.type) || last.event.type === "attack/declare"))
+    return { seq, also: [], what: null };
+  const also: number[] = [];
+  for (let j = i; j >= 0; j--) {
+    const { seq: s, event } = record.events[j]!;
+    if (undone.has(s)) continue;
+    if (event.type === "attack/declare") {
+      const spec = event.attack.spec;
+      const name = (id: string) => game.units[id]?.name ?? "a unit";
+      return {
+        seq: s,
+        also,
+        what: `${possessive(name(spec.attackerUnitId))} ${spec.kind === "melee" ? "fight with" : "shooting at"} ${name(spec.targetUnitId)}`,
+      };
+    }
+    if (!ATTACK_STEPS.has(event.type)) break;
+    also.push(s);
+  }
+  return { seq, also: [], what: null };
+}
+
+/** "Line Troopers'", "Warden's". */
+const possessive = (name: string) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
