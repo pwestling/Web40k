@@ -78,6 +78,8 @@ export type Intent =
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
+  /** This player chose to play without these packages ("Join with mine anyway"). */
+  | { type: "player/rules"; missing: string[] }
   /** Name the code this game runs (the host, before the battle; or after everyone agreed). */
   | ({ type: "game/packages" } & GamePackages)
   /** Ask the seated players to change the game's packages mid-game. */
@@ -177,6 +179,7 @@ export type GameEvent =
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/resync"; player: PlayerId }
+  | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
   | { type: "packages/propose"; by: PlayerId; packages: PackageRef[] }
   | { type: "packages/accept"; player: PlayerId }
@@ -396,6 +399,8 @@ export function resolveIntent(
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
     case "player/resync":
       return { type: "player/resync", player: from };
+    case "player/rules":
+      return state?.players[from] ? { type: "player/rules", player: from, missing: intent.missing } : null;
     case "packages/propose":
       return { type: "packages/propose", by: from, packages: intent.packages };
     case "packages/accept":

@@ -237,6 +237,13 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} withdrew the rules change`;
     case "player/resync":
       return `${game.players[event.player]?.name ?? who} resynced from the host`;
+    case "player/rules": {
+      const names = (game.packages?.packages ?? []).filter((p) => event.missing.includes(p.hash));
+      const name = game.players[event.player]?.name ?? who;
+      return event.missing.length
+        ? `${name} is playing without ${names.map((p) => `${p.name} ${p.version}`).join(", ") || "some of the rules"}: their table may disagree`
+        : `${name} now has the game's rules`;
+    }
     case "template/set": {
       const t = event.template;
       const old = before.templates?.[event.id];

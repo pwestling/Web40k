@@ -28,6 +28,8 @@ export interface Player {
   seat?: number;
   /** Says it has finished deploying (advisory: the battle can start without it). */
   ready?: boolean;
+  /** Playing without some of the game's rules packages (hashes), by choice: their table may disagree. */
+  rulesMismatch?: string[];
 }
 
 /**

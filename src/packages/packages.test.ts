@@ -61,5 +61,13 @@ describe("rules packages", () => {
     await tick();
     expect(client.current.packages?.packages[0]?.hash).toBe("b");
     expect(client.current.packageProposal).toBeUndefined();
+
+    // A player who goes without a package is flagged for everyone, until the rules change.
+    client.dispatch({ type: "player/rules", missing: ["b"] });
+    await tick();
+    expect(host.current.players.c?.rulesMismatch).toEqual(["b"]);
+    host.dispatch({ type: "game/packages", ...base, packages: [ref("1.2", "a")] });
+    await tick();
+    expect(host.current.players.c?.rulesMismatch).toBeUndefined();
   });
 });

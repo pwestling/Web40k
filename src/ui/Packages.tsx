@@ -10,6 +10,9 @@ import { APP_BUILD } from "../version";
 import { describePackageChange } from "./gameLog";
 import { useGame } from "./hooks";
 
+const SANDBOX =
+  "Rules packages contain code. It runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page.";
+
 /** The short fingerprint, monospace, with the full hash in a tooltip. */
 function Fp({ hash }: { hash: string }) {
   return (
@@ -54,6 +57,7 @@ function LoadButton({
   className?: string;
 }) {
   const [asking, setAsking] = useState<StoredPackage | null>(null);
+  const [error, setError] = useState<string | null>(null);
   return (
     <>
       <label className={`file button ${className ?? ""}`}>
@@ -66,13 +70,19 @@ function LoadButton({
             e.target.value = "";
             if (!file) return;
             const got = await loadFile(file, expect);
+            setError(null);
             if (typeof got === "string") {
               if (onError) onError(got);
-              else alert(got);
+              else setError(got);
             } else if (!got.trusted) setAsking(got);
           }}
         />
       </label>
+      {error && (
+        <span className="warn small" role="alert">
+          {error}
+        </span>
+      )}
       {asking && <ConsentSheet pkg={asking} onClose={() => setAsking(null)} forget />}
     </>
   );
@@ -100,10 +110,7 @@ export function ConsentSheet({
           {label(pkg.manifest)} · <Fp hash={pkg.hash} />
         </h3>
         {pkg.manifest.adds && <p>Adds: {pkg.manifest.adds}</p>}
-        <p className="muted">
-          This rules package contains code. It runs in a sandbox: it can read the game and suggest results,
-          but it can't reach the internet, your files or this page.
-        </p>
+        <p className="muted">{SANDBOX}</p>
         <div className="row">
           <button
             className="primary"
@@ -224,6 +231,7 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
  */
 export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const game = useGame();
+  const system = game.system ?? DEFAULT_SYSTEM;
   const { dispatch, role, mode } = useStore();
   const packages = useLibrary((s) => s.packages);
   const [all, setAll] = useState(false);
@@ -233,12 +241,12 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const chosen = draft ?? using;
   const started = game.turn.round > 0;
   const canChoose = editable && (role === "host" || mode === "hotseat");
-  const options = packagesFor(packages, all ? undefined : game.system);
-  const names = listSystems().find((s) => s.id === game.system)?.name ?? game.system;
+  const options = packagesFor(packages, all ? undefined : system);
+  const names = listSystems().find((s) => s.id === system)?.name ?? system;
   const apply = (next: PackageRef[], agreed?: PlayerId[]) => {
     const event: GamePackages = {
       app: APP_BUILD,
-      system: { id: game.system ?? DEFAULT_SYSTEM, builtIn: true },
+      system: { id: system, builtIn: true },
       packages: next,
     };
     if (agreed) event.agreed = agreed;
@@ -318,8 +326,9 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
 /** The room card's "Rules: Old World · Old World Factions 1.2 ✓". */
 export function RulesLine() {
   const game = useGame();
+  const system = game.system ?? DEFAULT_SYSTEM;
   const packages = useLibrary((s) => s.packages);
-  const name = listSystems().find((s) => s.id === game.system)?.name ?? game.system;
+  const name = listSystems().find((s) => s.id === system)?.name ?? system;
   const using = game.packages?.packages ?? [];
   return (
     <span className="muted small rules-line">
@@ -352,16 +361,51 @@ export function PackageCards() {
   const session = useStore((s) => s.session);
   const net = useStore((s) => s.net);
   const loaded = useLibrary((s) => s.loaded);
+  const record = useStore((s) => s.record);
   const isReplay = !session && role === "spectator";
   const isHost = net?.role === "host" || (!net && role === "host");
   useApplyAgreed(isHost);
+  useSeatAndReport();
+  // A replay's table is computed from its log as it plays; the rules it used are named in that log.
+  const replayPackages = useMemo(() => {
+    if (!isReplay) return undefined;
+    const last = record.events.findLast((e) => e.event.type === "game/packages")?.event;
+    return last?.type === "game/packages" ? last : undefined;
+  }, [isReplay, record]);
+  const packages = isReplay ? replayPackages : game.packages;
   if (!loaded) return null;
   return (
     <>
-      {game.packages && <MismatchCard game={game.packages} replay={isReplay} />}
+      {packages && <MismatchCard game={packages} replay={isReplay} />}
       {game.packageProposal && !isReplay && <ProposalCard />}
     </>
   );
+}
+
+/**
+ * Seat this player once the game's packages are sorted out (got, or chosen to
+ * go without), and tell the table when they play without some of them.
+ */
+function useSeatAndReport() {
+  const library = useLibrary((s) => s.packages);
+  const waived = useStore((s) => s.packagesWaived);
+  const seatAgain = useStore((s) => s.seatAgain);
+  const game = useStore((s) => s.game);
+  const selfId = useStore((s) => s.session?.selfId);
+  const mode = useStore((s) => s.mode);
+  const dispatch = useStore((s) => s.dispatch);
+  useEffect(() => seatAgain?.(), [library, waived, seatAgain]);
+  const me = selfId ? game.players[selfId] : undefined;
+  // Only what the player chose to go without; a package still on its way isn't reported.
+  const without = (game.packages?.packages ?? [])
+    .filter((p) => !library[p.hash] && waived[p.hash])
+    .map((p) => p.hash);
+  const reported = (me?.rulesMismatch ?? []).join();
+  const key = without.join();
+  useEffect(() => {
+    if (!me || me.seat === undefined || mode === "hotseat" || reported === key) return;
+    dispatch({ type: "player/rules", missing: key ? key.split(",") : [] });
+  }, [me, mode, reported, key, dispatch]);
 }
 
 function useApplyAgreed(isHost: boolean) {
@@ -388,10 +432,14 @@ function useApplyAgreed(isHost: boolean) {
 function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean }) {
   const library = useLibrary((s) => s.packages);
   const transfers = useTransfers((s) => s.byHash);
-  const { role, mode, roomId, net, start, session, game: state } = useStore();
+  const { role, mode, roomId, net, start, session, game: state, packagesWaived: without } = useStore();
   // Hashes this player chose to go without ("Join with mine anyway", "Watch without it").
-  const [without, setWithout] = useState<Record<string, true>>({});
-  const [trustSender, setTrustSender] = useState(true);
+  const setWithout = (hashes: string[]) =>
+    useStore.setState((s) => ({
+      packagesWaived: { ...s.packagesWaived, ...Object.fromEntries(hashes.map((h) => [h, true] as const)) },
+    }));
+  // Consent is never assumed: the box starts unticked, and says what ticking it allows.
+  const [trustSender, setTrustSender] = useState(false);
   const [consent, setConsent] = useState<StoredPackage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hostName = net?.hostId ? (state.players[net.hostId]?.name ?? "the host") : "the host";
@@ -409,8 +457,7 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   }, [anyChecked]);
   if (!missing.length && !fresh.length && (!anyChecked || shownDone)) return null;
   const watch = () => {
-    if (role === "spectator" || replay)
-      setWithout((w) => ({ ...w, ...Object.fromEntries(missing.map((p) => [p.hash, true] as const)) }));
+    if (role === "spectator" || replay) setWithout(missing.map((p) => p.hash));
     else
       start({
         role: "spectator",
@@ -487,9 +534,7 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
                   onError={setError}
                 />
                 {mine && role !== "spectator" && !replay && (
-                  <button onClick={() => setWithout((w) => ({ ...w, [p.hash]: true }))}>
-                    Join with mine anyway
-                  </button>
+                  <button onClick={() => setWithout([p.hash])}>Join with mine anyway</button>
                 )}
               </div>
             )}
@@ -498,10 +543,13 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
       })}
       {error && <span className="warn">{error}</span>}
       {canGet && missing.length > 0 && (
-        <label className="check small">
-          <input type="checkbox" checked={trustSender} onChange={(e) => setTrustSender(e.target.checked)} />{" "}
-          Trust packages {hostName} sends for this game
-        </label>
+        <>
+          <label className="check small">
+            <input type="checkbox" checked={trustSender} onChange={(e) => setTrustSender(e.target.checked)} />{" "}
+            Trust packages {hostName} sends for this game
+          </label>
+          <span className="muted small">{SANDBOX}</span>
+        </>
       )}
       {fresh.map((p) => (
         <div key={p.hash} className="row wrap">
@@ -571,6 +619,7 @@ function ProposalCard() {
     .map((r) => library[r.hash]?.manifest.changelog)
     .filter(Boolean)
     .join(" ");
+  const untrusted = proposal.packages.filter((r) => !library[r.hash]?.trusted);
   if (scrub !== null) return null;
   if (mineToAnswer.length)
     return (
@@ -578,12 +627,20 @@ function ProposalCard() {
         <strong>{by} wants to change the rules for this game</strong>
         <span>{change || "Same packages"}</span>
         {changelog && <span className="muted small">{changelog}</span>}
+        {untrusted.length > 0 && (
+          <span className="muted small">
+            Accepting lets {untrusted.map((r) => `${r.name} ${r.version}`).join(" and ")} run here. {SANDBOX}
+          </span>
+        )}
         <div className="row">
           <button
             className="primary"
             onClick={() => {
-              // Fetch what we'll need now, so the change applies without a wait.
-              for (const r of proposal.packages) requestPackage(r.hash);
+              // Accepting is the consent: fetch what we'll need now, trusted, so the change applies without a wait.
+              for (const r of proposal.packages) {
+                if (library[r.hash]) useLibrary.getState().trust(r.hash, true);
+                else requestPackage(r.hash, { trust: true });
+              }
               for (const p of mineToAnswer) dispatch({ type: "packages/accept" }, p.id);
             }}
           >

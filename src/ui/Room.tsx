@@ -54,6 +54,20 @@ export function RoomCard() {
               {net?.hostId === p.id ? " · host" : ""}
               {game.turn.round === 0 && p.ready ? " · ready" : ""}
             </span>
+            {p.rulesMismatch && (
+              <span
+                className="warn"
+                title={`Playing without ${
+                  (game.packages?.packages ?? [])
+                    .filter((r) => p.rulesMismatch!.includes(r.hash))
+                    .map((r) => `${r.name} ${r.version}`)
+                    .join(", ") || "some of the game's rules"
+                }: their table may disagree`}
+              >
+                {" "}
+                ⚠ different rules
+              </span>
+            )}
           </li>
         ))}
         {waiting && <li className="muted">Waiting for an opponent to join…</li>}

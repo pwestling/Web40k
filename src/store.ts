@@ -89,6 +89,10 @@ interface Store {
   rangeWeapon: string | null;
   /** Connection state: who is host, who is connected, whether the room is choosing a new host. */
   net: NetStatus | null;
+  /** Rules packages (hashes) this player chose to play without in this room. */
+  packagesWaived: Record<string, true>;
+  /** Try to take a seat again (after the player has sorted out the game's rules packages). */
+  seatAgain: (() => void) | null;
   /** Director camera: follows the latest action (moves, shots, charges). */
   director: boolean;
   /** Front, flank and rear arcs of the selected (and hovered) regiment. */
@@ -214,6 +218,8 @@ export const useStore = create<Store>((set, get) => ({
   rangeWeapon: null,
   director: false,
   net: null,
+  packagesWaived: {},
+  seatAgain: null,
   arcs: true,
   eye: null,
   set: (patch) => set(patch),
@@ -279,6 +285,8 @@ export const useStore = create<Store>((set, get) => ({
       scrub: null,
       // Spectators start with the camera following the action.
       director: role === "spectator",
+      packagesWaived: {},
+      seatAgain: () => takeSeat(),
     });
 
     /**
@@ -291,6 +299,13 @@ export const useStore = create<Store>((set, get) => ({
       if (status.role === "host" ? false : status.hostId === null) return;
       const game = session.current;
       if (game.seq === 0 && status.role !== "host") return;
+      // Sit down only with the game's rules, or having chosen to play without them (the package card).
+      if (status.role !== "host") {
+        const lib = useLibrary.getState();
+        if (!lib.loaded) return;
+        const waived = get().packagesWaived;
+        if ((game.packages?.packages ?? []).some((p) => !lib.packages[p.hash] && !waived[p.hash])) return;
+      }
       const players = Object.values(game.players);
       if (players.some((p) => p.id === session.selfId)) {
         seated = true;

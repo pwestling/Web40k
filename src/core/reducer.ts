@@ -175,10 +175,21 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "player/resync":
       return state;
+    case "player/rules": {
+      const p = state.players[event.player];
+      if (!p) return state;
+      const { rulesMismatch: _m, ...rest } = p;
+      const player = event.missing.length ? { ...rest, rulesMismatch: event.missing } : rest;
+      return { ...state, players: { ...state.players, [p.id]: player } };
+    }
     case "game/packages": {
       const { type: _t, ...packages } = event;
       const { packageProposal: _p, ...rest } = state;
-      return { ...rest, packages };
+      // New rules: whoever played without the old ones says again if they still do.
+      const players = Object.fromEntries(
+        Object.entries(state.players).map(([id, { rulesMismatch: _m, ...p }]) => [id, p]),
+      );
+      return { ...rest, players, packages };
     }
     case "packages/propose":
       return {
