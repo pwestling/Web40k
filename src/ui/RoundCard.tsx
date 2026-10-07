@@ -84,6 +84,7 @@ export function ReplayTitle() {
   const setOpen = (open: boolean) => setClosedFor(open ? null : record);
   if (!isReplay || closedFor === record) return null;
   const rounds = intro.rounds;
+  const branch = record.events[0]?.event.type === "game/branch" ? record.events[0].event.branch : undefined;
   return (
     <div className="round-card replay-title" role="status">
       <div className="head">
@@ -108,6 +109,14 @@ export function ReplayTitle() {
           .filter(Boolean)
           .join(" · ")}
       </span>
+      {branch && (
+        <span className="small branched">
+          Branched from {branch.title}{" "}
+          <span className="muted">
+            (game {branch.parentHash.slice(0, 8)}, event {branch.parentSeq})
+          </span>
+        </span>
+      )}
       <span className="muted small">Press ▶ to watch from the start of the battle.</span>
     </div>
   );

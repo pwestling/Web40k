@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GameState, Player, Unit } from "../../core";
 import { currentSlot } from "../../core/content/turn";
 import { useCanControl, useStore } from "../../store";
 import { useGame } from "../../ui/hooks";
 import { localSecret, keepSecret, useLocalSecrets } from "../../secrets/local";
+import { hear } from "../../talk/talk";
 import { cardKey, cardsLeft, nextCard, stackOf, type Card } from "./command";
 import {
   arrivalTarget,
@@ -32,6 +33,7 @@ export function CommandPanel() {
   const { role, scrub, select } = useStore();
   const canControl = useCanControl();
   const [open, setOpen] = useState(true);
+  useDrawPings(game, game.system === conquest.id && scrub === null);
   if (game.system !== conquest.id || scrub !== null) return null;
   const slot = currentSlot(game)?.id;
   const own = game.modules?.[conquest.id] ?? {};
@@ -55,7 +57,8 @@ export function CommandPanel() {
       </div>
       {players.map((p) => {
         const stack = stackOf(game, p.id);
-        if (slot === "command" && mine(p)) {
+        // A branched game (core/branch.ts) starts without the stacks, which stayed on their owners' devices.
+        if ((slot === "command" || (!stack && game.branch?.droppedSecrets)) && mine(p)) {
           const waiting = needsRoll(game, own, p.id);
           return waiting ? (
             <Reinforcements key={p.id} player={p} />
@@ -79,10 +82,13 @@ export function CommandPanel() {
               </span>
             ) : (
               <span className="muted">
-                {cardsLeft(game, stack)} card{cardsLeft(game, stack) === 1 ? "" : "s"} left
+                {faceDown(stack)} face down
+                {cardsLeft(game, stack) === 0 && " · all played"}
               </span>
             )}
-            {slot !== "command" && next && mine(p) && p.seat === game.turn.activeSeat && (
+            {/* The drawn card, on every screen (UX 132): hover it to ring the regiment. */}
+            {slot !== "command" && next?.unitId && <Drawn unitId={next.unitId} select={select} />}
+            {slot !== "command" && next && !next.unitId && mine(p) && p.seat === game.turn.activeSeat && (
               <NextCard player={p} stack={stack!} next={next} select={select} />
             )}
           </div>
@@ -90,6 +96,60 @@ export function CommandPanel() {
       })}
     </div>
   );
+}
+
+/** Cards still face down (UX 133: drawing one counts down). */
+const faceDown = (stack: Card[]) => stack.filter((c) => !c.unitId).length;
+
+/** The card just drawn, named for everyone; hovering it rings the regiment on the table. */
+function Drawn({ unitId, select }: { unitId: string; select: (id: string) => void }) {
+  const game = useGame();
+  const set = useStore((s) => s.set);
+  const unit = game.units[unitId];
+  if (!unit) return null;
+  return (
+    <div className="row">
+      <span className="muted">Drawn:</span>
+      <button
+        onClick={() => select(unitId)}
+        onMouseEnter={() => set({ hoverModels: unit.modelIds })}
+        onMouseLeave={() => set({ hoverModels: null })}
+      >
+        {unit.name}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * When a command card is drawn, a ping marks its regiment on every screen
+ * (UX 132). Only for draws seen live: cards drawn before this page loaded don't ping.
+ */
+function useDrawPings(game: GameState, on: boolean) {
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const drawn = Object.entries(game.secrets ?? {}).flatMap(([player, mine]) =>
+      Object.entries(mine)
+        .filter(([key, e]) => key.startsWith("stack:") && e.revealed)
+        .map(([key, e]) => ({ id: `${player}:${key}`, player, unitId: String(e.revealed!.value) })),
+    );
+    if (!seen.current) {
+      seen.current = new Set(drawn.map((d) => d.id));
+      return;
+    }
+    for (const d of drawn) {
+      if (seen.current.has(d.id)) continue;
+      seen.current.add(d.id);
+      const unit = game.units[d.unitId];
+      const models = unit?.modelIds.map((id) => game.models[id]).filter((m) => m && !m.destroyed) ?? [];
+      if (!on || !models.length) continue;
+      const at = {
+        x: models.reduce((n, m) => n + m!.position.x, 0) / models.length,
+        y: models.reduce((n, m) => n + m!.position.y, 0) / models.length,
+      };
+      hear({ id: `draw-${d.id}`, kind: "ping", at, unitId: d.unitId }, d.player);
+    }
+  }, [game, on]);
 }
 
 /** One player's cards in order, to rearrange and lock in. */
@@ -165,13 +225,6 @@ function NextCard({
   const game = useGame();
   const { dispatch } = useStore();
   useLocalSecrets((s) => s.kept);
-  if (next.unitId)
-    return (
-      <div className="row">
-        <span className="muted">Drawn:</span>
-        <button onClick={() => select(next.unitId!)}>{game.units[next.unitId]?.name}</button>
-      </div>
-    );
   const top = localSecret(next.commitment);
   if (!top) return <p className="muted small">Your cards are on the device that locked them in.</p>;
   const draw = () => {

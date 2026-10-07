@@ -1,3 +1,4 @@
+import type { BranchInfo } from "./branch";
 import type { Secrets } from "./secrets";
 
 /**
@@ -312,6 +313,8 @@ export interface GameState {
   modules?: Record<string, Record<string, unknown>>;
   /** Players' committed secrets (core/secrets.ts): commitments, and values once revealed. */
   secrets?: Secrets;
+  /** This game branched from another one's history (core/branch.ts). */
+  branch?: BranchInfo;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }

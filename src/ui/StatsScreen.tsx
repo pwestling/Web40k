@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { branchGame } from "./Branch";
 import { rareMoments, systemOf, type GameState } from "../core";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
@@ -77,7 +78,14 @@ export function StatsScreen() {
             {moments.map((m) => (
               <li key={m.seq}>
                 <span className="rare-star">★</span> Round {m.round} · <strong>{m.title}</strong>
-                {m.unitName && <> · {m.unitName}</>}: {m.line}
+                {m.unitName && <> · {m.unitName}</>}: {m.line}{" "}
+                <button
+                  className="quiet small"
+                  title="A new game on this screen, just before this moment"
+                  onClick={() => branchGame(m.seq - 1, "hotseat")}
+                >
+                  Practice from here
+                </button>
               </li>
             ))}
           </ul>

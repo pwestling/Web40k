@@ -164,7 +164,8 @@ export interface ReplayIntro {
 export function replayIntro(record: GameRecord): ReplayIntro {
   const undone = undoneSeqs(record);
   let state = record.initial;
-  let startSeq = 0;
+  // A branched game (core/branch.ts) may start mid-battle: watch from its first event.
+  let startSeq = record.initial.turn.round > 0 ? record.initial.seq : 0;
   for (const logged of record.events) {
     if (undone.has(logged.seq)) continue;
     const before = state;

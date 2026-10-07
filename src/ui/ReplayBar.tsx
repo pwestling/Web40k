@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
+import { BranchButton } from "./Branch";
 import { readGame, type Highlight } from "./highlights";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
@@ -40,6 +41,9 @@ export function ReplayBar() {
   const { record, scrub, setScrub, session, role } = useStore();
   const [playing, setPlaying] = useState(false);
   const last = record.events.at(-1)?.seq ?? 0;
+  // A branched game's log starts mid-battle: the track runs from its first event.
+  const first = record.initial.seq;
+  const at = (seq: number) => `${((seq - first) / Math.max(1, last - first)) * 100}%`;
   // The caption waits for the dice tray, like the log.
   const held = useHold((s) => s.held);
   const pos = scrub ?? (held !== null ? held - 1 : last);
@@ -85,7 +89,7 @@ export function ReplayBar() {
 
   const play = () => {
     // Playing from the end starts again from the beginning.
-    if (!playing && pos >= last) setScrub(0);
+    if (!playing && pos >= last) setScrub(first);
     // A replay starts straight away (which also closes its title card).
     else if (!playing && !session) setScrub(pos + 1);
     setPlaying(!playing);
@@ -94,7 +98,7 @@ export function ReplayBar() {
   const jump = (dir: 1 | -1) => {
     const target =
       dir === 1 ? marks.find((m) => m.seq > pos)?.seq : [...marks].reverse().find((m) => m.seq < pos)?.seq;
-    const to = target ?? (dir === 1 ? last : 0);
+    const to = target ?? (dir === 1 ? last : first);
     setScrub(to >= last && session ? null : to);
   };
   const captioned = role === "spectator" || scrub !== null;
@@ -118,7 +122,7 @@ export function ReplayBar() {
         <div className="track">
           <input
             type="range"
-            min={0}
+            min={first}
             max={last}
             value={pos}
             onChange={(e) => {
@@ -131,7 +135,7 @@ export function ReplayBar() {
               <span
                 key={m.seq}
                 className={`tick ${m.round ? "round" : ""}`}
-                style={{ left: `${(m.seq / last) * 100}%` }}
+                style={{ left: at(m.seq) }}
                 title={m.text}
               >
                 {m.round && <span className="label">R{m.round}</span>}
@@ -142,7 +146,7 @@ export function ReplayBar() {
               <button
                 key={`${h.seq}-${h.text}`}
                 className={`highlight ${h.kind}`}
-                style={{ left: `${(h.seq / last) * 100}%` }}
+                style={{ left: at(h.seq) }}
                 title={h.text}
                 aria-label={`Replay: ${h.text}`}
                 onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
@@ -155,7 +159,7 @@ export function ReplayBar() {
               <button
                 key={`rare-${m.seq}`}
                 className="highlight rare"
-                style={{ left: `${(m.seq / last) * 100}%` }}
+                style={{ left: at(m.seq) }}
                 title={`${m.title}: ${m.line}`}
                 aria-label={`Replay: ${m.title}`}
                 onClick={() => replayRoll(m.seq)}
@@ -168,7 +172,7 @@ export function ReplayBar() {
               <button
                 key={`rules-${r.seq}`}
                 className="highlight rules"
-                style={{ left: `${(r.seq / last) * 100}%` }}
+                style={{ left: at(r.seq) }}
                 title={r.text}
                 aria-label={`Replay: ${r.text}`}
                 onClick={() => setScrub(r.seq >= last && session ? null : r.seq)}
@@ -180,6 +184,8 @@ export function ReplayBar() {
         <span className="muted where">
           {scrub === null ? "Live" : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? "Setup")}
         </span>
+        {/* What if: a new game from the point on the track (UX: roadmap #14). */}
+        {scrub !== null && last > record.initial.seq && <BranchButton seq={pos} />}
         {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
         {!session && <button onClick={() => location.reload()}>Close replay</button>}
       </div>
