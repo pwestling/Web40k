@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import {
   BufferAttribute,
   BufferGeometry,
+  Euler,
   Frustum,
   InstancedMesh,
   Matrix4,
@@ -16,6 +17,7 @@ import {
 import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
 import type { Model, ModelFigure, Vec2 } from "../core";
 import { useAssets } from "../assets/store";
+import { poseOf } from "./feel";
 import type { ModelAsset } from "../assets/types";
 
 /** Top of the plastic base the figure stands on (see ModelInstances). */
@@ -139,6 +141,8 @@ const s = new Vector3();
 const sphere = new Sphere();
 const frustum = new Frustum();
 const projScreen = new Matrix4();
+const tilt = new Quaternion();
+const euler = new Euler();
 
 function AssetInstances({
   asset,
@@ -173,9 +177,14 @@ function AssetInstances({
     entries.forEach(({ model, binding }, i) => {
       const p = positions[model.id] ?? model.position;
       q.setFromAxisAngle(up, model.facing + binding.yaw);
-      const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0);
+      // Held, landing or settling (feel.ts).
+      const pose = poseOf(model.id);
+      if (pose && (pose.tiltX || pose.tiltZ))
+        q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
+      const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0) + (pose?.lift ?? 0);
       v.set(p.x, z, p.y);
       s.setScalar(binding.scale);
+      if (pose) s.y *= pose.squash;
       m4.compose(v, q, s);
       shadow?.setMatrixAt(i, m4);
 

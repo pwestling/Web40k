@@ -206,7 +206,13 @@ export function BlockMoveLabel({
       zIndexRange={LABEL_Z}
       position={[at.x, 2.5, at.y]}
       center
-      className={over || off || (sideways && game.turn.round > 0) ? "ruler over" : "ruler"}
+      className={
+        over || off || (sideways && game.turn.round > 0)
+          ? "ruler over"
+          : game.turn.round > 0 && allowed !== null && used >= allowed - 0.5
+            ? "ruler near"
+            : "ruler"
+      }
     >
       {parts.join(" · ")}
       {game.turn.round > 0 && (sideways || local.y < -0.25)

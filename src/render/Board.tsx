@@ -53,6 +53,9 @@ import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
 import { TalkLayer } from "./TalkLayer";
+import { carry, pickUp, setDown } from "./feel";
+import { tick } from "../ui/sound";
+import { FeelLayer } from "./FeelLayer";
 import { say, useTalk, type Said } from "../talk/talk";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
@@ -341,15 +344,49 @@ function Scene() {
         }
       }
       const moved = d.moved || Math.hypot(to.x - d.grab.x, to.y - d.grab.y) > 0.15;
+      if (d.kind === "models") {
+        // Picked up once it really moves (a click only selects); then it leans into the carry.
+        if (moved && !d.moved) pickUp(d.ids);
+        const t = performance.now();
+        const last = hand.current;
+        if (last && t > last.t)
+          carry(((to.x - last.x) * 1000) / (t - last.t), ((to.y - last.y) * 1000) / (t - last.t));
+        hand.current = { t, x: to.x, y: to.y };
+      }
       setDrag({ ...d, to, moved });
     };
     const drop = () => {
       const d = dragRef.current;
       setDrag(null);
+      hand.current = null;
       if (!d || !d.moved) return;
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
       const terrain = useStore.getState().game.terrain;
+      if (d.kind === "models") {
+        // Set down where they were let go; an over-limit drop knocks duller (advisory only).
+        const game = useStore.getState().game;
+        const unit = d.unitId ? game.units[d.unitId] : undefined;
+        const limit = unit ? moveAllowance(game, unit) : null;
+        // How far it has come this phase, as the move label measures it.
+        const far = Math.max(
+          ...d.ids.map((id) => {
+            const from = game.models[id]?.phaseStart ?? d.starts[id]!;
+            return Math.hypot(d.starts[id]!.x + dx - from.x, d.starts[id]!.y + dy - from.y);
+          }),
+        );
+        setDown(
+          d.ids,
+          (id) => {
+            const m = game.models[id];
+            if (!m) return null;
+            const to = { x: d.starts[id]!.x + dx, y: d.starts[id]!.y + dy };
+            const { width, depth } = baseSizeInches(m.base);
+            return { ...to, z: settleZ(terrain, to, d.startZ[id] ?? 0), radius: Math.max(width, depth) / 2 };
+          },
+          { dull: limit !== null && far > limit + 0.05 },
+        );
+      }
       if (d.kind === "talk") {
         say(
           d.tool === "arrow"
@@ -467,10 +504,15 @@ function Scene() {
 
   const measuring = useStore((s) => s.measuring) && live;
   const tool = useTalk((s) => s.tool);
+  // The pointer's last place and time while carrying models, for their lean (feel.ts).
+  const hand = useRef<{ t: number; x: number; y: number } | null>(null);
   // Table talk on a spot or a unit: a ping now, or the start of an arrow or area.
   const talkAt = (at: Vec2, unitId?: string) => {
-    if (tool === "ping" || !tool) say({ kind: "ping", at, ...(unitId ? { unitId } : {}) });
-    else setDrag({ kind: "talk", tool, grab: at, to: at, moved: false, planeZ: 0 });
+    if (tool === "ping" || !tool) {
+      say({ kind: "ping", at, ...(unitId ? { unitId } : {}) });
+      // One ping per press of the button, so the next click selects as usual (UX 120).
+      if (tool) useTalk.setState({ tool: null });
+    } else setDrag({ kind: "talk", tool, grab: at, to: at, moved: false, planeZ: 0 });
   };
   const startRuler = (at: Vec2, fromModel?: string) =>
     setDrag({
@@ -540,6 +582,21 @@ function Scene() {
   const rangeWeapon = draft?.weaponId
     ? game.units[draft.attackerId]?.sheet?.weapons[draft.weaponId]
     : undefined;
+  // The weapon range shown for the unit a ruler starts from: the attack's weapon, or the shown ranges.
+  const rulerRange = (fromModel?: string): number | null => {
+    const unitId = fromModel ? game.models[fromModel]?.unitId : undefined;
+    if (!unitId) return null;
+    if (rangeWeapon?.kind === "ranged" && draft?.attackerId === unitId)
+      return num(rangeWeapon.chars.RANGE) ?? null;
+    if (ranges !== unitId) return null;
+    const ranged = Object.values(game.units[unitId]?.sheet?.weapons ?? {}).filter(
+      (w) => w.kind === "ranged" && num(w.chars.RANGE),
+    );
+    const w =
+      ranged.find((x) => x.id === shownRangeWeapon) ??
+      ranged.sort((x, y) => num(y.chars.RANGE)! - num(x.chars.RANGE)!)[0];
+    return w ? (num(w.chars.RANGE) ?? null) : null;
+  };
 
   // Line of sight: one answer per enemy unit, with lines only to the target in focus
   // (the attack's target, or the enemy unit under the mouse).
@@ -901,11 +958,13 @@ function Scene() {
           ))}
 
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
+      <FeelLayer />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (
         <RulerLine
           game={game}
+          range={rulerRange(drag.fromModel)}
           ruler={{
             by: "",
             from: drag.grab,
@@ -917,7 +976,7 @@ function Scene() {
           }}
         />
       ) : (
-        game.ruler && <RulerLine game={game} ruler={game.ruler} />
+        game.ruler && <RulerLine game={game} ruler={game.ruler} range={rulerRange(game.ruler.fromModel)} />
       )}
 
       {/* One outline per range around the whole chosen unit: its move and a weapon's range. */}
@@ -1037,7 +1096,7 @@ function RangeOutline({
 }
 
 /** A measuring line with its length, in the colour of whoever measured. */
-function RulerLine({ game, ruler }: { game: GameState; ruler: Ruler }) {
+function RulerLine({ game, ruler, range }: { game: GameState; ruler: Ruler; range?: number | null }) {
   const a = ruler.fromModel ? game.models[ruler.fromModel] : undefined;
   const b = ruler.toModel ? game.models[ruler.toModel] : undefined;
   const from = a?.position ?? ruler.from;
@@ -1050,6 +1109,8 @@ function RulerLine({ game, ruler }: { game: GameState; ruler: Ruler }) {
   );
   const color = game.players[ruler.by]?.color ?? "#e5e7eb";
   const length = rulerLength(game, ruler);
+  // Against a weapon's range shown for the measuring unit: how far in or out (a measurement, not odds).
+  const short = range ? Number((range - length).toFixed(1)) : null;
   return (
     <>
       <lineSegments raycast={() => null}>
@@ -1062,11 +1123,13 @@ function RulerLine({ game, ruler }: { game: GameState; ruler: Ruler }) {
         zIndexRange={LABEL_Z}
         position={[(from.x + to.x) / 2, Math.max(za, zb) + 0.6, (from.y + to.y) / 2]}
         center
-        className="ruler"
+        className={short !== null && Math.abs(short) <= 0.5 ? "ruler near" : "ruler"}
         style={{ borderBottom: `2px solid ${color}` }}
       >
         {`${length.toFixed(1)}"`}
         {a || b ? " base to base" : ""}
+        {short !== null &&
+          (short >= 0 ? ` · in by ${short.toFixed(1)}"` : ` · out by ${(-short).toFixed(1)}"`)}
       </Html>
     </>
   );
@@ -1134,11 +1197,20 @@ function MoveLabel({
   const allowed = moveAllowance(game, unit);
   const deploying = game.turn.round === 0;
   const over = !deploying && allowed !== null && moved > allowed + 0.05;
+  // Within half an inch of the limit, the label gets tense (PX-3e).
+  const near = !deploying && !over && allowed !== null && moved >= allowed - 0.5;
+  useTapeTicks(near ? moved : null);
   const base = deploying ? `${moved.toFixed(1)}"` : `${moved.toFixed(1)}" / ${allowed ?? "?"}"`;
   const text = blocked.length
     ? `${base} · through ${blocked.map((p) => p.name.toLowerCase()).join(", ")}`
     : base;
-  return <SimpleLabel at={at} text={text} className={over || blocked.length ? "ruler over" : "ruler"} />;
+  return (
+    <SimpleLabel
+      at={at}
+      text={text}
+      className={over || blocked.length ? "ruler over" : near ? "ruler near" : "ruler"}
+    />
+  );
 }
 
 function SimpleLabel({ at, text, className = "ruler" }: { at: Vec2; text: string; className?: string }) {
@@ -1538,4 +1610,18 @@ function faded(color: string, on: boolean): string {
     fadedCache.set(color, out);
   }
   return out;
+}
+
+/** A soft tape-measure tick for each tenth of an inch crossed near the limit (quiet; off when muted). */
+function useTapeTicks(moved: number | null) {
+  const last = useRef<number | null>(null);
+  useEffect(() => {
+    if (moved === null) {
+      last.current = null;
+      return;
+    }
+    const tenth = Math.floor(moved * 10);
+    if (last.current !== null && tenth !== last.current) tick();
+    last.current = tenth;
+  }, [moved]);
 }

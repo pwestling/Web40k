@@ -26,7 +26,7 @@ describe("table talk", () => {
     const s = useTalk.getState();
     expect(s.chat).toHaveLength(12);
     expect(s.unread).toBe(12);
-    expect(s.chat[0]!.name).toBe("Spectator");
+    expect(s.chat[0]!.name).toMatch(/^Spectator \d+$/);
   });
 
   it("clears only the sender's drawings", () => {

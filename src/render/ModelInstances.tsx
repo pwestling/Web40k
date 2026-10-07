@@ -1,10 +1,11 @@
-import type { ThreeEvent } from "@react-three/fiber";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   BoxGeometry,
   CapsuleGeometry,
   Color,
   CylinderGeometry,
+  Euler,
   InstancedMesh,
   Matrix4,
   MeshStandardMaterial,
@@ -13,6 +14,7 @@ import {
   type BufferGeometry,
 } from "three";
 import { baseSizeInches, type Model, type Vec2 } from "../core";
+import { feelActive, poseOf } from "./feel";
 
 /** One model as drawn: where it stands and how it looks. */
 export interface ModelDraw {
@@ -88,6 +90,8 @@ const p = new Vector3();
 const s = new Vector3();
 const offset = new Vector3();
 const color = new Color();
+const tilt = new Quaternion();
+const euler = new Euler();
 
 /**
  * Every model's base, facing nub and stand-in as instanced meshes: a handful
@@ -203,22 +207,36 @@ function Instances({
   // Capacity in powers of two, so the mesh isn't rebuilt every time a model dies or arrives.
   const cap = 2 ** Math.ceil(Math.log2(Math.max(16, list.length)));
 
+  const draw = (mesh: InstancedMesh, colors: boolean) => {
+    const now = performance.now();
+    list.forEach((d, i) => {
+      q.setFromAxisAngle(up, d.model.facing);
+      // Held, landing or settling (feel.ts): lifted, leaning, squashed.
+      const pose = poseOf(d.model.id, now);
+      if (pose && (pose.tiltX || pose.tiltZ))
+        q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
+      p.set(d.position.x, d.z + (pose?.lift ?? 0), d.position.y);
+      const scale = place(d);
+      if (pose) scale.y *= pose.squash;
+      m4.compose(p, q, scale);
+      mesh.setMatrixAt(i, m4);
+      if (colors && hovered !== undefined)
+        mesh.setColorAt(i, d.targetable && hovered === d.model.id ? TARGET : color.set(d.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  };
+
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
-    list.forEach((d, i) => {
-      q.setFromAxisAngle(up, d.model.facing);
-      p.set(d.position.x, d.z, d.position.y);
-      const scale = place(d);
-      m4.compose(p, q, scale);
-      mesh.setMatrixAt(i, m4);
-      if (hovered !== undefined)
-        mesh.setColorAt(i, d.targetable && hovered === d.model.id ? TARGET : color.set(d.color));
-    });
+    draw(mesh, true);
     mesh.count = list.length;
-    mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
+  });
+
+  useFrame(() => {
+    if (ref.current && feelActive()) draw(ref.current, false);
   });
 
   useEffect(() => () => ref.current?.dispose(), []);

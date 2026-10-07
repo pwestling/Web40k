@@ -13,6 +13,7 @@ import {
   type Vec2,
 } from "../core";
 import { useHold } from "../ui/hold";
+import { pickUp, setDown } from "./feel";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
 
@@ -65,13 +66,15 @@ export function useTween(
   }, [positions, heights, dragging]);
   const seen = useRef<Input>(initial);
   const drawn = useRef<Frame>({ p: positions, z: heights });
-  const anim = useRef<{ from: Frame; start: number } | null>(null);
+  const anim = useRef<{ from: Frame; start: number; moved: string[] } | null>(null);
   const settleUntil = useRef(0);
   const [frame, setFrame] = useState<Frame>({ p: positions, z: heights });
   const [trails, setTrails] = useState<Trail[]>([]);
 
   const show = (f: Frame) => {
     drawn.current = f;
+    // A tween cut short puts its models straight down, quietly.
+    if (anim.current) setDown(anim.current.moved, () => null, { sound: false });
     anim.current = null;
     setFrame(f);
   };
@@ -110,7 +113,9 @@ export function useTween(
           show(cur);
           setTrails([]);
         } else {
-          anim.current = { from, start: now };
+          anim.current = { from, start: now, moved };
+          // A move always reads as picked up, carried and set down (feel.ts).
+          pickUp(moved, now, false);
           // The last move's trail stays until the next one, then fades.
           setTrails((old) => [
             ...old
@@ -148,7 +153,11 @@ export function useTween(
     }
     drawn.current = { p, z };
     setFrame({ p, z });
-    if (t >= 1) anim.current = null;
+    if (t >= 1) {
+      const { moved } = a;
+      anim.current = null;
+      setDown(moved.slice(0, 60), (id) => (p[id] ? { ...p[id], z: z[id] ?? 0, radius: 0.7 } : null), { now });
+    }
   });
 
   // While dragging, the pointer is in charge. Models added since the last

@@ -15,7 +15,7 @@ export const REACTIONS = ["👍", "🎲", "😮", "😬", "😂", "🔥", "💀"
 
 /** How long each kind stays up, in ms (chat stays in the list; this is its float). */
 export const LIFETIME: Record<TalkItem["kind"], number> = {
-  ping: 4000,
+  ping: 8000,
   react: 3000,
   arrow: 45000,
   area: 45000,
@@ -77,8 +77,21 @@ export function cleanItem(item: unknown): TalkItem | null {
 function who(peer: string, claimed?: string): { name: string; color: string } {
   const p = useStore.getState().game.players[peer];
   if (p) return { name: p.name, color: p.color };
+  // Each spectator keeps a name and colour of their own, from their peer id.
   const name = claimed?.trim().slice(0, 24);
-  return { name: name ? `${name} (watching)` : "Spectator", color: "#a1a1aa" };
+  const n = hash(peer);
+  return {
+    name: name ? `${name} (watching)` : `Spectator ${(n % 90) + 10}`,
+    color: WATCHER_COLORS[n % WATCHER_COLORS.length]!,
+  };
+}
+
+const WATCHER_COLORS = ["#a78bfa", "#2dd4bf", "#f472b6", "#a3e635", "#fbbf24", "#94a3b8"];
+
+function hash(text: string): number {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+  return Math.abs(h);
 }
 
 /** This peer's name from the lobby, for when it isn't seated. */

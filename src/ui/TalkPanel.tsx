@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "../store";
 import { clearMine, MAX_CHAT, REACTIONS, say, useTableTalk, useTalk, type Said } from "../talk/talk";
 
 const TOOLS = [
@@ -29,7 +30,7 @@ export function TalkPanel() {
 
   return (
     <div className="talk-dock">
-      {!open && <ChatToasts />}
+      <ChatToasts chatOpen={open} />
       <div className={`panel talk${open ? "" : " collapsed"}`}>
         <div className="row wrap">
           {TOOLS.map((t) => (
@@ -95,16 +96,28 @@ export function TalkPanel() {
   );
 }
 
-/** New chat lines while the chat is closed, for a few seconds each. */
-function ChatToasts() {
+/** New chat lines while the chat is closed, and unit pings, for a few seconds each. */
+function ChatToasts({ chatOpen }: { chatOpen: boolean }) {
   const items = useTalk((s) => s.items);
-  const lines = items.filter((i): i is Extract<Said, { kind: "chat" }> => i.kind === "chat").slice(-3);
+  const units = useStore((s) => s.game.units);
+  const lines = items
+    .filter((i) => (i.kind === "chat" && !chatOpen) || (i.kind === "ping" && i.unitId && units[i.unitId]))
+    .slice(-3);
   if (!lines.length) return null;
   return (
     <ol className="talk-toasts">
       {lines.map((c) => (
         <li key={`${c.by}:${c.id}`} onClick={() => useTalk.setState({ open: true, unread: 0 })}>
-          <strong style={{ color: c.color }}>{c.name}:</strong> {c.text}
+          {c.kind === "chat" ? (
+            <>
+              <strong style={{ color: c.color }}>{c.name}:</strong> {c.text}
+            </>
+          ) : (
+            <span className="muted">
+              <strong style={{ color: c.color }}>{c.name}</strong> pinged{" "}
+              {c.kind === "ping" && c.unitId ? units[c.unitId]?.name : "a spot"}
+            </span>
+          )}
         </li>
       ))}
     </ol>

@@ -201,3 +201,53 @@ export function womp() {
     tone(a, t + i * 0.32, { freq: f, to: f * 0.94, dur: i === 3 ? 0.9 : 0.3, gain: 0.09, type: "triangle" }),
   );
 }
+
+/** A model picked up: a soft felt brush and a tiny click. */
+export function pick() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  burst(a, t, { freq: 1400, q: 0.6, dur: 0.07, gain: 0.05 });
+  burst(a, t + 0.03, { freq: 3200, q: 4, dur: 0.012, gain: 0.08 });
+}
+
+/**
+ * Models set down: a low wooden knock each, staggered like setting them down
+ * one by one (at most six voices). An over-limit drop knocks duller.
+ */
+export function thunk(n = 1, dull = false) {
+  const a = audio();
+  if (!a) return;
+  const voices = Math.max(1, Math.min(6, n));
+  let t = a.currentTime;
+  for (let i = 0; i < voices; i++) {
+    const gain = (dull ? 0.22 : 0.32) / Math.sqrt(voices) + 0.08;
+    burst(a, t, { freq: dull ? 180 : 250, q: 0.9, dur: 0.06, gain, type: "lowpass" });
+    tone(a, t, { freq: dull ? 95 : 120, to: dull ? 70 : 90, dur: 0.06, gain: gain * 0.5 });
+    t += 0.015 + Math.random() * 0.015;
+  }
+}
+
+/** A charge striking home: the low thump with a short crack on top. */
+export function clash() {
+  const a = audio();
+  if (!a) return;
+  thump(0, 0.55);
+  burst(a, a.currentTime, { freq: 1200, q: 2.5, dur: 0.05, gain: 0.25 });
+}
+
+/** A slain model tipping over: two soft clicks a few ms apart. */
+export function topple(delay = 0) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime + delay;
+  burst(a, t, { freq: 1800, q: 3, dur: 0.015, gain: 0.1 });
+  burst(a, t + 0.035, { freq: 900, q: 1.5, dur: 0.03, gain: 0.12, type: "lowpass" });
+}
+
+/** A tape measure ticking past a tenth of an inch: barely there. */
+export function tick() {
+  const a = audio();
+  if (!a) return;
+  burst(a, a.currentTime, { freq: 4200, q: 6, dur: 0.008, gain: 0.03 });
+}

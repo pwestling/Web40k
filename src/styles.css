@@ -510,6 +510,21 @@ details p {
 .ruler.over {
   background: rgb(185 28 28 / 85%);
 }
+/* Within half an inch of the limit (PX-3e): amber, pulsing. */
+.ruler.near {
+  background: rgb(180 83 9 / 90%);
+  animation: ruler-near 0.6s ease-in-out infinite alternate;
+}
+@keyframes ruler-near {
+  to {
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ruler.near {
+    animation: none;
+  }
+}
 .wounds {
   font-size: 0.7rem;
   padding: 0 4px;
