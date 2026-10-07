@@ -1,6 +1,7 @@
 import {
   applyEvent,
   PHASES,
+  rulerLength,
   undoneSeqs,
   type AttackState,
   type GameRecord,
@@ -171,6 +172,13 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} changed ${event.piece.name.toLowerCase()}`;
     case "terrain/remove":
       return `${who} removed terrain`;
+    case "ruler/set": {
+      const r = event.ruler;
+      if (!r) return `${who} cleared the ruler`;
+      const name = (id?: string) => (id ? (game.models[id]?.label ?? "a model") : "a point");
+      const ends = r.fromModel || r.toModel ? ` (${name(r.fromModel)} to ${name(r.toModel)})` : "";
+      return `${who} measured ${rulerLength(game, r).toFixed(1)}"${ends}`;
+    }
     case "objective/move":
       return `${who} moved an objective`;
     case "unit/height":

@@ -22,6 +22,7 @@ export function Hud() {
     editing,
     xray,
     plates,
+    measuring,
     set,
   } = useStore();
   const canControl = useCanControl();
@@ -82,6 +83,20 @@ export function Hud() {
         <button onClick={resetView} title="Home">
           Reset view
         </button>
+        {role !== "spectator" && (
+          <button
+            className={measuring ? "on" : ""}
+            title="Drag between models or points to measure; both players see it (M)"
+            onClick={() => set({ measuring: !measuring })}
+          >
+            Ruler
+          </button>
+        )}
+        {liveGame.ruler && role !== "spectator" && (
+          <button title="Clear the ruler (Esc)" onClick={() => dispatch({ type: "ruler/set", ruler: null })}>
+            Clear ruler
+          </button>
+        )}
         <button className={plates ? "on" : ""} onClick={() => set({ plates: !plates })}>
           Unit names
         </button>

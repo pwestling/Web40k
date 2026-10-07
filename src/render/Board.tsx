@@ -7,10 +7,13 @@ import {
   maxWounds,
   modelHeight,
   settleZ,
+  modelAt,
+  rulerLength,
   standInHeight,
   footprintVisibility,
   type GameState,
   type Model,
+  type Ruler,
   type TerrainPiece,
   type Vec2,
 } from "../core";
@@ -21,6 +24,7 @@ import {
   ENGAGEMENT_RANGE,
   incoherentModels,
   moveAllowance,
+  clampFraction,
   num,
   OBJECTIVE_MARKER_MM,
   OBJECTIVE_RANGE,
@@ -195,6 +199,7 @@ type Drag = {
       unitId?: string;
     }
   | { kind: "terrain" | "objective"; id: string; start: Vec2 }
+  | { kind: "ruler"; fromModel?: string }
 );
 
 function Scene() {
@@ -214,6 +219,7 @@ function Scene() {
     eye,
     hoverUnit,
     plates,
+    ranges,
     set: setUi,
   } = useStore();
   const canControl = useCanControl();
@@ -243,7 +249,24 @@ function Scene() {
       if (!ray.ray.intersectPlane(plane, hit)) return;
       const d = dragRef.current;
       if (!d) return;
-      const to = { x: hit.x, y: hit.z };
+      let to = { x: hit.x, y: hit.z };
+      // Alt clamps a unit's move to what it is allowed this phase.
+      if (e.altKey && d.kind === "models" && d.unitId) {
+        const game = useStore.getState().game;
+        const unit = game.units[d.unitId];
+        const limit = unit ? moveAllowance(game, unit) : null;
+        if (limit !== null) {
+          const dx = to.x - d.grab.x;
+          const dy = to.y - d.grab.y;
+          const s = clampFraction(
+            game,
+            d.ids,
+            (id, k) => ({ x: d.starts[id]!.x + dx * k, y: d.starts[id]!.y + dy * k }),
+            limit,
+          );
+          to = { x: d.grab.x + dx * s, y: d.grab.y + dy * s };
+        }
+      }
       const moved = d.moved || Math.hypot(to.x - d.grab.x, to.y - d.grab.y) > 0.15;
       setDrag({ ...d, to, moved });
     };
@@ -254,7 +277,20 @@ function Scene() {
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
       const terrain = useStore.getState().game.terrain;
-      if (d.kind === "models") {
+      if (d.kind === "ruler") {
+        const game = useStore.getState().game;
+        const toModel = modelAt(game, d.to);
+        dispatch({
+          type: "ruler/set",
+          ruler: {
+            by: "",
+            from: d.grab,
+            to: d.to,
+            ...(d.fromModel ? { fromModel: d.fromModel } : {}),
+            ...(toModel && toModel.id !== d.fromModel ? { toModel: toModel.id } : {}),
+          },
+        });
+      } else if (d.kind === "models") {
         dispatch({
           type: "models/move",
           moves: d.ids.map((id) => {
@@ -333,7 +369,22 @@ function Scene() {
     return bad;
   }, [game, positions, heights]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const measuring = useStore((s) => s.measuring) && live;
+  const startRuler = (at: Vec2, fromModel?: string) =>
+    setDrag({
+      kind: "ruler",
+      grab: at,
+      to: at,
+      moved: false,
+      planeZ: 0,
+      ...(fromModel ? { fromModel } : {}),
+    });
+
   const onModelDown = (m: Model, shift: boolean) => {
+    if (measuring) {
+      startRuler(m.position, m.id);
+      return;
+    }
     if (draft?.picking) {
       if (m.unitId && m.unitId !== draft.attackerId)
         setDraft({ ...draft, targetId: m.unitId, picking: false });
@@ -506,8 +557,13 @@ function Scene() {
       <mesh
         rotation-x={-Math.PI / 2}
         receiveShadow
+        onPointerDown={(e) => {
+          if (!measuring || e.button !== 0) return;
+          e.stopPropagation();
+          startRuler({ x: e.point.x, y: e.point.z });
+        }}
         onClick={(e) => {
-          if (draft?.picking || e.delta >= 3) return;
+          if (measuring || draft?.picking || e.delta >= 3) return;
           select(null);
           if (editing) setUi({ selectedTerrain: null });
         }}
@@ -644,6 +700,44 @@ function Scene() {
             />
           ))}
 
+      {/* The ruler being dragged, else the last one shared. */}
+      {drag?.kind === "ruler" && drag.moved ? (
+        <RulerLine
+          game={game}
+          ruler={{
+            by: "",
+            from: drag.grab,
+            to: drag.to,
+            ...(drag.fromModel ? { fromModel: drag.fromModel } : {}),
+            ...(modelAt(game, drag.to) && modelAt(game, drag.to)!.id !== drag.fromModel
+              ? { toModel: modelAt(game, drag.to)!.id }
+              : {}),
+          }}
+        />
+      ) : (
+        game.ruler && <RulerLine game={game} ruler={game.ruler} />
+      )}
+
+      {/* Move and longest weapon range around each model of the chosen unit. */}
+      {ranges &&
+        game.units[ranges] &&
+        (() => {
+          const unit = game.units[ranges]!;
+          const move = moveAllowance(game, unit);
+          const longest = Math.max(
+            0,
+            ...Object.values(unit.sheet?.weapons ?? {})
+              .filter((w) => w.kind === "ranged")
+              .map((w) => num(w.chars.RANGE) ?? 0),
+          );
+          return aliveModels(game, unit).map((m) => (
+            <group key={`ranges-${m.id}`}>
+              {move !== null && <Ring model={placed(m)} radius={move} color="#38bdf8" opacity={0.45} />}
+              {longest > 0 && <Ring model={placed(m)} radius={longest} color="#facc15" opacity={0.3} />}
+            </group>
+          ));
+        })()}
+
       {sightLines.map((l, i) => (
         <SightLine key={i} shooter={l.shooter} target={l.target} state={l.state} />
       ))}
@@ -657,6 +751,42 @@ function Scene() {
           text={`${Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y).toFixed(1)}"`}
         />
       )}
+    </>
+  );
+}
+
+/** A measuring line with its length, in the colour of whoever measured. */
+function RulerLine({ game, ruler }: { game: GameState; ruler: Ruler }) {
+  const a = ruler.fromModel ? game.models[ruler.fromModel] : undefined;
+  const b = ruler.toModel ? game.models[ruler.toModel] : undefined;
+  const from = a?.position ?? ruler.from;
+  const to = b?.position ?? ruler.to;
+  const za = (a?.z ?? 0) + 0.3;
+  const zb = (b?.z ?? 0) + 0.3;
+  const line = useMemo(
+    () => new Float32Array([from.x, za, from.y, to.x, zb, to.y]),
+    [from.x, from.y, to.x, to.y, za, zb],
+  );
+  const color = game.players[ruler.by]?.color ?? "#e5e7eb";
+  const length = rulerLength(game, ruler);
+  return (
+    <>
+      <lineSegments raycast={() => null}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[line, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} />
+      </lineSegments>
+      <Html
+        zIndexRange={LABEL_Z}
+        position={[(from.x + to.x) / 2, Math.max(za, zb) + 0.6, (from.y + to.y) / 2]}
+        center
+        className="ruler"
+        style={{ borderBottom: `2px solid ${color}` }}
+      >
+        {`${length.toFixed(1)}"`}
+        {a || b ? " base to base" : ""}
+      </Html>
     </>
   );
 }

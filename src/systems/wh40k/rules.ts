@@ -429,3 +429,5 @@ export function moveAllowance(state: GameState, unit: Unit): number | null {
   const advance = typeof unit.status?.advance === "number" ? unit.status.advance : 0;
   return move + advance;
 }
+
+export { clampFraction } from "./measure";

@@ -145,6 +145,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       };
     case "terrain/remove":
       return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
+    case "ruler/set":
+      return { ...state, ruler: event.ruler };
     case "objective/move":
       return {
         ...state,

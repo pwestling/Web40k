@@ -10,7 +10,7 @@ import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
 /**
- * Keyboard: Esc clears; Q/E rotate; R/F move a unit up or down a floor;
+ * Keyboard: Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
  * Delete removes the selected terrain piece while editing; Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
@@ -25,12 +25,18 @@ function onKey(e: KeyboardEvent) {
   }
   if (key === "escape") {
     if (s.view === "eye") s.setView("3d");
+    if (s.measuring) s.set({ measuring: false });
+    else if (s.game.ruler && s.role !== "spectator") s.dispatch({ type: "ruler/set", ruler: null });
     s.setDraft(null);
     s.select(null);
     s.set({ selectedTerrain: null, losFrom: null });
     return;
   }
   if (s.role === "spectator" || s.scrub !== null) return;
+  if (key === "m") {
+    s.set({ measuring: !s.measuring });
+    return;
+  }
   if (s.editing && s.selectedTerrain) {
     if (key === "q") rotateTerrain(s.selectedTerrain, -15);
     if (key === "e") rotateTerrain(s.selectedTerrain, 15);

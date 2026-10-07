@@ -72,11 +72,24 @@ interface Store {
   hoverUnit: UnitId | null;
   /** Unit name plates over the table. */
   plates: boolean;
+  /** Ruler tool: drags on the table measure instead of moving. */
+  measuring: boolean;
+  /** Unit whose move and weapon ranges are drawn around its models. */
+  ranges: UnitId | null;
   set(
     patch: Partial<
       Pick<
         Store,
-        "editing" | "selectedTerrain" | "xray" | "losFrom" | "eye" | "view" | "hoverUnit" | "plates"
+        | "editing"
+        | "selectedTerrain"
+        | "xray"
+        | "losFrom"
+        | "eye"
+        | "view"
+        | "hoverUnit"
+        | "plates"
+        | "measuring"
+        | "ranges"
       >
     >,
   ): void;
@@ -142,6 +155,8 @@ export const useStore = create<Store>((set, get) => ({
   losFrom: null,
   hoverUnit: null,
   plates: true,
+  measuring: false,
+  ranges: null,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),
