@@ -196,3 +196,54 @@ describe("stand-in heights line of sight", () => {
     expect(modelSight(arc, a, behind).visible).toBe(false);
   });
 });
+
+describe("footprint line of sight", () => {
+  const flat = (terrain: TerrainPiece[], models: Model[]): GameState => {
+    const s = table(terrain, models);
+    return { ...s, settings: { ...s.settings, los: "footprint" } };
+  };
+  const piece = (visibility: "open" | "obscuring" | "blocking", x = 0): TerrainPiece => ({
+    ...wallPiece(0.5),
+    position: { x, y: 0 },
+    width: 4,
+    depth: 2,
+    visibility,
+  });
+
+  it("ignores height: blocking terrain stops sight however tall the models are", () => {
+    const a = { ...model("a", 0, -4), height: 10 };
+    const b = { ...model("b", 0, 4), height: 10 };
+    expect(modelSight(flat([piece("blocking")], [a, b]), a, b).visible).toBe(false);
+    expect(modelSight(flat([piece("open")], [a, b]), a, b).fully).toBe(true);
+  });
+
+  it("gives cover behind obscuring terrain and when blocking terrain hides part of the base", () => {
+    const a = model("a", 0, -4);
+    const b = model("b", 0, 4);
+    const obscured = modelSight(flat([piece("obscuring")], [a, b]), a, b);
+    expect(obscured.visible).toBe(true);
+    expect(obscured.fully).toBe(false);
+    // A blocking piece off to one side that clips the line to part of the base.
+    const corner = { ...piece("blocking"), position: { x: -2.05, y: 0 } };
+    const partial = modelSight(flat([corner], [a, b]), a, b);
+    expect(partial.visible).toBe(true);
+    expect(partial.fully).toBe(false);
+  });
+
+  it("ignores obscuring terrain touching the shooter's base for cover", () => {
+    const a = model("a", 0, -1.6);
+    const b = model("b", 0, 6);
+    expect(modelSight(flat([piece("obscuring")], [a, b]), a, b).fully).toBe(true);
+  });
+
+  it("hides a model on raised ground from below unless it stands at the edge", () => {
+    const hill: TerrainPiece = { ...piece("open"), width: 10, depth: 10 };
+    const below = model("a", 0, -12);
+    const middle = model("b", 0, 0, 2);
+    const edge = model("c", 0, -4.5, 2);
+    expect(modelSight(flat([hill], [below, middle]), below, middle).visible).toBe(false);
+    const e = modelSight(flat([hill], [below, edge]), below, edge);
+    expect(e.visible).toBe(true);
+    expect(e.fully).toBe(false);
+  });
+});

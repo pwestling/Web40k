@@ -182,6 +182,12 @@ export interface TerrainPiece {
    */
   sight?: "true" | "heights";
   /**
+   * For "footprint" line of sight: open terrain does nothing, obscuring terrain
+   * gives cover when it lies between the two bases' centres, and blocking
+   * terrain stops sight across its footprint. Defaults from the piece's height.
+   */
+  visibility?: "open" | "obscuring" | "blocking";
+  /**
    * Optional low-poly line-of-sight mesh from an imported terrain model:
    * triangles as flat [x,y,z, x,y,z, x,y,z, ...] in local inches, z up.
    * When present it blocks sight instead of the solids; floors still come from the solids.
@@ -248,9 +254,12 @@ export interface GameSettings {
    * World and Full Spectrum Dominance do: every terrain piece is a flat-topped
    * block of its stand-in height over its footprint, every model a cylinder of
    * its height, and a model sees another if the line between their tops clears
-   * everything in between. Missing means "true".
+   * everything in between. "footprint" ignores height altogether, as Full
+   * Spectrum Dominance does: lines run across the table from the centre of the
+   * observer's base, and each piece is open, obscuring or blocking (see
+   * TerrainPiece.visibility). Missing means "true".
    */
-  los?: "true" | "heights";
+  los?: "true" | "heights" | "footprint";
   /**
    * Vision arc in degrees, centred on each model's facing (90 in Warhammer:
    * The Old World). Missing means models see all around.

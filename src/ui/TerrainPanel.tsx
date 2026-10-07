@@ -1,4 +1,10 @@
-import { standInHeight, type Layout, type TerrainCategory, type TerrainPiece } from "../core";
+import {
+  footprintVisibility,
+  standInHeight,
+  type Layout,
+  type TerrainCategory,
+  type TerrainPiece,
+} from "../core";
 import { standardLayout, TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
 import { useStore } from "../store";
@@ -116,17 +122,31 @@ export function TerrainPanel() {
             </select>
           </label>
           <p className="muted small">{CATEGORY_RULES[piece.category].help}</p>
-          <label>
-            Blocks sight by{" "}
-            <select
-              value={piece.sight ?? ""}
-              onChange={(e) => update({ sight: (e.target.value || undefined) as TerrainPiece["sight"] })}
-            >
-              <option value="">Game setting</option>
-              <option value="true">Its shape</option>
-              <option value="heights">Stand-in height</option>
-            </select>
-          </label>
+          {game.settings.los === "footprint" ? (
+            <label>
+              Sight{" "}
+              <select
+                value={footprintVisibility(piece)}
+                onChange={(e) => update({ visibility: e.target.value as "open" | "obscuring" | "blocking" })}
+              >
+                <option value="open">Open: no effect</option>
+                <option value="obscuring">Obscuring: gives cover</option>
+                <option value="blocking">Blocking: blocks sight</option>
+              </select>
+            </label>
+          ) : (
+            <label>
+              Blocks sight by{" "}
+              <select
+                value={piece.sight ?? ""}
+                onChange={(e) => update({ sight: (e.target.value || undefined) as TerrainPiece["sight"] })}
+              >
+                <option value="">Game setting</option>
+                <option value="true">Its shape</option>
+                <option value="heights">Stand-in height</option>
+              </select>
+            </label>
+          )}
           {(piece.sight ?? game.settings.los) === "heights" && (
             <label>
               Stand-in height{" "}

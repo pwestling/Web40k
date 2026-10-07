@@ -224,6 +224,21 @@ export function standInHeight(piece: TerrainPiece): number {
   return piece.solids.reduce((h, s) => Math.max(h, s.z + s.h), 0);
 }
 
+/** A piece's visibility class for "footprint" line of sight: tall pieces block, low ones obscure. */
+export function footprintVisibility(piece: TerrainPiece): "open" | "obscuring" | "blocking" {
+  if (piece.visibility) return piece.visibility;
+  const solid = piece.solids.filter((s) => s.kind !== "foliage");
+  const top = solid.reduce((h, s) => Math.max(h, s.z + s.h), 0);
+  if (top >= 2) return "blocking";
+  if (top > 0 || piece.solids.length) return "obscuring";
+  return "open";
+}
+
+/** Whether a 2D segment crosses a piece's footprint (heights ignored). */
+export function segmentCrossesFootprint2D(piece: TerrainPiece, a: Vec2, b: Vec2): boolean {
+  return segmentCrossesFootprint(piece, { ...a, z: 0 }, { ...b, z: 0 }, 1);
+}
+
 /** Whether the segment passes over a piece's footprint, low enough to be "through" it. */
 export function segmentCrossesFootprint(piece: TerrainPiece, a: Vec3, b: Vec3, below: number): boolean {
   const la = { ...toLocal(piece, a), z: a.z };

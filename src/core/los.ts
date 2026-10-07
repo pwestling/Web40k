@@ -1,6 +1,8 @@
 import { baseSizeInches } from "./geometry";
 import {
+  footprintVisibility,
   inFootprint,
+  segmentCrossesFootprint2D,
   modelHeight,
   segmentCrossesFootprint,
   segmentPointDistance2D,
@@ -8,7 +10,7 @@ import {
   standInHeight,
   type Vec3,
 } from "./terrain";
-import type { GameState, Model, TerrainPiece } from "./types";
+import type { GameState, Model, TerrainPiece, Vec2 } from "./types";
 
 /**
  * True line of sight between model volumes: lines from points on the
@@ -157,6 +159,7 @@ export function modelSight(
   if (!inVisionArc(state, observer, target.position))
     return { visible: false, fully: false, fraction: 0, obscuredBy: [] };
   if (state.settings.los === "heights") return heightsSight(state, observer, target, options);
+  if (state.settings.los === "footprint") return footprintSight(state, observer, target, options);
   const eyes = eyePoints(observer);
   const body = bodyPoints(target);
   const blockers =
@@ -242,4 +245,85 @@ function heightsSight(state: GameState, observer: Model, target: Model, options:
     fraction: seen / points.length,
     obscuredBy: [...obscured],
   };
+}
+
+const baseRadius = (m: Model) => {
+  const { width, depth } = baseSizeInches(m.base);
+  return Math.max(width, depth) / 2;
+};
+
+/**
+ * Footprint line of sight, heights ignored (Full Spectrum Dominance style):
+ * - a point of the target's base is seen if the line from the centre of the
+ *   observer's base reaches it without crossing a blocking piece (or, if the
+ *   table says so, another model's base);
+ * - the target is in cover if a blocking piece hides part of its base, or the
+ *   line between the two centres crosses an obscuring piece; pieces touching
+ *   the observer's base are ignored for cover but not for sight;
+ * - a model on raised ground is out of sight from below unless its base
+ *   touches the edge, and then it is in cover.
+ * Models can see out of and into the piece they stand in.
+ */
+function footprintSight(state: GameState, observer: Model, target: Model, options: SightOptions): Sight {
+  const none: Sight = { visible: false, fully: false, fraction: 0, obscuredBy: [] };
+  const oz = observer.z ?? 0;
+  const tz = target.z ?? 0;
+  if (Math.abs(tz - oz) > 0.1) {
+    const high = tz > oz ? target : observer;
+    const ground = state.terrain.find((p) => inFootprint(p, high.position));
+    if (!ground) return none;
+    const atEdge = !inFootprint(ground, high.position, -baseRadius(high) - 0.05);
+    return atEdge ? { visible: true, fully: false, fraction: 0.5, obscuredBy: [ground] } : none;
+  }
+  const r = baseRadius(target) * 0.95;
+  const points: Vec2[] = [target.position];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    points.push({ x: target.position.x + Math.cos(a) * r, y: target.position.y + Math.sin(a) * r });
+  }
+  const between = state.terrain.filter(
+    (p) => !inFootprint(p, observer.position) && !inFootprint(p, target.position),
+  );
+  const blocking = between.filter((p) => footprintVisibility(p) === "blocking");
+  const bases =
+    options.modelsBlock === false
+      ? []
+      : Object.values(state.models).filter(
+          (m) => !m.destroyed && m.id !== observer.id && m.id !== target.id && !options.ignore?.has(m.id),
+        );
+  const obscured = new Set<TerrainPiece>();
+  let seen = 0;
+  for (const p of points) {
+    const wall = blocking.find((t) => segmentCrossesFootprint2D(t, observer.position, p));
+    if (wall) {
+      obscured.add(wall);
+      continue;
+    }
+    if (bases.some((m) => crossesBase(observer.position, p, m))) continue;
+    seen++;
+  }
+  // Obscuring terrain between the centres gives cover, unless it touches the observer's base.
+  const reach = baseRadius(observer);
+  for (const p of state.terrain) {
+    if (footprintVisibility(p) !== "obscuring" || inFootprint(p, observer.position, reach)) continue;
+    if (segmentCrossesFootprint2D(p, observer.position, target.position)) obscured.add(p);
+  }
+  const covered = [...obscured].some((p) => footprintVisibility(p) === "obscuring");
+  return {
+    visible: seen > 0,
+    fully: seen === points.length && !covered,
+    fraction: seen / points.length,
+    obscuredBy: [...obscured],
+  };
+}
+
+/** Whether a line across the table passes over another model's base (not just touching its ends). */
+function crossesBase(a: Vec2, b: Vec2, m: Model): boolean {
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const len = abx * abx + aby * aby;
+  if (len === 0) return false;
+  const t = ((m.position.x - a.x) * abx + (m.position.y - a.y) * aby) / len;
+  if (t < 0.02 || t > 0.98) return false;
+  return segmentPointDistance2D(a, b, m.position) < baseRadius(m) * 0.8;
 }

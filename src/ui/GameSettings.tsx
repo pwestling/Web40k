@@ -30,13 +30,24 @@ export function GameSettings() {
             <select
               value={los}
               onChange={(e) =>
-                dispatch({ type: "settings/set", settings: { los: e.target.value as "true" | "heights" } })
+                dispatch({
+                  type: "settings/set",
+                  settings: { los: e.target.value as "true" | "heights" | "footprint" },
+                })
               }
             >
               <option value="true">True line of sight</option>
               <option value="heights">Stand-in heights</option>
+              <option value="footprint">Footprints, no height</option>
             </select>
           </label>
+          {los === "footprint" && (
+            <p className="muted small">
+              Heights don't count. Sight runs from the centre of a model's base to any part of the target's
+              base. Each terrain piece is open, obscuring (gives cover) or blocking; set it in the terrain
+              editor.
+            </p>
+          )}
           {los === "heights" && (
             <p className="muted small">
               Each terrain piece counts as a block of its stand-in height, and models see each other if the
@@ -70,8 +81,8 @@ export function GameSettings() {
         </>
       ) : (
         <p className="muted small">
-          {los === "heights" ? "Stand-in heights" : "True"} line of sight. Cover:{" "}
-          {cover === "hit" ? "−1 to hit" : "+1 to save"}.{" "}
+          {los === "heights" ? "Stand-in heights" : los === "footprint" ? "Footprint" : "True"} line of sight.
+          Cover: {cover === "hit" ? "−1 to hit" : "+1 to save"}.{" "}
           {game.settings.visionArc && game.settings.visionArc < 360
             ? `Models see in a ${game.settings.visionArc}° front arc. `
             : ""}
