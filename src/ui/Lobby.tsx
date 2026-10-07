@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM, type GameRecord } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
-import { loadSavedGame, useStore, type Mode } from "../store";
+import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
+
+/** Rejoin once per page load (effects run twice in development). */
+let autoJoined = false;
 
 export function Lobby() {
   const { start, openReplay } = useStore();
@@ -46,6 +49,19 @@ export function Lobby() {
     if (saved.roomId) linkTo(saved.roomId);
     start({ role: "host", mode: saved.mode, roomId: saved.roomId ?? undefined, name, record: saved.record });
   };
+  // A tab reloaded in the middle of a game goes straight back into its room.
+  useEffect(() => {
+    if (autoJoined) return;
+    autoJoined = true;
+    const roomId = params.get("room");
+    const back = roomId ? loadRoom(roomId) : null;
+    if (!roomId || !back?.role) return;
+    const m: Mode = params.get("local") === "1" ? "local" : "online";
+    const who = localStorage.getItem("open-battle:name") ?? "";
+    if (back.role === "host") start({ role: "host", mode: m, roomId, name: who, record: back.record });
+    else start({ role: back.role, mode: m, roomId, name: who });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadReplay = async (file: File) => {
     const record = JSON.parse(await file.text()) as GameRecord;
     if (record.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");

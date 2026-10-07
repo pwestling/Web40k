@@ -874,3 +874,16 @@ input.frontage {
   background: #f59e0b;
   border-color: #b45309;
 }
+.net-banner {
+  z-index: 30;
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #78350f;
+  border: 1px solid #f59e0b;
+  color: #fef3c7;
+  font-size: 0.9rem;
+}
