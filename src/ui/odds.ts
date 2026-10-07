@@ -1,0 +1,90 @@
+import { findProcedure, previewRun, procedureEnv, type RoleRef, type StartOptions } from "../core/content";
+import { procedureOdds, type Odds, type OddsModel } from "../core/odds";
+import { ATTACK_PROCEDURE, specToRun } from "../core/attack";
+import { systemOf, type AttackSpec, type GameState, type UnitId } from "../core";
+
+/** The target's standing models with the wounds each has left, a wounded one first (it takes the next hit). */
+export function targetModels(game: GameState, unitId: UnitId | undefined): OddsModel[] {
+  const unit = unitId ? game.units[unitId] : undefined;
+  if (!unit) return [];
+  const models = unit.modelIds
+    .map((id) => game.models[id])
+    .filter((m) => m && !m.destroyed)
+    .map((m) => {
+      const w = Number(m!.profile?.chars.W ?? 1) || 1;
+      return { wounds: Math.max(1, w - (m!.woundsLost ?? 0)), hurt: (m!.woundsLost ?? 0) > 0 };
+    });
+  return [...models.filter((m) => m.hurt), ...models.filter((m) => !m.hurt)].map(({ wounds }) => ({
+    wounds,
+  }));
+}
+
+/** The unit a procedure's damage goes to: its "target" role, else the first unit role that isn't a weapon. */
+function targetOf(roles: Record<string, RoleRef>): UnitId | undefined {
+  const t = roles.target;
+  if (t && "unit" in t) return t.unit;
+  return undefined;
+}
+
+/** Odds for a procedure before it is rolled, from the same preview the panel shows. */
+export function previewOdds(
+  game: GameState,
+  procedure: string,
+  roles: Record<string, RoleRef>,
+  opts: StartOptions = {},
+): Odds | null {
+  try {
+    const env = procedureEnv(game);
+    const preview = previewRun(env, procedure, roles, opts);
+    const steps = findProcedure(env.system, procedure).steps;
+    const die = env.system.dice.find((d) => d.id === env.system.defaultDie);
+    return procedureOdds(steps, preview.plans, targetModels(game, targetOf(roles)), die?.sides ?? 6);
+  } catch {
+    return null;
+  }
+}
+
+/** "expects 2.4 slain, 18% to wipe", or the last step's average when nothing is slain by damage. */
+export function oddsLine(odds: Odds | null): string | null {
+  if (!odds || !odds.steps.length) return null;
+  if (odds.slain !== undefined) {
+    const wipe = odds.wipe ?? 0;
+    const pct = wipe > 0 && wipe < 0.005 ? "<1%" : `${Math.round(wipe * 100)}%`;
+    return `expects ${odds.slain.toFixed(1)} slain, ${pct} to wipe`;
+  }
+  const last = odds.steps.at(-1)!;
+  return `expects ${last.expected.toFixed(1)} ${last.id}`;
+}
+
+/** A 40k attack's odds from its spec, with every edit the player made. */
+export function specOdds(game: GameState, s: AttackSpec): Odds | null {
+  const roles: Record<string, RoleRef> = {
+    attacker: { unit: s.attackerUnitId },
+    weapon: { unit: s.attackerUnitId, weapon: s.weaponId },
+    target: { unit: s.targetUnitId },
+  };
+  return previewOdds(game, ATTACK_PROCEDURE, roles, specToRun(s));
+}
+
+/** The roll in progress (a 40k attack or any system's procedure) and its odds from the start, for the caption. */
+export function liveOdds(game: GameState): { odds: Odds | null; title: string } | null {
+  const attack = game.attack;
+  if (attack && attack.stage !== "done") {
+    const s = attack.spec;
+    return {
+      odds: specOdds(game, s),
+      title: `${game.units[s.attackerUnitId]?.name ?? "Attacker"} at ${game.units[s.targetUnitId]?.name ?? "target"}`,
+    };
+  }
+  const proc = game.procedure;
+  if (proc && !proc.run.done && systemOf(game)) {
+    const { run } = proc;
+    const opts: StartOptions = {
+      ...(run.rules ? { rules: run.rules } : {}),
+      ...(run.explicit ? { explicit: run.explicit } : {}),
+      ...(run.overrides ? { overrides: run.overrides } : {}),
+    };
+    return { odds: previewOdds(game, run.procedure, run.roles, opts), title: proc.title };
+  }
+  return null;
+}

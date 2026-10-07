@@ -14,6 +14,7 @@ import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
+import { oddsLine, specOdds } from "./odds";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 
 /**
@@ -116,6 +117,8 @@ function SpecEditor({
   onDeclare: (spec: AttackSpec) => void;
 }) {
   const [spec, setSpec] = useState(suggestion.spec);
+  const game = useGame();
+  const odds = useMemo(() => oddsLine(specOdds(game, spec)), [game, spec]);
   const set = <K extends keyof AttackSpec>(k: K, v: AttackSpec[K]) => setSpec({ ...spec, [k]: v });
   const target = (v: number | null, onChange: (v: number | null) => void, allowNone: string) => (
     <select value={v ?? 0} onChange={(e) => onChange(Number(e.target.value) || null)}>
@@ -198,6 +201,14 @@ function SpecEditor({
         </label>
         <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
       </div>
+      {odds && (
+        <p
+          className="odds"
+          title="Exact odds from the numbers above; sustained, lethal and devastating extras aren't counted"
+        >
+          {odds.replace(/^e/, "E")}
+        </p>
+      )}
       {s.inRange === 0 || s.visible === 0 ? (
         <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
           Declare anyway

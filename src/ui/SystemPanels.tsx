@@ -20,6 +20,8 @@ import { modelHeight, type GameState, type Unit } from "../core";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
+import { oddsLine, targetModels } from "./odds";
+import { procedureOdds } from "../core/odds";
 import { eyeView, rotateUnit } from "./UnitCard";
 
 /**
@@ -480,6 +482,16 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
     }),
   );
   const hopeless = cannotSucceed(preview);
+  // Exact odds from the same numbers, before anything is rolled.
+  const odds =
+    preview && draft.targetId
+      ? (() => {
+          const steps = findProcedure(system, def.procedure).steps;
+          const die = system.dice.find((d) => d.id === system.defaultDie);
+          return procedureOdds(steps, preview.plans, targetModels(game, draft.targetId), die?.sides ?? 6);
+        })()
+      : null;
+  const expected = Object.fromEntries((odds?.steps ?? []).map((s) => [s.id, s.expected]));
 
   return (
     <div className="panel attack">
@@ -530,6 +542,9 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
             return text ? (
               <li key={step.id}>
                 <span className="label">{label(step.id)}</span> {text}
+                {expected[step.id] !== undefined && step.kind !== "pool" && step.kind !== "damage" && (
+                  <span className="odds"> → {expected[step.id]!.toFixed(1)}</span>
+                )}
                 {preview.fired[step.id]?.length ? (
                   <span className="muted"> ({preview.fired[step.id]!.join(", ")})</span>
                 ) : null}
@@ -537,6 +552,14 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
             ) : null;
           })}
         </ul>
+      )}
+      {odds && oddsLine(odds) && !hopeless && (
+        <p
+          className="odds"
+          title="Exact odds from the numbers above; per-die rules such as extra hits aren't counted"
+        >
+          {oddsLine(odds)!.replace(/^e/, "E")}
+        </p>
       )}
       {option && !option.ok && <p className="warn">{option.why}</p>}
       {option?.ok && hopeless && draft.targetId && (
