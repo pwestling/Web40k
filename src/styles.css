@@ -407,12 +407,67 @@ details p {
   border: 1px solid #2d3340;
   border-radius: 8px;
   padding: 4px 10px;
-  width: min(560px, calc(100vw - 24px));
+  width: min(720px, calc(100vw - 24px));
   box-sizing: border-box;
+}
+.replaybar .track {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 .replaybar input[type="range"] {
   flex: 1;
   padding: 0;
+}
+.replaybar .tick {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 6px;
+  background: #6b7280;
+  pointer-events: none;
+}
+.replaybar .tick.round {
+  top: -6px;
+  width: 2px;
+  height: 10px;
+  background: #e5e7eb;
+}
+.replaybar .where {
+  min-width: 9em;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.caption {
+  position: absolute;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  max-width: min(720px, calc(100vw - 24px));
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+}
+.caption .when {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.plate {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border-left: 3px solid;
+  background: rgb(17 19 24 / 80%);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Labels drawn over the table */
@@ -490,4 +545,40 @@ details p {
   border-radius: 6px;
   white-space: nowrap;
   z-index: 5;
+}
+
+/* Line of sight */
+.sightlabel {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(17, 24, 39, 0.85);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sightlabel.full,
+.legend .full {
+  color: #4ade80;
+}
+.sightlabel.partial,
+.legend .partial {
+  color: #facc15;
+}
+.sightlabel.none,
+.legend .none {
+  color: #f87171;
+}
+.legend {
+  position: absolute;
+  bottom: 64px;
+  left: 12px;
+  display: flex;
+  gap: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.85);
+  font-size: 0.8rem;
+}
+.legend span:not(.muted)::before {
+  content: "● ";
 }

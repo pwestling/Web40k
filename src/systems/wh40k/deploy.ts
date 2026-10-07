@@ -30,6 +30,7 @@ export function spawnIntents(
   owner: PlayerId,
   units: SpawnableUnit[],
   idPrefix: string,
+  army?: string,
 ): Intent[] {
   const seat = state.players[owner]?.seat ?? 0;
   const sign = seat === 0 ? 1 : -1;
@@ -74,6 +75,7 @@ export function spawnIntents(
       modelIds: [],
       formation: { kind: "skirmish" },
       sheet: u.sheet,
+      ...(army ? { army } : {}),
     };
     return { type: "unit/add", unit, models } satisfies Intent;
   });

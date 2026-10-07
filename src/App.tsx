@@ -51,6 +51,8 @@ export function App() {
   // The attack flow takes the unit card's place on the right, keeping the table clear.
   const attacking = useStore((s) => s.game.attack !== null || (s.draft !== null && s.scrub === null));
   const view = useStore((s) => s.view);
+  const losFrom = useStore((s) => s.losFrom);
+  const showSight = useStore((s) => s.losFrom !== null || !!s.draft?.targetId);
   const setView = useStore((s) => s.setView);
   useEffect(() => {
     addEventListener("keydown", onKey);
@@ -65,6 +67,14 @@ export function App() {
           <Hud />
           {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           <ReplayBar />
+          {showSight && (
+            <div className="legend">
+              <span className="full">Fully visible</span>
+              <span className="partial">Partly visible or in cover</span>
+              <span className="none">Hidden</span>
+              {losFrom && <span className="muted">Hover an enemy unit for its sight lines</span>}
+            </div>
+          )}
           {view === "eye" && (
             <button className="eye-exit primary" onClick={() => setView("3d")}>
               Leave model's eye view (Esc)

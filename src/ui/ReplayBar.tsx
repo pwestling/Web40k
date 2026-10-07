@@ -1,44 +1,112 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { GameRecord } from "../core";
 import { useStore } from "../store";
+import { buildLog } from "./gameLog";
 
-/** Scrub through the game log. Works live (to look back) and on loaded replays. */
+/** How long playback lingers on an event: dice and phase changes get time to read. */
+function pace(record: GameRecord, seq: number): number {
+  const type = record.events.find((e) => e.seq === seq)?.event.type ?? "";
+  if (type === "attack/roll" || type === "dice/roll") return 1000;
+  if (type.startsWith("turn/")) return 900;
+  if (type === "unit/add") return 150;
+  return 450;
+}
+
+/**
+ * Scrub through the game log, live (to look back) or on loaded replays. The
+ * track is marked with rounds and phases, and a caption says what is
+ * happening at the current point, for spectators and anyone scrubbing.
+ */
 export function ReplayBar() {
-  const { record, scrub, setScrub, session } = useStore();
+  const { record, scrub, setScrub, session, role } = useStore();
   const [playing, setPlaying] = useState(false);
   const last = record.events.at(-1)?.seq ?? 0;
   const pos = scrub ?? last;
+  const log = useMemo(() => buildLog(record), [record]);
+  const marks = useMemo(
+    () =>
+      log.flatMap((l) =>
+        l.kind === "header" ? [{ seq: Number(l.key), text: l.text, round: /Command$/.test(l.text) }] : [],
+      ),
+    [log],
+  );
+  const phase = [...marks].reverse().find((m) => m.seq <= pos);
+  const now = [...log].reverse().find((l) => l.kind === "line" && l.seq <= pos && !l.undone);
 
   useEffect(() => {
     if (!playing) return;
-    const t = setInterval(() => {
-      const s = useStore.getState();
-      const at = s.scrub ?? last;
-      if (at >= last) {
-        setPlaying(false);
-        if (s.session) s.setScrub(null);
-      } else s.setScrub(at + 1);
-    }, 400);
-    return () => clearInterval(t);
-  }, [playing, last]);
+    const at = useStore.getState().scrub ?? last;
+    const next = at + 1;
+    const t = setTimeout(
+      () => {
+        const s = useStore.getState();
+        if (next >= last) {
+          setPlaying(false);
+          s.setScrub(s.session ? null : last);
+        } else s.setScrub(next);
+      },
+      pace(record, next),
+    );
+    return () => clearTimeout(t);
+  }, [playing, last, pos, record]);
+
+  const play = () => {
+    // Playing from the end starts again from the beginning.
+    if (!playing && pos >= last) setScrub(0);
+    setPlaying(!playing);
+  };
+
+  const jump = (dir: 1 | -1) => {
+    const target =
+      dir === 1 ? marks.find((m) => m.seq > pos)?.seq : [...marks].reverse().find((m) => m.seq < pos)?.seq;
+    const to = target ?? (dir === 1 ? last : 0);
+    setScrub(to >= last && session ? null : to);
+  };
+  const captioned = role === "spectator" || scrub !== null;
 
   return (
-    <div className="replaybar">
-      <button onClick={() => setPlaying(!playing)}>{playing ? "⏸" : "▶"}</button>
-      <input
-        type="range"
-        min={0}
-        max={last}
-        value={pos}
-        onChange={(e) => {
-          const v = Number(e.target.value);
-          setScrub(v >= last && session ? null : v);
-        }}
-      />
-      <span className="muted">
-        {pos}/{last}
-      </span>
-      {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
-      {!session && <button onClick={() => location.reload()}>Close replay</button>}
-    </div>
+    <>
+      {captioned && (phase || now) && (
+        <div className="caption">
+          {phase && <span className="when">{phase.text}</span>}
+          {now?.kind === "line" && <span>{now.text}</span>}
+        </div>
+      )}
+      <div className="replaybar">
+        <button title="Replay: back a phase" onClick={() => jump(-1)}>
+          ⏮
+        </button>
+        <button onClick={play}>{playing ? "⏸" : "▶"}</button>
+        <button title="Replay: forward a phase" onClick={() => jump(1)}>
+          ⏭
+        </button>
+        <div className="track">
+          <input
+            type="range"
+            min={0}
+            max={last}
+            value={pos}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setScrub(v >= last && session ? null : v);
+            }}
+          />
+          {last > 0 &&
+            marks.map((m) => (
+              <span
+                key={m.seq}
+                className={`tick ${m.round ? "round" : ""}`}
+                style={{ left: `${(m.seq / last) * 100}%` }}
+                title={m.text}
+              />
+            ))}
+        </div>
+        <span className="muted where">
+          {scrub === null ? "Live" : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? "Setup")}
+        </span>
+        {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
+        {!session && <button onClick={() => location.reload()}>Close replay</button>}
+      </div>
+    </>
   );
 }

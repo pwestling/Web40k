@@ -68,7 +68,18 @@ interface Store {
   losFrom: UnitId | null;
   /** Model whose eye the "eye" view looks from, and where it looks. */
   eye: { modelId: string; at: { x: number; y: number; z: number } } | null;
-  set(patch: Partial<Pick<Store, "editing" | "selectedTerrain" | "xray" | "losFrom" | "eye" | "view">>): void;
+  /** Unit under the mouse, for line-of-sight focus. */
+  hoverUnit: UnitId | null;
+  /** Unit name plates over the table. */
+  plates: boolean;
+  set(
+    patch: Partial<
+      Pick<
+        Store,
+        "editing" | "selectedTerrain" | "xray" | "losFrom" | "eye" | "view" | "hoverUnit" | "plates"
+      >
+    >,
+  ): void;
   setView(view: View): void;
   /** Bumped to put the camera back to its starting position. */
   cameraReset: number;
@@ -129,6 +140,8 @@ export const useStore = create<Store>((set, get) => ({
   selectedTerrain: null,
   xray: false,
   losFrom: null,
+  hoverUnit: null,
+  plates: true,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),

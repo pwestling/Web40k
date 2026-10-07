@@ -56,7 +56,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const deploy = () => {
     if (!roster) return;
     const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
-    for (const intent of spawnIntents(game, owner, roster.units, prefix)) dispatch(intent, owner);
+    for (const intent of spawnIntents(game, owner, roster.units, prefix, roster.name))
+      dispatch(intent, owner);
     setRoster(null);
   };
 

@@ -123,6 +123,8 @@ export interface Unit {
   name: string;
   modelIds: ModelId[];
   formation: Formation;
+  /** Name of the army list it was deployed from, for the log. */
+  army?: string;
   sheet?: UnitSheet;
   /** Per-turn and lasting flags such as moved, advanced, shot, battleShocked. */
   status?: Record<string, number | boolean>;

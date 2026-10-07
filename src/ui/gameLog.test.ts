@@ -70,10 +70,31 @@ describe("game log", () => {
     );
     expect(log.map((l) => l.text)).toEqual([
       "Ann joined",
-      "Ann deployed Troopers (2)",
+      "Ann deployed Troopers",
       "Round 1 · Ann · Command",
       'Ann moved Troopers 6.0"',
     ]);
     expect(log[2]!.kind).toBe("header");
+  });
+
+  it("collapses a deployed army into one line", () => {
+    const unit = (id: string, pts: number): [string, GameEvent] => [
+      "a",
+      {
+        type: "unit/add",
+        unit: {
+          id,
+          name: id,
+          owner: "a",
+          modelIds: [],
+          formation: { kind: "skirmish" },
+          army: "Vanguard",
+          sheet: { weapons: {}, abilities: [], keywords: [], points: pts },
+        },
+        models: [],
+      },
+    ];
+    const log = buildLog(record([join("a", "Ann", 0), unit("u1", 100), unit("u2", 150)]));
+    expect(log.map((l) => l.text)).toEqual(["Ann joined", "Ann deployed Vanguard (2 units, 250 pts)"]);
   });
 });

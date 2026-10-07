@@ -1,4 +1,13 @@
-import { maxWounds, modelHeight, stepLevel, type Model, type Unit, type WeaponProfile } from "../core";
+import {
+  levelsAt,
+  maxWounds,
+  modelHeight,
+  PHASES,
+  stepLevel,
+  type Model,
+  type Unit,
+  type WeaponProfile,
+} from "../core";
 import {
   aliveModels,
   blockedMoves,
@@ -100,6 +109,9 @@ export function UnitCard() {
   const moved = unitMoved(alive);
   const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
+  const phase = game.turn.round > 0 ? PHASES[game.turn.phase] : undefined;
+  // Floor buttons only show when the unit stands where there is a floor to climb to.
+  const onFloors = alive.some((m) => (m.z ?? 0) > 0 || levelsAt(game.terrain, m.position).length > 1);
   const elevation = Math.max(0, ...alive.map((m) => m.z ?? 0));
   const blocked = game.turn.round > 0 ? blockedMoves(game, unit) : [];
   const height = alive[0] ? modelHeight(alive[0]) : 0;
@@ -160,7 +172,7 @@ export function UnitCard() {
               weaponId && (
                 <button
                   key={kind}
-                  className="primary"
+                  className={phase === (kind === "ranged" ? "Shooting" : "Fight") ? "primary" : ""}
                   onClick={() => setDraft({ attackerId: unit.id, kind, weaponId, picking: true })}
                 >
                   {kind === "ranged" ? "Shoot" : "Fight"}
@@ -168,15 +180,23 @@ export function UnitCard() {
               )
             );
           })}
-          <button onClick={() => roll("advance", 1)}>Advance (D6)</button>
-          <button onClick={() => roll("charge", 2)}>Charge (2D6)</button>
+          <button className={phase === "Movement" ? "primary" : ""} onClick={() => roll("advance", 1)}>
+            Advance (D6)
+          </button>
+          <button className={phase === "Charge" ? "primary" : ""} onClick={() => roll("charge", 2)}>
+            Charge (2D6)
+          </button>
           <button onClick={() => roll("battleshock", 2)}>Battle-shock test</button>
-          <button title="Up a floor (R)" onClick={() => climbUnit(unit.id, 1)}>
-            ▲ Floor
-          </button>
-          <button title="Down a floor (F)" onClick={() => climbUnit(unit.id, -1)}>
-            ▼ Floor
-          </button>
+          {onFloors && (
+            <>
+              <button title="Up a floor (R)" onClick={() => climbUnit(unit.id, 1)}>
+                ▲ Floor
+              </button>
+              <button title="Down a floor (F)" onClick={() => climbUnit(unit.id, -1)}>
+                ▼ Floor
+              </button>
+            </>
+          )}
           <button title="Rotate left (Q)" onClick={() => rotateUnit(unit.id, -1)}>
             ⟲
           </button>

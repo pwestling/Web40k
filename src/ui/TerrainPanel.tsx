@@ -180,27 +180,6 @@ export function TerrainPanel() {
           />
         </label>
       </div>
-      <hr />
-      <label>
-        Cover{" "}
-        <select
-          value={game.settings.cover}
-          onChange={(e) =>
-            dispatch({ type: "settings/set", settings: { cover: e.target.value as "hit" | "save" } })
-          }
-        >
-          <option value="hit">−1 to hit (11th edition, per research notes)</option>
-          <option value="save">+1 to save (10th edition)</option>
-        </select>
-      </label>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={game.settings.modelsBlock}
-          onChange={(e) => dispatch({ type: "settings/set", settings: { modelsBlock: e.target.checked } })}
-        />
-        Models from other units block line of sight
-      </label>
     </div>
   );
 }

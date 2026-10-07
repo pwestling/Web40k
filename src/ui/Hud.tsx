@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord } from "../core";
 import { buildLog } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
+import { GameSettings } from "./GameSettings";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -20,6 +21,7 @@ export function Hud() {
     scrub,
     editing,
     xray,
+    plates,
     set,
   } = useStore();
   const canControl = useCanControl();
@@ -27,6 +29,11 @@ export function Hud() {
   const [sides, setSides] = useState(6);
   const [collapsed, setCollapsed] = useState(false);
   const undone = undoneSeqs(record);
+  // Starting the battle (or any later phase change) locks the terrain again.
+  const round = liveGame.turn.round;
+  useEffect(() => {
+    if (round > 0) useStore.getState().set({ editing: false, selectedTerrain: null });
+  }, [round, liveGame.turn.phase]);
   const log = useMemo(() => buildLog(record, scrub ?? Infinity), [record, scrub]);
   const selfId = session?.selfId;
   const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);
@@ -74,18 +81,31 @@ export function Hud() {
         <button onClick={resetView} title="Home">
           Reset view
         </button>
+        <button className={plates ? "on" : ""} onClick={() => set({ plates: !plates })}>
+          Unit names
+        </button>
         <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
           X-ray terrain
         </button>
         {role !== "spectator" && (
           <button
             className={editing ? "on" : ""}
-            onClick={() => set({ editing: !editing, selectedTerrain: null })}
+            onClick={() => {
+              // Terrain is locked once the battle starts; changing it then takes a confirm.
+              if (
+                !editing &&
+                liveGame.turn.round > 0 &&
+                !confirm("The battle has started. Unlock the terrain? Every change shows in the log.")
+              )
+                return;
+              set({ editing: !editing, selectedTerrain: null });
+            }}
           >
-            Edit terrain
+            {editing ? "Done editing" : liveGame.turn.round > 0 ? "Unlock terrain" : "Edit terrain"}
           </button>
         )}
       </div>
+      <GameSettings />
 
       {role === "client" && !amSeated && seated.length >= 2 && (
         <div className="claim">

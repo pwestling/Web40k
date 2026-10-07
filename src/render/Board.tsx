@@ -10,7 +10,6 @@ import {
   type GameState,
   type Model,
   type TerrainPiece,
-  type Unit,
   type Vec2,
 } from "../core";
 import {
@@ -26,6 +25,7 @@ import {
   objectiveControl,
   unitMoved,
   unitSight,
+  type UnitSight,
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
@@ -123,6 +123,8 @@ function Scene() {
     xray,
     losFrom,
     eye,
+    hoverUnit,
+    plates,
     set: setUi,
   } = useStore();
   const canControl = useCanControl();
@@ -293,31 +295,61 @@ function Scene() {
     ? game.units[draft.attackerId]?.sheet?.weapons[draft.weaponId]
     : undefined;
 
-  // Line of sight: the attack being set up, or everything a chosen unit can see.
-  const sightLines = useMemo(() => {
-    const out: { shooter?: Model; target: Model; state: "full" | "partial" | "none" }[] = [];
-    const addUnit = (shooters: Model[], target: Unit) => {
-      const sight = unitSight(game, shooters, target);
+  // Line of sight: one answer per enemy unit, with lines only to the target in focus
+  // (the attack's target, or the enemy unit under the mouse).
+  const { sightLines, sightLabels } = useMemo(() => {
+    const lines: { shooter?: Model; target: Model; state: "full" | "partial" | "none" }[] = [];
+    const labels: {
+      unitId: string;
+      at: Vec2;
+      z: number;
+      text: string;
+      state: "full" | "partial" | "none";
+    }[] = [];
+    const addLines = (sight: UnitSight) => {
       for (const t of sight.targets) {
         const target = game.models[t.modelId]!;
         const shooter = t.seenBy ? game.models[t.seenBy] : undefined;
-        out.push({ shooter, target, state: !t.visible ? "none" : t.fully && !t.cover ? "full" : "partial" });
+        lines.push({
+          shooter,
+          target,
+          state: !t.visible ? "none" : t.fully && !t.cover ? "full" : "partial",
+        });
       }
     };
     if (draft?.targetId && draft.weaponId) {
       const attacker = game.units[draft.attackerId];
       const target = game.units[draft.targetId];
-      if (attacker && target) addUnit(carriers(game, attacker, draft.weaponId), target);
+      if (attacker && target) addLines(unitSight(game, carriers(game, attacker, draft.weaponId), target));
     } else if (losFrom) {
       const from = game.units[losFrom];
       if (from)
-        for (const u of Object.values(game.units))
-          if (u.owner !== from.owner && aliveModels(game, u).length) addUnit(aliveModels(game, from), u);
+        for (const u of Object.values(game.units)) {
+          const models = aliveModels(game, u);
+          if (u.owner === from.owner || !models.length) continue;
+          const sight = unitSight(game, aliveModels(game, from), u);
+          if (u.id === hoverUnit) addLines(sight);
+          const n = models.length;
+          const text = !sight.visible
+            ? "Not visible"
+            : `${sight.visible}/${n} visible${sight.inCover ? ` · ${sight.inCover} in cover` : ""}`;
+          labels.push({
+            unitId: u.id,
+            at: {
+              x: models.reduce((a, m) => a + m.position.x, 0) / n,
+              y: models.reduce((a, m) => a + m.position.y, 0) / n,
+            },
+            z: Math.max(...models.map((m) => (m.z ?? 0) + modelHeight(m))),
+            text,
+            state: !sight.visible ? "none" : sight.visible === n && !sight.inCover ? "full" : "partial",
+          });
+        }
     }
-    return out;
-  }, [game, draft, losFrom]);
+    return { sightLines: lines, sightLabels: labels };
+  }, [game, draft, losFrom, hoverUnit]);
 
   const eyeTarget = eye?.at;
+  const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
 
   return (
     <>
@@ -404,7 +436,8 @@ function Scene() {
 
       {Object.values(game.models).map((model) => {
         if (model.destroyed) return null;
-        if (view === "eye" && eye?.modelId === model.id) return null;
+        // In a model's eye view, its own unit is hidden so it doesn't block the view.
+        if (view === "eye" && eyeUnit && (eye?.modelId === model.id || model.unitId === eyeUnit)) return null;
         const owner = game.players[model.owner];
         const isSelected = !!model.unitId && model.unitId === selected;
         return (
@@ -420,11 +453,40 @@ function Scene() {
             unitName={model.unitId ? game.units[model.unitId]?.name : undefined}
             figure={figures[model.id]}
             onDown={(shift) => onModelDown(model, shift)}
+            onHover={(on) => setUi({ hoverUnit: on ? (model.unitId ?? null) : null })}
           />
         );
       })}
 
       <Miniatures models={onTable} positions={positions} heights={heights} />
+      {/* One name plate per unit, and an outline around the unit under the mouse. */}
+      {plates &&
+        view !== "eye" &&
+        Object.values(game.units).map((u) => {
+          const models = aliveModels(game, u);
+          if (!models.length) return null;
+          const n = models.length;
+          const x = models.reduce((a, m) => a + positions[m.id]!.x, 0) / n;
+          const y = models.reduce((a, m) => a + positions[m.id]!.y, 0) / n;
+          const z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m)));
+          return (
+            <Html
+              key={`plate-${u.id}`}
+              position={[x, z + (losFrom ? 2.4 : 1), y]}
+              center
+              className="plate"
+              style={{ borderColor: game.players[u.owner]?.color ?? "#999" }}
+              zIndexRange={[10, 0]}
+            >
+              {u.name}
+            </Html>
+          );
+        })}
+      {hoverUnit &&
+        game.units[hoverUnit] &&
+        aliveModels(game, game.units[hoverUnit]).map((m) => (
+          <Ring key={`hover-${m.id}`} model={placed(m)} radius={0.12} color="#e5e7eb" opacity={0.8} />
+        ))}
 
       {/* Where the selected unit started this phase. */}
       {selectedUnit &&
@@ -464,6 +526,16 @@ function Scene() {
 
       {sightLines.map((l, i) => (
         <SightLine key={i} shooter={l.shooter} target={l.target} state={l.state} />
+      ))}
+      {sightLabels.map((l) => (
+        <Html
+          key={l.unitId}
+          position={[l.at.x, l.z + 1.2, l.at.y]}
+          center
+          className={`sightlabel ${l.state}`}
+        >
+          {l.text}
+        </Html>
       ))}
 
       {drag?.moved && dragUnit && (
@@ -786,6 +858,7 @@ interface ModelBaseProps {
   /** Height of the uploaded figure standing on this base, if there is one. */
   figure?: number;
   onDown: (shift: boolean) => void;
+  onHover: (on: boolean) => void;
 }
 
 function ModelBase({
@@ -799,6 +872,7 @@ function ModelBase({
   unitName,
   figure,
   onDown,
+  onHover,
 }: ModelBaseProps) {
   const { width, depth } = baseSizeInches(model.base);
   const r = Math.min(width, depth) / 2;
@@ -823,8 +897,12 @@ function ModelBase({
       onPointerOver={(e) => {
         e.stopPropagation();
         setHover(true);
+        onHover(true);
       }}
-      onPointerOut={() => setHover(false)}
+      onPointerOut={() => {
+        setHover(false);
+        onHover(false);
+      }}
     >
       <mesh
         castShadow

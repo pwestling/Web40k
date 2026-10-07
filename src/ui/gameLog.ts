@@ -23,6 +23,10 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   const items: LogItem[] = [];
   let state = record.initial;
   let attackLine: Extract<LogItem, { kind: "line" }> | null = null;
+  // Deployment: one line per player and army, however many units it had.
+  let deployLine:
+    (Extract<LogItem, { kind: "line" }> & { by: string; army?: string; units: number; pts: number }) | null =
+    null;
   for (const logged of record.events) {
     if (logged.seq > uptoSeq) break;
     const skipped = undone.has(logged.seq);
@@ -38,6 +42,36 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       items.push({ kind: "header", key, text: turnHeader(state) });
       continue;
     }
+    if (event.type === "unit/add" && !skipped) {
+      const army = event.unit.army;
+      const pts = event.unit.sheet?.points ?? 0;
+      if (deployLine && deployLine.by === logged.by && deployLine.army === army) {
+        deployLine.units++;
+        deployLine.pts += pts;
+      } else {
+        deployLine = {
+          kind: "line",
+          key,
+          seq: logged.seq,
+          text: "",
+          undone: false,
+          by: logged.by,
+          army,
+          units: 1,
+          pts,
+        };
+        items.push(deployLine);
+      }
+      const who = state.players[logged.by]?.name ?? "Someone";
+      const { units, pts: total } = deployLine;
+      const size = `${units} unit${units === 1 ? "" : "s"}${total ? `, ${total} pts` : ""}`;
+      deployLine.text =
+        units === 1 && !army
+          ? `${who} deployed ${event.unit.name}`
+          : `${who} deployed ${army ?? "an army"} (${size})`;
+      continue;
+    }
+    deployLine = null;
     if (event.type === "attack/declare" || event.type === "attack/roll") {
       const text = attackSummary(state.attack ?? event.attack, state);
       if (attackLine && event.type === "attack/roll") attackLine.text = text;
