@@ -3,6 +3,7 @@
 //
 //   pnpm perf                  # default scenarios
 //   pnpm perf -- --gpu         # use the machine's GPU instead of SwiftShader
+//   pnpm perf -- --only Conquest  # just the scenarios whose name contains this
 //   CHROMIUM=/path/to/chrome pnpm perf
 //
 // Frame times under SwiftShader (software GL, the default so it runs
@@ -15,6 +16,8 @@ import { chromium } from "playwright-core";
 
 const PORT = 5199;
 const gpu = process.argv.includes("--gpu");
+// --only <text>: run just the scenarios whose name contains it.
+const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : null;
 const executablePath =
   process.env.CHROMIUM ??
   ["/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "/opt/pw-browsers/chromium"].find(existsSync);
@@ -42,12 +45,15 @@ try {
   await page.waitForFunction(() => window.openBattlePerf);
   const models = await page.evaluate(() => window.openBattlePerf.setup(3));
   const run = async (name, fn, frames = 60, warmup = 10) => {
+    if (only && !name.includes(only)) return;
     const prep = await page.evaluate(fn);
     const m = await page.evaluate(([n, w]) => window.openBattlePerf.measure(n, w), [frames, warmup]);
     results.push({ scenario: name, ...m, ...(prep && typeof prep === "object" ? prep : {}) });
     console.error(name, JSON.stringify(results.at(-1)));
   };
   await run("stand-ins", () => window.openBattlePerf.undress());
+  // The same table while 60 dice tumble across the tray (DOM animation over the canvas).
+  await run("stand-ins, 60 dice rolling", () => window.openBattlePerf.roll(60), 30, 0);
   await run("pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000));
   await run("pipeline, 1M sculpts", () => window.openBattlePerf.dress(1_000_000));
   // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
@@ -60,6 +66,11 @@ try {
     const perArmyPair = await window.openBattlePerf.setup(1, "tow-hand");
     const models = await window.openBattlePerf.setup(Math.ceil(200 / perArmyPair), "tow-hand");
     return { models };
+  });
+  // Conquest: regiments of stands, 20 a side, on the table (before reinforcements).
+  await run("Conquest, 40 regiments (148 stands)", async () => {
+    const models = await window.openBattlePerf.setup(4, "conquest-hand");
+    return { models, dispatch: await window.openBattlePerf.dispatchCost() };
   });
   console.log(JSON.stringify({ when: new Date().toISOString(), gpu, models, results }, null, 2));
 } finally {

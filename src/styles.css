@@ -1353,9 +1353,11 @@ p.odds {
   position: absolute;
   inset: 8% 4% -2% 4%;
   border-radius: 22%;
-  background: #000;
-  filter: blur(4px);
+  /* A soft edge baked into a gradient: a blur filter is re-rasterised every frame for every tumbling die. */
+  background: radial-gradient(closest-side, #000 55%, transparent);
+  transform: scale(1.15);
   opacity: 0.45;
+  will-change: transform, opacity;
 }
 .dice-tray .die .body {
   position: absolute;
