@@ -45,9 +45,24 @@ pnpm dev          # http://localhost:5173
      twin-linked, anti, torrent, melta, heavy, lance) and feel no pain. Every number can be changed
      before declaring. Then roll each step, or _Roll everything_. Damage goes on the target's models
      automatically (wounded models first) and slain models leave the table.
-   - Objectives show who controls them (OC within 3"). Ruin walls block line of sight and ruin
-     footprints give cover, as a simplified check.
-5. **Fix anything by hand.** Rules are advisory: wounds, statuses, CP and VP can all be edited, and
+   - Objectives show who controls them (OC within 3").
+5. **Terrain, height and line of sight.** Terrain pieces are made of boxes (walls, floors, blocks,
+   foliage), and the same boxes drive drawing, line of sight and floors. There is no physics: models
+   stand on a level and never fall or collide.
+   - _Edit terrain_ opens the terrain panel: add ruins, tall ruins, containers, woods, barricades,
+     craters and hills; drag pieces and objectives; rotate with Q/E; set each piece's category
+     (exposed, light, dense, solid); duplicate or delete. Pick a deployment preset, reset to the
+     standard table, and save or load layouts as JSON.
+   - Models dropped on a floor or hill stand on it. With a unit selected, R/F (or the ▲/▼ buttons)
+     move it up or down a floor. Distances, engagement range and coherency count height.
+   - _Line of sight_ on a unit card draws sight lines to every enemy unit: green fully visible, yellow
+     partly visible (in cover), red hidden. Lines are traced from the model's eye line to points over
+     the target's body, stopped by terrain and (optionally) other models. _Model's eye view_ puts the
+     camera at a model's head; Esc leaves it. _X-ray terrain_ makes terrain see-through.
+   - The attack panel uses the same check for visibility, cover, higher ground and hidden units in
+     dense terrain. The terrain panel picks whether cover is −1 to hit or +1 to the save, and whether
+     models block sight. Category rules are a best guess and can always be overridden.
+6. **Fix anything by hand.** Rules are advisory: wounds, statuses, CP and VP can all be edited, and
    _Undo_ takes back your last action. The game autosaves in the host's browser (_Resume last game_
    in the lobby) and the replay bar scrubs back through everything that happened.
 

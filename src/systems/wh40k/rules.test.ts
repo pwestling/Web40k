@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, type GameState, type Model, type UnitSheet } from "../../core";
-import { incoherentModels, objectiveControl, suggestAttack, woundTarget } from "./rules";
+import { makePiece } from "./layout";
+import {
+  aliveModels,
+  blockedMoves,
+  incoherentModels,
+  objectiveControl,
+  suggestAttack,
+  unitSight,
+  woundTarget,
+} from "./rules";
 
 const m = (
   id: string,
@@ -118,5 +127,58 @@ describe("40k suggestions", () => {
       layout: { terrain: [], zones: [], objectives: [{ id: "o", position: { x: 0, y: 7 } }] },
     });
     expect(objectiveControl(s)[0]).toMatchObject({ controller: "p2", oc: { p2: 2 } });
+  });
+});
+
+describe("terrain rules", () => {
+  const unit = (id: string, owner: string, keywords: string[], models: Model[]) => ({
+    type: "unit/add" as const,
+    unit: {
+      id,
+      owner,
+      name: id,
+      modelIds: [],
+      formation: { kind: "skirmish" as const },
+      sheet: sheet({}, [], keywords),
+    },
+    models,
+  });
+
+  it('gives cover in light terrain and hides infantry in dense terrain beyond 15"', () => {
+    let s = createInitialState();
+    s = applyEvent(s, {
+      type: "layout/set",
+      layout: { terrain: [makePiece("Crater", "c", { x: 0, y: 0 })], objectives: [], zones: [] },
+    });
+    s = applyEvent(s, unit("t", "p2", ["Infantry"], [m("t1", "p2", 0, 0, {})]));
+    s = applyEvent(s, unit("s", "p1", [], [m("s1", "p1", 0, -10, {}), m("s2", "p1", 0, -20, {})]));
+    const shooters = aliveModels(s, s.units.s);
+    // A crater is exposed: no cover.
+    expect(unitSight(s, shooters, s.units.t!).inCover).toBe(0);
+    const light = { ...s.terrain[0]!, category: "light" as const };
+    s = applyEvent(s, { type: "terrain/update", piece: light });
+    expect(unitSight(s, shooters, s.units.t!).inCover).toBe(1);
+    s = applyEvent(s, { type: "terrain/update", piece: { ...light, category: "dense" } });
+    expect(unitSight(s, [shooters[1]!], s.units.t!)).toMatchObject({ visible: 0, hidden: 1 });
+    expect(unitSight(s, [shooters[0]!], s.units.t!).visible).toBe(1);
+  });
+
+  it("warns when a vehicle drives through a wall but lets infantry pass", () => {
+    let s = createInitialState();
+    s = applyEvent(s, {
+      type: "layout/set",
+      layout: { terrain: [makePiece("Barricade", "b", { x: 0, y: 0 })], objectives: [], zones: [] },
+    });
+    s = applyEvent(s, unit("v", "p1", ["Vehicle"], [m("v1", "p1", 0, -3, {})]));
+    s = applyEvent(s, unit("i", "p1", ["Infantry"], [m("i1", "p1", 1, -3, {})]));
+    s = applyEvent(s, {
+      type: "models/move",
+      moves: [
+        { id: "v1", to: { x: 0, y: 3 } },
+        { id: "i1", to: { x: 1, y: 3 } },
+      ],
+    });
+    expect(blockedMoves(s, s.units.v!).map((p) => p.id)).toEqual(["b"]);
+    expect(blockedMoves(s, s.units.i!)).toEqual([]);
   });
 });

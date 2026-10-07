@@ -6,7 +6,21 @@ import { useGame } from "./hooks";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
-  const { record, session, roomId, dispatch, view, setView, mode, role, game: liveGame, scrub } = useStore();
+  const {
+    record,
+    session,
+    roomId,
+    dispatch,
+    view,
+    setView,
+    mode,
+    role,
+    game: liveGame,
+    scrub,
+    editing,
+    xray,
+    set,
+  } = useStore();
   const game = useGame();
   const canControl = useCanControl();
   const [count, setCount] = useState(2);
@@ -53,9 +67,22 @@ export function Hud() {
       )}
       {mode === "hotseat" && <p className="muted">Hotseat: you control both sides.</p>}
       {role === "spectator" && <p className="muted">Spectating.</p>}
-      <button onClick={() => setView(view === "3d" ? "top" : "3d")}>
-        {view === "3d" ? "Top-down view" : "3D view"}
-      </button>
+      <div className="row wrap">
+        <button onClick={() => setView(view === "top" ? "3d" : "top")}>
+          {view === "top" ? "3D view" : "Top-down view"}
+        </button>
+        <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
+          X-ray terrain
+        </button>
+        {role !== "spectator" && (
+          <button
+            className={editing ? "on" : ""}
+            onClick={() => set({ editing: !editing, selectedTerrain: null })}
+          >
+            Edit terrain
+          </button>
+        )}
+      </div>
 
       {role === "client" && !amSeated && seated.length >= 2 && (
         <div className="claim">
@@ -136,6 +163,18 @@ export function describe(
       return `${who} undid #${event.seq}`;
     case "unit/add":
       return `${who} deployed ${event.unit.name} (${event.models.length})`;
+    case "terrain/add":
+      return `${who} added ${event.piece.name.toLowerCase()}`;
+    case "terrain/update":
+      return `${who} changed ${event.piece.name.toLowerCase()}`;
+    case "terrain/remove":
+      return `${who} removed terrain`;
+    case "objective/move":
+      return `${who} moved an objective`;
+    case "unit/height":
+      return `${who} set ${unitName(event.id)} height to ${event.height ?? "default"}"`;
+    case "settings/set":
+      return `${who} changed table settings`;
     case "unit/attach":
       return `${who} attached ${unitName(event.id)} to ${unitName(event.to)}`;
     case "unit/remove":

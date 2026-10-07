@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import * as core from "./core";
 import { useStore } from "./store";
 import "./styles.css";
 
@@ -11,4 +12,4 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // Expose the store in development for debugging and browser tests.
-if (import.meta.env.DEV) Object.assign(window, { openBattle: useStore });
+if (import.meta.env.DEV) Object.assign(window, { openBattle: useStore, openBattleCore: core });

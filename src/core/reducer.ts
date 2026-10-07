@@ -1,7 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { transformPositions } from "./formation";
-import type { GameState, Model, Unit, UnitSheet } from "./types";
+import type { GameState, Model, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
 
 /** Unit flags that last one turn; cleared when their owner's turn begins. */
 export const TURN_FLAGS = ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"];
@@ -38,9 +38,9 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       }));
     case "models/move": {
       const models = { ...state.models };
-      for (const { id, to } of event.moves) {
+      for (const { id, to, z } of event.moves) {
         const m = models[id];
-        if (m) models[id] = { ...m, position: to };
+        if (m) models[id] = { ...m, position: to, ...(z === undefined ? {} : { z }) };
       }
       return { ...state, models };
     }
@@ -61,7 +61,12 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "unit/add": {
       const models = { ...state.models };
       for (const model of event.models)
-        models[model.id] = { ...model, unitId: event.unit.id, phaseStart: model.position };
+        models[model.id] = {
+          ...model,
+          unitId: event.unit.id,
+          phaseStart: model.position,
+          phaseStartZ: model.z ?? 0,
+        };
       const unit = { ...event.unit, modelIds: event.models.map((m) => m.id) };
       return { ...state, units: { ...state.units, [unit.id]: unit }, models };
     }
@@ -130,7 +135,34 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       return state;
     }
     case "layout/set":
-      return { ...state, ...event.layout };
+      return { ...state, ...event.layout, terrain: event.layout.terrain.map(upgradePiece) };
+    case "terrain/add":
+    case "terrain/update":
+      return {
+        ...state,
+        terrain: [...state.terrain.filter((t) => t.id !== event.piece.id), upgradePiece(event.piece)],
+      };
+    case "terrain/remove":
+      return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
+    case "objective/move":
+      return {
+        ...state,
+        objectives: state.objectives.map((o) => (o.id === event.id ? { ...o, position: event.to } : o)),
+      };
+    case "unit/height": {
+      const unit = state.units[event.id];
+      if (!unit) return state;
+      const models = { ...state.models };
+      for (const id of unit.modelIds) {
+        const m = models[id];
+        if (!m) continue;
+        const { height: _old, ...rest } = m;
+        models[id] = event.height ? { ...rest, height: event.height } : rest;
+      }
+      return { ...state, models };
+    }
+    case "settings/set":
+      return { ...state, settings: { ...state.settings, ...event.settings } };
     case "turn/next":
       return stepTurn(state, 1);
     case "turn/prev":
@@ -205,7 +237,8 @@ function stepTurn(state: GameState, dir: 1 | -1): GameState {
   }
 
   const models: Record<string, Model> = {};
-  for (const [id, m] of Object.entries(state.models)) models[id] = { ...m, phaseStart: m.position };
+  for (const [id, m] of Object.entries(state.models))
+    models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };
   let next: GameState = { ...state, models, attack: null, turn: { ...state.turn, round, activeSeat, phase } };
 
   if (dir === 1 && phase === 0) {
@@ -264,4 +297,20 @@ function mergeSheets(a: UnitSheet | undefined, b: UnitSheet | undefined): UnitSh
     keywords: [...new Set([...(a?.keywords ?? []), ...(b?.keywords ?? [])])],
     ...(a?.points || b?.points ? { points: (a?.points ?? 0) + (b?.points ?? 0) } : {}),
   };
+}
+
+/** Read terrain saved before pieces were made of solids (an L of walls on a footprint). */
+function upgradePiece(piece: TerrainPiece): TerrainPiece {
+  if (Array.isArray(piece.solids)) return piece;
+  const old = piece as unknown as { walls?: { from: Vec2; to: Vec2; height: number }[] };
+  const solids = (old.walls ?? []).map((w) => ({
+    kind: "wall" as const,
+    x: (w.from.x + w.to.x) / 2,
+    y: (w.from.y + w.to.y) / 2,
+    z: 0,
+    w: Math.max(0.3, Math.abs(w.to.x - w.from.x)),
+    d: Math.max(0.3, Math.abs(w.to.y - w.from.y)),
+    h: w.height,
+  }));
+  return { ...piece, name: piece.name ?? "Ruin", category: piece.category ?? "light", solids };
 }

@@ -9,7 +9,14 @@
  */
 import {
   baseToBaseDistance,
+  inFootprint,
+  modelDistance,
+  modelSight,
+  moveCrossesWall,
   PHASES,
+  verticalGap,
+  whollyWithin,
+  type TerrainCategory,
   type AttackSpec,
   type GameState,
   type Model,
@@ -18,12 +25,13 @@ import {
   type Vec2,
   type WeaponProfile,
 } from "../../core";
-import { pointInTerrain } from "./layout";
 
 /** 11th edition values, from the research notes. */
 export const ENGAGEMENT_RANGE = 2;
 export const COHERENCY_NEAR = 2;
 export const COHERENCY_FAR = 9;
+/** Vertical distance allowed for engagement and coherency. */
+export const VERTICAL_TOLERANCE = 5;
 export const OBJECTIVE_RANGE = 3;
 export const OBJECTIVE_MARKER_MM = 40;
 
@@ -45,7 +53,7 @@ export function aliveModels(state: GameState, unit: Unit | undefined): Model[] {
 /** Closest base-to-base distance from one model to any model of a unit. */
 export function distanceToUnit(model: Model, targets: Model[]): number {
   let best = Infinity;
-  for (const t of targets) best = Math.min(best, baseToBaseDistance(model, t));
+  for (const t of targets) best = Math.min(best, modelDistance(model, t));
   return best;
 }
 
@@ -127,6 +135,7 @@ export interface AttackSuggestion {
   visible: number;
   inCover: number;
   targetModels: number;
+  sight: UnitSight;
 }
 
 /**
@@ -205,17 +214,30 @@ export function suggestAttack(
   // Save: armour modified by AP and cover, or the invulnerable save if better.
   const ap = num(weapon.chars.AP) ?? 0;
   const sv = num(first?.profile?.chars.SV) ?? 7;
-  const visibility = lineOfSight(state, shooters.length ? shooters : all, targets);
+  const sight = unitSight(state, shooters.length ? shooters : all, target);
   const ignoresCover = keywordValue(weapon, "Ignores Cover") !== null;
   const cover =
-    weapon.kind === "ranged" &&
-    !ignoresCover &&
-    visibility.inCover > 0 &&
-    visibility.inCover >= visibility.visible;
-  let save = sv - ap - (cover ? 1 : 0);
-  // Cover does not improve a 3+ or better save against AP 0.
-  if (cover && ap === 0 && sv <= 3) save = sv;
-  if (cover && save !== sv) notes.push("Target in cover: +1 to save");
+    weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;
+  let save = sv - ap;
+  if (cover && state.settings.cover === "save") {
+    // Cover does not improve a 3+ or better save against AP 0.
+    if (!(ap === 0 && sv <= 3)) {
+      save -= 1;
+      notes.push("Target in cover: +1 to save");
+    }
+  } else if (cover) {
+    hitMod -= 1;
+    notes.push("Target in cover: −1 to hit");
+  }
+  if (weapon.kind === "ranged" && sight.higherGround) {
+    hitMod += 1;
+    notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
+  }
+  if (weapon.kind === "ranged" && sight.visible === 0) notes.push("No target model is visible");
+  if (sight.hidden)
+    notes.push(
+      `${sight.hidden} target model(s) Hidden in dense terrain (only visible within ${HIDDEN_RANGE}")`,
+    );
   const inv = first ? invulnerable(first, target) : null;
   if (inv && inv < save) {
     save = inv;
@@ -263,8 +285,9 @@ export function suggestAttack(
     notes,
     carriers: all.length,
     inRange: count,
-    visible: visibility.visible,
-    inCover: visibility.inCover,
+    visible: sight.visible,
+    inCover: sight.inCover,
+    sight,
     targetModels: targets.length,
   };
 }
@@ -278,48 +301,154 @@ function addBonus(dice: string, bonus: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Line of sight and cover (simplified: ruin walls block, footprints give cover)
+// Terrain: categories, line of sight, cover, hidden, higher ground
 // ---------------------------------------------------------------------------
 
-function segmentsCross(a: Vec2, b: Vec2, c: Vec2, d: Vec2): boolean {
-  const cross = (p: Vec2, q: Vec2, r: Vec2) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
-  const d1 = cross(c, d, a);
-  const d2 = cross(c, d, b);
-  const d3 = cross(a, b, c);
-  const d4 = cross(a, b, d);
-  return d1 * d2 < 0 && d3 * d4 < 0;
+/**
+ * What each terrain category does. Based on the 11th edition summary in the
+ * research notes (secondary sources), so treat the details as a best guess
+ * and check against the official rules.
+ */
+export const CATEGORY_RULES: Record<
+  TerrainCategory,
+  {
+    label: string;
+    coverWithin: boolean;
+    coverBehind: boolean;
+    hides: boolean;
+    impassable: boolean;
+    help: string;
+  }
+> = {
+  exposed: {
+    label: "Exposed",
+    coverWithin: false,
+    coverBehind: false,
+    hides: false,
+    impassable: false,
+    help: "No cover.",
+  },
+  light: {
+    label: "Light",
+    coverWithin: true,
+    coverBehind: true,
+    hides: false,
+    impassable: false,
+    help: "Cover for models wholly within it or partly hidden by it.",
+  },
+  dense: {
+    label: "Dense",
+    coverWithin: true,
+    coverBehind: true,
+    hides: true,
+    impassable: false,
+    help: `Cover as Light. Infantry wholly within are Hidden: only visible within ${15}" unless they shot.`,
+  },
+  solid: {
+    label: "Solid",
+    coverWithin: false,
+    coverBehind: true,
+    hides: false,
+    impassable: true,
+    help: "Cannot be moved through. Cover for models partly hidden by it.",
+  },
+};
+
+export const HIDDEN_RANGE = 15;
+export const HIGHER_GROUND = 3;
+
+export interface TargetSight {
+  modelId: string;
+  visible: boolean;
+  fully: boolean;
+  cover: boolean;
+  hidden: boolean;
+  /** A shooter that can see it, for drawing the sight line. */
+  seenBy?: string;
 }
 
-export function wallSegments(piece: TerrainPiece): [Vec2, Vec2][] {
-  const c = Math.cos(piece.facing);
-  const s = Math.sin(piece.facing);
-  const tf = (p: Vec2): Vec2 => ({
-    x: piece.position.x + p.x * c + p.y * s,
-    y: piece.position.y - p.x * s + p.y * c,
-  });
-  return piece.walls.map((w) => [tf(w.from), tf(w.to)]);
+export interface UnitSight {
+  targets: TargetSight[];
+  visible: number;
+  inCover: number;
+  hidden: number;
+  /** Every shooter stands at least 3" above every target. */
+  higherGround: boolean;
 }
 
 /**
- * A target model is visible if a line from any shooter's centre to its
- * centre crosses no ruin wall. Base-centre lines are a simplification of
- * true line of sight; players can override.
+ * Line of sight from a set of shooters to a target unit, per target model,
+ * using the terrain and model volumes. A target model is in cover if it is
+ * wholly within light or dense terrain, or if terrain that gives cover hides
+ * part of it from every shooter that can see it.
  */
-export function lineOfSight(
-  state: GameState,
-  shooters: Model[],
-  targets: Model[],
-): { visible: number; inCover: number } {
-  const walls = state.terrain.flatMap(wallSegments);
-  let visible = 0;
-  let inCover = 0;
-  for (const t of targets) {
-    const seen = shooters.some((s) => !walls.some(([a, b]) => segmentsCross(s.position, t.position, a, b)));
-    if (!seen) continue;
-    visible++;
-    if (state.terrain.some((p) => pointInTerrain(t.position, p))) inCover++;
+export function unitSight(state: GameState, shooters: Model[], targetUnit: Unit): UnitSight {
+  const targets = aliveModels(state, targetUnit);
+  const ignore = new Set(
+    shooters.map((m) => m.unitId && state.units[m.unitId]).flatMap((u) => (u ? u.modelIds : [])),
+  );
+  for (const id of targetUnit.modelIds) ignore.add(id);
+  const infantry = hasKeyword(targetUnit.sheet?.keywords ?? [], "Infantry");
+  const shotRecently = !!targetUnit.status?.shot;
+  const result: TargetSight[] = targets.map((t) => {
+    const within = state.terrain.filter((p) => whollyWithin(p, t));
+    const coverWithin = within.some((p) => CATEGORY_RULES[p.category].coverWithin);
+    const hiddenHere = infantry && !shotRecently && within.some((p) => CATEGORY_RULES[p.category].hides);
+    let seenBy: string | undefined;
+    let anyFully = false;
+    let behindCover = true;
+    let hidden = false;
+    for (const s of shooters) {
+      if (hiddenHere && modelDistance(s, t) > HIDDEN_RANGE) {
+        hidden = true;
+        continue;
+      }
+      const sight = modelSight(state, s, t, { ignore, modelsBlock: state.settings.modelsBlock });
+      if (!sight.visible) continue;
+      seenBy ??= s.id;
+      if (sight.fully) anyFully = true;
+      const covered = !sight.fully && sight.obscuredBy.some((p) => CATEGORY_RULES[p.category].coverBehind);
+      if (!covered) behindCover = false;
+    }
+    const visible = seenBy !== undefined;
+    return {
+      modelId: t.id,
+      visible,
+      fully: anyFully,
+      cover: visible && (coverWithin || behindCover),
+      hidden: !visible && hidden,
+      ...(seenBy ? { seenBy } : {}),
+    };
+  });
+  const top = Math.max(0, ...targets.map((t) => t.z ?? 0));
+  const higherGround = shooters.length > 0 && shooters.every((s) => (s.z ?? 0) >= top + HIGHER_GROUND);
+  return {
+    targets: result,
+    visible: result.filter((r) => r.visible).length,
+    inCover: result.filter((r) => r.cover).length,
+    hidden: result.filter((r) => r.hidden).length,
+    higherGround,
+  };
+}
+
+/** Terrain a straight move from the phase start would pass through that the unit can't. */
+export function blockedMoves(state: GameState, unit: Unit, positions?: Record<string, Vec2>): TerrainPiece[] {
+  const kw = unit.sheet?.keywords ?? [];
+  if (hasKeyword(kw, "Fly")) return [];
+  const throughWalls = hasKeyword(kw, "Infantry") || hasKeyword(kw, "Beast") || hasKeyword(kw, "Swarm");
+  const hit = new Set<TerrainPiece>();
+  for (const m of aliveModels(state, unit)) {
+    const from = m.phaseStart ?? m.position;
+    const to = positions?.[m.id] ?? m.position;
+    if (Math.hypot(to.x - from.x, to.y - from.y) < 0.05) continue;
+    for (const p of state.terrain) {
+      const rule = CATEGORY_RULES[p.category];
+      if (rule.impassable && (inFootprint(p, to) || moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)))
+        hit.add(p);
+      else if (!throughWalls && moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)) hit.add(p);
+    }
   }
-  return { visible, inCover };
+  return [...hit];
 }
 
 // ---------------------------------------------------------------------------
@@ -336,8 +465,9 @@ export function incoherentModels(models: Model[]): Set<string> {
     for (const o of models) {
       if (o === m) continue;
       const d = baseToBaseDistance(m, o);
-      if (d <= COHERENCY_NEAR + 1e-6) near++;
-      if (d > COHERENCY_FAR + 1e-6) bad.add(m.id);
+      const up = verticalGap(m, o);
+      if (d <= COHERENCY_NEAR + 1e-6 && up <= VERTICAL_TOLERANCE) near++;
+      if (d > COHERENCY_FAR + 1e-6 || up > VERTICAL_TOLERANCE) bad.add(m.id);
     }
     if (near < needed) bad.add(m.id);
   }
@@ -349,7 +479,15 @@ export function engagedWith(state: GameState, unit: Unit): string[] {
   const mine = aliveModels(state, unit);
   return Object.values(state.units)
     .filter((u) => u.owner !== unit.owner)
-    .filter((u) => unitDistance(mine, aliveModels(state, u)) <= ENGAGEMENT_RANGE + 1e-6)
+    .filter((u) => {
+      const theirs = aliveModels(state, u);
+      return mine.some((m) =>
+        theirs.some(
+          (t) =>
+            baseToBaseDistance(m, t) <= ENGAGEMENT_RANGE + 1e-6 && verticalGap(m, t) <= VERTICAL_TOLERANCE,
+        ),
+      );
+    })
     .map((u) => u.id);
 }
 
@@ -374,13 +512,22 @@ export function objectiveControl(
   });
 }
 
-/** Furthest any model of the unit has moved since the phase began. */
-export function unitMoved(models: Model[], positions?: Record<string, Vec2>): number {
+/**
+ * Furthest any model of the unit has moved since the phase began, counting
+ * climbing up or down between floors.
+ */
+export function unitMoved(
+  models: Model[],
+  positions?: Record<string, Vec2>,
+  heights?: Record<string, number>,
+): number {
   let best = 0;
   for (const m of models) {
     const p = positions?.[m.id] ?? m.position;
+    const z = heights?.[m.id] ?? m.z ?? 0;
     const from = m.phaseStart ?? m.position;
-    best = Math.max(best, Math.hypot(p.x - from.x, p.y - from.y));
+    const climb = Math.abs(z - (m.phaseStartZ ?? 0));
+    best = Math.max(best, Math.hypot(p.x - from.x, p.y - from.y) + climb);
   }
   return best;
 }

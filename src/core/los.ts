@@ -1,0 +1,119 @@
+import { baseSizeInches } from "./geometry";
+import { modelHeight, segmentPointDistance2D, sightBlockedBy, type Vec3 } from "./terrain";
+import type { GameState, Model, TerrainPiece } from "./types";
+
+/**
+ * True line of sight between model volumes: lines from points on the
+ * observer to points on the target, stopped by terrain solids and, if the
+ * table says so, other models. A model is a cylinder (or box, for hull
+ * bases) of its base size and height.
+ */
+
+/** Points on the observer: its eye line, around the top of the model. */
+function eyePoints(m: Model): Vec3[] {
+  const { width, depth } = baseSizeInches(m.base);
+  const r = Math.max(width, depth) / 2;
+  const z = (m.z ?? 0) + modelHeight(m) * 0.9;
+  const pts: Vec3[] = [{ x: m.position.x, y: m.position.y, z }];
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    pts.push({ x: m.position.x + Math.cos(a) * r * 0.7, y: m.position.y + Math.sin(a) * r * 0.7, z });
+  }
+  return pts;
+}
+
+/** Points over the target's volume: a column through its middle and two rings. */
+function bodyPoints(m: Model): Vec3[] {
+  const { width, depth } = baseSizeInches(m.base);
+  const rx = (width / 2) * 0.85;
+  const ry = (depth / 2) * 0.85;
+  const z0 = m.z ?? 0;
+  const h = modelHeight(m);
+  const pts: Vec3[] = [0.15, 0.5, 0.9].map((f) => ({ x: m.position.x, y: m.position.y, z: z0 + h * f }));
+  for (const f of [0.25, 0.75]) {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      pts.push({ x: m.position.x + Math.cos(a) * rx, y: m.position.y + Math.sin(a) * ry, z: z0 + h * f });
+    }
+  }
+  return pts;
+}
+
+/** Whether a line passes through a model's volume (approximated as an upright cylinder). */
+function lineHitsModel(a: Vec3, b: Vec3, m: Model): boolean {
+  const { width, depth } = baseSizeInches(m.base);
+  const r = (Math.min(width, depth) / 2) * 0.8;
+  if (segmentPointDistance2D(a, b, m.position) > r) return false;
+  // Height of the line where it passes closest to the model's axis.
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const len = abx * abx + aby * aby;
+  const t =
+    len === 0 ? 0 : Math.max(0, Math.min(1, ((m.position.x - a.x) * abx + (m.position.y - a.y) * aby) / len));
+  if (t < 0.02 || t > 0.98) return false;
+  const z = a.z + (b.z - a.z) * t;
+  const z0 = m.z ?? 0;
+  return z >= z0 && z <= z0 + modelHeight(m);
+}
+
+export interface Sight {
+  /** Some part of the target can be seen. */
+  visible: boolean;
+  /** Every sampled part of the target can be seen. */
+  fully: boolean;
+  /** Share of the target's sampled points that can be seen. */
+  fraction: number;
+  /** Terrain pieces that hid at least part of the target. */
+  obscuredBy: TerrainPiece[];
+}
+
+export interface SightOptions {
+  /** Models that never block (the observer's own unit, the target). */
+  ignore?: Set<string>;
+  /** Whether models from other units block sight. */
+  modelsBlock?: boolean;
+}
+
+export function modelSight(
+  state: GameState,
+  observer: Model,
+  target: Model,
+  options: SightOptions = {},
+): Sight {
+  const eyes = eyePoints(observer);
+  const body = bodyPoints(target);
+  const blockers =
+    options.modelsBlock === false
+      ? []
+      : Object.values(state.models).filter(
+          (m) =>
+            !m.destroyed &&
+            m.id !== observer.id &&
+            m.id !== target.id &&
+            !options.ignore?.has(m.id) &&
+            // Only models near the line between the two can be in the way.
+            segmentPointDistance2D(observer.position, target.position, m.position) < 4,
+        );
+  const obscured = new Set<TerrainPiece>();
+  let seen = 0;
+  for (const p of body) {
+    let clear = false;
+    for (const e of eyes) {
+      const piece = sightBlockedBy(state.terrain, e, p);
+      if (piece) {
+        obscured.add(piece);
+        continue;
+      }
+      if (blockers.some((m) => lineHitsModel(e, p, m))) continue;
+      clear = true;
+      break;
+    }
+    if (clear) seen++;
+  }
+  return {
+    visible: seen > 0,
+    fully: seen === body.length,
+    fraction: seen / body.length,
+    obscuredBy: [...obscured],
+  };
+}
