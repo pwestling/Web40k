@@ -520,6 +520,16 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} ended the activation`;
     case "pool/set":
       return `${nameOf(event.player)} re-rolled or spent dice`;
+    case "game/branch": {
+      const b = event.branch;
+      const again = b.droppedSecrets
+        ? ` ${b.droppedSecrets} secret${b.droppedSecrets === 1 ? "" : "s"} stayed behind: lock them in again.`
+        : "";
+      const rule = b.droppedScript
+        ? ` "${b.droppedScript}" was waiting on a player and didn't carry over.`
+        : "";
+      return `What if: branched from ${b.title} (game ${b.parentHash.slice(0, 8)}, event ${b.parentSeq}).${again}${rule}`;
+    }
     case "secret/commit": {
       const n = event.secrets.length;
       return `${nameOf(event.player)} locked in ${event.label ?? "a secret"}${n > 1 ? `: ${n} cards, face down` : ""}`;
@@ -529,7 +539,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const v = event.value;
       const shown = typeof v === "string" && game.units[v] ? game.units[v]!.name : JSON.stringify(v);
       const ok = game.secrets?.[event.player]?.[event.key]?.revealed;
-      return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? " ✓" : " (didn't match what was committed)"}`;
+      return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? "" : " (didn't match what was locked in)"}`;
     }
     case "game/system":
       return `Game: ${systemOf(game).name}`;

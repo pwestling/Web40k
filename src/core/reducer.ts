@@ -278,6 +278,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       };
       return event.use ? recordUse(next, event.player, event.use) : next;
     }
+    case "game/branch":
+      return { ...state, branch: event.branch };
     case "game/system": {
       // Only before the battle starts: the table, settings and counters follow the system.
       if (state.turn.round !== 0) return state;
@@ -432,12 +434,17 @@ function claimPlayer(state: GameState, from: string, to: string): GameState {
   for (const [id, u] of Object.entries(state.units)) units[id] = u.owner === from ? { ...u, owner: to } : u;
   const models: Record<string, Model> = {};
   for (const [id, m] of Object.entries(state.models)) models[id] = m.owner === from ? { ...m, owner: to } : m;
+  // A player's committed secrets follow them to their new id (their device still holds the values).
+  const { [from]: mine, ...secrets } = state.secrets ?? {};
+  const { [from]: pool, ...pools } = state.pools ?? {};
   return {
     ...state,
     players: { ...players, [to]: { ...old, id: to } },
     resources: { ...resources, [to]: res ?? initialResources(state) },
     units,
     models,
+    ...(state.secrets ? { secrets: mine ? { ...secrets, [to]: mine } : secrets } : {}),
+    ...(state.pools ? { pools: pool ? { ...pools, [to]: pool } : pools } : {}),
   };
 }
 
