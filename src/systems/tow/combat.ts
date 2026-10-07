@@ -265,12 +265,19 @@ function* fallBack(
 function* leadershipTest(
   ctx: Ctx,
   u: Unit,
-  label: string,
-): Generator<Command, { roll: Roll; ld: number }, unknown> {
+  name: string,
+  mod = 0,
+  why = "",
+): Generator<Command, { roll: Roll; ld: number; score: string }, unknown> {
   const state = ctx.view.state;
   const { ld } = leadership(state, u);
-  const roll = (yield ctx.roll("2d6", `${label} (${ldLabel(state, u)})`, u.id)) as Roll;
-  return { roll, ld };
+  // "Reaver Warband break test: 2D6 + 8 (lost by 8) against Ld 6, Reaver Chief"
+  yield ctx.note(
+    `${u.name} ${name}: 2D6${mod ? ` + ${mod}${why ? ` (${why})` : ""}` : ""} against ${ldLabel(state, u)}`,
+  );
+  const roll = (yield ctx.roll("2d6", name, u.id)) as Roll;
+  const score = mod ? `${roll.total} + ${mod} = ${roll.total + mod}` : `${roll.total}`;
+  return { roll, ld, score };
 }
 
 /** The charge declared for a unit (chargeReaction records it): the gap to the target and the arc. */
@@ -392,19 +399,21 @@ export const combat: CodeProcedure = function* (ctx, args) {
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
-  const { roll: r, ld } = yield* leadershipTest(ctx, lost, `break test, ${r0(diff)}`);
+  const { roll: r, ld, score: total } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
   const double1 = r.rolls.every((x) => x === 1);
   const won = unitOf(ctx.view, winner.id);
   let fled: "" | "flees" | "falls back" = "";
   if (!double1 && r.total > ld) {
-    yield* flee(ctx, lost, won, `breaks (${r.total} against ${ld})`);
+    yield* flee(ctx, lost, won, `breaks (rolled ${r.total}, over Ld ${ld})`);
     fled = "flees";
   } else if (!double1 && r.total + diff > ld) {
-    yield* fallBack(ctx, lost, won, `gives way (${r.total} + ${diff} against ${ld})`);
+    yield* fallBack(ctx, lost, won, `gives way (${total}, over Ld ${ld})`);
     fled = "falls back";
   } else {
     yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
-    yield ctx.note(`${lost.name} gives ground ${GIVE_GROUND}" (${r.total} + ${diff} against ${ld})`);
+    yield ctx.note(
+      `${lost.name} gives ground ${GIVE_GROUND}" (${double1 ? "a double 1" : `${total}, within Ld ${ld}`})`,
+    );
   }
 
   const pick = yield ctx.ask(
@@ -422,16 +431,13 @@ export const combat: CodeProcedure = function* (ctx, args) {
     yield ctx.note(`${winner.name} ${verb}`);
     return;
   }
-  const t = yield* leadershipTest(ctx, won, "restraint");
+  const t = yield* leadershipTest(ctx, won, "restraint test");
   yield ctx.note(
     t.roll.total <= t.ld
-      ? `${winner.name} restrains and may reform`
-      : `${winner.name} fails to restrain and ${verb}`,
+      ? `${winner.name} restrains and may reform (rolled ${t.roll.total})`
+      : `${winner.name} fails to restrain (rolled ${t.roll.total}) and ${verb}`,
   );
 };
-
-/** "+2" for a break test's difference. */
-const r0 = (n: number) => `+${n}`;
 
 /** The charged unit's reaction: hold, stand and shoot (missile troops, not too close), or flee. */
 export const chargeReaction: CodeProcedure = function* (ctx, args) {
@@ -481,7 +487,6 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
  */
 export const panic: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
-  yield ctx.note(`${u.name} takes a Panic test`);
   const { roll, ld } = yield* leadershipTest(ctx, u, "Panic test");
   if (roll.total <= ld) {
     yield ctx.note(`${u.name} keeps its nerve (${roll.total} against ${ld})`);
@@ -489,8 +494,9 @@ export const panic: CodeProcedure = function* (ctx, args) {
   }
   const from = nearestEnemy(ctx.view.state, u);
   const left = alive(ctx.view.state, u).length;
-  if (left * 2 > u.modelIds.length) yield* fallBack(ctx, u, from, `panics (${roll.total} against ${ld})`);
-  else yield* flee(ctx, u, from, `panics (${roll.total} against ${ld})`);
+  if (left * 2 > u.modelIds.length)
+    yield* fallBack(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
+  else yield* flee(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
 };
 
 /** Enemy units within this gap of this one, nearest first. */
