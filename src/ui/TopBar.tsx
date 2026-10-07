@@ -1,3 +1,4 @@
+import { systemModule } from "../systems";
 import { useSound } from "./sound";
 import { useState } from "react";
 import { systemOf, turnView } from "../core";
@@ -26,6 +27,11 @@ export function TopBar() {
     deploying && mode !== "hotseat"
       ? players.filter((p) => !p.ready && !canControl(p.id)).map((p) => p.name)
       : [];
+  // The system's own reasons to think twice before moving on (Conquest: reinforcements not in).
+  const leaving = deploying ? [] : (systemModule(game.system).leaving?.(game) ?? []);
+  const warning = notReady.length
+    ? `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
+    : leaving.join(" · ");
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
@@ -178,8 +184,8 @@ export function TopBar() {
             className={view.alternating && !deploying ? "" : notReady.length ? "" : "primary"}
             title={notReady.length ? `Waiting for ${notReady.join(" and ")} to be ready` : "Next phase"}
             onClick={() => {
-              // Advisory: a player who isn't ready yet gets a say, but can be overruled.
-              if (notReady.length && !asking) setAsking(true);
+              // Advisory: a player who isn't ready yet, or a step left undone, gets a say, but can be overruled.
+              if (warning && !asking) setAsking(true);
               else {
                 setAsking(false);
                 dispatch({ type: "turn/next" });
@@ -189,9 +195,9 @@ export function TopBar() {
             {deploying ? "Start battle ▶" : "▶"}
           </button>
         )}
-        {asking && notReady.length > 0 && (
+        {asking && warning && (
           <span className="ask">
-            {notReady.join(" and ")} {notReady.length > 1 ? "aren't" : "isn't"} ready yet ·{" "}
+            {warning} ·{" "}
             <button
               className="primary"
               onClick={() => {
@@ -199,7 +205,7 @@ export function TopBar() {
                 dispatch({ type: "turn/next" });
               }}
             >
-              Start anyway
+              {deploying ? "Start anyway" : "Go on anyway"}
             </button>
             <button className="quiet" title="Not yet" onClick={() => setAsking(false)}>
               ✕

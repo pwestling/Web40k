@@ -248,6 +248,7 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       }
       if (def.limit && Number(unit.status?.[limitKey(def, req)] ?? 0) >= def.limit.count)
         return def.procedure && req.weapon ? "Weapon already used this round" : "Already used this round";
+      for (const n of def.notWhen ?? []) if (safeBool(n.if, ctx)) return n.why;
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
       return undefined;
     })();

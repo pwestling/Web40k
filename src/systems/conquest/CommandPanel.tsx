@@ -4,7 +4,16 @@ import { currentSlot } from "../../core/content/turn";
 import { useCanControl, useStore } from "../../store";
 import { useGame } from "../../ui/hooks";
 import { cardsLeft, nextCard, stackOf } from "./command";
-import { arrivalTarget, classOf, CLASSES, reservesOf, rolledKey, type UnitClass } from "./reinforce";
+import {
+  arrivalTarget,
+  atEdge,
+  classOf,
+  CLASSES,
+  needsRoll,
+  reservesOf,
+  rolledKey,
+  type UnitClass,
+} from "./reinforce";
 import { conquest } from "./system";
 
 const alive = (game: GameState, u: Unit) =>
@@ -131,47 +140,60 @@ function Ordering({ player, saved }: { player: Player; saved: string[] | undefin
   );
 }
 
-/** Whether a player still has this round's reinforcements to roll. */
-function needsRoll(game: GameState, own: Record<string, unknown>, player: string): boolean {
-  const round = game.turn.round;
-  if (own[rolledKey(player, round)]) return false;
-  return reservesOf(game, player).some((u) => arrivalTarget(round, classOf(u, game)) !== null);
-}
-
 /** Before the battle: Conquest armies start in reserve and arrive round by round. */
 function ToReserve({ players }: { players: Player[] }) {
   const game = useGame();
   const { dispatch } = useStore();
   const rows = players
-    .map((p) => ({
-      p,
-      table: Object.values(game.units).filter((u) => u.owner === p.id && !u.status?.reserves),
-      held: reservesOf(game, p.id).length,
-    }))
-    .filter((r) => r.table.length || r.held);
+    .map((p) => ({ p, units: Object.values(game.units).filter((u) => u.owner === p.id) }))
+    .filter((r) => r.units.length);
   if (!rows.length) return null;
+  const toReserve = (u: Unit) => dispatch({ type: "unit/reserve", id: u.id, reserve: true }, u.owner);
+  // Back on the table: just inside its owner's edge, where it waited.
+  const toTable = (u: Unit) => {
+    dispatch({ type: "unit/reserve", id: u.id, reserve: false }, u.owner);
+    const moves = atEdge(useStore.getState().game, u);
+    if (moves.length) dispatch({ type: "models/move", moves }, u.owner);
+  };
   return (
     <div className="panel play command-stack">
       <strong>Reinforcements</strong>
       <p className="muted small">
-        Regiments start in reserve: Light from round 1, Medium from round 2, Heavy from round 3.
+        Regiments start in reserve: Light from round 1, Medium from round 2, Heavy from round 3. Untick one to
+        keep it on the table.
       </p>
-      {rows.map(({ p, table, held }) => (
-        <div key={p.id} className="stack-player">
-          <span style={{ color: p.color }}>{p.name}</span>{" "}
-          {held > 0 && <span className="muted">{held} in reserve </span>}
-          {table.length > 0 && (
-            <button
-              className={held ? undefined : "primary"}
-              onClick={() => {
-                for (const u of table) dispatch({ type: "unit/reserve", id: u.id, reserve: true }, p.id);
-              }}
-            >
-              Send {table.length === 1 ? table[0]!.name : `${table.length} regiments`} to reserve
-            </button>
-          )}
-        </div>
-      ))}
+      {rows.map(({ p, units }) => {
+        const table = units.filter((u) => !u.status?.reserves);
+        return (
+          <div key={p.id} className="stack-player">
+            <div className="row spread">
+              <span style={{ color: p.color }}>{p.name}</span>
+              {table.length > 0 && (
+                <button
+                  className={table.length === units.length ? "primary" : undefined}
+                  onClick={() => table.forEach(toReserve)}
+                >
+                  {table.length === units.length ? "Send all to reserve" : "Rest to reserve"}
+                </button>
+              )}
+            </div>
+            <ul className="reserve-list">
+              {units.map((u) => (
+                <li key={u.id}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!u.status?.reserves}
+                      onChange={(e) => (e.target.checked ? toReserve(u) : toTable(u))}
+                    />{" "}
+                    {u.name} <span className="muted small">{classOf(u, game)}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -238,8 +260,8 @@ function Arrived({ player }: { player: Player }) {
   if (!Array.isArray(ids) || !ids.length) return null;
   return (
     <p className="muted small">
-      Arrived: {ids.map((id) => game.units[String(id)]?.name).join(", ")}. Drag them on from your table edge;
-      each marches first and can't charge this round.
+      Arrived: {ids.map((id) => game.units[String(id)]?.name).join(", ")}. They stand just inside your table
+      edge; each marches first and can't charge this round.
     </p>
   );
 }

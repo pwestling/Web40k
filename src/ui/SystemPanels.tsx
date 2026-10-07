@@ -111,7 +111,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|box\d+|used\.)/.test(f),
+      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.)/.test(f),
   );
   const chars = system.characteristics.filter((c) => c.of === "model" && c.type !== "text");
   const texts = system.characteristics.filter((c) => c.of === "model" && c.type === "text");
@@ -149,7 +149,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           ))}
           {flags.map((f) => (
             <span key={f} className="chip on">
-              {f}
+              {f === "reserves" ? "In reserve" : f}
             </span>
           ))}
         </div>

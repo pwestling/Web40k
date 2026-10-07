@@ -34,10 +34,37 @@ export function classOf(unit: Unit, state: GameState): UnitClass {
   return cls === "Medium" || cls === "Heavy" ? cls : "Light";
 }
 
+/**
+ * An arriving regiment, set just inside its owner's table edge where it
+ * waited (reserves wait off that edge, core/actions.ts), facing as deployed.
+ */
+export function atEdge(state: GameState, unit: Unit): { id: string; to: { x: number; y: number } }[] {
+  const ms = unit.modelIds.map((id) => state.models[id]).filter((m) => !!m);
+  if (!ms.length) return [];
+  const seat = state.players[unit.owner]?.seat ?? 0;
+  const zone = state.zones.find((z) => z.seat === seat);
+  const zy = zone?.points.length ? zone.points.reduce((t, p) => t + p.y, 0) / zone.points.length : 0;
+  const side = zy !== 0 ? Math.sign(zy) : seat === 0 ? 1 : -1;
+  const xs = ms.map((m) => m.position.x);
+  const ys = ms.map((m) => m.position.y);
+  const halfW = state.table.width / 2 - 1;
+  const dx = Math.max(-halfW - Math.min(...xs), Math.min(0, halfW - Math.max(...xs)));
+  const outer = side > 0 ? Math.max(...ys) : Math.min(...ys);
+  const dy = side * (state.table.depth / 2 - 1) - outer;
+  return ms.map((m) => ({ id: m.id, to: { x: m.position.x + dx, y: m.position.y + dy } }));
+}
+
 export const reservesOf = (state: GameState, player: string): Unit[] =>
   Object.values(state.units).filter((u) => u.owner === player && u.status?.reserves === true);
 
 export const rolledKey = (player: string, round: number) => `reinforced:${player}:${round}`;
+
+/** Whether a player still has this round's reinforcements to bring in. */
+export function needsRoll(game: GameState, own: Record<string, unknown>, player: string): boolean {
+  const round = game.turn.round;
+  if (own[rolledKey(player, round)]) return false;
+  return reservesOf(game, player).some((u) => arrivalTarget(round, classOf(u, game)) !== null);
+}
 
 /**
  * Roll a player's reinforcements for this round: `{ player, first }`, where
@@ -69,7 +96,7 @@ const reinforcements: CodeProcedure = function* (ctx, args) {
     }
   }
   for (const u of arriving) {
-    yield ctx.emit({ type: "unit/reserve", id: u.id, reserve: false, moves: [] });
+    yield ctx.emit({ type: "unit/reserve", id: u.id, reserve: false, moves: atEdge(state, u) });
     yield ctx.emit({ type: "unit/status", id: u.id, key: "reinforced", value: true });
   }
   yield ctx.set(

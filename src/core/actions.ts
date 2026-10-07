@@ -500,17 +500,31 @@ export function resolveIntent(
       const unit = state?.units[intent.id];
       if (!state || !unit || unit.owner !== from) return null;
       if (!intent.reserve) return { ...intent, moves: [] };
-      // Off the owner's side edge, in a row, so the models stay visible and draggable.
+      // Off the owner's own long edge (the one behind their deployment zone), shape kept and
+      // side by side, so the models stay visible and draggable and arrive facing the right way.
       const seat = state.players[unit.owner]?.seat ?? 0;
-      const side = seat === 0 ? -1 : 1;
-      const parked = Object.values(state.units).filter(
-        (u) => u.owner === unit.owner && u.status?.reserves,
-      ).length;
-      const x = side * (state.table.width / 2 + 3 + parked * 3);
-      const moves = unit.modelIds.map((id, i) => ({
-        id,
-        to: { x: x + side * Math.floor(i / 10) * 1.5, y: -state.table.depth / 2 + 2 + (i % 10) * 1.6 },
-      }));
+      const zone = state.zones.find((z) => z.seat === seat);
+      const zy = zone?.points.length ? zone.points.reduce((t, p) => t + p.y, 0) / zone.points.length : 0;
+      const side = zy !== 0 ? Math.sign(zy) : seat === 0 ? 1 : -1;
+      const ms = unit.modelIds.map((id) => state.models[id]).filter((m) => !!m);
+      if (!ms.length) return { ...intent, moves: [] };
+      const xs = ms.map((m) => m.position.x);
+      const ys = ms.map((m) => m.position.y);
+      // Further along the edge than the units already waiting there.
+      const waiting = Object.values(state.units).filter(
+        (u) => u.owner === unit.owner && u.status?.reserves && u.id !== unit.id,
+      );
+      let left = -state.table.width / 2 + 1;
+      for (const u of waiting)
+        for (const id of u.modelIds) {
+          const m = state.models[id];
+          if (m) left = Math.max(left, m.position.x + 2);
+        }
+      const dx = left - Math.min(...xs) + 1;
+      // The unit's inner edge 2" beyond the table edge.
+      const inner = side > 0 ? Math.min(...ys) : Math.max(...ys);
+      const dy = side * (state.table.depth / 2 + 2) - inner;
+      const moves = ms.map((m) => ({ id: m.id, to: { x: m.position.x + dx, y: m.position.y + dy } }));
       return { ...intent, moves };
     }
     case "unit/specialMove": {
