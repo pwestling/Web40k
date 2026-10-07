@@ -1,4 +1,5 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import { isCommitment, revealMatches, secretOf } from "./secrets";
 import {
   applyAction,
   endReaction,
@@ -153,6 +154,15 @@ export type Intent =
    * Bringing it back may set its models down at once (`moves`, its own models only).
    */
   | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves?: { id: ModelId; to: Vec2 }[] }
+  /** Commit to secrets (core/secrets.ts): only their commitments go to the table; the values stay here. */
+  | {
+      type: "secret/commit";
+      player: PlayerId;
+      secrets: { key: string; commitment: string }[];
+      label?: string;
+    }
+  /** Reveal a committed secret: every peer checks the value and salt against the commitment. */
+  | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
   /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   | { type: "undo"; seq: number }
@@ -240,6 +250,15 @@ export type GameEvent =
   | ({ type: "player/action" } & PlayerActionTaken)
   | { type: "ability/apply"; unitId: UnitId; ability: string }
   | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves: { id: ModelId; to: Vec2 }[] }
+  /** Commit to secrets (core/secrets.ts): only their commitments go to the table; the values stay here. */
+  | {
+      type: "secret/commit";
+      player: PlayerId;
+      secrets: { key: string; commitment: string }[];
+      label?: string;
+    }
+  /** Reveal a committed secret: every peer checks the value and salt against the commitment. */
+  | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   /** Takes back an earlier event. It stays in the log, marked as undone. */
   | { type: "undo"; seq: number }
@@ -314,7 +333,9 @@ export function resolveIntent(
       const script = state?.script;
       if (!state || !script?.waiting || !history) return null;
       if (script.waiting.player !== from) return null;
-      if (!script.waiting.options.some((o) => o.id === intent.answer)) return null;
+      // A secret's answer (a commitment, or a reveal) is checked by the procedure itself.
+      const secret = script.waiting.secret !== undefined || script.waiting.reveal !== undefined;
+      if (!secret && !script.waiting.options.some((o) => o.id === intent.answer)) return null;
       return stepScript(script, history(script.startSeq), rng, intent.answer);
     }
     case "dice/roll": {
@@ -499,6 +520,18 @@ export function resolveIntent(
       if (!unit || !unit.sheet?.abilities.some((a) => a.name === intent.ability)) return null;
       return intent;
     }
+    case "secret/commit": {
+      if (!state?.players[intent.player] || intent.player !== from || !intent.secrets.length) return null;
+      const keys = new Set<string>();
+      for (const { key, commitment } of intent.secrets) {
+        if (!key || keys.has(key) || !isCommitment(commitment) || secretOf(state, from, key)) return null;
+        keys.add(key);
+      }
+      return intent;
+    }
+    case "secret/reveal":
+      if (!state || intent.player !== from) return null;
+      return revealMatches(secretOf(state, from, intent.key), intent.value, intent.salt) ? intent : null;
     case "unit/reserve": {
       const unit = state?.units[intent.id];
       if (!state || !unit || unit.owner !== from) return null;

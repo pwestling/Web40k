@@ -25,3 +25,4 @@ export {
 } from "./content/turn";
 export * from "./rolls";
 export * from "./rare";
+export * from "./secrets";

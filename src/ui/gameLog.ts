@@ -498,6 +498,17 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} ended the activation`;
     case "pool/set":
       return `${nameOf(event.player)} re-rolled or spent dice`;
+    case "secret/commit": {
+      const n = event.secrets.length;
+      return `${nameOf(event.player)} locked in ${event.label ?? "a secret"}${n > 1 ? `: ${n} cards, face down` : ""}`;
+    }
+    case "secret/reveal": {
+      // A unit id reads as its name ("drew Warden Guard"); anything else as written.
+      const v = event.value;
+      const shown = typeof v === "string" && game.units[v] ? game.units[v]!.name : JSON.stringify(v);
+      const ok = game.secrets?.[event.player]?.[event.key]?.revealed;
+      return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? " ✓" : " (didn't match what was committed)"}`;
+    }
     case "game/system":
       return `Game: ${systemOf(game).name}`;
     case "player/action": {

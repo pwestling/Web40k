@@ -1,4 +1,5 @@
 import type { GameEvent } from "./actions";
+import { revealMatches } from "./secrets";
 import { applyDamage } from "./attack";
 import { applyAction, applyRunOutcomes, endReaction, setRun } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
@@ -339,6 +340,21 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         ...u,
         status: { ...u.status, [appliedKey(event.ability)]: true },
       }));
+    case "secret/commit": {
+      const mine = { ...state.secrets?.[event.player] };
+      for (const { key, commitment } of event.secrets) if (!mine[key]) mine[key] = { commitment };
+      return { ...state, secrets: { ...state.secrets, [event.player]: mine } };
+    }
+    case "secret/reveal": {
+      // Every peer checks the reveal; one that doesn't match its commitment changes nothing.
+      const entry = state.secrets?.[event.player]?.[event.key];
+      if (!revealMatches(entry, event.value, event.salt)) return state;
+      const mine = {
+        ...state.secrets![event.player],
+        [event.key]: { ...entry!, revealed: { value: event.value } },
+      };
+      return { ...state, secrets: { ...state.secrets, [event.player]: mine } };
+    }
     case "unit/reserve": {
       const next = updateUnit(state, event.id, (u) => {
         const { reserves: _r, arrived: _a, ...status } = u.status ?? {};

@@ -12,7 +12,7 @@ export function leavingCommand(game: GameState): string[] {
   for (const p of Object.values(game.players).filter((p) => p.seat !== undefined)) {
     if (needsRoll(game, own, p.id)) out.push(`${p.name} hasn't brought in reinforcements`);
     const onTable = Object.values(game.units).some((u) => u.owner === p.id && !u.status?.reserves);
-    if (onTable && !stackOf(game, own, p.id)) out.push(`${p.name} hasn't locked in a command stack`);
+    if (onTable && !stackOf(game, p.id)) out.push(`${p.name} hasn't locked in a command stack`);
   }
   return out;
 }

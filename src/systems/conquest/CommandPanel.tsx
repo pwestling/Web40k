@@ -3,7 +3,8 @@ import type { GameState, Player, Unit } from "../../core";
 import { currentSlot } from "../../core/content/turn";
 import { useCanControl, useStore } from "../../store";
 import { useGame } from "../../ui/hooks";
-import { cardsLeft, nextCard, stackOf } from "./command";
+import { localSecret, keepSecret, useLocalSecrets } from "../../secrets/local";
+import { cardKey, cardsLeft, nextCard, stackOf, type Card } from "./command";
 import {
   arrivalTarget,
   atEdge,
@@ -22,8 +23,9 @@ const alive = (game: GameState, u: Unit) =>
 /**
  * The command stack. In the Command phase each player puts their regiments'
  * cards in order (top card first) and locks it in; in the Action phase it
- * shows whose card is next. The other player's order stays hidden: only how
- * many cards they have left shows.
+ * shows whose card is next. Each card is a secret kept on its owner's device
+ * (command.ts): the other player, the host and spectators see only how many
+ * cards are left, until a card is drawn.
  */
 export function CommandPanel() {
   const game = useGame();
@@ -52,7 +54,7 @@ export function CommandPanel() {
         <button onClick={() => setOpen(false)}>Hide</button>
       </div>
       {players.map((p) => {
-        const stack = stackOf(game, own, p.id);
+        const stack = stackOf(game, p.id);
         if (slot === "command" && mine(p)) {
           const waiting = needsRoll(game, own, p.id);
           return waiting ? (
@@ -81,10 +83,7 @@ export function CommandPanel() {
               </span>
             )}
             {slot !== "command" && next && mine(p) && p.seat === game.turn.activeSeat && (
-              <div className="row">
-                <span className="muted">Next card:</span>
-                <button onClick={() => select(next.id)}>{next.name}</button>
-              </div>
+              <NextCard player={p} stack={stack!} next={next} select={select} />
             )}
           </div>
         );
@@ -94,10 +93,13 @@ export function CommandPanel() {
 }
 
 /** One player's cards in order, to rearrange and lock in. */
-function Ordering({ player, saved }: { player: Player; saved: string[] | undefined }) {
+function Ordering({ player, saved: cards }: { player: Player; saved: Card[] | undefined }) {
   const game = useGame();
   const { dispatch } = useStore();
   const [draft, setDraft] = useState<string[] | null>(null);
+  useLocalSecrets((s) => s.kept);
+  // The order as this device committed it (another device's commitments can't be read here).
+  const saved = cards?.map((c) => String(localSecret(c.commitment)?.value ?? ""));
   const units = Object.values(game.units).filter((u) => u.owner === player.id && alive(game, u));
   const ids = new Set(units.map((u) => u.id));
   // The saved order first (regiments still standing), then any not in it yet.
@@ -106,14 +108,16 @@ function Ordering({ player, saved }: { player: Player; saved: string[] | undefin
     ...units.map((u) => u.id).filter((id) => !saved?.includes(id)),
   ];
   const order = (draft ?? base).filter((id) => ids.has(id));
-  const locked = !!saved && draft === null;
+  const locked = !!cards;
   const move = (i: number, d: -1 | 1) => {
     const next = order.slice();
     [next[i], next[i + d]] = [next[i + d]!, next[i]!];
     setDraft(next);
   };
+  // Each card is committed on its own, so each can be revealed on its own when drawn.
   const lock = () => {
-    dispatch({ type: "script/start", procedure: "setStack", args: { player: player.id, order } }, player.id);
+    const secrets = order.map((id, i) => ({ key: cardKey(game.turn.round, i), commitment: keepSecret(id) }));
+    dispatch({ type: "secret/commit", player: player.id, secrets, label: "their command stack" }, player.id);
     setDraft(null);
   };
   return (
@@ -133,8 +137,70 @@ function Ordering({ player, saved }: { player: Player; saved: string[] | undefin
           </li>
         ))}
       </ol>
-      <button className={locked ? undefined : "primary"} disabled={locked || !!game.script} onClick={lock}>
+      {cards && saved?.some((id) => !id) && (
+        <p className="muted small">Locked in on another device: only that device can draw these cards.</p>
+      )}
+      <button className={locked ? undefined : "primary"} disabled={!!cards || !!game.script} onClick={lock}>
         {locked ? "Locked in" : "Lock in stack"}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The owner's top card. Face down, only this device knows it: Draw reveals it
+ * to the table (and any cards before it whose regiment has fallen since).
+ */
+function NextCard({
+  player,
+  stack,
+  next,
+  select,
+}: {
+  player: Player;
+  stack: Card[];
+  next: Card;
+  select: (id: string) => void;
+}) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  useLocalSecrets((s) => s.kept);
+  if (next.unitId)
+    return (
+      <div className="row">
+        <span className="muted">Drawn:</span>
+        <button onClick={() => select(next.unitId!)}>{game.units[next.unitId]?.name}</button>
+      </div>
+    );
+  const top = localSecret(next.commitment);
+  if (!top) return <p className="muted small">Your cards are on the device that locked them in.</p>;
+  const draw = () => {
+    for (const c of stack.slice(stack.indexOf(next))) {
+      const kept = localSecret(c.commitment);
+      if (!kept || c.unitId) continue;
+      dispatch(
+        {
+          type: "secret/reveal",
+          player: player.id,
+          key: c.key,
+          value: kept.value,
+          salt: kept.salt,
+          label: "their command card",
+        },
+        player.id,
+      );
+      const u = game.units[String(kept.value)];
+      if (u && alive(game, u) && !u.status?.activated) {
+        select(u.id);
+        return;
+      }
+    }
+  };
+  return (
+    <div className="row">
+      <span className="muted">Top card: {game.units[String(top.value)]?.name ?? "a fallen regiment"}</span>
+      <button className="primary" onClick={draw}>
+        Draw it
       </button>
     </div>
   );

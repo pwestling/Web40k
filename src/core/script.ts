@@ -7,6 +7,7 @@ import { parseDice, rollDice } from "./dice";
 import { tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
 import { currentSlot, systemOf } from "./content/turn";
+import { isCommitment, revealMatches, secretOf } from "./secrets";
 import type { GameState, PlayerId } from "./types";
 
 /**
@@ -41,6 +42,13 @@ export interface ScriptQuestion {
   player: PlayerId;
   question: string;
   options: { id: Id; label: string }[];
+  /**
+   * A secret choice (ctx.secret): the player's device keeps the option it
+   * picks and answers with its commitment. Or a reveal (ctx.reveal): the
+   * device answers with the value and salt, as JSON, with no question shown.
+   */
+  secret?: string;
+  reveal?: string;
 }
 
 export interface ScriptResult {
@@ -131,8 +139,8 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
       if (i < results.length) {
         // Replaying: same command, same result.
         if (results[i]!.command !== key) return stop(`"${script.procedure}" behaved differently on replay`);
-        input = results[i]!.value;
-        for (const e of replayEvents(cmd, input, script)) state = applyEventRef.fn(state, e);
+        for (const e of replayEvents(cmd, results[i]!.value, script)) state = applyEventRef.fn(state, e);
+        input = cmd.cmd === "reveal" ? (results[i]!.value as { value: unknown }).value : results[i]!.value;
         continue;
       }
       if (cmd.cmd === "ask") {
@@ -150,6 +158,23 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
         input = answer;
         answer = undefined;
         results.push({ command: key, value: input });
+        continue;
+      }
+      if (cmd.cmd === "secret" || cmd.cmd === "reveal") {
+        const got = secretAnswer(cmd, state, answer);
+        answer = undefined;
+        if (got === undefined) {
+          const waiting: ScriptQuestion =
+            cmd.cmd === "secret"
+              ? { player: cmd.player, question: cmd.question, options: cmd.options, secret: cmd.key }
+              : { player: cmd.player, question: `Reveal ${cmd.key}`, options: [], reveal: cmd.key };
+          return { type: "script/step", script: { ...script, results, waiting }, events };
+        }
+        results.push({ command: key, value: got });
+        const emitted = replayEvents(cmd, got, script);
+        events.push(...emitted);
+        for (const e of emitted) state = applyEventRef.fn(state, e);
+        input = cmd.cmd === "reveal" ? (got as { value: unknown }).value : got;
         continue;
       }
       const { value, emitted } = perform(cmd, rng, script, state);
@@ -226,7 +251,35 @@ function perform(
       return { value, emitted: [note, ...replayEvents(cmd, value, script)] };
     }
     case "ask":
+    case "secret":
+    case "reveal":
       throw new Error("unreachable");
+  }
+}
+
+/**
+ * A secret's result from the answer: for ctx.secret, the commitment the
+ * player's device sent; for ctx.reveal, `{ value, salt }` once it matches the
+ * commitment (or at once, if it was revealed already). Undefined while waiting.
+ */
+function secretAnswer(
+  cmd: Extract<Command, { cmd: "secret" | "reveal" }>,
+  state: GameState,
+  answer: string | undefined,
+): unknown {
+  const entry = secretOf(state, cmd.player, cmd.key);
+  if (cmd.cmd === "secret") {
+    if (entry) throw new Error(`${cmd.player} already committed "${cmd.key}"`);
+    return isCommitment(answer) ? answer : undefined;
+  }
+  if (!entry) throw new Error(`${cmd.player} has no secret "${cmd.key}"`);
+  if (entry.revealed) return { value: entry.revealed.value, salt: "" };
+  if (answer === undefined) return undefined;
+  try {
+    const { value, salt } = JSON.parse(answer) as { value: unknown; salt: string };
+    return revealMatches(entry, value, String(salt)) ? { value, salt: String(salt) } : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -243,6 +296,21 @@ function replayEvents(cmd: Command, value: unknown, script: ScriptState): GameEv
       return [{ type: "module/set", module: script.system, key: cmd.key, value: cmd.value }];
     case "run":
       return [{ type: "procedure/outcomes", outcomes: (value as RunResult).outcomes }];
+    case "secret":
+      return [
+        {
+          type: "secret/commit",
+          player: cmd.player,
+          secrets: [{ key: cmd.key, commitment: String(value) }],
+          label: `a secret choice (${cmd.question})`,
+        },
+      ];
+    case "reveal": {
+      const { value: v, salt } = value as { value: unknown; salt: string };
+      // Already revealed before this rule asked: nothing to add to the table.
+      if (!salt) return [];
+      return [{ type: "secret/reveal", player: cmd.player, key: cmd.key, value: v, salt }];
+    }
     default:
       return [];
   }
@@ -270,6 +338,8 @@ function makeCtx(current: () => GameState, module: Id): Ctx {
     run: (procedure, roles) => ({ cmd: "run", procedure, roles }),
     emit: (event) => ({ cmd: "emit", event }),
     set: (key, value) => ({ cmd: "set", key, value }),
+    secret: (player, key, question, options) => ({ cmd: "secret", player, key, question, options }),
+    reveal: (player, key) => ({ cmd: "reveal", player, key }),
   };
 }
 
