@@ -48,7 +48,10 @@ export interface Provided {
   app: {
     samples: ImportedRoster[];
     layout: Layout;
-  } & Pick<SystemModule, "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll">;
+  } & Pick<
+    SystemModule,
+    "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll"
+  >;
 }
 
 /** A package's code action as the unit card shows it, worked out in the sandbox. */

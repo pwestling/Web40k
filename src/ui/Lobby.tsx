@@ -27,7 +27,10 @@ export function Lobby() {
     ...listSystems().map((s) => ({ id: s.id, name: s.name })),
     ...fromPackages
       .filter((p) => !listSystems().some((s) => s.id === p.manifest.systems[0]))
-      .map((p) => ({ id: p.manifest.systems[0]!, name: `${p.manifest.name} ${p.manifest.version} (package)` })),
+      .map((p) => ({
+        id: p.manifest.systems[0]!,
+        name: `${p.manifest.name} ${p.manifest.version} (package)`,
+      })),
   ];
   const [system, setSystem] = useState(() => {
     const last = localStorage.getItem("open-battle:system");
