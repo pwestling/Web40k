@@ -14,6 +14,7 @@ import { spawnIntents } from "../wh40k/deploy";
 import "../index";
 import { nextCard, stackOf } from "./command";
 import { conquestLayout } from "./layout";
+import { reservesOf } from "./reinforce";
 import { conquestSample } from "./sample";
 
 function rng(seed: number) {
@@ -288,5 +289,54 @@ describe("Conquest", () => {
     // Front rank: the first three slots stand level with each other, the character among them.
     const ys = joined.modelIds.slice(0, 3).map((id) => s.models[id]!.position.y);
     expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(0.01);
+  });
+
+  it("brings regiments in from reserve by class and round; an arrival marches first and can't charge", () => {
+    let s = setup();
+    for (const u of Object.values(s.units).filter((u) => u.owner === "p1"))
+      s = play(s, { type: "unit/reserve", id: u.id, reserve: true }, "p1");
+    expect(reservesOf(s, "p1")).toHaveLength(5);
+    s = play(s, { type: "turn/next" }, "p1");
+    expect([s.turn.round, currentSlot(s)?.id]).toEqual([1, "command"]);
+    const reinforce = (st: GameState) =>
+      play(st, { type: "script/start", procedure: "reinforcements", args: { player: "p1" } }, "p1");
+
+    // Round 1: only Light may come, and the one Light regiment needs no roll.
+    s = reinforce(s);
+    const bows = unitNamed(s, "Ironmarch Crossbows");
+    expect(bows.status).toMatchObject({ arrived: true, reinforced: true });
+    expect(
+      reservesOf(s, "p1")
+        .map((u) => u.name)
+        .sort(),
+    ).toEqual(["Iron Riders", "Marshal of the March", "Shieldwall Spears", "Warden Guard"].sort());
+    s = play(s, { type: "turn/next" }, "p1");
+    if (s.turn.activeSeat === 1) {
+      s = play(s, { type: "turn/pass" }, "p2");
+    }
+    // A regiment in reserve has no card to play.
+    expect(unitActions(s, unitNamed(s, "Warden Guard").id).find((o) => o.def.id === "activate")?.ok).toBe(
+      false,
+    );
+
+    s = play(s, { type: "action/take", unitId: bows.id, action: "activate" }, "p1");
+    const ok = (action: string) => unitActions(s, bows.id).find((o) => o.def.id === action)?.ok;
+    expect([ok("takeAim"), ok("charge"), ok("march")]).toEqual([false, false, true]);
+    s = play(s, { type: "action/take", unitId: bows.id, action: "march" }, "p1");
+    expect([ok("takeAim"), ok("charge")]).toEqual([true, false]);
+
+    // Round 3: Light and Medium are in; of the two Heavy regiments one comes without a roll.
+    const toRound = (st: GameState, round: number) => {
+      while (st.turn.round < round) st = play(st, { type: "turn/next" }, "p1");
+      return st;
+    };
+    s = toRound(s, 3);
+    expect(s.units[bows.id]!.status?.reinforced).toBeFalsy();
+    s = reinforce(s);
+    const heavy = ["Warden Guard", "Iron Riders"].filter((n) => !unitNamed(s, n).status?.reserves);
+    expect(heavy.length).toBeGreaterThanOrEqual(1);
+    s = toRound(s, 5);
+    s = reinforce(s);
+    expect(reservesOf(s, "p1")).toHaveLength(0);
   });
 });

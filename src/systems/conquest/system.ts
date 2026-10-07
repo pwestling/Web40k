@@ -198,6 +198,14 @@ const arcs: ArcDef[] = [
 ];
 
 const notBroken: Expr = { not: { hasStatus: "self", status: "broken" } };
+/** A regiment that arrived from reserve this round marches first (reinforce.ts). */
+const marchedIn: Expr = {
+  any: [{ not: { hasFlag: "self", flag: "reinforced" } }, { hasFlag: "self", flag: "actionsTaken" }],
+};
+const and = (...e: (Expr | undefined)[]): Expr => {
+  const all = e.filter((x): x is Expr => x !== undefined);
+  return all.length === 1 ? all[0]! : { all };
+};
 const within = (inches: Expr): Expr => ({
   cmp: "<=",
   a: { query: { kind: "distance", from: "self", to: "it" } },
@@ -238,7 +246,7 @@ export const conquest: GameSystem = {
     { id: "inspired", name: "Inspired", on: "unit" },
     { id: "broken", name: "Broken", on: "unit" },
   ],
-  resets: [{ at: "round", flags: ["activated", "inspired", "charged", "aimed", "used.*"] }],
+  resets: [{ at: "round", flags: ["activated", "inspired", "charged", "aimed", "reinforced", "used.*"] }],
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],
   terrain: [
     { id: "open", name: "Open ground" },
@@ -265,6 +273,7 @@ export const conquest: GameSystem = {
       if: {
         all: [
           { not: { hasStatus: "self", status: "activated" } },
+          { not: { hasFlag: "self", flag: "reserves" } },
           { call: "nextCard", args: [ref("self.id")] },
         ],
       },
@@ -283,7 +292,8 @@ export const conquest: GameSystem = {
       verb: "charges",
       by: "unit",
       hint: "D6 + March at an enemy in the front arc; a charge that lands is Inspired",
-      if: notBroken,
+      // Not in the round a regiment arrives from reserve.
+      if: and(notBroken, { not: { hasFlag: "self", flag: "reinforced" } }),
       limit: { count: 1, per: "round" },
       sets: ["charged"],
       // A charge that falls short loses it: clear Inspired on the card.
@@ -312,7 +322,7 @@ export const conquest: GameSystem = {
       verb: "volleys",
       by: "unit",
       hint: "Barrage shots from the front rank",
-      if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
+      if: and({ cmp: ">", a: ref("self.Barrage"), b: 0 }, marchedIn),
       target: {
         filter: {
           all: [{ query: { kind: "visible", from: "self", to: "it" } }, within(ref("self.Range"))],
@@ -327,6 +337,7 @@ export const conquest: GameSystem = {
       verb: "clashes",
       by: "unit",
       hint: "Fight an enemy in contact",
+      if: marchedIn,
       target: { filter: within(1) },
       limit: { count: 1, per: "round" },
       procedure: "clash",
@@ -337,7 +348,7 @@ export const conquest: GameSystem = {
       verb: "takes aim",
       by: "unit",
       hint: "This round's volley re-rolls misses",
-      if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
+      if: and({ cmp: ">", a: ref("self.Barrage"), b: 0 }, marchedIn),
       limit: { count: 1, per: "round" },
       sets: ["aimed"],
     },
@@ -347,7 +358,7 @@ export const conquest: GameSystem = {
       verb: "is inspired",
       by: "unit",
       hint: "+1 Clash this round",
-      if: notBroken,
+      if: and(notBroken, marchedIn),
       limit: { count: 1, per: "round" },
       do: [{ do: "applyStatus", target: "self", status: "inspired" }],
     },
@@ -357,7 +368,7 @@ export const conquest: GameSystem = {
       verb: "rallies",
       by: "unit",
       hint: "No longer Broken",
-      if: { hasStatus: "self", status: "broken" },
+      if: and({ hasStatus: "self", status: "broken" }, marchedIn),
       limit: { count: 1, per: "round" },
       do: [{ do: "removeStatus", target: "self", status: "broken" }],
     },
@@ -367,6 +378,7 @@ export const conquest: GameSystem = {
       verb: "reforms",
       by: "unit",
       hint: "Rearrange the stands, then turn",
+      if: marchedIn,
       limit: { count: 1, per: "round" },
       move: { kind: "reform", distance: ref("self.M") },
     },
@@ -376,7 +388,7 @@ export const conquest: GameSystem = {
       verb: "withdraws",
       by: "unit",
       hint: "Leave a fight (Light and Medium)",
-      if: { not: { is: "self.Class", value: "Heavy" } },
+      if: and({ not: { is: "self.Class", value: "Heavy" } }, marchedIn),
       limit: { count: 1, per: "round" },
       move: { kind: "withdraw", distance: ref("self.M") },
     },

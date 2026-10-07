@@ -4,10 +4,11 @@ import { currentSlot } from "../../core/content/turn";
 import { useCanControl, useStore } from "../../store";
 import { useGame } from "../../ui/hooks";
 import { cardsLeft, nextCard, stackOf } from "./command";
+import { arrivalTarget, classOf, CLASSES, reservesOf, rolledKey, type UnitClass } from "./reinforce";
 import { conquest } from "./system";
 
 const alive = (game: GameState, u: Unit) =>
-  u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed);
+  !u.status?.reserves && u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed);
 
 /**
  * The command stack. In the Command phase each player puts their regiments'
@@ -20,13 +21,14 @@ export function CommandPanel() {
   const { role, scrub, select } = useStore();
   const canControl = useCanControl();
   const [open, setOpen] = useState(true);
-  if (game.system !== conquest.id || game.turn.round === 0 || scrub !== null) return null;
+  if (game.system !== conquest.id || scrub !== null) return null;
   const slot = currentSlot(game)?.id;
   const own = game.modules?.[conquest.id] ?? {};
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => (a.seat ?? 0) - (b.seat ?? 0));
   const mine = (p: Player) => role !== "spectator" && canControl(p.id);
+  if (game.turn.round === 0) return <ToReserve players={players.filter(mine)} />;
 
   if (!open)
     return (
@@ -42,11 +44,24 @@ export function CommandPanel() {
       </div>
       {players.map((p) => {
         const stack = stackOf(game, own, p.id);
-        if (slot === "command" && mine(p)) return <Ordering key={p.id} player={p} saved={stack} />;
+        if (slot === "command" && mine(p)) {
+          const waiting = needsRoll(game, own, p.id);
+          return waiting ? (
+            <Reinforcements key={p.id} player={p} />
+          ) : (
+            <div key={p.id}>
+              <Arrived player={p} />
+              <Ordering player={p} saved={stack} />
+            </div>
+          );
+        }
         const next = nextCard(game, stack);
         return (
           <div key={p.id} className="stack-player">
             <span style={{ color: p.color }}>{p.name}</span>{" "}
+            {reservesOf(game, p.id).length > 0 && (
+              <span className="muted">{reservesOf(game, p.id).length} in reserve · </span>
+            )}
             {!stack ? (
               <span className="muted">
                 {slot === "command" ? "ordering their cards" : "no stack: any regiment"}
@@ -113,5 +128,118 @@ function Ordering({ player, saved }: { player: Player; saved: string[] | undefin
         {locked ? "Locked in" : "Lock in stack"}
       </button>
     </div>
+  );
+}
+
+/** Whether a player still has this round's reinforcements to roll. */
+function needsRoll(game: GameState, own: Record<string, unknown>, player: string): boolean {
+  const round = game.turn.round;
+  if (own[rolledKey(player, round)]) return false;
+  return reservesOf(game, player).some((u) => arrivalTarget(round, classOf(u, game)) !== null);
+}
+
+/** Before the battle: Conquest armies start in reserve and arrive round by round. */
+function ToReserve({ players }: { players: Player[] }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const rows = players
+    .map((p) => ({
+      p,
+      table: Object.values(game.units).filter((u) => u.owner === p.id && !u.status?.reserves),
+      held: reservesOf(game, p.id).length,
+    }))
+    .filter((r) => r.table.length || r.held);
+  if (!rows.length) return null;
+  return (
+    <div className="panel play command-stack">
+      <strong>Reinforcements</strong>
+      <p className="muted small">
+        Regiments start in reserve: Light from round 1, Medium from round 2, Heavy from round 3.
+      </p>
+      {rows.map(({ p, table, held }) => (
+        <div key={p.id} className="stack-player">
+          <span style={{ color: p.color }}>{p.name}</span>{" "}
+          {held > 0 && <span className="muted">{held} in reserve </span>}
+          {table.length > 0 && (
+            <button
+              className={held ? undefined : "primary"}
+              onClick={() => {
+                for (const u of table) dispatch({ type: "unit/reserve", id: u.id, reserve: true }, p.id);
+              }}
+            >
+              Send {table.length === 1 ? table[0]!.name : `${table.length} regiments`} to reserve
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** This round's arrivals: one regiment of each class comes in, the rest roll. */
+function Reinforcements({ player }: { player: Player }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const [first, setFirst] = useState<Partial<Record<UnitClass, string>>>({});
+  const round = game.turn.round;
+  const rows = CLASSES.map((cls) => ({
+    cls,
+    target: arrivalTarget(round, cls),
+    waiting: reservesOf(game, player.id).filter((u) => classOf(u, game) === cls),
+  })).filter((r) => r.target !== null && r.waiting.length);
+  const roll = () =>
+    dispatch(
+      { type: "script/start", procedure: "reinforcements", args: { player: player.id, first } },
+      player.id,
+    );
+  return (
+    <div className="stack-player">
+      <span style={{ color: player.color }}>{player.name}</span>{" "}
+      <span className="muted">reinforcements, round {round}</span>
+      {rows.map(({ cls, target, waiting }) => (
+        <div key={cls} className="row small">
+          <span>
+            {cls}: {waiting.length > 1 ? "" : "arrives"}
+          </span>
+          {waiting.length > 1 && (
+            <select
+              aria-label={`${cls} regiment that arrives without a roll`}
+              value={first[cls] ?? waiting[0]!.id}
+              onChange={(e) => setFirst({ ...first, [cls]: e.target.value })}
+            >
+              {waiting.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {waiting.length > 1 && (
+            <span className="muted">
+              {target === "auto" ? "arrive with the rest" : `arrives; the rest on ${target} or less`}
+            </span>
+          )}
+        </div>
+      ))}
+      <button className="primary" disabled={!!game.script} onClick={roll}>
+        {rows.some((r) => r.target !== "auto" && r.waiting.length > 1)
+          ? "Roll reinforcements"
+          : "Bring them in"}
+      </button>
+    </div>
+  );
+}
+
+/** Who arrived this round, until they're on the table. */
+function Arrived({ player }: { player: Player }) {
+  const game = useGame();
+  const own = game.modules?.[conquest.id] ?? {};
+  const ids = own[rolledKey(player.id, game.turn.round)];
+  if (!Array.isArray(ids) || !ids.length) return null;
+  return (
+    <p className="muted small">
+      Arrived: {ids.map((id) => game.units[String(id)]?.name).join(", ")}. Drag them on from your table edge;
+      each marches first and can't charge this round.
+    </p>
   );
 }

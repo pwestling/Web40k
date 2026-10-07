@@ -11,8 +11,9 @@ import type { CodeProcedure, GameView, PureFn } from "../../sdk";
 
 export const stackKey = (player: string) => `stack:${player}`;
 
+/** On the table: standing and not waiting in reserve (reinforce.ts). */
 const alive = (state: GameState, u: Unit | undefined) =>
-  !!u && u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
+  !!u && !u.status?.reserves && u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
 
 /** A player's stack as set, or undefined if they haven't set one. */
 export function stackOf(
