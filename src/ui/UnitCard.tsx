@@ -109,7 +109,8 @@ export function snapToLimit(unitId: string, limit: number) {
   const at = (id: string, k: number) => {
     const m = game.models[id]!;
     const from = m.phaseStart ?? m.position;
-    return { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
+    const p = { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
+    return { ...p, z: settleZ(game.terrain, p, m.phaseStartZ ?? 0) };
   };
   const ids = models.map((m) => m.id);
   const k = clampFraction(game, ids, at, limit);
@@ -117,9 +118,10 @@ export function snapToLimit(unitId: string, limit: number) {
     {
       type: "models/move",
       moves: ids.map((id) => {
-        const to = at(id, k);
-        return { id, to, z: settleZ(game.terrain, to, game.models[id]!.phaseStartZ ?? 0) };
+        const { z, ...to } = at(id, k);
+        return { id, to, z };
       }),
+      snap: limit,
     },
     unit.owner,
   );
@@ -127,7 +129,7 @@ export function snapToLimit(unitId: string, limit: number) {
 
 export function UnitCard() {
   const game = useGame();
-  const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, set } = useStore();
+  const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, rangeWeapon, set } = useStore();
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
   if (!unit) return null;
@@ -263,10 +265,22 @@ export function UnitCard() {
         <button
           className={ranges === unit.id ? "on" : ""}
           title="Move (blue) and longest weapon range (yellow) around each model"
-          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id })}
+          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
         >
           Ranges
         </button>
+        {ranges === unit.id && (
+          <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
+            <option value="">Longest range</option>
+            {weapons
+              .filter((w) => w.kind === "ranged")
+              .map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} {w.chars.RANGE}
+                </option>
+              ))}
+          </select>
+        )}
         {elevation > 0 && <span className="muted">On a floor {elevation.toFixed(1)}" up</span>}
       </div>
 
