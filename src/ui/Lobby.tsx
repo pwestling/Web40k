@@ -1,5 +1,6 @@
+import { unbundleReplay, type ReplayFile } from "./replayFile";
 import { useEffect, useState } from "react";
-import { DEFAULT_SYSTEM, type GameRecord } from "../core";
+import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
 import { PackageLibrary } from "./Packages";
@@ -69,9 +70,9 @@ export function Lobby() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadReplay = async (file: File) => {
-    const record = JSON.parse(await file.text()) as GameRecord;
-    if (record.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");
-    openReplay(record);
+    const data = JSON.parse(await file.text()) as ReplayFile;
+    if (data.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");
+    openReplay(await unbundleReplay(data));
   };
 
   return (
