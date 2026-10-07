@@ -13,7 +13,8 @@ import { synthMiniature } from "../assets/synth";
 import type { ModelAsset } from "../assets/types";
 import { useStore } from "../store";
 import { spawnIntents } from "../systems/wh40k/deploy";
-import { sampleRoster } from "../systems/wh40k/sample";
+import { systemOf } from "../core/content/turn";
+import { systemModule } from "../systems";
 
 let renderer: WebGLRenderer | null = null;
 export function setPerfRenderer(gl: WebGLRenderer) {
@@ -24,19 +25,23 @@ const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
 
 export const perf = {
   /** Start a hotseat game and deploy both sample armies `copies` times. */
-  async setup(copies = 1) {
+  async setup(copies = 1, system?: string) {
     const store = useStore.getState();
-    store.start({ role: "host", mode: "hotseat", name: "Perf" });
+    store.start({ role: "host", mode: "hotseat", name: "Perf", system });
     await frame();
+    const sample = systemModule(system).sample;
     for (let c = 0; c < copies; c++) {
       for (const [owner, variant] of [
         ["p1", 0],
         ["p2", 1],
       ] as const) {
         const { game, dispatch } = useStore.getState();
-        const roster = sampleRoster(variant);
-        for (const intent of spawnIntents(game, owner, roster.units, `${owner}-perf${c}`))
-          dispatch(intent, owner);
+        // Rank-and-flank units deploy as blocks, five wide like the army import's default.
+        const ranked = systemOf(game).unitShape.kind === "ranked";
+        const units = sample(variant).units.map((u) =>
+          ranked ? { ...u, files: Math.min(u.models.length, 5) } : u,
+        );
+        for (const intent of spawnIntents(game, owner, units, `${owner}-perf${c}`)) dispatch(intent, owner);
       }
     }
     await frame();

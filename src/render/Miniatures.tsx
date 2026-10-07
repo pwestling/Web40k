@@ -18,7 +18,7 @@ import type { Model, ModelFigure, Vec2 } from "../core";
 import { useAssets } from "../assets/store";
 import type { ModelAsset } from "../assets/types";
 
-/** Top of the plastic base the figure stands on (see ModelBase). */
+/** Top of the plastic base the figure stands on (see ModelInstances). */
 export const BASE_TOP = 0.2;
 
 /**

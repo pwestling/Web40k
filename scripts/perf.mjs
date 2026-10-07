@@ -53,6 +53,12 @@ try {
   if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
   // Full detail is slow enough under SwiftShader that a few frames will do.
   await run("no pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000, true), 3, 1);
+  // A big rank-and-flank game: about 200 models in blocks (The Old World style).
+  await run("Old World, ~200 models, stand-ins", async () => {
+    const perArmyPair = await window.openBattlePerf.setup(1, "tow-hand");
+    const models = await window.openBattlePerf.setup(Math.ceil(200 / perArmyPair), "tow-hand");
+    return { models };
+  });
   console.log(JSON.stringify({ when: new Date().toISOString(), gpu, models, results }, null, 2));
 } finally {
   await browser.close();

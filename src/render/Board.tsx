@@ -38,6 +38,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
+import { ModelInstances, type ModelDraw } from "./ModelInstances";
 import { Trails, useTween, WatchEffects } from "./Watch";
 import { Templates } from "./Templates";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
@@ -86,11 +87,12 @@ function FigureDrop() {
         camera,
       );
       for (const hit of ray.intersectObjects(scene.children, true)) {
-        let o: Object3D | null = hit.object;
-        while (o && !o.userData.modelId) o = o.parent;
-        if (!o) continue;
+        // Model meshes are instanced: userData.modelIds maps instanceId to the model.
+        const ids = hit.object.userData.modelIds as string[] | undefined;
+        const modelId = ids && hit.instanceId !== undefined ? ids[hit.instanceId] : undefined;
+        if (!modelId) continue;
         const { game, select } = useStore.getState();
-        const model = game.models[o.userData.modelId as string];
+        const model = game.models[modelId];
         const unit = model?.unitId ? game.units[model.unitId] : undefined;
         const models = unit ? unit.modelIds.flatMap((id) => game.models[id] ?? []) : model ? [model] : [];
         if (unit) select(unit.id);
@@ -626,6 +628,31 @@ function Scene() {
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
 
+  // Every model on the table as drawn this frame (dragged ones where they're held).
+  const [hoverModel, setHoverModel] = useState<string | null>(null);
+  const modelDraws = useMemo(
+    () =>
+      Object.values(game.models).flatMap((model): ModelDraw[] => {
+        if (model.destroyed) return [];
+        // In a model's eye view, its own unit is hidden so it doesn't block the view.
+        if (view === "eye" && eyeUnit && (eye?.modelId === model.id || model.unitId === eyeUnit)) return [];
+        const figure = figures[model.id];
+        return [
+          {
+            model,
+            position: shown[model.id] ?? positions[model.id]!,
+            z: shownZ[model.id] ?? heights[model.id] ?? 0,
+            color: game.players[model.owner]?.color ?? "#999",
+            // The stand-in is as tall as the model's line-of-sight height.
+            height: figure ?? Math.max(0.3, modelHeight(model) - 0.2),
+            dressed: figure !== undefined,
+            targetable: !!draft?.picking && model.unitId !== draft.attackerId,
+          },
+        ];
+      }),
+    [game.models, game.players, view, eyeUnit, eye, figures, shown, positions, shownZ, heights, draft],
+  );
+
   return (
     <>
       {/* Remount on view change so the controls bind to the new camera. */}
@@ -718,29 +745,30 @@ function Scene() {
         );
       })}
 
-      {Object.values(game.models).map((model) => {
-        if (model.destroyed) return null;
-        // In a model's eye view, its own unit is hidden so it doesn't block the view.
-        if (view === "eye" && eyeUnit && (eye?.modelId === model.id || model.unitId === eyeUnit)) return null;
-        const owner = game.players[model.owner];
-        const isSelected = !!model.unitId && model.unitId === selected;
-        return (
-          <ModelBase
-            key={model.id}
-            model={model}
-            position={shown[model.id] ?? positions[model.id]!}
-            z={shownZ[model.id] ?? heights[model.id] ?? 0}
-            color={owner?.color ?? "#999"}
-            selected={isSelected}
-            incoherent={incoherent.has(model.id)}
-            targetable={!!draft?.picking && model.unitId !== draft.attackerId}
-            unitName={model.unitId ? game.units[model.unitId]?.name : undefined}
-            figure={figures[model.id]}
-            onDown={(shift) => onModelDown(model, shift)}
-            onHover={(on) => setUi({ hoverUnit: on ? (model.unitId ?? null) : null })}
+      <ModelInstances
+        draws={modelDraws}
+        hovered={hoverModel}
+        onDown={(model, shift) => onModelDown(model, shift)}
+        onHover={(model) => {
+          setHoverModel(model?.id ?? null);
+          setUi({ hoverUnit: model?.unitId ?? null });
+        }}
+      />
+      {modelDraws.map((d) =>
+        d.model.id === hoverModel ||
+        (!!d.model.unitId && d.model.unitId === selected) ||
+        incoherent.has(d.model.id) ||
+        (d.model.woundsLost ?? 0) > 0 ? (
+          <ModelOverlay
+            key={d.model.id}
+            draw={d}
+            selected={!!d.model.unitId && d.model.unitId === selected}
+            incoherent={incoherent.has(d.model.id)}
+            hover={d.model.id === hoverModel}
+            unitName={d.model.unitId ? game.units[d.model.unitId]?.name : undefined}
           />
-        );
-      })}
+        ) : null,
+      )}
 
       <Miniatures models={onTable} positions={shown} heights={shownZ} />
       <Trails trails={trails} />
@@ -1365,95 +1393,26 @@ function Ghost({
   );
 }
 
-interface ModelBaseProps {
-  model: Model;
-  position: Vec2;
-  z: number;
-  color: string;
-  selected: boolean;
-  incoherent: boolean;
-  targetable: boolean;
-  unitName?: string;
-  /** Height of the uploaded figure standing on this base, if there is one. */
-  figure?: number;
-  onDown: (shift: boolean) => void;
-  onHover: (on: boolean) => void;
-}
-
-function ModelBase({
-  model,
-  position,
-  z,
-  color,
+/** Rings and labels for one model, drawn only while something needs showing. */
+function ModelOverlay({
+  draw,
   selected,
   incoherent,
-  targetable,
+  hover,
   unitName,
-  figure,
-  onDown,
-  onHover,
-}: ModelBaseProps) {
+}: {
+  draw: ModelDraw;
+  selected: boolean;
+  incoherent: boolean;
+  hover: boolean;
+  unitName?: string;
+}) {
+  const { model, position, z, height } = draw;
   const { width, depth } = baseSizeInches(model.base);
-  const r = Math.min(width, depth) / 2;
-  const rect = model.base.shape === "rect";
   const wounds = maxWounds(model);
   const left = wounds - (model.woundsLost ?? 0);
-  // The stand-in is as tall as the model's line-of-sight height.
-  const dressed = figure !== undefined;
-  const height = figure ?? Math.max(0.3, modelHeight(model) - 0.2);
-  const [hover, setHover] = useState(false);
   return (
-    // The base and the figure both pick up clicks and drags.
-    <group
-      userData={{ modelId: model.id }}
-      position={[position.x, z, position.y]}
-      rotation-y={model.facing}
-      onPointerDown={(e) => {
-        if (e.button !== 0) return;
-        e.stopPropagation();
-        onDown(e.shiftKey);
-      }}
-      onClick={(e) => e.stopPropagation()}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHover(true);
-        onHover(true);
-      }}
-      onPointerOut={() => {
-        setHover(false);
-        onHover(false);
-      }}
-    >
-      <mesh
-        castShadow
-        position-y={0.1}
-        // Oval bases are a unit cylinder stretched to size.
-        scale={rect ? 1 : [width / 2, 1, depth / 2]}
-      >
-        {rect ? (
-          <boxGeometry args={[width * 0.98, 0.2, depth * 0.98]} />
-        ) : (
-          <cylinderGeometry args={[1, 1, 0.2, 32]} />
-        )}
-        <meshStandardMaterial color={color} emissive={targetable && hover ? "#facc15" : "#000"} />
-      </mesh>
-      {/* Stand-in for the miniature; the nub shows facing. With an uploaded
-          figure (see Miniatures) it stays as an invisible, cheap pick target. */}
-      {rect ? (
-        <mesh castShadow={!dressed} position-y={0.2 + height / 2}>
-          <boxGeometry args={[width * 0.8, height, depth * 0.85]} />
-          <meshStandardMaterial color="#94a3b8" visible={!dressed} />
-        </mesh>
-      ) : (
-        <mesh castShadow={!dressed} position-y={0.2 + height / 2}>
-          <capsuleGeometry args={[r * 0.45, Math.max(0.1, height - r * 0.9), 4, 12]} />
-          <meshStandardMaterial color="#cbd5e1" visible={!dressed} />
-        </mesh>
-      )}
-      <mesh position={[0, 0.25, depth / 2 - 0.1]} raycast={() => null}>
-        <boxGeometry args={[0.15, 0.1, 0.2]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
+    <group position={[position.x, z, position.y]} rotation-y={model.facing}>
       {(selected || incoherent) && (
         <mesh rotation-x={-Math.PI / 2} position-y={0.03} raycast={() => null}>
           <ringGeometry args={[Math.max(width, depth) / 2 + 0.05, Math.max(width, depth) / 2 + 0.25, 40]} />
