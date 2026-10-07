@@ -24,7 +24,7 @@ pnpm dev          # http://localhost:5173
 ```
 
 Click **Solo** to play locally, or **Host** to create a room and open the same URL in another browser
-(or send it to a friend) and click **Join**. Drag your own models to move them; the label shows how far
+(or send it to a friend) and click **Join**, or **Watch** to spectate. Drag your own models to move them; the label shows how far
 they have moved in inches.
 
 | Command          | What it does                           |
@@ -79,11 +79,12 @@ encoded as data so the engine can automate them. The schema for this is being de
 millimetres, as they are printed, and can be round, oval or rectangular, with a facing. Skirmish units
 (40k) place models freely; ranked units are rigid blocks that move, wheel and pivot together.
 
-**Sync model.** The host is authoritative. A player's action is sent as an _intent_; the host turns it
-into a fully resolved _event_ (this is where dice are rolled), applies it, and broadcasts it with a
-sequence number. Everyone applies the same events in the same order, and late joiners receive a
-snapshot. This keeps dice honest between friends and makes desyncs easy to reason about. If the host
-leaves, the game currently ends; host migration and commit-reveal dice are natural next steps.
+**The game is an event log.** The host turns every player _intent_ into a numbered, fully resolved
+_event_ (this is where dice are rolled) and appends it to the log (`src/core/log.ts`). The table is
+always just the starting state with the log folded over it, so the same log drives live sync, undo (an
+undo is itself an event, and the undone entry stays visible), late joining, spectating and replays (the
+log is the replay file). If the host leaves, the game currently ends; host migration and commit-reveal
+dice are natural next steps.
 
 ## License
 

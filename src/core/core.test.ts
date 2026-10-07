@@ -29,16 +29,7 @@ describe("reducer", () => {
 
     expect(s1.models.a?.position).toEqual({ x: 0, y: 0 });
     expect(s2.models.a?.position).toEqual({ x: 6, y: 0 });
-    expect(s2.seq).toBe(2);
     expect(s0.models).toEqual({});
-  });
-
-  it("logs dice rolls", () => {
-    const s = applyEvent(createInitialState(), {
-      type: "dice/roll",
-      roll: { by: "p1", sides: 6, results: [1, 6] },
-    });
-    expect(s.log).toEqual([{ kind: "roll", seq: 1, roll: { by: "p1", sides: 6, results: [1, 6] } }]);
   });
 
   it("wheels a ranked unit as one block around its front-left corner", () => {

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import {
   createInitialState,
+  createRecord,
+  type GameRecord,
   rankedOffsets,
   rotate,
   type BaseShape,
@@ -20,6 +22,8 @@ export type View = "3d" | "top";
 
 interface Store {
   game: GameState;
+  /** The event log: source of truth for history, undo and replays. */
+  record: GameRecord;
   session: Session | null;
   roomId: string | null;
   /** Camera mode. Local to each player; never synced. */
@@ -31,6 +35,7 @@ interface Store {
 
 export const useStore = create<Store>((set, get) => ({
   game: createInitialState(),
+  record: createRecord(),
   session: null,
   roomId: null,
   view: "3d",
@@ -39,8 +44,9 @@ export const useStore = create<Store>((set, get) => ({
   start({ role, roomId, name }) {
     get().session?.leave();
     const transport = roomId ? trysteroTransport(roomId) : createLoopbackNetwork().connect("solo");
-    const session = new Session({ transport, role, onState: (game) => set({ game }) });
-    set({ session, roomId: roomId ?? null, game: session.current });
+    const session = new Session({ transport, role, onChange: (game, record) => set({ game, record }) });
+    set({ session, roomId: roomId ?? null, game: session.current, record: session.log });
+    if (role === "spectator") return;
 
     const color = COLORS[role === "host" ? 0 : 1]!;
     const player: Player = { id: session.selfId, name, color };

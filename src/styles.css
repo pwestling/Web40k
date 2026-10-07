@@ -45,6 +45,8 @@ body,
   padding-left: 1.2em;
 }
 .log {
+  list-style: none;
+  padding-left: 0;
   font-family: ui-monospace, monospace;
   font-size: 0.85rem;
 }
@@ -55,4 +57,8 @@ body,
   font-family: ui-monospace, monospace;
   pointer-events: none;
   white-space: nowrap;
+}
+.log .undone {
+  text-decoration: line-through;
+  opacity: 0.5;
 }

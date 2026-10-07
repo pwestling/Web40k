@@ -2,26 +2,22 @@ import type { GameEvent } from "./actions";
 import { transformPositions } from "./formation";
 import type { GameState } from "./types";
 
-const MAX_LOG = 200;
-
-/** Apply one event. Pure: returns a new state and never mutates the input. */
+/**
+ * Apply one event's effect on the table. Pure: returns a new state and never
+ * mutates the input. Sequencing, undo and history live in the event log
+ * (log.ts), which is the source of truth; this only folds one event in.
+ */
 export function applyEvent(state: GameState, event: GameEvent): GameState {
-  const seq = state.seq + 1;
   switch (event.type) {
     case "player/join":
-      return {
-        ...state,
-        seq,
-        players: { ...state.players, [event.player.id]: event.player },
-        log: appendLog(state, { kind: "info", seq, text: `${event.player.name} joined` }),
-      };
+      return { ...state, players: { ...state.players, [event.player.id]: event.player } };
     case "model/add":
-      return { ...state, seq, models: { ...state.models, [event.model.id]: event.model } };
+      return { ...state, models: { ...state.models, [event.model.id]: event.model } };
     case "model/move": {
       const model = state.models[event.id];
-      if (!model) return { ...state, seq };
+      if (!model) return state;
       const moved = { ...model, position: event.to, facing: event.facing ?? model.facing };
-      return { ...state, seq, models: { ...state.models, [event.id]: moved } };
+      return { ...state, models: { ...state.models, [event.id]: moved } };
     }
     case "model/remove": {
       const { [event.id]: removed, ...models } = state.models;
@@ -29,17 +25,17 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       const units = unit
         ? { ...state.units, [unit.id]: { ...unit, modelIds: unit.modelIds.filter((id) => id !== event.id) } }
         : state.units;
-      return { ...state, seq, models, units };
+      return { ...state, models, units };
     }
     case "unit/add": {
       const models = { ...state.models };
       for (const model of event.models) models[model.id] = { ...model, unitId: event.unit.id };
       const unit = { ...event.unit, modelIds: event.models.map((m) => m.id) };
-      return { ...state, seq, units: { ...state.units, [unit.id]: unit }, models };
+      return { ...state, units: { ...state.units, [unit.id]: unit }, models };
     }
     case "unit/move": {
       const unit = state.units[event.id];
-      if (!unit) return { ...state, seq };
+      if (!unit) return state;
       const members = unit.modelIds.flatMap((id) => state.models[id] ?? []);
       const moved = transformPositions(
         members.map((m) => m.position),
@@ -51,14 +47,11 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       members.forEach(
         (m, i) => (models[m.id] = { ...m, position: moved[i]!, facing: m.facing + event.turn }),
       );
-      return { ...state, seq, models };
+      return { ...state, models };
     }
     case "dice/roll":
-      return { ...state, seq, log: appendLog(state, { kind: "roll", seq, roll: event.roll }) };
+    case "undo":
+      // Rolls only live in the log; undo is resolved by the log's replay.
+      return state;
   }
-}
-
-function appendLog(state: GameState, entry: GameState["log"][number]): GameState["log"] {
-  const log = [...state.log, entry];
-  return log.length > MAX_LOG ? log.slice(log.length - MAX_LOG) : log;
 }

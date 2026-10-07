@@ -12,7 +12,8 @@ export type Intent =
   | { type: "model/remove"; id: ModelId }
   | { type: "unit/add"; unit: Unit; models: Model[] }
   | UnitMove
-  | { type: "dice/roll"; count: number; sides: number };
+  | { type: "dice/roll"; count: number; sides: number }
+  | { type: "undo"; seq: number };
 
 /** Events are fully resolved and deterministic. */
 export type GameEvent =
@@ -22,7 +23,9 @@ export type GameEvent =
   | { type: "model/remove"; id: ModelId }
   | { type: "unit/add"; unit: Unit; models: Model[] }
   | UnitMove
-  | { type: "dice/roll"; roll: DiceRoll };
+  | { type: "dice/roll"; roll: DiceRoll }
+  /** Takes back an earlier event. It stays in the log, marked as undone. */
+  | { type: "undo"; seq: number };
 
 /** Move every model in a unit as one rigid block: rotate by `turn` radians
  * around `pivot`, then translate by `delta`. A ranked unit's wheel is a turn

@@ -67,9 +67,6 @@ export interface DiceRoll {
   results: number[];
 }
 
-export type LogEntry =
-  { kind: "roll"; seq: number; roll: DiceRoll } | { kind: "info"; seq: number; text: string };
-
 export interface Table {
   /** Width (x) in inches. */
   width: number;
@@ -78,18 +75,17 @@ export interface Table {
 }
 
 export interface GameState {
-  /** Sequence number of the last applied event. */
+  /** Sequence number of the last event folded into this state (0 = none). */
   seq: number;
   table: Table;
   players: Record<PlayerId, Player>;
   units: Record<UnitId, Unit>;
   models: Record<ModelId, Model>;
-  log: LogEntry[];
 }
 
 /** Strike Force sized board: 44" x 60". */
 export const STRIKE_FORCE_TABLE: Table = { width: 60, depth: 44 };
 
 export function createInitialState(table: Table = STRIKE_FORCE_TABLE): GameState {
-  return { seq: 0, table, players: {}, units: {}, models: {}, log: [] };
+  return { seq: 0, table, players: {}, units: {}, models: {} };
 }

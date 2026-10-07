@@ -1,15 +1,15 @@
-import type { GameEvent, GameState, Intent } from "../core";
+import type { GameRecord, Intent, LoggedEvent } from "../core";
 
 /** Wire protocol. The host is authoritative: clients send intents, the host
- * broadcasts numbered events, and late joiners get a snapshot. */
+ * broadcasts logged events, and late joiners get the whole record. */
 export type NetMessage =
   | { t: "hello" }
   | { t: "intent"; intent: Intent }
-  | { t: "event"; seq: number; event: GameEvent }
-  | { t: "snapshot"; state: GameState };
+  | { t: "event"; logged: LoggedEvent }
+  | { t: "record"; record: GameRecord };
 
 /** Minimal peer-to-peer channel the session needs. Implemented over WebRTC by
- * `trysteroTransport` and in memory by `createLoopbackPair` for tests. */
+ * `trysteroTransport` and in memory by `createLoopbackNetwork` for tests. */
 export interface Transport {
   readonly selfId: string;
   /** Send to one peer, or to everyone when `to` is omitted. */
