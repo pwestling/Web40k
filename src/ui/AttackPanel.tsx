@@ -14,7 +14,7 @@ import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
-import { oddsLine, specOdds } from "./odds";
+import { useActionReport } from "./odds";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 
 /**
@@ -118,7 +118,6 @@ function SpecEditor({
 }) {
   const [spec, setSpec] = useState(suggestion.spec);
   const game = useGame();
-  const odds = useMemo(() => oddsLine(specOdds(game, spec)), [game, spec]);
   const set = <K extends keyof AttackSpec>(k: K, v: AttackSpec[K]) => setSpec({ ...spec, [k]: v });
   const target = (v: number | null, onChange: (v: number | null) => void, allowNone: string) => (
     <select value={v ?? 0} onChange={(e) => onChange(Number(e.target.value) || null)}>
@@ -201,10 +200,8 @@ function SpecEditor({
         </label>
         <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
       </div>
-      {s.inRange === 0 && spec.kind === "ranged" ? (
-        <p className="odds warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
-      ) : (
-        <OddsLine odds={odds} />
+      {s.inRange === 0 && spec.kind === "ranged" && (
+        <p className="warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
       )}
       {s.inRange === 0 || s.visible === 0 ? (
         <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
@@ -219,14 +216,15 @@ function SpecEditor({
   );
 }
 
-function OddsLine({ odds }: { odds: string | null }) {
-  if (!odds) return null;
+/** After the dice: what the attack came to against its odds (never shown before the roll). */
+function ReportLine({ report }: { report: string | null }) {
+  if (!report) return null;
   return (
     <p
       className="odds"
-      title="Exact odds from the attack's numbers; sustained, lethal and devastating extras aren't counted"
+      title="Against the exact odds before the roll; sustained, lethal and devastating extras aren't counted"
     >
-      {odds.replace(/^e/, "E")}
+      {report.charAt(0).toUpperCase() + report.slice(1)}
     </p>
   );
 }
@@ -253,9 +251,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const target = game.units[spec.targetUnitId];
   const canAct = live && role !== "spectator";
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
-  // The odds stay up until the first dice land.
-  const unrolled = attack.stage !== "done" && !attack.hitDice && !attack.woundDice && !attack.saveDice;
-  const odds = useMemo(() => (unrolled ? oddsLine(specOdds(game, spec)) : null), [unrolled, game, spec]);
+  const report = useActionReport(attack.stage === "done");
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
   const roll = () => dispatch({ type: "attack/roll" }, roller);
@@ -277,7 +273,6 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         {fmtMod(spec.woundMod)} · save {spec.save ? `${spec.save}+` : "none"} · D {spec.damage}
         {spec.fnp ? ` · FNP ${spec.fnp}+` : ""}
       </p>
-      <OddsLine odds={odds} />
       {attack.hitDice && (
         <Stage label="Hits" dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
           {attack.hits} hits{attack.critHits ? `, ${attack.critHits} critical` : ""}
@@ -302,6 +297,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         </Stage>
       )}
       {attack.damage && <DamageSummary game={game} attack={attack} />}
+      <ReportLine report={report} />
       {live && target && (attack.stage === "save" || attack.stage === "damage") && !attack.damage && (
         <WoundOrder attack={attack} />
       )}

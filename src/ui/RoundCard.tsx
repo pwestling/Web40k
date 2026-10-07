@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
 import { readGame, replayIntro } from "./highlights";
-import { biggestSwings, gameStats, type RunSwing } from "../core/stats";
+import { biggestSwings, gameStats } from "../core/stats";
+import { swingResult } from "./odds";
 
 /** How far past a round's end (in events) its card still comes up. */
 const RECENT = 40;
@@ -57,17 +58,12 @@ export function RoundCard() {
         </div>
       ))}
       {swing && Math.abs(delta) >= 0.5 && (
-        <span className="swing-line">Biggest swing: {swingText(swing)}</span>
+        <span className="swing-line">
+          Biggest swing: {swing.title}: {swingResult(swing)}
+        </span>
       )}
     </div>
   );
-}
-
-/** "Lance Team at Ashen Thralls: 0 slain where 1.7 were expected". */
-export function swingText(r: RunSwing): string {
-  const what = r.measure === "slain" ? "slain" : r.measure === "damage" ? "damage" : r.measure;
-  const verb = r.measure !== "damage" && r.expected >= 1.05 ? "were" : "was";
-  return `${r.title}: ${r.actual} ${what} where ${r.expected.toFixed(1)} ${verb} expected`;
 }
 
 /** A replay's title card: who played what, how long, and how bloody. */

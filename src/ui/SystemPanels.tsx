@@ -21,8 +21,7 @@ import { modelHeight, type Ability, type GameState, type Unit } from "../core";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
-import { liveOdds, oddsLine, targetModels } from "./odds";
-import { procedureOdds } from "../core/odds";
+import { useActionReport } from "./odds";
 import { eyeView, rotateUnit } from "./UnitCard";
 
 /**
@@ -532,16 +531,6 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
     }),
   );
   const hopeless = cannotSucceed(preview);
-  // Exact odds from the same numbers, before anything is rolled.
-  const odds =
-    preview && draft.targetId
-      ? (() => {
-          const steps = findProcedure(system, def.procedure).steps;
-          const die = system.dice.find((d) => d.id === system.defaultDie);
-          return procedureOdds(steps, preview.plans, targetModels(game, draft.targetId), die?.sides ?? 6);
-        })()
-      : null;
-  const expected = Object.fromEntries((odds?.steps ?? []).map((s) => [s.id, s.expected]));
 
   return (
     <div className="panel attack">
@@ -592,9 +581,6 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
             return text ? (
               <li key={step.id}>
                 <span className="label">{label(step.id)}</span> {text}
-                {expected[step.id] !== undefined && step.kind !== "pool" && step.kind !== "damage" && (
-                  <span className="odds"> → {expected[step.id]!.toFixed(1)}</span>
-                )}
                 {preview.fired[step.id]?.length ? (
                   <span className="muted"> ({preview.fired[step.id]!.join(", ")})</span>
                 ) : null}
@@ -602,14 +588,6 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
             ) : null;
           })}
         </ul>
-      )}
-      {odds && oddsLine(odds) && !hopeless && (
-        <p
-          className="odds"
-          title="Exact odds from the numbers above; per-die rules such as extra hits aren't counted"
-        >
-          {oddsLine(odds)!.replace(/^e/, "E")}
-        </p>
       )}
       {option && !option.ok && <p className="warn">{option.why}</p>}
       {option?.ok && hopeless && draft.targetId && (
@@ -690,6 +668,8 @@ export function ProcedurePanel() {
   const game = useGame();
   const { dispatch, role, scrub } = useStore();
   const proc = game.procedure;
+  // After the dice: what the run came to against its odds (never shown before the roll).
+  const report = useActionReport(!!proc?.run.done);
   if (!proc) return null;
   const system = systemOf(game);
   const steps = findProcedure(system, proc.run.procedure).steps;
@@ -726,23 +706,19 @@ export function ProcedurePanel() {
     ),
   ];
 
-  // The odds stay up until the first dice land.
-  const unrolled = !run.done && !run.records.some((r) => r.kind === "test" && r.dice?.length);
-  const odds = unrolled ? oddsLine(liveOdds(game)?.odds ?? null) : null;
-
   return (
     <div className="panel attack">
       <strong>{proc.title}</strong>
-      {odds && (
-        <p className="odds" title="Exact odds from the run's numbers; per-die rules aren't counted">
-          {odds.replace(/^e/, "E")}
-        </p>
-      )}
       {run.records
         .filter((r) => r.dice?.length || r.rolls?.length || r.damage?.length || r.kind === "pool")
         .map((r, i) => (
           <RecordRow key={i} record={r} why={whyNone(r)} />
         ))}
+      {report && (
+        <p className="odds" title="Against the exact odds before the roll; per-die rules aren't counted">
+          {report.charAt(0).toUpperCase() + report.slice(1)}
+        </p>
+      )}
       {run.pending && (
         <div className="stage">
           <span className="label">{label(run.pending.step)}</span>

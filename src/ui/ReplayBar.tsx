@@ -3,8 +3,6 @@ import type { GameRecord } from "../core";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
 import { readGame, type Highlight } from "./highlights";
-import { useGame } from "./hooks";
-import { liveOdds, oddsLine } from "./odds";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
@@ -93,10 +91,6 @@ export function ReplayBar() {
     setScrub(to >= last && session ? null : to);
   };
   const captioned = role === "spectator" || scrub !== null;
-  // The roll in progress and its odds, e.g. "expects 2.4 slain, 18% to wipe".
-  const game = useGame();
-  const rolling = useMemo(() => (captioned ? liveOdds(game) : null), [captioned, game]);
-  const odds = rolling ? oddsLine(rolling.odds) : null;
 
   return (
     <>
@@ -104,11 +98,6 @@ export function ReplayBar() {
         <div className="caption">
           {phase && <span className="when">{phase.text}</span>}
           {now && <span>{now}</span>}
-          {odds && (
-            <span className="odds">
-              {rolling!.title}: {odds}
-            </span>
-          )}
         </div>
       )}
       <div className="replaybar">
