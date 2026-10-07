@@ -8,6 +8,7 @@ import {
   unitMoved,
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
+import { FigurePicker } from "./FigurePicker";
 import { useGame } from "./hooks";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
@@ -189,6 +190,8 @@ export function UnitCard() {
       {unit.sheet && unit.sheet.keywords.length > 0 && (
         <p className="muted small">{unit.sheet.keywords.join(", ")}</p>
       )}
+
+      <FigurePicker models={all} />
 
       <details>
         <summary>Models and wounds</summary>

@@ -16,6 +16,7 @@ import {
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
+import { Miniatures, useFigureHeights } from "./Miniatures";
 
 /**
  * World axes: x = table width, z = table depth, y = up. One unit is one inch.
@@ -29,8 +30,18 @@ export function Board() {
       <directionalLight position={[20, 40, 10]} intensity={1.3} castShadow shadow-mapSize={[2048, 2048]} />
       <Cameras />
       <Scene />
+      {import.meta.env.DEV && <PerfProbe />}
     </Canvas>
   );
+}
+
+/** Hands the renderer to the dev perf harness (src/dev/perf.ts). */
+function PerfProbe() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    void import("../dev/perf").then(({ setPerfRenderer }) => setPerfRenderer(gl));
+  }, [gl]);
+  return null;
 }
 
 /**
@@ -126,6 +137,9 @@ function Scene() {
     return p;
   }, [game.models, drag]);
 
+  const onTable = useMemo(() => Object.values(game.models).filter((m) => !m.destroyed), [game.models]);
+  const figures = useFigureHeights(onTable);
+
   const placed = (m: Model): Model => ({ ...m, position: positions[m.id] ?? m.position });
 
   // Coherency, with dragged models where they are being held.
@@ -206,10 +220,13 @@ function Scene() {
             incoherent={incoherent.has(model.id)}
             targetable={!!draft?.picking && model.unitId !== draft.attackerId}
             unitName={model.unitId ? game.units[model.unitId]?.name : undefined}
+            figure={figures[model.id]}
             onDown={(shift) => onModelDown(model, shift)}
           />
         );
       })}
+
+      <Miniatures models={onTable} positions={positions} />
 
       {/* Where the selected unit started this phase. */}
       {selectedUnit &&
@@ -429,6 +446,8 @@ interface ModelBaseProps {
   incoherent: boolean;
   targetable: boolean;
   unitName?: string;
+  /** Height of the uploaded figure standing on this base, if there is one. */
+  figure?: number;
   onDown: (shift: boolean) => void;
 }
 
@@ -440,6 +459,7 @@ function ModelBase({
   incoherent,
   targetable,
   unitName,
+  figure,
   onDown,
 }: ModelBaseProps) {
   const { width, depth } = baseSizeInches(model.base);
@@ -448,7 +468,7 @@ function ModelBase({
   const rect = model.base.shape === "rect";
   const wounds = maxWounds(model);
   const left = wounds - (model.woundsLost ?? 0);
-  const height = rect ? Math.min(3, 0.8 + big * 0.3) : Math.min(4, 0.9 + r * 1.4);
+  const height = figure ?? (rect ? Math.min(3, 0.8 + big * 0.3) : Math.min(4, 0.9 + r * 1.4));
   const [hover, setHover] = useState(false);
   return (
     <group position={[position.x, 0, position.y]} rotation-y={model.facing}>
@@ -473,8 +493,8 @@ function ModelBase({
         )}
         <meshStandardMaterial color={color} emissive={targetable && hover ? "#facc15" : "#000"} />
       </mesh>
-      {/* Stand-in for the miniature until real models are loaded; the nub shows facing. */}
-      {rect ? (
+      {/* Stand-in for the miniature until one is uploaded (see Miniatures); the nub shows facing. */}
+      {figure !== undefined ? null : rect ? (
         <mesh castShadow position-y={0.2 + height / 2} raycast={() => null}>
           <boxGeometry args={[width * 0.8, height, depth * 0.85]} />
           <meshStandardMaterial color="#94a3b8" />

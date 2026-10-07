@@ -1,0 +1,190 @@
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  Frustum,
+  InstancedMesh,
+  Matrix4,
+  MeshStandardMaterial,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Quaternion,
+  Sphere,
+  Vector3,
+} from "three";
+import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
+import type { Model, Vec2 } from "../core";
+import { bindingKey, useAssets, type Binding } from "../assets/store";
+import type { ModelAsset } from "../assets/types";
+
+/** Top of the plastic base the figure stands on (see ModelBase). */
+export const BASE_TOP = 0.2;
+
+/**
+ * On-screen height in pixels above which a figure gets each level. Below the
+ * last threshold it gets the coarsest level.
+ */
+export const LOD_PIXELS = [220, 70];
+
+const CREASE = (40 * Math.PI) / 180;
+
+const material = new MeshStandardMaterial({ color: "#c7ccd4", roughness: 0.75, metalness: 0.05 });
+/** Shadows come from the coarsest level only: drawn into the shadow map, invisible on screen. */
+const shadowMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
+
+interface Entry {
+  model: Model;
+  binding: Binding;
+}
+
+/** Figure height in inches for each model that has an uploaded figure. */
+export function useFigureHeights(models: Model[]): Record<string, number> {
+  const bindings = useAssets((s) => s.bindings);
+  const assets = useAssets((s) => s.assets);
+  return useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const m of models) {
+      const b = bindings[bindingKey(m)];
+      const asset = b && assets[b.asset];
+      if (asset) out[m.id] = asset.bounds.max[1] * b.scale;
+    }
+    return out;
+  }, [models, bindings, assets]);
+}
+
+/**
+ * Every model with an uploaded figure, drawn as one instanced mesh per asset
+ * and level of detail: draw calls scale with distinct sculpts, not models.
+ */
+export function Miniatures({ models, positions }: { models: Model[]; positions: Record<string, Vec2> }) {
+  const bindings = useAssets((s) => s.bindings);
+  const assets = useAssets((s) => s.assets);
+  const groups = useMemo(() => {
+    const g = new Map<string, Entry[]>();
+    for (const model of models) {
+      const binding = bindings[bindingKey(model)];
+      if (!binding || !assets[binding.asset]) continue;
+      const list = g.get(binding.asset) ?? [];
+      list.push({ model, binding });
+      g.set(binding.asset, list);
+    }
+    return g;
+  }, [models, bindings, assets]);
+
+  return (
+    <>
+      {[...groups].map(([id, entries]) => (
+        <AssetInstances key={id} asset={assets[id]!} entries={entries} positions={positions} />
+      ))}
+    </>
+  );
+}
+
+function toGeometry(mesh: ModelAsset["lods"][number]): BufferGeometry {
+  const g = new BufferGeometry();
+  g.setAttribute("position", new BufferAttribute(mesh.positions, 3));
+  g.setIndex(new BufferAttribute(mesh.indices, 1));
+  // Creased normals keep armour plates flat and edges sharp after decimation.
+  const creased = toCreasedNormals(g, CREASE);
+  g.dispose();
+  return creased;
+}
+
+const m4 = new Matrix4();
+const q = new Quaternion();
+const up = new Vector3(0, 1, 0);
+const v = new Vector3();
+const s = new Vector3();
+const sphere = new Sphere();
+const frustum = new Frustum();
+const projScreen = new Matrix4();
+
+function AssetInstances({
+  asset,
+  entries,
+  positions,
+}: {
+  asset: ModelAsset;
+  entries: Entry[];
+  positions: Record<string, Vec2>;
+}) {
+  const geometries = useMemo(() => asset.lods.map(toGeometry), [asset]);
+  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
+  const lodRefs = useRef<(InstancedMesh | null)[]>([]);
+  const shadowRef = useRef<InstancedMesh | null>(null);
+  const capacity = entries.length;
+  const height = asset.bounds.max[1];
+  const radius = Math.hypot(asset.bounds.max[0], asset.bounds.max[1] / 2, asset.bounds.max[2]);
+
+  useFrame(({ camera, size }) => {
+    const meshes = lodRefs.current;
+    const counts = geometries.map(() => 0);
+    const shadow = shadowRef.current;
+    projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(projScreen);
+    // Pixels per inch at unit distance (perspective) or everywhere (orthographic).
+    const persp = (camera as PerspectiveCamera).isPerspectiveCamera
+      ? size.height / (2 * Math.tan(((camera as PerspectiveCamera).fov * Math.PI) / 360))
+      : 0;
+    const zoom = (camera as OrthographicCamera).zoom;
+
+    entries.forEach(({ model, binding }, i) => {
+      const p = positions[model.id] ?? model.position;
+      q.setFromAxisAngle(up, model.facing + binding.yaw);
+      v.set(p.x, BASE_TOP, p.y);
+      s.setScalar(binding.scale);
+      m4.compose(v, q, s);
+      shadow?.setMatrixAt(i, m4);
+
+      sphere.center.set(p.x, BASE_TOP + (height * binding.scale) / 2, p.y);
+      sphere.radius = radius * binding.scale;
+      if (!frustum.intersectsSphere(sphere)) return;
+      const px = persp
+        ? (height * binding.scale * persp) / Math.max(0.01, camera.position.distanceTo(sphere.center))
+        : height * binding.scale * zoom;
+      let lod = LOD_PIXELS.findIndex((t) => px > t);
+      if (lod === -1) lod = geometries.length - 1;
+      lod = Math.min(lod, geometries.length - 1);
+      const mesh = meshes[lod];
+      if (!mesh) return;
+      mesh.setMatrixAt(counts[lod]!++, m4);
+    });
+
+    meshes.forEach((mesh, lod) => {
+      if (!mesh) return;
+      mesh.count = counts[lod]!;
+      mesh.instanceMatrix.needsUpdate = true;
+    });
+    if (shadow) {
+      shadow.count = entries.length;
+      shadow.instanceMatrix.needsUpdate = true;
+    }
+  });
+
+  return (
+    <>
+      {geometries.map((g, lod) => (
+        <instancedMesh
+          // Capacity is fixed at creation; remount when it changes.
+          key={`${lod}:${capacity}`}
+          ref={(m) => {
+            lodRefs.current[lod] = m;
+          }}
+          args={[g, material, capacity]}
+          frustumCulled={false}
+          receiveShadow
+          raycast={() => null}
+        />
+      ))}
+      <instancedMesh
+        key={`shadow:${capacity}`}
+        ref={shadowRef}
+        args={[geometries[geometries.length - 1], shadowMaterial, capacity]}
+        frustumCulled={false}
+        castShadow
+        raycast={() => null}
+      />
+    </>
+  );
+}

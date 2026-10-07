@@ -124,6 +124,15 @@ label.file.button {
   border-radius: 5px;
   padding: 3px 8px;
 }
+label.file.button.small {
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+.figures .figure {
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
 
 /* Lobby */
 .lobby {
