@@ -96,8 +96,25 @@ export function extractTowUnits(roster: RRoster, warnings: string[]): ImportedUn
   return sels.map((s) => extractUnit(s, warnings));
 }
 
-/** The troop type, from a characteristic, a category or a rule. */
-function troopType(sel: RNode): string | undefined {
+/** Nodes of a selection type ("mount", "crew"), outermost first. */
+function nodesOfType(sel: RNode, type: string): RNode[] {
+  const out: RNode[] = [];
+  walk(sel, (n) => {
+    if (n !== sel && n.type === type) out.push(n);
+  });
+  return out;
+}
+
+/** The troop type, from a characteristic, a category or a rule. A mount's (a chariot, a monster) wins over its rider's. */
+function troopType(sel: RNode, mounts: RNode[]): string | undefined {
+  for (const m of mounts) {
+    const t = troopIn(m);
+    if (t) return t;
+  }
+  return troopIn(sel);
+}
+
+function troopIn(sel: RNode): string | undefined {
   let found: string | undefined;
   walk(sel, (n) => {
     if (found) return;
@@ -122,26 +139,32 @@ function titleCase(s: string): string {
   return s.trim().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** "25x50" in a Base Size characteristic; in rules text only with "mm" ("a 25x50mm base"). */
+const SIZE_RE = /(\d{2,3})\s*(?:mm)?\s*[x×]\s*(\d{2,3})/i;
 const BASE_RE = /(\d{2,3})\s*(?:mm)?\s*[x×]\s*(\d{2,3})\s*mm/i;
 
-function baseOf(sel: RNode, troop: string | undefined): BaseShape {
+/** The base the roster names: a mount's (a chariot, a monster) before its rider's. */
+function baseOf(sel: RNode, mounts: RNode[], troop: string | undefined): BaseShape {
+  for (const n of [...mounts, sel]) {
+    const b = baseIn(n);
+    if (b) return b;
+  }
+  return baseForTroop(troop);
+}
+
+function baseIn(sel: RNode): BaseShape | undefined {
   let found: BaseShape | undefined;
+  const take = (m: RegExpExecArray | null) => {
+    if (m) found = { shape: "rect", widthMm: Number(m[1]), depthMm: Number(m[2]) };
+    return !!m;
+  };
   walk(sel, (n) => {
     if (found) return;
-    const texts = [
-      ...n.profiles.flatMap((p) => p.chars.map((c) => `${c.name} ${c.value}`)),
-      ...n.rules.map((r) => `${r.name} ${r.text}`),
-    ];
-    for (const t of texts) {
-      if (!/base/i.test(t)) continue;
-      const m = BASE_RE.exec(t);
-      if (m) {
-        found = { shape: "rect", widthMm: Number(m[1]), depthMm: Number(m[2]) };
-        return;
-      }
-    }
+    for (const p of n.profiles)
+      for (const c of p.chars) if (/base/i.test(c.name) && take(SIZE_RE.exec(c.value))) return;
+    for (const r of n.rules) if (/base/i.test(`${r.name} ${r.text}`) && take(BASE_RE.exec(r.text))) return;
   });
-  return found ?? baseForTroop(troop);
+  return found;
 }
 
 /** A sensible default base by troop type; players can change it on import. */
@@ -186,12 +209,20 @@ function weaponOf(p: RProfile): Omit<WeaponProfile, "id"> | undefined {
 }
 
 function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
-  const troop = troopType(sel);
+  // Mounts and crew are their own selection types in the community catalogues.
+  const mountNodes = nodesOfType(sel, "mount");
+  const crewNodes = nodesOfType(sel, "crew");
+  const troop = troopType(sel, mountNodes);
   const groups = sel.type === "model" ? [sel] : modelGroups(sel);
   const command: RNode[] = [];
   // A magic standard ("Banner of …") has rules of its own, and sits under its bearer.
+  // (A Battle Standard Bearer is a character's upgrade, not another model.)
   const isCommand = (n: RNode) =>
-    n.type === "upgrade" && COMMAND_RE.test(n.name) && !n.rules.length && n.profiles.every(isStatProfile);
+    n.type === "upgrade" &&
+    COMMAND_RE.test(n.name) &&
+    !/magic|battle/i.test(n.name) &&
+    !n.rules.length &&
+    n.profiles.every((p) => isStatProfile(p) || /command/i.test(p.typeName));
   const findCommand = (n: RNode) => {
     for (const c of n.selections) {
       if (isCommand(c)) command.push(c);
@@ -204,15 +235,18 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   // Rank and file (or the single model), and any mount: a second model profile with another name.
   const models: ImportedModel[] = [];
   const mounts = new Map<string, RProfile>();
+  const apart = new Set([...commandSet, ...mountNodes, ...crewNodes]);
   const fill = (g: RNode, count: number) => {
-    const own = statProfileIn(g, commandSet) ?? statProfileIn(sel, commandSet);
+    const own = statProfileIn(g, apart) ?? statProfileIn(sel, apart);
     const chars: Characteristics = own ? statsOf(own) : {};
-    walk(g, (n) => {
-      if (commandSet.has(n)) return;
-      for (const p of n.profiles)
-        if (isStatProfile(p) && p !== own && p.name !== own?.name && !mounts.has(p.name))
-          mounts.set(p.name, p);
-    });
+    // Rosters without mount selections: a second model profile with another name is the mount.
+    if (!mountNodes.length)
+      walk(g, (n) => {
+        if (apart.has(n)) return;
+        for (const p of n.profiles)
+          if (isStatProfile(p) && p !== own && p.name !== own?.name && !mounts.has(p.name))
+            mounts.set(p.name, p);
+      });
     for (let i = 0; i < count; i++)
       models.push({ profile: { name: own?.name || g.name, chars: { ...chars } }, weapons: [] });
   };
@@ -229,22 +263,31 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
     abilities.push(a);
   };
 
-  // A mount carries its rider: the model moves at the mount's Movement.
-  const mount = [...mounts.values()][0];
-  if (mount) {
-    const ms = statsOf(mount);
+  for (const n of mountNodes)
+    walk(n, (x) => {
+      for (const p of x.profiles) if (isStatProfile(p) && !mounts.has(p.name)) mounts.set(p.name, p);
+    });
+  // A mount carries its rider: the model moves at the mount's Movement (a chariot at its beasts').
+  const mountName = mountNodes[0]?.name ?? [...mounts.keys()][0];
+  if (mountName) {
+    const move = [...mounts.values()].map((p) => statsOf(p).M).find((v) => v && /\d/.test(v));
     for (const m of models) {
-      if (ms.M && ms.M !== "-") m.profile.chars.M = ms.M;
-      m.profile.chars.Mount = mount.name;
+      if (move) m.profile.chars.M = move;
+      m.profile.chars.Mount = mountName;
     }
-    for (const p of mounts.values())
-      addAbility({
-        name: p.name,
-        text: Object.entries(statsOf(p))
-          .map(([k, v]) => `${k} ${v}`)
-          .join(", "),
-      });
   }
+  for (const n of crewNodes)
+    walk(n, (x) => {
+      for (const p of x.profiles) if (isStatProfile(p) && !mounts.has(p.name)) mounts.set(p.name, p);
+    });
+  // Mount and crew profiles stay readable on the unit card.
+  for (const p of mounts.values())
+    addAbility({
+      name: p.name,
+      text: Object.entries(statsOf(p))
+        .map(([k, v]) => `${k} ${v}`)
+        .join(", "),
+    });
 
   // Command models take the front slots, with their own profile when the roster gives one.
   command.slice(0, models.length).forEach((c, i) => {
@@ -266,7 +309,8 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   walk(sel, (n) => {
     points += n.pts;
     for (const p of n.profiles) {
-      if (isStatProfile(p)) continue;
+      // Stat lines, the unit's troop type and size, bases and command are read elsewhere.
+      if (isStatProfile(p) || /^(unit|base|command)$/i.test(p.typeName)) continue;
       const w = weaponOf(p);
       if (w) {
         let id = w.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "weapon";
@@ -312,7 +356,7 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
     name: sel.name,
     sheet: { weapons, abilities, keywords, ...(points > 0 ? { points } : {}) },
     models,
-    base: baseOf(sel, troop),
+    base: baseOf(sel, mountNodes, troop),
   };
   if (missing.length) unit.missing = missing;
   return unit;

@@ -131,3 +131,60 @@ describe("Old World roster import", async () => {
     expect(thing!.missing).toEqual(["BS", "I", "Ld", "Troop"]);
   });
 });
+
+// The community catalogues' shape (invented content): mount and crew selection types, a Base profile,
+// and command upgrades carrying a "Command" profile.
+const prof = (name: string, type: string, chars: [string, string][]) =>
+  `<profile name="${name}" typeName="${type}"><characteristics>${chars
+    .map(([k, v]) => `<characteristic name="${k}">${v}</characteristic>`)
+    .join("")}</characteristics></profile>`;
+const line = (v: string) =>
+  ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"].map((k, i) => [k, v.split(" ")[i]!] as [string, string]);
+const CATALOGUE_SHAPE = `<roster name="Shape"><forces><force><selections>
+  <selection name="Herd Priest" type="unit">
+    <profiles>${prof("Herd Priest", "Unit", [
+      ["Troop Type", "Regular infantry"],
+      ["Unit Size", "1"],
+    ])}</profiles>
+    <selections>
+      <selection name="Herd Priest" type="model" number="1">
+        <profiles>${prof("Herd Priest", "Model", line("5 4 3 3 4 2 3 1 7"))}${prof("Base", "Base", [["Base Size", "25x25"]])}</profiles>
+        <selections>
+          <selection name="Tusk Cart" type="mount">
+            <profiles>${prof("Tusk Carts", "Unit", [["Troop Type", "Heavy Chariot"]])}${prof("Tusk Cart", "Model", line("- - - 5 5 (+4) - - -"))}${prof("Base", "Base", [["Base Size", "50x100"]])}</profiles>
+            <selections><selection name="Tusker" type="mount"><profiles>${prof("Tusker", "Model", line("7 3 - 5 - - 2 4 -"))}</profiles></selection></selections>
+          </selection>
+          <selection name="Cart Crew" type="crew"><profiles>${prof("Cart Crew", "Model", line("- 4 3 3 - - 3 1 7"))}</profiles></selection>
+        </selections>
+      </selection>
+    </selections>
+  </selection>
+  <selection name="Herd" type="unit">
+    <selections>
+      <selection name="Herder" type="model" number="10"><profiles>${prof("Herder", "Model", line("5 4 2 3 4 1 3 1 6"))}</profiles></selection>
+      <selection name="Battle Standard Bearer" type="upgrade"><profiles>${prof("Battle Standard Bearer", "Special Rule", [["Description", "x"]])}</profiles></selection>
+      <selection name="Standard Bearer" type="upgrade"><profiles>${prof("Standard Bearer", "Command", [["Description", "x"]])}</profiles></selection>
+      <selection name="Magic Standard" type="upgrade" />
+    </selections>
+  </selection>
+</selections></force></forces></roster>`;
+
+describe("Old World roster import, catalogue shape", async () => {
+  const roster = await importTowRoster("shape.ros", new TextEncoder().encode(CATALOGUE_SHAPE));
+  const [priest, herd] = roster.units;
+
+  it("puts a character in a chariot: the chariot's troop type, base and its beasts' Movement", () => {
+    expect(priest!.models[0]!.profile.chars).toMatchObject({
+      M: "7",
+      WS: "4",
+      Mount: "Tusk Cart",
+      Troop: "Heavy Chariot",
+    });
+    expect(priest!.base).toEqual({ shape: "rect", widthMm: 50, depthMm: 100 });
+    expect(priest!.sheet.abilities.map((a) => a.name)).toEqual(["Tusk Cart", "Tusker", "Cart Crew"]);
+  });
+
+  it("takes command models from Command profiles, not magic standards or a Battle Standard Bearer", () => {
+    expect(herd!.models.map((m) => m.profile.name).slice(0, 2)).toEqual(["Standard Bearer", "Herder"]);
+  });
+});
