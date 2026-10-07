@@ -10,8 +10,8 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure } from "../../core/con
  * Written from the paraphrased core rules notes in research/conquest-rules.md
  * (2.0, 2026). No rules text, profiles or points: the sample armies are
  * invented. Not covered yet: reinforcements (every regiment starts on the
- * table), Impact attacks, flank re-rolls, Broken using the lowest Resolve,
- * Shattered, characters and special rules beyond Cleave, Support and Barrage.
+ * table), Impact attacks, flank re-rolls, characters and special rules
+ * beyond Cleave, Support and Barrage.
  */
 
 const ref = (r: string): Expr => ({ ref: r });
@@ -85,6 +85,14 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
         alwaysPass: [1],
         roller: "defender",
         passOn: "inputPlusFailures",
+      },
+      // Broken and Shattered (morale.ts): runs once the attack is closed and its casualties are off.
+      {
+        kind: "do",
+        id: "aftermath",
+        do: [
+          { do: "script", procedure: "aftermath", args: { unit: ref("target"), before: count("target") } },
+        ],
       },
       { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
       { kind: "damage", id: "wounds", amount: 1, spillover: true },

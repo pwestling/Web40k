@@ -3,6 +3,7 @@ import type { SystemModule } from "../app";
 import { conquestFunctions, conquestProcedures } from "./command";
 import { CommandPanel } from "./CommandPanel";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
+import { moraleProcedures } from "./morale";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
 
@@ -12,7 +13,7 @@ export const conquestModule: GameModule<SystemModule> = {
   version: conquest.version,
   api: 1,
   system: conquest,
-  procedures: conquestProcedures,
+  procedures: { ...conquestProcedures, ...moraleProcedures },
   functions: conquestFunctions,
   app: {
     sample: conquestSample,

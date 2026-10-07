@@ -140,4 +140,62 @@ describe("Conquest", () => {
     const lost = thralls.modelIds.filter((id) => s.models[id]?.destroyed).length;
     expect(lost).toBe(Math.min(9, Math.floor(wounds / 4)));
   });
+
+  it("breaks a regiment that lost half its stands this round, and shatters it if it loses half again", () => {
+    let s = setup();
+    s = play(s, { type: "turn/next" }, "p1");
+    const hounds = unitNamed(s, "Grave Hounds");
+    const kill = (ids: string[]) => {
+      for (const id of ids) s = applyEvent(s, { type: "model/wounds", id, woundsLost: 5, destroyed: true });
+    };
+    const after = (before: number) =>
+      (s = play(
+        s,
+        { type: "script/start", procedure: "aftermath", args: { unit: hounds.id, before } },
+        "p2",
+      ));
+    kill(hounds.modelIds.slice(0, 1));
+    after(4);
+    expect(s.units[hounds.id]?.status?.broken).toBeFalsy();
+    kill(hounds.modelIds.slice(1, 2));
+    after(3);
+    // 2 of the 4 it began the round with are gone.
+    expect(s.units[hounds.id]?.status?.broken).toBe(true);
+    kill(hounds.modelIds.slice(2, 3));
+    after(2);
+    expect(hounds.modelIds.every((id) => s.models[id]?.destroyed)).toBe(true);
+  });
+
+  it("runs the aftermath when a clash that caused casualties is closed", () => {
+    const clashWith = (seed: number) => {
+      let s = setup();
+      const colossus = unitNamed(s, "Ossuary Colossus");
+      const spears = unitNamed(s, "Ironmarch Crossbows");
+      s = toCentre(s, spears.id, 0.25);
+      s = toCentre(s, colossus.id, 0.25);
+      s = play(s, { type: "turn/next" }, "p1");
+      s = play(s, { type: "turn/next" }, "p1");
+      if (s.turn.activeSeat !== 1) s = play(s, { type: "turn/pass" }, "p1");
+      s = play(s, { type: "action/take", unitId: colossus.id, action: "activate" }, "p2");
+      s = play(s, { type: "action/take", unitId: colossus.id, action: "clash", targetId: spears.id }, "p2");
+      const r = rng(seed);
+      while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p2", r);
+      s = play(s, { type: "procedure/clear" }, "p2");
+      const left = spears.modelIds.filter((id) => !s.models[id]?.destroyed).length;
+      return { s, spears, left };
+    };
+    // Some dice that cost the Crossbows a stand, and some that cost them half (3 stands to 1).
+    let bruised = false;
+    let broken = false;
+    for (let seed = 1; seed < 40 && !(bruised && broken); seed++) {
+      const { s, spears, left } = clashWith(seed);
+      expect(s.script ?? null).toBeNull();
+      if (left === 3 || left === 0) continue;
+      expect(s.modules?.["conquest-hand"]?.[`round:${spears.id}`]).toEqual({ round: 1, start: 3 });
+      expect(!!s.units[spears.id]?.status?.broken).toBe(left <= 1);
+      if (left <= 1) broken = true;
+      else bruised = true;
+    }
+    expect(bruised && broken).toBe(true);
+  });
 });
