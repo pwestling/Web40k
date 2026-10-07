@@ -1861,3 +1861,21 @@ button.rare-star:hover {
   flex: 1;
   min-width: 0;
 }
+
+/* "What if…" on the replay bar: start a new game from this point (src/ui/Branch.tsx). */
+.branch-button {
+  position: relative;
+}
+.branch-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+}
+.replay-title .branched {
+  display: block;
+}

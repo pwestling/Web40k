@@ -1,4 +1,5 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import {
   applyAction,
@@ -230,6 +231,7 @@ export type GameEvent =
   | { type: "turn/first"; seat: number }
   /** Choose the game system before the battle starts. */
   | { type: "game/system"; system: string }
+  | BranchEvent
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
   /** A player's dice pool after a re-roll or spending dice. */
   /** `use` records a once-per-round re-roll or "ready" (state.used). */
