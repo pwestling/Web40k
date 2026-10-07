@@ -126,7 +126,7 @@ export function Lobby() {
           ))}
         </select>
       </label>
-      <PackageLibrary system={system} />
+      <PackageLibrary system={system} onPick={setSystem} />
       <button
         className="primary"
         onClick={() => {

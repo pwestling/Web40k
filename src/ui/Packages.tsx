@@ -49,11 +49,14 @@ function LoadButton({
   text = "Load package…",
   expect,
   onError,
+  onTrusted,
   className,
 }: {
   text?: string;
   expect?: string;
   onError?: (e: string) => void;
+  /** Once the package may run: loaded already trusted, or just accepted. */
+  onTrusted?: (pkg: StoredPackage) => void;
   className?: string;
 }) {
   const [asking, setAsking] = useState<StoredPackage | null>(null);
@@ -75,6 +78,7 @@ function LoadButton({
               if (onError) onError(got);
               else setError(got);
             } else if (!got.trusted) setAsking(got);
+            else onTrusted?.(got);
           }}
         />
       </label>
@@ -83,7 +87,14 @@ function LoadButton({
           {error}
         </span>
       )}
-      {asking && <ConsentSheet pkg={asking} onClose={() => setAsking(null)} forget />}
+      {asking && (
+        <ConsentSheet
+          pkg={asking}
+          onClose={() => setAsking(null)}
+          onTrusted={() => onTrusted?.(asking)}
+          forget
+        />
+      )}
     </>
   );
 }
@@ -95,10 +106,12 @@ function LoadButton({
 export function ConsentSheet({
   pkg,
   onClose,
+  onTrusted,
   forget,
 }: {
   pkg: StoredPackage;
   onClose: () => void;
+  onTrusted?: () => void;
   /** Cancel removes it again (it was only just loaded). */
   forget?: boolean;
 }) {
@@ -117,6 +130,7 @@ export function ConsentSheet({
             onClick={() => {
               useLibrary.getState().trust(pkg.hash, true);
               onClose();
+              onTrusted?.();
             }}
           >
             Load it
@@ -137,7 +151,7 @@ export function ConsentSheet({
 }
 
 /** The lobby's "Rules packages": built-in rules, then this device's packages for the chosen game. */
-export function PackageLibrary({ system }: { system: string }) {
+export function PackageLibrary({ system, onPick }: { system: string; onPick?: (system: string) => void }) {
   const packages = useLibrary((s) => s.packages);
   const [all, setAll] = useState(false);
   useEffect(() => void useLibrary.getState().load(), []);
@@ -148,7 +162,8 @@ export function PackageLibrary({ system }: { system: string }) {
     <details className="packages">
       <summary>Rules packages</summary>
       <div className="row spread">
-        <LoadButton />
+        {/* A game loaded from a package is what the player wants to play next: pick it in the Game list. */}
+        <LoadButton onTrusted={(p) => p.manifest.kind === "system" && onPick?.(p.manifest.systems[0]!)} />
         {(hidden > 0 || all) && (
           <button className="link" onClick={() => setAll(!all)}>
             {all ? "Only this game's" : `Show all (${hidden} more)`}
@@ -328,8 +343,10 @@ export function RulesLine() {
   const game = useGame();
   const system = game.system ?? DEFAULT_SYSTEM;
   const packages = useLibrary((s) => s.packages);
-  const name = listSystems().find((s) => s.id === system)?.name ?? system;
   const using = game.packages?.packages ?? [];
+  const name =
+    listSystems().find((s) => s.id === system)?.name ??
+    (game.packages?.system.builtIn === false && using[0] ? `${using[0].name}, not loaded yet` : system);
   return (
     <span className="muted small rules-line">
       Rules: {name}
@@ -450,6 +467,10 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   const anyChecked = checked.length > 0 && !missing.length && !fresh.length;
   // A little "Checked ✓" before the card closes.
   const [shownDone, setShownDone] = useState(false);
+  // Packages this player clicked Get for: once their bytes check out, the consent sheet opens by itself.
+  const [asked, setAsked] = useState<Record<string, true>>({});
+  const arrived = fresh.find((p) => asked[p.hash]);
+  const sheet = consent ?? (arrived ? library[arrived.hash]! : null);
   useEffect(() => {
     if (!anyChecked) return;
     const t = setTimeout(() => setShownDone(true), 1500);
@@ -468,6 +489,7 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   };
   const get = (p: PackageRef) => {
     setError(null);
+    if (!trustSender) setAsked((a) => ({ ...a, [p.hash]: true }));
     requestPackage(p.hash, { trust: trustSender });
   };
   return (
@@ -582,7 +604,15 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
           Without it, moves, dice and results still play; rule hints that need the package are off.
         </span>
       )}
-      {consent && <ConsentSheet pkg={consent} onClose={() => setConsent(null)} />}
+      {sheet && (
+        <ConsentSheet
+          pkg={sheet}
+          onClose={() => {
+            setAsked(({ [sheet.hash]: _, ...rest }) => rest);
+            setConsent(null);
+          }}
+        />
+      )}
     </div>
   );
 }

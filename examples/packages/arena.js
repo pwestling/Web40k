@@ -32,6 +32,9 @@ const system = {
     { id: "W", name: "Wounds", of: "model", type: "number" },
   ],
   weaponKinds: ["melee"],
+  terrain: [
+    { id: "pillar", name: "Pillar", blocksMovement: true, blocksSight: true, visibility: "blocking" },
+  ],
   unitShape: { kind: "skirmish" },
   rules: [],
   procedures: [],
@@ -81,6 +84,36 @@ const samples = [
   },
 ];
 
+/** Two broken pillars either side of the centre, and each warband's gate: the 8" at its end of the arena. */
+function arenaLayout(width, depth) {
+  const pillar = (id, x, y) => ({
+    id,
+    name: "Pillar",
+    category: "pillar",
+    position: { x, y },
+    width: 3,
+    depth: 3,
+    facing: 0,
+    solids: [{ kind: "block", x: 0, y: 0, z: 0, w: 3, d: 3, h: 5 }],
+  });
+  const hx = width / 2;
+  const hy = depth / 2;
+  const gate = (seat, y0, y1) => ({
+    seat,
+    points: [
+      { x: -hx, y: y0 },
+      { x: hx, y: y0 },
+      { x: hx, y: y1 },
+      { x: -hx, y: y1 },
+    ],
+  });
+  return {
+    terrain: [pillar("p1", -8, 3), pillar("p2", 8, -3)],
+    objectives: [],
+    zones: [gate(0, hy - 8, hy), gate(1, -hy, -(hy - 8))],
+  };
+}
+
 const alive = (state, unit) => unit.modelIds.map((id) => state.models[id]).filter((m) => !m.destroyed);
 const stat = (model, key) => Number(model.profile.chars[key]) || 0;
 
@@ -124,7 +157,7 @@ const module = {
   system,
   app: {
     sample: (seat) => samples[seat],
-    layout: () => ({ terrain: [], objectives: [], zones: [] }),
+    layout: (table) => arenaLayout(table.width, table.depth),
     // Army lists: a JSON file like {"name": "My gladiators", "units": [{"name": "Brute", "count": 1, "M": 4, "A": 3, "Hit": 4, "W": 4}]}.
     importRoster: (fileName, data) => {
       const list = JSON.parse(new TextDecoder().decode(data));

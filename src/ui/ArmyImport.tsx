@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
+import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
 import { useStore } from "../store";
 
@@ -123,19 +124,24 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
           </select>
         </label>
       )}
-      <div className="row">
-        <label className="file button">
-          {busy ? "Reading…" : "Import army list"}
-          <input
-            type="file"
-            accept=".ros,.rosz,.json,.xml"
-            onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
-          />
-        </label>
-        <button onClick={() => setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0))}>
-          Sample army
-        </button>
-      </div>
+      {/* A package game's armies wait for its rules: without them the sample and the list reader aren't here yet. */}
+      {game.system && isPlaceholder(game.system) ? (
+        <p className="muted small">Armies can be added once this game's rules package is running.</p>
+      ) : (
+        <div className="row">
+          <label className="file button">
+            {busy ? "Reading…" : "Import army list"}
+            <input
+              type="file"
+              accept=".ros,.rosz,.json,.xml"
+              onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
+            />
+          </label>
+          <button onClick={() => setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0))}>
+            Sample army
+          </button>
+        </div>
+      )}
       {roster && (
         <div className="modal-backdrop">
           <div className="panel modal">

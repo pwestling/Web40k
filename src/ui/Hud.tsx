@@ -50,7 +50,8 @@ export function Hud() {
   const held = useHold((s) => s.held);
   const log = useMemo(
     () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
-    [record, scrub, held],
+    // liveGame too: a package's rules loading refolds the same record, and the log names its game again.
+    [record, scrub, held, liveGame], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const selfId = session?.selfId;
   const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);

@@ -9,6 +9,7 @@ import {
   type GameState,
   type LoggedEvent,
 } from "../core";
+import { isPlaceholder } from "../core/content/systems";
 
 /** A line of the game log as players read it. */
 export type LogItem =
@@ -39,6 +40,13 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   // A move action ("Spears marches"): the moves that follow add up on its line.
   let moveLine:
     (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
+  // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
+  const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
+  // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
+  const packaged = [...record.events]
+    .reverse()
+    .find((e) => e.event.type === "game/packages" && !e.event.system.builtIn)?.event;
+  const packageName = packaged?.type === "game/packages" ? packaged.packages[0]?.name : undefined;
   for (const logged of record.events) {
     if (logged.seq > uptoSeq) break;
     const skipped = undone.has(logged.seq);
@@ -169,7 +177,22 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       continue;
     }
     if (event.type !== "undo") moveLine = null;
-    const text = describe(logged, before, state);
+    let text = describe(logged, before, state);
+    if (event.type === "game/system" && isPlaceholder(event.system))
+      text = `Game: ${packageName ?? event.system}, its rules aren't loaded yet`;
+    if (
+      (event.type === "game/system" || event.type === "layout/set") &&
+      !skipped &&
+      !state.turn.round &&
+      text
+    ) {
+      const earlier = setup[event.type];
+      if (earlier) items.splice(items.indexOf(earlier), 1);
+      const line = { kind: "line" as const, key, seq: logged.seq, text, undone: false };
+      setup[event.type] = line;
+      items.push(line);
+      continue;
+    }
     if (event.type === "action/take" && !skipped && text) {
       const def = systemOf(state).actions.find((a) => a.id === event.action);
       if (def?.move && def.verb && !event.targetId) {
