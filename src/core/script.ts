@@ -1,4 +1,5 @@
 import type { Command, CodeProcedure, Ctx, GameView, RunResult } from "../sdk";
+import { viewRef } from "./content/calls";
 import { procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
 import type { GameEvent, Rng } from "./actions";
@@ -72,6 +73,7 @@ export interface ModuleSet {
 }
 
 const procedures = new Map<Id, Record<Id, CodeProcedure>>();
+viewRef.fn = (state, module) => gameView(state, module);
 
 /** Code procedures a game system's module provides. */
 export function registerCode(system: Id, code: Record<Id, CodeProcedure>): void {

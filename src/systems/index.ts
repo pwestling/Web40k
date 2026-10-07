@@ -1,5 +1,6 @@
 import { DEFAULT_SYSTEM } from "../core";
 import { registerSystem } from "../core/content";
+import { registerFunctions } from "../core/content/calls";
 import { registerCode } from "../core/script";
 import type { GameModule } from "../sdk";
 import type { SystemModule } from "./app";
@@ -22,6 +23,7 @@ const MODULES = new Map<string, GameModule<SystemModule>>();
 export function registerModule(m: GameModule<SystemModule>): void {
   registerSystem(m.system);
   if (m.procedures) registerCode(m.system.id, m.procedures);
+  if (m.functions) registerFunctions(m.system.id, m.functions);
   // A code action runs as the procedure of the same id.
   if (m.actions) registerCode(m.system.id, Object.fromEntries(m.actions.map((a) => [a.id, a.run])));
   MODULES.set(m.system.id, m);

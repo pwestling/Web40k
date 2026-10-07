@@ -385,7 +385,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "procedure/clear": {
       const cleared = { ...state, procedure: null };
-      return event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
+      const ended = event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
+      return event.script ? applyEvent(ended, event.script) : ended;
     }
     case "undo":
       // Undo is resolved by the log's replay.

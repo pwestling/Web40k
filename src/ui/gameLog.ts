@@ -83,17 +83,23 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       continue;
     }
     deployLine = null;
-    if (event.type === "script/step") {
-      const lines = scriptLines(event, before, state);
+    // A closed data procedure can start a code one: log that as the code procedure's first step.
+    const scriptStep =
+      event.type === "script/step" ? event : event.type === "procedure/clear" ? event.script : undefined;
+    if (event.type === "procedure/clear" && scriptStep) procLine = null;
+    if (scriptStep) {
+      const lines = scriptLines(scriptStep, before, state);
       if (scriptItem && before.script && !skipped) {
         (scriptItem.detail ??= []).push(...lines);
       } else {
         const who = state.players[logged.by]?.name ?? "Someone";
-        const [head, ...rest] = lines.length ? lines : [`${who} ran ${event.script?.procedure ?? "a rule"}`];
+        const [head, ...rest] = lines.length
+          ? lines
+          : [`${who} ran ${scriptStep.script?.procedure ?? "a rule"}`];
         scriptItem = { kind: "line", key, seq: logged.seq, text: head!, undone: skipped, detail: rest };
         items.push(scriptItem);
       }
-      if (!event.script) scriptItem = null;
+      if (!scriptStep.script) scriptItem = null;
       continue;
     }
     if (event.type === "attack/declare" || event.type === "attack/roll") {

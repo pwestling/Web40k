@@ -232,7 +232,8 @@ export type GameEvent =
   | { type: "reaction/end"; run?: ProcedureRun }
   | { type: "procedure/set"; run: ProcedureRun }
   /** Close the procedure; `end` closes a finished reaction too. */
-  | { type: "procedure/clear"; end?: { run?: ProcedureRun } }
+  /** `script`: a code procedure the closed run asked for (`{ do: "script" }`), started on the state before the clear. */
+  | { type: "procedure/clear"; end?: { run?: ProcedureRun }; script?: ScriptStep }
   | ({ type: "player/action" } & PlayerActionTaken)
   | { type: "ability/apply"; unitId: UnitId; ability: string }
   | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves: { id: ModelId; to: Vec2 }[] }
@@ -535,12 +536,21 @@ export function resolveIntent(
     }
     case "procedure/clear": {
       if (!state?.procedure) return null;
+      // A finished run that asked for a code procedure starts it now, against
+      // this state, so a replay from this seq sees the same table.
+      const wanted = state.procedure.run.done
+        ? state.procedure.run.outcomes.find((o) => o.kind === "script")
+        : undefined;
+      const script =
+        wanted?.kind === "script" && !state.script
+          ? { script: startScript(state, wanted.procedure, wanted.args, state.procedure.by, rng) }
+          : {};
       const cleared: GameState = { ...state, procedure: null };
-      if (!reactionOver(cleared)) return { type: "procedure/clear" };
+      if (!reactionOver(cleared)) return { type: "procedure/clear", ...script };
       const run = state.pending
         ? startActionRun(endReaction(cleared, null), state.pending.trigger, rng)
         : null;
-      return { type: "procedure/clear", end: run ? { run } : {} };
+      return { type: "procedure/clear", end: run ? { run } : {}, ...script };
     }
     default:
       return intent;

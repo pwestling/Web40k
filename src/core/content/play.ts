@@ -9,6 +9,7 @@ import {
   type RunEnv,
   type Outcome,
 } from "./runner";
+import { callFor } from "./calls";
 import {
   inchesPerUnit,
   readCharacteristics,
@@ -75,6 +76,7 @@ export function evalCtx(state: GameState, system: GameSystem, scope: Record<stri
     scope: { const: system.constants ?? {}, settings: state.settings, ...scope },
     tables: Object.fromEntries((system.tables ?? []).map((t) => [t.id, t])),
     geometry: tableGeometry(state, system),
+    call: callFor(state, system.id),
   };
 }
 

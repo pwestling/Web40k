@@ -68,7 +68,12 @@ export type Expr =
   | { some: Ref; as: string; test: Expr }
   | { count: Ref; as?: string; where?: Expr }
   /** Engine-computed geometry. */
-  | { query: GeoQuery };
+  | { query: GeoQuery }
+  /**
+   * A pure function from the system's code module. Each arg is evaluated;
+   * a bare `{ ref }` arg passes what it names (a unit, a model) as is.
+   */
+  | { call: Id; args?: Expr[] };
 
 export type GeoQuery =
   /** Inches between two things (models, units, terrain, points). */
@@ -199,7 +204,12 @@ export type EffectAction =
    */
   | { do: "damageTrack"; target: Ref; chart: Ref; die?: number; status?: Id }
   /** Not automated yet. The reminder text is supplied by the player's pack, never the repo. */
-  | { do: "manual"; reminder: string };
+  | { do: "manual"; reminder: string }
+  /**
+   * Start one of the system module's code procedures once this procedure is
+   * done. A bare `{ ref }` arg passes the id of the unit or model it names.
+   */
+  | { do: "script"; procedure: Id; args?: Record<string, Expr> };
 
 // ---------------------------------------------------------------------------
 // Rules: named, parameterised bundles of effects

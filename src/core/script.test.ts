@@ -13,6 +13,12 @@ import {
   type Intent,
   type PlayerId,
 } from "./index";
+import { registerFunctions } from "./content/calls";
+import { evaluate } from "./content/expr";
+import { evalCtx, procedureEnv } from "./content/play";
+import { startRun } from "./content/runner";
+import { systemOf } from "./content/turn";
+import { applyEvent, resolveIntent } from "./index";
 import { registerCode } from "./script";
 
 function rng(seed: number) {
@@ -175,5 +181,76 @@ describe("code procedures", () => {
       if (shocked) return;
     }
     throw new Error("never failed a Battle-shock test");
+  });
+
+  it("data calls module functions with { call }, refs passed as what they name", () => {
+    registerFunctions(SYSTEM, {
+      double: (_view, n) => Number(n) * 2,
+      isRound: (view) => view.round === 0,
+      named: (_view, unit) => (unit as { name?: string }).name === "Bob",
+    });
+    const state = stateAt(game());
+    const ctx = evalCtx(state, systemOf(state), { it: { name: "Bob" } });
+    expect(evaluate({ call: "double", args: [{ op: "+", args: [1, 2] }] }, ctx)).toBe(6);
+    expect(evaluate({ call: "isRound" }, ctx)).toBe(true);
+    expect(evaluate({ call: "named", args: [{ ref: "it" }] }, ctx)).toBe(true);
+    expect(() => evaluate({ call: "missing" }, ctx)).toThrow(/No function "missing"/);
+  });
+
+  it("a data procedure's { do: script } starts the code procedure when the run is closed", () => {
+    let record = game();
+    for (const i of spawnIntents(stateAt(record), "p1", sampleRoster(0).units, "p1", "army"))
+      record = host(record, i, "p1")!;
+    const state = stateAt(record);
+    const unit = Object.values(state.units)[0]!;
+    // A data procedure (added for the test) whose only step asks for the duel.
+    const base = systemOf(state);
+    const system = {
+      ...base,
+      procedures: [
+        ...base.procedures,
+        {
+          id: "callsDuel",
+          name: "Calls a duel",
+          params: ["unit"],
+          steps: [
+            {
+              kind: "do" as const,
+              id: "go",
+              do: [
+                {
+                  do: "script" as const,
+                  procedure: "duel",
+                  args: { attacker: 1, defender: 2, unit: { ref: "unit" } },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const run = startRun({ ...procedureEnv(state, rng(1)), system }, "callsDuel", {
+      unit: { unit: unit.id },
+    });
+    expect(run.done).toBe(true);
+    expect(run.outcomes).toEqual([
+      { kind: "script", procedure: "duel", args: { attacker: 1, defender: 2, unit: unit.id } },
+    ]);
+    const withRun = {
+      ...state,
+      procedure: {
+        run,
+        title: "Calls a duel",
+        unitId: unit.id,
+        action: "callsDuel",
+        by: "p1",
+        applied: true,
+      },
+    };
+    const event = resolveIntent({ type: "procedure/clear" }, "p1", rng(2), withRun)!;
+    expect(event.type === "procedure/clear" && event.script?.script?.procedure).toBe("duel");
+    const after = applyEvent(withRun, event);
+    expect(after.procedure).toBeNull();
+    expect(after.script?.waiting?.question).toBe("Forfeit what?");
   });
 });

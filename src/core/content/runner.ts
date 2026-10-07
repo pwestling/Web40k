@@ -1,5 +1,5 @@
 import type { GameState } from "../types";
-import { bool, matchesEvent, num, resolve, type EvalContext } from "./expr";
+import { bool, evaluate, matchesEvent, num, resolve, type EvalContext } from "./expr";
 import {
   diceTerm,
   formatDice,
@@ -14,6 +14,7 @@ import {
   type UnitView,
 } from "./runtime";
 import { blockSlots } from "../regiment";
+import { callFor } from "./calls";
 import type { Effect, EffectAction, Expr, GameSystem, Id, Procedure, RuleDef, RuleRef, Step } from "./schema";
 
 /**
@@ -148,7 +149,9 @@ export type Outcome =
   | { kind: "destroy"; unitId: string }
   | { kind: "reminder"; text: string }
   /** What happened, for the panel and the log (damage chart rolls). */
-  | { kind: "note"; text: string };
+  | { kind: "note"; text: string }
+  /** A code procedure to start when the run is closed (`{ do: "script" }`). */
+  | { kind: "script"; procedure: Id; args: Record<string, unknown> };
 
 export interface PendingWindow {
   step: Id;
@@ -454,6 +457,7 @@ function ctxFor(
     tables,
     ...(env.rng ? { rng: env.rng } : {}),
     geometry: tableGeometry(env.state, env.system),
+    call: callFor(env.state, env.system.id),
   };
 }
 
@@ -1095,6 +1099,17 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
       case "manual":
         out.push({ kind: "reminder", text: a.reminder });
         break;
+      case "script": {
+        const args: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(a.args ?? {})) {
+          if (typeof v === "object" && "ref" in v) {
+            const named = resolve(v.ref, ctx) as { id?: string } | string | number | boolean | undefined;
+            args[k] = typeof named === "object" ? named?.id : named;
+          } else args[k] = evaluate(v, ctx);
+        }
+        out.push({ kind: "script", procedure: a.procedure, args });
+        break;
+      }
       case "damageTrack":
         if (env.rng) out.push(...damageTrack(run, a, ctx, env.rng));
         break;

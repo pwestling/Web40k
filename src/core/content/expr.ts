@@ -1,6 +1,6 @@
 import { averageDice, parseDice, rollDice } from "../dice";
 import type { Rng } from "../actions";
-import type { Effect, EventPattern, Expr, GeoQuery, TableDef } from "./schema";
+import type { Effect, EventPattern, Expr, GeoQuery, Id, TableDef } from "./schema";
 
 /**
  * Evaluates the JSON expression language from schema.ts. Pure: geometry and
@@ -18,6 +18,8 @@ export interface EvalContext {
   /** Without an rng, dice evaluate to their average. */
   rng?: Rng;
   geometry?: (query: GeoQuery, ctx: EvalContext) => number | boolean;
+  /** Module functions, for `{ call }`. */
+  call?: (id: Id, args: unknown[]) => ExprValue;
 }
 
 export type ExprValue = number | boolean;
@@ -125,6 +127,13 @@ export function evaluate(expr: Expr, ctx: EvalContext): ExprValue {
   if ("query" in expr) {
     if (!ctx.geometry) throw new Error(`No geometry available for "${expr.query.kind}"`);
     return ctx.geometry(expr.query, ctx);
+  }
+  if ("call" in expr) {
+    if (!ctx.call) throw new Error(`No module functions available for "${expr.call}"`);
+    const args = (expr.args ?? []).map((a) =>
+      typeof a === "object" && "ref" in a ? resolve(a.ref, ctx) : evaluate(a, ctx),
+    );
+    return ctx.call(expr.call, args);
   }
   throw new Error(`Unknown expression: ${JSON.stringify(expr)}`);
 }
