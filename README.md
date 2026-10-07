@@ -57,6 +57,13 @@ src/
   store.ts Zustand store wiring a Session to React.
 ```
 
+**Content is imported, not shipped.** The engine knows about bases, inches, dice and the attack
+sequence, but contains no unit stats, points or rules text. Players import a `ContentPack`
+(`src/core/content/schema.ts`), for example converted from [BSData](https://github.com/BSData). Rules
+are encoded as data so the engine can automate them: weapon keywords are typed, and abilities are lists
+of effects ("when the attacker makes a hit roll, if the target is a VEHICLE, re-roll ones"). Anything not
+yet expressible becomes a `manual` reminder shown to players.
+
 **Units.** One world unit is one inch; the table is 60" × 44" (Strike Force). Base sizes are kept in
 millimetres, as they are printed.
 

@@ -32,6 +32,10 @@ export interface Model {
   facing: number;
   /** Round base diameter in millimetres (e.g. 32, 40). */
   baseMm: number;
+  /** Units group models for coherency, shooting and charging. */
+  unitId?: string;
+  /** Points at a Datasheet in an imported ContentPack, when the model has one. */
+  datasheetId?: string;
 }
 
 export interface DiceRoll {
