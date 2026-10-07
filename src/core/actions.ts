@@ -10,6 +10,7 @@ import type {
   Objective,
   Player,
   PlayerId,
+  Ruler,
   SightBand,
   TerrainPiece,
   Unit,
@@ -50,6 +51,7 @@ export type Intent =
   | { type: "terrain/update"; piece: TerrainPiece }
   | { type: "terrain/remove"; id: string }
   | { type: "objective/move"; id: string; to: Vec2 }
+  | { type: "ruler/set"; ruler: Ruler | null }
   | { type: "unit/height"; id: UnitId; height: number | null }
   /**
    * Dress the models in a unit whose profile (or label) is in `keys` with an
@@ -89,6 +91,7 @@ export type GameEvent =
   | { type: "terrain/update"; piece: TerrainPiece }
   | { type: "terrain/remove"; id: string }
   | { type: "objective/move"; id: string; to: Vec2 }
+  | { type: "ruler/set"; ruler: Ruler | null }
   | { type: "unit/height"; id: UnitId; height: number | null }
   /**
    * Dress the models in a unit whose profile (or label) is in `keys` with an
@@ -174,6 +177,8 @@ export function resolveIntent(
       if (!state || !attack || attack.stage === "done") return null;
       return { type: "attack/roll", attack: rollStage(state, attack, rng) };
     }
+    case "ruler/set":
+      return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
     default:
       return intent;
   }

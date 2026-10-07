@@ -254,6 +254,8 @@ export interface GameState {
   resources: Record<PlayerId, Record<string, number>>;
   /** The attack being resolved, if any. */
   attack: AttackState | null;
+  /** The last measurement a player shared, shown to everyone until cleared. */
+  ruler?: Ruler | null;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }
@@ -300,4 +302,13 @@ export function createInitialState(table: Table = STRIKE_FORCE_TABLE): GameState
     attack: null,
     settings: { cover: "hit", modelsBlock: true },
   };
+}
+
+/** A measurement between two points, either of which may be a model (measured from its base edge). */
+export interface Ruler {
+  by: PlayerId;
+  from: Vec2;
+  to: Vec2;
+  fromModel?: ModelId;
+  toModel?: ModelId;
 }

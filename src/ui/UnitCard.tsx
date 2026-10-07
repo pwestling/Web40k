@@ -3,6 +3,7 @@ import {
   maxWounds,
   modelHeight,
   PHASES,
+  settleZ,
   stepLevel,
   type Model,
   type Unit,
@@ -14,6 +15,7 @@ import {
   carriers,
   engagedWith,
   incoherentModels,
+  clampFraction,
   mainWeapon,
   moveAllowance,
   unitDistance,
@@ -93,9 +95,37 @@ export function eyeView(unitId: string) {
 }
 
 /** The selected unit's datasheet, state and actions. */
+/**
+ * Pull an over-long move back along each model's path until no model has
+ * moved further than the limit this phase. Advisory: only on request.
+ */
+export function snapToLimit(unitId: string, limit: number) {
+  const { game, dispatch } = useStore.getState();
+  const unit = game.units[unitId];
+  if (!unit) return;
+  const models = aliveModels(game, unit);
+  const at = (id: string, k: number) => {
+    const m = game.models[id]!;
+    const from = m.phaseStart ?? m.position;
+    return { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
+  };
+  const ids = models.map((m) => m.id);
+  const k = clampFraction(game, ids, at, limit);
+  dispatch(
+    {
+      type: "models/move",
+      moves: ids.map((id) => {
+        const to = at(id, k);
+        return { id, to, z: settleZ(game.terrain, to, game.models[id]!.phaseStartZ ?? 0) };
+      }),
+    },
+    unit.owner,
+  );
+}
+
 export function UnitCard() {
   const game = useGame();
-  const { selected, select, dispatch, setDraft, scrub, losFrom, set } = useStore();
+  const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, set } = useStore();
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
   if (!unit) return null;
@@ -154,6 +184,11 @@ export function UnitCard() {
           <span className={moved > allowed + 0.05 ? "warn" : ""}>
             Moved {moved.toFixed(1)}" of {allowed}" this phase.{" "}
           </span>
+        )}
+        {mine && game.turn.round > 0 && allowed !== null && moved > allowed + 0.05 && (
+          <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
+            Snap back to {allowed}"
+          </button>
         )}
         {incoherent > 0 && <span className="warn">{incoherent} model(s) out of coherency. </span>}
         {blocked.length > 0 && (
@@ -221,6 +256,13 @@ export function UnitCard() {
           Line of sight
         </button>
         <button onClick={() => eyeView(unit.id)}>Model's eye view</button>
+        <button
+          className={ranges === unit.id ? "on" : ""}
+          title="Move (blue) and longest weapon range (yellow) around each model"
+          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id })}
+        >
+          Ranges
+        </button>
         {elevation > 0 && <span className="muted">On a floor {elevation.toFixed(1)}" up</span>}
       </div>
 
