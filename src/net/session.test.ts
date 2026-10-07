@@ -22,7 +22,7 @@ describe("Session", () => {
       model: {
         id: "m1",
         owner: "host",
-        label: "Intercessor",
+        label: "Trooper",
         position: { x: 0, y: 0 },
         facing: 0,
         baseMm: 32,
