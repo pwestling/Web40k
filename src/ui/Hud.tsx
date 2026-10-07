@@ -1,3 +1,4 @@
+import { useSound } from "./sound";
 import { bundleReplay } from "./replayFile";
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
@@ -33,6 +34,7 @@ export function Hud() {
   const canControl = useCanControl();
   // The table on screen (a replay's scrub point), which decides whether stats are showing.
   const shown = useGame();
+  const fastDice = useSound((s) => s.fast);
   const [count, setCount] = useState(2);
   const [sides, setSides] = useState(6);
   const [collapsed, setCollapsed] = useState(false);
@@ -101,6 +103,13 @@ export function Hud() {
         </button>
         <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
           X-ray terrain
+        </button>
+        <button
+          className={fastDice ? "on" : ""}
+          title="Shorter dice rolls in the tray"
+          onClick={useSound.getState().toggleFast}
+        >
+          Fast dice
         </button>
         <button
           className={director ? "on" : ""}

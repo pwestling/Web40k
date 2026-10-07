@@ -1239,3 +1239,195 @@ p.odds {
   display: block;
   white-space: nowrap;
 }
+
+/* Dice tray (PX-1): a felt tray the rolls tumble onto, over the board. */
+.dice-tray {
+  z-index: 22;
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  width: min(520px, calc(100vw - 32px));
+  height: min(250px, 38vh);
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.25s,
+    transform 0.25s;
+  cursor: pointer;
+}
+.dice-tray.on {
+  opacity: 1;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+.dice-tray .felt {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #22302f 0%, #172221 80%);
+  box-shadow:
+    inset 0 0 0 8px #3a2b1f,
+    inset 0 0 0 10px #00000066,
+    inset 0 18px 40px #00000088,
+    0 10px 30px rgb(0 0 0 / 45%);
+}
+.dice-tray .tray-caption {
+  position: absolute;
+  left: 18px;
+  top: 14px;
+  z-index: 4;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #e7e3da;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+.dice-tray .tray-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 34px;
+  pointer-events: none;
+  text-align: center;
+}
+.dice-tray .tray-banner .big {
+  font-weight: 900;
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-shadow: 0 4px 24px #000c;
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity 0.18s,
+    transform 0.3s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.dice-tray .tray-banner .small {
+  font-size: 0.9rem;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.3s 0.1s;
+  text-shadow: 0 2px 8px #000;
+}
+.dice-tray .tray-banner.on .big {
+  opacity: 1;
+  transform: scale(1);
+}
+.dice-tray .tray-banner.on .small {
+  opacity: 0.9;
+}
+.dice-tray .tray-banner.good .big {
+  color: #e0b354;
+}
+.dice-tray .tray-banner.bad .big {
+  color: #9a9f9f;
+}
+.dice-tray .die {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--s);
+  height: var(--s);
+  will-change: transform;
+  z-index: 2;
+}
+.dice-tray .die .shadow {
+  position: absolute;
+  inset: 8% 4% -2% 4%;
+  border-radius: 22%;
+  background: #000;
+  filter: blur(4px);
+  opacity: 0.45;
+}
+.dice-tray .die .body {
+  position: absolute;
+  inset: 0;
+  border-radius: 20%;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 15%;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--c) 100%, #fff 18%),
+    var(--c) 55%,
+    color-mix(in srgb, var(--c) 70%, #000)
+  );
+  box-shadow:
+    inset 0 -3px 0 #0005,
+    inset 0 2px 0 #fff4;
+  transition: filter 0.25s;
+}
+.dice-tray .die .body.numeric {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.dice-tray .die .body.numeric::after {
+  content: attr(data-n);
+  font-weight: 800;
+  font-size: calc(var(--s) * 0.5);
+  color: #10141a;
+}
+.dice-tray .die .body.numeric .pip {
+  display: none;
+}
+.dice-tray .die .pip {
+  width: 70%;
+  height: 70%;
+  margin: auto;
+  border-radius: 50%;
+  background: #10141a;
+  box-shadow: inset 0 1px 1px #000c;
+  visibility: hidden;
+}
+.dice-tray .die .pip.on {
+  visibility: visible;
+}
+.dice-tray .die.crit .body {
+  box-shadow:
+    inset 0 -3px 0 #0005,
+    inset 0 2px 0 #fff6,
+    0 0 0 2px #e0b354,
+    0 0 18px 2px color-mix(in srgb, #e0b354 70%, transparent);
+}
+.dice-tray .die.fail .body {
+  filter: saturate(0.15) brightness(0.55);
+}
+.dice-tray .die.gone {
+  transition:
+    transform 0.45s cubic-bezier(0.5, 0, 0.8, 0.4),
+    opacity 0.45s;
+  opacity: 0;
+}
+.dice-tray .tray-counts {
+  position: absolute;
+  inset: 40px 20px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: center;
+  justify-content: center;
+}
+.dice-tray .tray-count {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--c);
+  color: #10141a;
+  font-weight: 800;
+  font-size: 18px;
+}
+.dice-tray .tray-count.fail {
+  filter: saturate(0.15) brightness(0.55);
+}
+.topbar .sound-toggle {
+  padding: 0 4px;
+}

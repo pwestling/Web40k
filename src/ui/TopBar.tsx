@@ -1,3 +1,4 @@
+import { useSound } from "./sound";
 import { useState } from "react";
 import { systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
@@ -228,6 +229,7 @@ export function TopBar() {
           </span>
         )}
       </div>
+      <SoundToggle />
       {/* Below the phase tracker, however the bar wraps. */}
       <NetBanner />
     </div>
@@ -296,5 +298,22 @@ function DicePool({
         )
       )}
     </span>
+  );
+}
+
+/** Dice sounds on or off, for this device. */
+function SoundToggle() {
+  const { on, toggle } = useSound();
+  return (
+    <div className="sound-toggle">
+      <button
+        className="quiet"
+        aria-pressed={on}
+        title={on ? "Dice sounds on (click to mute)" : "Dice sounds muted"}
+        onClick={toggle}
+      >
+        {on ? "🔊" : "🔇"}
+      </button>
+    </div>
   );
 }

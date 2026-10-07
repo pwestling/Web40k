@@ -1,0 +1,193 @@
+import { create } from "zustand";
+
+/**
+ * The dice tray's sounds, all synthesised with WebAudio (no samples): bounce
+ * clicks, the scoop, crit chimes, a thump for the slain and stings for
+ * decisive rolls. One mute switch, remembered on this device; audio starts on
+ * the first click, as browsers require.
+ */
+const KEY = "open-battle:sound";
+const FAST = "open-battle:fast-dice";
+
+function stored(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function keep(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Private mode: the switch still works until the page closes.
+  }
+}
+
+/** Sound on or off, and fast dice (half-length rolls), per device. */
+export const useSound = create<{ on: boolean; fast: boolean; toggle(): void; toggleFast(): void }>(
+  (set, get) => ({
+    on: stored(KEY, "on") !== "off",
+    fast: stored(FAST, "off") === "on",
+    toggle() {
+      const on = !get().on;
+      keep(KEY, on ? "on" : "off");
+      set({ on });
+      if (on) void audio();
+    },
+    toggleFast() {
+      const fast = !get().fast;
+      keep(FAST, fast ? "on" : "off");
+      set({ fast });
+    },
+  }),
+);
+
+let ac: AudioContext | null = null;
+let master: GainNode | null = null;
+let noise: AudioBuffer | null = null;
+
+function audio(): AudioContext | null {
+  if (!useSound.getState().on || typeof AudioContext === "undefined") return null;
+  if (!ac) {
+    ac = new AudioContext();
+    master = ac.createGain();
+    master.gain.value = 0.9;
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.ratio.value = 6;
+    master.connect(comp).connect(ac.destination);
+    noise = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (ac.state === "suspended") void ac.resume();
+  // Until the page has had a click the context stays suspended; sounds are skipped, not queued.
+  return ac.state === "running" ? ac : null;
+}
+
+// Browsers only allow audio after a gesture: wake it on the first one.
+if (typeof addEventListener !== "undefined")
+  addEventListener("pointerdown", () => void audio(), { once: true, capture: true });
+
+function burst(
+  a: AudioContext,
+  t: number,
+  {
+    freq,
+    q = 4,
+    dur = 0.03,
+    gain = 0.3,
+    type = "bandpass",
+  }: { freq: number; q?: number; dur?: number; gain?: number; type?: BiquadFilterType },
+) {
+  const src = a.createBufferSource();
+  src.buffer = noise;
+  src.playbackRate.value = 0.8 + Math.random() * 0.4;
+  const f = a.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  const g = a.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  src.connect(f).connect(g).connect(master!);
+  src.start(t, Math.random() * 0.4, dur + 0.02);
+}
+
+function tone(
+  a: AudioContext,
+  t: number,
+  {
+    freq,
+    dur = 0.05,
+    gain = 0.1,
+    type = "sine",
+    to,
+  }: { freq: number; dur?: number; gain?: number; type?: OscillatorType; to?: number },
+) {
+  const o = a.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(g).connect(master!);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+
+/** A die striking the tray: a hard plastic click over a dull wooden knock. Quieter the more dice are in flight. */
+export function click(strength: number, pitch: number, crowd: number) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime + Math.random() * 0.006;
+  const v = strength / Math.sqrt(Math.max(1, crowd));
+  burst(a, t, { freq: 2600 * pitch, q: 3, dur: 0.018 + 0.02 * strength, gain: 0.5 * v });
+  tone(a, t, { freq: 1700 * pitch, dur: 0.025, gain: 0.08 * v, type: "triangle" });
+  burst(a, t, { freq: 320 * pitch, q: 1.2, dur: 0.05 + 0.05 * strength, gain: 0.45 * v, type: "lowpass" });
+}
+
+/** Dice shaken in a hand. */
+export function rattle() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  for (let i = 0; i < 3; i++)
+    burst(a, t + i * 0.012, { freq: 2200 + Math.random() * 1800, q: 5, dur: 0.015, gain: 0.12 });
+}
+
+/** A critical success glinting; `i` staggers a run of them. */
+export function chime(i: number) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime + i * 0.045;
+  tone(a, t, { freq: 1568, dur: 0.6, gain: 0.05 });
+  tone(a, t, { freq: 2349, dur: 0.45, gain: 0.03 });
+}
+
+/** Failures swept off the tray. */
+export function scoop(n: number) {
+  const a = audio();
+  if (!a || !n) return;
+  burst(a, a.currentTime, { freq: 900, q: 0.7, dur: 0.28, gain: 0.12 + 0.01 * Math.min(n, 12) });
+}
+
+/** A low thump: models slain, or a heartbeat under a decisive die. */
+export function thump(delay = 0, gain = 0.5) {
+  const a = audio();
+  if (!a) return;
+  tone(a, a.currentTime + delay, { freq: 90, to: 40, dur: 0.22, gain });
+}
+
+/** The end of a decisive roll: a rising fanfare when it went the roller's way, a fall when it didn't. */
+export function sting(good: boolean) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  if (good)
+    [523, 659, 784, 1047].forEach((f, i) =>
+      tone(a, t + i * 0.06, { freq: f, dur: 0.5, gain: 0.07, type: "triangle" }),
+    );
+  else {
+    tone(a, t, { freq: 220, to: 110, dur: 0.6, gain: 0.12, type: "sawtooth" });
+    thump(0, 0.4);
+  }
+}
+
+/** The rare-outcome callout: a low boom, then a slow swelling chord with a shimmer on top. */
+export function legendSting() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  tone(a, t, { freq: 70, to: 32, dur: 1.1, gain: 0.7 });
+  burst(a, t, { freq: 180, q: 0.8, dur: 0.6, gain: 0.35, type: "lowpass" });
+  [262, 330, 392, 523, 659].forEach((f, i) =>
+    tone(a, t + 0.25 + i * 0.09, { freq: f, dur: 2.2, gain: 0.06, type: "triangle" }),
+  );
+  burst(a, t + 0.5, { freq: 7000, q: 1, dur: 1.4, gain: 0.05 });
+}

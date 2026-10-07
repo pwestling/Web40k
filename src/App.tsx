@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Board } from "./render/Board";
 import { useStore } from "./store";
 import { AttackPanel } from "./ui/AttackPanel";
+import { DiceTray } from "./ui/DiceTray";
 import { Hud } from "./ui/Hud";
 import { Lobby } from "./ui/Lobby";
 import { PlayPanel } from "./ui/PlayPanel";
@@ -90,6 +91,7 @@ export function App() {
           <ReplayBar />
           <RoundCard />
           <ReplayTitle />
+          <DiceTray />
           <StatsScreen />
           <PackageCards />
           {reacting && <ReactionPrompt />}
