@@ -857,3 +857,20 @@ input.frontage {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+/* Paying with a picked die (generic unit card and fire setup). */
+.actions button.die,
+.panel.attack button.die {
+  padding: 0;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.actions button.die.hover,
+.panel.attack button.die.hover {
+  box-shadow: 0 0 0 2px #60a5fa;
+}
+.actions button.die.on,
+.panel.attack button.die.on {
+  background: #f59e0b;
+  border-color: #b45309;
+}

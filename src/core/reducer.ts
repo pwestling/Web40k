@@ -1,7 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { applyAction, endReaction, setRun } from "./content/play";
-import { applyPlayerAction, appliedKey } from "./content/player";
+import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
@@ -205,14 +205,16 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       return passTurn(state, event.seed);
     case "turn/endActivation":
       return endActivation(state);
-    case "pool/set":
-      return {
+    case "pool/set": {
+      const next = {
         ...state,
         pools: {
           ...state.pools,
           [event.player]: { ...state.pools?.[event.player], [event.resource]: event.faces },
         },
       };
+      return event.use ? recordUse(next, event.player, event.use) : next;
+    }
     case "game/system": {
       // Only before the battle starts: the table, settings and counters follow the system.
       if (state.turn.round !== 0) return state;

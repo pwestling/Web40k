@@ -54,6 +54,8 @@ export interface ActionOption {
   /** What it costs, for the button, e.g. "1 AD" or "AD 4-6". */
   cost: string;
   payment: Payment[];
+  /** Pool dice faces it would spend, e.g. [1] for "uses a 1". */
+  faces?: number[];
   /** How far a move action lets the unit go, in the system's unit. */
   move?: number;
   /** Units this action may activate as well (FSD command), and how many. */
@@ -63,6 +65,8 @@ export interface ActionOption {
 export interface ActionRequest {
   weapon?: string;
   targetId?: UnitId;
+  /** Dice-pool indices the player picked to pay with, tried before the lowest that fit. */
+  dice?: number[];
 }
 
 export function evalCtx(state: GameState, system: GameSystem, scope: Record<string, unknown>): EvalContext {
@@ -137,7 +141,9 @@ export function payFor(
   player: PlayerId,
   def: ActionDef,
   ctx: EvalContext,
-): { payment: Payment[]; label: string } | { why: string } {
+  prefer: number[] = [],
+): { payment: Payment[]; label: string; faces: number[] } | { why: string } {
+  const paidFaces: number[] = [];
   const payment: Payment[] = [];
   const labels: string[] = [];
   for (const c of def.cost ?? []) {
@@ -147,7 +153,10 @@ export function payFor(
     if (res?.kind === "dicePool") {
       const slots = [...(c.slots ?? []), ...(c.slotsFrom ? parseSlots(resolve(c.slotsFrom, ctx)) : [])];
       const faces = state.pools?.[player]?.[c.resource] ?? [];
-      const order = faces.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f);
+      // Dice the player picked come first, then the lowest.
+      const order = faces
+        .map((f, i) => ({ f, i }))
+        .sort((a, b) => Number(prefer.includes(b.i)) - Number(prefer.includes(a.i)) || a.f - b.f);
       const used = new Set<number>();
       for (const s of slots) {
         const die = order.find((d) => !used.has(d.i) && d.f >= s.min && d.f <= s.max);
@@ -160,6 +169,7 @@ export function payFor(
         used.add(die.i);
       }
       if (used.size) payment.push({ resource: c.resource, indices: [...used] });
+      for (const i of used) paidFaces.push(faces[i]!);
       const parts = [
         ...(amount ? [`${amount} die`] : []),
         ...slots.map((s) => (s.min === s.max ? `${s.min}` : `${s.min}-${s.max}`)),
@@ -172,7 +182,7 @@ export function payFor(
       labels.push(`${amount} ${name}`);
     }
   }
-  return { payment, label: labels.join(", ") };
+  return { payment, label: labels.join(", "), faces: paidFaces };
 }
 
 /** Units whose activation is under way (or a reacting unit). */
@@ -220,8 +230,8 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
         if (!pending || pending.reactor || pending.seat !== seat) return "Only to answer an enemy action";
         if (acting) return "Already acting";
       } else if (def.activates !== undefined) {
-        if (pending) return "Waiting on a reaction";
         if (acting) return "Already activated";
+        if (pending) return "Waiting on a reaction";
         if (actingUnits(state).length) return "Finish the current activation first";
         if (def.side === "active" && !active) return "Not your turn";
         if (def.side === "inactive" && active) return "Only on the other player's turn";
@@ -238,11 +248,12 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
       return undefined;
     })();
-    const paid = payFor(state, system, unit.owner, def, ctx);
+    const paid = payFor(state, system, unit.owner, def, ctx, req.dice);
     const option: ActionOption = {
       def,
       ok: !why && !("why" in paid),
       cost: "label" in paid ? paid.label : "",
+      ...("faces" in paid && paid.faces.length ? { faces: paid.faces } : {}),
       payment: "payment" in paid ? paid.payment : [],
       ...(why || "why" in paid ? { why: why ?? (paid as { why: string }).why } : {}),
     };

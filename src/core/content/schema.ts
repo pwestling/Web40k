@@ -455,6 +455,8 @@ export interface CharacteristicDef {
   of: "model" | "weapon" | "unit";
   /** "target" values are dice targets such as 3+; "distance" is in the system's unit; "text" is kept as written. */
   type: "number" | "target" | "distance" | "dice" | "text";
+  /** A short column header when the id isn't one, e.g. "AD" for slots. */
+  short?: string;
   /** Display format, e.g. '{v}"' or "{v}+". */
   format?: string;
   /** Other names imported data uses for it, e.g. ["SV", "Save"] or ["BS", "WS"]. */
@@ -523,6 +525,8 @@ export interface ResourceDef {
   kind?: "counter" | "dicePool";
   /** Faces of the dice in a pool (default 6). */
   sides?: number;
+  /** A pool players may re-roll dice from once per reset, before marking themselves ready (FSD). */
+  rerollOnce?: boolean;
   /** Back to `initial` (a pool emptied) at the start of each player turn or round. */
   reset?: "playerTurn" | "round";
 }

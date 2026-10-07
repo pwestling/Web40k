@@ -30,6 +30,10 @@ import { eyeView, rotateUnit } from "./UnitCard";
  * (40k) keep those.
  */
 
+/** A column header: the system's short label, a short id ("Cmd", "AP"), else the display name. */
+const header = (c: { id: string; name: string; short?: string }) =>
+  c.short ?? (/^[A-Z][A-Za-z]{0,3}$/.test(c.id) ? c.id : c.name);
+
 const unitName = (sys: GameSystem) =>
   typeof sys.units === "object" ? sys.units.name : sys.units === "cm" ? "cm" : '"';
 const fmt = (n: number, sys: GameSystem) => {
@@ -129,7 +133,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           <tr>
             {chars.map((c) => (
               <th key={c.id} title={c.name}>
-                {c.id}
+                {header(c)}
               </th>
             ))}
           </tr>
@@ -167,7 +171,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
               <th>Weapon</th>
               {weaponChars.map((c) => (
                 <th key={c.id} title={c.name}>
-                  {c.id}
+                  {header(c)}
                 </th>
               ))}
             </tr>
@@ -227,12 +231,19 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   );
 }
 
-/** The actions this unit can take now, as buttons; ones it can't take say why. */
+/**
+ * The actions this unit can take now, as buttons. Dice-pool costs name the
+ * die they use; a player can pick a die in the pool first to pay with it.
+ * Reasons an action can't be taken: one shared line, the rest in tooltips.
+ */
 function SystemActions({ unit }: { unit: Unit }) {
   const game = useGame();
   const { dispatch, setDraft } = useStore();
   const [commanding, setCommanding] = useState<{ action: string; picked: string[] } | null>(null);
-  const options = unitActions(game, unit.id);
+  const [pick, setPick] = useState<number | null>(null);
+  const [hover, setHover] = useState<number[]>([]);
+  const chosen = pick !== null ? [pick] : undefined;
+  const options = unitActions(game, unit.id, chosen ? { dice: chosen } : {});
   const status = unit.status ?? {};
   const acting = !!status.acting;
   const reacting = !!status.reacting;
@@ -243,7 +254,17 @@ function SystemActions({ unit }: { unit: Unit }) {
       setDraft({ attackerId: unit.id, kind: "ranged", action: o.def.id, picking: true });
       return;
     }
-    dispatch({ type: "action/take", unitId: unit.id, action: o.def.id, ...extra }, unit.owner);
+    dispatch(
+      {
+        type: "action/take",
+        unitId: unit.id,
+        action: o.def.id,
+        ...extra,
+        ...(chosen ? { dice: chosen } : {}),
+      },
+      unit.owner,
+    );
+    setPick(null);
   };
   const click = (o: ActionOption) => {
     if (o.commands && o.commands.count > 0 && o.commands.candidates.length > 0)
@@ -251,6 +272,16 @@ function SystemActions({ unit }: { unit: Unit }) {
     else take(o);
   };
   const commandOption = commanding && options.find((o) => o.def.id === commanding.action);
+  const pending = game.pending;
+  const why = (o: ActionOption) =>
+    o.why === "Waiting on a reaction" && pending
+      ? `Waiting for ${seatName(game, pending.seat)} to react`
+      : o.why;
+  const blocked = shown.filter((o) => !o.ok && o.why);
+  const counts = new Map<string, number>();
+  for (const o of blocked) counts.set(why(o)!, (counts.get(why(o)!) ?? 0) + 1);
+  const shared = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const paidWith = (o: ActionOption) => o.payment.flatMap((p) => p.indices ?? []);
 
   return (
     <div className="actions">
@@ -260,26 +291,34 @@ function SystemActions({ unit }: { unit: Unit }) {
           {Number(status.actionBudget ?? 0)} actions used.
         </p>
       )}
+      {shown.some((o) => o.payment.some((p) => p.indices)) && (
+        <PoolPicker owner={unit.owner} pick={pick} hover={hover} onPick={setPick} />
+      )}
       <div className="row wrap">
         {shown.map((o) => (
           <button
             key={o.def.id}
             className={o.ok ? "primary" : ""}
             disabled={!o.ok}
-            title={o.why ?? (o.cost ? `Costs ${o.cost}` : undefined)}
+            title={why(o) ?? (o.cost ? `Costs ${o.cost}` : undefined)}
+            onMouseEnter={() => setHover(paidWith(o))}
+            onMouseLeave={() => setHover([])}
             onClick={() => click(o)}
           >
             {o.def.name}
             {o.move !== undefined ? ` ${o.move}` : ""}
-            {o.cost ? <span className="cost"> · {o.cost}</span> : null}
+            {o.faces?.length ? (
+              <span className="cost"> · uses a {o.faces.join(" and a ")}</span>
+            ) : o.cost ? (
+              <span className="cost"> · {o.cost}</span>
+            ) : null}
           </button>
         ))}
       </div>
-      {shown.some((o) => !o.ok) && (
+      {shared && (
         <p className="muted small">
-          {[...new Set(shown.filter((o) => !o.ok && o.why).map((o) => `${o.def.name}: ${o.why}`))].join(
-            " · ",
-          )}
+          {shared[0]}
+          {counts.size > 1 ? ". Hover a greyed-out action for its reason." : ""}
         </p>
       )}
       {commandOption?.commands && commanding && (
@@ -323,9 +362,6 @@ function SystemActions({ unit }: { unit: Unit }) {
           </div>
         </div>
       )}
-      {acting && !reacting && (
-        <button onClick={() => dispatch({ type: "turn/endActivation" }, unit.owner)}>End activation</button>
-      )}
       {reacting && (
         <button onClick={() => dispatch({ type: "reaction/pass" }, unit.owner)}>Finish reaction</button>
       )}
@@ -333,24 +369,80 @@ function SystemActions({ unit }: { unit: Unit }) {
   );
 }
 
+/** The owner's dice pool as buttons: pick one to pay with it; `hover` highlights the dice a button would use. */
+function PoolPicker({
+  owner,
+  pick,
+  hover,
+  onPick,
+}: {
+  owner: string;
+  pick: number | null;
+  hover: number[];
+  onPick: (i: number | null) => void;
+}) {
+  const game = useGame();
+  const pool = (systemOf(game).resources ?? []).find((r) => r.kind === "dicePool");
+  const faces = pool ? (game.pools?.[owner]?.[pool.id] ?? []) : [];
+  if (!pool || !faces.length) return null;
+  return (
+    <div className="row wrap small">
+      <span className="muted">{pool.name}:</span>
+      {faces.map((f, i) => (
+        <button
+          key={i}
+          className={`die ${pick === i ? "on" : ""} ${hover.includes(i) ? "hover" : ""}`}
+          title={
+            pick === i ? "Paying with this die; click again for the lowest that fits" : "Pay with this die"
+          }
+          onClick={() => onPick(pick === i ? null : i)}
+        >
+          {f}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Why a target can't be hit, or a range note, from the weapon's range and the step plans. */
+function rangeNote(
+  system: GameSystem,
+  weapon: { chars: Record<string, string> } | undefined,
+  distance: number,
+  impossible: boolean,
+): string | null {
+  const v = weapon ? readCharacteristics(system, "weapon", weapon.chars) : {};
+  const range = typeof v.range === "number" ? v.range : null;
+  const min = typeof v.minRange === "number" ? v.minRange : 0;
+  if (min && distance < min) return "inside minimum range";
+  if (range && distance > range) return impossible ? "out of range" : "long range";
+  return impossible ? "can't hit" : null;
+}
+
+/** Whether a preview has a dice step that can't succeed. */
+const cannotSucceed = (preview: { plans: Record<string, StepPlan> } | null) =>
+  !!preview && Object.values(preview.plans).some((p) => p.kind === "test" && !p.skip && p.target === null);
+
 /** Choose the weapon and target for a procedure action such as Fire, with the numbers it will use. */
 export function ActionSetup({ draft }: { draft: AttackDraft & { action: string } }) {
   const game = useGame();
   const { setDraft, dispatch } = useStore();
+  const [pick, setPick] = useState<number | null>(null);
   const unit = game.units[draft.attackerId];
   const system = systemOf(game);
   const def = system.actions.find((a) => a.id === draft.action);
+  const dice = pick !== null ? { dice: [pick] } : {};
   const weapons = Object.values(unit?.sheet?.weapons ?? {});
   const options = useMemo(
     () =>
       unit
         ? weapons.map((w) => ({
             w,
-            o: unitActions(game, unit.id, { weapon: w.id }).find((o) => o.def.id === draft.action),
+            o: unitActions(game, unit.id, { weapon: w.id, ...dice }).find((o) => o.def.id === draft.action),
           }))
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [game, unit?.id, draft.action],
+    [game, unit?.id, draft.action, pick],
   );
   const weaponId = draft.weaponId ?? options.find((x) => x.o?.ok)?.w.id ?? weapons[0]?.id;
   const targets = unit && def ? actionTargets(game, unit.id, def.id) : [];
@@ -358,7 +450,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
   const chosen = options.find((x) => x.w.id === weaponId);
   const ready = chosen?.o && draft.targetId;
   const option = ready
-    ? unitActions(game, unit!.id, { weapon: weaponId, targetId: draft.targetId }).find(
+    ? unitActions(game, unit!.id, { weapon: weaponId, targetId: draft.targetId, ...dice }).find(
         (o) => o.def.id === draft.action,
       )
     : undefined;
@@ -370,6 +462,21 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         procedureRoles(system, def.procedure, unit.id, { weapon: weaponId, targetId: draft.targetId }),
       )
     : null;
+  const weapon = weaponId ? unit.sheet?.weapons[weaponId] : undefined;
+  // Each target's range note, from a preview of the roll against it.
+  const notes = Object.fromEntries(
+    targets.map((t) => {
+      const p = weaponId
+        ? safePreview(
+            game,
+            def.procedure!,
+            procedureRoles(system, def.procedure!, unit.id, { weapon: weaponId, targetId: t.unitId }),
+          )
+        : null;
+      return [t.unitId, rangeNote(system, weapon, t.distance, cannotSucceed(p))];
+    }),
+  );
+  const hopeless = cannotSucceed(preview);
 
   return (
     <div className="panel attack">
@@ -401,7 +508,8 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           {targets.map((t) => (
             <option key={t.unitId} value={t.unitId}>
               {game.units[t.unitId]?.name} ({fmt(t.distance, system)}
-              {t.ok ? "" : ", not visible"})
+              {t.ok ? "" : ", not visible"}
+              {notes[t.unitId] ? `, ${notes[t.unitId]}` : ""})
             </option>
           ))}
         </select>
@@ -428,8 +536,16 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         </ul>
       )}
       {option && !option.ok && <p className="warn">{option.why}</p>}
+      {option?.ok && hopeless && draft.targetId && (
+        <p className="warn">
+          {(notes[draft.targetId] ?? "can't hit").replace(/^./, (c) => c.toUpperCase())}: no roll can succeed.
+        </p>
+      )}
+      {option?.payment.some((p) => p.indices) && (
+        <PoolPicker owner={unit.owner} pick={pick} hover={[]} onPick={setPick} />
+      )}
       <button
-        className="primary"
+        className={hopeless ? "" : "primary"}
         disabled={!option?.ok}
         onClick={() => {
           dispatch(
@@ -439,6 +555,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
               action: def.id,
               weapon: weaponId,
               targetId: draft.targetId,
+              ...dice,
             },
             unit.owner,
           );
@@ -446,7 +563,12 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         }}
       >
         {def.name}
-        {option?.cost ? ` (${option.cost})` : ""}
+        {hopeless ? " anyway" : ""}
+        {option?.faces?.length
+          ? ` (uses a ${option.faces.join(" and a ")})`
+          : option?.cost
+            ? ` (${option.cost})`
+            : ""}
       </button>
       <p className="muted small">
         Distances in {unitName(system) === '"' ? "inches" : unitName(system)} ({scale}" each).
@@ -503,6 +625,17 @@ export function ProcedurePanel() {
   // Rolls go through the attacker; the defender answers windows on their side.
   const roller = next && next.kind === "test" && next.roller === "defender" ? defender : proc.by;
   const notes = run.outcomes.filter((o) => o.kind === "note" || o.kind === "reminder");
+  const actor = game.units[proc.unitId];
+  const weapon = proc.weapon ? actor?.sheet?.weapons[proc.weapon] : undefined;
+  const distance =
+    proc.targetId && actor
+      ? actionTargets(game, actor.id, proc.action).find((t) => t.unitId === proc.targetId)?.distance
+      : undefined;
+  // A step that couldn't succeed says why, e.g. "out of range", rather than a bare "0 of 3".
+  const whyNone = (r: StepRecord) =>
+    r.plan.kind === "test" && r.plan.target === null
+      ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
+      : undefined;
   const lost = run.outcomes.filter((o) => o.kind === "wounds").length;
   const destroyed = run.outcomes.some((o) => o.kind === "destroy");
   const statuses = [
@@ -521,7 +654,7 @@ export function ProcedurePanel() {
       {run.records
         .filter((r) => r.dice?.length || r.rolls?.length || r.damage?.length || r.kind === "pool")
         .map((r, i) => (
-          <RecordRow key={i} record={r} />
+          <RecordRow key={i} record={r} why={whyNone(r)} />
         ))}
       {run.pending && (
         <div className="stage">
@@ -576,7 +709,7 @@ export function ProcedurePanel() {
   );
 }
 
-function RecordRow({ record: r }: { record: StepRecord }) {
+function RecordRow({ record: r, why }: { record: StepRecord; why?: string }) {
   const kept = r.dice ?? [];
   return (
     <div className="stage">
@@ -602,6 +735,7 @@ function RecordRow({ record: r }: { record: StepRecord }) {
         <span className="result">
           {r.successes ?? 0} of {r.in}{" "}
           {r.plan.kind === "test" && r.plan.passOn === "failures" ? "saved" : "succeed"}
+          {why ? <span className="warn">: {why}</span> : null}
         </span>
       )}
     </div>

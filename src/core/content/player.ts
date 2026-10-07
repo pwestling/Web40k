@@ -95,6 +95,25 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
   return out;
 }
 
+/** Note that a player used something now (a stratagem, a pool re-roll), for limits. */
+export function recordUse(state: GameState, player: PlayerId, action: string): GameState {
+  const use: PlayerActionUse = {
+    action,
+    round: state.turn.round,
+    phase: state.turn.phase,
+    seat: state.turn.activeSeat,
+  };
+  return { ...state, used: { ...state.used, [player]: [...(state.used?.[player] ?? []), use] } };
+}
+
+/** Where a player stands with a re-roll-once pool this round: re-rolled, ready, or neither. */
+export function poolUsed(state: GameState, player: PlayerId, resource: string): "ready" | "rerolled" | null {
+  const mine = (state.used?.[player] ?? []).filter((u) => u.round === state.turn.round);
+  if (mine.some((u) => u.action === `ready:${resource}`)) return "ready";
+  if (mine.some((u) => u.action === `reroll:${resource}`)) return "rerolled";
+  return null;
+}
+
 /** Fold a used player action into the state: pay, count it, apply its statuses. */
 export function applyPlayerAction(state: GameState, ev: PlayerActionTaken): GameState {
   const system = systemOf(state);

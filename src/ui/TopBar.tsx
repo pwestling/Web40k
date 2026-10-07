@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { systemOf, turnView } from "../core";
+import { actingUnits } from "../core/content/play";
+import { poolUsed } from "../core/content/player";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 
@@ -68,6 +70,8 @@ export function TopBar() {
               label={pool.name}
               faces={game.pools?.[p.id]?.[pool.id] ?? []}
               editable={live && canControl(p.id)}
+              rerollOnce={pool.rerollOnce ? (poolUsed(game, p.id, pool.id) ?? "open") : undefined}
+              onReady={() => dispatch({ type: "pool/ready", player: p.id, resource: pool.id }, p.id)}
               onSpend={(indices) =>
                 dispatch({ type: "pool/spend", player: p.id, resource: pool.id, indices }, p.id)
               }
@@ -125,16 +129,22 @@ export function TopBar() {
             </>
           )}
         </div>
-        {myTurn && view.alternating && !deploying && !over && (
-          <>
+        {myTurn &&
+          view.alternating &&
+          !deploying &&
+          !over &&
+          // One button that follows the state: end the unit's activation, or pass.
+          (actingUnits(game).length ? (
             <button
               className="primary"
               title="End this activation; the other player goes next"
               onClick={() => dispatch({ type: "turn/endActivation" })}
             >
-              Done
+              End activation
             </button>
+          ) : (
             <button
+              className="primary"
               title={
                 (game.turn.passes ?? 0) > 0
                   ? "Both passed: the round moves on"
@@ -144,9 +154,8 @@ export function TopBar() {
             >
               Pass
             </button>
-          </>
-        )}
-        {myTurn && !over && (
+          ))}
+        {myTurn && !over && !(view.alternating && !deploying) && (
           <button
             className={view.alternating && !deploying ? "" : "primary"}
             title="Next phase"
@@ -155,17 +164,29 @@ export function TopBar() {
             {deploying ? "Start battle ▶" : "▶"}
           </button>
         )}
-        {live && !myTurn && (
+        {live && (!myTurn || (view.alternating && !deploying && !over)) && (
           <span className="overflow">
             <button className="quiet" title="Phase options" onClick={() => setMenu(!menu)}>
               ⋯
             </button>
-            {menu && (
-              <span className="menu">
-                <button onClick={() => step("turn/next")}>Advance their phase</button>
-                <button onClick={() => step("turn/prev")}>Back a phase</button>
-              </span>
-            )}
+            {menu &&
+              (myTurn ? (
+                <span className="menu">
+                  <button
+                    onClick={() => {
+                      setMenu(false);
+                      dispatch({ type: "turn/next" });
+                    }}
+                  >
+                    Skip to the next phase
+                  </button>
+                </span>
+              ) : (
+                <span className="menu">
+                  <button onClick={() => step("turn/next")}>Advance their phase</button>
+                  <button onClick={() => step("turn/prev")}>Back a phase</button>
+                </span>
+              ))}
           </span>
         )}
       </div>
@@ -180,12 +201,17 @@ function DicePool({
   editable,
   onSpend,
   onReroll,
+  rerollOnce,
+  onReady,
 }: {
   label: string;
   faces: number[];
   editable: boolean;
   onSpend: (indices: number[]) => void;
   onReroll: (indices: number[]) => void;
+  /** For pools re-rolled once per round: where the player is in that roll step. */
+  rerollOnce?: "open" | "rerolled" | "ready";
+  onReady: () => void;
 }) {
   const [picked, setPicked] = useState<number[]>([]);
   const toggle = (i: number) => setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
@@ -206,11 +232,28 @@ function DicePool({
           {f}
         </button>
       ))}
-      {editable && picked.length > 0 && (
+      {editable && faces.length > 0 && rerollOnce && rerollOnce !== "ready" ? (
+        // The roll step: re-roll any dice once, then say you're ready.
         <>
-          <button onClick={() => act(onSpend)}>Spend</button>
-          <button onClick={() => act(onReroll)}>Re-roll</button>
+          <button
+            disabled={rerollOnce === "rerolled" || picked.length === 0}
+            title={rerollOnce === "rerolled" ? "Already re-rolled this round" : "Pick dice to re-roll first"}
+            onClick={() => act(onReroll)}
+          >
+            Re-roll selected (once)
+          </button>
+          <button className="primary" onClick={onReady}>
+            Ready
+          </button>
         </>
+      ) : (
+        editable &&
+        picked.length > 0 && (
+          <>
+            <button onClick={() => act(onSpend)}>Spend</button>
+            {!rerollOnce && <button onClick={() => act(onReroll)}>Re-roll</button>}
+          </>
+        )
       )}
     </span>
   );

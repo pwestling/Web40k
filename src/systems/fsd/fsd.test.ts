@@ -9,6 +9,7 @@ import {
   type PlayerId,
 } from "../../core";
 import { actionTargets, unitActions } from "../../core/content/play";
+import { poolUsed } from "../../core/content/player";
 import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
 import { fsdSample } from "./sample";
@@ -154,6 +155,31 @@ describe("Full Spectrum Dominance in play", () => {
     expect(s.turn.round).toBe(2);
     expect(s.units[boss.id]?.status?.activated).toBeUndefined();
     expect(s.pools?.p1?.readyDice).toHaveLength(8);
+  });
+
+  it("re-rolls activation dice once, then ready, and pays with the die the player picks", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    s = play(s, { type: "turn/next" }, "p1");
+    s = play(s, { type: "pool/reroll", player: "p1", resource: "readyDice", indices: [0, 1] }, "p1");
+    expect(poolUsed(s, "p1", "readyDice")).toBe("rerolled");
+    const again = resolveIntent(
+      { type: "pool/reroll", player: "p1", resource: "readyDice", indices: [2] },
+      "p1",
+      rng(2),
+      s,
+    );
+    expect(again).toBeNull();
+    s = play(s, { type: "pool/ready", player: "p1", resource: "readyDice" }, "p1");
+    expect(poolUsed(s, "p1", "readyDice")).toBe("ready");
+    const faces = s.pools!.p1!.readyDice!;
+    const highest = faces.indexOf(Math.max(...faces));
+    const option = unitActions(s, tank.id, { dice: [highest] }).find((o) => o.def.id === "activate")!;
+    expect(option.faces).toEqual([faces[highest]]);
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate", dice: [highest] }, "p1");
+    const left = [...faces];
+    left.splice(highest, 1);
+    expect(s.pools?.p1?.readyDice).toEqual(left);
   });
 
   it("rolls on the damage chart for units that have one", () => {

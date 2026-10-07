@@ -10,7 +10,7 @@ import {
   type ActionTaken,
 } from "./content/play";
 import { advance, respond, type ProcedureRun } from "./content/runner";
-import { playerActions, type PlayerActionTaken } from "./content/player";
+import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
@@ -100,7 +100,11 @@ export type Intent =
       weapon?: string;
       targetId?: UnitId;
       with?: UnitId[];
+      /** Pool dice the player picked to pay with. */
+      dice?: number[];
     }
+  /** A player is done re-rolling their pool for this round. */
+  | { type: "pool/ready"; player: PlayerId; resource: string }
   /** Don't react, or finish reacting: the held action goes on. */
   | { type: "reaction/pass" }
   /** Roll the next step of the procedure in progress. */
@@ -160,7 +164,8 @@ export type GameEvent =
   | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
   /** A player's dice pool after a re-roll or spending dice. */
-  | { type: "pool/set"; player: PlayerId; resource: string; faces: number[] }
+  /** `use` records a once-per-round re-roll or "ready" (state.used). */
+  | { type: "pool/set"; player: PlayerId; resource: string; faces: number[]; use?: string }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
@@ -256,12 +261,32 @@ export function resolveIntent(
       const faces = state?.pools?.[intent.player]?.[intent.resource];
       if (!state || !faces || !state.players[intent.player]) return null;
       const picked = new Set(intent.indices.filter((i) => i >= 0 && i < faces.length));
-      const sides = systemOf(state).resources?.find((r) => r.id === intent.resource)?.sides ?? 6;
+      const def = systemOf(state).resources?.find((r) => r.id === intent.resource);
+      const sides = def?.sides ?? 6;
+      const once = intent.type === "pool/reroll" && def?.rerollOnce;
+      if (once && poolUsed(state, intent.player, intent.resource)) return null;
       const next =
         intent.type === "pool/spend"
           ? faces.filter((_, i) => !picked.has(i))
           : faces.map((f, i) => (picked.has(i) ? 1 + Math.floor(rng() * sides) : f));
-      return { type: "pool/set", player: intent.player, resource: intent.resource, faces: next };
+      return {
+        type: "pool/set",
+        player: intent.player,
+        resource: intent.resource,
+        faces: next,
+        ...(once ? { use: `reroll:${intent.resource}` } : {}),
+      };
+    }
+    case "pool/ready": {
+      const faces = state?.pools?.[intent.player]?.[intent.resource];
+      if (!state || !faces || state.players[intent.player]?.id !== from) return null;
+      return {
+        type: "pool/set",
+        player: intent.player,
+        resource: intent.resource,
+        faces,
+        use: `ready:${intent.resource}`,
+      };
     }
     case "turn/next":
     case "turn/pass":
@@ -308,7 +333,10 @@ export function resolveIntent(
         ...(intent.weapon ? { weapon: intent.weapon } : {}),
         ...(intent.targetId ? { targetId: intent.targetId } : {}),
       };
-      const option = unitActions(state, unit.id, req).find((o) => o.def.id === intent.action);
+      const option = unitActions(state, unit.id, {
+        ...req,
+        ...(intent.dice ? { dice: intent.dice } : {}),
+      }).find((o) => o.def.id === intent.action);
       if (!option?.ok) return null;
       const allowed = new Set(option.commands?.candidates ?? []);
       const commanded = (intent.with ?? [])
