@@ -106,12 +106,13 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     const laid = formBlock(game, { ...unit, formation }, formation.files, frame.facing + turn);
     dispatch({ type: "unit/form", id: unit.id, formation, ...laid, how, distance }, as);
   };
+  const block = unit.formation;
   const setOrder = (id: BlockOrder | "skirmish") =>
     dispatch(
       {
         type: "unit/form",
         id: unit.id,
-        formation: id === "skirmish" ? { kind: "skirmish" } : { ...unit.formation, order: id },
+        formation: id === "skirmish" ? { kind: "skirmish" } : { ...block, order: id },
         how: "order",
       },
       as,

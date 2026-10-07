@@ -31,6 +31,7 @@ import type {
   UnitId,
   Vec2,
   Zone,
+  Formation,
 } from "./types";
 
 /** The table layout: terrain, objectives and deployment zones. */
