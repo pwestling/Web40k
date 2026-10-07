@@ -173,6 +173,14 @@ export interface TerrainPiece {
   depth: number;
   facing: number;
   solids: TerrainSolid[];
+  /** Stand-in height for "heights" line of sight; defaults to the top of its tallest solid. */
+  losHeight?: number;
+  /**
+   * How this piece blocks sight, overriding the game's setting: "heights" makes
+   * it a block of its stand-in height (hills and woods in some games) even in
+   * a true line of sight game; "true" uses its shape in a "heights" game.
+   */
+  sight?: "true" | "heights";
   /**
    * Optional low-poly line-of-sight mesh from an imported terrain model:
    * triangles as flat [x,y,z, x,y,z, x,y,z, ...] in local inches, z up.
@@ -234,6 +242,20 @@ export interface GameSettings {
   cover: "hit" | "save";
   /** Whether models from other units block line of sight. */
   modelsBlock: boolean;
+  /**
+   * How line of sight works. "true" traces the model and terrain shapes.
+   * "heights" uses stand-in heights instead, as games such as Warhammer: The Old
+   * World and Full Spectrum Dominance do: every terrain piece is a flat-topped
+   * block of its stand-in height over its footprint, every model a cylinder of
+   * its height, and a model sees another if the line between their tops clears
+   * everything in between. Missing means "true".
+   */
+  los?: "true" | "heights";
+  /**
+   * Vision arc in degrees, centred on each model's facing (90 in Warhammer:
+   * The Old World). Missing means models see all around.
+   */
+  visionArc?: number;
 }
 
 /** Strike Force sized board: 44" x 60". */

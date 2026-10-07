@@ -218,6 +218,12 @@ export function segmentHitsMesh(a: Vec3, b: Vec3, tris: number[]): boolean {
   return false;
 }
 
+/** A piece's stand-in height for "heights" line of sight. */
+export function standInHeight(piece: TerrainPiece): number {
+  if (piece.losHeight !== undefined) return piece.losHeight;
+  return piece.solids.reduce((h, s) => Math.max(h, s.z + s.h), 0);
+}
+
 /** Whether the segment passes over a piece's footprint, low enough to be "through" it. */
 export function segmentCrossesFootprint(piece: TerrainPiece, a: Vec3, b: Vec3, below: number): boolean {
   const la = { ...toLocal(piece, a), z: a.z };

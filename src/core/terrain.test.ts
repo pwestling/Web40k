@@ -139,3 +139,60 @@ describe("line of sight", () => {
     expect(modelSight(s, a, b, { modelsBlock: false }).visible).toBe(true);
   });
 });
+
+describe("stand-in heights line of sight", () => {
+  const heights = (terrain: TerrainPiece[], models: Model[]): GameState => {
+    const s = table(terrain, models);
+    return { ...s, settings: { ...s.settings, los: "heights" } };
+  };
+  const block = (h: number, losHeight?: number): TerrainPiece => ({
+    ...wallPiece(h),
+    width: 4,
+    depth: 2,
+    ...(losHeight === undefined ? {} : { losHeight }),
+  });
+
+  it("blocks with the piece's stand-in height, not its shape", () => {
+    const a = model("a", 0, -3);
+    const b = model("b", 0, 3);
+    expect(modelSight(heights([block(4)], [a, b]), a, b).visible).toBe(false);
+    // The same wall given a low stand-in height: the over-the-top line clears it.
+    const low = modelSight(heights([block(4, 1)], [a, b]), a, b);
+    expect(low.visible).toBe(true);
+    expect(low.fully).toBe(false);
+  });
+
+  it("lets a tall model see over terrain shorter than the line between the tops", () => {
+    const giant = { ...model("a", 0, -3), height: 6 };
+    const b = model("b", 0, 3);
+    expect(modelSight(heights([block(2.5)], [giant, b]), giant, b).visible).toBe(true);
+    expect(modelSight(heights([block(2.5)], [model("c", 0, -3), b]), model("c", 0, -3), b).visible).toBe(
+      false,
+    );
+  });
+
+  it("lets models see out of the terrain they stand in", () => {
+    const a = model("a", 0, 0);
+    const b = model("b", 0, 6);
+    expect(modelSight(heights([block(4)], [a, b]), a, b).visible).toBe(true);
+  });
+
+  it("lets a single piece use its stand-in height in a true line of sight game", () => {
+    const a = model("a", 0, -3);
+    const b = model("b", 0, 3);
+    const hill = { ...block(4, 1), sight: "heights" as const };
+    expect(modelSight(table([block(4)], [a, b]), a, b).visible).toBe(false);
+    expect(modelSight(table([hill], [a, b]), a, b).visible).toBe(true);
+  });
+
+  it("only sees inside the vision arc when the game has one", () => {
+    const a = model("a", 0, 0); // facing 0 looks along +y
+    const ahead = model("b", 1, 6);
+    const behind = model("c", 0, -6);
+    const s = table([], [a, ahead, behind]);
+    const arc = { ...s, settings: { ...s.settings, visionArc: 90 } };
+    expect(modelSight(s, a, behind).visible).toBe(true);
+    expect(modelSight(arc, a, ahead).visible).toBe(true);
+    expect(modelSight(arc, a, behind).visible).toBe(false);
+  });
+});

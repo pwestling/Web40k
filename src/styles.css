@@ -582,3 +582,7 @@ details p {
 .legend span:not(.muted)::before {
   content: "● ";
 }
+.settings label {
+  display: block;
+  margin: 4px 0;
+}

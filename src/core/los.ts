@@ -1,5 +1,13 @@
 import { baseSizeInches } from "./geometry";
-import { modelHeight, segmentPointDistance2D, sightBlockedBy, type Vec3 } from "./terrain";
+import {
+  inFootprint,
+  modelHeight,
+  segmentCrossesFootprint,
+  segmentPointDistance2D,
+  sightBlockedBy,
+  standInHeight,
+  type Vec3,
+} from "./terrain";
 import type { GameState, Model, TerrainPiece } from "./types";
 
 /**
@@ -100,12 +108,55 @@ export interface SightOptions {
   modelsBlock?: boolean;
 }
 
+/** Whether a model's vision arc (if the game has one) takes in a point. */
+export function inVisionArc(state: GameState, observer: Model, p: { x: number; y: number }): boolean {
+  const arc = state.settings.visionArc;
+  if (!arc || arc >= 360) return true;
+  // Facing 0 looks along +y; facing rotates the same way as the model's mesh.
+  const fx = Math.sin(observer.facing);
+  const fy = Math.cos(observer.facing);
+  const dx = p.x - observer.position.x;
+  const dy = p.y - observer.position.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6) return true;
+  const angle = Math.acos(Math.max(-1, Math.min(1, (dx * fx + dy * fy) / len)));
+  return angle <= ((arc / 2) * Math.PI) / 180 + 1e-9;
+}
+
+/**
+ * The first piece blocking a line, each piece by its own sight mode: its
+ * shape (true line of sight) or a block of its stand-in height. A stand-in
+ * block never hides a model from inside it, nor blocks a model looking out.
+ */
+function lineBlockedBy(
+  state: GameState,
+  a: Vec3,
+  b: Vec3,
+  observer: Model,
+  target: Model,
+): TerrainPiece | null {
+  const game = state.settings.los ?? "true";
+  const shaped: TerrainPiece[] = [];
+  for (const piece of state.terrain) {
+    if ((piece.sight ?? game) === "true") {
+      shaped.push(piece);
+      continue;
+    }
+    if (inFootprint(piece, observer.position) || inFootprint(piece, target.position)) continue;
+    if (segmentCrossesFootprint(piece, a, b, standInHeight(piece))) return piece;
+  }
+  return shaped.length ? sightBlockedBy(shaped, a, b) : null;
+}
+
 export function modelSight(
   state: GameState,
   observer: Model,
   target: Model,
   options: SightOptions = {},
 ): Sight {
+  if (!inVisionArc(state, observer, target.position))
+    return { visible: false, fully: false, fraction: 0, obscuredBy: [] };
+  if (state.settings.los === "heights") return heightsSight(state, observer, target, options);
   const eyes = eyePoints(observer);
   const body = bodyPoints(target);
   const blockers =
@@ -125,7 +176,7 @@ export function modelSight(
   for (const p of body) {
     let clear = false;
     for (const e of eyes) {
-      const piece = sightBlockedBy(state.terrain, e, p);
+      const piece = lineBlockedBy(state, e, p, observer, target);
       if (piece) {
         obscured.add(piece);
         continue;
@@ -140,6 +191,55 @@ export function modelSight(
     visible: seen > 0,
     fully: seen === body.length,
     fraction: seen / body.length,
+    obscuredBy: [...obscured],
+  };
+}
+
+/**
+ * Stand-in heights line of sight: lines from the top of the observer to the
+ * top, middle and foot of the target. A terrain piece blocks a line that
+ * passes over its footprint lower than its stand-in height, except a piece
+ * either model stands in (models can see into and out of terrain they are in).
+ * Other models block as cylinders of their height. Seeing any of the three
+ * (in practice the top) makes the target visible; seeing all three means
+ * fully visible, anything less counts as partly hidden for cover.
+ */
+function heightsSight(state: GameState, observer: Model, target: Model, options: SightOptions): Sight {
+  const top = (m: Model) => (m.z ?? 0) + modelHeight(m);
+  const eye: Vec3 = { x: observer.position.x, y: observer.position.y, z: top(observer) };
+  const base = target.z ?? 0;
+  const h = modelHeight(target);
+  const points: Vec3[] = [top(target), base + h / 2, base + 0.05].map((z) => ({
+    x: target.position.x,
+    y: target.position.y,
+    z,
+  }));
+  const blockers =
+    options.modelsBlock === false
+      ? []
+      : Object.values(state.models).filter(
+          (m) =>
+            !m.destroyed &&
+            m.id !== observer.id &&
+            m.id !== target.id &&
+            !options.ignore?.has(m.id) &&
+            segmentPointDistance2D(observer.position, target.position, m.position) < 4,
+        );
+  const obscured = new Set<TerrainPiece>();
+  let seen = 0;
+  for (const p of points) {
+    const piece = lineBlockedBy(state, eye, p, observer, target);
+    if (piece) {
+      obscured.add(piece);
+      continue;
+    }
+    if (blockers.some((m) => lineHitsModel(eye, p, m))) continue;
+    seen++;
+  }
+  return {
+    visible: seen > 0,
+    fully: seen === points.length,
+    fraction: seen / points.length,
     obscuredBy: [...obscured],
   };
 }

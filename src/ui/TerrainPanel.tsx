@@ -1,4 +1,4 @@
-import type { Layout, TerrainCategory, TerrainPiece } from "../core";
+import { standInHeight, type Layout, type TerrainCategory, type TerrainPiece } from "../core";
 import { standardLayout, TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
 import { useStore } from "../store";
@@ -116,6 +116,30 @@ export function TerrainPanel() {
             </select>
           </label>
           <p className="muted small">{CATEGORY_RULES[piece.category].help}</p>
+          <label>
+            Blocks sight by{" "}
+            <select
+              value={piece.sight ?? ""}
+              onChange={(e) => update({ sight: (e.target.value || undefined) as TerrainPiece["sight"] })}
+            >
+              <option value="">Game setting</option>
+              <option value="true">Its shape</option>
+              <option value="heights">Stand-in height</option>
+            </select>
+          </label>
+          {(piece.sight ?? game.settings.los) === "heights" && (
+            <label>
+              Stand-in height{" "}
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={standInHeight(piece)}
+                onChange={(e) => update({ losHeight: Math.max(0, Number(e.target.value)) })}
+              />
+              "
+            </label>
+          )}
           <div className="row">
             <button
               className="small"

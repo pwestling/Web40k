@@ -7,6 +7,7 @@ import {
   maxWounds,
   modelHeight,
   settleZ,
+  standInHeight,
   type GameState,
   type Model,
   type TerrainPiece,
@@ -401,6 +402,9 @@ function Scene() {
           xray={xray}
           editable={canEdit}
           selected={editing && t.id === selectedTerrain}
+          standIn={
+            (t.sight ?? game.settings.los) === "heights" && (xray || editing) ? standInHeight(t) : null
+          }
           onDown={() => onTerrainDown(t)}
         />
       ))}
@@ -680,12 +684,15 @@ function Terrain({
   xray,
   editable,
   selected,
+  standIn,
   onDown,
 }: {
   piece: TerrainPiece;
   xray: boolean;
   editable: boolean;
   selected: boolean;
+  /** Stand-in height to draw as a see-through block, in "heights" line of sight. */
+  standIn: number | null;
   onDown: () => void;
 }) {
   const handlers = editable
@@ -701,6 +708,12 @@ function Terrain({
   const opacity = xray ? 0.2 : 0.95;
   return (
     <group position={[piece.position.x, 0, piece.position.y]} rotation-y={piece.facing}>
+      {standIn !== null && standIn > 0 && (
+        <mesh position-y={standIn / 2} raycast={() => null}>
+          <boxGeometry args={[piece.width, standIn, piece.depth]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.15} depthWrite={false} />
+        </mesh>
+      )}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial
