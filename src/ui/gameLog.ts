@@ -30,6 +30,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   let procLine: Extract<LogItem, { kind: "line" }> | null = null;
   // A code procedure (an Old World combat, say): its first note heads one item, every later step a detail line.
   let scriptItem: Extract<LogItem, { kind: "line" }> | null = null;
+  // Its first step only asked a question: the first line it writes later becomes the heading.
+  let scriptHeadless = false;
   // Deployment: one line per player and army, however many units it had.
   let deployLine:
     (Extract<LogItem, { kind: "line" }> & { by: string; army?: string; units: number; pts: number }) | null =
@@ -98,8 +100,13 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         continue;
       }
       if (scriptItem && before.script && !skipped) {
+        if (scriptHeadless && lines.length) {
+          scriptItem.text = lines.shift()!;
+          scriptHeadless = false;
+        }
         (scriptItem.detail ??= []).push(...lines);
       } else {
+        scriptHeadless = !lines.length;
         const who = state.players[logged.by]?.name ?? "Someone";
         const [head, ...rest] = lines.length
           ? lines
@@ -535,16 +542,20 @@ function scriptLines(
       const unitId = game.models[e.id]?.unitId;
       let lost = 0;
       let hurt = 0;
+      let back = 0;
       for (; i < event.events.length; i++) {
         const x = event.events[i]!;
         if (x.type !== "model/wounds" || game.models[x.id]?.unitId !== unitId) break;
         if (x.destroyed) lost++;
+        // A rule that brings a fallen model back (a package's, say).
+        else if (before.models[x.id]?.destroyed) back++;
         else hurt++;
       }
       i--;
       const bits = [
         lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
         hurt ? `${hurt} wounded` : "",
+        back ? `${back} back in the fight` : "",
       ];
       lines.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
       continue;

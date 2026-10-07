@@ -15,6 +15,7 @@ import { ReplayTitle, RoundCard } from "./ui/RoundCard";
 import { StatsScreen } from "./ui/StatsScreen";
 import { systemModule } from "./systems";
 import { PackageCards } from "./ui/Packages";
+import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TalkPanel } from "./ui/TalkPanel";
 import { TopBar } from "./ui/TopBar";
@@ -109,6 +110,7 @@ export function App() {
           {!editing && <TalkPanel />}
           <StatsScreen />
           <PackageCards />
+          <SandboxNotice />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">

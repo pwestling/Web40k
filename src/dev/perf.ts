@@ -123,6 +123,29 @@ export const perf = {
   },
 
   /** Frame times over `frames` frames, and the last frame's draw stats. */
+  /** Roll `count` dice as player one, for the dice tray to stage. */
+  roll(count: number, sides = 6) {
+    useStore.getState().dispatch({ type: "dice/roll", count, sides }, "p1");
+  },
+
+  /**
+   * What one small event costs on this table: the reducer and React's
+   * synchronous work for it, then the time to the next painted frame.
+   */
+  async dispatchCost(n = 10) {
+    const sync: number[] = [];
+    const painted: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const t = performance.now();
+      useStore.getState().dispatch({ type: "dice/roll", count: 1, sides: 6 }, "p1");
+      sync.push(performance.now() - t);
+      await frame();
+      painted.push(performance.now() - t);
+    }
+    const med = (xs: number[]) => +xs.sort((a, b) => a - b)[Math.floor(xs.length / 2)]!.toFixed(1);
+    return { syncMs: med(sync), toFrameMs: med(painted) };
+  },
+
   async measure(frames = 120, warmup = 10) {
     for (let i = 0; i < warmup; i++) await frame();
     const times: number[] = [];
