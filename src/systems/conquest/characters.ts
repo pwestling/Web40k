@@ -65,6 +65,7 @@ export const characterActions: CodeAction[] = [
     id: "joinRegiment",
     name: "Join regiment",
     by: "unit",
+    applies: (view, actor) => isCharacter(view.state.units[actor.unitId ?? ""]),
     available: (view, actor) => {
       const u = view.state.units[actor.unitId ?? ""];
       if (!isCharacter(u)) return "Only characters join regiments";

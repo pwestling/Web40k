@@ -335,7 +335,9 @@ export function previewRun(
     const s = buildScope(env, { ...run, next: proc.steps.indexOf(step) }, members);
     const { plan, fired, reminders, members: m } = planStep(env, run, step, s);
     if (m) members[step.id] = m;
-    out.plans[step.id] = plan;
+    // A step whose condition fails won't run: nothing to show for it.
+    const passedOver = step.if !== undefined && !safe(() => bool(step.if!, ctxFor(env, s)));
+    out.plans[step.id] = passedOver ? { kind: "other" } : plan;
     out.fired[step.id] = fired;
     for (const r of reminders) if (!out.reminders.includes(r)) out.reminders.push(r);
   }

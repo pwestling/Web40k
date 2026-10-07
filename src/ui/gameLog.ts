@@ -92,6 +92,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     if (event.type === "procedure/clear" && scriptStep) procLine = null;
     if (scriptStep) {
       const lines = scriptLines(scriptStep, before, state);
+      // A rule that ran and finished without a word (an aftermath with no losses) stays out of the log.
+      if (!lines.length && !scriptStep.script && !(scriptItem && before.script)) {
+        scriptItem = null;
+        continue;
+      }
       if (scriptItem && before.script && !skipped) {
         (scriptItem.detail ??= []).push(...lines);
       } else {
@@ -221,6 +226,7 @@ export function lossText(
   const removed = new Set(
     hits.filter((o) => o.modelId && state.models[o.modelId]?.destroyed).map((o) => o.modelId),
   ).size;
+  if (!wounds) return "no losses";
   const bases = `${removed} base${removed === 1 ? "" : "s"}`;
   if (wounds === removed) return `${bases} lost`;
   return `${wounds} wound${wounds === 1 ? "" : "s"} · ${bases} removed`;

@@ -143,5 +143,6 @@ describe("lossText", () => {
   it("keeps the short form when each wound is a model", () => {
     const hits = ["a", "b"].map((modelId) => ({ kind: "wounds", modelId, lost: 1 }));
     expect(lossText(state(["a", "b"]), hits)).toBe("2 bases lost");
+    expect(lossText(state([]), [])).toBe("no losses");
   });
 });

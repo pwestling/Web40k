@@ -19,12 +19,13 @@ export function CodeActions({ unit }: { unit: Unit }) {
   const mod = gameModule(game.system);
   if (!mod?.actions?.length || scrub !== null) return null;
   const phase = currentSlot(game)?.id;
-  const actions = mod.actions.filter(
+  const phased = mod.actions.filter(
     (a) => a.by === "unit" && (!a.phases || (phase && a.phases.includes(phase))),
   );
-  if (!actions.length) return null;
   const view = gameView(game, mod.system.id);
   const actor = { player: unit.owner, unitId: unit.id };
+  const actions = phased.filter((a) => !a.applies || a.applies(view, actor));
+  if (!actions.length) return null;
   const mine = canControl(unit.owner);
   const busy = !!game.script;
   return (

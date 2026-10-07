@@ -336,7 +336,8 @@ function SystemActions({ unit }: { unit: Unit }) {
     o.why === "Waiting on a reaction" && pending
       ? `Waiting for ${seatName(game, pending.seat)} to react`
       : o.why;
-  const blocked = shown.filter((o) => !o.ok && o.why);
+  // The generic "Not allowed now" (a failed condition) says nothing as a line; it stays in the tooltip.
+  const blocked = shown.filter((o) => !o.ok && o.why && o.why !== "Not allowed now");
   const counts = new Map<string, number>();
   for (const o of blocked) counts.set(why(o)!, (counts.get(why(o)!) ?? 0) + 1);
   const shared = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
@@ -679,9 +680,12 @@ function safePreview(game: GameState, procedure: string, roles: ReturnType<typeo
   }
 }
 
-/** "pinInfantry" → "Pin infantry". */
+/** "pinInfantry" → "Pin infantry", "resolve_flanked" → "Resolve flanked". */
 function label(id: string): string {
-  const words = id.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  const words = id
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 

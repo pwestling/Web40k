@@ -53,6 +53,8 @@ export interface CodeAction {
   name: string;
   by: "unit" | "player";
   phases?: Id[];
+  /** Whether the unit could ever take it (a character's action); hidden otherwise. */
+  applies?(view: GameView, actor: Actor): boolean;
   /** True, or why not. */
   available(view: GameView, actor: Actor): true | string;
   targets?(view: GameView, actor: Actor): Target[];
