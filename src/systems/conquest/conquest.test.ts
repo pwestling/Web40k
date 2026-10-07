@@ -322,6 +322,11 @@ describe("Conquest", () => {
     s = play(s, { type: "action/take", unitId: bows.id, action: "activate" }, "p1");
     const ok = (action: string) => unitActions(s, bows.id).find((o) => o.def.id === action)?.ok;
     expect([ok("takeAim"), ok("charge"), ok("march")]).toEqual([false, false, true]);
+    const why = (action: string) => unitActions(s, bows.id).find((o) => o.def.id === action)?.why;
+    expect([why("takeAim"), why("charge")]).toEqual([
+      "Arrived this round: march first",
+      "Arrived this round: can't charge",
+    ]);
     s = play(s, { type: "action/take", unitId: bows.id, action: "march" }, "p1");
     expect([ok("takeAim"), ok("charge")]).toEqual([true, false]);
 

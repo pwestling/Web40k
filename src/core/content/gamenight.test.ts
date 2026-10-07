@@ -232,7 +232,8 @@ describe("40k game night", () => {
     let s = setup();
     s = play(s, { type: "unit/reserve", id: "sneaks", reserve: true }, "p1");
     expect(s.units.sneaks?.status?.reserves).toBe(true);
-    expect(Math.abs(s.models.s1!.position.x)).toBeGreaterThan(s.table.width / 2);
+    // Off the owner's own long edge.
+    expect(Math.abs(s.models.s1!.position.y)).toBeGreaterThan(s.table.depth / 2);
     s = play(s, { type: "unit/reserve", id: "sneaks", reserve: false }, "p1");
     expect(s.units.sneaks?.status).toMatchObject({ arrived: true });
     expect(s.units.sneaks?.status?.reserves).toBeUndefined();

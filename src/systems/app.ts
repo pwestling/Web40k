@@ -34,6 +34,8 @@ export interface SystemModule {
   chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
   /** A panel of the system's own, shown during play (Conquest's command stack). */
   panel?: ComponentType;
+  /** What is left undone in this phase, asked about before Next phase moves on ("hasn't brought in reinforcements"). */
+  leaving?(game: GameState): string[];
 }
 
 export interface TemplateKind {

@@ -199,13 +199,10 @@ const arcs: ArcDef[] = [
 
 const notBroken: Expr = { not: { hasStatus: "self", status: "broken" } };
 /** A regiment that arrived from reserve this round marches first (reinforce.ts). */
-const marchedIn: Expr = {
-  any: [{ not: { hasFlag: "self", flag: "reinforced" } }, { hasFlag: "self", flag: "actionsTaken" }],
-};
-const and = (...e: (Expr | undefined)[]): Expr => {
-  const all = e.filter((x): x is Expr => x !== undefined);
-  return all.length === 1 ? all[0]! : { all };
-};
+const marchFirst = {
+  if: { all: [{ hasFlag: "self", flag: "reinforced" }, { not: { hasFlag: "self", flag: "actionsTaken" } }] },
+  why: "Arrived this round: march first",
+} satisfies { if: Expr; why: string };
 const within = (inches: Expr): Expr => ({
   cmp: "<=",
   a: { query: { kind: "distance", from: "self", to: "it" } },
@@ -245,6 +242,8 @@ export const conquest: GameSystem = {
     { id: "activated", name: "Activated", on: "unit" },
     { id: "inspired", name: "Inspired", on: "unit" },
     { id: "broken", name: "Broken", on: "unit" },
+    // Set on a regiment that came in from reserve this round (reinforce.ts).
+    { id: "reinforced", name: "Arrived this round", on: "unit" },
   ],
   resets: [{ at: "round", flags: ["activated", "inspired", "charged", "aimed", "reinforced", "used.*"] }],
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],
@@ -293,7 +292,8 @@ export const conquest: GameSystem = {
       by: "unit",
       hint: "D6 + March at an enemy in the front arc; a charge that lands is Inspired",
       // Not in the round a regiment arrives from reserve.
-      if: and(notBroken, { not: { hasFlag: "self", flag: "reinforced" } }),
+      if: notBroken,
+      notWhen: [{ if: { hasFlag: "self", flag: "reinforced" }, why: "Arrived this round: can't charge" }],
       limit: { count: 1, per: "round" },
       sets: ["charged"],
       // A charge that falls short loses it: clear Inspired on the card.
@@ -321,8 +321,9 @@ export const conquest: GameSystem = {
       name: "Volley",
       verb: "volleys",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "Barrage shots from the front rank",
-      if: and({ cmp: ">", a: ref("self.Barrage"), b: 0 }, marchedIn),
+      if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
       target: {
         filter: {
           all: [{ query: { kind: "visible", from: "self", to: "it" } }, within(ref("self.Range"))],
@@ -336,8 +337,8 @@ export const conquest: GameSystem = {
       name: "Clash",
       verb: "clashes",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "Fight an enemy in contact",
-      if: marchedIn,
       target: { filter: within(1) },
       limit: { count: 1, per: "round" },
       procedure: "clash",
@@ -347,8 +348,9 @@ export const conquest: GameSystem = {
       name: "Take Aim",
       verb: "takes aim",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "This round's volley re-rolls misses",
-      if: and({ cmp: ">", a: ref("self.Barrage"), b: 0 }, marchedIn),
+      if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
       limit: { count: 1, per: "round" },
       sets: ["aimed"],
     },
@@ -357,8 +359,9 @@ export const conquest: GameSystem = {
       name: "Inspire",
       verb: "is inspired",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "+1 Clash this round",
-      if: and(notBroken, marchedIn),
+      if: notBroken,
       limit: { count: 1, per: "round" },
       do: [{ do: "applyStatus", target: "self", status: "inspired" }],
     },
@@ -367,8 +370,9 @@ export const conquest: GameSystem = {
       name: "Rally",
       verb: "rallies",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "No longer Broken",
-      if: and({ hasStatus: "self", status: "broken" }, marchedIn),
+      if: { hasStatus: "self", status: "broken" },
       limit: { count: 1, per: "round" },
       do: [{ do: "removeStatus", target: "self", status: "broken" }],
     },
@@ -377,8 +381,8 @@ export const conquest: GameSystem = {
       name: "Reform",
       verb: "reforms",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "Rearrange the stands, then turn",
-      if: marchedIn,
       limit: { count: 1, per: "round" },
       move: { kind: "reform", distance: ref("self.M") },
     },
@@ -387,8 +391,9 @@ export const conquest: GameSystem = {
       name: "Withdraw",
       verb: "withdraws",
       by: "unit",
+      notWhen: [marchFirst],
       hint: "Leave a fight (Light and Medium)",
-      if: and({ not: { is: "self.Class", value: "Heavy" } }, marchedIn),
+      if: { not: { is: "self.Class", value: "Heavy" } },
       limit: { count: 1, per: "round" },
       move: { kind: "withdraw", distance: ref("self.M") },
     },

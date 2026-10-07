@@ -423,6 +423,11 @@ export interface ActionDef {
   /** How the log says it, after the unit's name: "marches", "takes aim". */
   verb?: string;
   /**
+   * Conditions that rule it out, each with the reason players see, checked
+   * before `if` (whose failure only says "Not allowed now").
+   */
+  notWhen?: { if: Expr; why: string }[];
+  /**
    * Taking it starts the unit's activation (FSD: spend a die to activate, or
    * to react), after which the unit may take this many of the current slot's
    * other actions. Units without an activation take actions freely (40k).

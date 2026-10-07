@@ -5,6 +5,7 @@ import { conquestFunctions, conquestProcedures } from "./command";
 import { CommandPanel } from "./CommandPanel";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
 import { moraleProcedures } from "./morale";
+import { leavingCommand } from "./leaving";
 import { reinforceProcedures } from "./reinforce";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
@@ -25,5 +26,6 @@ export const conquestModule: GameModule<SystemModule> = {
     rankRules: () => ({ width: 2, maxBonus: 0 }),
     chargeRoll: { count: 1, sides: 6, keep: "sum" },
     panel: CommandPanel,
+    leaving: leavingCommand,
   },
 };
