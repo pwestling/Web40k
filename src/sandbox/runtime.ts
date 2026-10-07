@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
-import type { GameRecord, Unit } from "../core";
+import type { GameRecord, GameState, Unit } from "../core";
 import { systemOf } from "../core/content/turn";
 import { extendSystem, restoreSystems } from "../core/content/systems";
 import { registerHooks, unregisterHooks } from "../core/script";
@@ -9,7 +9,8 @@ import { registerPackageSystem, unregisterPackageSystem } from "../systems";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { Sandbox, STARTUP_MS } from "./host";
-import type { ActionRow, Loaded, Provided } from "./protocol";
+import type { ActionRow, AppState, Loaded, Provided } from "./protocol";
+import type { ImportedRoster } from "../systems/wh40k/roster";
 
 /**
  * The game's trusted rules packages running in the sandbox: started when the
@@ -25,9 +26,32 @@ interface SandboxState {
   code: Record<string, string[]>;
   /** Unit card rows, by `${seq}:${unitId}`. */
   rows: Record<string, ActionRow[]>;
+  /** A package game's rank rules, unfinished business and panel, as of `app.seq`. */
+  app: AppState | null;
 }
 
-export const useSandbox = create<SandboxState>(() => ({ status: "off", error: null, code: {}, rows: {} }));
+export const useSandbox = create<SandboxState>(() => ({
+  status: "off",
+  error: null,
+  code: {},
+  rows: {},
+  app: null,
+}));
+
+/** Whether the game being played comes from a package with game-dependent app glue to ask about. */
+let wantsAppState = false;
+let askedFor = -1;
+
+/** Ask the sandbox for the package game's app state once per new event. */
+function refreshApp(): void {
+  const seq = useStore.getState().record.events.at(-1)?.seq ?? 0;
+  if (!sandbox || !wantsAppState || askedFor === seq) return;
+  askedFor = seq;
+  sandbox
+    .call<AppState>({ t: "appState" })
+    .then((app) => useSandbox.setState({ app }))
+    .catch(() => {});
+}
 
 let sandbox: Sandbox | null = null;
 /** The record the worker holds, and how far it has been sent. */
@@ -51,10 +75,14 @@ function sync(): void {
     if (events.length) void sandbox.call({ t: "events", events }, STARTUP_MS).catch(() => {});
   } else void sandbox.call({ t: "init", record }, STARTUP_MS).catch(() => {});
   sent = { record, seq: last };
+  refreshApp();
 }
 
 /** Take the packages' data and hooks back off the app's systems. */
 function unload() {
+  wantsAppState = false;
+  askedFor = -1;
+  useSandbox.setState({ app: null });
   restoreSystems();
   for (const id of provided.splice(0)) unregisterPackageSystem(id);
   for (const owner of hookOwners.splice(0)) unregisterHooks(owner);
@@ -65,12 +93,33 @@ const provided: string[] = [];
 
 /** Register a whole-game package's system here, and refold the game, which was folded with a stand-in. */
 function provide(p: Provided): void {
-  const { samples, layout, ...rest } = p.app;
+  const { samples, layout, has, ...rest } = p.app;
   const empty = { name: "Empty", units: [], warnings: [] };
+  const constant = (key: string, fallback: number) => p.system.constants?.[key] ?? fallback;
+  wantsAppState ||= has.rankRules || has.leaving || has.sidePanel;
   registerPackageSystem(p.system, {
     ...rest,
     sample: (seat) => samples[seat] ?? empty,
     layout: () => layout,
+    // Code hooks run in the sandbox; the app reads what it last worked out.
+    ...(has.importRoster
+      ? {
+          importRoster: (fileName: string, data: Uint8Array) => {
+            if (!sandbox) return Promise.reject(new Error("The game's rules package isn't running"));
+            return sandbox.call<ImportedRoster>({ t: "importRoster", fileName, data }, STARTUP_MS);
+          },
+        }
+      : {}),
+    ...(has.rankRules
+      ? {
+          rankRules: (_game: GameState, unit: Unit) =>
+            useSandbox.getState().app?.ranks[unit.id] ?? {
+              width: constant("rankWidth", 5),
+              maxBonus: constant("maxRankBonus", 2),
+            },
+        }
+      : {}),
+    ...(has.leaving ? { leaving: () => useSandbox.getState().app?.leaving ?? [] } : {}),
   });
   provided.push(p.system.id);
   const store = useStore.getState();

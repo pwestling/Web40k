@@ -148,3 +148,40 @@ export interface RunResult {
   steps: Record<Id, { in: number; out: number; successes?: number; dice?: number[] }>;
   outcomes: Outcome[];
 }
+
+/**
+ * A package game's side panel, described as data (a package can't ship React
+ * components: its code runs in the sandbox). The app draws it and runs a
+ * button's procedure when it is pressed.
+ */
+export interface PanelSpec {
+  title: string;
+  lines?: string[];
+  buttons?: {
+    label: string;
+    procedure: Id;
+    args?: Args;
+    /** Who presses it; the player whose turn it is when missing. */
+    player?: Id;
+    /** Why it can't be pressed now. */
+    disabled?: string;
+  }[];
+}
+
+/**
+ * The app glue a whole-game package gives (`module.app`). It runs in the
+ * sandbox: `sample` and `layout` once when the package loads, `rankRules`,
+ * `leaving` and `sidePanel` after every event, `importRoster` when a player
+ * picks a file.
+ */
+export interface PackageApp {
+  sample(seat: 0 | 1): unknown;
+  layout(table: GameState["table"]): unknown;
+  importRoster?(fileName: string, data: Uint8Array): unknown;
+  rankRules?(game: GameState, unit: GameState["units"][string]): { width: number; maxBonus: number };
+  leaving?(game: GameState): string[];
+  sidePanel?(view: GameView): PanelSpec | null;
+  templateCategory?: Record<string, string>;
+  fleeDice?: string;
+  chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
+}

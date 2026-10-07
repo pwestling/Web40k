@@ -1,6 +1,7 @@
 // An example whole-game rules package for Open Battle: "Arena", a tiny
 // invented skirmish game. It brings its own rules data, sample warbands, a
-// table layout, one rule written as code and one turn hook. Load it from the
+// table layout, one rule written as code, one turn hook, its own army list
+// reader and a side panel. Load it from the
 // lobby (Load package…); once it's trusted it shows in the Game list. See
 // docs/packages.md for how packages work.
 
@@ -124,6 +125,42 @@ const module = {
   app: {
     sample: (seat) => samples[seat],
     layout: () => ({ terrain: [], objectives: [], zones: [] }),
+    // Army lists: a JSON file like {"name": "My gladiators", "units": [{"name": "Brute", "count": 1, "M": 4, "A": 3, "Hit": 4, "W": 4}]}.
+    importRoster: (fileName, data) => {
+      const list = JSON.parse(new TextDecoder().decode(data));
+      const units = (list.units ?? []).map((u) =>
+        warband(String(u.name), Number(u.count) || 1, {
+          M: u.M ?? 5,
+          A: u.A ?? 1,
+          Hit: u.Hit ?? 4,
+          W: u.W ?? 1,
+        }),
+      );
+      return {
+        name: String(list.name ?? fileName),
+        units,
+        warnings: units.length ? [] : ["No units in this list"],
+      };
+    },
+    // A panel of its own: the crowd's score, and a taunt any player can shout.
+    sidePanel: (view) => {
+      const fallen = {};
+      for (const u of Object.values(view.state.units))
+        fallen[u.owner] =
+          (fallen[u.owner] ?? 0) + u.modelIds.filter((id) => view.state.models[id].destroyed).length;
+      const lines = Object.values(view.state.players).map((p) => `${p.name}: ${fallen[p.id] ?? 0} fallen`);
+      return {
+        title: `Arena, round ${view.round || "–"}`,
+        lines,
+        buttons: [
+          {
+            label: "Taunt",
+            procedure: "taunt",
+            disabled: view.round ? undefined : "The games haven't begun",
+          },
+        ],
+      };
+    },
   },
   actions: [
     {
@@ -140,6 +177,11 @@ const module = {
       run: strike,
     },
   ],
+  procedures: {
+    taunt: function* (ctx) {
+      yield ctx.note("A taunt echoes round the arena");
+    },
+  },
   hooks: {
     roundStart: function* (ctx, args) {
       yield ctx.note(`Round ${args.round}: the crowd roars`);

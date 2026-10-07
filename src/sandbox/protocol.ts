@@ -1,5 +1,6 @@
 import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent } from "../core";
 import type { GameSystem } from "../core/content/schema";
+import type { PanelSpec } from "../sdk";
 import type { SystemModule } from "../systems/app";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Rng } from "../core/actions";
@@ -17,7 +18,10 @@ export type ToSandbox =
   | { id: number; t: "init"; record: GameRecord }
   | { id: number; t: "events"; events: LoggedEvent[] }
   | { id: number; t: "resolve"; intent: Intent; from: string; seed: number }
-  | { id: number; t: "actions"; unitId: string; player: string };
+  | { id: number; t: "actions"; unitId: string; player: string }
+  /** A package game's app glue that depends on the game: rank rules, what's left undone, its panel. */
+  | { id: number; t: "appState" }
+  | { id: number; t: "importRoster"; fileName: string; data: Uint8Array };
 
 export type FromSandbox =
   | { id: number; t: "ok"; value?: unknown }
@@ -48,10 +52,21 @@ export interface Provided {
   app: {
     samples: ImportedRoster[];
     layout: Layout;
+    /** Which of the game-dependent hooks the package has (they run in the sandbox). */
+    has: { importRoster: boolean; rankRules: boolean; leaving: boolean; sidePanel: boolean };
   } & Pick<
     SystemModule,
     "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll"
   >;
+}
+
+/** A package game's app glue for the current state (PackageApp in src/sdk), worked out in the sandbox. */
+export interface AppState {
+  seq: number;
+  /** Rank width and bonus cap per unit, for games with rankRules. */
+  ranks: Record<string, { width: number; maxBonus: number }>;
+  leaving: string[];
+  panel: PanelSpec | null;
 }
 
 /** A package's code action as the unit card shows it, worked out in the sandbox. */

@@ -201,4 +201,30 @@ describe("the package sandbox", () => {
         hook.events.some((e) => e.type === "log/note" && /crowd roars/.test(e.text)),
     ).toBe(true);
   });
+  it("gives a package game its own army list reader and side panel", async () => {
+    const box = new SandboxEngine(importSource);
+    const pkg = (await box.load([{ hash: "a1", source: arena }])).packages[0]!;
+    expect(pkg.provides?.app.has).toMatchObject({ importRoster: true, sidePanel: true, rankRules: false });
+
+    const t = table("arena", (seat) => pkg.provides!.app.samples[seat]!);
+    await t.sandbox.load([{ hash: "a1", source: arena }]);
+    const list = { name: "Mine", units: [{ name: "Brute", count: 2, M: 4, A: 3, Hit: 4, W: 4 }] };
+    const roster = (await t.sandbox.importRoster(
+      "mine.json",
+      new TextEncoder().encode(JSON.stringify(list)),
+    )) as {
+      name: string;
+      units: { name: string; models: unknown[] }[];
+    };
+    expect(roster.name).toBe("Mine");
+    expect(roster.units.map((u) => [u.name, u.models.length])).toEqual([["Brute", 2]]);
+
+    const blue = Object.values(t.state.units).find((u) => u.name === "Spear fighters")!;
+    t.play({ type: "model/wounds", id: blue.modelIds[0]!, woundsLost: 1, destroyed: true }, "p2");
+    const app = t.sandbox.appState();
+    expect(app.seq).toBe(t.state.seq);
+    expect(app.panel?.lines).toEqual(["A: 0 fallen", "B: 1 fallen"]);
+    expect(app.panel?.buttons?.[0]).toMatchObject({ label: "Taunt", procedure: "taunt" });
+    expect(app.leaving).toEqual([]);
+  });
 });

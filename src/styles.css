@@ -1816,3 +1816,13 @@ button.rare-star:hover {
     animation-name: none;
   }
 }
+
+/* A package game's own panel, described by the package (src/ui/PackagePanel.tsx). */
+.panel.package-panel {
+  top: 96px;
+  left: 330px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

@@ -122,7 +122,12 @@ export default {
 
 Once a player trusts the package, its game appears in the lobby's **Game** list, and a game started with it names the package so every player gets the code.
 
-`app.sample` and `app.layout` run once in the sandbox when the package loads, and the results are handed to the app as data. Other app hooks that are code (`importRoster`, `rankRules`, `leaving`, custom panels) aren't supported for package games yet.
+The rest of `app` (`PackageApp` in `src/sdk`) is optional, and all of it runs in the sandbox:
+
+- `sample(seat)` and `layout(table)` run once when the package loads, and the results are handed to the app as data.
+- `importRoster(fileName, data)` reads an army list file (`data` is its bytes) and returns a roster shaped like `sample`'s. The lobby's **Add an army** uses it for the package's game.
+- `rankRules(game, unit)` returns `{ width, maxBonus }` for rank-and-file games, and `leaving(game)` lists the units that must leave the table. Both run after every event, and the app reads their latest answers.
+- `sidePanel(view)` describes a panel of the game's own, as data: a `title`, text `lines`, and `buttons` that each start one of the package's procedures (`{ label, procedure, args?, player?, disabled? }`). It is redrawn after every event; return `null` to hide it.
 
 [`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game.
 

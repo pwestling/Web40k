@@ -16,9 +16,16 @@ import { currentSlot, systemOf } from "../core/content/turn";
 import { gameView, hookProcedures, registerCode } from "../core/script";
 import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
-import type { CodeAction, GameModule, PackageContents } from "../sdk";
+import type { CodeAction, GameModule, PackageApp, PackageContents, PanelSpec } from "../sdk";
 import { registerModule, type SystemModule } from "../systems";
-import { seededRng, type ActionRow, type Loaded, type Provided, type Resolved } from "./protocol";
+import {
+  seededRng,
+  type ActionRow,
+  type AppState,
+  type Loaded,
+  type Provided,
+  type Resolved,
+} from "./protocol";
 
 /** How the engine turns a package's source into its module (a blob import in the worker). */
 export type ImportSource = (source: string) => Promise<{ default?: unknown }>;
@@ -33,6 +40,8 @@ export type ImportSource = (source: string) => Promise<{ default?: unknown }>;
 export class SandboxEngine {
   private record: GameRecord = createRecord();
   private state: GameState = stateAt(this.record);
+  /** Whole-game packages' app glue by system id. */
+  private readonly apps = new Map<string, SystemModule & PackageApp>();
   /** Package code actions by system id. */
   private readonly actions = new Map<string, CodeAction[]>();
 
@@ -52,7 +61,8 @@ export class SandboxEngine {
           // its rules data plus what its app glue gives for a fresh game.
           const m = contents.module as GameModule<SystemModule>;
           registerModule(m);
-          const app = m.app;
+          const app = m.app as (SystemModule & PackageApp) | undefined;
+          if (app) this.apps.set(m.system.id, app);
           const table = m.system.defaultTable ?? createInitialState().table;
           provides = JSON.parse(
             JSON.stringify({
@@ -66,6 +76,12 @@ export class SandboxEngine {
                 scatter: app?.scatter,
                 fleeDice: app?.fleeDice,
                 chargeRoll: app?.chargeRoll,
+                has: {
+                  importRoster: !!app?.importRoster,
+                  rankRules: !!app?.rankRules,
+                  leaving: !!app?.leaving,
+                  sidePanel: !!app?.sidePanel,
+                },
               },
             }),
           ) as Provided;
@@ -137,6 +153,29 @@ export class SandboxEngine {
   /** The host's job for one intent, with dice from `seed`. */
   resolve(intent: Intent, from: string, seed: number): Resolved {
     return resolveLogged(this.record, intent, from, seededRng(seed), 0, this.state)?.event ?? null;
+  }
+
+  /** A package game's rank rules, unfinished business and panel for the game as it stands. */
+  appState(): AppState {
+    const system = systemOf(this.state).id;
+    const app = this.apps.get(system);
+    const ranks: AppState["ranks"] = {};
+    if (app?.rankRules)
+      for (const u of Object.values(this.state.units)) ranks[u.id] = app.rankRules(this.state, u);
+    const panel = app?.sidePanel ? app.sidePanel(gameView(this.state, system)) : null;
+    return {
+      seq: this.state.seq,
+      ranks,
+      leaving: app?.leaving ? app.leaving(this.state) : [],
+      panel: panel ? (JSON.parse(JSON.stringify(panel)) as PanelSpec) : null,
+    };
+  }
+
+  /** Read an army list with the package game's own reader. */
+  async importRoster(fileName: string, data: Uint8Array): Promise<unknown> {
+    const app = this.apps.get(systemOf(this.state).id);
+    if (!app?.importRoster) throw new Error("This game has no army list reader");
+    return JSON.parse(JSON.stringify(await app.importRoster(fileName, data)));
   }
 
   /** The packages' code actions for a unit in this phase, as the unit card lists them. */
