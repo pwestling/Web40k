@@ -250,6 +250,16 @@ export class Session {
   }
 
   /** This peer's checksum after event `seq`, if that was a recent checkpoint. */
+  /**
+   * Fold the whole log again: a game system arrived (a rules package loaded)
+   * after events that depend on it were folded with its stand-in.
+   */
+  refold(): void {
+    this.state = stateAt(this.record);
+    this.checks.clear();
+    this.onChange(this.state, this.record);
+  }
+
   checksumAt(seq: number): number | undefined {
     const c = this.checks.get(seq);
     if (!c) return undefined;

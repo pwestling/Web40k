@@ -1,5 +1,6 @@
 import { DEFAULT_SYSTEM } from "../core";
 import { registerSystem } from "../core/content";
+import { unregisterSystem } from "../core/content/systems";
 import { registerFunctions } from "../core/content/calls";
 import { hookProcedures, registerCode, registerHooks } from "../core/script";
 import type { GameModule } from "../sdk";
@@ -36,6 +37,22 @@ export function registerModule(m: GameModule<SystemModule>): void {
 }
 
 BUILT_IN.forEach(registerModule);
+
+/**
+ * A system from a rules package, on the app's side: its rules data and the
+ * app glue the sandbox worked out (sample armies, a layout). Its code stays
+ * in the sandbox.
+ */
+export function registerPackageSystem(system: GameModule["system"], app: SystemModule): void {
+  registerSystem(system);
+  MODULES.set(system.id, { id: system.id, version: system.version, api: 1, system, app });
+}
+
+export function unregisterPackageSystem(id: string): void {
+  if (BUILT_IN.some((m) => m.system.id === id)) return;
+  MODULES.delete(id);
+  unregisterSystem(id);
+}
 
 /** The game module for a system id, if one is registered. */
 export function gameModule(id: string | undefined): GameModule<SystemModule> | undefined {

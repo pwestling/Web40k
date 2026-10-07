@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
-import { PackageLibrary } from "./Packages";
+import { useLibrary } from "../packages/library";
+import { APP_BUILD } from "../version";
+import { PackageLibrary, refOf } from "./Packages";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Rejoin once per page load (effects run twice in development). */
@@ -15,7 +17,18 @@ export function Lobby() {
   const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [room, setRoom] = useState(() => params.get("room") ?? "");
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
-  const systems = listSystems();
+  // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
+  const library = useLibrary((s) => s.packages);
+  useEffect(() => void useLibrary.getState().load(), []);
+  const fromPackages = Object.values(library).filter(
+    (p) => p.trusted && p.manifest.kind === "system" && p.manifest.systems[0],
+  );
+  const systems = [
+    ...listSystems().map((s) => ({ id: s.id, name: s.name })),
+    ...fromPackages
+      .filter((p) => !listSystems().some((s) => s.id === p.manifest.systems[0]))
+      .map((p) => ({ id: p.manifest.systems[0]!, name: `${p.manifest.name} ${p.manifest.version} (package)` })),
+  ];
   const [system, setSystem] = useState(() => {
     const last = localStorage.getItem("open-battle:system");
     return systems.some((s) => s.id === last) ? last! : DEFAULT_SYSTEM;
@@ -35,11 +48,23 @@ export function Lobby() {
     history.replaceState(null, "", `?${q}`);
   };
 
+  /** A game from a package names that package, so every player gets its code. */
+  const namePackage = () => {
+    const pkg = fromPackages.find((p) => p.manifest.systems[0] === system);
+    if (!pkg) return;
+    useStore.getState().dispatch({
+      type: "game/packages",
+      app: APP_BUILD,
+      system: { id: system, builtIn: false },
+      packages: [refOf(pkg)],
+    });
+  };
   const host = () => {
     remember();
     const roomId = room || crypto.randomUUID().slice(0, 8);
     linkTo(roomId);
     start({ role: "host", mode, roomId, name, system });
+    namePackage();
   };
   const join = (role: "client" | "spectator") => {
     remember();
@@ -104,6 +129,7 @@ export function Lobby() {
         onClick={() => {
           remember();
           start({ role: "host", mode: "hotseat", name, system });
+          namePackage();
         }}
       >
         Play on this screen (hotseat)

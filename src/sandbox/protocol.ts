@@ -1,4 +1,7 @@
-import type { GameEvent, GameRecord, Intent, LoggedEvent } from "../core";
+import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent } from "../core";
+import type { GameSystem } from "../core/content/schema";
+import type { SystemModule } from "../systems/app";
+import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Rng } from "../core/actions";
 import type { SystemAdditions } from "../core/content/systems";
 import type { HookTable } from "../core/script";
@@ -33,8 +36,19 @@ export interface Loaded {
     data: SystemAdditions;
     /** Turn hooks, by procedure id, for the host to start (core/script.ts). */
     hooks: HookTable;
+    /** A whole game system the package provides. */
+    provides?: Provided;
   }[];
   errors: { hash: string; error: string }[];
+}
+
+/** A whole-game package's system, and what its app glue gave in the sandbox, as data. */
+export interface Provided {
+  system: GameSystem;
+  app: {
+    samples: ImportedRoster[];
+    layout: Layout;
+  } & Pick<SystemModule, "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll">;
 }
 
 /** A package's code action as the unit card shows it, worked out in the sandbox. */

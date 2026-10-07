@@ -22,7 +22,7 @@ export function registerSystem(system: GameSystem): void {
 
 export function getSystem(id: Id): GameSystem {
   const s = systems.get(id);
-  if (!s) throw new Error(`Unknown game system "${id}"`);
+  if (!s) return placeholder(id);
   return s;
 }
 
@@ -57,4 +57,46 @@ export function extendSystem(id: Id, add: SystemAdditions): void {
 export function restoreSystems(): void {
   for (const [id, base] of bases) systems.set(id, base);
   bases.clear();
+}
+
+export function unregisterSystem(id: Id): void {
+  systems.delete(id);
+}
+
+const placeholders = new Map<Id, GameSystem>();
+
+/**
+ * A system that comes from a rules package not loaded here (yet, or by
+ * choice): an empty stand-in, so the table still shows and the log still
+ * folds while the package arrives. The lobby doesn't list it.
+ */
+function placeholder(id: Id): GameSystem {
+  let s = placeholders.get(id);
+  if (!s) {
+    s = {
+      id,
+      name: `${id} (its rules package isn't loaded)`,
+      version: "0",
+      units: "inch",
+      dice: [{ id: "d6", sides: 6 }],
+      defaultDie: "d6",
+      characteristics: [],
+      weaponKinds: [],
+      unitShape: { kind: "skirmish" },
+      rules: [],
+      procedures: [],
+      actions: [],
+      turn: {
+        rounds: 5,
+        round: [{ kind: "playerTurns", segments: [{ kind: "phase", id: "turn", name: "Turn" }] }],
+      },
+    };
+    placeholders.set(id, s);
+  }
+  return s;
+}
+
+/** Whether a system id is only a stand-in (its package isn't loaded). */
+export function isPlaceholder(id: Id): boolean {
+  return !systems.has(id);
 }

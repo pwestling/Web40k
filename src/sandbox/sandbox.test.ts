@@ -19,6 +19,7 @@ import { towModule } from "../systems/tow/module";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { SandboxEngine } from "./engine";
 import { seededRng } from "./protocol";
+import arena from "../../examples/packages/arena.js?raw";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 
 /** Node imports a package's source from a data: URL; the worker uses a blob. */
@@ -172,5 +173,32 @@ describe("the package sandbox", () => {
     ).toBe(true);
     restoreSystems();
     expect(getSystem("tow-hand").rules.some((r) => r.id === "steady")).toBe(false);
+  });
+
+  it("loads a whole game from a package: its system, samples, code and hooks", async () => {
+    const box = new SandboxEngine(importSource);
+    const loaded = await box.load([{ hash: "a1", source: arena }]);
+    expect(loaded.errors).toEqual([]);
+    const pkg = loaded.packages[0]!;
+    expect(pkg.provides?.system.id).toBe("arena");
+    expect(pkg.provides?.app.samples.map((r) => r.name)).toEqual(["Red gladiators", "Blue gladiators"]);
+    expect(pkg.hooks).toEqual({ roundStart: ["hook:arena:roundStart"] });
+
+    const t = table("arena", (seat) => pkg.provides!.app.samples[seat]!);
+    await t.sandbox.load([{ hash: "a1", source: arena }]);
+    const red = Object.values(t.state.units).find((u) => u.name === "Champion")!;
+    const blue = Object.values(t.state.units).find((u) => u.name === "Spear fighters")!;
+    t.playBoxed({ type: "script/start", procedure: "strike", args: { unit: red.id, target: blue.id } }, "p1");
+    const step = t.record.events.at(-1)!.event;
+    const roll = step.type === "script/step" ? step.events.find((e) => e.type === "dice/roll") : undefined;
+    const hits = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r >= 3).length : -1;
+    const fallen = blue.modelIds.filter((id) => t.state.models[id]!.destroyed).length;
+    expect(fallen).toBe(Math.min(hits, 5));
+    t.playBoxed({ type: "script/start", procedure: "hook:arena:roundStart", args: { round: 1 } }, "p1");
+    const hook = t.record.events.at(-1)!.event;
+    expect(
+      hook.type === "script/step" &&
+        hook.events.some((e) => e.type === "log/note" && /crowd roars/.test(e.text)),
+    ).toBe(true);
   });
 });

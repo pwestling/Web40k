@@ -5,10 +5,11 @@ import { systemOf } from "../core/content/turn";
 import { extendSystem, restoreSystems } from "../core/content/systems";
 import { registerHooks, unregisterHooks } from "../core/script";
 import { setIntentRouter } from "../net/session";
+import { registerPackageSystem, unregisterPackageSystem } from "../systems";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { Sandbox, STARTUP_MS } from "./host";
-import type { ActionRow, Loaded } from "./protocol";
+import type { ActionRow, Loaded, Provided } from "./protocol";
 
 /**
  * The game's trusted rules packages running in the sandbox: started when the
@@ -55,9 +56,32 @@ function sync(): void {
 /** Take the packages' data and hooks back off the app's systems. */
 function unload() {
   restoreSystems();
+  for (const id of provided.splice(0)) unregisterPackageSystem(id);
   for (const owner of hookOwners.splice(0)) unregisterHooks(owner);
 }
 const hookOwners: string[] = [];
+/** Systems whole-game packages registered on the app's side. */
+const provided: string[] = [];
+
+/** Register a whole-game package's system here, and refold the game, which was folded with a stand-in. */
+function provide(p: Provided): void {
+  const { samples, layout, ...rest } = p.app;
+  const empty = { name: "Empty", units: [], warnings: [] };
+  registerPackageSystem(p.system, {
+    ...rest,
+    sample: (seat) => samples[seat] ?? empty,
+    layout: () => layout,
+  });
+  provided.push(p.system.id);
+  const store = useStore.getState();
+  store.session?.refold();
+  // A game just set up on the stand-in takes the real system's table, counters and layout.
+  const game = useStore.getState().game;
+  if (store.role === "host" && game.system === p.system.id && game.turn.round === 0) {
+    store.dispatch({ type: "game/system", system: p.system.id });
+    if (!game.terrain.length) store.dispatch({ type: "layout/set", layout });
+  }
+}
 
 function stop(why: string) {
   unload();
@@ -78,6 +102,10 @@ async function start(packages: { hash: string; source: string }[]): Promise<void
     sync();
     const code: Record<string, string[]> = {};
     for (const p of loaded.packages) {
+      if (p.provides) {
+        provide(p.provides);
+        code[p.provides.system.id] ??= [];
+      }
       for (const s of p.systems) {
         code[s] = [...(code[s] ?? []), ...p.procedures, ...p.actions];
         extendSystem(s, p.data);
