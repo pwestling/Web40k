@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Board } from "./render/Board";
 import { useStore } from "./store";
+import { useTalk } from "./talk/talk";
 import { AttackPanel } from "./ui/AttackPanel";
 import { DiceTray } from "./ui/DiceTray";
 import { useHold } from "./ui/hold";
@@ -15,6 +16,7 @@ import { StatsScreen } from "./ui/StatsScreen";
 import { systemModule } from "./systems";
 import { PackageCards } from "./ui/Packages";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
+import { TalkPanel } from "./ui/TalkPanel";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -33,6 +35,10 @@ function onKey(e: KeyboardEvent) {
     return;
   }
   if (key === "escape") {
+    if (useTalk.getState().tool) {
+      useTalk.setState({ tool: null });
+      return;
+    }
     if (s.view === "eye") s.setView("3d");
     if (s.measuring) s.set({ measuring: false });
     else if (s.game.ruler && s.role !== "spectator") s.dispatch({ type: "ruler/set", ruler: null });
@@ -100,6 +106,7 @@ export function App() {
           <RoundCard />
           <ReplayTitle />
           <DiceTray />
+          {!editing && <TalkPanel />}
           <StatsScreen />
           <PackageCards />
           {reacting && <ReactionPrompt />}
