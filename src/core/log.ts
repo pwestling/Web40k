@@ -68,13 +68,15 @@ export function resolveLogged(
   state: GameState = stateAt(record),
 ): LoggedEvent | null {
   if (intent.type === "undo" && !canUndo(record, intent.seq)) return null;
-  const event = resolveIntent(intent, by, rng, state);
+  const event = resolveIntent(intent, by, rng, state, (seq) => stateAt(record, seq));
   return event && { seq: lastSeq(record) + 1, by, at: now, event };
 }
 
 /** An event can be undone once, and undo events themselves cannot be undone (yet). */
 export function canUndo(record: GameRecord, seq: number): boolean {
   const target = record.events.find((e) => e.seq === seq);
+  // A code procedure's steps can't be taken back one by one: its replay would no longer match.
+  if (target?.event.type === "script/step" || target?.event.type === "module/set") return false;
   return !!target && target.event.type !== "undo" && !undoneSeqs(record).has(seq);
 }
 
