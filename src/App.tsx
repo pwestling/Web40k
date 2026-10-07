@@ -8,6 +8,7 @@ import { PlayPanel } from "./ui/PlayPanel";
 import { ReactionPrompt } from "./ui/SystemPanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { ReplayTitle, RoundCard } from "./ui/RoundCard";
+import { NetBanner } from "./ui/NetBanner";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
@@ -86,6 +87,7 @@ export function App() {
           <ReplayBar />
           <RoundCard />
           <ReplayTitle />
+          <NetBanner />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">

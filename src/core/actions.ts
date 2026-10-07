@@ -211,7 +211,7 @@ export interface UnitForm {
   formation: Formation;
   order?: ModelId[];
   models?: { id: ModelId; to: Vec2; facing: number }[];
-  how?: "reform" | "turn" | "order";
+  how?: "reform" | "redress" | "turn" | "order";
   distance?: number;
 }
 

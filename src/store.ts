@@ -12,7 +12,7 @@ import {
 } from "./core";
 import { broadcastTransport } from "./net/broadcast";
 import { createLoopbackNetwork } from "./net/loopback";
-import { Session, type Role } from "./net/session";
+import { Session, type NetStatus, type Role } from "./net/session";
 import { trysteroTransport } from "./net/trystero";
 import { systemModule } from "./systems";
 import { replayIntro } from "./ui/highlights";
@@ -84,6 +84,8 @@ interface Store {
   ranges: UnitId | null;
   /** Weapon whose range Ranges shows (default: the unit's longest). */
   rangeWeapon: string | null;
+  /** Connection state: who is host, who is connected, whether the room is choosing a new host. */
+  net: NetStatus | null;
   /** Director camera: follows the latest action (moves, shots, charges). */
   director: boolean;
   /** Front, flank and rear arcs of the selected (and hovered) regiment. */
@@ -140,6 +142,38 @@ export function loadSavedGame(): SavedGame | null {
   }
 }
 
+/** What a peer keeps per room so a reload can rejoin: the log it holds and the player it was. */
+export interface SavedRoom {
+  record: GameRecord;
+  playerId?: string;
+  /** What this tab was in the room, so a reload rejoins the same way. */
+  role?: Role;
+}
+
+const roomKey = (roomId: string) => `open-battle:room:${roomId}`;
+
+export function loadRoom(roomId: string): SavedRoom | null {
+  try {
+    const raw = sessionStorage.getItem(roomKey(roomId));
+    return raw ? (JSON.parse(raw) as SavedRoom) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRoom(roomId: string, record: GameRecord, seatedAs: string | undefined, role: Role) {
+  try {
+    // Remember the player we are once we have a seat; until then keep the old one.
+    const playerId = seatedAs ?? loadRoom(roomId)?.playerId;
+    sessionStorage.setItem(
+      roomKey(roomId),
+      JSON.stringify({ record, role, ...(playerId ? { playerId } : {}) }),
+    );
+  } catch {
+    // Storage full or blocked: a reload rejoins from scratch.
+  }
+}
+
 function saveGame(game: SavedGame) {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(game));
@@ -174,6 +208,7 @@ export const useStore = create<Store>((set, get) => ({
   ranges: null,
   rangeWeapon: null,
   director: false,
+  net: null,
   arcs: true,
   eye: null,
   set: (patch) => set(patch),
@@ -193,13 +228,34 @@ export const useStore = create<Store>((set, get) => ({
         : mode === "local"
           ? broadcastTransport(roomId!)
           : trysteroTransport(roomId!);
-    const session = new Session({
+    // A client coming back to a room picks up the log it saved there, and asks only for what it missed.
+    const room = mode === "hotseat" || !roomId ? null : loadRoom(roomId);
+    const resumed = role === "host" && !!record && mode !== "hotseat";
+    let seated = role === "spectator";
+    const session: Session = new Session({
       transport,
       role,
-      record,
+      record: record ?? (role === "client" ? room?.record : undefined),
+      resumed,
       onChange: (game, rec) => {
+        // A session that was replaced (left) may still call back; ignore it.
+        if (get().session !== session) return;
         set({ game, record: rec });
-        if (role === "host") saveGame({ mode, roomId: roomId ?? null, record: rec, savedAt: Date.now() });
+        const current = session?.status.role ?? role;
+        if (current === "host") saveGame({ mode, roomId: roomId ?? null, record: rec, savedAt: Date.now() });
+        if (roomId && mode !== "hotseat")
+          saveRoom(
+            roomId,
+            rec,
+            session && game.players[session.selfId] ? session.selfId : undefined,
+            current,
+          );
+        takeSeat();
+      },
+      onNet: (status) => {
+        if (get().session !== session) return;
+        set({ net: status, role: status.role });
+        takeSeat();
       },
     });
     set({
@@ -209,47 +265,64 @@ export const useStore = create<Store>((set, get) => ({
       roomId: roomId ?? null,
       game: session.current,
       record: session.log,
+      net: session.status,
       selected: null,
       draft: null,
       scrub: null,
       // Spectators start with the camera following the action.
       director: role === "spectator",
     });
-    if (role === "spectator") return;
 
-    if (role === "host") {
-      if (record) {
-        // A resumed online game: take back the host's old seat under our new peer id.
-        const host = Object.values(session.current.players).find((p) => p.seat === 0);
-        if (mode !== "hotseat" && host && host.id !== session.selfId)
-          session.dispatch({ type: "player/claim", player: host.id });
+    /**
+     * Once there is a host and a game: take back our old seat (a reload or a
+     * dropped connection gives us a new peer id), or a free one.
+     */
+    function takeSeat() {
+      if (seated || mode === "hotseat" || !session || get().session !== session) return;
+      const status = session.status;
+      if (status.role === "host" ? false : status.hostId === null) return;
+      const game = session.current;
+      if (game.seq === 0 && status.role !== "host") return;
+      const players = Object.values(game.players);
+      if (players.some((p) => p.id === session.selfId)) {
+        seated = true;
         return;
       }
-      if (mode === "hotseat") {
-        for (const p of HOTSEAT_PLAYERS) session.dispatch({ type: "player/join", player: p }, p.id);
-      } else {
-        session.dispatch({
-          type: "player/join",
-          player: { id: session.selfId, name, color: COLORS[0]!, seat: 0 },
-        });
+      const mine = room?.playerId ?? (resumed ? players.find((p) => p.seat === 0)?.id : undefined);
+      seated = true;
+      if (mine && game.players[mine] && !status.peers.includes(mine)) {
+        session.dispatch({ type: "player/claim", player: mine });
+        return;
       }
-      if (system && system !== DEFAULT_SYSTEM) session.dispatch({ type: "game/system", system });
-      session.dispatch({ type: "layout/set", layout: systemModule(system).layout(session.current.table) });
-      return;
-    }
-
-    // Clients wait for the host's snapshot, then take a free seat or watch.
-    const unsubscribe = useStore.subscribe((s) => {
-      if (s.game.seq === 0) return;
-      unsubscribe();
-      const seated = Object.values(s.game.players);
-      if (seated.some((p) => p.id === session.selfId)) return;
-      if (seated.filter((p) => p.seat !== undefined).length >= 2) return;
+      if (status.role === "host") return;
+      if (players.filter((p) => p.seat !== undefined).length >= 2) return;
       session.dispatch({
         type: "player/join",
         player: { id: session.selfId, name, color: COLORS[1]!, seat: 1 },
       });
-    });
+    }
+
+    if (role !== "host") {
+      takeSeat();
+      return;
+    }
+    if (record) {
+      // A resumed host first finds out whether the room has moved on without it
+      // (it may stand down), then takes its seat back.
+      setTimeout(takeSeat, 1500);
+      return;
+    }
+    seated = true;
+    if (mode === "hotseat") {
+      for (const p of HOTSEAT_PLAYERS) session.dispatch({ type: "player/join", player: p }, p.id);
+    } else {
+      session.dispatch({
+        type: "player/join",
+        player: { id: session.selfId, name, color: COLORS[0]!, seat: 0 },
+      });
+    }
+    if (system && system !== DEFAULT_SYSTEM) session.dispatch({ type: "game/system", system });
+    session.dispatch({ type: "layout/set", layout: systemModule(system).layout(session.current.table) });
   },
 
   openReplay(record) {

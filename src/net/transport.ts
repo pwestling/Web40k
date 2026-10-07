@@ -3,10 +3,22 @@ import type { GameRecord, Intent, LoggedEvent } from "../core";
 /** Wire protocol. The host is authoritative: clients send intents, the host
  * broadcasts logged events, and late joiners get the whole record. */
 export type NetMessage =
-  | { t: "hello" }
+  /**
+   * A non-host greeting a peer: what log it already holds (`seq`, and `tail`
+   * to check it is the same log), so the host sends only what is missing.
+   */
+  | { t: "hello"; seq?: number; tail?: string; role?: "host" | "client" | "spectator" }
   | { t: "intent"; intent: Intent }
   | { t: "event"; logged: LoggedEvent }
+  /** Events a reconnecting peer missed, in order. */
+  | { t: "events"; events: LoggedEvent[] }
   | { t: "record"; record: GameRecord }
+  /** "I am the host": sent to each peer met, and when taking over a room. */
+  | { t: "host"; seq: number; resumed?: boolean }
+  /** A peer's log length and role, shared while choosing a new host. */
+  | { t: "sync"; seq: number; role: "host" | "client" | "spectator" }
+  /** A host standing down in favour of `to`. */
+  | { t: "yield"; to: string }
   | SideMessage;
 
 /**

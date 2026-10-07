@@ -12,7 +12,10 @@ const HORSE: BaseShape = { shape: "rect", widthMm: 25, depthMm: 50 };
 const BRUTE: BaseShape = { shape: "rect", widthMm: 40, depthMm: 40 };
 const ENGINE: BaseShape = { shape: "rect", widthMm: 50, depthMm: 50 };
 
-type Stats = Record<"M" | "WS" | "BS" | "S" | "T" | "W" | "I" | "A" | "Ld", number> & { US?: number };
+type Stats = Record<"M" | "WS" | "BS" | "S" | "T" | "W" | "I" | "A" | "Ld", number> & {
+  US?: number;
+  Troop?: string;
+};
 
 const chars = (s: Stats): Record<string, string> =>
   Object.fromEntries(Object.entries(s).map(([k, v]) => [k, String(v)]));
@@ -59,10 +62,22 @@ function regiment(
   };
 }
 
-const spear: Stats = { M: 4, WS: 3, BS: 3, S: 3, T: 3, W: 1, I: 3, A: 1, Ld: 7 };
+const spear: Stats = { M: 4, WS: 3, BS: 3, S: 3, T: 3, W: 1, I: 3, A: 1, Ld: 7, Troop: "Regular Infantry" };
 const bow: Stats = { ...spear, BS: 3 };
-const rider: Stats = { M: 8, WS: 4, BS: 3, S: 3, T: 3, W: 1, I: 3, A: 1, Ld: 7, US: 2 };
-const captain: Stats = { M: 4, WS: 5, BS: 4, S: 4, T: 4, W: 2, I: 5, A: 3, Ld: 9 };
+const rider: Stats = {
+  M: 8,
+  WS: 4,
+  BS: 3,
+  S: 3,
+  T: 3,
+  W: 1,
+  I: 3,
+  A: 1,
+  Ld: 7,
+  US: 2,
+  Troop: "Light Cavalry",
+};
+const captain: Stats = { M: 4, WS: 5, BS: 4, S: 4, T: 4, W: 2, I: 5, A: 3, Ld: 9, Troop: "Regular Infantry" };
 
 function marchwardens(): ImportedRoster {
   const units = [
@@ -77,7 +92,7 @@ function marchwardens(): ImportedRoster {
       "Siege Engine",
       1,
       ENGINE,
-      { M: 0, WS: 0, BS: 3, S: 7, T: 7, W: 3, I: 1, A: 0, Ld: 7, US: 3 },
+      { M: 0, WS: 0, BS: 3, S: 7, T: 7, W: 3, I: 1, A: 0, Ld: 7, US: 3, Troop: "War Machine" },
       90,
     ),
   ];
@@ -85,8 +100,31 @@ function marchwardens(): ImportedRoster {
 }
 
 function reavers(): ImportedRoster {
-  const brute: Stats = { M: 6, WS: 3, BS: 2, S: 4, T: 4, W: 3, I: 2, A: 3, Ld: 7, US: 3 };
-  const raider: Stats = { M: 5, WS: 3, BS: 3, S: 3, T: 3, W: 1, I: 3, A: 1, Ld: 6 };
+  const brute: Stats = {
+    M: 6,
+    WS: 3,
+    BS: 2,
+    S: 4,
+    T: 4,
+    W: 3,
+    I: 2,
+    A: 3,
+    Ld: 7,
+    US: 3,
+    Troop: "Monstrous Infantry",
+  };
+  const raider: Stats = {
+    M: 5,
+    WS: 3,
+    BS: 3,
+    S: 3,
+    T: 3,
+    W: 1,
+    I: 3,
+    A: 1,
+    Ld: 6,
+    Troop: "Regular Infantry",
+  };
   const units = [
     regiment("Reaver Warband", 30, FOOT, raider, 160, [
       { name: "Reaver Chief", stats: { ...captain, Ld: 8 }, base: BIG_FOOT },

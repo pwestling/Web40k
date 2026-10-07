@@ -107,8 +107,10 @@ export function TopBar() {
                       ))}
                     </select>
                   </>
-                ) : (
+                ) : live ? (
                   "Place your units in your zone"
+                ) : (
+                  "Players are deploying"
                 )}
               </span>
             </>

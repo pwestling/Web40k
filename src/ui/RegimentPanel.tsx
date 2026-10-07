@@ -11,23 +11,29 @@ import {
 } from "../core";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
-import { blockMoveUsed, blockSummary } from "./regiment";
+import { blockMoveUsed, blockSummary, moveBudget, offTable, type MoveBudget } from "./regiment";
 
-const ORDERS: { id: BlockOrder | "skirmish"; label: string }[] = [
+const ORDERS: { id: Exclude<BlockOrder, "disrupted"> | "skirmish"; label: string }[] = [
   { id: "close", label: "Close order" },
   { id: "column", label: "Column" },
   { id: "open", label: "Open order" },
-  { id: "disrupted", label: "Disrupted" },
   { id: "skirmish", label: "Skirmish" },
+];
+
+const FACINGS: { label: string; turn: number }[] = [
+  { label: "same way", turn: 0 },
+  { label: "left", turn: Math.PI / 2 },
+  { label: "right", turn: -Math.PI / 2 },
+  { label: "about", turn: Math.PI },
 ];
 
 const fmt = (n: number) => `${Number(n.toFixed(1))}"`;
 
 /**
  * Manoeuvres for a regiment block (rank-and-flank games): move straight
- * ahead, wheel, turn, reform and march, each with the distance it uses and
- * advisory checks. Dragging the block on the table works too. Everything is
- * logged; nothing is blocked.
+ * ahead, wheel, turn, redress, reform and march, each with the distance it
+ * uses and advisory checks. Dragging the block on the table works too.
+ * Everything is logged; nothing is blocked.
  */
 export function RegimentPanel({ unit }: { unit: Unit }) {
   const game = useGame();
@@ -37,20 +43,34 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
   const mine = canControl(unit.owner) && scrub === null;
   const [ahead, setAhead] = useState(1);
   const [degrees, setDegrees] = useState(45);
+  const [files, setFiles] = useState<number | null>(null);
+  const [facing, setFacing] = useState(0);
   const frame = blockFrame(game, unit);
   const summary = blockSummary(game, unit);
-  const [files, setFiles] = useState<number | null>(null);
   const ranked = systemOf(game).unitShape.kind === "ranked";
   const as = unit.owner;
+  const used = blockMoveUsed(record, unit.id, scrub ?? Infinity);
+  const marching = unit.status?.marching === true;
+  const status = (key: string, value: number | boolean | null) =>
+    dispatch({ type: "unit/status", id: unit.id, key, value }, as);
+
   if (!frame || !summary || unit.formation.kind !== "ranked") {
     if (!ranked || unit.formation.kind === "ranked") return null;
-    // A skirmishing unit in a rank-and-flank game can form a block again.
+    // A skirmishing unit in a rank-and-flank game: its move, and forming a block again.
     const n = unit.modelIds.length;
-    const f = files ?? Math.min(5, n);
-    const facing = game.models[unit.modelIds[0] ?? ""]?.facing ?? 0;
+    const last = typeof unit.status?.lastFiles === "number" ? unit.status.lastFiles : Math.min(5, n);
+    const f = files ?? last;
+    const turnFacing = game.models[unit.modelIds[0] ?? ""]?.facing ?? 0;
     return (
       <div className="regiment">
         <h3>Skirmishing</h3>
+        <MovedLine
+          budget={moveBudget(game, unit)}
+          used={used}
+          marching={false}
+          off={offTable(game, unit)}
+          round={game.turn.round}
+        />
         {mine && (
           <div className="row">
             <label>
@@ -67,8 +87,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             <button
               onClick={() => {
                 const blockUnit: Unit = { ...unit, formation: { kind: "ranked", files: f, order: "close" } };
-                const centre = centreOf(game, unit);
-                const { order, models } = formBlock(game, blockUnit, f, facing, centre);
+                const { order, models } = formBlock(game, blockUnit, f, turnFacing, centreOf(game, unit));
                 dispatch(
                   {
                     type: "unit/form",
@@ -80,6 +99,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
                   },
                   as,
                 );
+                setFiles(null);
               }}
             >
               Form a block
@@ -90,33 +110,32 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     );
   }
 
-  const order = unit.formation.order ?? "close";
-  const used = blockMoveUsed(record, unit.id, scrub ?? Infinity);
-  const marching = unit.status?.marching === true;
-  const allowed = marching ? summary.march : summary.move;
-  const over = allowed !== null && used > allowed + 0.05;
-  const marchNear = marching && summary.nearestEnemy < summary.marchBlock;
+  const order = unit.formation.order === "disrupted" ? "close" : (unit.formation.order ?? "close");
   const frontage = files ?? summary.files;
   const alive = blockSlots(game, unit).length;
   const rearCount = alive - (summary.ranks - 1) * summary.files;
   const cost = (share: number) => (summary.move === null ? 0 : summary.move * share);
+  const fighting = game.turn.round > 0;
+  const redress =
+    facing === 0 && frontage !== summary.files && Math.abs(frontage - summary.files) <= summary.redressMax;
 
-  const form = (newFiles: number, turn: number, how: "reform" | "turn", distance: number) => {
+  const form = (newFiles: number, turn: number, how: "reform" | "redress" | "turn", distance: number) => {
     const formation = { ...unit.formation, files: Math.max(1, Math.min(newFiles, alive)) };
     const laid = formBlock(game, { ...unit, formation }, formation.files, frame.facing + turn);
-    dispatch({ type: "unit/form", id: unit.id, formation, ...laid, how, distance }, as);
-  };
-  const block = unit.formation;
-  const setOrder = (id: BlockOrder | "skirmish") =>
     dispatch(
-      {
-        type: "unit/form",
-        id: unit.id,
-        formation: id === "skirmish" ? { kind: "skirmish" } : { ...block, order: id },
-        how: "order",
-      },
+      { type: "unit/form", id: unit.id, formation, ...laid, how, distance: fighting ? distance : 0 },
       as,
     );
+  };
+  const block = unit.formation;
+  const setOrder = (id: (typeof ORDERS)[number]["id"]) => {
+    if (id === "skirmish") {
+      // Remember the frontage for when it forms up again; skirmishers don't march.
+      status("lastFiles", block.files);
+      if (marching) status("marching", null);
+      dispatch({ type: "unit/form", id: unit.id, formation: { kind: "skirmish" }, how: "order" }, as);
+    } else dispatch({ type: "unit/form", id: unit.id, formation: { ...block, order: id }, how: "order" }, as);
+  };
   const wheelCost = frame.width * ((degrees * Math.PI) / 180);
 
   return (
@@ -126,17 +145,18 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"} · unit strength{" "}
         {summary.strength}
         {order === "close" ? ` · rank bonus +${summary.rankBonus}` : ""}
+        {summary.disrupted ? " (disrupted)" : ""}
       </p>
       <p className="muted small">
-        Front to rear: {alive} models; the rear rank has {rearCount} of {summary.files}. Casualties come off
-        the rear rank.
+        Ranks count from {summary.rankWidth} wide. Front to rear: {alive} models; the rear rank has{" "}
+        {rearCount} of {summary.files}. Casualties come off the rear rank.
       </p>
       <div className="row">
         <select
           aria-label="Formation"
           value={order}
           disabled={!mine}
-          onChange={(e) => setOrder(e.target.value as BlockOrder | "skirmish")}
+          onChange={(e) => setOrder(e.target.value as (typeof ORDERS)[number]["id"])}
         >
           {ORDERS.map((o) => (
             <option key={o.id} value={o.id}>
@@ -145,6 +165,14 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           ))}
         </select>
         <button
+          className={summary.disrupted ? "on" : ""}
+          disabled={!mine}
+          title="Disrupted units lose their rank bonus"
+          onClick={() => status("disrupted", summary.disrupted ? null : true)}
+        >
+          Disrupted
+        </button>
+        <button
           className={arcs ? "on" : ""}
           onClick={() => set({ arcs: !arcs })}
           title="Show front, flank and rear arcs"
@@ -152,14 +180,13 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           Arcs
         </button>
       </div>
-      {game.turn.round > 0 && (
-        <p className={over || marchNear ? "warn" : "muted"}>
-          Moved {fmt(used)}
-          {allowed !== null ? ` of ${fmt(allowed)}${marching ? " (marching)" : ""}` : ""}
-          {over ? " · over its move" : ""}
-          {marchNear ? ` · an enemy is within ${summary.marchBlock}": marching needs a Leadership test` : ""}
-        </p>
-      )}
+      <MovedLine
+        budget={summary}
+        used={used}
+        marching={marching}
+        off={offTable(game, unit)}
+        round={game.turn.round}
+      />
       {mine && (
         <>
           <div className="row">
@@ -178,12 +205,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               <input
                 type="checkbox"
                 checked={marching}
-                onChange={(e) =>
-                  dispatch(
-                    { type: "unit/status", id: unit.id, key: "marching", value: e.target.checked || null },
-                    as,
-                  )
-                }
+                onChange={(e) => status("marching", e.target.checked || null)}
               />{" "}
               March
             </label>
@@ -222,8 +244,8 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               Turn right
             </button>
             <button
-              title={`Costs ${fmt(cost(summary.turnCost))}`}
-              onClick={() => form(summary.files, Math.PI, "turn", cost(summary.turnCost))}
+              title={`Costs ${fmt(cost(summary.turnCost * 2))}`}
+              onClick={() => form(summary.files, Math.PI, "turn", cost(summary.turnCost * 2))}
             >
               About face
             </button>
@@ -240,11 +262,37 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
                 onChange={(e) => setFiles(Number(e.target.value) || 1)}
               />
             </label>
+            <label>
+              facing{" "}
+              <select
+                aria-label="Facing after reforming"
+                value={facing}
+                onChange={(e) => setFacing(Number(e.target.value))}
+              >
+                {FACINGS.map((f, i) => (
+                  <option key={f.label} value={i}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {redress && (
+              <button
+                title={`Add or remove up to ${summary.redressMax} models from the front rank; costs ${fmt(cost(summary.redressCost))}`}
+                onClick={() => {
+                  form(frontage, 0, "redress", cost(summary.redressCost));
+                  setFiles(null);
+                }}
+              >
+                Redress
+              </button>
+            )}
             <button
-              title={`Rebuild the block around its centre; costs ${fmt(cost(summary.reformCost))}`}
+              title={`Rebuild the block around its centre; costs all its move (${fmt(cost(summary.reformCost))})`}
               onClick={() => {
-                form(frontage, 0, "reform", game.turn.round > 0 ? cost(summary.reformCost) : 0);
+                form(frontage, FACINGS[facing]!.turn, "reform", cost(summary.reformCost));
                 setFiles(null);
+                setFacing(0);
               }}
             >
               Reform
@@ -256,6 +304,37 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         </>
       )}
     </div>
+  );
+}
+
+/** The move used this phase against what the unit may move, with advisory notes. */
+function MovedLine({
+  budget,
+  used,
+  marching,
+  off,
+  round,
+}: {
+  budget: MoveBudget;
+  used: number;
+  marching: boolean;
+  off: boolean;
+  round: number;
+}) {
+  if (round <= 0) return off ? <p className="warn">Off the table</p> : null;
+  const allowed = marching ? budget.march : budget.move;
+  const over = allowed !== null && used > allowed + 0.05;
+  const marchNear = marching && budget.nearestEnemy < budget.marchBlock;
+  return (
+    <p className={over || marchNear || off ? "warn" : "muted"}>
+      Moved {fmt(used)}
+      {allowed !== null ? ` of ${fmt(allowed)}${marching ? " (marching)" : ""}` : ""}
+      {over ? " · over its move" : ""}
+      {off ? " · off the table" : ""}
+      {marchNear
+        ? ` · an enemy is within ${budget.marchBlock}": marching needs a Leadership test (if failed, it moves normally but counts as having marched)`
+        : ""}
+    </p>
   );
 }
 

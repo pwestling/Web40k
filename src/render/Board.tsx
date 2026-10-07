@@ -17,6 +17,7 @@ import {
   type TerrainPiece,
   type Vec2,
   isBlock,
+  blockFrame,
 } from "../core";
 import {
   aliveModels,
@@ -247,6 +248,7 @@ function Scene() {
     eye,
     hoverUnit,
     plates,
+    arcs,
     ranges,
     rangeWeapon: shownRangeWeapon,
     set: setUi,
@@ -297,6 +299,18 @@ function Scene() {
             limit,
           );
           to = { x: d.grab.x + dx * s, y: d.grab.y + dy * s };
+        }
+      }
+      // A regiment block drags straight ahead or back; Shift moves it freely.
+      if (d.kind === "models" && d.unitId && !e.shiftKey) {
+        const game = useStore.getState().game;
+        const unit = game.units[d.unitId];
+        const frame = unit && isBlock(unit) && d.ids.length > 1 ? blockFrame(game, unit) : null;
+        if (frame) {
+          const fx = Math.sin(frame.facing);
+          const fy = Math.cos(frame.facing);
+          const along = (to.x - d.grab.x) * fx + (to.y - d.grab.y) * fy;
+          to = { x: d.grab.x + fx * along, y: d.grab.y + fy * along };
         }
       }
       const moved = d.moved || Math.hypot(to.x - d.grab.x, to.y - d.grab.y) > 0.15;
@@ -576,15 +590,17 @@ function Scene() {
     for (const u of Object.values(game.units)) {
       const models = aliveModels(game, u);
       const sight = sightOf.get(u.id);
-      if (!models.length || (!plates && !sight)) continue;
+      // The selected block's arcs carry their own labels; its plate would sit on top of them.
+      const plate = plates && !(arcs && u.id === selected && isBlock(u));
+      if (!models.length || (!plate && !sight)) continue;
       const n = models.length;
       const x = models.reduce((a, m) => a + positions[m.id]!.x, 0) / n;
       const y = models.reduce((a, m) => a + positions[m.id]!.y, 0) / n;
       let z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m))) + 1;
       // Rough label size in pixels, from its text.
-      const chars = Math.max(plates ? u.name.length : 0, sight?.text.length ?? 0);
+      const chars = Math.max(plate ? u.name.length : 0, sight?.text.length ?? 0);
       const w = chars * 6.4 + 16;
-      const h = (plates && sight ? 2 : 1) * 15 + 6;
+      const h = (plate && sight ? 2 : 1) * 15 + 6;
       let r = rectAt(x, y, z, w, h);
       for (let i = 0; i < 12 && hits(r); i++) {
         z += 0.8;
@@ -596,13 +612,13 @@ function Scene() {
         x,
         y,
         z,
-        ...(plates ? { name: u.name } : {}),
+        ...(plate ? { name: u.name } : {}),
         color: game.players[u.owner]?.color ?? "#999",
         ...(sight ? { sight } : {}),
       });
     }
     return out;
-  }, [game, positions, heights, plates, sightLabels, view, camKey, size]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game, positions, heights, plates, arcs, selected, sightLabels, view, camKey, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;

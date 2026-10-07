@@ -74,6 +74,8 @@ export function ReplayBar() {
   const play = () => {
     // Playing from the end starts again from the beginning.
     if (!playing && pos >= last) setScrub(0);
+    // A replay starts straight away (which also closes its title card).
+    else if (!playing && !session) setScrub(pos + 1);
     setPlaying(!playing);
   };
 

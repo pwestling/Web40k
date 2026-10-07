@@ -16,7 +16,7 @@ import {
   type Vec2,
 } from "../core";
 import { useStore } from "../store";
-import { blockMoveUsed, blockSummary } from "../ui/regiment";
+import { blockMoveUsed, blockSummary, offTable } from "../ui/regiment";
 import { useGame } from "../ui/hooks";
 
 /** Labels sit under the side panels (see Board's LABEL_Z). */
@@ -47,10 +47,17 @@ export function BlockArcs() {
   const relation = sel && hov && hovFrame ? arcOf(hovFrame, unitPoint(game, sel, selFrame)) : null;
   return (
     <>
-      {sel && selFrame && <Arcs frame={selFrame} color={game.players[sel.owner]?.color ?? "#fff"} names />}
+      {sel && selFrame && (
+        <Arcs frame={selFrame} table={game.table} color={game.players[sel.owner]?.color ?? "#fff"} names />
+      )}
       {hov && hovFrame && (
         <>
-          <Arcs frame={hovFrame} color={game.players[hov.owner]?.color ?? "#fff"} names={false} />
+          <Arcs
+            frame={hovFrame}
+            table={game.table}
+            color={game.players[hov.owner]?.color ?? "#fff"}
+            names={false}
+          />
           {relation && (
             <Html
               zIndexRange={LABEL_Z}
@@ -74,13 +81,32 @@ function unitPoint(game: GameState, unit: Unit, frame: BlockFrame | null): Vec2 
   return { x: ms.reduce((a, m) => a + m.position.x, 0) / n, y: ms.reduce((a, m) => a + m.position.y, 0) / n };
 }
 
-function Arcs({ frame, color, names }: { frame: BlockFrame; color: string; names: boolean }) {
+function Arcs({
+  frame,
+  table,
+  color,
+  names,
+}: {
+  frame: BlockFrame;
+  table: { width: number; depth: number };
+  color: string;
+  names: boolean;
+}) {
   const { lines, wedge, labels } = useMemo(() => {
     const c = blockCorners(frame);
     // Local +x is the block's left (BLOCK_LEFT).
     const dir = (left: number, ahead: number) =>
       rotate({ x: left * BLOCK_LEFT * Math.SQRT1_2, y: ahead * Math.SQRT1_2 }, frame.facing);
-    const out = (p: Vec2, d: Vec2) => ({ x: p.x + d.x * REACH, y: p.y + d.y * REACH });
+    // Each line stops at the table edge.
+    const hx = table.width / 2;
+    const hy = table.depth / 2;
+    const out = (p: Vec2, d: Vec2) => {
+      let t = REACH;
+      if (d.x) t = Math.min(t, ((d.x > 0 ? hx : -hx) - p.x) / d.x);
+      if (d.y) t = Math.min(t, ((d.y > 0 ? hy : -hy) - p.y) / d.y);
+      t = Math.max(0, t);
+      return { x: p.x + d.x * t, y: p.y + d.y * t };
+    };
     const fl = out(c.frontLeft, dir(1, 1));
     const fr = out(c.frontRight, dir(-1, 1));
     const rl = out(c.rearLeft, dir(1, -1));
@@ -95,7 +121,11 @@ function Arcs({ frame, color, names }: { frame: BlockFrame; color: string; names
     ]);
     const tri = (a: Vec2, b: Vec2, d: Vec2) => [a.x, y, a.y, b.x, y, b.y, d.x, y, d.y];
     const wedge = new Float32Array([...tri(c.frontLeft, fl, fr), ...tri(c.frontLeft, fr, c.frontRight)]);
-    const at = (x: number, yy: number) => blockToWorld(frame, { x, y: yy });
+    // Labels stay on the table.
+    const at = (x: number, yy: number) => {
+      const p = blockToWorld(frame, { x, y: yy });
+      return { x: Math.max(-hx + 3, Math.min(hx - 3, p.x)), y: Math.max(-hy + 1.5, Math.min(hy - 1.5, p.y)) };
+    };
     const w = frame.width / 2;
     const labels: { text: string; p: Vec2 }[] = [
       { text: "Front", p: at(0, 6) },
@@ -104,7 +134,7 @@ function Arcs({ frame, color, names }: { frame: BlockFrame; color: string; names
       { text: "Right flank", p: at(-(w + 6) * BLOCK_LEFT, -frame.depth / 2) },
     ];
     return { lines, wedge, labels };
-  }, [frame]);
+  }, [frame, table]);
   return (
     <group>
       <lineSegments raycast={() => null}>
@@ -159,20 +189,29 @@ export function BlockMoveLabel({
   const allowed = marching ? summary.march : summary.move;
   const sideways = Math.abs(local.x) > 0.25;
   const over = game.turn.round > 0 && allowed !== null && used > allowed + 0.05;
+  const moved: Record<string, Vec2> = {};
+  for (const id of unit.modelIds) {
+    const p = game.models[id]?.position;
+    if (p) moved[id] = { x: p.x + d.x, y: p.y + d.y };
+  }
+  const off = offTable(game, unit, moved);
   const parts = [
     `${Math.abs(local.y).toFixed(1)}" ${local.y >= 0 ? "ahead" : "back"}`,
     ...(sideways ? [`${Math.abs(local.x).toFixed(1)}" sideways`] : []),
     ...(game.turn.round > 0 && allowed !== null ? [`${used.toFixed(1)}" of ${allowed}"`] : []),
+    ...(off ? ["off the table"] : []),
   ];
   return (
     <Html
       zIndexRange={LABEL_Z}
       position={[at.x, 2.5, at.y]}
       center
-      className={over || sideways ? "ruler over" : "ruler"}
+      className={over || off || (sideways && game.turn.round > 0) ? "ruler over" : "ruler"}
     >
       {parts.join(" · ")}
-      {sideways && game.turn.round > 0 ? " · not straight ahead: wheel or turn" : ""}
+      {game.turn.round > 0 && (sideways || local.y < -0.25)
+        ? " · moving back or sideways halves Movement"
+        : ""}
     </Html>
   );
 }

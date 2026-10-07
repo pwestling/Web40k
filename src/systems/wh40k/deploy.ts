@@ -23,6 +23,9 @@ export interface SpawnableUnit {
 }
 
 const GAP = 0.6;
+/** How far ranked blocks deploy in from the table edge, and the space kept between them. */
+const BLOCK_INSET = 3;
+const BLOCK_GAP = 2;
 
 /**
  * Turn imported units into unit/add intents, placed in tidy blocks inside
@@ -109,7 +112,8 @@ function blockIntent(
   const sizes = bases.map(baseSizeInches);
   const width = Math.max(...offsets.map((o, i) => Math.abs(o.x) + sizes[i]!.width / 2)) * 2;
   const depth = Math.max(...offsets.map((o, i) => -o.y + sizes[i]!.depth / 2));
-  const spot = findSpot(taken, width, depth, hx, hy, sign);
+  // Blocks start a few inches in from the edge with room between them to wheel.
+  const spot = findSpot(taken, width, depth, hx, hy, sign, BLOCK_INSET, BLOCK_GAP);
   // Seat 0 sits on the +y edge and faces -y (facing pi); seat 1 the other way.
   const facing = seat === 0 ? Math.PI : 0;
   const back = rotate({ x: 0, y: depth / 2 }, facing);
@@ -149,12 +153,14 @@ function findSpot(
   hx: number,
   hy: number,
   sign: number,
+  inset = 0.5,
+  gap = GAP / 2,
 ): { x: number; y: number } {
-  for (let depth = d / 2 + 0.5; depth < hy; depth += 1) {
-    for (let x = -hx + w / 2 + 0.5; x <= hx - w / 2 - 0.5; x += 1) {
+  for (let depth = d / 2 + inset; depth < hy; depth += 1) {
+    for (let x = -hx + w / 2 + inset; x <= hx - w / 2 - inset; x += 1) {
       const y = sign * (hy - depth);
       const clear = taken.every(
-        (t) => Math.abs(t.x - x) > w / 2 + t.r + GAP / 2 || Math.abs(t.y - y) > d / 2 + t.r + GAP / 2,
+        (t) => Math.abs(t.x - x) > w / 2 + t.r + gap || Math.abs(t.y - y) > d / 2 + t.r + gap,
       );
       if (clear) return { x, y };
     }

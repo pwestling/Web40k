@@ -14,6 +14,8 @@ export interface LoggedEvent {
   /** Host clock, ms since epoch. Used for replays, never for game logic. */
   at: number;
   event: GameEvent;
+  /** Peer that was host when it was logged (and rolled its dice), once hosts can change. */
+  host?: PlayerId;
 }
 
 /** A whole game: the starting table plus every event since. Also the replay file format. */

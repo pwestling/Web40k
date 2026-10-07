@@ -21,7 +21,10 @@ export function broadcastTransport(roomId: string): Transport {
     join: [] as ((id: string) => void)[],
     leave: [] as ((id: string) => void)[],
   };
-  const post = (e: Envelope) => channel.postMessage(e);
+  let closed = false;
+  const post = (e: Envelope) => {
+    if (!closed) channel.postMessage(e);
+  };
   const meet = (id: string) => {
     if (peers.has(id)) return;
     peers.add(id);
@@ -43,7 +46,7 @@ export function broadcastTransport(roomId: string): Transport {
   };
   // Announce once handlers are registered.
   setTimeout(() => post({ kind: "announce", from: selfId }), 0);
-  addEventListener("beforeunload", () => post({ kind: "bye", from: selfId }));
+  addEventListener("pagehide", () => post({ kind: "bye", from: selfId }));
 
   return {
     selfId,
@@ -53,6 +56,7 @@ export function broadcastTransport(roomId: string): Transport {
     onPeerLeave: (h) => void handlers.leave.push(h),
     leave() {
       post({ kind: "bye", from: selfId });
+      closed = true;
       channel.close();
     },
   };
