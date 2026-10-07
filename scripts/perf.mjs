@@ -19,7 +19,8 @@ const executablePath =
   process.env.CHROMIUM ??
   ["/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "/opt/pw-browsers/chromium"].find(existsSync);
 
-const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "pipe" });
+// Its own process group, so stopping it also stops the vite process npx starts.
+const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "pipe", detached: true });
 await new Promise((resolve, reject) => {
   server.stdout.on("data", (d) => String(d).includes("localhost") && resolve());
   server.on("exit", reject);
@@ -52,5 +53,5 @@ try {
   console.log(JSON.stringify({ when: new Date().toISOString(), gpu, models, results }, null, 2));
 } finally {
   await browser.close();
-  server.kill();
+  process.kill(-server.pid);
 }
