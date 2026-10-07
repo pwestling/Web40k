@@ -1848,3 +1848,16 @@ button.rare-star:hover {
   flex-direction: column;
   gap: 4px;
 }
+
+/* Hidden objectives, kept on their owner's device until revealed (src/ui/SecretObjectives.tsx). */
+.secret-objectives .stack-player {
+  margin-top: 6px;
+}
+.secret-objectives .objective-list {
+  margin: 2px 0 4px;
+  padding-left: 1.2em;
+}
+.secret-objectives input {
+  flex: 1;
+  min-width: 0;
+}

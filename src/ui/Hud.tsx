@@ -7,6 +7,7 @@ import { buildLog, collapseEmpty } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
+import { SecretObjectives } from "./SecretObjectives";
 import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
 import { battleOver } from "./StatsScreen";
@@ -160,6 +161,7 @@ export function Hud() {
             <ArmyImport players={mine} />
           </details>
         ))}
+      <SecretObjectives players={mine} />
 
       {role !== "spectator" && (
         <div className="row">

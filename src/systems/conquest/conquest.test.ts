@@ -12,7 +12,8 @@ import { unitActions } from "../../core/content/play";
 import type { StepRecord } from "../../core/content";
 import { spawnIntents } from "../wh40k/deploy";
 import "../index";
-import { nextCard, stackOf } from "./command";
+import { commitmentOf } from "../../core/secrets";
+import { cardKey, nextCard, stackOf } from "./command";
 import { conquestLayout } from "./layout";
 import { reservesOf } from "./reinforce";
 import { conquestSample } from "./sample";
@@ -85,8 +86,21 @@ describe("Conquest", () => {
     s = play(s, { type: "turn/next" }, "p1");
     expect(currentSlot(s)?.id).toBe("command");
     const order = [p1[2]!.id, p1[0]!.id, p1[1]!.id, p1[3]!.id];
-    s = play(s, { type: "script/start", procedure: "setStack", args: { player: "p1", order } }, "p1");
-    expect(stackOf(s, s.modules!["conquest-hand"]!, "p1")).toEqual(order);
+    // Each card is committed; the table never holds the order until a card is drawn.
+    const salt = (i: number) => `salt${i}`;
+    const secrets = order.map((id, i) => ({
+      key: cardKey(s.turn.round, i),
+      commitment: commitmentOf(id, salt(i)),
+    }));
+    s = play(s, { type: "secret/commit", player: "p1", secrets }, "p1");
+    expect(stackOf(s, "p1")?.map((c) => c.unitId)).toEqual([undefined, undefined, undefined, undefined]);
+    expect(order.some((id) => JSON.stringify(s.secrets).includes(id))).toBe(false);
+    const draw = (i: number) =>
+      (s = play(
+        s,
+        { type: "secret/reveal", player: "p1", key: cardKey(1, i), value: order[i], salt: salt(i) },
+        "p1",
+      ));
     s = play(s, { type: "turn/next" }, "p1");
     expect(currentSlot(s)?.kind).toBe("alternate");
 
@@ -99,6 +113,21 @@ describe("Conquest", () => {
       s = play(s, { type: "action/take", unitId: any.id, action: "activate" }, "p2");
       s = play(s, { type: "turn/endActivation" }, "p2");
     }
+    // Face down, no regiment may go; drawn, only the top card's.
+    expect(unitActions(s, order[0]!).find((o) => o.def.id === "activate")?.ok).toBe(false);
+    // A reveal that doesn't match its commitment is refused.
+    const forged = {
+      type: "secret/reveal",
+      player: "p1",
+      key: cardKey(1, 0),
+      value: order[1],
+      salt: salt(0),
+    } as const;
+    expect(resolveIntent(forged, "p1", rng(1), s)).toBeNull();
+    expect(applyEvent(s, forged)).toBe(s);
+    // Only the owner may reveal.
+    expect(resolveIntent({ ...forged, value: order[0] }, "p2", rng(1), s)).toBeNull();
+    draw(0);
     expect(unitActions(s, p1[0]!.id).find((o) => o.def.id === "activate")?.ok).toBe(false);
     expect(unitActions(s, order[0]!).find((o) => o.def.id === "activate")?.ok).toBe(true);
     s = play(s, { type: "action/take", unitId: order[0]!, action: "activate" }, "p1");
@@ -107,7 +136,9 @@ describe("Conquest", () => {
     s = play(s, { type: "action/take", unitId: order[0]!, action: "march" }, "p1");
     expect(unitActions(s, order[0]!).find((o) => o.def.id === "march")?.why).toBe("No actions left");
     s = play(s, { type: "turn/endActivation" }, "p1");
-    expect(nextCard(s, order)?.id).toBe(order[1]);
+    expect(nextCard(s, stackOf(s, "p1"))?.key).toBe(cardKey(1, 1));
+    draw(1);
+    expect(nextCard(s, stackOf(s, "p1"))?.unitId).toBe(order[1]);
   });
 
   it("clashes roll-under: hits on Clash, Defense less Cleave, Resolve with the size bonus", () => {

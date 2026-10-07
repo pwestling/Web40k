@@ -119,7 +119,9 @@ export type Command =
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id | RoleRef> }
   | { cmd: "emit"; event: { type: string } & Record<string, unknown> }
-  | { cmd: "set"; key: string; value: unknown };
+  | { cmd: "set"; key: string; value: unknown }
+  | { cmd: "secret"; player: Id; key: string; question: string; options: { id: Id; label: string }[] }
+  | { cmd: "reveal"; player: Id; key: string };
 
 export interface Ctx {
   view: GameView;
@@ -141,6 +143,19 @@ export interface Ctx {
   run(procedure: Id, roles: Record<string, Id | RoleRef>): Command;
   emit(event: { type: string } & Record<string, unknown>): Command;
   set(key: string, value: unknown): Command;
+  /**
+   * Ask a player to choose an option in secret (a hidden order, a secret
+   * objective). Their device keeps the choice and puts only a commitment on
+   * the table (`view.state.secrets[player][key]`), so nobody else, the host
+   * included, learns it. The result is the commitment.
+   */
+  secret(player: Id, key: string, question: string, options: { id: Id; label: string }[]): Command;
+  /**
+   * Have a player reveal a secret they committed. Their device sends the
+   * value, every player checks it against the commitment, and the result is
+   * the value (straight away if it was already revealed).
+   */
+  reveal(player: Id, key: string): Command;
 }
 
 /** What `ctx.run` hands back: each step's tokens in and out and its successes, and the table changes made. */

@@ -14,5 +14,6 @@ export const wh40kModule: GameModule<SystemModule> = {
     sample: sampleRoster,
     layout: (t) => standardLayout(t.width, t.depth),
     dedicatedUi: true,
+    secretObjectives: "Secret objectives",
   },
 };

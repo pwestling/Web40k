@@ -1,3 +1,5 @@
+import type { Secrets } from "./secrets";
+
 /**
  * Core game-state types. Everything in `src/core` is pure TypeScript with no
  * DOM, three.js or networking imports, so it can be unit tested and run
@@ -308,6 +310,8 @@ export interface GameState {
   script?: ScriptState | null;
   /** Game modules' own state: module id → key → value. */
   modules?: Record<string, Record<string, unknown>>;
+  /** Players' committed secrets (core/secrets.ts): commitments, and values once revealed. */
+  secrets?: Secrets;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }

@@ -36,6 +36,12 @@ export interface SystemModule {
   panel?: ComponentType;
   /** What is left undone in this phase, asked about before Next phase moves on ("hasn't brought in reinforcements"). */
   leaving?(game: GameState): string[];
+  /**
+   * The game has hidden objectives players write down and reveal later (40k's
+   * secret secondary missions): their name, e.g. "Secret objectives". Each is
+   * a secret kept on its owner's device (core/secrets.ts).
+   */
+  secretObjectives?: string;
 }
 
 export interface TemplateKind {

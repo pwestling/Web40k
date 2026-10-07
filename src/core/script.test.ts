@@ -20,6 +20,7 @@ import { startRun } from "./content/runner";
 import { systemOf } from "./content/turn";
 import { applyEvent, resolveIntent } from "./index";
 import { registerCode } from "./script";
+import { commitmentOf } from "./secrets";
 
 function rng(seed: number) {
   let a = seed >>> 0;
@@ -68,7 +69,18 @@ const shock: CodeProcedure = function* (ctx, args) {
   );
 };
 
-registerCode(SYSTEM, { duel, fickle, shock });
+/** A secret pick, then the other player rolls, then the pick is revealed and scored. */
+const gambit: CodeProcedure = function* (ctx) {
+  yield ctx.secret("p1", "gambit", "Pick a number", [
+    { id: "low", label: "Low" },
+    { id: "high", label: "High" },
+  ]);
+  const r = (yield ctx.roll("1d6", "Gambit")) as { total: number };
+  const pick = yield ctx.reveal("p1", "gambit");
+  yield ctx.set("gambitWon", (pick === "high") === r.total > 3);
+};
+
+registerCode(SYSTEM, { duel, fickle, shock, gambit });
 
 function game(): GameRecord {
   let record = createRecord(createInitialState());
@@ -252,5 +264,35 @@ describe("code procedures", () => {
     const after = applyEvent(withRun, event);
     expect(after.procedure).toBeNull();
     expect(after.script?.waiting?.question).toBe("Forfeit what?");
+  });
+
+  it("commits a secret choice without the host seeing it, then reveals and checks it", () => {
+    let record = game();
+    record = host(record, { type: "script/start", procedure: "gambit" }, "p2")!;
+    expect(stateAt(record).script?.waiting).toMatchObject({ player: "p1", secret: "gambit" });
+    // p1's device keeps "high" and answers with only the commitment.
+    const commitment = commitmentOf("high", "pepper");
+    expect(host(record, { type: "script/answer", answer: commitment }, "p2")).toBeNull();
+    record = host(record, { type: "script/answer", answer: commitment }, "p1")!;
+    const waiting = stateAt(record);
+    expect(waiting.secrets?.p1?.gambit).toEqual({ commitment });
+    expect(waiting.script?.waiting).toMatchObject({ player: "p1", reveal: "gambit" });
+    expect(JSON.stringify(record)).not.toContain(`"value":"high"`);
+    // A reveal that doesn't match stays waiting; the right one goes through.
+    const wrong = host(
+      record,
+      { type: "script/answer", answer: JSON.stringify({ value: "low", salt: "pepper" }) },
+      "p1",
+    )!;
+    expect(stateAt(wrong).script?.waiting?.reveal).toBe("gambit");
+    record = host(
+      record,
+      { type: "script/answer", answer: JSON.stringify({ value: "high", salt: "pepper" }) },
+      "p1",
+    )!;
+    const done = stateAt(record);
+    expect(done.script).toBeNull();
+    expect(done.secrets?.p1?.gambit?.revealed).toEqual({ value: "high" });
+    expect(typeof done.modules?.[SYSTEM]?.gambitWon).toBe("boolean");
   });
 });

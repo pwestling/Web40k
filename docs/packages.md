@@ -60,14 +60,16 @@ An action is a button on the unit card:
 
 A rule is a generator function. It yields commands and receives each command's result back:
 
-| Command                                  | Result                | What it does                                                                               |
-| ---------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------ |
-| `ctx.roll("3d6", label, unitId?, need?)` | `{ rolls, total }`    | Rolls dice with the host's dice. With `need`, the log shows "3+: 2 of 3" instead of a sum. |
-| `ctx.ask(player, question, options)`     | the chosen option id  | Shows the question to that player and waits for an answer.                                 |
-| `ctx.note(text)`                         | none                  | Adds a line to the game log.                                                               |
-| `ctx.emit(event)`                        | none                  | Changes the table with an ordinary game event, e.g. `model/wounds` or `unit/status`.       |
-| `ctx.set(key, value)`                    | none                  | Stores the package's own state, which you read back as `ctx.view.own[key]`.                |
-| `ctx.run(procedure, roles)`              | `{ steps, outcomes }` | Runs one of the system's data procedures (an attack sequence or a test) to its end.        |
+| Command                                      | Result                | What it does                                                                                        |
+| -------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
+| `ctx.roll("3d6", label, unitId?, need?)`     | `{ rolls, total }`    | Rolls dice with the host's dice. With `need`, the log shows "3+: 2 of 3" instead of a sum.          |
+| `ctx.ask(player, question, options)`         | the chosen option id  | Shows the question to that player and waits for an answer.                                          |
+| `ctx.note(text)`                             | none                  | Adds a line to the game log.                                                                        |
+| `ctx.emit(event)`                            | none                  | Changes the table with an ordinary game event, e.g. `model/wounds` or `unit/status`.                |
+| `ctx.set(key, value)`                        | none                  | Stores the package's own state, which you read back as `ctx.view.own[key]`.                         |
+| `ctx.run(procedure, roles)`                  | `{ steps, outcomes }` | Runs one of the system's data procedures (an attack sequence or a test) to its end.                 |
+| `ctx.secret(player, key, question, options)` | the commitment        | Asks a player to choose in secret. Their device keeps the choice; the table gets only a commitment. |
+| `ctx.reveal(player, key)`                    | the chosen option id  | Has that player's device reveal the secret. Every player checks it against the commitment.          |
 
 The first `note` of a rule becomes its heading in the log, and later notes and rolls appear under it. If the rule asks a question before writing anything, the first line it writes afterwards becomes the heading.
 
@@ -78,6 +80,10 @@ Only the host runs a rule. To resume after a question, a reconnect or a change o
 - Read the game only through `ctx.view`, which includes `ctx.view.state`, and get randomness only from `ctx.roll`.
 - Never use `Math.random`, `Date` or timers, and never keep state in variables outside the generator.
 - Keep anything that must last between rules in `ctx.set` and `ctx.view.own`.
+
+### Secrets
+
+A secret (a hidden order, a secret objective) never leaves its owner's device until they reveal it. `ctx.secret` puts a SHA-256 commitment of the choice and a random salt in the game, at `ctx.view.state.secrets[player][key]`. Nobody else can read it, the host included. `ctx.reveal` has the owner's device send the choice and the salt, and every player's app checks them against the commitment, so a secret can't be changed after it was committed. A revealed secret's value is at `secrets[player][key].revealed.value`.
 
 ## Turn hooks
 
