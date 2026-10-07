@@ -98,5 +98,11 @@ describe("odds", () => {
     expect(one("6", { spillover: true }).wipe).toBeCloseTo(1);
     // Ignore each wound on a 5+: all three of a 3-damage hit must get through.
     expect(one("3", { ignoreDamage: 5 }).slain).toBeCloseTo((4 / 6) ** 3);
+    // Expected wounds lost: D3 on a W3 model averages 2; 6 without spillover is capped at 3.
+    expect(one("D3").damage).toBeCloseTo(2);
+    expect(one("6").damage).toBeCloseTo(3);
+    expect(one("6", { spillover: true }).damage).toBeCloseTo(6);
+    expect(one("3", { ignoreDamage: 5 }).damage).toBeCloseTo(3 * (4 / 6));
+    expect(one("D3")).toMatchObject({ woundsLeft: 6, models: 2 });
   });
 });

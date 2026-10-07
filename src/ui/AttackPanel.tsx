@@ -201,13 +201,10 @@ function SpecEditor({
         </label>
         <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
       </div>
-      {odds && (
-        <p
-          className="odds"
-          title="Exact odds from the numbers above; sustained, lethal and devastating extras aren't counted"
-        >
-          {odds.replace(/^e/, "E")}
-        </p>
+      {s.inRange === 0 && spec.kind === "ranged" ? (
+        <p className="odds warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
+      ) : (
+        <OddsLine odds={odds} />
       )}
       {s.inRange === 0 || s.visible === 0 ? (
         <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
@@ -220,6 +217,24 @@ function SpecEditor({
       )}
     </div>
   );
+}
+
+function OddsLine({ odds }: { odds: string | null }) {
+  if (!odds) return null;
+  return (
+    <p
+      className="odds"
+      title="Exact odds from the attack's numbers; sustained, lethal and devastating extras aren't counted"
+    >
+      {odds.replace(/^e/, "E")}
+    </p>
+  );
+}
+
+/** The weapon's range as its profile prints it. */
+function rangeOf(game: GameState, spec: AttackSpec): string | undefined {
+  const chars = game.units[spec.attackerUnitId]?.sheet?.weapons[spec.weaponId]?.chars;
+  return chars?.Range ?? chars?.range;
 }
 
 const STAGE_LABEL: Record<AttackState["stage"], string> = {
@@ -238,6 +253,9 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const target = game.units[spec.targetUnitId];
   const canAct = live && role !== "spectator";
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
+  // The odds stay up until the first dice land.
+  const unrolled = attack.stage !== "done" && !attack.hitDice && !attack.woundDice && !attack.saveDice;
+  const odds = useMemo(() => (unrolled ? oddsLine(specOdds(game, spec)) : null), [unrolled, game, spec]);
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
   const roll = () => dispatch({ type: "attack/roll" }, roller);
@@ -259,6 +277,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         {fmtMod(spec.woundMod)} · save {spec.save ? `${spec.save}+` : "none"} · D {spec.damage}
         {spec.fnp ? ` · FNP ${spec.fnp}+` : ""}
       </p>
+      <OddsLine odds={odds} />
       {attack.hitDice && (
         <Stage label="Hits" dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
           {attack.hits} hits{attack.critHits ? `, ${attack.critHits} critical` : ""}

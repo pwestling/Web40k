@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@react-three/drei':
-    hash: 8ff82100bb8cc53d4328c7a11a3c534e3d4408fe00bcbee03801f26fc19e4b31
+    hash: 4b44f7a00bb8ac3c897ac097292e4850e36fc3abdbf6e4508e74f9dc2442654d
     path: patches/@react-three__drei.patch
 
 importers:
@@ -15,7 +15,7 @@ importers:
     dependencies:
       '@react-three/drei':
         specifier: ^10.7.9
-        version: 10.7.9(patch_hash=8ff82100bb8cc53d4328c7a11a3c534e3d4408fe00bcbee03801f26fc19e4b31)(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(@types/react@19.3.0)(@types/three@0.186.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+        version: 10.7.9(patch_hash=4b44f7a00bb8ac3c897ac097292e4850e36fc3abdbf6e4508e74f9dc2442654d)(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(@types/react@19.3.0)(@types/three@0.186.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
       '@react-three/fiber':
         specifier: ^9.8.1
         version: 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
@@ -1607,7 +1607,7 @@ snapshots:
 
   '@oxc-project/types@0.152.0': {}
 
-  '@react-three/drei@10.7.9(patch_hash=8ff82100bb8cc53d4328c7a11a3c534e3d4408fe00bcbee03801f26fc19e4b31)(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(@types/react@19.3.0)(@types/three@0.186.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)':
+  '@react-three/drei@10.7.9(patch_hash=4b44f7a00bb8ac3c897ac097292e4850e36fc3abdbf6e4508e74f9dc2442654d)(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(@types/react@19.3.0)(@types/three@0.186.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@mediapipe/tasks-vision': 0.10.17

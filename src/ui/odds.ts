@@ -1,23 +1,9 @@
 import { findProcedure, previewRun, procedureEnv, type RoleRef, type StartOptions } from "../core/content";
-import { procedureOdds, type Odds, type OddsModel } from "../core/odds";
+import { procedureOdds, targetModels, type Odds } from "../core/odds";
+
+export { targetModels };
 import { ATTACK_PROCEDURE, specToRun } from "../core/attack";
 import { systemOf, type AttackSpec, type GameState, type UnitId } from "../core";
-
-/** The target's standing models with the wounds each has left, a wounded one first (it takes the next hit). */
-export function targetModels(game: GameState, unitId: UnitId | undefined): OddsModel[] {
-  const unit = unitId ? game.units[unitId] : undefined;
-  if (!unit) return [];
-  const models = unit.modelIds
-    .map((id) => game.models[id])
-    .filter((m) => m && !m.destroyed)
-    .map((m) => {
-      const w = Number(m!.profile?.chars.W ?? 1) || 1;
-      return { wounds: Math.max(1, w - (m!.woundsLost ?? 0)), hurt: (m!.woundsLost ?? 0) > 0 };
-    });
-  return [...models.filter((m) => m.hurt), ...models.filter((m) => !m.hurt)].map(({ wounds }) => ({
-    wounds,
-  }));
-}
 
 /** The unit a procedure's damage goes to: its "target" role, else the first unit role that isn't a weapon. */
 function targetOf(roles: Record<string, RoleRef>): UnitId | undefined {
@@ -50,7 +36,12 @@ export function oddsLine(odds: Odds | null): string | null {
   if (odds.slain !== undefined) {
     const wipe = odds.wipe ?? 0;
     const pct = wipe > 0 && wipe < 0.005 ? "<1%" : `${Math.round(wipe * 100)}%`;
-    return `expects ${odds.slain.toFixed(1)} slain, ${pct} to wipe`;
+    const left = odds.woundsLeft ?? 0;
+    const damage = (odds.damage ?? 0).toFixed(1);
+    // One model: what it loses counts, not whether it dies.
+    if (odds.models === 1) return `expects ${damage} damage (of ${left} W left), ${pct} to destroy`;
+    const big = left > (odds.models ?? 0);
+    return `expects ${odds.slain.toFixed(1)} slain${big ? ` (${damage} damage)` : ""}, ${pct} to wipe`;
   }
   const last = odds.steps.at(-1)!;
   return `expects ${last.expected.toFixed(1)} ${last.id}`;

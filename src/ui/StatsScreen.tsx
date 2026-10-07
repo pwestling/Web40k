@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { systemOf, type GameState } from "../core";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
@@ -29,6 +29,14 @@ export function StatsScreen() {
   const game = useGame();
   // Opens on its own once the battle ends, until someone closes it.
   const open = stats ?? battleOver(game);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") useStore.getState().set({ stats: false });
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [open]);
   const data = useMemo(() => (open ? gameStats(record) : null), [open, record]);
   if (!open || !data) return null;
   const close = () => set({ stats: false });
@@ -68,10 +76,10 @@ export function StatsScreen() {
             <thead>
               <tr>
                 <th>Unit</th>
-                <th title="Wounds dealt to enemy models">Dealt</th>
-                <th title="Enemy models destroyed">Slain</th>
-                <th title="Wounds lost">Taken</th>
-                <th title="Own models destroyed">Lost</th>
+                <th title="Wounds this unit's attacks took off enemy models">Dealt</th>
+                <th title="Enemy models this unit's attacks destroyed">Slain</th>
+                <th title="Wounds this unit lost, from any cause">Taken</th>
+                <th title="Models this unit lost, from any cause">Lost</th>
               </tr>
             </thead>
             <tbody>
@@ -99,6 +107,8 @@ export function StatsScreen() {
 
 function LuckTable({ player }: { player: PlayerStats }) {
   const total = player.luck.reduce((a, l) => a + l.actual - l.expected, 0);
+  // A net of zero can hide good hits and bad wounds cancelling out.
+  const spread = player.luck.some((l) => Math.abs(l.actual - l.expected) >= 0.5);
   return (
     <div>
       <div className="who">
@@ -108,7 +118,9 @@ function LuckTable({ player }: { player: PlayerStats }) {
           <span className="muted">
             {" "}
             {Math.abs(total) < 0.05
-              ? "right on the odds"
+              ? spread
+                ? "even overall (luck in one roll, not another)"
+                : "right on the odds"
               : `${Math.abs(total).toFixed(1)} dice ${total > 0 ? "luckier" : "unluckier"} than the odds`}
           </span>
         )}
@@ -118,10 +130,10 @@ function LuckTable({ player }: { player: PlayerStats }) {
           <thead>
             <tr>
               <th>Roll</th>
-              <th>Dice</th>
-              <th>Passed</th>
+              <th title="Dice rolled">Dice</th>
+              <th title="Dice that passed (hits, wounds, saves made)">Passed</th>
               <th>Expected</th>
-              <th />
+              <th title="Dice that passed minus dice expected to">±</th>
             </tr>
           </thead>
           <tbody>

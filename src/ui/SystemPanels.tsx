@@ -21,7 +21,7 @@ import { modelHeight, type Ability, type GameState, type Unit } from "../core";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
-import { oddsLine, targetModels } from "./odds";
+import { liveOdds, oddsLine, targetModels } from "./odds";
 import { procedureOdds } from "../core/odds";
 import { eyeView, rotateUnit } from "./UnitCard";
 
@@ -726,9 +726,18 @@ export function ProcedurePanel() {
     ),
   ];
 
+  // The odds stay up until the first dice land.
+  const unrolled = !run.done && !run.records.some((r) => r.kind === "test" && r.dice?.length);
+  const odds = unrolled ? oddsLine(liveOdds(game)?.odds ?? null) : null;
+
   return (
     <div className="panel attack">
       <strong>{proc.title}</strong>
+      {odds && (
+        <p className="odds" title="Exact odds from the run's numbers; per-die rules aren't counted">
+          {odds.replace(/^e/, "E")}
+        </p>
+      )}
       {run.records
         .filter((r) => r.dice?.length || r.rolls?.length || r.damage?.length || r.kind === "pool")
         .map((r, i) => (

@@ -2,6 +2,7 @@ import type { Step } from "./content/schema";
 import { parseDiceSum, type DiceSum } from "./content/runtime";
 import type { StepPlan, StepRecord, TestPlan } from "./content/runner";
 import { evaluate } from "./content/expr";
+import type { GameState, UnitId } from "./types";
 
 /**
  * Exact odds for a procedure, from the numbers a preview works out for each
@@ -168,6 +169,11 @@ export interface Odds {
   steps: StepOdds[];
   /** Average models slain, when the procedure deals damage. */
   slain?: number;
+  /** Average wounds the target loses (capped by the wounds it has left). */
+  damage?: number;
+  /** Wounds the target has left before the attack, and its standing models. */
+  woundsLeft?: number;
+  models?: number;
   /** Chance every model of the target dies. */
   wipe?: number;
   /** False when a step couldn't be worked out (an opposed roll); later numbers are then missing. */
@@ -177,6 +183,22 @@ export interface Odds {
 /** A target model: wounds it has left. Models take damage in this order. */
 export interface OddsModel {
   wounds: number;
+}
+
+/** The target's standing models with the wounds each has left, a wounded one first (it takes the next hit). */
+export function targetModels(game: GameState, unitId: UnitId | undefined): OddsModel[] {
+  const unit = unitId ? game.units[unitId] : undefined;
+  if (!unit) return [];
+  const models = unit.modelIds
+    .map((id) => game.models[id])
+    .filter((m) => m && !m.destroyed)
+    .map((m) => {
+      const w = Number(m!.profile?.chars.W ?? 1) || 1;
+      return { wounds: Math.max(1, w - (m!.woundsLost ?? 0)), hurt: (m!.woundsLost ?? 0) > 0 };
+    });
+  return [...models.filter((m) => m.hurt), ...models.filter((m) => !m.hurt)].map(({ wounds }) => ({
+    wounds,
+  }));
 }
 
 /**
@@ -222,10 +244,13 @@ export function procedureOdds(
       }
     } else if (plan.kind === "damage") {
       out.steps.push({ id: step.id, kind: step.kind, expected: mean(count) });
-      const slain = slainDist(count, plan.amount, plan.ignoreDamage, plan.spillover, models, ignoreSides);
-      if (slain) {
-        out.slain = mean(slain);
-        out.wipe = models.length ? (slain[models.length] ?? 0) : 0;
+      const result = slainDist(count, plan.amount, plan.ignoreDamage, plan.spillover, models, ignoreSides);
+      if (result) {
+        out.slain = mean(result.slain);
+        out.wipe = models.length ? (result.slain[models.length] ?? 0) : 0;
+        out.damage = result.damage;
+        out.woundsLeft = models.reduce((a, m) => a + m.wounds, 0);
+        out.models = models.length;
       }
       count = point(0);
       continue;
@@ -247,7 +272,7 @@ function slainDist(
   spillover: boolean,
   models: OddsModel[],
   ignoreSides: number,
-): Dist | null {
+): { slain: Dist; damage: number } | null {
   if (!models.length) return null;
   let dmg: Dist;
   try {
@@ -261,6 +286,9 @@ function slainDist(
   const key = (i: number, lost: number) => i * 1000 + lost;
   let states = new Map<number, number>([[key(0, 0), 1]]);
   const slain: Dist = new Array<number>(n + 1).fill(0);
+  // Wounds lost by the models before index i, for the expected damage.
+  const before = models.reduce<number[]>((acc, m) => [...acc, acc.at(-1)! + m.wounds], [0]);
+  let damage = 0;
   const hit = (i: number, lost: number, d: number, p: number, into: Map<number, number>) => {
     if (i >= n) {
       into.set(key(n, 0), (into.get(key(n, 0)) ?? 0) + p);
@@ -280,7 +308,12 @@ function slainDist(
   for (let t = 0; t < count.length; t++) {
     // Those who stop after t dice.
     const stop = count[t] ?? 0;
-    if (stop) for (const [k, p] of states) slain[Math.min(n, Math.floor(k / 1000))]! += stop * p;
+    if (stop)
+      for (const [k, p] of states) {
+        const i = Math.min(n, Math.floor(k / 1000));
+        slain[i]! += stop * p;
+        damage += stop * p * (before[i]! + (i < n ? k % 1000 : 0));
+      }
     const tail = count.slice(t + 1).reduce((a, b) => a + b, 0);
     if (tail < 1e-12) break;
     const next = new Map<number, number>();
@@ -293,7 +326,7 @@ function slainDist(
     }
     states = next;
   }
-  return slain;
+  return { slain, damage };
 }
 
 /**

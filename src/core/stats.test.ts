@@ -11,6 +11,7 @@ import {
   type Model,
 } from "./index";
 import { biggestSwings, gameStats } from "./stats";
+import { specOdds } from "../ui/odds";
 
 /** Dice that come up exactly as listed, in order. */
 function loaded(faces: number[]): () => number {
@@ -124,12 +125,19 @@ describe("game stats", () => {
     expect(ana!.pointsByRound).toEqual([10]);
     expect(bo!.pointsByRound).toEqual([0]);
 
-    // Unsaved: 1 against 4 × 2/3 × 1/2 × 1/2 = 0.67 expected.
+    // Slain: 1 against 4 × 2/3 × 1/2 × 1/2 = 0.67 expected (W1 models, the odds the panel showed).
     expect(stats.runs).toHaveLength(1);
     expect(stats.runs[0]!.actual).toBe(1);
     expect(stats.runs[0]!.expected).toBeCloseTo(2 / 3);
-    expect(stats.runs[0]).toMatchObject({ player: "p1", title: "Shooters at Targets", round: 1 });
+    expect(stats.runs[0]).toMatchObject({
+      player: "p1",
+      title: "Shooters at Targets",
+      round: 1,
+      measure: "slain",
+    });
     expect(biggestSwings(stats.runs).get(1)).toBe(stats.runs[0]);
+    // The same expectation the attack panel showed before the roll (UX 96).
+    expect(stats.runs[0]!.expected).toBeCloseTo(specOdds(table(), spec)!.slain!);
   });
 
   it("leaves out undone events", () => {

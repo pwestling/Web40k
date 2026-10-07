@@ -4,7 +4,7 @@ import { findProcedure, type ProcedureRun, type StepRecord } from "./content/run
 import type { GameRecord } from "./log";
 import { undoneSeqs } from "./log";
 import { applyEvent } from "./reducer";
-import { followUpNeed, passChance, recordLuck } from "./odds";
+import { followUpNeed, passChance, procedureOdds, recordLuck, targetModels } from "./odds";
 import type { Step } from "./content/schema";
 import type { GameState, Model, PlayerId, UnitId } from "./types";
 
@@ -54,7 +54,12 @@ export interface RunSwing {
   round: number;
   player: PlayerId | undefined;
   title: string;
-  /** Dice reaching the end (unsaved wounds), and the number expected from the dice that went in. */
+  /**
+   * What was counted: models "slain", "damage" to a lone model, or (for a
+   * procedure without damage) the id of its last rolled step.
+   */
+  measure: string;
+  /** What came out, and the exact odds' expectation shown before the roll. */
   actual: number;
   expected: number;
 }
@@ -141,13 +146,35 @@ export function runExpectation(
   return expected === null ? null : { actual, expected };
 }
 
+/**
+ * How a run went against the odds a player saw before rolling it: models
+ * slain (or damage, against a lone model) from the same exact odds as the
+ * attack panel. Without damage, the dice left after its last test.
+ */
+function swingOf(t: Tracked, steps: Step[]): Pick<RunSwing, "measure" | "actual" | "expected"> | null {
+  const plans = Object.fromEntries(t.run.records.map((r) => [r.id, r.plan]));
+  const models = targetModels(t.state, unitRole(t.run, "target"));
+  const odds = procedureOdds(steps, plans, models);
+  if (odds.slain !== undefined) {
+    return models.length === 1
+      ? { measure: "damage", actual: t.damage, expected: odds.damage ?? 0 }
+      : { measure: "slain", actual: t.slain, expected: odds.slain };
+  }
+  const left = runExpectation(t.run.records, steps);
+  const last = [...t.run.records].reverse().find((r) => r.plan.kind === "test");
+  return left && last ? { measure: last.id, ...left } : null;
+}
+
 interface Tracked {
   seq: number;
   round: number;
   run: ProcedureRun;
   title: string;
-  /** The state when the run started, for owners and names. */
+  /** The state when the run started, for owners, names and the target's wounds. */
   state: GameState;
+  /** Target models destroyed and wounds it lost while this run was the one acting. */
+  slain: number;
+  damage: number;
 }
 
 export function gameStats(record: GameRecord): GameStats {
@@ -183,21 +210,25 @@ export function gameStats(record: GameRecord): GameStats {
       ["procedure", before.procedure?.run, state.procedure?.run, state.procedure] as const,
     ];
     let source: ProcedureRun | undefined;
+    let acting: Tracked | undefined;
     for (const [slot, was, now] of slots) {
       if (!now || now === was) continue;
       source = now;
       const current = live[slot];
-      if (current && continues(was, now)) current.run = now;
-      else {
+      if (current && continues(was, now)) {
+        current.run = now;
+        acting = current;
+      } else {
         const attacker = unitRole(now, "attacker");
         const target = unitRole(now, "target");
         const title =
           slot === "procedure" && state.procedure?.title
             ? state.procedure.title
             : `${state.units[attacker ?? ""]?.name ?? "Attack"}${target ? ` at ${state.units[target]?.name ?? "target"}` : ""}`;
-        const t: Tracked = { seq: logged.seq, round, run: now, title, state };
+        const t: Tracked = { seq: logged.seq, round, run: now, title, state, slain: 0, damage: 0 };
         tracked.push(t);
         live[slot] = t;
+        acting = t;
       }
     }
     const dealer = source ? unitRole(source, "attacker") : undefined;
@@ -213,6 +244,10 @@ export function gameStats(record: GameRecord): GameStats {
       if (victim) {
         victim.taken += Math.max(0, gained);
         if (died) victim.lost++;
+      }
+      if (acting && unitId && unitId === unitRole(acting.run, "target")) {
+        acting.damage += Math.max(0, gained);
+        if (died) acting.slain++;
       }
       const by = dealer ? unitStats(state, dealer) : undefined;
       if (by && by.owner !== m.owner) {
@@ -235,6 +270,8 @@ export function gameStats(record: GameRecord): GameStats {
   const rounds = Math.min(Math.max(1, state.turn.round), maxRounds);
   const luck: Record<PlayerId, Record<string, StepLuck>> = {};
   const runs: RunSwing[] = [];
+  // Rolled steps in the order procedures run them, so every player's rows line up.
+  const order: string[] = [];
   for (const t of tracked) {
     const steps = stepsOf(t.run);
     for (const r of t.run.records) {
@@ -247,8 +284,10 @@ export function gameStats(record: GameRecord): GameStats {
       row.actual += l.actual;
       row.expected += l.expected;
     }
-    const swing = runExpectation(t.run.records, steps);
-    if (swing && t.run.records.some((r) => r.plan.kind === "test" && r.dice?.length))
+    for (const r of t.run.records) if (!order.includes(r.id)) order.push(r.id);
+    if (!t.run.records.some((r) => r.plan.kind === "test" && r.dice?.length)) continue;
+    const swing = swingOf(t, steps);
+    if (swing)
       runs.push({
         seq: t.seq,
         round: t.round,
@@ -266,7 +305,7 @@ export function gameStats(record: GameRecord): GameStats {
       name: p.name,
       color: p.color,
       pointsByRound: Array.from({ length: rounds }, (_, i) => points[p.id]?.[i] ?? 0),
-      luck: Object.values(luck[p.id] ?? {}),
+      luck: Object.values(luck[p.id] ?? {}).sort((a, b) => order.indexOf(a.step) - order.indexOf(b.step)),
     }));
   return { units: Object.values(units), players, runs, rounds };
 }

@@ -74,6 +74,7 @@ function simulate(state: GameState, s: AttackSpec, runs: number, seed: number) {
   let slain = 0;
   let wiped = 0;
   let unsaved = 0;
+  let lost = 0;
   const models = state.units.t!.modelIds.length;
   for (let i = 0; i < runs; i++) {
     let a = startAttack(s, rng, state);
@@ -82,8 +83,9 @@ function simulate(state: GameState, s: AttackSpec, runs: number, seed: number) {
     slain += dead;
     if (dead === models) wiped++;
     unsaved += a.unsaved ?? 0;
+    lost += (a.damage ?? []).reduce((t, d) => t + d.lost, 0);
   }
-  return { slain: slain / runs, wipe: wiped / runs, unsaved: unsaved / runs };
+  return { slain: slain / runs, wipe: wiped / runs, unsaved: unsaved / runs, damage: lost / runs };
 }
 
 describe("attack odds against the runner", () => {
@@ -113,6 +115,7 @@ describe("attack odds against the runner", () => {
       expect(sim.unsaved).toBeCloseTo(unsaved, 0);
       expect(Math.abs(sim.slain - odds.slain!)).toBeLessThan(0.08 + odds.slain! * 0.03);
       expect(Math.abs(sim.wipe - odds.wipe!)).toBeLessThan(0.025);
+      expect(Math.abs(sim.damage - odds.damage!)).toBeLessThan(0.1 + odds.damage! * 0.03);
     },
   );
 });

@@ -1,14 +1,35 @@
 diff --git a/web/Html.js b/web/Html.js
-index 81d68b7f4e9893a7d0b436a398bb38883d333374..02cf3847fe9f4e858651a8ca4fb6deb32747fa9c 100644
+index 81d68b7f4e9893a7d0b436a398bb38883d333374..715102bd69471979574b5ea02501bd1f88d33522 100644
 --- a/web/Html.js
 +++ b/web/Html.js
-@@ -152,7 +152,8 @@ const Html = /* @__PURE__ */React.forwardRef(({
+@@ -140,7 +140,12 @@ const Html = /* @__PURE__ */React.forwardRef(({
+   }, [occlude]);
+   React.useLayoutEffect(() => {
+     if (group.current) {
+-      const currentRoot = root.current = ReactDOM.createRoot(el);
++      // Open Battle patch: each root gets its own container inside the label, so a root still
++      // unmounting (below) never shares one with its replacement.
++      const host = document.createElement('div');
++      host.style.display = 'contents';
++      el.appendChild(host);
++      const currentRoot = root.current = ReactDOM.createRoot(host);
+       scene.updateMatrixWorld();
+       if (transform) {
+         el.style.cssText = `position:absolute;top:0;left:0;pointer-events:none;overflow:hidden;`;
+@@ -152,8 +157,14 @@ const Html = /* @__PURE__ */React.forwardRef(({
          if (prepend) target.prepend(el);else target.appendChild(el);
        }
        return () => {
 -        if (target) target.removeChild(el);
+-        currentRoot.unmount();
 +        // Open Battle patch: on a replay jump the label can already be detached.
 +        if (target && el.parentNode === target) target.removeChild(el);
-         currentRoot.unmount();
++        // Unmounting the label's own root during the scene's render races with it when many labels
++        // go at once (the end of a battle, a replay jump): finish it after this render instead.
++        queueMicrotask(() => {
++          currentRoot.unmount();
++          host.remove();
++        });
        };
      }
+   }, [target, transform]);
