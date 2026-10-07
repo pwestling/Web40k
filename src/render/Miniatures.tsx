@@ -57,7 +57,16 @@ export function useFigureHeights(models: Model[]): Record<string, number> {
  * Every model with an uploaded figure, drawn as one instanced mesh per asset
  * and level of detail: draw calls scale with distinct sculpts, not models.
  */
-export function Miniatures({ models, positions }: { models: Model[]; positions: Record<string, Vec2> }) {
+export function Miniatures({
+  models,
+  positions,
+  heights,
+}: {
+  models: Model[];
+  positions: Record<string, Vec2>;
+  /** Base heights above the table (standing on terrain floors), by model id. */
+  heights: Record<string, number>;
+}) {
   const bindings = useAssets((s) => s.bindings);
   const assets = useAssets((s) => s.assets);
   const groups = useMemo(() => {
@@ -75,7 +84,7 @@ export function Miniatures({ models, positions }: { models: Model[]; positions: 
   return (
     <>
       {[...groups].map(([id, entries]) => (
-        <AssetInstances key={id} asset={assets[id]!} entries={entries} positions={positions} />
+        <AssetInstances key={id} asset={assets[id]!} entries={entries} positions={positions} heights={heights} />
       ))}
     </>
   );
@@ -104,10 +113,12 @@ function AssetInstances({
   asset,
   entries,
   positions,
+  heights,
 }: {
   asset: ModelAsset;
   entries: Entry[];
   positions: Record<string, Vec2>;
+  heights: Record<string, number>;
 }) {
   const geometries = useMemo(() => asset.lods.map(toGeometry), [asset]);
   useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
@@ -132,12 +143,13 @@ function AssetInstances({
     entries.forEach(({ model, binding }, i) => {
       const p = positions[model.id] ?? model.position;
       q.setFromAxisAngle(up, model.facing + binding.yaw);
-      v.set(p.x, BASE_TOP, p.y);
+      const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0);
+      v.set(p.x, z, p.y);
       s.setScalar(binding.scale);
       m4.compose(v, q, s);
       shadow?.setMatrixAt(i, m4);
 
-      sphere.center.set(p.x, BASE_TOP + (height * binding.scale) / 2, p.y);
+      sphere.center.set(p.x, z + (height * binding.scale) / 2, p.y);
       sphere.radius = radius * binding.scale;
       if (!frustum.intersectsSphere(sphere)) return;
       const px = persp

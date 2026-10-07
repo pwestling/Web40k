@@ -17,7 +17,8 @@ import { standardLayout } from "./systems/wh40k/layout";
 
 export const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
 
-export type View = "3d" | "top";
+/** "eye" looks from a model's eye line (see `eye`). */
+export type View = "3d" | "top" | "eye";
 
 /**
  * How peers reach each other. "online" is WebRTC between browsers;
@@ -58,6 +59,16 @@ interface Store {
   draft: AttackDraft | null;
   /** Replay viewer: show the table as it stood after this seq (null = live). */
   scrub: number | null;
+  /** Terrain editor open: terrain and objectives can be dragged and changed. */
+  editing: boolean;
+  selectedTerrain: string | null;
+  /** See-through terrain, to find models inside ruins. */
+  xray: boolean;
+  /** Show what this unit can see. */
+  losFrom: UnitId | null;
+  /** Model whose eye the "eye" view looks from, and where it looks. */
+  eye: { modelId: string; at: { x: number; y: number; z: number } } | null;
+  set(patch: Partial<Pick<Store, "editing" | "selectedTerrain" | "xray" | "losFrom" | "eye" | "view">>): void;
   setView(view: View): void;
   select(id: UnitId | null): void;
   setDraft(draft: AttackDraft | null): void;
@@ -111,7 +122,13 @@ export const useStore = create<Store>((set, get) => ({
   selected: null,
   draft: null,
   scrub: null,
-  setView: (view) => set({ view }),
+  editing: false,
+  selectedTerrain: null,
+  xray: false,
+  losFrom: null,
+  eye: null,
+  set: (patch) => set(patch),
+  setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),
   select: (selected) => set({ selected }),
   setDraft: (draft) => set({ draft }),
   setScrub: (scrub) => set({ scrub }),

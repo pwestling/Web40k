@@ -433,3 +433,31 @@ details p {
     width: calc(50vw - 18px);
   }
 }
+
+/* Terrain editor */
+.terrainpanel {
+  top: 64px;
+  right: 12px;
+  width: 360px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+.terrainpanel label:not(.check):not(.file) {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.selected-terrain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #a16207;
+  border-radius: 6px;
+}
+.eye-exit {
+  position: absolute;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+}

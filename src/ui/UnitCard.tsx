@@ -1,10 +1,12 @@
-import { maxWounds, type Model, type Unit, type WeaponProfile } from "../core";
+import { maxWounds, modelHeight, stepLevel, type Model, type Unit, type WeaponProfile } from "../core";
 import {
   aliveModels,
+  blockedMoves,
   carriers,
   engagedWith,
   incoherentModels,
   moveAllowance,
+  unitDistance,
   unitMoved,
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
@@ -37,10 +39,53 @@ export function rotateUnit(unitId: string, dir: 1 | -1) {
   );
 }
 
+/** Move a unit's models up or down one floor where they stand (R / F). */
+export function climbUnit(unitId: string, dir: 1 | -1) {
+  const { game, dispatch } = useStore.getState();
+  const unit = game.units[unitId];
+  const alive = aliveModels(game, unit);
+  if (!unit || !alive.length) return;
+  const moves = alive.map((m) => ({
+    id: m.id,
+    to: m.position,
+    z: stepLevel(game.terrain, m.position, m.z ?? 0, dir),
+  }));
+  if (moves.some((mv, i) => mv.z !== (alive[i]!.z ?? 0)))
+    dispatch({ type: "models/move", moves }, unit.owner);
+}
+
+/** Look from a model's eyes: at the attack's target, else the nearest enemy, else straight ahead. */
+export function eyeView(unitId: string) {
+  const { game, draft, set } = useStore.getState();
+  const unit = game.units[unitId];
+  const m = aliveModels(game, unit)[0];
+  if (!unit || !m) return;
+  const centre = (u: Unit) => {
+    const ms = aliveModels(game, u);
+    return {
+      x: ms.reduce((a, x) => a + x.position.x, 0) / ms.length,
+      y: ms.reduce((a, x) => a + x.position.y, 0) / ms.length,
+      z: ms.reduce((a, x) => a + (x.z ?? 0) + modelHeight(x) / 2, 0) / ms.length,
+    };
+  };
+  const target = draft?.targetId ? game.units[draft.targetId] : undefined;
+  const enemies = Object.values(game.units).filter(
+    (u) => u.owner !== unit.owner && aliveModels(game, u).length,
+  );
+  const nearest = enemies.sort(
+    (a, b) => unitDistance([m], aliveModels(game, a)) - unitDistance([m], aliveModels(game, b)),
+  )[0];
+  const look = target ?? nearest;
+  const at = look
+    ? centre(look)
+    : { x: m.position.x + Math.sin(m.facing) * 10, y: m.position.y + Math.cos(m.facing) * 10, z: m.z ?? 0 };
+  set({ view: "eye", eye: { modelId: m.id, at } });
+}
+
 /** The selected unit's datasheet, state and actions. */
 export function UnitCard() {
   const game = useGame();
-  const { selected, select, dispatch, setDraft, scrub } = useStore();
+  const { selected, select, dispatch, setDraft, scrub, losFrom, set } = useStore();
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
   if (!unit) return null;
@@ -54,6 +99,9 @@ export function UnitCard() {
   const moved = unitMoved(alive);
   const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
+  const elevation = Math.max(0, ...alive.map((m) => m.z ?? 0));
+  const blocked = game.turn.round > 0 ? blockedMoves(game, unit) : [];
+  const height = alive[0] ? modelHeight(alive[0]) : 0;
 
   // One stat line per distinct profile.
   const profiles = new Map<string, Model>();
@@ -95,6 +143,9 @@ export function UnitCard() {
           </span>
         )}
         {incoherent > 0 && <span className="warn">{incoherent} model(s) out of coherency. </span>}
+        {blocked.length > 0 && (
+          <span className="warn">Moved through {blocked.map((p) => p.name.toLowerCase()).join(", ")}. </span>
+        )}
         {engaged.length > 0 && (
           <span className="warn">Engaged with {engaged.map((id) => game.units[id]?.name).join(", ")}.</span>
         )}
@@ -105,6 +156,12 @@ export function UnitCard() {
           <button onClick={() => roll("advance", 1)}>Advance (D6)</button>
           <button onClick={() => roll("charge", 2)}>Charge (2D6)</button>
           <button onClick={() => roll("battleshock", 2)}>Battle-shock test</button>
+          <button title="Up a floor (R)" onClick={() => climbUnit(unit.id, 1)}>
+            ▲ Floor
+          </button>
+          <button title="Down a floor (F)" onClick={() => climbUnit(unit.id, -1)}>
+            ▼ Floor
+          </button>
           <button title="Rotate left (Q)" onClick={() => rotateUnit(unit.id, -1)}>
             ⟲
           </button>
@@ -120,6 +177,17 @@ export function UnitCard() {
           )}
         </div>
       )}
+
+      <div className="row wrap">
+        <button
+          className={losFrom === unit.id ? "on" : ""}
+          onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
+        >
+          Line of sight
+        </button>
+        <button onClick={() => eyeView(unit.id)}>Model's eye view</button>
+        {elevation > 0 && <span className="muted">On a floor {elevation.toFixed(1)}" up</span>}
+      </div>
 
       {profiles.size > 0 && (
         <table className="stats">
@@ -200,6 +268,23 @@ export function UnitCard() {
             <ModelRow key={m.id} model={m} unit={unit} editable={canControl(unit.owner) && scrub === null} />
           ))}
         </ul>
+        {mine && (
+          <label className="row small">
+            Model height for line of sight{" "}
+            <input
+              type="number"
+              min={0.5}
+              max={20}
+              step={0.5}
+              value={Number(height.toFixed(1))}
+              onChange={(e) => {
+                const h = Number(e.target.value);
+                if (h > 0) dispatch({ type: "unit/height", id: unit.id, height: h }, as);
+              }}
+            />
+            "
+          </label>
+        )}
         {mine && (
           <select
             value=""

@@ -2,6 +2,7 @@ import { rollStage, startAttack, type AttackSpec, type AttackState } from "./att
 import { parseDice, rollDice } from "./dice";
 import type {
   DiceRoll,
+  GameSettings,
   GameState,
   Model,
   ModelId,
@@ -43,6 +44,12 @@ export type Intent =
   | ModelsMove
   | { type: "dice/roll"; count: number; sides: number; label?: string; unitId?: UnitId }
   | { type: "layout/set"; layout: Layout }
+  | { type: "terrain/add"; piece: TerrainPiece }
+  | { type: "terrain/update"; piece: TerrainPiece }
+  | { type: "terrain/remove"; id: string }
+  | { type: "objective/move"; id: string; to: Vec2 }
+  | { type: "unit/height"; id: UnitId; height: number | null }
+  | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }
   | { type: "turn/first"; seat: number }
@@ -70,6 +77,12 @@ export type GameEvent =
   | ModelsMove
   | { type: "dice/roll"; roll: DiceRoll }
   | { type: "layout/set"; layout: Layout }
+  | { type: "terrain/add"; piece: TerrainPiece }
+  | { type: "terrain/update"; piece: TerrainPiece }
+  | { type: "terrain/remove"; id: string }
+  | { type: "objective/move"; id: string; to: Vec2 }
+  | { type: "unit/height"; id: UnitId; height: number | null }
+  | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }
   | { type: "turn/first"; seat: number }
@@ -95,7 +108,8 @@ export interface UnitMove {
 /** Several models placed at once, e.g. a squad dragged together. */
 export interface ModelsMove {
   type: "models/move";
-  moves: { id: ModelId; to: Vec2 }[];
+  /** `z` is the height of the base; omitted means unchanged. */
+  moves: { id: ModelId; to: Vec2; z?: number }[];
 }
 
 export type Rng = () => number;

@@ -6,3 +6,5 @@ export * from "./geometry";
 export * from "./formation";
 export * from "./dice";
 export * from "./attack";
+export * from "./terrain";
+export * from "./los";

@@ -89,6 +89,11 @@ export interface Model {
   destroyed?: boolean;
   /** Where the model stood when the current phase began, for move distances. */
   phaseStart?: Vec2;
+  /** Height of the base above the table, in inches (standing on a terrain floor). */
+  z?: number;
+  phaseStartZ?: number;
+  /** Height of the miniature in inches, for line of sight. Defaults from the base size. */
+  height?: number;
 }
 
 export type UnitId = string;
@@ -120,16 +125,40 @@ export interface DiceRoll {
   unitId?: UnitId;
 }
 
-/** A rectangle footprint on the table, centred at `position`, rotated by `facing`. */
+/**
+ * A box in a terrain piece's local space: x/y are the centre on the
+ * footprint (x = right, y = forward), z the bottom, and w/d/h the size in
+ * inches. Terrain is made of these, so the same shapes are drawn on the
+ * table and used for line of sight and floors. There is no physics.
+ */
+export interface TerrainSolid {
+  /** wall and block stop line of sight; floor also gives models a level to stand on; foliage is only visual. */
+  kind: "wall" | "floor" | "block" | "foliage";
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+  d: number;
+  h: number;
+}
+
+/**
+ * Rules category of a terrain piece. The game system decides what each one
+ * does (cover, hidden, impassable).
+ */
+export type TerrainCategory = "exposed" | "light" | "dense" | "solid";
+
+/** A terrain piece: a rectangular footprint, rotated by `facing`, with solids on it. */
 export interface TerrainPiece {
   id: string;
-  kind: "ruin" | "crater" | "woods" | "container";
+  /** Template name, e.g. "Ruin" or "Woods", for the editor. */
+  name: string;
+  category: TerrainCategory;
   position: Vec2;
   width: number;
   depth: number;
   facing: number;
-  /** Walls standing on the footprint, as segments in local space, with a height. */
-  walls: { from: Vec2; to: Vec2; height: number }[];
+  solids: TerrainSolid[];
 }
 
 export interface Objective {
@@ -176,6 +205,15 @@ export interface GameState {
   resources: Record<PlayerId, Record<string, number>>;
   /** The attack being resolved, if any. */
   attack: AttackState | null;
+  /** Table options the players agreed on. */
+  settings: GameSettings;
+}
+
+export interface GameSettings {
+  /** How cover helps: a worse hit roll for the attacker, or a better save. */
+  cover: "hit" | "save";
+  /** Whether models from other units block line of sight. */
+  modelsBlock: boolean;
 }
 
 /** Strike Force sized board: 44" x 60". */
@@ -194,5 +232,6 @@ export function createInitialState(table: Table = STRIKE_FORCE_TABLE): GameState
     turn: { round: 0, activeSeat: 0, phase: 0, firstSeat: 0 },
     resources: {},
     attack: null,
+    settings: { cover: "hit", modelsBlock: true },
   };
 }
