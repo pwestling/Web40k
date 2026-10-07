@@ -1,94 +1,110 @@
 import { useState } from "react";
-import { undoneSeqs, type GameRecord, type LoggedEvent } from "../core";
-import { useStore } from "../store";
+import { undoneSeqs, type GameRecord, type GameState, type LoggedEvent } from "../core";
+import { useCanControl, useStore } from "../store";
+import { ArmyImport } from "./ArmyImport";
+import { useGame } from "./hooks";
 
-export function Lobby() {
-  const start = useStore((s) => s.start);
-  const [name, setName] = useState("Player");
-  const [room, setRoom] = useState(() => new URLSearchParams(location.search).get("room") ?? "");
-
-  const host = () => {
-    const roomId = room || crypto.randomUUID().slice(0, 8);
-    history.replaceState(null, "", `?room=${roomId}`);
-    start({ role: "host", roomId, name });
-  };
-
-  return (
-    <div className="panel lobby">
-      <h1>Open Battle</h1>
-      <label>
-        Name <input value={name} onChange={(e) => setName(e.target.value)} />
-      </label>
-      <label>
-        Room{" "}
-        <input value={room} placeholder="leave blank to create" onChange={(e) => setRoom(e.target.value)} />
-      </label>
-      <div className="row">
-        <button onClick={host}>Host</button>
-        <button disabled={!room} onClick={() => start({ role: "client", roomId: room, name })}>
-          Join
-        </button>
-        <button disabled={!room} onClick={() => start({ role: "spectator", roomId: room, name })}>
-          Watch
-        </button>
-        <button onClick={() => start({ role: "host", name })}>Solo</button>
-      </div>
-    </div>
-  );
-}
-
+/** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
-  const { game, record, session, roomId, dispatch, view, setView } = useStore();
+  const { record, session, roomId, dispatch, view, setView, mode, role, game: liveGame } = useStore();
+  const game = useGame();
+  const canControl = useCanControl();
   const [count, setCount] = useState(2);
+  const [sides, setSides] = useState(6);
+  const [collapsed, setCollapsed] = useState(false);
   const undone = undoneSeqs(record);
-  const nameOf = (id: string) => game.players[id]?.name ?? "Spectator";
+  const nameOf = (id: string) => game.players[id]?.name ?? "Someone";
+  const selfId = session?.selfId;
+  const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);
+  const mine = seated.filter((p) => canControl(p.id));
   const lastOwn = [...record.events]
     .reverse()
     .find(
       (e) =>
-        e.by === session?.selfId &&
+        (mode === "hotseat" || e.by === selfId) &&
         e.event.type !== "undo" &&
         e.event.type !== "player/join" &&
+        e.event.type !== "layout/set" &&
         !undone.has(e.seq),
+    );
+  const amSeated = mode === "hotseat" || seated.some((p) => p.id === selfId);
+
+  if (collapsed)
+    return (
+      <div className="panel hud collapsed">
+        <button onClick={() => setCollapsed(false)}>☰ Menu</button>
+      </div>
     );
 
   return (
     <div className="panel hud">
+      <div className="row spread">
+        <strong>Open Battle</strong>
+        <button onClick={() => setCollapsed(true)}>Hide</button>
+      </div>
       {roomId && (
-        <p>
-          Room <code>{roomId}</code> · share this page's URL to invite
+        <p className="muted">
+          Room <code>{roomId}</code>
+          {mode === "local" ? " (this browser)" : ""} ·{" "}
+          <button className="link" onClick={() => void navigator.clipboard?.writeText(location.href)}>
+            copy invite link
+          </button>
         </p>
       )}
+      {mode === "hotseat" && <p className="muted">Hotseat: you control both sides.</p>}
+      {role === "spectator" && <p className="muted">Spectating.</p>}
       <button onClick={() => setView(view === "3d" ? "top" : "3d")}>
         {view === "3d" ? "Top-down view" : "3D view"}
       </button>
-      <ul className="players">
-        {Object.values(game.players).map((p) => (
-          <li key={p.id} style={{ color: p.color }}>
-            {p.name}
-          </li>
-        ))}
-      </ul>
-      <div className="row">
-        <input
-          type="number"
-          min={1}
-          max={100}
-          value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
-        />
-        <button onClick={() => dispatch({ type: "dice/roll", count, sides: 6 })}>Roll D6</button>
-        <button disabled={!lastOwn} onClick={() => lastOwn && dispatch({ type: "undo", seq: lastOwn.seq })}>
-          Undo
-        </button>
-      </div>
+
+      {role === "client" && !amSeated && seated.length >= 2 && (
+        <div className="claim">
+          <p className="muted">Both seats are taken. Rejoining? Take back your seat:</p>
+          {seated.map((p) => (
+            <button key={p.id} onClick={() => dispatch({ type: "player/claim", player: p.id })}>
+              Play as {p.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {role === "host" && seated.length < 2 && mode !== "hotseat" && (
+        <p className="muted">Waiting for an opponent to join…</p>
+      )}
+
+      {mine.length > 0 && <ArmyImport players={mine} />}
+
+      {role !== "spectator" && (
+        <div className="row">
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={count}
+            onChange={(e) => setCount(Number(e.target.value))}
+          />
+          <span>D</span>
+          <select value={sides} onChange={(e) => setSides(Number(e.target.value))}>
+            {[3, 6, 8, 10, 12, 20].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+          <button onClick={() => dispatch({ type: "dice/roll", count, sides })}>Roll</button>
+          <button
+            disabled={!lastOwn}
+            title={lastOwn ? `Undo #${lastOwn.seq}` : ""}
+            onClick={() => lastOwn && dispatch({ type: "undo", seq: lastOwn.seq })}
+          >
+            Undo
+          </button>
+        </div>
+      )}
       <ol className="log">
         {record.events
-          .slice(-12)
+          .slice(-40)
           .reverse()
           .map((e) => (
             <li key={e.seq} className={undone.has(e.seq) ? "undone" : undefined}>
-              {`#${e.seq} ${describe(e, nameOf)}`}
+              <span className="seq">#{e.seq}</span> {describe(e, nameOf, game)}
             </li>
           ))}
       </ol>
@@ -97,22 +113,71 @@ export function Hud() {
   );
 }
 
-function describe({ by, event }: LoggedEvent, nameOf: (id: string) => string): string {
+export function describe(
+  { by, event }: LoggedEvent,
+  nameOf: (id: string) => string,
+  game: GameState,
+): string {
   const who = nameOf(by);
+  const unitName = (id: string) => game.units[id]?.name ?? "a unit";
   switch (event.type) {
     case "player/join":
       return `${event.player.name} joined`;
-    case "dice/roll":
-      return `${who} rolled ${event.roll.results.join(" ")}`;
+    case "player/claim":
+      return `${nameOf(event.by)} reconnected`;
+    case "dice/roll": {
+      const { results, label, unitId, sides } = event.roll;
+      const total = results.reduce((a, b) => a + b, 0);
+      const what = label ? `${unitId ? `${unitName(unitId)} ` : ""}${label}` : `${results.length}D${sides}`;
+      return `${who} rolled ${what}: ${results.join(" ")}${results.length > 1 ? ` (= ${total})` : ""}`;
+    }
     case "undo":
       return `${who} undid #${event.seq}`;
     case "unit/add":
-      return `${who} deployed ${event.unit.name}`;
+      return `${who} deployed ${event.unit.name} (${event.models.length})`;
+    case "unit/remove":
+      return `${who} removed ${unitName(event.id)}`;
     case "unit/move":
     case "model/move":
+    case "models/move":
       return `${who} moved`;
+    case "unit/status":
+      return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
+    case "model/wounds":
+      return `${who} set wounds on ${game.models[event.id]?.label ?? "a model"}${event.destroyed ? " (destroyed)" : ""}`;
+    case "layout/set":
+      return "Table set up";
+    case "turn/next":
+    case "turn/prev":
+      return `${who} ${event.type === "turn/next" ? "advanced" : "went back"} a phase`;
+    case "turn/first":
+      return `First turn: ${Object.values(game.players).find((p) => p.seat === event.seat)?.name ?? "?"}`;
+    case "resource/adjust":
+      return `${nameOf(event.player)} ${event.delta > 0 ? "+" : ""}${event.delta} ${event.resource}`;
+    case "attack/declare": {
+      const s = event.attack.spec;
+      return `${unitName(s.attackerUnitId)} attacks ${unitName(s.targetUnitId)} with ${s.weaponName}: ${event.attack.attackCount} attacks`;
+    }
+    case "attack/roll": {
+      const a = event.attack;
+      switch (a.stage) {
+        case "wound":
+          return `Hits: ${a.hits}${a.critHits ? ` (${a.critHits} critical)` : ""}`;
+        case "save":
+          return `Wounds: ${a.wounds}${a.unsavable ? ` (${a.unsavable} skip saves)` : ""}`;
+        case "damage":
+          return `Unsaved: ${a.unsaved}`;
+        default: {
+          const lost = (a.damage ?? []).reduce((n, d) => n + d.lost, 0);
+          const dead = (a.damage ?? []).filter((d) => d.destroyed).length;
+          return `Damage: ${lost} wounds lost, ${dead} models destroyed`;
+        }
+      }
+    }
+    case "attack/clear":
+      return "Attack finished";
     default:
-      return `${who}: ${event.type}`;
+      return `${who}: ${(event as { type: string }).type}`;
   }
 }
 

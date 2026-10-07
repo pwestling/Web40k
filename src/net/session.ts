@@ -88,8 +88,12 @@ export class Session {
     return this.record;
   }
 
-  dispatch(intent: Intent): void {
-    if (this.role === "host") this.hostApply(intent, this.selfId);
+  /**
+   * Ask for an intent. The host may act `as` another player, which is how a
+   * hotseat game on one screen plays both sides.
+   */
+  dispatch(intent: Intent, as?: string): void {
+    if (this.role === "host") this.hostApply(intent, as ?? this.selfId);
     else if (this.role === "client" && this.hostId) this.transport.send({ t: "intent", intent }, this.hostId);
   }
 
@@ -98,7 +102,7 @@ export class Session {
   }
 
   private hostApply(intent: Intent, from: string): void {
-    const logged = resolveLogged(this.record, intent, from, this.rng, this.now());
+    const logged = resolveLogged(this.record, intent, from, this.rng, this.now(), this.state);
     if (!logged) return;
     this.append(logged);
     this.transport.send({ t: "event", logged });

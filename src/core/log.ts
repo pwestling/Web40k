@@ -63,9 +63,10 @@ export function resolveLogged(
   by: PlayerId,
   rng: Rng,
   now: number,
+  state: GameState = stateAt(record),
 ): LoggedEvent | null {
   if (intent.type === "undo" && !canUndo(record, intent.seq)) return null;
-  const event = resolveIntent(intent, by, rng);
+  const event = resolveIntent(intent, by, rng, state);
   return event && { seq: lastSeq(record) + 1, by, at: now, event };
 }
 
