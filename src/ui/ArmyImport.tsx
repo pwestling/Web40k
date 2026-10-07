@@ -38,7 +38,7 @@ const baseKey = (b: BaseShape) => JSON.stringify(b);
  * Load a roster file (BattleScribe / New Recruit .ros, .rosz or .json) or a
  * sample army, check the guessed bases, then deploy it for a player.
  */
-export function ArmyImport({ players }: { players: { id: PlayerId; name: string }[] }) {
+export function ArmyImport({ players }: { players: { id: PlayerId; name: string; seat?: number }[] }) {
   const { game, dispatch } = useStore();
   const [roster, setRoster] = useState<ImportedRoster | null>(null);
   const [owner, setOwner] = useState<PlayerId>(players[0]?.id ?? "");
@@ -60,7 +60,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string 
     setRoster(null);
   };
 
-  const ownerIndex = players.findIndex((p) => p.id === owner);
+  const ownerSeat = players.find((p) => p.id === owner)?.seat ?? 0;
 
   return (
     <div className="import">
@@ -85,7 +85,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string 
             onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
           />
         </label>
-        <button onClick={() => setRoster(sampleRoster(ownerIndex === 1 ? 1 : 0))}>Sample army</button>
+        <button onClick={() => setRoster(sampleRoster(ownerSeat === 1 ? 1 : 0))}>Sample army</button>
       </div>
       {roster && (
         <div className="modal-backdrop">

@@ -205,6 +205,7 @@ function Scene() {
             selected={isSelected}
             incoherent={incoherent.has(model.id)}
             targetable={!!draft?.picking && model.unitId !== draft.attackerId}
+            unitName={model.unitId ? game.units[model.unitId]?.name : undefined}
             onDown={(shift) => onModelDown(model, shift)}
           />
         );
@@ -427,10 +428,20 @@ interface ModelBaseProps {
   selected: boolean;
   incoherent: boolean;
   targetable: boolean;
+  unitName?: string;
   onDown: (shift: boolean) => void;
 }
 
-function ModelBase({ model, position, color, selected, incoherent, targetable, onDown }: ModelBaseProps) {
+function ModelBase({
+  model,
+  position,
+  color,
+  selected,
+  incoherent,
+  targetable,
+  unitName,
+  onDown,
+}: ModelBaseProps) {
   const { width, depth } = baseSizeInches(model.base);
   const r = Math.min(width, depth) / 2;
   const big = Math.max(width, depth);
@@ -483,6 +494,12 @@ function ModelBase({ model, position, color, selected, incoherent, targetable, o
           <ringGeometry args={[Math.max(width, depth) / 2 + 0.05, Math.max(width, depth) / 2 + 0.25, 40]} />
           <meshBasicMaterial color={incoherent ? "#ef4444" : "#fde047"} />
         </mesh>
+      )}
+      {hover && (
+        <Html position={[0, height + 1.8, 0]} center className="ruler">
+          {unitName && unitName !== model.label ? `${unitName}: ${model.label}` : model.label}
+          {wounds > 1 ? ` (${left}/${wounds} W)` : ""}
+        </Html>
       )}
       {wounds > 1 && left < wounds && (
         <Html position={[0, height + 0.9, 0]} center className="wounds">

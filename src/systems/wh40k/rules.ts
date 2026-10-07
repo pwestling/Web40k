@@ -9,6 +9,7 @@
  */
 import {
   baseToBaseDistance,
+  PHASES,
   type AttackSpec,
   type GameState,
   type Model,
@@ -384,8 +385,14 @@ export function unitMoved(models: Model[], positions?: Record<string, Vec2>): nu
   return best;
 }
 
-/** Allowed move this phase from M, plus the advance roll if the unit advanced. */
+/**
+ * How far the unit may move in the current phase: M (plus the advance roll)
+ * in Movement, the charge roll in Charge, 3" pile-in in Fight.
+ */
 export function moveAllowance(state: GameState, unit: Unit): number | null {
+  const phase = PHASES[state.turn.phase];
+  if (phase === "Charge") return typeof unit.status?.charge === "number" ? unit.status.charge : null;
+  if (phase === "Fight") return 3;
   const m = aliveModels(state, unit)[0];
   const move = num(m?.profile?.chars.M);
   if (move === null) return null;
