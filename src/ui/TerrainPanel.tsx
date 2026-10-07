@@ -1,11 +1,13 @@
 import {
   footprintVisibility,
   standInHeight,
+  systemOf,
   type Layout,
   type TerrainCategory,
   type TerrainPiece,
 } from "../core";
 import { standardLayout, TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
+import { systemModule } from "../systems";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -34,10 +36,19 @@ export function TerrainPanel() {
   const game = useGame();
   const { dispatch, selectedTerrain, set } = useStore();
   const piece = game.terrain.find((t) => t.id === selectedTerrain);
+  // The game system's own terrain categories, or 40k's.
+  const system = systemOf(game);
+  const categories = system.terrain?.length
+    ? system.terrain.map((c) => ({ id: c.id, label: c.name, help: categoryHelp(c) }))
+    : Object.entries(CATEGORY_RULES).map(([id, r]) => ({ id, label: r.label, help: r.help }));
+  const templateCategory = systemModule(game.system).templateCategory;
 
   const add = (name: string) => {
     const id = newId();
-    dispatch({ type: "terrain/add", piece: makePiece(name, id, { x: 0, y: 0 }) });
+    dispatch({
+      type: "terrain/add",
+      piece: makePiece(name, id, { x: 0, y: 0 }, 0, templateCategory?.[name]),
+    });
     set({ selectedTerrain: id });
   };
   const update = (patch: Partial<TerrainPiece>) =>
@@ -114,14 +125,14 @@ export function TerrainPanel() {
               value={piece.category}
               onChange={(e) => update({ category: e.target.value as TerrainCategory })}
             >
-              {Object.entries(CATEGORY_RULES).map(([k, r]) => (
-                <option key={k} value={k}>
-                  {r.label}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
                 </option>
               ))}
             </select>
           </label>
-          <p className="muted small">{CATEGORY_RULES[piece.category].help}</p>
+          <p className="muted small">{categories.find((c) => c.id === piece.category)?.help}</p>
           {game.settings.los === "footprint" ? (
             <label>
               Sight{" "}
@@ -226,4 +237,15 @@ export function TerrainPanel() {
       </div>
     </div>
   );
+}
+
+/** One line on what a system's terrain category does. */
+function categoryHelp(c: NonNullable<ReturnType<typeof systemOf>["terrain"]>[number]): string {
+  const parts: string[] = [];
+  if (c.cover)
+    parts.push(`Cover${c.coverFor ? ` for ${c.coverFor.join(", ").toLowerCase()}` : ""} in or touching it.`);
+  if (c.visibility === "blocking") parts.push("Blocks sight.");
+  if (c.visibility === "obscuring") parts.push("Gives cover when between shooter and target.");
+  if (c.blocksMovement) parts.push("Impassable.");
+  return parts.join(" ") || "No effect.";
 }

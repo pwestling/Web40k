@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { BaseShape, PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
-import { sampleRoster } from "../systems/wh40k/sample";
+import { systemModule } from "../systems";
 import { useStore } from "../store";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
@@ -86,7 +86,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
             onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
           />
         </label>
-        <button onClick={() => setRoster(sampleRoster(ownerSeat === 1 ? 1 : 0))}>Sample army</button>
+        <button onClick={() => setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0))}>
+          Sample army
+        </button>
       </div>
       {roster && (
         <div className="modal-backdrop">

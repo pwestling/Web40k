@@ -1,4 +1,17 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import {
+  applyAction,
+  endReaction,
+  procedureEnv,
+  reactionOver,
+  reactionSeat,
+  startActionRun,
+  unitActions,
+  type ActionTaken,
+} from "./content/play";
+import { advance, respond, type ProcedureRun } from "./content/runner";
+import { getSystem } from "./content/systems";
+import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
 import type {
   DiceRoll,
@@ -62,11 +75,34 @@ export type Intent =
   | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }
+  | { type: "turn/pass" }
+  | { type: "turn/endActivation" }
   | { type: "turn/first"; seat: number }
+  | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
+  /** Re-roll some dice in a player's pool (by index). */
+  | { type: "pool/reroll"; player: PlayerId; resource: string; indices: number[] }
+  /** Spend dice from a player's pool (by index). */
+  | { type: "pool/spend"; player: PlayerId; resource: string; indices: number[] }
   | { type: "attack/declare"; spec: AttackSpec }
   | { type: "attack/roll" }
   | { type: "attack/clear" }
+  /** Take one of the game system's actions with a unit (activate, move, fire, react...). */
+  | {
+      type: "action/take";
+      unitId: UnitId;
+      action: string;
+      weapon?: string;
+      targetId?: UnitId;
+      with?: UnitId[];
+    }
+  /** Don't react, or finish reacting: the held action goes on. */
+  | { type: "reaction/pass" }
+  /** Roll the next step of the procedure in progress. */
+  | { type: "procedure/roll" }
+  /** Answer the procedure's open window with an option id or "pass". */
+  | { type: "procedure/respond"; answer: string }
+  | { type: "procedure/clear" }
   | { type: "undo"; seq: number };
 
 /** Events are fully resolved and deterministic. */
@@ -100,14 +136,28 @@ export type GameEvent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
-  | { type: "turn/next" }
+  /** `seed` drives any dice rolled on the way, e.g. activation dice at the start of a round. */
+  | { type: "turn/next"; seed?: number }
   | { type: "turn/prev" }
+  | { type: "turn/pass"; seed?: number }
+  | { type: "turn/endActivation" }
   | { type: "turn/first"; seat: number }
+  /** Choose the game system before the battle starts. */
+  | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
+  /** A player's dice pool after a re-roll or spending dice. */
+  | { type: "pool/set"; player: PlayerId; resource: string; faces: number[] }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
   | { type: "attack/clear" }
+  /** A system action, paid for; any procedure it starts is already rolled up to its first pause. */
+  | ({ type: "action/take" } & ActionTaken)
+  /** The reaction is over; the held action goes on, with its procedure started. */
+  | { type: "reaction/end"; run?: ProcedureRun }
+  | { type: "procedure/set"; run: ProcedureRun }
+  /** Close the procedure; `end` closes a finished reaction too. */
+  | { type: "procedure/clear"; end?: { run?: ProcedureRun } }
   /** Takes back an earlier event. It stays in the log, marked as undone. */
   | { type: "undo"; seq: number };
 
@@ -127,6 +177,8 @@ export interface ModelsMove {
   type: "models/move";
   /** `z` is the height of the base; omitted means unchanged. */
   moves: { id: ModelId; to: Vec2; z?: number }[];
+  /** Set when this pulls an over-long move back to its limit, for the log. */
+  snap?: number;
 }
 
 export type Rng = () => number;
@@ -161,6 +213,28 @@ export function resolveIntent(
       return state?.players[intent.player] && intent.player !== from
         ? { type: "player/claim", player: intent.player, by: from }
         : null;
+    case "pool/reroll":
+    case "pool/spend": {
+      const faces = state?.pools?.[intent.player]?.[intent.resource];
+      if (!state || !faces || !state.players[intent.player]) return null;
+      const picked = new Set(intent.indices.filter((i) => i >= 0 && i < faces.length));
+      const sides = systemOf(state).resources?.find((r) => r.id === intent.resource)?.sides ?? 6;
+      const next =
+        intent.type === "pool/spend"
+          ? faces.filter((_, i) => !picked.has(i))
+          : faces.map((f, i) => (picked.has(i) ? 1 + Math.floor(rng() * sides) : f));
+      return { type: "pool/set", player: intent.player, resource: intent.resource, faces: next };
+    }
+    case "turn/next":
+    case "turn/pass":
+      return { ...intent, seed: Math.floor(rng() * 2 ** 31) };
+    case "game/system":
+      try {
+        getSystem(intent.system);
+      } catch {
+        return null;
+      }
+      return intent;
     case "attack/declare": {
       try {
         parseDice(intent.spec.attacks);
@@ -179,6 +253,58 @@ export function resolveIntent(
     }
     case "ruler/set":
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
+    case "action/take": {
+      const unit = state?.units[intent.unitId];
+      if (!state || !unit || unit.owner !== from) return null;
+      const req = {
+        ...(intent.weapon ? { weapon: intent.weapon } : {}),
+        ...(intent.targetId ? { targetId: intent.targetId } : {}),
+      };
+      const option = unitActions(state, unit.id, req).find((o) => o.def.id === intent.action);
+      if (!option?.ok) return null;
+      const allowed = new Set(option.commands?.candidates ?? []);
+      const commanded = (intent.with ?? [])
+        .filter((id) => allowed.has(id))
+        .slice(0, option.commands?.count ?? 0);
+      const taken: ActionTaken = {
+        unitId: unit.id,
+        action: intent.action,
+        by: from,
+        ...req,
+        payment: option.payment,
+        ...(commanded.length ? { with: commanded } : {}),
+      };
+      // The other player may react before a fire or move action goes on.
+      const paid = applyAction(state, taken);
+      const hold = !option.def.reactTo && reactionSeat(paid, taken) !== null;
+      const run = !hold && option.def.procedure ? startActionRun(paid, taken, rng) : null;
+      return { type: "action/take", ...taken, ...(hold ? { hold } : {}), ...(run ? { run } : {}) };
+    }
+    case "reaction/pass": {
+      const pending = state?.pending;
+      if (!state || !pending || state.procedure) return null;
+      const run = startActionRun(endReaction(state, null), pending.trigger, rng);
+      return { type: "reaction/end", ...(run ? { run } : {}) };
+    }
+    case "procedure/roll": {
+      const run = state?.procedure?.run;
+      if (!state || !run || run.done || run.pending) return null;
+      return { type: "procedure/set", run: advance(procedureEnv(state, rng), run) };
+    }
+    case "procedure/respond": {
+      const run = state?.procedure?.run;
+      if (!state || !run?.pending) return null;
+      return { type: "procedure/set", run: respond(procedureEnv(state, rng), run, intent.answer) };
+    }
+    case "procedure/clear": {
+      if (!state?.procedure) return null;
+      const cleared: GameState = { ...state, procedure: null };
+      if (!reactionOver(cleared)) return { type: "procedure/clear" };
+      const run = state.pending
+        ? startActionRun(endReaction(cleared, null), state.pending.trigger, rng)
+        : null;
+      return { type: "procedure/clear", end: run ? { run } : {} };
+    }
     default:
       return intent;
   }

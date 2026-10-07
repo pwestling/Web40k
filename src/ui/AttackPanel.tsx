@@ -11,6 +11,7 @@ import {
 } from "../systems/wh40k/rules";
 import { useStore, type AttackDraft } from "../store";
 import { useGame } from "./hooks";
+import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -20,7 +21,9 @@ import { useGame } from "./hooks";
 export function AttackPanel() {
   const game = useGame();
   const { draft, scrub } = useStore();
+  if (game.procedure) return <ProcedurePanel />;
   if (game.attack) return <AttackInProgress attack={game.attack} live={scrub === null} />;
+  if (draft?.action && scrub === null) return <ActionSetup draft={{ ...draft, action: draft.action }} />;
   if (draft && scrub === null) return <AttackSetup draft={draft} />;
   return null;
 }

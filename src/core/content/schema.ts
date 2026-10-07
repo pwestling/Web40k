@@ -59,6 +59,10 @@ export type Expr =
   | { is: Ref; value: string }
   | { hasStatus: Ref; status: Id }
   | { hasFlag: Ref; flag: Id }
+  /** Whether a characteristic or value is present (not "-" or missing), e.g. a damage chart. */
+  | { has: Ref }
+  /** Whether two refs name the same thing (by id), e.g. the event's target is this unit. */
+  | { same: [Ref, Ref] }
   /** Quantifiers over a collection such as "self.unit.models" or "enemy.units". */
   | { every: Ref; as: string; test: Expr }
   | { some: Ref; as: string; test: Expr }
@@ -85,7 +89,13 @@ export type GeoQuery =
   /** Terrain categories crossed by the line between two things, e.g. "dense". */
   | { kind: "crosses"; from: Ref; to: Ref; terrainCategory: Id }
   /** Height of `from` above `to`, in inches. */
-  | { kind: "elevation"; from: Ref; to: Ref };
+  | { kind: "elevation"; from: Ref; to: Ref }
+  /**
+   * Whether `to` is in cover from `from`: some model of `to` that `from` can
+   * see stands in or touches terrain whose category gives cover, or is seen
+   * past an obscuring piece. Categories come from the system's `terrain`.
+   */
+  | { kind: "cover"; from: Ref; to: Ref };
 
 // ---------------------------------------------------------------------------
 // Effects: "when <event>, if <condition>, do <actions>"
@@ -173,8 +183,21 @@ export type EffectAction =
   | { do: "roll"; dice: DiceText; outcomes: { min: number; max: number; do: EffectAction[] }[] }
   /** Run a system procedure or offer an action, e.g. "can make a Normal move". */
   | { do: "run"; action: Id; with?: Record<string, Expr>; optional?: boolean }
-  /** Activate other units for free, e.g. FSD's Command value. */
+  /**
+   * Activate other units for free, e.g. FSD's Command value: the player picks
+   * up to `count` friendly units matching `filter` (the candidate is "it").
+   */
   | { do: "activate"; count: Expr; filter?: Expr }
+  /**
+   * Roll on a damage track for each input (FSD's damage chart, a vehicle
+   * damage table). `chart` is text such as "1:red, 2-3:orange:ARM, 4:white:MOV,
+   * 5-6:white:PIN": faces, then the box colour, then its effect. A red box
+   * destroys the unit; an orange box destroys it when hit a second time; a
+   * white box applies its effect. The effect becomes a unit status
+   * "damage<effect>" (damageMOV), so statuses can change characteristics.
+   * Every roll also applies `status` (pinned) when given.
+   */
+  | { do: "damageTrack"; target: Ref; chart: Ref; die?: number; status?: Id }
   /** Not automated yet. The reminder text is supplied by the player's pack, never the repo. */
   | { do: "manual"; reminder: string };
 
@@ -383,6 +406,12 @@ export interface ActionDef {
   by: "unit" | "player";
   /** Which side may use it. */
   side?: "active" | "inactive" | "either";
+  /**
+   * Taking it starts the unit's activation (FSD: spend a die to activate, or
+   * to react), after which the unit may take this many of the current slot's
+   * other actions. Units without an activation take actions freely (40k).
+   */
+  activates?: Expr;
   /** Out-of-sequence actions that respond to an event (overwatch, reactions). */
   reactTo?: EventPattern;
   /** Eligibility, evaluated against the acting unit or player. */
@@ -391,7 +420,13 @@ export interface ActionDef {
    * Resources spent. For dice pools, `slots` restricts which faces can pay,
    * one entry per die (FSD: a slot marked 4-6 takes one die showing 4 to 6).
    */
-  cost?: { resource: Id; amount: Expr; slots?: { min: number; max: number }[] }[];
+  cost?: {
+    resource: Id;
+    amount: Expr;
+    slots?: { min: number; max: number }[];
+    /** Slots read from content, e.g. "weapon.slots" holding "4-6" or "1-2 1-2". */
+    slotsFrom?: Ref;
+  }[];
   limit?: { count: number; per: "phase" | "turn" | "round" | "battle"; perUnit?: boolean };
   /** Who or what the action targets, chosen by the player. */
   target?: { filter: Expr; count?: number };
@@ -412,14 +447,20 @@ export interface CharacteristicDef {
   id: Id;
   name: string;
   of: "model" | "weapon" | "unit";
-  /** "target" values are dice targets such as 3+; "distance" is inches. */
-  type: "number" | "target" | "distance" | "dice";
+  /** "target" values are dice targets such as 3+; "distance" is in the system's unit; "text" is kept as written. */
+  type: "number" | "target" | "distance" | "dice" | "text";
   /** Display format, e.g. '{v}"' or "{v}+". */
   format?: string;
   /** Other names imported data uses for it, e.g. ["SV", "Save"] or ["BS", "WS"]. */
   aliases?: string[];
   /** Value when missing or unreadable ("-"); null if omitted. */
   default?: Value;
+  /**
+   * A regular expression whose first group is the value, for characteristics
+   * printed together: FSD's Save "d8(2)" gives the save die with "d(\\d+)"
+   * and the number of dice with "\\((\\d+)\\)".
+   */
+  pattern?: string;
 }
 
 export interface DieDef {
@@ -474,6 +515,10 @@ export interface ResourceDef {
   max?: Expr;
   /** Dice pools keep the rolled faces (dice-placement games). */
   kind?: "counter" | "dicePool";
+  /** Faces of the dice in a pool (default 6). */
+  sides?: number;
+  /** Back to `initial` (a pool emptied) at the start of each player turn or round. */
+  reset?: "playerTurn" | "round";
 }
 
 /** An advisory rule check. Breaking it warns; it never blocks. */
@@ -501,6 +546,12 @@ export interface TerrainCategoryDef {
   name: string;
   blocksMovement?: boolean;
   blocksSight?: boolean;
+  /** Models in or touching it are in cover (see the "cover" query). */
+  cover?: boolean;
+  /** Only these unit keywords get its cover, e.g. ["INFANTRY"]. */
+  coverFor?: Keyword[];
+  /** How it blocks sight in "footprint" line of sight. */
+  visibility?: "open" | "obscuring" | "blocking";
   effects?: Effect[];
 }
 
@@ -534,6 +585,14 @@ export interface GameSystem {
   coreEffects?: Effect[];
   /** Named numbers such as engagement range, available as "const.<id>". */
   constants?: Record<Id, number>;
+  /**
+   * Unit flags cleared at the start of each player turn (for that player's
+   * units), each round, or the end of each activation (for everyone), e.g.
+   * "moved" or "activated". A trailing "*" clears every flag with that prefix.
+   */
+  resets?: { at: "playerTurn" | "round" | "activation"; flags: Id[] }[];
+  /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
+  settings?: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------

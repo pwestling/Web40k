@@ -1,5 +1,5 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
-import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CanvasTexture, Plane, Raycaster, RepeatWrapping, Vector2, Vector3, type Object3D } from "three";
 import {
@@ -146,43 +146,56 @@ function Cameras() {
   return <OrthographicCamera key={reset} makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
 }
 
+/** Width the right-hand panel (unit card, attack, terrain editor) takes when open. */
+const RIGHT_PANEL = 412;
+
 /**
- * Centre the table in the space between the side panels rather than the
- * whole window, by shifting the camera's view. Measures the panels a few
- * times a second, so it follows them opening, closing and resizing.
+ * Fit the table into the space between the side panels, by shifting and
+ * zooming the camera's view. The right panel is assumed open, so selecting
+ * and deselecting units never moves the table; the fit is worked out again
+ * only when the view is reset, the left panel opens or closes, or the window
+ * resizes, and it eases into place.
  */
 function CameraFit() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   const view = useStore((s) => s.view);
-  const [shift, setShift] = useState(0);
+  const reset = useStore((s) => s.cameraReset);
+  const started = useStore((s) => s.session !== null || s.role === "spectator");
+  const [left, setLeft] = useState(0);
+  // The left panel's edge, checked now and then; it changes only when it is hidden or shown.
   useEffect(() => {
-    if (view === "eye") return;
     const measure = () => {
-      const left = document.querySelector(".hud")?.getBoundingClientRect();
-      const right = document.querySelector(".unitcard, .attack, .terrainpanel")?.getBoundingClientRect();
-      const l = left ? left.right : 0;
-      const r = right ? size.width - right.left : 0;
-      setShift(Math.round((l - r) / 2));
+      const l = Math.round(document.querySelector(".hud")?.getBoundingClientRect().right ?? 0);
+      setLeft((old) => (Math.abs(old - l) > 40 ? l : old));
     };
     measure();
-    const t = setInterval(measure, 300);
+    const t = setInterval(measure, 500);
     return () => clearInterval(t);
-  }, [view, size.width]);
-  useEffect(() => {
+  }, [reset]);
+  const target = useMemo(() => {
+    if (view === "eye" || !started) return { zoom: 1, centre: size.width / 2 };
+    const gap = Math.max(300, size.width - left - RIGHT_PANEL);
+    return { zoom: Math.min(1.6, Math.max(1, (size.width * 0.82) / gap)), centre: left + gap / 2 };
+  }, [view, started, size.width, left, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  const current = useRef({ zoom: 1, centre: size.width / 2 });
+  useFrame(() => {
     const cam = camera as Object3D & {
       setViewOffset?: (fw: number, fh: number, x: number, y: number, w: number, h: number) => void;
-      clearViewOffset?: () => void;
       updateProjectionMatrix?: () => void;
     };
-    if (!cam.setViewOffset || view === "eye" || !shift) return;
-    cam.setViewOffset(size.width, size.height, -shift, 0, size.width, size.height);
+    if (!cam.setViewOffset) return;
+    const c = current.current;
+    const done = Math.abs(c.zoom - target.zoom) < 0.001 && Math.abs(c.centre - target.centre) < 0.5;
+    if (done && (cam as { view?: { enabled: boolean } }).view?.enabled) return;
+    c.zoom += (target.zoom - c.zoom) * 0.15;
+    c.centre += (target.centre - c.centre) * 0.15;
+    // Render a window `zoom` times the screen, placed so the table centre lands at `centre`.
+    const { width: W, height: H } = size;
+    const k = c.zoom;
+    cam.setViewOffset(W, H, W / 2 - c.centre * k, (H / 2) * (1 - k), W * k, H * k);
     cam.updateProjectionMatrix?.();
-    return () => {
-      cam.clearViewOffset?.();
-      cam.updateProjectionMatrix?.();
-    };
-  }, [camera, size, shift, view]);
+  });
   return null;
 }
 
@@ -222,6 +235,7 @@ function Scene() {
     hoverUnit,
     plates,
     ranges,
+    rangeWeapon: shownRangeWeapon,
     set: setUi,
   } = useStore();
   const canControl = useCanControl();
@@ -230,7 +244,7 @@ function Scene() {
   useLayoutEffect(() => {
     dragRef.current = drag;
   });
-  const { camera, gl } = useThree();
+  const { camera, gl, size } = useThree();
   const { width, depth } = game.table;
   const cameraReset = useStore((s) => s.cameraReset);
   const live = scrub === null;
@@ -263,7 +277,10 @@ function Scene() {
           const s = clampFraction(
             game,
             d.ids,
-            (id, k) => ({ x: d.starts[id]!.x + dx * k, y: d.starts[id]!.y + dy * k }),
+            (id, k) => {
+              const p = { x: d.starts[id]!.x + dx * k, y: d.starts[id]!.y + dy * k };
+              return { ...p, z: settleZ(game.terrain, p, d.startZ[id] ?? 0) };
+            },
             limit,
           );
           to = { x: d.grab.x + dx * s, y: d.grab.y + dy * s };
@@ -490,7 +507,20 @@ function Scene() {
     return { sightLines: lines, sightLabels: labels };
   }, [game, draft, losFrom, hoverUnit]);
 
-  // Unit labels, nudged upwards where they would overlap a neighbour's.
+  // The camera as last seen, so labels can be laid out on screen. Checked a
+  // few times a second; only a real change re-lays them out.
+  const [camKey, setCamKey] = useState("");
+  useEffect(() => {
+    const t = setInterval(() => {
+      const key = [...camera.matrixWorld.elements, ...camera.projectionMatrix.elements]
+        .map((v) => v.toFixed(3))
+        .join(",");
+      setCamKey((old) => (old === key ? old : key));
+    }, 400);
+    return () => clearInterval(t);
+  }, [camera]);
+
+  // Unit labels, lifted where they would overlap another label on screen.
   const unitLabels = useMemo(() => {
     const sightOf = new Map(sightLabels.map((l) => [l.unitId, l]));
     const out: {
@@ -503,6 +533,16 @@ function Scene() {
       sight?: (typeof sightLabels)[number];
     }[] = [];
     if (view === "eye") return out;
+    const rects: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    const v = new Vector3();
+    const rectAt = (x: number, y: number, z: number, w: number, h: number) => {
+      v.set(x, z, y).project(camera);
+      const sx = ((v.x + 1) / 2) * size.width;
+      const sy = ((1 - v.y) / 2) * size.height;
+      return { x0: sx - w / 2, x1: sx + w / 2, y0: sy - h / 2, y1: sy + h / 2 };
+    };
+    const hits = (r: (typeof rects)[number]) =>
+      rects.some((o) => r.x0 < o.x1 && r.x1 > o.x0 && r.y0 < o.y1 && r.y1 > o.y0);
     for (const u of Object.values(game.units)) {
       const models = aliveModels(game, u);
       const sight = sightOf.get(u.id);
@@ -511,8 +551,16 @@ function Scene() {
       const x = models.reduce((a, m) => a + positions[m.id]!.x, 0) / n;
       const y = models.reduce((a, m) => a + positions[m.id]!.y, 0) / n;
       let z = Math.max(...models.map((m) => (heights[m.id] ?? 0) + modelHeight(m))) + 1;
-      while (out.some((o) => Math.abs(o.x - x) < 5 && Math.abs(o.y - y) < 3 && Math.abs(o.z - z) < 1.6))
-        z += 1.6;
+      // Rough label size in pixels, from its text.
+      const chars = Math.max(plates ? u.name.length : 0, sight?.text.length ?? 0);
+      const w = chars * 6.4 + 16;
+      const h = (plates && sight ? 2 : 1) * 15 + 6;
+      let r = rectAt(x, y, z, w, h);
+      for (let i = 0; i < 12 && hits(r); i++) {
+        z += 0.8;
+        r = rectAt(x, y, z, w, h);
+      }
+      rects.push(r);
       out.push({
         unitId: u.id,
         x,
@@ -524,7 +572,7 @@ function Scene() {
       });
     }
     return out;
-  }, [game, positions, heights, plates, sightLabels, view]);
+  }, [game, positions, heights, plates, sightLabels, view, camKey, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
@@ -720,24 +768,38 @@ function Scene() {
         game.ruler && <RulerLine game={game} ruler={game.ruler} />
       )}
 
-      {/* Move and longest weapon range around each model of the chosen unit. */}
+      {/* One outline per range around the whole chosen unit: its move and a weapon's range. */}
       {ranges &&
         game.units[ranges] &&
         (() => {
           const unit = game.units[ranges]!;
+          const models = aliveModels(game, unit).map(placed);
           const move = moveAllowance(game, unit);
-          const longest = Math.max(
-            0,
-            ...Object.values(unit.sheet?.weapons ?? {})
-              .filter((w) => w.kind === "ranged")
-              .map((w) => num(w.chars.RANGE) ?? 0),
+          const ranged = Object.values(unit.sheet?.weapons ?? {}).filter(
+            (w) => w.kind === "ranged" && num(w.chars.RANGE),
           );
-          return aliveModels(game, unit).map((m) => (
-            <group key={`ranges-${m.id}`}>
-              {move !== null && <Ring model={placed(m)} radius={move} color="#38bdf8" opacity={0.45} />}
-              {longest > 0 && <Ring model={placed(m)} radius={longest} color="#facc15" opacity={0.3} />}
-            </group>
-          ));
+          const weapon =
+            ranged.find((w) => w.id === shownRangeWeapon) ??
+            ranged.reduce<(typeof ranged)[number] | undefined>(
+              (best, w) => (!best || num(w.chars.RANGE)! > num(best.chars.RANGE)! ? w : best),
+              undefined,
+            );
+          const carriers = weapon ? models.filter((m) => m.weapons?.includes(weapon.id)) : [];
+          return (
+            <>
+              {move !== null && (
+                <RangeOutline models={models} range={move} color="#38bdf8" label={`Move ${move}"`} />
+              )}
+              {weapon && carriers.length > 0 && (
+                <RangeOutline
+                  models={carriers}
+                  range={num(weapon.chars.RANGE)!}
+                  color="#facc15"
+                  label={`${weapon.name} ${num(weapon.chars.RANGE)}"`}
+                />
+              )}
+            </>
+          );
         })()}
 
       {sightLines.map((l, i) => (
@@ -753,6 +815,66 @@ function Scene() {
           text={`${Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y).toFixed(1)}"`}
         />
       )}
+    </>
+  );
+}
+
+/**
+ * The outline of everywhere within `range` of any of the models' bases: the
+ * outer edge of the union of their circles, with one label.
+ */
+function RangeOutline({
+  models,
+  range,
+  color,
+  label,
+}: {
+  models: Model[];
+  range: number;
+  color: string;
+  label: string;
+}) {
+  const { segments, at } = useMemo(() => {
+    const circles = models.map((m) => {
+      const { width, depth } = baseSizeInches(m.base);
+      return { x: m.position.x, y: m.position.y, z: m.z ?? 0, r: Math.max(width, depth) / 2 + range };
+    });
+    const inside = (x: number, y: number, skip: number) =>
+      circles.some((c, i) => i !== skip && Math.hypot(x - c.x, y - c.y) < c.r - 1e-3);
+    const pts: number[] = [];
+    let at = { x: 0, y: -Infinity, z: 0 };
+    const N = 96;
+    circles.forEach((c, i) => {
+      for (let k = 0; k < N; k++) {
+        const a0 = (k / N) * Math.PI * 2;
+        const a1 = ((k + 1) / N) * Math.PI * 2;
+        const p0 = { x: c.x + Math.cos(a0) * c.r, y: c.y + Math.sin(a0) * c.r };
+        const p1 = { x: c.x + Math.cos(a1) * c.r, y: c.y + Math.sin(a1) * c.r };
+        if (inside(p0.x, p0.y, i) || inside(p1.x, p1.y, i)) continue;
+        pts.push(p0.x, c.z + 0.06, p0.y, p1.x, c.z + 0.06, p1.y);
+        if (p0.y > at.y) at = { x: p0.x, y: p0.y, z: c.z };
+      }
+    });
+    return { segments: new Float32Array(pts), at };
+  }, [models, range]);
+  if (!segments.length) return null;
+  return (
+    <>
+      <lineSegments raycast={() => null}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[segments, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} />
+      </lineSegments>
+      <Html
+        zIndexRange={LABEL_Z}
+        position={[at.x, at.z + 0.4, at.y]}
+        center
+        className="ruler"
+        style={{ color }}
+      >
+        {label}
+      </Html>
     </>
   );
 }
@@ -988,6 +1110,12 @@ const CATEGORY_COLORS: Record<TerrainPiece["category"], string> = {
   light: "#6b6257",
   dense: "#3d5a32",
   solid: "#4b4b52",
+  // Other games' categories.
+  open: "#6f6450",
+  broken: "#6f6450",
+  traversable: "#6b6257",
+  obscuring: "#3d5a32",
+  blocking: "#4b4b52",
 };
 
 function Terrain({
@@ -1032,7 +1160,7 @@ function Terrain({
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial
-          color={selected ? "#a16207" : CATEGORY_COLORS[piece.category]}
+          color={selected ? "#a16207" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
           transparent
           opacity={0.8}
         />

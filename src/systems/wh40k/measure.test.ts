@@ -41,4 +41,12 @@ describe("measuring", () => {
     expect(clampFraction(s, ["a", "b"], at, 6)).toBeCloseTo(0.6, 3);
     expect(clampFraction(s, ["a", "b"], at, 12)).toBe(1);
   });
+
+  it("counts climbing towards the limit, as the unit card does", () => {
+    const s = table([m("a", 0, 5, { x: 0, y: 0 })]);
+    // Ends 2.5" up a crate after 5" across: 7.5" in all, so a 5" limit stops it short.
+    const at = (_: string, k: number) => ({ x: 0, y: 5 * k, z: k > 0.5 ? 2.5 : 0 });
+    const k = clampFraction(s, ["a"], at, 5);
+    expect(k).toBeCloseTo(0.5, 4);
+  });
 });

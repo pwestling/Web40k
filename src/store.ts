@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   createInitialState,
   createRecord,
+  DEFAULT_SYSTEM,
   type GameRecord,
   type GameState,
   type Intent,
@@ -13,7 +14,7 @@ import { broadcastTransport } from "./net/broadcast";
 import { createLoopbackNetwork } from "./net/loopback";
 import { Session, type Role } from "./net/session";
 import { trysteroTransport } from "./net/trystero";
-import { standardLayout } from "./systems/wh40k/layout";
+import { systemModule } from "./systems";
 
 export const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
 
@@ -33,6 +34,8 @@ export interface StartOptions {
   name: string;
   /** Resume a saved game (host only). */
   record?: GameRecord;
+  /** Game system for a new game (host only); 40k when missing. */
+  system?: string;
 }
 
 /** The attack panel's choices before anything is rolled. Local to each player. */
@@ -43,6 +46,8 @@ export interface AttackDraft {
   targetId?: UnitId;
   /** Waiting for a click on an enemy unit. */
   picking: boolean;
+  /** The game system action this sets up (generic systems), e.g. "fire". */
+  action?: string;
 }
 
 interface Store {
@@ -76,6 +81,8 @@ interface Store {
   measuring: boolean;
   /** Unit whose move and weapon ranges are drawn around its models. */
   ranges: UnitId | null;
+  /** Weapon whose range Ranges shows (default: the unit's longest). */
+  rangeWeapon: string | null;
   set(
     patch: Partial<
       Pick<
@@ -90,6 +97,7 @@ interface Store {
         | "plates"
         | "measuring"
         | "ranges"
+        | "rangeWeapon"
       >
     >,
   ): void;
@@ -157,6 +165,7 @@ export const useStore = create<Store>((set, get) => ({
   plates: true,
   measuring: false,
   ranges: null,
+  rangeWeapon: null,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),
@@ -167,7 +176,7 @@ export const useStore = create<Store>((set, get) => ({
   setDraft: (draft) => set({ draft }),
   setScrub: (scrub) => set({ scrub }),
 
-  start({ role, mode, roomId, name, record }) {
+  start({ role, mode, roomId, name, record, system }) {
     get().session?.leave();
     const transport =
       mode === "hotseat"
@@ -213,7 +222,8 @@ export const useStore = create<Store>((set, get) => ({
           player: { id: session.selfId, name, color: COLORS[0]!, seat: 0 },
         });
       }
-      session.dispatch({ type: "layout/set", layout: standardLayout() });
+      if (system && system !== DEFAULT_SYSTEM) session.dispatch({ type: "game/system", system });
+      session.dispatch({ type: "layout/set", layout: systemModule(system).layout(session.current.table) });
       return;
     }
 

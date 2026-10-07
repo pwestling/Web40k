@@ -124,12 +124,19 @@ export const TEMPLATES: TerrainTemplate[] = [
   },
 ];
 
-export function makePiece(templateName: string, id: string, position: Vec2, facing = 0): TerrainPiece {
+/** A piece from a template; `category` replaces the template's, for games with their own categories. */
+export function makePiece(
+  templateName: string,
+  id: string,
+  position: Vec2,
+  facing = 0,
+  category?: TerrainCategory,
+): TerrainPiece {
   const t = TEMPLATES.find((x) => x.name === templateName) ?? TEMPLATES[0]!;
   return {
     id,
     name: t.name,
-    category: t.category,
+    category: category ?? t.category,
     position,
     width: t.width,
     depth: t.depth,

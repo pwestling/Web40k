@@ -1,11 +1,10 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
+import { applyAction, endReaction, setRun } from "./content/play";
+import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
 import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
-
-/** Unit flags that last one turn; cleared when their owner's turn begins. */
-export const TURN_FLAGS = ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"];
 
 /**
  * Apply one event's effect on the table. Pure: returns a new state and never
@@ -21,7 +20,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       const seat = known?.seat ?? event.player.seat ?? (seats.has(0) ? (seats.has(1) ? undefined : 1) : 0);
       const player = { ...event.player, ...(seat === undefined ? {} : { seat }) };
       player.name = playerName(state, player);
-      const resources = state.resources[player.id] ?? { CP: 0, VP: 0 };
+      const resources = state.resources[player.id] ?? initialResources(state);
       return {
         ...state,
         players: { ...state.players, [player.id]: player },
@@ -181,9 +180,35 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "settings/set":
       return { ...state, settings: { ...state.settings, ...event.settings } };
     case "turn/next":
-      return stepTurn(state, 1);
+      return advanceTurn(state, 1, event.seed);
     case "turn/prev":
-      return stepTurn(state, -1);
+      return advanceTurn(state, -1);
+    case "turn/pass":
+      return passTurn(state, event.seed);
+    case "turn/endActivation":
+      return endActivation(state);
+    case "pool/set":
+      return {
+        ...state,
+        pools: {
+          ...state.pools,
+          [event.player]: { ...state.pools?.[event.player], [event.resource]: event.faces },
+        },
+      };
+    case "game/system": {
+      // Only before the battle starts: the table, settings and counters follow the system.
+      if (state.turn.round !== 0) return state;
+      const next = { ...state, system: event.system };
+      const system = systemOf(next);
+      const resources: GameState["resources"] = {};
+      for (const id of Object.keys(state.players)) resources[id] = initialResources(next);
+      return {
+        ...next,
+        table: system.defaultTable ?? state.table,
+        settings: { ...state.settings, ...(system.settings as Partial<GameState["settings"]>) },
+        resources,
+      };
+    }
     case "turn/first":
       return { ...state, turn: { ...state.turn, firstSeat: event.seat, activeSeat: event.seat } };
     case "resource/adjust": {
@@ -214,67 +239,20 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
             status: { ...u.status, [flag]: true },
           }));
     }
+    case "action/take":
+      return applyAction(state, event);
+    case "reaction/end":
+      return endReaction(state, event.run ?? null);
+    case "procedure/set":
+      return setRun(state, event.run);
+    case "procedure/clear": {
+      const cleared = { ...state, procedure: null };
+      return event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
+    }
     case "undo":
       // Undo is resolved by the log's replay.
       return state;
   }
-}
-
-/** Phases per player turn. Systems will supply these; 40k's five for now. */
-export const PHASES = ["Command", "Movement", "Shooting", "Charge", "Fight"];
-export const SEATS = 2;
-
-/**
- * Move the turn marker one phase forwards or back. Entering a phase records
- * where every model stands, so moves are measured from there. Starting a new
- * player turn clears that player's per-turn flags and, going forwards, gives
- * every player 1 CP (40k's Command phase).
- */
-function stepTurn(state: GameState, dir: 1 | -1): GameState {
-  let { round, activeSeat, phase } = state.turn;
-  const { firstSeat } = state.turn;
-  phase += dir;
-  if (round === 0) {
-    // Round 0 is deployment; going forwards starts the battle.
-    if (dir === -1) return state;
-    round = 1;
-    phase = 0;
-    activeSeat = firstSeat;
-  } else if (round === 1 && activeSeat === firstSeat && phase < 0) {
-    round = 0;
-    phase = 0;
-  } else if (phase >= PHASES.length) {
-    phase = 0;
-    activeSeat = (activeSeat + 1) % SEATS;
-    if (activeSeat === firstSeat) round += 1;
-  } else if (phase < 0) {
-    phase = PHASES.length - 1;
-    if (activeSeat === firstSeat) round -= 1;
-    activeSeat = (activeSeat + SEATS - 1) % SEATS;
-  }
-
-  const models: Record<string, Model> = {};
-  for (const [id, m] of Object.entries(state.models))
-    models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };
-  let next: GameState = { ...state, models, attack: null, turn: { ...state.turn, round, activeSeat, phase } };
-
-  if (dir === 1 && phase === 0) {
-    const units: Record<string, Unit> = {};
-    for (const [id, u] of Object.entries(next.units)) {
-      const seat = next.players[u.owner]?.seat;
-      if (seat !== activeSeat || !u.status) {
-        units[id] = u;
-        continue;
-      }
-      const status = { ...u.status };
-      for (const flag of TURN_FLAGS) delete status[flag];
-      units[id] = { ...u, status };
-    }
-    const resources: GameState["resources"] = {};
-    for (const [pid, r] of Object.entries(next.resources)) resources[pid] = { ...r, CP: (r.CP ?? 0) + 1 };
-    next = { ...next, units, resources };
-  }
-  return next;
 }
 
 function updateModel(state: GameState, id: string, f: (m: Model) => Model): GameState {
@@ -300,7 +278,7 @@ function claimPlayer(state: GameState, from: string, to: string): GameState {
   return {
     ...state,
     players: { ...players, [to]: { ...old, id: to } },
-    resources: { ...resources, [to]: res ?? { CP: 0, VP: 0 } },
+    resources: { ...resources, [to]: res ?? initialResources(state) },
     units,
     models,
   };

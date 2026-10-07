@@ -95,7 +95,11 @@ describe("other systems fit the same schema", () => {
 
   it("opposes FSD saves to the hit roll and strips save dice with AP", () => {
     const save = step(fsd, "attack", "save");
-    const ctx = { scope: { input: { value: 7 }, target: { saveDice: 2 }, weapon: { AP: 1 } } };
+    // Five DU away: not close combat, so only the weapon's AP counts.
+    const ctx = {
+      scope: { input: { value: 7 }, target: { saveDice: 2 }, weapon: { AP: 1 } },
+      geometry: () => 5,
+    };
     expect(num(save.target, ctx)).toBe(7);
     expect(save.keep).toBe("highest");
     expect(num(save.dicePerInput!, ctx)).toBe(1);

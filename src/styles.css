@@ -621,3 +621,48 @@ details p {
 .terrain-legend .blocking {
   color: #f87171;
 }
+
+/* Dice pools in the top bar (activation dice) */
+.topbar .pool button.die {
+  padding: 0;
+  margin: 0 1px;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.topbar .pool button.die.on {
+  background: #f59e0b;
+  border-color: #b45309;
+}
+
+/* Game system panels: actions, plans and the reaction prompt */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0;
+}
+.actions .cost {
+  opacity: 0.75;
+  font-size: 0.8em;
+}
+.command {
+  border-left: 2px solid #3b82f6;
+  padding-left: 8px;
+}
+.plan {
+  margin: 6px 0;
+  padding-left: 1.2em;
+  font-size: 0.85rem;
+}
+.plan .label {
+  color: #9ca3af;
+}
+.reaction {
+  top: 136px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100vw - 32px));
+  border-color: #f59e0b;
+  z-index: 5;
+}

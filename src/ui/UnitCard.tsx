@@ -2,7 +2,7 @@ import {
   levelsAt,
   maxWounds,
   modelHeight,
-  PHASES,
+  phaseName,
   settleZ,
   stepLevel,
   type Model,
@@ -22,6 +22,8 @@ import {
   unitMoved,
 } from "../systems/wh40k/rules";
 import { useCanControl, useStore } from "../store";
+import { systemModule } from "../systems";
+import { SystemUnitCard } from "./SystemPanels";
 import { FigurePicker } from "./FigurePicker";
 import { useGame } from "./hooks";
 
@@ -107,7 +109,8 @@ export function snapToLimit(unitId: string, limit: number) {
   const at = (id: string, k: number) => {
     const m = game.models[id]!;
     const from = m.phaseStart ?? m.position;
-    return { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
+    const p = { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
+    return { ...p, z: settleZ(game.terrain, p, m.phaseStartZ ?? 0) };
   };
   const ids = models.map((m) => m.id);
   const k = clampFraction(game, ids, at, limit);
@@ -115,9 +118,10 @@ export function snapToLimit(unitId: string, limit: number) {
     {
       type: "models/move",
       moves: ids.map((id) => {
-        const to = at(id, k);
-        return { id, to, z: settleZ(game.terrain, to, game.models[id]!.phaseStartZ ?? 0) };
+        const { z, ...to } = at(id, k);
+        return { id, to, z };
       }),
+      snap: limit,
     },
     unit.owner,
   );
@@ -125,10 +129,12 @@ export function snapToLimit(unitId: string, limit: number) {
 
 export function UnitCard() {
   const game = useGame();
-  const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, set } = useStore();
+  const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, rangeWeapon, set } = useStore();
   const canControl = useCanControl();
   const unit = selected ? game.units[selected] : undefined;
   if (!unit) return null;
+  // Systems without panels of their own get the card built from their data.
+  if (!systemModule(game.system).dedicatedUi) return <SystemUnitCard unit={unit} />;
   const owner = game.players[unit.owner];
   const mine = canControl(unit.owner) && scrub === null;
   const alive = aliveModels(game, unit);
@@ -139,7 +145,7 @@ export function UnitCard() {
   const moved = unitMoved(alive);
   const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
-  const phase = game.turn.round > 0 ? PHASES[game.turn.phase] : undefined;
+  const phase = phaseName(game);
   // Floor buttons only show when the unit stands where there is a floor to climb to.
   const onFloors = alive.some((m) => (m.z ?? 0) > 0 || levelsAt(game.terrain, m.position).length > 1);
   const elevation = Math.max(0, ...alive.map((m) => m.z ?? 0));
@@ -259,10 +265,22 @@ export function UnitCard() {
         <button
           className={ranges === unit.id ? "on" : ""}
           title="Move (blue) and longest weapon range (yellow) around each model"
-          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id })}
+          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
         >
           Ranges
         </button>
+        {ranges === unit.id && (
+          <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
+            <option value="">Longest range</option>
+            {weapons
+              .filter((w) => w.kind === "ranged")
+              .map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} {w.chars.RANGE}
+                </option>
+              ))}
+          </select>
+        )}
         {elevation > 0 && <span className="muted">On a floor {elevation.toFixed(1)}" up</span>}
       </div>
 
