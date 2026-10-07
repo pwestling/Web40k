@@ -31,6 +31,26 @@ export const MOUNT_GROUP = "Mount and crew";
 export const ITEM_GROUP = "Magic items and options";
 export const RULE_GROUP = "Special rules";
 
+/** Unit Strength per model by troop type (the rulebook's Troop Type table, via tow.whfb.app). */
+const UNIT_STRENGTH: [RegExp, number | "W"][] = [
+  [/monstrous infantry|swarm/i, 3],
+  [/monstrous cavalry/i, 3],
+  [/light cavalry|heavy cavalry|^cavalry/i, 2],
+  [/war beast/i, 1],
+  [/light chariot/i, 3],
+  [/heavy chariot|chariot/i, 5],
+  [/monstrous creature|behemoth|monster|war machine/i, "W"],
+  [/infantry/i, 1],
+];
+
+export function unitStrengthFor(troop: string | undefined, wounds: string | undefined): number | null {
+  const row = UNIT_STRENGTH.find(([re]) => re.test(troop ?? ""));
+  if (!row) return null;
+  if (row[1] !== "W") return row[1];
+  const w = Number(wounds);
+  return Number.isFinite(w) && w > 0 ? w : null;
+}
+
 export const TOW_STATS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"] as const;
 
 const STAT_KEYS: Record<string, string> = {
@@ -284,7 +304,9 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
       if (!bigMount) continue;
       const own = Number(m.profile.chars.W);
       if (Number.isFinite(own)) m.profile.chars.W = String(own + Number(/\d+/.exec(bigMount.W!)![0]));
-      if (/^\d+$/.test(bigMount.T ?? "")) m.profile.chars.T = bigMount.T!;
+      // The higher of the rider's and the mount's Toughness is used (tow.whfb.app, split profile).
+      const t = Math.max(Number(m.profile.chars.T) || 0, Number(bigMount.T) || 0);
+      if (t) m.profile.chars.T = String(t);
     }
   }
   for (const n of crewNodes)
@@ -312,9 +334,12 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   });
 
   if (troop) for (const m of models) m.profile.chars.Troop = troop;
-  // Unit Strength is the model's Wounds unless the list says otherwise.
+  // Unit Strength per model from the troop type table; monsters and war machines count their Wounds.
   for (const m of models)
-    if (!m.profile.chars.US && /^\d+$/.test(m.profile.chars.W ?? "")) m.profile.chars.US = m.profile.chars.W!;
+    if (!m.profile.chars.US) {
+      const us = unitStrengthFor(m.profile.chars.Troop, m.profile.chars.W);
+      if (us) m.profile.chars.US = String(us);
+    }
 
   // Weapons go to every model; rules, magic items and options become abilities.
   const weapons: Record<string, WeaponProfile> = {};

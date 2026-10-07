@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { importTowRoster } from "./roster";
+import { importTowRoster, unitStrengthFor } from "./roster";
 
 // All names and numbers below are invented test data.
 const stats = (name: string, type: string, v: string[], extra = "") => `
@@ -121,9 +121,9 @@ describe("Old World roster import", async () => {
     });
     expect(lord!.base).toEqual({ shape: "rect", widthMm: 25, depthMm: 50 });
     expect(lord!.sheet.abilities.map((a) => a.name)).toEqual(["Fen Strider", "Charm of Mud"]);
-    // Grouped for the unit card (UX 76); Unit Strength is Wounds (UX 78).
+    // Grouped for the unit card (UX 76); Unit Strength from the troop type table (UX 78).
     expect(lord!.sheet.abilities.map((a) => a.group)).toEqual(["Mount and crew", "Magic items and options"]);
-    expect(lord!.models[0]!.profile.chars.US).toBe(lord!.models[0]!.profile.chars.W);
+    expect(lord!.models[0]!.profile.chars.US).toBe("2"); // heavy cavalry
     expect(lord!.sheet.weapons["long-bow"]).toMatchObject({
       kind: "ranged",
       chars: { Range: '30"', S: "3" },
@@ -173,6 +173,20 @@ const CATALOGUE_SHAPE = `<roster name="Shape"><forces><force><selections>
   </selection>
 </selections></force></forces></roster>`;
 
+describe("Old World unit strength", () => {
+  it("follows the troop type table; monsters count their Wounds", () => {
+    expect(unitStrengthFor("Regular Infantry", "1")).toBe(1);
+    expect(unitStrengthFor("Monstrous Infantry", "3")).toBe(3);
+    expect(unitStrengthFor("Heavy Cavalry", "1")).toBe(2);
+    expect(unitStrengthFor("Monstrous Cavalry", "3")).toBe(3);
+    expect(unitStrengthFor("Light Chariot", "4")).toBe(3);
+    expect(unitStrengthFor("Heavy Chariot", "6")).toBe(5);
+    expect(unitStrengthFor("Behemoth", "6")).toBe(6);
+    expect(unitStrengthFor("War Machine", "3")).toBe(3);
+    expect(unitStrengthFor("Special Feature", "-")).toBeNull();
+  });
+});
+
 describe("Old World roster import, catalogue shape", async () => {
   const roster = await importTowRoster("shape.ros", new TextEncoder().encode(CATALOGUE_SHAPE));
   const [priest, herd] = roster.units;
@@ -186,9 +200,9 @@ describe("Old World roster import, catalogue shape", async () => {
     });
     expect(priest!.base).toEqual({ shape: "rect", widthMm: 50, depthMm: 100 });
     expect(priest!.sheet.abilities.map((a) => a.name)).toEqual(["Tusk Cart", "Tusker", "Cart Crew"]);
-    // "W (+4)": the chariot adds its Wounds and lends its Toughness; Unit Strength follows.
+    // "W (+4)": the chariot adds its Wounds, the higher Toughness counts, and a heavy chariot is US 5.
     const c = priest!.models[0]!.profile.chars;
-    expect([c.W, c.T, c.US]).toEqual(["6", "5", "6"]);
+    expect([c.W, c.T, c.US]).toEqual(["6", "5", "5"]);
   });
 
   it("takes command models from Command profiles, not magic standards or a Battle Standard Bearer", () => {
