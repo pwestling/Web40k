@@ -1,7 +1,7 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plane, Raycaster, Vector2, Vector3 } from "three";
+import { Plane, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import {
   baseSizeInches,
   maxWounds,
@@ -31,6 +31,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
+import { unitKeys, useAssets } from "../assets/store";
 
 /**
  * World axes: x = table width, z = table depth, y = up. One unit is one inch.
@@ -44,9 +45,54 @@ export function Board() {
       <directionalLight position={[20, 40, 10]} intensity={1.3} castShadow shadow-mapSize={[2048, 2048]} />
       <Cameras />
       <Scene />
+      <FigureDrop />
       {import.meta.env.DEV && <PerfProbe />}
     </Canvas>
   );
+}
+
+/** Drop a model file onto a unit on the table to give the whole unit that figure. */
+function FigureDrop() {
+  const { gl, camera, scene } = useThree();
+  useEffect(() => {
+    const el = gl.domElement;
+    const ray = new Raycaster();
+    const over = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
+    };
+    const drop = (e: DragEvent) => {
+      const file = e.dataTransfer?.files[0];
+      if (!file) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      ray.setFromCamera(
+        new Vector2(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1,
+        ),
+        camera,
+      );
+      for (const hit of ray.intersectObjects(scene.children, true)) {
+        let o: Object3D | null = hit.object;
+        while (o && !o.userData.modelId) o = o.parent;
+        if (!o) continue;
+        const { game, select } = useStore.getState();
+        const model = game.models[o.userData.modelId as string];
+        const unit = model?.unitId ? game.units[model.unitId] : undefined;
+        const models = unit ? unit.modelIds.flatMap((id) => game.models[id] ?? []) : model ? [model] : [];
+        if (unit) select(unit.id);
+        void useAssets.getState().importFor(unitKeys(models), file);
+        return;
+      }
+    };
+    el.addEventListener("dragover", over);
+    el.addEventListener("drop", drop);
+    return () => {
+      el.removeEventListener("dragover", over);
+      el.removeEventListener("drop", drop);
+    };
+  }, [gl, camera, scene]);
+  return null;
 }
 
 /** Hands the renderer to the dev perf harness (src/dev/perf.ts). */
@@ -899,6 +945,7 @@ function ModelBase({
   return (
     // The base and the figure both pick up clicks and drags.
     <group
+      userData={{ modelId: model.id }}
       position={[position.x, z, position.y]}
       rotation-y={model.facing}
       onPointerDown={(e) => {

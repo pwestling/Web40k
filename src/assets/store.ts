@@ -21,13 +21,19 @@ export function bindingKey(model: Pick<Model, "profile" | "label">): string {
   return model.profile?.name ?? model.label;
 }
 
+/** Every profile key among `models`, in model order. */
+export function unitKeys(models: Pick<Model, "profile" | "label">[]): string[] {
+  return [...new Set(models.map(bindingKey))];
+}
+
 interface AssetStore {
   /** Processed assets loaded in this browser, by file hash. */
   assets: Record<string, ModelAsset>;
   bindings: Record<string, Binding>;
   /** Imports in progress or failed, by binding key. */
   status: Record<string, string>;
-  importFor(key: string, file: File, kind?: AssetKind): Promise<void>;
+  /** Import a file and dress every profile in `keys` with it. */
+  importFor(keys: string[], file: File, kind?: AssetKind): Promise<void>;
   setBinding(key: string, patch: Partial<Binding> | null): void;
   /** Add an already-processed asset (benchmarks, and later assets from peers). */
   addAsset(asset: ModelAsset): void;
@@ -92,12 +98,14 @@ export const useAssets = create<AssetStore>((set, get) => ({
   bindings: loadBindings(),
   status: {},
 
-  async importFor(key, file, kind = "miniature") {
+  async importFor(keys, file, kind = "miniature") {
     const setStatus = (text: string | null) =>
       set((s) => {
         const status = { ...s.status };
-        if (text === null) delete status[key];
-        else status[key] = text;
+        for (const key of keys) {
+          if (text === null) delete status[key];
+          else status[key] = text;
+        }
         return { status };
       });
     setStatus(`Reading ${file.name}…`);
@@ -116,7 +124,8 @@ export const useAssets = create<AssetStore>((set, get) => ({
     }
     get().addAsset(asset);
     setStatus(null);
-    get().setBinding(key, { asset: asset.id, yaw: get().bindings[key]?.yaw ?? 0, scale: 1 });
+    for (const key of keys)
+      get().setBinding(key, { asset: asset.id, yaw: get().bindings[key]?.yaw ?? 0, scale: 1 });
   },
 
   setBinding(key, patch) {
