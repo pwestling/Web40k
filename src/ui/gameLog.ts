@@ -327,3 +327,43 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who}: ${(event as { type: string }).type}`;
   }
 }
+
+/**
+ * The log for reading: phases nothing happened in fold away. A whole player
+ * turn with no actions becomes one "Round 1 · Player 2: no actions" line, and
+ * empty phases before one with actions are dropped. The replay track keeps
+ * using the full log.
+ */
+export function collapseEmpty(log: LogItem[]): LogItem[] {
+  const out: LogItem[] = [];
+  const turnOf = (text: string) => /^(Round \d+ · [^·]+?) · /.exec(text)?.[1] ?? text;
+  let run: Extract<LogItem, { kind: "header" }>[] = [];
+  // The turn of the last header shown: its later empty phases just drop.
+  let shownTurn = "";
+  const flush = () => {
+    if (!run.length) return;
+    const last = run.at(-1)!;
+    const lastTurn = turnOf(last.text);
+    let i = 0;
+    while (i < run.length) {
+      const turn = turnOf(run[i]!.text);
+      let j = i;
+      while (j + 1 < run.length && turnOf(run[j + 1]!.text) === turn) j++;
+      if (turn !== lastTurn && turn !== shownTurn)
+        out.push({ kind: "header", key: run[i]!.key, text: `${turn}: no actions` });
+      i = j + 1;
+    }
+    out.push(last);
+    shownTurn = lastTurn;
+    run = [];
+  };
+  for (const item of log) {
+    if (item.kind === "header") run.push(item);
+    else {
+      flush();
+      out.push(item);
+    }
+  }
+  flush();
+  return out;
+}

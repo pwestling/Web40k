@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
-import { readGame } from "./highlights";
+import { readGame, replayIntro } from "./highlights";
 
 /** How far past a round's end (in events) its card still comes up. */
 const RECENT = 40;
@@ -50,6 +50,50 @@ export function RoundCard() {
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** A replay's title card: who played what, how long, and how bloody. */
+export function ReplayTitle() {
+  const record = useStore((s) => s.record);
+  const isReplay = useStore((s) => s.session === null && s.role === "spectator");
+  const intro = useMemo(() => replayIntro(record), [record]);
+  // Closed per replay: a newly opened replay gets its card again.
+  const [closedFor, setClosedFor] = useState<unknown>(null);
+  useEffect(() => {
+    if (!isReplay) return;
+    const t = setTimeout(() => setClosedFor(record), 8000);
+    return () => clearTimeout(t);
+  }, [isReplay, record]);
+  const setOpen = (open: boolean) => setClosedFor(open ? null : record);
+  if (!isReplay || closedFor === record) return null;
+  const rounds = intro.rounds;
+  return (
+    <div className="round-card replay-title" role="status">
+      <div className="head">
+        <strong>
+          {intro.players.map((p, i) => (
+            <span key={p.name}>
+              {i > 0 && " vs "}
+              <span style={{ color: p.color }}>{p.name}</span>
+            </span>
+          ))}
+        </strong>
+        <button className="quiet" title="Close" onClick={() => setOpen(false)}>
+          ✕
+        </button>
+      </div>
+      <span className="muted">
+        {[
+          intro.system,
+          rounds > 0 ? `${rounds} round${rounds === 1 ? "" : "s"}` : "not started",
+          `${intro.modelsLost} model${intro.modelsLost === 1 ? "" : "s"} lost`,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </span>
+      <span className="muted small">Press ▶ to watch from the start of the battle.</span>
     </div>
   );
 }

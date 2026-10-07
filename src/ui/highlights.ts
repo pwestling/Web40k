@@ -1,4 +1,4 @@
-import { applyEvent, undoneSeqs, type GameRecord, type GameState } from "../core";
+import { applyEvent, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
 
 /** A moment worth jumping to in a replay. */
@@ -149,4 +149,47 @@ function vpOf(state: GameState, player: string): number {
   return Object.entries(own)
     .filter(([k]) => isVp(k))
     .reduce((a, [, v]) => a + (v ?? 0), 0);
+}
+
+/** What a replay's title card says, and where the battle starts. */
+export interface ReplayIntro {
+  /** Seq of the event that started round 1 (0 when the battle never started). */
+  startSeq: number;
+  players: { name: string; color: string }[];
+  system: string;
+  rounds: number;
+  modelsLost: number;
+}
+
+export function replayIntro(record: GameRecord): ReplayIntro {
+  const undone = undoneSeqs(record);
+  let state = record.initial;
+  let startSeq = 0;
+  for (const logged of record.events) {
+    if (undone.has(logged.seq)) continue;
+    const before = state;
+    state = applyEvent(state, logged.event);
+    if (!startSeq && before.turn.round === 0 && state.turn.round > 0) startSeq = logged.seq;
+  }
+  const players = Object.values(state.players)
+    .filter((p) => p.seat !== undefined)
+    .sort((a, b) => a.seat! - b.seat!)
+    .map((p) => ({ name: p.name, color: p.color }));
+  let system: string;
+  let maxRounds = Infinity;
+  try {
+    const sys = systemOf(state);
+    system = sys.name;
+    if (typeof sys.turn.rounds === "number") maxRounds = sys.turn.rounds;
+  } catch {
+    system = state.system ?? "";
+  }
+  return {
+    startSeq,
+    players,
+    system,
+    // A finished game's round counter is one past the last round.
+    rounds: Math.min(state.turn.round, maxRounds),
+    modelsLost: Object.values(state.models).filter((m) => m.destroyed).length,
+  };
 }

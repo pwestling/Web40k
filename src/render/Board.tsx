@@ -1,6 +1,6 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CanvasTexture, Plane, Raycaster, RepeatWrapping, Vector2, Vector3, type Object3D } from "three";
 import {
   baseSizeInches,
@@ -394,7 +394,11 @@ function Scene() {
     return [p, h];
   }, [game.models, game.terrain, drag]);
   // What is drawn: the same, but eased between moves (watch mode).
-  const { shown, shownZ, trails } = useTween(positions, heights, drag?.kind === "models");
+  const trailColor = useCallback(
+    (id: string) => game.players[game.models[id]?.owner ?? ""]?.color ?? "#e5e7eb",
+    [game.players, game.models],
+  );
+  const { shown, shownZ, trails } = useTween(positions, heights, drag?.kind === "models", trailColor);
 
   const onTable = useMemo(() => Object.values(game.models).filter((m) => !m.destroyed), [game.models]);
   const figures = useFigureHeights(onTable);

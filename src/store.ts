@@ -15,6 +15,7 @@ import { createLoopbackNetwork } from "./net/loopback";
 import { Session, type Role } from "./net/session";
 import { trysteroTransport } from "./net/trystero";
 import { systemModule } from "./systems";
+import { replayIntro } from "./ui/highlights";
 
 export const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
 
@@ -253,7 +254,9 @@ export const useStore = create<Store>((set, get) => ({
 
   openReplay(record) {
     get().session?.leave();
-    set({ session: null, role: "spectator", record, scrub: 0, selected: null, draft: null, director: true });
+    // Replays open where the battle starts, not on the empty deployment table.
+    const scrub = replayIntro(record).startSeq;
+    set({ session: null, role: "spectator", record, scrub, selected: null, draft: null, director: true });
   },
 
   dispatch(intent, as) {

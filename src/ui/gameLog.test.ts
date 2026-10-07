@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, createRecord, type GameEvent, type GameRecord } from "../core";
-import { buildLog } from "./gameLog";
+import { buildLog, collapseEmpty } from "./gameLog";
 
 function record(events: [string, GameEvent][]): GameRecord {
   return {
@@ -96,5 +96,34 @@ describe("game log", () => {
     ];
     const log = buildLog(record([join("a", "Ann", 0), unit("u1", 100), unit("u2", 150)]));
     expect(log.map((l) => l.text)).toEqual(["Ann joined", "Ann deployed Vanguard (2 units, 250 pts)"]);
+  });
+});
+
+describe("collapseEmpty", () => {
+  const h = (key: string, text: string) => ({ kind: "header" as const, key, text });
+  const l = (key: string, text: string) => ({
+    kind: "line" as const,
+    key,
+    seq: Number(key),
+    text,
+    undone: false,
+  });
+  it("folds a player turn with no actions into one line and drops empty phases before actions", () => {
+    const out = collapseEmpty([
+      h("1", "Round 1 · Ann · Command"),
+      h("2", "Round 1 · Ann · Movement"),
+      l("3", "Ann moved Troopers"),
+      h("3a", "Round 1 · Ann · Shooting"),
+      h("4", "Round 1 · Bo · Command"),
+      h("5", "Round 1 · Bo · Movement"),
+      h("6", "Round 2 · Ann · Command"),
+      h("7", "Round 2 · Ann · Movement"),
+    ]).map((i) => i.text);
+    expect(out).toEqual([
+      "Round 1 · Ann · Movement",
+      "Ann moved Troopers",
+      "Round 1 · Bo: no actions",
+      "Round 2 · Ann · Movement",
+    ]);
   });
 });

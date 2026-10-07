@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord } from "../core";
-import { buildLog } from "./gameLog";
+import { buildLog, collapseEmpty } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
@@ -189,7 +189,7 @@ export function Hud() {
         </div>
       )}
       <ol className="log">
-        {log
+        {collapseEmpty(log)
           .slice(-60)
           .reverse()
           .map((item) =>

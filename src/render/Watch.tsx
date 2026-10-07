@@ -24,7 +24,8 @@ import { useGame } from "../ui/hooks";
  */
 
 const TWEEN_MS = 350;
-const TRAIL_MS = 2500;
+/** How long a trail takes to fade once another unit moves. */
+const TRAIL_FADE_MS = 700;
 const EFFECT_MS = 1600;
 
 export interface Trail {
@@ -33,6 +34,9 @@ export interface Trail {
   to: Vec2;
   z: number;
   start: number;
+  color: string;
+  /** When it began to fade (the next move); unset while it is the latest. */
+  end?: number;
 }
 
 /**
@@ -44,7 +48,13 @@ export function useTween(
   positions: Record<string, Vec2>,
   heights: Record<string, number>,
   dragging: boolean,
+  /** Trail colour for a model (its player's). */
+  colorOf: (id: string) => string = () => "#e5e7eb",
 ): { shown: Record<string, Vec2>; shownZ: Record<string, number>; trails: Trail[] } {
+  const color = useRef(colorOf);
+  useEffect(() => {
+    color.current = colorOf;
+  }, [colorOf]);
   type Frame = { p: Record<string, Vec2>; z: Record<string, number> };
   type Input = Frame & { dragging: boolean };
   const [initial] = useState<Input>(() => ({ p: positions, z: heights, dragging }));
@@ -93,12 +103,26 @@ export function useTween(
           const b = cur.p[id]!;
           return Math.hypot(a.x - b.x, a.y - b.y) > 40;
         });
-        if (!moved.length || far || moved.length > 60) show(cur);
-        else {
+        if (!moved.length) show(cur);
+        else if (far || moved.length > 60) {
+          // A jump (scrubbing, a replay opening): no tween, and old trails go.
+          show(cur);
+          setTrails([]);
+        } else {
           anim.current = { from, start: now };
+          // The last move's trail stays until the next one, then fades.
           setTrails((old) => [
-            ...old.filter((t) => now - t.start < TRAIL_MS),
-            ...moved.map((id) => ({ id, from: from.p[id]!, to: cur.p[id]!, z: cur.z[id] ?? 0, start: now })),
+            ...old
+              .filter((t) => !t.end || now - t.end < TRAIL_FADE_MS)
+              .map((t) => (t.end ? t : { ...t, end: now })),
+            ...moved.map((id) => ({
+              id,
+              from: from.p[id]!,
+              to: cur.p[id]!,
+              z: cur.z[id] ?? 0,
+              start: now,
+              color: color.current(id),
+            })),
           ]);
         }
       }
@@ -139,21 +163,38 @@ export function useTween(
   return { shown, shownZ, trails };
 }
 
-/** Fading lines from where models were to where they went. */
+/** Ribbons from where models were to where they went, in their player's colour. */
 export function Trails({ trails }: { trails: Trail[] }) {
   return (
     <>
       {trails.map((t) => (
-        <FadingLine
-          key={`${t.id}-${t.start}`}
-          points={[t.from.x, t.z + 0.08, t.from.y, t.to.x, t.z + 0.08, t.to.y]}
-          color="#e5e7eb"
-          start={t.start}
-          duration={TRAIL_MS}
-          opacity={0.6}
-        />
+        <Ribbon key={`${t.id}-${t.start}`} trail={t} />
       ))}
     </>
+  );
+}
+
+function Ribbon({ trail }: { trail: Trail }) {
+  const material = useRef<MeshBasicMaterial>(null);
+  const dx = trail.to.x - trail.from.x;
+  const dy = trail.to.y - trail.from.y;
+  const length = Math.hypot(dx, dy);
+  useFrame(() => {
+    if (!material.current) return;
+    const t = trail.end ? (performance.now() - trail.end) / TRAIL_FADE_MS : 0;
+    material.current.opacity = Math.max(0, 0.55 * (1 - t));
+    material.current.visible = t < 1;
+  });
+  return (
+    <group
+      position={[(trail.from.x + trail.to.x) / 2, trail.z + 0.05, (trail.from.y + trail.to.y) / 2]}
+      rotation-y={Math.atan2(dx, dy)}
+    >
+      <mesh rotation-x={-Math.PI / 2} raycast={() => null}>
+        <planeGeometry args={[0.35, length]} />
+        <meshBasicMaterial ref={material} color={trail.color} transparent opacity={0.55} depthWrite={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -243,7 +284,9 @@ export function WatchEffects() {
   }, [shownSeq, game, record]);
   const last = useRef(initial);
   const [effects, setEffects] = useState<Effect[]>([]);
-  const focus = useRef<{ x: number; y: number; z: number } | null>(null);
+  const focus = useRef<Focus | null>(null);
+  const lastAction = useRef(0);
+  const overview = useRef(true);
 
   // New events are picked up each frame (not in an effect, to keep renders cheap).
   useFrame(() => {
@@ -268,7 +311,11 @@ export function WatchEffects() {
         });
     if (fresh.length) setEffects((old) => [...old.filter((e) => now - e.start < EFFECT_MS * 2), ...fresh]);
     const f = focusFor(events.at(-1), prev.game, game);
-    if (f) focus.current = f;
+    if (f) {
+      focus.current = f;
+      lastAction.current = now;
+      overview.current = false;
+    }
   });
 
   // The director: ease the camera to look at the latest action, keeping its angle.
@@ -277,17 +324,32 @@ export function WatchEffects() {
     object: { position: Vector3 };
     update: () => void;
   } | null;
+  // Once the action has been quiet a while, it eases back out to the whole table.
+  const table = game.table;
   useFrame(() => {
+    if (!director || !controls) return;
+    if (!focus.current && !overview.current && performance.now() - lastAction.current > OVERVIEW_AFTER_MS) {
+      overview.current = true;
+      focus.current = { x: 0, y: 0, z: 0, span: null };
+    }
     const f = focus.current;
-    if (!director || !f || !controls) return;
+    if (!f) return;
     const goal = new Vector3(f.x, 0, f.y);
     const delta = goal.sub(controls.target).multiplyScalar(0.06);
-    if (delta.lengthSq() < 1e-4) {
+    // Distance: close enough to see the action (both shooter and target), or the whole table.
+    const k = Math.max(table.width / 60, table.depth / 44);
+    const full = Math.hypot(52, 44) * k;
+    const want = f.span === null ? full : Math.min(full, Math.max(22, f.span * 1.6 + 14));
+    const offset = controls.object.position.clone().sub(controls.target);
+    const len = offset.length();
+    const step = (want - len) * 0.06;
+    if (delta.lengthSq() < 1e-4 && Math.abs(want - len) < 0.05) {
       focus.current = null;
       return;
     }
     controls.target.add(delta);
-    controls.object.position.add(delta);
+    if (len > 1e-6) offset.multiplyScalar((len + step) / len);
+    controls.object.position.copy(controls.target).add(offset);
     controls.update();
   });
 
@@ -365,16 +427,25 @@ function effectsFor(
   return [];
 }
 
+const OVERVIEW_AFTER_MS = 4000;
+
+/** Where the director looks, and how wide a view it needs (null: the whole table). */
+type Focus = { x: number; y: number; z: number; span: number | null };
+
 /** Where the director should look after an event, if anywhere. */
-function focusFor(
-  event: GameEvent | undefined,
-  before: GameState,
-  after: GameState,
-): { x: number; y: number; z: number } | null {
+function focusFor(event: GameEvent | undefined, before: GameState, after: GameState): Focus | null {
   if (!event) return null;
-  const ofModels = (ids: string[]) => {
+  const ofModels = (ids: string[]): Focus | null => {
     const ms = ids.flatMap((id) => after.models[id] ?? []);
-    return ms.length ? centre(ms) : null;
+    if (!ms.length) return null;
+    const c = centre(ms);
+    const span = Math.max(4, ...ms.map((m) => 2 * Math.hypot(m.position.x - c.x, m.position.y - c.y)));
+    return { ...c, span };
+  };
+  const pair = (attacker: string, target: string, state: GameState): Focus => {
+    const a = centre(alive(state, attacker));
+    const b = centre(alive(state, target));
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: 0, span: Math.hypot(a.x - b.x, a.y - b.y) + 4 };
   };
   switch (event.type) {
     case "models/move":
@@ -383,15 +454,13 @@ function focusFor(
       return ofModels([event.id]);
     case "unit/move":
       return ofModels(after.units[event.id]?.modelIds ?? []);
-    case "attack/declare": {
-      const a = centre(alive(after, event.attack.spec.attackerUnitId));
-      const b = centre(alive(after, event.attack.spec.targetUnitId));
-      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: 0 };
-    }
-    case "dice/roll":
-      return event.roll.unitId ? centre(alive(after, event.roll.unitId)) : null;
+    // Shooter and target stay framed together while the dice roll.
+    case "attack/declare":
+      return pair(event.attack.spec.attackerUnitId, event.attack.spec.targetUnitId, after);
     case "attack/roll":
-      return centre(alive(before, event.attack.spec.targetUnitId));
+      return pair(event.attack.spec.attackerUnitId, event.attack.spec.targetUnitId, before);
+    case "dice/roll":
+      return event.roll.unitId ? ofModels(alive(after, event.roll.unitId).map((m) => m.id)) : null;
     default:
       return null;
   }
