@@ -6,6 +6,7 @@ import { Hud } from "./ui/Hud";
 import { Lobby } from "./ui/Lobby";
 import { ReactionPrompt } from "./ui/SystemPanels";
 import { ReplayBar } from "./ui/ReplayBar";
+import { RoundCard } from "./ui/RoundCard";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
@@ -80,6 +81,7 @@ export function App() {
           <Hud />
           {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           <ReplayBar />
+          <RoundCard />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">

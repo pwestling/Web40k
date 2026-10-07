@@ -58,6 +58,7 @@ export type Intent =
   | { type: "unit/remove"; id: UnitId }
   | { type: "unit/status"; id: UnitId; key: string; value: number | boolean | null }
   | UnitMove
+  | UnitForm
   | ModelsMove
   | { type: "dice/roll"; count: number; sides: number; label?: string; unitId?: UnitId }
   | { type: "layout/set"; layout: Layout }
@@ -131,6 +132,7 @@ export type GameEvent =
   | { type: "unit/remove"; id: UnitId }
   | { type: "unit/status"; id: UnitId; key: string; value: number | boolean | null }
   | UnitMove
+  | UnitForm
   | ModelsMove
   | { type: "dice/roll"; roll: DiceRoll }
   | { type: "layout/set"; layout: Layout }
@@ -186,6 +188,25 @@ export interface UnitMove {
   pivot: Vec2;
   turn: number;
   delta: Vec2;
+  /** What kind of block move this was, for the log and the move tally. */
+  how?: "forward" | "drag" | "wheel";
+  /** Inches of movement it used (a wheel: the outside corner's path). */
+  distance?: number;
+}
+
+/**
+ * Draw a unit up as a new block: a new frontage, facing or order (a reform,
+ * a turn, a change of formation). `order` is the new slot order, front rank
+ * first; `models` are the standing models' new places.
+ */
+export interface UnitForm {
+  type: "unit/form";
+  id: UnitId;
+  formation: Formation;
+  order?: ModelId[];
+  models?: { id: ModelId; to: Vec2; facing: number }[];
+  how?: "reform" | "turn" | "order";
+  distance?: number;
 }
 
 /** Several models placed at once, e.g. a squad dragged together. */

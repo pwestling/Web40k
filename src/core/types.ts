@@ -131,7 +131,14 @@ export type UnitId = string;
  * and check coherency; ranked units (The Old World, Conquest) are rigid
  * blocks laid out in ranks and files that move, wheel and pivot together.
  */
-export type Formation = { kind: "skirmish" } | { kind: "ranked"; files: number };
+export type Formation = { kind: "skirmish" } | { kind: "ranked"; files: number; order?: BlockOrder };
+
+/**
+ * How a ranked block is drawn up (The Old World): close order is the default
+ * fighting formation, a column marches, open order is looser, and a disrupted
+ * block has lost its order (no rank bonus). Skirmishers use `kind: "skirmish"`.
+ */
+export type BlockOrder = "close" | "column" | "open" | "disrupted";
 
 export interface Unit {
   id: UnitId;

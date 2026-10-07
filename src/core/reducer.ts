@@ -120,6 +120,22 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       );
       return { ...state, models };
     }
+    case "unit/form": {
+      const unit = state.units[event.id];
+      if (!unit) return state;
+      const order = event.order?.filter((id) => unit.modelIds.includes(id));
+      const modelIds = order && order.length === unit.modelIds.length ? order : unit.modelIds;
+      const models = { ...state.models };
+      for (const { id, to, facing } of event.models ?? []) {
+        const m = models[id];
+        if (m && m.unitId === unit.id) models[id] = { ...m, position: to, facing };
+      }
+      return {
+        ...state,
+        models,
+        units: { ...state.units, [unit.id]: { ...unit, formation: event.formation, modelIds } },
+      };
+    }
     case "dice/roll": {
       // Advance and charge rolls are remembered on the unit for move checks;
       // a battle-shock test below the unit's Leadership shocks it.
