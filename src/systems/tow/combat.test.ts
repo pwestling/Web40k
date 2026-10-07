@@ -101,10 +101,14 @@ const standing = (s: GameState, unitId: string) =>
 
 describe("The Old World combat as code", () => {
   it("to hit and to wound tables", () => {
+    // The Weapon Skill chart, spot checks.
     expect(combatHit(4, 3)).toBe(3);
     expect(combatHit(3, 3)).toBe(4);
-    expect(combatHit(3, 4)).toBe(4);
-    expect(combatHit(2, 5)).toBe(5);
+    expect(combatHit(3, 7)).toBe(5);
+    expect(combatHit(1, 3)).toBe(5);
+    expect(combatHit(3, 1)).toBe(2);
+    expect(combatHit(10, 10)).toBe(4);
+    expect(combatHit(7, 3)).toBe(2);
     expect(toWound(3, 3)).toBe(4);
     expect(toWound(5, 3)).toBe(2);
     expect(toWound(3, 6)).toBe(6);
@@ -119,7 +123,7 @@ describe("The Old World combat as code", () => {
     // If the loser broke, the winner is asked whether to pursue.
     if (t.s.script?.waiting) {
       const winner = t.s.script.waiting.player;
-      expect(t.s.script.waiting.options.map((o) => o.id)).toEqual(["pursue", "restrain"]);
+      expect(t.s.script.waiting.options.map((o) => o.id)).toEqual(["go", "restrain"]);
       t.play({ type: "script/answer", answer: "restrain" }, winner, 4);
     }
     expect(t.s.script).toBeNull();
@@ -130,9 +134,26 @@ describe("The Old World combat as code", () => {
     // The front rank is untouched: casualties came off the back.
     const front = t.s.units[warband]!.modelIds.slice(0, 6);
     expect(front.every((id) => !t.s.models[id]!.destroyed)).toBe(true);
-    const fled = [spears, warband].filter((id) => t.s.units[id]!.status?.fleeing);
-    if (fled.length) expect(notes.some((n) => /breaks and flees/.test(n))).toBe(true);
-    else expect(notes.some((n) => / holds$|draw/.test(n))).toBe(true);
+    // One of the break test's three outcomes, or a draw.
+    expect(notes.some((n) => /breaks and flees|falls back in good order|gives ground|draw/.test(n))).toBe(
+      true,
+    );
+  });
+
+  it("charging adds +1 Initiative per full inch, up to +3 into the front", () => {
+    const { t, spears, warband } = setup();
+    // Pull the warband back 2.5" so the charge has distance, declare, then close in.
+    toPhase(t, "movement");
+    block(t, warband, 3.3, 6, Math.PI);
+    t.play(
+      { type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: warband } },
+      "p1",
+    );
+    t.play({ type: "script/answer", answer: "hold" }, "p2");
+    block(t, warband, 0.8, 6, Math.PI);
+    toPhase(t, "combat");
+    t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 5);
+    expect(t.notes()).toContain("Marchwarden Spears charged: Initiative +2");
   });
 
   it("charge reactions: the charged unit's player chooses, and fleeing rolls the flee distance", () => {
@@ -167,7 +188,7 @@ describe("The Old World combat as code", () => {
     expect(t.s.script!.waiting!.options.map((o) => o.id)).toEqual(["hold", "shoot", "flee"]);
   });
 
-  it("Panic: pass on Leadership or less, else flee", () => {
+  it("Panic: pass on Leadership or less; else fall back (over half left) or flee", () => {
     const spears = unitNamed(setup().t.s, "Marchwarden Spears").id;
     for (let seed = 1; seed < 40; seed++) {
       const { t: fresh } = setup();
@@ -175,9 +196,11 @@ describe("The Old World combat as code", () => {
       const step = fresh.events.at(-1)!;
       const roll = step.type === "script/step" && step.events.find((e) => e.type === "dice/roll");
       const total = roll && roll.type === "dice/roll" ? roll.roll.results.reduce((a, b) => a + b, 0) : 0;
-      const double1 = roll && roll.type === "dice/roll" && roll.roll.results.every((x) => x === 1);
-      // Best Leadership in the unit: the Warden Captain's 9.
-      expect(!!fresh.s.units[spears]!.status?.fleeing).toBe(total > 9 && !double1);
+      // Best Leadership in the unit: the Warden Captain's 9. All 25 models stand, so a fail falls back.
+      const text = fresh.notes().join(" ");
+      expect(/keeps its nerve/.test(text)).toBe(total <= 9);
+      expect(/falls back in good order/.test(text)).toBe(total > 9);
+      expect(fresh.s.units[spears]!.status?.fleeing).toBeFalsy();
     }
   });
 });

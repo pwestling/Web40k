@@ -9,14 +9,21 @@ import { towRanks } from "./troops";
  * by hand: fleeing and pursuit use the Charge panel, which picks up the
  * "flee roll" these log for the unit.
  *
- * The numbers follow general knowledge of Warhammer: The Old World and are
- * unverified against the rules index; every result is advisory and lands in
- * the log, so players can correct it by hand.
+ * Checked against the community rules index (tow.whfb.app, 2026-10-07): the
+ * Weapon Skill chart, charging Initiative, combat result bonuses, the three
+ * break test outcomes, Panic, flee and fall back rolls, restraint and Stand &
+ * Shoot range. Not covered: high ground, overkill, special rules (Stubborn,
+ * Unbreakable...), and supporting attacks assume every second-rank model may
+ * make one. Every result is advisory and lands in the log.
  */
 
 type Roll = { rolls: number[]; total: number };
 
 const FLEE_DICE = "2d6";
+/** Falling back in good order: 2D6, discarding the lowest. */
+const FALL_BACK_DICE = "2d6";
+/** Giving ground: straight back this far. */
+const GIVE_GROUND = 2;
 
 function unitOf(view: GameView, id: unknown): Unit {
   const u = view.state.units[String(id)];
@@ -41,25 +48,34 @@ function leadership(state: GameState, u: Unit): number {
   return Math.max(0, ...alive(state, u).map((m) => charNum(m, "Ld")));
 }
 
-function ranks(state: GameState, u: Unit): number {
-  return rankCount(state, u, towRanks(state, u).width);
-}
-
 function rankBonus(state: GameState, u: Unit): number {
-  return Math.min(Math.max(0, ranks(state, u) - 1), towRanks(state, u).maxBonus);
+  const ranks = rankCount(state, u, towRanks(state, u).width);
+  return Math.min(Math.max(0, ranks - 1), towRanks(state, u).maxBonus);
 }
 
 const hasStandard = (state: GameState, u: Unit) =>
   alive(state, u).some((m) => /standard|banner/i.test(m.profile?.name ?? ""));
 
 const owner = (u: Unit) => u.owner;
-const passes = (r: Roll, target: number) => r.total <= target || r.rolls.every((x) => x === 1);
 
-/** To hit in combat: 3+ against a lower Weapon Skill, 5+ against more than double, else 4+. */
+/** The Weapon Skill chart: rows the attacker's WS 1-10, columns the target's. */
+const WS_CHART = [
+  [4, 4, 5, 5, 5, 5, 5, 5, 5, 5],
+  [3, 4, 4, 4, 5, 5, 5, 5, 5, 5],
+  [2, 3, 4, 4, 4, 4, 5, 5, 5, 5],
+  [2, 3, 3, 4, 4, 4, 4, 4, 5, 5],
+  [2, 2, 3, 3, 4, 4, 4, 4, 4, 4],
+  [2, 2, 3, 3, 3, 4, 4, 4, 4, 4],
+  [2, 2, 2, 3, 3, 3, 4, 4, 4, 4],
+  [2, 2, 2, 3, 3, 3, 3, 4, 4, 4],
+  [2, 2, 2, 2, 3, 3, 3, 3, 4, 4],
+  [2, 2, 2, 2, 3, 3, 3, 3, 3, 4],
+];
+
+/** To hit in combat, from the Weapon Skill chart. */
 export function combatHit(ws: number, enemyWs: number): number {
-  if (ws > enemyWs) return 3;
-  if (enemyWs > ws * 2) return 5;
-  return 4;
+  const clamp = (x: number) => Math.min(10, Math.max(1, Math.round(x || 1)));
+  return WS_CHART.at(clamp(ws) - 1)!.at(clamp(enemyWs) - 1)!;
 }
 
 /** To wound: 4+ at equal Strength and Toughness, a step per point between; none at 4 or more short. */
@@ -69,6 +85,8 @@ export function toWound(s: number, t: number): number | null {
 }
 
 const count = (r: Roll, target: number) => r.rolls.filter((x) => x !== 1 && x >= target).length;
+/** To hit: a natural 6 always hits, a natural 1 always misses. */
+const hitsOf = (r: Roll, target: number) => r.rolls.filter((x) => x === 6 || (x !== 1 && x >= target)).length;
 
 /**
  * One side's attacks against another: the front rank's Attacks plus one
@@ -85,7 +103,7 @@ function* strike(ctx: Ctx, atk: Unit, def: Unit): Generator<Command, number, unk
   const attacks = files * Math.max(1, stat(view, atk, "A", 1)) + support;
   const hitOn = combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
   const hit = (yield ctx.roll(`${attacks}d6`, `to hit (${hitOn}+)`, atk.id)) as Roll;
-  const hits = count(hit, hitOn);
+  const hits = hitsOf(hit, hitOn);
   if (!hits) return 0;
   const woundOn = toWound(stat(view, atk, "S"), stat(view, def, "T"));
   if (woundOn === null) {
@@ -137,25 +155,53 @@ function* flee(ctx: Ctx, u: Unit, why: string): Generator<Command, void, unknown
   yield ctx.note(`${u.name} ${why} and flees ${r.total}"`);
 }
 
-/** Leadership test on 2D6; a double 1 always passes. */
+/** Falls back in good order: moves like a fleeing unit (2D6, lowest discarded), then rallies at once. */
+function* fallBack(ctx: Ctx, u: Unit, why: string): Generator<Command, void, unknown> {
+  const r = (yield ctx.roll(FALL_BACK_DICE, "fall back roll", u.id)) as Roll;
+  yield ctx.note(
+    `${u.name} ${why} and falls back in good order ${Math.max(...r.rolls)}" (it rallies at the end)`,
+  );
+}
+
+/** Leadership test: 2D6 equal to or under Leadership. */
 function* leadershipTest(
   ctx: Ctx,
   u: Unit,
   target: number,
   label: string,
-): Generator<Command, boolean, unknown> {
-  const r = (yield ctx.roll("2d6", `${label} (${target} or less)`, u.id)) as Roll;
-  return passes(r, target);
+): Generator<Command, Roll, unknown> {
+  return (yield ctx.roll("2d6", `${label} (${target} or less)`, u.id)) as Roll;
+}
+
+/** The charge declared for a unit this turn (chargeReaction records it): distance to the target and the arc. */
+interface ChargeRecord {
+  target: string;
+  distance: number;
+  arc: string | null;
+  round: number;
+}
+
+/**
+ * A charging unit's Initiative bonus: +1 per full inch moved before contact,
+ * up to +3 into the front arc or +4 into a flank or rear.
+ */
+function chargeBonus(view: GameView, u: Unit): number {
+  const c = view.own[`charge:${u.id}`] as ChargeRecord | undefined;
+  if (!c || c.round !== view.round || u.status?.charged !== true) return 0;
+  return Math.min(Math.floor(c.distance), c.arc === "front" || !c.arc ? 3 : 4);
 }
 
 /** A round of close combat between two units, then the combat result and break test. */
 export const combat: CodeProcedure = function* (ctx, args) {
   const a = unitOf(ctx.view, args.unit);
   const b = unitOf(ctx.view, args.target);
-  const charged = (u: Unit) => u.status?.charged === true;
-  // Who strikes first: a charging unit, else higher Initiative; ties strike together.
-  const order = (u: Unit) => (charged(u) ? 100 : 0) + stat(ctx.view, u, "I");
-  const steps = order(a) === order(b) ? [[a, b]] : order(a) > order(b) ? [[a], [b]] : [[b], [a]];
+  // Highest Initiative strikes first; models with the same Initiative strike together.
+  const init = (u: Unit) => stat(ctx.view, u, "I") + chargeBonus(ctx.view, u);
+  for (const u of [a, b]) {
+    const bonus = chargeBonus(ctx.view, u);
+    if (bonus) yield ctx.note(`${u.name} charged: Initiative +${bonus}`);
+  }
+  const steps = init(a) === init(b) ? [[a, b]] : init(a) > init(b) ? [[a], [b]] : [[b], [a]];
   const caused = new Map<string, number>([
     [a.id, 0],
     [b.id, 0],
@@ -169,29 +215,35 @@ export const combat: CodeProcedure = function* (ctx, args) {
       hits.push([def, yield* strike(ctx, atk, def)]);
     }
     for (const [def, n] of hits) {
-      caused.set(def.id === a.id ? b.id : a.id, (caused.get(def.id === a.id ? b.id : a.id) ?? 0) + n);
+      const by = def.id === a.id ? b.id : a.id;
+      caused.set(by, (caused.get(by) ?? 0) + n);
       if (n) yield* casualties(ctx, unitOf(ctx.view, def.id), n);
     }
   }
 
   // Combat result.
   const state = ctx.view.state;
+  const strength = (u: Unit) => alive(state, u).reduce((t, m) => t + Math.max(1, charNum(m, "US", 1)), 0);
+  const massed = (u: Unit) => (u.sheet?.abilities ?? []).some((x) => /massed infantry/i.test(x.name));
   const score = (u: Unit, other: Unit) => {
     const parts: string[] = [];
     let s = caused.get(u.id) ?? 0;
-    if (s) parts.push(`${s} wounds`);
-    const rb = rankBonus(state, u);
-    if (rb) parts.push(`ranks +${rb}`);
-    s += rb;
     const add = (n: number, why: string) => {
       s += n;
       parts.push(why);
     };
+    if (s) parts.push(`${s} wounds`);
+    if (u.formation.kind !== "ranked" || u.formation.order !== "disrupted") {
+      const rb = rankBonus(state, u);
+      if (rb) add(rb, `ranks +${rb}`);
+    }
     if (hasStandard(state, u)) add(1, "standard +1");
-    if (charged(u)) add(1, "charge +1");
+    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? "")))
+      add(1, "battle standard +1");
     const arc = inArc(state, other, u);
     if (arc === "rear") add(2, "rear +2");
     else if (arc === "left" || arc === "right") add(1, "flank +1");
+    if (massed(u) && strength(u) > strength(other)) add(1, "massed infantry +1");
     return { s, parts };
   };
   const sa = score(unitOf(ctx.view, a.id), unitOf(ctx.view, b.id));
@@ -208,47 +260,60 @@ export const combat: CodeProcedure = function* (ctx, args) {
   const lost = unitOf(ctx.view, loser.id);
   if (!alive(ctx.view.state, lost).length) return;
 
-  // Break test: Leadership minus the difference, unless steadfast (more ranks than the winner).
-  const steadfast = ranks(ctx.view.state, lost) > ranks(ctx.view.state, unitOf(ctx.view, winner.id));
+  // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
+  // naturally but over once the difference is added: fall back in good order. Otherwise (or a
+  // double 1): give ground.
   const ld = leadership(ctx.view.state, lost);
-  const target = steadfast ? ld : ld - diff;
-  const held = yield* leadershipTest(
-    ctx,
-    lost,
-    target,
-    steadfast ? "break test, steadfast" : `break test, -${diff}`,
+  const r = yield* leadershipTest(ctx, lost, ld, `break test, +${diff}`);
+  const double1 = r.rolls.every((x) => x === 1);
+  let fled = false;
+  if (!double1 && r.total > ld) {
+    yield* flee(ctx, lost, "breaks");
+    fled = true;
+  } else if (!double1 && r.total + diff > ld) {
+    yield* fallBack(ctx, lost, `gives way (${r.total} + ${diff})`);
+    fled = true;
+  } else yield ctx.note(`${lost.name} gives ground ${GIVE_GROUND}"`);
+
+  const pick = yield ctx.ask(
+    owner(winner),
+    fled ? `${lost.name} falls back. Does ${winner.name} pursue?` : `Does ${winner.name} follow up?`,
+    [
+      { id: "go", label: fled ? "Pursue" : "Follow up" },
+      { id: "restrain", label: "Restrain (Leadership test)" },
+    ],
   );
-  if (held) {
-    yield ctx.note(`${lost.name} holds`);
+  const verb = fled ? "pursues (Charge panel: Roll to pursue)" : "follows up";
+  if (pick === "go") {
+    yield ctx.note(`${winner.name} ${verb}`);
     return;
   }
-  yield* flee(ctx, lost, "breaks");
-  const pick = yield ctx.ask(owner(winner), `${lost.name} flees. Does ${winner.name} pursue?`, [
-    { id: "pursue", label: "Pursue" },
-    { id: "restrain", label: "Restrain (Leadership test)" },
-  ]);
-  if (pick === "pursue") {
-    yield ctx.note(`${winner.name} pursues`);
-    return;
-  }
-  const kept = yield* leadershipTest(
-    ctx,
-    unitOf(ctx.view, winner.id),
-    leadership(ctx.view.state, winner),
-    "restraint",
-  );
+  const w = unitOf(ctx.view, winner.id);
+  const wld = leadership(ctx.view.state, w);
+  const kept = (yield* leadershipTest(ctx, w, wld, "restraint")).total <= wld;
   yield ctx.note(
-    kept ? `${winner.name} holds its ground` : `${winner.name} fails to restrain and must pursue`,
+    kept ? `${winner.name} restrains and may reform` : `${winner.name} fails to restrain and ${verb}`,
   );
 };
 
-/** The charged unit's reaction: hold, stand and shoot (missile troops), or flee. */
+/** The charged unit's reaction: hold, stand and shoot (missile troops, not too close), or flee. */
 export const chargeReaction: CodeProcedure = function* (ctx, args) {
   const charger = unitOf(ctx.view, args.unit);
   const target = unitOf(ctx.view, args.target);
-  const shoots = Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged");
-  yield ctx.note(`${charger.name} declares a charge against ${target.name}`);
+  const distance = ctx.view.distance(charger.id, target.id);
+  const shoots =
+    Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged") &&
+    !target.status?.fleeing &&
+    distance >= stat(ctx.view, charger, "M");
+  yield ctx.note(`${charger.name} declares a charge against ${target.name} (${distance.toFixed(1)}" away)`);
   yield ctx.emit({ type: "unit/status", id: charger.id, key: "charged", value: true });
+  const record: ChargeRecord = {
+    target: target.id,
+    distance,
+    arc: inArc(ctx.view.state, target, charger),
+    round: ctx.view.round,
+  };
+  yield ctx.set(`charge:${charger.id}`, record);
   const pick = yield ctx.ask(owner(target), `${charger.name} charges ${target.name}. Reaction?`, [
     { id: "hold", label: "Hold" },
     ...(shoots ? [{ id: "shoot", label: "Stand and shoot" }] : []),
@@ -257,16 +322,25 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
   if (pick === "hold") yield ctx.note(`${target.name} holds`);
   if (pick === "shoot") {
     yield ctx.emit({ type: "unit/status", id: target.id, key: "standAndShoot", value: true });
-    yield ctx.note(`${target.name} stands and shoots (use Shoot; -1 to hit)`);
+    yield ctx.note(`${target.name} stands and shoots (use Shoot), then holds`);
   }
   if (pick === "flee") yield* flee(ctx, target, "won't face the charge");
 };
 
-/** A Panic test: Leadership on 2D6, or flee. */
+/**
+ * A Panic test: Leadership on 2D6. On a fail the unit falls back in good
+ * order if more than half its models remain, else it flees.
+ */
 export const panic: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
-  const ok = yield* leadershipTest(ctx, u, leadership(ctx.view.state, u), "Panic test");
-  if (ok) yield ctx.note(`${u.name} keeps its nerve`);
+  const ld = leadership(ctx.view.state, u);
+  const r = yield* leadershipTest(ctx, u, ld, "Panic test");
+  if (r.total <= ld) {
+    yield ctx.note(`${u.name} keeps its nerve`);
+    return;
+  }
+  const left = alive(ctx.view.state, u).length;
+  if (left * 2 > u.modelIds.length) yield* fallBack(ctx, u, "panics");
   else yield* flee(ctx, u, "panics");
 };
 
