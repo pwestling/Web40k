@@ -165,6 +165,8 @@ export interface DiceRoll {
   /** What the roll was for, e.g. "advance" or "charge". */
   label?: string;
   unitId?: UnitId;
+  /** Each die succeeds on this score or more (e.g. 4 for "to hit 4+"). */
+  need?: number;
   /** Named faces (a scatter or artillery die): each result is a 1-based index into these. */
   faces?: string[];
 }

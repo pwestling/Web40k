@@ -1,3 +1,4 @@
+import { awayFrom, fleeMove, unitCentre, unitGap } from "../../core/manoeuvre";
 import { blockModels, inArc, rankCount } from "../../core/regiment";
 import type { GameState, Model, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
@@ -5,16 +6,17 @@ import { towRanks } from "./troops";
 
 /**
  * Close combat, charge reactions, break tests and Panic for rank-and-flank
- * play, as code procedures (the game modules spec, step 3). Movement stays
- * by hand: fleeing and pursuit use the Charge panel, which picks up the
- * "flee roll" these log for the unit.
+ * play, as code procedures (the game modules spec, step 3). Units that flee,
+ * fall back or give ground are moved straight away from the enemy; pursuit
+ * and the charge move itself stay on the Charge panel.
  *
  * Checked against the community rules index (tow.whfb.app, 2026-10-07): the
  * Weapon Skill chart, charging Initiative, combat result bonuses, the three
- * break test outcomes, Panic, flee and fall back rolls, restraint and Stand &
- * Shoot range. Not covered: high ground, overkill, special rules (Stubborn,
- * Unbreakable...), and supporting attacks assume every second-rank model may
- * make one. Every result is advisory and lands in the log.
+ * break test outcomes, Panic, flee and fall back rolls, restraint, Stand &
+ * Shoot (range and -1 to hit) and the shooting to-hit modifiers. Not covered:
+ * high ground, overkill, special rules (Stubborn, Unbreakable...), and
+ * supporting attacks assume every second-rank model may make one. Every
+ * result is advisory and lands in the log.
  */
 
 type Roll = { rolls: number[]; total: number };
@@ -43,9 +45,20 @@ function stat(view: GameView, u: Unit, id: string, d = 0): number {
   return typeof v === "number" ? v : d;
 }
 
-/** Leadership: the best in the unit (a character or champion lends theirs). */
-function leadership(state: GameState, u: Unit): number {
-  return Math.max(0, ...alive(state, u).map((m) => charNum(m, "Ld")));
+/** Leadership: the best in the unit (a character or champion lends theirs), and whose it is. */
+function leadership(state: GameState, u: Unit): { ld: number; who: string } {
+  let best = { ld: 0, who: "" };
+  for (const m of alive(state, u)) {
+    const ld = charNum(m, "Ld");
+    if (ld > best.ld) best = { ld, who: m.profile?.name ?? "" };
+  }
+  return best;
+}
+
+/** "Ld 9, Warden Captain" when a model other than the rank and file lends its Leadership. */
+function ldLabel(state: GameState, u: Unit): string {
+  const { ld, who } = leadership(state, u);
+  return who && who !== u.name ? `Ld ${ld}, ${who}` : `Ld ${ld}`;
 }
 
 function rankBonus(state: GameState, u: Unit): number {
@@ -88,6 +101,36 @@ const count = (r: Roll, target: number) => r.rolls.filter((x) => x !== 1 && x >=
 /** To hit: a natural 6 always hits, a natural 1 always misses. */
 const hitsOf = (r: Roll, target: number) => r.rolls.filter((x) => x === 6 || (x !== 1 && x >= target)).length;
 
+/** To wound, then armour, ward and regeneration saves. Returns the unsaved wounds. */
+function* woundAndSave(
+  ctx: Ctx,
+  atk: Unit,
+  def: Unit,
+  hits: number,
+  strength: number,
+  ap = 0,
+): Generator<Command, number, unknown> {
+  const view = ctx.view;
+  const woundOn = toWound(strength, stat(view, def, "T"));
+  if (woundOn === null) {
+    yield ctx.note(`${atk.name} can't wound ${def.name}`);
+    return 0;
+  }
+  const wound = (yield ctx.roll(`${hits}d6`, "to wound", atk.id, woundOn)) as Roll;
+  let left = count(wound, woundOn);
+  for (const [save, name] of [
+    ["armour", "armour"],
+    ["ward", "ward"],
+    ["regen", "regeneration"],
+  ] as const) {
+    const on = stat(view, def, save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
+    if (!left || on < 2 || on > 6) continue;
+    const r = (yield ctx.roll(`${left}d6`, `${name} save`, def.id, on)) as Roll;
+    left -= count(r, on);
+  }
+  return left;
+}
+
 /**
  * One side's attacks against another: the front rank's Attacks plus one
  * supporting attack from each model in the second rank, then to hit, to
@@ -102,27 +145,45 @@ function* strike(ctx: Ctx, atk: Unit, def: Unit): Generator<Command, number, unk
   const support = atk.formation.kind === "ranked" ? Math.min(files, models - files) : 0;
   const attacks = files * Math.max(1, stat(view, atk, "A", 1)) + support;
   const hitOn = combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
-  const hit = (yield ctx.roll(`${attacks}d6`, `to hit (${hitOn}+)`, atk.id)) as Roll;
+  const hit = (yield ctx.roll(`${attacks}d6`, "to hit", atk.id, hitOn)) as Roll;
   const hits = hitsOf(hit, hitOn);
   if (!hits) return 0;
-  const woundOn = toWound(stat(view, atk, "S"), stat(view, def, "T"));
-  if (woundOn === null) {
-    yield ctx.note(`${atk.name} can't wound ${def.name}`);
+  return yield* woundAndSave(ctx, atk, def, hits, stat(view, atk, "S"));
+}
+
+/**
+ * Missile fire at one unit: the front rank of models carrying the unit's
+ * first missile weapon. To hit is 7 - BS, worse by one per modifier
+ * (`penalties`), and 7+ needs a 6 then a 4+, 5+ or 6+; 10+ can't hit.
+ */
+function* shoot(ctx: Ctx, shooter: Unit, target: Unit, penalties: string[]): Generator<Command, number, unknown> {
+  const view = ctx.view;
+  const state = view.state;
+  const weapon = Object.values(shooter.sheet?.weapons ?? {}).find((w) => w.kind === "ranged");
+  if (!weapon) return 0;
+  const carriers = alive(state, shooter).filter((m) => (m.weapons ?? []).includes(weapon.id)).length;
+  const files = shooter.formation.kind === "ranked" ? shooter.formation.files : carriers;
+  const dice = Math.min(carriers, files);
+  if (!dice) return 0;
+  const range = Number.parseFloat(weapon.chars.Range ?? "") || 0;
+  const mods = [...penalties];
+  if (range && unitGap(state, shooter, target) > range / 2) mods.push("long range");
+  const need = 7 - stat(view, shooter, "BS") + mods.length;
+  const label = `to hit${need >= 7 ? ` (6 then ${need - 3}+)` : ""}${mods.length ? ` (${mods.join(", ")})` : ""}`;
+  if (need >= 10) {
+    yield ctx.note(`${shooter.name} can't hit (${mods.join(", ")})`);
     return 0;
   }
-  const wound = (yield ctx.roll(`${hits}d6`, `to wound (${woundOn}+)`, atk.id)) as Roll;
-  let left = count(wound, woundOn);
-  for (const [save, name] of [
-    ["armour", "armour"],
-    ["ward", "ward"],
-    ["regen", "regeneration"],
-  ] as const) {
-    const on = stat(view, def, save, save === "armour" ? 7 : 0);
-    if (!left || on < 2 || on > 6) continue;
-    const r = (yield ctx.roll(`${left}d6`, `${name} save (${on}+)`, def.id)) as Roll;
-    left -= count(r, on);
+  const r = (yield ctx.roll(`${dice}d6`, label, shooter.id, Math.min(6, Math.max(2, need)))) as Roll;
+  let hits = need <= 6 ? count(r, Math.max(2, need)) : r.rolls.filter((x) => x === 6).length;
+  if (need >= 7 && hits) {
+    const f = (yield ctx.roll(`${hits}d6`, "then", shooter.id, need - 3)) as Roll;
+    hits = count(f, need - 3);
   }
-  return left;
+  if (!hits) return 0;
+  const s = Number.parseFloat(weapon.chars.S ?? "") || stat(view, shooter, "S");
+  const ap = Math.abs(Number.parseFloat(weapon.chars.AP ?? "") || 0);
+  return yield* woundAndSave(ctx, shooter, target, hits, s, ap);
 }
 
 /** Casualties come off the rear rank: wounded models first, then rank and file, the command group last. */
@@ -148,37 +209,65 @@ function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, vo
   }
 }
 
-/** A failed test: the unit flees; the Charge panel moves it by this roll. */
-function* flee(ctx: Ctx, u: Unit, why: string): Generator<Command, void, unknown> {
+/** The nearest enemy unit still standing and not fleeing, to run from. */
+function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
+  let best: { e: Unit; d: number } | undefined;
+  for (const e of Object.values(state.units)) {
+    if (e.owner === u.owner || e.status?.fleeing || !alive(state, e).length) continue;
+    const d = unitGap(state, u, e);
+    if (!best || d < best.d) best = { e, d };
+  }
+  return best?.e;
+}
+
+/** Move a unit straight away from `from` by `inches`: turning to run (flee, fall back) or backing off (give ground). */
+function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, turn: boolean) {
+  const state = ctx.view.state;
+  if (!from || inches <= 0) return;
+  const away = awayFrom(state, u, unitCentre(state, from));
+  const move = fleeMove(state, u, away, inches);
+  if (move) yield ctx.emit((turn ? move : { ...move, turn: 0, how: "drag" }) as unknown as { type: string } & Record<string, unknown>);
+}
+
+/** The unit flees 2D6" from `from` and is marked fleeing. */
+function* flee(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
   const r = (yield ctx.roll(FLEE_DICE, "flee roll", u.id)) as Roll;
   yield ctx.emit({ type: "unit/status", id: u.id, key: "fleeing", value: true });
+  yield* moveAway(ctx, unitOf(ctx.view, u.id), from, r.total, true);
   yield ctx.note(`${u.name} ${why} and flees ${r.total}"`);
 }
 
 /** Falls back in good order: moves like a fleeing unit (2D6, lowest discarded), then rallies at once. */
-function* fallBack(ctx: Ctx, u: Unit, why: string): Generator<Command, void, unknown> {
+function* fallBack(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
   const r = (yield ctx.roll(FALL_BACK_DICE, "fall back roll", u.id)) as Roll;
-  yield ctx.note(
-    `${u.name} ${why} and falls back in good order ${Math.max(...r.rolls)}" (it rallies at the end)`,
-  );
+  const inches = Math.max(...r.rolls);
+  yield* moveAway(ctx, unitOf(ctx.view, u.id), from, inches, true);
+  yield ctx.note(`${u.name} ${why} and falls back in good order ${inches}" (it rallies at the end)`);
 }
 
 /** Leadership test: 2D6 equal to or under Leadership. */
-function* leadershipTest(
-  ctx: Ctx,
-  u: Unit,
-  target: number,
-  label: string,
-): Generator<Command, Roll, unknown> {
-  return (yield ctx.roll("2d6", `${label} (${target} or less)`, u.id)) as Roll;
+function* leadershipTest(ctx: Ctx, u: Unit, label: string): Generator<Command, { roll: Roll; ld: number }, unknown> {
+  const state = ctx.view.state;
+  const { ld } = leadership(state, u);
+  const roll = (yield ctx.roll("2d6", `${label} (${ldLabel(state, u)})`, u.id)) as Roll;
+  return { roll, ld };
 }
 
-/** The charge declared for a unit this turn (chargeReaction records it): distance to the target and the arc. */
+/** The charge declared for a unit (chargeReaction records it): the gap to the target and the arc. */
 interface ChargeRecord {
   target: string;
   distance: number;
   arc: string | null;
   round: number;
+}
+
+/** When a unit fought this phase, and the result line. */
+interface Fought {
+  round: number;
+  seat: number;
+  phase: string | null;
+  against: string;
+  result: string;
 }
 
 /**
@@ -191,10 +280,18 @@ function chargeBonus(view: GameView, u: Unit): number {
   return Math.min(Math.floor(c.distance), c.arc === "front" || !c.arc ? 3 : 4);
 }
 
+/** This unit's fight this phase, if it had one. */
+function foughtNow(view: GameView, unitId: string): Fought | undefined {
+  const f = view.own[`fought:${unitId}`] as Fought | undefined;
+  const now = view.state.turn;
+  return f && f.round === now.round && f.seat === now.activeSeat && f.phase === view.phase ? f : undefined;
+}
+
 /** A round of close combat between two units, then the combat result and break test. */
 export const combat: CodeProcedure = function* (ctx, args) {
   const a = unitOf(ctx.view, args.unit);
   const b = unitOf(ctx.view, args.target);
+  yield ctx.note(`${a.name} fight ${b.name}`);
   // Highest Initiative strikes first; models with the same Initiative strike together.
   const init = (u: Unit) => stat(ctx.view, u, "I") + chargeBonus(ctx.view, u);
   for (const u of [a, b]) {
@@ -238,8 +335,7 @@ export const combat: CodeProcedure = function* (ctx, args) {
       if (rb) add(rb, `ranks +${rb}`);
     }
     if (hasStandard(state, u)) add(1, "standard +1");
-    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? "")))
-      add(1, "battle standard +1");
+    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? ""))) add(1, "battle standard +1");
     const arc = inArc(state, other, u);
     if (arc === "rear") add(2, "rear +2");
     else if (arc === "left" || arc === "right") add(1, "flank +1");
@@ -248,10 +344,16 @@ export const combat: CodeProcedure = function* (ctx, args) {
   };
   const sa = score(unitOf(ctx.view, a.id), unitOf(ctx.view, b.id));
   const sb = score(unitOf(ctx.view, b.id), unitOf(ctx.view, a.id));
-  yield ctx.note(
-    `Combat result: ${a.name} ${sa.s} (${sa.parts.join(", ") || "nothing"}) against ${b.name} ${sb.s} (${sb.parts.join(", ") || "nothing"})`,
-  );
-  yield ctx.set("lastCombat", { a: a.id, b: b.id, scores: [sa.s, sb.s] });
+  const result = `${a.name} ${sa.s} (${sa.parts.join(", ") || "nothing"}) against ${b.name} ${sb.s} (${sb.parts.join(", ") || "nothing"})`;
+  yield ctx.note(`Combat result: ${result}`);
+  const now = ctx.view.state.turn;
+  for (const [u, other] of [
+    [a, b],
+    [b, a],
+  ] as const) {
+    const fought: Fought = { round: now.round, seat: now.activeSeat, phase: ctx.view.phase, against: other.id, result };
+    yield ctx.set(`fought:${u.id}`, fought);
+  }
   if (sa.s === sb.s) {
     yield ctx.note("The combat is a draw");
     return;
@@ -263,21 +365,26 @@ export const combat: CodeProcedure = function* (ctx, args) {
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
-  const ld = leadership(ctx.view.state, lost);
-  const r = yield* leadershipTest(ctx, lost, ld, `break test, +${diff}`);
+  const { roll: r, ld } = yield* leadershipTest(ctx, lost, `break test, ${r0(diff)}`);
   const double1 = r.rolls.every((x) => x === 1);
-  let fled = false;
+  const won = unitOf(ctx.view, winner.id);
+  let fled: "" | "flees" | "falls back" = "";
   if (!double1 && r.total > ld) {
-    yield* flee(ctx, lost, "breaks");
-    fled = true;
+    yield* flee(ctx, lost, won, `breaks (${r.total} against ${ld})`);
+    fled = "flees";
   } else if (!double1 && r.total + diff > ld) {
-    yield* fallBack(ctx, lost, `gives way (${r.total} + ${diff})`);
-    fled = true;
-  } else yield ctx.note(`${lost.name} gives ground ${GIVE_GROUND}"`);
+    yield* fallBack(ctx, lost, won, `gives way (${r.total} + ${diff} against ${ld})`);
+    fled = "falls back";
+  } else {
+    yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
+    yield ctx.note(`${lost.name} gives ground ${GIVE_GROUND}" (${r.total} + ${diff} against ${ld})`);
+  }
 
   const pick = yield ctx.ask(
     owner(winner),
-    fled ? `${lost.name} falls back. Does ${winner.name} pursue?` : `Does ${winner.name} follow up?`,
+    fled
+      ? `${lost.name} ${fled === "flees" ? "has broken and flees" : "falls back in good order"}. Does ${winner.name} pursue it?`
+      : `${lost.name} gave ground. Does ${winner.name} follow up?`,
     [
       { id: "go", label: fled ? "Pursue" : "Follow up" },
       { id: "restrain", label: "Restrain (Leadership test)" },
@@ -288,19 +395,20 @@ export const combat: CodeProcedure = function* (ctx, args) {
     yield ctx.note(`${winner.name} ${verb}`);
     return;
   }
-  const w = unitOf(ctx.view, winner.id);
-  const wld = leadership(ctx.view.state, w);
-  const kept = (yield* leadershipTest(ctx, w, wld, "restraint")).total <= wld;
+  const t = yield* leadershipTest(ctx, won, "restraint");
   yield ctx.note(
-    kept ? `${winner.name} restrains and may reform` : `${winner.name} fails to restrain and ${verb}`,
+    t.roll.total <= t.ld ? `${winner.name} restrains and may reform` : `${winner.name} fails to restrain and ${verb}`,
   );
 };
+
+/** "+2" for a break test's difference. */
+const r0 = (n: number) => `+${n}`;
 
 /** The charged unit's reaction: hold, stand and shoot (missile troops, not too close), or flee. */
 export const chargeReaction: CodeProcedure = function* (ctx, args) {
   const charger = unitOf(ctx.view, args.unit);
   const target = unitOf(ctx.view, args.target);
-  const distance = ctx.view.distance(charger.id, target.id);
+  const distance = unitGap(ctx.view.state, charger, target);
   const shoots =
     Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged") &&
     !target.status?.fleeing &&
@@ -314,17 +422,23 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
     round: ctx.view.round,
   };
   yield ctx.set(`charge:${charger.id}`, record);
-  const pick = yield ctx.ask(owner(target), `${charger.name} charges ${target.name}. Reaction?`, [
+  const options = [
     { id: "hold", label: "Hold" },
-    ...(shoots ? [{ id: "shoot", label: "Stand and shoot" }] : []),
+    ...(shoots ? [{ id: "shoot", label: `Stand and shoot at ${charger.name} (-1 to hit)` }] : []),
     { id: "flee", label: "Flee" },
-  ]);
+  ];
+  const pick = yield ctx.ask(
+    owner(target),
+    `${charger.name} charges ${target.name}. ${options.map((o) => o.label.split(" at ")[0]).join(", ").replace(/, ([^,]*)$/, " or $1")}?`,
+    options,
+  );
   if (pick === "hold") yield ctx.note(`${target.name} holds`);
   if (pick === "shoot") {
-    yield ctx.emit({ type: "unit/status", id: target.id, key: "standAndShoot", value: true });
-    yield ctx.note(`${target.name} stands and shoots (use Shoot), then holds`);
+    const n = yield* shoot(ctx, target, charger, ["stand and shoot"]);
+    if (n) yield* casualties(ctx, unitOf(ctx.view, charger.id), n);
+    yield ctx.note(`${target.name} stands and shoots (${n} unsaved ${n === 1 ? "wound" : "wounds"}), then holds`);
   }
-  if (pick === "flee") yield* flee(ctx, target, "won't face the charge");
+  if (pick === "flee") yield* flee(ctx, target, charger, "won't face the charge");
 };
 
 /**
@@ -333,29 +447,36 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
  */
 export const panic: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
-  const ld = leadership(ctx.view.state, u);
-  const r = yield* leadershipTest(ctx, u, ld, "Panic test");
-  if (r.total <= ld) {
-    yield ctx.note(`${u.name} keeps its nerve`);
+  yield ctx.note(`${u.name} takes a Panic test`);
+  const { roll, ld } = yield* leadershipTest(ctx, u, "Panic test");
+  if (roll.total <= ld) {
+    yield ctx.note(`${u.name} keeps its nerve (${roll.total} against ${ld})`);
     return;
   }
+  const from = nearestEnemy(ctx.view.state, u);
   const left = alive(ctx.view.state, u).length;
-  if (left * 2 > u.modelIds.length) yield* fallBack(ctx, u, "panics");
-  else yield* flee(ctx, u, "panics");
+  if (left * 2 > u.modelIds.length) yield* fallBack(ctx, u, from, `panics (${roll.total} against ${ld})`);
+  else yield* flee(ctx, u, from, `panics (${roll.total} against ${ld})`);
 };
 
-/** Enemy units within reach of this one (base contact for combat). */
-function enemies(view: GameView, unitId: string, within: number) {
+/** Enemy units within this gap of this one, nearest first. */
+function enemies(view: GameView, unitId: string, within: number, fleeing = true) {
   const me = view.state.units[unitId];
+  if (!me) return [];
   return Object.values(view.state.units)
-    .filter((u) => me && u.owner !== me.owner && alive(view.state, u).length)
-    .map((u) => ({ u, d: view.distance(unitId, u.id) }))
+    .filter((u) => u.owner !== me.owner && alive(view.state, u).length && (fleeing || !u.status?.fleeing))
+    .map((u) => ({ u, d: unitGap(view.state, me, u) }))
     .filter((x) => x.d <= within)
     .sort((x, y) => x.d - y.d);
 }
 
 /** Touching, for close combat. */
 const CONTACT = 0.5;
+
+/** Close combat targets: in contact, not fleeing, and not already fought this phase. */
+function fightTargets(view: GameView, unitId: string) {
+  return enemies(view, unitId, CONTACT, false).filter((x) => !foughtNow(view, x.u.id));
+}
 
 export const towActions: CodeAction[] = [
   {
@@ -367,10 +488,11 @@ export const towActions: CodeAction[] = [
       const u = view.state.units[actor.unitId ?? ""];
       if (!u) return "No unit";
       if (u.status?.fleeing) return "Fleeing units can't charge";
-      return enemies(view, u.id, 24).length ? true : 'No enemy within 24"';
+      if (u.status?.charged) return "Already charged this turn";
+      return enemies(view, u.id, 24, false).length ? true : 'No enemy within 24"';
     },
     targets: (view, actor) =>
-      enemies(view, actor.unitId ?? "", 24).map((x) => ({
+      enemies(view, actor.unitId ?? "", 24, false).map((x) => ({
         unitId: x.u.id,
         label: `${x.u.name} (${x.d.toFixed(1)}")`,
       })),
@@ -381,18 +503,23 @@ export const towActions: CodeAction[] = [
     name: "Fight",
     by: "unit",
     phases: ["combat"],
-    available: (view, actor) =>
-      enemies(view, actor.unitId ?? "", CONTACT).length ? true : "Not in base contact with an enemy",
-    targets: (view, actor) =>
-      enemies(view, actor.unitId ?? "", CONTACT).map((x) => ({ unitId: x.u.id, label: x.u.name })),
+    available: (view, actor) => {
+      const id = actor.unitId ?? "";
+      const u = view.state.units[id];
+      if (u?.status?.fleeing) return "Fleeing units don't fight";
+      const done = foughtNow(view, id);
+      if (done) return `Fought this phase: ${done.result}`;
+      if (fightTargets(view, id).length) return true;
+      return enemies(view, id, CONTACT).length ? "The enemy in contact is fleeing" : "Not in base contact with an enemy";
+    },
+    targets: (view, actor) => fightTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
     run: combat,
   },
   {
     id: "panic",
     name: "Panic test",
     by: "unit",
-    available: (view, actor) =>
-      view.state.units[actor.unitId ?? ""]?.status?.fleeing ? "Already fleeing" : true,
+    available: (view, actor) => (view.state.units[actor.unitId ?? ""]?.status?.fleeing ? "Already fleeing" : true),
     run: panic,
   },
 ];

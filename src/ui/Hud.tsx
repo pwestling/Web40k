@@ -185,6 +185,13 @@ export function Hud() {
             ) : (
               <li key={item.key} className={item.undone ? "undone" : undefined}>
                 {item.text}
+                {item.detail?.length ? (
+                  <ul className="detail">
+                    {item.detail.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ),
           )}

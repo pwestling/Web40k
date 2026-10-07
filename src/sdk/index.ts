@@ -111,7 +111,7 @@ export interface GameView {
 
 /** Commands a procedure yields; each result is recorded for replay. */
 export type Command =
-  | { cmd: "roll"; dice: string; label?: string; unitId?: Id }
+  | { cmd: "roll"; dice: string; label?: string; unitId?: Id; need?: number }
   | { cmd: "note"; text: string }
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id> }
@@ -120,8 +120,11 @@ export type Command =
 
 export interface Ctx {
   view: GameView;
-  /** Dice from the host's rng; `unitId` files the roll under that unit (e.g. a "flee roll"). */
-  roll(dice: string, label?: string, unitId?: Id): Command;
+  /**
+   * Dice from the host's rng; `unitId` files the roll under that unit (e.g. a "flee roll").
+   * `need` marks each die as a success on that score or more, so the log reads "5 of 10" not a sum.
+   */
+  roll(dice: string, label?: string, unitId?: Id, need?: number): Command;
   /** A line in the game log. */
   note(text: string): Command;
   ask(player: Id, question: string, options: { id: Id; label: string }[]): Command;

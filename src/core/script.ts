@@ -148,7 +148,7 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
         results.push({ command: key, value: input });
         continue;
       }
-      const { value, emitted } = perform(cmd, rng, script);
+      const { value, emitted } = perform(cmd, rng, script, state);
       results.push(value === undefined ? { command: key } : { command: key, value });
       events.push(...emitted);
       for (const e of emitted) state = replayEffect(state, e);
@@ -160,7 +160,12 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
 }
 
 /** Run a new command: roll dice, or turn an emit or set into events. */
-function perform(cmd: Command, rng: Rng, script: ScriptState): { value?: unknown; emitted: GameEvent[] } {
+function perform(
+  cmd: Command,
+  rng: Rng,
+  script: ScriptState,
+  state: GameState,
+): { value?: unknown; emitted: GameEvent[] } {
   switch (cmd.cmd) {
     case "roll": {
       const dice = parseDice(cmd.dice);
@@ -172,11 +177,13 @@ function perform(cmd: Command, rng: Rng, script: ScriptState): { value?: unknown
           {
             type: "dice/roll",
             roll: {
-              by: script.by,
+              // A unit's roll is its owner's, whoever started the rule.
+              by: (cmd.unitId && state.units[cmd.unitId]?.owner) || script.by,
               sides,
               results: rolls,
               ...(cmd.label ? { label: cmd.label } : {}),
               ...(cmd.unitId ? { unitId: cmd.unitId } : {}),
+              ...(cmd.need ? { need: cmd.need } : {}),
             },
           },
         ],
@@ -216,11 +223,12 @@ function makeCtx(current: () => GameState, module: Id): Ctx {
     get view() {
       return gameView(current(), module);
     },
-    roll: (dice, label, unitId) => ({
+    roll: (dice, label, unitId, need) => ({
       cmd: "roll",
       dice,
       ...(label ? { label } : {}),
       ...(unitId ? { unitId } : {}),
+      ...(need ? { need } : {}),
     }),
     note: (text) => ({ cmd: "note", text }),
     ask: (player, question, options) => ({ cmd: "ask", player, question, options }),

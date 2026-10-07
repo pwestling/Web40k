@@ -14,7 +14,7 @@ import {
 export type LogItem =
   /** A phase change, or (`rules`) a rules change both players agreed to mid-game. */
   | { kind: "header"; key: string; text: string; rules?: true }
-  | { kind: "line"; key: string; seq: number; text: string; undone: boolean };
+  | { kind: "line"; key: string; seq: number; text: string; undone: boolean; detail?: string[] };
 
 /**
  * The event log in words: phase changes become headers, each attack is one
@@ -28,6 +28,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   let attackLine: Extract<LogItem, { kind: "line" }> | null = null;
   // A system procedure (any game's attack) is one line, updated as it is rolled.
   let procLine: Extract<LogItem, { kind: "line" }> | null = null;
+  // A code procedure (an Old World combat, say): its first note heads one item, every later step a detail line.
+  let scriptItem: Extract<LogItem, { kind: "line" }> | null = null;
   // Deployment: one line per player and army, however many units it had.
   let deployLine:
     (Extract<LogItem, { kind: "line" }> & { by: string; army?: string; units: number; pts: number }) | null =
@@ -81,6 +83,19 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       continue;
     }
     deployLine = null;
+    if (event.type === "script/step") {
+      const lines = scriptLines(event, before, state);
+      if (scriptItem && before.script && !skipped) {
+        (scriptItem.detail ??= []).push(...lines);
+      } else {
+        const who = state.players[logged.by]?.name ?? "Someone";
+        const [head, ...rest] = lines.length ? lines : [`${who} ran ${event.script?.procedure ?? "a rule"}`];
+        scriptItem = { kind: "line", key, seq: logged.seq, text: head!, undone: skipped, detail: rest };
+        items.push(scriptItem);
+      }
+      if (!event.script) scriptItem = null;
+      continue;
+    }
     if (event.type === "attack/declare" || event.type === "attack/roll") {
       const text = attackSummary(state.attack ?? event.attack, state);
       if (attackLine && event.type === "attack/roll") attackLine.text = text;
@@ -203,10 +218,18 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${nameOf(event.by)} reconnected`;
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
+      // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.
+      const roller = nameOf(event.roll.by);
       const total = results.reduce((a, b) => a + b, 0);
+      if (event.roll.need) {
+        // "Warriors to hit 4+: 5 of 10 (6 5 5 4 4 3 2 2 1 1)"
+        const n = results.filter((r) => r >= event.roll.need!).length;
+        const dice = [...results].sort((a, b) => b - a).join(" ");
+        return `${unitId ? `${unitName(unitId)} ` : ""}${label ?? "roll"} ${event.roll.need}+: ${n} of ${results.length} (${dice})`;
+      }
       const what = label ? `${unitId ? `${unitName(unitId)} ` : ""}${label}` : `${results.length}D${sides}`;
-      if (faces) return `${who} rolled ${what}: ${results.map((r) => faces[r - 1] ?? r).join(" ")}`;
-      return `${who} rolled ${what}: ${results.join(" ")}${results.length > 1 ? ` (= ${total})` : ""}`;
+      if (faces) return `${roller} rolled ${what}: ${results.map((r) => faces[r - 1] ?? r).join(" ")}`;
+      return `${roller} rolled ${what}: ${results.join(" ")}${results.length > 1 ? ` (= ${total})` : ""}`;
     }
     case "undo":
       return `${who} took back an action`;
@@ -397,45 +420,53 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${unitName(event.id)} may move up to ${event.inches}" (${event.flag})`;
     case "attack/allocate":
       return `${who} chose the order their models take wounds`;
-    case "script/step": {
-      // A code procedure's effects, each described as if logged on its own.
-      const parts: string[] = [];
-      for (let i = 0; i < event.events.length; i++) {
-        const e = event.events[i]!;
-        if (e.type === "module/set") continue;
-        if (e.type === "model/wounds") {
-          // Casualties in a row on one unit read as one line.
-          const unitId = game.models[e.id]?.unitId;
-          let lost = 0;
-          let hurt = 0;
-          for (; i < event.events.length; i++) {
-            const x = event.events[i]!;
-            if (x.type !== "model/wounds" || game.models[x.id]?.unitId !== unitId) break;
-            if (x.destroyed) lost++;
-            else hurt++;
-          }
-          i--;
-          const bits = [
-            lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
-            hurt ? `${hurt} wounded` : "",
-          ];
-          parts.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
-          continue;
-        }
-        parts.push(describe({ by, event: e, seq: 0, at: 0 }, before, game));
-      }
-      if (event.error) parts.push(`stopped: ${event.error}`);
-      if (event.script?.waiting)
-        parts.push(`${nameOf(event.script.waiting.player)} to choose: ${event.script.waiting.question}`);
-      return parts.join(" · ") || `${who} continued ${event.script?.procedure ?? "a rule"}`;
-    }
     case "module/set":
-      return `${who}: ${event.key} updated`;
+      return "";
     case "log/note":
       return event.text;
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }
+}
+
+/**
+ * A code procedure's step as log lines: its notes and rolls, casualties folded
+ * per unit. Module bookkeeping and status flags stay out (the notes say what
+ * they mean), and so does the waiting question, which the question panel asks.
+ */
+function scriptLines(event: Extract<LoggedEvent["event"], { type: "script/step" }>, before: GameState, game: GameState) {
+  const unitName = (id: string) => game.units[id]?.name ?? "a unit";
+  const by = event.script?.by ?? "";
+  const lines: string[] = [];
+  for (let i = 0; i < event.events.length; i++) {
+    const e = event.events[i]!;
+    if (e.type === "module/set" || e.type === "unit/status") continue;
+    if (e.type === "model/wounds") {
+      // Casualties in a row on one unit read as one line.
+      const unitId = game.models[e.id]?.unitId;
+      let lost = 0;
+      let hurt = 0;
+      for (; i < event.events.length; i++) {
+        const x = event.events[i]!;
+        if (x.type !== "model/wounds" || game.models[x.id]?.unitId !== unitId) break;
+        if (x.destroyed) lost++;
+        else hurt++;
+      }
+      i--;
+      const bits = [
+        lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
+        hurt ? `${hurt} wounded` : "",
+      ];
+      lines.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
+      continue;
+    }
+    // A unit moved by the rule (fleeing, giving ground) is said by the rule's own note.
+    if (e.type === "unit/move") continue;
+    const text = describe({ by, event: e, seq: 0, at: 0 }, before, game);
+    if (text) lines.push(text);
+  }
+  if (event.error) lines.push(`stopped: ${event.error}`);
+  return lines;
 }
 
 /**

@@ -15,7 +15,11 @@ export function ScriptPanel() {
   const who = game.players[waiting.player]?.name ?? "A player";
   return (
     <div className="panel script">
-      <div className="label">{mine ? waiting.question : `Waiting for ${who}: ${waiting.question}`}</div>
+      {/* The question leads with who decides (UX 90), and says so when it isn't you. */}
+      <div className="label">
+        <strong>{who}:</strong> {waiting.question}
+        {!mine && <span className="muted"> (waiting for {who})</span>}
+      </div>
       <div className="chips">
         {waiting.options.map((o) => (
           <button

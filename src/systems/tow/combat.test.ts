@@ -9,9 +9,11 @@ import {
   type Intent,
   type PlayerId,
 } from "../../core";
+import { buildLog } from "../../ui/gameLog";
 import "../index";
 import { spawnIntents } from "../wh40k/deploy";
-import { combatHit, toWound } from "./combat";
+import { gameView } from "../../core/script";
+import { combatHit, toWound, towActions } from "./combat";
 import { towSample } from "./sample";
 
 function rng(seed: number) {
@@ -177,6 +179,28 @@ describe("The Old World combat as code", () => {
     );
   });
 
+  it("fleeing moves the unit straight away from the charger by the flee roll (UX 84)", () => {
+    const { t, spears, warband } = setup();
+    toPhase(t, "movement");
+    // The unit's centre: fleeing turns it about, so its old front rank ends up at the back.
+    const y = (s: GameState) => {
+      const ids = s.units[warband]!.modelIds.filter((id) => !s.models[id]!.destroyed);
+      return ids.reduce((a, id) => a + s.models[id]!.position.y, 0) / ids.length;
+    };
+    const y0 = y(t.s);
+    t.play({ type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: warband } }, "p1");
+    t.play({ type: "script/answer", answer: "flee" }, "p2", 9);
+    const step = t.events.at(-1)!;
+    const roll = step.type === "script/step" && step.events.find((e) => e.type === "dice/roll");
+    const total = roll && roll.type === "dice/roll" ? roll.roll.results.reduce((a, b) => a + b, 0) : 0;
+    // The spears are south of the warband, so it runs north.
+    expect(y(t.s) - y0).toBeCloseTo(total, 0);
+    // A fleeing unit can't be fought.
+    toPhase(t, "combat");
+    const fight = towActions.find((a) => a.id === "combat")!;
+    expect(fight.available(gameView(t.s, "tow-hand"), { unitId: spears } as never)).not.toBe(true);
+  });
+
   it("missile troops may stand and shoot", () => {
     const { t, warband } = setup();
     const bows = unitNamed(t.s, "Fen Bowmen").id;
@@ -186,6 +210,36 @@ describe("The Old World combat as code", () => {
       "p2",
     );
     expect(t.s.script!.waiting!.options.map((o) => o.id)).toEqual(["hold", "shoot", "flee"]);
+    // Standing and shooting fires the bows at -1 to hit (UX 86).
+    t.play({ type: "script/answer", answer: "shoot" }, "p1", 2);
+    const step = t.events.at(-1)!;
+    const hit = step.type === "script/step" && step.events.find((e) => e.type === "dice/roll");
+    expect(hit && hit.type === "dice/roll" && hit.roll.label).toMatch(/^to hit.*stand and shoot/);
+    expect(t.notes().some((n) => /stands and shoots .* then holds/.test(n))).toBe(true);
+  });
+
+  it("a unit fights once a phase, and the log reads one combat as one item (UX 87, 88)", () => {
+    const { t, spears, warband } = setup();
+    toPhase(t, "combat");
+    t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 3);
+    if (t.s.script?.waiting) t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player, 4);
+    const fight = towActions.find((a) => a.id === "combat")!;
+    const view = gameView(t.s, "tow-hand");
+    expect(fight.available(view, { unitId: spears } as never)).toMatch(/^Fought this phase/);
+    expect(fight.available(view, { unitId: warband } as never)).toMatch(/^Fought this phase/);
+    const record = { initial: createInitialState(), events: [] as { seq: number; by: string; at: number; event: GameEvent }[] };
+    // Rebuild a record from the table's events, as the host logs them.
+    let state = createInitialState();
+    t.events.forEach((event, i) => {
+      record.events.push({ seq: i + 1, by: "p1", at: 0, event });
+      state = applyEvent(state, event);
+    });
+    const log = buildLog(record as never);
+    const item = log.find((l) => l.kind === "line" && l.text === "Marchwarden Spears fight Reaver Warband");
+    expect(item && item.kind === "line" && item.detail?.length).toBeGreaterThan(3);
+    const lines = item && item.kind === "line" ? item.detail!.join("\n") : "";
+    expect(lines).toMatch(/to hit \d\+: \d+ of \d+/);
+    expect(lines).not.toMatch(/to choose|= true|updated/);
   });
 
   it("Panic: pass on Leadership or less; else fall back (over half left) or flee", () => {
