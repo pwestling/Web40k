@@ -63,6 +63,7 @@ export function DiceTray() {
         color,
         stakesOf(roll, p.state, shown),
         rare?.rollId === roll.id ? rare : null,
+        scrub === null,
       );
     }
   }, [pos, shown, record, scrub]);
@@ -131,7 +132,7 @@ class Stage {
     this.root.innerHTML = "";
   }
 
-  play(roll: TrayRoll, color: string, stakes: Stakes | null, rare: RareOutcome | null) {
+  play(roll: TrayRoll, color: string, stakes: Stakes | null, rare: RareOutcome | null, live: boolean) {
     this.waiting++;
     this.queue = this.queue.then(async () => {
       this.waiting--;
@@ -140,7 +141,7 @@ class Stage {
       const fast = this.waiting > 0 || useSound.getState().fast;
       try {
         await this.roll(roll, color, stakes, fast);
-        if (rare) await this.moment(rare);
+        if (rare) await this.moment(rare, live);
       } catch {
         // A roll that can't be staged is still in the panel and the log.
       }
@@ -151,6 +152,9 @@ class Stage {
 
   private show() {
     clearTimeout(this.hideTimer);
+    // Sit above the phase's stratagem box, which shares the corner (UX 104).
+    const box = document.querySelector(".panel.play")?.getBoundingClientRect();
+    this.root.style.bottom = box?.height ? `${Math.max(60, innerHeight - box.top + 8)}px` : "";
     this.root.classList.add("on");
   }
 
@@ -218,7 +222,7 @@ class Stage {
    * that did it, a boom and a chord (a comic womp for cursed dice), and the
    * title with its one number. The unit's bases pulse on the table too.
    */
-  private async moment(rare: RareOutcome) {
+  private async moment(rare: RareOutcome, live: boolean) {
     clearTimeout(this.hideTimer);
     this.show();
     await wait(this.skip ? 0 : 450);
@@ -231,9 +235,12 @@ class Stage {
     big.textContent = rare.title;
     const small = div("small");
     small.textContent = rare.line;
-    const hint = div("hint");
-    hint.textContent = "Click to continue";
-    this.banner.append(big, small, hint);
+    this.banner.append(big, small);
+    if (live) {
+      const hint = div("hint");
+      hint.textContent = "Click to continue";
+      this.banner.append(hint);
+    }
     this.banner.className = `tray-banner on tray-legend ${rare.lucky ? "" : "cursed"}`;
     if (rare.unitId)
       useStore.getState().set({
@@ -246,8 +253,9 @@ class Stage {
         },
       });
     this.skip = false;
-    // It stays until it's clicked, holding the next roll behind it (UX 102); never forever.
-    const end = Date.now() + (document.hidden ? 0 : 20_000);
+    // Live, it stays until it's clicked, holding the next roll behind it (UX 102); never forever.
+    // A replay shows it for a few seconds.
+    const end = Date.now() + (document.hidden ? 0 : live ? 20_000 : 4_000);
     while (Date.now() < end && !this.skip) await wait(100);
     this.root.classList.remove("legendary");
     this.lingerThenHide();
