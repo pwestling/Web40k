@@ -56,9 +56,14 @@ export function Lobby() {
     autoJoined = true;
     const roomId = params.get("room");
     const back = roomId ? loadRoom(roomId) : null;
-    if (!roomId || !back?.role) return;
+    if (!roomId) return;
     const m: Mode = params.get("local") === "1" ? "local" : "online";
     const who = localStorage.getItem("open-battle:name") ?? "";
+    // An invite link goes straight into the room: a free seat is taken, a game in progress offers Rejoin or Watch.
+    if (!back?.role) {
+      start({ role: "client", mode: m, roomId, name: who });
+      return;
+    }
     if (back.role === "host") start({ role: "host", mode: m, roomId, name: who, record: back.record });
     else start({ role: back.role, mode: m, roomId, name: who });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

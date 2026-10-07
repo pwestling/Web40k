@@ -73,7 +73,12 @@ export function RoomCard() {
         ))}
         {joining ? (
           <li className="muted">
-            Joining {(net?.hostId && game.players[net.hostId]?.name) || "the host"}'s game…
+            {net?.hostId
+              ? `Joining ${game.players[net.hostId]?.name || "the host"}'s game…`
+              : "Looking for the game's host…"}{" "}
+            <button className="link" onClick={() => (location.href = location.pathname)}>
+              Back to the lobby
+            </button>
           </li>
         ) : (
           waiting && <li className="muted">Waiting for an opponent to join…</li>

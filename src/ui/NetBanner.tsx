@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
-import { useStore } from "../store";
+import { useJoining, useStore } from "../store";
 import { buildLog } from "./gameLog";
 
 /**
@@ -15,6 +15,8 @@ export function NetBanner() {
   const record = useStore((s) => s.record);
   const session = useStore((s) => s.session);
   const selfId = session?.selfId;
+  // Someone still joining (or rejoining) would only read about their own empty seat.
+  const joining = useJoining();
   const desyncSeq = net?.desync?.seq ?? null;
   const since = useMemo(() => {
     if (desyncSeq === null) return null;
@@ -22,7 +24,7 @@ export function NetBanner() {
     const items = buildLog(record, desyncSeq).filter((l) => l.text);
     return items.at(-1)?.text ?? null;
   }, [desyncSeq, record]);
-  if (!net || mode === "hotseat") return null;
+  if (!net || mode === "hotseat" || (joining && !net.desync)) return null;
   if (net.migrating)
     return <div className="net-banner">Host disconnected: waiting for it, or for a new host…</div>;
   if (net.desync) {
