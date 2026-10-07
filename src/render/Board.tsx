@@ -36,6 +36,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
+import { Trails, useTween, WatchEffects } from "./Watch";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
 
@@ -138,8 +139,18 @@ function Cameras() {
       />
     );
   }
-  if (view !== "top")
-    return <PerspectiveCamera key={reset} makeDefault position={[0, 52, 44 * side]} fov={45} />;
+  if (view !== "top") {
+    // Tuned for a 60" x 44" table; smaller tables (FSD's 36" x 24") bring the camera in.
+    const k = Math.max(game.table.width / 60, game.table.depth / 44);
+    return (
+      <PerspectiveCamera
+        key={`${reset}-${game.table.width}x${game.table.depth}`}
+        makeDefault
+        position={[0, 52 * k, 44 * k * side]}
+        fov={45}
+      />
+    );
+  }
   const zoom = Math.min(size.width / game.table.width, size.height / game.table.depth) * 0.85;
   // The tiny z offset keeps the camera's up vector defined and puts the
   // player's own edge at the bottom of the screen.
@@ -369,6 +380,8 @@ function Scene() {
       }
     return [p, h];
   }, [game.models, game.terrain, drag]);
+  // What is drawn: the same, but eased between moves (watch mode).
+  const { shown, shownZ, trails } = useTween(positions, heights, drag?.kind === "models");
 
   const onTable = useMemo(() => Object.values(game.models).filter((m) => !m.destroyed), [game.models]);
   const figures = useFigureHeights(onTable);
@@ -581,7 +594,7 @@ function Scene() {
     <>
       {/* Remount on view change so the controls bind to the new camera. */}
       <OrbitControls
-        key={`${view}-${eye?.modelId ?? ""}-${cameraReset}`}
+        key={`${view}-${eye?.modelId ?? ""}-${cameraReset}-${width}x${depth}`}
         enabled={!drag}
         enableRotate={view !== "top"}
         // Never lower than about 25 degrees above the table, so the camera can't end up level with it.
@@ -679,8 +692,8 @@ function Scene() {
           <ModelBase
             key={model.id}
             model={model}
-            position={positions[model.id]!}
-            z={heights[model.id] ?? 0}
+            position={shown[model.id] ?? positions[model.id]!}
+            z={shownZ[model.id] ?? heights[model.id] ?? 0}
             color={owner?.color ?? "#999"}
             selected={isSelected}
             incoherent={incoherent.has(model.id)}
@@ -693,7 +706,9 @@ function Scene() {
         );
       })}
 
-      <Miniatures models={onTable} positions={positions} heights={heights} />
+      <Miniatures models={onTable} positions={shown} heights={shownZ} />
+      <Trails trails={trails} />
+      <WatchEffects />
       {/* One label per unit: its name plate, with the line of sight answer as a second line. */}
       {unitLabels.map((l) => (
         <Html

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
+import { readGame, type Highlight } from "./highlights";
+
+const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
 /** How long playback lingers on an event: dice and phase changes get time to read. */
 function pace(record: GameRecord, seq: number): number {
@@ -38,6 +41,7 @@ export function ReplayBar() {
   const log = useMemo(() => buildLog(record), [record]);
   // Phase changes, with the first one of each round marked "R1", "R2"...
   const marks = useMemo(() => phaseMarks(log), [log]);
+  const { highlights } = useMemo(() => readGame(record), [record]);
   const phase = [...marks].reverse().find((m) => m.seq <= pos);
   // The latest action in the current phase, or that the phase has just begun.
   const latest = [...log]
@@ -118,6 +122,19 @@ export function ReplayBar() {
               >
                 {m.round && <span className="label">R{m.round}</span>}
               </span>
+            ))}
+          {last > 0 &&
+            highlights.map((h) => (
+              <button
+                key={`${h.seq}-${h.text}`}
+                className={`highlight ${h.kind}`}
+                style={{ left: `${(h.seq / last) * 100}%` }}
+                title={h.text}
+                aria-label={`Replay: ${h.text}`}
+                onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
+              >
+                {ICONS[h.kind]}
+              </button>
             ))}
         </div>
         <span className="muted where">

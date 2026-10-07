@@ -83,6 +83,8 @@ interface Store {
   ranges: UnitId | null;
   /** Weapon whose range Ranges shows (default: the unit's longest). */
   rangeWeapon: string | null;
+  /** Director camera: follows the latest action (moves, shots, charges). */
+  director: boolean;
   set(
     patch: Partial<
       Pick<
@@ -98,6 +100,7 @@ interface Store {
         | "measuring"
         | "ranges"
         | "rangeWeapon"
+        | "director"
       >
     >,
   ): void;
@@ -166,6 +169,7 @@ export const useStore = create<Store>((set, get) => ({
   measuring: false,
   ranges: null,
   rangeWeapon: null,
+  director: false,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),
@@ -203,6 +207,8 @@ export const useStore = create<Store>((set, get) => ({
       selected: null,
       draft: null,
       scrub: null,
+      // Spectators start with the camera following the action.
+      director: role === "spectator",
     });
     if (role === "spectator") return;
 
@@ -243,7 +249,7 @@ export const useStore = create<Store>((set, get) => ({
 
   openReplay(record) {
     get().session?.leave();
-    set({ session: null, role: "spectator", record, scrub: 0, selected: null, draft: null });
+    set({ session: null, role: "spectator", record, scrub: 0, selected: null, draft: null, director: true });
   },
 
   dispatch(intent, as) {

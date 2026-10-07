@@ -666,3 +666,88 @@ details p {
   border-color: #f59e0b;
   z-index: 5;
 }
+/* Watch mode: replay highlights, dice pop-ups and round cards. */
+.replaybar .highlight {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  padding: 0 3px;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: 4px;
+  background: #1f2430;
+  border: 1px solid #3a4150;
+}
+.replaybar .highlight.wiped {
+  color: #f87171;
+}
+.replaybar .highlight.charge {
+  color: #fbbf24;
+}
+.replaybar .highlight.swing {
+  color: #a3e635;
+}
+.burst {
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #fde68a;
+  background: rgb(17 19 24 / 85%);
+  border: 1px solid #fbbf24;
+  animation: burst 1.6s ease-out forwards;
+}
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(6px) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-16px);
+  }
+}
+.round-card {
+  z-index: 25;
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 280px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgb(17 19 24 / 95%);
+  border: 1px solid #3a4150;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.round-card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.round-card .row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 12px;
+  border-left: 3px solid;
+  padding-left: 8px;
+}
+.round-card .row .muted {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+}

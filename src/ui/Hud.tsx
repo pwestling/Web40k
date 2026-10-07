@@ -23,6 +23,7 @@ export function Hud() {
     xray,
     plates,
     measuring,
+    director,
     set,
   } = useStore();
   const canControl = useCanControl();
@@ -102,6 +103,13 @@ export function Hud() {
         </button>
         <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
           X-ray terrain
+        </button>
+        <button
+          className={director ? "on" : ""}
+          title="Camera follows the action: moves, shots and charges"
+          onClick={() => set({ director: !director })}
+        >
+          Follow action
         </button>
         {role !== "spectator" && (
           <button
