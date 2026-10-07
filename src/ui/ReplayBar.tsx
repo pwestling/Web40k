@@ -1,4 +1,6 @@
 import { rareMoments } from "../core";
+import { useHold } from "./hold";
+import { replayRoll } from "./hooks";
 import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
@@ -38,7 +40,9 @@ export function ReplayBar() {
   const { record, scrub, setScrub, session, role } = useStore();
   const [playing, setPlaying] = useState(false);
   const last = record.events.at(-1)?.seq ?? 0;
-  const pos = scrub ?? last;
+  // The caption waits for the dice tray, like the log.
+  const held = useHold((s) => s.held);
+  const pos = scrub ?? (held !== null ? held - 1 : last);
   const log = useMemo(() => buildLog(record), [record]);
   // Phase changes, with the first one of each round marked "R1", "R2"...
   const marks = useMemo(() => phaseMarks(log), [log]);
@@ -154,7 +158,7 @@ export function ReplayBar() {
                 style={{ left: `${(m.seq / last) * 100}%` }}
                 title={`${m.title}: ${m.line}`}
                 aria-label={`Replay: ${m.title}`}
-                onClick={() => setScrub(m.seq >= last && session ? null : m.seq)}
+                onClick={() => replayRoll(m.seq)}
               >
                 ★
               </button>

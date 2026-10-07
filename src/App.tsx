@@ -3,6 +3,7 @@ import { Board } from "./render/Board";
 import { useStore } from "./store";
 import { AttackPanel } from "./ui/AttackPanel";
 import { DiceTray } from "./ui/DiceTray";
+import { useHold } from "./ui/hold";
 import { Hud } from "./ui/Hud";
 import { Lobby } from "./ui/Lobby";
 import { PlayPanel } from "./ui/PlayPanel";
@@ -61,6 +62,7 @@ function onKey(e: KeyboardEvent) {
 export function App() {
   const started = useStore((s) => s.session !== null || s.role === "spectator");
   const editing = useStore((s) => s.editing);
+  const holding = useHold((s) => s.held !== null);
   // The attack flow takes the unit card's place on the right, keeping the table clear.
   const attacking = useStore(
     (s) => s.game.attack !== null || !!s.game.procedure || (s.draft !== null && s.scrub === null),
@@ -87,7 +89,10 @@ export function App() {
           {/* Before the right-hand panels, so CSS can shorten them while it's open. */}
           {!editing && <ScriptPanel />}
           {!editing && <PlayPanel />}
-          {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
+          {/* While the dice tray rolls, the panels show the table before the roll: no clicking ahead. */}
+          <div className={holding ? "holding" : undefined} style={{ display: "contents" }}>
+            {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
+          </div>
           <ReplayBar />
           <RoundCard />
           <ReplayTitle />

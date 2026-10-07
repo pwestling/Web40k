@@ -1,4 +1,5 @@
 import { useSound } from "./sound";
+import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
@@ -45,7 +46,12 @@ export function Hud() {
   useEffect(() => {
     if (round > 0) useStore.getState().set({ editing: false, selectedTerrain: null });
   }, [round, liveGame.turn.phase]);
-  const log = useMemo(() => buildLog(record, scrub ?? Infinity), [record, scrub]);
+  // While the dice tray rolls, the log waits for the dice to land.
+  const held = useHold((s) => s.held);
+  const log = useMemo(
+    () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
+    [record, scrub, held],
+  );
   const selfId = session?.selfId;
   const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);
   const mine = seated.filter((p) => canControl(p.id));

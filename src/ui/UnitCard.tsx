@@ -28,7 +28,7 @@ import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
-import { useGame, useRareStars } from "./hooks";
+import { replayRoll, useGame, useRareStars } from "./hooks";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
 const FLAGS: [string, string][] = [
@@ -177,14 +177,15 @@ export function UnitCard() {
         <h2 style={{ color: owner?.color }}>
           {unit.name}
           {stars.map((m) => (
-            <span
+            <button
               key={m.seq}
               className="rare-star"
-              title={`${m.title}, round ${m.round}: ${m.line.split(" · ")[0]}`}
+              title={`${m.title}, round ${m.round}: ${m.line.split(" · ")[0]}. Click to replay it.`}
+              aria-label={`Replay: ${m.title}, round ${m.round}`}
+              onClick={() => replayRoll(m.seq)}
             >
-              {" "}
               ★
-            </span>
+            </button>
           ))}
         </h2>
         <button onClick={() => select(null)}>✕</button>

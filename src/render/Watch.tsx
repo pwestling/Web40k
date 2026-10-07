@@ -12,6 +12,7 @@ import {
   type Model,
   type Vec2,
 } from "../core";
+import { useHold } from "../ui/hold";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
 
@@ -276,7 +277,9 @@ export function WatchEffects() {
   const record = useStore((s) => s.record);
   const scrub = useStore((s) => s.scrub);
   const director = useStore((s) => s.director);
-  const shownSeq = scrub ?? record.events.at(-1)?.seq ?? 0;
+  // Held back while the dice tray rolls, so pop-ups and casualties land with the dice.
+  const held = useHold((s) => s.held);
+  const shownSeq = scrub ?? (held !== null ? held - 1 : (record.events.at(-1)?.seq ?? 0));
   const [initial] = useState(() => ({ seq: shownSeq, game, record }));
   const input = useRef(initial);
   useEffect(() => {

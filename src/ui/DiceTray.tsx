@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { lastSeq, rareOf, rollsIn, type GameState, type RareOutcome, type TrayRoll } from "../core";
 import { useStore } from "../store";
-import { useGame } from "./hooks";
+import { useHold } from "./hold";
+import { useLiveGame } from "./hooks";
 import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
 
@@ -16,7 +17,8 @@ import { stakesOf, type Stakes } from "./stakes";
 export function DiceTray() {
   const ref = useRef<HTMLDivElement>(null);
   const stage = useRef<Stage | null>(null);
-  const shown = useGame();
+  // The real table, not the held one: the tray is what the hold waits for.
+  const shown = useLiveGame();
   const record = useStore((s) => s.record);
   const scrub = useStore((s) => s.scrub);
   const pos = scrub ?? lastSeq(record);
@@ -26,13 +28,26 @@ export function DiceTray() {
 
   useEffect(() => {
     if (!ref.current) return;
-    stage.current = new Stage(ref.current);
-    return () => stage.current?.clear();
+    stage.current = new Stage(ref.current, () => useHold.setState({ held: null }));
+    return () => {
+      stage.current?.clear();
+      useHold.setState({ held: null });
+    };
   }, []);
+
+  // Never hold the screen for long, whatever the tray is doing.
+  const held = useHold((s) => s.held);
+  useEffect(() => {
+    if (held === null) return;
+    const t = setTimeout(() => useHold.setState({ held: null }), 30_000);
+    return () => clearTimeout(t);
+  }, [held]);
 
   useEffect(() => {
     const p = prev.current;
     prev.current = { pos, state: shown, initial: record.initial };
+    // Scrubbed back (a ★ replaying its roll): its moment may show again.
+    if (p && pos < p.pos) called.current.clear();
     // Only steps forward a few events at a time: live play, or a replay playing. Not jumps or a new game.
     if (!p || p.initial !== record.initial || pos <= p.pos || pos - p.pos > 8) return;
     const events = record.events.filter((e) => e.seq > p.pos && e.seq <= pos).map((e) => e.event);
@@ -50,7 +65,7 @@ export function DiceTray() {
         rare?.rollId === roll.id ? rare : null,
       );
     }
-  }, [pos, shown, record]);
+  }, [pos, shown, record, scrub]);
 
   return <div ref={ref} className="dice-tray" aria-hidden="true" />;
 }
@@ -74,6 +89,9 @@ interface Die {
   crit?: boolean;
 }
 
+/** An animation frame, or a timer in a background tab, where frames never come. */
+const nextFrame = (cb: (now: number) => void) =>
+  document.hidden ? setTimeout(() => cb(performance.now()), 16) : requestAnimationFrame(cb);
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const ease = (p: number) => 1 - Math.pow(1 - p, 3);
 const reduced = () =>
@@ -86,18 +104,26 @@ class Stage {
   private dice: Die[] = [];
   private chain: string | undefined;
   private skip = false;
+  private active = false;
   private hideTimer: ReturnType<typeof setTimeout> | undefined;
   private caption: HTMLDivElement;
   private banner: HTMLDivElement;
   private felt: HTMLDivElement;
 
-  constructor(private root: HTMLDivElement) {
+  constructor(
+    private root: HTMLDivElement,
+    private onIdle: () => void,
+  ) {
     root.innerHTML = "";
     this.felt = div("felt");
     this.caption = div("tray-caption");
     this.banner = div("tray-banner");
     root.append(this.felt, this.caption, this.banner);
-    root.addEventListener("click", () => (this.skip = true));
+    // Clicking skips to the result; clicking a settled tray puts it away.
+    root.addEventListener("click", () => {
+      if (this.active) this.skip = true;
+      else this.hideNow();
+    });
   }
 
   clear() {
@@ -109,6 +135,7 @@ class Stage {
     this.waiting++;
     this.queue = this.queue.then(async () => {
       this.waiting--;
+      this.active = true;
       // A backlog (a whole attack rolled at once) plays fast.
       const fast = this.waiting > 0 || useSound.getState().fast;
       try {
@@ -117,6 +144,8 @@ class Stage {
       } catch {
         // A roll that can't be staged is still in the panel and the log.
       }
+      this.active = false;
+      if (this.waiting === 0) this.onIdle();
     });
   }
 
@@ -127,19 +156,25 @@ class Stage {
 
   private lingerThenHide() {
     clearTimeout(this.hideTimer);
-    this.hideTimer = setTimeout(() => {
-      this.root.classList.remove("on");
-      this.dice.forEach((d) => d.el.remove());
-      this.dice = [];
-      this.chain = undefined;
-    }, LINGER_MS);
+    this.hideTimer = setTimeout(() => this.hideNow(), LINGER_MS);
+  }
+
+  private hideNow() {
+    clearTimeout(this.hideTimer);
+    this.root.classList.remove("on");
+    this.dice.forEach((d) => d.el.remove());
+    this.dice = [];
+    this.chain = undefined;
   }
 
   private async roll(roll: TrayRoll, color: string, stakes: Stakes | null, fast: boolean) {
-    this.skip = reduced();
+    // A background tab paints nothing (and gets no animation frames): just settle the dice.
+    this.skip = reduced() || document.hidden;
     this.show();
     this.banner.className = "tray-banner";
     this.caption.textContent = roll.title;
+    // A handful of dice gets a smaller tray (UX 101).
+    this.root.classList.toggle("few", roll.dice.length <= 6);
     // The same attack's next step: pick up the survivors first. Anything else: clear the felt.
     if (this.dice.length && roll.chain && roll.chain === this.chain) await this.pickUp(roll.defender, fast);
     else this.removeAll();
@@ -188,7 +223,7 @@ class Stage {
     this.show();
     await wait(this.skip ? 0 : 450);
     this.root.classList.add("legendary");
-    this.dice.forEach((d) => d.el.classList.add("legend"));
+    this.dice.forEach((d) => d.el.classList.add("tray-legend"));
     if (rare.lucky) legendSting();
     else womp();
     this.banner.innerHTML = "";
@@ -196,8 +231,10 @@ class Stage {
     big.textContent = rare.title;
     const small = div("small");
     small.textContent = rare.line;
-    this.banner.append(big, small);
-    this.banner.className = `tray-banner on legend ${rare.lucky ? "" : "cursed"}`;
+    const hint = div("hint");
+    hint.textContent = "Click to continue";
+    this.banner.append(big, small, hint);
+    this.banner.className = `tray-banner on tray-legend ${rare.lucky ? "" : "cursed"}`;
     if (rare.unitId)
       useStore.getState().set({
         moment: {
@@ -209,7 +246,8 @@ class Stage {
         },
       });
     this.skip = false;
-    const end = Date.now() + (reduced() ? 1500 : 3000);
+    // It stays until it's clicked, holding the next roll behind it (UX 102); never forever.
+    const end = Date.now() + (document.hidden ? 0 : 20_000);
     while (Date.now() < end && !this.skip) await wait(100);
     this.root.classList.remove("legendary");
     this.lingerThenHide();
@@ -333,14 +371,14 @@ class Stage {
             this.face(d.el, d.v, roll.sides);
           } else alive++;
         }
-        if (alive) requestAnimationFrame(frame);
+        if (alive) nextFrame(frame);
         else {
           const out = ds.map(({ el, v, ok, crit }) => ({ el, v, ok, crit }));
           this.dice.push(...out);
           resolve(out);
         }
       };
-      requestAnimationFrame(frame);
+      nextFrame(frame);
     });
   }
 
