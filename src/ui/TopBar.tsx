@@ -22,6 +22,8 @@ export function TopBar() {
   const counters = (system.resources ?? []).filter((r) => r.kind !== "dicePool");
   const pools = (system.resources ?? []).filter((r) => r.kind === "dicePool");
   const view = turnView(game);
+  const rounds = typeof system.turn.rounds === "number" ? system.turn.rounds : null;
+  const over = rounds !== null && game.turn.round > rounds;
   const step = (type: "turn/next" | "turn/prev") => {
     setMenu(false);
     const what = type === "turn/next" ? "Advance" : "Go back";
@@ -109,7 +111,9 @@ export function TopBar() {
           ) : (
             <>
               <strong>
-                Round {game.turn.round} · {active?.name ?? "?"}
+                {over
+                  ? "Battle over"
+                  : `Round ${game.turn.round}${rounds ? ` of ${rounds}` : ""} · ${active?.name ?? "?"}`}
               </strong>
               <span className="phases">
                 {view.phases.map((ph, i) => (
@@ -121,7 +125,7 @@ export function TopBar() {
             </>
           )}
         </div>
-        {myTurn && view.alternating && !deploying && (
+        {myTurn && view.alternating && !deploying && !over && (
           <>
             <button
               className="primary"
@@ -142,7 +146,7 @@ export function TopBar() {
             </button>
           </>
         )}
-        {myTurn && (
+        {myTurn && !over && (
           <button
             className={view.alternating && !deploying ? "" : "primary"}
             title="Next phase"

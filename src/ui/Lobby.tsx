@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { GameRecord } from "../core";
+import { DEFAULT_SYSTEM, type GameRecord } from "../core";
+import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
 import { loadSavedGame, useStore, type Mode } from "../store";
 
@@ -9,10 +10,18 @@ export function Lobby() {
   const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [room, setRoom] = useState(() => params.get("room") ?? "");
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
+  const systems = listSystems();
+  const [system, setSystem] = useState(() => {
+    const last = localStorage.getItem("open-battle:system");
+    return systems.some((s) => s.id === last) ? last! : DEFAULT_SYSTEM;
+  });
   const saved = loadSavedGame();
   const mode: Mode = sameBrowser ? "local" : "online";
 
-  const remember = () => localStorage.setItem("open-battle:name", name);
+  const remember = () => {
+    localStorage.setItem("open-battle:name", name);
+    localStorage.setItem("open-battle:system", system);
+  };
   const linkTo = (roomId: string) => {
     const q = new URLSearchParams({ room: roomId });
     if (sameBrowser) q.set("local", "1");
@@ -25,7 +34,7 @@ export function Lobby() {
     remember();
     const roomId = room || crypto.randomUUID().slice(0, 8);
     linkTo(roomId);
-    start({ role: "host", mode, roomId, name });
+    start({ role: "host", mode, roomId, name, system });
   };
   const join = (role: "client" | "spectator") => {
     remember();
@@ -56,7 +65,23 @@ export function Lobby() {
           onChange={(e) => setName(e.target.value)}
         />
       </label>
-      <button className="primary" onClick={() => start({ role: "host", mode: "hotseat", name })}>
+      <label>
+        Game{" "}
+        <select value={system} onChange={(e) => setSystem(e.target.value)}>
+          {systems.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        className="primary"
+        onClick={() => {
+          remember();
+          start({ role: "host", mode: "hotseat", name, system });
+        }}
+      >
         Play on this screen (hotseat)
       </button>
       <hr />

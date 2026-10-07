@@ -193,7 +193,7 @@ export function suggestAttack(
  * and check against the official rules.
  */
 export const CATEGORY_RULES: Record<
-  TerrainCategory,
+  "exposed" | "light" | "dense" | "solid",
   {
     label: string;
     coverWithin: boolean;
@@ -275,8 +275,8 @@ export function unitSight(state: GameState, shooters: Model[], targetUnit: Unit)
   const shotRecently = !!targetUnit.status?.shot;
   const result: TargetSight[] = targets.map((t) => {
     const within = state.terrain.filter((p) => whollyWithin(p, t));
-    const coverWithin = within.some((p) => CATEGORY_RULES[p.category].coverWithin);
-    const hiddenHere = infantry && !shotRecently && within.some((p) => CATEGORY_RULES[p.category].hides);
+    const coverWithin = within.some((p) => categoryRule(p.category).coverWithin);
+    const hiddenHere = infantry && !shotRecently && within.some((p) => categoryRule(p.category).hides);
     let seenBy: string | undefined;
     let anyFully = false;
     let behindCover = true;
@@ -290,7 +290,7 @@ export function unitSight(state: GameState, shooters: Model[], targetUnit: Unit)
       if (!sight.visible) continue;
       seenBy ??= s.id;
       if (sight.fully) anyFully = true;
-      const covered = !sight.fully && sight.obscuredBy.some((p) => CATEGORY_RULES[p.category].coverBehind);
+      const covered = !sight.fully && sight.obscuredBy.some((p) => categoryRule(p.category).coverBehind);
       if (!covered) behindCover = false;
     }
     const visible = seenBy !== undefined;
@@ -314,6 +314,11 @@ export function unitSight(state: GameState, shooters: Model[], targetUnit: Unit)
   };
 }
 
+/** The rules of a terrain category; categories from other games count as exposed. */
+export function categoryRule(category: TerrainCategory) {
+  return CATEGORY_RULES[category as keyof typeof CATEGORY_RULES] ?? CATEGORY_RULES.exposed;
+}
+
 /** Terrain a straight move from the phase start would pass through that the unit can't. */
 export function blockedMoves(state: GameState, unit: Unit, positions?: Record<string, Vec2>): TerrainPiece[] {
   const kw = unit.sheet?.keywords ?? [];
@@ -325,7 +330,7 @@ export function blockedMoves(state: GameState, unit: Unit, positions?: Record<st
     const to = positions?.[m.id] ?? m.position;
     if (Math.hypot(to.x - from.x, to.y - from.y) < 0.05) continue;
     for (const p of state.terrain) {
-      const rule = CATEGORY_RULES[p.category];
+      const rule = categoryRule(p.category);
       if (rule.impassable && (inFootprint(p, to) || moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)))
         hit.add(p);
       else if (!throughWalls && moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)) hit.add(p);
@@ -420,6 +425,8 @@ export function unitMoved(
  * in Movement, the charge roll in Charge, 3" pile-in in Fight.
  */
 export function moveAllowance(state: GameState, unit: Unit): number | null {
+  // Set by a game system's move actions (see core/content/play.ts).
+  if (typeof unit.status?.allowance === "number") return unit.status.allowance;
   const phase = phaseName(state);
   if (phase === "Charge") return typeof unit.status?.charge === "number" ? unit.status.charge : null;
   if (phase === "Fight") return 3;

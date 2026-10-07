@@ -103,6 +103,15 @@ export function evaluate(expr: Expr, ctx: EvalContext): ExprValue {
   if ("is" in expr) return resolve(expr.is, ctx) === expr.value;
   if ("hasStatus" in expr) return tags(resolve(expr.hasStatus, ctx), "statuses").includes(expr.status);
   if ("hasFlag" in expr) return tags(resolve(expr.hasFlag, ctx), "flags").includes(expr.flag);
+  if ("same" in expr) {
+    const id = (v: unknown) => (v && typeof v === "object" ? (v as { id?: unknown }).id : v);
+    const a = id(resolve(expr.same[0], ctx));
+    return a !== undefined && a === id(resolve(expr.same[1], ctx));
+  }
+  if ("has" in expr) {
+    const v = resolve(expr.has, ctx);
+    return v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && !v.length);
+  }
   if ("every" in expr)
     return collection(expr.every, ctx).every((item) => bool(expr.test, bind(ctx, expr.as, item)));
   if ("some" in expr)

@@ -9,6 +9,7 @@
  */
 
 import type { AttackState } from "./attack";
+import type { ProcedureRun } from "./content/runner";
 
 export type PlayerId = string;
 export type ModelId = string;
@@ -172,10 +173,11 @@ export interface TerrainSolid {
 }
 
 /**
- * Rules category of a terrain piece. The game system decides what each one
- * does (cover, hidden, impassable).
+ * Rules category of a terrain piece, one of the game system's terrain
+ * categories (40k: exposed, light, dense, solid). The system decides what
+ * each one does (cover, hidden, impassable).
  */
-export type TerrainCategory = "exposed" | "light" | "dense" | "solid";
+export type TerrainCategory = string;
 
 /** A terrain piece: a rectangular footprint, rotated by `facing`, with solids on it. */
 export interface TerrainPiece {
@@ -264,6 +266,10 @@ export interface GameState {
   resources: Record<PlayerId, Record<string, number>>;
   /** The attack being resolved, if any. */
   attack: AttackState | null;
+  /** A system procedure being resolved (any game's attack), if any. */
+  procedure?: ProcedureState | null;
+  /** An action held while the other player decides whether to react. */
+  pending?: PendingReaction | null;
   /** The last measurement a player shared, shown to everyone until cleared. */
   ruler?: Ruler | null;
   /** Table options the players agreed on. */
@@ -312,6 +318,40 @@ export function createInitialState(table: Table = STRIKE_FORCE_TABLE): GameState
     attack: null,
     settings: { cover: "hit", modelsBlock: true },
   };
+}
+
+/** A procedure in progress: the run (plain JSON) and the action that started it. */
+export interface ProcedureState {
+  run: ProcedureRun;
+  title: string;
+  unitId: UnitId;
+  action: string;
+  by: PlayerId;
+  targetId?: UnitId;
+  weapon?: string;
+  /** Whether the run's outcomes have been applied to the table. */
+  applied?: boolean;
+}
+
+/** What a reaction answers: the action declared, its unit and target. */
+export interface ActionTrigger {
+  unitId: UnitId;
+  action: string;
+  by: PlayerId;
+  targetId?: UnitId;
+  weapon?: string;
+}
+
+/**
+ * An action waits while the player in `seat` decides whether to react (FSD:
+ * a unit shot at, or seeing an enemy move). Once a unit reacts it is the
+ * `reactor`; when its action is done, the held action goes on.
+ */
+export interface PendingReaction {
+  kind: "reaction";
+  seat: number;
+  trigger: ActionTrigger;
+  reactor?: UnitId;
 }
 
 /** A measurement between two points, either of which may be a model (measured from its base edge). */

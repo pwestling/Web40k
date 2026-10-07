@@ -1,5 +1,6 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
+import { applyAction, endReaction, setRun } from "./content/play";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
@@ -237,6 +238,16 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
             ...u,
             status: { ...u.status, [flag]: true },
           }));
+    }
+    case "action/take":
+      return applyAction(state, event);
+    case "reaction/end":
+      return endReaction(state, event.run ?? null);
+    case "procedure/set":
+      return setRun(state, event.run);
+    case "procedure/clear": {
+      const cleared = { ...state, procedure: null };
+      return event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
     }
     case "undo":
       // Undo is resolved by the log's replay.

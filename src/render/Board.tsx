@@ -988,6 +988,12 @@ const CATEGORY_COLORS: Record<TerrainPiece["category"], string> = {
   light: "#6b6257",
   dense: "#3d5a32",
   solid: "#4b4b52",
+  // Other games' categories.
+  open: "#6f6450",
+  broken: "#6f6450",
+  traversable: "#6b6257",
+  obscuring: "#3d5a32",
+  blocking: "#4b4b52",
 };
 
 function Terrain({
@@ -1032,7 +1038,7 @@ function Terrain({
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial
-          color={selected ? "#a16207" : CATEGORY_COLORS[piece.category]}
+          color={selected ? "#a16207" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
           transparent
           opacity={0.8}
         />

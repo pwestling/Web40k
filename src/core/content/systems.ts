@@ -1,11 +1,20 @@
 import { fortyK } from "./examples/forty-k";
+import { fsd } from "./examples/fsd";
 import type { GameSystem, Id } from "./schema";
 
 /**
- * Game systems the engine can run. 40k is built in while it is the only
- * playable system; others register at startup or when a player imports one.
+ * Game systems the engine can run. 40k and Full Spectrum Dominance are built
+ * in; others register at startup or when a player imports one.
  */
-const systems = new Map<Id, GameSystem>([[fortyK.id, fortyK]]);
+const systems = new Map<Id, GameSystem>([
+  [fortyK.id, fortyK],
+  [fsd.id, fsd],
+]);
+
+/** Every registered system, for the lobby's picker. */
+export function listSystems(): GameSystem[] {
+  return [...systems.values()];
+}
 
 export function registerSystem(system: GameSystem): void {
   systems.set(system.id, system);

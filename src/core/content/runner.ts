@@ -140,7 +140,11 @@ export type Outcome =
   | { kind: "wounds"; modelId: string; lost: number }
   | { kind: "status"; unitId: string; status: Id; value: boolean }
   | { kind: "resource"; player: string; resource: Id; delta: number }
-  | { kind: "reminder"; text: string };
+  /** Every model of the unit is removed (a red box on a damage chart). */
+  | { kind: "destroy"; unitId: string }
+  | { kind: "reminder"; text: string }
+  /** What happened, for the panel and the log (damage chart rolls). */
+  | { kind: "note"; text: string };
 
 export interface PendingWindow {
   step: Id;
@@ -445,7 +449,7 @@ function ctxFor(
     scope: { ...scope, param },
     tables,
     ...(env.rng ? { rng: env.rng } : {}),
-    geometry: tableGeometry(env.state),
+    geometry: tableGeometry(env.state, env.system),
   };
 }
 
@@ -1052,9 +1056,74 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
       case "manual":
         out.push({ kind: "reminder", text: a.reminder });
         break;
+      case "damageTrack":
+        if (env.rng) out.push(...damageTrack(run, a, ctx, env.rng));
+        break;
       default:
         out.push({ kind: "reminder", text: a.do });
     }
+  }
+  return out;
+}
+
+/** One box of a damage track: the faces that hit it, its colour and effect. */
+export interface TrackBox {
+  min: number;
+  max: number;
+  colour: "red" | "orange" | "white";
+  effect?: string;
+}
+
+/** Read "1:red, 2-3:orange:ARM, 4:white:MOV" into boxes. */
+export function parseTrack(text: string): TrackBox[] {
+  const out: TrackBox[] = [];
+  for (const part of text.split(/[,;\s]+/)) {
+    const m = /^(\d+)(?:-(\d+))?:(red|orange|white)(?::(\w+))?$/i.exec(part.trim());
+    if (!m) continue;
+    out.push({
+      min: Number(m[1]),
+      max: Number(m[2] ?? m[1]),
+      colour: m[3]!.toLowerCase() as TrackBox["colour"],
+      ...(m[4] ? { effect: m[4].toUpperCase() } : {}),
+    });
+  }
+  return out;
+}
+
+function damageTrack(
+  run: ProcedureRun,
+  a: Extract<EffectAction, { do: "damageTrack" }>,
+  ctx: EvalContext,
+  rng: () => number,
+): Outcome[] {
+  const view = resolve(a.target, ctx) as { kind?: string; id?: string; flags?: string[] } | undefined;
+  const text = resolve(a.chart, ctx);
+  if (view?.kind !== "unit" || !view.id || typeof text !== "string") return [];
+  const boxes = parseTrack(text);
+  const hit = new Set((view.flags ?? []).filter((f) => f.startsWith("box")));
+  const out: Outcome[] = [];
+  const die = a.die ?? 6;
+  for (let i = 0; i < run.tokens.length; i++) {
+    const roll = 1 + Math.floor(rng() * die);
+    const idx = boxes.findIndex((b) => roll >= b.min && roll <= b.max);
+    const box = boxes[idx];
+    if (a.status) out.push({ kind: "status", unitId: view.id, status: a.status, value: true });
+    if (!box) {
+      out.push({ kind: "note", text: `Damage roll ${roll}: no box` });
+      continue;
+    }
+    const again = hit.has(`box${idx}`);
+    const label = `${box.colour}${box.effect ? ` ${box.effect}` : ""}`;
+    if (box.colour === "red" || (box.colour === "orange" && again)) {
+      out.push({ kind: "note", text: `Damage roll ${roll}: ${label}${again ? " again" : ""}, destroyed` });
+      out.push({ kind: "destroy", unitId: view.id });
+      break;
+    }
+    hit.add(`box${idx}`);
+    out.push({ kind: "status", unitId: view.id, status: `box${idx}`, value: true });
+    if (box.effect && box.effect !== "PIN")
+      out.push({ kind: "status", unitId: view.id, status: `damage${box.effect}`, value: true });
+    out.push({ kind: "note", text: `Damage roll ${roll}: ${label}` });
   }
   return out;
 }
@@ -1081,6 +1150,12 @@ export function applyOutcomes(
       const u = units[o.unitId];
       if (!u) continue;
       units = { ...units, [u.id]: { ...u, status: { ...u.status, [o.status]: o.value } } };
+    } else if (o.kind === "destroy") {
+      const u = units[o.unitId];
+      for (const id of u?.modelIds ?? []) {
+        const m = models[id];
+        if (m && !m.destroyed) models = { ...models, [id]: { ...m, destroyed: true } };
+      }
     } else if (o.kind === "resource") {
       const own = resources[o.player] ?? {};
       resources = { ...resources, [o.player]: { ...own, [o.resource]: (own[o.resource] ?? 0) + o.delta } };

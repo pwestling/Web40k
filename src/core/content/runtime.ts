@@ -1,7 +1,7 @@
-import { baseToBaseDistance, distance as centreDistance } from "../geometry";
+import { baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
 import { modelSight } from "../los";
-import { modelDistance } from "../terrain";
-import type { GameState, Model, Unit, WeaponProfile } from "../types";
+import { footprintVisibility, inFootprint, modelDistance } from "../terrain";
+import type { GameState, Model, TerrainPiece, Unit, WeaponProfile } from "../types";
 import { bool, evaluate, num, resolve, type EvalContext } from "./expr";
 import type {
   CharacteristicDef,
@@ -89,6 +89,7 @@ export type View = ModelView | UnitView | WeaponView;
 export function parseValue(text: string | number | null | undefined, type: CharacteristicDef["type"]): Value {
   if (text === null || text === undefined) return null;
   if (typeof text === "number") return text;
+  if (type === "text") return text.trim() && text.trim() !== "-" ? text.trim() : null;
   const t = text.replace(/\s/g, "");
   if (type === "dice" && /^\d*d\d+([+-]\d+)?$/i.test(t)) return t.toUpperCase();
   const m = /^[+-]?\d+(\.\d+)?/.exec(t);
@@ -108,8 +109,13 @@ export function readCharacteristics(
     if (def.of !== of) continue;
     let value: Value = null;
     for (const name of [def.id, ...(def.aliases ?? [])]) {
-      const raw = byName.get(name.toLowerCase());
+      let raw = byName.get(name.toLowerCase());
       if (raw === undefined) continue;
+      if (def.pattern) {
+        const m = pattern(def.pattern).exec(raw);
+        if (!m) continue;
+        raw = m[1] ?? m[0];
+      }
       value = parseValue(raw, def.type);
       if (value !== null) break;
     }
@@ -477,13 +483,21 @@ function modelsOf(view: unknown, state: GameState): Model[] {
   return [src];
 }
 
+/** Inches in one of the system's distance units (FSD's DU is 3"). */
+export function inchesPerUnit(system: GameSystem | undefined): number {
+  const u = system?.units;
+  return u && typeof u === "object" ? u.inches : u === "cm" ? 1 / 2.54 : 1;
+}
+
 /**
  * Geometry queries answered from the table: distance and visibility between
- * any two models or units (closest pair). Distances are base edge to base
- * edge in 3D unless the query asks for centres or one axis. Other queries throw until the
- * engine supports them, so callers can fall back to supplied facts.
+ * any two models or units (closest pair), arcs and cover. Distances are base
+ * edge to base edge in 3D unless the query asks for centres or one axis, in
+ * the system's distance unit. Other queries throw until the engine supports
+ * them, so callers can fall back to supplied facts.
  */
-export function tableGeometry(state: GameState): NonNullable<EvalContext["geometry"]> {
+export function tableGeometry(state: GameState, system?: GameSystem): NonNullable<EvalContext["geometry"]> {
+  const scale = inchesPerUnit(system);
   return (query: GeoQuery, ctx: EvalContext) => {
     if (query.kind === "distance") {
       const a = modelsOf(resolve(query.from, ctx), state);
@@ -501,18 +515,79 @@ export function tableGeometry(state: GameState): NonNullable<EvalContext["geomet
                   : modelDistance(x, y);
           best = Math.min(best, d);
         }
-      return best;
+      return best / scale;
     }
     if (query.kind === "visible") {
       const a = modelsOf(resolve(query.from, ctx), state);
       const b = modelsOf(resolve(query.to, ctx), state);
+      const ignore = ownUnits(state, [...a, ...b]);
       return a.some((x) =>
         b.some((y) => {
-          const s = modelSight(state, x, y, { modelsBlock: state.settings.modelsBlock });
+          const s = modelSight(state, x, y, { modelsBlock: state.settings.modelsBlock, ignore });
           return query.fully ? s.fully : s.visible;
         }),
       );
     }
+    if (query.kind === "inArc") {
+      // Some model of `to` lies in the arc of `from`'s first model, measured from its facing.
+      const arc = system?.arcs?.find((x) => x.id === query.arc);
+      const from = modelsOf(resolve(query.from, ctx), state)[0];
+      if (!arc || !from) return false;
+      return modelsOf(resolve(query.to, ctx), state).some((m) => {
+        const dx = m.position.x - from.position.x;
+        const dy = m.position.y - from.position.y;
+        // Facing 0 looks along +y; angles run clockwise from straight ahead.
+        let deg = ((Math.atan2(dx, dy) - from.facing) * 180) / Math.PI;
+        deg = ((deg % 360) + 360) % 360;
+        const lo = ((arc.from % 360) + 360) % 360;
+        const hi = lo + (arc.to - arc.from);
+        return (deg >= lo && deg <= hi) || (deg + 360 >= lo && deg + 360 <= hi);
+      });
+    }
+    if (query.kind === "cover")
+      return inCover(state, system, resolve(query.from, ctx), resolve(query.to, ctx));
     throw new Error(`Geometry query "${query.kind}" is not supported yet`);
   };
+}
+
+/** Models of the units these models belong to, which never block each other's sight. */
+function ownUnits(state: GameState, models: Model[]): Set<string> {
+  const out = new Set<string>();
+  for (const m of models) {
+    const u = m.unitId ? state.units[m.unitId] : undefined;
+    for (const id of u?.modelIds ?? [m.id]) out.add(id);
+  }
+  return out;
+}
+
+/**
+ * Cover by the system's terrain categories: a target model `from` can see is
+ * in cover if it stands in or touches a piece whose category gives cover to
+ * its keywords, or is seen only past an obscuring piece.
+ */
+function inCover(state: GameState, system: GameSystem | undefined, from: unknown, to: unknown): boolean {
+  const shooters = modelsOf(from, state);
+  const targets = modelsOf(to, state);
+  const ignore = ownUnits(state, [...shooters, ...targets]);
+  const keywords = ((to as { keywords?: string[] })?.keywords ?? []).map((k) => k.toUpperCase());
+  const categories = new Map((system?.terrain ?? []).map((c) => [c.id, c]));
+  const givesCover = (piece: TerrainPiece) => {
+    const c = categories.get(piece.category);
+    if (!c?.cover) return false;
+    return !c.coverFor || c.coverFor.some((k) => keywords.includes(k.toUpperCase()));
+  };
+  return targets.some((t) => {
+    const r = Math.max(baseSizeInches(t.base).width, baseSizeInches(t.base).depth) / 2;
+    const seen = shooters.some(
+      (s) => modelSight(state, s, t, { modelsBlock: state.settings.modelsBlock, ignore }).visible,
+    );
+    if (!seen) return false;
+    if (state.terrain.some((p) => givesCover(p) && inFootprint(p, t.position, r))) return true;
+    return shooters.some((s) => {
+      const sight = modelSight(state, s, t, { modelsBlock: state.settings.modelsBlock, ignore });
+      return (
+        sight.visible && sight.obscuredBy.some((p) => footprintVisibility(p) === "obscuring" || givesCover(p))
+      );
+    });
+  });
 }

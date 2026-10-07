@@ -4,6 +4,7 @@ import { useStore } from "./store";
 import { AttackPanel } from "./ui/AttackPanel";
 import { Hud } from "./ui/Hud";
 import { Lobby } from "./ui/Lobby";
+import { ReactionPrompt } from "./ui/SystemPanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TopBar } from "./ui/TopBar";
@@ -55,7 +56,10 @@ export function App() {
   const started = useStore((s) => s.session !== null || s.role === "spectator");
   const editing = useStore((s) => s.editing);
   // The attack flow takes the unit card's place on the right, keeping the table clear.
-  const attacking = useStore((s) => s.game.attack !== null || (s.draft !== null && s.scrub === null));
+  const attacking = useStore(
+    (s) => s.game.attack !== null || !!s.game.procedure || (s.draft !== null && s.scrub === null),
+  );
+  const reacting = useStore((s) => !!s.game.pending);
   const view = useStore((s) => s.view);
   const losFrom = useStore((s) => s.losFrom);
   const footprints = useStore(
@@ -76,6 +80,7 @@ export function App() {
           <Hud />
           {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           <ReplayBar />
+          {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">
               <span className="full">Fully visible</span>

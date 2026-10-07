@@ -1,4 +1,15 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import {
+  applyAction,
+  endReaction,
+  procedureEnv,
+  reactionOver,
+  reactionSeat,
+  startActionRun,
+  unitActions,
+  type ActionTaken,
+} from "./content/play";
+import { advance, respond, type ProcedureRun } from "./content/runner";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
@@ -76,6 +87,22 @@ export type Intent =
   | { type: "attack/declare"; spec: AttackSpec }
   | { type: "attack/roll" }
   | { type: "attack/clear" }
+  /** Take one of the game system's actions with a unit (activate, move, fire, react...). */
+  | {
+      type: "action/take";
+      unitId: UnitId;
+      action: string;
+      weapon?: string;
+      targetId?: UnitId;
+      with?: UnitId[];
+    }
+  /** Don't react, or finish reacting: the held action goes on. */
+  | { type: "reaction/pass" }
+  /** Roll the next step of the procedure in progress. */
+  | { type: "procedure/roll" }
+  /** Answer the procedure's open window with an option id or "pass". */
+  | { type: "procedure/respond"; answer: string }
+  | { type: "procedure/clear" }
   | { type: "undo"; seq: number };
 
 /** Events are fully resolved and deterministic. */
@@ -124,6 +151,13 @@ export type GameEvent =
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
   | { type: "attack/clear" }
+  /** A system action, paid for; any procedure it starts is already rolled up to its first pause. */
+  | ({ type: "action/take" } & ActionTaken)
+  /** The reaction is over; the held action goes on, with its procedure started. */
+  | { type: "reaction/end"; run?: ProcedureRun }
+  | { type: "procedure/set"; run: ProcedureRun }
+  /** Close the procedure; `end` closes a finished reaction too. */
+  | { type: "procedure/clear"; end?: { run?: ProcedureRun } }
   /** Takes back an earlier event. It stays in the log, marked as undone. */
   | { type: "undo"; seq: number };
 
@@ -217,6 +251,58 @@ export function resolveIntent(
     }
     case "ruler/set":
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
+    case "action/take": {
+      const unit = state?.units[intent.unitId];
+      if (!state || !unit || unit.owner !== from) return null;
+      const req = {
+        ...(intent.weapon ? { weapon: intent.weapon } : {}),
+        ...(intent.targetId ? { targetId: intent.targetId } : {}),
+      };
+      const option = unitActions(state, unit.id, req).find((o) => o.def.id === intent.action);
+      if (!option?.ok) return null;
+      const allowed = new Set(option.commands?.candidates ?? []);
+      const commanded = (intent.with ?? [])
+        .filter((id) => allowed.has(id))
+        .slice(0, option.commands?.count ?? 0);
+      const taken: ActionTaken = {
+        unitId: unit.id,
+        action: intent.action,
+        by: from,
+        ...req,
+        payment: option.payment,
+        ...(commanded.length ? { with: commanded } : {}),
+      };
+      // The other player may react before a fire or move action goes on.
+      const paid = applyAction(state, taken);
+      const hold = !option.def.reactTo && reactionSeat(paid, taken) !== null;
+      const run = !hold && option.def.procedure ? startActionRun(paid, taken, rng) : null;
+      return { type: "action/take", ...taken, ...(hold ? { hold } : {}), ...(run ? { run } : {}) };
+    }
+    case "reaction/pass": {
+      const pending = state?.pending;
+      if (!state || !pending || state.procedure) return null;
+      const run = startActionRun(endReaction(state, null), pending.trigger, rng);
+      return { type: "reaction/end", ...(run ? { run } : {}) };
+    }
+    case "procedure/roll": {
+      const run = state?.procedure?.run;
+      if (!state || !run || run.done || run.pending) return null;
+      return { type: "procedure/set", run: advance(procedureEnv(state, rng), run) };
+    }
+    case "procedure/respond": {
+      const run = state?.procedure?.run;
+      if (!state || !run?.pending) return null;
+      return { type: "procedure/set", run: respond(procedureEnv(state, rng), run, intent.answer) };
+    }
+    case "procedure/clear": {
+      if (!state?.procedure) return null;
+      const cleared: GameState = { ...state, procedure: null };
+      if (!reactionOver(cleared)) return { type: "procedure/clear" };
+      const run = state.pending
+        ? startActionRun(endReaction(cleared, null), state.pending.trigger, rng)
+        : null;
+      return { type: "procedure/clear", end: run ? { run } : {} };
+    }
     default:
       return intent;
   }

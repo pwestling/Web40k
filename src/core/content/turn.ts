@@ -180,6 +180,17 @@ function playerAt(state: GameState, seat: number): PlayerId | undefined {
  * the way (activation dice) come from `seed`, so every peer gets the same.
  */
 export function advanceTurn(state: GameState, dir: 1 | -1, seed = 0): GameState {
+  // Steps only run their actions: pass straight through them.
+  let next = stepTurn(state, dir, seed);
+  const slots = schedule(systemOf(state));
+  for (let guard = 0; guard < slots.length; guard++) {
+    if (next.turn.round === 0 || slots[next.turn.phase]?.kind !== "step") break;
+    next = stepTurn(next, dir, seed + guard + 1);
+  }
+  return next;
+}
+
+function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   const system = systemOf(state);
   const slots = schedule(system);
   const rng = seeded(seed);
@@ -238,12 +249,18 @@ export function advanceTurn(state: GameState, dir: 1 | -1, seed = 0): GameState 
   const models: Record<string, Model> = {};
   for (const [id, m] of Object.entries(state.models))
     models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };
-  let next: GameState = {
-    ...state,
-    models,
-    attack: null,
-    turn: { round, activeSeat, phase, firstSeat, passes: 0 },
-  };
+  // Moves are measured from here, so move allowances and activations start afresh.
+  let next: GameState = clearFlags(
+    {
+      ...state,
+      models,
+      attack: null,
+      procedure: null,
+      pending: null,
+      turn: { round, activeSeat, phase, firstSeat, passes: 0 },
+    },
+    [...ACTIVATION_FLAGS, "allowance"],
+  );
   if (dir === -1 || round === 0) return next;
 
   if (newRound) next = resetFor(next, system, "round", undefined);
@@ -255,9 +272,38 @@ export function advanceTurn(state: GameState, dir: 1 | -1, seed = 0): GameState 
   return next;
 }
 
+/** Flags the engine keeps on a unit during its activation (see play.ts). */
+const ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting"];
+
+/** Clear unit flags; a trailing "*" clears every flag with that prefix. */
+function clearFlags(state: GameState, flags: string[], seat?: number): GameState {
+  if (!flags.length) return state;
+  const exact = new Set(flags.filter((f) => !f.endsWith("*")));
+  const prefixes = flags.filter((f) => f.endsWith("*")).map((f) => f.slice(0, -1));
+  let units: GameState["units"] | null = null;
+  for (const [id, u] of Object.entries(state.units)) {
+    if (!u.status) continue;
+    if (seat !== undefined && state.players[u.owner]?.seat !== seat) continue;
+    const keys = Object.keys(u.status).filter((k) => exact.has(k) || prefixes.some((p) => k.startsWith(p)));
+    if (!keys.length) continue;
+    const status = { ...u.status };
+    for (const k of keys) delete status[k];
+    units ??= { ...state.units };
+    units[id] = { ...u, status } as Unit;
+  }
+  return units ? { ...state, units } : state;
+}
+
 /** End the active player's activation: the other player goes next. */
 export function endActivation(state: GameState): GameState {
-  return { ...state, turn: { ...state.turn, activeSeat: (state.turn.activeSeat + 1) % SEATS, passes: 0 } };
+  const system = systemOf(state);
+  const flags = (system.resets ?? []).filter((r) => r.at === "activation").flatMap((r) => r.flags);
+  const cleared = clearFlags(state, [...ACTIVATION_FLAGS, ...flags]);
+  return {
+    ...cleared,
+    pending: null,
+    turn: { ...state.turn, activeSeat: (state.turn.activeSeat + 1) % SEATS, passes: 0 },
+  };
 }
 
 /** The active player passes; when every player has passed in a row, the round moves on. */
@@ -274,20 +320,7 @@ function resetFor(
   seat: number | undefined,
 ) {
   const flags = (system.resets ?? []).filter((r) => r.at === at).flatMap((r) => r.flags);
-  let units = state.units;
-  if (flags.length) {
-    units = {};
-    for (const [id, u] of Object.entries(state.units)) {
-      const mine = seat === undefined || state.players[u.owner]?.seat === seat;
-      if (!mine || !u.status) {
-        units[id] = u;
-        continue;
-      }
-      const status = { ...u.status };
-      for (const f of flags) delete status[f];
-      units[id] = { ...u, status } as Unit;
-    }
-  }
+  const units = clearFlags(state, flags, seat).units;
   let resources = state.resources;
   let pools = state.pools;
   for (const r of system.resources ?? []) {

@@ -2,6 +2,7 @@ import {
   applyEvent,
   phaseName,
   rulerLength,
+  systemOf,
   undoneSeqs,
   type AttackState,
   type GameRecord,
@@ -24,6 +25,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   const items: LogItem[] = [];
   let state = record.initial;
   let attackLine: Extract<LogItem, { kind: "line" }> | null = null;
+  // A system procedure (any game's attack) is one line, updated as it is rolled.
+  let procLine: Extract<LogItem, { kind: "line" }> | null = null;
   // Deployment: one line per player and army, however many units it had.
   let deployLine:
     (Extract<LogItem, { kind: "line" }> & { by: string; army?: string; units: number; pts: number }) | null =
@@ -82,6 +85,29 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       }
       continue;
     }
+    if (event.type === "procedure/set" || (event.type === "procedure/clear" && procLine)) {
+      if (event.type === "procedure/clear") {
+        procLine = null;
+        continue;
+      }
+      const text = procedureSummary(state);
+      if (procLine) procLine.text = text;
+      else items.push((procLine = { kind: "line", key, seq: logged.seq, text, undone: skipped }));
+      continue;
+    }
+    if ((event.type === "action/take" || event.type === "reaction/end") && !skipped && state.procedure) {
+      // The action and its first rolls; later rolls update the same line.
+      const lead = describe(logged, before, state);
+      procLine = {
+        kind: "line",
+        key,
+        seq: logged.seq,
+        text: `${lead}. ${procedureSummary(state)}`,
+        undone: skipped,
+      };
+      items.push(procLine);
+      continue;
+    }
     if (event.type === "attack/clear") {
       // Folded into the attack's own line.
       if (attackLine) {
@@ -123,6 +149,21 @@ function attackSummary(a: AttackState, state: GameState): string {
   }
   const verb = s.kind === "melee" ? "fought" : "shot";
   return `${name(s.attackerUnitId)} ${verb} ${name(s.targetUnitId)} (${s.weaponName}): ${parts.join(", ")}`;
+}
+
+/** "Raider Gang Carbines at Lancer Tank: hit 1/3, save 1/1, 0 bases lost". */
+function procedureSummary(state: GameState): string {
+  const proc = state.procedure;
+  if (!proc) return "";
+  const parts = proc.run.records
+    .filter((r) => r.dice?.length)
+    .map((r) => `${r.id} ${r.successes ?? 0}/${r.in}`);
+  if (proc.run.done) {
+    const lost = proc.run.outcomes.filter((o) => o.kind === "wounds").length;
+    const destroyed = proc.run.outcomes.some((o) => o.kind === "destroy");
+    parts.push(destroyed ? "destroyed" : `${lost} lost`);
+  }
+  return `${proc.title}${parts.length ? `: ${parts.join(", ")}` : ""}`;
 }
 
 /** How far the furthest model moved, counting climbs. */
@@ -222,6 +263,25 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${nameOf(event.player)} ${event.delta > 0 ? "+" : ""}${event.delta} ${event.resource}`;
     case "attack/clear":
       return "Attack cancelled";
+    case "action/take": {
+      const weapon = event.weapon ? game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name : undefined;
+      const action = systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
+      const also = event.with?.length ? ` with ${event.with.map(unitName).join(", ")}` : "";
+      const target = event.targetId ? ` at ${unitName(event.targetId)}` : "";
+      return `${unitName(event.unitId)}: ${action}${weapon ? ` (${weapon})` : ""}${target}${also}${event.hold ? ", waiting on a reaction" : ""}`;
+    }
+    case "reaction/end":
+      return "Reaction over";
+    case "procedure/clear":
+      return "Roll closed";
+    case "turn/pass":
+      return `${who} passed`;
+    case "turn/endActivation":
+      return `${who} ended the activation`;
+    case "pool/set":
+      return `${nameOf(event.player)} re-rolled or spent dice`;
+    case "game/system":
+      return `Game: ${systemOf(game).name}`;
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }
