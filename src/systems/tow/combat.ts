@@ -26,6 +26,8 @@ const FLEE_DICE = "2d6";
 const FALL_BACK_DICE = "2d6";
 /** Giving ground: straight back this far. */
 const GIVE_GROUND = 2;
+/** Pursuit distance. */
+const PURSUE_DICE = "2d6";
 
 function unitOf(view: GameView, id: unknown): Unit {
   const u = view.state.units[String(id)];
@@ -399,7 +401,11 @@ export const combat: CodeProcedure = function* (ctx, args) {
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
-  const { roll: r, ld, score: total } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
+  const {
+    roll: r,
+    ld,
+    score: total,
+  } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
   const double1 = r.rolls.every((x) => x === 1);
   const won = unitOf(ctx.view, winner.id);
   let fled: "" | "flees" | "falls back" = "";
@@ -426,18 +432,66 @@ export const combat: CodeProcedure = function* (ctx, args) {
       { id: "restrain", label: "Restrain (Leadership test)" },
     ],
   );
-  const verb = fled ? "pursues (Charge panel: Roll to pursue)" : "follows up";
-  if (pick === "go") {
-    yield ctx.note(`${winner.name} ${verb}`);
+  if (pick !== "go") {
+    const t = yield* leadershipTest(ctx, won, "restraint test");
+    if (t.roll.total <= t.ld) {
+      yield ctx.note(`${winner.name} restrains and may reform (rolled ${t.roll.total})`);
+      return;
+    }
+    yield ctx.note(`${winner.name} fails to restrain (rolled ${t.roll.total})`);
+  }
+  yield* pursue(ctx, winner.id, loser.id, fled);
+};
+
+/**
+ * The winner goes after the loser. Following up (the loser gave ground) keeps
+ * the units in contact. Pursuing rolls 2D6": reaching a fleeing unit destroys
+ * it; reaching one falling back in good order puts the pursuer back in contact.
+ */
+function* pursue(
+  ctx: Ctx,
+  winnerId: string,
+  loserId: string,
+  fled: "" | "flees" | "falls back",
+): Generator<Command, void, unknown> {
+  const state = ctx.view.state;
+  const won = unitOf(ctx.view, winnerId);
+  const lost = unitOf(ctx.view, loserId);
+  const towards = (inches: number) => {
+    const c = unitCentre(state, won);
+    const t = unitCentre(state, lost);
+    return fleeMove(state, won, { x: t.x - c.x, y: t.y - c.y }, inches);
+  };
+  const gap = unitGap(state, won, lost);
+  if (!fled) {
+    const move = gap > 0.05 ? towards(gap) : null;
+    if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+    yield ctx.note(`${won.name} follows up ${gap.toFixed(1)}" and stays in contact`);
     return;
   }
-  const t = yield* leadershipTest(ctx, won, "restraint test");
-  yield ctx.note(
-    t.roll.total <= t.ld
-      ? `${winner.name} restrains and may reform (rolled ${t.roll.total})`
-      : `${winner.name} fails to restrain (rolled ${t.roll.total}) and ${verb}`,
-  );
-};
+  const r = (yield ctx.roll(PURSUE_DICE, "pursuit roll", won.id)) as Roll;
+  const caught = r.total >= gap;
+  const move = towards(Math.min(r.total, gap));
+  if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+  if (!caught) {
+    yield ctx.note(
+      `${won.name} pursues ${r.total}" and falls ${(gap - r.total).toFixed(1)}" short of ${lost.name}`,
+    );
+    return;
+  }
+  if (fled === "falls back") {
+    yield ctx.note(`${won.name} pursues ${r.total}" and catches ${lost.name}: they are in combat again`);
+    return;
+  }
+  for (const m of alive(ctx.view.state, lost))
+    yield ctx.emit({
+      type: "model/wounds",
+      id: m.id,
+      woundsLost: stat(ctx.view, lost, "W", 1),
+      destroyed: true,
+    });
+  yield ctx.note(`${won.name} pursues ${r.total}" and catches ${lost.name}, which is destroyed`);
+}
 
 /** The charged unit's reaction: hold, stand and shoot (missile troops, not too close), or flee. */
 export const chargeReaction: CodeProcedure = function* (ctx, args) {

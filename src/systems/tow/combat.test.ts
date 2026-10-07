@@ -264,4 +264,27 @@ describe("The Old World combat as code", () => {
       expect(fresh.s.units[spears]!.status?.fleeing).toBeFalsy();
     }
   });
+
+  it("pursuit is rolled in the procedure: catching a fleeing unit destroys it", () => {
+    let seen = 0;
+    for (let seed = 1; seed < 80 && seen < 2; seed++) {
+      const { t, spears, warband } = setup();
+      toPhase(t, "combat");
+      t.play(
+        { type: "script/start", procedure: "combat", args: { unit: spears, target: warband } },
+        "p1",
+        seed,
+      );
+      const q = t.s.script?.waiting;
+      if (!q || !/broken and flees/.test(q.question)) continue;
+      seen++;
+      const loser = /^Marchwarden/.test(q.question) ? spears : warband;
+      t.play({ type: "script/answer", answer: "go" }, q.player, seed);
+      const text = t.notes().join(" ");
+      const caught = /catches .* which is destroyed/.test(text);
+      expect(caught || /falls [\d.]+" short/.test(text)).toBe(true);
+      expect(standing(t.s, loser) === 0).toBe(caught);
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
 });
