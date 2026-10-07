@@ -10,7 +10,7 @@ import { NetBanner } from "./NetBanner";
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
   const game = useGame();
-  const { dispatch, scrub, role } = useStore();
+  const { dispatch, scrub, role, setDraft } = useStore();
   const canControl = useCanControl();
   // Someone still joining watches until seated: no Start battle, no "place your units".
   const joining = useJoining();
@@ -153,7 +153,10 @@ export function TopBar() {
             <button
               className="primary"
               title="End this activation; the other player goes next"
-              onClick={() => dispatch({ type: "turn/endActivation" })}
+              onClick={() => {
+                setDraft(null);
+                dispatch({ type: "turn/endActivation" });
+              }}
             >
               End activation
             </button>

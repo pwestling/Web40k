@@ -420,6 +420,8 @@ export interface ActionDef {
   phases?: Id[];
   /** A short summary in the system author's own words, shown on the button. */
   hint?: string;
+  /** How the log says it, after the unit's name: "marches", "takes aim". */
+  verb?: string;
   /**
    * Taking it starts the unit's activation (FSD: spend a die to activate, or
    * to react), after which the unit may take this many of the current slot's

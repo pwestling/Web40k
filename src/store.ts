@@ -235,7 +235,9 @@ export const useStore = create<Store>((set, get) => ({
   cameraReset: 0,
   resetView: () =>
     set((s) => ({ view: s.view === "eye" ? "3d" : s.view, eye: null, cameraReset: s.cameraReset + 1 })),
-  select: (selected) => set({ selected }),
+  // Picking another unit closes an open action for the last one (UX 111).
+  select: (selected) =>
+    set((s) => ({ selected, draft: s.draft && s.draft.attackerId !== selected ? null : s.draft })),
   setDraft: (draft) => set({ draft }),
   setScrub: (scrub) => set({ scrub }),
 

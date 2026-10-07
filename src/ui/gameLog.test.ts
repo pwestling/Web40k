@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, createRecord, type GameEvent, type GameRecord } from "../core";
-import { buildLog, collapseEmpty } from "./gameLog";
+import { buildLog, collapseEmpty, lossText } from "./gameLog";
 
 function record(events: [string, GameEvent][]): GameRecord {
   return {
@@ -125,5 +125,23 @@ describe("collapseEmpty", () => {
       "Round 1 · Bo: no actions",
       "Round 2 · Ann · Movement",
     ]);
+  });
+});
+
+describe("lossText", () => {
+  const state = (destroyed: string[]) =>
+    ({
+      models: Object.fromEntries(["a", "b"].map((id) => [id, { id, destroyed: destroyed.includes(id) }])),
+    }) as unknown as Parameters<typeof lossText>[0];
+
+  it("says wounds and stands apart when stands take several wounds (UX 106)", () => {
+    const hits = [1, 1, 1, 1].map(() => ({ kind: "wounds", modelId: "a", lost: 1 }));
+    expect(lossText(state(["a"]), hits)).toBe("4 wounds · 1 base removed");
+    expect(lossText(state([]), hits.slice(0, 2))).toBe("2 wounds · 0 bases removed");
+  });
+
+  it("keeps the short form when each wound is a model", () => {
+    const hits = ["a", "b"].map((modelId) => ({ kind: "wounds", modelId, lost: 1 }));
+    expect(lossText(state(["a", "b"]), hits)).toBe("2 bases lost");
   });
 });

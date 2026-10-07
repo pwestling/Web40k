@@ -167,7 +167,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                         {details(u) && <div className="muted small">{details(u)}</div>}
                       </td>
                       <td>{u.sheet.points ?? "–"}</td>
-                      {ranked && <td className="small">{u.models[0]?.profile.chars.Troop ?? "–"}</td>}
+                      {ranked && <td className="small">{troopType(u)}</td>}
                       <td>{u.models.length}</td>
                       <td>
                         <select
@@ -298,4 +298,10 @@ function pointsLine(roster: ImportedRoster): string {
 function baseLabel(b: BaseShape): string {
   if (b.shape === "round") return `${b.diameterMm}mm round`;
   return `${b.widthMm}×${b.depthMm}mm${b.shape === "oval" ? " oval" : ""}`;
+}
+
+/** The Old World's troop type, or Conquest's Type and Class ("Infantry, Medium"). */
+function troopType(u: ImportedUnit): string {
+  const c = u.models[0]?.profile.chars ?? {};
+  return c.Troop ?? ([c.Type, c.Class].filter(Boolean).join(", ") || "–");
 }

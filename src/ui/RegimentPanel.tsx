@@ -52,6 +52,14 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
   const as = unit.owner;
   const used = blockMoveUsed(record, unit.id, scrub ?? Infinity);
   const marching = unit.status?.marching === true;
+  // Activation games (Conquest): moves come from actions (March gives its distance), and the
+  // charge panel opens once the Charge action is taken.
+  const sys = systemOf(game);
+  const activations = sys.actions.some((a) => a.activates !== undefined);
+  const chargeAction = sys.actions.some((a) => a.id === "charge");
+  const showCharge = !chargeAction || unit.status?.charged === true;
+  const allowance = typeof unit.status?.allowance === "number" ? unit.status.allowance : 0;
+  const toGo = activations ? Math.max(0, allowance - used) : 0;
   const status = (key: string, value: number | boolean | null) =>
     dispatch({ type: "unit/status", id: unit.id, key, value }, as);
 
@@ -107,7 +115,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             </button>
           </div>
         )}
-        <ChargePanel unit={unit} />
+        {showCharge && <ChargePanel unit={unit} />}
       </div>
     );
   }
@@ -199,13 +207,24 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           Arcs
         </button>
       </div>
-      <MovedLine
-        budget={summary}
-        used={used}
-        marching={marching}
-        off={offTable(game, unit)}
-        round={game.turn.round}
-      />
+      {!activations && (
+        <MovedLine
+          budget={summary}
+          used={used}
+          marching={marching}
+          off={offTable(game, unit)}
+          round={game.turn.round}
+        />
+      )}
+      {mine && toGo > 0.05 && (
+        <div className="row">
+          <span>Move up to {fmt(toGo)} now:</span>
+          <button className="primary" onClick={() => dispatch(forwardMove(frame, unit.id, toGo), as)}>
+            Forward {fmt(toGo)}
+          </button>
+          <span className="muted small">or drag, wheel or turn</span>
+        </div>
+      )}
       {mine && (
         <>
           <div className="row">
@@ -220,14 +239,16 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             />
             <button onClick={() => dispatch(forwardMove(frame, unit.id, ahead), as)}>Forward</button>
             <button onClick={() => dispatch(forwardMove(frame, unit.id, -ahead), as)}>Back</button>
-            <label title="A march is double Movement, straight ahead">
-              <input
-                type="checkbox"
-                checked={marching}
-                onChange={(e) => status("marching", e.target.checked || null)}
-              />{" "}
-              March
-            </label>
+            {!activations && (
+              <label title="A march is double Movement, straight ahead">
+                <input
+                  type="checkbox"
+                  checked={marching}
+                  onChange={(e) => status("marching", e.target.checked || null)}
+                />{" "}
+                March
+              </label>
+            )}
           </div>
           <div className="row">
             <input
@@ -324,7 +345,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           )}
         </>
       )}
-      <ChargePanel unit={unit} />
+      {showCharge && <ChargePanel unit={unit} />}
     </div>
   );
 }

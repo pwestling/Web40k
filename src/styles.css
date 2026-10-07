@@ -208,6 +208,8 @@ label.file.button.small {
   display: flex;
   gap: 8px;
   align-items: stretch;
+  /* left: 50% would cap it at half the screen and wrap the last button (UX 113). */
+  width: max-content;
   max-width: calc(100vw - 24px);
   flex-wrap: wrap;
   justify-content: center;

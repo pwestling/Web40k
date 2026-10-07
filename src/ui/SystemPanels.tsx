@@ -18,6 +18,8 @@ import {
   type StepRecord,
 } from "../core/content";
 import { modelHeight, type Ability, type GameState, type Unit } from "../core";
+import { inArc } from "../core/regiment";
+import { lossText } from "./gameLog";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
@@ -60,7 +62,9 @@ function shown(c: CharacteristicDef, value: unknown, chars: Record<string, strin
     return !text || /^[-–—]$|^n\/?a$/i.test(text) ? "–" : text;
   if (value === null || value === undefined) return "–";
   // A default standing in for a value the roster never gave: none, not a number.
-  if (text === undefined && (c.type === "target" || c.of === "weapon") && value === c.default) return "–";
+  // So is a 0 the roster never gave (Conquest's Barrage or Cleave on a unit without them, UX 110).
+  if (text === undefined && (c.type === "target" || c.of === "weapon" || value === 0) && value === c.default)
+    return "–";
   return String(value);
 }
 
@@ -126,6 +130,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         {owner?.name} · {alive.length}/{all.length} {all.length === 1 ? "model" : "bases"}
         {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
       </p>
+      {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
       {children}
       {(statuses.length > 0 || flags.length > 0) && (
         <div className="chips">
@@ -154,8 +159,6 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           Moved {fmt(moved / scale, system)} of {fmt(allowance / scale, system)} this round.
         </p>
       )}
-
-      {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
 
       <div className="row wrap">
         <button
@@ -297,8 +300,14 @@ function SystemActions({ unit }: { unit: Unit }) {
   const status = unit.status ?? {};
   const acting = !!status.acting;
   const reacting = !!status.reacting;
-  // Reactions only show while one can be made.
-  const shown = options.filter((o) => !o.def.reactTo || o.ok);
+  // Reactions only show while one can be made. In activation games, Activate stands alone
+  // until the unit is activated, then only the actions it can take with it.
+  const activations = options.some((o) => o.def.activates !== undefined);
+  const shown = options.filter(
+    (o) =>
+      (!o.def.reactTo || o.ok) &&
+      (!activations || (acting ? o.def.activates === undefined : o.def.activates !== undefined)),
+  );
   const take = (o: ActionOption, extra: { with?: string[] } = {}) => {
     if (o.def.procedure) {
       setDraft({ attackerId: unit.id, kind: "ranged", action: o.def.id, picking: true });
@@ -357,6 +366,9 @@ function SystemActions({ unit }: { unit: Unit }) {
           >
             {o.def.name}
             {o.move !== undefined ? ` ${o.move}` : ""}
+            {o.def.activates !== undefined && typeof o.def.activates === "number" && !o.def.reactTo
+              ? ` (${o.def.activates} action${o.def.activates === 1 ? "" : "s"})`
+              : ""}
             {o.faces?.length ? (
               <span className="cost"> · uses a {o.faces.join(" and a ")}</span>
             ) : o.cost ? (
@@ -469,12 +481,34 @@ function rangeNote(
   return impossible ? "can't hit" : null;
 }
 
-/** Whether a preview has a dice step that can't succeed. */
+/**
+ * Whether a preview has a dice step that can't succeed and that hurts the
+ * one rolling it. An impossible save (passes on failures) or morale test
+ * (failures add to the input) is good for the attacker, not a reason it
+ * "can't hit".
+ */
 const cannotSucceed = (preview: { plans: Record<string, StepPlan> } | null) =>
   !!preview &&
   Object.values(preview.plans).some(
-    (p) => p.kind === "test" && !p.skip && p.target === null && p.passOn !== "failures",
+    (p) =>
+      p.kind === "test" &&
+      !p.skip &&
+      p.target === null &&
+      p.passOn !== "failures" &&
+      p.passOn !== "inputPlusFailures",
   );
+
+/** "Rear charge: every Resolve test fails", or without the cause when the attacker isn't behind. */
+function everyTestFails(
+  stepId: string,
+  target: Unit | undefined,
+  attacker: Unit | undefined,
+  game: GameState,
+) {
+  const what = `every ${label(stepId)} test fails`;
+  const behind = target && attacker && inArc(game, target, attacker) === "rear";
+  return behind ? `Rear charge: ${what}` : what.replace(/^./, (c) => c.toUpperCase());
+}
 
 /** Choose the weapon and target for a procedure action such as Fire, with the numbers it will use. */
 export function ActionSetup({ draft }: { draft: AttackDraft & { action: string } }) {
@@ -658,7 +692,12 @@ function describePlan(plan: StepPlan | undefined): string | null {
   if (plan.kind !== "test") return null;
   if (plan.skip) return "skipped";
   const dice = `${plan.dicePerInput > 1 ? `${plan.dicePerInput}×` : ""}${plan.sumOf > 1 ? plan.sumOf : ""}d${plan.sides}${plan.keep && plan.dicePerInput > 1 ? ` keep ${plan.keep}` : ""}`;
-  if (plan.target === null) return plan.passOn === "failures" ? "no save" : `${dice}: can't succeed`;
+  if (plan.target === null)
+    return plan.passOn === "failures"
+      ? "no save"
+      : plan.passOn === "inputPlusFailures"
+        ? `${dice}: every test fails`
+        : `${dice}: can't succeed`;
   // A target of 0 means each die is judged against the roll it answers (opposed saves).
   const vs =
     plan.target === 0
@@ -695,11 +734,12 @@ export function ProcedurePanel() {
   const whyNone = (r: StepRecord) =>
     r.plan.kind === "test" && r.plan.target === null && r.plan.passOn === "failures"
       ? "no save possible"
-      : r.plan.kind === "test" && r.plan.target === null
-        ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
-        : undefined;
-  const lost = run.outcomes.filter((o) => o.kind === "wounds").length;
-  const destroyed = run.outcomes.some((o) => o.kind === "destroy");
+      : r.plan.kind === "test" && r.plan.target === null && r.plan.passOn === "inputPlusFailures"
+        ? everyTestFails(r.id, target, actor, game)
+        : r.plan.kind === "test" && r.plan.target === null
+          ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
+          : undefined;
+  const loss = lossText(game, run.outcomes);
   const statuses = [
     ...new Set(
       run.outcomes.flatMap((o) =>
@@ -743,7 +783,7 @@ export function ProcedurePanel() {
       {run.done && (
         <p>
           <strong>
-            {destroyed ? "Unit destroyed" : `${lost} base${lost === 1 ? "" : "s"} lost`}
+            {loss === "destroyed" ? "Unit destroyed" : loss.replace(/^./, (c) => c.toUpperCase())}
             {statuses.length ? ` · ${statuses.join(", ")}` : ""}
           </strong>
         </p>

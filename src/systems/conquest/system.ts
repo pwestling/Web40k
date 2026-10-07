@@ -272,6 +272,7 @@ export const conquest: GameSystem = {
     {
       id: "march",
       name: "March",
+      verb: "marches",
       by: "unit",
       hint: "Up to March forwards; may be taken twice",
       move: { kind: "march", distance: ref("self.M") },
@@ -279,6 +280,7 @@ export const conquest: GameSystem = {
     {
       id: "charge",
       name: "Charge",
+      verb: "charges",
       by: "unit",
       hint: "D6 + March at an enemy in the front arc; a charge that lands is Inspired",
       if: notBroken,
@@ -290,6 +292,7 @@ export const conquest: GameSystem = {
     {
       id: "impact",
       name: "Impact",
+      verb: "makes Impact attacks",
       by: "unit",
       hint: "Impact attacks after the charge lands; part of the charge",
       free: true,
@@ -306,6 +309,7 @@ export const conquest: GameSystem = {
     {
       id: "volley",
       name: "Volley",
+      verb: "volleys",
       by: "unit",
       hint: "Barrage shots from the front rank",
       if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
@@ -320,6 +324,7 @@ export const conquest: GameSystem = {
     {
       id: "clash",
       name: "Clash",
+      verb: "clashes",
       by: "unit",
       hint: "Fight an enemy in contact",
       target: { filter: within(1) },
@@ -329,6 +334,7 @@ export const conquest: GameSystem = {
     {
       id: "takeAim",
       name: "Take Aim",
+      verb: "takes aim",
       by: "unit",
       hint: "This round's volley re-rolls misses",
       if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
@@ -338,6 +344,7 @@ export const conquest: GameSystem = {
     {
       id: "inspire",
       name: "Inspire",
+      verb: "is inspired",
       by: "unit",
       hint: "+1 Clash this round",
       if: notBroken,
@@ -347,6 +354,7 @@ export const conquest: GameSystem = {
     {
       id: "rally",
       name: "Rally",
+      verb: "rallies",
       by: "unit",
       hint: "No longer Broken",
       if: { hasStatus: "self", status: "broken" },
@@ -356,6 +364,7 @@ export const conquest: GameSystem = {
     {
       id: "reform",
       name: "Reform",
+      verb: "reforms",
       by: "unit",
       hint: "Rearrange the stands, then turn",
       limit: { count: 1, per: "round" },
@@ -364,6 +373,7 @@ export const conquest: GameSystem = {
     {
       id: "withdraw",
       name: "Withdraw",
+      verb: "withdraws",
       by: "unit",
       hint: "Leave a fight (Light and Medium)",
       if: { not: { is: "self.Class", value: "Heavy" } },

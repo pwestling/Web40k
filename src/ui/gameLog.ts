@@ -34,6 +34,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   let deployLine:
     (Extract<LogItem, { kind: "line" }> & { by: string; army?: string; units: number; pts: number }) | null =
     null;
+  // A move action ("Spears marches"): the moves that follow add up on its line.
+  let moveLine:
+    (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
   for (const logged of record.events) {
     if (logged.seq > uptoSeq) break;
     const skipped = undone.has(logged.seq);
@@ -141,7 +144,37 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         continue;
       }
     }
+    if (
+      moveLine &&
+      !skipped &&
+      (event.type === "unit/move" || event.type === "unit/form") &&
+      event.id === moveLine.unitId &&
+      event.distance !== undefined &&
+      !(event.type === "unit/move" && event.how && !["forward", "wheel"].includes(event.how))
+    ) {
+      moveLine.inches += Math.abs(event.distance);
+      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${moveLine.inches.toFixed(1)}"`;
+      continue;
+    }
+    if (event.type !== "undo") moveLine = null;
     const text = describe(logged, before, state);
+    if (event.type === "action/take" && !skipped && text) {
+      const def = systemOf(state).actions.find((a) => a.id === event.action);
+      if (def?.move && def.verb && !event.targetId) {
+        moveLine = {
+          kind: "line",
+          key,
+          seq: logged.seq,
+          text,
+          undone: false,
+          unitId: event.unitId,
+          verb: def.verb,
+          inches: 0,
+        };
+        items.push(moveLine);
+        continue;
+      }
+    }
     // Bookkeeping events (an empty description) stay out of the log.
     if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });
   }
@@ -173,6 +206,26 @@ function attackSummary(a: AttackState, state: GameState): string {
   return `${name(s.attackerUnitId)} ${verb} ${name(s.targetUnitId)} (${s.weaponName}): ${parts.join(", ")}`;
 }
 
+/**
+ * What a finished procedure cost the target, read from the table after it:
+ * "2 bases lost" where each wound took a base, else "4 wounds · 1 base
+ * removed" (Conquest's multi-wound stands), or "destroyed".
+ */
+export function lossText(
+  state: GameState,
+  outcomes: { kind: string; modelId?: string; lost?: number }[],
+): string {
+  if (outcomes.some((o) => o.kind === "destroy")) return "destroyed";
+  const hits = outcomes.filter((o) => o.kind === "wounds");
+  const wounds = hits.reduce((t, o) => t + (o.lost ?? 1), 0);
+  const removed = new Set(
+    hits.filter((o) => o.modelId && state.models[o.modelId]?.destroyed).map((o) => o.modelId),
+  ).size;
+  const bases = `${removed} base${removed === 1 ? "" : "s"}`;
+  if (wounds === removed) return `${bases} lost`;
+  return `${wounds} wound${wounds === 1 ? "" : "s"} · ${bases} removed`;
+}
+
 /** "Raider Gang Carbines at Lancer Tank: hit 1/3, save 1/1, 0 bases lost". */
 function procedureSummary(state: GameState): string {
   const proc = state.procedure;
@@ -180,11 +233,7 @@ function procedureSummary(state: GameState): string {
   const parts = proc.run.records
     .filter((r) => r.dice?.length)
     .map((r) => `${r.id} ${r.successes ?? 0}/${r.in}`);
-  if (proc.run.done) {
-    const lost = proc.run.outcomes.filter((o) => o.kind === "wounds").length;
-    const destroyed = proc.run.outcomes.some((o) => o.kind === "destroy");
-    parts.push(destroyed ? "destroyed" : `${lost} lost`);
-  }
+  if (proc.run.done) parts.push(lossText(state, proc.run.outcomes));
   return `${proc.title}${parts.length ? `: ${parts.join(", ")}` : ""}`;
 }
 
@@ -390,9 +439,17 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return "Attack cancelled";
     case "action/take": {
       const weapon = event.weapon ? game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name : undefined;
-      const action = systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
+      const def = systemOf(game).actions.find((a) => a.id === event.action);
+      const action = def?.name ?? event.action;
+      // Activation games read as sentences: "Spears activates (2 actions)", "Spears marches" (UX 112).
+      if (def?.activates !== undefined) {
+        const n = Number(game.units[event.unitId]?.status?.actionBudget ?? 0);
+        return `${unitName(event.unitId)} activates${n ? ` (${n} action${n === 1 ? "" : "s"})` : ""}`;
+      }
       const also = event.with?.length ? ` with ${event.with.map(unitName).join(", ")}` : "";
       const target = event.targetId ? ` at ${unitName(event.targetId)}` : "";
+      if (def?.verb)
+        return `${unitName(event.unitId)} ${def.verb}${weapon ? ` (${weapon})` : ""}${target}${also}${event.hold ? ", waiting on a reaction" : ""}`;
       return `${unitName(event.unitId)}: ${action}${weapon ? ` (${weapon})` : ""}${target}${also}${event.hold ? ", waiting on a reaction" : ""}`;
     }
     case "reaction/end":
