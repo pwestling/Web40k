@@ -173,6 +173,8 @@ export type EffectAction =
   | { do: "roll"; dice: DiceText; outcomes: { min: number; max: number; do: EffectAction[] }[] }
   /** Run a system procedure or offer an action, e.g. "can make a Normal move". */
   | { do: "run"; action: Id; with?: Record<string, Expr>; optional?: boolean }
+  /** Activate other units for free, e.g. FSD's Command value. */
+  | { do: "activate"; count: Expr; filter?: Expr }
   /** Not automated yet. The reminder text is supplied by the player's pack, never the repo. */
   | { do: "manual"; reminder: string };
 
@@ -227,7 +229,15 @@ export type Step =
       id: Id;
       /** Which step's successes feed this one; defaults to the previous step. */
       from?: Id;
-      die?: Id;
+      /** A die id, or an expression for its size (FSD's d8 stepped up to d10). */
+      die?: Id | Expr;
+      /**
+       * Dice rolled per input, keeping one (FSD saves roll d10(2), keep the
+       * highest). The input die's own result is available as "input.value",
+       * so opposed rolls can use it as the target.
+       */
+      dicePerInput?: Expr;
+      keep?: "highest" | "lowest";
       /** Roll-high ("atLeast": 3+) or roll-under ("atMost": 3 or less). */
       compare: "atLeast" | "atMost";
       target: Expr;
@@ -338,7 +348,11 @@ export interface ActionDef {
   reactTo?: EventPattern;
   /** Eligibility, evaluated against the acting unit or player. */
   if?: Expr;
-  cost?: { resource: Id; amount: Expr }[];
+  /**
+   * Resources spent. For dice pools, `slots` restricts which faces can pay,
+   * one entry per die (FSD: a slot marked 4-6 takes one die showing 4 to 6).
+   */
+  cost?: { resource: Id; amount: Expr; slots?: { min: number; max: number }[] }[];
   limit?: { count: number; per: "phase" | "turn" | "round" | "battle"; perUnit?: boolean };
   /** Who or what the action targets, chosen by the player. */
   target?: { filter: Expr; count?: number };
@@ -451,11 +465,14 @@ export interface GameSystem {
   id: Id;
   name: string;
   version: string;
-  units: "inch" | "cm";
+  /** Distance unit. FSD uses a configurable "DU" worth some number of inches. */
+  units: "inch" | "cm" | { name: string; inches: number };
   defaultTable?: Table;
   dice: DieDef[];
   /** Default die for tests that don't name one. */
   defaultDie: Id;
+  /** Die sizes in order, for "step up / step down a die" rules. */
+  dieLadder?: Id[];
   characteristics: CharacteristicDef[];
   /** Kinds of weapon, e.g. "ranged" and "melee". */
   weaponKinds: Id[];

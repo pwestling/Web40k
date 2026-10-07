@@ -10,7 +10,7 @@ import {
 } from "./index";
 import { fortyK } from "./examples/forty-k";
 import { conquestLike, oldWorldLike } from "./examples/rank-and-flank";
-import { dicePlacementLike } from "./examples/dice-placement";
+import { fsd } from "./examples/fsd";
 
 const step = (system: typeof fortyK, procedure: string, id: string) => {
   const s = system.procedures.find((p) => p.id === procedure)?.steps.find((x) => x.id === id);
@@ -93,8 +93,16 @@ describe("other systems fit the same schema", () => {
     expect(num(defense.target, { scope: { target: { D: 3 }, weapon: { cleave: 1 } } })).toBe(2);
   });
 
+  it("opposes FSD saves to the hit roll and strips save dice with AP", () => {
+    const save = step(fsd, "attack", "save");
+    const ctx = { scope: { input: { value: 7 }, target: { saveDice: 2 }, weapon: { AP: 1 } } };
+    expect(num(save.target, ctx)).toBe(7);
+    expect(save.keep).toBe("highest");
+    expect(num(save.dicePerInput!, ctx)).toBe(1);
+  });
+
   it("validates every example system", () => {
-    for (const system of [fortyK, oldWorldLike, conquestLike, dicePlacementLike]) {
+    for (const system of [fortyK, oldWorldLike, conquestLike, fsd]) {
       expect(validateSystem(system), system.id).toEqual([]);
     }
   });

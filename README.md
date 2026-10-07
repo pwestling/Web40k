@@ -83,7 +83,7 @@ in two layers (`src/core/content/schema.ts`):
 
 Rule checks are advisory: they warn and players decide. Anything not yet expressible becomes a
 `manual` reminder. `src/core/content/examples/` has draft systems for 40k-style, Old World-style,
-Conquest-style and dice-placement games, to keep the schema honest about being generic.
+Conquest-style and Full Spectrum Dominance games, to keep the schema honest about being generic.
 
 **Units and bases.** One world unit is one inch; the default table is 60" × 44". Base sizes are kept in
 millimetres, as they are printed, and can be round, oval or rectangular, with a facing. Skirmish units
