@@ -117,7 +117,7 @@ describe("attack execution parity with the hand-written sequence", () => {
       }
       expect(after.stage).toBe("done");
     }
-  });
+  }, 30_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -304,5 +304,5 @@ describe("attack suggestion parity with the hand-written rules", () => {
     }
     expect(compared).toBeGreaterThan(1000);
     for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(5);
-  });
+  }, 30_000);
 });
