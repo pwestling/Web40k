@@ -12,7 +12,8 @@ import {
 
 /** A line of the game log as players read it. */
 export type LogItem =
-  | { kind: "header"; key: string; text: string }
+  /** A phase change, or (`rules`) a rules change both players agreed to mid-game. */
+  | { kind: "header"; key: string; text: string; rules?: true }
   | { kind: "line"; key: string; seq: number; text: string; undone: boolean };
 
 /**
@@ -44,6 +45,10 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       (event.type === "turn/next" || event.type === "turn/prev" || event.type === "turn/first")
     ) {
       items.push({ kind: "header", key, text: turnHeader(state) });
+      continue;
+    }
+    if (!skipped && event.type === "game/packages" && event.agreed && before.packages) {
+      items.push({ kind: "header", key, text: describe(logged, before, state), rules: true });
       continue;
     }
     if (event.type === "unit/add" && !skipped) {
@@ -437,7 +442,7 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
     run = [];
   };
   for (const item of log) {
-    if (item.kind === "header") run.push(item);
+    if (item.kind === "header" && !item.rules) run.push(item);
     else {
       flush();
       out.push(item);

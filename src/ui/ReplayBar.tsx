@@ -20,7 +20,7 @@ function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string
   const out: { seq: number; text: string; round?: string }[] = [];
   let lastRound: string | undefined;
   for (const l of log) {
-    if (l.kind !== "header") continue;
+    if (l.kind !== "header" || l.rules) continue;
     const r = /^Round (\d+)/.exec(l.text)?.[1];
     out.push({ seq: Number(l.key), text: l.text, ...(r && r !== lastRound ? { round: r } : {}) });
     lastRound = r;
@@ -42,6 +42,11 @@ export function ReplayBar() {
   // Phase changes, with the first one of each round marked "R1", "R2"...
   const marks = useMemo(() => phaseMarks(log), [log]);
   const { highlights } = useMemo(() => readGame(record), [record]);
+  // Rules changes both players agreed to, marked ◆ on the track.
+  const rulesChanges = useMemo(
+    () => log.flatMap((l) => (l.kind === "header" && l.rules ? [{ seq: Number(l.key), text: l.text }] : [])),
+    [log],
+  );
   const phase = [...marks].reverse().find((m) => m.seq <= pos);
   // The latest action in the current phase, or that the phase has just begun.
   const latest = [...log]
@@ -136,6 +141,19 @@ export function ReplayBar() {
                 onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
               >
                 {ICONS[h.kind]}
+              </button>
+            ))}
+          {last > 0 &&
+            rulesChanges.map((r) => (
+              <button
+                key={`rules-${r.seq}`}
+                className="highlight rules"
+                style={{ left: `${(r.seq / last) * 100}%` }}
+                title={r.text}
+                aria-label={`Replay: ${r.text}`}
+                onClick={() => setScrub(r.seq >= last && session ? null : r.seq)}
+              >
+                ◆
               </button>
             ))}
         </div>

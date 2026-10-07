@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Player } from "../core";
 import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
+import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
 
 /**
@@ -12,6 +13,7 @@ export function RoomCard() {
   const { roomId, mode, net, session, game } = useStore();
   const [copied, setCopied] = useState(false);
   const joining = useJoining();
+  const peerMissing = useTransfers((s) => s.peerMissing);
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 2000);
@@ -23,8 +25,13 @@ export function RoomCard() {
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => a.seat! - b.seat!);
   const peers = net?.peers ?? [];
-  const watching = peers.filter((id) => !seated.some((p) => p.id === id)).length;
   const waiting = seated.length < 2;
+  // Still receiving the game's rules packages (and not playing without them by choice).
+  const fetching = (id: string) =>
+    peers.includes(id) && (peerMissing[id]?.length ?? 0) > 0 && !game.players[id]?.rulesMismatch;
+  const joiners = peers.filter((id) => !seated.some((p) => p.id === id) && fetching(id)).length;
+  const watchers = peers.filter((id) => !seated.some((p) => p.id === id)).length;
+  const watching = watchers - joiners;
   const state = (p: Player) =>
     p.id === selfId ? "you" : peers.includes(p.id) ? "connected" : "reconnecting…";
   return (
@@ -54,6 +61,7 @@ export function RoomCard() {
               {state(p)}
               {net?.hostId === p.id ? " · host" : ""}
               {game.turn.round === 0 && p.ready ? " · ready" : ""}
+              {fetching(p.id) ? " · getting rules…" : ""}
             </span>
             {p.rulesMismatch && (
               <span
@@ -82,6 +90,11 @@ export function RoomCard() {
           </li>
         ) : (
           waiting && <li className="muted">Waiting for an opponent to join…</li>
+        )}
+        {joiners > 0 && (
+          <li className="muted">
+            {joiners === 1 ? "Someone joining is" : `${joiners} people joining are`} getting the rules…
+          </li>
         )}
         {watching > 0 && (
           <li className="muted">

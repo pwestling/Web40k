@@ -1075,3 +1075,10 @@ label.file.button input {
   gap: 2px;
   margin-right: 6px;
 }
+.replaybar .highlight.rules {
+  color: #60a5fa;
+}
+.log .phase.rules {
+  text-transform: none;
+  color: #93c5fd;
+}

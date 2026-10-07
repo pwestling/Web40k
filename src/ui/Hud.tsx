@@ -179,7 +179,7 @@ export function Hud() {
           .reverse()
           .map((item) =>
             item.kind === "header" ? (
-              <li key={`h${item.key}`} className="phase">
+              <li key={`h${item.key}`} className={item.rules ? "phase rules" : "phase"}>
                 {item.text}
               </li>
             ) : (

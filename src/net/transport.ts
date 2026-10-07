@@ -38,7 +38,9 @@ export type SideMessage =
   | { t: "asset/part"; id: string; part: number; parts: number; data: string }
   /** Rules packages, by the SHA-256 of their bytes (src/packages/share.ts). */
   | { t: "package/want"; hash: string }
-  | { t: "package/part"; hash: string; part: number; parts: number; data: string };
+  | { t: "package/part"; hash: string; part: number; parts: number; data: string }
+  /** Which of the game's packages this peer is still getting (empty when it has them all). */
+  | { t: "package/status"; missing: string[] };
 
 /** Minimal peer-to-peer channel the session needs. Implemented over WebRTC by
  * `trysteroTransport` and in memory by `createLoopbackNetwork` for tests. */

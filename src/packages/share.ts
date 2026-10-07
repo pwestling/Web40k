@@ -18,11 +18,13 @@ export type Transfer =
 
 interface Transfers {
   byHash: Record<string, Transfer>;
+  /** What each other peer says it is still getting, for "getting rules…" in the people list. */
+  peerMissing: Record<string, string[]>;
   /** Hashes whose package arrives already trusted ("Trust packages Player 1 sends"). */
   trustOnArrival: Record<string, boolean>;
 }
 
-export const useTransfers = create<Transfers>(() => ({ byHash: {}, trustOnArrival: {} }));
+export const useTransfers = create<Transfers>(() => ({ byHash: {}, trustOnArrival: {}, peerMissing: {} }));
 
 const incoming = new Map<string, string[]>();
 
@@ -58,11 +60,23 @@ export function transferPercent(t: Transfer | undefined): number {
 /** Answer other peers' requests for packages this device holds, and take in the ones we asked for. */
 export function usePackageSharing() {
   const session = useStore((s) => s.session);
+  const wanted = useStore((s) => s.game.packages?.packages);
+  const library = useLibrary((s) => s.packages);
+  const loaded = useLibrary((s) => s.loaded);
+  // What this peer is still getting: told to everyone when it changes, and to each peer that arrives.
+  const missing = loaded ? (wanted ?? []).filter((p) => !library[p.hash]).map((p) => p.hash) : [];
+  const key = missing.join();
   useEffect(() => {
     if (!session) return;
-    session.listenSide((message, from) => void receive(message, from), null, "packages");
+    const status = () => (key ? key.split(",") : []);
+    session.listenSide(
+      (message, from) => void receive(message, from),
+      (peer) => session.sendSide({ t: "package/status", missing: status() }, peer),
+      "packages",
+    );
+    session.sendSide({ t: "package/status", missing: status() });
     return () => session.listenSide(null, null, "packages");
-  }, [session]);
+  }, [session, key]);
 }
 
 async function receive(message: SideMessage, from: string) {
@@ -85,6 +99,12 @@ async function receive(message: SideMessage, from: string) {
         },
         from,
       );
+    return;
+  }
+  if (message.t === "package/status") {
+    if (!Array.isArray(message.missing)) return;
+    const missing = message.missing.filter((h) => typeof h === "string");
+    useTransfers.setState((s) => ({ peerMissing: { ...s.peerMissing, [from]: missing } }));
     return;
   }
   if (message.t !== "package/part") return;
