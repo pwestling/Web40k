@@ -27,6 +27,9 @@ export default {
   actions: [], // buttons on the unit card
   procedures: {}, // rules other code (or data) can start by id
   functions: {}, // pure helpers data expressions can call
+  hooks: {}, // procedures run when phases and rounds start and end
+  rules: [], // data: rules (keywords, abilities) in the system's rules schema
+  abilityTimings: [], // data: when abilities matching some text come up
 };
 ```
 
@@ -76,12 +79,52 @@ Only the host runs a rule. To resume after a question, a reconnect or a change o
 - Never use `Math.random`, `Date` or timers, and never keep state in variables outside the generator.
 - Keep anything that must last between rules in `ctx.set` and `ctx.view.own`.
 
+## Turn hooks
+
+`hooks` runs procedures when the turn moves on:
+
+```js
+hooks: {
+  phaseStart: { strategy: function* (ctx, args) { ... } }, // args: { phase, round, player }
+  phaseEnd: { combat: function* (ctx, args) { ... } },
+  roundStart: function* (ctx, args) { ... },
+  activationEnd: function* (ctx, args) { ... }, // games where units activate one at a time
+}
+```
+
+The host starts them one after another, in this order: phase end, round start, phase start. If one asks a question, the next waits for the answer. `args.player` is the player whose turn it is.
+
+## Data rules
+
+`rules`, `abilityTimings`, and `actions` entries without a `run`, are plain data in the system's rules schema (`src/core/content/schema.ts`). They are added to the system on every player's screen that runs the package, so previews and panels show them as well. A data rule with the same id as a built-in one replaces it.
+
 ## Data calling code
 
 Rules written as data can use package code in two ways:
 
-- `{ "call": "myFunction", "args": [...] }` inside any expression calls one of the package's `functions`. Its signature is `(view, ...args) => number | boolean`, and it must be pure. A bare `{ "ref": "unit" }` argument passes the unit or model it names.
+- `{ "call": "myFunction", "args": [...] }` inside any expression calls one of the package's `functions`. While a game uses a package, the host resolves every action in the sandbox, so these calls always reach the package. Its signature is `(view, ...args) => number | boolean`, and it must be pure. A bare `{ "ref": "unit" }` argument passes the unit or model it names.
 - `{ "do": "script", "procedure": "myRule", "args": { ... } }` in a data effect starts a code procedure once the data procedure finishes.
+
+## A whole game
+
+A package can also bring an entire game system. Set `kind: "system"` and list the new system's id in `systems`, then export `{ module }`. The module has the same shape as a built-in one (`GameModule` in `src/sdk`):
+
+```js
+export default {
+  module: {
+    id: "arena", version: "1.0.0", api: 1,
+    system, // the rules as data: characteristics, dice, turn structure, rules, procedures, actions
+    app: { sample: (seat) => roster, layout: (table) => ({ terrain: [], objectives: [], zones: [] }) },
+    actions: [...], procedures: {...}, hooks: {...}, functions: {...},
+  },
+};
+```
+
+Once a player trusts the package, its game appears in the lobby's **Game** list, and a game started with it names the package so every player gets the code.
+
+`app.sample` and `app.layout` run once in the sandbox when the package loads, and the results are handed to the app as data. Other app hooks that are code (`importRoster`, `rankRules`, `leaving`, custom panels) aren't supported for package games yet.
+
+[`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game.
 
 ## The sandbox
 

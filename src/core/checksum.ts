@@ -23,55 +23,44 @@ export function isCheckpoint(seq: number, event: GameEvent): boolean {
 }
 
 export function canonical(value: unknown): string {
-  const out: string[] = [];
-  write(value, out);
-  return out.join("");
+  if (value === null || value === undefined) return "null";
+  switch (typeof value) {
+    case "number":
+      // -0 and 0 hash alike.
+      if (Object.is(value, -0)) return "0";
+      return Number.isInteger(value) || !Number.isFinite(value)
+        ? String(value)
+        : String(Math.round(value * 1e4) / 1e4);
+    case "string":
+      return quote(value);
+    case "boolean":
+      return value ? "true" : "false";
+    case "object": {
+      // Plain string building: V8 joins these as ropes, faster than an array of parts (perf/notes.md).
+      if (Array.isArray(value)) {
+        let out = "[";
+        for (let i = 0; i < value.length; i++) out += (i ? "," : "") + canonical(value[i]);
+        return out + "]";
+      }
+      const o = value as Record<string, unknown>;
+      let out = "{";
+      let first = true;
+      for (const k of Object.keys(o).sort()) {
+        if (o[k] === undefined) continue;
+        out += (first ? "" : ",") + quote(k) + ":" + canonical(o[k]);
+        first = false;
+      }
+      return out + "}";
+    }
+    default:
+      return "null";
+  }
 }
 
-function write(v: unknown, out: string[]): void {
-  if (v === null || v === undefined) {
-    out.push("null");
-    return;
-  }
-  switch (typeof v) {
-    case "number":
-      out.push(Number.isInteger(v) || !Number.isFinite(v) ? String(v) : String(Math.round(v * 1e4) / 1e4));
-      // -0 and 0 hash alike.
-      if (Object.is(v, -0)) out[out.length - 1] = "0";
-      return;
-    case "string":
-      out.push(JSON.stringify(v));
-      return;
-    case "boolean":
-      out.push(v ? "true" : "false");
-      return;
-    case "object":
-      if (Array.isArray(v)) {
-        out.push("[");
-        v.forEach((x, i) => {
-          if (i) out.push(",");
-          write(x, out);
-        });
-        out.push("]");
-        return;
-      } else {
-        const o = v as Record<string, unknown>;
-        const keys = Object.keys(o)
-          .filter((k) => o[k] !== undefined)
-          .sort();
-        out.push("{");
-        keys.forEach((k, i) => {
-          if (i) out.push(",");
-          out.push(JSON.stringify(k), ":");
-          write(o[k], out);
-        });
-        out.push("}");
-        return;
-      }
-    default:
-      out.push("null");
-  }
-}
+/** Strings JSON.stringify would only wrap in quotes (no escapes, no lone surrogates) skip it. */
+// eslint-disable-next-line no-control-regex -- control characters are exactly what JSON escapes
+const PLAIN = /^[^"\\\u0000-\u001f\ud800-\udfff]*$/;
+const quote = (s: string) => (PLAIN.test(s) ? `"${s}"` : JSON.stringify(s));
 
 /** cyrb53 (public domain, bryc): a 53-bit string hash. */
 export function cyrb53(str: string, seed = 0): number {

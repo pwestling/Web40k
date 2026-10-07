@@ -15,6 +15,10 @@ import { useStore } from "../store";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { systemOf } from "../core/content/turn";
 import { systemModule } from "../systems";
+import { Sandbox } from "../sandbox/host";
+import { stateHash } from "../core/checksum";
+import type { ActionRow } from "../sandbox/protocol";
+import secondWind from "../../examples/packages/second-wind.js?raw";
 
 let renderer: WebGLRenderer | null = null;
 export function setPerfRenderer(gl: WebGLRenderer) {
@@ -144,6 +148,91 @@ export const perf = {
     }
     const med = (xs: number[]) => +xs.sort((a, b) => a - b)[Math.floor(xs.length / 2)]!.toFixed(1);
     return { syncMs: med(sync), toFrameMs: med(painted) };
+  },
+
+  /**
+   * The rules sandbox against perf/scripting-budget.md, on whatever game is
+   * set up (an Old World one, for the example package): startup, the first
+   * copy of the record, forwarding events, small calls, a package procedure,
+   * and the checksum.
+   */
+  async sandbox(calls = 200) {
+    const pct = (xs: number[], p: number) =>
+      +[...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * p))]!.toFixed(2);
+    const stats = (xs: number[]) => ({ p50: pct(xs, 0.5), p95: pct(xs, 0.95) });
+    const timed = async <T>(f: () => Promise<T>) => {
+      const t = performance.now();
+      const v = await f();
+      return [performance.now() - t, v] as const;
+    };
+
+    let t = performance.now();
+    const source = (await import("virtual:sandbox-worker")).default;
+    const fetchMs = performance.now() - t;
+    const [bootMs, box] = await timed(() => Sandbox.start(source, (why) => console.warn(why)));
+    const [loadMs] = await timed(() =>
+      box.call({ t: "load", packages: [{ hash: "perf", source: secondWind }] }, 5000),
+    );
+
+    const { record, game } = useStore.getState();
+    // The record minus its last events, so they can be forwarded one at a time.
+    const tail = record.events.slice(-Math.min(20, record.events.length));
+    const head = { ...record, events: record.events.slice(0, record.events.length - tail.length) };
+    t = performance.now();
+    const p = box.call({ t: "init", record: head }, 5000);
+    const initPostMs = performance.now() - t;
+    await p;
+    const initMs = performance.now() - t;
+
+    const forward: number[] = [];
+    for (const e of tail) forward.push((await timed(() => box.call({ t: "events", events: [e] })))[0]);
+
+    const unit = Object.values(game.units).find((u) => !u.status?.reserves) ?? Object.values(game.units)[0];
+    const small: number[] = [];
+    for (let i = 0; i < calls && unit; i++)
+      small.push(
+        (await timed(() => box.call<ActionRow[]>({ t: "actions", unitId: unit.id, player: unit.owner })))[0],
+      );
+    const resolve: number[] = [];
+    for (let i = 0; i < 50 && unit; i++)
+      resolve.push(
+        (
+          await timed(() =>
+            box.call({
+              t: "resolve",
+              intent: { type: "script/start", procedure: "secondWind", args: { unit: unit.id } },
+              from: unit.owner,
+              seed: i,
+            }),
+          )
+        )[0],
+      );
+    box.stop();
+
+    const hash: number[] = [];
+    for (let i = 0; i < 5; i++) stateHash(game);
+    for (let i = 0; i < 30; i++) {
+      const t0 = performance.now();
+      stateHash(game);
+      hash.push(performance.now() - t0);
+    }
+    return {
+      models: Object.values(game.models).filter((m) => !m.destroyed).length,
+      events: record.events.length,
+      recordKB: Math.round(JSON.stringify(head).length / 1024),
+      workerKB: Math.round(source.length / 1024),
+      startup: {
+        fetchMs: +fetchMs.toFixed(1),
+        bootMs: +bootMs.toFixed(1),
+        loadMs: +loadMs.toFixed(1),
+        initMs: +initMs.toFixed(1),
+        initPostMs: +initPostMs.toFixed(1),
+      },
+      forwardEventMs: stats(forward),
+      smallCallMs: stats(small),
+      resolveMs: stats(resolve),
+      checksumMs: stats(hash),
+    };
   },
 
   async measure(frames = 120, warmup = 10) {

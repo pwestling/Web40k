@@ -9,13 +9,17 @@ import {
   type Intent,
   type LoggedEvent,
 } from "../core";
-import { currentSlot } from "../core/content/turn";
+import { evaluate } from "../core/content/expr";
+import { evalCtx } from "../core/content/play";
+import { getSystem, restoreSystems } from "../core/content/systems";
+import { currentSlot, systemOf } from "../core/content/turn";
 import "../systems";
 import { conquestModule } from "../systems/conquest/module";
 import { towModule } from "../systems/tow/module";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { SandboxEngine } from "./engine";
 import { seededRng } from "./protocol";
+import arena from "../../examples/packages/arena.js?raw";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 
 /** Node imports a package's source from a data: URL; the worker uses a blob. */
@@ -141,5 +145,60 @@ describe("the package sandbox", () => {
     const sixes = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r === 6).length : -1;
     expect(fallen()).toBe(6 - sixes);
     expect(t.sandbox.unitActions(unit.id, "p1")[0]!.available).toBe("Already used this battle");
+  });
+
+  it("loads a package's data rules, functions and turn hooks", async () => {
+    const t = table("tow-hand", (seat) => towModule.app!.sample(seat));
+    const source = `export const manifest = { id: "t.data", name: "Data", version: "1.0.0", api: 1, kind: "extension", systems: ["tow"], requires: [] };
+      export default {
+        rules: [{ id: "steady", name: "Steady", effects: [] }],
+        functions: { twice: (view, n) => n * 2 },
+        hooks: { phaseStart: { strategy: function* (ctx) { yield ctx.note("strategy hook"); } } },
+      };`;
+    const loaded = await t.sandbox.load([{ hash: "abcdef0123", source }]);
+    expect(loaded.errors).toEqual([]);
+    const pkg = loaded.packages[0]!;
+    expect(pkg.data.rules?.map((r) => r.id)).toEqual(["steady"]);
+    expect(pkg.hooks).toEqual({ phaseStart: { strategy: ["hook:abcdef01:phaseStart:strategy"] } });
+    expect(pkg.procedures).toContain("hook:abcdef01:phaseStart:strategy");
+    expect(getSystem("tow-hand").rules.some((r) => r.id === "steady")).toBe(true);
+    const state = t.state;
+    expect(evaluate({ call: "twice", args: [21] }, evalCtx(state, systemOf(state), {}))).toBe(42);
+    // The hook runs as the procedure it was registered under.
+    t.playBoxed({ type: "script/start", procedure: pkg.hooks.phaseStart!.strategy![0]!, args: {} }, "p1");
+    const last = t.record.events.at(-1)!.event;
+    expect(
+      last.type === "script/step" &&
+        last.events.some((e) => e.type === "log/note" && e.text === "strategy hook"),
+    ).toBe(true);
+    restoreSystems();
+    expect(getSystem("tow-hand").rules.some((r) => r.id === "steady")).toBe(false);
+  });
+
+  it("loads a whole game from a package: its system, samples, code and hooks", async () => {
+    const box = new SandboxEngine(importSource);
+    const loaded = await box.load([{ hash: "a1", source: arena }]);
+    expect(loaded.errors).toEqual([]);
+    const pkg = loaded.packages[0]!;
+    expect(pkg.provides?.system.id).toBe("arena");
+    expect(pkg.provides?.app.samples.map((r) => r.name)).toEqual(["Red gladiators", "Blue gladiators"]);
+    expect(pkg.hooks).toEqual({ roundStart: ["hook:arena:roundStart"] });
+
+    const t = table("arena", (seat) => pkg.provides!.app.samples[seat]!);
+    await t.sandbox.load([{ hash: "a1", source: arena }]);
+    const red = Object.values(t.state.units).find((u) => u.name === "Champion")!;
+    const blue = Object.values(t.state.units).find((u) => u.name === "Spear fighters")!;
+    t.playBoxed({ type: "script/start", procedure: "strike", args: { unit: red.id, target: blue.id } }, "p1");
+    const step = t.record.events.at(-1)!.event;
+    const roll = step.type === "script/step" ? step.events.find((e) => e.type === "dice/roll") : undefined;
+    const hits = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r >= 3).length : -1;
+    const fallen = blue.modelIds.filter((id) => t.state.models[id]!.destroyed).length;
+    expect(fallen).toBe(Math.min(hits, 5));
+    t.playBoxed({ type: "script/start", procedure: "hook:arena:roundStart", args: { round: 1 } }, "p1");
+    const hook = t.record.events.at(-1)!.event;
+    expect(
+      hook.type === "script/step" &&
+        hook.events.some((e) => e.type === "log/note" && /crowd roars/.test(e.text)),
+    ).toBe(true);
   });
 });

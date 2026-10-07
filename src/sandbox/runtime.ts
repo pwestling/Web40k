@@ -2,11 +2,14 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import type { GameRecord, Unit } from "../core";
 import { systemOf } from "../core/content/turn";
+import { extendSystem, restoreSystems } from "../core/content/systems";
+import { registerHooks, unregisterHooks } from "../core/script";
 import { setIntentRouter } from "../net/session";
+import { registerPackageSystem, unregisterPackageSystem } from "../systems";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { Sandbox, STARTUP_MS } from "./host";
-import type { ActionRow, Loaded } from "./protocol";
+import type { ActionRow, Loaded, Provided } from "./protocol";
 
 /**
  * The game's trusted rules packages running in the sandbox: started when the
@@ -50,7 +53,38 @@ function sync(): void {
   sent = { record, seq: last };
 }
 
+/** Take the packages' data and hooks back off the app's systems. */
+function unload() {
+  restoreSystems();
+  for (const id of provided.splice(0)) unregisterPackageSystem(id);
+  for (const owner of hookOwners.splice(0)) unregisterHooks(owner);
+}
+const hookOwners: string[] = [];
+/** Systems whole-game packages registered on the app's side. */
+const provided: string[] = [];
+
+/** Register a whole-game package's system here, and refold the game, which was folded with a stand-in. */
+function provide(p: Provided): void {
+  const { samples, layout, ...rest } = p.app;
+  const empty = { name: "Empty", units: [], warnings: [] };
+  registerPackageSystem(p.system, {
+    ...rest,
+    sample: (seat) => samples[seat] ?? empty,
+    layout: () => layout,
+  });
+  provided.push(p.system.id);
+  const store = useStore.getState();
+  store.session?.refold();
+  // A game just set up on the stand-in takes the real system's table, counters and layout.
+  const game = useStore.getState().game;
+  if (store.role === "host" && game.system === p.system.id && game.turn.round === 0) {
+    store.dispatch({ type: "game/system", system: p.system.id });
+    if (!game.terrain.length) store.dispatch({ type: "layout/set", layout });
+  }
+}
+
 function stop(why: string) {
+  unload();
   sandbox = null;
   sent = null;
   setIntentRouter(null);
@@ -67,22 +101,27 @@ async function start(packages: { hash: string; source: string }[]): Promise<void
     sent = null;
     sync();
     const code: Record<string, string[]> = {};
-    for (const p of loaded.packages)
-      for (const s of p.systems) code[s] = [...(code[s] ?? []), ...p.procedures, ...p.actions];
+    for (const p of loaded.packages) {
+      if (p.provides) {
+        provide(p.provides);
+        code[p.provides.system.id] ??= [];
+      }
+      for (const s of p.systems) {
+        code[s] = [...(code[s] ?? []), ...p.procedures, ...p.actions];
+        extendSystem(s, p.data);
+        registerHooks(s, p.hash, p.hooks);
+      }
+      hookOwners.push(p.hash);
+    }
     useSandbox.setState({
       status: "on",
       code,
       error: loaded.errors.length ? `A rules package didn't load: ${loaded.errors[0]!.error}` : null,
     });
+    // While a package changes a system, the sandbox (which has its code) resolves every intent in
+    // that game: any rule may now call package code, from data ({ call }) as well as from code.
     setIntentRouter((intent, from, state) => {
-      const mine = code[systemOf(state).id] ?? [];
-      const procedure =
-        intent.type === "script/start"
-          ? intent.procedure
-          : intent.type === "script/answer"
-            ? state.script?.procedure
-            : undefined;
-      if (!procedure || !mine.includes(procedure) || !sandbox) return null;
+      if (!code[systemOf(state).id] || !sandbox) return null;
       const box = sandbox;
       return (seed) => {
         sync();
@@ -107,6 +146,7 @@ export function usePackageSandbox(): void {
     void start(key.split(",").map((hash) => ({ hash, source: lib[hash]!.source })));
     return () => {
       sandbox?.stop();
+      unload();
       sandbox = null;
       sent = null;
       setIntentRouter(null);

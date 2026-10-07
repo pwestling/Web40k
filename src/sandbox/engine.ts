@@ -1,6 +1,7 @@
 import {
   appendEvent,
   applyEvent,
+  createInitialState,
   createRecord,
   resolveLogged,
   stateAt,
@@ -10,14 +11,14 @@ import {
   type LoggedEvent,
 } from "../core";
 import { registerFunctions } from "../core/content/calls";
-import { listSystems } from "../core/content/systems";
+import { extendSystem, listSystems, type SystemAdditions } from "../core/content/systems";
 import { currentSlot, systemOf } from "../core/content/turn";
-import { gameView, registerCode } from "../core/script";
+import { gameView, hookProcedures, registerCode } from "../core/script";
 import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
-import type { CodeAction, PackageContents } from "../sdk";
-import "../systems";
-import { seededRng, type ActionRow, type Loaded, type Resolved } from "./protocol";
+import type { CodeAction, GameModule, PackageContents } from "../sdk";
+import { registerModule, type SystemModule } from "../systems";
+import { seededRng, type ActionRow, type Loaded, type Provided, type Resolved } from "./protocol";
 
 /** How the engine turns a package's source into its module (a blob import in the worker). */
 export type ImportSource = (source: string) => Promise<{ default?: unknown }>;
@@ -45,12 +46,53 @@ export class SandboxEngine {
         if ("error" in read) throw new Error(read.error);
         const mod = await this.importSource(source);
         const contents = (mod.default ?? {}) as PackageContents;
-        if (contents.module) throw new Error("Whole-system packages aren't supported in the sandbox yet");
+        let provides: Provided | undefined;
+        if (contents.module) {
+          // A whole game: its module registers here as a built-in one would, and the app gets
+          // its rules data plus what its app glue gives for a fresh game.
+          const m = contents.module as GameModule<SystemModule>;
+          registerModule(m);
+          const app = m.app;
+          const table = m.system.defaultTable ?? createInitialState().table;
+          provides = JSON.parse(
+            JSON.stringify({
+              system: m.system,
+              app: {
+                samples: app ? [app.sample(0), app.sample(1)] : [],
+                layout: app ? app.layout(table) : { terrain: [], objectives: [], zones: [] },
+                templateCategory: app?.templateCategory,
+                templates: app?.templates,
+                specialDice: app?.specialDice,
+                scatter: app?.scatter,
+                fleeDice: app?.fleeDice,
+                chargeRoll: app?.chargeRoll,
+              },
+            }),
+          ) as Provided;
+          if (m.actions) this.actions.set(m.system.id, m.actions);
+        }
         const systems = listSystems()
           .map((s) => s.id)
           .filter((id) => read.manifest.systems.some((d) => systemMatches(d, id)));
         const actions = (contents.actions ?? []).filter((a): a is CodeAction => "run" in a);
+        // Data the package adds: the same on both sides, so the app's previews and panels see it too.
+        const data: SystemAdditions = JSON.parse(
+          JSON.stringify({
+            rules: contents.rules ?? [],
+            actions: (contents.actions ?? []).filter((a) => !("run" in a)),
+            abilityTimings: contents.abilityTimings ?? [],
+          }),
+        );
+        // A whole game's hooks were registered with its module; report their ids for the host.
+        const moduleHooks = contents.module?.hooks;
+        const hooked = contents.hooks
+          ? hookProcedures(hash.slice(0, 8), contents.hooks)
+          : moduleHooks
+            ? hookProcedures(contents.module!.system.id, moduleHooks)
+            : null;
         for (const system of systems) {
+          extendSystem(system, data);
+          if (hooked) registerCode(system, hooked.procedures);
           if (contents.procedures) registerCode(system, contents.procedures);
           if (contents.functions) registerFunctions(system, contents.functions);
           registerCode(system, Object.fromEntries(actions.map((a) => [a.id, a.run])));
@@ -62,8 +104,11 @@ export class SandboxEngine {
         out.packages.push({
           hash,
           systems,
-          procedures: Object.keys(contents.procedures ?? {}),
+          procedures: [...Object.keys(contents.procedures ?? {}), ...Object.keys(hooked?.procedures ?? {})],
           actions: actions.map((a) => a.id),
+          data,
+          hooks: hooked?.table ?? {},
+          ...(provides ? { provides } : {}),
         });
       } catch (e) {
         out.errors.push({ hash, error: e instanceof Error ? e.message : String(e) });

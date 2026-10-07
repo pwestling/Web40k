@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { canonical, cyrb53, stateHash, stateAt, type GameState } from "../core";
+import { canonical, createRecord, cyrb53, stateHash, stateAt, type GameState } from "../core";
+
+/** A deep copy with keys sorted, for comparing against JSON.stringify. */
+const sortKeys = (v: unknown): unknown =>
+  Array.isArray(v)
+    ? v.map(sortKeys)
+    : v && typeof v === "object"
+      ? Object.fromEntries(
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, sortKeys((v as Record<string, unknown>)[k])]),
+        )
+      : v;
 import { createLoopbackNetwork } from "./loopback";
 import { Session, type NetStatus } from "./session";
 
@@ -10,6 +22,21 @@ describe("state checksum", () => {
     expect(canonical({ b: 1, a: [0.1 + 0.2, undefined] })).toBe(canonical({ a: [0.3, null], b: 1 }));
     expect(canonical({ x: -0 })).toBe(canonical({ x: 0 }));
     expect(cyrb53("a")).not.toBe(cyrb53("b"));
+  });
+
+  it("writes the same canonical form as sorted JSON", () => {
+    const odd = {
+      z: [1.23456789, -0, NaN, Infinity, null, undefined, true],
+      'q"uote': 'a "b" \\ c\n\u0001',
+      emoji: "dice 🎲",
+      lone: "\ud800x",
+      nested: { b: { d: 1, c: undefined }, a: [] },
+    };
+    expect(canonical(odd)).toBe(
+      '{"emoji":"dice 🎲","lone":"\\ud800x","nested":{"a":[],"b":{"d":1}},"q\\"uote":"a \\"b\\" \\\\ c\\n\\u0001","z":[1.2346,0,NaN,Infinity,null,null,true]}',
+    );
+    const state = stateAt(createRecord());
+    expect(canonical(state)).toBe(JSON.stringify(sortKeys(state)));
     const s = stateAt({ events: [] } as never);
     expect(stateHash(s)).toBe(stateHash(structuredClone(s)));
   });

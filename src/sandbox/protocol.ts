@@ -1,5 +1,10 @@
-import type { GameEvent, GameRecord, Intent, LoggedEvent } from "../core";
+import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent } from "../core";
+import type { GameSystem } from "../core/content/schema";
+import type { SystemModule } from "../systems/app";
+import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Rng } from "../core/actions";
+import type { SystemAdditions } from "../core/content/systems";
+import type { HookTable } from "../core/script";
 
 /**
  * Messages between the app and the package sandbox (a Worker started inside
@@ -22,8 +27,28 @@ export type FromSandbox =
 
 /** What a load reports: the code each package added, by system. */
 export interface Loaded {
-  packages: { hash: string; systems: string[]; procedures: string[]; actions: string[] }[];
+  packages: {
+    hash: string;
+    systems: string[];
+    procedures: string[];
+    actions: string[];
+    /** Data the app adds to the same systems on its side (core/content/systems.ts extendSystem). */
+    data: SystemAdditions;
+    /** Turn hooks, by procedure id, for the host to start (core/script.ts). */
+    hooks: HookTable;
+    /** A whole game system the package provides. */
+    provides?: Provided;
+  }[];
   errors: { hash: string; error: string }[];
+}
+
+/** A whole-game package's system, and what its app glue gave in the sandbox, as data. */
+export interface Provided {
+  system: GameSystem;
+  app: {
+    samples: ImportedRoster[];
+    layout: Layout;
+  } & Pick<SystemModule, "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll">;
 }
 
 /** A package's code action as the unit card shows it, worked out in the sandbox. */
