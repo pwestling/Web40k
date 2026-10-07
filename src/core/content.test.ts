@@ -71,4 +71,8 @@ describe("rollModifiers", () => {
       "Rear attack",
     ]);
   });
+
+  it("defaults criticals to the system's die", () => {
+    expect(rollModifiers({ ...system, die: 10 }, [], { ...ctx, roll: "hit" }).criticalOn).toBe(10);
+  });
 });
