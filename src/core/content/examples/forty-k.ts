@@ -472,7 +472,7 @@ const stratagems: ActionDef[] = [
     phases: ["command"],
     cost: cp(1),
     limit: { count: 1, per: "battle" },
-    target: { filter: own },
+    target: { filter: { all: [own, { hasStatus: "it", status: "battleShocked" }] } },
     hint: "Pass a Battle-shock test",
   },
   {
@@ -682,7 +682,7 @@ export const fortyK: GameSystem = {
     },
   ],
   resources: [
-    { id: "CP", name: "Command points", on: "player", initial: 0 },
+    { id: "CP", name: "Command points", short: "CP", on: "player", initial: 0 },
     { id: "VP", name: "Victory points", on: "player", initial: 0 },
   ],
   // Per-turn flags, cleared when their owner's turn begins.

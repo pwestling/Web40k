@@ -89,6 +89,10 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
           );
         })
         .map((u) => u.id);
+      if (option.ok && !option.targets.length) {
+        option.ok = false;
+        option.why = "No eligible unit";
+      }
     }
     out.push(option);
   }

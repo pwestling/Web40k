@@ -523,6 +523,8 @@ export interface ResourceDef {
   max?: Expr;
   /** Dice pools keep the rolled faces (dice-placement games). */
   kind?: "counter" | "dicePool";
+  /** A short label for costs, e.g. "CP". */
+  short?: string;
   /** Faces of the dice in a pool (default 6). */
   sides?: number;
   /** A pool players may re-roll dice from once per reset, before marking themselves ready (FSD). */

@@ -17,25 +17,36 @@ import { useGame } from "./hooks";
  */
 export function PlayPanel() {
   const game = useGame();
-  const { scrub, role } = useStore();
+  const { scrub, role, selected, draft } = useStore();
   const canControl = useCanControl();
-  const [open, setOpen] = useState(true);
+  // The user's own open/closed choice, kept until the selection changes.
+  const busy = !!selected || !!draft || !!game.attack || !!game.procedure;
+  const context = `${selected ?? ""}|${busy}`;
+  const [choice, setChoice] = useState<{ context: string; open: boolean } | null>(null);
+  const open = choice?.context === context ? choice.open : !busy;
+  const setOpen = (o: boolean) => setChoice({ context, open: o });
   const system = systemOf(game);
   const reminders = abilityReminders(game);
   const stratagems = system.actions.some((a) => a.by === "player");
+  // Players' own tool: not for spectators or replays.
+  if (role === "spectator" || scrub !== null) return null;
   if (!stratagems && !system.abilityTimings) return null;
   if (game.turn.round === 0 && !reminders.length) return null;
-  const live = scrub === null && role !== "spectator";
   const players = Object.values(game.players)
-    .filter((p) => p.seat !== undefined && live && canControl(p.id))
+    .filter((p) => p.seat !== undefined && canControl(p.id))
     .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
   const phase = game.turn.round === 0 ? "Deployment" : (phaseName(game) ?? "");
+  const usable = players.reduce(
+    (n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length,
+    0,
+  );
 
   if (!open)
     return (
       <div className="panel play collapsed">
         <button onClick={() => setOpen(true)}>
-          {phase}: stratagems{reminders.length ? ` · ${reminders.length} abilities` : ""}
+          {phase}: {usable} stratagem{usable === 1 ? "" : "s"}
+          {reminders.length ? ` · ${reminders.length} abilit${reminders.length === 1 ? "y" : "ies"}` : ""}
         </button>
       </div>
     );
@@ -45,13 +56,16 @@ export function PlayPanel() {
         <strong>{phase}: stratagems and abilities</strong>
         <button onClick={() => setOpen(false)}>Hide</button>
       </div>
-      {stratagems && game.turn.round > 0 && players.map((p) => <PlayerStratagems key={p.id} player={p} />)}
-      <Reminders items={reminders} live={live} empty="No abilities flagged for this phase." />
+      {stratagems &&
+        game.turn.round > 0 &&
+        players.map((p, i) => <PlayerStratagems key={p.id} player={p} brief={i > 0} />)}
+      <Reminders items={reminders} live empty="No abilities flagged for this phase." />
     </div>
   );
 }
 
-function PlayerStratagems({ player }: { player: Player }) {
+/** One player's stratagems; `brief` (the other player in hotseat) folds them into one line. */
+function PlayerStratagems({ player, brief }: { player: Player; brief: boolean }) {
   const game = useGame();
   const { dispatch } = useStore();
   const options = playerActions(game, player.id);
@@ -59,12 +73,8 @@ function PlayerStratagems({ player }: { player: Player }) {
   const custom = options.find((o) => o.def.custom);
   const others = options.filter((o) => !o.ok && !o.def.custom);
   const cp = game.resources[player.id]?.CP;
-  return (
-    <div className="stratagems">
-      <p className="row spread">
-        <span style={{ color: player.color }}>{player.name}</span>
-        {cp !== undefined && <span className="muted">{cp} CP</span>}
-      </p>
+  const list = (
+    <>
       {usable.length === 0 && <p className="muted">No core stratagems fit this moment.</p>}
       {usable.map((o) => (
         <Stratagem
@@ -98,6 +108,28 @@ function PlayerStratagems({ player }: { player: Player }) {
           </ul>
         </details>
       )}
+    </>
+  );
+  if (brief)
+    return (
+      <details className="stratagems">
+        <summary>
+          <span style={{ color: player.color }}>{player.name}</span>
+          {usable.length
+            ? ` can react: ${usable.map((o) => o.def.name).join(", ")}`
+            : ": nothing to react with"}
+          <span className="muted"> ({cp ?? 0} CP)</span>
+        </summary>
+        {list}
+      </details>
+    );
+  return (
+    <div className="stratagems">
+      <p className="row spread">
+        <span style={{ color: player.color }}>{player.name}</span>
+        {cp !== undefined && <span className="muted">{cp} CP</span>}
+      </p>
+      {list}
     </div>
   );
 }
@@ -127,7 +159,7 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
       {option.def.hint && <span className="muted small">{option.def.hint}</span>}
       {targets && (
         <select value={target} onChange={(e) => setTarget(e.target.value)}>
-          <option value="">{targets.length ? "On which unit…" : "No eligible unit"}</option>
+          <option value="">On which unit…</option>
           {targets.map((id) => (
             <option key={id} value={id}>
               {game.units[id]?.name}

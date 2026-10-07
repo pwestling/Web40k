@@ -127,7 +127,7 @@ describe("40k game night", () => {
     expect(s.resources.p2?.CP).toBe(1);
     const gtg = playerActions(s, "p2").find((o) => o.def.id === "goToGround")!;
     expect(gtg.ok).toBe(true);
-    expect(gtg.cost).toBe("1 Command points");
+    expect(gtg.cost).toBe("1 CP");
     expect(gtg.targets).toEqual(["troops"]);
     // The active player can't: it's for the opponent's Shooting phase.
     expect(playerActions(s, "p1").find((o) => o.def.id === "goToGround")?.why).toBe(
@@ -135,6 +135,10 @@ describe("40k game night", () => {
     );
     expect(playerActions(s, "p1").find((o) => o.def.id === "tankShock")?.why).toBe("Not in this phase");
 
+    // Insane Bravery only offers battle-shocked units.
+    expect(
+      playerActions(goTo(setup(), "command", 0), "p1").find((o) => o.def.id === "insaneBravery")?.why,
+    ).toBe("No eligible unit");
     s = play(s, { type: "player/action", action: "goToGround", targetId: "troops" }, "p2");
     expect(s.resources.p2?.CP).toBe(0);
     expect(s.units.troops?.status?.goneToGround).toBe(true);

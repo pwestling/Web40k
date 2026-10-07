@@ -148,7 +148,7 @@ export function payFor(
   const labels: string[] = [];
   for (const c of def.cost ?? []) {
     const res = system.resources?.find((r) => r.id === c.resource);
-    const name = res?.name ?? c.resource;
+    const name = res?.short ?? res?.name ?? c.resource;
     const amount = safeNum(c.amount, ctx);
     if (res?.kind === "dicePool") {
       const slots = [...(c.slots ?? []), ...(c.slotsFrom ? parseSlots(resolve(c.slotsFrom, ctx)) : [])];
