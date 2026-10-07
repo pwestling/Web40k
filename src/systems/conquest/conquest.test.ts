@@ -225,4 +225,43 @@ describe("Conquest", () => {
       true,
     );
   });
+
+  it("re-rolls passed Resolve tests against a flank attack", () => {
+    let base = setup();
+    const colossus = unitNamed(base, "Ossuary Colossus");
+    const spears = unitNamed(base, "Shieldwall Spears");
+    base = toCentre(base, spears.id, 0.25);
+    // The Colossus (a 100mm stand) against the Spears' side.
+    const sm = spears.modelIds.map((id) => base.models[id]!);
+    const x = Math.max(...sm.map((m) => m.position.x)) + 0.79 + 0.25 + 1.97;
+    const y = sm.reduce((t, m) => t + m.position.y, 0) / sm.length;
+    base = applyEvent(base, { type: "models/move", moves: [{ id: colossus.modelIds[0]!, to: { x, y } }] });
+    base = play(base, { type: "turn/next" }, "p1");
+    base = play(base, { type: "turn/next" }, "p1");
+    if (base.turn.activeSeat !== 1) base = play(base, { type: "turn/pass" }, "p1");
+    base = play(base, { type: "action/take", unitId: colossus.id, action: "activate" }, "p2");
+    let tested = false;
+    for (let seed = 1; seed < 20 && !tested; seed++) {
+      let s = play(
+        base,
+        { type: "action/take", unitId: colossus.id, action: "clash", targetId: spears.id },
+        "p2",
+      );
+      const r = rng(seed);
+      while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p2", r);
+      expect(step(s, "resolve")?.bypassed).toBe(step(s, "defense")?.out);
+      const flank = step(s, "resolve_flanked");
+      if (!flank?.in) continue;
+      tested = true;
+      expect(flank.plan).toMatchObject({ dicePerInput: 2, keep: "highest", compare: "atMost" });
+      // Each test passes only when both its dice pass.
+      const need = (flank.plan as { target: number }).target;
+      expect(need).toBe(3);
+      for (const d of flank.dice ?? []) {
+        const worst = Math.max(...(d.dice ?? [d.value]));
+        expect(d.success).toBe(worst === 1 || (worst <= need && worst !== 6));
+      }
+    }
+    expect(tested).toBe(true);
+  });
 });

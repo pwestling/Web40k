@@ -10,7 +10,7 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure } from "../../core/con
  * Written from the paraphrased core rules notes in research/conquest-rules.md
  * (2.0, 2026). No rules text, profiles or points: the sample armies are
  * invented. Not covered yet: reinforcements (every regiment starts on the
- * table), flank re-rolls, characters and special rules
+ * table), characters and special rules
  * beyond Cleave, Support and Barrage.
  */
 
@@ -41,12 +41,21 @@ const resolveTarget: Expr = {
   ],
 };
 
+/** The attacker stands in one of the target's flank arcs. */
+const flanked: Expr = {
+  any: [
+    { query: { kind: "inArc", from: "target", to: "attacker", arc: "leftFlank" } },
+    { query: { kind: "inArc", from: "target", to: "attacker", arc: "rightFlank" } },
+  ],
+};
+
 /**
  * Hits on Volley or Clash or less; a natural 6 always misses and a natural 1
  * always hits. Defense on the higher of Defense (less Cleave) and Evasion: a
  * 1 is no automatic save, so D and E of 0 never save. Each failed defense is
  * a wound; each wound calls for a Resolve test, and each failed test is one
- * more wound. A charge from the rear fails every Resolve test.
+ * more wound. From a flank, passed Resolve tests are re-rolled; from the
+ * rear, every test fails.
  */
 function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Expr): Procedure {
   return {
@@ -78,9 +87,24 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
       {
         kind: "test",
         id: "resolve",
+        if: { not: flanked },
         compare: "atMost",
         target: resolveTarget,
         impossibleIf: { query: { kind: "inArc", from: "target", to: "attacker", arc: "rear" } },
+        alwaysFail: [6],
+        alwaysPass: [1],
+        roller: "defender",
+        passOn: "inputPlusFailures",
+      },
+      {
+        // From a flank, passed tests are re-rolled: the same as needing two dice to pass.
+        kind: "test",
+        id: "resolve_flanked",
+        if: flanked,
+        compare: "atMost",
+        target: resolveTarget,
+        dicePerInput: 2,
+        keep: "highest",
         alwaysFail: [6],
         alwaysPass: [1],
         roller: "defender",

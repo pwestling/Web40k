@@ -1,5 +1,6 @@
 import { baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
 import { modelSight } from "../los";
+import { inArc as blockArc } from "../regiment";
 import { footprintVisibility, inFootprint, modelDistance } from "../terrain";
 import type { GameState, Model, TerrainPiece, Unit, WeaponProfile } from "../types";
 import { bool, evaluate, num, resolve, type EvalContext } from "./expr";
@@ -571,6 +572,19 @@ export function tableGeometry(state: GameState, system?: GameSystem): NonNullabl
       const arc = system?.arcs?.find((x) => x.id === query.arc);
       const from = modelsOf(resolve(query.from, ctx), state)[0];
       if (!arc || !from) return false;
+      // A ranked block's arcs run from its corners, and a unit counts by the
+      // centre of its front edge (rank-and-flank flank and rear charges).
+      const fromSrc = sourceOf(resolve(query.from, ctx));
+      const toSrc = sourceOf(resolve(query.to, ctx));
+      if (fromSrc && toSrc && "modelIds" in fromSrc && "modelIds" in toSrc) {
+        const side = blockArc(state, fromSrc, toSrc);
+        if (side) {
+          const mid = ((((arc.from + arc.to) / 2) % 360) + 360) % 360;
+          // The arcs' angles run clockwise from ahead as below, which the block code calls the other side.
+          const named = mid < 45 || mid >= 315 ? "front" : mid < 135 ? "left" : mid < 225 ? "rear" : "right";
+          return side === named;
+        }
+      }
       return modelsOf(resolve(query.to, ctx), state).some((m) => {
         const dx = m.position.x - from.position.x;
         const dy = m.position.y - from.position.y;
