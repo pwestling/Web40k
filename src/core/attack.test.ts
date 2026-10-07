@@ -133,6 +133,19 @@ describe("turn sequence", () => {
     expect(s.turn).toMatchObject({ round: 1, activeSeat: 1, phase: 4 });
   });
 
+  it("attaches a leader to a unit, placing the leader last", () => {
+    let s = withTarget([trooper("m1", 0)]);
+    s = applyEvent(s, {
+      type: "unit/add",
+      unit: { id: "l", owner: "p2", name: "Leader", modelIds: [], formation: { kind: "skirmish" } },
+      models: [trooper("boss", 1, "4")],
+    });
+    s = applyEvent(s, { type: "unit/attach", id: "l", to: "t" });
+    expect(s.units.l).toBeUndefined();
+    expect(s.units.t?.modelIds).toEqual(["m1", "boss"]);
+    expect(s.models.boss?.unitId).toBe("t");
+  });
+
   it("hands a reconnecting player's seat and army to their new id", () => {
     let s = withTarget([trooper("m1", 0)]);
     s = applyEvent(s, { type: "player/join", player: { id: "p2", name: "B", color: "#f00", seat: 1 } });

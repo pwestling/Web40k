@@ -1,7 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { transformPositions } from "./formation";
-import type { GameState, Model, Unit } from "./types";
+import type { GameState, Model, Unit, UnitSheet } from "./types";
 
 /** Unit flags that last one turn; cleared when their owner's turn begins. */
 export const TURN_FLAGS = ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"];
@@ -64,6 +64,23 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         models[model.id] = { ...model, unitId: event.unit.id, phaseStart: model.position };
       const unit = { ...event.unit, modelIds: event.models.map((m) => m.id) };
       return { ...state, units: { ...state.units, [unit.id]: unit }, models };
+    }
+    case "unit/attach": {
+      const leader = state.units[event.id];
+      const body = state.units[event.to];
+      if (!leader || !body || leader === body) return state;
+      const { [event.id]: _gone, ...units } = state.units;
+      const models = { ...state.models };
+      for (const id of leader.modelIds) if (models[id]) models[id] = { ...models[id]!, unitId: body.id };
+      const sheet = body.sheet || leader.sheet ? mergeSheets(body.sheet, leader.sheet) : undefined;
+      const merged: Unit = {
+        ...body,
+        name: `${body.name} + ${leader.name}`,
+        // Leaders go last, so damage reaches them after the bodyguard.
+        modelIds: [...body.modelIds, ...leader.modelIds],
+        ...(sheet ? { sheet } : {}),
+      };
+      return { ...state, units: { ...units, [body.id]: merged }, models };
     }
     case "unit/remove": {
       const { [event.id]: unit, ...units } = state.units;
@@ -236,5 +253,15 @@ function claimPlayer(state: GameState, from: string, to: string): GameState {
     resources: { ...resources, [to]: res ?? { CP: 0, VP: 0 } },
     units,
     models,
+  };
+}
+
+function mergeSheets(a: UnitSheet | undefined, b: UnitSheet | undefined): UnitSheet {
+  const names = new Set((a?.abilities ?? []).map((x) => x.name));
+  return {
+    weapons: { ...b?.weapons, ...a?.weapons },
+    abilities: [...(a?.abilities ?? []), ...(b?.abilities ?? []).filter((x) => !names.has(x.name))],
+    keywords: [...new Set([...(a?.keywords ?? []), ...(b?.keywords ?? [])])],
+    ...(a?.points || b?.points ? { points: (a?.points ?? 0) + (b?.points ?? 0) } : {}),
   };
 }

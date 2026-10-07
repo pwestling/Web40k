@@ -20,6 +20,22 @@ const FLAGS: [string, string][] = [
   ["battleShocked", "Battle-shocked"],
 ];
 
+/** Turn a unit 15° around its centre (Q / E with the unit selected). */
+export function rotateUnit(unitId: string, dir: 1 | -1) {
+  const { game, dispatch } = useStore.getState();
+  const unit = game.units[unitId];
+  const alive = aliveModels(game, unit);
+  if (!unit || !alive.length) return;
+  const pivot = {
+    x: alive.reduce((a, m) => a + m.position.x, 0) / alive.length,
+    y: alive.reduce((a, m) => a + m.position.y, 0) / alive.length,
+  };
+  dispatch(
+    { type: "unit/move", id: unitId, pivot, turn: (dir * Math.PI) / 12, delta: { x: 0, y: 0 } },
+    unit.owner,
+  );
+}
+
 /** The selected unit's datasheet, state and actions. */
 export function UnitCard() {
   const game = useGame();
@@ -88,6 +104,12 @@ export function UnitCard() {
           <button onClick={() => roll("advance", 1)}>Advance (D6)</button>
           <button onClick={() => roll("charge", 2)}>Charge (2D6)</button>
           <button onClick={() => roll("battleshock", 2)}>Battle-shock test</button>
+          <button title="Rotate left (Q)" onClick={() => rotateUnit(unit.id, -1)}>
+            ⟲
+          </button>
+          <button title="Rotate right (E)" onClick={() => rotateUnit(unit.id, 1)}>
+            ⟳
+          </button>
           {status.advance !== undefined && (
             <button
               onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "advance", value: null }, as)}
@@ -175,6 +197,23 @@ export function UnitCard() {
             <ModelRow key={m.id} model={m} unit={unit} editable={canControl(unit.owner) && scrub === null} />
           ))}
         </ul>
+        {mine && (
+          <select
+            value=""
+            onChange={(e) =>
+              e.target.value && dispatch({ type: "unit/attach", id: unit.id, to: e.target.value }, as)
+            }
+          >
+            <option value="">Attach to unit (leaders)…</option>
+            {Object.values(game.units)
+              .filter((u) => u.owner === unit.owner && u.id !== unit.id)
+              .map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+          </select>
+        )}
         {mine && (
           <button
             className="danger"

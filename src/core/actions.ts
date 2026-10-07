@@ -29,6 +29,8 @@ export interface Layout {
  */
 export type Intent =
   | { type: "player/join"; player: Player }
+  /** Join a leader (or any unit) to another unit, which then moves, fights and takes damage as one. */
+  | { type: "unit/attach"; id: UnitId; to: UnitId }
   | { type: "player/claim"; player: PlayerId }
   | { type: "model/add"; model: Model }
   | { type: "model/move"; id: ModelId; to: Vec2; facing?: number }
@@ -53,6 +55,8 @@ export type Intent =
 /** Events are fully resolved and deterministic. */
 export type GameEvent =
   | { type: "player/join"; player: Player }
+  /** Join a leader (or any unit) to another unit, which then moves, fights and takes damage as one. */
+  | { type: "unit/attach"; id: UnitId; to: UnitId }
   /** A reconnecting peer takes over an earlier player's seat, units and counters. */
   | { type: "player/claim"; player: PlayerId; by: PlayerId }
   | { type: "model/add"; model: Model }

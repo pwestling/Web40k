@@ -6,7 +6,7 @@ import { useGame } from "./hooks";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
-  const { record, session, roomId, dispatch, view, setView, mode, role, game: liveGame } = useStore();
+  const { record, session, roomId, dispatch, view, setView, mode, role, game: liveGame, scrub } = useStore();
   const game = useGame();
   const canControl = useCanControl();
   const [count, setCount] = useState(2);
@@ -100,6 +100,7 @@ export function Hud() {
       )}
       <ol className="log">
         {record.events
+          .filter((e) => scrub === null || e.seq <= scrub)
           .slice(-40)
           .reverse()
           .map((e) => (
@@ -135,6 +136,8 @@ export function describe(
       return `${who} undid #${event.seq}`;
     case "unit/add":
       return `${who} deployed ${event.unit.name} (${event.models.length})`;
+    case "unit/attach":
+      return `${who} attached ${unitName(event.id)} to ${unitName(event.to)}`;
     case "unit/remove":
       return `${who} removed ${unitName(event.id)}`;
     case "unit/move":
