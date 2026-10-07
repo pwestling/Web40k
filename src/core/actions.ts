@@ -143,6 +143,8 @@ export interface ModelsMove {
   type: "models/move";
   /** `z` is the height of the base; omitted means unchanged. */
   moves: { id: ModelId; to: Vec2; z?: number }[];
+  /** Set when this pulls an over-long move back to its limit, for the log. */
+  snap?: number;
 }
 
 export type Rng = () => number;

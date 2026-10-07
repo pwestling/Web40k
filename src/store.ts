@@ -76,6 +76,8 @@ interface Store {
   measuring: boolean;
   /** Unit whose move and weapon ranges are drawn around its models. */
   ranges: UnitId | null;
+  /** Weapon whose range Ranges shows (default: the unit's longest). */
+  rangeWeapon: string | null;
   set(
     patch: Partial<
       Pick<
@@ -90,6 +92,7 @@ interface Store {
         | "plates"
         | "measuring"
         | "ranges"
+        | "rangeWeapon"
       >
     >,
   ): void;
@@ -157,6 +160,7 @@ export const useStore = create<Store>((set, get) => ({
   plates: true,
   measuring: false,
   ranges: null,
+  rangeWeapon: null,
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),

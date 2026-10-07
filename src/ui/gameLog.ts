@@ -134,7 +134,10 @@ function moveText(before: GameState, after: GameState, ids: string[]): string {
     const b = after.models[id];
     if (!a || !b) continue;
     unitId ??= a.unitId;
-    const d = Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y, (b.z ?? 0) - (a.z ?? 0));
+    // Measured as the unit card measures moves: across the table plus any climb.
+    const d =
+      Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y) +
+      Math.abs((b.z ?? 0) - (a.z ?? 0));
     far = Math.max(far, d);
   }
   const unit = unitId ? after.units[unitId] : undefined;
@@ -207,6 +210,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "model/move":
       return `${who} ${moveText(before, game, [event.id])}`;
     case "models/move":
+      if (event.snap !== undefined) {
+        const unitId = game.models[event.moves[0]?.id ?? ""]?.unitId;
+        return `${unitName(unitId ?? "")} snapped back to ${event.snap}"`;
+      }
       return `${who} ${moveText(
         before,
         game,
