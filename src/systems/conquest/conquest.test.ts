@@ -198,4 +198,31 @@ describe("Conquest", () => {
     }
     expect(bruised && broken).toBe(true);
   });
+
+  it("charges Inspired, then Impact attacks without using an action", () => {
+    let s = setup();
+    const colossus = unitNamed(s, "Ossuary Colossus");
+    const spears = unitNamed(s, "Shieldwall Spears");
+    s = toCentre(s, spears.id, 0.25);
+    s = toCentre(s, colossus.id, 0.25);
+    s = play(s, { type: "turn/next" }, "p1");
+    s = play(s, { type: "turn/next" }, "p1");
+    if (s.turn.activeSeat !== 1) s = play(s, { type: "turn/pass" }, "p1");
+    s = play(s, { type: "action/take", unitId: colossus.id, action: "activate" }, "p2");
+    expect(unitActions(s, colossus.id, { targetId: spears.id }).find((o) => o.def.id === "impact")?.ok).toBe(
+      false,
+    );
+    s = play(s, { type: "action/take", unitId: colossus.id, action: "charge" }, "p2");
+    expect(s.units[colossus.id]?.status).toMatchObject({ inspired: true, actionsTaken: 1 });
+    s = play(s, { type: "action/take", unitId: colossus.id, action: "impact", targetId: spears.id }, "p2");
+    const r = rng(5);
+    while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p2", r);
+    // Impact 4 from its one stand.
+    expect(step(s, "attacks")?.out).toBe(4);
+    s = play(s, { type: "procedure/clear" }, "p2");
+    expect(s.units[colossus.id]?.status?.actionsTaken).toBe(1);
+    expect(unitActions(s, colossus.id, { targetId: spears.id }).find((o) => o.def.id === "clash")?.ok).toBe(
+      true,
+    );
+  });
 });

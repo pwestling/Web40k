@@ -240,7 +240,7 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
         if (def.side === "inactive" && active) return "Only on the other player's turn";
       } else if (activations) {
         if (!acting) return "Activate the unit first";
-        if (taken >= budget) return "No actions left";
+        if (taken >= budget && !def.free) return "No actions left";
         if (pending && pending.reactor !== unit.id) return "Waiting on a reaction";
       } else {
         if (def.side === "active" && !active) return "Not your turn";
@@ -425,7 +425,7 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
     if (def.reactTo && next.pending) next = { ...next, pending: { ...next.pending, reactor: unit.id } };
   } else {
     const patch: Record<string, number | boolean> = {};
-    if (unit.status?.acting) patch.actionsTaken = Number(unit.status.actionsTaken ?? 0) + 1;
+    if (unit.status?.acting && !def.free) patch.actionsTaken = Number(unit.status.actionsTaken ?? 0) + 1;
     if (def.limit) patch[limitKey(def, ev)] = Number(unit.status?.[limitKey(def, ev)] ?? 0) + 1;
     if (def.move) {
       const inches = safeNum(def.move.distance, ctx) * inchesPerUnit(system);

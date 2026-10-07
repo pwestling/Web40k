@@ -17,6 +17,7 @@ type Stats = Record<"M" | "V" | "C" | "A" | "W" | "R" | "D", number> & {
   Range?: number;
   Cleave?: number;
   Support?: number;
+  Impact?: number;
   Type: "Infantry" | "Cavalry" | "Brute" | "Monster";
   Class: "Light" | "Medium" | "Heavy";
 };
@@ -63,7 +64,7 @@ function ironmarch(): ImportedRoster {
     regiment(
       "Iron Riders",
       3,
-      { M: 8, V: 1, C: 3, A: 4, W: 4, R: 3, D: 4, Cleave: 1, Type: "Cavalry", Class: "Heavy" },
+      { M: 8, V: 1, C: 3, A: 4, W: 4, R: 3, D: 4, Cleave: 1, Impact: 2, Type: "Cavalry", Class: "Heavy" },
       190,
     ),
   ];
@@ -87,13 +88,13 @@ function ashen(): ImportedRoster {
     regiment(
       "Grave Hounds",
       4,
-      { M: 9, V: 0, C: 3, A: 3, W: 5, R: 2, D: 2, E: 2, Type: "Brute", Class: "Medium" },
+      { M: 9, V: 0, C: 3, A: 3, W: 5, R: 2, D: 2, E: 2, Impact: 1, Type: "Brute", Class: "Medium" },
       170,
     ),
     regiment(
       "Ossuary Colossus",
       1,
-      { M: 6, V: 0, C: 3, A: 9, W: 16, R: 4, D: 3, Cleave: 2, Type: "Monster", Class: "Heavy" },
+      { M: 6, V: 0, C: 3, A: 9, W: 16, R: 4, D: 3, Cleave: 2, Impact: 4, Type: "Monster", Class: "Heavy" },
       240,
     ),
   ];

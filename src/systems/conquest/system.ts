@@ -10,7 +10,7 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure } from "../../core/con
  * Written from the paraphrased core rules notes in research/conquest-rules.md
  * (2.0, 2026). No rules text, profiles or points: the sample armies are
  * invented. Not covered yet: reinforcements (every regiment starts on the
- * table), Impact attacks, flank re-rolls, characters and special rules
+ * table), flank re-rolls, characters and special rules
  * beyond Cleave, Support and Barrage.
  */
 
@@ -99,6 +99,18 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
     ],
   };
 }
+
+/**
+ * After a charge that made contact: Impact(X) attacks from each front-rank
+ * stand, rolled like a clash (unverified: hits on Clash).
+ */
+const impact = attack(
+  "impact",
+  "Impact",
+  { op: "*", args: [ref("attacker.Impact"), frontStands("attacker")] },
+  "attacker.C",
+  ref("attacker.Cleave"),
+);
 
 /** Barrage shots from each front-rank stand. */
 const volley = attack(
@@ -190,6 +202,7 @@ export const conquest: GameSystem = {
     { id: "Range", name: "Range", short: "Rng", of: "model", type: "distance", default: 0 },
     { id: "Cleave", name: "Cleave", of: "model", type: "number", default: 0 },
     { id: "Support", name: "Support", of: "model", type: "number", default: 0 },
+    { id: "Impact", name: "Impact", of: "model", type: "number", default: 0 },
     { id: "Type", name: "Type", of: "model", type: "text" },
     { id: "Class", name: "Class", of: "model", type: "text" },
   ],
@@ -213,7 +226,7 @@ export const conquest: GameSystem = {
     { id: "defensible", name: "Defensible obstacle", cover: true },
   ],
   rules: [],
-  procedures: [volley, clash],
+  procedures: [volley, clash, impact],
   coreEffects: effects,
   actions: [
     {
@@ -243,10 +256,28 @@ export const conquest: GameSystem = {
       id: "charge",
       name: "Charge",
       by: "unit",
-      hint: "D6 + March at an enemy in the front arc",
+      hint: "D6 + March at an enemy in the front arc; a charge that lands is Inspired",
       if: notBroken,
       limit: { count: 1, per: "round" },
       sets: ["charged"],
+      // A charge that falls short loses it: clear Inspired on the card.
+      do: [{ do: "applyStatus", target: "self", status: "inspired" }],
+    },
+    {
+      id: "impact",
+      name: "Impact",
+      by: "unit",
+      hint: "Impact attacks after the charge lands; part of the charge",
+      free: true,
+      if: {
+        all: [
+          { hasFlag: "self", flag: "charged" },
+          { cmp: ">", a: ref("self.Impact"), b: 0 },
+        ],
+      },
+      target: { filter: within(1) },
+      limit: { count: 1, per: "round" },
+      procedure: "impact",
     },
     {
       id: "volley",
@@ -337,6 +368,7 @@ export const conquest: GameSystem = {
               "activate",
               "march",
               "charge",
+              "impact",
               "volley",
               "clash",
               "takeAim",

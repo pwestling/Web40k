@@ -426,6 +426,11 @@ export interface ActionDef {
    * other actions. Units without an activation take actions freely (40k).
    */
   activates?: Expr;
+  /**
+   * Taken as part of another action, without using one of the activation's
+   * actions (Conquest's Impact attacks come with the charge).
+   */
+  free?: boolean;
   /** Out-of-sequence actions that respond to an event (overwatch, reactions). */
   reactTo?: EventPattern;
   /** Eligibility, evaluated against the acting unit or player. */
