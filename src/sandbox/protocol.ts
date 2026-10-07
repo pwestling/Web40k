@@ -1,5 +1,7 @@
 import type { GameEvent, GameRecord, Intent, LoggedEvent } from "../core";
 import type { Rng } from "../core/actions";
+import type { SystemAdditions } from "../core/content/systems";
+import type { HookTable } from "../core/script";
 
 /**
  * Messages between the app and the package sandbox (a Worker started inside
@@ -22,7 +24,16 @@ export type FromSandbox =
 
 /** What a load reports: the code each package added, by system. */
 export interface Loaded {
-  packages: { hash: string; systems: string[]; procedures: string[]; actions: string[] }[];
+  packages: {
+    hash: string;
+    systems: string[];
+    procedures: string[];
+    actions: string[];
+    /** Data the app adds to the same systems on its side (core/content/systems.ts extendSystem). */
+    data: SystemAdditions;
+    /** Turn hooks, by procedure id, for the host to start (core/script.ts). */
+    hooks: HookTable;
+  }[];
   errors: { hash: string; error: string }[];
 }
 

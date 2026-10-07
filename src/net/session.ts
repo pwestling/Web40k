@@ -14,6 +14,7 @@ import {
   type LoggedEvent,
   type Rng,
 } from "../core";
+import { hookIntents } from "../core/script";
 import type { Check, NetMessage, SideMessage, Transport } from "./transport";
 
 /** Spectators receive the game like clients but never send intents. */
@@ -456,6 +457,7 @@ export class Session {
           if (event && this.role === "host")
             this.hostLog({ seq: lastSeq(this.record) + 1, by: from, at: this.now(), event });
           for (const [i, f] of this.waiting.splice(0)) this.hostApply(i, f);
+          this.runHooks();
         });
       return;
     }
@@ -463,7 +465,18 @@ export class Session {
     if (resolved) this.hostLog(resolved);
   }
 
+  /** Turn hooks an event set off, started one at a time once no rule is waiting (core/script.ts). */
+  private hooks: [Intent, string][] = [];
+
+  private runHooks(): void {
+    while (this.hooks.length && !this.resolving && !this.state.script && this.role === "host") {
+      const [intent, from] = this.hooks.shift()!;
+      this.hostApply(intent, from);
+    }
+  }
+
   private hostLog(resolved: LoggedEvent): void {
+    const before = this.state;
     const logged: LoggedEvent = { ...resolved, host: this.selfId };
     // The previous checkpoint's hash rides along with this event.
     const due = this.pendingCheck;
@@ -475,6 +488,8 @@ export class Session {
       logged,
       ...(hash !== undefined ? { check: { seq: due!, hash } } : {}),
     });
+    for (const intent of hookIntents(before, this.state, logged.event)) this.hooks.push([intent, logged.by]);
+    this.runHooks();
   }
 
   /** Compare the host's checksum with ours at the same point. */

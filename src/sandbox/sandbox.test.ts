@@ -9,7 +9,10 @@ import {
   type Intent,
   type LoggedEvent,
 } from "../core";
-import { currentSlot } from "../core/content/turn";
+import { evaluate } from "../core/content/expr";
+import { evalCtx } from "../core/content/play";
+import { getSystem, restoreSystems } from "../core/content/systems";
+import { currentSlot, systemOf } from "../core/content/turn";
 import "../systems";
 import { conquestModule } from "../systems/conquest/module";
 import { towModule } from "../systems/tow/module";
@@ -141,5 +144,33 @@ describe("the package sandbox", () => {
     const sixes = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r === 6).length : -1;
     expect(fallen()).toBe(6 - sixes);
     expect(t.sandbox.unitActions(unit.id, "p1")[0]!.available).toBe("Already used this battle");
+  });
+
+  it("loads a package's data rules, functions and turn hooks", async () => {
+    const t = table("tow-hand", (seat) => towModule.app!.sample(seat));
+    const source = `export const manifest = { id: "t.data", name: "Data", version: "1.0.0", api: 1, kind: "extension", systems: ["tow"], requires: [] };
+      export default {
+        rules: [{ id: "steady", name: "Steady", effects: [] }],
+        functions: { twice: (view, n) => n * 2 },
+        hooks: { phaseStart: { strategy: function* (ctx) { yield ctx.note("strategy hook"); } } },
+      };`;
+    const loaded = await t.sandbox.load([{ hash: "abcdef0123", source }]);
+    expect(loaded.errors).toEqual([]);
+    const pkg = loaded.packages[0]!;
+    expect(pkg.data.rules?.map((r) => r.id)).toEqual(["steady"]);
+    expect(pkg.hooks).toEqual({ phaseStart: { strategy: ["hook:abcdef01:phaseStart:strategy"] } });
+    expect(pkg.procedures).toContain("hook:abcdef01:phaseStart:strategy");
+    expect(getSystem("tow-hand").rules.some((r) => r.id === "steady")).toBe(true);
+    const state = t.state;
+    expect(evaluate({ call: "twice", args: [21] }, evalCtx(state, systemOf(state), {}))).toBe(42);
+    // The hook runs as the procedure it was registered under.
+    t.playBoxed({ type: "script/start", procedure: pkg.hooks.phaseStart!.strategy![0]!, args: {} }, "p1");
+    const last = t.record.events.at(-1)!.event;
+    expect(
+      last.type === "script/step" &&
+        last.events.some((e) => e.type === "log/note" && e.text === "strategy hook"),
+    ).toBe(true);
+    restoreSystems();
+    expect(getSystem("tow-hand").rules.some((r) => r.id === "steady")).toBe(false);
   });
 });

@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import type { GameRecord, Unit } from "../core";
 import { systemOf } from "../core/content/turn";
+import { extendSystem, restoreSystems } from "../core/content/systems";
+import { registerHooks, unregisterHooks } from "../core/script";
 import { setIntentRouter } from "../net/session";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
@@ -50,7 +52,15 @@ function sync(): void {
   sent = { record, seq: last };
 }
 
+/** Take the packages' data and hooks back off the app's systems. */
+function unload() {
+  restoreSystems();
+  for (const owner of hookOwners.splice(0)) unregisterHooks(owner);
+}
+const hookOwners: string[] = [];
+
 function stop(why: string) {
+  unload();
   sandbox = null;
   sent = null;
   setIntentRouter(null);
@@ -67,22 +77,23 @@ async function start(packages: { hash: string; source: string }[]): Promise<void
     sent = null;
     sync();
     const code: Record<string, string[]> = {};
-    for (const p of loaded.packages)
-      for (const s of p.systems) code[s] = [...(code[s] ?? []), ...p.procedures, ...p.actions];
+    for (const p of loaded.packages) {
+      for (const s of p.systems) {
+        code[s] = [...(code[s] ?? []), ...p.procedures, ...p.actions];
+        extendSystem(s, p.data);
+        registerHooks(s, p.hash, p.hooks);
+      }
+      hookOwners.push(p.hash);
+    }
     useSandbox.setState({
       status: "on",
       code,
       error: loaded.errors.length ? `A rules package didn't load: ${loaded.errors[0]!.error}` : null,
     });
+    // While a package changes a system, the sandbox (which has its code) resolves every intent in
+    // that game: any rule may now call package code, from data ({ call }) as well as from code.
     setIntentRouter((intent, from, state) => {
-      const mine = code[systemOf(state).id] ?? [];
-      const procedure =
-        intent.type === "script/start"
-          ? intent.procedure
-          : intent.type === "script/answer"
-            ? state.script?.procedure
-            : undefined;
-      if (!procedure || !mine.includes(procedure) || !sandbox) return null;
+      if (!code[systemOf(state).id] || !sandbox) return null;
       const box = sandbox;
       return (seed) => {
         sync();
@@ -107,6 +118,7 @@ export function usePackageSandbox(): void {
     void start(key.split(",").map((hash) => ({ hash, source: lib[hash]!.source })));
     return () => {
       sandbox?.stop();
+      unload();
       sandbox = null;
       sent = null;
       setIntentRouter(null);

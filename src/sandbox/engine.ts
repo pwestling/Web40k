@@ -10,9 +10,9 @@ import {
   type LoggedEvent,
 } from "../core";
 import { registerFunctions } from "../core/content/calls";
-import { listSystems } from "../core/content/systems";
+import { extendSystem, listSystems, type SystemAdditions } from "../core/content/systems";
 import { currentSlot, systemOf } from "../core/content/turn";
-import { gameView, registerCode } from "../core/script";
+import { gameView, hookProcedures, registerCode } from "../core/script";
 import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
 import type { CodeAction, PackageContents } from "../sdk";
@@ -50,7 +50,18 @@ export class SandboxEngine {
           .map((s) => s.id)
           .filter((id) => read.manifest.systems.some((d) => systemMatches(d, id)));
         const actions = (contents.actions ?? []).filter((a): a is CodeAction => "run" in a);
+        // Data the package adds: the same on both sides, so the app's previews and panels see it too.
+        const data: SystemAdditions = JSON.parse(
+          JSON.stringify({
+            rules: contents.rules ?? [],
+            actions: (contents.actions ?? []).filter((a) => !("run" in a)),
+            abilityTimings: contents.abilityTimings ?? [],
+          }),
+        );
+        const hooked = contents.hooks ? hookProcedures(hash.slice(0, 8), contents.hooks) : null;
         for (const system of systems) {
+          extendSystem(system, data);
+          if (hooked) registerCode(system, hooked.procedures);
           if (contents.procedures) registerCode(system, contents.procedures);
           if (contents.functions) registerFunctions(system, contents.functions);
           registerCode(system, Object.fromEntries(actions.map((a) => [a.id, a.run])));
@@ -62,8 +73,10 @@ export class SandboxEngine {
         out.packages.push({
           hash,
           systems,
-          procedures: Object.keys(contents.procedures ?? {}),
+          procedures: [...Object.keys(contents.procedures ?? {}), ...Object.keys(hooked?.procedures ?? {})],
           actions: actions.map((a) => a.id),
+          data,
+          hooks: hooked?.table ?? {},
         });
       } catch (e) {
         out.errors.push({ hash, error: e instanceof Error ? e.message : String(e) });

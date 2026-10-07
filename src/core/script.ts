@@ -1,8 +1,8 @@
-import type { Command, CodeProcedure, Ctx, GameView, RunResult } from "../sdk";
+import type { Command, CodeProcedure, Ctx, GameView, RunResult, TurnHooks } from "../sdk";
 import { viewRef } from "./content/calls";
 import { procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
-import type { GameEvent, Rng } from "./actions";
+import type { GameEvent, Intent, Rng } from "./actions";
 import { parseDice, rollDice } from "./dice";
 import { tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
@@ -320,4 +320,86 @@ export function gameView(state: GameState, module: Id): GameView {
     state,
   };
   return view;
+}
+
+/** Turn hooks by system: which procedures (by id) run when phases and rounds start and end. */
+export interface HookTable {
+  phaseStart?: Record<Id, Id[]>;
+  phaseEnd?: Record<Id, Id[]>;
+  roundStart?: Id[];
+  activationEnd?: Id[];
+}
+
+const hooks = new Map<Id, Map<string, HookTable>>();
+
+/** A module's or package's turn hooks (`owner` keeps each one's apart, so a package's can be taken off again). */
+export function registerHooks(system: Id, owner: string, table: HookTable): void {
+  const bySystem = hooks.get(system) ?? new Map<string, HookTable>();
+  bySystem.set(owner, table);
+  hooks.set(system, bySystem);
+}
+
+export function unregisterHooks(owner: string): void {
+  for (const bySystem of hooks.values()) bySystem.delete(owner);
+}
+
+/**
+ * A module's TurnHooks as procedures: each gets an id (`hook:<owner>:phaseStart:shooting`),
+ * for registerCode, and the table that names them, for registerHooks.
+ */
+export function hookProcedures(
+  owner: string,
+  h: TurnHooks,
+): { procedures: Record<Id, CodeProcedure>; table: HookTable } {
+  const procedures: Record<Id, CodeProcedure> = {};
+  const table: HookTable = {};
+  const add = (key: string, proc: CodeProcedure) => {
+    const id = `hook:${owner}:${key}`;
+    procedures[id] = proc;
+    return id;
+  };
+  for (const kind of ["phaseStart", "phaseEnd"] as const) {
+    const byPhase = h[kind];
+    if (!byPhase) continue;
+    table[kind] = Object.fromEntries(
+      Object.entries(byPhase).map(([phase, p]) => [phase, [add(`${kind}:${phase}`, p)]]),
+    );
+  }
+  if (h.roundStart) table.roundStart = [add("roundStart", h.roundStart)];
+  if (h.activationEnd) table.activationEnd = [add("activationEnd", h.activationEnd)];
+  return { procedures, table };
+}
+
+/**
+ * The hook procedures an event sets off (phase end, round start, phase start,
+ * activation end, in that order), as intents the host starts one after
+ * another (net/session.ts). Each gets `{ phase, round, player }`.
+ */
+export function hookIntents(before: GameState, after: GameState, event: GameEvent): Intent[] {
+  const bySystem = hooks.get(systemOf(after).id);
+  if (!bySystem?.size || !event.type.startsWith("turn/") || event.type === "turn/prev") return [];
+  const tables = [...bySystem.values()];
+  const active = (s: GameState) =>
+    Object.values(s.players).find((p) => p.seat === s.turn.activeSeat)?.id ?? "";
+  const out: Intent[] = [];
+  const start = (ids: Id[] | undefined, s: GameState, phase: Id | undefined) => {
+    for (const procedure of ids ?? [])
+      out.push({
+        type: "script/start",
+        procedure,
+        args: { ...(phase ? { phase } : {}), round: s.turn.round, player: active(s) },
+      });
+  };
+  if (event.type === "turn/endActivation")
+    for (const t of tables) start(t.activationEnd, before, currentSlot(before)?.id);
+  const was = currentSlot(before)?.id;
+  const now = currentSlot(after)?.id;
+  const moved =
+    before.turn.round !== after.turn.round || before.turn.activeSeat !== after.turn.activeSeat || was !== now;
+  if (!moved) return out;
+  if (before.turn.round > 0 && was) for (const t of tables) start(t.phaseEnd?.[was], before, was);
+  if (after.turn.round > 0 && after.turn.round !== before.turn.round)
+    for (const t of tables) start(t.roundStart, after, now);
+  if (after.turn.round > 0 && now) for (const t of tables) start(t.phaseStart?.[now], after, now);
+  return out;
 }
