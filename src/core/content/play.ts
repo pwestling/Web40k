@@ -7,6 +7,7 @@ import {
   type ProcedureRun,
   type RoleRef,
   type RunEnv,
+  type Outcome,
 } from "./runner";
 import {
   inchesPerUnit,
@@ -517,14 +518,19 @@ export function setRun(state: GameState, run: ProcedureRun): GameState {
 function finishRun(state: GameState): GameState {
   const proc = state.procedure;
   if (!proc || proc.applied) return state;
+  const applied = applyRunOutcomes(state, proc.run.outcomes);
+  return { ...applied, procedure: { ...proc, applied: true } };
+}
+
+/** Apply a run's table changes, with each model's wounds from its profile. */
+export function applyRunOutcomes(state: GameState, outcomes: Outcome[]): GameState {
   const system = systemOf(state);
   const maxWounds = (id: string) => {
     const m = state.models[id];
     const w = Number(readCharacteristics(system, "model", m?.profile?.chars).W ?? 1);
     return w > 0 ? w : 1;
   };
-  const applied = applyOutcomes(state, proc.run.outcomes, maxWounds);
-  return { ...applied, procedure: { ...proc, applied: true } };
+  return applyOutcomes(state, outcomes, maxWounds);
 }
 
 /**

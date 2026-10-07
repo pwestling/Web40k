@@ -1,5 +1,6 @@
 import type { GameSystem, Id } from "../core/content/schema";
 import type { GameState } from "../core/types";
+import type { Outcome, RoleRef } from "../core/content/runner";
 
 /**
  * The game module API, version 1 (see the game modules spec, linked from
@@ -114,7 +115,7 @@ export type Command =
   | { cmd: "roll"; dice: string; label?: string; unitId?: Id; need?: number }
   | { cmd: "note"; text: string }
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
-  | { cmd: "run"; procedure: Id; roles: Record<string, Id> }
+  | { cmd: "run"; procedure: Id; roles: Record<string, Id | RoleRef> }
   | { cmd: "emit"; event: { type: string } & Record<string, unknown> }
   | { cmd: "set"; key: string; value: unknown };
 
@@ -128,7 +129,20 @@ export interface Ctx {
   /** A line in the game log. */
   note(text: string): Command;
   ask(player: Id, question: string, options: { id: Id; label: string }[]): Command;
-  run(procedure: Id, roles: Record<string, Id>): Command;
+  /**
+   * Run one of the system's data procedures (an attack sequence, a test) to
+   * the end with the host's dice: a unit id fills a role, or pass a RoleRef
+   * for a weapon, model or player. Reaction windows take their default
+   * answer. Its table changes are applied, and the result says what each
+   * step rolled.
+   */
+  run(procedure: Id, roles: Record<string, Id | RoleRef>): Command;
   emit(event: { type: string } & Record<string, unknown>): Command;
   set(key: string, value: unknown): Command;
+}
+
+/** What `ctx.run` hands back: each step's tokens in and out and its successes, and the table changes made. */
+export interface RunResult {
+  steps: Record<Id, { in: number; out: number; successes?: number; dice?: number[] }>;
+  outcomes: Outcome[];
 }

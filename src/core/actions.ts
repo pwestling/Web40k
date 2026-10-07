@@ -9,7 +9,7 @@ import {
   unitActions,
   type ActionTaken,
 } from "./content/play";
-import { advance, respond, type ProcedureRun } from "./content/runner";
+import { advance, respond, type Outcome, type ProcedureRun } from "./content/runner";
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
@@ -241,6 +241,8 @@ export type GameEvent =
   | { type: "undo"; seq: number }
   | ScriptStep
   | ModuleSet
+  /** A data procedure's table changes, run from code (`ctx.run`). */
+  | { type: "procedure/outcomes"; outcomes: Outcome[] }
   | LogNote;
 
 /** Move every model in a unit as one rigid block: rotate by `turn` radians

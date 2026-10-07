@@ -1,6 +1,6 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
-import { applyAction, endReaction, setRun } from "./content/play";
+import { applyAction, applyRunOutcomes, endReaction, setRun } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
@@ -377,6 +377,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "log/note":
       return state;
+    case "procedure/outcomes":
+      return applyRunOutcomes(state, event.outcomes);
     case "module/set": {
       const mine = { ...state.modules?.[event.module], [event.key]: event.value };
       return { ...state, modules: { ...state.modules, [event.module]: mine } };

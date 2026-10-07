@@ -1,4 +1,6 @@
-import type { Command, CodeProcedure, Ctx, GameView } from "../sdk";
+import type { Command, CodeProcedure, Ctx, GameView, RunResult } from "../sdk";
+import { procedureEnv } from "./content/play";
+import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
 import type { GameEvent, Rng } from "./actions";
 import { parseDice, rollDice } from "./dice";
 import { tableGeometry, unitView, type UnitView } from "./content/runtime";
@@ -128,7 +130,7 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
         // Replaying: same command, same result.
         if (results[i]!.command !== key) return stop(`"${script.procedure}" behaved differently on replay`);
         input = results[i]!.value;
-        state = replayEffect(state, cmd);
+        for (const e of replayEvents(cmd, input, script)) state = applyEventRef.fn(state, e);
         continue;
       }
       if (cmd.cmd === "ask") {
@@ -151,7 +153,7 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
       const { value, emitted } = perform(cmd, rng, script, state);
       results.push(value === undefined ? { command: key } : { command: key, value });
       events.push(...emitted);
-      for (const e of emitted) state = replayEffect(state, e);
+      for (const e of emitted) if (e.type !== "dice/roll") state = applyEventRef.fn(state, e);
       input = value;
     }
   } catch (e) {
@@ -190,27 +192,58 @@ function perform(
       };
     }
     case "emit":
-      return { emitted: [cmd.event as GameEvent] };
+    case "set":
+      return { emitted: replayEvents(cmd, undefined, script) };
     case "note":
       return { emitted: [{ type: "log/note", text: cmd.text }] };
-    case "set":
-      return { emitted: [{ type: "module/set", module: script.system, key: cmd.key, value: cmd.value }] };
-    case "run":
-      throw new Error("ctx.run is not supported yet");
+    case "run": {
+      const env = { ...procedureEnv(state, rng), autoAnswer: true };
+      const roles: Record<string, RoleRef> = {};
+      for (const [k, v] of Object.entries(cmd.roles)) roles[k] = typeof v === "string" ? { unit: v } : v;
+      let run = startRun(env, cmd.procedure, roles);
+      for (let i = 0; !run.done && i < 100; i++) run = advance(env, run);
+      if (!run.done) throw new Error(`"${cmd.procedure}" didn't finish`);
+      const steps: RunResult["steps"] = {};
+      for (const r of run.records)
+        steps[r.id] = {
+          in: r.in,
+          out: r.out,
+          ...(r.successes !== undefined ? { successes: r.successes } : {}),
+          ...(r.dice?.length ? { dice: r.dice.map((d) => d.value) } : {}),
+        };
+      const value: RunResult = { steps, outcomes: run.outcomes };
+      // "Battle-shock test: test 0/1" in the log, like a procedure run from the panel.
+      const rolled = run.records
+        .filter((r) => r.dice?.length)
+        .map((r) => `${r.id} ${r.successes ?? 0}/${r.in}`);
+      const name = findProcedure(env.system, cmd.procedure).name ?? cmd.procedure;
+      const note: GameEvent = {
+        type: "log/note",
+        text: `${name}${rolled.length ? `: ${rolled.join(", ")}` : ""}`,
+      };
+      return { value, emitted: [note, ...replayEvents(cmd, value, script)] };
+    }
     case "ask":
       throw new Error("unreachable");
   }
 }
 
-/** Re-apply what a replayed command did, so later reads see it. */
-function replayEffect(state: GameState, x: Command | GameEvent): GameState {
-  // Imported lazily: the reducer imports this module for its event types.
-  if ("cmd" in x) {
-    if (x.cmd === "emit") return applyEventRef.fn(state, x.event as GameEvent);
-    return state;
+/**
+ * The events a command emitted, rebuilt from the command and its recorded
+ * result, so a replay sees the table as it was. Rolls change nothing; a data
+ * procedure's changes are in its result.
+ */
+function replayEvents(cmd: Command, value: unknown, script: ScriptState): GameEvent[] {
+  switch (cmd.cmd) {
+    case "emit":
+      return [cmd.event as GameEvent];
+    case "set":
+      return [{ type: "module/set", module: script.system, key: cmd.key, value: cmd.value }];
+    case "run":
+      return [{ type: "procedure/outcomes", outcomes: (value as RunResult).outcomes }];
+    default:
+      return [];
   }
-  if (x.type === "dice/roll") return state;
-  return applyEventRef.fn(state, x);
 }
 
 /** Set by the reducer, which can't be imported here without a cycle. */

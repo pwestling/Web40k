@@ -424,6 +424,22 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return "";
     case "log/note":
       return event.text;
+    case "procedure/outcomes": {
+      const lost = event.outcomes
+        .filter((o) => o.kind === "wounds")
+        .reduce((n, o) => n + (o.kind === "wounds" ? o.lost : 0), 0);
+      const parts = event.outcomes.flatMap((o) =>
+        o.kind === "status"
+          ? [`${unitName(o.unitId)} ${o.value ? "is" : "is no longer"} ${o.status}`]
+          : o.kind === "destroy"
+            ? [`${unitName(o.unitId)} destroyed`]
+            : o.kind === "note" || o.kind === "reminder"
+              ? [o.text]
+              : [],
+      );
+      if (lost) parts.unshift(`${lost} ${lost === 1 ? "wound" : "wounds"} lost`);
+      return parts.join(", ");
+    }
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }

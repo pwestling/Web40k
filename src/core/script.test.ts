@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { CodeProcedure } from "../sdk";
+import type { CodeProcedure, RunResult } from "../sdk";
+import "../systems";
+import { spawnIntents } from "../systems/wh40k/deploy";
+import { sampleRoster } from "../systems/wh40k/sample";
 import {
   appendEvent,
   createInitialState,
@@ -47,7 +50,19 @@ const fickle: CodeProcedure = function* (ctx) {
   yield ctx.ask("p1", "Go on?", [{ id: "yes", label: "Yes" }]);
 };
 
-registerCode(SYSTEM, { duel, fickle });
+/** Calls a data procedure from code: a Battle-shock test, then asks, so the run is replayed. */
+const shock: CodeProcedure = function* (ctx, args) {
+  const r = (yield ctx.run("battleShockTest", { unit: String(args.unit) })) as RunResult;
+  yield ctx.set("shockDice", r.steps.test?.dice ?? []);
+  yield ctx.ask("p1", "Seen it?", [{ id: "ok", label: "OK" }]);
+  // After the answer the run is replayed: its outcome is still on the table.
+  yield ctx.set(
+    "shockedAfterReplay",
+    Boolean(ctx.view.state.units[String(args.unit)]?.status?.battleShocked),
+  );
+};
+
+registerCode(SYSTEM, { duel, fickle, shock });
 
 function game(): GameRecord {
   let record = createRecord(createInitialState());
@@ -136,5 +151,29 @@ describe("code procedures", () => {
     const fresh = host(game(), { type: "script/start", procedure: "nope" }, "p1")!;
     const step = fresh.events.at(-1)!.event;
     expect(step.type === "script/step" && step.error).toMatch(/No procedure/);
+  });
+
+  it("ctx.run plays a data procedure with the host's dice and applies its outcomes", () => {
+    let record = game();
+    for (const i of spawnIntents(stateAt(record), "p1", sampleRoster(0).units, "p1", "army"))
+      record = host(record, i, "p1")!;
+    const unit = Object.values(stateAt(record).units)[0]!;
+    // Seed until a failed test, so the outcome (battle-shocked) shows.
+    for (let seed = 1; seed < 50; seed++) {
+      let r = host(
+        record,
+        { type: "script/start", procedure: "shock", args: { unit: unit.id } },
+        "p1",
+        seed,
+      )!;
+      const own = () => (stateAt(r).modules?.[SYSTEM] ?? {}) as Record<string, unknown>;
+      expect((own().shockDice as number[]).length).toBe(1);
+      const shocked = Boolean(stateAt(r).units[unit.id]!.status?.battleShocked);
+      r = host(r, { type: "script/answer", answer: "ok" }, "p1", seed + 100)!;
+      expect(stateAt(r).script).toBeNull();
+      expect(own().shockedAfterReplay).toBe(shocked);
+      if (shocked) return;
+    }
+    throw new Error("never failed a Battle-shock test");
   });
 });
