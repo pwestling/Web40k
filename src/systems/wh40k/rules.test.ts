@@ -8,7 +8,6 @@ import {
   objectiveControl,
   suggestAttack,
   unitSight,
-  woundTarget,
 } from "./rules";
 
 const m = (
@@ -87,16 +86,6 @@ function table(): GameState {
 }
 
 describe("40k suggestions", () => {
-  it("wounds by comparing S and T", () => {
-    expect([
-      woundTarget(8, 4),
-      woundTarget(5, 4),
-      woundTarget(4, 4),
-      woundTarget(3, 4),
-      woundTarget(2, 4),
-    ]).toEqual([2, 3, 4, 5, 6]);
-  });
-
   it("counts models in range, rapid fire, anti, AP and feel no pain", () => {
     const s = suggestAttack(table(), "a", "rifle", "t")!;
     expect(s.inRange).toBe(1);
@@ -110,7 +99,7 @@ describe("40k suggestions", () => {
 
   it("uses dice attacks, melta and the invulnerable save", () => {
     const s = suggestAttack(table(), "a", "melta", "t")!;
-    expect(s.spec.attacks).toBe("1D3");
+    expect(s.spec.attacks).toBe("D3");
     expect(s.spec.damage).toBe("D6+2");
     expect(s.spec.save).toBe(5);
   });

@@ -99,11 +99,11 @@ describe("attack sequence", () => {
   it("puts damage on a wounded model first, loses excess and rolls feel no pain per wound", () => {
     let state = withTarget([trooper("m1", 0, "3"), trooper("m2", 2, "3")]);
     state = applyEvent(state, { type: "model/wounds", id: "m2", woundsLost: 2, destroyed: false });
-    const attack = {
-      ...startAttack({ ...spec, damage: "3", fnp: 5 }, faces()),
-      stage: "damage" as const,
-      unsaved: 2,
-    };
+    let attack = startAttack({ ...spec, attacks: "2", damage: "3", fnp: 5 }, faces(), state);
+    attack = rollStage(state, attack, faces(6, 6)); // 2 hits
+    attack = rollStage(state, attack, faces(6, 6)); // 2 wounds
+    attack = rollStage(state, attack, faces(1, 1)); // 2 unsaved
+    expect(attack.stage).toBe("damage");
     // m2 has 1 wound left: one FNP die (fails); m1 takes 3: dice 5, 1, 1 → loses 2.
     const done = rollStage(state, attack, faces(2, 5, 1, 1));
     expect(done.damage).toEqual([

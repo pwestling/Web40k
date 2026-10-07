@@ -4,8 +4,8 @@
  * text) and suggest numbers for the attack sequence and table checks.
  * Every suggestion can be edited by the players: rules are advisory.
  *
- * The longer-term plan is for the data-driven GameSystem in
- * src/core/content to drive this; this module is the hand-written stand-in.
+ * The attack numbers come from the data-driven GameSystem in src/core/content
+ * (see suggestAttack); the table checks here are still hand-written.
  */
 import {
   baseToBaseDistance,
@@ -14,6 +14,7 @@ import {
   modelSight,
   moveCrossesWall,
   PHASES,
+  previewAttack,
   verticalGap,
   whollyWithin,
   type TerrainCategory,
@@ -23,7 +24,6 @@ import {
   type TerrainPiece,
   type Unit,
   type Vec2,
-  type WeaponProfile,
 } from "../../core";
 
 /** 11th edition values, from the research notes. */
@@ -63,59 +63,9 @@ export function unitDistance(a: Model[], b: Model[]): number {
   return best;
 }
 
-/** A weapon keyword with its parameter, e.g. "Sustained Hits 2" → 2. */
-export function keywordValue(weapon: WeaponProfile, name: string): number | null {
-  const re = new RegExp(`^${name}\\s*(D?\\d+)?`, "i");
-  for (const k of weapon.keywords) {
-    const m = re.exec(k.trim());
-    if (m) return m[1] ? (num(m[1]) ?? 1) : 1;
-  }
-  return null;
-}
-
 export function hasKeyword(keywords: string[], name: string): boolean {
   const n = name.toLowerCase();
   return keywords.some((k) => k.trim().toLowerCase() === n);
-}
-
-/** "Anti-Infantry 4+" against a target with that keyword → 4. */
-export function antiValue(weapon: WeaponProfile, targetKeywords: string[]): number | null {
-  let best: number | null = null;
-  for (const k of weapon.keywords) {
-    const m = /^anti-(.+?)\s+(\d)\+?$/i.exec(k.trim());
-    if (m && hasKeyword(targetKeywords, m[1]!)) best = Math.min(best ?? 7, Number(m[2]));
-  }
-  return best;
-}
-
-/** S vs T: double or more 2+, more 3+, equal 4+, less 5+, half or less 6+. */
-export function woundTarget(s: number, t: number): number {
-  if (s >= 2 * t) return 2;
-  if (s > t) return 3;
-  if (s === t) return 4;
-  if (s * 2 <= t) return 6;
-  return 5;
-}
-
-/** Invulnerable save from the INV characteristic or an ability that names one. */
-export function invulnerable(model: Model, unit: Unit): number | null {
-  const inv = num(model.profile?.chars.INV);
-  if (inv) return inv;
-  for (const a of unit.sheet?.abilities ?? []) {
-    if (/invulnerable/i.test(a.name) || /invulnerable save/i.test(a.text)) {
-      const m = /(\d)\+/.exec(`${a.name} ${a.text}`);
-      if (m) return Number(m[1]);
-    }
-  }
-  return null;
-}
-
-export function feelNoPain(unit: Unit): number | null {
-  for (const a of unit.sheet?.abilities ?? []) {
-    const m = /feel no pain\s*(\d)\+/i.exec(`${a.name} ${a.text}`);
-    if (m) return Number(m[1]);
-  }
-  return null;
 }
 
 /** Models of the attacking unit that carry `weaponId`, once per copy carried. */
@@ -160,10 +110,21 @@ export interface AttackSuggestion {
   sight: UnitSight;
 }
 
+/** What a step is called in notes. */
+const STEP_NOUN: Record<string, string> = {
+  attacks: "attacks",
+  hit: "hit roll",
+  wound: "wound roll",
+  save: "save",
+  damage: "damage",
+};
+
 /**
- * Work out a weapon's attack against a target unit from the imported
- * characteristics and the table: models in range, keywords, S vs T, AP,
- * cover and invulnerable saves.
+ * Work out a weapon's attack against a target unit. The numbers come from
+ * the 40k GameSystem data run through the procedure runner (models in range,
+ * weapon keywords, S vs T, AP, invulnerable saves, feel no pain); this
+ * module supplies what it sees on the table: line of sight, cover, hidden
+ * models and higher ground.
  */
 export function suggestAttack(
   state: GameState,
@@ -175,133 +136,41 @@ export function suggestAttack(
   const target = state.units[targetId];
   const weapon = attacker?.sheet?.weapons[weaponId];
   if (!attacker || !target || !weapon) return null;
-  const notes: string[] = [];
-  const targets = aliveModels(state, target);
-  const first = targets[0];
-  const range = weapon.kind === "melee" ? ENGAGEMENT_RANGE : (num(weapon.chars.RANGE) ?? 0);
   const all = carriers(state, attacker, weaponId);
-  const shooters = all.filter((m) => distanceToUnit(m, targets) <= range + 1e-6);
-  const halfRange = shooters.filter((m) => distanceToUnit(m, targets) <= range / 2 + 1e-6).length;
-  const count = shooters.length;
-  if (count < all.length) notes.push(`${count} of ${all.length} models in range (${range}")`);
-
-  // Attacks: per-model A, plus rapid fire and blast.
-  const a = (weapon.chars.A ?? "1").replace(/\s/g, "").toUpperCase();
-  const dm = /^(\d*)D(\d+)([+-]\d+)?$/.exec(a);
-  let dice = 0;
-  let sides = 6;
-  let flat: number;
-  if (dm) {
-    dice = (dm[1] ? Number(dm[1]) : 1) * count;
-    sides = Number(dm[2]);
-    flat = (dm[3] ? Number(dm[3]) : 0) * count;
-  } else flat = (num(a) ?? 1) * count;
-  const rapid = keywordValue(weapon, "Rapid Fire");
-  if (rapid && halfRange > 0) {
-    flat += rapid * halfRange;
-    notes.push(`Rapid fire: +${rapid * halfRange} attacks within half range`);
-  }
-  if (keywordValue(weapon, "Blast") && count > 0) {
-    const extra = Math.floor(targets.length / 5) * count;
-    if (extra) notes.push(`Blast: +${extra} attacks`);
-    flat += extra;
-  }
-  const attacks = dice ? `${dice}D${sides}${flat ? `+${flat}` : ""}` : String(flat);
-
-  // Hit.
-  const torrent = keywordValue(weapon, "Torrent") !== null;
-  const skill = num(weapon.kind === "melee" ? weapon.chars.WS : weapon.chars.BS);
-  let hitMod = 0;
-  if (keywordValue(weapon, "Heavy") && !attacker.status?.moved) {
-    hitMod += 1;
-    notes.push("Heavy: +1 to hit (unit has not moved)");
-  }
-  const sustained = keywordValue(weapon, "Sustained Hits") ?? 0;
-  const lethal = keywordValue(weapon, "Lethal Hits") !== null;
-  if (torrent) notes.push("Torrent: hits automatically");
-
-  // Wound.
-  const s = num(weapon.chars.S) ?? 4;
-  const t = num(first?.profile?.chars.T) ?? 4;
-  let woundMod = 0;
-  if (keywordValue(weapon, "Lance") && attacker.status?.charged) {
-    woundMod += 1;
-    notes.push("Lance: +1 to wound after charging");
-  }
-  const anti = antiValue(weapon, target.sheet?.keywords ?? []);
-  if (anti) notes.push(`Anti: critical wounds on ${anti}+`);
-  const twin = keywordValue(weapon, "Twin-linked") !== null;
-  const devastating = keywordValue(weapon, "Devastating Wounds") !== null;
-
-  // Save: armour modified by AP and cover, or the invulnerable save if better.
-  const ap = num(weapon.chars.AP) ?? 0;
-  const sv = num(first?.profile?.chars.SV) ?? 7;
+  const reach = previewAttack(state, attackerId, weaponId, targetId);
+  if (!reach) return null;
+  const inRange = new Set(reach.members);
+  const shooters = all.filter((m) => inRange.has(m.id));
+  const count = reach.members.length;
   const sight = unitSight(state, shooters.length ? shooters : all, target);
-  const ignoresCover = keywordValue(weapon, "Ignores Cover") !== null;
+  const preview = previewAttack(state, attackerId, weaponId, targetId, {
+    cover: sight.visible > 0 && sight.inCover >= sight.visible,
+    higherGround: sight.higherGround,
+  })!;
+  const { spec } = preview;
+
+  const notes: string[] = [];
+  const range = weapon.kind === "melee" ? ENGAGEMENT_RANGE : (num(weapon.chars.RANGE) ?? 0);
+  if (count < all.length) notes.push(`${count} of ${all.length} models in range (${range}")`);
+  for (const [step, names] of Object.entries(preview.fired))
+    for (const name of names)
+      if (name === "Cover") notes.push("Target in cover: −1 to hit");
+      else if (name === "Higher ground")
+        notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
+      else notes.push(`${name}: ${STEP_NOUN[step] ?? step}`);
+  const ignoresCover = preview.weaponRules.some((r) => r.rule === "ignoresCover");
   const cover =
     weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;
-  let save = sv - ap;
-  if (cover && state.settings.cover === "save") {
-    // Cover does not improve a 3+ or better save against AP 0.
-    if (!(ap === 0 && sv <= 3)) {
-      save -= 1;
-      notes.push("Target in cover: +1 to save");
-    }
-  } else if (cover) {
-    hitMod -= 1;
-    notes.push("Target in cover: −1 to hit");
-  }
-  if (weapon.kind === "ranged" && sight.higherGround) {
-    hitMod += 1;
-    notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
-  }
+  if (cover && state.settings.cover === "save")
+    notes.push("Target in cover: +1 to save (not 3+ against AP 0)");
   if (weapon.kind === "ranged" && sight.visible === 0) notes.push("No target model is visible");
   if (sight.hidden)
     notes.push(
       `${sight.hidden} target model(s) Hidden in dense terrain (only visible within ${HIDDEN_RANGE}")`,
     );
-  const inv = first ? invulnerable(first, target) : null;
-  if (inv && inv < save) {
-    save = inv;
-    notes.push(`Invulnerable save ${inv}+`);
-  }
+  if (spec.fnp) notes.push(`Feel no pain ${spec.fnp}+`);
+  if (preview.reminders.length) notes.push(`Check by hand: ${preview.reminders.join(", ")}`);
 
-  // Damage.
-  let damage = (weapon.chars.D ?? "1").replace(/\s/g, "");
-  const melta = keywordValue(weapon, "Melta");
-  if (melta && halfRange > 0 && halfRange === count) {
-    damage = addBonus(damage, melta);
-    notes.push(`Melta: +${melta} damage within half range`);
-  }
-  const fnp = feelNoPain(target);
-  if (fnp) notes.push(`Feel no pain ${fnp}+`);
-  if (weapon.keywords.some((k) => /precision|hazardous|indirect|pistol|assault|extra attacks/i.test(k)))
-    notes.push(
-      `Check by hand: ${weapon.keywords.filter((k) => /precision|hazardous|indirect|pistol|assault|extra attacks/i.test(k)).join(", ")}`,
-    );
-
-  const spec: AttackSpec = {
-    attackerUnitId: attackerId,
-    targetUnitId: targetId,
-    weaponId,
-    weaponName: weapon.name,
-    kind: weapon.kind,
-    attacks,
-    hit: torrent ? null : (skill ?? 4),
-    hitMod,
-    critHit: 6,
-    rerollHits: "none",
-    sustained,
-    lethal,
-    wound: woundTarget(s, t),
-    woundMod,
-    critWound: anti ?? 6,
-    rerollWounds: twin ? "failed" : "none",
-    devastating,
-    save: save >= 7 ? null : Math.max(2, save),
-    damage,
-    fnp,
-  };
   return {
     spec,
     notes,
@@ -310,16 +179,8 @@ export function suggestAttack(
     visible: sight.visible,
     inCover: sight.inCover,
     sight,
-    targetModels: targets.length,
+    targetModels: aliveModels(state, target).length,
   };
-}
-
-function addBonus(dice: string, bonus: number): string {
-  const m = /^(.*?)([+-]\d+)?$/.exec(dice);
-  if (!m) return dice;
-  if (!/d/i.test(m[1]!)) return String((num(dice) ?? 0) + bonus);
-  const b = (m[2] ? Number(m[2]) : 0) + bonus;
-  return `${m[1]}${b ? `+${b}` : ""}`;
 }
 
 // ---------------------------------------------------------------------------

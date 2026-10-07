@@ -1,11 +1,30 @@
 import type { Rng } from "./actions";
-import { parseDice, rollDice } from "./dice";
-import type { GameState, Model, ModelId, UnitId } from "./types";
+import {
+  advance,
+  averageSum,
+  getSystem,
+  nextStep,
+  parseDiceSum,
+  previewRun,
+  startRun,
+  type DamagePlan,
+  type PoolPlan,
+  type ProcedureRun,
+  type RoleRef,
+  type RuleRef,
+  type RunEnv,
+  type StartOptions,
+  type StepRecord,
+  type TestPlan,
+} from "./content";
+import { createInitialState, type GameState, type Model, type ModelId, type UnitId } from "./types";
 
 /**
  * The attack sequence: hit → wound → save → damage, one weapon profile at a
- * time. The numbers come from the game system (see src/systems), but players
- * can edit every one of them before rolling, because rules are advisory.
+ * time. It runs the game system's "attack" procedure (src/core/content), so
+ * weapon keywords and core rules come from data. The numbers come from the
+ * data, but players can edit every one of them before rolling, because rules
+ * are advisory.
  *
  * The host rolls every die. Each stage is one event that carries its dice and
  * outcome, so every peer folds in exactly the same result and each stage can
@@ -82,6 +101,11 @@ export interface AttackState {
   saveDice?: Die[];
   unsaved?: number;
   damage?: DamageResult[];
+  /**
+   * The procedure run behind this attack: every die, the rules that fired
+   * and the table changes. The fields above are read from it for the panel.
+   */
+  run?: ProcedureRun;
 }
 
 /** Applies the always-fails-on-1 rule and the ±1 cap used by most d6 games. */
@@ -90,106 +114,214 @@ export function passes(value: number, target: number, mod: number): boolean {
   return value + Math.max(-1, Math.min(1, mod)) >= target;
 }
 
-function rollD6(rng: Rng): number {
-  return 1 + Math.floor(rng() * 6);
-}
+/** The game system and procedure that run attacks. */
+export const ATTACK_SYSTEM = "forty-k-11";
+export const ATTACK_PROCEDURE = "attack";
 
-function rollPool(count: number, rng: Rng, reroll: Reroll, success: (v: number) => boolean): Die[] {
-  return Array.from({ length: count }, () => {
-    const value = rollD6(rng);
-    const again = (reroll === "ones" && value === 1) || (reroll === "failed" && !success(value));
-    return again ? { value: rollD6(rng), rerolledFrom: value } : { value };
-  });
-}
-
-/** Host side: roll the number of attacks when the attack is declared. */
-export function startAttack(spec: AttackSpec, rng: Rng): AttackState {
-  const expr = parseDice(spec.attacks);
-  const { rolls, total } = rollDice(expr, rng);
-  const attackCount = Math.max(0, total);
+function roles(attackerId: UnitId, weaponId: string, targetId: UnitId): Record<string, RoleRef> {
   return {
-    spec,
-    stage: spec.hit === null ? "wound" : "hit",
-    attackRolls: rolls,
-    attackCount,
-    ...autoHits(spec, attackCount),
+    attacker: { unit: attackerId },
+    weapon: { unit: attackerId, weapon: weaponId },
+    target: { unit: targetId },
   };
 }
 
-function autoHits(spec: AttackSpec, attackCount: number): Partial<AttackState> {
-  // Torrent: every attack hits, and nothing is a critical hit.
-  return spec.hit === null ? { hits: attackCount, critHits: 0, autoWounds: 0 } : {};
+/**
+ * The players' numbers as run options. The spec is what the attack panel
+ * shows and lets players edit, so the run uses exactly those numbers, and
+ * only the per-die keyword rules the spec switches on.
+ */
+export function specToRun(spec: AttackSpec): StartOptions {
+  const weapon: RuleRef[] = [];
+  if (spec.sustained > 0) weapon.push({ rule: "sustainedHits", params: { x: spec.sustained } });
+  if (spec.lethal) weapon.push({ rule: "lethalHits" });
+  if (spec.devastating) weapon.push({ rule: "devastatingWounds" });
+  return {
+    explicit: true,
+    rules: { weapon },
+    overrides: {
+      attacks: { count: spec.attacks },
+      hit: {
+        skip: spec.hit === null,
+        target: spec.hit ?? 0,
+        modifier: spec.hitMod,
+        criticalOn: spec.critHit,
+        reroll: spec.rerollHits,
+      },
+      wound: {
+        target: spec.wound,
+        modifier: spec.woundMod,
+        criticalOn: spec.critWound,
+        reroll: spec.rerollWounds,
+      },
+      save: { target: spec.save, modifier: 0, criticalOn: null, reroll: "none" },
+      damage: { amount: spec.damage, ignoreDamage: spec.fnp },
+    },
+  };
+}
+
+function env(state: GameState, rng?: Rng): RunEnv {
+  return { system: getSystem(ATTACK_SYSTEM), state, ...(rng ? { rng } : {}) };
+}
+
+/** The attack as the panel shows it, read from the run's step records. */
+export function projectAttack(spec: AttackSpec, run: ProcedureRun): AttackState {
+  const rec = (id: string) => run.records.find((r) => r.id === id);
+  const dice = (r: StepRecord | undefined): Die[] | undefined =>
+    r?.dice?.map((d) =>
+      d.rerolledFrom !== undefined ? { value: d.value, rerolledFrom: d.rerolledFrom } : { value: d.value },
+    );
+  const pool = rec("attacks");
+  const hit = rec("hit");
+  const wound = rec("wound");
+  const save = rec("save");
+  const damage = rec("damage");
+  const next = run.done ? "done" : (nextStep(getSystem(run.system), run)?.id ?? "done");
+  const stage: AttackStage =
+    (["hit", "wound", "save", "damage"] as const).find((s) => s === next) ??
+    (next === "done" ? "done" : "save");
+  const out: AttackState = {
+    spec,
+    stage,
+    attackRolls: pool?.rolls ?? [],
+    attackCount: pool?.out ?? 0,
+    run,
+  };
+  if (hit) {
+    const d = dice(hit);
+    if (d?.length || !hit.bypassed) out.hitDice = d ?? [];
+    out.hits = hit.out;
+    out.critHits = hit.criticals ?? 0;
+    out.autoWounds = hit.tagged?.["bypass:wound"] ?? 0;
+  }
+  if (wound) {
+    out.woundDice = dice(wound) ?? [];
+    out.wounds = wound.out;
+    out.unsavable = wound.tagged?.["bypass:save"] ?? 0;
+  }
+  if (save) {
+    out.saveDice = dice(save) ?? [];
+    out.unsaved = save.out;
+  }
+  if (damage)
+    out.damage = (damage.damage ?? []).map((e) => ({
+      modelId: e.modelId,
+      damage: e.damage,
+      fnp: e.ignore,
+      lost: e.lost,
+      destroyed: e.destroyed,
+    }));
+  return out;
+}
+
+/** Host side: roll the number of attacks when the attack is declared. */
+export function startAttack(
+  spec: AttackSpec,
+  rng: Rng,
+  state: GameState = createInitialState(),
+): AttackState {
+  const run = startRun(
+    env(state, rng),
+    ATTACK_PROCEDURE,
+    roles(spec.attackerUnitId, spec.weaponId, spec.targetUnitId),
+    specToRun(spec),
+  );
+  return projectAttack(spec, run);
 }
 
 /** Host side: roll the dice for the attack's current stage. */
 export function rollStage(state: GameState, attack: AttackState, rng: Rng): AttackState {
-  const { spec } = attack;
-  switch (attack.stage) {
-    case "hit": {
-      const target = spec.hit ?? 0;
-      const ok = (v: number) => v >= spec.critHit || passes(v, target, spec.hitMod);
-      const dice = rollPool(attack.attackCount, rng, spec.rerollHits, ok);
-      const crits = dice.filter((d) => d.value >= spec.critHit).length;
-      const normal = dice.filter((d) => d.value < spec.critHit && ok(d.value)).length;
-      const autoWounds = spec.lethal ? crits : 0;
-      const hits = normal + crits + crits * spec.sustained;
-      return { ...attack, stage: "wound", hitDice: dice, hits, critHits: crits, autoWounds };
-    }
-    case "wound": {
-      const pool = (attack.hits ?? 0) - (attack.autoWounds ?? 0);
-      const ok = (v: number) => v >= spec.critWound || passes(v, spec.wound, spec.woundMod);
-      const dice = rollPool(pool, rng, spec.rerollWounds, ok);
-      const crits = dice.filter((d) => d.value >= spec.critWound).length;
-      const success = dice.filter((d) => ok(d.value)).length + (attack.autoWounds ?? 0);
-      const unsavable = spec.devastating ? crits : 0;
-      return { ...attack, stage: "save", woundDice: dice, wounds: success, unsavable };
-    }
-    case "save": {
-      const pool = (attack.wounds ?? 0) - (attack.unsavable ?? 0);
-      const dice = rollPool(pool, rng, "none", () => true);
-      const saved = spec.save === null ? 0 : dice.filter((d) => passes(d.value, spec.save!, 0)).length;
-      const unsaved = pool - saved + (attack.unsavable ?? 0);
-      return { ...attack, stage: "damage", saveDice: dice, unsaved };
-    }
-    case "damage":
-      return { ...attack, stage: "done", damage: allocateDamage(state, attack, rng) };
-    case "done":
-      return attack;
-  }
+  if (attack.stage === "done") return attack;
+  // Attacks saved before the runner existed carry no run: restart it from the rolled count.
+  const run =
+    attack.run ??
+    startRun(
+      env(state, rng),
+      ATTACK_PROCEDURE,
+      roles(attack.spec.attackerUnitId, attack.spec.weaponId, attack.spec.targetUnitId),
+      {
+        ...specToRun(attack.spec),
+        overrides: { ...specToRun(attack.spec).overrides, attacks: { count: String(attack.attackCount) } },
+      },
+    );
+  return projectAttack(attack.spec, advance(env(state, rng), run));
+}
+
+/** What the data says an attack should be, before any player edits. */
+export interface AttackPreview {
+  spec: AttackSpec;
+  /** Ids of the attacking models in range. */
+  members: string[];
+  /** Rule names that changed each step, e.g. { hit: ["Heavy"] }. */
+  fired: Record<string, string[]>;
+  /** Rules the weapon or target has that a player resolves by hand. */
+  reminders: string[];
+  /** The weapon's rules as bound from its keywords. */
+  weaponRules: RuleRef[];
+}
+
+/** Facts about sight between attacker and target, worked out by the system module. */
+export interface SightFacts {
+  /** Every visible target model is in cover. */
+  cover: boolean;
+  /** Every shooter stands well above every target. */
+  higherGround: boolean;
 }
 
 /**
- * Allocate each unsaved wound to the target: a model that is already wounded
- * first, then the others in unit order. Excess damage on one wound is lost.
- * Feel-no-pain is rolled for each wound the model would actually lose.
+ * Work out an attack's numbers from the game system's data: models in
+ * range, weapon keywords, S vs T, AP, cover, invulnerable saves, feel no pain.
  */
-function allocateDamage(state: GameState, attack: AttackState, rng: Rng): DamageResult[] {
-  const unit = state.units[attack.spec.targetUnitId];
-  if (!unit) return [];
-  const expr = parseDice(attack.spec.damage);
-  const left = new Map<ModelId, number>();
-  const alive = unit.modelIds.flatMap((id) => {
-    const m = state.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
-  for (const m of alive) left.set(m.id, woundsRemaining(m));
-
-  const results: DamageResult[] = [];
-  for (let i = 0; i < (attack.unsaved ?? 0); i++) {
-    const victim =
-      alive.find((m) => left.get(m.id)! > 0 && left.get(m.id)! < maxWounds(m)) ??
-      alive.find((m) => left.get(m.id)! > 0);
-    if (!victim) break;
-    const damage = Math.max(0, rollDice(expr, rng).total);
-    const remaining = left.get(victim.id)!;
-    const wouldLose = Math.min(damage, remaining);
-    const fnp = attack.spec.fnp === null ? [] : Array.from({ length: wouldLose }, () => rollD6(rng));
-    const ignored = fnp.filter((v) => v >= attack.spec.fnp!).length;
-    const lost = wouldLose - ignored;
-    left.set(victim.id, remaining - lost);
-    results.push({ modelId: victim.id, damage, fnp, lost, destroyed: remaining - lost <= 0 });
-  }
-  return results;
+export function previewAttack(
+  state: GameState,
+  attackerId: UnitId,
+  weaponId: string,
+  targetId: UnitId,
+  sight: SightFacts = { cover: false, higherGround: false },
+): AttackPreview | null {
+  const attacker = state.units[attackerId];
+  const target = state.units[targetId];
+  const weapon = attacker?.sheet?.weapons[weaponId];
+  if (!attacker || !target || !weapon) return null;
+  const e = { ...env(state), facts: { sight } };
+  const p = previewRun(e, ATTACK_PROCEDURE, roles(attackerId, weaponId, targetId));
+  const pool = p.plans.attacks as PoolPlan;
+  const hit = p.plans.hit as TestPlan;
+  const wound = p.plans.wound as TestPlan;
+  const save = p.plans.save as TestPlan;
+  const damage = p.plans.damage as DamagePlan;
+  const weaponRules = p.rules.weapon ?? [];
+  const has = (id: string) => weaponRules.find((r) => r.rule === id);
+  const sustained = has("sustainedHits")?.params?.x;
+  const reroll = (r: TestPlan["reroll"]): Reroll => (r === "any" ? "failed" : r);
+  const spec: AttackSpec = {
+    attackerUnitId: attackerId,
+    targetUnitId: targetId,
+    weaponId,
+    weaponName: weapon.name,
+    kind: weapon.kind,
+    attacks: pool.count,
+    hit: hit.skip ? null : (hit.target ?? 7),
+    hitMod: hit.modifier,
+    critHit: hit.criticalOn ?? 6,
+    rerollHits: reroll(hit.reroll),
+    sustained:
+      sustained === undefined || sustained === null
+        ? 0
+        : typeof sustained === "number"
+          ? sustained
+          : averageSum(parseDiceSum(sustained)),
+    lethal: !!has("lethalHits"),
+    wound: wound.target ?? 7,
+    woundMod: wound.modifier,
+    critWound: wound.criticalOn ?? 6,
+    rerollWounds: reroll(wound.reroll),
+    devastating: !!has("devastatingWounds"),
+    save: save.target === null || save.target > 6 ? null : save.target,
+    damage: damage.amount,
+    fnp: damage.ignoreDamage,
+  };
+  return { spec, members: pool.members ?? [], fired: p.fired, reminders: p.reminders, weaponRules };
 }
 
 export function maxWounds(model: Model): number {

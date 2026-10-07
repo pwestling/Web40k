@@ -26,7 +26,10 @@ export function evaluate(expr: Expr, ctx: EvalContext): ExprValue {
   if (typeof expr === "number" || typeof expr === "boolean") return expr;
   if ("ref" in expr) return toValue(resolve(expr.ref, ctx), expr.ref);
   if ("dice" in expr) {
-    const text = typeof expr.dice === "string" ? expr.dice : String(num(expr.dice, ctx));
+    const inner = expr.dice;
+    const named = typeof inner === "object" && "ref" in inner ? resolve(inner.ref, ctx) : undefined;
+    const text =
+      typeof inner === "string" ? inner : typeof named === "string" ? named : String(num(inner, ctx));
     const parsed = parseDice(text);
     return ctx.rng ? rollDice(parsed, ctx.rng).total : averageDice(parsed);
   }

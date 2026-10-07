@@ -22,29 +22,58 @@ const beforeStep = (step: string): Effect["when"] => ({
   where: { is: "event.step", value: step },
 });
 
-const withinHalfRange: Expr = {
+/** The model making this pool's attacks is within half the weapon's range of the target. */
+const bearerWithinHalfRange: Expr = {
   cmp: "<=",
-  a: { query: { kind: "distance", from: "attacker", to: "target" } },
-  b: { op: "/", args: [ref("weapon.range"), 2] },
+  a: { query: { kind: "distance", from: "bearer", to: "target" } },
+  b: { op: "+", args: [{ op: "/", args: [ref("weapon.range"), 2] }, 0.000001] },
 };
+
+/** Every model attacking with the weapon is within half range (damage applies to the whole pool). */
+const allWithinHalfRange: Expr = {
+  all: [
+    { cmp: ">", a: { count: "step.attacks.members" }, b: 0 },
+    {
+      every: "step.attacks.members",
+      as: "bearer",
+      test: bearerWithinHalfRange,
+    },
+  ],
+};
+
+/** A weapon keyword with an optional value, e.g. "Sustained Hits 2" or "Sustained Hits D3". */
+const keyword = (name: string, param?: string) =>
+  param ? `^${name}\\s*(?<${param}>d?\\d+(\\+\\d+)?)?$` : `^${name}$`;
+
+/** Rules whose effect a player resolves by hand; listed as reminders by name. */
+const manualRule = (id: string, name: string, match: string): RuleDef => ({
+  id,
+  name,
+  match,
+  appliesTo: ["weapon"],
+  effects: [{ when: { event: "action.declared" }, do: [{ do: "manual", reminder: id }] }],
+});
 
 const weaponRules: RuleDef[] = [
   {
     id: "sustainedHits",
     name: "Sustained Hits",
-    params: [{ id: "x", type: "dice" }],
+    params: [{ id: "x", type: "dice", default: 1 }],
+    match: keyword("sustained hits", "x"),
     appliesTo: ["weapon"],
     effects: [{ when: onCritical("hit"), do: [{ do: "addSuccesses", count: { dice: ref("param.x") } }] }],
   },
   {
     id: "lethalHits",
     name: "Lethal Hits",
+    match: keyword("lethal hits"),
     appliesTo: ["weapon"],
     effects: [{ when: onCritical("hit"), do: [{ do: "autoPass", step: "wound" }] }],
   },
   {
     id: "devastatingWounds",
     name: "Devastating Wounds",
+    match: keyword("devastating wounds"),
     appliesTo: ["weapon"],
     effects: [{ when: onCritical("wound"), do: [{ do: "skipStep", step: "save" }] }],
   },
@@ -55,6 +84,7 @@ const weaponRules: RuleDef[] = [
       { id: "keyword", type: "keyword" },
       { id: "threshold", type: "number" },
     ],
+    match: "^anti-(?<keyword>.+?)\\s+(?<threshold>\\d)\\+?$",
     appliesTo: ["weapon"],
     effects: [
       {
@@ -65,14 +95,16 @@ const weaponRules: RuleDef[] = [
     ],
   },
   {
+    // Per model: each one within half range makes extra attacks.
     id: "rapidFire",
     name: "Rapid Fire",
-    params: [{ id: "x", type: "dice" }],
+    params: [{ id: "x", type: "dice", default: 1 }],
+    match: keyword("rapid fire", "x"),
     appliesTo: ["weapon"],
     effects: [
       {
         when: beforeStep("attacks"),
-        if: withinHalfRange,
+        if: bearerWithinHalfRange,
         do: [
           { do: "modifyCharacteristic", target: "weapon", characteristic: "A", by: { dice: ref("param.x") } },
         ],
@@ -82,12 +114,13 @@ const weaponRules: RuleDef[] = [
   {
     id: "melta",
     name: "Melta",
-    params: [{ id: "x", type: "dice" }],
+    params: [{ id: "x", type: "dice", default: 1 }],
+    match: keyword("melta", "x"),
     appliesTo: ["weapon"],
     effects: [
       {
         when: beforeStep("damage"),
-        if: withinHalfRange,
+        if: allWithinHalfRange,
         do: [
           { do: "modifyCharacteristic", target: "weapon", characteristic: "D", by: { dice: ref("param.x") } },
         ],
@@ -95,13 +128,28 @@ const weaponRules: RuleDef[] = [
     ],
   },
   {
+    // +1 to hit if the unit has not moved this turn.
     id: "heavy",
     name: "Heavy",
+    match: keyword("heavy"),
     appliesTo: ["weapon"],
     effects: [
       {
         when: beforeStep("hit"),
-        if: { cmp: "<=", a: ref("attacker.unit.inchesMoved"), b: 3 },
+        if: { not: { hasFlag: "attacker", flag: "moved" } },
+        do: [{ do: "modifyRoll", by: 1 }],
+      },
+    ],
+  },
+  {
+    id: "lance",
+    name: "Lance",
+    match: keyword("lance"),
+    appliesTo: ["weapon"],
+    effects: [
+      {
+        when: beforeStep("wound"),
+        if: { hasFlag: "attacker", flag: "charged" },
         do: [{ do: "modifyRoll", by: 1 }],
       },
     ],
@@ -109,19 +157,22 @@ const weaponRules: RuleDef[] = [
   {
     id: "twinLinked",
     name: "Twin-linked",
+    match: keyword("twin-linked"),
     appliesTo: ["weapon"],
     effects: [{ when: beforeStep("wound"), do: [{ do: "reroll", which: "failed" }] }],
   },
   {
     id: "torrent",
     name: "Torrent",
+    match: keyword("torrent"),
     appliesTo: ["weapon"],
     effects: [{ when: beforeStep("hit"), do: [{ do: "skipStep", step: "hit" }] }],
   },
   {
+    // Per model: one extra attack for every five models in the target unit.
     id: "blast",
     name: "Blast",
-    params: [{ id: "x", type: "number" }],
+    match: keyword("blast"),
     appliesTo: ["weapon"],
     effects: [
       {
@@ -131,13 +182,7 @@ const weaponRules: RuleDef[] = [
             do: "modifyCharacteristic",
             target: "weapon",
             characteristic: "A",
-            by: {
-              op: "*",
-              args: [
-                ref("param.x"),
-                { op: "floor", args: [{ op: "/", args: [{ count: "target.models" }, 5] }] },
-              ],
-            },
+            by: { op: "floor", args: [{ op: "/", args: [{ count: "target.models" }, 5] }] },
           },
         ],
       },
@@ -146,6 +191,7 @@ const weaponRules: RuleDef[] = [
   {
     id: "ignoresCover",
     name: "Ignores Cover",
+    match: keyword("ignores cover"),
     appliesTo: ["weapon"],
     effects: [
       {
@@ -157,6 +203,7 @@ const weaponRules: RuleDef[] = [
   {
     id: "hazardous",
     name: "Hazardous",
+    match: keyword("hazardous"),
     appliesTo: ["weapon"],
     effects: [
       {
@@ -189,12 +236,17 @@ const weaponRules: RuleDef[] = [
     ],
   },
   {
-    // Changes who allocates; not automated in this draft.
+    // Changes who allocates; not automated yet.
     id: "precision",
     name: "Precision",
+    match: keyword("precision"),
     appliesTo: ["weapon"],
     effects: [{ when: beforeStep("allocate"), do: [{ do: "manual", reminder: "precision" }] }],
   },
+  manualRule("indirectFire", "Indirect Fire", keyword("indirect fire")),
+  manualRule("pistol", "Pistol", keyword("pistol")),
+  manualRule("assault", "Assault", keyword("assault")),
+  manualRule("extraAttacks", "Extra Attacks", keyword("extra attacks")),
 ];
 
 const unitRules: RuleDef[] = [
@@ -202,12 +254,40 @@ const unitRules: RuleDef[] = [
     id: "feelNoPain",
     name: "Feel No Pain",
     params: [{ id: "threshold", type: "number" }],
+    // Found in an ability's name or text.
+    match: "feel no pain\\s*(?<threshold>\\d)\\+",
     appliesTo: ["model", "unit"],
     effects: [{ when: { event: "always" }, do: [{ do: "ignoreDamage", atLeast: ref("param.threshold") }] }],
   },
   {
+    // An ability that grants an invulnerable save, e.g. "Invulnerable Save 4+".
+    id: "invulnerableSave",
+    name: "Invulnerable save",
+    params: [{ id: "x", type: "number" }],
+    match: "invulnerable[\\s\\S]*?(?<x>\\d)\\+",
+    appliesTo: ["model"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [
+          {
+            do: "setCharacteristic",
+            target: "self",
+            characteristic: "InSv",
+            to: {
+              if: { cmp: ">", a: ref("self.InSv"), b: 0 },
+              then: { op: "min", args: [ref("self.InSv"), ref("param.x")] },
+              else: ref("param.x"),
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "deepStrike",
     name: "Deep Strike",
+    match: "^deep strike",
     appliesTo: ["unit"],
     effects: [
       {
@@ -229,11 +309,60 @@ const woundTarget: Expr = {
   else: 5,
 };
 
-/** AP is stored negative, so Sv - AP worsens the save. Invulnerable saves ignore AP. */
+/**
+ * Cover improves the save by 1 when the table plays cover that way, except
+ * for a 3+ or better save against AP 0. `sight` is supplied by the system
+ * module from true line of sight: every visible target model is in cover.
+ */
+const coverHelpsSave: Expr = {
+  all: [
+    { is: "settings.cover", value: "save" },
+    { is: "weapon.weaponKind", value: "ranged" },
+    ref("sight.cover"),
+    { not: { hasFlag: "weapon", flag: "ignoresCover" } },
+    {
+      not: {
+        all: [
+          { cmp: "==", a: ref("weapon.AP"), b: 0 },
+          { cmp: "<=", a: ref("model.Sv"), b: 3 },
+        ],
+      },
+    },
+  ],
+};
+
+/** AP is stored negative, so Sv - AP worsens the save. Invulnerable saves ignore AP and cover. */
+const armourSave: Expr = {
+  op: "-",
+  args: [ref("model.Sv"), ref("weapon.AP"), { if: coverHelpsSave, then: 1, else: 0 }],
+};
 const saveTarget: Expr = {
-  if: { cmp: ">", a: ref("model.InSv"), b: 0 },
-  then: { op: "min", args: [{ op: "-", args: [ref("model.Sv"), ref("weapon.AP")] }, ref("model.InSv")] },
-  else: { op: "-", args: [ref("model.Sv"), ref("weapon.AP")] },
+  op: "max",
+  args: [
+    2,
+    {
+      if: { cmp: ">", a: ref("model.InSv"), b: 0 },
+      then: { op: "min", args: [armourSave, ref("model.InSv")] },
+      else: armourSave,
+    },
+  ],
+};
+
+/** A model can attack if the target is within the weapon's range, or engagement range for melee. */
+const inReach: Expr = {
+  cmp: "<=",
+  a: { query: { kind: "distance", from: "bearer", to: "target" } },
+  b: {
+    op: "+",
+    args: [
+      {
+        if: { is: "weapon.weaponKind", value: "melee" },
+        then: ref("const.engagementRange"),
+        else: ref("weapon.range"),
+      },
+      0.000001,
+    ],
+  },
 };
 
 const engagementRange: Expr = {
@@ -251,19 +380,26 @@ export const fortyK: GameSystem = {
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
   characteristics: [
-    { id: "M", name: "Move", of: "model", type: "distance" },
-    { id: "T", name: "Toughness", of: "model", type: "number" },
-    { id: "Sv", name: "Save", of: "model", type: "target" },
-    { id: "InSv", name: "Invulnerable save", of: "model", type: "target" },
-    { id: "W", name: "Wounds", of: "model", type: "number" },
+    { id: "M", name: "Move", of: "model", type: "distance", aliases: ["Move"] },
+    { id: "T", name: "Toughness", of: "model", type: "number", default: 4 },
+    { id: "Sv", name: "Save", of: "model", type: "target", aliases: ["Save"], default: 7 },
+    {
+      id: "InSv",
+      name: "Invulnerable save",
+      of: "model",
+      type: "target",
+      aliases: ["INV", "Invuln"],
+      default: 0,
+    },
+    { id: "W", name: "Wounds", of: "model", type: "number", default: 1 },
     { id: "Ld", name: "Leadership", of: "model", type: "target" },
-    { id: "OC", name: "Objective control", of: "model", type: "number" },
-    { id: "range", name: "Range", of: "weapon", type: "distance" },
-    { id: "A", name: "Attacks", of: "weapon", type: "dice" },
-    { id: "skill", name: "BS/WS", of: "weapon", type: "target" },
-    { id: "S", name: "Strength", of: "weapon", type: "number" },
-    { id: "AP", name: "Armour penetration", of: "weapon", type: "number" },
-    { id: "D", name: "Damage", of: "weapon", type: "dice" },
+    { id: "OC", name: "Objective control", of: "model", type: "number", default: 1 },
+    { id: "range", name: "Range", of: "weapon", type: "distance", default: 0 },
+    { id: "A", name: "Attacks", of: "weapon", type: "dice", default: 1 },
+    { id: "skill", name: "BS/WS", of: "weapon", type: "target", aliases: ["BS", "WS"], default: 4 },
+    { id: "S", name: "Strength", of: "weapon", type: "number", default: 4 },
+    { id: "AP", name: "Armour penetration", of: "weapon", type: "number", default: 0 },
+    { id: "D", name: "Damage", of: "weapon", type: "dice", default: 1 },
   ],
   weaponKinds: ["ranged", "melee"],
   unitShape: { kind: "skirmish" },
@@ -317,7 +453,14 @@ export const fortyK: GameSystem = {
       name: "Attack sequence",
       params: ["attacker", "weapon", "target"],
       steps: [
-        { kind: "pool", id: "attacks", count: { dice: ref("weapon.A") } },
+        {
+          kind: "pool",
+          id: "attacks",
+          each: "weapon.bearers",
+          as: "bearer",
+          where: inReach,
+          count: { dice: ref("weapon.A") },
+        },
         {
           kind: "test",
           id: "hit",
@@ -345,7 +488,14 @@ export const fortyK: GameSystem = {
           id: "allocate",
           chooser: "defender",
           groupBy: ["model.W", "model.Sv", "model.InSv"],
-          order: { if: kw("model", "CHARACTER"), then: 1, else: 0 },
+          // A model that has already lost wounds takes the next one; characters last.
+          order: {
+            cases: [
+              { when: { cmp: ">", a: ref("model.woundsLost"), b: 0 }, then: -1 },
+              { when: kw("model", "CHARACTER"), then: 1 },
+            ],
+            else: 0,
+          },
         },
         {
           kind: "test",
@@ -546,15 +696,26 @@ export const fortyK: GameSystem = {
   ],
   coreEffects: [
     {
-      // Cover: -1 to the attacker's BS (a worse target number).
+      // Cover: -1 to hit, when the table plays cover that way.
+      id: "Cover",
       when: beforeStep("hit"),
       if: {
         all: [
-          { hasStatus: "target", status: "inCover" },
+          { is: "weapon.weaponKind", value: "ranged" },
+          ref("sight.cover"),
           { not: { hasFlag: "weapon", flag: "ignoresCover" } },
+          { not: { is: "settings.cover", value: "save" } },
         ],
       },
-      do: [{ do: "modifyTarget", by: 1 }],
+      do: [{ do: "modifyRoll", by: -1 }],
+    },
+    {
+      // Every shooter stands well above every target.
+      id: "Higher ground",
+      when: beforeStep("hit"),
+      if: { all: [{ is: "weapon.weaponKind", value: "ranged" }, ref("sight.higherGround")] },
+      do: [{ do: "modifyRoll", by: 1 }],
     },
   ],
+  constants: { engagementRange: 2 },
 };

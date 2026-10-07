@@ -151,7 +151,7 @@ export function resolveIntent(
       } catch {
         return null;
       }
-      const attack = startAttack(intent.spec, rng);
+      const attack = startAttack(intent.spec, rng, state);
       if (attack.attackCount > 500) return null;
       return { type: "attack/declare", attack };
     }

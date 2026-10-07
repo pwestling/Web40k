@@ -190,7 +190,15 @@ export type EffectAction =
 export interface RuleDef {
   id: Id;
   name: string;
-  params?: { id: Id; type: "number" | "dice" | "keyword" | "text" }[];
+  params?: { id: Id; type: "number" | "dice" | "keyword" | "text"; default?: Value }[];
+  /**
+   * How imported content names this rule: a case-insensitive regular
+   * expression tried against weapon keywords ("Sustained Hits 2") or, for
+   * model and unit rules, ability names and text. Named groups fill params,
+   * e.g. "^sustained hits\\s*(?<x>d?\\d+)?$". Lets the engine map BSData
+   * keywords to rules without shipping any rules text.
+   */
+  match?: string;
   /** What it attaches to, for validation and UI grouping. */
   appliesTo?: ("weapon" | "model" | "unit" | "army")[];
   effects: Effect[];
@@ -220,9 +228,19 @@ export interface Procedure {
   steps: Step[];
 }
 
-export type Step =
-  /** Produce a number of dice to test, e.g. the weapon's attacks. */
-  | { kind: "pool"; id: Id; count: Expr }
+export type Step = StepKind & {
+  /** Run the step only when this holds, e.g. only if the target chose to stand and shoot. */
+  if?: Expr;
+};
+
+export type StepKind =
+  /**
+   * Produce a number of dice to test, e.g. the weapon's attacks. With `each`,
+   * `count` is summed over a collection (every model carrying the weapon),
+   * with the item bound as `as` and filtered by `where` (in range). The items
+   * kept are available to later steps as "step.<id>.members".
+   */
+  | { kind: "pool"; id: Id; count: Expr; each?: Ref; as?: string; where?: Expr }
   /** Roll one die per input success and compare with a target number. */
   | {
       kind: "test";
@@ -270,6 +288,8 @@ export type Step =
       kind: "allocate";
       id: Id;
       chooser: "attacker" | "defender";
+      /** The unit whose models take the hits; defaults to "target". */
+      unit?: Ref;
       /** Models with equal values here form one allocation group. */
       groupBy?: Ref[];
       /** Expression giving sort priority; lower goes first. */
@@ -281,8 +301,27 @@ export type Step =
   | { kind: "damage"; id: Id; amount: Expr; spillover: boolean }
   /** Compare two totals and branch, e.g. combat resolution. */
   | { kind: "compare"; id: Id; a: Expr; b: Expr; outcomes: { when: Expr; do: EffectAction[] }[] }
-  /** Free-form actions, e.g. apply a status after a failed test. */
-  | { kind: "do"; id: Id; do: EffectAction[] };
+  /**
+   * Free-form actions, e.g. apply a status after a failed test. Runs only
+   * when something reached it (a failed test passes its failures on), or
+   * when no pool came before it.
+   */
+  | { kind: "do"; id: Id; do: EffectAction[] }
+  /**
+   * A pause in which another player may react before the procedure goes on,
+   * e.g. The Old World's charge reactions or a dispel attempt. The procedure
+   * waits for `side` to pick one of `options` (or one of the actions whose
+   * `reactTo` names this window) or pass. The answer is available to later
+   * steps as "reaction.<id>" (the option id, or "pass").
+   */
+  | {
+      kind: "window";
+      id: Id;
+      side: "attacker" | "defender" | "active" | "opponent";
+      options?: { id: Id; label: string }[];
+      /** Answer used when nobody is asked (hotseat auto-play, previews). */
+      default?: Id;
+    };
 
 // ---------------------------------------------------------------------------
 // Turn structure and actions
@@ -377,6 +416,10 @@ export interface CharacteristicDef {
   type: "number" | "target" | "distance" | "dice";
   /** Display format, e.g. '{v}"' or "{v}+". */
   format?: string;
+  /** Other names imported data uses for it, e.g. ["SV", "Save"] or ["BS", "WS"]. */
+  aliases?: string[];
+  /** Value when missing or unreadable ("-"); null if omitted. */
+  default?: Value;
 }
 
 export interface DieDef {
@@ -489,6 +532,8 @@ export interface GameSystem {
   checks?: CheckDef[];
   /** Effects that always apply, e.g. core rules not tied to a keyword. */
   coreEffects?: Effect[];
+  /** Named numbers such as engagement range, available as "const.<id>". */
+  constants?: Record<Id, number>;
 }
 
 // ---------------------------------------------------------------------------
