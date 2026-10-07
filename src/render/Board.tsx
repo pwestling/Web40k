@@ -49,6 +49,7 @@ import { useGame, useSelfSeat } from "../ui/hooks";
 import { Miniatures, useFigureHeights } from "./Miniatures";
 import { ModelInstances, type ModelDraw } from "./ModelInstances";
 import { Trails, useTween, WatchEffects } from "./Watch";
+import { CasterCamera } from "./CasterCamera";
 import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
@@ -959,6 +960,7 @@ function Scene() {
 
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
       <FeelLayer />
+      <CasterCamera />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (

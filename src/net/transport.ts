@@ -45,7 +45,13 @@ export type SideMessage =
   /** `name`: what a spectator calls themselves (players go by their seat's name). */
   | { t: "talk"; item: TalkItem; name?: string }
   /** Wipe the sender's drawings. */
-  | { t: "talk/clear" };
+  | { t: "talk/clear" }
+  /** A commentator's camera (Broadcast mode), a few times a second; null when they stop. */
+  | {
+      t: "talk/cam";
+      cam: { target: [number, number, number]; position: [number, number, number] } | null;
+      name?: string;
+    };
 
 /** A short-lived message over the table, from whoever sent it. */
 export type TalkItem = { id: string } & (

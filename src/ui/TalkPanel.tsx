@@ -125,7 +125,7 @@ function ChatToasts({ chatOpen }: { chatOpen: boolean }) {
 }
 
 /** Reactions rise over the board and fade. */
-function FloatingReactions() {
+export function FloatingReactions() {
   const items = useTalk((s) => s.items);
   const reacts = items.filter((i): i is Extract<Said, { kind: "react" }> => i.kind === "react");
   return (

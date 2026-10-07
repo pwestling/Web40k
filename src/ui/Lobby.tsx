@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
+import { BROADCAST } from "../broadcast/broadcast";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
 import { PackageLibrary, refOf } from "./Packages";
@@ -88,6 +89,11 @@ export function Lobby() {
     if (!roomId) return;
     const m: Mode = params.get("local") === "1" ? "local" : "online";
     const who = localStorage.getItem("open-battle:name") ?? "";
+    // The streaming view always just watches.
+    if (BROADCAST) {
+      start({ role: "spectator", mode: m, roomId, name: who || "Stream" });
+      return;
+    }
     // An invite link goes straight into the room: a free seat is taken, a game in progress offers Rejoin or Watch.
     if (!back?.role) {
       start({ role: "client", mode: m, roomId, name: who });

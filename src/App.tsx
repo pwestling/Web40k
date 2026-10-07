@@ -18,7 +18,10 @@ import { PackageCards } from "./ui/Packages";
 import { PackagePanel } from "./ui/PackagePanel";
 import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
-import { TalkPanel } from "./ui/TalkPanel";
+import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
+import { useTableTalk } from "./talk/talk";
+import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
+import { BroadcastBadge } from "./broadcast/BroadcastControls";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -68,7 +71,24 @@ function onKey(e: KeyboardEvent) {
   if (key === "f") climbUnit(unit.id, -1);
 }
 
+/** The clean streaming view (`?view=broadcast`): the board, score bar, caption, dice and reactions. */
+function BroadcastView() {
+  useTableTalk();
+  return (
+    <>
+      <TopBar />
+      <ReplayBar />
+      <RoundCard />
+      <DiceTray />
+      <FloatingReactions />
+      <BroadcastBadge />
+      <StatsScreen />
+    </>
+  );
+}
+
 export function App() {
+  useSpectatorDelay();
   const started = useStore((s) => s.session !== null || s.role === "spectator");
   const editing = useStore((s) => s.editing);
   const holding = useHold((s) => s.held !== null);
@@ -86,13 +106,16 @@ export function App() {
   const showSight = useStore((s) => s.losFrom !== null || !!s.draft?.targetId);
   const setView = useStore((s) => s.setView);
   useEffect(() => {
+    document.body.classList.toggle("broadcast", BROADCAST);
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, []);
   return (
     <>
       <Board />
-      {started ? (
+      {started && BROADCAST ? (
+        <BroadcastView />
+      ) : started ? (
         <>
           <TopBar />
           <Hud />

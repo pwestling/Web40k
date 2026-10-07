@@ -17,6 +17,7 @@ import {
 import { useHold } from "../ui/hold";
 import { jolt, pickUp, setDown } from "./feel";
 import { markCharge } from "./charges";
+import { delaying, followed } from "../broadcast/broadcast";
 import { CasualtyPiles, Topple, TOPPLE_MS } from "./Casualties";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
@@ -334,7 +335,7 @@ export function WatchEffects() {
     last.current = input.current;
     // A jump: scrubbing, a replay opening, or catching up on rejoin. A live
     // attack released by the dice tray can be a dozen events, which still play.
-    const far = useStore.getState().scrub !== null ? 6 : 40;
+    const far = useStore.getState().scrub !== null && !delaying() ? 6 : 40;
     if (shownSeq <= prev.seq || shownSeq - prev.seq > far) {
       // What was showing belongs to another moment.
       if (shownSeq !== prev.seq) setEffects((old) => (old.length ? [] : old));
@@ -441,7 +442,7 @@ export function WatchEffects() {
         if (t >= 1) nudge.current = null;
       }
     } else if (n) nudge.current = null;
-    if (!director || !controls) return;
+    if (!director || !controls || followed.active) return;
     if (!focus.current && !overview.current && performance.now() - lastAction.current > OVERVIEW_AFTER_MS) {
       overview.current = true;
       focus.current = { x: 0, y: 0, z: 0, span: null };

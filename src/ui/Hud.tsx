@@ -4,6 +4,7 @@ import { bundleReplay } from "./replayFile";
 import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
+import { BroadcastControls } from "../broadcast/BroadcastControls";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
@@ -86,6 +87,7 @@ export function Hud() {
       <RoomCard />
       {mode === "hotseat" && <p className="muted">Hotseat: you control both sides.</p>}
       {role === "spectator" && <p className="muted">Spectating.</p>}
+      {role === "spectator" && <BroadcastControls />}
       <div className="row wrap">
         <button onClick={() => setView(view === "top" ? "3d" : "top")}>
           {view === "top" ? "3D view" : "Top-down view"}

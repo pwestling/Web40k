@@ -1861,3 +1861,33 @@ button.rare-star:hover {
   flex: 1;
   min-width: 0;
 }
+
+/* Broadcast mode (roadmap #13): the spectator's controls, and the clean streaming view. */
+.broadcast-controls select {
+  max-width: 9rem;
+}
+body.broadcast .topbar button,
+body.broadcast .topbar .overflow,
+body.broadcast .topbar .sound-toggle,
+body.broadcast .replaybar {
+  display: none;
+}
+body.broadcast .caption {
+  bottom: 24px;
+  font-size: 1.05rem;
+}
+.broadcast-badge {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.broadcast-badge span {
+  padding: 4px 10px;
+  border: 2px solid #475569;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 85%);
+  font-weight: 600;
+}

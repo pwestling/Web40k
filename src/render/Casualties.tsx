@@ -24,7 +24,7 @@ export const FALL_MS = 350;
 export const REST_MS = 600;
 export const FADE_MS = 300;
 export const TOPPLE_MS = FALL_MS + REST_MS + FADE_MS;
-const PER_ROW = 20;
+const PER_ROW = 14;
 const MAX_SHOWN = 60;
 /** Along the edge between figures, and outwards between rows. */
 const COL_STEP = 1.6;
@@ -48,7 +48,7 @@ function fallen(game: GameState, owner: string): Model[] {
 
 /**
  * Where slot `i` of a player's pile is: in rows just beyond their own long
- * table edge, from its right-hand end (reserves wait from the left), the
+ * table edge, from the middle of it outwards (clear of the side panels), the
  * first row nearest the table.
  */
 export function pileSlot(game: GameState, owner: string, i: number): Vec2 {
@@ -56,10 +56,9 @@ export function pileSlot(game: GameState, owner: string, i: number): Vec2 {
   const k = Math.min(i, MAX_SHOWN - 1);
   const row = Math.floor(k / PER_ROW);
   const col = k % PER_ROW;
-  return {
-    x: side * (game.table.width / 2 - 1.5 - col * COL_STEP),
-    y: side * (game.table.depth / 2 + 1 + row * ROW_STEP),
-  };
+  // 0, then right, left, right... of the middle.
+  const off = Math.ceil(col / 2) * (col % 2 ? 1 : -1);
+  return { x: side * off * COL_STEP, y: side * (game.table.depth / 2 + 1 + row * ROW_STEP) };
 }
 
 /**
@@ -191,10 +190,10 @@ function Pile({
   }, [open, record, upto, dead, game.units]);
   if (!dead.length) return null;
   const side = sideOf(game, owner);
-  // Over the middle of the first row, at its outer side.
+  // Over the pile's middle, beyond its outer row (UX 129).
   const first = pileSlot(game, owner, 0);
-  const last = pileSlot(game, owner, Math.min(dead.length, PER_ROW) - 1);
   const rows = Math.ceil(Math.min(dead.length, MAX_SHOWN) / PER_ROW);
+  const labelX = first.x;
   return (
     <group>
       {dead
@@ -205,7 +204,7 @@ function Pile({
           ),
         )}
       <Html
-        position={[(first.x + last.x) / 2, 1.2, first.y + side * (rows * ROW_STEP)]}
+        position={[labelX, 1.2, first.y + side * (rows * ROW_STEP)]}
         center
         zIndexRange={[9, 0]}
         className="ruler casualty-pile"

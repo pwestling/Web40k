@@ -33,9 +33,42 @@ interface TalkState {
   unread: number;
   open: boolean;
   tool: "ping" | "arrow" | "area" | null;
+  /** Commentators' cameras (Broadcast mode), by peer, with when each last moved. */
+  casters: Record<string, Caster>;
 }
 
-export const useTalk = create<TalkState>(() => ({ items: [], chat: [], unread: 0, open: false, tool: null }));
+export interface Caster {
+  name: string;
+  color: string;
+  target: [number, number, number];
+  position: [number, number, number];
+  at: number;
+}
+
+export const useTalk = create<TalkState>(() => ({
+  items: [],
+  chat: [],
+  unread: 0,
+  open: false,
+  tool: null,
+  casters: {},
+}));
+
+const vec3 = (v: unknown): v is [number, number, number] =>
+  Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(n) && Math.abs(n) < 2000);
+
+/** Send this peer's camera to the audience, or null to stop commentating. */
+export function sendCamera(
+  cam: { target: [number, number, number]; position: [number, number, number] } | null,
+) {
+  const name = myName();
+  useStore.getState().session?.sendSide({ t: "talk/cam", cam, ...(name ? { name } : {}) });
+}
+
+/** The commentator to follow: the one whose camera moved most recently, if any is still on. */
+export function currentCaster(casters: Record<string, Caster>): Caster | null {
+  return Object.values(casters).sort((a, b) => b.at - a.at)[0] ?? null;
+}
 
 const point = (p: unknown): p is { x: number; y: number } =>
   !!p &&
@@ -155,7 +188,21 @@ export function clearMine(): void {
 }
 
 function receive(message: SideMessage, from: string): void {
-  if (message.t === "talk/clear") clearDrawings(from);
+  if (message.t === "talk/cam") {
+    const cam = message.cam;
+    useTalk.setState((s) => {
+      const { [from]: _gone, ...rest } = s.casters;
+      if (!cam || !vec3(cam.target) || !vec3(cam.position)) return { casters: rest };
+      const name = typeof message.name === "string" ? message.name : undefined;
+      const { name: shown, color } = who(from, name);
+      return {
+        casters: {
+          ...rest,
+          [from]: { name: shown, color, target: cam.target, position: cam.position, at: Date.now() },
+        },
+      };
+    });
+  } else if (message.t === "talk/clear") clearDrawings(from);
   else if (message.t === "talk") {
     const item = cleanItem(message.item);
     if (item) hear(item, from, Date.now(), typeof message.name === "string" ? message.name : undefined);
@@ -178,7 +225,7 @@ export function useTableTalk(): void {
     return () => {
       session.listenSide(null, null, "talk");
       clearInterval(timer);
-      useTalk.setState({ items: [], chat: [], unread: 0, tool: null });
+      useTalk.setState({ items: [], chat: [], unread: 0, tool: null, casters: {} });
     };
   }, [session]);
 }
