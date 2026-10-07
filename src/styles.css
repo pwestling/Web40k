@@ -887,3 +887,40 @@ input.frontage {
   color: #fef3c7;
   font-size: 0.9rem;
 }
+
+/* Room card and deployment tray */
+.room {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.room .people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.room .people .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.deploy-tray {
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deploy-tray .tray {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 140px;
+  overflow-y: auto;
+}

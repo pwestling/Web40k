@@ -4,13 +4,13 @@ import { buildLog, collapseEmpty } from "./gameLog";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
+import { DeployTray, RoomCard } from "./Room";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
   const {
     record,
     session,
-    roomId,
     dispatch,
     view,
     setView,
@@ -66,15 +66,7 @@ export function Hud() {
         <strong>Open Battle</strong>
         <button onClick={() => setCollapsed(true)}>Hide</button>
       </div>
-      {roomId && (
-        <p className="muted">
-          Room <code>{roomId}</code>
-          {mode === "local" ? " (this browser)" : ""} ·{" "}
-          <button className="link" onClick={() => void navigator.clipboard?.writeText(location.href)}>
-            copy invite link
-          </button>
-        </p>
-      )}
+      <RoomCard />
       {mode === "hotseat" && <p className="muted">Hotseat: you control both sides.</p>}
       {role === "spectator" && <p className="muted">Spectating.</p>}
       <div className="row wrap">
@@ -141,14 +133,14 @@ export function Hud() {
           ))}
         </div>
       )}
-      {role === "host" && seated.length < 2 && mode !== "hotseat" && (
-        <p className="muted">Waiting for an opponent to join…</p>
-      )}
 
       {/* During the battle, setup tools and the dice tray fold away to keep the panel slim. */}
       {mine.length > 0 &&
         (round === 0 ? (
-          <ArmyImport players={mine} />
+          <>
+            <ArmyImport players={mine} />
+            <DeployTray players={mine} />
+          </>
         ) : (
           <details className="fold">
             <summary>Add an army</summary>

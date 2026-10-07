@@ -25,6 +25,8 @@ export interface Player {
   color: string;
   /** Table side: 0 sits at the +y edge, 1 at the -y edge. */
   seat?: number;
+  /** Says it has finished deploying (advisory: the battle can start without it). */
+  ready?: boolean;
 }
 
 /**
@@ -160,6 +162,8 @@ export interface DiceRoll {
   /** What the roll was for, e.g. "advance" or "charge". */
   label?: string;
   unitId?: UnitId;
+  /** Named faces (a scatter or artillery die): each result is a 1-based index into these. */
+  faces?: string[];
 }
 
 /**
@@ -281,6 +285,8 @@ export interface GameState {
   used?: Record<PlayerId, PlayerActionUse[]>;
   /** The last measurement a player shared, shown to everyone until cleared. */
   ruler?: Ruler | null;
+  /** Blast, flame and line templates on the table, by id. */
+  templates?: Record<string, Template>;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }
@@ -368,6 +374,24 @@ export interface PendingReaction {
   seat: number;
   trigger: ActionTrigger;
   reactor?: UnitId;
+}
+
+/**
+ * A template laid on the table: a circle (blast) centred on `at`, a flame
+ * teardrop with its point at `at` aimed at `to`, or a line from `at` to `to`
+ * (a cannon's path). Sizes come from the game system.
+ */
+export interface Template {
+  id: string;
+  by: PlayerId;
+  shape: "circle" | "flame" | "line";
+  /** Diameter of a circle, length of a flame (a line's length is at to `to`). */
+  size: number;
+  /** Width of a flame's round end. */
+  width?: number;
+  at: Vec2;
+  to?: Vec2;
+  label?: string;
 }
 
 /** A measurement between two points, either of which may be a model (measured from its base edge). */

@@ -165,6 +165,25 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
     case "ruler/set":
       return { ...state, ruler: event.ruler };
+    case "player/ready": {
+      const p = state.players[event.player];
+      if (!p) return state;
+      const { ready: _r, ...rest } = p;
+      const player = event.ready ? { ...rest, ready: true } : rest;
+      return { ...state, players: { ...state.players, [p.id]: player } };
+    }
+    case "template/set": {
+      const { [event.id]: _old, ...rest } = state.templates ?? {};
+      return { ...state, templates: event.template ? { ...rest, [event.id]: event.template } : rest };
+    }
+    case "template/scatter": {
+      const t = state.templates?.[event.id];
+      if (!t) return state;
+      const dx = event.to.x - t.at.x;
+      const dy = event.to.y - t.at.y;
+      const moved = { ...t, at: event.to, ...(t.to ? { to: { x: t.to.x + dx, y: t.to.y + dy } } : {}) };
+      return { ...state, templates: { ...state.templates, [t.id]: moved } };
+    }
     case "objective/move":
       return {
         ...state,

@@ -197,9 +197,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "player/claim":
       return `${nameOf(event.by)} reconnected`;
     case "dice/roll": {
-      const { results, label, unitId, sides } = event.roll;
+      const { results, label, unitId, sides, faces } = event.roll;
       const total = results.reduce((a, b) => a + b, 0);
       const what = label ? `${unitId ? `${unitName(unitId)} ` : ""}${label}` : `${results.length}D${sides}`;
+      if (faces) return `${who} rolled ${what}: ${results.map((r) => faces[r - 1] ?? r).join(" ")}`;
       return `${who} rolled ${what}: ${results.join(" ")}${results.length > 1 ? ` (= ${total})` : ""}`;
     }
     case "undo":
@@ -212,6 +213,23 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} changed ${event.piece.name.toLowerCase()}`;
     case "terrain/remove":
       return `${who} removed terrain`;
+    case "player/ready":
+      return `${game.players[event.player]?.name ?? who} is ${event.ready ? "ready" : "not ready yet"}`;
+    case "template/set": {
+      const t = event.template;
+      const old = before.templates?.[event.id];
+      const name = (t?.label ?? old?.label ?? "template").toLowerCase();
+      return t ? `${who} ${old ? "moved" : "placed"} the ${name}` : `${who} removed the ${name}`;
+    }
+    case "template/scatter": {
+      const t = before.templates?.[event.id];
+      const name = (event.label ?? t?.label ?? "template").toLowerCase();
+      if (event.scatter.toLowerCase() === "hit") return `${who} rolled a hit: the ${name} stays put`;
+      const inches = Number(event.distance);
+      if (!inches)
+        return `${who} scattered the ${name}: ${event.scatter}, ${event.distance} (it doesn't move)`;
+      return `${who} scattered the ${name} ${inches}" (${event.scatter})`;
+    }
     case "ruler/set": {
       const r = event.ruler;
       if (!r) return `${who} cleared the ruler`;

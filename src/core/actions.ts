@@ -26,6 +26,7 @@ import type {
   PlayerId,
   Ruler,
   SightBand,
+  Template,
   TerrainPiece,
   Unit,
   UnitId,
@@ -61,8 +62,25 @@ export type Intent =
   | UnitMove
   | UnitForm
   | ModelsMove
-  | { type: "dice/roll"; count: number; sides: number; label?: string; unitId?: UnitId }
+  | {
+      type: "dice/roll";
+      count: number;
+      sides: number;
+      label?: string;
+      unitId?: UnitId;
+      /** Named faces for a special die; `sides` is then their number. */
+      faces?: string[];
+    }
   | { type: "layout/set"; layout: Layout }
+  | { type: "player/ready"; player: PlayerId; ready: boolean }
+  | { type: "template/set"; id: string; template: Omit<Template, "by"> | null }
+  /**
+   * Scatter a template: roll `scatter` (a face named "hit" leaves it where it
+   * is, any other face sends it off in a random direction) and move it as
+   * far as the `distance` die shows (a face that isn't a number, a misfire,
+   * leaves it).
+   */
+  | { type: "template/scatter"; id: string; scatter: string[]; distance: string[]; label?: string }
   | { type: "terrain/add"; piece: TerrainPiece }
   | { type: "terrain/update"; piece: TerrainPiece }
   | { type: "terrain/remove"; id: string }
@@ -141,6 +159,18 @@ export type GameEvent =
   | ModelsMove
   | { type: "dice/roll"; roll: DiceRoll }
   | { type: "layout/set"; layout: Layout }
+  | { type: "player/ready"; player: PlayerId; ready: boolean }
+  | { type: "template/set"; id: string; template: Template | null }
+  | {
+      type: "template/scatter";
+      id: string;
+      /** The faces rolled, the direction (as a model facing) and where the template landed. */
+      scatter: string;
+      distance: string;
+      angle: number;
+      to: Vec2;
+      label?: string;
+    }
   | { type: "terrain/add"; piece: TerrainPiece }
   | { type: "terrain/update"; piece: TerrainPiece }
   | { type: "terrain/remove"; id: string }
@@ -246,6 +276,7 @@ export function resolveIntent(
       if (count < 1 || count > MAX_DICE_PER_ROLL || sides < 2) return null;
       const results = Array.from({ length: count }, () => 1 + Math.floor(rng() * sides));
       const roll: DiceRoll = { by: from, sides, results };
+      if (intent.faces?.length === sides) roll.faces = intent.faces;
       if (intent.label) roll.label = intent.label;
       if (intent.unitId) roll.unitId = intent.unitId;
       return { type: "dice/roll", roll };
@@ -326,6 +357,31 @@ export function resolveIntent(
     }
     case "ruler/set":
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
+    case "template/set":
+      return {
+        type: "template/set",
+        id: intent.id,
+        template: intent.template && { ...intent.template, by: from },
+      };
+    case "template/scatter": {
+      const t = state?.templates?.[intent.id];
+      if (!t || !intent.scatter.length || !intent.distance.length) return null;
+      const pick = (faces: string[]) => faces[Math.floor(rng() * faces.length)]!;
+      const scatter = pick(intent.scatter);
+      const distance = pick(intent.distance);
+      const angle = rng() * Math.PI * 2;
+      const inches = scatter.toLowerCase() === "hit" ? 0 : Number(distance) || 0;
+      const to = { x: t.at.x + Math.sin(angle) * inches, y: t.at.y + Math.cos(angle) * inches };
+      return {
+        type: "template/scatter",
+        id: intent.id,
+        scatter,
+        distance,
+        angle,
+        to,
+        ...(intent.label ? { label: intent.label } : {}),
+      };
+    }
     case "action/take": {
       const unit = state?.units[intent.unitId];
       if (!state || !unit || unit.owner !== from) return null;
