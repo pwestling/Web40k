@@ -5,6 +5,7 @@ import {
   carriers,
   engagedWith,
   incoherentModels,
+  mainWeapon,
   moveAllowance,
   unitDistance,
   unitMoved,
@@ -152,6 +153,20 @@ export function UnitCard() {
 
       {mine && (
         <div className="row wrap">
+          {(["ranged", "melee"] as const).map((kind) => {
+            const weaponId = mainWeapon(game, unit, kind);
+            return (
+              weaponId && (
+                <button
+                  key={kind}
+                  className="primary"
+                  onClick={() => setDraft({ attackerId: unit.id, kind, weaponId, picking: true })}
+                >
+                  {kind === "ranged" ? "Shoot" : "Fight"}
+                </button>
+              )
+            );
+          })}
           <button onClick={() => roll("advance", 1)}>Advance (D6)</button>
           <button onClick={() => roll("charge", 2)}>Charge (2D6)</button>
           <button onClick={() => roll("battleshock", 2)}>Battle-shock test</button>

@@ -1,7 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { transformPositions } from "./formation";
-import type { GameState, Model, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
+import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
 
 /** Unit flags that last one turn; cleared when their owner's turn begins. */
 export const TURN_FLAGS = ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"];
@@ -19,6 +19,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       // First come, first seated; a rejoining player keeps their seat.
       const seat = known?.seat ?? event.player.seat ?? (seats.has(0) ? (seats.has(1) ? undefined : 1) : 0);
       const player = { ...event.player, ...(seat === undefined ? {} : { seat }) };
+      player.name = playerName(state, player);
       const resources = state.resources[player.id] ?? { CP: 0, VP: 0 };
       return {
         ...state,
@@ -313,4 +314,22 @@ function upgradePiece(piece: TerrainPiece): TerrainPiece {
     h: w.height,
   }));
   return { ...piece, name: piece.name ?? "Ruin", category: piece.category ?? "light", solids };
+}
+
+/**
+ * A blank or generic name becomes "Player 1"/"Player 2" by seat, and a name
+ * another player already has gets a number, so the two sides never look alike.
+ */
+function playerName(state: GameState, player: Player): string {
+  const fallback = player.seat === undefined ? "Spectator" : `Player ${player.seat + 1}`;
+  const wanted = player.name.trim();
+  const base = !wanted || wanted === "Player" ? fallback : wanted;
+  const taken = new Set(
+    Object.values(state.players)
+      .filter((p) => p.id !== player.id)
+      .map((p) => p.name),
+  );
+  if (!taken.has(base)) return base;
+  if (!taken.has(fallback) && base !== fallback) return fallback;
+  for (let i = 2; ; i++) if (!taken.has(`${base} (${i})`)) return `${base} (${i})`;
 }

@@ -125,6 +125,28 @@ export function carriers(state: GameState, unit: Unit, weaponId: string): Model[
   );
 }
 
+/** The weapon of a kind that most of the unit's models carry (ties go to the first listed). */
+export function mainWeapon(state: GameState, unit: Unit, kind: "ranged" | "melee"): string | undefined {
+  let best: string | undefined;
+  let most = 0;
+  for (const w of Object.values(unit.sheet?.weapons ?? {})) {
+    if (w.kind !== kind) continue;
+    const n = carriers(state, unit, w.id).length;
+    if (n > most) [best, most] = [w.id, n];
+  }
+  return best;
+}
+
+/** A weapon's reach in inches: its range, or engagement range for melee. Null if unreadable. */
+export function weaponReach(weapon: {
+  kind: "ranged" | "melee";
+  chars: Record<string, string>;
+}): number | null {
+  if (weapon.kind === "melee") return 1;
+  const n = parseFloat(weapon.chars.RANGE ?? "");
+  return Number.isFinite(n) ? n : null;
+}
+
 export interface AttackSuggestion {
   spec: AttackSpec;
   /** Explanations of each number, for the panel. */
