@@ -70,6 +70,9 @@ interface Store {
   eye: { modelId: string; at: { x: number; y: number; z: number } } | null;
   set(patch: Partial<Pick<Store, "editing" | "selectedTerrain" | "xray" | "losFrom" | "eye" | "view">>): void;
   setView(view: View): void;
+  /** Bumped to put the camera back to its starting position. */
+  cameraReset: number;
+  resetView(): void;
   select(id: UnitId | null): void;
   setDraft(draft: AttackDraft | null): void;
   setScrub(seq: number | null): void;
@@ -129,6 +132,9 @@ export const useStore = create<Store>((set, get) => ({
   eye: null,
   set: (patch) => set(patch),
   setView: (view) => set({ view, ...(view === "eye" ? {} : { eye: null }) }),
+  cameraReset: 0,
+  resetView: () =>
+    set((s) => ({ view: s.view === "eye" ? "3d" : s.view, eye: null, cameraReset: s.cameraReset + 1 })),
   select: (selected) => set({ selected }),
   setDraft: (draft) => set({ draft }),
   setScrub: (scrub) => set({ scrub }),

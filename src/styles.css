@@ -163,16 +163,23 @@ label.file.button.small {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-family: ui-monospace, monospace;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
   max-height: 260px;
   overflow-y: auto;
 }
 .log li {
-  padding: 1px 0;
+  padding: 2px 0;
 }
-.log .seq {
-  color: #6b7280;
+.log .phase {
+  margin-top: 6px;
+  padding: 2px 0;
+  border-bottom: 1px solid #374151;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .log .undone {
   text-decoration: line-through;
@@ -310,16 +317,15 @@ details p {
 
 /* Attack panel */
 .attack {
-  bottom: 56px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(720px, calc(100vw - 24px));
-  max-height: 50vh;
+  top: 64px;
+  right: 12px;
+  width: 400px;
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
 }
 .attack .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 6px 12px;
 }
 .attack .grid input[type="number"] {
@@ -429,7 +435,8 @@ details p {
 
 @media (max-width: 900px) {
   .hud,
-  .unitcard {
+  .unitcard,
+  .attack {
     width: calc(50vw - 18px);
   }
 }
@@ -460,4 +467,27 @@ details p {
   top: 110px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.overflow {
+  position: relative;
+}
+.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: #9ca3af;
+}
+.overflow .menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 5;
 }

@@ -11,7 +11,7 @@ import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
 /**
  * Keyboard: Esc clears; Q/E rotate; R/F move a unit up or down a floor;
- * Delete removes the selected terrain piece while editing.
+ * Delete removes the selected terrain piece while editing; Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
   const t = e.target;
@@ -19,6 +19,10 @@ function onKey(e: KeyboardEvent) {
     return;
   const s = useStore.getState();
   const key = e.key.toLowerCase();
+  if (key === "home") {
+    s.resetView();
+    return;
+  }
   if (key === "escape") {
     if (s.view === "eye") s.setView("3d");
     s.setDraft(null);
@@ -44,6 +48,8 @@ function onKey(e: KeyboardEvent) {
 export function App() {
   const started = useStore((s) => s.session !== null || s.role === "spectator");
   const editing = useStore((s) => s.editing);
+  // The attack flow takes the unit card's place on the right, keeping the table clear.
+  const attacking = useStore((s) => s.game.attack !== null || (s.draft !== null && s.scrub === null));
   const view = useStore((s) => s.view);
   const setView = useStore((s) => s.setView);
   useEffect(() => {
@@ -57,8 +63,7 @@ export function App() {
         <>
           <TopBar />
           <Hud />
-          {editing ? <TerrainPanel /> : <UnitCard />}
-          <AttackPanel />
+          {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           <ReplayBar />
           {view === "eye" && (
             <button className="eye-exit primary" onClick={() => setView("3d")}>

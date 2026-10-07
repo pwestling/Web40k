@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
-import { aliveModels, suggestAttack, unitDistance, type AttackSuggestion } from "../systems/wh40k/rules";
+import {
+  aliveModels,
+  carriers,
+  mainWeapon,
+  suggestAttack,
+  unitDistance,
+  weaponReach,
+  type AttackSuggestion,
+} from "../systems/wh40k/rules";
 import { useStore, type AttackDraft } from "../store";
 import { useGame } from "./hooks";
 
@@ -22,15 +30,24 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
   const { setDraft, dispatch } = useStore();
   const attacker = game.units[draft.attackerId];
   if (!attacker) return null;
-  const weapons = Object.values(attacker.sheet?.weapons ?? {}).filter((w) => w.kind === draft.kind);
-  const enemies = Object.values(game.units).filter(
-    (u) => u.owner !== attacker.owner && aliveModels(game, u).length > 0,
-  );
-  const mine = aliveModels(game, attacker);
+  const weapons = Object.values(attacker.sheet?.weapons ?? {})
+    .filter((w) => w.kind === draft.kind)
+    .map((w) => ({ ...w, count: carriers(game, attacker, w.id).length }))
+    .sort((a, b) => b.count - a.count);
+  const weaponId = draft.weaponId ?? mainWeapon(game, attacker, draft.kind);
+  const weapon = weapons.find((w) => w.id === weaponId);
+  const reach = weapon ? weaponReach(weapon) : null;
+  // Closest models carrying the weapon; enemies out of its reach go last and say so.
+  const shooters = weapon ? carriers(game, attacker, weapon.id) : aliveModels(game, attacker);
+  const enemies = Object.values(game.units)
+    .filter((u) => u.owner !== attacker.owner && aliveModels(game, u).length > 0)
+    .map((u) => {
+      const distance = unitDistance(shooters, aliveModels(game, u));
+      return { unit: u, distance, out: reach !== null && distance > reach };
+    })
+    .sort((a, b) => Number(a.out) - Number(b.out) || a.distance - b.distance);
   const suggestion =
-    draft.weaponId && draft.targetId
-      ? suggestAttack(game, attacker.id, draft.weaponId, draft.targetId)
-      : null;
+    weaponId && draft.targetId ? suggestAttack(game, attacker.id, weaponId, draft.targetId) : null;
 
   return (
     <div className="panel attack">
@@ -42,13 +59,13 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
       </div>
       <div className="row wrap">
         <select
-          value={draft.weaponId ?? ""}
+          value={weaponId ?? ""}
           onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
         >
           <option value="">Weapon…</option>
           {weapons.map((w) => (
             <option key={w.id} value={w.id}>
-              {w.name}
+              {w.name} (×{w.count})
             </option>
           ))}
         </select>
@@ -58,9 +75,9 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
           <option value="">Target…</option>
-          {enemies.map((u) => (
+          {enemies.map(({ unit: u, distance, out }) => (
             <option key={u.id} value={u.id}>
-              {u.name} ({unitDistance(mine, aliveModels(game, u)).toFixed(1)}")
+              {u.name} ({distance.toFixed(1)}"{out ? ", out of range" : ""})
             </option>
           ))}
         </select>
@@ -73,7 +90,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
       </div>
       {suggestion && (
         <SpecEditor
-          key={`${draft.weaponId}|${draft.targetId}`}
+          key={`${weaponId}|${draft.targetId}`}
           suggestion={suggestion}
           onDeclare={(spec) => {
             dispatch({ type: "attack/declare", spec }, attacker.owner);
@@ -175,9 +192,15 @@ function SpecEditor({
         </label>
         <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
       </div>
-      <button className="primary" onClick={() => onDeclare(spec)}>
-        Declare attack
-      </button>
+      {s.inRange === 0 || s.visible === 0 ? (
+        <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
+          Declare anyway
+        </button>
+      ) : (
+        <button className="primary" onClick={() => onDeclare(spec)}>
+          Declare attack
+        </button>
+      )}
     </div>
   );
 }

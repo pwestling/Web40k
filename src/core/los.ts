@@ -22,8 +22,34 @@ function eyePoints(m: Model): Vec3[] {
   return pts;
 }
 
-/** Points over the target's volume: a column through its middle and two rings. */
+/** The model's shape as stacked cylinders: its imported bands, or one cylinder of base size. */
+function bandsOf(m: Model): { rx: number; ry: number; z0: number; z1: number }[] {
+  const { width, depth } = baseSizeInches(m.base);
+  if (m.bands?.length) return m.bands.map((b) => ({ rx: b.r, ry: b.r, z0: b.z0, z1: b.z1 }));
+  return [{ rx: width / 2, ry: depth / 2, z0: 0, z1: modelHeight(m) }];
+}
+
+/** Points over the target's volume: a column through its middle and two rings per band. */
 function bodyPoints(m: Model): Vec3[] {
+  if (m.bands?.length) {
+    const z0 = m.z ?? 0;
+    const pts: Vec3[] = [];
+    for (const b of bandsOf(m)) {
+      pts.push({ x: m.position.x, y: m.position.y, z: z0 + (b.z0 + b.z1) / 2 });
+      for (const f of [0.25, 0.75]) {
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const z = z0 + b.z0 + (b.z1 - b.z0) * f;
+          pts.push({
+            x: m.position.x + Math.cos(a) * b.rx * 0.85,
+            y: m.position.y + Math.sin(a) * b.ry * 0.85,
+            z,
+          });
+        }
+      }
+    }
+    return pts;
+  }
   const { width, depth } = baseSizeInches(m.base);
   const rx = (width / 2) * 0.85;
   const ry = (depth / 2) * 0.85;
@@ -41,9 +67,10 @@ function bodyPoints(m: Model): Vec3[] {
 
 /** Whether a line passes through a model's volume (approximated as an upright cylinder). */
 function lineHitsModel(a: Vec3, b: Vec3, m: Model): boolean {
-  const { width, depth } = baseSizeInches(m.base);
-  const r = (Math.min(width, depth) / 2) * 0.8;
-  if (segmentPointDistance2D(a, b, m.position) > r) return false;
+  const bands = bandsOf(m);
+  const reach = Math.max(...bands.map((x) => Math.min(x.rx, x.ry))) * 0.8;
+  const dist = segmentPointDistance2D(a, b, m.position);
+  if (dist > reach) return false;
   // Height of the line where it passes closest to the model's axis.
   const abx = b.x - a.x;
   const aby = b.y - a.y;
@@ -51,9 +78,8 @@ function lineHitsModel(a: Vec3, b: Vec3, m: Model): boolean {
   const t =
     len === 0 ? 0 : Math.max(0, Math.min(1, ((m.position.x - a.x) * abx + (m.position.y - a.y) * aby) / len));
   if (t < 0.02 || t > 0.98) return false;
-  const z = a.z + (b.z - a.z) * t;
-  const z0 = m.z ?? 0;
-  return z >= z0 && z <= z0 + modelHeight(m);
+  const z = a.z + (b.z - a.z) * t - (m.z ?? 0);
+  return bands.some((x) => dist <= Math.min(x.rx, x.ry) * 0.8 && z >= x.z0 && z <= x.z1);
 }
 
 export interface Sight {

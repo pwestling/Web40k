@@ -65,6 +65,7 @@ function PerfProbe() {
 function Cameras() {
   const view = useStore((s) => s.view);
   const eye = useStore((s) => s.eye);
+  const reset = useStore((s) => s.cameraReset);
   const game = useGame();
   const size = useThree((s) => s.size);
   const seat = useSelfSeat();
@@ -82,11 +83,12 @@ function Cameras() {
       />
     );
   }
-  if (view !== "top") return <PerspectiveCamera makeDefault position={[0, 52, 44 * side]} fov={45} />;
+  if (view !== "top")
+    return <PerspectiveCamera key={reset} makeDefault position={[0, 52, 44 * side]} fov={45} />;
   const zoom = Math.min(size.width / game.table.width, size.height / game.table.depth) * 0.85;
   // The tiny z offset keeps the camera's up vector defined and puts the
   // player's own edge at the bottom of the screen.
-  return <OrthographicCamera makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
+  return <OrthographicCamera key={reset} makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
 }
 
 type Drag = {
@@ -131,6 +133,7 @@ function Scene() {
   });
   const { camera, gl } = useThree();
   const { width, depth } = game.table;
+  const cameraReset = useStore((s) => s.cameraReset);
   const live = scrub === null;
 
   // Track the pointer on a horizontal plane while dragging, wherever it is.
@@ -320,10 +323,26 @@ function Scene() {
     <>
       {/* Remount on view change so the controls bind to the new camera. */}
       <OrbitControls
-        key={`${view}-${eye?.modelId ?? ""}`}
+        key={`${view}-${eye?.modelId ?? ""}-${cameraReset}`}
         enabled={!drag}
         enableRotate={view !== "top"}
-        maxPolarAngle={view === "eye" ? Math.PI : Math.PI / 2.1}
+        // Never lower than about 25 degrees above the table, so the camera can't end up level with it.
+        maxPolarAngle={view === "eye" ? Math.PI : (65 * Math.PI) / 180}
+        maxDistance={view === "eye" ? undefined : 140}
+        onChange={(e) => {
+          if (view === "eye" || !e) return;
+          // Keep the point the camera looks at over the table.
+          const c = e.target;
+          const tx = Math.max(-width / 2, Math.min(width / 2, c.target.x));
+          const tz = Math.max(-depth / 2, Math.min(depth / 2, c.target.z));
+          const dx = tx - c.target.x;
+          const dz = tz - c.target.z;
+          if (dx || dz) {
+            c.target.set(tx, c.target.y, tz);
+            c.object.position.x += dx;
+            c.object.position.z += dz;
+          }
+        }}
         target={eyeTarget && view === "eye" ? [eyeTarget.x, eyeTarget.z, eyeTarget.y] : [0, 0, 0]}
         makeDefault
       />
@@ -787,23 +806,31 @@ function ModelBase({
   const wounds = maxWounds(model);
   const left = wounds - (model.woundsLost ?? 0);
   // The stand-in is as tall as the model's line-of-sight height.
+  const dressed = figure !== undefined;
   const height = figure ?? Math.max(0.3, modelHeight(model) - 0.2);
   const [hover, setHover] = useState(false);
   return (
-    <group position={[position.x, z, position.y]} rotation-y={model.facing}>
+    // The base and the figure both pick up clicks and drags.
+    <group
+      position={[position.x, z, position.y]}
+      rotation-y={model.facing}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        onDown(e.shiftKey);
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHover(true);
+      }}
+      onPointerOut={() => setHover(false)}
+    >
       <mesh
         castShadow
         position-y={0.1}
         // Oval bases are a unit cylinder stretched to size.
         scale={rect ? 1 : [width / 2, 1, depth / 2]}
-        onPointerDown={(e) => {
-          if (e.button !== 0) return;
-          e.stopPropagation();
-          onDown(e.shiftKey);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onPointerOver={() => setHover(true)}
-        onPointerOut={() => setHover(false)}
       >
         {rect ? (
           <boxGeometry args={[width * 0.98, 0.2, depth * 0.98]} />
@@ -812,16 +839,17 @@ function ModelBase({
         )}
         <meshStandardMaterial color={color} emissive={targetable && hover ? "#facc15" : "#000"} />
       </mesh>
-      {/* Stand-in for the miniature until one is uploaded (see Miniatures); the nub shows facing. */}
-      {figure !== undefined ? null : rect ? (
-        <mesh castShadow position-y={0.2 + height / 2} raycast={() => null}>
+      {/* Stand-in for the miniature; the nub shows facing. With an uploaded
+          figure (see Miniatures) it stays as an invisible, cheap pick target. */}
+      {rect ? (
+        <mesh castShadow={!dressed} position-y={0.2 + height / 2}>
           <boxGeometry args={[width * 0.8, height, depth * 0.85]} />
-          <meshStandardMaterial color="#94a3b8" />
+          <meshStandardMaterial color="#94a3b8" visible={!dressed} />
         </mesh>
       ) : (
-        <mesh castShadow position-y={0.2 + height / 2} raycast={() => null}>
+        <mesh castShadow={!dressed} position-y={0.2 + height / 2}>
           <capsuleGeometry args={[r * 0.45, Math.max(0.1, height - r * 0.9), 4, 12]} />
-          <meshStandardMaterial color="#cbd5e1" />
+          <meshStandardMaterial color="#cbd5e1" visible={!dressed} />
         </mesh>
       )}
       <mesh position={[0, 0.25, depth / 2 - 0.1]} raycast={() => null}>

@@ -94,6 +94,18 @@ export interface Model {
   phaseStartZ?: number;
   /** Height of the miniature in inches, for line of sight. Defaults from the base size. */
   height?: number;
+  /**
+   * Line-of-sight shape from an imported miniature: 1-4 stacked bands, each a
+   * cylinder of radius `r` from `z0` to `z1` (inches above the base). Without
+   * it the model is one cylinder of its base size.
+   */
+  bands?: SightBand[];
+}
+
+export interface SightBand {
+  r: number;
+  z0: number;
+  z1: number;
 }
 
 export type UnitId = string;
@@ -159,6 +171,12 @@ export interface TerrainPiece {
   depth: number;
   facing: number;
   solids: TerrainSolid[];
+  /**
+   * Optional low-poly line-of-sight mesh from an imported terrain model:
+   * triangles as flat [x,y,z, x,y,z, x,y,z, ...] in local inches, z up.
+   * When present it blocks sight instead of the solids; floors still come from the solids.
+   */
+  hull?: number[];
 }
 
 export interface Objective {

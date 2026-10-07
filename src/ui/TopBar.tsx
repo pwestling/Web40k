@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PHASES } from "../core";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
@@ -13,6 +14,15 @@ export function TopBar() {
     .sort((a, b) => a.seat! - b.seat!);
   const active = players.find((p) => p.seat === game.turn.activeSeat);
   const deploying = game.turn.round === 0;
+  // Only the player whose turn it is gets the phase buttons; the other can still
+  // step the phase (rules are advisory) from a quiet menu, after a confirm.
+  const myTurn = live && (deploying || (active ? canControl(active.id) : true));
+  const [menu, setMenu] = useState(false);
+  const step = (type: "turn/next" | "turn/prev") => {
+    setMenu(false);
+    const what = type === "turn/next" ? "Advance" : "Go back";
+    if (confirm(`${what} a phase during ${active?.name ?? "the other player"}'s turn?`)) dispatch({ type });
+  };
 
   return (
     <div className="topbar">
@@ -49,7 +59,7 @@ export function TopBar() {
         </div>
       ))}
       <div className="turn">
-        {live && (
+        {myTurn && (
           <button title="Previous phase" onClick={() => dispatch({ type: "turn/prev" })}>
             ◀
           </button>
@@ -93,10 +103,23 @@ export function TopBar() {
             </>
           )}
         </div>
-        {live && (
+        {myTurn && (
           <button className="primary" title="Next phase" onClick={() => dispatch({ type: "turn/next" })}>
             {deploying ? "Start battle ▶" : "▶"}
           </button>
+        )}
+        {live && !myTurn && (
+          <span className="overflow">
+            <button className="quiet" title="Phase options" onClick={() => setMenu(!menu)}>
+              ⋯
+            </button>
+            {menu && (
+              <span className="menu">
+                <button onClick={() => step("turn/next")}>Advance their phase</button>
+                <button onClick={() => step("turn/prev")}>Back a phase</button>
+              </span>
+            )}
+          </span>
         )}
       </div>
     </div>

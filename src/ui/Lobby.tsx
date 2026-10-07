@@ -6,7 +6,7 @@ import { loadSavedGame, useStore, type Mode } from "../store";
 export function Lobby() {
   const { start, openReplay } = useStore();
   const params = new URLSearchParams(location.search);
-  const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "Player");
+  const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [room, setRoom] = useState(() => params.get("room") ?? "");
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
   const saved = loadSavedGame();
@@ -48,7 +48,13 @@ export function Lobby() {
       <h1>Open Battle</h1>
       <p className="muted">A peer-to-peer tabletop for miniatures wargames. Bring your own army list.</p>
       <label>
-        Your name <input value={name} onChange={(e) => setName(e.target.value)} />
+        Your name{" "}
+        <input
+          value={name}
+          placeholder="Player 1 or 2, by seat"
+          autoFocus={!name}
+          onChange={(e) => setName(e.target.value)}
+        />
       </label>
       <button className="primary" onClick={() => start({ role: "host", mode: "hotseat", name })}>
         Play on this screen (hotseat)
