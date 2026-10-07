@@ -36,25 +36,26 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const { dispatch, scrub, record } = useStore();
   const canControl = useCanControl();
   const mine = canControl(unit.owner) && scrub === null;
-  const centre = unitCentre(game, unit);
   const mod = systemModule(game.system);
   const move = moveBudget(game, unit).move ?? 0;
   const chargeDice = mod.chargeRoll ?? { count: 2, sides: 6, keep: "highest" as const };
   const fleeDice = mod.fleeDice ?? "2D6";
   // Within reach: what a charge (or a long flight or pursuit) could cover.
   const reach = Math.max(move + chargeDice.sides * (chargeDice.keep === "sum" ? chargeDice.count : 1), 12);
+  // Base to base, as Declare charge measures it.
   const enemies = useMemo(
     () =>
       Object.values(game.units)
         .filter((u) => u.owner !== unit.owner && u.modelIds.some((id) => !game.models[id]?.destroyed))
-        .map((u) => {
-          const c = unitCentre(game, u);
-          return { unit: u, d: Math.hypot(c.x - centre.x, c.y - centre.y) };
-        })
+        .map((u) => ({ unit: u, d: unitGap(game, unit, u) }))
         .sort((a, b) => a.d - b.d),
-    [game, unit.owner, centre.x, centre.y],
+    [game, unit],
   );
   const [pick, setPick] = useState<string | null>(null);
+  // The charge declared for this unit this round picks the enemy until the player picks another.
+  const declared = game.modules?.[game.system ?? ""]?.[`charge:${unit.id}`] as
+    { target?: string; round?: number } | undefined;
+  const declaredTarget = declared?.round === game.turn.round ? declared.target : undefined;
   const [typed, setTyped] = useState<number | null>(null);
   const upto = scrub ?? Infinity;
   const flee = lastRoll(record, unit.id, upto, "flee roll");
@@ -62,7 +63,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const charge = lastRoll(record, unit.id, upto, "charge roll");
   const charged = chargedThisPhase(record, unit.id, upto);
   if (!mine || !enemies.length) return null;
-  const enemy = enemies.find((e) => e.unit.id === pick)?.unit ?? enemies[0]!.unit;
+  const enemy = enemies.find((e) => e.unit.id === (pick ?? declaredTarget))?.unit ?? enemies[0]!.unit;
   const near = enemies.filter((e) => e.d <= reach);
   const far = enemies.filter((e) => e.d > reach);
   const door = closeDoor(game, unit, enemy);
@@ -74,6 +75,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const as = unit.owner;
   const chargeDie = charge ? (chargeDice.keep === "highest" ? charge.keep : charge.total) : 0;
   const chargeRange = charge ? chargeDie + move : null;
+  const short = !!door && chargeRange !== null && door.distance > chargeRange + 0.05;
   const roll = (label: RollKind) => {
     setTyped(null);
     if (label === "charge roll") {
@@ -124,16 +126,20 @@ export function ChargePanel({ unit }: { unit: Unit }) {
         <div className="row">
           <button onClick={() => roll("charge roll")}>Roll to charge</button>
           <button
-            title={`Move into contact with ${enemy.name}'s ${ARC_EDGE[door.arc]}, lined up flush`}
-            className={chargeRange !== null && door.distance > chargeRange + 0.05 ? "" : "primary"}
+            title={
+              short
+                ? `The roll falls ${fmt(door.distance - chargeRange!)} short of ${enemy.name}`
+                : `Move into contact with ${enemy.name}'s ${ARC_EDGE[door.arc]}, lined up flush`
+            }
+            className={short ? "" : "primary"}
+            disabled={short}
             onClick={() => dispatch({ ...door.move, how: "charge" }, as)}
           >
             Charge into its {ARC_EDGE[door.arc]} ({fmt(door.distance)})
           </button>
           {chargeRange !== null && (
-            <span className={door.distance > chargeRange + 0.05 ? "warn" : "muted small"}>
-              range {fmt(chargeRange)} ({chargeDie} + M {move})
-              {door.distance > chargeRange + 0.05 ? " · too short" : " · reaches ✓"}
+            <span className={short ? "warn" : "muted small"}>
+              range {fmt(chargeRange)} ({chargeDie} + M {move}){short ? " · too short" : " · reaches ✓"}
             </span>
           )}
         </div>
