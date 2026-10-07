@@ -1,8 +1,7 @@
 import { Detailed } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
 import type { ModelAsset } from "../assets/types";
-import { toGeometry } from "./Miniatures";
+import { shadowMaterial, useAssetGeometries } from "./Miniatures";
 
 /** Camera distances (inches) at which each level of detail takes over. */
 const LOD_DISTANCES = [0, 40, 90];
@@ -30,13 +29,12 @@ export function TerrainModel({
     raycast: () => null;
   }>;
 }) {
-  const geometries = useMemo(() => asset.lods.map(toGeometry), [asset]);
-  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
+  const geometries = useAssetGeometries(asset);
   return (
     <group scale={scale}>
       <Detailed distances={LOD_DISTANCES.slice(0, geometries.length)}>
         {geometries.map((g, i) => (
-          <mesh key={i} geometry={g} castShadow={!xray} receiveShadow {...handlers}>
+          <mesh key={i} geometry={g} receiveShadow {...handlers}>
             <meshStandardMaterial
               color={selected ? "#c08a3e" : "#8a8178"}
               roughness={0.9}
@@ -47,6 +45,13 @@ export function TerrainModel({
           </mesh>
         ))}
       </Detailed>
+      {/* Shadows from the coarsest level whatever the camera distance: invisible on screen. */}
+      <mesh
+        geometry={geometries[geometries.length - 1]}
+        material={shadowMaterial}
+        castShadow={!xray}
+        raycast={() => null}
+      />
     </group>
   );
 }

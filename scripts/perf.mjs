@@ -50,6 +50,8 @@ try {
   await run("stand-ins", () => window.openBattlePerf.undress());
   await run("pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000));
   await run("pipeline, 1M sculpts", () => window.openBattlePerf.dress(1_000_000));
+  // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
+  await run("terrain-heavy: uploaded terrain + 1M figures", () => window.openBattlePerf.terrain(500_000));
   if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
   // Full detail is slow enough under SwiftShader that a few frames will do.
   await run("no pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000, true), 3, 1);

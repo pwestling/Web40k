@@ -31,7 +31,7 @@ const CREASE = (40 * Math.PI) / 180;
 
 const material = new MeshStandardMaterial({ color: "#c7ccd4", roughness: 0.75, metalness: 0.05 });
 /** Shadows come from the coarsest level only: drawn into the shadow map, invisible on screen. */
-const shadowMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
+export const shadowMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
 
 interface Entry {
   model: Model;
@@ -104,6 +104,33 @@ export function toGeometry(mesh: ModelAsset["lods"][number]): BufferGeometry {
   return creased;
 }
 
+/**
+ * Render geometry per asset, shared by everything that draws it (figures,
+ * and every terrain piece using the same upload) and freed when the last
+ * user goes. Creased normals make each level about 3x its indexed size, so
+ * building one copy per piece adds up quickly.
+ */
+const shared = new Map<string, { geometries: BufferGeometry[]; users: number }>();
+
+export function useAssetGeometries(asset: ModelAsset): BufferGeometry[] {
+  const geometries = useMemo(() => {
+    let entry = shared.get(asset.id);
+    if (!entry) shared.set(asset.id, (entry = { geometries: asset.lods.map(toGeometry), users: 0 }));
+    return entry.geometries;
+  }, [asset]);
+  useEffect(() => {
+    const entry = shared.get(asset.id);
+    if (!entry) return;
+    entry.users++;
+    return () => {
+      if (--entry.users > 0) return;
+      entry.geometries.forEach((g) => g.dispose());
+      shared.delete(asset.id);
+    };
+  }, [asset]);
+  return geometries;
+}
+
 const m4 = new Matrix4();
 const q = new Quaternion();
 const up = new Vector3(0, 1, 0);
@@ -124,8 +151,7 @@ function AssetInstances({
   positions: Record<string, Vec2>;
   heights: Record<string, number>;
 }) {
-  const geometries = useMemo(() => asset.lods.map(toGeometry), [asset]);
-  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
+  const geometries = useAssetGeometries(asset);
   const lodRefs = useRef<(InstancedMesh | null)[]>([]);
   const shadowRef = useRef<InstancedMesh | null>(null);
   const capacity = entries.length;

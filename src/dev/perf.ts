@@ -86,6 +86,33 @@ export const perf = {
     return { profiles: keys.length, pipelineMs: [...assets.values()].map((a) => a.stats.ms) };
   },
 
+  /**
+   * Replace every terrain piece's boxes with an uploaded-style model:
+   * `kinds` distinct sculpts of `sourceTriangles`, scaled to each footprint.
+   */
+  async terrain(sourceTriangles: number, kinds = 3) {
+    await ready;
+    const { game, dispatch } = useStore.getState();
+    const { addAsset } = useAssets.getState();
+    const assets = Array.from({ length: kinds }, (_, i) => {
+      const asset = processMesh(synthMiniature(sourceTriangles * (1 + i * 0.01), 25.4 * 4), {
+        id: `synth-terrain-${sourceTriangles}-${i}`,
+        name: `terrain ${i}`,
+        kind: "terrain",
+      });
+      addAsset(asset);
+      return asset;
+    });
+    game.terrain.forEach((piece, i) => {
+      const asset = assets[i % kinds]!;
+      const width = asset.bounds.max[0] - asset.bounds.min[0];
+      const mesh = { asset: asset.id, name: asset.name, scale: piece.width / width };
+      dispatch({ type: "terrain/update", piece: { ...piece, mesh } });
+    });
+    await frame();
+    return { pieces: game.terrain.length, pipelineMs: assets.map((a) => a.stats.ms) };
+  },
+
   /** Take every figure off. */
   undress() {
     const { game, dispatch } = useStore.getState();
