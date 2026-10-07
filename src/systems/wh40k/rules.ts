@@ -13,7 +13,7 @@ import {
   modelDistance,
   modelSight,
   moveCrossesWall,
-  PHASES,
+  phaseName,
   previewAttack,
   verticalGap,
   whollyWithin,
@@ -420,7 +420,7 @@ export function unitMoved(
  * in Movement, the charge roll in Charge, 3" pile-in in Fight.
  */
 export function moveAllowance(state: GameState, unit: Unit): number | null {
-  const phase = PHASES[state.turn.phase];
+  const phase = phaseName(state);
   if (phase === "Charge") return typeof unit.status?.charge === "number" ? unit.status.charge : null;
   if (phase === "Fight") return 3;
   const m = aliveModels(state, unit)[0];

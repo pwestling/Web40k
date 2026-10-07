@@ -2,7 +2,7 @@ import {
   levelsAt,
   maxWounds,
   modelHeight,
-  PHASES,
+  phaseName,
   settleZ,
   stepLevel,
   type Model,
@@ -139,7 +139,7 @@ export function UnitCard() {
   const moved = unitMoved(alive);
   const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
-  const phase = game.turn.round > 0 ? PHASES[game.turn.phase] : undefined;
+  const phase = phaseName(game);
   // Floor buttons only show when the unit stands where there is a floor to climb to.
   const onFloors = alive.some((m) => (m.z ?? 0) > 0 || levelsAt(game.terrain, m.position).length > 1);
   const elevation = Math.max(0, ...alive.map((m) => m.z ?? 0));

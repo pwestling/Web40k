@@ -474,6 +474,10 @@ export interface ResourceDef {
   max?: Expr;
   /** Dice pools keep the rolled faces (dice-placement games). */
   kind?: "counter" | "dicePool";
+  /** Faces of the dice in a pool (default 6). */
+  sides?: number;
+  /** Back to `initial` (a pool emptied) at the start of each player turn or round. */
+  reset?: "playerTurn" | "round";
 }
 
 /** An advisory rule check. Breaking it warns; it never blocks. */
@@ -534,6 +538,13 @@ export interface GameSystem {
   coreEffects?: Effect[];
   /** Named numbers such as engagement range, available as "const.<id>". */
   constants?: Record<Id, number>;
+  /**
+   * Unit flags cleared at the start of each player turn (for that player's
+   * units) or each round (for everyone), e.g. "moved" or "activated".
+   */
+  resets?: { at: "playerTurn" | "round"; flags: Id[] }[];
+  /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
+  settings?: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------

@@ -226,8 +226,14 @@ export interface TurnState {
   round: number;
   /** Index into the turn order (seats). */
   activeSeat: number;
-  /** Index into the system's phases. */
+  /**
+   * Index into the system's round schedule (see content/turn.ts). For games
+   * where each player takes a turn of phases (40k), the same indices repeat
+   * for each player's turn.
+   */
   phase: number;
+  /** Players who passed in a row during alternating activations. */
+  passes?: number;
   /** Seat that takes the first turn each round. */
   firstSeat: number;
 }
@@ -250,6 +256,10 @@ export interface GameState {
   objectives: Objective[];
   zones: Zone[];
   turn: TurnState;
+  /** The game system being played (a GameSystem id); 40k when missing. */
+  system?: string;
+  /** Dice pools whose faces matter, e.g. FSD's ready activation dice: player → resource → faces. */
+  pools?: Record<PlayerId, Record<string, number[]>>;
   /** Per-player counters such as CP and VP. */
   resources: Record<PlayerId, Record<string, number>>;
   /** The attack being resolved, if any. */

@@ -1,6 +1,6 @@
 import {
   applyEvent,
-  PHASES,
+  phaseName,
   rulerLength,
   undoneSeqs,
   type AttackState,
@@ -101,11 +101,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
 }
 
 function turnHeader(state: GameState): string {
-  const { round, activeSeat, phase } = state.turn;
+  const { round, activeSeat } = state.turn;
   if (round === 0) return "Deployment";
   const player =
     Object.values(state.players).find((p) => p.seat === activeSeat)?.name ?? `Player ${activeSeat + 1}`;
-  return `Round ${round} · ${player} · ${PHASES[phase] ?? ""}`;
+  return `Round ${round} · ${player} · ${phaseName(state) ?? ""}`;
 }
 
 /** "Line Troopers shot Ashen Thralls (Pattern Rifle): 16 attacks, 11 hits, 6 wounds, 2 unsaved, 2 slain". */

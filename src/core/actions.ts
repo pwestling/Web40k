@@ -1,4 +1,6 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import { getSystem } from "./content/systems";
+import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
 import type {
   DiceRoll,
@@ -62,8 +64,15 @@ export type Intent =
   | { type: "settings/set"; settings: Partial<GameSettings> }
   | { type: "turn/next" }
   | { type: "turn/prev" }
+  | { type: "turn/pass" }
+  | { type: "turn/endActivation" }
   | { type: "turn/first"; seat: number }
+  | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
+  /** Re-roll some dice in a player's pool (by index). */
+  | { type: "pool/reroll"; player: PlayerId; resource: string; indices: number[] }
+  /** Spend dice from a player's pool (by index). */
+  | { type: "pool/spend"; player: PlayerId; resource: string; indices: number[] }
   | { type: "attack/declare"; spec: AttackSpec }
   | { type: "attack/roll" }
   | { type: "attack/clear" }
@@ -100,10 +109,17 @@ export type GameEvent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
-  | { type: "turn/next" }
+  /** `seed` drives any dice rolled on the way, e.g. activation dice at the start of a round. */
+  | { type: "turn/next"; seed?: number }
   | { type: "turn/prev" }
+  | { type: "turn/pass"; seed?: number }
+  | { type: "turn/endActivation" }
   | { type: "turn/first"; seat: number }
+  /** Choose the game system before the battle starts. */
+  | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
+  /** A player's dice pool after a re-roll or spending dice. */
+  | { type: "pool/set"; player: PlayerId; resource: string; faces: number[] }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
@@ -161,6 +177,28 @@ export function resolveIntent(
       return state?.players[intent.player] && intent.player !== from
         ? { type: "player/claim", player: intent.player, by: from }
         : null;
+    case "pool/reroll":
+    case "pool/spend": {
+      const faces = state?.pools?.[intent.player]?.[intent.resource];
+      if (!state || !faces || !state.players[intent.player]) return null;
+      const picked = new Set(intent.indices.filter((i) => i >= 0 && i < faces.length));
+      const sides = systemOf(state).resources?.find((r) => r.id === intent.resource)?.sides ?? 6;
+      const next =
+        intent.type === "pool/spend"
+          ? faces.filter((_, i) => !picked.has(i))
+          : faces.map((f, i) => (picked.has(i) ? 1 + Math.floor(rng() * sides) : f));
+      return { type: "pool/set", player: intent.player, resource: intent.resource, faces: next };
+    }
+    case "turn/next":
+    case "turn/pass":
+      return { ...intent, seed: Math.floor(rng() * 2 ** 31) };
+    case "game/system":
+      try {
+        getSystem(intent.system);
+      } catch {
+        return null;
+      }
+      return intent;
     case "attack/declare": {
       try {
         parseDice(intent.spec.attacks);

@@ -621,3 +621,16 @@ details p {
 .terrain-legend .blocking {
   color: #f87171;
 }
+
+/* Dice pools in the top bar (activation dice) */
+.topbar .pool button.die {
+  padding: 0;
+  margin: 0 1px;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.topbar .pool button.die.on {
+  background: #f59e0b;
+  border-color: #b45309;
+}

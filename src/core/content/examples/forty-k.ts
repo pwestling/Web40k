@@ -439,7 +439,17 @@ export const fortyK: GameSystem = {
       },
     },
   ],
-  resources: [{ id: "cp", name: "Command points", on: "player", initial: 0 }],
+  resources: [
+    { id: "CP", name: "Command points", on: "player", initial: 0 },
+    { id: "VP", name: "Victory points", on: "player", initial: 0 },
+  ],
+  // Per-turn flags, cleared when their owner's turn begins.
+  resets: [
+    {
+      at: "playerTurn",
+      flags: ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"],
+    },
+  ],
   terrain: [
     { id: "exposed", name: "Exposed" },
     { id: "light", name: "Light" },
@@ -636,8 +646,8 @@ export const fortyK: GameSystem = {
                 kind: "step",
                 id: "gainCp",
                 do: [
-                  { do: "gainResource", resource: "cp", amount: 1, player: "owner" },
-                  { do: "gainResource", resource: "cp", amount: 1, player: "opponent" },
+                  { do: "gainResource", resource: "CP", amount: 1, player: "owner" },
+                  { do: "gainResource", resource: "CP", amount: 1, player: "opponent" },
                 ],
               },
             ],
