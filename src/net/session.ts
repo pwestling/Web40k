@@ -7,6 +7,7 @@ import {
   lastSeq,
   resolveLogged,
   stateAt,
+  type GameEvent,
   type GameRecord,
   type GameState,
   type Intent,
@@ -35,6 +36,23 @@ export interface NetStatus {
 
 /** Checkpoints kept for comparing against the host's checksums. */
 const KEEP_CHECKS = 32;
+
+/**
+ * Intents the host hands to the rules-package sandbox (src/sandbox): the
+ * router returns how to resolve one there, or null to resolve it here. The
+ * host draws a seed from its rng for the sandbox's dice.
+ */
+export type IntentRouter = (
+  intent: Intent,
+  from: string,
+  state: GameState,
+) => ((seed: number) => Promise<GameEvent | null>) | null;
+
+let router: IntentRouter | null = null;
+
+export function setIntentRouter(r: IntentRouter | null): void {
+  router = r;
+}
 
 export interface SessionOptions {
   transport: Transport;
@@ -418,9 +436,34 @@ export class Session {
     this.schedule();
   }
 
+  /** Intents waiting while the sandbox resolves one, so events keep their order. */
+  private waiting: [Intent, string][] = [];
+  private resolving = false;
+
   private hostApply(intent: Intent, from: string): void {
+    if (this.resolving) {
+      this.waiting.push([intent, from]);
+      return;
+    }
+    const routed = router?.(intent, from, this.state);
+    if (routed) {
+      this.resolving = true;
+      const seed = Math.floor(this.rng() * 2 ** 32);
+      void routed(seed)
+        .catch(() => null)
+        .then((event) => {
+          this.resolving = false;
+          if (event && this.role === "host")
+            this.hostLog({ seq: lastSeq(this.record) + 1, by: from, at: this.now(), event });
+          for (const [i, f] of this.waiting.splice(0)) this.hostApply(i, f);
+        });
+      return;
+    }
     const resolved = resolveLogged(this.record, intent, from, this.rng, this.now(), this.state);
-    if (!resolved) return;
+    if (resolved) this.hostLog(resolved);
+  }
+
+  private hostLog(resolved: LoggedEvent): void {
     const logged: LoggedEvent = { ...resolved, host: this.selfId };
     // The previous checkpoint's hash rides along with this event.
     const due = this.pendingCheck;

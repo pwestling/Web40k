@@ -1587,3 +1587,12 @@ button.rare-star:hover {
 .command-stack .stack-cards button {
   padding: 0 6px;
 }
+
+/* The rules-package sandbox stopped a package (src/sandbox). */
+.panel.sandbox-notice {
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 420px;
+  border: 1px solid #b45309;
+}

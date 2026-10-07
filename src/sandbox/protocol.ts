@@ -1,0 +1,56 @@
+import type { GameEvent, GameRecord, Intent, LoggedEvent } from "../core";
+import type { Rng } from "../core/actions";
+
+/**
+ * Messages between the app and the package sandbox (a Worker started inside
+ * a sandboxed iframe; see host.ts). The worker keeps a replica of the game
+ * record, folded with the same reducer, so calls carry ids and intents,
+ * never the whole state.
+ */
+export type ToSandbox =
+  | { id: number; t: "load"; packages: { hash: string; source: string }[] }
+  | { id: number; t: "init"; record: GameRecord }
+  | { id: number; t: "events"; events: LoggedEvent[] }
+  | { id: number; t: "resolve"; intent: Intent; from: string; seed: number }
+  | { id: number; t: "actions"; unitId: string; player: string };
+
+export type FromSandbox =
+  | { id: number; t: "ok"; value?: unknown }
+  | { id: number; t: "error"; error: string }
+  /** The worker is up and listening. */
+  | { id: 0; t: "ready" };
+
+/** What a load reports: the code each package added, by system. */
+export interface Loaded {
+  packages: { hash: string; systems: string[]; procedures: string[]; actions: string[] }[];
+  errors: { hash: string; error: string }[];
+}
+
+/** A package's code action as the unit card shows it, worked out in the sandbox. */
+export interface ActionRow {
+  id: string;
+  name: string;
+  /** True, or why not. */
+  available: true | string;
+  targets: { unitId?: string; label: string }[];
+  /** Whether it needs a target picked. */
+  targeted: boolean;
+}
+
+export type Resolved = GameEvent | null;
+
+/**
+ * The host draws one number from its rng per intent and the sandbox rolls
+ * from it, so dice still come from the host and a replay of the log never
+ * needs them again (results are in the events). mulberry32.
+ */
+export function seededRng(seed: number): Rng {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}

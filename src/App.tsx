@@ -14,6 +14,7 @@ import { ReplayTitle, RoundCard } from "./ui/RoundCard";
 import { StatsScreen } from "./ui/StatsScreen";
 import { systemModule } from "./systems";
 import { PackageCards } from "./ui/Packages";
+import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
@@ -102,6 +103,7 @@ export function App() {
           <DiceTray />
           <StatsScreen />
           <PackageCards />
+          <SandboxNotice />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">
