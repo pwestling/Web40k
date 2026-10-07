@@ -10,6 +10,7 @@ import {
   type AttackSuggestion,
 } from "../systems/wh40k/rules";
 import { attackReminders } from "../core/content/player";
+import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
@@ -385,15 +386,20 @@ function DamageSummary({ game, attack }: { game: GameState; attack: AttackState 
  */
 function WoundOrder({ attack }: { attack: AttackState }) {
   const game = useGame();
-  const { dispatch } = useStore();
+  const { dispatch, set: setUi } = useStore();
   const canControl = useCanControl();
   const target = game.units[attack.spec.targetUnitId];
   if (!target) return null;
   const alive = aliveModels(game, target);
-  // Attached leaders come last in the unit already; a wounded model goes first.
-  const fallback = [...alive].sort(
-    (a, b) => Number((b.woundsLost ?? 0) > 0) - Number((a.woundsLost ?? 0) > 0),
-  );
+  // As the engine orders them: a wounded model first, then ordinary models,
+  // then sergeants and special weapons; attached leaders come last in the unit already.
+  const common = commonLoadout(alive);
+  const rank = (m: (typeof alive)[number]) =>
+    (m.woundsLost ?? 0) > 0 ? -1 : loadoutKey(m) === common ? 0 : 1;
+  const fallback = alive
+    .map((m, i) => ({ m, i }))
+    .sort((x, y) => rank(x.m) - rank(y.m) || x.i - y.i)
+    .map((x) => x.m);
   const chosen = attack.run?.overrides?.allocate?.order;
   const order = chosen
     ? [
@@ -401,35 +407,64 @@ function WoundOrder({ attack }: { attack: AttackState }) {
         ...alive.filter((m) => !chosen.includes(m.id)),
       ]
     : fallback;
+  // Neighbours with the same profile and weapons, unwounded, are one choice.
+  const groups: (typeof alive)[] = [];
+  for (const m of order) {
+    const last = groups.at(-1);
+    const same =
+      last &&
+      (m.woundsLost ?? 0) === 0 &&
+      (last[0]!.woundsLost ?? 0) === 0 &&
+      loadoutKey(m) === loadoutKey(last[0]);
+    if (same) last.push(m);
+    else groups.push([m]);
+  }
   const mine = canControl(target.owner);
   const wounded = order.findIndex((m) => (m.woundsLost ?? 0) > 0);
-  const toFront = (id: string) =>
+  const toFront = (ids: string[]) =>
     dispatch(
-      { type: "attack/allocate", order: [id, ...order.map((m) => m.id).filter((x) => x !== id)] },
+      { type: "attack/allocate", order: [...ids, ...order.map((m) => m.id).filter((x) => !ids.includes(x))] },
       target.owner,
     );
+  const point = (ids: string[] | null) => setUi({ hoverModels: ids });
+  // What sets a special model apart: weapons the ordinary models don't carry.
+  const usual = alive.find((m) => loadoutKey(m) === common)?.weapons ?? [];
+  const gear = (m: (typeof alive)[number]) => {
+    const extra = [...new Set((m.weapons ?? []).filter((w) => !usual.includes(w)))];
+    const names = extra.map((w) => target.sheet?.weapons[w]?.name ?? w);
+    return names.length ? ` (${names.join(", ")})` : "";
+  };
   return (
     <div className="stage wound-order">
       <span className="label">Wounds go to</span>
-      <span className="chips">
-        {order.slice(0, 12).map((m, i) => (
-          <button
-            key={m.id}
-            className={`chip ${i === 0 ? "on" : ""}`}
-            disabled={!mine || i === 0}
-            title={mine ? "Take wounds on this model first" : undefined}
-            onClick={() => toFront(m.id)}
-          >
-            {i + 1}. {m.label}
-            {(m.woundsLost ?? 0) > 0 ? ` (${woundsLeft(m)} W left)` : ""}
-          </button>
-        ))}
-        {order.length > 12 && <span className="muted">+{order.length - 12} more</span>}
+      <span className="chips" onMouseLeave={() => point(null)}>
+        {groups.slice(0, 10).map((g, i) => {
+          const m = g[0]!;
+          const ids = g.map((x) => x.id);
+          return (
+            <button
+              key={m.id}
+              className={`chip ${i === 0 ? "on" : ""}`}
+              disabled={!mine || i === 0}
+              title={mine && i > 0 ? "Take wounds on these models first" : undefined}
+              onMouseEnter={() => point(ids)}
+              onFocus={() => point(ids)}
+              onBlur={() => point(null)}
+              onClick={() => toFront(ids)}
+            >
+              {i + 1}. {m.label}
+              {gear(m)}
+              {g.length > 1 ? ` ×${g.length}` : ""}
+              {(m.woundsLost ?? 0) > 0 ? ` (${woundsLeft(m)} W left)` : ""}
+            </button>
+          );
+        })}
+        {groups.length > 10 && <span className="muted">+{groups.length - 10} more</span>}
       </span>
       <span className="result">
         {wounded > 0 ? (
           <span className="warn">A model that has already lost wounds should take the next one.</span>
-        ) : mine && !chosen ? (
+        ) : mine && !chosen && groups.length > 1 ? (
           <span className="muted">Defender: click a model to put it first.</span>
         ) : null}
       </span>

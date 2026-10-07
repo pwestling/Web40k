@@ -42,6 +42,11 @@ export interface ModelView {
   rules: RuleRef[];
   woundsLost: number;
   destroyed: boolean;
+  /**
+   * 1 for a model unlike most of its unit (a sergeant, a special weapon, a
+   * character), else 0. Set on a unit view's models; 0 on a lone model view.
+   */
+  special: number;
   /** Characteristics by system id, e.g. T, Sv, W. */
   [characteristic: string]: unknown;
 }
@@ -232,9 +237,27 @@ export function modelView(
     rules: bindRules(rules, abilityTexts(unit), "model"),
     woundsLost: model.woundsLost ?? 0,
     destroyed: !!model.destroyed,
+    special: 0,
   };
   Object.defineProperty(view, "source", { value: model, enumerable: false });
   return applyContinuous(system, view, opts.rules);
+}
+
+/** What makes models interchangeable: the same profile and the same weapons. */
+export function loadoutKey(model: { profile?: { name?: string }; weapons?: string[] } | undefined): string {
+  return `${model?.profile?.name ?? ""}|${[...(model?.weapons ?? [])].sort().join(",")}`;
+}
+
+/** The commonest loadout among these models (the unit's ordinary models). */
+export function commonLoadout(
+  models: ({ profile?: { name?: string }; weapons?: string[] } | undefined)[],
+): string {
+  const counts = new Map<string, number>();
+  for (const m of models) counts.set(loadoutKey(m), (counts.get(loadoutKey(m)) ?? 0) + 1);
+  let best = "";
+  let n = 0;
+  for (const [k, c] of counts) if (c > n) [best, n] = [k, c];
+  return best;
 }
 
 function majority(state: GameState, models: ModelView[]): ModelView | undefined {
@@ -251,6 +274,8 @@ export function unitView(state: GameState, system: GameSystem, unit: Unit, opts:
     const m = state.models[id];
     return m && !m.destroyed ? [modelView(state, system, m, opts)] : [];
   });
+  const common = commonLoadout(models.map((m) => state.models[m.id]));
+  for (const m of models) m.special = loadoutKey(state.models[m.id]) === common ? 0 : 1;
   const rules = [...system.rules, ...(opts.rules ?? [])];
   const flags = unitFlags(unit);
   // Read from the commonest profile (most games use the majority's Toughness), else the first model.

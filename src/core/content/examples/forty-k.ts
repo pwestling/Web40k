@@ -743,11 +743,13 @@ export const fortyK: GameSystem = {
           id: "allocate",
           chooser: "defender",
           groupBy: ["model.W", "model.Sv", "model.InSv"],
-          // A model that has already lost wounds takes the next one; characters last.
+          // A model that has already lost wounds takes the next one; then ordinary
+          // models, then sergeants and special weapons, characters last.
           order: {
             cases: [
               { when: { cmp: ">", a: ref("model.woundsLost"), b: 0 }, then: -1 },
-              { when: kw("model", "CHARACTER"), then: 1 },
+              { when: kw("model", "CHARACTER"), then: 2 },
+              { when: { cmp: ">", a: ref("model.special"), b: 0 }, then: 1 },
             ],
             else: 0,
           },

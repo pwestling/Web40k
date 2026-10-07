@@ -76,6 +76,8 @@ interface Store {
   eye: { modelId: string; at: { x: number; y: number; z: number } } | null;
   /** Unit under the mouse, for line-of-sight focus. */
   hoverUnit: UnitId | null;
+  /** Models a panel points at (a wound-order chip under the mouse), ringed on the table. */
+  hoverModels: string[] | null;
   /** Unit name plates over the table. */
   plates: boolean;
   /** Ruler tool: drags on the table measure instead of moving. */
@@ -101,6 +103,7 @@ interface Store {
         | "eye"
         | "view"
         | "hoverUnit"
+        | "hoverModels"
         | "plates"
         | "measuring"
         | "ranges"
@@ -203,6 +206,7 @@ export const useStore = create<Store>((set, get) => ({
   xray: false,
   losFrom: null,
   hoverUnit: null,
+  hoverModels: null,
   plates: true,
   measuring: false,
   ranges: null,

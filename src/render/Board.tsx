@@ -248,6 +248,7 @@ function Scene() {
     losFrom,
     eye,
     hoverUnit,
+    hoverModels,
     plates,
     arcs,
     ranges,
@@ -763,6 +764,13 @@ function Scene() {
         aliveModels(game, game.units[hoverUnit]).map((m) => (
           <Ring key={`hover-${m.id}`} model={placed(m)} radius={0.12} color="#e5e7eb" opacity={0.8} />
         ))}
+
+      {hoverModels?.flatMap((id) => {
+        const m = game.models[id];
+        return m && !m.destroyed
+          ? [<Ring key={`point-${id}`} model={placed(m)} radius={0.2} color="#facc15" opacity={0.95} />]
+          : [];
+      })}
 
       {/* Where the selected unit started this phase. */}
       {selectedUnit &&
