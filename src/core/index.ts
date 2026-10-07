@@ -7,6 +7,7 @@ export * from "./formation";
 export * from "./regiment";
 export * from "./manoeuvre";
 export * from "./templates";
+export * from "./checksum";
 export * from "./dice";
 export * from "./attack";
 export * from "./terrain";

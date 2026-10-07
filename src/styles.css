@@ -952,3 +952,9 @@ input.frontage {
   color: #f4f4f5;
   pointer-events: none;
 }
+.net-banner.desync {
+  background: #7f1d1d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

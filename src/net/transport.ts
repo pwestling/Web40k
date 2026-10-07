@@ -1,5 +1,11 @@
 import type { GameRecord, Intent, LoggedEvent } from "../core";
 
+/** The host's state hash after event `seq` (see core/checksum.ts). */
+export interface Check {
+  seq: number;
+  hash: number;
+}
+
 /** Wire protocol. The host is authoritative: clients send intents, the host
  * broadcasts logged events, and late joiners get the whole record. */
 export type NetMessage =
@@ -9,9 +15,10 @@ export type NetMessage =
    */
   | { t: "hello"; seq?: number; tail?: string; role?: "host" | "client" | "spectator" }
   | { t: "intent"; intent: Intent }
-  | { t: "event"; logged: LoggedEvent }
+  /** `check`: the host's state checksum after an earlier event, riding along with this one. */
+  | { t: "event"; logged: LoggedEvent; check?: Check }
   /** Events a reconnecting peer missed, in order. */
-  | { t: "events"; events: LoggedEvent[] }
+  | { t: "events"; events: LoggedEvent[]; check?: Check }
   | { t: "record"; record: GameRecord }
   /** "I am the host": sent to each peer met, and when taking over a room. */
   | { t: "host"; seq: number; resumed?: boolean }

@@ -2,6 +2,8 @@ import {
   appendEvent,
   applyEvent,
   createRecord,
+  isCheckpoint,
+  stateHash,
   lastSeq,
   resolveLogged,
   stateAt,
@@ -11,7 +13,7 @@ import {
   type LoggedEvent,
   type Rng,
 } from "../core";
-import type { NetMessage, SideMessage, Transport } from "./transport";
+import type { Check, NetMessage, SideMessage, Transport } from "./transport";
 
 /** Spectators receive the game like clients but never send intents. */
 export type Role = "host" | "client" | "spectator";
@@ -24,7 +26,15 @@ export interface NetStatus {
   peers: string[];
   /** The host has left and the room is choosing (or waiting for) a new one. */
   migrating: boolean;
+  /**
+   * This peer's state stopped matching the host's after event `seq` (the
+   * checksums differ); `count` is how many times it has happened this game.
+   */
+  desync: { seq: number; count: number; host: number; mine: number } | null;
 }
+
+/** Checkpoints kept for comparing against the host's checksums. */
+const KEEP_CHECKS = 32;
 
 export interface SessionOptions {
   transport: Transport;
@@ -94,6 +104,12 @@ export class Session {
   private readonly now: () => number;
   private readonly graceMs: number;
   private onSide: ((message: SideMessage, from: string) => void) | null = null;
+  /** States at recent checkpoints, hashed lazily (off the hot path). */
+  private readonly checks = new Map<number, { state: GameState; hash?: number }>();
+  /** Host: the checkpoint whose hash rides on the next event sent. */
+  private pendingCheck: number | null = null;
+  private desync: NetStatus["desync"] = null;
+  private desyncs = 0;
   private onPeer: ((peerId: string) => void) | null = null;
 
   constructor({ transport, role, onChange, record, rng, now, resumed, graceMs, onNet }: SessionOptions) {
@@ -143,7 +159,13 @@ export class Session {
   }
 
   get status(): NetStatus {
-    return { role: this.role, hostId: this.hostId, peers: [...this.peers.keys()], migrating: this.migrating };
+    return {
+      role: this.role,
+      hostId: this.hostId,
+      peers: [...this.peers.keys()],
+      migrating: this.migrating,
+      desync: this.desync,
+    };
   }
 
   /**
@@ -174,6 +196,26 @@ export class Session {
     this.transport.send(message, to);
   }
 
+  /**
+   * Replace this peer's table with the host's after a checksum mismatch. A
+   * player's resync is logged (it is evidence of a bug or mismatched code);
+   * a spectator just asks for the record again.
+   */
+  resync(): void {
+    if (this.left || this.role === "host" || !this.hostId) return;
+    if (this.role === "client")
+      this.transport.send({ t: "intent", intent: { type: "player/resync" } }, this.hostId);
+    else this.transport.send({ t: "hello", role: this.role }, this.hostId);
+  }
+
+  /** This peer's checksum after event `seq`, if that was a recent checkpoint. */
+  checksumAt(seq: number): number | undefined {
+    const c = this.checks.get(seq);
+    if (!c) return undefined;
+    c.hash ??= stateHash(c.state);
+    return c.hash;
+  }
+
   leave(): void {
     this.left = true;
     if (this.timer) clearTimeout(this.timer);
@@ -194,7 +236,11 @@ export class Session {
         this.peers.set(from, { role: message.role, seq: message.seq });
         return;
       case "intent":
-        if (this.role === "host") this.hostApply(message.intent, from);
+        if (this.role !== "host") return;
+        this.hostApply(message.intent, from);
+        // A resync is logged first, so the record sent includes it.
+        if (message.intent.type === "player/resync")
+          this.transport.send({ t: "record", record: this.record }, from);
         return;
       case "host":
         this.heardHost(from, message.seq, message.resumed);
@@ -208,14 +254,22 @@ export class Session {
         if (from !== this.hostId) return;
         this.record = message.record;
         this.state = stateAt(this.record);
+        // A fresh copy of the host's table: earlier checkpoints no longer apply.
+        this.checks.clear();
+        if (this.desync) {
+          this.desync = null;
+          this.notify();
+        }
         this.onChange(this.state, this.record);
         return;
       case "events":
         if (this.role === "host" || from !== this.hostId) return;
         for (const logged of message.events) if (!this.take(logged, from)) return;
+        if (message.check) this.verify(message.check);
         return;
       case "event":
-        if (this.role !== "host" && from === this.hostId) this.take(message.logged, from);
+        if (this.role !== "host" && from === this.hostId && this.take(message.logged, from) && message.check)
+          this.verify(message.check);
         return;
     }
   }
@@ -248,7 +302,16 @@ export class Session {
   /** Send a peer the events after `seq` if its log matches ours that far, else the whole record. */
   private catchUp(to: string, seq?: number, tail?: string): void {
     if (seq !== undefined && seq > 0 && seq <= lastSeq(this.record) && tailOf(this.record, seq) === tail) {
-      this.transport.send({ t: "events", events: this.record.events.filter((e) => e.seq > seq) }, to);
+      const latest = Math.max(-1, ...[...this.checks.keys()].filter((k) => k > seq));
+      const hash = latest > 0 ? this.checksumAt(latest) : undefined;
+      this.transport.send(
+        {
+          t: "events",
+          events: this.record.events.filter((e) => e.seq > seq),
+          ...(hash !== undefined ? { check: { seq: latest, hash } } : {}),
+        },
+        to,
+      );
     } else this.transport.send({ t: "record", record: this.record }, to);
   }
 
@@ -333,8 +396,37 @@ export class Session {
     const resolved = resolveLogged(this.record, intent, from, this.rng, this.now(), this.state);
     if (!resolved) return;
     const logged: LoggedEvent = { ...resolved, host: this.selfId };
+    // The previous checkpoint's hash rides along with this event.
+    const due = this.pendingCheck;
+    this.pendingCheck = null;
     this.append(logged);
-    this.transport.send({ t: "event", logged });
+    const hash = due !== null ? this.checksumAt(due) : undefined;
+    this.transport.send({
+      t: "event",
+      logged,
+      ...(hash !== undefined ? { check: { seq: due!, hash } } : {}),
+    });
+  }
+
+  /** Compare the host's checksum with ours at the same point. */
+  private verify(check: Check): void {
+    const mine = this.checksumAt(check.seq);
+    if (mine === undefined || mine === check.hash) return;
+    if (this.desync) return;
+    this.desyncs++;
+    this.desync = { seq: check.seq, count: this.desyncs, host: check.hash, mine };
+    this.notify();
+  }
+
+  /** Keep the state after a checkpoint event and hash it when the browser is idle. */
+  private checkpoint(logged: LoggedEvent): void {
+    if (!isCheckpoint(logged.seq, logged.event)) return;
+    this.checks.set(logged.seq, { state: this.state });
+    if (this.checks.size > KEEP_CHECKS) this.checks.delete(this.checks.keys().next().value!);
+    if (this.role === "host") this.pendingCheck = logged.seq;
+    const seq = logged.seq;
+    const idle = (globalThis as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
+    if (idle) idle(() => this.checksumAt(seq));
   }
 
   private append(logged: LoggedEvent): void {
@@ -344,6 +436,7 @@ export class Session {
       logged.event.type === "undo"
         ? stateAt(this.record)
         : { ...applyEvent(this.state, logged.event), seq: logged.seq };
+    this.checkpoint(logged);
     this.onChange(this.state, this.record);
   }
 

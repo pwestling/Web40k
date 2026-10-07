@@ -73,6 +73,8 @@ export type Intent =
     }
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
+  /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
+  | { type: "player/resync" }
   | { type: "template/set"; id: string; template: Omit<Template, "by"> | null }
   /**
    * Scatter a template: roll `scatter` (a face named "hit" leaves it where it
@@ -160,6 +162,7 @@ export type GameEvent =
   | { type: "dice/roll"; roll: DiceRoll }
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
+  | { type: "player/resync"; player: PlayerId }
   | { type: "template/set"; id: string; template: Template | null }
   | {
       type: "template/scatter";
@@ -357,6 +360,8 @@ export function resolveIntent(
     }
     case "ruler/set":
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
+    case "player/resync":
+      return { type: "player/resync", player: from };
     case "template/set":
       return {
         type: "template/set",

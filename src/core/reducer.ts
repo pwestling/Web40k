@@ -172,6 +172,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       const player = event.ready ? { ...rest, ready: true } : rest;
       return { ...state, players: { ...state.players, [p.id]: player } };
     }
+    case "player/resync":
+      return state;
     case "template/set": {
       const { [event.id]: _old, ...rest } = state.templates ?? {};
       return { ...state, templates: event.template ? { ...rest, [event.id]: event.template } : rest };

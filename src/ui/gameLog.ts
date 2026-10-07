@@ -215,6 +215,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} removed terrain`;
     case "player/ready":
       return `${game.players[event.player]?.name ?? who} is ${event.ready ? "ready" : "not ready yet"}`;
+    case "player/resync":
+      return `${game.players[event.player]?.name ?? who} resynced from the host`;
     case "template/set": {
       const t = event.template;
       const old = before.templates?.[event.id];
