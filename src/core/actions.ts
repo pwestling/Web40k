@@ -10,6 +10,7 @@ import {
   type ActionTaken,
 } from "./content/play";
 import { advance, respond, type ProcedureRun } from "./content/runner";
+import { playerActions, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
@@ -86,6 +87,8 @@ export type Intent =
   | { type: "pool/spend"; player: PlayerId; resource: string; indices: number[] }
   | { type: "attack/declare"; spec: AttackSpec }
   | { type: "attack/roll" }
+  /** The defender declares the order their models take wounds in. */
+  | { type: "attack/allocate"; order: string[] }
   | { type: "attack/clear" }
   /** Take one of the game system's actions with a unit (activate, move, fire, react...). */
   | {
@@ -103,6 +106,14 @@ export type Intent =
   /** Answer the procedure's open window with an option id or "pass". */
   | { type: "procedure/respond"; answer: string }
   | { type: "procedure/clear" }
+  /** Use a player action (a stratagem). Custom ones carry a name and cost. */
+  | { type: "player/action"; action: string; targetId?: UnitId; label?: string; cost?: number }
+  /** Mark an ability the players resolved by hand as used this phase. */
+  | { type: "ability/apply"; unitId: UnitId; ability: string }
+  /** Put a unit into reserves off the table edge, or bring it back (deep strike). */
+  | { type: "unit/reserve"; id: UnitId; reserve: boolean }
+  /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
+  | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   | { type: "undo"; seq: number };
 
 /** Events are fully resolved and deterministic. */
@@ -150,6 +161,7 @@ export type GameEvent =
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
+  | { type: "attack/allocate"; order: string[] }
   | { type: "attack/clear" }
   /** A system action, paid for; any procedure it starts is already rolled up to its first pause. */
   | ({ type: "action/take" } & ActionTaken)
@@ -158,6 +170,10 @@ export type GameEvent =
   | { type: "procedure/set"; run: ProcedureRun }
   /** Close the procedure; `end` closes a finished reaction too. */
   | { type: "procedure/clear"; end?: { run?: ProcedureRun } }
+  | ({ type: "player/action" } & PlayerActionTaken)
+  | { type: "ability/apply"; unitId: UnitId; ability: string }
+  | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves: { id: ModelId; to: Vec2 }[] }
+  | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   /** Takes back an earlier event. It stays in the log, marked as undone. */
   | { type: "undo"; seq: number };
 
@@ -251,6 +267,16 @@ export function resolveIntent(
       if (!state || !attack || attack.stage === "done") return null;
       return { type: "attack/roll", attack: rollStage(state, attack, rng) };
     }
+    case "attack/allocate": {
+      const attack = state?.attack;
+      const target = attack && state?.units[attack.spec.targetUnitId];
+      // Only the defender declares, and only before damage is rolled.
+      if (!attack?.run || !target || target.owner !== from) return null;
+      if (attack.stage === "damage" || attack.stage === "done") return null;
+      const own = new Set(target.modelIds);
+      if (!intent.order.every((id) => own.has(id))) return null;
+      return { type: "attack/allocate", order: intent.order };
+    }
     case "ruler/set":
       return { type: "ruler/set", ruler: intent.ruler && { ...intent.ruler, by: from } };
     case "action/take": {
@@ -279,6 +305,58 @@ export function resolveIntent(
       const hold = !option.def.reactTo && reactionSeat(paid, taken) !== null;
       const run = !hold && option.def.procedure ? startActionRun(paid, taken, rng) : null;
       return { type: "action/take", ...taken, ...(hold ? { hold } : {}), ...(run ? { run } : {}) };
+    }
+    case "player/action": {
+      if (!state) return null;
+      const option = playerActions(state, from).find((o) => o.def.id === intent.action);
+      if (!option) return null;
+      if (!option.ok) return null;
+      let payment = option.payment;
+      if (option.def.custom) {
+        // The player names the stratagem and its cost; the engine only checks they can pay.
+        const cost = Math.max(0, Math.floor(intent.cost ?? 0));
+        const resource = option.def.cost?.[0]?.resource;
+        if (!intent.label?.trim() || !resource) return null;
+        if ((state.resources[from]?.[resource] ?? 0) < cost) return null;
+        payment = cost ? [{ resource, amount: cost }] : [];
+      }
+      if (intent.targetId && !option.targets?.includes(intent.targetId)) return null;
+      if (option.targets && !intent.targetId) return null;
+      return {
+        type: "player/action",
+        player: from,
+        action: intent.action,
+        payment,
+        ...(intent.targetId ? { targetId: intent.targetId } : {}),
+        ...(option.def.custom && intent.label ? { label: intent.label.trim().slice(0, 60) } : {}),
+      };
+    }
+    case "ability/apply": {
+      const unit = state?.units[intent.unitId];
+      if (!unit || !unit.sheet?.abilities.some((a) => a.name === intent.ability)) return null;
+      return intent;
+    }
+    case "unit/reserve": {
+      const unit = state?.units[intent.id];
+      if (!state || !unit || unit.owner !== from) return null;
+      if (!intent.reserve) return { ...intent, moves: [] };
+      // Off the owner's side edge, in a row, so the models stay visible and draggable.
+      const seat = state.players[unit.owner]?.seat ?? 0;
+      const side = seat === 0 ? -1 : 1;
+      const parked = Object.values(state.units).filter(
+        (u) => u.owner === unit.owner && u.status?.reserves,
+      ).length;
+      const x = side * (state.table.width / 2 + 3 + parked * 3);
+      const moves = unit.modelIds.map((id, i) => ({
+        id,
+        to: { x: x + side * Math.floor(i / 10) * 1.5, y: -state.table.depth / 2 + 2 + (i % 10) * 1.6 },
+      }));
+      return { ...intent, moves };
+    }
+    case "unit/specialMove": {
+      const unit = state?.units[intent.id];
+      if (!unit || unit.owner !== from || !(intent.inches > 0)) return null;
+      return intent;
     }
     case "reaction/pass": {
       const pending = state?.pending;

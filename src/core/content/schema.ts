@@ -406,6 +406,10 @@ export interface ActionDef {
   by: "unit" | "player";
   /** Which side may use it. */
   side?: "active" | "inactive" | "either";
+  /** Player actions (stratagems): the phases it can be used in; any phase if omitted. */
+  phases?: Id[];
+  /** A short summary in the system author's own words, shown on the button. */
+  hint?: string;
   /**
    * Taking it starts the unit's activation (FSD: spend a die to activate, or
    * to react), after which the unit may take this many of the current slot's
@@ -428,6 +432,8 @@ export interface ActionDef {
     slotsFrom?: Ref;
   }[];
   limit?: { count: number; per: "phase" | "turn" | "round" | "battle"; perUnit?: boolean };
+  /** A player action with no fixed effect: the player names it and its cost (a faction stratagem). */
+  custom?: boolean;
   /** Who or what the action targets, chosen by the player. */
   target?: { filter: Expr; count?: number };
   /** A movement, measured by the engine and checked against `distance`. */
@@ -590,9 +596,28 @@ export interface GameSystem {
    * units), each round, or the end of each activation (for everyone), e.g.
    * "moved" or "activated". A trailing "*" clears every flag with that prefix.
    */
-  resets?: { at: "playerTurn" | "round" | "activation"; flags: Id[] }[];
+  resets?: { at: "phase" | "playerTurn" | "round" | "activation"; flags: Id[] }[];
+  /**
+   * When imported abilities the engine doesn't automate matter, read from
+   * their text, so the right ones are put in front of players at the right
+   * moment with a manual-apply button. Per phase, the first matching entry wins.
+   */
+  abilityTimings?: AbilityTiming[];
   /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
   settings?: Record<string, unknown>;
+}
+
+export interface AbilityTiming {
+  /** Case-insensitive regular expression tried against the ability's text. */
+  match: string;
+  /** A phase id, or "deployment" for before the first battle round. */
+  phase?: Id;
+  /** Whose turn, relative to the ability's owner. */
+  side?: "active" | "inactive" | "either";
+  /** Shown during an attack the unit makes ("attacker") or receives ("defender"). */
+  attack?: "attacker" | "defender";
+  /** Only for attacks of this weapon kind, e.g. "melee". */
+  weaponKind?: Id;
 }
 
 // ---------------------------------------------------------------------------

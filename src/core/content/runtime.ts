@@ -130,7 +130,7 @@ export function readCharacteristics(
 
 const patternCache = new Map<string, RegExp>();
 
-function pattern(source: string): RegExp {
+export function pattern(source: string): RegExp {
   let re = patternCache.get(source);
   if (!re) {
     re = new RegExp(source, "i");

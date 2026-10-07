@@ -1,4 +1,4 @@
-import type { Effect, Expr, GameSystem, RuleDef } from "../schema";
+import type { AbilityTiming, ActionDef, Effect, Expr, GameSystem, RuleDef } from "../schema";
 
 /**
  * Example GameSystem: 40k 11th edition core mechanics, encoded as data.
@@ -249,6 +249,24 @@ const weaponRules: RuleDef[] = [
   manualRule("extraAttacks", "Extra Attacks", keyword("extra attacks")),
 ];
 
+/** "A ranged attack against the unit this rule or status belongs to." */
+const rangedAgainstOwner: Expr = {
+  all: [
+    { is: "ruleOwner", value: "target" },
+    { is: "weapon.weaponKind", value: "ranged" },
+  ],
+};
+
+/** Flags a unit with a core ability the app handles (reserves, scout moves, attaching). */
+const flagRule = (id: string, name: string, match: string, params?: RuleDef["params"]): RuleDef => ({
+  id,
+  name,
+  match,
+  ...(params ? { params } : {}),
+  appliesTo: ["unit"],
+  effects: [{ when: { event: "always" }, do: [{ do: "setFlag", target: "self", flag: id, value: true }] }],
+});
+
 const unitRules: RuleDef[] = [
   {
     id: "feelNoPain",
@@ -296,7 +314,28 @@ const unitRules: RuleDef[] = [
       },
     ],
   },
+  {
+    id: "stealth",
+    name: "Stealth",
+    match: "^stealth",
+    appliesTo: ["unit"],
+    effects: [{ when: beforeStep("hit"), if: rangedAgainstOwner, do: [{ do: "modifyRoll", by: -1 }] }],
+  },
+  // Lone Operative's range limit is the hit step's impossibleIf below.
+  flagRule("loneOperative", "Lone Operative", "^lone operative"),
+  flagRule("scouts", "Scouts", "^scouts\\s*(?<x>\\d+)", [{ id: "x", type: "number", default: 6 }]),
+  flagRule("leader", "Leader", "^leader\\b"),
 ];
+
+/** Lone Operative: out of reach of ranged attacks beyond 12" unless attached to a unit. */
+const loneOperativeOutOfReach: Expr = {
+  all: [
+    { is: "weapon.weaponKind", value: "ranged" },
+    { hasFlag: "target", flag: "loneOperative" },
+    { not: { hasFlag: "target", flag: "attached" } },
+    { cmp: ">", a: { query: { kind: "distance", from: "attacker", to: "target" } }, b: 12.000001 },
+  ],
+};
 
 /** Hit, wound, allocate, save, damage. */
 const woundTarget: Expr = {
@@ -372,6 +411,175 @@ const engagementRange: Expr = {
   ],
 };
 
+/**
+ * When an imported ability matters, read from its text. Our own patterns,
+ * not rules text; per phase the first match wins, so "your opponent's"
+ * comes before "your".
+ */
+const abilityTimings: AbilityTiming[] = [
+  {
+    phase: "deployment",
+    match: "deploy|declare battle formations|start of the (first battle round|battle)\\b",
+  },
+  { phase: "command", side: "inactive", match: "opponent.s command phase" },
+  { phase: "command", side: "active", match: "your command phase" },
+  { phase: "command", side: "either", match: "command phase" },
+  { phase: "movement", side: "inactive", match: "opponent.s movement phase" },
+  { phase: "movement", side: "active", match: "your movement phase|remains? stationary" },
+  {
+    phase: "movement",
+    side: "either",
+    match: "movement phase|(normal|advance|fall back) move|from (strategic )?reserves|reinforcements",
+  },
+  { phase: "shooting", side: "inactive", match: "opponent.s shooting phase" },
+  { phase: "shooting", side: "active", match: "your shooting phase|selected to shoot|has shot" },
+  { phase: "shooting", side: "either", match: "shooting phase" },
+  { phase: "charge", side: "inactive", match: "opponent.s charge phase" },
+  { phase: "charge", side: "active", match: "your charge phase|declares? a charge|charge move" },
+  { phase: "charge", side: "either", match: "charge phase" },
+  { phase: "fight", side: "inactive", match: "opponent.s fight phase|end of (your )?opponent.s turn" },
+  { phase: "fight", side: "either", match: "fight phase|selected to fight|\\bfights\\b" },
+  { attack: "attacker", weaponKind: "melee", match: "makes? a melee attack" },
+  { attack: "attacker", weaponKind: "ranged", match: "makes? a ranged attack" },
+  { attack: "attacker", match: "makes? an attack|attacks? made by this (model|unit)" },
+  {
+    attack: "defender",
+    match:
+      "attack (targets|is allocated to) (this|that) (unit|model)|made against (it|this unit)|benefit of cover|model is destroyed",
+  },
+];
+
+/** Each core stratagem once per phase. Costs and timings follow 10th edition; check them against 11th. */
+const once = { count: 1, per: "phase" as const };
+const cp = (amount: number) => [{ resource: "CP", amount }];
+const own: Expr = { same: ["it.owner", "player.id"] };
+const ownWith = (keyword: string): Expr => ({ all: [own, kw("it", keyword)] });
+const stratagems: ActionDef[] = [
+  {
+    id: "commandReroll",
+    name: "Command Re-roll",
+    by: "player",
+    side: "either",
+    cost: cp(1),
+    limit: once,
+    hint: "Re-roll one roll",
+  },
+  {
+    id: "insaneBravery",
+    name: "Insane Bravery",
+    by: "player",
+    side: "active",
+    phases: ["command"],
+    cost: cp(1),
+    limit: { count: 1, per: "battle" },
+    target: { filter: own },
+    hint: "Pass a Battle-shock test",
+  },
+  {
+    id: "grenade",
+    name: "Grenade",
+    by: "player",
+    side: "active",
+    phases: ["shooting"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: ownWith("GRENADES") },
+    hint: 'Roll 6D6 at a unit within 8": each 4+ is a mortal wound',
+  },
+  {
+    id: "tankShock",
+    name: "Tank Shock",
+    by: "player",
+    side: "active",
+    phases: ["charge"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: ownWith("VEHICLE") },
+    hint: "After a charge move: roll D6 equal to Toughness, each 5+ is a mortal wound",
+  },
+  {
+    id: "rapidIngress",
+    name: "Rapid Ingress",
+    by: "player",
+    side: "inactive",
+    phases: ["movement"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: { all: [own, { hasFlag: "it", flag: "reserves" }] } },
+    hint: "End of the opponent's Movement phase: arrive from reserves",
+  },
+  {
+    id: "fireOverwatch",
+    name: "Fire Overwatch",
+    by: "player",
+    side: "inactive",
+    phases: ["movement", "charge"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: own },
+    hint: "Shoot at a unit that moved or charged; hits only on unmodified 6s",
+  },
+  {
+    id: "goToGround",
+    name: "Go to Ground",
+    by: "player",
+    side: "inactive",
+    phases: ["shooting"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: ownWith("INFANTRY") },
+    do: [{ do: "applyStatus", status: "goneToGround" }],
+    hint: "6+ invulnerable save and cover this phase",
+  },
+  {
+    id: "smokescreen",
+    name: "Smokescreen",
+    by: "player",
+    side: "inactive",
+    phases: ["shooting"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: ownWith("SMOKE") },
+    do: [{ do: "applyStatus", status: "smokescreen" }],
+    hint: "Cover and -1 to be hit by ranged attacks this phase",
+  },
+  {
+    id: "heroicIntervention",
+    name: "Heroic Intervention",
+    by: "player",
+    side: "inactive",
+    phases: ["charge"],
+    cost: cp(2),
+    limit: once,
+    target: { filter: own },
+    hint: 'Charge an enemy unit that just charged within 6"',
+  },
+  {
+    id: "counterOffensive",
+    name: "Counter-offensive",
+    by: "player",
+    side: "either",
+    phases: ["fight"],
+    cost: cp(2),
+    limit: once,
+    target: { filter: own },
+    hint: "Fight next, after an enemy unit has fought",
+  },
+  {
+    id: "epicChallenge",
+    name: "Epic Challenge",
+    by: "player",
+    side: "either",
+    phases: ["fight"],
+    cost: cp(1),
+    limit: once,
+    target: { filter: ownWith("CHARACTER") },
+    hint: "A character's melee attacks get Precision",
+  },
+  // Faction and detachment stratagems aren't in imported rosters: the player names one and its cost.
+  { id: "otherStratagem", name: "Other stratagem", by: "player", side: "either", custom: true, cost: cp(0) },
+];
+
 export const fortyK: GameSystem = {
   id: "forty-k-11",
   name: "40k (11th edition mechanics, draft)",
@@ -429,6 +637,40 @@ export const fortyK: GameSystem = {
       },
     },
     {
+      // From the Go to Ground stratagem until the end of the phase. Cover is a reminder.
+      id: "goneToGround",
+      name: "Gone to ground",
+      on: "unit",
+      effects: [
+        {
+          when: { event: "always" },
+          do: [
+            {
+              do: "setCharacteristic",
+              target: "self",
+              characteristic: "InSv",
+              to: {
+                if: { cmp: ">", a: ref("self.InSv"), b: 0 },
+                then: { op: "min", args: [ref("self.InSv"), 6] },
+                else: 6,
+              },
+            },
+          ],
+        },
+        { when: { event: "action.declared" }, do: [{ do: "manual", reminder: "goneToGround" }] },
+      ],
+    },
+    {
+      // From the Smokescreen stratagem until the end of the phase. Cover is a reminder.
+      id: "smokescreen",
+      name: "Smokescreen",
+      on: "unit",
+      effects: [
+        { when: beforeStep("hit"), if: rangedAgainstOwner, do: [{ do: "modifyRoll", by: -1 }] },
+        { when: { event: "action.declared" }, do: [{ do: "manual", reminder: "smokescreen" }] },
+      ],
+    },
+    {
       id: "engaged",
       name: "Engaged",
       on: "unit",
@@ -449,7 +691,9 @@ export const fortyK: GameSystem = {
       at: "playerTurn",
       flags: ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"],
     },
+    { at: "phase", flags: ["goneToGround", "smokescreen", "scouting", "arrived"] },
   ],
+  abilityTimings,
   terrain: [
     { id: "exposed", name: "Exposed" },
     { id: "light", name: "Light" },
@@ -476,6 +720,7 @@ export const fortyK: GameSystem = {
           id: "hit",
           compare: "atLeast",
           target: ref("weapon.skill"),
+          impossibleIf: loneOperativeOutOfReach,
           alwaysFail: [1],
           alwaysPass: [6],
           criticalOn: 6,
@@ -544,6 +789,7 @@ export const fortyK: GameSystem = {
     },
   ],
   actions: [
+    ...stratagems,
     {
       id: "battleShockTest",
       name: "Battle-shock test",

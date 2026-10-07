@@ -259,7 +259,12 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
       pending: null,
       turn: { round, activeSeat, phase, firstSeat, passes: 0 },
     },
-    [...ACTIVATION_FLAGS, "allowance"],
+    [
+      ...ACTIVATION_FLAGS,
+      "allowance",
+      "applied.*",
+      ...(system.resets ?? []).filter((r) => r.at === "phase").flatMap((r) => r.flags),
+    ],
   );
   if (dir === -1 || round === 0) return next;
 

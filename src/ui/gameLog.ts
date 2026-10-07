@@ -289,6 +289,25 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${nameOf(event.player)} re-rolled or spent dice`;
     case "game/system":
       return `Game: ${systemOf(game).name}`;
+    case "player/action": {
+      const name =
+        event.label ?? systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
+      const spent = event.payment
+        .map((p) => `${p.amount ?? p.indices?.length ?? 0} ${p.resource}`)
+        .join(", ");
+      const on = event.targetId ? ` on ${unitName(event.targetId)}` : "";
+      return `${nameOf(event.player)} used ${name}${on}${spent ? ` (${spent})` : ""}`;
+    }
+    case "ability/apply":
+      return `${unitName(event.unitId)}: ${event.ability} applied`;
+    case "unit/reserve":
+      return event.reserve
+        ? `${unitName(event.id)} went into reserves`
+        : `${unitName(event.id)} arrives from reserves`;
+    case "unit/specialMove":
+      return `${unitName(event.id)} may move up to ${event.inches}" (${event.flag})`;
+    case "attack/allocate":
+      return `${who} chose the order their models take wounds`;
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }

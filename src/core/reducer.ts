@@ -1,6 +1,7 @@
 import type { GameEvent } from "./actions";
 import { applyDamage } from "./attack";
 import { applyAction, endReaction, setRun } from "./content/play";
+import { applyPlayerAction, appliedKey } from "./content/player";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
@@ -84,6 +85,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         name: `${body.name} + ${leader.name}`,
         // Leaders go last, so damage reaches them after the bodyguard.
         modelIds: [...body.modelIds, ...leader.modelIds],
+        status: { ...body.status, attached: true },
         ...(sheet ? { sheet } : {}),
       };
       return { ...state, units: { ...units, [body.id]: merged }, models };
@@ -227,6 +229,15 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         ? applyDamage(next, event.attack.damage)
         : next;
     }
+    case "attack/allocate": {
+      const attack = state.attack;
+      if (!attack?.run) return state;
+      const overrides = {
+        ...attack.run.overrides,
+        allocate: { ...attack.run.overrides?.allocate, order: event.order },
+      };
+      return { ...state, attack: { ...attack, run: { ...attack.run, overrides } } };
+    }
     case "attack/clear": {
       const attack = state.attack;
       if (!attack) return state;
@@ -241,6 +252,41 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "action/take":
       return applyAction(state, event);
+    case "player/action":
+      return applyPlayerAction(state, event);
+    case "ability/apply":
+      return updateUnit(state, event.unitId, (u) => ({
+        ...u,
+        status: { ...u.status, [appliedKey(event.ability)]: true },
+      }));
+    case "unit/reserve": {
+      const next = updateUnit(state, event.id, (u) => {
+        const { reserves: _r, arrived: _a, ...status } = u.status ?? {};
+        return { ...u, status: event.reserve ? { ...status, reserves: true } : { ...status, arrived: true } };
+      });
+      const models = { ...next.models };
+      for (const { id, to } of event.moves) if (models[id]) models[id] = { ...models[id]!, position: to };
+      // Arriving models are set up, not moved: drop the start point so it doesn't count as a move.
+      if (!event.reserve)
+        for (const id of next.units[event.id]?.modelIds ?? [])
+          if (models[id]) {
+            const { phaseStart: _p, ...m } = models[id]!;
+            models[id] = m;
+          }
+      return { ...next, models };
+    }
+    case "unit/specialMove": {
+      const unit = state.units[event.id];
+      if (!unit) return state;
+      const models = { ...state.models };
+      for (const id of unit.modelIds)
+        if (models[id])
+          models[id] = { ...models[id]!, phaseStart: models[id]!.position, phaseStartZ: models[id]!.z ?? 0 };
+      return updateUnit({ ...state, models }, event.id, (u) => ({
+        ...u,
+        status: { ...u.status, allowance: event.inches, [event.flag]: true },
+      }));
+    }
     case "reaction/end":
       return endReaction(state, event.run ?? null);
     case "procedure/set":

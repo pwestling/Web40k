@@ -65,7 +65,7 @@ export interface ActionRequest {
   targetId?: UnitId;
 }
 
-function evalCtx(state: GameState, system: GameSystem, scope: Record<string, unknown>): EvalContext {
+export function evalCtx(state: GameState, system: GameSystem, scope: Record<string, unknown>): EvalContext {
   return {
     scope: { const: system.constants ?? {}, settings: state.settings, ...scope },
     tables: Object.fromEntries((system.tables ?? []).map((t) => [t.id, t])),
@@ -73,7 +73,7 @@ function evalCtx(state: GameState, system: GameSystem, scope: Record<string, unk
   };
 }
 
-function safeBool(expr: Expr, ctx: EvalContext): boolean {
+export function safeBool(expr: Expr, ctx: EvalContext): boolean {
   try {
     return bool(expr, ctx);
   } catch {
@@ -81,7 +81,7 @@ function safeBool(expr: Expr, ctx: EvalContext): boolean {
   }
 }
 
-function safeNum(expr: Expr, ctx: EvalContext, fallback = 0): number {
+export function safeNum(expr: Expr, ctx: EvalContext, fallback = 0): number {
   try {
     return num(expr, ctx);
   } catch {
@@ -378,7 +378,7 @@ export interface ActionTaken extends ActionTrigger {
   hold?: boolean;
 }
 
-function setStatus(
+export function setStatus(
   state: GameState,
   unitId: UnitId,
   patch: Record<string, number | boolean | null>,
@@ -447,7 +447,7 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
   return next;
 }
 
-function pay(state: GameState, player: PlayerId, payment: Payment[]): GameState {
+export function pay(state: GameState, player: PlayerId, payment: Payment[]): GameState {
   let next = state;
   for (const p of payment) {
     if (p.indices) {

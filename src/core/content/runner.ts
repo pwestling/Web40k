@@ -96,7 +96,10 @@ export type StepPlan = PoolPlan | TestPlan | DamagePlan | { kind: "other" };
 
 export type PlanOverride = Partial<Omit<PoolPlan, "kind">> &
   Partial<Omit<TestPlan, "kind">> &
-  Partial<Omit<DamagePlan, "kind">>;
+  Partial<Omit<DamagePlan, "kind">> & {
+    /** For an allocate step: model ids in the order the chooser declared. */
+    order?: string[];
+  };
 
 export interface DamageEntry {
   modelId: string;
@@ -387,7 +390,7 @@ function buildScope(
   const alloc = proc.steps.slice(0, run.next).filter((s) => s.kind === "allocate");
   const last = alloc[alloc.length - 1];
   if (last && last.kind === "allocate") {
-    const order = allocationOrder(env, scope, last);
+    const order = allocationOrder(env, scope, last, undefined, run.overrides?.[last.id]?.order);
     if (order[0]) scope.model = order[0];
   }
   return scope;
@@ -459,7 +462,9 @@ function firing(env: RunEnv, live: Live[], event: string, payload: object, scope
     try {
       if (!matchesEvent(l.effect.when, event, payload, ctx)) return false;
       return (
-        l.effect.if === undefined || bool(l.effect.if, { ...ctx, scope: { ...ctx.scope, event: payload } })
+        l.effect.if === undefined ||
+        // "ruleOwner" is the role whose rule or status this is, e.g. "target" for Stealth.
+        bool(l.effect.if, { ...ctx, scope: { ...ctx.scope, event: payload, ruleOwner: l.owner ?? null } })
       );
     } catch {
       // An expression that can't be answered here (missing data or an
@@ -768,7 +773,9 @@ function runStep(env: RunEnv, run: ProcedureRun, step: Step): ProcedureRun {
     case "test":
       return runTest(env, run, step, planned, base, finish);
     case "allocate": {
-      const order = allocationOrder(env, scope, step).map((m) => m.id);
+      const order = allocationOrder(env, scope, step, undefined, run.overrides?.[step.id]?.order).map(
+        (m) => m.id,
+      );
       return finish({ ...base, order }, run.tokens);
     }
     case "damage":
@@ -946,12 +953,24 @@ function allocationOrder(
   scope: Record<string, unknown>,
   step: Extract<Step, { kind: "allocate" }>,
   woundsLost?: Map<string, number>,
+  chosen?: string[],
 ): ModelView[] {
   const unit = scope[step.unit ?? "target"] as UnitView | undefined;
   if (!unit?.models) return [];
   const models = unit.models
     .map((m) => (woundsLost?.has(m.id) ? { ...m, woundsLost: woundsLost.get(m.id)! } : m))
     .filter((m) => !m.destroyed && (Number(m.W ?? 1) || 1) - m.woundsLost > 0);
+  if (chosen?.length) {
+    // The chooser's declared order wins; models it left out keep their place after.
+    const rank = (m: ModelView) => {
+      const i = chosen.indexOf(m.id);
+      return i < 0 ? chosen.length : i;
+    };
+    return models
+      .map((m, i) => ({ m, i }))
+      .sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i)
+      .map((x) => x.m);
+  }
   if (step.order === undefined) return models;
   const key = (m: ModelView) => {
     try {
@@ -988,7 +1007,7 @@ function runDamage(
     let damage = Math.max(0, rollSum(amount, rng).total);
     // With spillover, damage beyond a slain model's wounds goes on to the next.
     for (;;) {
-      const victim = allocationOrder(env, planned.scope, alloc, lost)[0];
+      const victim = allocationOrder(env, planned.scope, alloc, lost, run.overrides?.[alloc.id]?.order)[0];
       if (!victim) break outer;
       const max = Number(victim.W ?? 1) || 1;
       const already = lost.get(victim.id) ?? victim.woundsLost;

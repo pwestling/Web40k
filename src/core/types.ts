@@ -270,6 +270,8 @@ export interface GameState {
   procedure?: ProcedureState | null;
   /** An action held while the other player decides whether to react. */
   pending?: PendingReaction | null;
+  /** Player actions taken (stratagems), for their once-per-phase limits. */
+  used?: Record<PlayerId, PlayerActionUse[]>;
   /** The last measurement a player shared, shown to everyone until cleared. */
   ruler?: Ruler | null;
   /** Table options the players agreed on. */
@@ -347,6 +349,13 @@ export interface ActionTrigger {
  * a unit shot at, or seeing an enemy move). Once a unit reacts it is the
  * `reactor`; when its action is done, the held action goes on.
  */
+export interface PlayerActionUse {
+  action: string;
+  round: number;
+  phase: number;
+  seat: number;
+}
+
 export interface PendingReaction {
   kind: "reaction";
   seat: number;
