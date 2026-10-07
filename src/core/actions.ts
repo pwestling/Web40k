@@ -39,7 +39,11 @@ export type Rng = () => number;
 
 export const MAX_DICE_PER_ROLL = 100;
 
-/** Resolve an intent from `from` into an event, or null if it is rejected. */
+/**
+ * Resolve an intent from `from` into an event, or null if it is rejected.
+ * Only malformed or impersonating intents are rejected. Rules are advisory:
+ * a move that breaks a game rule is still applied, and the UI warns instead.
+ */
 export function resolveIntent(intent: Intent, from: PlayerId, rng: Rng = Math.random): GameEvent | null {
   switch (intent.type) {
     case "dice/roll": {

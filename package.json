@@ -2,7 +2,7 @@
   "name": "web40k",
   "version": "0.0.0",
   "private": true,
-  "description": "Open source, peer-to-peer, browser-based tabletop for playing Warhammer 40,000.",
+  "description": "Open source, peer-to-peer, browser-based tabletop for miniatures wargames.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.28.0",

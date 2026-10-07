@@ -34,7 +34,7 @@ export function Lobby() {
 }
 
 export function Hud() {
-  const { game, roomId, dispatch } = useStore();
+  const { game, roomId, dispatch, view, setView } = useStore();
   const [count, setCount] = useState(2);
 
   return (
@@ -44,6 +44,9 @@ export function Hud() {
           Room <code>{roomId}</code> · share this page's URL to invite
         </p>
       )}
+      <button onClick={() => setView(view === "3d" ? "top" : "3d")}>
+        {view === "3d" ? "Top-down view" : "3D view"}
+      </button>
       <ul className="players">
         {Object.values(game.players).map((p) => (
           <li key={p.id} style={{ color: p.color }}>

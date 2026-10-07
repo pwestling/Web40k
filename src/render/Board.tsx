@@ -1,5 +1,5 @@
-import { Html, OrbitControls } from "@react-three/drei";
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
+import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import { baseSizeInches, distance, type Model, type UnitId, type Vec2 } from "../core";
 import { useStore } from "../store";
@@ -10,17 +10,33 @@ import { useStore } from "../store";
  */
 export function Board() {
   return (
-    <Canvas camera={{ position: [0, 45, 40], fov: 45 }} shadows>
+    <Canvas shadows>
       <color attach="background" args={["#111318"]} />
       <ambientLight intensity={0.6} />
       <directionalLight position={[20, 40, 10]} intensity={1.4} castShadow />
+      <Cameras />
       <Scene />
     </Canvas>
   );
 }
 
+/**
+ * 3D is the main view. Top-down is an orthographic map view of the same
+ * scene for precise measuring; it pans and zooms but does not rotate.
+ */
+function Cameras() {
+  const view = useStore((s) => s.view);
+  const table = useStore((s) => s.game.table);
+  const size = useThree((s) => s.size);
+  if (view === "3d") return <PerspectiveCamera makeDefault position={[0, 45, 40]} fov={45} />;
+  // Fit the whole table with a small margin. The tiny z offset keeps the
+  // camera's up vector well defined when looking straight down.
+  const zoom = Math.min(size.width / table.width, size.height / table.depth) * 0.9;
+  return <OrthographicCamera makeDefault position={[0, 100, 0.001]} zoom={zoom} />;
+}
+
 function Scene() {
-  const { game, session, dispatch } = useStore();
+  const { game, session, dispatch, view } = useStore();
   // Dragging a model in a ranked unit drags the whole block.
   const [drag, setDrag] = useState<{ id: string; unitId?: UnitId; from: Vec2; to: Vec2 } | null>(null);
   const { width, depth } = game.table;
@@ -48,7 +64,14 @@ function Scene() {
 
   return (
     <>
-      <OrbitControls enabled={!drag} maxPolarAngle={Math.PI / 2.1} makeDefault />
+      {/* Remount on view change so the controls bind to the new camera. */}
+      <OrbitControls
+        key={view}
+        enabled={!drag}
+        enableRotate={view === "3d"}
+        maxPolarAngle={Math.PI / 2.1}
+        makeDefault
+      />
       <mesh rotation-x={-Math.PI / 2} receiveShadow onPointerMove={onTableMove}>
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial color="#4b5a3a" />

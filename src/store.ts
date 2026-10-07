@@ -16,10 +16,15 @@ import { trysteroTransport } from "./net/trystero";
 
 const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
 
+export type View = "3d" | "top";
+
 interface Store {
   game: GameState;
   session: Session | null;
   roomId: string | null;
+  /** Camera mode. Local to each player; never synced. */
+  view: View;
+  setView(view: View): void;
   start(options: { role: Role; roomId?: string; name: string }): void;
   dispatch(intent: Intent): void;
 }
@@ -28,6 +33,8 @@ export const useStore = create<Store>((set, get) => ({
   game: createInitialState(),
   session: null,
   roomId: null,
+  view: "3d",
+  setView: (view) => set({ view }),
 
   start({ role, roomId, name }) {
     get().session?.leave();

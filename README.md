@@ -7,6 +7,9 @@ Simulator, but built around 40k: inch-based measuring, bases, units, dice pools 
 engine can also run rank-and-file games such as Warhammer: The Old World and Conquest: The Last Argument
 of Kings, and other free-movement skirmish games such as Full Spectrum Dominance.
 
+_Web40k is a working codename. The project will launch under a neutral name that doesn't use any
+publisher's trademarks._
+
 No install and no game server: one player hosts, shares a link, and the browsers talk to each other
 directly over WebRTC.
 
@@ -46,6 +49,15 @@ they have moved in inches.
 | Networking   | WebRTC data channels via [Trystero](https://github.com/dmotz/trystero) (Nostr relays for signalling only)             |
 | Build / test | Vite, Vitest, TypeScript, ESLint, Prettier                                                                            |
 | Hosting      | Any static host (GitHub Pages works)                                                                                  |
+
+## Design principles
+
+- **3D first, with a top-down view.** The table is a 3D scene by default. Players can switch to an
+  orthographic top-down view of the same scene for precise measuring; the view is per player and never
+  synced.
+- **Rules are advisory.** The engine measures, highlights and reminds (out of coherency, too far,
+  this re-roll applies), but it never blocks a move or a roll. Players stay in charge, as at a real table.
+- **Generic engine, imported content.** See below.
 
 ## Architecture
 
