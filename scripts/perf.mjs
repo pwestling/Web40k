@@ -67,6 +67,15 @@ try {
     const models = await window.openBattlePerf.setup(Math.ceil(200 / perArmyPair), "tow-hand");
     return { models };
   });
+  // The rules sandbox on that Old World table, against perf/scripting-budget.md (no frames: call timings).
+  if (!only || "rules sandbox".includes(only)) {
+    if (only) await page.evaluate(() => window.openBattlePerf.setup(4, "tow-hand"));
+    results.push({
+      scenario: "rules sandbox",
+      ...(await page.evaluate(() => window.openBattlePerf.sandbox())),
+    });
+    console.error(JSON.stringify(results.at(-1)));
+  }
   // Conquest: regiments of stands, 20 a side, on the table (before reinforcements).
   await run("Conquest, 40 regiments (148 stands)", async () => {
     const models = await window.openBattlePerf.setup(4, "conquest-hand");
