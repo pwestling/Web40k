@@ -23,7 +23,7 @@ describe("figure proxy", () => {
     const proxy = figureProxy(mesh);
     expect(proxy.height).toBeGreaterThan(1.2);
     expect(proxy.bands.length).toBeGreaterThanOrEqual(1);
-    expect(proxy.bands.length).toBeLessThanOrEqual(4);
+    expect(proxy.bands.length).toBeLessThanOrEqual(3);
     expect(proxy.bands[0]!.z0).toBe(0);
     expect(proxy.bands.at(-1)!.z1).toBeCloseTo(proxy.height, 2);
     for (const b of proxy.bands) expect(b.r).toBeLessThan(0.7);

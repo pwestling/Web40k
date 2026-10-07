@@ -27,7 +27,8 @@ export interface Box {
   h: number;
 }
 
-const BANDS = 4;
+/** Three figure bands plus the base keeps within the engine's four. */
+const BANDS = 3;
 /**
  * Radius percentile per band. A spear or banner sticking out shouldn't turn
  * the whole band into a wide disc that is "visible" through every gap.
@@ -58,6 +59,30 @@ export function figureProxy(mesh: MeshData): FigureProxy {
   });
   for (const band of bands) band.z1 = round(band.z1);
   return { height: round(height), bands };
+}
+
+/**
+ * Sight bands for a model wearing this figure, as `Model.bands` wants them:
+ * inches above the bottom of the base, with the figure standing on a base
+ * `baseTop` thick and scaled by `scale`.
+ */
+export function sightBands(figure: FigureProxy, scale: number, baseTop: number, baseRadius: number) {
+  return [
+    { r: round(baseRadius), z0: 0, z1: baseTop },
+    ...figure.bands.map((b) => ({
+      r: round(b.r * scale),
+      z0: round(baseTop + b.z0 * scale),
+      z1: round(baseTop + b.z1 * scale),
+    })),
+  ];
+}
+
+/** A y-up mesh as a flat z-up triangle list (x right, y forward, z up), for `TerrainPiece.hull`. */
+export function hullTris(mesh: MeshData): number[] {
+  const out: number[] = [];
+  const p = mesh.positions;
+  for (const i of mesh.indices) out.push(round(p[i * 3]!), round(p[i * 3 + 2]!), round(p[i * 3 + 1]!));
+  return out;
 }
 
 /** Most boxes a terrain piece's proxy may have. */

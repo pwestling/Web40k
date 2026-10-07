@@ -21,7 +21,7 @@ const executablePath =
 
 const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "pipe" });
 await new Promise((resolve, reject) => {
-  server.stdout.on("data", (d) => String(d).includes("Local") && resolve());
+  server.stdout.on("data", (d) => String(d).includes("localhost") && resolve());
   server.on("exit", reject);
 });
 
@@ -33,20 +33,22 @@ const results = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
   page.on("pageerror", (e) => console.error("page error:", e.message));
+  page.setDefaultTimeout(0);
   await page.goto(`http://localhost:${PORT}/`);
   await page.waitForFunction(() => window.openBattlePerf);
   const models = await page.evaluate(() => window.openBattlePerf.setup(3));
-  const run = async (name, fn) => {
+  const run = async (name, fn, frames = 60, warmup = 10) => {
     const prep = await page.evaluate(fn);
-    const m = await page.evaluate(() => window.openBattlePerf.measure(90));
+    const m = await page.evaluate(([n, w]) => window.openBattlePerf.measure(n, w), [frames, warmup]);
     results.push({ scenario: name, ...m, ...(prep && typeof prep === "object" ? prep : {}) });
     console.error(name, JSON.stringify(results.at(-1)));
   };
   await run("stand-ins", () => window.openBattlePerf.undress());
-  await run("raw 250k sculpts", () => window.openBattlePerf.dress(250_000, true));
-  await run("pipeline, 250k sculpts", () => window.openBattlePerf.dress(250_000));
-  await run("pipeline, 2M sculpts", () => window.openBattlePerf.dress(2_000_000));
-  await page.screenshot({ path: process.env.PERF_SCREENSHOT ?? "perf.png" });
+  await run("pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000));
+  await run("pipeline, 1M sculpts", () => window.openBattlePerf.dress(1_000_000));
+  if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
+  // Full detail is slow enough under SwiftShader that a few frames will do.
+  await run("no pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000, true), 3, 1);
   console.log(JSON.stringify({ when: new Date().toISOString(), gpu, models, results }, null, 2));
 } finally {
   await browser.close();

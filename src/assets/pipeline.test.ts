@@ -48,3 +48,20 @@ describe("asset pipeline", () => {
     }
   });
 });
+
+describe("rules proxies", () => {
+  it("gives miniatures sight bands and terrain boxes plus a hull", () => {
+    const mini = processMesh(synthMiniature(50_000), { id: "m", name: "mini", kind: "miniature" });
+    expect(mini.figure?.height).toBeCloseTo(mini.bounds.max[1], 1);
+    expect(mini.solids).toBeUndefined();
+
+    const ruin = processMesh(synthMiniature(200_000, 25.4 * 4), { id: "t", name: "rock", kind: "terrain" });
+    expect(ruin.solids!.length).toBeGreaterThan(0);
+    expect(ruin.solids!.length).toBeLessThanOrEqual(32);
+    expect(ruin.hull!.length % 9).toBe(0);
+    expect(ruin.hull!.length / 9).toBeLessThanOrEqual(BUDGETS.terrain.proxy);
+    // Hull is z up: its top is the rock's height.
+    const zs = ruin.hull!.filter((_, i) => i % 3 === 2);
+    expect(Math.max(...zs)).toBeCloseTo(ruin.bounds.max[1], 0);
+  });
+});
