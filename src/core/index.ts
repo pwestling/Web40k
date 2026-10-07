@@ -4,6 +4,7 @@ export * from "./reducer";
 export * from "./log";
 export * from "./geometry";
 export * from "./formation";
+export * from "./regiment";
 export * from "./dice";
 export * from "./attack";
 export * from "./terrain";
