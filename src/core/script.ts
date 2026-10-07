@@ -56,6 +56,12 @@ export interface ScriptStep {
 }
 
 /** A module's own state, `state.modules[module][key]`. */
+/** A line in the game log, written by a module. */
+export interface LogNote {
+  type: "log/note";
+  text: string;
+}
+
 export interface ModuleSet {
   type: "module/set";
   module: Id;
@@ -165,13 +171,21 @@ function perform(cmd: Command, rng: Rng, script: ScriptState): { value?: unknown
         emitted: [
           {
             type: "dice/roll",
-            roll: { by: script.by, sides, results: rolls, ...(cmd.label ? { label: cmd.label } : {}) },
+            roll: {
+              by: script.by,
+              sides,
+              results: rolls,
+              ...(cmd.label ? { label: cmd.label } : {}),
+              ...(cmd.unitId ? { unitId: cmd.unitId } : {}),
+            },
           },
         ],
       };
     }
     case "emit":
       return { emitted: [cmd.event as GameEvent] };
+    case "note":
+      return { emitted: [{ type: "log/note", text: cmd.text }] };
     case "set":
       return { emitted: [{ type: "module/set", module: script.system, key: cmd.key, value: cmd.value }] };
     case "run":
@@ -202,7 +216,13 @@ function makeCtx(current: () => GameState, module: Id): Ctx {
     get view() {
       return gameView(current(), module);
     },
-    roll: (dice, label) => ({ cmd: "roll", dice, ...(label ? { label } : {}) }),
+    roll: (dice, label, unitId) => ({
+      cmd: "roll",
+      dice,
+      ...(label ? { label } : {}),
+      ...(unitId ? { unitId } : {}),
+    }),
+    note: (text) => ({ cmd: "note", text }),
     ask: (player, question, options) => ({ cmd: "ask", player, question, options }),
     run: (procedure, roles) => ({ cmd: "run", procedure, roles }),
     emit: (event) => ({ cmd: "emit", event }),
@@ -254,6 +274,7 @@ export function gameView(state: GameState, module: Id): GameView {
         .map((u) => u.id);
     },
     own: (state.modules?.[module] ?? {}) as Record<string, unknown>,
+    state,
   };
   return view;
 }

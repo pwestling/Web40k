@@ -22,6 +22,8 @@ const MODULES = new Map<string, GameModule<SystemModule>>();
 export function registerModule(m: GameModule<SystemModule>): void {
   registerSystem(m.system);
   if (m.procedures) registerCode(m.system.id, m.procedures);
+  // A code action runs as the procedure of the same id.
+  if (m.actions) registerCode(m.system.id, Object.fromEntries(m.actions.map((a) => [a.id, a.run])));
   MODULES.set(m.system.id, m);
 }
 

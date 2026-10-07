@@ -399,7 +399,31 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${who} chose the order their models take wounds`;
     case "script/step": {
       // A code procedure's effects, each described as if logged on its own.
-      const parts = event.events.map((e) => describe({ by, event: e, seq: 0, at: 0 }, before, game));
+      const parts: string[] = [];
+      for (let i = 0; i < event.events.length; i++) {
+        const e = event.events[i]!;
+        if (e.type === "module/set") continue;
+        if (e.type === "model/wounds") {
+          // Casualties in a row on one unit read as one line.
+          const unitId = game.models[e.id]?.unitId;
+          let lost = 0;
+          let hurt = 0;
+          for (; i < event.events.length; i++) {
+            const x = event.events[i]!;
+            if (x.type !== "model/wounds" || game.models[x.id]?.unitId !== unitId) break;
+            if (x.destroyed) lost++;
+            else hurt++;
+          }
+          i--;
+          const bits = [
+            lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
+            hurt ? `${hurt} wounded` : "",
+          ];
+          parts.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
+          continue;
+        }
+        parts.push(describe({ by, event: e, seq: 0, at: 0 }, before, game));
+      }
       if (event.error) parts.push(`stopped: ${event.error}`);
       if (event.script?.waiting)
         parts.push(`${nameOf(event.script.waiting.player)} to choose: ${event.script.waiting.question}`);
@@ -407,6 +431,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     }
     case "module/set":
       return `${who}: ${event.key} updated`;
+    case "log/note":
+      return event.text;
     default:
       return `${who}: ${(event as { type: string }).type}`;
   }

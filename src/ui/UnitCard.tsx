@@ -1,3 +1,4 @@
+import { CodeActions } from "./CodeActions";
 import {
   levelsAt,
   maxWounds,
@@ -139,6 +140,7 @@ export function UnitCard() {
   if (!systemModule(game.system).dedicatedUi)
     return (
       <SystemUnitCard unit={unit}>
+        <CodeActions unit={unit} />
         <RegimentPanel unit={unit} />
       </SystemUnitCard>
     );
@@ -193,6 +195,7 @@ export function UnitCard() {
         {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
       </div>
       <CoreAbilities unit={unit} />
+      <CodeActions unit={unit} />
       <p className="muted">
         {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
           <span className={moved > allowed + 0.05 ? "warn" : ""}>

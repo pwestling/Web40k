@@ -1,4 +1,5 @@
 import type { GameSystem, Id } from "../core/content/schema";
+import type { GameState } from "../core/types";
 
 /**
  * The game module API, version 1 (see the game modules spec, linked from
@@ -104,11 +105,14 @@ export interface GameView {
   engaged(unitId: Id): Id[];
   /** This module's own state, `state.modules[id]`. */
   own: Record<string, unknown>;
+  /** The whole game state, read-only (a worker holds the same replica). */
+  state: Readonly<GameState>;
 }
 
 /** Commands a procedure yields; each result is recorded for replay. */
 export type Command =
-  | { cmd: "roll"; dice: string; label?: string }
+  | { cmd: "roll"; dice: string; label?: string; unitId?: Id }
+  | { cmd: "note"; text: string }
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id> }
   | { cmd: "emit"; event: { type: string } & Record<string, unknown> }
@@ -116,7 +120,10 @@ export type Command =
 
 export interface Ctx {
   view: GameView;
-  roll(dice: string, label?: string): Command;
+  /** Dice from the host's rng; `unitId` files the roll under that unit (e.g. a "flee roll"). */
+  roll(dice: string, label?: string, unitId?: Id): Command;
+  /** A line in the game log. */
+  note(text: string): Command;
   ask(player: Id, question: string, options: { id: Id; label: string }[]): Command;
   run(procedure: Id, roles: Record<string, Id>): Command;
   emit(event: { type: string } & Record<string, unknown>): Command;

@@ -375,6 +375,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       const after = event.events.reduce(applyEvent, state);
       return { ...after, script: event.script };
     }
+    case "log/note":
+      return state;
     case "module/set": {
       const mine = { ...state.modules?.[event.module], [event.key]: event.value };
       return { ...state, modules: { ...state.modules, [event.module]: mine } };

@@ -1,4 +1,5 @@
 import type { GameModule } from "../../sdk";
+import { towActions } from "./combat";
 import type { SystemModule } from "../app";
 import { towLayout, TOW_CATEGORIES } from "./layout";
 import { towSample } from "./sample";
@@ -13,6 +14,7 @@ export const towModule: GameModule<SystemModule> = {
   version: oldWorld.version,
   api: 1,
   system: oldWorld,
+  actions: towActions,
   app: {
     sample: towSample,
     importRoster: importTowRoster,

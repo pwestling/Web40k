@@ -1082,3 +1082,22 @@ label.file.button input {
   text-transform: none;
   color: #93c5fd;
 }
+/* A rule written as code waiting on a player's choice (ScriptPanel). */
+.panel.script {
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100vw - 32px));
+  border-color: #f59e0b;
+}
+.panel.script .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.code-actions .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
