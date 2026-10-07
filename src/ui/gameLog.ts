@@ -491,7 +491,9 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "unit/reserve":
       return event.reserve
         ? `${unitName(event.id)} went into reserves`
-        : `${unitName(event.id)} arrives from reserves`;
+        : before.turn.round === 0
+          ? `${unitName(event.id)} back on the table`
+          : `${unitName(event.id)} arrives from reserves`;
     case "unit/specialMove":
       return `${unitName(event.id)} may move up to ${event.inches}" (${event.flag})`;
     case "attack/allocate":

@@ -1,7 +1,16 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { CanvasTexture, Plane, Raycaster, RepeatWrapping, Vector2, Vector3, type Object3D } from "three";
+import {
+  CanvasTexture,
+  Color,
+  Plane,
+  Raycaster,
+  RepeatWrapping,
+  Vector2,
+  Vector3,
+  type Object3D,
+} from "three";
 import {
   baseSizeInches,
   maxWounds,
@@ -670,7 +679,11 @@ function Scene() {
             model,
             position: shown[model.id] ?? positions[model.id]!,
             z: shownZ[model.id] ?? heights[model.id] ?? 0,
-            color: game.players[model.owner]?.color ?? "#999",
+            // Waiting in reserve: faded, so it doesn't read as deployed.
+            color: faded(
+              game.players[model.owner]?.color ?? "#999",
+              !!(model.unitId && game.units[model.unitId]?.status?.reserves),
+            ),
             // The stand-in is as tall as the model's line-of-sight height.
             height: figure ?? Math.max(0.3, modelHeight(model) - 0.2),
             dressed: figure !== undefined,
@@ -678,7 +691,20 @@ function Scene() {
           },
         ];
       }),
-    [game.models, game.players, view, eyeUnit, eye, figures, shown, positions, shownZ, heights, draft],
+    [
+      game.models,
+      game.players,
+      game.units,
+      view,
+      eyeUnit,
+      eye,
+      figures,
+      shown,
+      positions,
+      shownZ,
+      heights,
+      draft,
+    ],
   );
 
   return (
@@ -1500,4 +1526,16 @@ function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said 
         at: drag.grab,
         radius: Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y),
       };
+}
+
+const fadedCache = new Map<string, string>();
+/** A colour washed towards the table's dark grey. */
+function faded(color: string, on: boolean): string {
+  if (!on) return color;
+  let out = fadedCache.get(color);
+  if (!out) {
+    out = `#${new Color(color).lerp(new Color("#3f3f46"), 0.65).getHexString()}`;
+    fadedCache.set(color, out);
+  }
+  return out;
 }

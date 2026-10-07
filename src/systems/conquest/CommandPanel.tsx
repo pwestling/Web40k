@@ -151,9 +151,7 @@ function ToReserve({ players }: { players: Player[] }) {
   const toReserve = (u: Unit) => dispatch({ type: "unit/reserve", id: u.id, reserve: true }, u.owner);
   // Back on the table: just inside its owner's edge, where it waited.
   const toTable = (u: Unit) => {
-    dispatch({ type: "unit/reserve", id: u.id, reserve: false }, u.owner);
-    const moves = atEdge(useStore.getState().game, u);
-    if (moves.length) dispatch({ type: "models/move", moves }, u.owner);
+    dispatch({ type: "unit/reserve", id: u.id, reserve: false, moves: atEdge(game, u) }, u.owner);
   };
   return (
     <div className="panel play command-stack">

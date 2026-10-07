@@ -235,7 +235,8 @@ describe("40k game night", () => {
     // Off the owner's own long edge.
     expect(Math.abs(s.models.s1!.position.y)).toBeGreaterThan(s.table.depth / 2);
     s = play(s, { type: "unit/reserve", id: "sneaks", reserve: false }, "p1");
-    expect(s.units.sneaks?.status).toMatchObject({ arrived: true });
+    // Taken back out before the battle, it is simply deployed again.
+    expect(s.units.sneaks?.status?.arrived).toBeUndefined();
     expect(s.units.sneaks?.status?.reserves).toBeUndefined();
 
     s = play(s, { type: "unit/specialMove", id: "loner", inches: 6, flag: "scouting" }, "p1");

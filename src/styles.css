@@ -1732,6 +1732,7 @@ button.rare-star:hover {
   font-size: 0.75rem;
   white-space: nowrap;
   pointer-events: none;
+}
 /* The rules-package sandbox stopped a package (src/sandbox). */
 .panel.sandbox-notice {
   bottom: 96px;
