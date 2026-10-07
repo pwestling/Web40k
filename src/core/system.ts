@@ -22,6 +22,8 @@ export interface GameSystem {
   /** Default arrangement for new units. */
   defaultFormation: "skirmish" | "ranked";
   defaultTable: Table;
+  /** The standard die, e.g. 6 for D6 games. Criticals default to its top face. */
+  die: number;
   /** Largest total modifier allowed per roll kind, if the system caps it. */
   rollModifierCaps?: Record<string, number>;
 }

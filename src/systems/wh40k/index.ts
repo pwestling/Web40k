@@ -27,6 +27,7 @@ export const wh40k: GameSystem = {
   turnStructure: "playerTurn",
   defaultFormation: "skirmish",
   defaultTable: STRIKE_FORCE_TABLE,
+  die: 6,
   rollModifierCaps: { hit: 1, wound: 1 },
 };
 

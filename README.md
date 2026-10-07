@@ -5,7 +5,7 @@ Simulator, but built around 40k: inch-based measuring, bases, units, dice pools 
 
 40k is the primary target, but the engine is deliberately generic. The test for that is whether the same
 engine can also run rank-and-file games such as Warhammer: The Old World and Conquest: The Last Argument
-of Kings.
+of Kings, and other free-movement skirmish games such as Full Spectrum Dominance.
 
 No install and no game server: one player hosts, shares a link, and the browsers talk to each other
 directly over WebRTC.

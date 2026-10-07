@@ -26,6 +26,7 @@ describe("rollModifiers", () => {
     turnStructure: "playerTurn",
     defaultFormation: "skirmish",
     defaultTable: { width: 60, depth: 44 },
+    die: 6,
     rollModifierCaps: { hit: 1 },
   };
   const rifle: Weapon = {

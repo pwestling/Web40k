@@ -26,7 +26,7 @@ export interface RollModifiers {
 
 /** Fold every applicable effect into the modifiers for one roll. */
 export function rollModifiers(system: GameSystem, effects: Effect[], ctx: RollContext): RollModifiers {
-  const out: RollModifiers = { modifier: 0, reroll: null, criticalOn: 6, reminders: [] };
+  const out: RollModifiers = { modifier: 0, reroll: null, criticalOn: system.die, reminders: [] };
   for (const effect of effects) {
     const { when } = effect;
     if (when.kind !== "roll" || when.roll !== ctx.roll || when.side !== ctx.side) continue;
