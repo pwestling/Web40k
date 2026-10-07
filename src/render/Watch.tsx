@@ -6,15 +6,17 @@ import { Vector3 } from "three";
 import {
   modelHeight,
   type AttackState,
+  baseSizeInches,
+  phaseName,
   type GameEvent,
   type GameState,
   type Model,
   type Vec2,
 } from "../core";
 import { useHold } from "../ui/hold";
-import { pickUp, setDown } from "./feel";
+import { jolt, pickUp, setDown } from "./feel";
 import { CasualtyPiles, slotOf, Topple, TOPPLE_MS } from "./Casualties";
-import { topple } from "../ui/sound";
+import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
 
@@ -243,7 +245,9 @@ function FadingLine({
 type Effect =
   | { kind: "tracer"; key: string; start: number; points: number[] }
   | { kind: "burst"; key: string; start: number; at: [number, number, number]; text: string }
-  | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; to: Vec2; color: string };
+  | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; to: Vec2; color: string }
+  /** "Charged 7.2"" over a charge that struck home, or a grey "Short by 2"" (PX-3c). */
+  | { kind: "stamp"; key: string; start: number; at: [number, number, number]; text: string; fail: boolean };
 
 const centre = (models: Model[]): { x: number; y: number; z: number } => {
   const n = Math.max(1, models.length);
@@ -301,6 +305,8 @@ export function WatchEffects() {
   const [arriving, setArriving] = useState<ReadonlySet<string>>(new Set());
   const focus = useRef<Focus | null>(null);
   const lastAction = useRef(0);
+  // The camera's nudge toward a charge's target: when, which way, and how much is applied now.
+  const nudge = useRef<{ start: number; x: number; y: number; applied?: number } | null>(null);
   const overview = useRef(true);
   // Effect keys must never repeat: a replay rewound and played again reaches the same seqs.
   const nextKey = useRef(0);
@@ -338,6 +344,24 @@ export function WatchEffects() {
         color: game.players[m.owner]?.color ?? "#999",
       });
     });
+    // A charge striking home: the target jolts, the camera nudges, a stamp says how far (PX-3c).
+    for (const event of events) {
+      const c = chargeFor(event, prev.game, game);
+      if (!c) continue;
+      if (c.target) {
+        jolt(c.target.ids, c.target.dir, now + 60);
+        setTimeout(clash, 60);
+        nudge.current = { start: now + 60, x: c.target.dir.x, y: c.target.dir.y };
+      }
+      fresh.push({
+        kind: "stamp",
+        key: `stamp-${nextKey.current++}`,
+        start: now,
+        at: [c.at.x, c.at.z + 1.6, c.at.y],
+        text: c.target ? `Charged ${c.distance.toFixed(1)}"` : `Short by ${c.gap.toFixed(1)}"`,
+        fail: !c.target,
+      });
+    }
     if (fresh.length)
       setEffects((old) => [
         ...old.filter((e) => now - e.start < (e.kind === "topple" ? TOPPLE_MS + 100 : EFFECT_MS * 2)),
@@ -373,6 +397,21 @@ export function WatchEffects() {
   // Once the action has been quiet a while, it eases back out to the whole table.
   const table = game.table;
   useFrame(() => {
+    // 0.15" toward the charge's target and back over 200 ms; 3D only, never with reduced motion.
+    const n = nudge.current;
+    if (n && controls && useStore.getState().view === "3d" && !reducedMotion()) {
+      const t = (performance.now() - n.start) / 200;
+      if (t >= 0) {
+        const want = t >= 1 ? 0 : 0.15 * Math.sin(Math.PI * Math.min(1, t));
+        const step = want - (n.applied ?? 0);
+        n.applied = want;
+        const shift = new Vector3(n.x * step, 0, n.y * step);
+        controls.target.add(shift);
+        controls.object.position.add(shift);
+        controls.update();
+        if (t >= 1) nudge.current = null;
+      }
+    } else if (n) nudge.current = null;
     if (!director || !controls) return;
     if (!focus.current && !overview.current && performance.now() - lastAction.current > OVERVIEW_AFTER_MS) {
       overview.current = true;
@@ -411,6 +450,16 @@ export function WatchEffects() {
             duration={EFFECT_MS}
             opacity={0.9}
           />
+        ) : e.kind === "stamp" ? (
+          <Html
+            key={e.key}
+            position={e.at}
+            center
+            zIndexRange={[9, 0]}
+            className={e.fail ? "charge-stamp short" : "charge-stamp"}
+          >
+            {e.text}
+          </Html>
         ) : e.kind === "burst" ? (
           <Html key={e.key} position={e.at} center zIndexRange={[9, 0]} className="burst">
             {e.text}
@@ -536,4 +585,71 @@ function blowFrom(game: GameState, victim: Model | undefined): Vec2 | null {
       )
         best = m;
   return best?.position ?? null;
+}
+
+const reducedMotion = () =>
+  typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * A charge move, if this event is one: a block's charge move, or a unit's
+ * models moved in the Charge phase after a charge roll. Says how far it
+ * came and, if it reached an enemy, which unit and which way it was struck.
+ */
+export function chargeFor(
+  event: GameEvent,
+  before: GameState,
+  after: GameState,
+): {
+  at: { x: number; y: number; z: number };
+  distance: number;
+  gap: number;
+  target: { ids: string[]; dir: { x: number; y: number } } | null;
+} | null {
+  let unitId: string | undefined;
+  let distance = 0;
+  if (event.type === "unit/move" && event.how === "charge") {
+    unitId = event.id;
+    distance = Math.abs(event.distance ?? 0);
+  } else if (event.type === "models/move" && event.moves.length) {
+    const id = before.models[event.moves[0]!.id]?.unitId;
+    const unit = id ? before.units[id] : undefined;
+    if (!unit || typeof unit.status?.charge !== "number" || !/charge/i.test(phaseName(before) ?? ""))
+      return null;
+    if (!event.moves.every((m) => before.models[m.id]?.unitId === id)) return null;
+    unitId = id;
+    for (const m of event.moves) {
+      const from = before.models[m.id]?.phaseStart ?? before.models[m.id]?.position;
+      if (from) distance = Math.max(distance, Math.hypot(m.to.x - from.x, m.to.y - from.y));
+    }
+  }
+  if (!unitId) return null;
+  const mine = alive(after, unitId);
+  if (!mine.length) return null;
+  const owner = mine[0]!.owner;
+  const half = (m: Model) => Math.max(baseSizeInches(m.base).width, baseSizeInches(m.base).depth) / 2;
+  // The nearest enemy model to any of the charging models, base edge to base edge.
+  let gap = Infinity;
+  let hit: Model | null = null;
+  for (const e of Object.values(after.models)) {
+    if (e.destroyed || e.owner === owner) continue;
+    for (const m of mine) {
+      const d = Math.hypot(e.position.x - m.position.x, e.position.y - m.position.y) - half(e) - half(m);
+      if (d < gap) {
+        gap = d;
+        hit = e;
+      }
+    }
+  }
+  const at = centre(mine);
+  if (!hit || !Number.isFinite(gap)) return null;
+  if (gap > 1.05) return { at, distance, gap: Math.max(0, gap - 1), target: null };
+  const struck = hit.unitId ? alive(after, hit.unitId) : [hit];
+  const c = centre(struck);
+  const len = Math.hypot(c.x - at.x, c.y - at.y) || 1;
+  return {
+    at,
+    distance,
+    gap: 0,
+    target: { ids: struck.map((m) => m.id), dir: { x: (c.x - at.x) / len, y: (c.y - at.y) / len } },
+  };
 }

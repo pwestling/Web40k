@@ -215,7 +215,7 @@ function Instances({
       const pose = poseOf(d.model.id, now);
       if (pose && (pose.tiltX || pose.tiltZ))
         q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
-      p.set(d.position.x, d.z + (pose?.lift ?? 0), d.position.y);
+      p.set(d.position.x + (pose?.dx ?? 0), d.z + (pose?.lift ?? 0), d.position.y + (pose?.dy ?? 0));
       const scale = place(d);
       if (pose) scale.y *= pose.squash;
       m4.compose(p, q, scale);

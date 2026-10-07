@@ -15,6 +15,9 @@ export interface Pose {
   tiltZ: number;
   /** Height scale, 1 at rest. */
   squash: number;
+  /** Shoved across the table, inches (a charge striking home). */
+  dx?: number;
+  dy?: number;
 }
 
 const LIFT = 0.4;
@@ -31,6 +34,8 @@ type Held = { start: number; tiltX: number; tiltZ: number; vx: number; vy: numbe
 type Landing = { start: number; from: number };
 
 const held = new Map<string, Held>();
+const jolts = new Map<string, { start: number; x: number; y: number }>();
+const JOLT_MS = 190;
 const landing = new Map<string, Landing>();
 /** Rings spreading from bases just set down: where, how wide, when. */
 export const rings: { x: number; y: number; z: number; radius: number; start: number }[] = [];
@@ -110,8 +115,28 @@ export function stepFeel(dt: number, now = performance.now()): void {
   lastActive = now;
 }
 
+/** Models hit by a charge: knocked 0.1" along `dir` (a unit vector) and back (PX-3c). */
+export function jolt(ids: string[], dir: { x: number; y: number }, now = performance.now()): void {
+  if (reduced()) return;
+  for (const id of ids) jolts.set(id, { start: now, x: dir.x, y: dir.y });
+  lastActive = now;
+}
+
 /** A model's pose now, or null at rest. */
 export function poseOf(id: string, now = performance.now()): Pose | null {
+  const pose = basePose(id, now);
+  const j = jolts.get(id);
+  if (!j) return pose;
+  const t = now - j.start;
+  if (t >= JOLT_MS) {
+    jolts.delete(id);
+    return pose;
+  }
+  const k = 0.1 * (t < 40 ? t / 40 : 1 - (t - 40) / (JOLT_MS - 40));
+  return { ...(pose ?? { lift: 0, tiltX: 0, tiltZ: 0, squash: 1 }), dx: j.x * k, dy: j.y * k };
+}
+
+function basePose(id: string, now: number): Pose | null {
   const h = held.get(id);
   if (h) return { lift: currentLift(h, now), tiltX: h.tiltX, tiltZ: h.tiltZ, squash: 1 };
   const l = landing.get(id);
@@ -131,7 +156,7 @@ export function poseOf(id: string, now = performance.now()): Pose | null {
 
 /** Whether renderers need to redraw poses this frame (and one frame after the last). */
 export function feelActive(now = performance.now()): boolean {
-  if (held.size || landing.size) {
+  if (held.size || landing.size || jolts.size) {
     lastActive = now;
     return true;
   }

@@ -182,7 +182,7 @@ function AssetInstances({
       if (pose && (pose.tiltX || pose.tiltZ))
         q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
       const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0) + (pose?.lift ?? 0);
-      v.set(p.x, z, p.y);
+      v.set(p.x + (pose?.dx ?? 0), z, p.y + (pose?.dy ?? 0));
       s.setScalar(binding.scale);
       if (pose) s.y *= pose.squash;
       m4.compose(v, q, s);
