@@ -1588,6 +1588,151 @@ button.rare-star:hover {
   padding: 0 6px;
 }
 
+/* Table talk (src/talk): tools, reactions and chat, bottom left */
+.talk-dock {
+  z-index: 20;
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.talk-dock .panel.talk {
+  position: static;
+  gap: 6px;
+  padding: 8px 10px;
+}
+.panel.talk .row {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.panel.talk button {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.panel.talk .talk-toggle {
+  margin-left: auto;
+}
+.talk-reactions-row {
+  justify-content: space-between;
+}
+.panel.talk .talk-reactions-row button {
+  font-size: 1.05rem;
+  padding: 0 2px;
+}
+.talk-chat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.panel.talk form input {
+  flex: 1;
+  min-width: 0;
+}
+.talk-toasts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.talk-toasts li {
+  pointer-events: auto;
+  cursor: pointer;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  animation: talk-toast 15s ease forwards;
+}
+@keyframes talk-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  3%,
+  85% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.talk-floats {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  overflow: hidden;
+}
+.talk-float {
+  position: absolute;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  animation: talk-rise 3s ease-out forwards;
+}
+.talk-float .emoji {
+  font-size: 3rem;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 60%));
+}
+.talk-float .who {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-shadow: 0 1px 3px #000;
+}
+@keyframes talk-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.15);
+  }
+  20% {
+    transform: translate(-50%, -10px) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -240px) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talk-float {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}
+.talk-label span {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: 6px;
+  background: rgb(17 19 24 / 85%);
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
 /* The rules-package sandbox stopped a package (src/sandbox). */
 .panel.sandbox-notice {
   bottom: 96px;

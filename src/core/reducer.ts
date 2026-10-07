@@ -342,6 +342,8 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "unit/reserve": {
       const next = updateUnit(state, event.id, (u) => {
         const { reserves: _r, arrived: _a, ...status } = u.status ?? {};
+        // Taken back out of reserve before the battle, it simply stands deployed.
+        if (!event.reserve && state.turn.round === 0) return { ...u, status };
         return { ...u, status: event.reserve ? { ...status, reserves: true } : { ...status, arrived: true } };
       });
       const models = { ...next.models };

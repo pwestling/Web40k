@@ -1,7 +1,16 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { CanvasTexture, Plane, Raycaster, RepeatWrapping, Vector2, Vector3, type Object3D } from "three";
+import {
+  CanvasTexture,
+  Color,
+  Plane,
+  Raycaster,
+  RepeatWrapping,
+  Vector2,
+  Vector3,
+  type Object3D,
+} from "three";
 import {
   baseSizeInches,
   maxWounds,
@@ -43,6 +52,8 @@ import { Trails, useTween, WatchEffects } from "./Watch";
 import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
+import { TalkLayer } from "./TalkLayer";
+import { say, useTalk, type Said } from "../talk/talk";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
@@ -234,6 +245,8 @@ type Drag = {
     }
   | { kind: "terrain" | "objective"; id: string; start: Vec2 }
   | { kind: "ruler"; fromModel?: string }
+  /** Table talk: an arrow or an area being drawn. */
+  | { kind: "talk"; tool: "arrow" | "area" }
 );
 
 function Scene() {
@@ -337,7 +350,13 @@ function Scene() {
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
       const terrain = useStore.getState().game.terrain;
-      if (d.kind === "ruler") {
+      if (d.kind === "talk") {
+        say(
+          d.tool === "arrow"
+            ? { kind: "arrow", from: d.grab, to: d.to }
+            : { kind: "area", at: d.grab, radius: Math.hypot(dx, dy) },
+        );
+      } else if (d.kind === "ruler") {
         const game = useStore.getState().game;
         const toModel = modelAt(game, d.to);
         dispatch({
@@ -447,6 +466,12 @@ function Scene() {
   }, [game, positions, heights]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const measuring = useStore((s) => s.measuring) && live;
+  const tool = useTalk((s) => s.tool);
+  // Table talk on a spot or a unit: a ping now, or the start of an arrow or area.
+  const talkAt = (at: Vec2, unitId?: string) => {
+    if (tool === "ping" || !tool) say({ kind: "ping", at, ...(unitId ? { unitId } : {}) });
+    else setDrag({ kind: "talk", tool, grab: at, to: at, moved: false, planeZ: 0 });
+  };
   const startRuler = (at: Vec2, fromModel?: string) =>
     setDrag({
       kind: "ruler",
@@ -458,6 +483,10 @@ function Scene() {
     });
 
   const onModelDown = (m: Model, shift: boolean) => {
+    if (tool) {
+      talkAt(m.position, m.unitId);
+      return;
+    }
     if (measuring) {
       startRuler(m.position, m.id);
       return;
@@ -650,7 +679,11 @@ function Scene() {
             model,
             position: shown[model.id] ?? positions[model.id]!,
             z: shownZ[model.id] ?? heights[model.id] ?? 0,
-            color: game.players[model.owner]?.color ?? "#999",
+            // Waiting in reserve: faded, so it doesn't read as deployed.
+            color: faded(
+              game.players[model.owner]?.color ?? "#999",
+              !!(model.unitId && game.units[model.unitId]?.status?.reserves),
+            ),
             // The stand-in is as tall as the model's line-of-sight height.
             height: figure ?? Math.max(0.3, modelHeight(model) - 0.2),
             dressed: figure !== undefined,
@@ -658,7 +691,20 @@ function Scene() {
           },
         ];
       }),
-    [game.models, game.players, view, eyeUnit, eye, figures, shown, positions, shownZ, heights, draft],
+    [
+      game.models,
+      game.players,
+      game.units,
+      view,
+      eyeUnit,
+      eye,
+      figures,
+      shown,
+      positions,
+      shownZ,
+      heights,
+      draft,
+    ],
   );
 
   return (
@@ -692,12 +738,19 @@ function Scene() {
         rotation-x={-Math.PI / 2}
         receiveShadow
         onPointerDown={(e) => {
-          if (!measuring || e.button !== 0) return;
+          if (e.button !== 0) return;
+          // Alt-click pings a spot whatever else is going on.
+          if (tool || e.altKey) {
+            e.stopPropagation();
+            talkAt({ x: e.point.x, y: e.point.z });
+            return;
+          }
+          if (!measuring) return;
           e.stopPropagation();
           startRuler({ x: e.point.x, y: e.point.z });
         }}
         onClick={(e) => {
-          if (measuring || draft?.picking || e.delta >= 3) return;
+          if (tool || e.altKey || measuring || draft?.picking || e.delta >= 3) return;
           select(null);
           if (editing) setUi({ selectedTerrain: null });
         }}
@@ -846,6 +899,8 @@ function Scene() {
               opacity={0.35}
             />
           ))}
+
+      <TalkLayer game={game} preview={talkPreview(drag, game)} />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (
@@ -1455,4 +1510,32 @@ function ModelOverlay({
       )}
     </group>
   );
+}
+
+/** The arrow or area being drawn, in this player's colour. */
+function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said | null {
+  if (drag?.kind !== "talk" || !drag.moved) return null;
+  const self = useStore.getState().session?.selfId ?? "";
+  const color = game.players[self]?.color ?? "#a1a1aa";
+  const base = { id: "draft", by: self, name: "", color, sentAt: Date.now() };
+  return drag.tool === "arrow"
+    ? { ...base, kind: "arrow", from: drag.grab, to: drag.to }
+    : {
+        ...base,
+        kind: "area",
+        at: drag.grab,
+        radius: Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y),
+      };
+}
+
+const fadedCache = new Map<string, string>();
+/** A colour washed towards the table's dark grey. */
+function faded(color: string, on: boolean): string {
+  if (!on) return color;
+  let out = fadedCache.get(color);
+  if (!out) {
+    out = `#${new Color(color).lerp(new Color("#3f3f46"), 0.65).getHexString()}`;
+    fadedCache.set(color, out);
+  }
+  return out;
 }

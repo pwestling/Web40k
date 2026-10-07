@@ -306,12 +306,10 @@ export const conquest: GameSystem = {
       by: "unit",
       hint: "Impact attacks after the charge lands; part of the charge",
       free: true,
-      if: {
-        all: [
-          { hasFlag: "self", flag: "charged" },
-          { cmp: ">", a: ref("self.Impact"), b: 0 },
-        ],
-      },
+      notWhen: [
+        { if: { cmp: "<=", a: ref("self.Impact"), b: 0 }, why: "No Impact attacks" },
+        { if: { not: { hasFlag: "self", flag: "charged" } }, why: "Only straight after a charge" },
+      ],
       target: { filter: within(1) },
       limit: { count: 1, per: "round" },
       procedure: "impact",
