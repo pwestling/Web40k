@@ -1,0 +1,25 @@
+import type { GameModule } from "../../sdk";
+import type { SystemModule } from "../app";
+import { conquestFunctions, conquestProcedures } from "./command";
+import { CommandPanel } from "./CommandPanel";
+import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
+import { conquestSample } from "./sample";
+import { conquest } from "./system";
+
+/** Conquest: roll-under regiments, a command stack and alternating activations (system.ts). */
+export const conquestModule: GameModule<SystemModule> = {
+  id: conquest.id,
+  version: conquest.version,
+  api: 1,
+  system: conquest,
+  procedures: conquestProcedures,
+  functions: conquestFunctions,
+  app: {
+    sample: conquestSample,
+    layout: (t) => conquestLayout(t.width, t.depth),
+    templateCategory: CONQUEST_CATEGORIES,
+    rankRules: () => ({ width: 2, maxBonus: 0 }),
+    chargeRoll: { count: 1, sides: 6, keep: "sum" },
+    panel: CommandPanel,
+  },
+};

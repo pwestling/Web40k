@@ -777,8 +777,8 @@ details p {
 .play.collapsed {
   width: auto;
 }
-.play:not(.collapsed) ~ .unitcard,
-.play:not(.collapsed) ~ .attack {
+.play:not(.collapsed) ~ .panels > .unitcard,
+.play:not(.collapsed) ~ .panels > .attack {
   max-height: calc(66vh - 136px);
 }
 .play .stratagems {
@@ -1555,4 +1555,26 @@ button.rare-star:hover {
   font-size: 0.75rem;
   opacity: 0.7;
   color: #e7e3da;
+}
+
+/* Conquest's command stack */
+.command-stack .stack-player {
+  border-top: 1px solid #2d3340;
+  padding-top: 4px;
+}
+.command-stack .stack-cards {
+  margin: 4px 0;
+  padding-left: 1.6em;
+}
+.command-stack .stack-cards li {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 1px 0;
+}
+.command-stack .stack-cards li span {
+  flex: 1;
+}
+.command-stack .stack-cards button {
+  padding: 0 6px;
 }

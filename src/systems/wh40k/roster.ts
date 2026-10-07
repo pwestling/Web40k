@@ -34,6 +34,8 @@ export interface ImportedUnit {
   base: BaseShape;
   /** Characteristics the roster left blank, for the player to fill in before deploying. */
   missing?: string[];
+  /** A suggested frontage for a ranked block (rank-and-flank sample armies). */
+  files?: number;
 }
 
 export interface ImportedRoster {

@@ -1,0 +1,143 @@
+import { describe, expect, it } from "vitest";
+import {
+  applyEvent,
+  createInitialState,
+  currentSlot,
+  resolveIntent,
+  type GameState,
+  type Intent,
+  type PlayerId,
+} from "../../core";
+import { unitActions } from "../../core/content/play";
+import type { StepRecord } from "../../core/content";
+import { spawnIntents } from "../wh40k/deploy";
+import "../index";
+import { nextCard, stackOf } from "./command";
+import { conquestLayout } from "./layout";
+import { conquestSample } from "./sample";
+
+function rng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function play(state: GameState, intent: Intent, from: PlayerId, r = rng(1)): GameState {
+  const event = resolveIntent(intent, from, r, state);
+  if (!event) throw new Error(`Rejected: ${JSON.stringify(intent)}`);
+  return applyEvent({ ...state, seq: state.seq + 1 }, event);
+}
+
+/** Two seated players, Conquest chosen, an empty table and the sample armies deployed as blocks. */
+function setup(): GameState {
+  let s = createInitialState();
+  s = play(s, { type: "player/join", player: { id: "p1", name: "A", color: "#00f", seat: 0 } }, "p1");
+  s = play(s, { type: "player/join", player: { id: "p2", name: "B", color: "#f00", seat: 1 } }, "p2");
+  s = play(s, { type: "game/system", system: "conquest-hand" }, "p1");
+  s = play(s, { type: "layout/set", layout: { ...conquestLayout(), terrain: [] } }, "p1");
+  for (const [p, seat] of [
+    ["p1", 0],
+    ["p2", 1],
+  ] as const)
+    for (const i of spawnIntents(s, p, conquestSample(seat).units, p, "army")) s = play(s, i, p);
+  return s;
+}
+
+const unitNamed = (s: GameState, name: string) => Object.values(s.units).find((u) => u.name === name)!;
+
+/** Slide a block so its front edge sits `gap` inches from the centre line, centred on x = 0. */
+function toCentre(s: GameState, unitId: string, gap: number): GameState {
+  const ms = s.units[unitId]!.modelIds.map((id) => s.models[id]!);
+  const half = 0.79; // a 40mm stand's half depth
+  const xs = ms.map((m) => m.position.x);
+  const dx = -(Math.min(...xs) + Math.max(...xs)) / 2;
+  const ys = ms.map((m) => m.position.y);
+  // Seat 0 faces -y (its front is its lowest y), seat 1 faces +y.
+  const dy = ms[0]!.owner === "p1" ? gap + half - Math.min(...ys) : -gap - half - Math.max(...ys);
+  return applyEvent(s, {
+    type: "models/move",
+    moves: ms.map((m) => ({ id: m.id, to: { x: m.position.x + dx, y: m.position.y + dy } })),
+  });
+}
+
+const step = (s: GameState, id: string): StepRecord | undefined =>
+  s.procedure?.run.records.find((r) => r.id === id);
+
+describe("Conquest", () => {
+  it("deploys regiments of stands as blocks on a 6' by 4' table", () => {
+    const s = setup();
+    expect(s.table).toEqual({ width: 72, depth: 48 });
+    const spears = unitNamed(s, "Shieldwall Spears");
+    expect(spears.formation).toMatchObject({ kind: "ranked", files: 3 });
+    expect(spears.modelIds).toHaveLength(6);
+    expect(s.models[spears.modelIds[0]!]?.profile?.chars.C).toBe("2");
+  });
+
+  it("activates regiments in command stack order, two actions each", () => {
+    let s = setup();
+    const p1 = Object.values(s.units).filter((u) => u.owner === "p1");
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.id).toBe("command");
+    const order = [p1[2]!.id, p1[0]!.id, p1[1]!.id, p1[3]!.id];
+    s = play(s, { type: "script/start", procedure: "setStack", args: { player: "p1", order } }, "p1");
+    expect(stackOf(s, s.modules!["conquest-hand"]!, "p1")).toEqual(order);
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.kind).toBe("alternate");
+
+    // Only the top card may go.
+    const active = s.turn.activeSeat === 0 ? "p1" : "p2";
+    if (active === "p2") {
+      // p2 set no stack, so any of their regiments may go.
+      const any = Object.values(s.units).find((u) => u.owner === "p2")!;
+      expect(unitActions(s, any.id).find((o) => o.def.id === "activate")?.ok).toBe(true);
+      s = play(s, { type: "action/take", unitId: any.id, action: "activate" }, "p2");
+      s = play(s, { type: "turn/endActivation" }, "p2");
+    }
+    expect(unitActions(s, p1[0]!.id).find((o) => o.def.id === "activate")?.ok).toBe(false);
+    expect(unitActions(s, order[0]!).find((o) => o.def.id === "activate")?.ok).toBe(true);
+    s = play(s, { type: "action/take", unitId: order[0]!, action: "activate" }, "p1");
+    expect(s.units[order[0]!]?.status).toMatchObject({ acting: true, activated: true, actionBudget: 2 });
+    s = play(s, { type: "action/take", unitId: order[0]!, action: "march" }, "p1");
+    s = play(s, { type: "action/take", unitId: order[0]!, action: "march" }, "p1");
+    expect(unitActions(s, order[0]!).find((o) => o.def.id === "march")?.why).toBe("No actions left");
+    s = play(s, { type: "turn/endActivation" }, "p1");
+    expect(nextCard(s, order)?.id).toBe(order[1]);
+  });
+
+  it("clashes roll-under: hits on Clash, Defense less Cleave, Resolve with the size bonus", () => {
+    let s = setup();
+    const guard = unitNamed(s, "Warden Guard");
+    const thralls = unitNamed(s, "Thrall Host");
+    s = toCentre(s, guard.id, 0.25);
+    s = toCentre(s, thralls.id, 0.25);
+    s = play(s, { type: "turn/next" }, "p1");
+    s = play(s, { type: "turn/next" }, "p1");
+    if (s.turn.activeSeat !== 0) s = play(s, { type: "turn/pass" }, "p2");
+    s = play(s, { type: "action/take", unitId: guard.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: guard.id, action: "inspire" }, "p1");
+    const clash = unitActions(s, guard.id, { targetId: thralls.id }).find((o) => o.def.id === "clash");
+    expect(clash?.ok).toBe(true);
+    s = play(s, { type: "action/take", unitId: guard.id, action: "clash", targetId: thralls.id }, "p1");
+    const r = rng(7);
+    while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+    // Three stands of A 5 in front, three supporting at 1 each.
+    expect(step(s, "attacks")?.out).toBe(18);
+    const plan = (id: string) => step(s, id)?.plan as { target: number | null; compare: string };
+    // Clash 3, +1 for Inspired.
+    expect(plan("hit")).toMatchObject({ target: 4, compare: "atMost" });
+    // Defense 1 less Cleave 1, Evasion 0: nothing saves.
+    expect(plan("defense").target).toBe(0);
+    // Resolve 1, +2 for 7-9 stands.
+    expect(plan("resolve").target).toBe(3);
+    const wounds = step(s, "resolve")!.out;
+    expect(wounds).toBeGreaterThanOrEqual(step(s, "defense")!.out);
+    s = play(s, { type: "procedure/clear" }, "p1");
+    const lost = thralls.modelIds.filter((id) => s.models[id]?.destroyed).length;
+    expect(lost).toBe(Math.min(9, Math.floor(wounds / 4)));
+  });
+});

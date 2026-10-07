@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { lastSeq, rareOf, rollsIn, type GameState, type RareOutcome, type TrayRoll } from "../core";
 import { useStore } from "../store";
-import { useHold } from "./hold";
+import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
 import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
@@ -29,7 +29,9 @@ export function DiceTray() {
   useEffect(() => {
     if (!ref.current) return;
     stage.current = new Stage(ref.current, () => useHold.setState({ held: null }));
+    const unwatch = watchForRolls();
     return () => {
+      unwatch();
       stage.current?.clear();
       useHold.setState({ held: null });
     };

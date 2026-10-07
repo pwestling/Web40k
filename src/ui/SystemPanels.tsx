@@ -497,11 +497,15 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [game, unit?.id, draft.action, pick],
   );
-  const weaponId = draft.weaponId ?? options.find((x) => x.o?.ok)?.w.id ?? weapons[0]?.id;
+  // Procedures without a weapon (Conquest's Clash and Volley) skip the weapon picker.
+  const armed = !!def?.procedure && (findProcedure(system, def.procedure).params ?? []).includes("weapon");
+  const weaponId = armed
+    ? (draft.weaponId ?? options.find((x) => x.o?.ok)?.w.id ?? weapons[0]?.id)
+    : undefined;
   const targets = unit && def ? actionTargets(game, unit.id, def.id) : [];
   const scale = inchesPerUnit(system);
   const chosen = options.find((x) => x.w.id === weaponId);
-  const ready = chosen?.o && draft.targetId;
+  const ready = (armed ? chosen?.o : unit) && draft.targetId;
   const option = ready
     ? unitActions(game, unit!.id, { weapon: weaponId, targetId: draft.targetId, ...dice }).find(
         (o) => o.def.id === draft.action,
@@ -519,13 +523,14 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
   // Each target's range note, from a preview of the roll against it.
   const notes = Object.fromEntries(
     targets.map((t) => {
-      const p = weaponId
-        ? safePreview(
-            game,
-            def.procedure!,
-            procedureRoles(system, def.procedure!, unit.id, { weapon: weaponId, targetId: t.unitId }),
-          )
-        : null;
+      const p =
+        weaponId || !armed
+          ? safePreview(
+              game,
+              def.procedure!,
+              procedureRoles(system, def.procedure!, unit.id, { weapon: weaponId, targetId: t.unitId }),
+            )
+          : null;
       return [t.unitId, rangeNote(system, weapon, t.distance, cannotSucceed(p))];
     }),
   );
@@ -540,18 +545,20 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         <button onClick={() => setDraft(null)}>Cancel</button>
       </div>
       <div className="row wrap">
-        <select
-          value={weaponId ?? ""}
-          onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
-        >
-          {options.map(({ w, o }) => (
-            <option key={w.id} value={w.id}>
-              {w.name}
-              {o?.cost ? ` (${o.cost})` : ""}
-              {o && !o.ok ? `: ${o.why}` : ""}
-            </option>
-          ))}
-        </select>
+        {armed && (
+          <select
+            value={weaponId ?? ""}
+            onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
+          >
+            {options.map(({ w, o }) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+                {o?.cost ? ` (${o.cost})` : ""}
+                {o && !o.ok ? `: ${o.why}` : ""}
+              </option>
+            ))}
+          </select>
+        )}
         <span>at</span>
         <select
           value={draft.targetId ?? ""}

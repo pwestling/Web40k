@@ -11,22 +11,28 @@ import { useStore } from "../store";
  */
 export const useHold = create<{ held: number | null }>(() => ({ held: null }));
 
-// Set in the same update as the new event, before anything renders it, so the result never flashes up early.
-useStore.subscribe((s, prev) => {
-  if (s.record === prev.record || s.scrub !== null || prev.scrub !== null) return;
-  if (typeof document === "undefined" || document.hidden || useHold.getState().held !== null) return;
-  if (s.record.initial !== prev.record.initial) return;
-  const from = prev.record.events.at(-1)?.seq ?? prev.record.initial.seq;
-  const fresh = s.record.events.filter((e) => e.seq > from);
-  if (!fresh.length || fresh.length > 8) return;
-  const last = fresh.at(-1)!.seq;
-  if (
-    rollsIn(
-      prev.game,
-      s.game,
-      fresh.map((e) => e.event),
-      last,
-    ).length
-  )
-    useHold.setState({ held: fresh[0]!.seq });
-});
+/**
+ * Hold new events that roll dice, set in the same update as the event, before
+ * anything renders it, so the result never flashes up early. The tray starts
+ * this when it mounts; returns the unsubscribe.
+ */
+export function watchForRolls(): () => void {
+  return useStore.subscribe((s, prev) => {
+    if (s.record === prev.record || s.scrub !== null || prev.scrub !== null) return;
+    if (typeof document === "undefined" || document.hidden || useHold.getState().held !== null) return;
+    if (s.record.initial !== prev.record.initial) return;
+    const from = prev.record.events.at(-1)?.seq ?? prev.record.initial.seq;
+    const fresh = s.record.events.filter((e) => e.seq > from);
+    if (!fresh.length || fresh.length > 8) return;
+    const last = fresh.at(-1)!.seq;
+    if (
+      rollsIn(
+        prev.game,
+        s.game,
+        fresh.map((e) => e.event),
+        last,
+      ).length
+    )
+      useHold.setState({ held: fresh[0]!.seq });
+  });
+}

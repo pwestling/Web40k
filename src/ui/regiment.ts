@@ -88,6 +88,8 @@ export interface BlockSummary extends MoveBudget {
   strength: number;
   /** Rank bonus in close order (none when disrupted, in open order or in column). */
   rankBonus: number;
+  /** The system has rank bonuses, unit strength and formation orders (The Old World; not Conquest). */
+  rankBonuses: boolean;
   disrupted: boolean;
   turnCost: number;
   reformCost: number;
@@ -117,6 +119,7 @@ export function blockSummary(game: GameState, unit: Unit): BlockSummary | null {
     rankWidth: ranks.width,
     strength: unitStrength(game, unit),
     rankBonus,
+    rankBonuses: ranks.maxBonus > 0,
     disrupted,
     turnCost: constant(game, "turnCost", 0.25),
     reformCost: constant(game, "reformCost", 1),

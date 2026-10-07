@@ -146,7 +146,12 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     <div className="regiment">
       <h3>{lone ? "Single model" : "Regiment"}</h3>
       {lone ? (
-        <p className="muted">Unit strength {summary.strength}</p>
+        summary.rankBonuses && <p className="muted">Unit strength {summary.strength}</p>
+      ) : !summary.rankBonuses ? (
+        <p className="muted small">
+          {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"}. Casualties come off the
+          rear rank.
+        </p>
       ) : (
         <>
           <p className="muted">
@@ -162,7 +167,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         </>
       )}
       <div className="row">
-        {!lone && (
+        {!lone && summary.rankBonuses && (
           <select
             aria-label="Formation"
             value={order}
@@ -176,7 +181,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             ))}
           </select>
         )}
-        {!lone && (
+        {!lone && summary.rankBonuses && (
           <button
             className={summary.disrupted ? "on" : ""}
             disabled={!mine}

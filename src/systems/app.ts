@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import type { GameState, Layout, Table, Unit } from "../core";
 import type { ImportedRoster } from "./wh40k/roster";
 
@@ -31,6 +32,8 @@ export interface SystemModule {
   fleeDice?: string;
   /** The charge roll: these dice, keeping the highest or adding them, plus the unit's Movement. */
   chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
+  /** A panel of the system's own, shown during play (Conquest's command stack). */
+  panel?: ComponentType;
 }
 
 export interface TemplateKind {

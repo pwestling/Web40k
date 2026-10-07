@@ -103,7 +103,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
 
   return (
     <div className="charge">
-      <h4>Charge, flee, pursue</h4>
+      <h4>{mod.fleeDice ? "Charge, flee, pursue" : "Charge"}</h4>
       <div className="row">
         <select aria-label="Enemy unit" value={enemy.id} onChange={(e) => setPick(e.target.value)}>
           {near.map((e) => (
@@ -155,47 +155,51 @@ export function ChargePanel({ unit }: { unit: Unit }) {
         </div>
       )}
       {charged > 0 && <p className="muted small">Charged {fmt(charged)} this phase.</p>}
-      <div className="row">
-        <input
-          type="number"
-          aria-label="Inches to flee or pursue"
-          className="frontage"
-          min={0}
-          step={1}
-          value={inches}
-          onChange={(e) => setTyped(Number(e.target.value) || 0)}
-        />
-        <button onClick={() => roll("flee roll")}>Roll to flee</button>
-        <button
-          disabled={!inches}
-          title={`Turn and run directly away from ${enemy.name}`}
-          onClick={() => runAway(awayFrom(game, unit, unitCentre(game, enemy)))}
-        >
-          Flee
-        </button>
-        <button
-          disabled={!inches}
-          title="A fleeing unit runs towards the nearest table edge"
-          onClick={() => runAway(towardsNearestEdge(game, unit))}
-        >
-          Flee to edge
-        </button>
-      </div>
-      <div className="row">
-        <button onClick={() => roll("pursuit roll")}>Roll to pursue</button>
-        <button disabled={!chase} onClick={() => chase && dispatch(chase.move, as)}>
-          Pursue {enemy.name}
-        </button>
-        {chase && (
-          <span className={chase.caught ? "warn" : "muted small"}>
-            {chase.caught
-              ? `catches it after ${fmt(chase.moved)}`
-              : Number.isFinite(chase.gap)
-                ? `falls ${fmt(chase.gap)} short`
-                : "won't reach it"}
-          </span>
-        )}
-      </div>
+      {mod.fleeDice && (
+        <>
+          <div className="row">
+            <input
+              type="number"
+              aria-label="Inches to flee or pursue"
+              className="frontage"
+              min={0}
+              step={1}
+              value={inches}
+              onChange={(e) => setTyped(Number(e.target.value) || 0)}
+            />
+            <button onClick={() => roll("flee roll")}>Roll to flee</button>
+            <button
+              disabled={!inches}
+              title={`Turn and run directly away from ${enemy.name}`}
+              onClick={() => runAway(awayFrom(game, unit, unitCentre(game, enemy)))}
+            >
+              Flee
+            </button>
+            <button
+              disabled={!inches}
+              title="A fleeing unit runs towards the nearest table edge"
+              onClick={() => runAway(towardsNearestEdge(game, unit))}
+            >
+              Flee to edge
+            </button>
+          </div>
+          <div className="row">
+            <button onClick={() => roll("pursuit roll")}>Roll to pursue</button>
+            <button disabled={!chase} onClick={() => chase && dispatch(chase.move, as)}>
+              Pursue {enemy.name}
+            </button>
+            {chase && (
+              <span className={chase.caught ? "warn" : "muted small"}>
+                {chase.caught
+                  ? `catches it after ${fmt(chase.moved)}`
+                  : Number.isFinite(chase.gap)
+                    ? `falls ${fmt(chase.gap)} short`
+                    : "won't reach it"}
+              </span>
+            )}
+          </div>
+        </>
+      )}
       {fleeing && (
         <div className="row">
           <span className="warn">Fleeing</span>

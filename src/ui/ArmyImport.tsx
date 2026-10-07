@@ -61,7 +61,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   // Rank-and-flank systems deploy units as blocks; the player picks each frontage.
   const ranked = systemOf(game).unitShape.kind === "ranked";
   const [files, setFiles] = useState<Record<number, number>>({});
-  const frontage = (i: number, models: number) => files[i] ?? Math.min(models, models >= 10 ? 5 : models);
+  const frontage = (i: number, models: number) =>
+    files[i] ?? roster?.units[i]?.files ?? Math.min(models, models >= 10 ? 5 : models);
   // Skirmishers deploy as a loose spread, not a block; the player can change it per unit.
   const [loose, setLoose] = useState<Record<number, boolean>>({});
   const skirmish = (i: number, u: ImportedRoster["units"][number]) => loose[i] ?? isSkirmisher(u);
