@@ -542,16 +542,20 @@ function scriptLines(
       const unitId = game.models[e.id]?.unitId;
       let lost = 0;
       let hurt = 0;
+      let back = 0;
       for (; i < event.events.length; i++) {
         const x = event.events[i]!;
         if (x.type !== "model/wounds" || game.models[x.id]?.unitId !== unitId) break;
         if (x.destroyed) lost++;
+        // A rule that brings a fallen model back (a package's, say).
+        else if (before.models[x.id]?.destroyed) back++;
         else hurt++;
       }
       i--;
       const bits = [
         lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
         hurt ? `${hurt} wounded` : "",
+        back ? `${back} back in the fight` : "",
       ];
       lines.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
       continue;
