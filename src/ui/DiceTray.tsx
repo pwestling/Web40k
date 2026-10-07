@@ -1,5 +1,13 @@
 import { useEffect, useRef } from "react";
-import { lastSeq, rareOf, rollsIn, type GameState, type RareOutcome, type TrayRoll } from "../core";
+import {
+  applyEvent,
+  lastSeq,
+  rareOf,
+  rollsIn,
+  type GameState,
+  type RareOutcome,
+  type TrayRoll,
+} from "../core";
 import { useStore } from "../store";
 import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
@@ -28,7 +36,15 @@ export function DiceTray() {
 
   useEffect(() => {
     if (!ref.current) return;
-    stage.current = new Stage(ref.current, () => useHold.setState({ held: null }));
+    stage.current = new Stage(
+      ref.current,
+      () => useHold.setState({ held: null }),
+      // A roll settled: show the table up to the next roll still to come.
+      (next) => {
+        const held = useHold.getState().held;
+        if (held !== null && next > held) useHold.setState({ held: next });
+      },
+    );
     const unwatch = watchForRolls();
     return () => {
       unwatch();
@@ -52,16 +68,28 @@ export function DiceTray() {
     if (p && pos < p.pos) called.current.clear();
     // Only steps forward a few events at a time: live play, or a replay playing. Not jumps or a new game.
     if (!p || p.initial !== record.initial || pos <= p.pos || pos - p.pos > 8) return;
-    const events = record.events.filter((e) => e.seq > p.pos && e.seq <= pos).map((e) => e.event);
-    const rolls = rollsIn(p.state, shown, events, pos);
+    // Event by event, so each roll knows which event made it: the hold lets
+    // the table catch up one stage at a time as the tray settles each roll.
+    const staged: { roll: TrayRoll; seq: number }[] = [];
+    const fresh = record.events.filter((e) => e.seq > p.pos && e.seq <= pos);
+    // An undo shows nothing (and the states in between can't be rebuilt one event at a time).
+    if (fresh.some((e) => e.event.type === "undo")) return;
+    let state = p.state;
+    for (const { seq, event } of fresh) {
+      const next = seq === pos ? shown : applyEvent(state, event);
+      for (const roll of rollsIn(state, next, [event], seq)) staged.push({ roll, seq });
+      state = next;
+    }
+    const rolls = staged.map((r) => r.roll);
     let rare = rareOf(rolls, shown, pos);
     const action = rare && `${rare.chain ?? rare.rollId}@${rare.round}`;
     if (action && called.current.has(action)) rare = null;
     else if (action) called.current.add(action);
-    for (const roll of rolls) {
+    for (const { roll, seq } of staged) {
       const color = (roll.by && shown.players[roll.by]?.color) || (roll.defender ? "#d9584e" : "#7fb0df");
       stage.current?.play(
         roll,
+        seq,
         color,
         stakesOf(roll, p.state, shown),
         rare?.rollId === roll.id ? rare : null,
@@ -104,6 +132,10 @@ const reduced = () =>
 class Stage {
   private queue: Promise<void> = Promise.resolve();
   private waiting = 0;
+  /** The event behind each roll still queued or playing, oldest first. */
+  private seqs: number[] = [];
+  /** The size dice were thrown at, so the lineup matches them. */
+  private dieSize = 0;
   private dice: Die[] = [];
   private chain: string | undefined;
   private skip = false;
@@ -116,6 +148,8 @@ class Stage {
   constructor(
     private root: HTMLDivElement,
     private onIdle: () => void,
+    /** A roll's dice are judged: the table may show everything before `next`, the next roll's event. */
+    private onSettled: (next: number) => void,
   ) {
     root.innerHTML = "";
     this.felt = div("felt");
@@ -134,19 +168,38 @@ class Stage {
     this.root.innerHTML = "";
   }
 
-  play(roll: TrayRoll, color: string, stakes: Stakes | null, rare: RareOutcome | null, live: boolean) {
+  play(
+    roll: TrayRoll,
+    seq: number,
+    color: string,
+    stakes: Stakes | null,
+    rare: RareOutcome | null,
+    live: boolean,
+  ) {
     this.waiting++;
+    this.seqs.push(seq);
     this.queue = this.queue.then(async () => {
       this.waiting--;
       this.active = true;
       // A backlog (a whole attack rolled at once) plays fast.
       const fast = this.waiting > 0 || useSound.getState().fast;
+      let settled = false;
+      const settle = () => {
+        if (settled) return;
+        settled = true;
+        this.seqs.shift();
+        // Up to the next roll's event, or everything once it's the last.
+        const next = this.seqs[0];
+        if (next === undefined) this.onIdle();
+        else if (next > seq) this.onSettled(next);
+      };
       try {
-        await this.roll(roll, color, stakes, fast);
+        await this.roll(roll, color, stakes, fast, settle);
         if (rare) await this.moment(rare, live);
       } catch {
         // A roll that can't be staged is still in the panel and the log.
       }
+      settle();
       this.active = false;
       if (this.waiting === 0) this.onIdle();
     });
@@ -173,7 +226,13 @@ class Stage {
     this.chain = undefined;
   }
 
-  private async roll(roll: TrayRoll, color: string, stakes: Stakes | null, fast: boolean) {
+  private async roll(
+    roll: TrayRoll,
+    color: string,
+    stakes: Stakes | null,
+    fast: boolean,
+    settle: () => void,
+  ) {
     // A background tab paints nothing (and gets no animation frames): just settle the dice.
     this.skip = reduced() || document.hidden;
     this.show();
@@ -188,6 +247,7 @@ class Stage {
 
     if (roll.dice.length > MAX_DICE) {
       this.counts(roll, color);
+      settle();
       this.lingerThenHide();
       return;
     }
@@ -202,6 +262,8 @@ class Stage {
       const of = roll.passOn === "failures" ? "saved" : "pass";
       this.caption.textContent = `${roll.title}: ${keep.length} of ${ds.length} ${of}`;
     }
+    // The table shows this stage's result now, with the banner, not after it.
+    settle();
     if (stakes) {
       await wait(this.skip ? 0 : 120);
       this.banner.innerHTML = "";
@@ -302,18 +364,23 @@ class Stage {
       const W = this.felt.clientWidth;
       const H = this.felt.clientHeight;
       const n = roll.dice.length;
-      const size = this.size(n);
       const cols = Math.ceil(Math.sqrt(n * 1.6));
       const rows = Math.ceil(n / cols);
       const cw = (W * 0.8) / cols;
       const ch = (H * 0.6) / Math.max(rows, 1);
+      // At most half a cell, so neighbours keep at least a die's width between them.
+      const size = Math.max(10, Math.min(this.size(n), cw / 2, ch / 2));
+      this.dieSize = size;
+      // Jitter only within the room that leaves.
+      const jx = Math.max(0, cw / 2 - size);
+      const jy = Math.max(0, ch / 2 - size);
       const spots: [number, number][] = [];
       for (let i = 0; i < n; i++) {
         const c = i % cols;
         const r = Math.floor(i / cols);
         spots.push([
-          W * 0.1 + c * cw + cw / 2 - size / 2 + (Math.random() - 0.5) * cw * 0.35,
-          H * 0.2 + r * ch + ch / 2 - size / 2 + (Math.random() - 0.5) * ch * 0.35,
+          W * 0.1 + c * cw + cw / 2 - size / 2 + (Math.random() - 0.5) * 2 * jx,
+          H * 0.2 + r * ch + ch / 2 - size / 2 + (Math.random() - 0.5) * 2 * jy,
         ]);
       }
       spots.sort(() => Math.random() - 0.5);
@@ -396,7 +463,7 @@ class Stage {
   private async sift(ds: Die[], fast: boolean): Promise<Die[]> {
     const W = this.felt.clientWidth;
     const H = this.felt.clientHeight;
-    const size = this.size(ds.length);
+    const size = this.dieSize || this.size(ds.length);
     const keep = ds.filter((d) => d.ok).sort((a, b) => b.v - a.v);
     const fails = ds.filter((d) => !d.ok);
     fails.forEach((d) => d.el.classList.add("fail"));

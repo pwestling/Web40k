@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
-import { Color, type Group } from "three";
+import { Color, type Group, type Mesh, type MeshStandardMaterial } from "three";
 import {
   applyEvent,
   baseSizeInches,
@@ -14,18 +14,21 @@ import {
 } from "../core";
 
 /**
- * PX-3d: slain models tip over where they stood, lie still a moment, then
- * slide to their owner's casualty pile just off the table, where they lie
- * in rows with a count over them. The pile is read from the game state, so
- * an undo puts a model back on the table.
+ * PX-3d: slain models tip over where they stood, lie still a moment and fade
+ * out there, then fade in on their owner's casualty pile: rows just off the
+ * owner's long table edge, under the player's name and a count. The pile is
+ * read from the game state, so an undo puts a model back on the table.
  */
 
 export const FALL_MS = 350;
 export const REST_MS = 600;
-export const SLIDE_MS = 400;
-export const TOPPLE_MS = FALL_MS + REST_MS + SLIDE_MS;
-const PER_ROW = 10;
+export const FADE_MS = 300;
+export const TOPPLE_MS = FALL_MS + REST_MS + FADE_MS;
+const PER_ROW = 20;
 const MAX_SHOWN = 60;
+/** Along the edge between figures, and outwards between rows. */
+const COL_STEP = 1.6;
+const ROW_STEP = 2.6;
 
 const reduced = () =>
   typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,18 +46,20 @@ function fallen(game: GameState, owner: string): Model[] {
   return Object.values(game.models).filter((m) => m.destroyed && m.owner === owner);
 }
 
-/** Where slot `i` of a player's pile is: rows off the table's right end, on their half. */
+/**
+ * Where slot `i` of a player's pile is: in rows just beyond their own long
+ * table edge, from its right-hand end (reserves wait from the left), the
+ * first row nearest the table.
+ */
 export function pileSlot(game: GameState, owner: string, i: number): Vec2 {
   const side = sideOf(game, owner);
-  const row = Math.floor(Math.min(i, MAX_SHOWN - 1) / PER_ROW);
-  const col = i % PER_ROW;
-  return { x: game.table.width / 2 + 2.5 + row * 2, y: side * (2.5 + col * 1.6) };
-}
-
-/** A model's slot in its owner's pile. */
-export function slotOf(game: GameState, model: Model): Vec2 {
-  const i = fallen(game, model.owner).findIndex((m) => m.id === model.id);
-  return pileSlot(game, model.owner, Math.max(0, i));
+  const k = Math.min(i, MAX_SHOWN - 1);
+  const row = Math.floor(k / PER_ROW);
+  const col = k % PER_ROW;
+  return {
+    x: side * (game.table.width / 2 - 1.5 - col * COL_STEP),
+    y: side * (game.table.depth / 2 + 1 + row * ROW_STEP),
+  };
 }
 
 /**
@@ -128,6 +133,7 @@ export function CasualtyPiles({
           record={record}
           upto={upto}
           owner={p.id}
+          name={p.name}
           color={p.color}
           arriving={arriving}
         />
@@ -141,6 +147,7 @@ function Pile({
   record,
   upto,
   owner,
+  name,
   color,
   arriving,
 }: {
@@ -148,6 +155,7 @@ function Pile({
   record: GameRecord;
   upto: number;
   owner: string;
+  name: string;
   color: string;
   arriving: ReadonlySet<string>;
 }) {
@@ -183,24 +191,27 @@ function Pile({
   }, [open, record, upto, dead, game.units]);
   if (!dead.length) return null;
   const side = sideOf(game, owner);
-  const label = pileSlot(game, owner, 0);
+  // Over the middle of the first row, at its outer side.
+  const first = pileSlot(game, owner, 0);
+  const last = pileSlot(game, owner, Math.min(dead.length, PER_ROW) - 1);
+  const rows = Math.ceil(Math.min(dead.length, MAX_SHOWN) / PER_ROW);
   return (
     <group>
       {dead
         .slice(0, MAX_SHOWN)
         .map((m, i) =>
           arriving.has(m.id) ? null : (
-            <Lying key={m.id} model={m} at={pileSlot(game, owner, i)} color={tint} />
+            <Lying key={m.id} model={m} at={pileSlot(game, owner, i)} side={side} color={tint} />
           ),
         )}
       <Html
-        position={[label.x + 1, 1.2, side * 0.8]}
+        position={[(first.x + last.x) / 2, 1.2, first.y + side * (rows * ROW_STEP)]}
         center
         zIndexRange={[9, 0]}
         className="ruler casualty-pile"
       >
         <button className="link" onClick={() => setOpen(!open)} title="Units lost">
-          {dead.length} model{dead.length === 1 ? "" : "s"}
+          <strong style={{ color }}>{name}</strong> · {dead.length} model{dead.length === 1 ? "" : "s"}
           {summary.pts ? ` · ${summary.pts} pts` : ""}
           {dead.length > MAX_SHOWN ? ` (+${dead.length - MAX_SHOWN} not shown)` : ""}
         </button>
@@ -224,34 +235,51 @@ function Pile({
   );
 }
 
-/** A model lying on its side in the pile, head away from the table (as a toppled model lands). */
-function Lying({ model, at, color }: { model: Model; at: Vec2; color: string }) {
+/** A model lying on its side in the pile, head away from the table; it fades in as it arrives. */
+function Lying({ model, at, side, color }: { model: Model; at: Vec2; side: number; color: string }) {
   const r = Math.min(baseSizeInches(model.base).width, baseSizeInches(model.base).depth) / 2;
+  const ref = useRef<Group>(null);
+  const [born] = useState(() => performance.now());
+  const done = useRef(false);
+  useFrame(() => {
+    if (done.current || !ref.current) return;
+    const k = reduced() ? 1 : Math.min(1, (performance.now() - born) / FADE_MS);
+    fade(ref.current, k);
+    if (k >= 1) done.current = true;
+  });
   return (
-    <group position={[at.x, r, at.y]} rotation-z={-Math.PI / 2}>
+    <group ref={ref} position={[at.x, r, at.y]} rotation-x={(side * Math.PI) / 2}>
       <Figure model={model} color={color} />
     </group>
   );
 }
 
+/** Sets every material under `g` to opacity `k`, transparent only while fading. */
+function fade(g: Group, k: number) {
+  g.traverse((o) => {
+    const mat = (o as Mesh).material as MeshStandardMaterial | undefined;
+    if (!mat || Array.isArray(mat)) return;
+    mat.transparent = k < 1;
+    mat.opacity = k;
+    mat.depthWrite = k >= 1;
+  });
+}
+
 /**
  * One slain model: it tips over about its base edge (away from `from`), with a
- * small bounce, lies still, then slides to its pile slot. With reduced
- * motion it just fades and appears in the pile.
+ * small bounce, lies still, then fades out where it lies (and fades in on the
+ * pile). With reduced motion it just appears in the pile.
  */
 export function Topple({
   model,
   color,
   from,
-  to,
   start,
 }: {
   model: Model;
   color: string;
   /** Where the blow came from; it falls away from here. */
   from: Vec2 | null;
-  /** Its slot in the pile. */
-  to: Vec2;
   start: number;
 }) {
   const outer = useRef<Group>(null);
@@ -281,13 +309,8 @@ export function Topple({
       const k = (t - FALL_MS) / 150;
       p.rotation.x = Math.PI / 2 - 0.15 * Math.sin(k * Math.PI);
     } else p.rotation.x = Math.PI / 2;
-    if (t > FALL_MS + REST_MS) {
-      // Slide off to the pile, turning to lie as the pile lies.
-      const k = Math.min(1, (t - FALL_MS - REST_MS) / SLIDE_MS);
-      const e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
-      g.position.set(edge.x + (to.x - edge.x) * e, z * (1 - e), edge.y + (to.y - edge.y) * e);
-      g.rotation.y = dir + (Math.PI / 2 - dir) * e;
-    }
+    // Gone from where it fell; it fades in on the pile instead of crossing the table.
+    if (t > FALL_MS + REST_MS) fade(g, 1 - Math.min(1, (t - FALL_MS - REST_MS) / FADE_MS));
   });
   return (
     <group ref={outer} position={[edge.x, z, edge.y]} rotation-y={dir}>

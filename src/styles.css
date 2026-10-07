@@ -1801,6 +1801,14 @@ button.rare-star:hover {
   pointer-events: none;
   animation: charge-stamp 2.6s ease-out both;
 }
+/* Moved further than the roll: noted, not cheered (UX 128). */
+.charge-stamp.over {
+  border-color: #d97706;
+  color: #fde68a;
+  background: rgb(120 53 15 / 85%);
+  font-weight: 600;
+  text-transform: none;
+}
 .charge-stamp.short {
   border-color: #71717a;
   color: #e4e4e7;

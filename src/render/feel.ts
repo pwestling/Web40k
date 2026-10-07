@@ -20,7 +20,7 @@ export interface Pose {
   dy?: number;
 }
 
-const LIFT = 0.4;
+const LIFT = 0.7;
 const LIFT_MS = 120;
 const DROP_MS = 90;
 const SQUASH_MS = 120;

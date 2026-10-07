@@ -17,7 +17,7 @@ import {
 import { useHold } from "../ui/hold";
 import { jolt, pickUp, setDown } from "./feel";
 import { markCharge } from "./charges";
-import { CasualtyPiles, slotOf, Topple, TOPPLE_MS } from "./Casualties";
+import { CasualtyPiles, Topple, TOPPLE_MS } from "./Casualties";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
@@ -251,7 +251,7 @@ function FadingLine({
 type Effect =
   | { kind: "tracer"; key: string; start: number; points: number[] }
   | { kind: "burst"; key: string; start: number; at: [number, number, number]; text: string }
-  | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; to: Vec2; color: string }
+  | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; color: string }
   /** "Charged 7.2"" over a charge that struck home, or a grey "Short by 2"" (PX-3c). */
   | {
       kind: "stamp";
@@ -261,7 +261,7 @@ type Effect =
       delay: number;
       at: [number, number, number];
       text: string;
-      fail: boolean;
+      tone: "hit" | "short" | "over";
     };
 
 const centre = (models: Model[]): { x: number; y: number; z: number } => {
@@ -332,8 +332,11 @@ export function WatchEffects() {
     const prev = last.current;
     if (prev === input.current) return;
     last.current = input.current;
-    if (shownSeq <= prev.seq || shownSeq - prev.seq > 6) {
-      // A jump: what was showing belongs to another moment.
+    // A jump: scrubbing, a replay opening, or catching up on rejoin. A live
+    // attack released by the dice tray can be a dozen events, which still play.
+    const far = useStore.getState().scrub !== null ? 6 : 40;
+    if (shownSeq <= prev.seq || shownSeq - prev.seq > far) {
+      // What was showing belongs to another moment.
       if (shownSeq !== prev.seq) setEffects((old) => (old.length ? [] : old));
       return;
     }
@@ -356,7 +359,6 @@ export function WatchEffects() {
         start: now + i * 40,
         model: prev.game.models[m.id]!,
         from: blow,
-        to: slotOf(game, m),
         color: game.players[m.owner]?.color ?? "#999",
       });
     });
@@ -380,8 +382,13 @@ export function WatchEffects() {
         start: now,
         delay: contact,
         at: [c.at.x, c.at.z + 1.6, c.at.y],
-        text: c.target ? `Charged ${c.distance.toFixed(1)}"` : `Short by ${c.gap.toFixed(1)}"`,
-        fail: !c.target,
+        text:
+          c.over !== null
+            ? `${c.distance.toFixed(1)}" of ${c.over}"`
+            : c.target
+              ? `Charged ${c.distance.toFixed(1)}"`
+              : `Short by ${c.gap.toFixed(1)}"`,
+        tone: c.over !== null ? "over" : c.target ? "hit" : "short",
       });
     }
     if (fresh.length)
@@ -478,7 +485,7 @@ export function WatchEffects() {
             position={e.at}
             center
             zIndexRange={[9, 0]}
-            className={e.fail ? "charge-stamp short" : "charge-stamp"}
+            className={e.tone === "hit" ? "charge-stamp" : `charge-stamp ${e.tone}`}
             style={{ animationDelay: `${e.delay}ms` }}
           >
             {e.text}
@@ -488,7 +495,7 @@ export function WatchEffects() {
             {e.text}
           </Html>
         ) : (
-          <Topple key={e.key} model={e.model} color={e.color} from={e.from} to={e.to} start={e.start} />
+          <Topple key={e.key} model={e.model} color={e.color} from={e.from} start={e.start} />
         ),
       )}
       <CasualtyPiles game={game} record={record} upto={shownSeq} arriving={arriving} />
@@ -644,6 +651,8 @@ export function chargeFor(
   at: { x: number; y: number; z: number };
   distance: number;
   gap: number;
+  /** The charge roll, when the move went further than it (advisory: it stands, but isn't cheered). */
+  over: number | null;
   target: { ids: string[]; dir: { x: number; y: number } } | null;
 } | null {
   let unitId: string | undefined;
@@ -664,6 +673,8 @@ export function chargeFor(
     }
   }
   if (!unitId) return null;
+  const roll = before.units[unitId]?.status?.charge;
+  const over = typeof roll === "number" && distance > roll + 0.05 ? roll : null;
   const mine = alive(after, unitId);
   if (!mine.length) return null;
   const owner = mine[0]!.owner;
@@ -683,7 +694,8 @@ export function chargeFor(
   }
   const at = centre(mine);
   if (!hit || !Number.isFinite(gap)) return null;
-  if (gap > 1.05) return { unitId, at, distance, gap: Math.max(0, gap - 1), target: null };
+  if (gap > 1.05) return { unitId, at, distance, gap: Math.max(0, gap - 1), over, target: null };
+  if (over !== null) return { unitId, at, distance, gap: 0, over, target: null };
   const struck = hit.unitId ? alive(after, hit.unitId) : [hit];
   const c = centre(struck);
   const len = Math.hypot(c.x - at.x, c.y - at.y) || 1;
@@ -692,6 +704,7 @@ export function chargeFor(
     at,
     distance,
     gap: 0,
+    over,
     target: { ids: struck.map((m) => m.id), dir: { x: (c.x - at.x) / len, y: (c.y - at.y) / len } },
   };
 }
