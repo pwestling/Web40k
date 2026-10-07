@@ -62,6 +62,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const ranked = systemOf(game).unitShape.kind === "ranked";
   const [files, setFiles] = useState<Record<number, number>>({});
   const frontage = (i: number, models: number) => files[i] ?? Math.min(models, models >= 10 ? 5 : models);
+  // Skirmishers deploy as a loose spread, not a block; the player can change it per unit.
+  const [loose, setLoose] = useState<Record<number, boolean>>({});
+  const skirmish = (i: number, u: ImportedRoster["units"][number]) => loose[i] ?? isSkirmisher(u);
 
   const load = async (file: File) => {
     setBusy(true);
@@ -77,11 +80,14 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     if (!roster) return;
     const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
     const units = ranked
-      ? roster.units.map((u, i) => ({ ...u, files: frontage(i, u.models.length) }))
+      ? roster.units.map((u, i) =>
+          skirmish(i, u) ? { ...u, files: undefined } : { ...u, files: frontage(i, u.models.length) },
+        )
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
     setRoster(null);
     setFiles({});
+    setLoose({});
   };
 
   /** Fill a characteristic the list left out, for every model of the unit that lacks it. */
@@ -133,7 +139,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         <div className="modal-backdrop">
           <div className="panel modal">
             <h2>
-              {roster.name} {roster.points ? <span className="muted">({roster.points} pts)</span> : null}
+              {roster.name} <span className="muted">{pointsLine(roster)}</span>
             </h2>
             {roster.warnings.map((w) => (
               <p key={w} className="warn">
@@ -144,6 +150,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               <thead>
                 <tr>
                   <th>Unit</th>
+                  <th>Pts</th>
+                  {ranked && <th>Troop type</th>}
                   <th>Models</th>
                   <th>Base</th>
                   {ranked && <th title="Models in the front rank">Frontage</th>}
@@ -153,7 +161,12 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 {roster.units.map((u, i) => (
                   <Fragment key={i}>
                     <tr>
-                      <td>{u.name}</td>
+                      <td>
+                        {u.name}
+                        {details(u) && <div className="muted small">{details(u)}</div>}
+                      </td>
+                      <td>{u.sheet.points ?? "–"}</td>
+                      {ranked && <td className="small">{u.models[0]?.profile.chars.Troop ?? "–"}</td>}
                       <td>{u.models.length}</td>
                       <td>
                         <select
@@ -165,7 +178,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                           }}
                         >
                           {!BASES.some((b) => baseKey(b.base) === baseKey(u.base)) && (
-                            <option value={baseKey(u.base)}>{JSON.stringify(u.base)}</option>
+                            <option value={baseKey(u.base)}>{baseLabel(u.base)}</option>
                           )}
                           {BASES.map((b) => (
                             <option key={b.label} value={baseKey(b.base)}>
@@ -176,26 +189,41 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                       </td>
                       {ranked && (
                         <td>
-                          <input
-                            type="number"
-                            className="frontage"
-                            aria-label={`${u.name} frontage`}
-                            min={1}
-                            max={u.models.length}
-                            value={frontage(i, u.models.length)}
-                            onChange={(e) =>
-                              setFiles({
-                                ...files,
-                                [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
-                              })
-                            }
-                          />
+                          {u.models.length === 1 ? (
+                            <span className="muted small">single</span>
+                          ) : (
+                            <>
+                              <input
+                                type="number"
+                                className="frontage"
+                                aria-label={`${u.name} frontage`}
+                                min={1}
+                                max={u.models.length}
+                                disabled={skirmish(i, u)}
+                                value={frontage(i, u.models.length)}
+                                onChange={(e) =>
+                                  setFiles({
+                                    ...files,
+                                    [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
+                                  })
+                                }
+                              />
+                              <label className="small" title="Deploy as a loose spread instead of a block">
+                                <input
+                                  type="checkbox"
+                                  checked={skirmish(i, u)}
+                                  onChange={(e) => setLoose({ ...loose, [i]: e.target.checked })}
+                                />{" "}
+                                Skirmish
+                              </label>
+                            </>
+                          )}
                         </td>
                       )}
                     </tr>
                     {u.missing && u.missing.length > 0 && (
                       <tr className="missing-stats">
-                        <td colSpan={ranked ? 4 : 3}>
+                        <td colSpan={ranked ? 6 : 4}>
                           <span className="warn small">Not in the list, fill in: </span>
                           {u.missing.map((k) => (
                             <label key={k} className="stat-input">
@@ -233,4 +261,40 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       )}
     </div>
   );
+}
+
+type ImportedUnit = ImportedRoster["units"][number];
+
+/**
+ * Light infantry with the Skirmishers rule (or a unit named as skirmishers)
+ * deploys loose. The rule only lets other units choose it, so they start in
+ * a block.
+ */
+function isSkirmisher(u: ImportedUnit): boolean {
+  const rule = u.sheet.abilities.some((a) => /^skirmish/i.test(a.name));
+  return /skirmish/i.test(u.name) || (rule && /light/i.test(u.models[0]?.profile.chars.Troop ?? ""));
+}
+
+/** The command models and mount under a unit's name, so the player can check the import. */
+function details(u: ImportedUnit): string {
+  const counts = new Map<string, number>();
+  for (const m of u.models) counts.set(m.profile.name, (counts.get(m.profile.name) ?? 0) + 1);
+  const command = u.models.length > 1 ? [...counts].filter(([, n]) => n === 1).map(([name]) => name) : [];
+  const mount = u.models[0]?.profile.chars.Mount;
+  return [...command, ...(mount ? [`on ${mount}`] : [])].join(", ");
+}
+
+/** One points figure: the roster's cost, with the units' sum beside it when they differ. */
+function pointsLine(roster: ImportedRoster): string {
+  const units = roster.units.reduce((a, u) => a + (u.sheet.points ?? 0), 0);
+  if (!roster.points) return units ? `(${units} pts)` : "";
+  return units && units !== roster.points
+    ? `(${roster.points} pts; units ${units})`
+    : `(${roster.points} pts)`;
+}
+
+/** A base the list of common sizes doesn't have, in words. */
+function baseLabel(b: BaseShape): string {
+  if (b.shape === "round") return `${b.diameterMm}mm round`;
+  return `${b.widthMm}×${b.depthMm}mm${b.shape === "oval" ? " oval" : ""}`;
 }

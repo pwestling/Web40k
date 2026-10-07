@@ -51,6 +51,8 @@ export interface WeaponProfile {
 export interface Ability {
   name: string;
   text: string;
+  /** Heading the unit card lists it under, e.g. "Mount and crew", "Magic items", "Special rules". */
+  group?: string;
 }
 
 /**

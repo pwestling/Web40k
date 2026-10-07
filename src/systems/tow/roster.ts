@@ -26,6 +26,11 @@ export function importTowRoster(fileName: string, data: Uint8Array): Promise<Imp
   return parseRosterFile(fileName, data, extractTowUnits);
 }
 
+/** Ability groups on the unit card. */
+export const MOUNT_GROUP = "Mount and crew";
+export const ITEM_GROUP = "Magic items and options";
+export const RULE_GROUP = "Special rules";
+
 export const TOW_STATS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"] as const;
 
 const STAT_KEYS: Record<string, string> = {
@@ -271,9 +276,15 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   const mountName = mountNodes[0]?.name ?? [...mounts.keys()][0];
   if (mountName) {
     const move = [...mounts.values()].map((p) => statsOf(p).M).find((v) => v && /\d/.test(v));
+    // A chariot or monster written as "W (+4)" adds its Wounds to the rider's and lends its Toughness.
+    const bigMount = [...mounts.values()].map(statsOf).find((st) => /^\(\+\d+\)$/.test(st.W ?? ""));
     for (const m of models) {
       if (move) m.profile.chars.M = move;
       m.profile.chars.Mount = mountName;
+      if (!bigMount) continue;
+      const own = Number(m.profile.chars.W);
+      if (Number.isFinite(own)) m.profile.chars.W = String(own + Number(/\d+/.exec(bigMount.W!)![0]));
+      if (/^\d+$/.test(bigMount.T ?? "")) m.profile.chars.T = bigMount.T!;
     }
   }
   for (const n of crewNodes)
@@ -287,6 +298,7 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
       text: Object.entries(statsOf(p))
         .map(([k, v]) => `${k} ${v}`)
         .join(", "),
+      group: MOUNT_GROUP,
     });
 
   // Command models take the front slots, with their own profile when the roster gives one.
@@ -300,6 +312,9 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   });
 
   if (troop) for (const m of models) m.profile.chars.Troop = troop;
+  // Unit Strength is the model's Wounds unless the list says otherwise.
+  for (const m of models)
+    if (!m.profile.chars.US && /^\d+$/.test(m.profile.chars.W ?? "")) m.profile.chars.US = m.profile.chars.W!;
 
   // Weapons go to every model; rules, magic items and options become abilities.
   const weapons: Record<string, WeaponProfile> = {};
@@ -331,9 +346,10 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
               .filter((c) => c.value)
               .map((c) => `${c.name}: ${c.value}`)
               .join("; "),
+        group: n !== sel && n.pts > 0 ? ITEM_GROUP : RULE_GROUP,
       });
     }
-    for (const r of n.rules) addAbility(r);
+    for (const r of n.rules) addAbility({ ...r, group: n !== sel && n.pts > 0 ? ITEM_GROUP : RULE_GROUP });
     // Magic items and options with no rules text of their own still show by name.
     if (
       n !== sel &&
@@ -343,7 +359,7 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
       !n.profiles.length &&
       !n.rules.length
     )
-      addAbility({ name: n.name, text: `${n.pts} pts` });
+      addAbility({ name: n.name, text: `${n.pts} pts`, group: ITEM_GROUP });
     for (const c of n.categories) if (c && !keywords.includes(c)) keywords.push(c);
   });
   for (const m of models) m.weapons = [...carried];

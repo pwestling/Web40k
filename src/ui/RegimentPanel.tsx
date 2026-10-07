@@ -139,41 +139,53 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     } else dispatch({ type: "unit/form", id: unit.id, formation: { ...block, order: id }, how: "order" }, as);
   };
   const wheelCost = frame.width * ((degrees * Math.PI) / 180);
+  // A character, chariot or monster on its own: no ranks, frontage or formation to manage.
+  const lone = unit.modelIds.length === 1;
 
   return (
     <div className="regiment">
-      <h3>Regiment</h3>
-      <p className="muted">
-        {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"} · unit strength{" "}
-        {summary.strength}
-        {order === "close" ? ` · rank bonus +${summary.rankBonus}` : ""}
-        {summary.disrupted ? " (disrupted)" : ""}
-      </p>
-      <p className="muted small">
-        Ranks count from {summary.rankWidth} wide. Front to rear: {alive} models; the rear rank has{" "}
-        {rearCount} of {summary.files}. Casualties come off the rear rank.
-      </p>
+      <h3>{lone ? "Single model" : "Regiment"}</h3>
+      {lone ? (
+        <p className="muted">Unit strength {summary.strength}</p>
+      ) : (
+        <>
+          <p className="muted">
+            {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"} · unit strength{" "}
+            {summary.strength}
+            {order === "close" ? ` · rank bonus +${summary.rankBonus}` : ""}
+            {summary.disrupted ? " (disrupted)" : ""}
+          </p>
+          <p className="muted small">
+            Ranks count from {summary.rankWidth} wide. Front to rear: {alive} models; the rear rank has{" "}
+            {rearCount} of {summary.files}. Casualties come off the rear rank.
+          </p>
+        </>
+      )}
       <div className="row">
-        <select
-          aria-label="Formation"
-          value={order}
-          disabled={!mine}
-          onChange={(e) => setOrder(e.target.value as (typeof ORDERS)[number]["id"])}
-        >
-          {ORDERS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <button
-          className={summary.disrupted ? "on" : ""}
-          disabled={!mine}
-          title="Disrupted units lose their rank bonus"
-          onClick={() => status("disrupted", summary.disrupted ? null : true)}
-        >
-          Disrupted
-        </button>
+        {!lone && (
+          <select
+            aria-label="Formation"
+            value={order}
+            disabled={!mine}
+            onChange={(e) => setOrder(e.target.value as (typeof ORDERS)[number]["id"])}
+          >
+            {ORDERS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        )}
+        {!lone && (
+          <button
+            className={summary.disrupted ? "on" : ""}
+            disabled={!mine}
+            title="Disrupted units lose their rank bonus"
+            onClick={() => status("disrupted", summary.disrupted ? null : true)}
+          >
+            Disrupted
+          </button>
+        )}
         <button
           className={arcs ? "on" : ""}
           onClick={() => set({ arcs: !arcs })}
@@ -252,54 +264,56 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               About face
             </button>
           </div>
-          <div className="row">
-            <label>
-              Frontage{" "}
-              <input
-                type="number"
-                className="frontage"
-                min={1}
-                max={alive}
-                value={frontage}
-                onChange={(e) => setFiles(Number(e.target.value) || 1)}
-              />
-            </label>
-            <label>
-              facing{" "}
-              <select
-                aria-label="Facing after reforming"
-                value={facing}
-                onChange={(e) => setFacing(Number(e.target.value))}
-              >
-                {FACINGS.map((f, i) => (
-                  <option key={f.label} value={i}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {redress && (
+          {!lone && (
+            <div className="row">
+              <label>
+                Frontage{" "}
+                <input
+                  type="number"
+                  className="frontage"
+                  min={1}
+                  max={alive}
+                  value={frontage}
+                  onChange={(e) => setFiles(Number(e.target.value) || 1)}
+                />
+              </label>
+              <label>
+                facing{" "}
+                <select
+                  aria-label="Facing after reforming"
+                  value={facing}
+                  onChange={(e) => setFacing(Number(e.target.value))}
+                >
+                  {FACINGS.map((f, i) => (
+                    <option key={f.label} value={i}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {redress && (
+                <button
+                  title={`Add or remove up to ${summary.redressMax} models from the front rank; costs ${fmt(cost(summary.redressCost))}`}
+                  onClick={() => {
+                    form(frontage, 0, "redress", cost(summary.redressCost));
+                    setFiles(null);
+                  }}
+                >
+                  Redress
+                </button>
+              )}
               <button
-                title={`Add or remove up to ${summary.redressMax} models from the front rank; costs ${fmt(cost(summary.redressCost))}`}
+                title={`Rebuild the block around its centre; costs all its move (${fmt(cost(summary.reformCost))})`}
                 onClick={() => {
-                  form(frontage, 0, "redress", cost(summary.redressCost));
+                  form(frontage, FACINGS[facing]!.turn, "reform", cost(summary.reformCost));
                   setFiles(null);
+                  setFacing(0);
                 }}
               >
-                Redress
+                Reform
               </button>
-            )}
-            <button
-              title={`Rebuild the block around its centre; costs all its move (${fmt(cost(summary.reformCost))})`}
-              onClick={() => {
-                form(frontage, FACINGS[facing]!.turn, "reform", cost(summary.reformCost));
-                setFiles(null);
-                setFacing(0);
-              }}
-            >
-              Reform
-            </button>
-          </div>
+            </div>
+          )}
           {marching && used > 0.05 && (
             <p className="muted small">Marching blocks may only move straight ahead and wheel.</p>
           )}

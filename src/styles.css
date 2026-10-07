@@ -1218,3 +1218,24 @@ p.odds {
   font-size: 13px;
   color: #93c5fd;
 }
+/* Long package names wrap; the fingerprint stays whole on its line (UX 82). */
+.game-packages label.check {
+  flex-wrap: wrap;
+  align-items: baseline;
+  row-gap: 0;
+  line-height: 1.35;
+}
+.game-packages .fp {
+  white-space: nowrap;
+}
+/* The army import dialog has a column per check (points, troop type, base, frontage). */
+.modal:has(.import-units) {
+  width: min(760px, calc(100vw - 32px));
+}
+.import-units select {
+  max-width: 150px;
+}
+.import-units td label.small {
+  display: block;
+  white-space: nowrap;
+}

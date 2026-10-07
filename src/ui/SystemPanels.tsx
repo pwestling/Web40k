@@ -12,11 +12,12 @@ import {
   unitActions,
   unitView,
   type ActionOption,
+  type CharacteristicDef,
   type GameSystem,
   type StepPlan,
   type StepRecord,
 } from "../core/content";
-import { modelHeight, type GameState, type Unit } from "../core";
+import { modelHeight, type Ability, type GameState, type Unit } from "../core";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
@@ -42,6 +43,54 @@ const fmt = (n: number, sys: GameSystem) => {
   const u = unitName(sys);
   return `${Number(n.toFixed(1))}${u === '"' ? u : ` ${u}`}`;
 };
+
+/** The characteristic as the roster wrote it, under the system's id or one of its aliases. */
+function rosterText(c: CharacteristicDef, chars: Record<string, string> | undefined): string | undefined {
+  if (!chars) return undefined;
+  const names = [c.id, ...(c.aliases ?? [])].map((n) => n.toLowerCase());
+  return Object.entries(chars).find(([k]) => names.includes(k.toLowerCase()))?.[1];
+}
+
+/**
+ * A characteristic for the card: "–" for none (not the stand-in number a
+ * missing save or ward reads as), and the roster's own text when it isn't a
+ * number ("S", "S+1", "-").
+ */
+function shown(c: CharacteristicDef, value: unknown, chars: Record<string, string> | undefined): string {
+  const text = rosterText(c, chars)?.trim();
+  if (text !== undefined && !/^[+-]?\d+(\.\d+)?\s*(\+|"|”|''|cm|mm)?$/i.test(text))
+    return !text || /^[-–—]$|^n\/?a$/i.test(text) ? "–" : text;
+  if (value === null || value === undefined) return "–";
+  // A default standing in for a value the roster never gave: none, not a number.
+  if (text === undefined && (c.type === "target" || c.of === "weapon") && value === c.default) return "–";
+  return String(value);
+}
+
+/** Imported abilities, under the headings the importer gave them (or one list). */
+function AbilityList({ abilities }: { abilities: Ability[] }) {
+  if (!abilities.length) return null;
+  const groups = new Map<string, Ability[]>();
+  for (const a of abilities) {
+    const g = a.group ?? "Abilities";
+    groups.set(g, [...(groups.get(g) ?? []), a]);
+  }
+  return (
+    <>
+      {[...groups].map(([group, list]) => (
+        <details key={group} className="abilities">
+          <summary>
+            {group} ({list.length})
+          </summary>
+          {list.map((a) => (
+            <p key={a.name} className="small">
+              <strong>{a.name}.</strong> {a.text}
+            </p>
+          ))}
+        </details>
+      ))}
+    </>
+  );
+}
 
 export function SystemUnitCard({ unit, children }: { unit: Unit; children?: ReactNode }) {
   const game = useGame();
@@ -151,7 +200,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                   className={changed ? "warn" : ""}
                   title={changed ? `${raw[c.id]} on the card` : undefined}
                 >
-                  {v === null || v === undefined ? "–" : String(v)}
+                  {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
                 </td>
               );
             })}
@@ -188,7 +237,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                     {w.keywords.length > 0 && <div className="muted small">{w.keywords.join(", ")}</div>}
                   </td>
                   {weaponChars.map((c) => (
-                    <td key={c.id}>{v[c.id] === null ? "–" : String(v[c.id])}</td>
+                    <td key={c.id}>{shown(c, v[c.id], w.chars)}</td>
                   ))}
                 </tr>
               );
@@ -196,6 +245,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           </tbody>
         </table>
       )}
+      <AbilityList abilities={unit.sheet?.abilities ?? []} />
       {unit.sheet && unit.sheet.keywords.length > 0 && (
         <p className="muted small">{unit.sheet.keywords.join(", ")}</p>
       )}

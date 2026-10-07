@@ -96,6 +96,7 @@ describe("Old World roster import", async () => {
         A: "2",
         Ld: "7",
         Troop: "Regular Infantry",
+        US: "1",
       },
     });
     expect(spears!.models[1]!.profile.name).toBe("Standard bearer");
@@ -120,6 +121,9 @@ describe("Old World roster import", async () => {
     });
     expect(lord!.base).toEqual({ shape: "rect", widthMm: 25, depthMm: 50 });
     expect(lord!.sheet.abilities.map((a) => a.name)).toEqual(["Fen Strider", "Charm of Mud"]);
+    // Grouped for the unit card (UX 76); Unit Strength is Wounds (UX 78).
+    expect(lord!.sheet.abilities.map((a) => a.group)).toEqual(["Mount and crew", "Magic items and options"]);
+    expect(lord!.models[0]!.profile.chars.US).toBe(lord!.models[0]!.profile.chars.W);
     expect(lord!.sheet.weapons["long-bow"]).toMatchObject({
       kind: "ranged",
       chars: { Range: '30"', S: "3" },
@@ -182,6 +186,9 @@ describe("Old World roster import, catalogue shape", async () => {
     });
     expect(priest!.base).toEqual({ shape: "rect", widthMm: 50, depthMm: 100 });
     expect(priest!.sheet.abilities.map((a) => a.name)).toEqual(["Tusk Cart", "Tusker", "Cart Crew"]);
+    // "W (+4)": the chariot adds its Wounds and lends its Toughness; Unit Strength follows.
+    const c = priest!.models[0]!.profile.chars;
+    expect([c.W, c.T, c.US]).toEqual(["6", "5", "6"]);
   });
 
   it("takes command models from Command profiles, not magic standards or a Battle Standard Bearer", () => {
