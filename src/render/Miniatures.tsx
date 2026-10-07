@@ -94,7 +94,7 @@ export function Miniatures({
   );
 }
 
-function toGeometry(mesh: ModelAsset["lods"][number]): BufferGeometry {
+export function toGeometry(mesh: ModelAsset["lods"][number]): BufferGeometry {
   const g = new BufferGeometry();
   g.setAttribute("position", new BufferAttribute(mesh.positions, 3));
   g.setIndex(new BufferAttribute(mesh.indices, 1));

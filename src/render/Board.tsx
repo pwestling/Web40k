@@ -41,6 +41,7 @@ import { Miniatures, useFigureHeights } from "./Miniatures";
 import { ModelInstances, type ModelDraw } from "./ModelInstances";
 import { Trails, useTween, WatchEffects } from "./Watch";
 import { Templates } from "./Templates";
+import { TerrainModel } from "./TerrainModel";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
@@ -1247,8 +1248,19 @@ function Terrain({
       }
     : { raycast: () => null };
   const opacity = xray ? 0.2 : 0.95;
+  // An uploaded model replaces the solids' boxes once its meshes are here; until then the boxes stand in.
+  const model = useAssets((a) => (piece.mesh ? a.assets[piece.mesh.asset] : undefined));
   return (
     <group position={[piece.position.x, 0, piece.position.y]} rotation-y={piece.facing}>
+      {model && (
+        <TerrainModel
+          asset={model}
+          scale={piece.mesh!.scale}
+          xray={xray}
+          selected={selected}
+          handlers={handlers}
+        />
+      )}
       {standIn !== null && standIn > 0 && (
         <mesh position-y={standIn / 2} raycast={() => null}>
           <boxGeometry args={[piece.width, standIn, piece.depth]} />
@@ -1264,38 +1276,39 @@ function Terrain({
           opacity={0.8}
         />
       </mesh>
-      {piece.solids.map((s, i) =>
-        s.kind === "foliage" ? (
-          <group key={i} position={[s.x, s.z, s.y]}>
-            <mesh position-y={0.6} raycast={() => null}>
-              <cylinderGeometry args={[0.15, 0.2, 1.2, 8]} />
-              <meshStandardMaterial color="#5b4630" />
+      {!model &&
+        piece.solids.map((s, i) =>
+          s.kind === "foliage" ? (
+            <group key={i} position={[s.x, s.z, s.y]}>
+              <mesh position-y={0.6} raycast={() => null}>
+                <cylinderGeometry args={[0.15, 0.2, 1.2, 8]} />
+                <meshStandardMaterial color="#5b4630" />
+              </mesh>
+              <mesh position-y={1.2 + (s.h - 1.2) / 2} castShadow raycast={() => null}>
+                <coneGeometry args={[s.w / 2, s.h - 1.2, 10]} />
+                <meshStandardMaterial color="#2f5d2a" transparent opacity={xray ? 0.25 : 1} />
+              </mesh>
+            </group>
+          ) : (
+            <mesh key={i} position={[s.x, s.z + s.h / 2, s.y]} castShadow={!xray} receiveShadow {...handlers}>
+              <boxGeometry args={[s.w, s.h, s.d]} />
+              <meshStandardMaterial
+                color={
+                  s.kind === "floor"
+                    ? "#9a8f80"
+                    : s.kind === "block"
+                      ? piece.name === "Hill"
+                        ? "#5f6e45"
+                        : "#7a5c3c"
+                      : "#8a8178"
+                }
+                transparent
+                opacity={opacity}
+                depthWrite={!xray}
+              />
             </mesh>
-            <mesh position-y={1.2 + (s.h - 1.2) / 2} castShadow raycast={() => null}>
-              <coneGeometry args={[s.w / 2, s.h - 1.2, 10]} />
-              <meshStandardMaterial color="#2f5d2a" transparent opacity={xray ? 0.25 : 1} />
-            </mesh>
-          </group>
-        ) : (
-          <mesh key={i} position={[s.x, s.z + s.h / 2, s.y]} castShadow={!xray} receiveShadow {...handlers}>
-            <boxGeometry args={[s.w, s.h, s.d]} />
-            <meshStandardMaterial
-              color={
-                s.kind === "floor"
-                  ? "#9a8f80"
-                  : s.kind === "block"
-                    ? piece.name === "Hill"
-                      ? "#5f6e45"
-                      : "#7a5c3c"
-                    : "#8a8178"
-              }
-              transparent
-              opacity={opacity}
-              depthWrite={!xray}
-            />
-          </mesh>
-        ),
-      )}
+          ),
+        )}
       {selected && (
         <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler">
           {piece.name} · {piece.category}

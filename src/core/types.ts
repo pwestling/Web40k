@@ -228,6 +228,12 @@ export interface TerrainPiece {
    * When present it blocks sight instead of the solids; floors still come from the solids.
    */
   hull?: number[];
+  /**
+   * An uploaded 3D model drawn in place of the solids: the processed asset's
+   * file hash (shared peer to peer like figures), its name, and the scale it
+   * was sized to (solids, hull and footprint are already scaled by it).
+   */
+  mesh?: { asset: string; name: string; scale: number };
 }
 
 export interface Objective {

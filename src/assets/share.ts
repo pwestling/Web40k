@@ -24,6 +24,7 @@ const STALL_MS = 15000;
 export function useAssetSharing() {
   const session = useStore((s) => s.session);
   const models = useStore((s) => s.game.models);
+  const terrain = useStore((s) => s.game.terrain);
   const assets = useAssets((s) => s.assets);
 
   useEffect(() => {
@@ -37,14 +38,18 @@ export function useAssetSharing() {
 
   useEffect(() => {
     const missing = [
-      ...new Set(Object.values(models).flatMap((m) => (m.figure ? [m.figure.asset] : []))),
+      ...new Set([
+        ...Object.values(models).flatMap((m) => (m.figure ? [m.figure.asset] : [])),
+        // Uploaded terrain models travel the same way.
+        ...terrain.flatMap((t) => (t.mesh ? [t.mesh.asset] : [])),
+      ]),
     ].filter((id) => !assets[id]);
     if (!missing.length) return;
     const fetchAll = () => missing.forEach((id) => void fetchAsset(id));
     fetchAll();
     const timer = setInterval(fetchAll, RETRY_MS);
     return () => clearInterval(timer);
-  }, [models, assets]);
+  }, [models, terrain, assets]);
 }
 
 async function fetchAsset(id: string) {

@@ -10,6 +10,8 @@ import { standardLayout, TEMPLATES, zones, makePiece, type ZonePreset } from "..
 import { systemModule } from "../systems";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
 import { useStore } from "../store";
+import { useAssets } from "../assets/store";
+import type { ModelAsset } from "../assets/types";
 import { useGame } from "./hooks";
 
 /** Rotate a terrain piece by `deg` degrees (Q / E while editing). */
@@ -27,6 +29,32 @@ export function removeTerrain(id: string) {
 }
 
 const newId = () => `t-${crypto.randomUUID().slice(0, 8)}`;
+
+const MESH_FILES = ".glb,.gltf,.stl,.obj,.ply";
+const UPLOAD = "terrain-upload";
+
+/** A piece's shape taken from a processed terrain model, at a scale. */
+function meshShape(
+  asset: ModelAsset,
+  scale: number,
+): Pick<TerrainPiece, "width" | "depth" | "solids" | "hull" | "mesh"> {
+  const { min, max } = asset.bounds;
+  return {
+    width: Math.max(0.5, (max[0] - min[0]) * scale),
+    depth: Math.max(0.5, (max[2] - min[2]) * scale),
+    solids: (asset.solids ?? []).map((b) => ({
+      ...b,
+      x: b.x * scale,
+      y: b.y * scale,
+      z: b.z * scale,
+      w: b.w * scale,
+      d: b.d * scale,
+      h: b.h * scale,
+    })),
+    hull: asset.hull?.map((n) => n * scale),
+    mesh: { asset: asset.id, name: asset.name, scale },
+  };
+}
 
 /**
  * The terrain editor: add pieces, drag them on the table, rotate, change
@@ -53,6 +81,28 @@ export function TerrainPanel() {
   };
   const update = (patch: Partial<TerrainPiece>) =>
     piece && dispatch({ type: "terrain/update", piece: { ...piece, ...patch } });
+  const uploadStatus = useAssets((a) => a.status[UPLOAD]);
+  const meshAsset = useAssets((a) => (piece?.mesh ? a.assets[piece.mesh.asset] : undefined));
+  /** Process a model file; on the selected piece it replaces the shape, otherwise it adds a piece. */
+  const upload = async (file: File, onto?: TerrainPiece) => {
+    const asset = await useAssets.getState().importFile(file, UPLOAD, "terrain");
+    if (!asset) return;
+    if (onto) {
+      dispatch({ type: "terrain/update", piece: { ...onto, ...meshShape(asset, 1) } });
+      return;
+    }
+    const id = newId();
+    const base = makePiece("Ruin", id, { x: 0, y: 0 }, 0, templateCategory?.["Ruin"]);
+    dispatch({
+      type: "terrain/add",
+      piece: { ...base, name: asset.name.replace(/\.[^.]+$/, ""), ...meshShape(asset, 1) },
+    });
+    set({ selectedTerrain: id });
+  };
+  const rescale = (scale: number) => {
+    if (!piece?.mesh || !meshAsset || !(scale > 0)) return;
+    update(meshShape(meshAsset, scale));
+  };
   const layout = (): Layout => ({ terrain: game.terrain, objectives: game.objectives, zones: game.zones });
   const save = () => {
     const blob = new Blob([JSON.stringify({ format: "open-battle/layout@1", ...layout() })], {
@@ -101,7 +151,19 @@ export function TerrainPanel() {
             + {t.name}
           </button>
         ))}
+        <label className="file button small" title="A .glb, .gltf, .stl, .obj or .ply terrain model">
+          + From 3D model
+          <input
+            type="file"
+            accept={MESH_FILES}
+            onChange={(e) => {
+              if (e.target.files?.[0]) void upload(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
       </div>
+      {uploadStatus && <p className="muted small">{uploadStatus}</p>}
 
       {piece ? (
         <div className="selected-terrain">
@@ -171,6 +233,39 @@ export function TerrainPanel() {
               "
             </label>
           )}
+          <div className="row wrap">
+            <label className="file button small" title="Replace this piece's shape with a terrain model">
+              {piece.mesh ? "Change 3D model" : "Use 3D model"}
+              <input
+                type="file"
+                accept={MESH_FILES}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) void upload(e.target.files[0], piece);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {piece.mesh && (
+              <label title="Scale the model; its footprint and line-of-sight shape follow">
+                Scale{" "}
+                <input
+                  type="number"
+                  className="frontage"
+                  min={0.1}
+                  step={0.1}
+                  disabled={!meshAsset}
+                  value={piece.mesh.scale}
+                  onChange={(e) => rescale(Number(e.target.value))}
+                />
+                ×
+              </label>
+            )}
+            {piece.mesh && (
+              <span className="muted small">
+                {Number(piece.width.toFixed(1))}" × {Number(piece.depth.toFixed(1))}"
+              </span>
+            )}
+          </div>
           <div className="row">
             <button
               className="small"
