@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { LineBasicMaterial, MeshBasicMaterial } from "three";
 import { Vector3 } from "three";
 import {
-  baseSizeInches,
   modelHeight,
   type AttackState,
   type GameEvent,
@@ -14,6 +13,8 @@ import {
 } from "../core";
 import { useHold } from "../ui/hold";
 import { pickUp, setDown } from "./feel";
+import { CasualtyPiles, slotOf, Topple, TOPPLE_MS } from "./Casualties";
+import { topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
 
@@ -242,7 +243,7 @@ function FadingLine({
 type Effect =
   | { kind: "tracer"; key: string; start: number; points: number[] }
   | { kind: "burst"; key: string; start: number; at: [number, number, number]; text: string }
-  | { kind: "ghost"; key: string; start: number; model: Model };
+  | { kind: "topple"; key: string; start: number; model: Model; from: Vec2 | null; to: Vec2; color: string };
 
 const centre = (models: Model[]): { x: number; y: number; z: number } => {
   const n = Math.max(1, models.length);
@@ -296,6 +297,8 @@ export function WatchEffects() {
   }, [shownSeq, game, record]);
   const last = useRef(initial);
   const [effects, setEffects] = useState<Effect[]>([]);
+  // Models still toppling or sliding stay out of the pile until they get there.
+  const [arriving, setArriving] = useState<ReadonlySet<string>>(new Set());
   const focus = useRef<Focus | null>(null);
   const lastAction = useRef(0);
   const overview = useRef(true);
@@ -318,16 +321,41 @@ export function WatchEffects() {
     const fresh: Effect[] = [];
     for (const event of events)
       fresh.push(...effectsFor(event, prev.game, game, now, `${nextKey.current++}`));
-    // Casualties: models destroyed since the last frame fade out where they stood.
-    for (const m of Object.values(game.models))
-      if (m.destroyed && prev.game.models[m.id] && !prev.game.models[m.id]!.destroyed)
-        fresh.push({
-          kind: "ghost",
-          key: `ghost-${m.id}-${nextKey.current++}`,
-          start: now,
-          model: prev.game.models[m.id]!,
-        });
-    if (fresh.length) setEffects((old) => [...old.filter((e) => now - e.start < EFFECT_MS * 2), ...fresh]);
+    // Casualties: models destroyed since the last frame topple, then go to the pile (PX-3d).
+    const slain = Object.values(game.models).filter(
+      (m) => m.destroyed && prev.game.models[m.id] && !prev.game.models[m.id]!.destroyed,
+    );
+    const blow = blowFrom(prev.game, slain[0]);
+    slain.forEach((m, i) => {
+      if (i < 6) topple(i * 0.04);
+      fresh.push({
+        kind: "topple",
+        key: `topple-${m.id}-${nextKey.current++}`,
+        start: now + i * 40,
+        model: prev.game.models[m.id]!,
+        from: blow,
+        to: slotOf(game, m),
+        color: game.players[m.owner]?.color ?? "#999",
+      });
+    });
+    if (fresh.length)
+      setEffects((old) => [
+        ...old.filter((e) => now - e.start < (e.kind === "topple" ? TOPPLE_MS + 100 : EFFECT_MS * 2)),
+        ...fresh,
+      ]);
+    if (slain.length) {
+      const ids = slain.map((m) => m.id);
+      setArriving((old) => new Set([...old, ...ids]));
+      setTimeout(
+        () =>
+          setArriving((old) => {
+            const next = new Set(old);
+            for (const id of ids) next.delete(id);
+            return next;
+          }),
+        TOPPLE_MS + ids.length * 40,
+      );
+    }
     const f = focusFor(events.at(-1), prev.game, game);
     if (f) {
       focus.current = f;
@@ -388,9 +416,10 @@ export function WatchEffects() {
             {e.text}
           </Html>
         ) : (
-          <FadingGhost key={e.key} model={e.model} start={e.start} />
+          <Topple key={e.key} model={e.model} color={e.color} from={e.from} to={e.to} start={e.start} />
         ),
       )}
+      <CasualtyPiles game={game} arriving={arriving} />
     </>
   );
 }
@@ -485,27 +514,26 @@ function focusFor(event: GameEvent | undefined, before: GameState, after: GameSt
 }
 
 /** A destroyed model's stand-in, fading and sinking where it fell. */
-function FadingGhost({ model, start }: { model: Model; start: number }) {
-  const material = useRef<MeshBasicMaterial>(null);
-  const group = useRef<{ position: Vector3 }>(null);
-  const { width, depth } = baseSizeInches(model.base);
-  const r = Math.min(width, depth) / 2;
-  const h = Math.max(0.3, modelHeight(model) - 0.2);
-  const z = model.z ?? 0;
-  useFrame(() => {
-    const t = (performance.now() - start) / (EFFECT_MS * 1.5);
-    if (material.current) {
-      material.current.opacity = Math.max(0, 0.7 * (1 - t));
-      material.current.visible = t < 1;
-    }
-    if (group.current) group.current.position.y = z - Math.min(1, t) * h * 0.5;
-  });
-  return (
-    <group ref={group as never} position={[model.position.x, z, model.position.y]}>
-      <mesh position-y={h / 2 + 0.2} raycast={() => null}>
-        <cylinderGeometry args={[r * 0.6, r * 0.8, h, 12]} />
-        <meshBasicMaterial ref={material} color="#ef4444" transparent opacity={0.7} depthWrite={false} />
-      </mesh>
-    </group>
-  );
+
+/** Where a blow came from: the attacking unit's middle, else the nearest enemy, for which way the slain fall. */
+function blowFrom(game: GameState, victim: Model | undefined): Vec2 | null {
+  if (!victim) return null;
+  const attacker = game.attack?.spec.attackerUnitId ?? game.procedure?.unitId;
+  const unit = attacker ? game.units[attacker] : undefined;
+  const ms = unit ? alive(game, unit.id) : [];
+  if (ms.length)
+    return {
+      x: ms.reduce((t, m) => t + m.position.x, 0) / ms.length,
+      y: ms.reduce((t, m) => t + m.position.y, 0) / ms.length,
+    };
+  let best: Model | null = null;
+  for (const m of Object.values(game.models))
+    if (!m.destroyed && m.owner !== victim.owner)
+      if (
+        !best ||
+        Math.hypot(m.position.x - victim.position.x, m.position.y - victim.position.y) <
+          Math.hypot(best.position.x - victim.position.x, best.position.y - victim.position.y)
+      )
+        best = m;
+  return best?.position ?? null;
 }

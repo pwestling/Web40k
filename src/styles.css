@@ -1756,3 +1756,19 @@ button.rare-star:hover {
   max-width: 420px;
   border: 1px solid #b45309;
 }
+
+/* A player's casualty pile beside the table (render/Casualties.tsx) */
+.ruler.casualty-pile {
+  pointer-events: auto;
+  font-size: 0.8rem;
+}
+.ruler.casualty-pile button {
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+.ruler.casualty-pile ul {
+  margin: 4px 0 0;
+  padding: 0 0 0 1em;
+  text-align: left;
+}
