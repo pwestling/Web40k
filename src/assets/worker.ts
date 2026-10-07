@@ -21,11 +21,13 @@ self.onmessage = async (e: MessageEvent<ImportRequest>) => {
     const asset = processMesh(raw, { id, name, kind });
     const transfer = [...asset.lods, asset.proxy].flatMap((m) => [m.positions.buffer, m.indices.buffer]);
     // Levels can share a buffer when a mesh was already under budget.
-    (self as DedicatedWorkerGlobalScope).postMessage(
-      { ok: true, asset } satisfies ImportResponse,
-      [...new Set(transfer)] as ArrayBuffer[],
-    );
+    (self as DedicatedWorkerGlobalScope).postMessage({ ok: true, asset } satisfies ImportResponse, [
+      ...new Set(transfer),
+    ] as ArrayBuffer[]);
   } catch (err) {
-    self.postMessage({ ok: false, error: err instanceof Error ? err.message : String(err) } satisfies ImportResponse);
+    self.postMessage({
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    } satisfies ImportResponse);
   }
 };

@@ -55,7 +55,15 @@ export function processMesh(raw: MeshData, options: ProcessOptions): ModelAsset 
     unitScale,
     ms: Math.round(performance.now() - start),
   };
-  const asset: ModelAsset = { id: options.id, name: options.name, kind: options.kind, lods, proxy, bounds, stats };
+  const asset: ModelAsset = {
+    id: options.id,
+    name: options.name,
+    kind: options.kind,
+    lods,
+    proxy,
+    bounds,
+    stats,
+  };
   if (options.kind === "miniature") asset.figure = figureProxy(lods[0]!);
   else {
     asset.solids = boxProxy(lods[1] ?? lods[0]!);

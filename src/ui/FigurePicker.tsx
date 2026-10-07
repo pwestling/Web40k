@@ -36,13 +36,25 @@ export function FigurePicker({ models }: { models: Model[] }) {
             </label>
             {asset && (
               <>
-                <button className="small" title="Turn the figure 90°" onClick={() => setBinding(key, { yaw: b.yaw + Math.PI / 2 })}>
+                <button
+                  className="small"
+                  title="Turn the figure 90°"
+                  onClick={() => setBinding(key, { yaw: b.yaw + Math.PI / 2 })}
+                >
                   ⟳
                 </button>
-                <button className="small" title="Smaller" onClick={() => setBinding(key, { scale: b.scale / 1.1 })}>
+                <button
+                  className="small"
+                  title="Smaller"
+                  onClick={() => setBinding(key, { scale: b.scale / 1.1 })}
+                >
                   −
                 </button>
-                <button className="small" title="Bigger" onClick={() => setBinding(key, { scale: b.scale * 1.1 })}>
+                <button
+                  className="small"
+                  title="Bigger"
+                  onClick={() => setBinding(key, { scale: b.scale * 1.1 })}
+                >
                   +
                 </button>
                 <button className="small" title="Back to the stand-in" onClick={() => setBinding(key, null)}>

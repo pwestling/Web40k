@@ -66,7 +66,8 @@ function fromObject(root: Object3D): MeshData {
       : Uint32Array.from({ length: position.count - (position.count % 3) }, (_, i) => i);
     // Mirrored transforms flip the winding.
     if (matrix.determinant() < 0)
-      for (let i = 0; i < indices.length; i += 3) [indices[i + 1], indices[i + 2]] = [indices[i + 2]!, indices[i + 1]!];
+      for (let i = 0; i < indices.length; i += 3)
+        [indices[i + 1], indices[i + 2]] = [indices[i + 2]!, indices[i + 1]!];
     parts.push({ positions, indices });
     vertexCount += position.count;
     indexCount += indices.length;
@@ -111,7 +112,10 @@ function withoutTextures(bytes: ArrayBuffer): ArrayBuffer | string {
   }
   const jsonLength = view.getUint32(12, true);
   if (view.getUint32(16, true) !== JSON_CHUNK) return bytes;
-  const json = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes, 20, jsonLength))) as Record<string, unknown>;
+  const json = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes, 20, jsonLength))) as Record<
+    string,
+    unknown
+  >;
   let text = new TextEncoder().encode(JSON.stringify(stripTextures(json)));
   // Chunks are 4-byte aligned, padded with spaces.
   const padded = new Uint8Array(Math.ceil(text.length / 4) * 4).fill(0x20);
@@ -143,7 +147,9 @@ function stripTextures(json: Record<string, unknown>): Record<string, unknown> {
     delete m.extensions;
   }
   const used = (json.extensionsUsed ?? []) as string[];
-  json.extensionsUsed = used.filter((e) => !e.startsWith("KHR_texture") && !e.startsWith("KHR_materials") && e !== "EXT_texture_webp");
+  json.extensionsUsed = used.filter(
+    (e) => !e.startsWith("KHR_texture") && !e.startsWith("KHR_materials") && e !== "EXT_texture_webp",
+  );
   json.extensionsRequired = ((json.extensionsRequired ?? []) as string[]).filter((e) =>
     (json.extensionsUsed as string[]).includes(e),
   );

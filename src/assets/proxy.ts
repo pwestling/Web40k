@@ -138,7 +138,8 @@ function boxesAt(mesh: MeshData, cell: number): Box[] {
   const [nx, ny, nz] = n as [number, number, number];
   const at = (x: number, y: number, z: number) => (x * ny + y) * nz + z;
   const solid = new Uint8Array(nx * ny * nz);
-  const voxel = (v: number, a: number) => Math.min(n[a]! - 1, Math.max(0, Math.floor((v - min[a]!) / step[a]!)));
+  const voxel = (v: number, a: number) =>
+    Math.min(n[a]! - 1, Math.max(0, Math.floor((v - min[a]!) / step[a]!)));
 
   // Mark voxels the surface passes through by sampling each triangle densely enough.
   const idx = mesh.indices;
@@ -213,7 +214,8 @@ function boxesAt(mesh: MeshData, cell: number): Box[] {
         while (z1 < nz && range(x, x1).every((i) => free(i, y, z1))) z1++;
         let y1 = y + 1;
         while (y1 < ny && range(x, x1).every((i) => range(z, z1).every((k) => free(i, y1, k)))) y1++;
-        for (let i = x; i < x1; i++) for (let j = y; j < y1; j++) for (let k = z; k < z1; k++) used[at(i, j, k)] = 1;
+        for (let i = x; i < x1; i++)
+          for (let j = y; j < y1; j++) for (let k = z; k < z1; k++) used[at(i, j, k)] = 1;
         const w = Math.min(x1 * step[0]!, size[0]!) - x * step[0]!;
         const h = Math.min(y1 * step[1]!, size[1]!) - y * step[1]!;
         const d = Math.min(z1 * step[2]!, size[2]!) - z * step[2]!;

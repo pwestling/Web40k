@@ -84,7 +84,13 @@ export function Miniatures({
   return (
     <>
       {[...groups].map(([id, entries]) => (
-        <AssetInstances key={id} asset={assets[id]!} entries={entries} positions={positions} heights={heights} />
+        <AssetInstances
+          key={id}
+          asset={assets[id]!}
+          entries={entries}
+          positions={positions}
+          heights={heights}
+        />
       ))}
     </>
   );

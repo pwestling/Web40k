@@ -35,7 +35,8 @@ export const perf = {
       ] as const) {
         const { game, dispatch } = useStore.getState();
         const roster = sampleRoster(variant);
-        for (const intent of spawnIntents(game, owner, roster.units, `${owner}-perf${c}`)) dispatch(intent, owner);
+        for (const intent of spawnIntents(game, owner, roster.units, `${owner}-perf${c}`))
+          dispatch(intent, owner);
       }
     }
     await frame();
