@@ -1,6 +1,6 @@
-import { unbundleReplay, type ReplayFile } from "./replayFile";
+import type { ReplayFile } from "./replayFile";
 import { useOpenReport, type ReportFile } from "./report";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
@@ -14,13 +14,14 @@ import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
 import { formatDate, t, tn, gameText } from "../i18n";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
-import { startLesson } from "../teach/store";
-import { MailLobby } from "../mail/MailLobby";
 import { openLibrary } from "../figures/open";
 import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/UpdateToast";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
+
+/** Play by mail loads after the front door; it sits below the fold. */
+const MailLobby = lazy(() => import("../mail/MailLobby").then((m) => ({ default: m.MailLobby })));
 
 /** Rejoin once per page load (effects run twice in development). */
 let autoJoined = false;
@@ -136,7 +137,7 @@ export function Lobby() {
   const loadReplay = async (file: File) => {
     const data = JSON.parse(await file.text()) as ReplayFile;
     if (data.format !== "open-battle/record@1") return alert(t("That is not an Open Battle replay file."));
-    openReplay(await unbundleReplay(data));
+    openReplay(await (await import("./replayFile")).unbundleReplay(data));
     // A problem report opens at the moment it was made (src/ui/report.ts).
     const report = (data as Partial<ReportFile>).report;
     if (report && Number.isFinite(report.seq)) {
@@ -175,7 +176,11 @@ export function Lobby() {
       </p>
       <div className="demos">
         {lessons.map((l) => (
-          <button key={`${l.system}/${l.id}`} className="demo" onClick={() => startLesson(l)}>
+          <button
+            key={`${l.system}/${l.id}`}
+            className="demo"
+            onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+          >
             <strong>
               {systemLabel(lessonSystem(l), "")}: {gameText(l.title)}
             </strong>
@@ -275,14 +280,16 @@ export function Lobby() {
         </button>
         <PackageLibrary system={system} onPick={setSystem} />
       </details>
-      <MailLobby
-        name={name}
-        system={system}
-        onStarted={() => {
-          remember();
-          namePackage();
-        }}
-      />
+      <Suspense fallback={null}>
+        <MailLobby
+          name={name}
+          system={system}
+          onStarted={() => {
+            remember();
+            namePackage();
+          }}
+        />
+      </Suspense>
       <InstallLink />
       <hr />
       <button className="link" onClick={() => setGuide(true)}>

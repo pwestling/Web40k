@@ -19,8 +19,17 @@ applyTextSize();
 // Models joining this browser go into the figure library (#33).
 watchFigures();
 // The app kept on the device, for offline play and installing (#34). Not in development, where it
-// would hold on to old modules.
-if (import.meta.env.PROD) void registerServiceWorker()?.catch(() => {});
+// would hold on to old modules. Installing it downloads the whole app, so it waits until the page has
+// loaded and the browser is idle: the first visit's lobby and table come first (perf/budget.md, load).
+if (import.meta.env.PROD) {
+  const later = () =>
+    (window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 2000)))(
+      () => void registerServiceWorker()?.catch(() => {}),
+      { timeout: 10_000 },
+    );
+  if (document.readyState === "complete") later();
+  else addEventListener("load", later, { once: true });
+}
 listenForInstall();
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).

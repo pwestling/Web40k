@@ -3,7 +3,7 @@ import { DEFAULT_SYSTEM } from "../core";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { APP_BUILD } from "../version";
-import { bundleReplay, type ReplayFile } from "./replayFile";
+import type { ReplayFile } from "./replayFile";
 
 /**
  * "Report a problem" (playtest kit, roadmap #21): one file with everything
@@ -133,7 +133,8 @@ export async function buildReport(error?: ProblemReport["error"]): Promise<Repor
   };
   let file: ReplayFile;
   try {
-    file = await bundleReplay(record);
+    // Loaded only when a report is made: the replay format reaches the campaign book.
+    file = await (await import("./replayFile")).bundleReplay(record);
   } catch {
     // Figures that won't pack must not cost the report: the bare record still replays.
     file = { ...record };

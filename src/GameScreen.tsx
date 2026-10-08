@@ -5,7 +5,7 @@ import { TableWarningsPanel } from "./ui/TableWarnings";
 import { Announcer } from "./ui/Announcer";
 import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { CompanionScreen } from "./companion/CompanionScreen";
 import { Board } from "./render/Board";
 import { t } from "./i18n";
@@ -253,7 +253,11 @@ export function GameScreen({ started }: { started: boolean }) {
           {/* Before the right-hand panels, so CSS can shorten them while it's open. */}
           {!editing && <ScriptPanel />}
           {!editing && <PlayPanel />}
-          {!editing && SystemPanel && <SystemPanel />}
+          {!editing && SystemPanel && (
+            <Suspense fallback={null}>
+              <SystemPanel />
+            </Suspense>
+          )}
           {!editing && <PackagePanel />}
           {!editing && <ScorePanel />}
           {/* While the dice tray rolls, the panels show the table before the roll: no clicking ahead. */}

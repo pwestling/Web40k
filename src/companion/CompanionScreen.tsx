@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { sideName, sidePlayers, sides, type GameState, type Unit } from "../core";
 import { t, tn } from "../i18n";
 import { useCanControl, useStore } from "../store";
@@ -59,7 +59,11 @@ export function CompanionScreen() {
         ) : (
           <>
             <PlayPanel />
-            {SystemPanel && <SystemPanel />}
+            {SystemPanel && (
+              <Suspense fallback={null}>
+                <SystemPanel />
+              </Suspense>
+            )}
             {tab === "units" && <Units game={game} before={before} />}
             {tab === "mission" && <MissionTab before={before} />}
             {tab === "log" && <GameLog />}

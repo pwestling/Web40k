@@ -19,7 +19,13 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(FILES.map((f) => new Request(at(f), { cache: "reload" })))),
+      // Hashed build files never change, so the copies the page just loaded will do; the rest
+      // (index.html, the manifest, icons) are fetched fresh.
+      .then((cache) =>
+        cache.addAll(
+          FILES.map((f) => new Request(at(f), { cache: /-[\w-]{8}\.\w+$/.test(f) ? "default" : "reload" })),
+        ),
+      ),
   );
 });
 

@@ -1,9 +1,9 @@
+import { lazy } from "react";
 import { holdTheField } from "../../missions/holdTheField";
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
 import { characterActions } from "./characters";
 import { conquestFunctions, conquestProcedures } from "./command";
-import { CommandPanel } from "./CommandPanel";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
 import { moraleProcedures } from "./morale";
 import { leavingCommand } from "./leaving";
@@ -26,7 +26,8 @@ export const conquestModule: GameModule<SystemModule> = {
     templateCategory: CONQUEST_CATEGORIES,
     rankRules: () => ({ width: 2, maxBonus: 0 }),
     chargeRoll: { count: 1, sides: 6, keep: "sum" },
-    panel: CommandPanel,
+    // The panel (and the lesson code it reaches) loads with the game screen, not the front door.
+    panel: lazy(() => import("./CommandPanel").then((m) => ({ default: m.CommandPanel }))),
     missions: [holdTheField()],
     leaving: leavingCommand,
   },
