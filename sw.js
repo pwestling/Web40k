@@ -8,8 +8,8 @@
 // - It shows play-by-mail notifications (src/mail/mailbox.ts). A push from
 //   the mailbox carries nothing about the game: it only says a file has come,
 //   and the app fetches it from the mailbox when it opens.
-const VERSION = "0a2d186ee848";
-const FILES = ["assets/FigureLibrary-gnpDKSBJ.js","assets/GameScreen-hihYVGkO.js","assets/_virtual_sandbox-worker-D8gNcQtb.js","assets/browser-bopAeLbn.js","assets/codec-DswBLtqW.js","assets/config-sq2W6zqc.js","assets/de-daO0mO6r.js","assets/dist-D0EAIOa9.js","assets/fr-BeCql8W7.js","assets/fxp-CNHNYw_7.js","assets/index-B4Ni4zyW.js","assets/index-CzB8aTWr.css","assets/levels-DlkUqTaf.js","assets/library-BAd94RI7.js","assets/parse-Cc0w01sd.js","assets/rolldown-runtime-hePW80VL.js","assets/trystero-DM003VXL.js","assets/worker-BRBYgEIG.js","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/icon.svg","icons/maskable-512.png","index.html","manifest.webmanifest"];
+const VERSION = "9fd0e843b1aa";
+const FILES = ["assets/FigureLibrary-Dnz_X-y2.js","assets/GameScreen-B9XM33xM.js","assets/Miniatures-CvpQDHgV.js","assets/_virtual_sandbox-worker-D8gNcQtb.js","assets/browser-bopAeLbn.js","assets/codec-DswBLtqW.js","assets/config-sq2W6zqc.js","assets/de-KZQtrE3l.js","assets/dist-D0EAIOa9.js","assets/fr-Dtxnvq4n.js","assets/fxp-CNHNYw_7.js","assets/index-0CoQFaTD.css","assets/index-DtZaj7sW.js","assets/levels-DlkUqTaf.js","assets/library-BFooSYNX.js","assets/rolldown-runtime-hePW80VL.js","assets/trystero-DM003VXL.js","assets/worker-BRBYgEIG.js","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/icon.svg","icons/maskable-512.png","index.html","manifest.webmanifest"];
 const CACHE = `open-battle-${VERSION}`;
 const DEV = VERSION === "dev";
 const at = (path) => new URL(path, self.registration.scope).href;
