@@ -11,6 +11,8 @@ import {
   type Unit,
 } from "../core";
 import { opposed } from "../core/teams";
+import { nextRoller } from "../core/rolls";
+import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
 import { actingUnits, actionTargets, unitActions } from "../core/content/play";
 import { playerActions } from "../core/content/player";
 import { currentSlot, systemOf } from "../core/content/turn";
@@ -64,6 +66,20 @@ export interface BotContext {
   tidy?: boolean;
   /** A tidy bot's units already moved this phase (keyed by round, side and phase). */
   moved?: { phase: string; units: Set<string> };
+  /** Tidy mode: the unit actions taken this phase ("unit:action"), each taken once. */
+  taken?: { phase: string; keys: Set<string> };
+}
+
+/** Tidy mode: note a move taken, so the bot doesn't repeat the same unit's action in one phase. */
+export function noteTaken(ctx: BotContext, state: GameState, move: BotMove): void {
+  if (!ctx.tidy || move.intent.type !== "action/take") return;
+  const phase = phaseKey(state);
+  if (ctx.taken?.phase !== phase) ctx.taken = { phase, keys: new Set() };
+  ctx.taken.keys.add(`${move.intent.unitId}:${move.intent.action}`);
+}
+
+function phaseKey(state: GameState): string {
+  return `${state.turn.round}:${state.turn.activeSeat}:${state.turn.phase}`;
 }
 
 const pick = <T>(rng: Rng, xs: readonly T[]): T | undefined => xs[Math.floor(rng() * xs.length)];
@@ -166,7 +182,12 @@ export function waitingOn(
     }
     return {
       what: `the ${proc.action} roll`,
-      moves: everyone(run.done ? { type: "procedure/clear" } : { type: "procedure/roll" }, "roll", proc.by),
+      // The player whose dice these are first (a save is the defender's), so a learner rolls their own.
+      moves: everyone(
+        run.done ? { type: "procedure/clear" } : { type: "procedure/roll" },
+        "roll",
+        (!run.done && nextRoller(state, run)) || proc.by,
+      ),
     };
   }
 
@@ -174,7 +195,12 @@ export function waitingOn(
   if (attack)
     return {
       what: "the attack",
-      moves: everyone(attack.stage === "done" ? { type: "attack/clear" } : { type: "attack/roll" }, "attack"),
+      // Saves are the defender's roll, everything else the attacker's (as the attack panel sends them).
+      moves: everyone(
+        attack.stage === "done" ? { type: "attack/clear" } : { type: "attack/roll" },
+        "attack",
+        state.units[attack.stage === "save" ? attack.spec.targetUnitId : attack.spec.attackerUnitId]?.owner,
+      ),
     };
 
   const pending = state.pending;
@@ -314,13 +340,19 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
 
 /** A unit's actions now: procedure actions with a weapon and target each, others as they are. */
 function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMove> {
+  const taken = ctx.taken?.phase === phaseKey(state) ? ctx.taken.keys : undefined;
   for (const o of shuffle(ctx.rng, unitActions(state, u.id))) {
     if (o.def.reactTo) continue;
+    // A tidy bot plays like a person would: each action once a phase, and no pointless ones.
+    if (ctx.tidy && (taken?.has(`${u.id}:${o.def.id}`) || pointless(state, u, o.def.id))) continue;
     if (o.def.procedure) {
       const weapons = Object.keys(u.sheet?.weapons ?? {});
       const targets = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
       for (const weapon of shuffle(ctx.rng, weapons.length ? weapons : [undefined]).slice(0, 3))
         for (const t of shuffle(ctx.rng, targets).slice(0, 2)) {
+          // A tidy bot doesn't make attacks that can't reach (no dice to roll).
+          if (ctx.tidy && weapon && (!reaches(state, u, weapon, t.unitId) || wrongKind(u, weapon, o.def.id)))
+            continue;
           const req = { ...(weapon ? { weapon } : {}), targetId: t.unitId };
           if (unitActions(state, u.id, req).find((x) => x.def.id === o.def.id)?.ok)
             yield {
@@ -432,6 +464,35 @@ function moveUnit(state: GameState, u: Unit, ctx: BotContext, inches: number): B
   };
 }
 
+/** Whether a weapon reaches the target unit, where its range can be read (true when it can't). */
+function reaches(state: GameState, u: Unit, weapon: string, targetId: string): boolean {
+  const w = u.sheet?.weapons?.[weapon];
+  const target = state.units[targetId];
+  if (!w || !target) return true;
+  const reach = weaponReach(w);
+  if (reach === null) return true;
+  return unitDistance(aliveModels(state, u), aliveModels(state, target)) <= reach + 0.05;
+}
+
+/** A melee weapon in a shooting action, or a ranged one in a fight. */
+function wrongKind(u: Unit, weapon: string, action: string): boolean {
+  const kind = u.sheet?.weapons?.[weapon]?.kind;
+  return (
+    (kind === "melee" && /shoot|fire/i.test(action)) ||
+    (kind === "ranged" && /fight|melee|strike/i.test(action))
+  );
+}
+
+/** Falling back with no enemy near, the kind of move that teaches a learner the wrong thing. */
+function pointless(state: GameState, u: Unit, action: string): boolean {
+  if (!/withdraw|fall.?back|retreat|disengage/i.test(action)) return false;
+  const mine = aliveModels(state, u);
+  return !Object.values(state.units).some(
+    (e) =>
+      opposed(state, e.owner, u.owner) && alive(state, e) && unitDistance(mine, aliveModels(state, e)) <= 6,
+  );
+}
+
 function nearestEnemy(state: GameState, u: Unit, cx: number, cy: number): { x: number; y: number } | null {
   let best: { x: number; y: number } | null = null;
   let dist = Infinity;
@@ -444,6 +505,11 @@ function nearestEnemy(state: GameState, u: Unit, cx: number, cy: number): { x: n
     if (d < dist) [best, dist] = [{ x, y }, d];
   }
   return best;
+}
+
+/** Moves a side makes outside its own turn: locking in its command stack for the round. */
+export function offTurnMoves(state: GameState, ctx: BotContext, players: PlayerId[]): BotMove[] {
+  return commandStack(state, ctx, players).filter((m) => m.kind === "stack");
 }
 
 /** Conquest's command stack (systems/conquest/command.ts): commit one this round, then draw the top card. */
@@ -459,7 +525,7 @@ function commandStack(state: GameState, ctx: BotContext, players: PlayerId[]): B
           .filter((u) => u.owner === p && alive(state, u))
           .map((u) => u.id),
       );
-      if (!ids.length || ctx.rng() < 0.3) continue;
+      if (!ids.length || (!ctx.tidy && ctx.rng() < 0.3)) continue;
       out.push({
         intent: {
           type: "secret/commit",

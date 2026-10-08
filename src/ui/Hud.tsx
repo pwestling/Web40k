@@ -15,6 +15,7 @@ import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
 import { battleOver } from "./StatsScreen";
 import { useGame } from "./hooks";
+import { useCoach } from "../teach/store";
 import { narrow } from "./narrow";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
@@ -57,6 +58,7 @@ export function Hud() {
   }, [round, liveGame.turn.phase]);
   // While the dice tray rolls, the log waits for the dice to land.
   const held = useHold((s) => s.held);
+  const lesson = useCoach((s) => s.lesson);
   const log = useMemo(
     () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
     // liveGame too: a package's rules loading refolds the same record, and the log names its game again.
@@ -92,7 +94,11 @@ export function Hud() {
         <button onClick={() => setCollapsed(true)}>Hide</button>
       </div>
       <RoomCard />
-      {mode === "hotseat" && <p className="muted">Hotseat: you control both sides.</p>}
+      {mode === "hotseat" && (
+        <p className="muted">
+          {lesson ? "Lesson: the computer plays the other side." : "Hotseat: you control both sides."}
+        </p>
+      )}
       {role === "spectator" && <p className="muted">Spectating.</p>}
       {role === "spectator" && <BroadcastControls />}
       <div className="row wrap">
@@ -181,7 +187,7 @@ export function Hud() {
       <SecretMissions players={mine} />
 
       {role !== "spectator" && (
-        <div className="row">
+        <div className="row undo-row">
           <button
             disabled={!takeBack}
             title={takeBack ? `Take back ${takeBack.what ?? "your last action"}` : ""}

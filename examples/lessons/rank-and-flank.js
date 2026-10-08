@@ -51,7 +51,7 @@ export const lessons = [
         until: { yourTurn: true },
       },
       {
-        say: "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. \"What can I do now?\" at the bottom left always says what's possible.",
+        say: "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible.",
       },
     ],
   },

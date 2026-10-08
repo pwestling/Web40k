@@ -20,7 +20,15 @@ const PLAYERS: Player[] = [
 ];
 
 const wanted = (u: Until | undefined): string[] =>
-  !u ? [] : "any" in u ? u.any.flatMap(wanted) : "did" in u ? [u.did].flat() : [];
+  !u
+    ? []
+    : "any" in u
+      ? u.any.flatMap(wanted)
+      : "all" in u
+        ? u.all.flatMap(wanted)
+        : "did" in u
+          ? [u.did].flat()
+          : [];
 
 /** What a move would count as doing (coach.didIds, from the intent). */
 const idsOf = (i: Intent): string[] => [
@@ -89,12 +97,17 @@ function walk(lesson: Lesson, seed: number): { progress: Progress; moves: number
       continue;
     }
     const state = host.current;
-    const theirs = opponentMove(host.log, state, bot, 1 - you);
+    const theirs = opponentMove(host.log, state, bot, 1 - you, step.hold);
     const move = theirs ?? studentMove(host.log, state, student, you, wanted(step.until));
+    // A step held for the learner that the student can't do from here: skip it, as the card's Skip does.
+    if (!move && step.hold) {
+      progress = advance(lesson, progress, host.log, host.current, true);
+      continue;
+    }
     if (!move) throw new Error(`stuck at step ${progress.step + 1}: "${step.say.slice(0, 60)}"`);
     send(move.intent, move.as);
     if (move.then && legal(host.log, host.current, move.then)) send(move.then.intent, move.then.as);
-    noteProgress(theirs ? bot : student, host.current);
+    noteProgress(theirs ? bot : student, host.current, move);
   }
   host.leave();
   return { progress, moves, state: host.current };
@@ -112,7 +125,15 @@ describe("lessons", () => {
         // A phase the game doesn't have would never come round: the step would never finish.
         const slots = new Set(schedule(getSystem(lessonSystem(l)!)).map((s) => s.id));
         const phases = (u: Until | undefined): string[] =>
-          !u ? [] : "any" in u ? u.any.flatMap(phases) : "phase" in u ? [u.phase] : [];
+          !u
+            ? []
+            : "any" in u
+              ? u.any.flatMap(phases)
+              : "all" in u
+                ? u.all.flatMap(phases)
+                : "phase" in u
+                  ? [u.phase]
+                  : [];
         for (const s of l.steps)
           for (const ph of phases(s.until)) expect(slots, `${l.id}: ${ph}`).toContain(ph);
       }

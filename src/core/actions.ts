@@ -350,6 +350,8 @@ export interface ModelsMove {
   moves: { id: ModelId; to: Vec2; z?: number }[];
   /** Set when this pulls an over-long move back to its limit, for the log. */
   snap?: number;
+  /** Setting the table up (a lesson placing its units), not a move: the log leaves it out. */
+  setup?: boolean;
 }
 
 export type Rng = () => number;

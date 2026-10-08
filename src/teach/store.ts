@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { DEFAULT_SYSTEM, sides, type GameState } from "../core";
-import { owed } from "../render/showcase";
+import { sidePlayers } from "../core";
 import { seededRng } from "../sandbox/protocol";
 import type { BotContext } from "../soak/bot";
 import { useStore } from "../store";
@@ -18,6 +18,8 @@ import { setUpLesson } from "./setup";
  */
 interface Coach {
   lesson: Lesson | null;
+  /** Lesson finished and the learner chose to play on: no card, the computer keeps playing. */
+  free: boolean;
   progress: Progress;
   bot: BotContext & { mark?: string };
   initial: GameState | null;
@@ -25,10 +27,18 @@ interface Coach {
 
 export const useCoach = create<Coach>(() => ({
   lesson: null,
+  free: false,
   progress: { step: 0, began: [] },
   bot: { rng: Math.random, kept: new Map(), idle: 0, tidy: true },
   initial: null,
 }));
+
+/** In a lesson, whether the computer plays this player: its rolls and answers aren't the learner's to make. */
+export function computerPlays(game: GameState, player: string | undefined): boolean {
+  const { lesson } = useCoach.getState();
+  if (!lesson || !player || !game.players[player]) return false;
+  return !sidePlayers(game, lesson.you ?? 0).some((p) => p.id === player);
+}
 
 /** Start a lesson: a hotseat game of its system, its table set up, the learner to play first. */
 export function startLesson(lesson: Lesson): void {
@@ -49,11 +59,11 @@ export function startLesson(lesson: Lesson): void {
     }
     const { dispatch } = useStore.getState();
     setUpLesson(lesson, () => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
-    // The army showcase opens the battle, as in the demos.
-    owed.initial = useStore.getState().record.initial;
+    // No army showcase here: the coach's first line opens the lesson (PX review).
     useHelp.setState({ hint: false });
     useCoach.setState({
       lesson,
+      free: false,
       progress: { step: 0, began: [] },
       bot: { rng: seededRng(Date.now() % 2 ** 31), kept: new Map(), idle: 0, tidy: true },
       initial: useStore.getState().record.initial,
@@ -64,7 +74,14 @@ export function startLesson(lesson: Lesson): void {
 }
 
 export function leaveLesson(): void {
-  useCoach.setState({ lesson: null, initial: null });
+  useCoach.setState({ lesson: null, free: false, initial: null });
+}
+
+/** "Try another lesson": back to the front door (the game stays saved, as any game does). */
+export function backToLobby(): void {
+  leaveLesson();
+  useStore.getState().session?.leave();
+  useStore.setState({ session: null, role: null, scrub: null, selected: null, draft: null });
 }
 
 /** Move the lesson on from the log (and a "Got it"); select the unit a new step points at. */

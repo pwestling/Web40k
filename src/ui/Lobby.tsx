@@ -149,17 +149,6 @@ export function Lobby() {
 
       <TextSizePicker />
 
-      <h2>Try it now</h2>
-      <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>
-      <div className="demos">
-        {demos.map((g) => (
-          <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
-            <strong>{FRONT[g.id]!.title}</strong>
-            <span className="muted small">{FRONT[g.id]!.blurb}</span>
-          </button>
-        ))}
-      </div>
-
       <h2>Learn to play</h2>
       <p className="muted small">
         A guided first game: you play blue, the computer plays red, and a coach says what to do next.
@@ -171,6 +160,17 @@ export function Lobby() {
               {systemLabel(lessonSystem(l), "")}: {l.title}
             </strong>
             <span className="muted small">{l.summary}</span>
+          </button>
+        ))}
+      </div>
+
+      <h2>Try it now</h2>
+      <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>
+      <div className="demos">
+        {demos.map((g) => (
+          <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
+            <strong>{FRONT[g.id]!.title}</strong>
+            <span className="muted small">{FRONT[g.id]!.blurb}</span>
           </button>
         ))}
       </div>

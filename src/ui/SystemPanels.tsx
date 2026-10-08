@@ -27,6 +27,7 @@ import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
+import { computerPlays } from "../teach/store";
 
 /**
  * Panels for any game system, built from its data: a unit card with the
@@ -742,6 +743,10 @@ export function ProcedurePanel() {
   const defender = target?.owner;
   // Rolls go through the attacker; the defender answers windows on their side.
   const roller = next && next.kind === "test" && next.roller === "defender" ? defender : proc.by;
+  // In a lesson the computer rolls and answers for its own side.
+  const botRolls = computerPlays(game, roller);
+  const botAnswers = computerPlays(game, defender);
+  const botActs = computerPlays(game, proc.by);
   const notes = run.outcomes.filter((o) => o.kind === "note" || o.kind === "reminder");
   const actor = game.units[proc.unitId];
   const weapon = proc.weapon ? actor?.sheet?.weapons[proc.weapon] : undefined;
@@ -777,7 +782,7 @@ export function ProcedurePanel() {
         .map((r, i) => (
           <RecordRow key={i} record={r} why={whyNone(r)} />
         ))}
-      {run.pending && (
+      {run.pending && !botAnswers && (
         <div className="stage">
           <span className="label">{label(run.pending.step)}</span>
           <span className="row wrap">
@@ -814,16 +819,21 @@ export function ProcedurePanel() {
           ))}
         </ul>
       )}
-      {live && (
+      {live && next && (botRolls || (run.pending && botAnswers)) && (
+        <p className="muted">The computer is rolling…</p>
+      )}
+      {live && !(botActs && (botRolls || run.done)) && (
         <div className="row">
-          {next && !run.pending && (
+          {next && !run.pending && !botRolls && (
             <button className="primary" onClick={() => dispatch({ type: "procedure/roll" }, roller)}>
               Roll {label(next.id).toLowerCase()}
             </button>
           )}
-          <button onClick={() => dispatch({ type: "procedure/clear" }, proc.by)}>
-            {run.done ? "Done" : "Cancel"}
-          </button>
+          {!botActs && (
+            <button onClick={() => dispatch({ type: "procedure/clear" }, proc.by)}>
+              {run.done ? "Done" : "Cancel"}
+            </button>
+          )}
         </div>
       )}
     </div>

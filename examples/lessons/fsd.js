@@ -21,8 +21,9 @@ export const lessons = [
     summary: "Activate a unit, move and fire, then take turns with the other side.",
     you: 0,
     place: [
-      { seat: 0, unit: 1, at: { x: -6, y: 9 } },
-      { seat: 1, unit: 1, at: { x: -6, y: -9 } },
+      // Within rifle range of each other, so the first Fire has something to hit.
+      { seat: 0, unit: 1, at: { x: -6, y: 2 } },
+      { seat: 1, unit: 1, at: { x: -6, y: -1 } },
     ],
     steps: [
       {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { computerPlays } from "../../teach/store";
 import type { GameState, Player, Unit } from "../../core";
 import { currentSlot } from "../../core/content/turn";
 import { useCanControl, useStore } from "../../store";
@@ -40,7 +41,8 @@ export function CommandPanel() {
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => (a.seat ?? 0) - (b.seat ?? 0));
-  const mine = (p: Player) => role !== "spectator" && canControl(p.id);
+  // In a lesson the computer's stack is its own secret, as at a real table.
+  const mine = (p: Player) => role !== "spectator" && canControl(p.id) && !computerPlays(game, p.id);
   if (game.turn.round === 0) return <ToReserve players={players.filter(mine)} />;
 
   if (!open)

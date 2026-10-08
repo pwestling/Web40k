@@ -248,11 +248,47 @@ label.file.button.small {
   font-size: 0.95rem;
   line-height: 1.4;
 }
-.panel.coach.done {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.panel.coach .coach-said {
+  color: #86efac;
+  font-weight: 600;
+}
+.panel.coach .coach-title {
+  font-size: 1.15rem;
+}
+.panel.coach .coach-ticks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted, #9ca3af);
+}
+.panel.coach .coach-ticks .ok {
+  color: #86efac;
+}
+/* In a lesson the left panel keeps only its title, Undo and the log (PX review). */
+body.lesson .panel.hud > :not(:first-child):not(.log):not(.undo-row) {
+  display: none;
+}
+/* The control a lesson step names (ui/Coach.tsx). */
+button.coach-pulse {
+  animation: coach-pulse 1.6s ease-in-out infinite;
+}
+@keyframes coach-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.coach-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8);
+  }
 }
 .keys-sheet table {
   border-collapse: collapse;

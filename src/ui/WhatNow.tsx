@@ -125,7 +125,7 @@ export function WhatNow() {
   const spectator = useStore((s) => s.role === "spectator");
   const scrub = useStore((s) => s.scrub);
   // A lesson's coach card says what to do instead.
-  const coaching = useCoach((s) => s.lesson !== null);
+  const coaching = useCoach((s) => s.lesson !== null && !s.free);
   if (spectator || scrub !== null || coaching) return null;
   if (!open)
     return (

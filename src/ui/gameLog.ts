@@ -546,6 +546,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "model/move":
       return `${who} ${moveText(before, game, [event.id])}`;
     case "models/move":
+      if (event.setup) return "";
       if (event.snap !== undefined) {
         const unitId = game.models[event.moves[0]?.id ?? ""]?.unitId;
         return `${unitName(unitId ?? "")} snapped back to ${event.snap}"`;

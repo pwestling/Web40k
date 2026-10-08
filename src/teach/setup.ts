@@ -59,6 +59,7 @@ export function setUpLesson(lesson: Lesson, get: () => GameState, send: Send, ta
     send(
       {
         type: "models/move",
+        setup: true,
         moves: ms.map((m) => ({
           id: m.id,
           to: { x: m.position.x + p.at.x - cx, y: m.position.y + p.at.y - cy },

@@ -1,3 +1,4 @@
+import { useCoach, computerPlays } from "../teach/store";
 import { focusSoon } from "./focusSoon";
 import { useMemo, useState } from "react";
 import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
@@ -148,6 +149,7 @@ function SpecEditor({
     </select>
   );
   const s = suggestion;
+  const coaching = useCoach.getState().lesson !== null && !useCoach.getState().free;
 
   return (
     <div className="spec">
@@ -178,48 +180,52 @@ function SpecEditor({
           Declare attack
         </button>
       )}
-      <div className="grid">
-        <label>
-          Attacks <input value={spec.attacks} onChange={(e) => set("attacks", e.target.value)} size={7} />
-        </label>
-        <label>
-          Hit {target(spec.hit, (v) => set("hit", v), "auto")} {mod(spec.hitMod, (v) => set("hitMod", v))}{" "}
-          {reroll(spec.rerollHits, (v) => set("rerollHits", v))}
-        </label>
-        <label>
-          Sustained{" "}
-          <input
-            type="number"
-            min={0}
-            max={6}
-            value={spec.sustained}
-            onChange={(e) => set("sustained", Number(e.target.value))}
-          />
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={spec.lethal} onChange={(e) => set("lethal", e.target.checked)} />{" "}
-          Lethal hits
-        </label>
-        <label>
-          Wound {target(spec.wound, (v) => set("wound", v ?? 6), "6+")}{" "}
-          {mod(spec.woundMod, (v) => set("woundMod", v))}{" "}
-          {reroll(spec.rerollWounds, (v) => set("rerollWounds", v))}
-        </label>
-        <label>Crit wound on {target(spec.critWound, (v) => set("critWound", v ?? 6), "6+")}</label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={spec.devastating}
-            onChange={(e) => set("devastating", e.target.checked)}
-          />{" "}
-          Devastating
-        </label>
-        <label>Save {target(spec.save, (v) => set("save", v), "none")}</label>
-        <label>
-          Damage <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />
-        </label>
-        <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
-      </div>
+      {/* In a lesson the numbers fold away: the form is just weapon, target and Declare (PX review). */}
+      <details className="more-options" open={!coaching}>
+        <summary>More options</summary>
+        <div className="grid">
+          <label>
+            Attacks <input value={spec.attacks} onChange={(e) => set("attacks", e.target.value)} size={7} />
+          </label>
+          <label>
+            Hit {target(spec.hit, (v) => set("hit", v), "auto")} {mod(spec.hitMod, (v) => set("hitMod", v))}{" "}
+            {reroll(spec.rerollHits, (v) => set("rerollHits", v))}
+          </label>
+          <label>
+            Sustained{" "}
+            <input
+              type="number"
+              min={0}
+              max={6}
+              value={spec.sustained}
+              onChange={(e) => set("sustained", Number(e.target.value))}
+            />
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={spec.lethal} onChange={(e) => set("lethal", e.target.checked)} />{" "}
+            Lethal hits
+          </label>
+          <label>
+            Wound {target(spec.wound, (v) => set("wound", v ?? 6), "6+")}{" "}
+            {mod(spec.woundMod, (v) => set("woundMod", v))}{" "}
+            {reroll(spec.rerollWounds, (v) => set("rerollWounds", v))}
+          </label>
+          <label>Crit wound on {target(spec.critWound, (v) => set("critWound", v ?? 6), "6+")}</label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={spec.devastating}
+              onChange={(e) => set("devastating", e.target.checked)}
+            />{" "}
+            Devastating
+          </label>
+          <label>Save {target(spec.save, (v) => set("save", v), "none")}</label>
+          <label>
+            Damage <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />
+          </label>
+          <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
+        </div>
+      </details>
     </div>
   );
 }
@@ -248,6 +254,9 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
+  // In a lesson the computer rolls its own dice: the learner only sees them land.
+  const botRolls = computerPlays(game, roller);
+  const botAttacks = computerPlays(game, attacker?.owner);
   const roll = () => dispatch({ type: "attack/roll" }, roller);
   const rollAll = () => {
     for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
@@ -297,25 +306,28 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       {attacker && target && (
         <Reminders items={attackReminders(game, attacker.id, target.id, spec.kind)} live={live} />
       )}
-      {canAct && (
+      {canAct && botRolls && attack.stage !== "done" && <p className="muted">The computer is rolling…</p>}
+      {canAct && !(botRolls && botAttacks) && (
         <div className="row">
-          {attack.stage !== "done" && (
+          {attack.stage !== "done" && !botRolls && (
             <>
               <button className="primary attack-roll" onClick={roll}>
                 {STAGE_LABEL[attack.stage]}
               </button>
-              <button onClick={rollAll}>Roll everything</button>
+              {!botAttacks && <button onClick={rollAll}>Roll everything</button>}
             </>
           )}
-          <button
-            className="attack-done"
-            onClick={() => {
-              dispatch({ type: "attack/clear" }, attacker?.owner);
-              focusSoon(".panel.unitcard");
-            }}
-          >
-            {attack.stage === "done" ? "Done" : "Cancel"}
-          </button>
+          {!botAttacks && (
+            <button
+              className="attack-done"
+              onClick={() => {
+                dispatch({ type: "attack/clear" }, attacker?.owner);
+                focusSoon(".panel.unitcard");
+              }}
+            >
+              {attack.stage === "done" ? "Done" : "Cancel"}
+            </button>
+          )}
         </div>
       )}
     </div>
