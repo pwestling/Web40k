@@ -2050,3 +2050,7 @@ body.reeling
 .result-table th:first-child {
   text-align: left;
 }
+/* The stream's end: the stats card on its own, without the caption under it (UX 143). */
+body.broadcast:has(.stats-screen) .caption {
+  display: none;
+}

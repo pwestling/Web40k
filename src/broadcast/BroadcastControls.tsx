@@ -61,7 +61,8 @@ export function BroadcastControls() {
             title="Your camera follows the commentator's; move it yourself to stop"
             onClick={() => useBroadcast.setState({ follow: !follow })}
           >
-            Follow {live.name.replace(/ \(watching\)$/, "")}
+            {/* Says so while on, apart from "Follow action" (UX 146). */}
+            {follow ? "🎥 Following" : "Follow"} {live.name.replace(/ \(watching\)$/, "")}
           </button>
         )}
         {moments.length > 0 && (
