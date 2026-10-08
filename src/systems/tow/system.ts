@@ -238,8 +238,10 @@ export const oldWorld: GameSystem = {
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],
   terrain: [
     { id: "open", name: "Open ground" },
-    { id: "difficult", name: "Difficult terrain" },
-    { id: "dangerous", name: "Dangerous terrain" },
+    // -1 Movement (at least 1) for a unit moving through it (tow.whfb.app, checked 2026-10-08);
+    // dangerous terrain slows like difficult terrain.
+    { id: "difficult", name: "Difficult terrain", slows: 1 },
+    { id: "dangerous", name: "Dangerous terrain", slows: 1 },
     { id: "impassable", name: "Impassable", blocksMovement: true, blocksSight: true },
     { id: "lowObstacle", name: "Low linear obstacle", cover: true },
     { id: "highObstacle", name: "High linear obstacle", cover: true, blocksSight: true },

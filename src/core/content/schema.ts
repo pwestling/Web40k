@@ -647,6 +647,11 @@ export interface TerrainCategoryDef {
   coverFor?: Keyword[];
   /** How it blocks sight in "footprint" line of sight. */
   visibility?: "open" | "obscuring" | "blocking";
+  /**
+   * Movement off a unit's move when any of it starts, passes through or ends
+   * its move in this terrain (The Old World's difficult terrain: 1, never below 1).
+   */
+  slows?: number;
   effects?: Effect[];
 }
 

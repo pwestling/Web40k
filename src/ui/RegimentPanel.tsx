@@ -451,6 +451,11 @@ function MovedLine({
       ) : (
         ""
       )}
+      {budget.slowed ? (
+        <> · {t("{piece}: -{n} Movement", { piece: budget.slowed.piece, n: budget.slowed.by })}</>
+      ) : (
+        ""
+      )}
       {marchManoeuvre ? <> · {t("a marching block may only move ahead and wheel")}</> : ""}
       {marching && marchTest === false ? (
         <> · {t("failed its march test: normal move, counts as marched")}</>

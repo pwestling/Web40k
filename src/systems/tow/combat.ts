@@ -31,7 +31,7 @@ import {
  * (+1 at Unit Strength 10+), the high ground (+1 for a fighting rank standing
  * higher), Stubborn (the first break test falls back in good order) and
  * Unbreakable (no break test, it gives ground) (#40). Supporting attacks
- * follow troop type, arc and Fight in Extra Rank (supportingAttacks). Every result is advisory and lands in the log.
+ * come from Fight in Extra Rank only (supportingAttacks). Every result is advisory and lands in the log.
  *
  * Psychology (roadmap #32), by special rule name, from general knowledge of
  * the game and unverified: the General's Leadership within 12" (Inspiring
@@ -217,26 +217,27 @@ export function* woundAndSave(
 }
 
 /**
- * Supporting attacks: infantry fighting an enemy in their front arc get one
- * attack from each model in the rank behind the fighting rank (Monstrous
- * Infantry up to three each, their Attacks); Fight in Extra Rank adds the
- * rank behind that. None to the flank or rear, and none for cavalry,
- * chariots or monsters. From general knowledge of the game, partly checked
- * on tow.whfb.app (2026-10-08): no supporting attacks into a flank or rear.
+ * Supporting attacks (tow.whfb.app, supporting attacks and how many attacks,
+ * checked 2026-10-08): only models whose weapon or rules allow them (Fight in
+ * Extra Rank, as spears have), standing in the rank or file directly behind
+ * the fighting rank, one attack each (a model not in base contact makes one
+ * attack whatever its Attacks); none against an enemy's flank or rear.
  */
 export function supportingAttacks(view: GameView, atk: Unit, def: Unit): number {
   const state = view.state;
   if (atk.formation.kind !== "ranked") return 0;
-  const first = alive(state, atk)[0];
-  const troop = first?.profile?.chars.Troop ?? "Regular Infantry";
-  if (!/infantry/i.test(troop)) return 0;
-  if ((inArc(state, atk, def) ?? "front") !== "front") return 0;
+  const extraRank = (n: string) => /fight in extra rank/i.test(n);
+  const weapons = Object.values(atk.sheet?.weapons ?? {}).filter((w) => w.kind !== "ranged");
+  if (!hasRule(atk, /fight in extra rank/i) && !weapons.some((w) => (w.keywords ?? []).some(extraRank)))
+    return 0;
+  // Not into the enemy's flank or rear.
+  if ((inArc(state, def, atk) ?? "front") !== "front") return 0;
   const models = alive(state, atk).length;
   const files = Math.min(atk.formation.files, models);
-  const ranks = hasRule(atk, /fight in extra rank/i) ? 2 : 1;
-  const behind = Math.max(0, Math.min(files * ranks, models - files));
-  const each = /monstrous/i.test(troop) ? Math.min(3, Math.max(1, stat(view, atk, "A", 1))) : 1;
-  return behind * each;
+  // The rank behind a front (or rear) fighting rank; the file beside a flank one.
+  const side = inArc(state, atk, def);
+  if (side === "left" || side === "right") return files > 1 ? Math.ceil(models / files) : 0;
+  return Math.max(0, Math.min(files, models - files));
 }
 
 /**

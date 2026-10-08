@@ -128,7 +128,7 @@ function marchwardens(): ImportedRoster {
       undefined,
       {
         keywords: ["General"],
-        rules: ["Drilled"],
+        rules: ["Drilled", "Fight in Extra Rank"],
         wizard: 2,
         spells: HEDGE_LORE,
         items: [

@@ -21,31 +21,29 @@ describe("The Old World combat as code", () => {
     expect(toWound(3, 7)).toBeNull();
   });
 
-  it("supporting attacks: the rank behind, Fight in Extra Rank, none to the rear", () => {
+  it("supporting attacks: Fight in Extra Rank only, the rank behind, none into a flank or rear", () => {
     const { t, spears, warband } = setup();
     const view = () => gameView(t.s, "tow-hand");
     const u = (id: string) => t.s.units[id]!;
+    // The sample spears Fight in Extra Rank: the second rank of five supports.
     expect(supportingAttacks(view(), u(spears), u(warband))).toBe(5);
-    expect(supportingAttacks(view(), u(warband), u(spears))).toBe(6);
-    const sheet = u(spears).sheet!;
+    // The warband has no such weapon or rule.
+    expect(supportingAttacks(view(), u(warband), u(spears))).toBe(0);
+    const sheet = u(warband).sheet!;
     t.s = {
       ...t.s,
       units: {
         ...t.s.units,
-        [spears]: {
-          ...u(spears),
+        [warband]: {
+          ...u(warband),
           sheet: { ...sheet, abilities: [...sheet.abilities, { name: "Fight in Extra Rank", text: "" }] },
         },
       },
     };
-    expect(supportingAttacks(view(), u(spears), u(warband))).toBe(10);
-    // Turned about, the warband is behind the spears: no supporting attacks into it.
-    block(t, spears, -4, 5, Math.PI);
+    expect(supportingAttacks(view(), u(warband), u(spears))).toBe(6);
+    // The warband turned about: the spears strike its rear, with no support.
+    block(t, warband, 4.8, 6, 0);
     expect(supportingAttacks(view(), u(spears), u(warband))).toBe(0);
-    // Cavalry don't make them.
-    const riders = unitNamed(t.s, "Riders of the Downs").id;
-    block(t, riders, 0, 3, 0);
-    expect(supportingAttacks(view(), u(riders), u(warband))).toBe(0);
   });
 
   it("a unit that has moved can't declare a charge (UX 323)", () => {

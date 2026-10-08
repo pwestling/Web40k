@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { TerrainPiece } from "../../core";
 import { gameView } from "../../core/script";
-import { dangerousTests, terrainActions, terrainWarnings } from "./terrainTests";
+import { moveBudget } from "../../ui/regiment";
+import { dangerousTests, inRoughGround, terrainActions, terrainWarnings } from "./terrainTests";
 import { block, setup, standing, toPhase, unitNamed } from "./testing";
 
 const marsh: TerrainPiece = {
@@ -43,5 +44,28 @@ describe("The Old World dangerous terrain tests (#40)", () => {
     expect(standing(t.s, bows)).toBe(before - lost);
     expect(action.available(view(), actor)).toBe("Tested for this move");
     expect(terrainWarnings(view())).toEqual([]);
+  });
+
+  it("difficult terrain: -1 Movement for a move through it; a quarter in it at the end disrupts", () => {
+    const { t, spears } = setup();
+    const bows = unitNamed(t.s, "Fen Bowmen").id;
+    block(t, bows, -10, 5, 0);
+    const scrub: TerrainPiece = { ...marsh, id: "s", name: "Scrub", category: "difficult" };
+    t.s = { ...t.s, terrain: [scrub] };
+    toPhase(t, "movement");
+    expect(moveBudget(t.s, t.s.units[bows]!).move).toBe(4);
+    const moves = t.s.units[bows]!.modelIds.map((id) => ({
+      id,
+      to: { x: t.s.models[id]!.position.x, y: t.s.models[id]!.position.y + 4 },
+    }));
+    t.play({ type: "models/move", moves }, "p1");
+    // Its move now passes through the scrub: M 4 becomes 3.
+    expect(moveBudget(t.s, t.s.units[bows]!)).toMatchObject({ move: 3, slowed: { by: 1, piece: "Scrub" } });
+    // The front two ranks (10 of 15) stand in it.
+    expect(inRoughGround(t.s, t.s.units[bows]!)).toBe(true);
+    expect(inRoughGround(t.s, t.s.units[spears]!)).toBe(false);
+    t.play({ type: "script/start", procedure: "hook:tow-hand:phaseEnd:movement", args: {} }, "p1");
+    expect(t.s.units[bows]!.status?.disrupted).toBe(true);
+    expect(t.notes().at(-1)).toMatch(/Fen Bowmen .*Disrupted/);
   });
 });

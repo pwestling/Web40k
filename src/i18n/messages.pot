@@ -5883,35 +5883,39 @@ msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:454
+#: src/ui/RegimentPanel.tsx:455
+msgid "{piece}: -{n} Movement"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:459
 msgid "a marching block may only move ahead and wheel"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:456
+#: src/ui/RegimentPanel.tsx:461
 msgid "failed its march test: normal move, counts as marched"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:464
+#: src/ui/RegimentPanel.tsx:469
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:479
+#: src/ui/RegimentPanel.tsx:484
 msgid "back"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:481
+#: src/ui/RegimentPanel.tsx:486
 msgid "sideways"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:483
+#: src/ui/RegimentPanel.tsx:488
 msgid "turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:485
+#: src/ui/RegimentPanel.tsx:490
 msgid "redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:487
+#: src/ui/RegimentPanel.tsx:492
 msgid "reform"
 msgstr ""
 

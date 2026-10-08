@@ -10,6 +10,7 @@ import {
   type Unit,
   type Vec2,
 } from "../core";
+import { inFootprint, segmentCrossesFootprint2D } from "../core/terrain";
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { opposed } from "../core/teams";
@@ -85,13 +86,37 @@ export interface MoveBudget {
   slow: number;
   /** Manoeuvres a move may include (The Old World: 1); 0 for no limit. */
   manoeuvreLimit: number;
+  /** Movement lost to terrain this move (The Old World's difficult terrain), and the piece's name. */
+  slowed: { by: number; piece: string } | null;
+}
+
+/** The terrain the unit's move this phase touches that slows it most (its category's `slows`). */
+export function slowingTerrain(game: GameState, unit: Unit): { by: number; piece: string } | null {
+  const cats = new Map((systemOf(game).terrain ?? []).map((c) => [c.id, c.slows ?? 0]));
+  let best: { by: number; piece: string } | null = null;
+  for (const p of game.terrain) {
+    const by = cats.get(p.category) ?? 0;
+    if (by <= (best?.by ?? 0)) continue;
+    const touched = aliveModels(game, unit).some((m) => {
+      const from = m.phaseStart ?? m.position;
+      const r = Math.max(baseSizeInches(m.base).width, baseSizeInches(m.base).depth) / 2;
+      return (
+        inFootprint(p, from, r) ||
+        inFootprint(p, m.position, r) ||
+        segmentCrossesFootprint2D(p, from, m.position)
+      );
+    });
+    if (touched) best = { by, piece: p.name };
+  }
+  return best;
 }
 
 /** A unit's move and march, and how near the closest enemy (not fleeing) is. */
 export function moveBudget(game: GameState, unit: Unit): MoveBudget {
   const mine = aliveModels(game, unit);
   const m = Number.parseFloat(mine[0]?.profile?.chars.M ?? "");
-  const move = Number.isFinite(m) ? m : null;
+  const slowed = slowingTerrain(game, unit);
+  const move = Number.isFinite(m) ? (slowed ? Math.max(1, m - slowed.by) : m) : null;
   const nearestEnemy = Math.min(
     Infinity,
     ...Object.values(game.units)
@@ -108,6 +133,7 @@ export function moveBudget(game: GameState, unit: Unit): MoveBudget {
     drilled: hasRule(unit, /\bdrilled\b/i),
     slow: constant(game, "slowMoveCost", 1),
     manoeuvreLimit: constant(game, "manoeuvresPerMove", 0),
+    slowed,
   };
 }
 

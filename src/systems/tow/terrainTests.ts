@@ -1,3 +1,4 @@
+import { baseSizeInches } from "../../core";
 import { inFootprint, segmentCrossesFootprint2D } from "../../core/terrain";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView, Warning } from "../../sdk";
@@ -83,3 +84,39 @@ export function terrainWarnings(view: GameView): Warning[] {
       message: `${u.name} moved through dangerous terrain: take its Dangerous terrain tests from its card`,
     }));
 }
+
+/**
+ * Disrupted by terrain (tow.whfb.app, difficult terrain, checked 2026-10-08):
+ * a unit that ends its move with at least a quarter of its models in
+ * difficult (or dangerous) terrain, or straddling a low linear obstacle, is
+ * Disrupted: no rank bonus or combat order. Worked out as the Movement phase
+ * ends; a unit this disrupted is steady again once a later Movement phase
+ * ends with it clear.
+ */
+export function inRoughGround(state: GameState, u: Unit): boolean {
+  const models = alive(state, u);
+  if (!models.length) return false;
+  const rough = state.terrain.filter((p) => p.category === "difficult" || p.category === "dangerous");
+  const walls = state.terrain.filter((p) => p.category === "lowObstacle");
+  const caught = models.filter((m) => {
+    const r = Math.max(baseSizeInches(m.base).width, baseSizeInches(m.base).depth) / 2;
+    return rough.some((p) => inFootprint(p, m.position)) || walls.some((p) => inFootprint(p, m.position, r));
+  }).length;
+  return caught * 4 >= models.length;
+}
+
+export const terrainDisruption: CodeProcedure = function* (ctx) {
+  for (const u of Object.values(ctx.view.state.units)) {
+    const rough = inRoughGround(ctx.view.state, u);
+    const ours = ctx.view.own[`roughGround:${u.id}`] === true;
+    if (rough && !u.status?.disrupted) {
+      yield ctx.emit({ type: "unit/status", id: u.id, key: "disrupted", value: true });
+      yield ctx.set(`roughGround:${u.id}`, true);
+      yield ctx.note(`${u.name} ends its move with a quarter or more in difficult ground: Disrupted`);
+    } else if (!rough && ours) {
+      yield ctx.emit({ type: "unit/status", id: u.id, key: "disrupted", value: null });
+      yield ctx.set(`roughGround:${u.id}`, null);
+      yield ctx.note(`${u.name} is clear of difficult ground and no longer Disrupted`);
+    }
+  }
+};

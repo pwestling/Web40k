@@ -2,6 +2,7 @@ import type { CodeProcedure, TurnHooks } from "../../sdk";
 import { alive, leadershipTest } from "./combat";
 import { expireSpells } from "./magic";
 import { immune, stupid } from "./specialRules";
+import { terrainDisruption } from "./terrainTests";
 
 /**
  * The start of a side's turn (the Strategy phase), as a turn hook: its own
@@ -28,4 +29,7 @@ export const startOfTurn: CodeProcedure = function* (ctx, args) {
   }
 };
 
-export const towHooks: TurnHooks = { phaseStart: { strategy: startOfTurn } };
+export const towHooks: TurnHooks = {
+  phaseStart: { strategy: startOfTurn },
+  phaseEnd: { movement: terrainDisruption },
+};
