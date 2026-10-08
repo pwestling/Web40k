@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import "../systems";
+import { opposed, teamShare, zoneSlice } from "./teams";
 import {
   applyEvent,
   createInitialState,
@@ -53,5 +54,31 @@ describe("team games", () => {
     expect(gainedB).toBeLessThanOrEqual(1);
     expect(s.resources.c).toEqual(s.resources.a);
     expect(s.resources.d).toEqual(s.resources.b);
+  });
+
+  it("treats teammates as allies, not enemies", () => {
+    const s = twoVsTwo();
+    expect(opposed(s, "a", "c")).toBe(false);
+    expect(opposed(s, "a", "a")).toBe(false);
+    expect(opposed(s, "a", "b")).toBe(true);
+    expect(opposed(s, "c", "d")).toBe(true);
+  });
+
+  it("gives each teammate their own slice of the side's zone", () => {
+    const s = twoVsTwo();
+    expect(teamShare(s, "a")).toEqual({ index: 0, of: 2 });
+    expect(teamShare(s, "c")).toEqual({ index: 1, of: 2 });
+    const zone = [
+      { x: -30, y: 10 },
+      { x: 30, y: 10 },
+      { x: 30, y: 22 },
+      { x: -30, y: 22 },
+    ];
+    const xs = (i: number) => zoneSlice(zone, i, 2).map((p) => p.x);
+    expect(Math.min(...xs(0))).toBe(-30);
+    expect(Math.max(...xs(0))).toBe(0);
+    expect(Math.min(...xs(1))).toBe(0);
+    expect(Math.max(...xs(1))).toBe(30);
+    expect(zoneSlice(zone, 0, 1)).toBe(zone);
   });
 });

@@ -1,3 +1,4 @@
+import { opposed } from "./teams";
 import { baseSizeInches } from "./geometry";
 import { modelHeight } from "./terrain";
 import { phaseName } from "./content/turn";
@@ -65,7 +66,7 @@ export function chargeFor(
   let gap = Infinity;
   let hit: Model | null = null;
   for (const e of Object.values(after.models)) {
-    if (e.destroyed || e.owner === owner) continue;
+    if (e.destroyed || !opposed(after, e.owner, owner)) continue;
     for (const m of mine) {
       const d = Math.hypot(e.position.x - m.position.x, e.position.y - m.position.y) - half(e) - half(m);
       if (d < gap) {

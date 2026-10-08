@@ -30,6 +30,7 @@ import { SystemUnitCard } from "./SystemPanels";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { replayRoll, useGame, useRareStars } from "./hooks";
+import { opposed } from "../core/teams";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
 const FLAGS: [string, string][] = [
@@ -88,7 +89,7 @@ export function eyeView(unitId: string) {
   };
   const target = draft?.targetId ? game.units[draft.targetId] : undefined;
   const enemies = Object.values(game.units).filter(
-    (u) => u.owner !== unit.owner && aliveModels(game, u).length,
+    (u) => opposed(game, u.owner, unit.owner) && aliveModels(game, u).length,
   );
   const nearest = enemies.sort(
     (a, b) => unitDistance([m], aliveModels(game, a)) - unitDistance([m], aliveModels(game, b)),

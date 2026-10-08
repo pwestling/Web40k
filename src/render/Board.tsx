@@ -61,6 +61,7 @@ import { say, useTalk, type Said } from "../talk/talk";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
+import { opposed, sidePlayers, zoneSlice } from "../core/teams";
 
 /**
  * World axes: x = table width, z = table depth, y = up. One unit is one inch.
@@ -630,7 +631,7 @@ function Scene() {
       if (from)
         for (const u of Object.values(game.units)) {
           const models = aliveModels(game, u);
-          if (u.owner === from.owner || !models.length) continue;
+          if (!opposed(game, u.owner, from.owner) || !models.length) continue;
           const sight = unitSight(game, aliveModels(game, from), u);
           if (u.id === hoverUnit) addLines(sight);
           const n = models.length;
@@ -817,9 +818,19 @@ function Scene() {
         <meshStandardMaterial color="#4b5a3a" />
       </mesh>
       <InchGrid width={width} depth={depth} />
-      {game.zones.map((z) => (
-        <ZoneShape key={z.seat} points={z.points} color={seatColor(game, z.seat)} />
-      ))}
+      {/* In a team game each teammate's share of the side's zone shows in their own colour. */}
+      {game.zones.flatMap((z) => {
+        const team = sidePlayers(game, z.seat);
+        return team.length > 1
+          ? team.map((p, i) => (
+              <ZoneShape
+                key={`${z.seat}-${p.id}`}
+                points={zoneSlice(z.points, i, team.length)}
+                color={p.color}
+              />
+            ))
+          : [<ZoneShape key={z.seat} points={z.points} color={seatColor(game, z.seat)} />];
+      })}
       {terrain.map((t) => (
         <Terrain
           key={t.id}
@@ -940,7 +951,7 @@ function Scene() {
       {/* Engagement range around enemies while dragging. */}
       {dragUnit &&
         Object.values(game.models)
-          .filter((m) => !m.destroyed && m.owner !== dragUnit.owner)
+          .filter((m) => !m.destroyed && opposed(game, m.owner, dragUnit.owner))
           .map((m) => <Ring key={m.id} model={m} radius={ENGAGEMENT_RANGE} color="#f97316" opacity={0.25} />)}
 
       {/* Weapon range around each carrier. */}

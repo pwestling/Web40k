@@ -1,5 +1,6 @@
 import { applyEvent, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
+import { opposed } from "../core/teams";
 
 /** A moment worth jumping to in a replay. */
 export interface Highlight {
@@ -113,7 +114,7 @@ export function readGame(
         const gap = Math.min(
           Infinity,
           ...Object.values(state.units)
-            .filter((u) => u.owner !== unit.owner)
+            .filter((u) => opposed(state, u.owner, unit.owner))
             .map((u) => aliveModels(state, u))
             .filter((ms) => ms.length)
             .map((ms) => unitDistance(mine, ms)),

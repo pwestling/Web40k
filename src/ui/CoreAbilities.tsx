@@ -4,6 +4,7 @@ import type { GameState, Unit } from "../core";
 import { useCanControl, useStore } from "../store";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
+import { opposed } from "../core/teams";
 
 /** Rule ids the unit's imported abilities bound to, with their parameters. */
 function boundRules(game: GameState, unit: Unit) {
@@ -28,7 +29,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
   const deploying = game.turn.round === 0;
   const scouts = has("scouts");
   const scoutInches = Number(scouts?.param.x ?? 6);
-  const enemies = Object.values(game.units).filter((u) => u.owner !== unit.owner);
+  const enemies = Object.values(game.units).filter((u) => opposed(game, u.owner, unit.owner));
   const nearest = status.arrived
     ? unitDistance(
         aliveModels(game, unit),

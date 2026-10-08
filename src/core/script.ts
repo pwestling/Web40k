@@ -9,6 +9,7 @@ import type { GeoQuery, Id } from "./content/schema";
 import { currentSlot, systemOf } from "./content/turn";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import type { GameState, PlayerId } from "./types";
+import { opposed } from "./teams";
 
 /**
  * Code procedures (the game modules spec, "Game module API"): a rule written
@@ -382,7 +383,7 @@ export function gameView(state: GameState, module: Id): GameView {
       const me = state.units[id];
       const range = system.constants?.engagementRange ?? 1;
       return Object.values(state.units)
-        .filter((u) => me && u.owner !== me.owner && unit(u.id)?.models.length)
+        .filter((u) => me && opposed(state, u.owner, me.owner) && unit(u.id)?.models.length)
         .filter((u) => view.distance(id, u.id) <= range + 1e-4)
         .map((u) => u.id);
     },

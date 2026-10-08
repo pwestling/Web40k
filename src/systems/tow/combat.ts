@@ -3,6 +3,7 @@ import { blockModels, inArc, rankCount } from "../../core/regiment";
 import type { GameState, Model, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { towRanks } from "./troops";
+import { opposed } from "../../core/teams";
 
 /**
  * Close combat, charge reactions, break tests and Panic for rank-and-flank
@@ -220,7 +221,7 @@ function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, vo
 function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
   let best: { e: Unit; d: number } | undefined;
   for (const e of Object.values(state.units)) {
-    if (e.owner === u.owner || e.status?.fleeing || !alive(state, e).length) continue;
+    if (!opposed(state, e.owner, u.owner) || e.status?.fleeing || !alive(state, e).length) continue;
     const d = unitGap(state, u, e);
     if (!best || d < best.d) best = { e, d };
   }
@@ -558,7 +559,12 @@ function enemies(view: GameView, unitId: string, within: number, fleeing = true)
   const me = view.state.units[unitId];
   if (!me) return [];
   return Object.values(view.state.units)
-    .filter((u) => u.owner !== me.owner && alive(view.state, u).length && (fleeing || !u.status?.fleeing))
+    .filter(
+      (u) =>
+        opposed(view.state, u.owner, me.owner) &&
+        alive(view.state, u).length &&
+        (fleeing || !u.status?.fleeing),
+    )
     .map((u) => ({ u, d: unitGap(view.state, me, u) }))
     .filter((x) => x.d <= within)
     .sort((x, y) => x.d - y.d);

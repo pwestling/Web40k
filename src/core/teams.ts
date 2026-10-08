@@ -1,4 +1,4 @@
-import type { GameState, Player, PlayerId } from "./types";
+import type { GameState, Player, PlayerId, Vec2 } from "./types";
 
 /**
  * Team games (2v2 and up): a side is a seat, and several players can sit at
@@ -49,4 +49,52 @@ export function shareSideResources(before: GameState, after: GameState): GameSta
       if (p.id !== changed.id && resources[p.id] !== value) resources = { ...resources, [p.id]: value! };
   }
   return resources === after.resources ? after : { ...after, resources };
+}
+
+/**
+ * Whether two players are on opposite sides. Teammates (players at the same
+ * seat) are allies: they don't engage, target or charge each other. A player
+ * with no seat yet only counts as their own side.
+ */
+export function opposed(state: GameState, a: PlayerId | undefined, b: PlayerId | undefined): boolean {
+  if (a === b) return false;
+  const sa = a === undefined ? undefined : state.players[a]?.seat;
+  const sb = b === undefined ? undefined : state.players[b]?.seat;
+  return sa === undefined || sb === undefined || sa !== sb;
+}
+
+/** A player's place at their side: the i-th of n teammates (0 of 1 when alone). */
+export function teamShare(state: GameState, player: PlayerId): { index: number; of: number } {
+  const seat = state.players[player]?.seat;
+  const team = seat === undefined ? [] : sidePlayers(state, seat);
+  const index = team.findIndex((p) => p.id === player);
+  return index < 0 ? { index: 0, of: 1 } : { index, of: team.length };
+}
+
+/**
+ * The i-th of n slices of a deployment zone, cut across the table's width, so
+ * teammates each deploy in their own part of their side's zone.
+ */
+export function zoneSlice(points: Vec2[], index: number, of: number): Vec2[] {
+  if (of <= 1 || points.length < 3) return points;
+  const xs = points.map((p) => p.x);
+  const lo = Math.min(...xs);
+  const w = (Math.max(...xs) - lo) / of;
+  return clipX(clipX(points, lo + w * index, 1), lo + w * (index + 1), -1);
+}
+
+/** Sutherland–Hodgman against x >= at (dir 1) or x <= at (dir -1). */
+function clipX(poly: Vec2[], at: number, dir: 1 | -1): Vec2[] {
+  const inside = (p: Vec2) => (p.x - at) * dir >= -1e-9;
+  const out: Vec2[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i]!;
+    const b = poly[(i + 1) % poly.length]!;
+    if (inside(a)) out.push(a);
+    if (inside(a) !== inside(b)) {
+      const t = (at - a.x) / (b.x - a.x);
+      out.push({ x: at, y: a.y + (b.y - a.y) * t });
+    }
+  }
+  return out;
 }

@@ -2,6 +2,7 @@ import { blockFrame, templateHits, unitCentre, type GameState, type Unit, type V
 import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { useGame } from "./hooks";
+import { opposed } from "../core/teams";
 
 /**
  * Templates and special dice, for systems that use them: lay a blast, flame
@@ -138,7 +139,10 @@ function nearestEnemy(game: GameState, unit: Unit): Unit | undefined {
   const c = unitCentre(game, unit);
   let best: { u: Unit; d: number } | undefined;
   for (const u of Object.values(game.units)) {
-    if (u.owner === unit.owner || !u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed))
+    if (
+      !opposed(game, u.owner, unit.owner) ||
+      !u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed)
+    )
       continue;
     const p = unitCentre(game, u);
     const d = Math.hypot(p.x - c.x, p.y - c.y);

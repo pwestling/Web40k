@@ -1,3 +1,4 @@
+import { teamShare } from "../../core/teams";
 import {
   baseSizeInches,
   blockOffsets,
@@ -45,6 +46,8 @@ export function spawnIntents(
   const hx = state.table.width / 2;
   const hy = state.table.depth / 2;
   const zone = state.zones.find((z) => z.seat === seat)?.points;
+  // A teammate's units start in their own slice of the side's zone.
+  const share = teamShare(state, owner);
   const taken: { x: number; y: number; r: number }[] = Object.values(state.models)
     .filter((m) => !m.destroyed)
     .map((m) => {
@@ -54,7 +57,7 @@ export function spawnIntents(
 
   return units.map((u, ui) => {
     // Spread across the zone: each unit looks first at its own share of the width.
-    const where: Where = { hx, hy, sign, zone, prefer: (ui + 0.5) / units.length };
+    const where: Where = { hx, hy, sign, zone, prefer: (share.index + (ui + 0.5) / units.length) / share.of };
     if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, where, army);
     const size = baseSizeInches(u.base);
     const step = Math.max(size.width, size.depth) + GAP;
