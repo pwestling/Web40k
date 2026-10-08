@@ -40,6 +40,7 @@ export function fsdChecks(view: GameView): Warning[] {
       const near = Object.values(state.units).some(
         (e) =>
           opposed(state, e.owner, unit.owner) &&
+          !e.status?.reserves &&
           aliveModels(state, e).some((o) => alive.some((m) => baseToBaseDistance(m, o) < 2 * aoc)),
       );
       if (near)
@@ -87,7 +88,8 @@ function areaOfControl(view: GameView, unit: Unit, alive: Model[], aoc: number):
   const state = view.state;
   const started = alive.map((m) => ({ ...m, position: m.phaseStart ?? m.position }));
   for (const enemy of Object.values(state.units)) {
-    if (!opposed(state, enemy.owner, unit.owner) || enemy.status?.pinned) continue;
+    // Pinned enemies and those still in reserve project no area of control (UX 293).
+    if (!opposed(state, enemy.owner, unit.owner) || enemy.status?.pinned || enemy.status?.reserves) continue;
     const theirs = aliveModels(state, enemy);
     if (!theirs.length || !view.visible(enemy.id, unit.id)) continue;
     const near = (ms: Model[]) => ms.some((m) => theirs.some((e) => baseToBaseDistance(m, e) <= aoc));

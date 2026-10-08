@@ -349,7 +349,7 @@ function runTriggers(
   let next = state;
   for (const unit of Object.values(state.units)) {
     const alive = unit.modelIds.map((id) => state.models[id]).filter((m) => m && !m.destroyed) as Model[];
-    if (!alive.length || unit.status?.reserve) continue;
+    if (!alive.length || unit.status?.reserves) continue;
     for (const a of unit.sheet?.abilities ?? []) {
       const tr = a.auto?.trigger;
       if (!tr || tr.phase !== slot.id || tr.at !== at) continue;

@@ -235,7 +235,7 @@ export function waitingOn(
     const react: BotMove[] = [];
     if (ctx.rng() < 0.4)
       for (const u of shuffle(ctx.rng, Object.values(state.units)))
-        if (seat.some((p) => p.id === u.owner) && alive(state, u))
+        if (seat.some((p) => p.id === u.owner) && alive(state, u) && !u.status?.reserves)
           for (const o of unitActions(state, u.id))
             if (o.ok && o.def.reactTo)
               react.push({

@@ -489,6 +489,8 @@ function SystemActions({ unit }: { unit: Unit }) {
             onClick={() => click(o)}
           >
             {gameText(o.def.name)}
+            {/* It asks which units to command first: "Activate…" says a choice comes (UX 295). */}
+            {o.commands && o.commands.count > 0 && o.commands.candidates.length > 0 ? "…" : ""}
             {o.move !== undefined ? ` ${o.move}` : ""}
             {o.def.activates !== undefined && typeof o.def.activates === "number" && !o.def.reactTo
               ? " (" + tn(o.def.activates, "{n} action", "{n} actions") + ")"
@@ -566,7 +568,9 @@ function PrepareButton({ unit, weaponId }: { unit: Unit; weaponId: string }) {
   const { dispatch } = useStore();
   if (!unit.status?.acting) return null;
   const o = unitActions(game, unit.id, { weapon: weaponId }).find((x) => x.def.prepares);
-  if (!o || o.why === "Not for this weapon") return null;
+  // Once used this round, or while its token is down, there's nothing to press (UX 294).
+  if (!o || o.why === "Not for this weapon" || o.why === "Weapon already used this round") return null;
+  if (unit.status?.[`prepared.${weaponId}`]) return null;
   return (
     <div className="actions">
       <button
@@ -1113,11 +1117,23 @@ export function ReactionPrompt() {
   const deciding = Object.values(game.players).find((p) => p.seat === pending.seat);
   const mine = deciding ? canControl(deciding.id) : false;
   const reactors = Object.values(game.units).flatMap((u) => {
-    if (game.players[u.owner]?.seat !== pending.seat) return [];
+    // Units still in reserve aren't on the table to react (UX 293).
+    if (game.players[u.owner]?.seat !== pending.seat || u.status?.reserves) return [];
     const o = unitActions(game, u.id).find((x) => x.def.reactTo && x.ok);
     return o ? [{ unit: u, option: o }] : [];
   });
   const actorName = actor?.name ?? t("A unit");
+  // Prepared tokens on the deciding side: their effects may apply now (UX 294).
+  const prepared = Object.values(game.units).flatMap((u) =>
+    game.players[u.owner]?.seat !== pending.seat
+      ? []
+      : Object.keys(u.status ?? {})
+          .filter((k) => k.startsWith("prepared.") && u.status?.[k])
+          .flatMap((k) => {
+            const w = u.sheet?.weapons[k.slice("prepared.".length)];
+            return w ? [{ unit: u, weapon: w }] : [];
+          }),
+  );
   const what = target
     ? t("{unit}: {action} at {target}", { unit: actorName, action, target: target.name })
     : `${actorName}: ${action}`;
@@ -1158,6 +1174,16 @@ export function ReactionPrompt() {
           {what}. {t("Waiting on {name} to decide whether to react.", { name: who })}
         </p>
       )}
+      {prepared.map(({ unit, weapon }) => (
+        <p key={`${unit.id}/${weapon.id}`} className="muted small">
+          {t("{unit}'s {weapon} is prepared: check whether {actor} is within its range of {range}.", {
+            unit: unit.name,
+            weapon: weapon.name,
+            actor: actorName,
+            range: weapon.chars.RANGE ?? weapon.chars.Range ?? "–",
+          })}
+        </p>
+      ))}
       {reactor && mine && (
         <button onClick={() => dispatch({ type: "reaction/pass" }, deciding?.id)}>
           {t("Finish reaction")}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, type GameState, type Model, type UnitSheet } from "../core";
-import { firstAnswers, tableAttack } from "./attack";
+import { firstAnswers, stillnessMatters, tableAttack } from "./attack";
 
 const m = (
   id: string,
@@ -98,5 +98,35 @@ describe("table companion attacks (#37)", () => {
     expect(far.spec.damage).toBe("D6");
     const covered = tableAttack(st, "a", "rifle", "t", { ...firstAnswers(st, "a", "rifle"), cover: true })!;
     expect(covered.notes).toContain("Cover: −1 to hit");
+  });
+
+  it("asks whether the unit stayed still only when a rule cares (Heavy, UX 297)", () => {
+    let st = table();
+    expect(stillnessMatters(st, "a", "rifle", "t")).toBe(false);
+    const u = st.units.a!;
+    const rifle = u.sheet!.weapons.rifle!;
+    st = {
+      ...st,
+      units: {
+        ...st.units,
+        a: {
+          ...u,
+          sheet: {
+            ...u.sheet!,
+            weapons: { ...u.sheet!.weapons, rifle: { ...rifle, keywords: [...rifle.keywords, "Heavy"] } },
+          },
+        },
+      },
+    };
+    expect(stillnessMatters(st, "a", "rifle", "t")).toBe(true);
+    const still = tableAttack(st, "a", "rifle", "t", {
+      ...firstAnswers(st, "a", "rifle"),
+      stationary: true,
+    })!;
+    const moved = tableAttack(st, "a", "rifle", "t", {
+      ...firstAnswers(st, "a", "rifle"),
+      stationary: false,
+    })!;
+    expect(still.spec.hitMod).toBe(moved.spec.hitMod + 1);
   });
 });

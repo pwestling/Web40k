@@ -5,7 +5,14 @@ import { useStore, type AttackDraft } from "../store";
 import { aliveModels, mainWeapon } from "../systems/wh40k/rules";
 import { useGame } from "../ui/hooks";
 import { SpecEditor } from "../ui/AttackPanel";
-import { firstAnswers, tableAttack, weaponModels, aurasFor, type TableAnswers } from "./attack";
+import {
+  firstAnswers,
+  stillnessMatters,
+  tableAttack,
+  weaponModels,
+  aurasFor,
+  type TableAnswers,
+} from "./attack";
 import { RollButton } from "./RealDice";
 
 /**
@@ -104,6 +111,12 @@ export function TableAttackSetup({ draft }: { draft: AttackDraft }) {
                 {t("Target in cover")}
               </Toggle>
             </>
+          )}
+          {/* Heavy, Braced Firing and the like: the table can't tell, so ask (UX 297). */}
+          {weaponId && stillnessMatters(game, attacker.id, weaponId, draft.targetId) && (
+            <Toggle on={a.stationary ?? !attacker.status?.moved} set={(stationary) => set({ stationary })}>
+              {t("{unit} stayed still this turn", { unit: attacker.name })}
+            </Toggle>
           )}
           {aurasFor(game, attacker.id, draft.targetId).map((q) => (
             <Toggle

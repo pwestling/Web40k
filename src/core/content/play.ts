@@ -475,7 +475,9 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
     if (command) {
       const count = safeNum(command.count, ctx);
       const candidates = Object.values(state.units).filter((u) => {
-        if (u.id === unit.id || u.owner !== unit.owner || u.status?.acting) return false;
+        // Units in reserve aren't on the table to be commanded (UX 293).
+        if (u.id === unit.id || u.owner !== unit.owner || u.status?.acting || u.status?.reserves)
+          return false;
         const it = unitView(state, system, u);
         if (!it.models.length) return false;
         return (
@@ -563,7 +565,7 @@ export function reactionSeat(state: GameState, trigger: ActionTrigger): number |
     const where = def.reactTo!.where;
     if (def.reactTo!.event !== "action.declared" || (where !== undefined && !safeBool(where, ctx))) continue;
     for (const u of Object.values(state.units)) {
-      if (seatOf(state, u.owner) !== otherSeat) continue;
+      if (seatOf(state, u.owner) !== otherSeat || u.status?.reserves) continue;
       if (unitActions(probe, u.id).some((o) => o.def.id === def.id && o.ok)) return otherSeat;
     }
   }

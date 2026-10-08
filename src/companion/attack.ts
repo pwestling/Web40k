@@ -28,6 +28,34 @@ export interface TableAnswers {
   cover: boolean;
   /** Auras the players say reach (keys from `aurasFor`). */
   auras?: string[];
+  /** The attacker stayed still this turn (Heavy, Braced Firing); unset: as its card says. */
+  stationary?: boolean;
+}
+
+/** The unit as having moved this turn, or not. */
+function withMoved(state: GameState, unitId: UnitId, moved: boolean): GameState {
+  const u = state.units[unitId];
+  if (!u) return state;
+  const { moved: _m, ...status } = u.status ?? {};
+  return {
+    ...state,
+    units: { ...state.units, [unitId]: { ...u, status: moved ? { ...status, moved: true } : status } },
+  };
+}
+
+/**
+ * Whether staying still changes this attack (Heavy, Braced Firing and the
+ * like), so the companion asks (UX 297): the attack worked out both ways.
+ */
+export function stillnessMatters(
+  state: GameState,
+  attackerId: UnitId,
+  weaponId: string,
+  targetId: UnitId,
+): boolean {
+  const still = previewAttack(withMoved(state, attackerId, false), attackerId, weaponId, targetId);
+  const moved = previewAttack(withMoved(state, attackerId, true), attackerId, weaponId, targetId);
+  return !!still && !!moved && JSON.stringify(still.spec) !== JSON.stringify(moved.spec);
 }
 
 /** An automated aura (#38) that could reach the attacker or the target, if its source is near enough. */
@@ -135,7 +163,10 @@ export function tableAttack(
     const y = near ? -(front + radius(m) + gap) : -(front + radius(m) + reach + 50);
     models[m.id] = { ...m, position: { x: (i % Math.max(1, targets.length)) * 3, y }, z: 0, facing: 0 };
   });
-  const stand: GameState = withAuras({ ...state, models, terrain: [] }, answers, attackerId, targetId);
+  const placed: GameState = { ...state, models, terrain: [] };
+  const still =
+    answers.stationary === undefined ? placed : withMoved(placed, attackerId, !answers.stationary);
+  const stand: GameState = withAuras(still, answers, attackerId, targetId);
   const ignoresCover = (previewAttack(stand, attackerId, weaponId, targetId)?.weaponRules ?? []).some(
     (r) => r.rule === "ignoresCover",
   );

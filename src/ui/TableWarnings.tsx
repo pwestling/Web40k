@@ -62,6 +62,8 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
   );
   return (
     <li className={w.severity}>
+      {/* The check's name as a label ahead of the sentence, not trailing it (UX 331). */}
+      <span className="check-label small">{checkName(game, w.checkId)}</span>{" "}
       {onShow ? (
         <button className="link" title={t("Show this unit")} onClick={() => onShow(w)}>
           {text}
@@ -69,7 +71,6 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
       ) : (
         <span>{text}</span>
       )}
-      <span className="muted small"> {checkName(game, w.checkId)}</span>
       <span className="row">
         {yours && unit && (
           <button

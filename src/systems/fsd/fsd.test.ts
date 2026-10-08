@@ -470,6 +470,27 @@ describe("Full Spectrum Dominance in play", () => {
     expect(s.pools?.p1?.readyDice).toEqual([1]);
   });
 
+  it("a unit in reserve can't be commanded and projects no area of control (UX 293)", () => {
+    let s = setup();
+    const boss = unitNamed(s, "Command Team", "p1");
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    s = place(s, boss.id, -6, 8);
+    s = place(s, squad.id, -6, 10);
+    s = play(s, { type: "unit/reserve", id: squad.id, reserve: true }, "p1");
+    s = toActivations(s);
+    const activate = unitActions(s, boss.id).find((o) => o.def.id === "activate")!;
+    expect(activate.commands?.candidates ?? []).not.toContain(squad.id);
+    // An enemy in reserve right beside a moving unit: no area of control warning from it.
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    let t = play(s, { type: "unit/reserve", id: gang.id, reserve: true }, "p2");
+    t = place(t, gang.id, -6, 6);
+    expect(
+      checks(t)
+        .map((w) => w.message)
+        .join("\n"),
+    ).not.toMatch(/Raider Gang's area of control/);
+  });
+
   it("deploys a unit from reserve as an activation with one action and no die", () => {
     let s = setup();
     const squad = unitNamed(s, "Rifle Squad", "p1");
