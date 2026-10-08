@@ -2108,6 +2108,8 @@ body.broadcast .caption {
     bottom: 68px;
     width: auto;
     max-height: 45vh;
+    /* Opaque: name plates on the table mustn't show through (UX 164). */
+    background: #111318;
     overflow-y: auto;
   }
   .hud.collapsed,
@@ -2143,6 +2145,19 @@ body.broadcast .caption {
   }
   .caption {
     max-width: calc(100vw - 16px);
+  }
+  /* Everything on the replay bar fits, What if… included (UX 152). */
+  .replaybar {
+    gap: 4px;
+  }
+  .replaybar .track,
+  .replaybar input[type="range"] {
+    min-width: 0;
+  }
+  .replaybar .where {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   /* Below the phase bar, which wraps to two rows here (UX 153). */
   .panel.whatnow,
@@ -2438,35 +2453,41 @@ body.showcase
   min-width: 0;
 }
 
-/* Voice at the table */
-.talk-dock .panel.voice {
-  position: static;
-  gap: 4px;
-  padding: 6px 8px;
+/* Voice at the table: 🎙 in the talk bar's row, the rest in a pop-over above it (UX 166). */
+.voice-controls {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
 }
-.panel.voice .row {
-  gap: 4px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.panel.voice select {
-  font-size: 0.8rem;
-}
-.panel.voice .ptt {
-  flex: 1;
+.voice-controls .mic {
   user-select: none;
   touch-action: none;
 }
-.panel.voice .ptt.live {
+.voice-controls .mic.on {
+  border-color: #4b5563;
+}
+.voice-controls .mic.live {
   background: #b45309;
   border-color: #f59e0b;
-  color: #fff;
 }
-.panel.voice .open-mic {
-  flex: 1;
-  font-size: 0.85rem;
-  padding: 3px 6px;
-  border-radius: 6px;
+.voice-controls .voice-more {
+  padding: 0 4px;
+  font-size: 0.8rem;
+}
+.panel.voice-pop {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: -44px;
+  width: 280px;
+  gap: 6px;
+  z-index: 30;
+}
+.panel.voice-pop .close {
+  align-self: flex-end;
+  margin-bottom: -6px;
+}
+.panel.voice-pop select {
+  font-size: 0.8rem;
 }
 .voice-people {
   margin: 0;
@@ -2551,4 +2572,13 @@ body.showcase
   margin-top: 4px;
   padding-top: 6px;
   border-top: 1px solid #2d3340;
+}
+/* Room for 🎙 in the talk bar's row (UX 166). */
+.panel.talk > .row:first-child > button,
+.panel.talk .voice-controls button {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.panel.talk > .row:first-child {
+  gap: 3px;
 }
