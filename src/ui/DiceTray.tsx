@@ -115,13 +115,35 @@ export function clearTray(): void {
   current?.reset();
 }
 
+/** Marbled dice: turbulence veins, one of a few seeds each, so no two dice in a roll match. */
+const MARBLES = 16;
+const marbles = new Map<number, string>();
+function marble(seed: number): string {
+  let url = marbles.get(seed);
+  if (!url) {
+    const svg =
+      `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'>` +
+      `<filter id='m'><feTurbulence type='turbulence' baseFrequency='0.022 0.045' numOctaves='3' seed='${seed + 1}'/>` +
+      // Greys from the noise, then light veins along its ridges with a darker edge: overlaid on the body colour.
+      `<feColorMatrix values='0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1'/>` +
+      `<feComponentTransfer><feFuncR type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/>` +
+      `<feFuncG type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/>` +
+      `<feFuncB type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/></feComponentTransfer>` +
+      `</filter><rect width='100%' height='100%' filter='url(#m)' transform='rotate(${(seed * 47) % 360} 48 48)'/></svg>`;
+    url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    marbles.set(seed, url);
+  }
+  return url;
+}
+
 /** One die's DOM in a set's colours and finish (PX-5b); a marbled die gets its own swirl. */
 export function makeDie(look: DiceSet, size: number): HTMLDivElement {
   const el = div(`die finish-${look.finish}`);
   el.style.setProperty("--c", look.body);
   el.style.setProperty("--p", look.pip);
   el.style.setProperty("--s", `${size}px`);
-  if (look.finish === "marbled") el.style.setProperty("--a", `${Math.floor(Math.random() * 360)}deg`);
+  if (look.finish === "marbled")
+    el.style.setProperty("--marble", marble(Math.floor(Math.random() * MARBLES)));
   el.innerHTML = `<div class="shadow"></div><div class="body">${'<i class="pip"></i>'.repeat(9)}</div>`;
   return el;
 }

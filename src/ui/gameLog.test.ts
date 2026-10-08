@@ -146,3 +146,28 @@ describe("lossText", () => {
     expect(lossText(state([]), [])).toBe("no losses");
   });
 });
+
+describe("dice picks", () => {
+  it("shows only the last of a run of picks by one player (PX-5 review)", () => {
+    const pick = (finish: "solid" | "marbled"): [string, GameEvent] => [
+      "a",
+      { type: "player/dice", player: "a", dice: { body: "#112233", pip: "#ffffff", finish } },
+    ];
+    const log = buildLog(
+      record([
+        join("a", "Ann", 0),
+        pick("solid"),
+        pick("marbled"),
+        pick("solid"),
+        join("b", "Bo", 1),
+        pick("marbled"),
+      ]),
+    );
+    expect(log.map((l) => l.text)).toEqual([
+      "Ann joined",
+      "Ann picked new dice",
+      "Bo joined",
+      "Ann picked new dice",
+    ]);
+  });
+});

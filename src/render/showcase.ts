@@ -17,3 +17,6 @@ export const useShowcase = create<{ on: boolean; shot: Shot | null }>(() => ({ o
 
 /** The showcase has the camera: the director and a followed commentator stand aside. */
 export const showcasing = (): boolean => useShowcase.getState().on;
+
+/** A game started before the table had loaded (the one-click demo): its showcase is still owed when it mounts. */
+export const owed = { initial: null as object | null };

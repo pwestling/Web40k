@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DiceSet, PlayerId } from "../core";
 import { useStore } from "../store";
 import { diceLook, FINISHES, PRESETS } from "./diceSets";
@@ -20,6 +20,11 @@ export function DicePicker({ player }: { player: PlayerId }) {
   // Dragging a colour picker sends a stream of colours: settle on one before it goes in the log.
   const [draft, setDraft] = useState<DiceSet | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Three dice of the current set waiting in the tray, before any pick.
+  const first = useRef(p ? diceLook(p, p.color) : null);
+  useEffect(() => {
+    if (first.current) lay(tray.current, first.current, false);
+  }, []);
   if (!p) return null;
   const preset = p.dice ? PRESETS.findIndex((x) => sameSet(x.dice, p.dice!)) : -1;
   const value = custom || (p.dice && preset < 0) ? CUSTOM : p.dice ? String(preset) : COLOUR;
@@ -29,19 +34,8 @@ export function DicePicker({ player }: { player: PlayerId }) {
     tryOut(diceLook(dice ? { color: p.color, dice } : p, p.color));
   };
   const tryOut = (look: DiceSet) => {
-    const box = tray.current;
-    if (!box) return;
-    box.innerHTML = "";
     rattle();
-    [0, 1, 2].forEach((i) => {
-      const el = makeDie(look, 30);
-      el.style.left = `${14 + i * 44 + Math.random() * 10}px`;
-      el.style.animationDelay = `${i * 60}ms`;
-      el.classList.add("rolling");
-      showFace(el, 1 + Math.floor(Math.random() * 6), 6);
-      box.append(el);
-      setTimeout(() => click(0.6, 1 + i * 0.1, 0), 520 + i * 60);
-    });
+    lay(tray.current, look, true);
   };
   const set = draft ?? p.dice ?? { body: p.color, pip: "#10141a", finish: "solid" as const };
   const pickSoon = (dice: DiceSet) => {
@@ -112,6 +106,23 @@ export function DicePicker({ player }: { player: PlayerId }) {
       />
     </div>
   );
+}
+
+/** Three dice in the try-out tray: rolled in with clicks, or just sitting there. */
+function lay(box: HTMLDivElement | null, look: DiceSet, roll: boolean): void {
+  if (!box) return;
+  box.innerHTML = "";
+  [0, 1, 2].forEach((i) => {
+    const el = makeDie(look, 30);
+    el.style.left = `${14 + i * 44 + (roll ? Math.random() * 10 : 5)}px`;
+    if (roll) {
+      el.style.animationDelay = `${i * 60}ms`;
+      el.classList.add("rolling");
+      setTimeout(() => click(0.6, 1 + i * 0.1, 0), 520 + i * 60);
+    }
+    showFace(el, roll ? 1 + Math.floor(Math.random() * 6) : [6, 3, 5][i]!, 6);
+    box.append(el);
+  });
 }
 
 const sameSet = (a: DiceSet, b: DiceSet) =>
