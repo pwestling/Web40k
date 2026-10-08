@@ -1,7 +1,7 @@
 import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
-import { unitActions } from "../core/content/play";
+import { placedKey, unitActions, weaponSlots } from "../core/content/play";
 import { currentSlot, phaseName, turnView } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { useStore } from "../store";
@@ -22,7 +22,7 @@ export function whatNow(
   game: GameState,
   me: string | null,
   hotseat: boolean,
-): { head: string; lines: string[] } {
+): { head: string; lines: string[]; units?: { id: string; text: string }[] } {
   const raw = phaseName(game) ?? "";
   // Shown in this device's language (UX 277); the checks below read the English name.
   const phase = gameText(raw);
@@ -50,6 +50,23 @@ export function whatNow(
       head: t("{phase}: a reaction", { phase }),
       lines: [t("A player can react now. The panel at the bottom right shows what.")],
     };
+  // Placing dice on cards (FSD's Pre-assign, Cleanup): both players at once (UX 261).
+  if (currentSlot(game)?.placeDice) {
+    const slots = placeList(game, me, hotseat);
+    return {
+      head: t("{phase}: place dice on cards", { phase }),
+      lines: [
+        t(
+          "Put dice from your pool on the cards that take their faces. A die on a card waits there for that action.",
+        ),
+        ...(slots.length
+          ? [t("Cards that take dice (click one to open it):")]
+          : [t("None of your cards take dice now.")]),
+        t("When both players are done, press ▶ at the top."),
+      ],
+      units: slots,
+    };
+  }
   if (!mine)
     return {
       head: t("{side}'s turn · {phase}", { side: who, phase }),
@@ -117,6 +134,29 @@ export function whatNow(
   return { head: t("{side}'s turn · {phase}", { side: who, phase }), lines };
 }
 
+const faces = (s: { min: number; max: number }) => (s.min === s.max ? `${s.min}` : `${s.min}–${s.max}`);
+
+/** "Lancer Tank · Light Cannon takes 4–6" for each weapon card the player can put dice on now. */
+function placeList(game: GameState, me: string | null, hotseat: boolean): { id: string; text: string }[] {
+  const out: { id: string; text: string }[] = [];
+  for (const u of Object.values(game.units)) {
+    if (!hotseat && u.owner !== me) continue;
+    if (!u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed)) continue;
+    for (const w of Object.values(u.sheet?.weapons ?? {})) {
+      const ws = weaponSlots(game, u.id, w.id);
+      if (!ws || ws.off || !ws.slots.length) continue;
+      const on = game.placed?.[u.owner]?.[placedKey(u.id, w.id)]?.length ?? 0;
+      const text = t("{unit} · {weapon} takes {faces}", {
+        unit: u.name,
+        weapon: w.name,
+        faces: ws.slots.map(faces).join(", "),
+      });
+      out.push({ id: u.id, text: on ? `${text} ${t("(placed: {n})", { n: on })}` : text });
+    }
+  }
+  return out;
+}
+
 /** Some enemy is within reach of one of the unit's ranged weapons (true when its weapons can't be read). */
 function inReach(game: GameState, unit: Unit): boolean {
   const ranged = Object.values(unit.sheet?.weapons ?? {}).filter((w) => w.kind === "ranged");
@@ -146,7 +186,7 @@ export function WhatNow() {
         {t("What can I do now?")}
       </button>
     );
-  const { head, lines } = whatNow(game, me, hotseat);
+  const { head, lines, units } = whatNow(game, me, hotseat);
   return (
     <div className="panel whatnow">
       <div className="row spread">
@@ -158,6 +198,17 @@ export function WhatNow() {
       {lines.map((l) => (
         <p key={l}>{l}</p>
       ))}
+      {units && units.length > 0 && (
+        <ul className="whatnow-cards">
+          {units.map((u) => (
+            <li key={u.text}>
+              <button className="link" onClick={() => useStore.getState().select(u.id)}>
+                {u.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="muted small">
         {t("Press")} <kbd>?</kbd> {t("for all the controls.")}
       </p>

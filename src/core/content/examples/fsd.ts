@@ -480,6 +480,7 @@ export const fsd: GameSystem = {
       by: "player",
       side: "active",
       custom: true,
+      endsTurn: true,
       phases: ["activations"],
       cost: [{ resource: "readyDice", amount: 0 }],
     },

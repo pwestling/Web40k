@@ -12,6 +12,7 @@ import { manualAbilities } from "../../core/content/player";
 import { getSystem } from "../../core/content/systems";
 import { coverage, recognize } from "./recognize";
 import { sampleRoster } from "./sample";
+import { aurasFor, firstAnswers, tableAttack } from "../../companion/attack";
 
 const next = (s: GameState) => applyEvent(s, { type: "turn/next", seed: 1 });
 const system = getSystem("forty-k-11");
@@ -242,6 +243,18 @@ describe("automated abilities at the table", () => {
       ],
     });
     expect(previewAttack(far, "shooters", "gun", "targets")!.spec.hitMod).toBe(0);
+  });
+
+  it("works in Table companion mode, with the players saying which auras reach", () => {
+    let s = setup({ shooters: [volley], captain: [banner] });
+    s = automate(automate(s, "shooters", volley), "captain", banner);
+    const answers = firstAnswers(s, "shooters", "gun");
+    expect(tableAttack(s, "shooters", "gun", "targets", answers)!.spec.rerollHits).toBe("ones");
+    expect(tableAttack(s, "shooters", "gun", "targets", answers)!.spec.hitMod).toBe(0);
+    const q = aurasFor(s, "shooters", "targets");
+    expect(q.map((x) => x.ability.name)).toEqual(["Banner"]);
+    const near = { ...answers, auras: [q[0]!.key] };
+    expect(tableAttack(s, "shooters", "gun", "targets", near)!.spec.hitMod).toBe(1);
   });
 
   it("runs once per battle from when it's used until the end of the phase", () => {

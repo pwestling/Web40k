@@ -61,8 +61,8 @@ export function useTween(
   positions: Record<string, Vec2>,
   heights: Record<string, number>,
   dragging: boolean,
-  /** Trail colour for a model (its player's). */
-  colorOf: (id: string) => string = () => "#e5e7eb",
+  /** Trail colour for a model (its player's); null for none. */
+  colorOf: (id: string) => string | null = () => "#e5e7eb",
 ): { shown: Record<string, Vec2>; shownZ: Record<string, number>; trails: Trail[] } {
   const color = useRef(colorOf);
   useEffect(() => {
@@ -132,14 +132,12 @@ export function useTween(
             ...old
               .filter((t) => !t.end || now - t.end < TRAIL_FADE_MS)
               .map((t) => (t.end ? t : { ...t, end: now })),
-            ...moved.map((id) => ({
-              id,
-              from: from.p[id]!,
-              to: cur.p[id]!,
-              z: cur.z[id] ?? 0,
-              start: now,
-              color: color.current(id),
-            })),
+            ...moved.flatMap((id) => {
+              const c = color.current(id);
+              return c === null
+                ? []
+                : [{ id, from: from.p[id]!, to: cur.p[id]!, z: cur.z[id] ?? 0, start: now, color: c }];
+            }),
           ]);
         }
       }

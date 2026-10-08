@@ -495,8 +495,14 @@ function Scene() {
   }, [game.models, game.terrain, drag]);
   // What is drawn: the same, but eased between moves (watch mode).
   const trailColor = useCallback(
-    (id: string) => game.players[game.models[id]?.owner ?? ""]?.color ?? "#e5e7eb",
-    [game.players, game.models],
+    (id: string) => {
+      const m = game.models[id];
+      // Going into reserve or arriving from it isn't a move across the table: no trail (UX 268).
+      const status = m?.unitId ? game.units[m.unitId]?.status : undefined;
+      if (status?.reserves || status?.arrived) return null;
+      return game.players[m?.owner ?? ""]?.color ?? "#e5e7eb";
+    },
+    [game.players, game.models, game.units],
   );
   const { shown, shownZ, trails } = useTween(positions, heights, drag?.kind === "models", trailColor);
 

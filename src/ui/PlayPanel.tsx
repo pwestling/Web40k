@@ -110,13 +110,22 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           }
         />
       ))}
+      {!core && custom?.why === "Not in this phase" && (
+        <p className="muted small">
+          {t("No {cards} in this phase.", { cards: `${custom.def.name.toLowerCase()}s` })}
+        </p>
+      )}
       {custom?.ok && (
         <CustomStratagem
           cp={have}
           unit={payWith?.short ?? payWith?.name ?? t("CP")}
           placeholder={core ? t("Other stratagem…") : `${custom.def.name}…`}
-          onUse={(label, cost) =>
-            dispatch({ type: "player/action", action: custom.def.id, label, cost }, player.id)
+          {...(payWith?.kind === "dicePool" ? { faces: game.pools?.[player.id]?.[payWith.id] ?? [] } : {})}
+          onUse={(label, cost, dice) =>
+            dispatch(
+              { type: "player/action", action: custom.def.id, label, cost, ...(dice ? { dice } : {}) },
+              player.id,
+            )
           }
         />
       )}
@@ -199,37 +208,84 @@ function CustomStratagem({
   cp,
   unit,
   placeholder,
+  faces,
   onUse,
 }: {
   cp: number;
   unit: string;
   placeholder: string;
-  onUse: (label: string, cost: number) => void;
+  /** Paid from a dice pool: its faces, so the player picks which dice to spend (UX 269). */
+  faces?: number[];
+  onUse: (label: string, cost: number, dice?: number[]) => void;
 }) {
   const [label, setLabel] = useState("");
-  const [cost, setCost] = useState(1);
+  const [typed, setCost] = useState(1);
+  const [picked, setPicked] = useState<number[]>([]);
+  const cost = faces && picked.length ? picked.length : typed;
+  const toggle = (i: number) => setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
   return (
-    <div className="row stratagem">
-      <input placeholder={placeholder} value={label} onChange={(e) => setLabel(e.target.value)} size={14} />
-      <input type="number" min={0} max={3} value={cost} onChange={(e) => setCost(Number(e.target.value))} />
-      {unit}
-      <button
-        className="small"
-        disabled={!label.trim() || cost > cp}
-        title={
-          cost > cp
-            ? t("Not enough {resource}", { resource: unit })
-            : !label.trim()
-              ? t("Name it first")
-              : undefined
-        }
-        onClick={() => {
-          onUse(label.trim(), cost);
-          setLabel("");
-        }}
-      >
-        {t("Use")}
-      </button>
+    <div className="stratagem custom">
+      <div className="row">
+        <label className="small">
+          {t("Name")}{" "}
+          <input
+            placeholder={placeholder}
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            size={14}
+          />
+        </label>
+        {!(faces && picked.length) && (
+          <label className="small">
+            {t("Cost")}{" "}
+            <input
+              type="number"
+              min={0}
+              max={3}
+              value={typed}
+              onChange={(e) => setCost(Number(e.target.value))}
+            />{" "}
+            {unit}
+          </label>
+        )}
+        <button
+          className="small"
+          disabled={!label.trim() || cost > cp}
+          title={
+            cost > cp
+              ? t("Not enough {resource}", { resource: unit })
+              : !label.trim()
+                ? t("Name it first")
+                : undefined
+          }
+          onClick={() => {
+            onUse(label.trim(), cost, faces && picked.length ? picked : undefined);
+            setLabel("");
+            setPicked([]);
+          }}
+        >
+          {t("Use")}
+        </button>
+      </div>
+      {faces && faces.length > 0 && (
+        <div className="row small" role="group" aria-label={t("Dice to spend")}>
+          <span className="muted">
+            {picked.length
+              ? t("Spends these {resource}:", { resource: unit })
+              : t("Pick the {resource} to spend, or the lowest go:", { resource: unit })}
+          </span>
+          {faces.map((f, i) => (
+            <button
+              key={i}
+              className={`die ${picked.includes(i) ? "on" : ""}`}
+              aria-pressed={picked.includes(i)}
+              onClick={() => toggle(i)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

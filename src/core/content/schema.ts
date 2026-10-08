@@ -469,6 +469,8 @@ export interface ActionDef {
   limit?: { count: number; per: "phase" | "turn" | "round" | "battle"; perUnit?: boolean };
   /** A player action with no fixed effect: the player names it and its cost (a faction stratagem). */
   custom?: boolean;
+  /** A player action taken instead of an activation: only between activations, and the turn passes (FSD support cards). */
+  endsTurn?: boolean;
   /** Who or what the action targets, chosen by the player. */
   target?: { filter: Expr; count?: number };
   /** A movement, measured by the engine and checked against `distance`. */
@@ -558,6 +560,8 @@ export interface StatusDef {
   derived?: Expr;
   /** Effects while the status holds, e.g. objective control becomes 0. */
   effects?: Effect[];
+  /** What it means for the unit, shown on its card while it holds ("can't declare a charge"). */
+  hint?: string;
 }
 
 export interface ResourceDef {

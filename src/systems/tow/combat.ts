@@ -654,6 +654,13 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
     // Immune to Psychology (and frenzied) units won't flee.
     ...(immune(target) ? [] : [{ id: "flee", label: "Flee" }]),
   ];
+  // Only Hold left (UX 260): no question, and the log says why it can't flee.
+  if (options.length === 1) {
+    yield ctx.note(
+      `${target.name} holds: ${frenzied(target) ? "frenzied units" : "units immune to psychology"} don't flee`,
+    );
+    return;
+  }
   const pick = yield ctx.ask(
     owner(target),
     `${charger.name} charges ${target.name}. ${options
@@ -761,6 +768,7 @@ export const towActions: CodeAction[] = [
       if (!u) return "No unit";
       if (u.status?.fleeing) return "Fleeing units can't charge";
       if (u.status?.charged) return "Already charged this turn";
+      if (u.status?.stupid) return "Stupid this turn: it can't declare a charge";
       const fear = view.own[`fearTest:${u.id}`] as { round: number; seat: number } | undefined;
       const now = view.state.turn;
       if (fear && fear.round === now.round && fear.seat === now.activeSeat)

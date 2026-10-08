@@ -5,7 +5,7 @@ import { useStore, type AttackDraft } from "../store";
 import { aliveModels, mainWeapon } from "../systems/wh40k/rules";
 import { useGame } from "../ui/hooks";
 import { SpecEditor } from "../ui/AttackPanel";
-import { firstAnswers, tableAttack, weaponModels, type TableAnswers } from "./attack";
+import { firstAnswers, tableAttack, weaponModels, aurasFor, type TableAnswers } from "./attack";
 import { RollButton } from "./RealDice";
 
 /**
@@ -105,6 +105,22 @@ export function TableAttackSetup({ draft }: { draft: AttackDraft }) {
               </Toggle>
             </>
           )}
+          {aurasFor(game, attacker.id, draft.targetId).map((q) => (
+            <Toggle
+              key={q.key}
+              on={!!a.auras?.includes(q.key)}
+              set={(on) =>
+                set({ auras: on ? [...(a.auras ?? []), q.key] : (a.auras ?? []).filter((k) => k !== q.key) })
+              }
+            >
+              {t('{receiver} within {range}" of {source} ({ability})', {
+                receiver: q.receiver.name,
+                range: q.range,
+                source: q.source.name,
+                ability: q.ability.name,
+              })}
+            </Toggle>
+          ))}
         </div>
       )}
       {suggestion && (

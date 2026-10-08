@@ -784,6 +784,17 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
           });
     case "unit/status": {
       const p = { name: who, unit: unitName(event.id), spell: event.key.slice(6) };
+      // A damage track's box set by hand (FSD's damaged systems, UX 264), and the placed dice it cost.
+      const damage = /^damage(\w+)$/.exec(event.key);
+      if (damage) {
+        const sys = /^S(\d)$/.exec(damage[1]!);
+        const what = sys ? t("system {n}", { n: sys[1]! }) : damage[1]!;
+        const line = event.value
+          ? t("{name} marked {unit} damaged: {what}", { ...p, what })
+          : t("{name} cleared {unit}'s damage: {what}", { ...p, what });
+        const lost = lostDice(before, game, event.id);
+        return lost.length ? `${line} ${t("(placed dice lost: {faces})", { faces: lost.join(", ") })}` : line;
+      }
       if (event.key.startsWith("autoUsed.")) return "";
       if (event.key.startsWith("auto."))
         return event.value ? t("{unit} used {ability}", { ...p, ability: event.key.slice(5) }) : "";
@@ -1173,4 +1184,21 @@ export function undoGroup(
     also.push(s);
   }
   return { seq, also: [], what: null };
+}
+
+/** Dice that were placed on a unit's cards before and are gone after (dropped, not spent). */
+function lostDice(before: GameState, after: GameState, unitId: string): number[] {
+  const owner = before.units[unitId]?.owner;
+  if (!owner) return [];
+  const out: number[] = [];
+  for (const [key, faces] of Object.entries(before.placed?.[owner] ?? {})) {
+    if (!key.startsWith(`${unitId}/`)) continue;
+    const left = [...(after.placed?.[owner]?.[key] ?? [])];
+    for (const f of faces) {
+      const i = left.indexOf(f);
+      if (i >= 0) left.splice(i, 1);
+      else out.push(f);
+    }
+  }
+  return out;
 }

@@ -16,6 +16,8 @@ import { aliveModels, unitMoved } from "../wh40k/rules";
  *
  *  - A unit acts only once it is activated (spending an activation die), so a
  *    unit dragged across the table without activating has moved for nothing.
+ *    Once activated, a move is a Move action (an action spent, a reaction
+ *    offered), so a drag without one is flagged too.
  *  - Areas of control: every unit controls 1 DU around its bases. An enemy
  *    can't enter and leave it in one move, and a move that starts in it must
  *    end outside it or in base contact. Ignored while the controlling unit is
@@ -55,6 +57,16 @@ export function fsdChecks(view: GameView): Warning[] {
           unitId: unit.id,
           message: "Moved without activating: activate it first, or put it back",
         });
+      continue;
+    }
+    // Dragged without a move action: no action spent and no reaction offered (UX 262).
+    if (moved > 0.05 && !(Number(unit.status?.allowance ?? 0) > 0) && !unit.status?.arrived) {
+      out.push({
+        id: "moveAction",
+        unitId: unit.id,
+        message:
+          "Moved without a Move action: take Move on its card (the other side may react), or put it back",
+      });
       continue;
     }
     if (moved > 0.05 && Number(unit.status?.moves ?? 0) <= 1 && !fliesOrJumps(unit)) {

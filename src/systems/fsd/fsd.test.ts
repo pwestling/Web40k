@@ -76,6 +76,9 @@ describe("Full Spectrum Dominance in play", () => {
     s = place(s, squad.id, 0, 4);
     expect(checks(s).map((w) => [w.id, w.unitId])).toEqual([["activateFirst", squad.id]]);
     s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
+    // Activated, the drag still needs a Move action (UX 262).
+    expect(checks(s).map((w) => w.id)).toEqual(["moveAction"]);
+    s = play(s, { type: "action/take", unitId: squad.id, action: "move" }, "p1");
     expect(checks(s)).toEqual([]);
   });
 
@@ -452,8 +455,10 @@ describe("Full Spectrum Dominance in play", () => {
       "p1",
     );
     expect(s.pools?.p1?.readyDice).toEqual([4]);
+    // Used instead of an activation: the other side goes next (UX 263).
+    expect(s.turn.activeSeat).toBe(1);
     expect(
-      resolveIntent({ type: "player/action", action: "support", label: "Recon", cost: 2 }, "p1", rng(1), s),
+      resolveIntent({ type: "player/action", action: "support", label: "Recon", cost: 1 }, "p1", rng(1), s),
     ).toBeNull();
   });
 });

@@ -1,8 +1,8 @@
 import type { Ability, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
-import { evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
+import { actingUnits, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
 import { bindRules, lookupRules, pattern, unitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
-import { currentSlot, systemOf } from "./turn";
+import { currentSlot, endActivation, systemOf } from "./turn";
 
 /**
  * Player-level play: actions a player takes rather than a unit (40k
@@ -67,6 +67,8 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
       if (def.phases && !def.phases.includes(slot.id)) return "Not in this phase";
       if (def.side === "active" && !me.active) return "Only in your turn";
       if (def.side === "inactive" && me.active) return "Only in your opponent's turn";
+      if (def.endsTurn && (actingUnits(state).length || state.pending))
+        return "Finish the current activation first";
       if (def.limit && usesInWindow(state, player, def).length >= def.limit.count)
         return `Already used this ${def.limit.per}`;
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
@@ -139,7 +141,8 @@ export function applyPlayerAction(state: GameState, ev: PlayerActionTaken): Game
     if (a.do === "removeStatus") next = setStatus(next, target.id, { [a.status]: null });
     if (a.do === "setFlag") next = setStatus(next, target.id, { [a.flag]: a.value });
   }
-  return next;
+  // Instead of an activation: the other side goes next (UX 263).
+  return def.endsTurn ? endActivation(next) : next;
 }
 
 // ---------------------------------------------------------------------------

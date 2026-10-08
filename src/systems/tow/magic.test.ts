@@ -223,7 +223,9 @@ describe("Old World psychology", () => {
       "p2",
     );
     expect(rolls(t, /Terror/)).toEqual([]);
-    expect(t.s.script!.waiting!.options.map((o) => o.id)).toEqual(["hold"]);
+    // Hold is all it can do: no question, and the log says why (UX 260).
+    expect(t.s.script).toBeNull();
+    expect(t.notes().join(" | ")).toMatch(/holds: units immune to psychology don't flee/);
     toPhase(t, "combat");
     const panic = towActions.find((a) => a.id === "panic")!;
     expect(panic.available(view(t.s), { player: "p1", unitId: spears })).toBe("Immune to Psychology");
@@ -273,8 +275,14 @@ describe("Old World psychology", () => {
       const r = rolls(t, /^Stupidity test/)[0]!;
       // The Brutes stand within 12" of their General (Ld 8).
       expect(!!t.s.units[brutes]!.status?.stupid).toBe(sum(r) > 8);
-      if (t.s.units[brutes]!.status?.stupid) seen.stupid++;
-      else seen.fine++;
+      const charge = towActions.find((a) => a.id === "chargeReaction")!;
+      if (t.s.units[brutes]!.status?.stupid) {
+        seen.stupid++;
+        // A stupid unit can't declare a charge (UX 259).
+        expect(charge.available(view(t.s), { player: "p2", unitId: brutes })).toBe(
+          "Stupid this turn: it can't declare a charge",
+        );
+      } else seen.fine++;
     }
     expect(seen.stupid && seen.fine).toBeTruthy();
   });

@@ -33,6 +33,7 @@ const NAMES: Record<string, () => string> = {
   terrain: () => t("Moving through terrain"),
   deepStrike: () => "Deep Strike",
   activateFirst: () => t("Activate before moving"),
+  moveAction: () => t("Move action"),
   areaOfControl: () => t("Area of control"),
   deployDistance: () => t("Deploying from reserve"),
 };

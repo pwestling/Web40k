@@ -162,6 +162,13 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       </p>
       {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
       {children}
+      {statuses
+        .filter((s) => s.hint)
+        .map((s) => (
+          <p key={`hint-${s.id}`} className="warn small">
+            {gameText(s.hint!)}
+          </p>
+        ))}
       {(statuses.length > 0 || flags.length > 0 || chargedText) && (
         <div className="chips">
           {statuses.map((s) => (
@@ -440,6 +447,24 @@ function SystemActions({ unit }: { unit: Unit }) {
               })}
         </p>
       )}
+      {/* Out of actions: end the activation here, not only from the top bar (UX 265). */}
+      {acting &&
+        !reacting &&
+        Number(status.actionsTaken ?? 0) >= Number(status.actionBudget ?? 0) &&
+        !game.pending && (
+          <div className="row">
+            <button
+              className="primary"
+              title={t("End this activation; the other player goes next")}
+              onClick={() => {
+                setDraft(null);
+                dispatch({ type: "turn/endActivation" }, unit.owner);
+              }}
+            >
+              {t("End activation")}
+            </button>
+          </div>
+        )}
       {shown.some((o) => o.payment.some((p) => p.indices)) && (
         <PoolPicker owner={unit.owner} pick={pick} hover={hover} onPick={setPick} />
       )}
@@ -821,6 +846,9 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         </ul>
       )}
       {option && !option.ok && <p className="warn">{option.why}</p>}
+      {!draft.targetId && (
+        <p className="muted small">{t("Pick a target first: from the list, or on the table.")}</p>
+      )}
       {option?.ok && hopeless && draft.targetId && (
         <p className="warn">
           {t("{reason}: no roll can succeed.", {
@@ -834,6 +862,8 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
       <button
         className={hopeless ? "" : "primary"}
         disabled={!option?.ok}
+        // Why it can't go yet, before a target is picked (UX 266).
+        title={!draft.targetId ? t("Pick a target first") : option && !option.ok ? option.why : undefined}
         onClick={() => {
           dispatch(
             {

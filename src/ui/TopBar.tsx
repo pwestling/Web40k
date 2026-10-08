@@ -169,7 +169,13 @@ export function TopBar() {
               pools.map((pool) => (
                 <DicePool
                   key={`${p.id}-${pool.id}`}
-                  label={team.length > 1 ? `${displayName(p.name)} ${pool.name}` : pool.name}
+                  // The short name keeps two pools on one top bar row at 1280 wide (UX 267).
+                  label={
+                    team.length > 1
+                      ? `${displayName(p.name)} ${pool.short ?? pool.name}`
+                      : (pool.short ?? pool.name)
+                  }
+                  title={pool.name}
                   faces={game.pools?.[p.id]?.[pool.id] ?? []}
                   editable={live && canControl(p.id)}
                   rerollOnce={pool.rerollOnce ? (poolUsed(game, p.id, pool.id) ?? "open") : undefined}
@@ -357,6 +363,7 @@ export function TopBar() {
 /** A player's dice pool, e.g. ready activation dice: pick dice to spend or re-roll. */
 function DicePool({
   label,
+  title,
   faces,
   editable,
   onSpend,
@@ -365,6 +372,7 @@ function DicePool({
   onReady,
 }: {
   label: string;
+  title?: string;
   faces: number[];
   editable: boolean;
   onSpend: (indices: number[]) => void;
@@ -380,7 +388,7 @@ function DicePool({
     setPicked([]);
   };
   return (
-    <span className="counter pool" title={label}>
+    <span className="counter pool" title={title ?? label}>
       {label} {faces.length === 0 && <span className="muted">{t("none")}</span>}
       {faces.map((f, i) => (
         <button
@@ -398,13 +406,21 @@ function DicePool({
           <button
             disabled={rerollOnce === "rerolled" || picked.length === 0}
             title={
-              rerollOnce === "rerolled" ? t("Already re-rolled this round") : t("Pick dice to re-roll first")
+              rerollOnce === "rerolled"
+                ? t("Already re-rolled this round")
+                : picked.length
+                  ? t("Re-roll the picked dice: once a round")
+                  : t("Pick dice to re-roll first")
             }
             onClick={() => act(onReroll)}
           >
-            {t("Re-roll picked (once)")}
+            {t("Re-roll (once)")}
           </button>
-          <button className="primary" onClick={onReady}>
+          <button
+            className="primary"
+            title={t("Keep these dice as they are: you give up this round's re-roll")}
+            onClick={onReady}
+          >
             {t("Ready")}
           </button>
         </>

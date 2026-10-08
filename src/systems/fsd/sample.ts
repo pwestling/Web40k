@@ -98,6 +98,8 @@ function coalition(): ImportedRoster {
       [
         { name: "Autocannon", range: 4, attack: "2d8", ap: 1, ad: "3-6" },
         { name: "Light MG", range: 3, attack: "3d6" },
+        // A prepared action, so Prepare can be tried with the samples (UX 46).
+        { name: "Overwatch Guns", range: 4, attack: "2d6", ad: "5-6", keywords: ["Prepared"] },
       ],
     ),
     unit(

@@ -198,7 +198,12 @@ export const oldWorld: GameSystem = {
   // Psychology marks on a regiment (combat.ts, psychology.ts); spells show as their own names.
   statuses: [
     { id: "fleeing", name: "Fleeing", on: "unit" },
-    { id: "stupid", name: "Stupid this turn", on: "unit" },
+    {
+      id: "stupid",
+      name: "Stupid this turn",
+      on: "unit",
+      hint: "Stupid this turn: it can't declare a charge and moves straight ahead.",
+    },
     { id: "frenzyLost", name: "Frenzy lost", on: "unit" },
   ],
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],

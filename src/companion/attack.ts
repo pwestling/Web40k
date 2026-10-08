@@ -1,4 +1,6 @@
-import { previewAttack, type GameState, type Model, type UnitId } from "../core";
+import { previewAttack, type Ability, type GameState, type Model, type Unit, type UnitId } from "../core";
+import { autoActive, hasKeywordPhrase } from "../core/content/runtime";
+import { opposed } from "../core/teams";
 import { baseSizeInches } from "../core/geometry";
 import { aliveModels, carriers, weaponReach, type AttackSuggestion } from "../systems/wh40k/rules";
 import { t } from "../i18n";
@@ -16,6 +18,63 @@ export interface TableAnswers {
   visible: boolean;
   /** The target has the benefit of cover. */
   cover: boolean;
+  /** Auras the players say reach (keys from `aurasFor`). */
+  auras?: string[];
+}
+
+/** An automated aura (#38) that could reach the attacker or the target, if its source is near enough. */
+export interface AuraQuestion {
+  key: string;
+  source: Unit;
+  ability: Ability;
+  receiver: Unit;
+  range: number;
+}
+
+/** Auras of other units that could apply to this attack, for the players to answer from the table. */
+export function aurasFor(state: GameState, attackerId: UnitId, targetId: UnitId): AuraQuestion[] {
+  const out: AuraQuestion[] = [];
+  for (const receiver of [state.units[attackerId], state.units[targetId]]) {
+    if (!receiver) continue;
+    for (const source of Object.values(state.units)) {
+      if (source.id === receiver.id || !aliveModels(state, source).length) continue;
+      const seen = new Set<string>();
+      for (const a of source.sheet?.abilities ?? []) {
+        const aura = a.auto?.aura;
+        if (!aura || seen.has(a.name) || !autoActive(source, a)) continue;
+        seen.add(a.name);
+        if ((aura.side === "enemy") !== opposed(state, source.owner, receiver.owner)) continue;
+        if (aura.keyword && !hasKeywordPhrase(receiver, aura.keyword)) continue;
+        out.push({
+          key: `${source.id}/${a.name}/${receiver.id}`,
+          source,
+          ability: a,
+          receiver,
+          range: aura.range,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The stand-in table puts every other unit far off, so an aura the players
+ * say reaches becomes the receiver's own ability for this attack.
+ */
+function withAuras(state: GameState, answers: TableAnswers, attackerId: UnitId, targetId: UnitId): GameState {
+  const yes = aurasFor(state, attackerId, targetId).filter((q) => answers.auras?.includes(q.key));
+  if (!yes.length) return state;
+  const units = { ...state.units };
+  for (const q of yes) {
+    const u = units[q.receiver.id]!;
+    if (!u.sheet) continue;
+    // Already checked on the source (aurasFor): once per battle and leading are its own.
+    const { aura: _a, oncePerBattle: _o, whileLeading: _w, ...auto } = q.ability.auto!;
+    const own: Ability = { name: q.ability.name, text: "", auto };
+    units[u.id] = { ...u, sheet: { ...u.sheet, abilities: [...u.sheet.abilities, own] } };
+  }
+  return { ...state, units };
 }
 
 /** The models that carry the weapon, each once. */
@@ -68,7 +127,7 @@ export function tableAttack(
     const y = near ? -(front + radius(m) + gap) : -(front + radius(m) + reach + 50);
     models[m.id] = { ...m, position: { x: (i % Math.max(1, targets.length)) * 3, y }, z: 0, facing: 0 };
   });
-  const stand: GameState = { ...state, models, terrain: [] };
+  const stand: GameState = withAuras({ ...state, models, terrain: [] }, answers, attackerId, targetId);
   const ignoresCover = (previewAttack(stand, attackerId, weaponId, targetId)?.weaponRules ?? []).some(
     (r) => r.rule === "ignoresCover",
   );
