@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { noteReason } from "./reasons";
+import { useHold } from "../ui/hold";
 import { sidePlayers, type GameState, type Unit } from "../core";
 import { clearDrawings, hear } from "../talk/talk";
 import { t } from "../i18n";
@@ -16,6 +18,8 @@ import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
 const BOT_PACE = 500;
 const ROLL_PACE = 1100;
+/** After the dice tray lands a roll: time to read the result before the computer moves on (PX solo 2, A). */
+const AFTER_DICE = 900;
 
 /**
  * Solo against the computer (#45): plays the computer's side one move at a
@@ -32,19 +36,30 @@ export function SoloBot() {
   const game = useStore((s) => s.game);
   const scrub = useStore((s) => s.scrub);
   const timer = useRef<number | null>(null);
+  // The dice tray still showing a roll: the computer waits for it to land (PX solo 2, A).
+  const tray = useHold((s) => s.held !== null || s.busy);
+  const wasTray = useRef(false);
   const on = !!level && !paused && mine === session && !!session;
 
   useEffect(() => {
+    if (tray) {
+      wasTray.current = true;
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = null;
+      return;
+    }
     if (!on || scrub !== null || timer.current !== null) return;
     const rolling = !!(game.attack || game.procedure || game.script?.waiting);
+    const landed = wasTray.current;
+    wasTray.current = false;
     timer.current = window.setTimeout(
       () => {
         timer.current = null;
         void play();
       },
-      rolling ? ROLL_PACE : glided(game) ? GLIDE_MS + BOT_PACE : BOT_PACE,
+      landed ? AFTER_DICE : rolling ? ROLL_PACE : glided(game) ? GLIDE_MS + BOT_PACE : BOT_PACE,
     );
-  }, [on, game, scrub]);
+  }, [on, game, scrub, tray]);
 
   useEffect(
     () => () => {
@@ -68,6 +83,8 @@ function glided(game: GameState): boolean {
 async function play(): Promise<void> {
   const solo = useSolo.getState();
   const { record, game, dispatch, scrub, session } = useStore.getState();
+  const hold = useHold.getState();
+  if (hold.held !== null || hold.busy) return;
   if (!solo.level || solo.paused || solo.session !== session || scrub !== null || game.turn.round === 0)
     return;
   const player = sidePlayers(game, solo.seat)[0]?.id;
@@ -116,7 +133,10 @@ async function play(): Promise<void> {
     if (waitsOn(game, solo.seat)) window.setTimeout(() => void play(), BOT_PACE);
     return;
   }
-  tell(game, move, player);
+  const why = tell(game, move, player);
+  // The log line for its move says why (PX solo review B), once the move lands (a package game's
+  // moves are worked out in its sandbox, so they arrive a moment later).
+  if (why) awaitMove(move.as, record.events.at(-1)?.seq ?? 0, why);
   dispatch(move.intent, move.as);
   if (move.then) {
     const after = useStore.getState();
@@ -125,6 +145,29 @@ async function play(): Promise<void> {
   if (worker) sawOffThread(move);
   useSolo.getState().policy?.saw?.(useStore.getState().game, move);
 }
+
+/** Reasons waiting for the computer's move to land in the record. */
+let waiting: { by: string; after: number; text: string } | null = null;
+
+function awaitMove(by: string, after: number, text: string): void {
+  waiting = { by, after, text };
+  look();
+}
+
+function look(): void {
+  if (!waiting) return;
+  const w = waiting;
+  const e = useStore
+    .getState()
+    .record.events.find((x) => x.seq > w.after && x.by === w.by && x.event.type === "models/move");
+  if (!e) return;
+  noteReason(e, w.text);
+  waiting = null;
+}
+
+useStore.subscribe((s, prev) => {
+  if (waiting && s.record !== prev.record) look();
+});
 
 /** The unit whose go the table was last shown. */
 let shown: string | null = null;
@@ -135,11 +178,11 @@ let shown: string | null = null;
  * to where it went, and why, in one line in the chat. Table talk, so none of
  * it goes in the game's log.
  */
-function tell(game: GameState, move: BotMove, player: string): void {
+function tell(game: GameState, move: BotMove, player: string): string | null {
   const why = explain(game, move);
-  if (!why) return;
+  if (!why) return null;
   const unit = game.units[why.unitId];
-  if (!unit) return;
+  if (!unit) return null;
   const now = Date.now();
   const id = (k: string) => `bot${now.toString(36)}${k}`;
   if (shown !== why.unitId) {
@@ -147,11 +190,14 @@ function tell(game: GameState, move: BotMove, player: string): void {
     clearDrawings(player);
     useStore.getState().select(null);
     const at = why.from ?? centreOf(game, unit);
-    if (at) hear({ id: id("p"), kind: "ping", at, unitId: unit.id }, player, now);
+    // A ring on the spot, with no "pinged" toast (PX solo 2, B).
+    if (at) hear({ id: id("p"), kind: "ping", at }, player, now);
   }
   if (why.from && why.to) hear({ id: id("a"), kind: "arrow", from: why.from, to: why.to }, player, now);
   // Its reason goes in the hint, in place, not in the chat (UX 352).
   useSolo.setState({ why: `${unit.name}: ${why.text}` });
+  // Attacks name their target in the log already; moves say where they're headed.
+  return why.from && why.to ? why.text : null;
 }
 
 function centreOf(game: GameState, unit: Unit): { x: number; y: number } | null {

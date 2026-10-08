@@ -212,7 +212,8 @@ function computerGo(
   const solo = useSolo.getState();
   if (!solo.level || solo.paused || solo.session !== useStore.getState().session || game.turn.round === 0)
     return null;
-  if (battleOver(game) || !waitsOn(game, solo.seat)) return null;
+  // The same moment the top bar says so (UX 355 minor): its side has the go, or the game waits on it.
+  if (battleOver(game) || (game.turn.activeSeat !== solo.seat && !waitsOn(game, solo.seat))) return null;
   const acting = actingUnits(game).find((u) => game.players[u.owner]?.seat === solo.seat);
   return {
     head: acting

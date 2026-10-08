@@ -1,4 +1,5 @@
 import { playerName } from "../i18n/names";
+import { reasonFor } from "../bot/reasons";
 import { becauseText, triggeredLines } from "./autoText";
 import { checkName } from "./warnings";
 import { distanceText } from "./distance";
@@ -518,7 +519,14 @@ function moveText(who: string, before: GameState, after: GameState, ids: string[
           );
 }
 
-export function describe({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
+export function describe(logged: LoggedEvent, before: GameState, game: GameState): string {
+  const text = describeEvent(logged, before, game);
+  // The computer's reason for a move, in a solo game (PX solo review B).
+  const why = reasonFor(logged);
+  return why ? `${text}, ${why}` : text;
+}
+
+function describeEvent({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
   const nameOf = (id: string) => playerName(game.players[id]) ?? t("Someone");
   const who = nameOf(by);
   const unitName = (id: string) => game.units[id]?.name ?? t("a unit");

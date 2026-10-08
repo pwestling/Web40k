@@ -22,7 +22,7 @@ import {
   unitActions,
 } from "../core/content/play";
 import { playerActions } from "../core/content/player";
-import { currentSlot, systemOf } from "../core/content/turn";
+import { currentSlot, plainActivations, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { pendingScores } from "../missions/scoring";
 import { gameModule } from "../systems";
@@ -79,6 +79,8 @@ export interface BotContext {
   wholeGame?: boolean;
   /** A tidy bot's units already moved this phase (keyed by round, side and phase). */
   moved?: { phase: string; units: Set<string> };
+  /** Units a tidy bot has moved this round in a whole-game package (once each, like a player). */
+  went?: { round: number; units: Set<string> };
   /** Tidy mode: the unit actions taken this phase ("unit:action"), each taken once. */
   taken?: { phase: string; keys: Set<string> };
   /**
@@ -298,7 +300,21 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     Object.values(state.units).filter((u) => mine(u.owner) && alive(state, u) && !u.status?.reserves),
   );
   const acting = actingUnits(state);
-  const next = side.map((p) => ({ intent: { type: "turn/next" } as Intent, as: p.id, kind: "next" }));
+  // Taking turns at activating units, ▶ ends the whole round: a tidy bot with units still to go gives
+  // one of them its go (it holds) instead, so none of its units, or the other side's, are skipped (UX 355).
+  const holding =
+    round > 0 && ctx.tidy && !acting.length && plainActivations(state)
+      ? units.find((u) => !u.status?.activated && !u.status?.acting)
+      : undefined;
+  const next: BotMove[] = holding
+    ? [
+        {
+          intent: { type: "turn/endActivation", unit: holding.id } as Intent,
+          as: holding.owner,
+          kind: "endActivation",
+        },
+      ]
+    : side.map((p) => ({ intent: { type: "turn/next" } as Intent, as: p.id, kind: "next" }));
 
   // Before the battle: a few moves around the deployment zone, then start.
   if (round === 0) {
@@ -372,7 +388,11 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
   if (ctx.wholeGame && ctx.idle < 6) {
     yield* codeMoves(state, ctx, units);
     const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
-    if (u) yield* shifted(state, moveUnit(state, u, { ...ctx, tidy: true }, 6));
+    if (ctx.went?.round !== round) ctx.went = { round, units: new Set() };
+    if (u && !(ctx.tidy && ctx.went.units.has(u.id))) {
+      ctx.went.units.add(u.id);
+      yield* shifted(state, moveUnit(state, u, { ...ctx, tidy: true }, 6));
+    }
   }
   // ...and charges are declared more often than not, so fights (and crowded ones) come up.
   if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
