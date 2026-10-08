@@ -31,6 +31,7 @@ const NAMES: Record<string, string> = {
   moveDistance: "Move distance",
   terrain: "Moving through terrain",
   deepStrike: "Deep Strike",
+  activateFirst: "Activate before moving",
 };
 
 export function checkName(state: GameState, id: string): string {

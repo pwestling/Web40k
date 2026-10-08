@@ -10,6 +10,7 @@ import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
+import { TextSizePicker } from "./TextSizePicker";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { startLesson } from "../teach/store";
 import { PackageLibrary, refOf } from "./Packages";
@@ -145,6 +146,8 @@ export function Lobby() {
       <p className="pitch">
         Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.
       </p>
+
+      <TextSizePicker />
 
       <h2>Try it now</h2>
       <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>

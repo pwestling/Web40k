@@ -13,6 +13,7 @@ import { poolUsed } from "../../core/content/player";
 import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
 import { fsdSample } from "./sample";
+import { fsdChecks } from "./checks";
 
 /** A seeded rng, so every run of the test rolls the same dice. */
 function rng(seed: number) {
@@ -58,6 +59,19 @@ function place(s: GameState, unitId: string, x: number, y: number): GameState {
 }
 
 describe("Full Spectrum Dominance in play", () => {
+  it("warns about a unit moved without activating", () => {
+    let s = play(setup(), { type: "turn/next" }, "p1");
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    const view = { state: s } as Parameters<typeof fsdChecks>[0];
+    expect(fsdChecks(view)).toEqual([]);
+    s = place(s, squad.id, 0, 4);
+    expect(fsdChecks({ ...view, state: s }).map((w) => [w.id, w.unitId])).toEqual([
+      ["activateFirst", squad.id],
+    ]);
+    s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
+    expect(fsdChecks({ ...view, state: s })).toEqual([]);
+  });
+
   it("sets the table and rolls activation dice at the start of each round", () => {
     let s = setup();
     expect(s.table).toEqual({ width: 36, depth: 24 });
