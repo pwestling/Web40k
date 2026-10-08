@@ -100,7 +100,7 @@ For a full self-hosted stack, with the app, your own signalling relay and a TURN
 
 ## Releases
 
-What changed in each version is in [CHANGELOG.md](CHANGELOG.md), and the start page's **What's new** shows the highlights. Pushing a `v*` tag publishes a GitHub release with that version's notes.
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md), and the start page's **What's new** shows the highlights. Pushing a `v*` tag, or running the Release workflow by hand with a version, publishes a GitHub release with that version's notes.
 
 ## Contributing
 
