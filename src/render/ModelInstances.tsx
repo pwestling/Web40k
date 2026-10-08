@@ -60,6 +60,8 @@ const standInMaterial = {
   round: new MeshStandardMaterial({ color: "#cbd5e1" }),
 };
 const pickMaterial = new MeshStandardMaterial({ visible: false });
+// A round model's pick target (UX #25): the base's footprint, up to the model's height.
+const hitColumn = new CylinderGeometry(1, 1, 1, 16).translate(0, 0.5, 0);
 
 /** A soft dark blob, darkest in the middle, fading to nothing at the rim. */
 function blobTexture(): CanvasTexture | null {
@@ -194,6 +196,17 @@ export function ModelInstances({ draws, hovered, onDown, onHover }: Props) {
         place={(d) => {
           const { width, depth } = baseSizeInches(d.model.base);
           return s.set(width * 0.98, 1, depth * 0.98);
+        }}
+      />
+      {/* Infantry figures are thin: a click anywhere over the base picks the model (UX #25). */}
+      <Instances
+        geometry={hitColumn}
+        material={pickMaterial}
+        list={round}
+        handlers={handlers(round)}
+        place={(d) => {
+          const { width, depth } = baseSizeInches(d.model.base);
+          return s.set(width / 2, BASE_HEIGHT + d.height, depth / 2);
         }}
       />
       <Instances
