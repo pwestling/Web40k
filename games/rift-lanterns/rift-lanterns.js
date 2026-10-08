@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.1.1",
+  version: "1.2.0",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,7 +34,7 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.1.1",
+  version: "1.2.0",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
@@ -95,10 +95,10 @@ const system = {
 // ---------------------------------------------------------------------------
 
 const FACTIONS = {
-  WARDENS: { name: "Wardens of the Wick", color: "#c9a44c" },
-  THORNKIN: { name: "Thornkin", color: "#5d8f3e" },
-  COGWRIGHTS: { name: "Cogwright Guild", color: "#5f84ad" },
-  GLOAM: { name: "Gloam Choir", color: "#8a6bb8" },
+  WARDENS: { name: "Wardens of the Wick", color: "#c9a44c", about: "Shield-bearing lamp guards." },
+  THORNKIN: { name: "Thornkin", color: "#5d8f3e", about: "Hounds and walking briars." },
+  COGWRIGHTS: { name: "Cogwright Guild", color: "#5f84ad", about: "Gearmen, drones and a strider." },
+  GLOAM: { name: "Gloam Choir", color: "#8a6bb8", about: "Robed singers and dusk stalkers." },
 };
 
 const RULES = {
@@ -147,6 +147,7 @@ function unit(faction, name, count, mm, look, points, stats, height) {
 
 const army = (faction, units) => ({
   name: FACTIONS[faction].name,
+  about: FACTIONS[faction].about,
   // Its player takes the faction's colour, so figures and bases match.
   color: FACTIONS[faction].color,
   points: units.reduce((n, u) => n + u.sheet.points, 0),
@@ -293,10 +294,27 @@ const opponents = (state, a, b) => {
   return sa !== undefined && sb !== undefined && sa !== sb;
 };
 
-/** Enemy units this one can shoot: seen, in range of a shooter, and (`veil`) not Veiled beyond 12". */
+/** Enemy units still standing. */
+const enemies = (state, me) =>
+  Object.values(state.units).filter((u) => opponents(state, me.owner, u.owner) && alive(state, u).length);
+
+/** The longest Range among the unit's shooters (0: it can't shoot). */
+const reach = (state, me) =>
+  Math.max(
+    0,
+    ...alive(state, me)
+      .filter((m) => stat(m, "Shoot") > 0)
+      .map((m) => stat(m, "Range")),
+  );
+
+/**
+ * Enemy units this one can shoot: seen, in range of a shooter, and (`veil`) not Veiled beyond 12".
+ * At a real table nothing here is measured: every enemy is offered and the players say (`told`).
+ */
 function shootable(view, unitId, veil = true) {
   const state = view.state;
   const me = state.units[unitId];
+  if (view.atTable) return reach(state, me) ? enemies(state, me) : [];
   const range = Math.max(
     0,
     ...alive(state, me)
@@ -322,10 +340,11 @@ function inCover(view, unitId, target) {
   return covered * 2 > seen.length;
 }
 
-/** Enemy units within 1". */
+/** Enemy units within 1" (at a real table: any enemy, and the players say). */
 function inContact(view, unitId) {
   const state = view.state;
   const me = state.units[unitId];
+  if (view.atTable) return enemies(state, me);
   return Object.values(state.units).filter(
     (u) => opponents(state, me.owner, u.owner) && alive(state, u).length && view.distance(unitId, u.id) <= 1,
   );
@@ -366,7 +385,11 @@ function* shoot(ctx, args) {
   const me = state.units[args.unit];
   const target = state.units[args.target];
   const shooters = alive(state, me).filter((m) => stat(m, "Shoot") > 0);
-  const cover = inCover(ctx.view, me.id, target);
+  if (!shooters.length) {
+    yield ctx.note(`${me.name} have nothing to shoot with`);
+    return;
+  }
+  const cover = ctx.view.atTable ? !!args.told?.cover : inCover(ctx.view, me.id, target);
   const need = Math.min(6, Math.max(...shooters.map((m) => stat(m, "Hit"))) + (cover ? 1 : 0));
   let dice = shooters.reduce((n, m) => n + stat(m, "Shoot"), 0);
   let overcharged = false;
@@ -484,7 +507,8 @@ const MISSIONS = [
   {
     id: "lantern-grab",
     name: "Lantern Grab",
-    summary: "Three lanterns lie across the middle of the rift. Hold them at the end of each round.",
+    summary:
+      "Three lanterns lie across the middle of the rift. At the end of each round, each side scores 1 for each lantern it holds.",
     setup: (table) => ({
       zones: edgeZones(table, 6),
       objectives: [
@@ -517,7 +541,7 @@ const MISSIONS = [
     id: "snuff-them-out",
     name: "Snuff Them Out",
     summary:
-      "Break the enemy warband. Each enemy unit wiped out is worth 2; holding the middle lantern, 1 a round.",
+      "Break the enemy warband. One lantern in the middle: holding it at the end of a round scores 1. At the end of the game, each enemy unit wiped out scores 2.",
     setup: (table) => ({
       zones: edgeZones(table, 6),
       objectives: [{ id: "middle", position: { x: 0, y: 0 }, label: "Middle lantern", look: "lantern" }],
@@ -541,6 +565,8 @@ const MISSIONS = [
         id: "broken",
         name: "Units wiped out",
         at: { gameEnd: true },
+        // Counted from the wounds, not the table: a real table scores it as it stands.
+        measures: false,
         suggest: (game, seat) => {
           const n = fallen(game, seat).length;
           return { vp: n * 2, why: `${plural(n, "enemy unit")} wiped out` };
@@ -552,7 +578,7 @@ const MISSIONS = [
     id: "last-lantern",
     name: "The Last Lantern",
     summary:
-      "One lantern burns in the middle: 2 a round for holding it from round 2. At the end, 2 for each unit in the enemy's deployment zone.",
+      "One lantern burns in the middle: from round 2, holding it at the end of a round scores 2. At the end of the game, each of your units with a model in the enemy's deployment strip scores 2.",
     setup: (table) => ({
       zones: edgeZones(table, 6),
       objectives: [{ id: "last", position: { x: 0, y: 0 }, label: "The last lantern", look: "lantern" }],
@@ -564,6 +590,13 @@ const MISSIONS = [
         at: { roundEnd: true },
         suggest: (game, seat) =>
           game.turn.round >= 2 && heldBy(game, seat).length ? { vp: 2, why: "holds the last lantern" } : null,
+        ask: {
+          question: 'Do you hold the last lantern (most models within 3")? It scores from round 2.',
+          answers: [
+            { label: "Yes", vp: 2, why: "holds the last lantern" },
+            { label: "No", vp: 0, why: "doesn't hold it" },
+          ],
+        },
       },
       {
         id: "deep",
@@ -576,6 +609,14 @@ const MISSIONS = [
             (u) => seatOf(game, u.owner) === seat && alive(game, u).some((m) => deep(m.position.y)),
           ).length;
           return { vp: n * 2, why: `${plural(n, "unit")} in the enemy's ground` };
+        },
+        ask: {
+          question: "How many of your units have a model in the enemy's deployment strip?",
+          answers: [0, 1, 2, 3].map((n) => ({
+            label: String(n),
+            vp: n * 2,
+            why: `${plural(n, "unit")} in the enemy's ground`,
+          })),
         },
       },
     ],
@@ -602,13 +643,78 @@ function layout(table) {
 }
 
 // ---------------------------------------------------------------------------
+// The rules in words
+// ---------------------------------------------------------------------------
+
+/**
+ * The rulebook's words (#47). The app's rules page, the docs (RULES.md) and
+ * the print-and-play rules sheet put these round tables made from the data
+ * above (warbands, units, missions, the starter table), so the rules a player
+ * reads are the rules the game plays.
+ */
+const RULEBOOK = {
+  intro:
+    "A small skirmish game for two players, about an hour long, played with three units a side. Lanterns have fallen into a rift, and four warbands go down after them.",
+  sections: [
+    {
+      id: "need",
+      title: "What you need",
+      text: [
+        'A table 36" x 24" (a kitchen table will do), a tape measure in inches, a handful of six-sided dice, and a warband each: your own models, or the stand-ins from the print-and-play sheets. Put some ruins, thickets and wrecks on the table: books and boxes work.',
+        "On a screen, Open Battle does the measuring and the dice. At a real table it can still keep the score: open it on a phone and pick **At a real table**.",
+      ].join("\n\n"),
+    },
+    {
+      id: "turn",
+      title: "The turn",
+      text: [
+        "The game lasts **5 rounds**. In each round, players take turns activating one unit at a time, starting with the player who goes first, until every unit has gone. An activated unit:",
+        "1. **Moves** up to its Move in inches. Wrecks can't be walked through.",
+        "2. Then takes **one action**: **Shoot** or **Fight**. That ends its activation.",
+        "3. A unit that only moves ends its activation there.",
+        "When one player has no units left to activate, the other activates theirs in turn. The round ends when every unit has gone.",
+      ].join("\n"),
+    },
+    {
+      id: "shooting",
+      title: "Shooting",
+      text: [
+        "Pick an enemy unit that a shooter can see and that is within the shooter's Range. A unit locked in a fight (an enemy within 1\") can't shoot.",
+        "- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.",
+        "- The target rolls a die for each hit. Each die that rolls its **Saves on** or more is saved.",
+        "- Each hit not saved takes 1 wound. Models lose wounds in turn; a model with none left is out.",
+      ].join("\n"),
+    },
+    {
+      id: "fighting",
+      title: "Fighting",
+      text: 'Pick an enemy unit within 1". The attackers roll their **Fight** dice and hit and wound as when shooting (no cover in a fight). Then, if any of the target are left, they strike back the same way.',
+    },
+    {
+      id: "lanterns",
+      title: "Holding a lantern",
+      text: 'A side **holds** a lantern if it has more models within 3" of it than the other side. Nobody holds it on a tie. The side with more victory points at the end of round 5 wins.',
+    },
+  ],
+  /** The quick-reference card, a line each. */
+  quickRef: [
+    "**5 rounds.** Take turns activating one unit each.",
+    "**Activate:** move up to Move, then Shoot or Fight (or just move).",
+    '**Shoot:** see it, in Range, no enemy within 1". Shoot dice; hit on Hits on (+1 in cover).',
+    '**Fight:** an enemy within 1". Fight dice; hit on Hits on; they strike back.',
+    "**Saves:** a die per hit; Saves on or more saves. Each unsaved hit is a wound.",
+    '**Lanterns:** most models within 3" holds it; a tie holds nothing.',
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // The module
 // ---------------------------------------------------------------------------
 
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.1.1",
+    version: "1.2.0",
     api: 1,
     system,
     app: {
@@ -617,6 +723,7 @@ export default {
       layout,
       templateCategory: CATEGORIES,
       missions: MISSIONS,
+      rulebook: RULEBOOK,
     },
     actions: [
       {
@@ -626,6 +733,7 @@ export default {
         phases: ["activations"],
         available: (view, actor) => {
           if (acted(view, actor.unitId)) return "Already acted this round";
+          if (view.atTable) return reach(view.state, view.state.units[actor.unitId]) ? true : "Can't shoot";
           if (inContact(view, actor.unitId).length) return "Locked in a fight";
           if (shootable(view, actor.unitId).length) return true;
           // Something would be in reach but for the dusk: say which rule hides it.
@@ -634,6 +742,24 @@ export default {
           return "No enemy in sight and range";
         },
         targets: (view, actor) => shootable(view, actor.unitId).map((u) => ({ unitId: u.id, label: u.name })),
+        // At a real table the players say what the board would measure.
+        told: (view, actor, targetId) => {
+          const me = view.state.units[actor.unitId];
+          const target = view.state.units[targetId];
+          if (!me || !target) return [];
+          return [
+            { id: "clear", question: `No enemy within 1" of ${me.name}`, need: true },
+            {
+              id: "seen",
+              question: `A shooter can see ${target.name}, within ${reach(view.state, me)}"`,
+              need: true,
+            },
+            ...(has(target, "GLOAM")
+              ? [{ id: "near", question: `${named("GLOAM")}: ${target.name} within 12"`, need: true }]
+              : []),
+            { id: "cover", question: `Most of ${target.name} in cover` },
+          ];
+        },
         run: shoot,
       },
       {
@@ -646,6 +772,10 @@ export default {
           return inContact(view, actor.unitId).length ? true : 'No enemy within 1"';
         },
         targets: (view, actor) => inContact(view, actor.unitId).map((u) => ({ unitId: u.id, label: u.name })),
+        told: (view, actor, targetId) => {
+          const target = view.state.units[targetId];
+          return target ? [{ id: "contact", question: `${target.name} within 1"`, need: true }] : [];
+        },
         run: fight,
       },
     ],

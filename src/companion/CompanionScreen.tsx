@@ -197,6 +197,8 @@ function UnitTile({ game, unit, open }: { game: GameState; unit: Unit; open: () 
           </>
         ) : null}
         {status.reserves ? <> · {t("in reserve")}</> : null}
+        {/* Alternating activations: who has had their go this round. */}
+        {status.activated && !dead ? <> · {t("had its go")}</> : null}
       </span>
       {on.length > 0 && (
         <span className="chips">

@@ -10,7 +10,9 @@ const NEWS = (): { version: string; items: string[] }[] => [
   {
     version: "0.1.0",
     items: [
-      t("Rift Lanterns, our own skirmish game: play now, nothing to import."),
+      t(
+        "Rift Lanterns, our own skirmish game: play now, nothing to import, or print it and play at a real table.",
+      ),
       t("Four games built in, each with a demo and a guided first game against the computer."),
       t("Play online 1v1 or 2v2, with table talk and voice, or watch a game as it streams."),
       t("Table companion: play on your real table with real models, and roll your own dice."),

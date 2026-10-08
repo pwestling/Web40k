@@ -12,6 +12,7 @@ import { FeedbackCard } from "./Feedback";
 import { Result } from "./Missions";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
+import { VIEWER } from "../viewer/flag";
 import { useGame } from "./hooks";
 import { formatNumber, t, tn } from "../i18n";
 
@@ -39,6 +40,8 @@ export function StatsScreen() {
   const record = useStore((s) => s.record);
   const stats = useStore((s) => s.stats);
   const set = useStore((s) => s.set);
+  // A watcher (the replay page, a spectator at someone's game) neither shares nor branches it (PX).
+  const watching = useStore((s) => VIEWER || (!!s.session && !s.review && s.role === "spectator"));
   const game = useGame();
   // Opens on its own once the battle ends, until someone closes it.
   const open = stats ?? battleOver(game);
@@ -64,8 +67,8 @@ export function StatsScreen() {
       <div className="head">
         <strong>{t("Battle stats")}</strong>
         <span className="muted">{tn(data.rounds, "{n} round", "{n} rounds")}</span>
-        {!BROADCAST && (
-          // Where a player is when the game ends (UX 336): the sheet makes way for Share.
+        {!BROADCAST && !watching && (
+          // Where a player is when the game ends (UX 336): the sheet makes way for Share. Not a watcher's (PX).
           <button
             onClick={() => {
               close();
@@ -123,7 +126,7 @@ export function StatsScreen() {
                   </button>
                 )}
                 : {m.line}{" "}
-                {m.kind !== "mvp" && !BROADCAST && (
+                {m.kind !== "mvp" && !BROADCAST && !watching && (
                   <button
                     className="quiet small"
                     title={t("A new game on this screen, just before this moment")}

@@ -86,7 +86,13 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
     ctx.fillStyle = "#111318";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(src, dx, dy, r.width * k, r.height * k);
-    paintOverlays(ctx, { left: r.left - dx / k, top: r.top - dy / k, scale: k });
+    paintOverlays(
+      ctx,
+      { left: r.left - dx / k, top: r.top - dy / k, scale: k },
+      document,
+      // Cropped from a screen of another shape, the tray would sit squeezed in a corner (UX 55).
+      Math.abs(width / height - r.width / r.height) > 0.2 ? { width, height } : undefined,
+    );
   });
 
   const video = canvas.captureStream(FPS);

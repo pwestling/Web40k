@@ -1,2 +1,5 @@
 dist
 pnpm-lock.yaml
+# Made by pnpm rulebook from the module; a test checks them byte for byte.
+games/*/RULES.md
+games/*/rulebook.json

@@ -132,6 +132,10 @@ Data can call code too. Conquest's command stack decides which regiment may acti
 
 Code procedures must be deterministic: only the host runs them, and it replays them from the start to resume after a question or a change of host. Read the game through `ctx.view`, get dice only from `ctx.roll`, and keep state in `ctx.set`. [packages.md](packages.md) explains the commands and the rules in full; they apply to built-in modules exactly as they do to packages.
 
+### At a real table
+
+In the table companion (players use real models; the app keeps the cards, dice and score) the board's positions mean nothing. `view.atTable` is true there, and a code action should not measure: offer every target that could be right, and give the action `told(view, actor, target)`, yes/no questions the players answer before it starts ("A shooter can see Gearmen, within 24\"", "Most of Gearmen in cover"). A question with `need: true` answered no stops the action; the answers reach `run` as `args.told`. A mission's scoring rule has `ask` for the same reason, and `measures: false` when its `suggest` counts only what the log knows (units wiped out), so a real table can use it as it is. A unit whose go is only a move ends it with **Moved only** on its card. Rift Lanterns (`games/rift-lanterns`) does all three.
+
 ### The app glue
 
 `SystemModule` in `src/systems/app.ts` is what the app needs besides the rules. Only `sample` and `layout` are required.

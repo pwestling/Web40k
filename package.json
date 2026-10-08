@@ -30,7 +30,8 @@
     "i18n:check": "node scripts/i18n.mjs --check",
     "perf:phone": "node scripts/phone.mjs",
     "perf:rift": "node scripts/rift.mjs",
-    "perf:bot": "node scripts/bot.mjs"
+    "perf:bot": "node scripts/bot.mjs",
+    "rulebook": "RULEBOOK_WRITE=1 vitest run src/printplay/rulebook.test.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

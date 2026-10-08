@@ -142,7 +142,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|moves|arrived|box\d+|used\.|spent\.|ok\.)/.test(
+      !/^(acting|activated|actionsTaken|actionBudget|allowance|reacting|moves|arrived|box\d+|used\.|spent\.|ok\.)/.test(
         f,
       ),
   );

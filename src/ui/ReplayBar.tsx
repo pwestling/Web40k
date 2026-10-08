@@ -19,7 +19,7 @@ import { battleOver } from "./StatsScreen";
 import { RecordingPill, SharePanel } from "../share/SharePanel";
 import { openShare, useShare } from "../share/store";
 
-const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
+const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★", losses: "✚" };
 
 /** Phase changes on the replay track, with the first one of each round marked "R1", "R2"... */
 function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string }[] {
@@ -54,6 +54,7 @@ export function ReplayBar() {
   const { record, scrub, setScrub, session: live, role, review } = useStore();
   // A review room is a replay watched together: there's no "live" in it.
   const session = review ? null : live;
+  const watching = VIEWER || (!!session && role === "spectator");
   const notes = useNotes((s) => s.notes);
   const over = useStore((s) => battleOver(s.game));
   const noted = useMemo(() => [...new Set(notes.map((n) => n.seq))], [notes]);
@@ -268,9 +269,10 @@ export function ReplayBar() {
         </span>
         {/* What if: a new game from the point on the track (UX: roadmap #14). */}
         {/* Live, it branches from now (UX 138); not for a viewer held back by the delay (UX 146). */}
-        {last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
+        {/* Neither is a watcher's (PX): not on the replay page, nor for a spectator at someone's game. */}
+        {last > record.initial.seq && !delaying() && !watching && <BranchButton seq={pos} />}
         {/* Share the battle (#46): a page, a clip, pictures. In a replay, or once the game is over. */}
-        {(!session || over) && last > record.initial.seq && (
+        {(!session || over) && last > record.initial.seq && !watching && (
           <button
             title={t("Share the battle")}
             onClick={() => {

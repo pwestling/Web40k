@@ -6,7 +6,7 @@ import { t } from "../i18n";
 import { useStore } from "../store";
 import { useReel } from "../broadcast/reel";
 import { playMoment, reelLength, startReel, stopMoment, stretchLength } from "../broadcast/Moments";
-import { readGame, replayIntro } from "../ui/highlights";
+import { lossesBetween, readGame, replayIntro } from "../ui/highlights";
 import { battleOver } from "../ui/StatsScreen";
 import { voiceStreams } from "../voice/voice";
 import { grabTable, settle } from "./capture";
@@ -31,18 +31,23 @@ export { useShare };
  * scrubber back. With a moment, the camera frames its units (PX share 3)
  * rather than the whole table.
  */
-async function tableAt(seq: number, moment?: Moment): Promise<HTMLCanvasElement | null> {
+async function tableAt(
+  seq: number,
+  moment?: Moment,
+  subject?: { x: number; y: number; span: number } | null,
+): Promise<HTMLCanvasElement | null> {
   const s = useStore.getState();
   const was = { scrub: s.scrub, director: s.director };
   s.set({ director: false });
   s.setScrub(seq);
   // With no moment, the whole table, closer than the screen's view: the card's picture is narrower than a screen.
   const { width, depth } = s.game.table;
-  const frame = (moment ? momentFrame(s.record, moment) : null) ?? {
-    x: 0,
-    y: 0,
-    span: Math.max(width, depth) * 0.25,
-  };
+  const frame = (moment ? momentFrame(s.record, moment) : null) ??
+    subject ?? {
+      x: 0,
+      y: 0,
+      span: Math.max(width, depth) * 0.25,
+    };
   shot.request = frame;
   await settle();
   const picture = await grabTable();
@@ -89,9 +94,11 @@ async function saveEndCard() {
   const end = lastSeq(record);
   // The picture is the decisive moment as it happened; the words are the result.
   const { decisive } = standouts(record);
+  // With none, the unit that lost the most (PX): the game's story, not a deployment corner.
+  const most = lossesBetween(record, record.initial.seq, end)[0]?.at;
   const picture = decisive
-    ? await tableAt(Math.max(decisive.seq, decisive.end), decisive)
-    : await tableAt(end);
+    ? await tableAt(Math.max(decisive.seq, decisive.end), decisive, most)
+    : await tableAt(end, undefined, most);
   saveFile(await pngOf(endCard(record, stateAt(record, end), picture)), `${stamp()}-result.png`);
 }
 
@@ -105,8 +112,14 @@ async function saveRoundCard(round: number) {
   const moments = momentsOf(record).filter((m) => m.round === round && m.kind !== "mvp");
   const marks = highlights.filter((h) => h.seq > from && h.seq <= summary.seq);
   const top = [...moments].sort((a, b) => b.score - a.score)[0];
-  const picture = top ? await tableAt(Math.max(top.seq, top.end), top) : await tableAt(summary.seq);
-  const card = roundCard(stateAt(record, summary.seq), summary, [...moments, ...marks], picture);
+  // Who lost models this round is part of what happened (UX 339), and the picture is on them when nothing stood out.
+  const losses = lossesBetween(record, from, summary.seq);
+  const hurt = losses.filter((l) => l.highlight.kind === "losses").map((l) => l.highlight);
+  const said = [...moments, ...marks, ...hurt].slice(0, Math.max(3, moments.length + marks.length));
+  const picture = top
+    ? await tableAt(Math.max(top.seq, top.end), top, losses[0]?.at)
+    : await tableAt(summary.seq, undefined, losses[0]?.at);
+  const card = roundCard(stateAt(record, summary.seq), summary, said, picture);
   saveFile(await pngOf(card), `${stamp()}-round-${round}.png`);
 }
 
@@ -306,19 +319,31 @@ export function SharePanel() {
                 <p className="muted small">{t("No highlights reel: this game had no standout moments.")}</p>
               )}
             </div>
-            <div className="share-options" role="radiogroup" aria-label={t("Shape")}>
-              {(
-                [
-                  ["wide", t("Wide (16:9)")],
-                  ["square", t("Square, for feeds")],
-                  ["tall", t("Tall (9:16), for stories")],
-                ] as const
-              ).map(([id, label]) => (
-                <label key={id}>
-                  <input type="radio" checked={shape === id} onChange={() => setShape(id)} />{" "}
-                  <span>{label}</span>
-                </label>
-              ))}
+            {/* The clip's shape, apart from what to record (UX 353): a label and three segments. */}
+            <div className="share-shape">
+              <span className="muted small" id="share-shape-label">
+                {t("Shape")}
+              </span>
+              <div className="segmented" role="radiogroup" aria-labelledby="share-shape-label">
+                {(
+                  [
+                    ["wide", t("Wide"), t("16:9, for screens and video sites")],
+                    ["square", t("Square"), t("1:1, for feeds")],
+                    ["tall", t("Tall"), t("9:16, for stories")],
+                  ] as const
+                ).map(([id, label, about]) => (
+                  <button
+                    key={id}
+                    role="radio"
+                    aria-checked={shape === id}
+                    className={shape === id ? "on" : ""}
+                    title={about}
+                    onClick={() => setShape(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="share-options">
               <label>

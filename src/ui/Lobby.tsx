@@ -28,6 +28,8 @@ import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Play by mail loads after the front door; it sits below the fold. */
 const MailLobby = lazy(() => import("../mail/MailLobby").then((m) => ({ default: m.MailLobby })));
+/** Rift Lanterns' rules page (#47), with its print and play, on demand. */
+const RulesPage = lazy(() => import("../printplay/RulesPage"));
 
 /** Rejoin once per page load (effects run twice in development). */
 let autoJoined = false;
@@ -41,6 +43,7 @@ export function Lobby() {
   // Players per side when hosting: 1 (1v1) or 2 (a 2v2 team game, core/teams.ts).
   const [teamSize, setTeamSize] = useState(1);
   const [guide, setGuide] = useState(false);
+  const [rules, setRules] = useState(params.get("rules") === "rift-lanterns");
   // Play the computer (#45): the game whose card asks "How hard?" (UX 350).
   const [asking, setAsking] = useState<string | null>(null);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
@@ -233,15 +236,15 @@ export function Lobby() {
               <button className="small solo" onClick={() => setAsking(RIFT_LANTERNS)}>
                 {t("Play the computer")}
               </button>
-              <a
-                className="small"
-                href="https://github.com/pwestling/Web40k/blob/main/games/rift-lanterns/README.md"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("Rules")}
-              </a>
+              <button className="small" onClick={() => setRules(true)}>
+                {t("Rules, print and play")}
+              </button>
             </div>
+            {rules && (
+              <Suspense fallback={null}>
+                <RulesPage onClose={() => setRules(false)} />
+              </Suspense>
+            )}
             {asking === RIFT_LANTERNS && <HowHard system={RIFT_LANTERNS} onCancel={() => setAsking(null)} />}
           </div>
           <h2>{t("Pick a game")}</h2>

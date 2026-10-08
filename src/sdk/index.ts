@@ -305,6 +305,14 @@ export interface PackageApp {
   leaving?(game: GameState): string[];
   sidePanel?(view: GameView): PanelSpec | null;
   templateCategory?: Record<string, string>;
+  /**
+   * The game's rules in words (#47), for its rules page, its docs and its
+   * print-and-play rules sheet, which add tables made from the game's own
+   * data (armies, units, missions, the starter table). Light Markdown: a
+   * line each, `**bold**`, `- ` and `1. ` list items, a blank line between
+   * paragraphs.
+   */
+  rulebook?: Rulebook;
   fleeDice?: string;
   chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
 }
@@ -341,6 +349,11 @@ export interface ScoringRule {
   suggest(game: GameState, seat: number): { vp: number; why: string } | null;
   /** At a real table (table companion), what to ask the player instead, the app working out the VP. */
   ask?: ScoreQuestion;
+  /**
+   * False when `suggest` measures nothing on the table (it counts units wiped out, say): a real
+   * table can then use it as it is, instead of asking.
+   */
+  measures?: boolean;
 }
 
 /** A scoring rule's question for players at a real table (UX 278), and what each answer scores. */
@@ -358,4 +371,12 @@ export interface MissionCard {
   suggest(game: GameState, seat: number): { vp: number; why: string };
   /** At a real table, the question that scores it. */
   ask?: ScoreQuestion;
+}
+
+/** A game's rules in words (PackageApp.rulebook). */
+export interface Rulebook {
+  intro: string;
+  sections: { id: Id; title: string; text: string }[];
+  /** The quick-reference card, a line each. */
+  quickRef?: string[];
 }

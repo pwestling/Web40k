@@ -1,0 +1,607 @@
+{
+  "id": "rift-lanterns",
+  "name": "Rift Lanterns",
+  "version": "1.2.0",
+  "licence": "CC BY 4.0",
+  "intro": "A small skirmish game for two players, about an hour long, played with three units a side. Lanterns have fallen into a rift, and four warbands go down after them.",
+  "sections": [
+    {
+      "id": "need",
+      "title": "What you need",
+      "text": "A table 36\" x 24\" (a kitchen table will do), a tape measure in inches, a handful of six-sided dice, and a warband each: your own models, or the stand-ins from the print-and-play sheets. Put some ruins, thickets and wrecks on the table: books and boxes work.\n\nOn a screen, Open Battle does the measuring and the dice. At a real table it can still keep the score: open it on a phone and pick **At a real table**."
+    },
+    {
+      "id": "turn",
+      "title": "The turn",
+      "text": "The game lasts **5 rounds**. In each round, players take turns activating one unit at a time, starting with the player who goes first, until every unit has gone. An activated unit:\n1. **Moves** up to its Move in inches. Wrecks can't be walked through.\n2. Then takes **one action**: **Shoot** or **Fight**. That ends its activation.\n3. A unit that only moves ends its activation there.\nWhen one player has no units left to activate, the other activates theirs in turn. The round ends when every unit has gone."
+    },
+    {
+      "id": "shooting",
+      "title": "Shooting",
+      "text": "Pick an enemy unit that a shooter can see and that is within the shooter's Range. A unit locked in a fight (an enemy within 1\") can't shoot.\n- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.\n- The target rolls a die for each hit. Each die that rolls its **Saves on** or more is saved.\n- Each hit not saved takes 1 wound. Models lose wounds in turn; a model with none left is out."
+    },
+    {
+      "id": "fighting",
+      "title": "Fighting",
+      "text": "Pick an enemy unit within 1\". The attackers roll their **Fight** dice and hit and wound as when shooting (no cover in a fight). Then, if any of the target are left, they strike back the same way."
+    },
+    {
+      "id": "lanterns",
+      "title": "Holding a lantern",
+      "text": "A side **holds** a lantern if it has more models within 3\" of it than the other side. Nobody holds it on a tie. The side with more victory points at the end of round 5 wins."
+    }
+  ],
+  "quickRef": [
+    "**5 rounds.** Take turns activating one unit each.",
+    "**Activate:** move up to Move, then Shoot or Fight (or just move).",
+    "**Shoot:** see it, in Range, no enemy within 1\". Shoot dice; hit on Hits on (+1 in cover).",
+    "**Fight:** an enemy within 1\". Fight dice; hit on Hits on; they strike back.",
+    "**Saves:** a die per hit; Saves on or more saves. Each unsaved hit is a wound.",
+    "**Lanterns:** most models within 3\" holds it; a tie holds nothing."
+  ],
+  "rounds": 5,
+  "table": {
+    "width": 36,
+    "depth": 24
+  },
+  "characteristics": [
+    {
+      "id": "M",
+      "name": "Move",
+      "type": "distance"
+    },
+    {
+      "id": "Shoot",
+      "name": "Shoot",
+      "type": "number"
+    },
+    {
+      "id": "Range",
+      "name": "Range",
+      "type": "distance"
+    },
+    {
+      "id": "Fight",
+      "name": "Fight",
+      "type": "number"
+    },
+    {
+      "id": "Hit",
+      "name": "Hits on",
+      "type": "number"
+    },
+    {
+      "id": "Save",
+      "name": "Saves on",
+      "type": "number"
+    },
+    {
+      "id": "W",
+      "name": "Wounds",
+      "type": "number"
+    }
+  ],
+  "terrain": [
+    {
+      "id": "ruin",
+      "name": "Ruin",
+      "does": "cover"
+    },
+    {
+      "id": "thicket",
+      "name": "Thicket",
+      "does": "cover; seen past it, a target is in cover"
+    },
+    {
+      "id": "wreck",
+      "name": "Wreck",
+      "does": "can't be walked through; blocks sight"
+    },
+    {
+      "id": "open",
+      "name": "Open ground",
+      "does": "no effect"
+    }
+  ],
+  "armies": [
+    {
+      "name": "Wardens of the Wick",
+      "about": "Shield-bearing lamp guards.",
+      "color": "#c9a44c",
+      "points": 100,
+      "rule": {
+        "name": "Shieldwall",
+        "text": "Saves against shooting succeed on one less."
+      },
+      "units": [
+        {
+          "name": "Wick Guard",
+          "count": 5,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#c9a44c",
+            "gear": [
+              "shield",
+              "pole"
+            ]
+          },
+          "points": 50,
+          "stats": {
+            "M": "5",
+            "Shoot": "1",
+            "Range": "18",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "4",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Lamplighters",
+          "count": 2,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#c9a44c",
+            "gear": [
+              "lamp"
+            ]
+          },
+          "points": 25,
+          "stats": {
+            "M": "6",
+            "Shoot": "2",
+            "Range": "24",
+            "Fight": "1",
+            "Hit": "3",
+            "Save": "5",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Warden-Captain",
+          "count": 1,
+          "baseMm": 40,
+          "look": {
+            "shape": "brute",
+            "color": "#c9a44c",
+            "gear": [
+              "shield"
+            ]
+          },
+          "points": 25,
+          "stats": {
+            "M": "5",
+            "Shoot": "1",
+            "Range": "12",
+            "Fight": "3",
+            "Hit": "3",
+            "Save": "3",
+            "W": "3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Thornkin",
+      "about": "Hounds and walking briars.",
+      "color": "#5d8f3e",
+      "points": 100,
+      "rule": {
+        "name": "Regrow",
+        "text": "At the start of each round, every wounded model heals 1 wound."
+      },
+      "units": [
+        {
+          "name": "Briar Hounds",
+          "count": 3,
+          "baseMm": 40,
+          "height": 1.6,
+          "look": {
+            "shape": "beast",
+            "color": "#5d8f3e"
+          },
+          "points": 40,
+          "stats": {
+            "M": "8",
+            "Shoot": "0",
+            "Range": "0",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "6",
+            "W": "2"
+          }
+        },
+        {
+          "name": "Thorn Slingers",
+          "count": 4,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#5d8f3e",
+            "gear": [
+              "thorns",
+              "unarmed"
+            ]
+          },
+          "points": 35,
+          "stats": {
+            "M": "6",
+            "Shoot": "1",
+            "Range": "12",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "6",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Old Bramble",
+          "count": 1,
+          "baseMm": 50,
+          "height": 3.2,
+          "look": {
+            "shape": "mound",
+            "color": "#5d8f3e"
+          },
+          "points": 25,
+          "stats": {
+            "M": "5",
+            "Shoot": "0",
+            "Range": "0",
+            "Fight": "4",
+            "Hit": "3",
+            "Save": "4",
+            "W": "4"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cogwright Guild",
+      "about": "Gearmen, drones and a strider.",
+      "color": "#5f84ad",
+      "points": 100,
+      "rule": {
+        "name": "Overcharge",
+        "text": "When this unit shoots it may overcharge: 2 more dice, but each 1 rolled is a wound on the shooters."
+      },
+      "units": [
+        {
+          "name": "Gearmen",
+          "count": 4,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#5f84ad",
+            "gear": [
+              "cog"
+            ]
+          },
+          "points": 40,
+          "stats": {
+            "M": "5",
+            "Shoot": "1",
+            "Range": "24",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "4",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Spark Drones",
+          "count": 2,
+          "baseMm": 32,
+          "height": 2.4,
+          "look": {
+            "shape": "drone",
+            "color": "#5f84ad"
+          },
+          "points": 25,
+          "stats": {
+            "M": "8",
+            "Shoot": "2",
+            "Range": "12",
+            "Fight": "0",
+            "Hit": "4",
+            "Save": "5",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Strider",
+          "count": 1,
+          "baseMm": 50,
+          "height": 3.4,
+          "look": {
+            "shape": "walker",
+            "color": "#5f84ad"
+          },
+          "points": 35,
+          "stats": {
+            "M": "6",
+            "Shoot": "3",
+            "Range": "24",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "3",
+            "W": "4"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gloam Choir",
+      "about": "Robed singers and dusk stalkers.",
+      "color": "#8a6bb8",
+      "points": 100,
+      "rule": {
+        "name": "Veiled",
+        "text": "Can't be shot from more than 12\" away."
+      },
+      "units": [
+        {
+          "name": "Hushed Choir",
+          "count": 4,
+          "baseMm": 28,
+          "look": {
+            "shape": "robed",
+            "color": "#8a6bb8"
+          },
+          "points": 40,
+          "stats": {
+            "M": "6",
+            "Shoot": "1",
+            "Range": "18",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "5",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Dusk Stalkers",
+          "count": 3,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#8a6bb8",
+            "gear": [
+              "hunched",
+              "blades"
+            ]
+          },
+          "points": 35,
+          "stats": {
+            "M": "7",
+            "Shoot": "0",
+            "Range": "0",
+            "Fight": "2",
+            "Hit": "3",
+            "Save": "5",
+            "W": "1"
+          }
+        },
+        {
+          "name": "Cantor of Ash",
+          "count": 1,
+          "baseMm": 32,
+          "height": 2.4,
+          "look": {
+            "shape": "robed",
+            "color": "#8a6bb8"
+          },
+          "points": 25,
+          "stats": {
+            "M": "6",
+            "Shoot": "2",
+            "Range": "18",
+            "Fight": "1",
+            "Hit": "3",
+            "Save": "4",
+            "W": "3"
+          }
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "id": "lantern-grab",
+      "name": "Lantern Grab",
+      "summary": "Three lanterns lie across the middle of the rift. At the end of each round, each side scores 1 for each lantern it holds.",
+      "scoring": [
+        "Lanterns held"
+      ],
+      "objectives": [
+        {
+          "label": "West lantern",
+          "x": -12,
+          "y": 0
+        },
+        {
+          "label": "Middle lantern",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "label": "East lantern",
+          "x": 12,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "id": "snuff-them-out",
+      "name": "Snuff Them Out",
+      "summary": "Break the enemy warband. One lantern in the middle: holding it at the end of a round scores 1. At the end of the game, each enemy unit wiped out scores 2.",
+      "scoring": [
+        "Middle lantern",
+        "Units wiped out"
+      ],
+      "objectives": [
+        {
+          "label": "Middle lantern",
+          "x": 0,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "id": "last-lantern",
+      "name": "The Last Lantern",
+      "summary": "One lantern burns in the middle: from round 2, holding it at the end of a round scores 2. At the end of the game, each of your units with a model in the enemy's deployment strip scores 2.",
+      "scoring": [
+        "The last lantern",
+        "Deep in their ground"
+      ],
+      "objectives": [
+        {
+          "label": "The last lantern",
+          "x": 0,
+          "y": 0
+        }
+      ]
+    }
+  ],
+  "map": {
+    "pieces": [
+      {
+        "name": "Ruin",
+        "category": "ruin",
+        "x": -12.5,
+        "y": 4.5,
+        "width": 10,
+        "depth": 6,
+        "facing": 0
+      },
+      {
+        "name": "Ruin",
+        "category": "ruin",
+        "x": 12.5,
+        "y": -4.5,
+        "width": 10,
+        "depth": 6,
+        "facing": 3.14
+      },
+      {
+        "name": "Woods",
+        "category": "thicket",
+        "x": 4.5,
+        "y": 5.5,
+        "width": 9,
+        "depth": 6,
+        "facing": 0
+      },
+      {
+        "name": "Woods",
+        "category": "thicket",
+        "x": -4.5,
+        "y": -5.5,
+        "width": 9,
+        "depth": 6,
+        "facing": 3.14
+      },
+      {
+        "name": "Small ruin",
+        "category": "ruin",
+        "x": 14.5,
+        "y": 4,
+        "width": 6,
+        "depth": 4,
+        "facing": 1.57
+      },
+      {
+        "name": "Small ruin",
+        "category": "ruin",
+        "x": -14.5,
+        "y": -4,
+        "width": 6,
+        "depth": 4,
+        "facing": 4.71
+      },
+      {
+        "name": "Barricade",
+        "category": "ruin",
+        "x": -4.5,
+        "y": 5.5,
+        "width": 5,
+        "depth": 1.5,
+        "facing": 0
+      },
+      {
+        "name": "Barricade",
+        "category": "ruin",
+        "x": 4.5,
+        "y": -5.5,
+        "width": 5,
+        "depth": 1.5,
+        "facing": 3.14
+      },
+      {
+        "name": "Container",
+        "category": "wreck",
+        "x": 10,
+        "y": 3.5,
+        "width": 5,
+        "depth": 2.5,
+        "facing": 1.57
+      },
+      {
+        "name": "Container",
+        "category": "wreck",
+        "x": -10,
+        "y": -3.5,
+        "width": 5,
+        "depth": 2.5,
+        "facing": 4.71
+      }
+    ],
+    "zones": [
+      {
+        "seat": 0,
+        "points": [
+          {
+            "x": -18,
+            "y": 6
+          },
+          {
+            "x": 18,
+            "y": 6
+          },
+          {
+            "x": 18,
+            "y": 12
+          },
+          {
+            "x": -18,
+            "y": 12
+          }
+        ]
+      },
+      {
+        "seat": 1,
+        "points": [
+          {
+            "x": -18,
+            "y": -12
+          },
+          {
+            "x": 18,
+            "y": -12
+          },
+          {
+            "x": 18,
+            "y": -6
+          },
+          {
+            "x": -18,
+            "y": -6
+          }
+        ]
+      }
+    ]
+  }
+}

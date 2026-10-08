@@ -98,7 +98,8 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
         const key = `${rule.id}:${m.round}:${seat}`;
         if (done.has(key)) continue;
         // At a real table (#37) the positions here mean nothing: each moment is the players' to count.
-        const companion = !!game.settings.companion;
+        // A rule that measures nothing (it counts what was wiped out) is worked out there too.
+        const companion = !!game.settings.companion && rule.measures !== false;
         const s = companion
           ? { vp: 0, why: rule.ask?.question ?? t("count it on your table") }
           : rule.suggest(m.state, seat);

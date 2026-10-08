@@ -31,6 +31,8 @@ export function paintOverlays(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
   root: ParentNode = document,
+  /** A clip not the screen's shape: the tray goes bottom centre, at a size of its own, not in a cropped corner. */
+  trayIn?: { width: number; height: number },
 ): void {
   for (const sel of LAYERS)
     for (const el of root.querySelectorAll<HTMLElement>(sel))
@@ -38,7 +40,18 @@ export function paintOverlays(
       // show as a stray frame (UX 337); wound pips have no text.
       if (sel === ".wounds" || showsText(el)) paintBox(ctx, el, frame, 1);
   const tray = root.querySelector<HTMLElement>(".dice-tray.on");
-  if (tray) paintTray(ctx, tray, frame);
+  if (tray) paintTray(ctx, tray, trayIn ? (trayFrame(tray, trayIn) ?? frame) : frame);
+}
+
+/** The frame that puts the tray's felt bottom centre of a `size` picture, as big as fits. */
+function trayFrame(tray: HTMLElement, size: { width: number; height: number }): Frame | null {
+  const r = (tray.querySelector<HTMLElement>(".felt") ?? tray).getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const scale = Math.min((size.width * 0.7) / r.width, (size.height * 0.3) / r.height);
+  const x = (size.width - r.width * scale) / 2;
+  // Above the caption, which keeps its place at the bottom.
+  const y = size.height * 0.85 - r.height * scale;
+  return { scale, left: r.left - x / scale, top: r.top - y / scale };
 }
 
 const visible = (style: CSSStyleDeclaration) =>

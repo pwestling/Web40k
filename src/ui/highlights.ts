@@ -1,12 +1,13 @@
-import { applyEvent, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
+import { applyEvent, stateAt, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
 import { opposed, sidePlayers } from "../core/teams";
-import { t } from "../i18n";
+import { t, tn } from "../i18n";
+import { plainSystemName } from "../share/site";
 
 /** A moment worth jumping to in a replay. */
 export interface Highlight {
   seq: number;
-  kind: "wiped" | "charge" | "swing";
+  kind: "wiped" | "charge" | "swing" | "losses";
   text: string;
 }
 
@@ -206,7 +207,7 @@ export function replayIntro(record: GameRecord): ReplayIntro {
   let maxRounds = Infinity;
   try {
     const sys = systemOf(state);
-    system = sys.name;
+    system = plainSystemName(sys.name);
     if (typeof sys.turn.rounds === "number") maxRounds = sys.turn.rounds;
   } catch {
     system = state.system ?? "";
@@ -219,4 +220,43 @@ export function replayIntro(record: GameRecord): ReplayIntro {
     rounds: Math.min(state.turn.round, maxRounds),
     modelsLost: Object.values(state.models).filter((m) => m.destroyed).length,
   };
+}
+
+/**
+ * Who lost models between two points of the game, most first, with where
+ * they stood at the start: a round card's lines when nothing else stood out
+ * (UX 339), and its picture's subject.
+ */
+export function lossesBetween(
+  record: GameRecord,
+  from: number,
+  to: number,
+): { unit: string; lost: number; highlight: Highlight; at: { x: number; y: number; span: number } | null }[] {
+  const before = stateAt(record, from);
+  const after = stateAt(record, to);
+  const out = [];
+  for (const u of Object.values(before.units)) {
+    const now = after.units[u.id];
+    const was = aliveModels(before, u);
+    const lost = was.length - (now ? aliveModels(after, now).length : 0);
+    if (lost <= 0) continue;
+    const at = was.map((m) => m.position);
+    const x = at.reduce((n, p) => n + p.x, 0) / at.length;
+    const y = at.reduce((n, p) => n + p.y, 0) / at.length;
+    const span = Math.max(6, ...at.map((p) => 2 * Math.hypot(p.x - x, p.y - y)));
+    const wiped = !!now && aliveModels(after, now).length === 0;
+    out.push({
+      unit: u.id,
+      lost,
+      highlight: {
+        seq: to,
+        kind: wiped ? ("wiped" as const) : ("losses" as const),
+        text: wiped
+          ? t("{unit} wiped out", { unit: u.name })
+          : tn(lost, "{unit} lost a model", "{unit} lost {n} models", { unit: u.name }),
+      },
+      at: { x, y, span },
+    });
+  }
+  return out.sort((a, b) => b.lost - a.lost);
 }
