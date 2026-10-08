@@ -11,6 +11,7 @@ import type { ReplayFile } from "../ui/replayFile";
 import { commitTo, newSeed, segmentRng, type DiceKey } from "./dice";
 import { identity, sign, verifySignature } from "./keys";
 import type { Box } from "./mailbox";
+import { t } from "../i18n";
 
 /**
  * Play by mail (roadmap #23): a game that lives across days, passed back and
@@ -124,17 +125,17 @@ export function parseFile(text: string): MailFile | string {
   try {
     v = JSON.parse(text);
   } catch {
-    return "That isn't a play-by-mail file (it doesn't read as JSON).";
+    return t("That isn't a play-by-mail file (it doesn't read as JSON).");
   }
   const f = v as Partial<MailFile>;
-  if (f?.format !== "open-battle/mail@1") return "That isn't a play-by-mail file.";
+  if (f?.format !== "open-battle/mail@1") return t("That isn't a play-by-mail file.");
   if (
     typeof f.game !== "string" ||
     typeof f.index !== "number" ||
     !Array.isArray(f.events) ||
     !Array.isArray(f.intents)
   )
-    return "That play-by-mail file is damaged.";
+    return t("That play-by-mail file is damaged.");
   return f as MailFile;
 }
 

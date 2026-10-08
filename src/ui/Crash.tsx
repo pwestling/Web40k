@@ -1,4 +1,5 @@
 import { Component, useState, type ReactNode } from "react";
+import { formatDate, t } from "../i18n";
 import { saveNow, useStore } from "../store";
 import { reportProblem, useOpenReport, type ProblemReport } from "./report";
 import { SavedNote } from "./SavedNote";
@@ -47,11 +48,12 @@ function CrashScreen({
   const [sent, setSent] = useState<string | null>(null);
   return (
     <div className="panel crash" role="alert">
-      <h2>Something went wrong</h2>
-      <p>Your game is saved. You can go back to it, or reload and pick it up from the start screen.</p>
+      <h2>{t("Something went wrong")}</h2>
+      <p>{t("Your game is saved. You can go back to it, or reload and pick it up from the start screen.")}</p>
       <p className="muted small">
-        A problem report helps fix this: it holds the game so far and what broke, and it stays on your device
-        until you send it to someone.
+        {t(
+          "A problem report helps fix this: it holds the game so far and what broke, and it stays on your device until you send it to someone.",
+        )}
       </p>
       <div className="row">
         <button
@@ -60,14 +62,15 @@ function CrashScreen({
             void reportProblem(error).then(setSent);
           }}
         >
-          {sent ? "Downloaded ✓" : "Download a problem report"}
+          {sent ? t("Downloaded ✓") : t("Download a problem report")}
         </button>
-        <button onClick={onRetry}>Back to the game</button>
-        <button onClick={() => location.reload()}>Reload</button>
+        <button onClick={onRetry}>{t("Back to the game")}</button>
+        <button onClick={() => location.reload()}>{t("Reload")}</button>
       </div>
+      {/* i18n-ignore: a kind, not text */}
       {sent && <SavedNote file={sent} kind="report" />}
       <details>
-        <summary className="muted small">What broke</summary>
+        <summary className="muted small">{t("What broke")}</summary>
         <pre className="small">{error.message}</pre>
       </details>
     </div>
@@ -81,14 +84,22 @@ export function ReportBanner() {
   if (!report || session) return null;
   return (
     <div className="panel report-banner" role="status">
-      <strong>Problem report</strong>
+      <strong>{t("Problem report")}</strong>
       <span className="small">
-        {report.error ? report.error.message : "Reported by a player"} · build {report.build} ·{" "}
-        {report.role ?? "?"}, {report.mode ?? "?"} · {new Date(report.at).toLocaleString()}
+        {report.error ? report.error.message : t("Reported by a player")} ·{" "}
+        {t("build {build}", { build: report.build })} · {report.role ?? "?"}, {report.mode ?? "?"} ·{" "}
+        {formatDate(new Date(report.at), {
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+        })}
       </span>
       <div className="row">
         <button onClick={() => useStore.getState().setScrub(report.seq)}>
-          Go to the report (event {report.seq})
+          {t("Go to the report (event {seq})", { seq: report.seq })}
         </button>
         <button className="quiet" onClick={() => useOpenReport.setState({ report: null })}>
           ✕

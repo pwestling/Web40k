@@ -9,6 +9,7 @@ import {
   type ClockSettings,
   type Clocks,
 } from "../core";
+import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 
@@ -45,19 +46,30 @@ export function SideClock({ seat }: { seat: number }) {
   return (
     <span
       className={`side-clock${running ? " running" : ""}${left <= 0 ? " out" : ""}`}
-      title={left <= 0 ? "Out of time" : running ? "This side's clock is running" : "Chess clock"}
-      aria-label={`${clockText(left)} left${running ? ", running" : ""}${left <= 0 ? ", out of time" : ""}`}
+      title={left <= 0 ? t("Out of time") : running ? t("This side's clock is running") : t("Chess clock")}
+      aria-label={
+        running && left <= 0
+          ? t("{time} left, running, out of time", { time: clockText(left) })
+          : running
+            ? t("{time} left, running", { time: clockText(left) })
+            : left <= 0
+              ? t("{time} left, out of time", { time: clockText(left) })
+              : t("{time} left", { time: clockText(left) })
+      }
     >
       ⏱ {clockText(left)}
       {live && host && c.paused && (
         <>
           <button
-            title="Take a minute off"
+            title={t("Take a minute off")}
             onClick={() => dispatch({ type: "clock/adjust", seat, ms: -60_000 })}
           >
             −1′
           </button>
-          <button title="Give a minute" onClick={() => dispatch({ type: "clock/adjust", seat, ms: 60_000 })}>
+          <button
+            title={t("Give a minute")}
+            onClick={() => dispatch({ type: "clock/adjust", seat, ms: 60_000 })}
+          >
             +1′
           </button>
         </>
@@ -79,12 +91,14 @@ export function ClockBar() {
   if (c.battleStart === null && !call) return null;
   return (
     <div className="clock-bar" role="status">
-      {c.paused === "disconnect" && <span className="warn">Clocks stopped: a player is disconnected.</span>}
-      {c.paused === "hand" && <span className="muted">Clocks stopped.</span>}
+      {c.paused === "disconnect" && (
+        <span className="warn">{t("Clocks stopped: a player is disconnected.")}</span>
+      )}
+      {c.paused === "hand" && <span className="muted">{t("Clocks stopped.")}</span>}
       {call && <strong className="time-call">{call}</strong>}
       {out.map((name) => (
         <span key={name} className="warn">
-          {name} is out of time.
+          {t("{name} is out of time.", { name })}
         </span>
       ))}
       {live && !c.over && c.battleStart !== null && c.paused !== "disconnect" && (
@@ -92,27 +106,27 @@ export function ClockBar() {
           className="small"
           onClick={() => dispatch({ type: "clock/pause", paused: !c.paused, reason: "hand" })}
         >
-          {c.paused ? "Restart the clocks" : "Stop the clocks"}
+          {c.paused ? t("Restart the clocks") : t("Stop the clocks")}
         </button>
       )}
       {live && host && !c.over && c.paused === "disconnect" && (
         <button
           className="small"
-          title="Start the clocks again without waiting for them"
+          title={t("Start the clocks again without waiting for them")}
           onClick={() => dispatch({ type: "clock/pause", paused: false })}
         >
-          Restart anyway
+          {t("Restart anyway")}
         </button>
       )}
       {live && host && c.paused && !c.over && (
-        <span className="muted small">Use −1′ and +1′ on a side's clock to adjust it.</span>
+        <span className="muted small">{t("Use −1′ and +1′ on a side's clock to adjust it.")}</span>
       )}
       {live && host && !c.paused && !c.over && c.battleStart !== null && (
         <span
           className="muted small"
-          title="The −1′ and +1′ buttons show on each side's clock while the clocks are stopped"
+          title={t("The −1′ and +1′ buttons show on each side's clock while the clocks are stopped")}
         >
-          Stop the clocks to adjust them.
+          {t("Stop the clocks to adjust them.")}
         </span>
       )}
     </div>
@@ -190,9 +204,11 @@ function ClockCaller() {
         if (timeLeft(c, settings, seat, now) <= 0)
           due.push({
             kind: `out-${seat}`,
-            text: `${sidePlayers(game, seat)
-              .map((p) => p.name)
-              .join(" & ")} is out of time.`,
+            text: t("{name} is out of time.", {
+              name: sidePlayers(game, seat)
+                .map((p) => p.name)
+                .join(" & "),
+            }),
           });
     for (const d of due) {
       if (c.called.includes(d.kind) || sent.current.has(d.kind)) continue;
@@ -221,15 +237,15 @@ export function ClockSettingsRow({
   return (
     <div className="clock-settings">
       <label>
-        Chess clock{" "}
+        {t("Chess clock")}{" "}
         <select
           value={value?.minutes ?? 0}
           onChange={(e) => (Number(e.target.value) ? set({ minutes: Number(e.target.value) }) : change(null))}
         >
-          <option value={0}>Off</option>
+          <option value={0}>{t("Off")}</option>
           {[45, 60, 75, 90, 105, 120, 150].map((m) => (
             <option key={m} value={m}>
-              {m} minutes a side
+              {t("{n} minutes a side", { n: m })}
             </option>
           ))}
         </select>
@@ -237,36 +253,37 @@ export function ClockSettingsRow({
       {value && (
         <>
           <label>
-            Battle time limit{" "}
+            {t("Battle time limit")}{" "}
             <select
               value={value.gameMinutes ?? 0}
               onChange={(e) => set({ gameMinutes: Number(e.target.value) || undefined })}
             >
-              <option value={0}>None</option>
+              <option value={0}>{t("None")}</option>
               {[120, 150, 180, 210, 240].map((m) => (
                 <option key={m} value={m}>
-                  {m / 60} hours
+                  {tn(m / 60, "{n} hour", "{n} hours")}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Each battle round{" "}
+            {t("Each battle round")}{" "}
             <select
               value={value.roundMinutes ?? 0}
               onChange={(e) => set({ roundMinutes: Number(e.target.value) || undefined })}
             >
-              <option value={0}>Untimed</option>
+              <option value={0}>{t("Untimed")}</option>
               {[20, 30, 40, 45, 60].map((m) => (
                 <option key={m} value={m}>
-                  {m} minutes
+                  {tn(m, "{n} minute", "{n} minutes")}
                 </option>
               ))}
             </select>
           </label>
           <p className="muted small">
-            Each side's clock runs while it has to act: its turn, its reactions and its saves. The clocks stop
-            while a player is disconnected. Nothing is enforced; the time calls are for the players.
+            {t(
+              "Each side's clock runs while it has to act: its turn, its reactions and its saves. The clocks stop while a player is disconnected. Nothing is enforced; the time calls are for the players.",
+            )}
           </p>
         </>
       )}

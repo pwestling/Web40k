@@ -6,6 +6,7 @@ import type { AssetKind } from "../assets/types";
 import { useShelf } from "../packages/shelf";
 import { useTables } from "../tables/library";
 import { download } from "../ui/report";
+import { formatNumber, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { useFigures, type FigureEntry } from "./library";
 import { closeLibrary, useLibraryOpen } from "./open";
@@ -15,12 +16,13 @@ import { unused, usage, type Usage } from "./usage";
 
 export const mb = (bytes: number) =>
   bytes >= 1e9
-    ? `${(bytes / 1e9).toFixed(1)} GB`
+    ? `${tenths(bytes / 1e9)} GB`
     : bytes >= 1e6
-      ? `${(bytes / 1e6).toFixed(1)} MB`
-      : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
+      ? `${tenths(bytes / 1e6)} MB`
+      : `${formatNumber(Math.max(1, Math.round(bytes / 1e3)))} KB`;
+const tenths = (n: number) => formatNumber(n, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const k = (n: number) =>
-  n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}k` : String(n);
+  n >= 1e6 ? `${tenths(n / 1e6)}M` : n >= 1000 ? `${formatNumber(Math.round(n / 1000))}k` : formatNumber(n);
 
 /** Thumbnails are drawn one at a time, the first time the library shows a model. */
 let drawing = false;
@@ -71,30 +73,30 @@ export function FigureLibrary() {
       <div
         className="panel modal figure-library"
         role="dialog"
-        aria-label="Figure library"
+        aria-label={t("Figure library")}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="row spread">
-          <h2>Figure library</h2>
-          <button className="quiet" title="Close" aria-label="Close" onClick={closeLibrary}>
+          <h2>{t("Figure library")}</h2>
+          <button className="quiet" title={t("Close")} aria-label={t("Close")} onClick={closeLibrary}>
             ✕
           </button>
         </div>
         <div className="tabs" role="tablist">
-          {(["figures", "storage"] as const).map((t) => (
+          {(["figures", "storage"] as const).map((id) => (
             <button
-              key={t}
+              key={id}
               role="tab"
-              aria-selected={t === tab}
-              className={t === tab ? "on" : ""}
-              onClick={() => useLibraryOpen.setState({ tab: t })}
+              aria-selected={id === tab}
+              className={id === tab ? "on" : ""}
+              onClick={() => useLibraryOpen.setState({ tab: id })}
             >
-              {t === "figures" ? "Figures" : "Storage"}
+              {id === "figures" ? t("Figures") : t("Storage")}
             </button>
           ))}
         </div>
         {!loaded ? (
-          <p className="muted">Reading the library…</p>
+          <p className="muted">{t("Reading the library…")}</p>
         ) : tab === "figures" ? (
           <Figures />
         ) : (
@@ -139,7 +141,13 @@ function Figures() {
         .then((asset) => {
           // The same file twice is one model: say so rather than adding nothing quietly (UX 243).
           const same = asset && before[asset.id];
-          if (same) setNote(`${file.name} is the same model as ${same.name}, already in your library.`);
+          if (same)
+            setNote(
+              t("{file} is the same model as {name}, already in your library.", {
+                file: file.name,
+                name: same.name,
+              }),
+            );
           void drawThumbs();
         });
     }
@@ -147,9 +155,19 @@ function Figures() {
   const pack = async () => {
     setBusy(true);
     try {
-      const p = await makePack(packName.trim() || "Figures", forPack);
+      const p = await makePack(packName.trim() || t("Figures"), forPack);
       download(packFileName(p), p);
-      setNote(`Saved ${packFileName(p)}: ${p.figures.length} models, pack ${shortHash(p.hash)}.`);
+      setNote(
+        tn(
+          p.figures.length,
+          "Saved {file}: {n} model, pack {code}.",
+          "Saved {file}: {n} models, pack {code}.",
+          {
+            file: packFileName(p),
+            code: shortHash(p.hash),
+          },
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -170,34 +188,38 @@ function Figures() {
       <div className="row wrap">
         <input
           type="search"
-          placeholder="Find a model, tag or unit"
-          aria-label="Find a model"
+          placeholder={t("Find a model, tag or unit")}
+          aria-label={t("Find a model")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value as AssetKind | "")}>
-          <option value="">Figures and terrain</option>
-          <option value="miniature">Figures</option>
-          <option value="terrain">Terrain</option>
+        <select
+          aria-label={t("Kind")}
+          value={kind}
+          onChange={(e) => setKind(e.target.value as AssetKind | "")}
+        >
+          <option value="">{t("Figures and terrain")}</option>
+          <option value="miniature">{t("Figures")}</option>
+          <option value="terrain">{t("Terrain")}</option>
         </select>
       </div>
       {tags.length > 0 && (
         <div className="row wrap tag-filter">
-          {tags.map((t) => (
+          {tags.map((tg) => (
             <button
-              key={t}
-              className={`chip${tag === t ? " on" : ""}`}
-              aria-pressed={tag === t}
-              onClick={() => setTag(tag === t ? null : t)}
+              key={tg}
+              className={`chip${tag === tg ? " on" : ""}`}
+              aria-pressed={tag === tg}
+              onClick={() => setTag(tag === tg ? null : tg)}
             >
-              {t}
+              {tg}
             </button>
           ))}
         </div>
       )}
       <div className="row wrap">
         <label className="file button">
-          Add models…
+          {t("Add models…")}
           <input
             type="file"
             multiple
@@ -208,12 +230,16 @@ function Figures() {
             }}
           />
         </label>
-        <select aria-label="Add as" value={addAs} onChange={(e) => setAddAs(e.target.value as AssetKind)}>
-          <option value="miniature">as figures</option>
-          <option value="terrain">as terrain</option>
+        <select
+          aria-label={t("Add as")}
+          value={addAs}
+          onChange={(e) => setAddAs(e.target.value as AssetKind)}
+        >
+          <option value="miniature">{t("as figures")}</option>
+          <option value="terrain">{t("as terrain")}</option>
         </select>
         <label className="file button">
-          Open a pack…
+          {t("Open a pack…")}
           <input
             type="file"
             accept=".json,application/json"
@@ -234,7 +260,7 @@ function Figures() {
 
       {all.length === 0 ? (
         <p className="muted">
-          No models yet. Upload a figure onto a unit, add models here, or open a pack from your club.
+          {t("No models yet. Upload a figure onto a unit, add models here, or open a pack from your club.")}
         </p>
       ) : (
         <>
@@ -254,28 +280,31 @@ function Figures() {
               />
             ))}
           </ul>
-          {shown.length === 0 && <p className="muted small">Nothing matches.</p>}
+          {shown.length === 0 && <p className="muted small">{t("Nothing matches.")}</p>}
           <div className="row wrap pack-row">
             <input
-              aria-label="Pack name"
-              placeholder="Pack name, e.g. our club's Orks"
+              aria-label={t("Pack name")}
+              placeholder={t("Pack name, e.g. our club's Orks")}
               value={packName}
               onChange={(e) => setPackName(e.target.value)}
             />
             <button disabled={busy || !forPack.length} onClick={() => void pack()}>
-              Make a pack of {forPack.length}{" "}
-              {picked.size ? "picked" : shown.length === all.length ? "" : "shown"}{" "}
-              {forPack.length === 1 ? "model" : "models"}
+              {picked.size
+                ? tn(forPack.length, "Make a pack of {n} picked model", "Make a pack of {n} picked models")
+                : shown.length === all.length
+                  ? tn(forPack.length, "Make a pack of {n} model", "Make a pack of {n} models")
+                  : tn(forPack.length, "Make a pack of {n} shown model", "Make a pack of {n} shown models")}
             </button>
             {picked.size > 0 && (
               <button className="quiet" onClick={() => setPicked(new Set())}>
-                Clear picks
+                {t("Clear picks")}
               </button>
             )}
           </div>
           <p className="muted small">
-            A pack is one file with the models, their paint, names and tags, to share a collection. Its short
-            code is the same on every device that has the same pack.
+            {t(
+              "A pack is one file with the models, their paint, names and tags, to share a collection. Its short code is the same on every device that has the same pack.",
+            )}
           </p>
         </>
       )}
@@ -285,11 +314,17 @@ function Figures() {
 
 function packLine(r: PackResult): string {
   const parts = [
-    `${r.name} (pack ${shortHash(r.hash)}): ${r.added} new ${r.added === 1 ? "model" : "models"}`,
-    r.already ? `${r.already} already here` : "",
-    r.damaged ? `${r.damaged} damaged and left out` : "",
+    tn(r.added, "{name} (pack {code}): {n} new model", "{name} (pack {code}): {n} new models", {
+      name: r.name,
+      code: shortHash(r.hash),
+    }),
+    r.already ? tn(r.already, "{n} already here", "{n} already here") : "",
+    r.damaged ? tn(r.damaged, "{n} damaged and left out", "{n} damaged and left out") : "",
   ].filter(Boolean);
-  return `${parts.join(", ")}.${r.changed ? " This pack was changed after it was made: its code won't match the original's." : ""}`;
+  const line = `${parts.join(", ")}.`;
+  return r.changed
+    ? `${line} ${t("This pack was changed after it was made: its code won't match the original's.")}`
+    : line;
 }
 
 function FigureCard({
@@ -307,13 +342,13 @@ function FigureCard({
   const [name, setName] = useState(entry.name);
   const [tags, setTags] = useState(entry.tags.join(", "));
   const where = [
-    u?.armies.length ? `Armies: ${u.armies.join(", ")}` : "",
-    u?.tables.length ? `Tables: ${u.tables.join(", ")}` : "",
-    u?.game ? "In a game" : "",
+    u?.armies.length ? t("Armies: {names}", { names: u.armies.join(", ") }) : "",
+    u?.tables.length ? t("Tables: {names}", { names: u.tables.join(", ") }) : "",
+    u?.game ? t("In a game") : "",
   ].filter(Boolean);
   return (
     <li className={`figure-card${picked ? " picked" : ""}`}>
-      <label className="thumb" title="Pick for a pack">
+      <label className="thumb" title={t("Pick for a pack")}>
         <input type="checkbox" checked={picked} onChange={(e) => onPick(e.target.checked)} />
         {entry.thumb && entry.thumb !== "none" ? (
           <img src={entry.thumb} alt="" width={96} height={96} />
@@ -326,20 +361,21 @@ function FigureCard({
       <div className="figure-info">
         <input
           className="figure-name"
-          aria-label="Name"
+          aria-label={t("Name")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           onBlur={() => name.trim() && name !== entry.name && patch(entry.id, { name: name.trim() })}
         />
         <span className="muted small">
-          {entry.kind === "terrain" ? "Terrain" : "Figure"} · {entry.height}" tall · {k(entry.triangles)}{" "}
-          triangles · {mb(entry.bytes)}
+          {entry.kind === "terrain" ? t("Terrain") : t("Figure")} ·{" "}
+          {t('{height}" tall', { height: entry.height })} ·{" "}
+          {t("{count} triangles", { count: k(entry.triangles) })} · {mb(entry.bytes)}
         </span>
         <input
           className="small"
-          aria-label="Tags"
-          placeholder="Tags, e.g. orks, painted"
+          aria-label={t("Tags")}
+          placeholder={t("Tags, e.g. orks, painted")}
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
@@ -348,7 +384,7 @@ function FigureCard({
               ...new Set(
                 tags
                   .split(",")
-                  .map((t) => t.trim().toLowerCase())
+                  .map((s) => s.trim().toLowerCase())
                   .filter(Boolean),
               ),
             ];
@@ -356,20 +392,28 @@ function FigureCard({
           }}
         />
         {entry.units.length > 0 && (
-          <span className="small">Dresses {entry.units.slice(0, 6).join(", ")}</span>
+          <span className="small">
+            {/* A figure from a pack knows its units before it is on any table (UX 252). */}
+            {where.length
+              ? t("Dresses {units}", { units: entry.units.slice(0, 6).join(", ") })
+              : t("Will dress {units}", { units: entry.units.slice(0, 6).join(", ") })}
+          </span>
         )}
         <span className="muted small">
-          {where.length ? where.join(" · ") : "Not used in a saved army, table or game"}
+          {where.length ? where.join(" · ") : t("Not used in a saved army, table or game")}
         </span>
       </div>
       <button
         className="quiet small"
-        title="Delete this model from this device"
+        title={t("Delete this model from this device")}
         onClick={() => {
-          const warn = unused(u)
-            ? ""
-            : " It's still used, and those figures will show plain stand-ins until it comes back.";
-          if (confirm(`Delete ${entry.name} from this device?${warn}`)) void remove([entry.id]);
+          const ask = unused(u)
+            ? t("Delete {name} from this device?", { name: entry.name })
+            : t(
+                "Delete {name} from this device? It's still used, and those figures will show plain stand-ins until it comes back.",
+                { name: entry.name },
+              );
+          if (confirm(ask)) void remove([entry.id]);
         }}
       >
         ✕
@@ -397,46 +441,49 @@ function Storage() {
   const total = all.reduce((n, e) => n + e.bytes, 0);
   const spare = used ? all.filter((e) => unused(used[e.id])) : [];
   const spareBytes = spare.reduce((n, e) => n + e.bytes, 0);
-  const refresh = () => setTick((t) => t + 1);
+  const refresh = () => setTick((n) => n + 1);
 
   return (
     <>
       {estimate?.quota ? (
         <>
-          <p>
-            Open Battle is using <strong>{mb(estimate.usage ?? 0)}</strong> of the {mb(estimate.quota)} this
-            browser lets it keep.
-          </p>
+          <UsingLine used={mb(estimate.usage ?? 0)} quota={mb(estimate.quota)} />
           <meter
+            // i18n-ignore: a class name
             className="storage-meter"
             min={0}
             max={estimate.quota}
             value={estimate.usage ?? 0}
-            aria-label="Storage used"
+            aria-label={t("Storage used")}
           />
         </>
       ) : (
-        <p className="muted">This browser doesn't say how much space it allows.</p>
+        <p className="muted">{t("This browser doesn't say how much space it allows.")}</p>
       )}
       <p className="small">
-        Models: {all.length}, {mb(total)} (their meshes, simplified; your original files aren't kept).
+        {t("Models: {count}, {size} (their meshes, simplified; your original files aren't kept).", {
+          count: all.length,
+          size: mb(total),
+        })}
       </p>
       {kept === false && (
         <p className="row wrap small">
-          <span className="muted">The browser may clear this when space runs low.</span>
+          <span className="muted">{t("The browser may clear this when space runs low.")}</span>
           <button className="small" onClick={() => void navigator.storage.persist().then(setKept)}>
-            Ask it to keep Open Battle's data
+            {t("Ask it to keep Open Battle's data")}
           </button>
         </p>
       )}
-      {kept && <p className="muted small">The browser will keep this data until you clear it.</p>}
+      {kept && <p className="muted small">{t("The browser will keep this data until you clear it.")}</p>}
       <div className="row wrap">
         <button
           disabled={!spare.length}
           onClick={() => {
             if (
               !confirm(
-                `Delete ${spare.length} unused ${spare.length === 1 ? "model" : "models"} (${mb(spareBytes)})?`,
+                tn(spare.length, "Delete {n} unused model ({size})?", "Delete {n} unused models ({size})?", {
+                  size: mb(spareBytes),
+                }),
               )
             )
               return;
@@ -447,18 +494,21 @@ function Storage() {
           }}
         >
           {spare.length
-            ? `Delete ${spare.length} unused ${spare.length === 1 ? "model" : "models"} (${mb(spareBytes)})`
-            : "No unused models"}
+            ? tn(spare.length, "Delete {n} unused model ({size})", "Delete {n} unused models ({size})", {
+                size: mb(spareBytes),
+              })
+            : t("No unused models")}
         </button>
         {stale > 0 && (
           <button className="quiet" onClick={() => void deleteStale().then(refresh)}>
-            Clear {stale} outdated {stale === 1 ? "copy" : "copies"}
+            {tn(stale, "Clear {n} outdated copy", "Clear {n} outdated copies")}
           </button>
         )}
       </div>
       <p className="muted small">
-        Unused means no saved army, saved table or game in progress on this device needs it. Outdated copies
-        are from an older version of the app, which makes them again when needed.
+        {t(
+          "Unused means no saved army, saved table or game in progress on this device needs it. Outdated copies are from an older version of the app, which makes them again when needed.",
+        )}
       </p>
       <table className="storage-list">
         <tbody>
@@ -466,13 +516,13 @@ function Storage() {
             <tr key={e.id}>
               <td>{e.name}</td>
               <td className="num">{mb(e.bytes)}</td>
-              <td className="muted small">{used && unused(used[e.id]) ? "unused" : "in use"}</td>
+              <td className="muted small">{used && unused(used[e.id]) ? t("unused") : t("in use")}</td>
               <td>
                 <button
                   className="quiet small"
-                  title="Delete from this device"
+                  title={t("Delete from this device")}
                   onClick={() => {
-                    if (confirm(`Delete ${e.name} from this device?`))
+                    if (confirm(t("Delete {name} from this device?", { name: e.name })))
                       void useFigures.getState().remove([e.id]).then(refresh);
                   }}
                 >
@@ -484,5 +534,19 @@ function Storage() {
         </tbody>
       </table>
     </>
+  );
+}
+
+/** "Open Battle is using **12.3 MB** of the 2.1 GB this browser lets it keep.", the amount in bold. */
+function UsingLine({ used, quota }: { used: string; quota: string }) {
+  const [before, after] = t("Open Battle is using {used} of the {quota} this browser lets it keep.", {
+    quota,
+  }).split("{used}");
+  return (
+    <p>
+      {before}
+      <strong>{used}</strong>
+      {after}
+    </p>
   );
 }

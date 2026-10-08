@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
 import { BroadcastControls } from "../broadcast/BroadcastControls";
+import { t } from "../i18n";
 import { loadRoom, useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
@@ -89,68 +90,72 @@ export function Hud() {
   if (collapsed)
     return (
       <div className="panel hud collapsed">
-        <button onClick={() => setCollapsed(false)}>☰ Menu</button>
+        <button onClick={() => setCollapsed(false)}>{t("☰ Menu")}</button>
       </div>
     );
 
   return (
     <div className="panel hud">
       <div className="row spread">
+        {/* i18n-ignore */}
         <strong>Open Battle</strong>
-        <button onClick={() => setCollapsed(true)}>Hide</button>
+        <button onClick={() => setCollapsed(true)}>{t("Hide")}</button>
       </div>
       <RoomCard />
       {mode === "hotseat" && (
         <p className="muted">
           {lesson
-            ? "Lesson: the computer plays the other side."
+            ? t("Lesson: the computer plays the other side.")
             : mail
-              ? "Play by mail: you play your side; send your file when you're done."
-              : "Hotseat: you control both sides."}
+              ? t("Play by mail: you play your side; send your file when you're done.")
+              : t("Hotseat: you control both sides.")}
         </p>
       )}
-      {role === "spectator" && <p className="muted">Spectating.</p>}
+      {role === "spectator" && <p className="muted">{t("Spectating.")}</p>}
       {role === "spectator" && <BroadcastControls />}
       <div className="row wrap">
         <button onClick={() => setView(view === "top" ? "3d" : "top")}>
-          {view === "top" ? "3D view" : "Top-down view"}
+          {view === "top" ? t("3D view") : t("Top-down view")}
         </button>
-        <button onClick={resetView} title="Home">
-          Reset view
+        <button onClick={resetView} title={t("Home")}>
+          {t("Reset view")}
         </button>
         {role !== "spectator" && (
           <button
             className={measuring ? "on" : ""}
-            title="Drag between models or points to measure; both players see it (M)"
+            title={t("Drag between models or points to measure; both players see it (M)")}
             onClick={() => set({ measuring: !measuring })}
           >
-            Ruler
+            {t("Ruler")}
           </button>
         )}
         {liveGame.ruler && role !== "spectator" && (
-          <button title="Clear the ruler (Esc)" onClick={() => dispatch({ type: "ruler/set", ruler: null })}>
-            Clear ruler
+          <button
+            title={t("Clear the ruler (Esc)")}
+            onClick={() => dispatch({ type: "ruler/set", ruler: null })}
+          >
+            {t("Clear ruler")}
           </button>
         )}
         <button className={plates ? "on" : ""} onClick={() => set({ plates: !plates })}>
-          Unit names
+          {t("Unit names")}
         </button>
         <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
-          X-ray terrain
+          {t("X-ray terrain")}
         </button>
         <button
           className={fastDice ? "on" : ""}
-          title="Shorter dice rolls in the tray"
+          title={t("Shorter dice rolls in the tray")}
           onClick={useSound.getState().toggleFast}
         >
-          Fast dice
+          {t("Fast dice")}
         </button>
         <button
           className={director ? "on" : ""}
-          title="Camera follows the action: moves, shots and charges"
+          title={t("Camera follows the action: moves, shots and charges")}
           onClick={() => set({ director: !director })}
         >
-          Follow action
+          {t("Follow action")}
         </button>
         {role !== "spectator" && (
           <button
@@ -160,13 +165,13 @@ export function Hud() {
               if (
                 !editing &&
                 liveGame.turn.round > 0 &&
-                !confirm("The battle has started. Unlock the terrain? Every change shows in the log.")
+                !confirm(t("The battle has started. Unlock the terrain? Every change shows in the log."))
               )
                 return;
               set({ editing: !editing, selectedTerrain: null });
             }}
           >
-            {editing ? "Done editing" : liveGame.turn.round > 0 ? "Unlock terrain" : "Edit terrain"}
+            {editing ? t("Done editing") : liveGame.turn.round > 0 ? t("Unlock terrain") : t("Edit terrain")}
           </button>
         )}
       </div>
@@ -192,7 +197,7 @@ export function Hud() {
           </>
         ) : (
           <details className="fold">
-            <summary>Add an army</summary>
+            <summary>{t("Add an army")}</summary>
             <ArmyImport players={mine} />
           </details>
         ))}
@@ -204,7 +209,13 @@ export function Hud() {
         <div className="row undo-row">
           <button
             disabled={!takeBack}
-            title={takeBack ? `Take back ${takeBack.what ?? "your last action"}` : ""}
+            title={
+              takeBack
+                ? takeBack.what
+                  ? t("Take back {what}", { what: takeBack.what })
+                  : t("Take back your last action")
+                : ""
+            }
             onClick={() =>
               takeBack &&
               dispatch({
@@ -214,10 +225,10 @@ export function Hud() {
               })
             }
           >
-            Undo
+            {t("Undo")}
           </button>
           <button className={dice ? "on" : ""} onClick={() => setDice(!dice)}>
-            Dice
+            {t("Dice")}
           </button>
         </div>
       )}
@@ -230,13 +241,13 @@ export function Hud() {
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}
           />
-          <span>D</span>
+          <span>{t("D")}</span>
           <select value={sides} onChange={(e) => setSides(Number(e.target.value))}>
             {[3, 6, 8, 10, 12, 20].map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
-          <button onClick={() => dispatch({ type: "dice/roll", count, sides })}>Roll</button>
+          <button onClick={() => dispatch({ type: "dice/roll", count, sides })}>{t("Roll")}</button>
         </div>
       )}
       <TemplateTools />
@@ -267,14 +278,14 @@ export function Hud() {
         {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
         {(battleOver(shown) || !session) && (
           <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
-            Stats
+            {t("Stats")}
           </button>
         )}
-        <button onClick={() => void downloadReplay(record)}>Download replay</button>
+        <button onClick={() => void downloadReplay(record)}>{t("Download replay")}</button>
         {/* Notes go on a replay: the game just played becomes one (UX 231). */}
         {session && battleOver(shown) && (
-          <button title="Open this game as a replay to add notes and marks" onClick={reviewThisGame}>
-            Review this game
+          <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
+            {t("Review this game")}
           </button>
         )}
         <ReportButton />
@@ -293,9 +304,12 @@ async function downloadReplay(record: GameRecord) {
   URL.revokeObjectURL(a.href);
 }
 
-const NUMBERS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+const numberWord = (n: number): string | undefined =>
+  [t("three"), t("four"), t("five"), t("six"), t("seven"), t("eight")][n - 3];
 export const seatsTaken = (n: number) =>
-  n <= 2 ? "Both players are here." : `All ${NUMBERS[n] ?? n} seats are taken.`;
+  n <= 2
+    ? t("Both players are here.")
+    : t("All {count} seats are taken.", { count: numberWord(n) ?? String(n) });
 
 /**
  * Invite links join straight in, as "Player N": until the player names
@@ -320,11 +334,16 @@ function NameCard({ player }: { player: Player }) {
         save();
       }}
     >
-      <p className="muted">You're {player.name}. What should the others call you?</p>
+      <p className="muted">{t("You're {name}. What should the others call you?", { name: player.name })}</p>
       <div className="row">
-        <input value={name} placeholder="Your name" autoFocus onChange={(e) => setName(e.target.value)} />
+        <input
+          value={name}
+          placeholder={t("Your name")}
+          autoFocus
+          onChange={(e) => setName(e.target.value)}
+        />
         <button className="primary" disabled={!name.trim()}>
-          Use this name
+          {t("Use this name")}
         </button>
       </div>
     </form>
@@ -351,21 +370,21 @@ function RejoinCard({ seated }: { seated: Player[] }) {
     <div className="claim">
       {free.length ? (
         <>
-          <p className="muted">This game is already under way. Rejoining?</p>
+          <p className="muted">{t("This game is already under way. Rejoining?")}</p>
           {free.map((p) => (
             <button
               key={p.id}
               className="primary"
               onClick={() => dispatch({ type: "player/claim", player: p.id })}
             >
-              Rejoin as {p.name}
+              {t("Rejoin as {name}", { name: p.name })}
             </button>
           ))}
         </>
       ) : (
         <p className="muted">{seatsTaken(seated.length)}</p>
       )}
-      <button onClick={watch}>Watch</button>
+      <button onClick={watch}>{t("Watch")}</button>
     </div>
   );
 }

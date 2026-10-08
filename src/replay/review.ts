@@ -6,6 +6,7 @@ import { useStore } from "../store";
 import { myName } from "../talk/talk";
 import { NET_PARAMS } from "../net/config";
 import { cleanNote, cleanNotes, deviceId, putNote, removeNote, useNotes } from "./notes";
+import { t } from "../i18n";
 
 /**
  * A review room (roadmap #30, coach mode): a replay watched together online.
@@ -181,7 +182,7 @@ export function reviewThisGame(): void {
   if (
     session &&
     mode === "online" &&
-    !confirm("Reviewing leaves this game's room. The game stays saved, to resume from the start page.")
+    !confirm(t("Reviewing leaves this game's room. The game stays saved, to resume from the start page."))
   )
     return;
   useStore.getState().openReplay(record);

@@ -1,10 +1,11 @@
 import { stateAt, systemOf, type GameRecord } from "../core";
 import { buildLog } from "../ui/gameLog";
 import { readGame, type RoundSummary } from "../ui/highlights";
+import { t } from "../i18n";
 
 /**
  * A replay's chapters: deployment, then each side's turn in each round, read
- * from the log's turn headers ("Round 2 · Ana · Shooting"). Each says how
+ * from the log's turn headers (their round, and "Round 2 · Ana"). Each says how
  * much happened in it, what stood out, and, for the turn that ends a round,
  * that round's card (VP and losses).
  */
@@ -41,15 +42,15 @@ export function chapters(record: GameRecord): Chapter[] {
     current = { seq, title, round, actions: 0, highlights: [], end: last };
     out.push(current);
   };
-  if (record.initial.turn.round === 0) open(record.initial.seq, "Deployment", 0);
+  if (record.initial.turn.round === 0) open(record.initial.seq, t("Deployment"), 0);
   for (const item of log) {
     if (item.kind === "header") {
       if (item.rules) continue;
-      const m = /^Round (\d+) · (.+?) · /.exec(`${item.text} · `);
-      const title = m ? (Number(m[1]) > limit ? "After the battle" : `Round ${m[1]} · ${m[2]}`) : item.text;
-      if (title !== (current as Chapter | null)?.title) open(Number(item.key), title, m ? Number(m[1]) : 0);
+      const round = item.round ?? 0;
+      const title = round && item.turn ? (round > limit ? t("After the battle") : item.turn) : item.text;
+      if (title !== (current as Chapter | null)?.title) open(Number(item.key), title, round);
     } else if (item.kind === "line" && !item.undone && item.text) {
-      if (!current) open(record.initial.seq, "Setup", 0);
+      if (!current) open(record.initial.seq, t("Setup"), 0);
       current!.actions++;
     }
   }

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useStore } from "../store";
-import { who } from "../talk/talk";
+import { who, withoutWatching } from "../talk/talk";
 import { micOff, micOn, pushToTalk, setMode, setMuted, setVolume, useVoice, useVoiceRoom } from "./voice";
+import { t } from "../i18n";
 
 /** Voice for the room, always on while in a game (the bar can come and go). */
 export function VoiceRoom() {
@@ -33,11 +34,11 @@ export function VoiceButton() {
         title={
           !mic
             ? spectator
-              ? "Speak too: talk to the table with your microphone"
-              : "Voice: talk to the table with your microphone"
+              ? t("Speak too: talk to the table with your microphone")
+              : t("Voice: talk to the table with your microphone")
             : ptt
-              ? "Hold to talk (or hold V)"
-              : "Your mic is open"
+              ? t("Hold to talk (or hold V)")
+              : t("Your mic is open")
         }
         aria-pressed={live}
         onClick={() => {
@@ -48,12 +49,12 @@ export function VoiceButton() {
         onPointerUp={() => ptt && pushToTalk(false)}
         onPointerLeave={() => ptt && pushToTalk(false)}
       >
-        {used ? "🎙" : spectator ? "🎙 Speak" : "🎙 Voice"}
+        {used ? "🎙" : spectator ? t("🎙 Speak") : t("🎙 Voice")}
       </button>
       {(mic || others.length > 0 || error) && (
         <button
           className="quiet voice-more"
-          title="Voice settings and who is in voice"
+          title={t("Voice settings and who is in voice")}
           onClick={() => setMenu(!menu)}
         >
           {others.length > 0 ? others.length : ""}▾
@@ -63,7 +64,7 @@ export function VoiceButton() {
         <div className="panel voice-pop">
           <button
             className="quiet close"
-            title="Close"
+            title={t("Close")}
             onClick={() => {
               setMenu(false);
               useVoice.setState({ error: null });
@@ -76,20 +77,20 @@ export function VoiceButton() {
             <div className="row">
               <select
                 value={mode}
-                aria-label="How your mic works"
+                aria-label={t("How your mic works")}
                 onChange={(e) => setMode(e.target.value as "ptt" | "open")}
               >
-                <option value="ptt">Push to talk (hold 🎙 or V)</option>
-                <option value="open">Open mic</option>
+                <option value="ptt">{t("Push to talk (hold 🎙 or V)")}</option>
+                <option value="open">{t("Open mic")}</option>
               </select>
               <button className="quiet" onClick={micOff}>
-                Mic off
+                {t("Mic off")}
               </button>
             </div>
           ) : (
             !error && (
               <p className="muted small">
-                {spectator ? "You're listening. 🎙 to speak too." : "🎙 turns your mic on."}
+                {spectator ? t("You're listening. 🎙 to speak too.") : t("🎙 turns your mic on.")}
               </p>
             )
           )}
@@ -109,13 +110,13 @@ export function VoiceButton() {
                       max={1}
                       step={0.05}
                       value={volume[id] ?? 1}
-                      aria-label={`${name}'s volume`}
+                      aria-label={t("{name}'s volume", { name })}
                       disabled={!!muted[id]}
                       onChange={(e) => setVolume(id, Number(e.target.value))}
                     />
                     <button
                       className="quiet"
-                      title={muted[id] ? "Unmute" : "Mute"}
+                      title={muted[id] ? t("Unmute") : t("Mute")}
                       onClick={() => setMuted(id, !muted[id])}
                     >
                       {muted[id] ? "🔇" : "🔊"}
@@ -139,7 +140,7 @@ export function OnAir() {
   if (!on.length) return null;
   return (
     <div className="on-air">
-      🎙 {on.map((id) => who(id, peers[id]!.name).name.replace(/ \(watching\)$/, "")).join(" & ")}
+      🎙 {on.map((id) => withoutWatching(who(id, peers[id]!.name).name)).join(" & ")}
     </div>
   );
 }

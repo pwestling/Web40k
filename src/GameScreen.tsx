@@ -7,6 +7,7 @@ import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
 import { useEffect } from "react";
 import { Board } from "./render/Board";
+import { t } from "./i18n";
 import { useStore } from "./store";
 import { useTalk } from "./talk/talk";
 import { AttackPanel } from "./ui/AttackPanel";
@@ -47,8 +48,12 @@ import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
  * Delete removes the selected terrain piece while editing; Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
-  const t = e.target;
-  if (t instanceof HTMLInputElement || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement)
+  const target = e.target;
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement
+  )
     return;
   const s = useStore.getState();
   const key = e.key.toLowerCase();
@@ -80,7 +85,7 @@ function onKey(e: KeyboardEvent) {
     return;
   }
   // Enter goes from the table into the selected unit's card.
-  if (key === "enter" && s.selected && (t === document.body || t instanceof HTMLCanvasElement)) {
+  if (key === "enter" && s.selected && (target === document.body || target instanceof HTMLCanvasElement)) {
     // The card itself: Tab then walks through its buttons, and a screen reader reads its name.
     document.querySelector<HTMLElement>(".panel.unitcard")?.focus();
     e.preventDefault();
@@ -99,7 +104,7 @@ function onKey(e: KeyboardEvent) {
   }
   const unit = s.selected ? s.game.units[s.selected] : undefined;
   if (!unit || (s.mode !== "hotseat" && unit.owner !== s.session?.selfId)) return;
-  if (key.startsWith("arrow") && !(t instanceof HTMLButtonElement && e.altKey)) {
+  if (key.startsWith("arrow") && !(target instanceof HTMLButtonElement && e.altKey)) {
     nudgeUnit(unit.id, key, e.shiftKey ? 0.25 : 1);
     e.preventDefault();
     return;
@@ -262,22 +267,22 @@ export function GameScreen({ started }: { started: boolean }) {
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">
-              <span className="full">Fully visible</span>
-              <span className="partial">Partly visible or in cover</span>
-              <span className="none">Hidden</span>
-              {losFrom && <span className="muted">Hover an enemy unit for its sight lines</span>}
+              <span className="full">{t("Fully visible")}</span>
+              <span className="partial">{t("Partly visible or in cover")}</span>
+              <span className="none">{t("Hidden")}</span>
+              {losFrom && <span className="muted">{t("Hover an enemy unit for its sight lines")}</span>}
             </div>
           )}
           {footprints && (
             <div className="legend terrain-legend">
-              <span className="open">Open</span>
-              <span className="obscuring">Obscuring: cover</span>
-              <span className="blocking">Blocking: no sight</span>
+              <span className="open">{t("Open")}</span>
+              <span className="obscuring">{t("Obscuring: cover")}</span>
+              <span className="blocking">{t("Blocking: no sight")}</span>
             </div>
           )}
           {view === "eye" && (
             <button className="eye-exit primary" onClick={() => setView("3d")}>
-              Leave model's eye view (Esc)
+              {t("Leave model's eye view (Esc)")}
             </button>
           )}
         </>

@@ -6,7 +6,45 @@ import { create } from "zustand";
  * downloads in the background and waits; the start page offers to reload into
  * it, so nobody's game changes version mid-battle (#34).
  */
-export const useUpdate = create<{ ready: ServiceWorker | null }>(() => ({ ready: null }));
+export const useUpdate = create<{ ready: ServiceWorker | null; install: InstallPrompt | null }>(() => ({
+  ready: null,
+  install: null,
+}));
+
+/** The browser's offer to install the app (Chrome, Edge, Android), held until the player asks (UX 251). */
+interface InstallPrompt extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+/** Hold the browser's install offer for the start page's quiet link. */
+export function listenForInstall(): void {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    useUpdate.setState({ install: e as InstallPrompt });
+  });
+  window.addEventListener("appinstalled", () => useUpdate.setState({ install: null }));
+}
+
+/** Ask the browser to install the app; its offer can be used once. */
+export async function install(): Promise<void> {
+  const offer = useUpdate.getState().install;
+  if (!offer) return;
+  useUpdate.setState({ install: null });
+  await offer.prompt();
+}
+
+/** An iPhone or iPad in Safari, not yet on the home screen: installing is by hand there. */
+export function installByHand(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ios =
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  const standalone =
+    matchMedia("(display-mode: standalone)").matches ||
+    ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone);
+  return ios && !standalone;
+}
 
 const supported = () => typeof navigator !== "undefined" && "serviceWorker" in navigator;
 

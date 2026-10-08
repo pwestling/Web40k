@@ -10,6 +10,7 @@ import { Result } from "./Missions";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
+import { formatNumber, t, tn } from "../i18n";
 
 /** The battle has run past its last round. */
 export function battleOver(game: GameState): boolean {
@@ -21,7 +22,9 @@ export function battleOver(game: GameState): boolean {
   }
 }
 
-const signed = (n: number) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}`;
+/** One decimal place, in the language's way. */
+const oneDp = (n: number) => formatNumber(n, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const signed = (n: number) => `${n >= 0 ? "+" : "−"}${oneDp(Math.abs(n))}`;
 const stepName = (id: string) => id.charAt(0).toUpperCase() + id.slice(1).replace(/[-_]/g, " ");
 
 /**
@@ -54,14 +57,12 @@ export function StatsScreen() {
   const units = [...data.units].sort((a, b) => b.dealt - a.dealt || b.taken - a.taken);
 
   return (
-    <div className="stats-screen" role="dialog" aria-label="Battle stats">
+    <div className="stats-screen" role="dialog" aria-label={t("Battle stats")}>
       <div className="head">
-        <strong>Battle stats</strong>
-        <span className="muted">
-          {data.rounds} round{data.rounds === 1 ? "" : "s"}
-        </span>
+        <strong>{t("Battle stats")}</strong>
+        <span className="muted">{tn(data.rounds, "{n} round", "{n} rounds")}</span>
         {!BROADCAST && (
-          <button className="quiet" title="Close" onClick={close}>
+          <button className="quiet" title={t("Close")} onClick={close}>
             ✕
           </button>
         )}
@@ -71,12 +72,12 @@ export function StatsScreen() {
       {!BROADCAST && <FeedbackCard />}
 
       <section>
-        <h4>Points destroyed per round</h4>
+        <h4>{t("Points destroyed per round")}</h4>
         <PointsChart players={data.players} rounds={data.rounds} />
       </section>
 
       <section>
-        <h4>Dice against the odds</h4>
+        <h4>{t("Dice against the odds")}</h4>
         <div className="luck">
           {data.players.map((p) => (
             <LuckTable key={p.id} player={p} />
@@ -86,7 +87,7 @@ export function StatsScreen() {
 
       {moments.length > 0 && (
         <section>
-          <h4>Moments</h4>
+          <h4>{t("Moments")}</h4>
           <ul className="moments">
             {moments.map((m) => (
               <li key={`${m.kind}-${m.seq}-${m.player ?? ""}`}>
@@ -97,7 +98,7 @@ export function StatsScreen() {
                 ) : (
                   <button
                     className="link"
-                    title="Watch it again on the table"
+                    title={t("Watch it again on the table")}
                     onClick={() => {
                       close();
                       playMoment(m);
@@ -110,10 +111,10 @@ export function StatsScreen() {
                 {m.kind !== "mvp" && !BROADCAST && (
                   <button
                     className="quiet small"
-                    title="A new game on this screen, just before this moment"
+                    title={t("A new game on this screen, just before this moment")}
                     onClick={() => branchGame(m.seq - 1, "hotseat")}
                   >
-                    Practice from here
+                    {t("Practice from here")}
                   </button>
                 )}
               </li>
@@ -123,16 +124,16 @@ export function StatsScreen() {
       )}
 
       <section>
-        <h4>Units</h4>
+        <h4>{t("Units")}</h4>
         {units.length ? (
           <table className="stats-table">
             <thead>
               <tr>
-                <th>Unit</th>
-                <th title="Wounds this unit's attacks took off enemy models">Dealt</th>
-                <th title="Enemy models this unit's attacks destroyed">Slain</th>
-                <th title="Wounds this unit lost, from any cause">Taken</th>
-                <th title="Models this unit lost, from any cause">Lost</th>
+                <th>{t("Unit")}</th>
+                <th title={t("Wounds this unit's attacks took off enemy models")}>{t("Dealt")}</th>
+                <th title={t("Enemy models this unit's attacks destroyed")}>{t("Slain")}</th>
+                <th title={t("Wounds this unit lost, from any cause")}>{t("Taken")}</th>
+                <th title={t("Models this unit lost, from any cause")}>{t("Lost")}</th>
               </tr>
             </thead>
             <tbody>
@@ -151,7 +152,7 @@ export function StatsScreen() {
             </tbody>
           </table>
         ) : (
-          <p className="muted">No damage dealt yet.</p>
+          <p className="muted">{t("No damage dealt yet.")}</p>
         )}
       </section>
     </div>
@@ -172,9 +173,11 @@ function LuckTable({ player }: { player: PlayerStats }) {
             {" "}
             {Math.abs(total) < 0.05
               ? spread
-                ? "even overall (luck in one roll, not another)"
-                : "right on the odds"
-              : `${Math.abs(total).toFixed(1)} dice ${total > 0 ? "luckier" : "unluckier"} than the odds`}
+                ? t("even overall (luck in one roll, not another)")
+                : t("right on the odds")
+              : total > 0
+                ? t("{dice} dice luckier than the odds", { dice: oneDp(Math.abs(total)) })
+                : t("{dice} dice unluckier than the odds", { dice: oneDp(Math.abs(total)) })}
           </span>
         )}
       </div>
@@ -182,11 +185,11 @@ function LuckTable({ player }: { player: PlayerStats }) {
         <table className="stats-table">
           <thead>
             <tr>
-              <th>Roll</th>
-              <th title="Dice rolled">Dice</th>
-              <th title="Dice that passed (hits, wounds, saves made)">Passed</th>
-              <th>Expected</th>
-              <th title="Dice that passed minus dice expected to">±</th>
+              <th>{t("Roll")}</th>
+              <th title={t("Dice rolled")}>{t("Dice")}</th>
+              <th title={t("Dice that passed (hits, wounds, saves made)")}>{t("Passed")}</th>
+              <th>{t("Expected")}</th>
+              <th title={t("Dice that passed minus dice expected to")}>±</th>
             </tr>
           </thead>
           <tbody>
@@ -195,7 +198,7 @@ function LuckTable({ player }: { player: PlayerStats }) {
                 <td>{stepName(l.step)}</td>
                 <td>{l.rolled}</td>
                 <td>{l.actual}</td>
-                <td>{l.expected.toFixed(1)}</td>
+                <td>{oneDp(l.expected)}</td>
                 <td className={l.actual - l.expected >= 0 ? "up" : "down"}>
                   {signed(l.actual - l.expected)}
                 </td>
@@ -204,7 +207,7 @@ function LuckTable({ player }: { player: PlayerStats }) {
           </tbody>
         </table>
       ) : (
-        <p className="muted">No rolls yet.</p>
+        <p className="muted">{t("No rolls yet.")}</p>
       )}
     </div>
   );
@@ -231,7 +234,7 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
         {players.map((p) => (
           <span key={p.id}>
             <span className="swatch" style={{ background: p.color }} />
-            {p.name} · {Math.round(p.pointsByRound.reduce((a, b) => a + b, 0))} pts
+            {p.name} · {t("{n} pts", { n: Math.round(p.pointsByRound.reduce((a, b) => a + b, 0)) })}
           </span>
         ))}
       </div>
@@ -239,7 +242,7 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
         className="points-chart"
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label="Points destroyed per round"
+        aria-label={t("Points destroyed per round")}
       >
         <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} className="axis" />
         {Array.from({ length: rounds }, (_, i) => {
@@ -253,10 +256,17 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
                   <g key={p.id}>
                     {/* A wider invisible target so a 0 bar still shows its tooltip. */}
                     <rect x={x} y={pad.t} width={bar} height={H - pad.t - pad.b} fill="transparent">
-                      <title>{`${p.name}, round ${i + 1}: ${Math.round(v)} pts`}</title>
+                      <title>
+                        {t("{player}, round {round}: {n} pts", {
+                          player: p.name,
+                          round: i + 1,
+                          n: Math.round(v),
+                        })}
+                      </title>
                     </rect>
                     {v > 0 && (
                       <>
+                        {/* i18n-ignore */}
                         <path d={path(x, v)} fill={p.color} pointerEvents="none" />
                         <text x={x + bar / 2} y={y(v) - 4} className="value">
                           {Math.round(v)}
@@ -267,7 +277,7 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
                 );
               })}
               <text x={pad.l + i * group + group / 2} y={H - 6} className="tick">
-                Round {i + 1}
+                {t("Round {n}", { n: i + 1 })}
               </text>
             </g>
           );

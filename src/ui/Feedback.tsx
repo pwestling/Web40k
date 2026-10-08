@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import { APP_BUILD } from "../version";
 import { download, stamp } from "./report";
 import { SavedNote } from "./SavedNote";
 import { DEFAULT_SYSTEM } from "../core";
 
-const QUESTIONS = [
-  { id: "enjoyed", label: "What was fun?" },
-  { id: "confusing", label: "What was confusing or slow?" },
-  { id: "broken", label: "Anything broken?" },
-] as const;
+const questions = () =>
+  [
+    { id: "enjoyed", label: t("What was fun?") },
+    { id: "confusing", label: t("What was confusing or slow?") },
+    { id: "broken", label: t("Anything broken?") },
+  ] as const;
 
 /**
  * After the battle, an optional few questions (playtest kit, roadmap #21).
@@ -41,9 +43,10 @@ export function FeedbackCard() {
   return (
     <section className="feedback">
       <h4>
-        How was it? <span className="muted small">Optional, saved as a file on this device</span>
+        {t("How was it?")}{" "}
+        <span className="muted small">{t("Optional, saved as a file on this device")}</span>
       </h4>
-      <div className="row" role="radiogroup" aria-label="Overall, out of 5">
+      <div className="row" role="radiogroup" aria-label={t("Overall, out of 5")}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -54,10 +57,10 @@ export function FeedbackCard() {
             {n}
           </button>
         ))}
-        <span className="muted small">out of 5</span>
+        <span className="muted small">{t("out of 5")}</span>
       </div>
       {rating !== null &&
-        QUESTIONS.map((q) => (
+        questions().map((q) => (
           <label key={q.id}>
             {q.label}
             <textarea
@@ -70,10 +73,11 @@ export function FeedbackCard() {
       {rating !== null && (
         <div className="row">
           <button className="primary" onClick={save}>
-            {saved ? "Saved ✓" : "Save as a file"}
+            {saved ? t("Saved ✓") : t("Save as a file")}
           </button>
         </div>
       )}
+      {/* i18n-ignore: a kind, not text */}
       {saved && <SavedNote file={saved} kind="feedback" />}
     </section>
   );

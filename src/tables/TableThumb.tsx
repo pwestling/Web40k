@@ -1,4 +1,5 @@
 import { toWorld, type Layout, type TerrainPiece } from "../core";
+import { t } from "../i18n";
 
 const FILL: Record<string, string> = {
   blocking: "#6b7280",
@@ -53,7 +54,7 @@ export function TableThumb({
       height={(width * table.depth) / table.width}
       viewBox={`${-hx} ${-hy} ${table.width} ${table.depth}`}
       role="img"
-      aria-label={label ?? "The table from above"}
+      aria-label={label ?? t("The table from above")}
     >
       <rect x={-hx} y={-hy} width={table.width} height={table.depth} fill="#3f4a33" />
       {layout.zones.map((z, i) => (

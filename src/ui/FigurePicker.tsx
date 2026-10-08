@@ -6,6 +6,7 @@ import { dressFromLibrary } from "../figures/actions";
 import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
 import { openLibrary } from "../figures/open";
+import { t } from "../i18n";
 
 const k = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n));
 
@@ -25,16 +26,16 @@ export function FigurePicker({ unit, models, editable }: { unit: Unit; models: M
 
   return (
     <details className="figures">
-      <summary>Figures</summary>
+      <summary>{t("Figures")}</summary>
       {editable && (
         <p className="muted small">
-          Everyone in the game sees uploaded figures. You can also drop a model file onto the unit.
+          {t("Everyone in the game sees uploaded figures. You can also drop a model file onto the unit.")}
         </p>
       )}
       {editable && keys.length > 1 && (
         <label className="check small">
-          <input type="checkbox" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> Use for every
-          model in this unit
+          <input type="checkbox" checked={whole} onChange={(e) => setWhole(e.target.checked)} />{" "}
+          {t("Use for every model in this unit")}
         </label>
       )}
       {rows.map((row) => (
@@ -72,17 +73,23 @@ function FigureRow({
   return (
     <div className="row wrap figure">
       <span>{label}</span>
-      {figure && !asset && <span className="muted small">Fetching {figure.name}…</span>}
+      {figure && !asset && (
+        <span className="muted small">{t("Fetching {name}…", { name: figure.name })}</span>
+      )}
       {editable && (
         <label
           className="file button small"
           title={
             asset
-              ? `${asset.name}: ${k(asset.stats.sourceTriangles)} triangles, drawn at ${asset.stats.lodTriangles.map(k).join(" / ")} depending on distance`
-              : `Model file: ${MODEL_EXTENSIONS.join(", ")}`
+              ? t("{name}: {triangles} triangles, drawn at {levels} depending on distance", {
+                  name: asset.name,
+                  triangles: k(asset.stats.sourceTriangles),
+                  levels: asset.stats.lodTriangles.map(k).join(" / "),
+                })
+              : t("Model file: {extensions}", { extensions: MODEL_EXTENSIONS.join(", ") })
           }
         >
-          {figure ? "Replace…" : "Upload…"}
+          {figure ? t("Replace…") : t("Upload…")}
           <input
             type="file"
             accept={MODEL_EXTENSIONS.join(",")}
@@ -99,18 +106,26 @@ function FigureRow({
         <>
           <button
             className="small"
-            title="Turn the figure 90°"
+            title={t("Turn the figure 90°")}
             onClick={() => restyle({ yaw: figure.yaw + Math.PI / 2 })}
           >
             ⟳
           </button>
-          <button className="small" title="Smaller" onClick={() => restyle({ scale: figure.scale / 1.1 })}>
+          <button
+            className="small"
+            title={t("Smaller")}
+            onClick={() => restyle({ scale: figure.scale / 1.1 })}
+          >
             −
           </button>
-          <button className="small" title="Bigger" onClick={() => restyle({ scale: figure.scale * 1.1 })}>
+          <button
+            className="small"
+            title={t("Bigger")}
+            onClick={() => restyle({ scale: figure.scale * 1.1 })}
+          >
             +
           </button>
-          <button className="small" title="Back to the stand-in" onClick={() => restyle(null)}>
+          <button className="small" title={t("Back to the stand-in")} onClick={() => restyle(null)}>
             ✕
           </button>
         </>
@@ -144,7 +159,7 @@ function FromLibrary({
   return (
     <select
       className="small"
-      aria-label={`Figure from the library for ${label}`}
+      aria-label={t("Figure from the library for {name}", { name: label })}
       value=""
       onChange={(e) => {
         const id = e.target.value;
@@ -152,9 +167,9 @@ function FromLibrary({
         else if (id) void dressFromLibrary(unit.id, id, keys);
       }}
     >
-      <option value="">From the library…</option>
+      <option value="">{t("From the library…")}</option>
       {fits.length > 0 && (
-        <optgroup label="Fits this unit">
+        <optgroup label={t("Fits this unit")}>
           {fits.map((f) => (
             <option key={f.id} value={f.id} disabled={f.id === current}>
               {f.name}
@@ -162,14 +177,14 @@ function FromLibrary({
           ))}
         </optgroup>
       )}
-      <optgroup label={fits.length ? "Everything else" : "Your figures"}>
+      <optgroup label={fits.length ? t("Everything else") : t("Your figures")}>
         {rest.map((f) => (
           <option key={f.id} value={f.id} disabled={f.id === current}>
             {f.name}
           </option>
         ))}
       </optgroup>
-      <option value="open">Open the figure library…</option>
+      <option value="open">{t("Open the figure library…")}</option>
     </select>
   );
 }

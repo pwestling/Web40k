@@ -9,7 +9,6 @@ import {
   blockToWorld,
   BLOCK_LEFT,
   rotate,
-  type Arc,
   type BlockFrame,
   type GameState,
   type Unit,
@@ -18,16 +17,11 @@ import {
 import { useStore } from "../store";
 import { blockMoveUsed, blockSummary, offTable } from "../ui/regiment";
 import { useGame } from "../ui/hooks";
+import { t } from "../i18n";
 
 /** Labels sit under the side panels (see Board's LABEL_Z). */
 const LABEL_Z: [number, number] = [9, 0];
 const REACH = 24;
-const ARC_NAMES: Record<Arc, string> = {
-  front: "front",
-  left: "left flank",
-  right: "right flank",
-  rear: "rear",
-};
 
 /**
  * The selected regiment's arcs: lines out from its corners at 45 degrees,
@@ -65,7 +59,13 @@ export function BlockArcs() {
               center
               className="ruler arc-note"
             >
-              {sel!.name} is in its {ARC_NAMES[relation]}
+              {relation === "front"
+                ? t("{unit} is in its front", { unit: sel!.name })
+                : relation === "left"
+                  ? t("{unit} is in its left flank", { unit: sel!.name })
+                  : relation === "right"
+                    ? t("{unit} is in its right flank", { unit: sel!.name })
+                    : t("{unit} is in its rear", { unit: sel!.name })}
             </Html>
           )}
         </>
@@ -196,10 +196,14 @@ export function BlockMoveLabel({
   }
   const off = offTable(game, unit, moved);
   const parts = [
-    `${Math.abs(local.y).toFixed(1)}" ${local.y >= 0 ? "ahead" : "back"}`,
-    ...(sideways ? [`${Math.abs(local.x).toFixed(1)}" sideways`] : []),
-    ...(game.turn.round > 0 && allowed !== null ? [`${used.toFixed(1)}" of ${allowed}"`] : []),
-    ...(off ? ["off the table"] : []),
+    local.y >= 0
+      ? t('{inches}" ahead', { inches: Math.abs(local.y).toFixed(1) })
+      : t('{inches}" back', { inches: Math.abs(local.y).toFixed(1) }),
+    ...(sideways ? [t('{inches}" sideways', { inches: Math.abs(local.x).toFixed(1) })] : []),
+    ...(game.turn.round > 0 && allowed !== null
+      ? [t('{used}" of {allowed}"', { used: used.toFixed(1), allowed: String(allowed) })]
+      : []),
+    ...(off ? [t("off the table")] : []),
   ];
   return (
     <Html
@@ -216,7 +220,7 @@ export function BlockMoveLabel({
     >
       {parts.join(" · ")}
       {game.turn.round > 0 && (sideways || local.y < -0.25)
-        ? " · moving back or sideways halves Movement"
+        ? t(" · moving back or sideways halves Movement")
         : ""}
     </Html>
   );

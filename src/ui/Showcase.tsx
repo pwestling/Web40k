@@ -3,6 +3,7 @@ import { delaying } from "../broadcast/broadcast";
 import { useReel } from "../broadcast/reel";
 import { modelHeight, sideName, sidePlayers, sides, type GameState } from "../core";
 import { owed, useShowcase, type Shot } from "../render/showcase";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 import { drum, horn } from "./sound";
@@ -48,8 +49,8 @@ function armies(game: GameState) {
     const heights = standing.map((m) => modelHeight(m)).sort((p, q) => p - q);
     const height = Math.max(1, heights[Math.floor(heights.length / 2)] ?? 1);
     const card: Card = {
-      title: army ?? `${sideName(game, seat)}'s army`,
-      line: [points ? `${points} pts` : "", sideName(game, seat)].filter(Boolean).join(" · "),
+      title: army ?? t("{side}'s army", { side: sideName(game, seat) }),
+      line: [points ? t("{points} pts", { points }) : "", sideName(game, seat)].filter(Boolean).join(" · "),
       color: players[0]?.color ?? "#e5e7eb",
     };
     // The rank nearest the middle of the table: the camera stands off from that.
@@ -72,6 +73,7 @@ export function Showcase() {
   const [card, setCard] = useState<Card | null>(null);
   const [round, setRound] = useState(false);
   const last = useRef<number | null>(null);
+  const seen = useRef<object | null>(null);
   const token = useRef(0);
   // Name plates and x-ray as they were, to put back afterwards.
   const plates = useRef<{ plates: boolean; xray: boolean } | null>(null);
@@ -89,7 +91,10 @@ export function Showcase() {
 
   useEffect(() => {
     // Mounted just after the battle began (the one-click demo starts it before the table has loaded): as if from 0.
-    const was = last.current ?? (owed.initial === initial && turn.round === 1 ? 0 : null);
+    // A game arriving whole (joining, or rejoining mid-game) isn't the battle starting here (UX 245).
+    const arrived = seen.current !== initial;
+    seen.current = initial;
+    const was = (arrived ? null : last.current) ?? (owed.initial === initial && turn.round === 1 ? 0 : null);
     if (owed.initial === initial) owed.initial = null;
     last.current = turn.round;
     // The battle starting on this screen: live, behind the delay, or a replay playing through it.
@@ -179,10 +184,11 @@ export function Showcase() {
     };
     const tap = (e: PointerEvent) => {
       swallow(e);
-      for (const t of ["pointerup", "click"]) addEventListener(t, swallow, { capture: true, once: true });
+      for (const type of ["pointerup", "click"])
+        addEventListener(type, swallow, { capture: true, once: true });
       // A tap with no click after it leaves nothing armed.
       setTimeout(() => {
-        for (const t of ["pointerup", "click"]) removeEventListener(t, swallow, { capture: true });
+        for (const type of ["pointerup", "click"]) removeEventListener(type, swallow, { capture: true });
       }, 600);
       stop();
     };
@@ -214,7 +220,7 @@ export function Showcase() {
   if (round)
     return (
       <div className="showcase-round" role="status">
-        Round 1
+        {t("Round {round}", { round: 1 })}
       </div>
     );
   if (!card) return null;
@@ -224,7 +230,7 @@ export function Showcase() {
         {card.title}
       </div>
       <div className="line">{card.line}</div>
-      <div className="skip">Click or Esc to skip</div>
+      <div className="skip">{t("Click or Esc to skip")}</div>
     </div>
   );
 }

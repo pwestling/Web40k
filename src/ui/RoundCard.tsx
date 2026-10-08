@@ -3,6 +3,7 @@ import { useStore } from "../store";
 import { readGame, replayIntro } from "./highlights";
 import { biggestSwings, gameStats } from "../core/stats";
 import { swingResult } from "./odds";
+import { t, tn } from "../i18n";
 
 /** How far past a round's end (in events) its card still comes up. */
 const RECENT = 40;
@@ -24,8 +25,8 @@ export function RoundCard() {
   const seq = current?.seq;
   useEffect(() => {
     if (seq === undefined) return;
-    const t = setTimeout(() => setClosed((c) => [...c, seq]), 7000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setClosed((c) => [...c, seq]), 7000);
+    return () => clearTimeout(timer);
   }, [seq]);
   if (!current || closed.includes(current.seq)) return null;
   const swing = swings?.get(current.round);
@@ -33,8 +34,8 @@ export function RoundCard() {
   return (
     <div className="round-card" role="status">
       <div className="head">
-        <strong>Round {current.round} done</strong>
-        <button className="quiet" title="Close" onClick={() => setClosed((c) => [...c, current.seq])}>
+        <strong>{t("Round {n} done", { n: current.round })}</strong>
+        <button className="quiet" title={t("Close")} onClick={() => setClosed((c) => [...c, current.seq])}>
           ✕
         </button>
       </div>
@@ -42,7 +43,7 @@ export function RoundCard() {
         <div key={p.id} className="row" style={{ borderColor: p.color }}>
           <strong style={{ color: p.color }}>{p.name}</strong>
           <span className="vp">
-            {p.vp} VP
+            {t("{n} VP", { n: p.vp })}
             {p.vpGained ? (
               <span className="muted">
                 {" "}
@@ -52,14 +53,14 @@ export function RoundCard() {
             ) : null}
           </span>
           <span className="muted">
-            {p.modelsLost ? `lost ${p.modelsLost} model${p.modelsLost === 1 ? "" : "s"}` : "no losses"}
-            {p.unitsLost.length ? `, ${p.unitsLost.join(", ")} wiped out` : ""}
+            {p.modelsLost ? tn(p.modelsLost, "lost {n} model", "lost {n} models") : t("no losses")}
+            {p.unitsLost.length ? ", " + t("{units} wiped out", { units: p.unitsLost.join(", ") }) : ""}
           </span>
         </div>
       ))}
       {swing && Math.abs(delta) >= 0.5 && (
         <span className="swing-line">
-          Biggest swing: {swing.title}: {swingResult(swing)}
+          {t("Biggest swing: {title}: {result}", { title: swing.title, result: swingResult(swing) })}
         </span>
       )}
     </div>
@@ -78,8 +79,8 @@ export function ReplayTitle() {
   if (isReplay && closedFor !== record && scrub !== null && scrub !== intro.startSeq) setClosedFor(record);
   useEffect(() => {
     if (!isReplay) return;
-    const t = setTimeout(() => setClosedFor(record), 8000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setClosedFor(record), 8000);
+    return () => clearTimeout(timer);
   }, [isReplay, record]);
   const setOpen = (open: boolean) => setClosedFor(open ? null : record);
   if (!isReplay || closedFor === record) return null;
@@ -91,34 +92,35 @@ export function ReplayTitle() {
         <strong>
           {intro.players.map((p, i) => (
             <span key={p.name}>
-              {i > 0 && " vs "}
+              {i > 0 && " " + t("vs") + " "}
               <span style={{ color: p.color }}>{p.name}</span>
             </span>
           ))}
         </strong>
-        <button className="quiet" title="Close" onClick={() => setOpen(false)}>
+        <button className="quiet" title={t("Close")} onClick={() => setOpen(false)}>
           ✕
         </button>
       </div>
       <span className="muted">
         {[
           intro.system,
-          rounds > 0 ? `${rounds} round${rounds === 1 ? "" : "s"}` : "not started",
-          `${intro.modelsLost} model${intro.modelsLost === 1 ? "" : "s"} lost`,
+          rounds > 0 ? tn(rounds, "{n} round", "{n} rounds") : t("not started"),
+          tn(intro.modelsLost, "{n} model lost", "{n} models lost"),
         ]
           .filter(Boolean)
           .join(" · ")}
       </span>
       {branch && (
         <span className="small branched">
-          Branched from {branch.title}
-          {branch.moment ? `, ${branch.moment}` : ""}{" "}
+          {branch.moment
+            ? t("Branched from {game}, {moment}", { game: branch.title, moment: branch.moment })
+            : t("Branched from {game}", { game: branch.title })}{" "}
           <span className="muted">
-            (game {branch.parentHash.slice(0, 8)}, event {branch.parentSeq})
+            {t("(game {hash}, event {seq})", { hash: branch.parentHash.slice(0, 8), seq: branch.parentSeq })}
           </span>
         </span>
       )}
-      <span className="muted small">Press ▶ to watch from the start of the battle.</span>
+      <span className="muted small">{t("Press ▶ to watch from the start of the battle.")}</span>
     </div>
   );
 }

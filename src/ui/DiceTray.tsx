@@ -15,6 +15,7 @@ import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
 import { chime, click, duckVoices, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
+import { t } from "../i18n";
 
 /**
  * Every roll, staged: the known results tumble onto a felt tray from the
@@ -60,8 +61,8 @@ export function DiceTray() {
   const held = useHold((s) => s.held);
   useEffect(() => {
     if (held === null) return;
-    const t = setTimeout(() => useHold.setState({ held: null }), 30_000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => useHold.setState({ held: null }), 30_000);
+    return () => clearTimeout(timer);
   }, [held]);
 
   useEffect(() => {
@@ -325,8 +326,11 @@ class Stage {
       if (roll.passed !== undefined) ds.forEach((d) => d.el.classList.add(roll.passed ? "crit" : "fail"));
     } else {
       const keep = await this.sift(ds, fast);
-      const of = roll.passOn === "failures" ? "saved" : "pass";
-      this.caption.textContent = `${roll.title}: ${keep.length} of ${ds.length} ${of}`;
+      const counts = { title: roll.title, n: keep.length, total: ds.length };
+      this.caption.textContent =
+        roll.passOn === "failures"
+          ? t("{title}: {n} of {total} saved", counts)
+          : t("{title}: {n} of {total} pass", counts);
     }
     // The table shows this stage's result now, with the banner, not after it.
     settle();
@@ -342,7 +346,7 @@ class Stage {
       ds.forEach((d) => d.el.classList.add(stakes.good ? "crit" : "fail"));
       sting(stakes.good);
       duckVoices(1600);
-      if (/slain/i.test(stakes.big)) thump(0, 0.6);
+      if (stakes.big === t("Slain")) thump(0, 0.6);
       await wait(this.skip ? 400 : 1400);
     }
     this.lingerThenHide();
@@ -371,7 +375,7 @@ class Stage {
     this.banner.append(big, small);
     if (live) {
       const hint = div("hint");
-      hint.textContent = "Click to continue";
+      hint.textContent = t("Click to continue");
       this.banner.append(hint);
     }
     this.banner.className = `tray-banner on tray-legend ${rare.lucky ? "" : "cursed"}`;
@@ -473,7 +477,7 @@ class Stage {
       });
       // A heartbeat under a decisive die.
       if (slowLast && !this.skip) {
-        [0.5, 1.0, 1.5].forEach((t, i) => thump(fast ? t / 2 : t, 0.3 + i * 0.05));
+        [0.5, 1.0, 1.5].forEach((at, i) => thump(fast ? at / 2 : at, 0.3 + i * 0.05));
         // Voices hush for the last die and its verdict.
         duckVoices(fast ? 1800 : 3400);
       }
@@ -597,7 +601,11 @@ class Stage {
     }
     const ok = roll.dice.filter((d) => d.ok).length;
     if (roll.dice.some((d) => d.ok !== undefined))
-      this.caption.textContent = `${roll.title}: ${ok} of ${roll.dice.length} pass`;
+      this.caption.textContent = t("{title}: {n} of {total} pass", {
+        title: roll.title,
+        n: ok,
+        total: roll.dice.length,
+      });
     this.felt.append(box);
     this.dice = [{ el: box, v: 0 }];
   }

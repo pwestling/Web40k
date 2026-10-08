@@ -4,6 +4,7 @@ import { fromBase64, toBase64 } from "../assets/base64";
 import { useAssets } from "../assets/store";
 import type { AssetKind } from "../assets/types";
 import { stableJson } from "../core/secrets";
+import { t } from "../i18n";
 import { useFigures, type FigureEntry } from "./library";
 
 /**
@@ -89,15 +90,15 @@ export async function openPack(text: string): Promise<PackResult | string> {
   try {
     pack = JSON.parse(text) as Partial<FigurePack>;
   } catch {
-    return "That isn't a figure pack (it doesn't read as JSON).";
+    return t("That isn't a figure pack (it doesn't read as JSON).");
   }
-  if (pack?.format !== PACK_FORMAT || !Array.isArray(pack.figures)) return "That isn't a figure pack.";
+  if (pack?.format !== PACK_FORMAT || !Array.isArray(pack.figures)) return t("That isn't a figure pack.");
   const figures = pack.figures.filter(
     (f): f is PackFigure => !!f && /^[0-9a-f]{64}$/.test(f.id) && typeof f.data === "string",
   );
   const hash = await packHash(figures);
   const result: PackResult = {
-    name: typeof pack.name === "string" ? pack.name : "Figure pack",
+    name: typeof pack.name === "string" ? pack.name : t("Figure pack"),
     hash,
     added: 0,
     already: 0,

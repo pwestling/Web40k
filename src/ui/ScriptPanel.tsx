@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { t } from "../i18n";
 import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
@@ -31,13 +32,13 @@ export function ScriptPanel() {
     );
   }, [reveal, step]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!waiting || scrub !== null) return null;
-  const who = game.players[waiting.player]?.name ?? "A player";
+  const who = game.players[waiting.player]?.name ?? t("A player");
   if (waiting.reveal !== undefined)
     return (
       <div className="panel script">
         <div className="label">
-          <strong>{who}</strong> reveals a secret
-          {mine && !reveal && <span className="warn"> (it was committed on another device)</span>}
+          <strong>{who}</strong> {t("reveals a secret")}
+          {mine && !reveal && <span className="warn"> {t("(it was committed on another device)")}</span>}
         </div>
       </div>
     );
@@ -51,8 +52,8 @@ export function ScriptPanel() {
       {/* The question leads with who decides (UX 90), and says so when it isn't you. */}
       <div className="label">
         <strong>{who}:</strong> {waiting.question}
-        {waiting.secret !== undefined && <span className="muted"> (in secret)</span>}
-        {!mine && <span className="muted"> (waiting for {who})</span>}
+        {waiting.secret !== undefined && <span className="muted"> {t("(in secret)")}</span>}
+        {!mine && <span className="muted"> {t("(waiting for {name})", { name: who })}</span>}
       </div>
       <div className="chips">
         {waiting.options.map((o) => (

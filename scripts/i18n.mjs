@@ -19,8 +19,11 @@ const POT = join(SRC, "i18n/messages.pot");
 const LOCALES = join(SRC, "i18n/locales");
 const check = process.argv.includes("--check");
 
-/** Folders whose text isn't the app's UI: tests, dev tools, the engine's data, players' packages. */
-const SKIP = /(\.test\.tsx?$|\/dev\/|\/soak\/|\/sdk\/|\/core\/|\/sandbox\/|\/i18n\/|\.d\.ts$)/;
+/** Files not read at all: tests, type declarations, and the helpers themselves. */
+const SKIP = /(\.test\.tsx?$|\.d\.ts$|\/i18n\/(index|po)\.ts$)/;
+/** Folders whose text isn't the app's UI (dev tools, the engine's data, players' packages): their t() calls
+ * still count, but unwrapped text there isn't flagged. */
+const NOT_UI = /(\/dev\/|\/soak\/|\/sdk\/|\/core\/|\/sandbox\/)/;
 const ATTRS = new Set(["title", "placeholder", "aria-label", "alt", "label"]);
 const words = (s) => /[A-Za-z]{2,}/.test(s);
 
@@ -70,7 +73,8 @@ for (const path of files(SRC)) {
           (ts.isJsxAttribute(at) && ATTRS.has(at.name.getText()))
         );
       }
-      if (ts.isJsxElement(p) || ts.isBlock(p) || ts.isSourceFile(p)) return false;
+      // A plain attribute value (type="number") is checked as an attribute, not as shown text.
+      if (ts.isJsxAttribute(p) || ts.isJsxElement(p) || ts.isBlock(p) || ts.isSourceFile(p)) return false;
     }
     return false;
   };
@@ -102,7 +106,7 @@ for (const path of files(SRC)) {
         else add(n, one, undefined, other);
       }
     }
-    if (file.endsWith(".tsx")) {
+    if (file.endsWith(".tsx") && !NOT_UI.test("/" + file)) {
       if (ts.isJsxText(n) && words(n.text) && !ignored(n))
         raw.push(`${file}:${lineOf(n) + 1}: ${n.text.trim().slice(0, 60)}`);
       // Text in an expression shown in JSX ({ok ? "Yes" : `${n} left`}), unless it goes through a call.
@@ -111,9 +115,11 @@ for (const path of files(SRC)) {
         shown(n) &&
         !ignored(n)
       ) {
-        const s = n.getText().slice(1, -1);
-        if (words(s.replace(/\$\{[^}]*\}/g, "")))
-          raw.push(`${file}:${lineOf(n) + 1}: ${n.getText().slice(0, 60)}`);
+        // Only the template's own text counts, not what goes into its ${…} (a t() call, say).
+        const s = ts.isTemplateExpression(n)
+          ? [n.head.text, ...n.templateSpans.map((x) => x.literal.text)].join(" ")
+          : n.text;
+        if (words(s)) raw.push(`${file}:${lineOf(n) + 1}: ${n.getText().slice(0, 60)}`);
       }
       if (
         ts.isJsxAttribute(n) &&
@@ -193,13 +199,16 @@ if (check) {
     problems.push(
       `UI text not wrapped in t() (${raw.length}):\n  ${raw.slice(0, process.env.I18N_ALL ? Infinity : 80).join("\n  ")}${raw.length > 80 && !process.env.I18N_ALL ? "\n  …" : ""}`,
     );
+  // Where a string is used (#: lines) moves with every edit, so only the strings themselves count.
+  const strings = (text) => text.replace(/^#:.*\n/gm, "");
   let stale = false;
   try {
-    stale = readFileSync(POT, "utf8") !== pot;
+    stale = strings(readFileSync(POT, "utf8")) !== strings(pot);
   } catch {
     stale = true;
   }
-  for (const [path, text] of Object.entries(updated)) if (readFileSync(path, "utf8") !== text) stale = true;
+  for (const [path, text] of Object.entries(updated))
+    if (strings(readFileSync(path, "utf8")) !== strings(text)) stale = true;
   if (stale || missing)
     problems.push("The catalogs are out of date with the code: run `pnpm i18n` and commit the result.");
   console.log(report.join("\n"));

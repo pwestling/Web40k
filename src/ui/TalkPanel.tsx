@@ -2,12 +2,18 @@ import { VoiceButton } from "../voice/VoiceBar";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
 import { clearMine, MAX_CHAT, REACTIONS, say, useTableTalk, useTalk, type Said } from "../talk/talk";
+import { t } from "../i18n";
 
-const TOOLS = [
-  { id: "ping", label: "📍 Ping", title: "Click a spot or a unit to ping it (or Alt-click any time)" },
-  { id: "arrow", label: "↗ Arrow", title: "Drag on the table to draw an arrow" },
-  { id: "area", label: "◯ Area", title: "Drag out from a centre to mark an area" },
-] as const;
+const TOOLS = () =>
+  [
+    {
+      id: "ping",
+      label: t("📍 Ping"),
+      title: t("Click a spot or a unit to ping it (or Alt-click any time)"),
+    },
+    { id: "arrow", label: t("↗ Arrow"), title: t("Drag on the table to draw an arrow") },
+    { id: "area", label: t("◯ Area"), title: t("Drag out from a centre to mark an area") },
+  ] as const;
 
 /**
  * Table talk: point at things, draw on the table, chat and react. None of it
@@ -27,34 +33,40 @@ export function TalkPanel() {
     setText("");
   };
   const setOpen = (o: boolean) => useTalk.setState(o ? { open: true, unread: 0 } : { open: false });
-  const pick = (t: (typeof TOOLS)[number]["id"]) => useTalk.setState({ tool: tool === t ? null : t });
+  const pick = (id: ReturnType<typeof TOOLS>[number]["id"]) =>
+    useTalk.setState({ tool: tool === id ? null : id });
 
   return (
     <div className="talk-dock">
       <ChatToasts chatOpen={open} />
       <div className={`panel talk${open ? "" : " collapsed"}`}>
         <div className="row wrap">
-          {TOOLS.map((t) => (
+          {TOOLS().map((x) => (
             <button
-              key={t.id}
-              className={tool === t.id ? "on" : ""}
-              title={t.title}
-              onClick={() => pick(t.id)}
+              key={x.id}
+              className={tool === x.id ? "on" : ""}
+              title={x.title}
+              onClick={() => pick(x.id)}
             >
-              {t.label}
+              {x.label}
             </button>
           ))}
-          <button className="quiet" title="Clear: wipe your arrows and areas" onClick={clearMine}>
+          <button className="quiet" title={t("Clear: wipe your arrows and areas")} onClick={clearMine}>
             🧹
           </button>
           <VoiceButton />
-          <button className="quiet talk-toggle" onClick={() => setOpen(!open)} title="Chat">
+          <button className="quiet talk-toggle" onClick={() => setOpen(!open)} title={t("Chat")}>
             💬{unread > 0 ? ` ${unread}` : ""}
           </button>
         </div>
         <div className="row talk-reactions-row">
           {REACTIONS.map((e) => (
-            <button key={e} className="quiet" title="React" onClick={() => say({ kind: "react", emoji: e })}>
+            <button
+              key={e}
+              className="quiet"
+              title={t("React")}
+              onClick={() => say({ kind: "react", emoji: e })}
+            >
               {e}
             </button>
           ))}
@@ -63,11 +75,12 @@ export function TalkPanel() {
           <>
             <ol className="talk-chat" ref={list}>
               {chat.length === 0 && (
-                <li className="muted small">Messages here aren't part of the game log.</li>
+                <li className="muted small">{t("Messages here aren't part of the game log.")}</li>
               )}
               {chat.map((c) => (
                 <li key={`${c.by}:${c.id}`}>
-                  <strong style={{ color: c.color }}>{c.name}:</strong> {c.kind === "chat" ? c.text : ""}
+                  <strong style={{ color: c.color }}>{t("{name}:", { name: c.name })}</strong>{" "}
+                  {c.kind === "chat" ? c.text : ""}
                 </li>
               ))}
             </ol>
@@ -81,13 +94,13 @@ export function TalkPanel() {
               <input
                 value={text}
                 maxLength={MAX_CHAT}
-                placeholder="Say something…"
-                aria-label="Chat message"
+                placeholder={t("Say something…")}
+                aria-label={t("Chat message")}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && (e.target as HTMLInputElement).blur()}
               />
               <button type="submit" disabled={!text.trim()}>
-                Send
+                {t("Send")}
               </button>
             </form>
           </>
@@ -112,12 +125,14 @@ function ChatToasts({ chatOpen }: { chatOpen: boolean }) {
         <li key={`${c.by}:${c.id}`} onClick={() => useTalk.setState({ open: true, unread: 0 })}>
           {c.kind === "chat" ? (
             <>
-              <strong style={{ color: c.color }}>{c.name}:</strong> {c.text}
+              <strong style={{ color: c.color }}>{t("{name}:", { name: c.name })}</strong> {c.text}
             </>
           ) : (
             <span className="muted">
-              <strong style={{ color: c.color }}>{c.name}</strong> pinged{" "}
-              {c.kind === "ping" && c.unitId ? units[c.unitId]?.name : "a spot"}
+              <strong style={{ color: c.color }}>{c.name}</strong>{" "}
+              {c.kind === "ping" && c.unitId
+                ? t("pinged {unit}", { unit: units[c.unitId]?.name ?? "" })
+                : t("pinged a spot")}
             </span>
           )}
         </li>

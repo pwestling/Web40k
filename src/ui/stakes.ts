@@ -3,6 +3,7 @@ import { systemModule } from "../systems";
 import { aliveModels } from "../systems/wh40k/rules";
 import { moveBudget } from "./regiment";
 import { opposed } from "../core/teams";
+import { t } from "../i18n";
 
 /**
  * A decisive roll: a charge, a summed test (leadership, break) or the save
@@ -50,8 +51,12 @@ export function stakesOf(roll: TrayRoll, before: GameState, after: GameState): S
     const made = ranked ? reach >= gap - 0.05 : total >= need - 0.05;
     return {
       good: made,
-      big: made ? "Charge!" : "Short",
-      small: `${fmt(ranked ? reach : total)}, needed ${fmt(ranked ? gap : need)} to reach ${target.name}`,
+      big: made ? t("Charge!") : t("Short"),
+      small: t("{reach}, needed {need} to reach {unit}", {
+        reach: fmt(ranked ? reach : total),
+        need: fmt(ranked ? gap : need),
+        unit: target.name,
+      }),
     };
   }
 
@@ -61,11 +66,15 @@ export function stakesOf(roll: TrayRoll, before: GameState, after: GameState): S
         ? 1 - atLeastSum(n, roll.sides, roll.need + 1)
         : atLeastSum(n, roll.sides, roll.need);
     if (!doubtful(chance)) return null;
-    const sign = roll.compare === "atMost" ? `${roll.need} or less` : `${roll.need}+`;
+    const sign = roll.compare === "atMost" ? t("{n} or less", { n: roll.need }) : `${roll.need}+`;
     return {
       good: roll.passed,
-      big: roll.passed ? "Passed" : "Failed",
-      small: `${roll.title.replace(/\s+\S+$/, "")}: ${total}, needed ${sign}`,
+      big: roll.passed ? t("Passed") : t("Failed"),
+      small: t("{test}: {total}, needed {need}", {
+        test: roll.title.replace(/\s+\S+$/, ""),
+        total,
+        need: sign,
+      }),
     };
   }
 
@@ -81,8 +90,12 @@ export function stakesOf(roll: TrayRoll, before: GameState, after: GameState): S
     const gone = aliveModels(after, after.units[roll.targetId]).length === 0;
     return {
       good: saved,
-      big: saved ? "Saved" : gone ? "Slain" : "Wounded",
-      small: `${unit.name}, saving on ${roll.need}+: rolled ${values.join(", ")}`,
+      big: saved ? t("Saved") : gone ? t("Slain") : t("Wounded"),
+      small: t("{unit}, saving on {need}+: rolled {dice}", {
+        unit: unit.name,
+        need: roll.need,
+        dice: values.join(", "),
+      }),
     };
   }
   return null;

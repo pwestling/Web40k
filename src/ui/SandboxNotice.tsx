@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { usePackageSandbox, useSandbox } from "../sandbox/runtime";
 
 /** Runs the game's trusted rules packages, and says so when the sandbox stops one. */
@@ -8,7 +9,7 @@ export function SandboxNotice() {
   return (
     <div className="panel sandbox-notice" role="status">
       {error}{" "}
-      <button onClick={() => useSandbox.setState({ error: null })} aria-label="Dismiss">
+      <button onClick={() => useSandbox.setState({ error: null })} aria-label={t("Dismiss")}>
         ✕
       </button>
     </div>

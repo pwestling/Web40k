@@ -18,6 +18,7 @@ import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 import { opposed } from "../core/teams";
+import { t, tn } from "../i18n";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -62,33 +63,38 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
     <div className="panel attack">
       <div className="row spread">
         <strong>
-          {attacker.name}: {draft.kind === "ranged" ? "shoot" : "fight"}
+          {draft.kind === "ranged"
+            ? t("{unit}: shoot", { unit: attacker.name })
+            : t("{unit}: fight", { unit: attacker.name })}
         </strong>
-        <button onClick={() => setDraft(null)}>Cancel</button>
+        <button onClick={() => setDraft(null)}>{t("Cancel")}</button>
       </div>
       <div className="row wrap">
         <select
-          aria-label="Weapon"
+          aria-label={t("Weapon")}
           value={weaponId ?? ""}
           onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
         >
-          <option value="">Weapon…</option>
+          <option value="">{t("Weapon…")}</option>
           {weapons.map((w) => (
             <option key={w.id} value={w.id}>
               {w.name} (×{w.count})
             </option>
           ))}
         </select>
-        <span>at</span>
+        <span>{t("at")}</span>
         <select
-          aria-label="Target"
+          className="attack-target"
+          aria-label={t("Target")}
           value={draft.targetId ?? ""}
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
-          <option value="">Target…</option>
+          <option value="">{t("Target…")}</option>
           {enemies.map(({ unit: u, distance, out }) => (
             <option key={u.id} value={u.id}>
-              {u.name} ({distance.toFixed(1)}"{out ? ", out of range" : ""})
+              {out
+                ? t('{unit} ({distance}", out of range)', { unit: u.name, distance: distance.toFixed(1) })
+                : `${u.name} (${distance.toFixed(1)}")`}
             </option>
           ))}
         </select>
@@ -96,7 +102,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
           className={draft.picking ? "on" : ""}
           onClick={() => setDraft({ ...draft, picking: !draft.picking })}
         >
-          {draft.picking ? "Click a target on the table…" : "Pick on table"}
+          {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
         </button>
       </div>
       {suggestion && (
@@ -143,9 +149,9 @@ function SpecEditor({
   );
   const reroll = (v: Reroll, onChange: (v: Reroll) => void) => (
     <select value={v} onChange={(e) => onChange(e.target.value as Reroll)}>
-      <option value="none">no re-roll</option>
-      <option value="ones">re-roll 1s</option>
-      <option value="failed">re-roll fails</option>
+      <option value="none">{t("no re-roll")}</option>
+      <option value="ones">{t("re-roll 1s")}</option>
+      <option value="failed">{t("re-roll fails")}</option>
     </select>
   );
   const s = suggestion;
@@ -154,8 +160,13 @@ function SpecEditor({
   return (
     <div className="spec">
       <p className="muted">
-        {s.inRange}/{s.carriers} models in range · {s.visible}/{s.targetModels} targets visible
-        {s.inCover ? ` · ${s.inCover} in cover` : ""}
+        {t("{inRange}/{carriers} models in range · {visible}/{targets} targets visible", {
+          inRange: s.inRange,
+          carriers: s.carriers,
+          visible: s.visible,
+          targets: s.targetModels,
+        })}
+        {s.inCover ? <> · {t("{n} in cover", { n: s.inCover })}</> : ""}
       </p>
       {s.notes.length > 0 && (
         <ul className="notes">
@@ -165,34 +176,39 @@ function SpecEditor({
         </ul>
       )}
       {s.inRange === 0 && spec.kind === "ranged" && (
-        <p className="warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
+        <p className="warn">
+          {rangeOf(game, spec)
+            ? t("Out of range ({range})", { range: rangeOf(game, spec) })
+            : t("Out of range")}
+        </p>
       )}
       {s.inRange === 0 && spec.kind === "ranged" ? (
-        <button disabled title="No model has the target in range, so there are no attacks to roll">
-          Declare attack
+        <button disabled title={t("No model has the target in range, so there are no attacks to roll")}>
+          {t("Declare attack")}
         </button>
       ) : s.inRange === 0 || s.visible === 0 ? (
-        <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
-          Declare anyway
+        <button onClick={() => onDeclare(spec)} title={t("No models in range, or no target visible")}>
+          {t("Declare anyway")}
         </button>
       ) : (
         <button className="primary" onClick={() => onDeclare(spec)}>
-          Declare attack
+          {t("Declare attack")}
         </button>
       )}
       {/* In a lesson the numbers fold away: the form is just weapon, target and Declare (PX review). */}
       <details className="more-options" open={!coaching}>
-        <summary>More options</summary>
+        <summary>{t("More options")}</summary>
         <div className="grid">
           <label>
-            Attacks <input value={spec.attacks} onChange={(e) => set("attacks", e.target.value)} size={7} />
+            {t("Attacks")}{" "}
+            <input value={spec.attacks} onChange={(e) => set("attacks", e.target.value)} size={7} />
           </label>
           <label>
-            Hit {target(spec.hit, (v) => set("hit", v), "auto")} {mod(spec.hitMod, (v) => set("hitMod", v))}{" "}
-            {reroll(spec.rerollHits, (v) => set("rerollHits", v))}
+            {t("Hit")} {target(spec.hit, (v) => set("hit", v), t("auto"))}{" "}
+            {mod(spec.hitMod, (v) => set("hitMod", v))} {reroll(spec.rerollHits, (v) => set("rerollHits", v))}
           </label>
           <label>
-            Sustained{" "}
+            {t("Sustained")}{" "}
             <input
               type="number"
               min={0}
@@ -203,27 +219,34 @@ function SpecEditor({
           </label>
           <label className="check">
             <input type="checkbox" checked={spec.lethal} onChange={(e) => set("lethal", e.target.checked)} />{" "}
-            Lethal hits
+            {t("Lethal hits")}
           </label>
           <label>
-            Wound {target(spec.wound, (v) => set("wound", v ?? 6), "6+")}{" "}
+            {t("Wound")} {target(spec.wound, (v) => set("wound", v ?? 6), "6+")}{" "}
             {mod(spec.woundMod, (v) => set("woundMod", v))}{" "}
             {reroll(spec.rerollWounds, (v) => set("rerollWounds", v))}
           </label>
-          <label>Crit wound on {target(spec.critWound, (v) => set("critWound", v ?? 6), "6+")}</label>
+          <label>
+            {t("Crit wound on")} {target(spec.critWound, (v) => set("critWound", v ?? 6), "6+")}
+          </label>
           <label className="check">
             <input
               type="checkbox"
               checked={spec.devastating}
               onChange={(e) => set("devastating", e.target.checked)}
             />{" "}
-            Devastating
+            {t("Devastating")}
           </label>
-          <label>Save {target(spec.save, (v) => set("save", v), "none")}</label>
           <label>
-            Damage <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />
+            {t("Save")} {target(spec.save, (v) => set("save", v), t("none"))}
           </label>
-          <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
+          <label>
+            {t("Damage")}{" "}
+            <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />
+          </label>
+          <label>
+            {t("Feel no pain")} {target(spec.fnp, (v) => set("fnp", v), t("none"))}
+          </label>
         </div>
       </details>
     </div>
@@ -236,13 +259,14 @@ function rangeOf(game: GameState, spec: AttackSpec): string | undefined {
   return chars?.Range ?? chars?.range;
 }
 
-const STAGE_LABEL: Record<AttackState["stage"], string> = {
-  hit: "Roll to hit",
-  wound: "Roll to wound",
-  save: "Roll saves",
-  damage: "Roll damage",
-  done: "",
-};
+const stageLabel = (stage: AttackState["stage"]): string =>
+  ({
+    hit: t("Roll to hit"),
+    wound: t("Roll to wound"),
+    save: t("Roll saves"),
+    damage: t("Roll damage"),
+    done: "",
+  })[stage];
 
 function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean }) {
   const game = useGame();
@@ -257,7 +281,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
   const canControl = useCanControl();
   const theirs = !!roller && attack.stage === "save" && !canControl(roller);
-  const rollerName = roller ? game.players[roller]?.name || "Your opponent" : "";
+  const rollerName = roller ? game.players[roller]?.name || t("Your opponent") : "";
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
   const botAttacks = computerPlays(game, attacker?.owner);
@@ -281,33 +305,45 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         </strong>
       </div>
       <p className="muted">
-        {attack.attackCount} attacks
-        {attack.attackRolls.length ? ` (rolled ${attack.attackRolls.join(" ")})` : ""} · hit{" "}
-        {spec.hit === null ? "auto" : `${spec.hit}+${fmtMod(spec.hitMod)}`} · wound {spec.wound}+
-        {fmtMod(spec.woundMod)} · save {spec.save ? `${spec.save}+` : "none"} · D {spec.damage}
-        {spec.fnp ? ` · FNP ${spec.fnp}+` : ""}
+        {[
+          tn(attack.attackCount, "{n} attack", "{n} attacks") +
+            (attack.attackRolls.length
+              ? ` ${t("(rolled {dice})", { dice: attack.attackRolls.join(" ") })}`
+              : ""),
+          t("hit {value}", { value: spec.hit === null ? t("auto") : `${spec.hit}+${fmtMod(spec.hitMod)}` }),
+          t("wound {value}", { value: `${spec.wound}+${fmtMod(spec.woundMod)}` }),
+          t("save {value}", { value: spec.save ? `${spec.save}+` : t("none") }),
+          t("D {value}", { value: spec.damage }),
+          ...(spec.fnp ? [t("FNP {value}", { value: `${spec.fnp}+` })] : []),
+        ].join(" · ")}
       </p>
       {attack.hitDice && (
-        <Stage label="Hits" dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
-          {attack.hits} hits{attack.critHits ? `, ${attack.critHits} critical` : ""}
-          {attack.autoWounds ? `, ${attack.autoWounds} auto-wound` : ""}
+        <Stage label={t("Hits")} dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
+          {[
+            tn(attack.hits ?? 0, "{n} hit", "{n} hits"),
+            ...(attack.critHits ? [t("{n} critical", { n: attack.critHits })] : []),
+            ...(attack.autoWounds ? [t("{n} auto-wound", { n: attack.autoWounds })] : []),
+          ].join(", ")}
         </Stage>
       )}
       {spec.hit === null && attack.hits !== undefined && !attack.hitDice && (
-        <p>Torrent: {attack.hits} automatic hits</p>
+        <p>{t("Torrent: {n} automatic hits", { n: attack.hits })}</p>
       )}
       {attack.woundDice && (
-        <Stage label="Wounds" dice={attack.woundDice} judge={(v) => woundJudge(spec, v)}>
-          {attack.wounds} wounds{attack.unsavable ? `, ${attack.unsavable} skip saves` : ""}
+        <Stage label={t("Wounds")} dice={attack.woundDice} judge={(v) => woundJudge(spec, v)}>
+          {[
+            tn(attack.wounds ?? 0, "{n} wound", "{n} wounds"),
+            ...(attack.unsavable ? [t("{n} skip saves", { n: attack.unsavable })] : []),
+          ].join(", ")}
         </Stage>
       )}
       {attack.saveDice && (
         <Stage
-          label="Saves"
+          label={t("Saves")}
           dice={attack.saveDice}
           judge={(v) => (spec.save !== null && v !== 1 && v >= spec.save ? "ok" : "fail")}
         >
-          {attack.unsaved} unsaved
+          {t("{n} unsaved", { n: attack.unsaved ?? "" })}
         </Stage>
       )}
       {attack.damage && <DamageSummary game={game} attack={attack} />}
@@ -317,27 +353,29 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       {attacker && target && (
         <Reminders items={attackReminders(game, attacker.id, target.id, spec.kind)} live={live} />
       )}
-      {canAct && botRolls && attack.stage !== "done" && <p className="muted">The computer is rolling…</p>}
+      {canAct && botRolls && attack.stage !== "done" && (
+        <p className="muted">{t("The computer is rolling…")}</p>
+      )}
       {canAct && !(botRolls && botAttacks) && (
         <div className="row">
           {attack.stage !== "done" && !botRolls && theirs && (
             <>
-              <span className="muted">{rollerName} rolls the saves</span>
+              <span className="muted">{t("{name} rolls the saves", { name: rollerName })}</span>
               <button
                 className="quiet small"
-                title="Dice hold no choices, so either player may roll them"
+                title={t("Dice hold no choices, so either player may roll them")}
                 onClick={roll}
               >
-                Roll for them
+                {t("Roll for them")}
               </button>
             </>
           )}
           {attack.stage !== "done" && !botRolls && !theirs && (
             <>
               <button className="primary attack-roll" onClick={roll}>
-                {STAGE_LABEL[attack.stage]}
+                {stageLabel(attack.stage)}
               </button>
-              {!botAttacks && <button onClick={rollAll}>Roll everything</button>}
+              {!botAttacks && <button onClick={rollAll}>{t("Roll everything")}</button>}
             </>
           )}
           {!botAttacks && (
@@ -349,7 +387,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
                 focusSoon(".panel.unitcard");
               }}
             >
-              {attack.stage === "done" ? "Done" : "Cancel"}
+              {attack.stage === "done" ? t("Done") : t("Cancel")}
             </button>
           )}
         </div>
@@ -400,7 +438,7 @@ function Stage({
           <span
             key={i}
             className={`die ${judge(d.value)}`}
-            title={d.rerolledFrom ? `re-rolled from ${d.rerolledFrom}` : undefined}
+            title={d.rerolledFrom ? t("re-rolled from {value}", { value: d.rerolledFrom }) : undefined}
           >
             {d.value}
             {d.rerolledFrom !== undefined && <sup>↻</sup>}
@@ -419,7 +457,7 @@ function DamageSummary({ game, attack }: { game: GameState; attack: AttackState 
   const fnpSaved = results.reduce((n, d) => n + d.fnp.filter((v) => v >= (attack.spec.fnp ?? 7)).length, 0);
   return (
     <div className="stage">
-      <span className="label">Damage</span>
+      <span className="label">{t("Damage")}</span>
       <span className="dice">
         {results.map((d, i) => (
           <span
@@ -433,9 +471,11 @@ function DamageSummary({ game, attack }: { game: GameState; attack: AttackState 
       </span>
       <span className="result">
         <strong>
-          {lost} wounds lost, {dead} model{dead === 1 ? "" : "s"} destroyed
+          {tn(dead, "{lost} wounds lost, {n} model destroyed", "{lost} wounds lost, {n} models destroyed", {
+            lost,
+          })}
         </strong>
-        {attack.spec.fnp ? ` (${fnpSaved} ignored by feel no pain)` : ""}
+        {attack.spec.fnp ? <> ({t("{n} ignored by feel no pain", { n: fnpSaved })})</> : ""}
       </span>
     </div>
   );
@@ -497,7 +537,7 @@ function WoundOrder({ attack }: { attack: AttackState }) {
   };
   return (
     <div className="stage wound-order">
-      <span className="label">Wounds go to</span>
+      <span className="label">{t("Wounds go to")}</span>
       <span className="chips" onMouseLeave={() => point(null)}>
         {groups.slice(0, 10).map((g, i) => {
           const m = g[0]!;
@@ -507,7 +547,7 @@ function WoundOrder({ attack }: { attack: AttackState }) {
               key={m.id}
               className={`chip ${i === 0 ? "on" : ""}`}
               disabled={!mine || i === 0}
-              title={mine && i > 0 ? "Take wounds on these models first" : undefined}
+              title={mine && i > 0 ? t("Take wounds on these models first") : undefined}
               onMouseEnter={() => point(ids)}
               onFocus={() => point(ids)}
               onBlur={() => point(null)}
@@ -516,17 +556,17 @@ function WoundOrder({ attack }: { attack: AttackState }) {
               {i + 1}. {m.label}
               {gear(m)}
               {g.length > 1 ? ` ×${g.length}` : ""}
-              {(m.woundsLost ?? 0) > 0 ? ` (${woundsLeft(m)} W left)` : ""}
+              {(m.woundsLost ?? 0) > 0 ? <> ({t("{n} W left", { n: woundsLeft(m) })})</> : ""}
             </button>
           );
         })}
-        {groups.length > 10 && <span className="muted">+{groups.length - 10} more</span>}
+        {groups.length > 10 && <span className="muted">{t("+{n} more", { n: groups.length - 10 })}</span>}
       </span>
       <span className="result">
         {wounded > 0 ? (
-          <span className="warn">A model that has already lost wounds should take the next one.</span>
+          <span className="warn">{t("A model that has already lost wounds should take the next one.")}</span>
         ) : mine && !chosen && groups.length > 1 ? (
-          <span className="muted">Defender: click a model to put it first.</span>
+          <span className="muted">{t("Defender: click a model to put it first.")}</span>
         ) : null}
       </span>
     </div>

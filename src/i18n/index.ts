@@ -95,6 +95,14 @@ function fill(text: string, params?: Params): string {
   });
 }
 
+/**
+ * A string that is already in the catalog under another call, looked up at run time (a lesson naming a
+ * button by its English label). The extractor doesn't read it, so it adds nothing to the catalog.
+ */
+export function translated(text: string): string {
+  return t(text);
+}
+
 /** A UI string in the chosen language. `{name}` placeholders are filled from `params`. */
 export function t(text: string, params?: Params): string {
   return fill(messages.get(text)?.[0] || text, params);

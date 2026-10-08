@@ -12,6 +12,7 @@ import {
   type Model,
   type Vec2,
 } from "../core";
+import { t, tn } from "../i18n";
 
 /**
  * PX-3d: slain models tip over where they stood, lie still a moment and fade
@@ -210,10 +211,10 @@ function Pile({
         zIndexRange={[9, 0]}
         className="ruler casualty-pile"
       >
-        <button className="link" onClick={() => setOpen(!open)} title="Units lost">
-          <strong style={{ color }}>{name}</strong> · {dead.length} model{dead.length === 1 ? "" : "s"}
-          {summary.pts ? ` · ${summary.pts} pts` : ""}
-          {dead.length > MAX_SHOWN ? ` (+${dead.length - MAX_SHOWN} not shown)` : ""}
+        <button className="link" onClick={() => setOpen(!open)} title={t("Units lost")}>
+          <strong style={{ color }}>{name}</strong> · {tn(dead.length, "{n} model", "{n} models")}
+          {summary.pts ? t(" · {pts} pts", { pts: String(summary.pts) }) : ""}
+          {dead.length > MAX_SHOWN ? t(" (+{n} not shown)", { n: dead.length - MAX_SHOWN }) : ""}
         </button>
         {open && (
           <ul>
@@ -223,7 +224,10 @@ function Pile({
                 {u.when.length > 0 && (
                   <span className="muted">
                     {" "}
-                    · round{u.when.length > 1 ? "s" : ""} {u.when.join(", ")}
+                    ·{" "}
+                    {u.when.length > 1
+                      ? t("rounds {rounds}", { rounds: u.when.join(", ") })
+                      : t("round {rounds}", { rounds: u.when.join(", ") })}
                   </span>
                 )}
               </li>

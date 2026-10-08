@@ -5,6 +5,7 @@ import { delaying } from "../broadcast/broadcast";
 import { useHold } from "./hold";
 import { replayRoll } from "./hooks";
 import { useEffect, useMemo, useState } from "react";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
 import { pace } from "./pace";
@@ -22,7 +23,7 @@ function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string
   let lastRound: string | undefined;
   for (const l of log) {
     if (l.kind !== "header" || l.rules) continue;
-    const r = /^Round (\d+)/.exec(l.text)?.[1];
+    const r = l.round === undefined ? undefined : String(l.round);
     out.push({ seq: Number(l.key), text: l.text, ...(r && r !== lastRound ? { round: r } : {}) });
     lastRound = r;
   }
@@ -78,14 +79,14 @@ export function ReplayBar() {
     latest?.kind === "line"
       ? latest.text
       : phase
-        ? `${phase.text.split(" · ").at(-1)} phase began`
+        ? t("{phase} phase began", { phase: phase.text.split(" · ").at(-1) })
         : undefined;
 
   useEffect(() => {
     if (!playing) return;
     const at = useStore.getState().scrub ?? last;
     const next = at + 1;
-    const t = setTimeout(
+    const timer = setTimeout(
       () => {
         const s = useStore.getState();
         if (next >= last) {
@@ -99,7 +100,7 @@ export function ReplayBar() {
       },
       pace(record, next),
     );
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [playing, last, pos, record, session]);
 
   const play = () => {
@@ -127,11 +128,11 @@ export function ReplayBar() {
         </div>
       )}
       <div className="replaybar">
-        <button title="Replay: back a phase" onClick={() => jump(-1)}>
+        <button title={t("Replay: back a phase")} onClick={() => jump(-1)}>
           ⏮
         </button>
         <button onClick={play}>{playing ? "⏸" : "▶"}</button>
-        <button title="Replay: forward a phase" onClick={() => jump(1)}>
+        <button title={t("Replay: forward a phase")} onClick={() => jump(1)}>
           ⏭
         </button>
         <div className="track">
@@ -153,7 +154,7 @@ export function ReplayBar() {
                 style={{ left: at(m.seq) }}
                 title={m.text}
               >
-                {m.round && <span className="label">R{m.round}</span>}
+                {m.round && <span className="label">{t("R{round}", { round: m.round })}</span>}
               </span>
             ))}
           {last > 0 &&
@@ -163,7 +164,7 @@ export function ReplayBar() {
                 className={`highlight ${h.kind}`}
                 style={{ left: at(h.seq) }}
                 title={h.text}
-                aria-label={`Replay: ${h.text}`}
+                aria-label={t("Replay: {what}", { what: h.text })}
                 onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
               >
                 {ICONS[h.kind]}
@@ -176,7 +177,7 @@ export function ReplayBar() {
                 className="highlight rare"
                 style={{ left: at(m.seq) }}
                 title={`${m.title}: ${m.line}`}
-                aria-label={`Replay: ${m.title}`}
+                aria-label={t("Replay: {what}", { what: m.title })}
                 onClick={() => replayRoll(m.seq)}
               >
                 ★
@@ -189,7 +190,7 @@ export function ReplayBar() {
                 className="highlight moment"
                 style={{ left: at(m.seq) }}
                 title={`${m.title}: ${m.line}`}
-                aria-label={`Replay: ${m.title}`}
+                aria-label={t("Replay: {what}", { what: m.title })}
                 onClick={() => playMoment(m)}
               >
                 ❖
@@ -201,8 +202,8 @@ export function ReplayBar() {
                 key={`note-${seq}`}
                 className="highlight note"
                 style={{ left: at(seq) }}
-                title={notes.find((n) => n.seq === seq)?.text || "A note"}
-                aria-label={`Replay: note, ${notes.find((n) => n.seq === seq)?.text ?? ""}`}
+                title={notes.find((n) => n.seq === seq)?.text || t("A note")}
+                aria-label={t("Replay: note, {text}", { text: notes.find((n) => n.seq === seq)?.text ?? "" })}
                 onClick={() => setScrub(seq)}
               >
                 ✎
@@ -215,7 +216,7 @@ export function ReplayBar() {
                 className="highlight rules"
                 style={{ left: at(r.seq) }}
                 title={r.text}
-                aria-label={`Replay: ${r.text}`}
+                aria-label={t("Replay: {what}", { what: r.text })}
                 onClick={() => setScrub(r.seq >= last && session ? null : r.seq)}
               >
                 ◆
@@ -223,16 +224,16 @@ export function ReplayBar() {
             ))}
         </div>
         <span className="muted where">
-          {scrub === null ? "Live" : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? "Setup")}
+          {scrub === null ? t("Live") : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? t("Setup"))}
         </span>
         {/* What if: a new game from the point on the track (UX: roadmap #14). */}
         {/* Live, it branches from now (UX 138); not for a viewer held back by the delay (UX 146). */}
         {last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
         <BackToOriginal />
-        {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
+        {scrub !== null && session && <button onClick={() => setScrub(null)}>{t("Back to live")}</button>}
         {scrub !== null && session && over && (
-          <button title="Open this game as a replay to add notes and marks" onClick={reviewThisGame}>
-            Review with notes
+          <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
+            {t("Review with notes")}
           </button>
         )}
         {!session && (
@@ -243,7 +244,7 @@ export function ReplayBar() {
               location.reload();
             }}
           >
-            {review ? "Leave" : "Close replay"}
+            {review ? t("Leave") : t("Close replay")}
           </button>
         )}
       </div>

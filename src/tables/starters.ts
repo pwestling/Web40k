@@ -1,4 +1,5 @@
 import type { Layout, Table, TerrainPiece } from "../core";
+import { t } from "../i18n";
 import { systemModule } from "../systems";
 import { makePiece, TEMPLATES } from "../systems/wh40k/layout";
 
@@ -11,8 +12,6 @@ import { makePiece, TEMPLATES } from "../systems/wh40k/layout";
 
 interface Starter {
   id: string;
-  name: string;
-  blurb: string;
   /** Templates for one half of the table (each gets a twin), for a 60" x 44" table. */
   half: string[];
 }
@@ -20,20 +19,14 @@ interface Starter {
 const STARTERS: Starter[] = [
   {
     id: "close",
-    name: "Close quarters",
-    blurb: "Dense ruins and short sightlines",
     half: ["Tall ruin", "Ruin", "Ruin", "Small ruin", "Small ruin", "Container", "Barricade"],
   },
   {
     id: "broken",
-    name: "Broken ground",
-    blurb: "A mix of ruins, woods and hills",
     half: ["Ruin", "Small ruin", "Woods", "Hill", "Crater", "Barricade"],
   },
   {
     id: "open",
-    name: "Open field",
-    blurb: "Room to manoeuvre: a few hills, woods and walls",
     half: ["Hill", "Woods", "Crater", "Barricade"],
   },
 ];
@@ -110,5 +103,14 @@ function scaled(piece: TerrainPiece, k: number): TerrainPiece {
   };
 }
 
-export const starters = (): { id: string; name: string; blurb: string }[] =>
-  STARTERS.map(({ id, name, blurb }) => ({ id, name, blurb }));
+/** The starters' names and blurbs, in the chosen language. */
+const text = (): Record<string, { name: string; blurb: string }> => ({
+  close: { name: t("Close quarters"), blurb: t("Dense ruins and short sightlines") },
+  broken: { name: t("Broken ground"), blurb: t("A mix of ruins, woods and hills") },
+  open: { name: t("Open field"), blurb: t("Room to manoeuvre: a few hills, woods and walls") },
+});
+
+export const starters = (): { id: string; name: string; blurb: string }[] => {
+  const words = text();
+  return STARTERS.map(({ id }) => ({ id, name: words[id]!.name, blurb: words[id]!.blurb }));
+};

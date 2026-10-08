@@ -5,6 +5,7 @@ import { evalCtx, safeBool } from "../core/content/play";
 import { unitView } from "../core/content/runtime";
 import type { CheckDef } from "../core/content/schema";
 import { gameView } from "../core/script";
+import { t } from "../i18n";
 import { gameModule } from "../systems";
 import { aliveModels, unitMoved } from "../systems/wh40k/rules";
 
@@ -26,16 +27,16 @@ export interface TableWarning {
 }
 
 /** Names for the code checks' ids, where no data check names them. */
-const NAMES: Record<string, string> = {
-  coherency: "Unit coherency",
-  moveDistance: "Move distance",
-  terrain: "Moving through terrain",
-  deepStrike: "Deep Strike",
-  activateFirst: "Activate before moving",
+const NAMES: Record<string, () => string> = {
+  coherency: () => t("Unit coherency"),
+  moveDistance: () => t("Move distance"),
+  terrain: () => t("Moving through terrain"),
+  deepStrike: () => "Deep Strike",
+  activateFirst: () => t("Activate before moving"),
 };
 
 export function checkName(state: GameState, id: string): string {
-  return systemOf(state).checks?.find((c) => c.id === id)?.name ?? NAMES[id] ?? id;
+  return systemOf(state).checks?.find((c) => c.id === id)?.name ?? NAMES[id]?.() ?? id;
 }
 
 /** Where a unit's models stand, as one number: an override lasts while it doesn't change. */

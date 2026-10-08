@@ -11,6 +11,7 @@ import {
   type ArmyFile,
   type SavedArmy,
 } from "../packages/shelf";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import { download } from "./report";
@@ -92,10 +93,10 @@ export async function importArmyFile(file: File): Promise<SavedArmy | string> {
   try {
     data = JSON.parse(await file.text());
   } catch {
-    return "That file isn't an Open Battle army.";
+    return t("That file isn't an Open Battle army.");
   }
   const army = readArmy(data);
-  if (!army) return "That file isn't an Open Battle army.";
+  if (!army) return t("That file isn't an Open Battle army.");
   const attached = (data as ArmyFile).attachments?.assets ?? {};
   if (Object.keys(attached).length) {
     const { decodeAsset } = await import("../assets/codec");

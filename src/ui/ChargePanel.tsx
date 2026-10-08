@@ -17,9 +17,17 @@ import { systemModule } from "../systems";
 import { useGame } from "./hooks";
 import { moveBudget } from "./regiment";
 import { opposed } from "../core/teams";
+import { formatNumber, t, tc } from "../i18n";
 
-const fmt = (n: number) => `${Number(n.toFixed(1))}"`;
-const ARC_EDGE = { front: "front", rear: "rear", left: "left flank", right: "right flank" } as const;
+const fmt = (n: number) => `${formatNumber(Number(n.toFixed(1)), { maximumFractionDigits: 1 })}"`;
+/** The side of the enemy a charge meets, on screen. */
+const arcEdge = (arc: "front" | "rear" | "left" | "right") =>
+  ({
+    front: tc("charge arc", "front"),
+    rear: tc("charge arc", "rear"),
+    left: tc("charge arc", "left flank"),
+    right: tc("charge arc", "right flank"),
+  })[arc];
 /** Touching, for closing the door: bases this close count as in contact. */
 const CONTACT = 0.1;
 
@@ -108,16 +116,16 @@ export function ChargePanel({ unit }: { unit: Unit }) {
 
   return (
     <div className="charge">
-      <h4>{mod.fleeDice ? "Charge, flee, pursue" : "Charge"}</h4>
+      <h4>{mod.fleeDice ? t("Charge, flee, pursue") : tc("panel heading", "Charge")}</h4>
       <div className="row">
-        <select aria-label="Enemy unit" value={enemy.id} onChange={(e) => setPick(e.target.value)}>
+        <select aria-label={t("Enemy unit")} value={enemy.id} onChange={(e) => setPick(e.target.value)}>
           {near.map((e) => (
             <option key={e.unit.id} value={e.unit.id}>
               {e.unit.name} ({fmt(e.d)})
             </option>
           ))}
           {far.length > 0 && (
-            <optgroup label="Further away">
+            <optgroup label={t("Further away")}>
               {far.map((e) => (
                 <option key={e.unit.id} value={e.unit.id}>
                   {e.unit.name} ({fmt(e.d)})
@@ -129,24 +137,38 @@ export function ChargePanel({ unit }: { unit: Unit }) {
       </div>
       {door && !touching && (
         <div className="row">
-          <button onClick={() => roll("charge roll")}>Roll to charge</button>
+          <button onClick={() => roll("charge roll")}>{t("Roll to charge")}</button>
           <button
             title={
               short
-                ? `The roll falls ${fmt(door.distance - chargeRange!)} short of ${enemy.name}`
-                : `Move into contact with ${enemy.name}'s ${ARC_EDGE[door.arc]}, lined up flush`
+                ? t("The roll falls {distance} short of {unit}", {
+                    distance: fmt(door.distance - chargeRange!),
+                    unit: enemy.name,
+                  })
+                : t("Move into contact with {unit}'s {edge}, lined up flush", {
+                    unit: enemy.name,
+                    edge: arcEdge(door.arc),
+                  })
             }
             // The next step only once a roll says it reaches (UX 192).
             className={chargeRange !== null && !short ? "primary" : ""}
             disabled={short}
             onClick={() => dispatch({ ...door.move, how: "charge" }, as)}
           >
-            Charge into its {ARC_EDGE[door.arc]} ({fmt(door.distance)})
+            {t("Charge into its {edge} ({distance})", {
+              edge: arcEdge(door.arc),
+              distance: fmt(door.distance),
+            })}
           </button>
           {chargeRange !== null && (
             <span className={`${short ? "warn" : "muted small"}${tense ? " tense" : ""}`}>
-              needs {fmt(door.distance)} of {fmt(chargeRange)} ({chargeDie} + M {move})
-              {short ? " · too short" : " · reaches ✓"}
+              {t("needs {distance} of {range} ({roll} + M {move})", {
+                distance: fmt(door.distance),
+                range: fmt(chargeRange),
+                roll: chargeDie,
+                move,
+              })}
+              {short ? ` · ${t("too short")}` : ` · ${t("reaches")} ✓`}
             </span>
           )}
         </div>
@@ -154,54 +176,56 @@ export function ChargePanel({ unit }: { unit: Unit }) {
       {door && touching && !flush && (
         <div className="row">
           <button
-            title={`Line up flush with ${enemy.name}'s ${ARC_EDGE[door.arc]}`}
+            title={t("Line up flush with {unit}'s {edge}", { unit: enemy.name, edge: arcEdge(door.arc) })}
             onClick={() => dispatch(door.move, as)}
           >
-            Close the door ({fmt(door.distance)})
+            {t("Close the door ({distance})", { distance: fmt(door.distance) })}
           </button>
         </div>
       )}
-      {charged > 0 && <p className="muted small">Charged {fmt(charged)} this phase.</p>}
+      {charged > 0 && (
+        <p className="muted small">{t("Charged {distance} this phase.", { distance: fmt(charged) })}</p>
+      )}
       {mod.fleeDice && (
         <>
           <div className="row">
             <input
               type="number"
-              aria-label="Inches to flee or pursue"
+              aria-label={t("Inches to flee or pursue")}
               className="frontage"
               min={0}
               step={1}
               value={inches}
               onChange={(e) => setTyped(Number(e.target.value) || 0)}
             />
-            <button onClick={() => roll("flee roll")}>Roll to flee</button>
+            <button onClick={() => roll("flee roll")}>{t("Roll to flee")}</button>
             <button
               disabled={!inches}
-              title={`Turn and run directly away from ${enemy.name}`}
+              title={t("Turn and run directly away from {unit}", { unit: enemy.name })}
               onClick={() => runAway(awayFrom(game, unit, unitCentre(game, enemy)))}
             >
-              Flee
+              {t("Flee")}
             </button>
             <button
               disabled={!inches}
-              title="A fleeing unit runs towards the nearest table edge"
+              title={t("A fleeing unit runs towards the nearest table edge")}
               onClick={() => runAway(towardsNearestEdge(game, unit))}
             >
-              Flee to edge
+              {t("Flee to edge")}
             </button>
           </div>
           <div className="row">
-            <button onClick={() => roll("pursuit roll")}>Roll to pursue</button>
+            <button onClick={() => roll("pursuit roll")}>{t("Roll to pursue")}</button>
             <button disabled={!chase} onClick={() => chase && dispatch(chase.move, as)}>
-              Pursue {enemy.name}
+              {t("Pursue {unit}", { unit: enemy.name })}
             </button>
             {chase && (
               <span className={chase.caught ? "warn" : "muted small"}>
                 {chase.caught
-                  ? `catches it after ${fmt(chase.moved)}`
+                  ? t("catches it after {distance}", { distance: fmt(chase.moved) })
                   : Number.isFinite(chase.gap)
-                    ? `falls ${fmt(chase.gap)} short`
-                    : "won't reach it"}
+                    ? t("falls {distance} short", { distance: fmt(chase.gap) })
+                    : t("won't reach it")}
               </span>
             )}
           </div>
@@ -209,11 +233,11 @@ export function ChargePanel({ unit }: { unit: Unit }) {
       )}
       {fleeing && (
         <div className="row">
-          <span className="warn">Fleeing</span>
+          <span className="warn">{t("Fleeing")}</span>
           <button
             onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "fleeing", value: null }, as)}
           >
-            Rallied
+            {t("Rallied")}
           </button>
         </div>
       )}

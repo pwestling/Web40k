@@ -3,6 +3,7 @@ import { branchRecord, sha256Hex, stateAt, type GameRecord } from "../core";
 import { currentSlot } from "../core/content/turn";
 import { buildLog } from "./gameLog";
 import { NET_PARAMS } from "../net/config";
+import { t } from "../i18n";
 import { useStore, type Mode } from "../store";
 
 /**
@@ -32,18 +33,18 @@ export function BranchButton({ seq }: { seq: number }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="branch-button">
-      <button title="Start a new game from this point" onClick={() => setOpen(!open)}>
-        What if…
+      <button title={t("Start a new game from this point")} onClick={() => setOpen(!open)}>
+        {t("What if…")}
       </button>
       {open && (
         <div className="panel branch-menu" role="menu">
-          <strong>Play on from here</strong>
-          <span className="muted small">A new game from this moment. This one stays as it is.</span>
+          <strong>{t("Play on from here")}</strong>
+          <span className="muted small">{t("A new game from this moment. This one stays as it is.")}</span>
           <button role="menuitem" className="primary" onClick={() => branchGame(seq, "hotseat")}>
-            On this screen
+            {t("On this screen")}
           </button>
           <button role="menuitem" onClick={() => branchGame(seq, "online")}>
-            Invite someone
+            {t("Invite someone")}
           </button>
         </div>
       )}
@@ -56,8 +57,12 @@ function momentAt(record: GameRecord, seq: number): string {
   const state = stateAt(record, seq);
   const phase = currentSlot(state)?.name;
   const last = [...buildLog(record, seq)].reverse().find((l) => l.kind === "line" && !l.undone && l.text);
-  const when = state.turn.round ? `round ${state.turn.round}${phase ? `, ${phase}` : ""}` : "deployment";
-  return last ? `${when}, just after ${last.text}` : when;
+  const when = state.turn.round
+    ? phase
+      ? t("round {round}, {phase}", { round: state.turn.round, phase })
+      : t("round {round}", { round: state.turn.round })
+    : t("deployment");
+  return last ? t("{when}, just after {what}", { when, what: last.text }) : when;
 }
 
 /**
@@ -112,8 +117,8 @@ export function BackToOriginal() {
       });
   };
   return (
-    <button title="Open the game this one branched from" onClick={back}>
-      Back to the original
+    <button title={t("Open the game this one branched from")} onClick={back}>
+      {t("Back to the original")}
     </button>
   );
 }

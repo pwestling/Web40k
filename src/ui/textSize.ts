@@ -1,10 +1,11 @@
 import { create } from "zustand";
+import { t } from "../i18n";
 
 /** Text sizes a player can pick (#25), as a scale on the root font size (styles.css --text-scale). */
 export const TEXT_SIZES = [
-  { id: "normal", label: "Normal", scale: 1 },
-  { id: "large", label: "Large", scale: 1.15 },
-  { id: "larger", label: "Larger", scale: 1.3 },
+  { id: "normal", label: () => t("Normal"), scale: 1 },
+  { id: "large", label: () => t("Large"), scale: 1.15 },
+  { id: "larger", label: () => t("Larger"), scale: 1.3 },
 ] as const;
 export type TextSize = (typeof TEXT_SIZES)[number]["id"];
 

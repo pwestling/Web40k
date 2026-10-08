@@ -11,6 +11,7 @@ import {
   startMailGame,
   useMail,
 } from "./store";
+import { formatDate, t } from "../i18n";
 
 /** The invite link last followed, so it's followed once (StrictMode mounts twice). */
 let followed: string | null = null;
@@ -79,23 +80,23 @@ export function MailLobby({
               join();
             }}
           >
-            <strong>You've been invited to a game by mail</strong>
+            <strong>{t("You've been invited to a game by mail")}</strong>
             <label className="row">
-              Your name, for your opponent{" "}
+              {t("Your name, for your opponent")}{" "}
               <input
                 autoFocus
-                aria-label="Your name, for your opponent"
+                aria-label={t("Your name, for your opponent")}
                 value={joinName}
-                placeholder="Your name"
+                placeholder={t("Your name")}
                 onChange={(e) => setJoinName(e.target.value)}
               />
             </label>
             <div className="row">
               <button className="primary" disabled={busy || !joinName.trim()}>
-                Join the game
+                {t("Join the game")}
               </button>
               <button type="button" onClick={() => setInvite(null)}>
-                Not now
+                {t("Not now")}
               </button>
             </div>
           </form>
@@ -103,11 +104,11 @@ export function MailLobby({
       )}
       {/* Open when something went wrong (a link whose mailbox can't be reached), so it's seen. */}
       <details className="fold" open={error ? true : undefined}>
-        <summary>Play by mail</summary>
+        <summary>{t("Play by mail")}</summary>
         <p className="muted small">
-          A game that lives across days: take your turn when you can, then send it to your opponent. On a
-          server with a mailbox, turns go there and open on their side; otherwise you pass a file (email,
-          chat, anything). Every roll is checked on their side, and neither of you can pick the dice.
+          {t(
+            "A game that lives across days: take your turn when you can, then send it to your opponent. On a server with a mailbox, turns go there and open on their side; otherwise you pass a file (email, chat, anything). Every roll is checked on their side, and neither of you can pick the dice.",
+          )}
         </p>
         <div className="row wrap">
           <button
@@ -119,10 +120,10 @@ export function MailLobby({
               })
             }
           >
-            Start a mail game
+            {t("Start a mail game")}
           </button>
           <label className="file">
-            Open a file from your opponent
+            {t("Open a file from your opponent")}
             <input
               type="file"
               accept=".json,application/json"
@@ -139,17 +140,17 @@ export function MailLobby({
             {games.map((g) => (
               <li key={g.id} className="row spread">
                 <span>
-                  vs {g.vs || "your opponent"} ·{" "}
+                  {t("vs {name}", { name: g.vs || t("your opponent") })} ·{" "}
                   <strong className={g.yours || arrived[g.id] ? "" : "muted"}>
                     {g.yours
-                      ? "your move"
+                      ? t("your move")
                       : arrived[g.id]
-                        ? "● their turn is here: your move"
+                        ? t("● their turn is here: your move")
                         : g.box
-                          ? "waiting for their turn"
-                          : "waiting for their file"}
+                          ? t("waiting for their turn")
+                          : t("waiting for their file")}
                   </strong>{" "}
-                  <span className="muted small">{new Date(g.at).toLocaleDateString()}</span>
+                  <span className="muted small">{formatDate(new Date(g.at))}</span>
                 </span>
                 <span className="row">
                   <button
@@ -161,13 +162,13 @@ export function MailLobby({
                       })
                     }
                   >
-                    Open
+                    {t("Open")}
                   </button>
                   <button
                     className="quiet"
-                    title="Remove this game from this device (the files you saved keep it)"
+                    title={t("Remove this game from this device (the files you saved keep it)")}
                     onClick={() => {
-                      if (!confirm("Remove this mail game from this device?")) return;
+                      if (!confirm(t("Remove this mail game from this device?"))) return;
                       forgetMailGame(g.id);
                       setGames(mailGames());
                     }}

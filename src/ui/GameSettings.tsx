@@ -1,5 +1,6 @@
 import { ClockSettingsRow } from "./Clocks";
 import type { GameSettings as Settings } from "../core";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 import { GamePackagesSettings } from "./Packages";
@@ -13,56 +14,58 @@ export function GameSettings() {
   const editable = role !== "spectator" && scrub === null;
   // Once the battle has started, changing a rule takes a confirm (and shows in the log).
   const change = (settings: Partial<Settings>) => {
-    if (game.turn.round > 0 && !confirm("The battle has started. Change this rule for both players?")) return;
+    if (game.turn.round > 0 && !confirm(t("The battle has started. Change this rule for both players?")))
+      return;
     dispatch({ type: "settings/set", settings });
   };
   return (
     <details className="settings">
-      <summary>Game settings</summary>
+      <summary>{t("Game settings")}</summary>
       <GamePackagesSettings editable={editable} />
       {editable ? (
         <>
           <label>
-            Cover{" "}
+            {t("Cover")}{" "}
             <select value={cover} onChange={(e) => change({ cover: e.target.value as "hit" | "save" })}>
-              <option value="hit">−1 to hit</option>
-              <option value="save">+1 to save</option>
+              <option value="hit">{t("−1 to hit")}</option>
+              <option value="save">{t("+1 to save")}</option>
             </select>
           </label>
           <label>
-            Line of sight{" "}
+            {t("Line of sight")}{" "}
             <select
               value={los}
               onChange={(e) => change({ los: e.target.value as "true" | "heights" | "footprint" })}
             >
-              <option value="true">True line of sight</option>
-              <option value="heights">Stand-in heights</option>
-              <option value="footprint">Footprints, no height</option>
+              <option value="true">{t("True line of sight")}</option>
+              <option value="heights">{t("Stand-in heights")}</option>
+              <option value="footprint">{t("Footprints, no height")}</option>
             </select>
           </label>
           {los === "footprint" && (
             <p className="muted small">
-              Heights don't count. Sight runs from the centre of a model's base to any part of the target's
-              base. Each terrain piece is open, obscuring (gives cover) or blocking; set it in the terrain
-              editor.
+              {t(
+                "Heights don't count. Sight runs from the centre of a model's base to any part of the target's base. Each terrain piece is open, obscuring (gives cover) or blocking; set it in the terrain editor.",
+              )}
             </p>
           )}
           {los === "heights" && (
             <p className="muted small">
-              Each terrain piece counts as a block of its stand-in height, and models see each other if the
-              line between their tops clears it. Set heights in the terrain editor; X-ray shows them.
+              {t(
+                "Each terrain piece counts as a block of its stand-in height, and models see each other if the line between their tops clears it. Set heights in the terrain editor; X-ray shows them.",
+              )}
             </p>
           )}
           <label>
-            Models see{" "}
+            {t("Models see")}{" "}
             <select
               value={game.settings.visionArc ?? 360}
               // 360 rather than "missing", so the change survives being sent to peers as JSON.
               onChange={(e) => change({ visionArc: Number(e.target.value) })}
             >
-              <option value={360}>All around</option>
-              <option value={180}>In a 180° front arc</option>
-              <option value={90}>In a 90° front arc</option>
+              <option value={360}>{t("All around")}</option>
+              <option value={180}>{t("In a {degrees}° front arc", { degrees: 180 })}</option>
+              <option value={90}>{t("In a {degrees}° front arc", { degrees: 90 })}</option>
             </select>
           </label>
           <ClockSettingsRow value={game.settings.clock} change={(clock) => change({ clock })} />
@@ -72,17 +75,23 @@ export function GameSettings() {
               checked={modelsBlock}
               onChange={(e) => change({ modelsBlock: e.target.checked })}
             />
-            Other units' models block line of sight
+            {t("Other units' models block line of sight")}
           </label>
         </>
       ) : (
         <p className="muted small">
-          {los === "heights" ? "Stand-in heights" : los === "footprint" ? "Footprint" : "True"} line of sight.
-          Cover: {cover === "hit" ? "−1 to hit" : "+1 to save"}.{" "}
+          {los === "heights"
+            ? t("Stand-in heights line of sight.")
+            : los === "footprint"
+              ? t("Footprint line of sight.")
+              : t("True line of sight.")}{" "}
+          {t("Cover: {cover}.", { cover: cover === "hit" ? t("−1 to hit") : t("+1 to save") })}{" "}
           {game.settings.visionArc && game.settings.visionArc < 360
-            ? `Models see in a ${game.settings.visionArc}° front arc. `
+            ? `${t("Models see in a {degrees}° front arc.", { degrees: game.settings.visionArc })} `
             : ""}
-          Other units' models {modelsBlock ? "block" : "don't block"} line of sight.
+          {modelsBlock
+            ? t("Other units' models block line of sight.")
+            : t("Other units' models don't block line of sight.")}
         </p>
       )}
     </details>

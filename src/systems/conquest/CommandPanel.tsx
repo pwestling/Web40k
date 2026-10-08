@@ -18,6 +18,7 @@ import {
   type UnitClass,
 } from "./reinforce";
 import { conquest } from "./system";
+import { t } from "../../i18n";
 
 const alive = (game: GameState, u: Unit) =>
   !u.status?.reserves && u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed);
@@ -48,14 +49,14 @@ export function CommandPanel() {
   if (!open)
     return (
       <div className="panel play command-stack collapsed">
-        <button onClick={() => setOpen(true)}>Command stack</button>
+        <button onClick={() => setOpen(true)}>{t("Command stack")}</button>
       </div>
     );
   return (
     <div className="panel play command-stack">
       <div className="row spread">
-        <strong>Command stack</strong>
-        <button onClick={() => setOpen(false)}>Hide</button>
+        <strong>{t("Command stack")}</strong>
+        <button onClick={() => setOpen(false)}>{t("Hide")}</button>
       </div>
       {players.map((p) => {
         const stack = stackOf(game, p.id);
@@ -76,16 +77,16 @@ export function CommandPanel() {
           <div key={p.id} className="stack-player">
             <span style={{ color: p.color }}>{p.name}</span>{" "}
             {reservesOf(game, p.id).length > 0 && (
-              <span className="muted">{reservesOf(game, p.id).length} in reserve · </span>
+              <span className="muted">{t("{n} in reserve", { n: reservesOf(game, p.id).length })} · </span>
             )}
             {!stack ? (
               <span className="muted">
-                {slot === "command" ? "ordering their cards" : "no stack: any regiment"}
+                {slot === "command" ? t("ordering their cards") : t("no stack: any regiment")}
               </span>
             ) : (
               <span className="muted">
-                {faceDown(stack)} face down
-                {cardsLeft(game, stack) === 0 && " · all played"}
+                {t("{n} face down", { n: faceDown(stack) })}
+                {cardsLeft(game, stack) === 0 && ` · ${t("all played")}`}
               </span>
             )}
             {/* The drawn card, on every screen (UX 132): hover it to ring the regiment. */}
@@ -111,7 +112,7 @@ function Drawn({ unitId, select }: { unitId: string; select: (id: string) => voi
   if (!unit) return null;
   return (
     <div className="row">
-      <span className="muted">Drawn:</span>
+      <span className="muted">{t("Drawn:")}</span>
       <button
         onClick={() => select(unitId)}
         onMouseEnter={() => set({ hoverModels: unit.modelIds })}
@@ -185,25 +186,27 @@ function Ordering({ player, saved: cards }: { player: Player; saved: Card[] | un
   return (
     <div className="stack-player">
       <span style={{ color: player.color }}>{player.name}</span>{" "}
-      <span className="muted">{locked ? "locked in" : "top card first"}</span>
+      <span className="muted">{locked ? t("locked in") : t("top card first")}</span>
       <ol className="stack-cards">
         {order.map((id, i) => (
           <li key={id}>
             <span>{game.units[id]?.name}</span>
-            <button aria-label="Earlier" disabled={i === 0} onClick={() => move(i, -1)}>
+            <button aria-label={t("Earlier")} disabled={i === 0} onClick={() => move(i, -1)}>
               ↑
             </button>
-            <button aria-label="Later" disabled={i === order.length - 1} onClick={() => move(i, 1)}>
+            <button aria-label={t("Later")} disabled={i === order.length - 1} onClick={() => move(i, 1)}>
               ↓
             </button>
           </li>
         ))}
       </ol>
       {cards && saved?.some((id) => !id) && (
-        <p className="muted small">Locked in on another device: only that device can draw these cards.</p>
+        <p className="muted small">
+          {t("Locked in on another device: only that device can draw these cards.")}
+        </p>
       )}
       <button className={locked ? undefined : "primary"} disabled={!!cards || !!game.script} onClick={lock}>
-        {locked ? "Locked in" : "Lock in stack"}
+        {locked ? t("Locked in") : t("Lock in stack")}
       </button>
     </div>
   );
@@ -228,7 +231,7 @@ function NextCard({
   const { dispatch } = useStore();
   useLocalSecrets((s) => s.kept);
   const top = localSecret(next.commitment);
-  if (!top) return <p className="muted small">Your cards are on the device that locked them in.</p>;
+  if (!top) return <p className="muted small">{t("Your cards are on the device that locked them in.")}</p>;
   const draw = () => {
     for (const c of stack.slice(stack.indexOf(next))) {
       const kept = localSecret(c.commitment);
@@ -253,9 +256,13 @@ function NextCard({
   };
   return (
     <div className="row">
-      <span className="muted">Top card: {game.units[String(top.value)]?.name ?? "a fallen regiment"}</span>
+      <span className="muted">
+        {t("Top card: {regiment}", {
+          regiment: game.units[String(top.value)]?.name ?? t("a fallen regiment"),
+        })}
+      </span>
       <button className="primary" onClick={draw}>
-        Draw it
+        {t("Draw it")}
       </button>
     </div>
   );
@@ -276,10 +283,11 @@ function ToReserve({ players }: { players: Player[] }) {
   };
   return (
     <div className="panel play command-stack">
-      <strong>Reinforcements</strong>
+      <strong>{t("Reinforcements")}</strong>
       <p className="muted small">
-        Regiments start in reserve: Light from round 1, Medium from round 2, Heavy from round 3. Untick one to
-        keep it on the table.
+        {t(
+          "Regiments start in reserve: Light from round 1, Medium from round 2, Heavy from round 3. Untick one to keep it on the table.",
+        )}
       </p>
       {rows.map(({ p, units }) => {
         const table = units.filter((u) => !u.status?.reserves);
@@ -292,7 +300,7 @@ function ToReserve({ players }: { players: Player[] }) {
                   className={table.length === units.length ? "primary" : undefined}
                   onClick={() => table.forEach(toReserve)}
                 >
-                  {table.length === units.length ? "Send all to reserve" : "Rest to reserve"}
+                  {table.length === units.length ? t("Send all to reserve") : t("Rest to reserve")}
                 </button>
               )}
             </div>
@@ -336,15 +344,15 @@ function Reinforcements({ player }: { player: Player }) {
   return (
     <div className="stack-player">
       <span style={{ color: player.color }}>{player.name}</span>{" "}
-      <span className="muted">reinforcements, round {round}</span>
+      <span className="muted">{t("reinforcements, round {round}", { round })}</span>
       {rows.map(({ cls, target, waiting }) => (
         <div key={cls} className="row small">
           <span>
-            {cls}: {waiting.length > 1 ? "" : "arrives"}
+            {cls}: {waiting.length > 1 ? "" : t("arrives")}
           </span>
           {waiting.length > 1 && (
             <select
-              aria-label={`${cls} regiment that arrives without a roll`}
+              aria-label={t("{class} regiment that arrives without a roll", { class: cls })}
               value={first[cls] ?? waiting[0]!.id}
               onChange={(e) => setFirst({ ...first, [cls]: e.target.value })}
             >
@@ -357,15 +365,17 @@ function Reinforcements({ player }: { player: Player }) {
           )}
           {waiting.length > 1 && (
             <span className="muted">
-              {target === "auto" ? "arrive with the rest" : `arrives; the rest on ${target} or less`}
+              {target === "auto"
+                ? t("arrive with the rest")
+                : t("arrives; the rest on {target} or less", { target })}
             </span>
           )}
         </div>
       ))}
       <button className="primary" disabled={!!game.script} onClick={roll}>
         {rows.some((r) => r.target !== "auto" && r.waiting.length > 1)
-          ? "Roll reinforcements"
-          : "Bring them in"}
+          ? t("Roll reinforcements")
+          : t("Bring them in")}
       </button>
     </div>
   );
@@ -379,8 +389,10 @@ function Arrived({ player }: { player: Player }) {
   if (!Array.isArray(ids) || !ids.length) return null;
   return (
     <p className="muted small">
-      Arrived: {ids.map((id) => game.units[String(id)]?.name).join(", ")}. They stand just inside your table
-      edge; each marches first and can't charge this round.
+      {t(
+        "Arrived: {regiments}. They stand just inside your table edge; each marches first and can't charge this round.",
+        { regiments: ids.map((id) => game.units[String(id)]?.name).join(", ") },
+      )}
     </p>
   );
 }

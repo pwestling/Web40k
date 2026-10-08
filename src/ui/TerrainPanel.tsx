@@ -9,6 +9,7 @@ import {
 import { TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
 import { systemModule } from "../systems";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
+import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { useAssets } from "../assets/store";
 import type { ModelAsset } from "../assets/types";
@@ -92,22 +93,29 @@ function ModelSize({
   const { min, max } = asset.bounds;
   const across = Math.max(max[0] - min[0], max[2] - min[2]);
   const tall = max[1] - min[1];
-  const read = asset.stats.unitScale === 1 ? "inches" : "millimetres";
-  const size = `${inches((max[0] - min[0]) * scale)} × ${inches((max[2] - min[2]) * scale)}, ${inches(tall * scale)} tall`;
+  const size = t("{width} × {depth}, {height} tall", {
+    width: inches((max[0] - min[0]) * scale),
+    depth: inches((max[2] - min[2]) * scale),
+    height: inches(tall * scale),
+  });
   const small = across * scale < 2;
   const big = across * scale > 24;
   /** A scale that makes it 6" across, a typical ruin or crate stack. */
   const fit = across > 0 ? Number((6 / across).toFixed(2)) : 1;
   return (
     <p className="muted small model-size">
-      {scale === 1 ? `Came in at ${size}: the file was read as ${read}.` : `Now ${size} (scale ${scale}×).`}
-      {small && " That's figure-sized for terrain."}
-      {big && " That's bigger than most terrain."}
+      {scale !== 1
+        ? t("Now {size} (scale {scale}×).", { size, scale })
+        : asset.stats.unitScale === 1
+          ? t("Came in at {size}: the file was read as inches.", { size })
+          : t("Came in at {size}: the file was read as millimetres.", { size })}
+      {small && <> {t("That's figure-sized for terrain.")}</>}
+      {big && <> {t("That's bigger than most terrain.")}</>}
       {(small || big) && (
         <>
           {" "}
           <button className="small" onClick={() => rescale(fit)}>
-            Make it 6" across
+            {t('Make it 6" across')}
           </button>
         </>
       )}
@@ -115,7 +123,7 @@ function ModelSize({
         <>
           {" "}
           <button className="small" onClick={() => rescale(1)}>
-            As it came in
+            {t("As it came in")}
           </button>
         </>
       )}
@@ -174,53 +182,56 @@ export function TerrainPanel() {
   return (
     <div className="panel terrainpanel">
       <div className="row spread">
-        <strong>Edit terrain</strong>
-        <button onClick={() => set({ editing: false, selectedTerrain: null })}>Done</button>
+        <strong>{t("Edit terrain")}</strong>
+        <button onClick={() => set({ editing: false, selectedTerrain: null })}>{t("Done")}</button>
       </div>
       <p className="muted small">
-        Drag terrain and objectives on the table. Q / E rotate the selected piece, Delete removes it.
-        Shift-click pieces to group them.
+        {t(
+          "Drag terrain and objectives on the table. Q / E rotate the selected piece, Delete removes it. Shift-click pieces to group them.",
+        )}
       </p>
       <div className="row wrap edit-aids">
         <label
           className="check"
-          title="Every change is made to the piece's twin across the table centre too, so both halves stay the same"
+          title={t(
+            "Every change is made to the piece's twin across the table centre too, so both halves stay the same",
+          )}
         >
           <input
             type="checkbox"
             checked={symmetry}
             onChange={(e) => useTableEdit.setState({ symmetry: e.target.checked })}
           />{" "}
-          Symmetry
+          {t("Symmetry")}
         </label>
-        <label className="check" title="Pieces land on the half inch and turn in 15° steps">
+        <label className="check" title={t("Pieces land on the half inch and turn in 15° steps")}>
           <input
             type="checkbox"
             checked={snap}
             onChange={(e) => useTableEdit.setState({ snap: e.target.checked })}
           />{" "}
-          Snap
+          {t("Snap")}
         </label>
         <SightlinesToggle />
         {symmetry && lone.length > 0 && (
           <span className="muted small">
-            {lone.length} piece{lone.length === 1 ? " has" : "s have"} no twin
+            {tn(lone.length, "{n} piece has no twin", "{n} pieces have no twin")}
           </span>
         )}
         {group.length > 0 && (
           <button className="small quiet" onClick={() => useTableEdit.setState({ group: [] })}>
-            Ungroup ({group.length})
+            {t("Ungroup ({count})", { count: group.length })}
           </button>
         )}
       </div>
       <div className="row wrap">
-        {TEMPLATES.map((t) => (
-          <button key={t.name} className="small" onClick={() => add(t.name)}>
-            + {t.name}
+        {TEMPLATES.map((tpl) => (
+          <button key={tpl.name} className="small" onClick={() => add(tpl.name)}>
+            + {tpl.name}
           </button>
         ))}
-        <label className="file button small" title="A .glb, .gltf, .stl, .obj or .ply terrain model">
-          + From 3D model
+        <label className="file button small" title={t("A .glb, .gltf, .stl, .obj or .ply terrain model")}>
+          {t("+ From 3D model")}
           <input
             type="file"
             accept={MESH_FILES}
@@ -250,7 +261,7 @@ export function TerrainPanel() {
             </span>
           </div>
           <label>
-            Category{" "}
+            {t("Category")}{" "}
             <select
               value={piece.category}
               onChange={(e) => update({ category: e.target.value as TerrainCategory })}
@@ -265,32 +276,32 @@ export function TerrainPanel() {
           <p className="muted small">{categories.find((c) => c.id === piece.category)?.help}</p>
           {game.settings.los === "footprint" ? (
             <label>
-              Sight{" "}
+              {t("Sight")}{" "}
               <select
                 value={footprintVisibility(piece)}
                 onChange={(e) => update({ visibility: e.target.value as "open" | "obscuring" | "blocking" })}
               >
-                <option value="open">Open: no effect</option>
-                <option value="obscuring">Obscuring: gives cover</option>
-                <option value="blocking">Blocking: blocks sight</option>
+                <option value="open">{t("Open: no effect")}</option>
+                <option value="obscuring">{t("Obscuring: gives cover")}</option>
+                <option value="blocking">{t("Blocking: blocks sight")}</option>
               </select>
             </label>
           ) : (
             <label>
-              Blocks sight by{" "}
+              {t("Blocks sight by")}{" "}
               <select
                 value={piece.sight ?? ""}
                 onChange={(e) => update({ sight: (e.target.value || undefined) as TerrainPiece["sight"] })}
               >
-                <option value="">Game setting</option>
-                <option value="true">Its shape</option>
-                <option value="heights">Stand-in height</option>
+                <option value="">{t("Game setting")}</option>
+                <option value="true">{t("Its shape")}</option>
+                <option value="heights">{t("Stand-in height")}</option>
               </select>
             </label>
           )}
           {(piece.sight ?? game.settings.los) === "heights" && (
             <label>
-              Stand-in height{" "}
+              {t("Stand-in height")}{" "}
               <input
                 type="number"
                 min={0}
@@ -302,8 +313,8 @@ export function TerrainPanel() {
             </label>
           )}
           <div className="row wrap">
-            <label className="file button small" title="Replace this piece's shape with a terrain model">
-              {piece.mesh ? "Change 3D model" : "Use 3D model"}
+            <label className="file button small" title={t("Replace this piece's shape with a terrain model")}>
+              {piece.mesh ? t("Change 3D model") : t("Use 3D model")}
               <input
                 type="file"
                 accept={MESH_FILES}
@@ -314,8 +325,8 @@ export function TerrainPanel() {
               />
             </label>
             {piece.mesh && (
-              <label title="Scale the model; its footprint and line-of-sight shape follow">
-                Scale{" "}
+              <label title={t("Scale the model; its footprint and line-of-sight shape follow")}>
+                {t("Scale")}{" "}
                 <input
                   type="number"
                   className="frontage"
@@ -339,30 +350,30 @@ export function TerrainPanel() {
           )}
           <div className="row wrap">
             <button className="small" onClick={() => duplicatePieces(inGroup ? group : [piece.id])}>
-              {inGroup ? `Duplicate the group (${group.length})` : "Duplicate"}
+              {inGroup ? t("Duplicate the group ({count})", { count: group.length }) : t("Duplicate")}
             </button>
             {symmetry && !atCentre(piece) && !twinOf(game.terrain, piece) && (
               <button
                 className="small"
-                title="Add the same piece across the table centre"
+                title={t("Add the same piece across the table centre")}
                 onClick={() => mirrorPiece(piece)}
               >
-                Give it a twin
+                {t("Give it a twin")}
               </button>
             )}
             <button className="small danger" onClick={() => removeTerrain(piece.id)}>
-              {inGroup ? `Delete the group (${group.length})` : "Delete"}
+              {inGroup ? t("Delete the group ({count})", { count: group.length }) : t("Delete")}
             </button>
           </div>
         </div>
       ) : (
-        <p className="muted small">Click a piece to select it.</p>
+        <p className="muted small">{t("Click a piece to select it.")}</p>
       )}
 
       <hr />
       <div className="row wrap">
         <label>
-          Deployment{" "}
+          {t("Deployment")}{" "}
           <select
             value={zonePreset}
             onChange={(e) =>
@@ -375,9 +386,9 @@ export function TerrainPanel() {
               })
             }
           >
-            <option value="long">Long edges (12")</option>
-            <option value="short">Short edges (18")</option>
-            <option value="none">None</option>
+            <option value="long">{t('Long edges ({depth}")', { depth: 12 })}</option>
+            <option value="short">{t('Short edges ({width}")', { width: 18 })}</option>
+            <option value="none">{t("None")}</option>
           </select>
         </label>
       </div>
@@ -388,13 +399,13 @@ export function TerrainPanel() {
             dispatch({ type: "layout/set", layout: systemModule(game.system).layout(game.table) as Layout })
           }
         >
-          Standard table
+          {t("Standard table")}
         </button>
         <button
           className="small"
           onClick={() => dispatch({ type: "layout/set", layout: { ...layout(), terrain: [] } })}
         >
-          Clear terrain
+          {t("Clear terrain")}
         </button>
       </div>
       <TableShelf />
@@ -406,9 +417,13 @@ export function TerrainPanel() {
 function categoryHelp(c: NonNullable<ReturnType<typeof systemOf>["terrain"]>[number]): string {
   const parts: string[] = [];
   if (c.cover)
-    parts.push(`Cover${c.coverFor ? ` for ${c.coverFor.join(", ").toLowerCase()}` : ""} in or touching it.`);
-  if (c.visibility === "blocking") parts.push("Blocks sight.");
-  if (c.visibility === "obscuring") parts.push("Gives cover when between shooter and target.");
-  if (c.blocksMovement) parts.push("Impassable.");
-  return parts.join(" ") || "No effect.";
+    parts.push(
+      c.coverFor
+        ? t("Cover for {kinds} in or touching it.", { kinds: c.coverFor.join(", ").toLowerCase() })
+        : t("Cover in or touching it."),
+    );
+  if (c.visibility === "blocking") parts.push(t("Blocks sight."));
+  if (c.visibility === "obscuring") parts.push(t("Gives cover when between shooter and target."));
+  if (c.blocksMovement) parts.push(t("Impassable."));
+  return parts.join(" ") || t("No effect.");
 }

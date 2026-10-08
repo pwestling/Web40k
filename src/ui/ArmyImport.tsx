@@ -10,14 +10,15 @@ import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
+import { formatDate, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { DicePicker } from "./DicePicker";
 import { addSpells, importedWizard, parseSpellList } from "../systems/tow/spells";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
-const BASES: { label: string; base: BaseShape }[] = [
+const bases = (): { label: string; base: BaseShape }[] => [
   ...[25, 28, 32, 40, 50, 60, 80, 90, 100, 130, 160].map((d) => ({
-    label: `${d}mm round`,
+    label: t("{d}mm round", { d }),
     base: { shape: "round", diameterMm: d } as BaseShape,
   })),
   ...[
@@ -28,7 +29,7 @@ const BASES: { label: string; base: BaseShape }[] = [
     [120, 92],
     [170, 105],
   ].map(([w, d]) => ({
-    label: `${w}×${d}mm oval`,
+    label: t("{w}×{d}mm oval", { w, d }),
     base: { shape: "oval", widthMm: w!, depthMm: d! } as BaseShape,
   })),
   // Square and rectangular bases for rank-and-flank games.
@@ -43,7 +44,7 @@ const BASES: { label: string; base: BaseShape }[] = [
     [50, 75],
     [50, 100],
   ].map(([w, d]) => ({
-    label: w === d ? `${w}mm square` : `${w}×${d}mm`,
+    label: w === d ? t("{w}mm square", { w }) : t("{w}×{d}mm", { w, d }),
     base: { shape: "rect", widthMm: w!, depthMm: d! } as BaseShape,
   })),
   ...[
@@ -51,7 +52,7 @@ const BASES: { label: string; base: BaseShape }[] = [
     [90, 150],
     [110, 180],
   ].map(([w, d]) => ({
-    label: `${w}×${d}mm hull`,
+    label: t("{w}×{d}mm hull", { w, d }),
     base: { shape: "rect", widthMm: w!, depthMm: d! } as BaseShape,
   })),
 ];
@@ -168,19 +169,24 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     setRoster(added.roster);
     setSpellNote([
       ...(spells.length
-        ? [`${spells.length} spells read for ${added.wizards} ${added.wizards === 1 ? "wizard" : "wizards"}.`]
+        ? [
+            tn(added.wizards, "{count} spells read for {n} wizard.", "{count} spells read for {n} wizards.", {
+              count: spells.length,
+            }),
+          ]
         : []),
       ...problems,
     ]);
   };
 
   const ownerSeat = players.find((p) => p.id === owner)?.seat ?? 0;
+  const BASES = bases();
 
   return (
     <div className="import">
       {players.length > 1 && (
         <label>
-          Army for{" "}
+          {t("Army for")}{" "}
           <select value={owner} onChange={(e) => setOwner(e.target.value)}>
             {players.map((p) => (
               <option key={p.id} value={p.id}>
@@ -192,11 +198,11 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       )}
       {/* A package game's armies wait for its rules: without them the sample and the list reader aren't here yet. */}
       {game.system && isPlaceholder(game.system) ? (
-        <p className="muted small">Armies can be added once this game's rules package is running.</p>
+        <p className="muted small">{t("Armies can be added once this game's rules package is running.")}</p>
       ) : (
         <div className="row">
           <label className="file button">
-            {busy ? "Reading…" : "Import a list"}
+            {busy ? t("Reading…") : t("Import a list")}
             <input
               type="file"
               accept=".ros,.rosz,.json,.xml"
@@ -209,7 +215,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0));
             }}
           >
-            Sample army
+            {t("Sample army")}
           </button>
         </div>
       )}
@@ -241,8 +247,11 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
             {open.length > 0 && (
               <p className="row wrap">
                 <span className="small">
-                  Your figure library has figures that fit {open.length}{" "}
-                  {open.length === 1 ? "unit" : "units"}.
+                  {tn(
+                    open.length,
+                    "Your figure library has figures that fit {n} unit.",
+                    "Your figure library has figures that fit {n} units.",
+                  )}
                 </span>
                 <button
                   className="small"
@@ -252,28 +261,28 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                     setFigs(next);
                   }}
                 >
-                  Use them
+                  {t("Use them")}
                 </button>
               </p>
             )}
             {Object.values(figs).some(Boolean) && open.length === 0 && (
               <p className="row wrap small">
-                <span className="muted">Picked figures go on when the army is deployed.</span>
+                <span className="muted">{t("Picked figures go on when the army is deployed.")}</span>
                 <button className="quiet small" onClick={() => setFigs({})}>
-                  Clear the figures
+                  {t("Clear the figures")}
                 </button>
               </p>
             )}
             <table className="import-units">
               <thead>
                 <tr>
-                  <th>Unit</th>
-                  <th>Pts</th>
-                  {ranked && <th>Troop type</th>}
-                  <th>Models</th>
-                  <th>Base</th>
-                  {ranked && <th title="Models in the front rank">Frontage</th>}
-                  {library.length > 0 && <th>Figure</th>}
+                  <th>{t("Unit")}</th>
+                  <th>{t("Pts")}</th>
+                  {ranked && <th>{t("Troop type")}</th>}
+                  <th>{t("Models")}</th>
+                  <th>{t("Base")}</th>
+                  {ranked && <th title={t("Models in the front rank")}>{t("Frontage")}</th>}
+                  {library.length > 0 && <th>{t("Figure")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -285,10 +294,10 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                         {details(u) && <div className="muted small">{details(u)}</div>}
                         {importedWizard(u) > 0 && (
                           <div className="muted small">
-                            Level {importedWizard(u)} wizard:{" "}
+                            {t("Level {level} wizard:", { level: importedWizard(u) })}{" "}
                             {u.sheet.spells?.length
                               ? u.sheet.spells.map((sp) => sp.name).join(", ")
-                              : "no spells yet"}
+                              : t("no spells yet")}
                           </div>
                         )}
                       </td>
@@ -317,13 +326,13 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                       {ranked && (
                         <td>
                           {u.models.length === 1 ? (
-                            <span className="muted small">single</span>
+                            <span className="muted small">{t("single")}</span>
                           ) : (
                             <>
                               <input
-                                type="number"
-                                className="frontage"
-                                aria-label={`${u.name} frontage`}
+                                type="number" // i18n-ignore: an input type
+                                className="frontage" // i18n-ignore: a class name
+                                aria-label={t("{unit} frontage", { unit: u.name })}
                                 min={1}
                                 max={u.models.length}
                                 disabled={skirmish(i, u)}
@@ -335,13 +344,16 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                                   })
                                 }
                               />
-                              <label className="small" title="Deploy as a loose spread instead of a block">
+                              <label
+                                className="small"
+                                title={t("Deploy as a loose spread instead of a block")}
+                              >
                                 <input
                                   type="checkbox"
                                   checked={skirmish(i, u)}
                                   onChange={(e) => setLoose({ ...loose, [i]: e.target.checked })}
                                 />{" "}
-                                Skirmish
+                                {t("Skirmish")}
                               </label>
                             </>
                           )}
@@ -350,18 +362,20 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                       {library.length > 0 && (
                         <td className="figure-pick">
                           {dressed(i) && !figs[i] ? (
-                            <span className="muted small">From your shelf</span>
+                            <span className="muted small">{t("From your shelf")}</span>
                           ) : (
                             <select
-                              aria-label={`${u.name} figure`}
+                              aria-label={t("{unit} figure", { unit: u.name })}
                               value={figs[i] ?? ""}
                               onChange={(e) => setFigs({ ...figs, [i]: e.target.value })}
                             >
                               <option value="">
-                                {suggested[i]?.length ? `Suggested: ${suggested[i]![0]!.name}` : "Stand-ins"}
+                                {suggested[i]?.length
+                                  ? t("Suggested: {name}", { name: suggested[i]![0]!.name })
+                                  : t("Stand-ins")}
                               </option>
                               {suggested[i]?.length ? (
-                                <optgroup label="Fits this unit">
+                                <optgroup label={t("Fits this unit")}>
                                   {suggested[i]!.map((f) => (
                                     <option key={f.id} value={f.id}>
                                       {f.name}
@@ -369,7 +383,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                                   ))}
                                 </optgroup>
                               ) : null}
-                              <optgroup label="Your figures">
+                              <optgroup label={t("Your figures")}>
                                 {library.map((f) => (
                                   <option key={f.id} value={f.id}>
                                     {f.name}
@@ -384,13 +398,14 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                     {u.missing && u.missing.length > 0 && (
                       <tr className="missing-stats">
                         <td colSpan={(ranked ? 6 : 4) + (library.length > 0 ? 1 : 0)}>
-                          <span className="warn small">Not in the list, fill in: </span>
+                          <span className="warn small">{t("Not in the list, fill in:")} </span>
                           {u.missing.map((k) => (
                             <label key={k} className="stat-input">
                               {k}{" "}
                               <input
                                 aria-label={`${u.name} ${k}`}
                                 className={k === "Troop" ? "" : "frontage"}
+                                // i18n-ignore: a troop type as the game's rules write it
                                 placeholder={k === "Troop" ? "Regular Infantry" : ""}
                                 value={u.models[0]?.profile.chars[k] ?? ""}
                                 onChange={(e) => setStat(i, k, e.target.value)}
@@ -406,17 +421,16 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
             </table>
             <p className="muted">
               {ranked
-                ? "Bases are a guess from each unit's troop type"
-                : "Bases are a guess from keywords and wounds"}
-              ; check them against your models.
+                ? t("Bases are a guess from each unit's troop type; check them against your models.")
+                : t("Bases are a guess from keywords and wounds; check them against your models.")}
             </p>
             {ranked && wizards > 0 && (
               <div className="row wrap">
                 <label
                   className="file button"
-                  title="A spell list file: names, casting values, ranges and kinds"
+                  title={t("A spell list file: names, casting values, ranges and kinds")}
                 >
-                  Add spells from a list
+                  {t("Add spells from a list")}
                   <input
                     type="file"
                     accept=".json"
@@ -432,9 +446,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
             )}
             <div className="row">
               <button className="primary" disabled={!roster.units.length} onClick={deploy}>
-                Deploy for {players.find((p) => p.id === owner)?.name}
+                {t("Deploy for {name}", { name: players.find((p) => p.id === owner)?.name })}
               </button>
-              <button onClick={cancel}>Cancel</button>
+              <button onClick={cancel}>{t("Cancel")}</button>
             </div>
           </div>
         </div>
@@ -456,7 +470,7 @@ function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedA
     <>
       {here.length > 0 && (
         <select
-          aria-label="From your shelf"
+          aria-label={t("From your shelf")}
           className="shelf-select"
           value=""
           onChange={(e) => {
@@ -464,7 +478,7 @@ function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedA
             if (army) onPick(army);
           }}
         >
-          <option value="">From your shelf…</option>
+          <option value="">{t("From your shelf…")}</option>
           {here.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name} · {shelfLine(a)}
@@ -485,9 +499,13 @@ function ShelfManager({ system }: { system: string }) {
   return (
     <>
       <details className="fold shelf">
-        <summary>Your army shelf{loaded ? ` (${all.length})` : ""}</summary>
+        <summary>
+          {loaded ? t("Your army shelf ({count})", { count: all.length }) : t("Your army shelf")}
+        </summary>
         <p className="muted small">
-          Armies saved on this device. Save one after deploying it; pass one on as a file, figures included.
+          {t(
+            "Armies saved on this device. Save one after deploying it; pass one on as a file, figures included.",
+          )}
         </p>
         <ul>
           {all.map((a) => (
@@ -497,25 +515,25 @@ function ShelfManager({ system }: { system: string }) {
                 <span className="muted small">
                   {" "}
                   · {shelfLine(a)}
-                  {a.system !== system && " · another game"}
+                  {a.system !== system && ` · ${t("another game")}`}
                 </span>
               </span>
               <span className="row">
                 <button className="small" onClick={() => void exportArmy(a).then((f) => setExported(f))}>
-                  Export
+                  {t("Export")}
                 </button>
                 <button
                   className="quiet small"
-                  onClick={() => confirm(`Take ${a.name} off your shelf?`) && remove(a.id)}
+                  onClick={() => confirm(t("Take {name} off your shelf?", { name: a.name })) && remove(a.id)}
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </span>
             </li>
           ))}
         </ul>
         <label className="file button small">
-          Open an army file
+          {t("Open an army file")}
           <input
             type="file"
             accept=".json"
@@ -523,12 +541,13 @@ function ShelfManager({ system }: { system: string }) {
               const file = e.target.files?.[0];
               if (file)
                 void importArmyFile(file).then((r) =>
-                  setNote(typeof r === "string" ? r : `${r.name} is on your shelf.`),
+                  setNote(typeof r === "string" ? r : t("{name} is on your shelf.", { name: r.name })),
                 );
               e.target.value = "";
             }}
           />
         </label>
+        {/* i18n-ignore */}
         {exported && <SavedNote file={exported} kind="army" />}
         {note && <p className="muted small">{note}</p>}
       </details>
@@ -538,13 +557,13 @@ function ShelfManager({ system }: { system: string }) {
 
 /** "5 units · saved 8 Oct, 03:12": enough to tell two saves of one army apart (UX 196). */
 function shelfLine(a: SavedArmy): string {
-  const when = new Date(a.savedAt).toLocaleString(undefined, {
+  const when = formatDate(a.savedAt, {
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
   });
-  return `${a.roster.units.length} unit${a.roster.units.length === 1 ? "" : "s"} · saved ${when}`;
+  return tn(a.roster.units.length, "{n} unit · saved {when}", "{n} units · saved {when}", { when });
 }
 
 /** Save the army a player deployed in this game (its names, figures, dice and colour as they are now). */
@@ -553,20 +572,32 @@ function SaveToShelf({ owner, name }: { owner: PlayerId; name: string | null }) 
   const game = useStore((s) => s.game);
   const saved = useShelf((s) => (deployed?.shelfId ? s.armies[deployed.shelfId] : undefined));
   if (!deployed) return null;
-  const whose = name ? `${name}'s army` : "This army";
   // On the shelf as it stands: say so, rather than offer a button that does nothing (UX 195, 196).
   if (saved && sameArmy(saved, { ...armyFromGame(game, owner, deployed, saved.id), savedAt: saved.savedAt }))
-    return <p className="muted small">✓ {whose} is on your shelf as it is now.</p>;
+    return (
+      <p className="muted small">
+        ✓{" "}
+        {name
+          ? t("{name}'s army is on your shelf as it is now.", { name })
+          : t("This army is on your shelf as it is now.")}
+      </p>
+    );
   return (
     <div className="row">
       <button
         className="small"
-        title="Keep this army on this device for later games, with its unit names, figures, dice and colour"
+        title={t(
+          "Keep this army on this device for later games, with its unit names, figures, dice and colour",
+        )}
         onClick={() => saveToShelf(owner)}
       >
         {saved
-          ? `Update ${name ? `${name}'s army` : "it"} on your shelf`
-          : `Save ${name ? `${name}'s army` : "army"} to your shelf`}
+          ? name
+            ? t("Update {name}'s army on your shelf", { name })
+            : t("Update it on your shelf")
+          : name
+            ? t("Save {name}'s army to your shelf", { name })
+            : t("Save army to your shelf")}
       </button>
     </div>
   );
@@ -590,22 +621,24 @@ function details(u: ImportedUnit): string {
   for (const m of u.models) counts.set(m.profile.name, (counts.get(m.profile.name) ?? 0) + 1);
   const command = u.models.length > 1 ? [...counts].filter(([, n]) => n === 1).map(([name]) => name) : [];
   const mount = u.models[0]?.profile.chars.Mount;
-  return [...command, ...(mount ? [`on ${mount}`] : [])].join(", ");
+  return [...command, ...(mount ? [t("on {mount}", { mount })] : [])].join(", ");
 }
 
 /** One points figure: the roster's cost, with the units' sum beside it when they differ. */
 function pointsLine(roster: ImportedRoster): string {
   const units = roster.units.reduce((a, u) => a + (u.sheet.points ?? 0), 0);
-  if (!roster.points) return units ? `(${units} pts)` : "";
+  if (!roster.points) return units ? t("({points} pts)", { points: units }) : "";
   return units && units !== roster.points
-    ? `(${roster.points} pts; units ${units})`
-    : `(${roster.points} pts)`;
+    ? t("({points} pts; units {units})", { points: roster.points, units })
+    : t("({points} pts)", { points: roster.points });
 }
 
 /** A base the list of common sizes doesn't have, in words. */
 function baseLabel(b: BaseShape): string {
-  if (b.shape === "round") return `${b.diameterMm}mm round`;
-  return `${b.widthMm}×${b.depthMm}mm${b.shape === "oval" ? " oval" : ""}`;
+  if (b.shape === "round") return t("{d}mm round", { d: b.diameterMm });
+  return b.shape === "oval"
+    ? t("{w}×{d}mm oval", { w: b.widthMm, d: b.depthMm })
+    : t("{w}×{d}mm", { w: b.widthMm, d: b.depthMm });
 }
 
 /** The Old World's troop type, or Conquest's Type and Class ("Infantry, Medium"). */

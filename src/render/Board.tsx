@@ -69,6 +69,7 @@ import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
 import { opposed, sidePlayers, zoneSlice } from "../core/teams";
+import { t } from "../i18n";
 
 /**
  * World axes: x = table width, z = table depth, y = up. One unit is one inch.
@@ -654,8 +655,14 @@ function Scene() {
           if (u.id === hoverUnit) addLines(sight);
           const n = models.length;
           const text = !sight.visible
-            ? "Not visible"
-            : `${sight.visible}/${n} visible${sight.inCover ? ` · ${sight.inCover} in cover` : ""}`;
+            ? t("Not visible")
+            : sight.inCover
+              ? t("{visible}/{n} visible · {cover} in cover", {
+                  visible: sight.visible,
+                  n,
+                  cover: sight.inCover,
+                })
+              : t("{visible}/{n} visible", { visible: sight.visible, n });
           labels.push({
             unitId: u.id,
             at: {
@@ -1044,12 +1051,19 @@ function Scene() {
           return (
             <>
               {move !== null && (
-                <RangeOutline models={models} range={move} color="#38bdf8" label={`Move ${move}"`} />
+                <RangeOutline
+                  models={models}
+                  range={move}
+                  // A colour, not words. i18n-ignore
+                  color="#38bdf8"
+                  label={t('Move {inches}"', { inches: move })}
+                />
               )}
               {weapon && carriers.length > 0 && (
                 <RangeOutline
                   models={carriers}
                   range={num(weapon.chars.RANGE)!}
+                  // A colour, not words. i18n-ignore
                   color="#facc15"
                   label={`${weapon.name} ${num(weapon.chars.RANGE)}"`}
                 />
@@ -1172,9 +1186,11 @@ function RulerLine({ game, ruler, range }: { game: GameState; ruler: Ruler; rang
         style={{ borderBottom: `2px solid ${color}` }}
       >
         {`${length.toFixed(1)}"`}
-        {a || b ? " base to base" : ""}
+        {a || b ? t(" base to base") : ""}
         {short !== null &&
-          (short >= 0 ? ` · in by ${short.toFixed(1)}"` : ` · out by ${(-short).toFixed(1)}"`)}
+          (short >= 0
+            ? t(' · in by {inches}"', { inches: short.toFixed(1) })
+            : t(' · out by {inches}"', { inches: (-short).toFixed(1) }))}
       </Html>
     </>
   );
@@ -1247,7 +1263,10 @@ function MoveLabel({
   useTapeTicks(near ? moved : null);
   const base = deploying ? `${moved.toFixed(1)}"` : `${moved.toFixed(1)}" / ${allowed ?? "?"}"`;
   const text = blocked.length
-    ? `${base} · through ${blocked.map((p) => p.name.toLowerCase()).join(", ")}`
+    ? t("{distance} · through {terrain}", {
+        distance: base,
+        terrain: blocked.map((p) => p.name.toLowerCase()).join(", "),
+      })
     : base;
   return (
     <SimpleLabel

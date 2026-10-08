@@ -8,7 +8,7 @@ import "./styles.css";
 import { loadSiteConfig } from "./net/config";
 import { loadLanguage } from "./i18n";
 import { watchFigures } from "./figures/library";
-import { registerServiceWorker } from "./sw/register";
+import { listenForInstall, registerServiceWorker } from "./sw/register";
 import { watchErrors } from "./ui/report";
 import { applyTextSize } from "./ui/textSize";
 
@@ -21,6 +21,7 @@ watchFigures();
 // The app kept on the device, for offline play and installing (#34). Not in development, where it
 // would hold on to old modules.
 if (import.meta.env.PROD) void registerServiceWorker()?.catch(() => {});
+listenForInstall();
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
 // …and the player's language (#35), so the first render is already in it.

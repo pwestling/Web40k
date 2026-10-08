@@ -14,6 +14,7 @@ import {
   setPush,
   useMail,
 } from "./store";
+import { t } from "../i18n";
 
 /** How often a waiting game looks in its mailbox while the page is open. */
 const POLL_MS = 30_000;
@@ -33,7 +34,7 @@ async function passOn(file: MailFile, to: string): Promise<"shared" | "saved"> {
   const f = new File([JSON.stringify(file)], fileName(file), { type: "application/json" });
   if (touch && navigator.canShare?.({ files: [f] })) {
     try {
-      await navigator.share({ files: [f], title: `Open Battle: your move, ${to}` });
+      await navigator.share({ files: [f], title: t("Open Battle: your move, {name}", { name: to }) });
       return "shared";
     } catch {
       // Cancelled or refused: save it instead.
@@ -95,12 +96,12 @@ export function MailBar() {
   useEffect(() => {
     if (!game) return;
     const was = document.title;
-    document.title = yours ? "● Your move · Open Battle" : "Waiting · Open Battle";
+    document.title = yours ? t("● Your move · Open Battle") : t("Waiting · Open Battle");
     return () => void (document.title = was);
   }, [game, yours]);
 
   if (!game || !seated || scrub !== null) return null;
-  const them = Object.entries(game.names).find(([p]) => p !== game.me)?.[1] || "your opponent";
+  const them = Object.entries(game.names).find(([p]) => p !== game.me)?.[1] || t("your opponent");
   const invitation = game.segment?.index === 1;
   const run = (f: () => Promise<unknown>) => {
     setBusy(true);
@@ -124,13 +125,13 @@ export function MailBar() {
       if (why) setNote(why);
       else {
         setPush(true);
-        setNote("This browser will tell you when it's your move.");
+        setNote(t("This browser will tell you when it's your move."));
       }
     });
   const copyLink = () => {
     const link = inviteLink(box!);
     void navigator.clipboard?.writeText(link).then(
-      () => setNote("Invite link copied. Send it to your opponent."),
+      () => setNote(t("Invite link copied. Send it to your opponent.")),
       () => setNote(link),
     );
   };
@@ -138,7 +139,7 @@ export function MailBar() {
   const handOff = yours && !invitation && waitsOn(state, 1 - game.seat);
 
   return (
-    <div className="panel mailbar" role="region" aria-label="Play by mail">
+    <div className="panel mailbar" role="region" aria-label={t("Play by mail")}>
       {!game.names[game.me] && (
         <form
           className="row"
@@ -149,20 +150,22 @@ export function MailBar() {
         >
           <input
             value={name}
-            placeholder="Your name, for your opponent"
+            placeholder={t("Your name, for your opponent")}
             onChange={(e) => setName(e.target.value)}
           />
           <button type="submit" disabled={!name.trim()}>
-            Save
+            {t("Save")}
           </button>
         </form>
       )}
       {doubt ? (
         <>
-          <strong>{them}'s file doesn't check out</strong>
+          <strong>{t("{name}'s file doesn't check out", { name: them })}</strong>
           <span className="small muted">
-            Open it anyway plays it into your game as it is, as if it had checked out. Don't open it leaves
-            your game as it was; ask {them} to send it again.
+            {t(
+              "Open it anyway plays it into your game as it is, as if it had checked out. Don't open it leaves your game as it was; ask {name} to send it again.",
+              { name: them },
+            )}
           </span>
           <ul className="small">
             {doubt.problems.map((p) => (
@@ -170,25 +173,32 @@ export function MailBar() {
             ))}
           </ul>
           <div className="row">
-            <button onClick={rejectDoubt}>Don't open it</button>
-            <button onClick={() => run(acceptAnyway)}>Open it anyway</button>
+            <button onClick={rejectDoubt}>{t("Don't open it")}</button>
+            <button onClick={() => run(acceptAnyway)}>{t("Open it anyway")}</button>
           </div>
         </>
       ) : yours ? (
         <div className="row spread wrap">
           <span>
-            <strong>{invitation || (setup && !creator) ? "Set up your side" : "Your move"}</strong>
+            <strong>{invitation || (setup && !creator) ? t("Set up your side") : t("Your move")}</strong>
             <span className="muted small">
               {" "}
               {invitation
-                ? "· then send the invitation"
+                ? t("· then send the invitation")
                 : setup && !creator
-                  ? `· then send it back to ${them}, who starts the battle when they have your file`
+                  ? t("· then send it back to {name}, who starts the battle when they have your file", {
+                      name: them,
+                    })
                   : setup
-                    ? `· start the battle (▶ at the top) when you're ready, then send your file to ${them}`
+                    ? t(
+                        "· start the battle (▶ at the top) when you're ready, then send your file to {name}",
+                        {
+                          name: them,
+                        },
+                      )
                     : handOff
-                      ? `· over to ${them} now: send your file`
-                      : `· send your file to ${them} when you're done`}
+                      ? t("· over to {name} now: send your file", { name: them })
+                      : t("· send your file to {name} when you're done", { name: them })}
             </span>
           </span>
           <button
@@ -196,40 +206,43 @@ export function MailBar() {
             disabled={busy}
             onClick={send}
           >
-            {invitation ? "Send invitation" : `Send to ${them}`}
+            {invitation ? t("Send invitation") : t("Send to {name}", { name: them })}
           </button>
         </div>
       ) : (
         <>
           <div className="row spread wrap">
             <span>
-              <strong>Waiting for {them}</strong>
+              <strong>{t("Waiting for {name}", { name: them })}</strong>
               <span className="muted small">
                 {box && game.posted
                   ? game.sent?.index === 1
-                    ? " · the invitation is in the game's mailbox: send them the link"
-                    : " · your turn is in the game's mailbox; theirs will open here when it comes"
-                  : " · open their file when it comes"}
+                    ? t(" · the invitation is in the game's mailbox: send them the link")
+                    : t(" · your turn is in the game's mailbox; theirs will open here when it comes")
+                  : t(" · open their file when it comes")}
               </span>
               {passed && (
                 <span className="small mail-passed">
                   {passed.how === "shared"
-                    ? `Sent ${passed.file}. `
-                    : `Saved ${passed.file} to your downloads: send it to ${them} by email, chat or anything. `}
+                    ? t("Sent {file}. ", { file: passed.file })
+                    : t("Saved {file} to your downloads: send it to {name} by email, chat or anything. ", {
+                        file: passed.file,
+                        name: them,
+                      })}
                   {passed.invite
-                    ? "They open it from the lobby, under Play by mail."
-                    : "They open it with Open their file."}
+                    ? t("They open it from the lobby, under Play by mail.")
+                    : t("They open it with Open their file.")}
                 </span>
               )}
             </span>
             <span className="row">
               {box && game.sent?.index === 1 && game.posted && (
                 <button className="primary" onClick={copyLink}>
-                  Copy invite link
+                  {t("Copy invite link")}
                 </button>
               )}
               <label className="file">
-                Open their file
+                {t("Open their file")}
                 <input
                   type="file"
                   accept=".json,application/json"
@@ -243,10 +256,10 @@ export function MailBar() {
               {game.sent && (
                 <button
                   className="quiet"
-                  title="Save the file you sent, to pass it on by hand"
+                  title={t("Save the file you sent, to pass it on by hand")}
                   onClick={() => download(game.sent!)}
                 >
-                  {box && game.posted ? "Save as a file" : "Save mine again"}
+                  {box && game.posted ? t("Save as a file") : t("Save mine again")}
                 </button>
               )}
             </span>
@@ -254,22 +267,24 @@ export function MailBar() {
           {box && game.sent && !game.posted && (
             <div className="row wrap">
               <span className="warn small">
-                The game's mailbox couldn't be reached, so pass your file on by hand.
+                {t("The game's mailbox couldn't be reached, so pass your file on by hand.")}
               </span>
               <button
                 className="quiet"
                 disabled={busy}
                 onClick={() => run(async () => (await postAgain()) && setPassed(null))}
               >
-                Try the mailbox again
+                {t("Try the mailbox again")}
               </button>
             </div>
           )}
           {box && game.posted && canPush && !game.push && (
             <div className="row wrap">
-              <span className="muted small">Or leave this tab: the title says when it's your move.</span>
+              <span className="muted small">
+                {t("Or leave this tab: the title says when it's your move.")}
+              </span>
               <button className="quiet" disabled={busy} onClick={notify}>
-                Notify me when it's my move
+                {t("Notify me when it's my move")}
               </button>
             </div>
           )}

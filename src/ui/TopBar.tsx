@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
+import { formatList, t } from "../i18n";
 import { useCanControl, useJoining, useStore } from "../store";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
@@ -65,11 +66,15 @@ export function TopBar() {
         .map((seat) => sideName(game, seat))
     : [];
   const warning = armyless.length
-    ? `${armyless.join(" and ")} ${armyless.length > 1 ? "have" : "has"} no army yet`
+    ? armyless.length > 1
+      ? t("{names} have no army yet", { names: formatList(armyless) })
+      : t("{name} has no army yet", { name: armyless[0] })
     : notReady.length
       ? notReady.length > 2
-        ? `${notReady.length} players aren't ready yet`
-        : `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
+        ? t("{n} players aren't ready yet", { n: notReady.length })
+        : notReady.length > 1
+          ? t("{names} aren't ready yet", { names: formatList(notReady) })
+          : t("{name} isn't ready yet", { name: notReady[0] })
       : leaving.join(" · ");
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still
@@ -84,9 +89,16 @@ export function TopBar() {
   const over = rounds !== null && game.turn.round > rounds;
   const step = (type: "turn/next" | "turn/prev") => {
     setMenu(false);
-    const what = type === "turn/next" ? "Advance" : "Go back";
-    const whose = activeSide.length ? sideName(game, game.turn.activeSeat) : "the other player";
-    if (confirm(`${what} a phase during ${whose}'s turn?`)) dispatch({ type });
+    const side = activeSide.length ? sideName(game, game.turn.activeSeat) : null;
+    const question =
+      type === "turn/next"
+        ? side
+          ? t("Advance a phase during {side}'s turn?", { side })
+          : t("Advance a phase during the other player's turn?")
+        : side
+          ? t("Go back a phase during {side}'s turn?", { side })
+          : t("Go back a phase during the other player's turn?");
+    if (confirm(question)) dispatch({ type });
   };
 
   return (
@@ -165,18 +177,18 @@ export function TopBar() {
       })}
       <div className="turn">
         {myTurn && (
-          <button title="Previous phase" onClick={() => dispatch({ type: "turn/prev" })}>
+          <button title={t("Previous phase")} onClick={() => dispatch({ type: "turn/prev" })}>
             ◀
           </button>
         )}
         <div className="phase">
           {deploying ? (
             <>
-              <strong>Deployment</strong>
+              <strong>{t("Deployment")}</strong>
               <span className="muted">
                 {live && seats.length === 2 ? (
                   <>
-                    First turn:{" "}
+                    {t("First turn:")}{" "}
                     <select
                       value={game.turn.firstSeat}
                       onChange={(e) => dispatch({ type: "turn/first", seat: Number(e.target.value) })}
@@ -189,11 +201,11 @@ export function TopBar() {
                     </select>
                   </>
                 ) : live ? (
-                  "Place your units in your zone"
+                  t("Place your units in your zone")
                 ) : joining ? (
-                  "Joining the game…"
+                  t("Joining the game…")
                 ) : (
-                  "Players are deploying"
+                  t("Players are deploying")
                 )}
               </span>
             </>
@@ -201,8 +213,17 @@ export function TopBar() {
             <>
               <strong>
                 {over
-                  ? "Battle over"
-                  : `Round ${game.turn.round}${rounds ? ` of ${rounds}` : ""} · ${activeSide.length ? sideName(game, game.turn.activeSeat) : "?"}`}
+                  ? t("Battle over")
+                  : rounds
+                    ? t("Round {round} of {rounds} · {side}", {
+                        round: game.turn.round,
+                        rounds,
+                        side: activeSide.length ? sideName(game, game.turn.activeSeat) : "?",
+                      })
+                    : t("Round {round} · {side}", {
+                        round: game.turn.round,
+                        side: activeSide.length ? sideName(game, game.turn.activeSeat) : "?",
+                      })}
               </strong>
               <span className="phases">
                 {view.phases.map((ph, i) => (
@@ -222,31 +243,35 @@ export function TopBar() {
           (actingUnits(game).length ? (
             <button
               className="primary"
-              title="End this activation; the other player goes next"
+              title={t("End this activation; the other player goes next")}
               onClick={() => {
                 setDraft(null);
                 dispatch({ type: "turn/endActivation" });
               }}
             >
-              End activation
+              {t("End activation")}
             </button>
           ) : (
             <button
               className="primary"
               title={
                 (game.turn.passes ?? 0) > 0
-                  ? "Both passed: the round moves on"
-                  : "Pass; the other player goes next"
+                  ? t("Both passed: the round moves on")
+                  : t("Pass; the other player goes next")
               }
               onClick={() => dispatch({ type: "turn/pass" })}
             >
-              Pass
+              {t("Pass")}
             </button>
           ))}
         {myTurn && !over && !(view.alternating && !deploying) && (
           <button
             className={view.alternating && !deploying ? "" : notReady.length ? "" : "primary"}
-            title={notReady.length ? `Waiting for ${notReady.join(" and ")} to be ready` : "Next phase"}
+            title={
+              notReady.length
+                ? t("Waiting for {names} to be ready", { names: formatList(notReady) })
+                : t("Next phase")
+            }
             onClick={() => {
               // Advisory: a player who isn't ready yet, or a step left undone, gets a say, but can be overruled.
               if (warning && !asking) setAsking(true);
@@ -256,7 +281,7 @@ export function TopBar() {
               }
             }}
           >
-            {deploying ? "Start battle ▶" : "▶"}
+            {deploying ? t("Start battle ▶") : "▶"}
           </button>
         )}
         {asking && warning && (
@@ -269,16 +294,16 @@ export function TopBar() {
                 dispatch({ type: "turn/next" });
               }}
             >
-              {deploying ? "Start anyway" : "Go on anyway"}
+              {deploying ? t("Start anyway") : t("Go on anyway")}
             </button>
-            <button className="quiet" title="Not yet" onClick={() => setAsking(false)}>
+            <button className="quiet" title={t("Not yet")} onClick={() => setAsking(false)}>
               ✕
             </button>
           </span>
         )}
         {live && (!myTurn || (view.alternating && !deploying && !over)) && (
           <span className="overflow">
-            <button className="quiet" title="Phase options" onClick={() => setMenu(!menu)}>
+            <button className="quiet" title={t("Phase options")} onClick={() => setMenu(!menu)}>
               ⋯
             </button>
             {menu &&
@@ -290,13 +315,13 @@ export function TopBar() {
                       dispatch({ type: "turn/next" });
                     }}
                   >
-                    Skip to the next phase
+                    {t("Skip to the next phase")}
                   </button>
                 </span>
               ) : (
                 <span className="menu">
-                  <button onClick={() => step("turn/next")}>Advance their phase</button>
-                  <button onClick={() => step("turn/prev")}>Back a phase</button>
+                  <button onClick={() => step("turn/next")}>{t("Advance their phase")}</button>
+                  <button onClick={() => step("turn/prev")}>{t("Back a phase")}</button>
                 </span>
               ))}
           </span>
@@ -306,7 +331,7 @@ export function TopBar() {
       <SoundToggle />
       <button
         className="quiet help-key"
-        title="Controls (?)"
+        title={t("Controls (?)")}
         onClick={() => useHelp.setState({ keys: true })}
       >
         ?
@@ -345,7 +370,7 @@ function DicePool({
   };
   return (
     <span className="counter pool" title={label}>
-      {label} {faces.length === 0 && <span className="muted">none</span>}
+      {label} {faces.length === 0 && <span className="muted">{t("none")}</span>}
       {faces.map((f, i) => (
         <button
           key={i}
@@ -361,21 +386,23 @@ function DicePool({
         <>
           <button
             disabled={rerollOnce === "rerolled" || picked.length === 0}
-            title={rerollOnce === "rerolled" ? "Already re-rolled this round" : "Pick dice to re-roll first"}
+            title={
+              rerollOnce === "rerolled" ? t("Already re-rolled this round") : t("Pick dice to re-roll first")
+            }
             onClick={() => act(onReroll)}
           >
-            Re-roll picked (once)
+            {t("Re-roll picked (once)")}
           </button>
           <button className="primary" onClick={onReady}>
-            Ready
+            {t("Ready")}
           </button>
         </>
       ) : (
         editable &&
         picked.length > 0 && (
           <>
-            <button onClick={() => act(onSpend)}>Spend</button>
-            {!rerollOnce && <button onClick={() => act(onReroll)}>Re-roll</button>}
+            <button onClick={() => act(onSpend)}>{t("Spend")}</button>
+            {!rerollOnce && <button onClick={() => act(onReroll)}>{t("Re-roll")}</button>}
           </>
         )
       )}
@@ -416,8 +443,8 @@ function SoundToggle() {
       <button
         className="quiet"
         aria-expanded={open}
-        aria-label="Sound and dice"
-        title={on ? "Sound and dice" : "Sound muted"}
+        aria-label={t("Sound and dice")}
+        title={on ? t("Sound and dice") : t("Sound muted")}
         onClick={() => setOpen(!open)}
       >
         {on ? "🔊" : "🔇"}
@@ -425,10 +452,10 @@ function SoundToggle() {
       {open && (
         <div className="menu sound-menu" role="menu">
           <label className="check">
-            <input type="checkbox" checked={on} onChange={toggle} /> Sound
+            <input type="checkbox" checked={on} onChange={toggle} /> {t("Sound")}
           </label>
           <label className="volume">
-            Volume{" "}
+            {t("Volume")}{" "}
             <input
               type="range"
               min={0}
@@ -439,12 +466,12 @@ function SoundToggle() {
               onChange={(e) => setVolume(Number(e.target.value))}
             />
           </label>
-          <label className="check" title="A quiet room under the game; the turn bell follows Sound">
-            <input type="checkbox" checked={ambience} disabled={!on} onChange={toggleAmbience} /> Table
-            ambience
+          <label className="check" title={t("A quiet room under the game; the turn bell follows Sound")}>
+            <input type="checkbox" checked={ambience} disabled={!on} onChange={toggleAmbience} />{" "}
+            {t("Table ambience")}
           </label>
           <label className="check">
-            <input type="checkbox" checked={fast} onChange={toggleFast} /> Fast dice
+            <input type="checkbox" checked={fast} onChange={toggleFast} /> {t("Fast dice")}
           </label>
           {mineKey && mineKey.split(",").map((id) => <DicePicker key={id} player={id} />)}
         </div>

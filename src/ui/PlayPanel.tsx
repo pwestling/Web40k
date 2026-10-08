@@ -10,6 +10,7 @@ import {
 import { phaseName, systemOf } from "../core/content/turn";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
+import { t, tn } from "../i18n";
 
 /**
  * Stratagems and ability reminders for the current phase, from the game
@@ -37,7 +38,7 @@ export function PlayPanel() {
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined && canControl(p.id))
     .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
-  const phase = game.turn.round === 0 ? "Deployment" : (phaseName(game) ?? "");
+  const phase = game.turn.round === 0 ? t("Deployment") : (phaseName(game) ?? "");
   const usable = players.reduce(
     (n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length,
     0,
@@ -47,21 +48,21 @@ export function PlayPanel() {
     return (
       <div className="panel play collapsed">
         <button onClick={() => setOpen(true)}>
-          {phase}: {usable} stratagem{usable === 1 ? "" : "s"}
-          {reminders.length ? ` · ${reminders.length} abilit${reminders.length === 1 ? "y" : "ies"}` : ""}
+          {tn(usable, "{phase}: {n} stratagem", "{phase}: {n} stratagems", { phase })}
+          {reminders.length ? " · " + tn(reminders.length, "{n} ability", "{n} abilities") : ""}
         </button>
       </div>
     );
   return (
     <div className="panel play">
       <div className="row spread">
-        <strong>{phase}: stratagems and abilities</strong>
-        <button onClick={() => setOpen(false)}>Hide</button>
+        <strong>{t("{phase}: stratagems and abilities", { phase })}</strong>
+        <button onClick={() => setOpen(false)}>{t("Hide")}</button>
       </div>
       {stratagems &&
         game.turn.round > 0 &&
         players.map((p, i) => <PlayerStratagems key={p.id} player={p} brief={i > 0} />)}
-      <Reminders items={reminders} live empty="No abilities flagged for this phase." />
+      <Reminders items={reminders} live empty={t("No abilities flagged for this phase.")} />
     </div>
   );
 }
@@ -77,7 +78,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
   const cp = game.resources[player.id]?.CP;
   const list = (
     <>
-      {usable.length === 0 && <p className="muted">No core stratagems fit this moment.</p>}
+      {usable.length === 0 && <p className="muted">{t("No core stratagems fit this moment.")}</p>}
       {usable.map((o) => (
         <Stratagem
           key={o.def.id}
@@ -100,7 +101,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
       )}
       {others.length > 0 && (
         <details>
-          <summary className="muted">{others.length} not usable now</summary>
+          <summary className="muted">{tn(others.length, "{n} not usable now", "{n} not usable now")}</summary>
           <ul className="small">
             {others.map((o) => (
               <li key={o.def.id}>
@@ -118,9 +119,9 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
         <summary>
           <span style={{ color: player.color }}>{player.name}</span>
           {usable.length
-            ? ` can react: ${usable.map((o) => o.def.name).join(", ")}`
-            : ": nothing to react with"}
-          <span className="muted"> ({cp ?? 0} CP)</span>
+            ? " " + t("can react: {stratagems}", { stratagems: usable.map((o) => o.def.name).join(", ") })
+            : `: ${t("nothing to react with")}`}
+          <span className="muted"> {t("({cp} CP)", { cp: cp ?? 0 })}</span>
         </summary>
         {list}
       </details>
@@ -129,7 +130,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
     <div className="stratagems">
       <p className="row spread">
         <span style={{ color: player.color }}>{player.name}</span>
-        {cp !== undefined && <span className="muted">{cp} CP</span>}
+        {cp !== undefined && <span className="muted">{t("{cp} CP", { cp })}</span>}
       </p>
       {list}
     </div>
@@ -149,19 +150,19 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
         <button
           className="small"
           disabled={!!targets && !target}
-          title={targets && !target ? "Pick a unit first" : undefined}
+          title={targets && !target ? t("Pick a unit first") : undefined}
           onClick={() => {
             onUse(target || undefined);
             setTarget("");
           }}
         >
-          Use
+          {t("Use")}
         </button>
       </div>
       {option.def.hint && <span className="muted small">{option.def.hint}</span>}
       {targets && (
         <select value={target} onChange={(e) => setTarget(e.target.value)}>
-          <option value="">On which unit…</option>
+          <option value="">{t("On which unit…")}</option>
           {targets.map((id) => (
             <option key={id} value={id}>
               {game.units[id]?.name}
@@ -179,23 +180,23 @@ function CustomStratagem({ cp, onUse }: { cp: number; onUse: (label: string, cos
   return (
     <div className="row stratagem">
       <input
-        placeholder="Other stratagem…"
+        placeholder={t("Other stratagem…")}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         size={14}
       />
       <input type="number" min={0} max={3} value={cost} onChange={(e) => setCost(Number(e.target.value))} />
-      CP
+      {t("CP")}
       <button
         className="small"
         disabled={!label.trim() || cost > cp}
-        title={cost > cp ? "Not enough CP" : !label.trim() ? "Name the stratagem" : undefined}
+        title={cost > cp ? t("Not enough CP") : !label.trim() ? t("Name the stratagem") : undefined}
         onClick={() => {
           onUse(label.trim(), cost);
           setLabel("");
         }}
       >
-        Use
+        {t("Use")}
       </button>
     </div>
   );
@@ -231,12 +232,12 @@ export function Reminders({
             {live && canControl(r.owner) && !r.applied && (
               <button
                 className="small"
-                title="Mark it resolved by hand; it shows in the log"
+                title={t("Mark it resolved by hand; it shows in the log")}
                 onClick={() =>
                   dispatch({ type: "ability/apply", unitId: r.unitId, ability: r.ability.name }, r.owner)
                 }
               >
-                Apply
+                {t("Apply")}
               </button>
             )}
           </li>

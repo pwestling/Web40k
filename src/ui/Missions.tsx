@@ -8,6 +8,7 @@ import { systemModule } from "../systems";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
+import { t, tc, tn } from "../i18n";
 
 /** The game's chosen mission (SystemModule.missions), if any. */
 export function missionOf(game: GameState): Mission | undefined {
@@ -46,9 +47,9 @@ export function MissionPicker() {
   return (
     <div className="mission-picker">
       <label>
-        Mission{" "}
+        {t("Mission")}{" "}
         <select value={chosen?.id ?? ""} onChange={(e) => pick(e.target.value)}>
-          <option value="">None (score by hand)</option>
+          <option value="">{t("None (score by hand)")}</option>
           {missions.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -79,7 +80,7 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
   if (!inline && (stats ?? battleOver(game))) return null;
   return (
     <div className={inline ? "score-inline" : "panel score-panel"} role="status">
-      <strong>{inline ? "Scores to confirm" : "Score"}</strong>
+      <strong>{inline ? t("Scores to confirm") : tc("noun", "Score")}</strong>
       {pending.map((p) => {
         const mine =
           role !== "spectator" ? sidePlayers(game, p.seat).find((x) => canControl(x.id)) : undefined;
@@ -88,25 +89,28 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
         return (
           <div key={p.key} className="score-item">
             <span>
-              Round {p.round} · <strong>{sideName(game, p.seat)}</strong> · {p.rule}: {p.why}
+              {t("Round {n}", { n: p.round })} · <strong>{sideName(game, p.seat)}</strong> · {p.rule}: {p.why}
             </span>
             {mine ? (
               <div className="row">
                 <input
                   type="number"
-                  aria-label={`VP for ${p.rule}`}
+                  aria-label={t("VP for {rule}", { rule: p.rule })}
                   value={vp}
                   onChange={(e) => setEdits({ ...edits, [p.key]: Number(e.target.value) })}
                 />
-                <span className="muted">VP</span>
+                <span className="muted">{t("VP")}</span>
                 <button className="primary" onClick={() => confirm()}>
-                  Score it
+                  {t("Score it")}
                 </button>
-                <button onClick={() => confirm(true)}>Pass</button>
+                <button onClick={() => confirm(true)}>{t("Pass")}</button>
               </div>
             ) : (
               <span className="muted small">
-                Suggested {p.vp} VP · waiting for {sideName(game, p.seat)} to confirm
+                {t("Suggested {vp} VP · waiting for {side} to confirm", {
+                  vp: p.vp,
+                  side: sideName(game, p.seat),
+                })}
               </span>
             )}
           </div>
@@ -159,7 +163,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   return (
     <details className="fold secret-objectives" open>
-      <summary>Secret missions</summary>
+      <summary>{t("Secret missions")}</summary>
       {seated.map((p) => {
         const cards = secretsWithPrefix(game, p.id, "mission:");
         const mine = players.some((m) => m.id === p.id);
@@ -185,7 +189,9 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
         return (
           <div key={p.id} className="stack-player">
             <span style={{ color: p.color }}>{p.name}</span>{" "}
-            {!mine && <span className="muted small">{held.length} face down</span>}
+            {!mine && (
+              <span className="muted small">{tn(held.length, "{n} face down", "{n} face down")}</span>
+            )}
             <ul className="objective-list">
               {cards.map(([key, e]) => {
                 const id = e.revealed
@@ -206,26 +212,27 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                         <strong>{card.name}</strong> <span className="muted small">{card.text}</span>
                       </>
                     ) : (
-                      <span className="muted">(drawn on another device)</span>
+                      <span className="muted">{t("(drawn on another device)")}</span>
                     )}
                     {due ? (
                       <span className="row">
                         <span className="muted small">{due.why}</span>
                         <button className="primary" onClick={() => confirmScore(dispatch, due, p.id, due.vp)}>
-                          Score {due.vp} VP
+                          {t("Score {n} VP", { n: due.vp })}
                         </button>
-                        <button onClick={() => confirmScore(dispatch, due, p.id)}>Pass</button>
+                        <button onClick={() => confirmScore(dispatch, due, p.id)}>{t("Pass")}</button>
                       </span>
                     ) : (
                       e.revealed && (
                         <span className="muted small">
+                          {" · "}
                           {scored
                             ? scored.skipped
-                              ? " · passed"
-                              : ` · scored ${scored.vp} VP`
+                              ? t("passed")
+                              : t("scored {n} VP", { n: scored.vp })
                             : open || !over
-                              ? ` · revealed, waiting for ${p.name} to score it`
-                              : " · not scored"}
+                              ? t("revealed, waiting for {player} to score it", { player: p.name })
+                              : t("not scored")}
                         </span>
                       )
                     )}
@@ -246,7 +253,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                           );
                         }}
                       >
-                        Reveal to score
+                        {t("Reveal to score")}
                       </button>
                     )}
                   </li>
@@ -254,7 +261,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
               })}
             </ul>
             {mine && !over && held.length < (mission.hand ?? 1) && cards.length < deck.length && (
-              <button onClick={draw}>Draw a card</button>
+              <button onClick={draw}>{t("Draw a card")}</button>
             )}
           </div>
         );
@@ -281,28 +288,31 @@ export function Result() {
   const winners = seats.filter((s) => vp(s) === best);
   return (
     <section className="result">
-      <h4>Result{game.mission ? ` · ${game.mission.name}` : ""}</h4>
+      <h4>
+        {t("Result")}
+        {game.mission ? ` · ${game.mission.name}` : ""}
+      </h4>
       {pending.length ? (
         <ScorePanel inline />
       ) : (
         <p className="result-line">
           {winners.length === 1 ? (
-            <strong>{sideName(game, winners[0]!)} wins</strong>
+            <strong>{t("{side} wins", { side: sideName(game, winners[0]!) })}</strong>
           ) : (
-            <strong>A draw</strong>
+            <strong>{t("A draw")}</strong>
           )}{" "}
-          {seats.map((s) => vp(s)).join(" – ")} VP
+          {t("{scores} VP", { scores: seats.map((s) => vp(s)).join(" – ") })}
         </p>
       )}
       {rounds.length > 0 && (
         <table className="result-table">
           <thead>
             <tr>
-              <th>VP</th>
+              <th>{t("VP")}</th>
               {rounds.map((r) => (
-                <th key={r}>R{r}</th>
+                <th key={r}>{t("R{n}", { n: r })}</th>
               ))}
-              <th>Total</th>
+              <th>{t("Total")}</th>
             </tr>
           </thead>
           <tbody>
