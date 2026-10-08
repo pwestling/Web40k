@@ -220,6 +220,28 @@ label.file.button.small {
   font-size: 0.85rem;
   opacity: 0.85;
 }
+/* Play by mail: whose move it is, Send and Open their file (src/mail/MailBar.tsx). */
+.panel.mailbar {
+  z-index: 18;
+  /* Just above the replay bar, which shares the bottom middle. */
+  bottom: 58px;
+  left: max(50%, 540px);
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  gap: 6px;
+  border-color: #a78bfa;
+}
+.panel.mailbar ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.mail-games {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
 .panel.whatnow {
   z-index: 19;
   top: var(--below-bar, 64px);

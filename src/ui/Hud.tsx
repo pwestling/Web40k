@@ -61,6 +61,7 @@ export function Hud() {
   // While the dice tray rolls, the log waits for the dice to land.
   const held = useHold((s) => s.held);
   const lesson = useCoach((s) => s.lesson);
+  const mail = useStore((s) => s.mail !== null);
   const log = useMemo(
     () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
     // liveGame too: a package's rules loading refolds the same record, and the log names its game again.
@@ -98,7 +99,11 @@ export function Hud() {
       <RoomCard />
       {mode === "hotseat" && (
         <p className="muted">
-          {lesson ? "Lesson: the computer plays the other side." : "Hotseat: you control both sides."}
+          {lesson
+            ? "Lesson: the computer plays the other side."
+            : mail
+              ? "Play by mail: you play your side; send your file when you're done."
+              : "Hotseat: you control both sides."}
         </p>
       )}
       {role === "spectator" && <p className="muted">Spectating.</p>}

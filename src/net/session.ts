@@ -77,6 +77,8 @@ export interface SessionOptions {
    * take over as host. Peers that aren't ready never win an election.
    */
   ready?: (state: GameState) => boolean;
+  /** Told of every intent this host is asked to resolve, in order (play by mail records them: src/mail). */
+  onIntent?: (intent: Intent, by: string) => void;
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
@@ -126,6 +128,7 @@ export class Session {
   private readonly onChange: SessionOptions["onChange"];
   private readonly onNet: SessionOptions["onNet"];
   private readonly rng: Rng;
+  private readonly onIntent?: (intent: Intent, by: string) => void;
   private readonly now: () => number;
   private readonly graceMs: number;
   /** Side-channel listeners by owner (figures, rules packages). */
@@ -153,7 +156,9 @@ export class Session {
     graceMs,
     onNet,
     ready,
+    onIntent,
   }: SessionOptions) {
+    this.onIntent = onIntent;
     this.isReady = ready ?? (() => true);
     this.transport = transport;
     this.role = role;
@@ -222,7 +227,10 @@ export class Session {
    */
   dispatch(intent: Intent, as?: string): void {
     if (this.left) return;
-    if (this.role === "host") this.hostApply(intent, as ?? this.selfId);
+    if (this.role === "host") {
+      this.onIntent?.(intent, as ?? this.selfId);
+      this.hostApply(intent, as ?? this.selfId);
+    }
     else if (this.role === "client") {
       if (this.hostId) this.transport.send({ t: "intent", intent }, this.hostId);
       else this.queue.push(intent);

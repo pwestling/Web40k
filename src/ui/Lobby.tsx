@@ -13,6 +13,7 @@ import { startDemo } from "./demo";
 import { TextSizePicker } from "./TextSizePicker";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { startLesson } from "../teach/store";
+import { MailLobby } from "../mail/MailLobby";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
@@ -235,6 +236,14 @@ export function Lobby() {
         </button>
         <PackageLibrary system={system} onPick={setSystem} />
       </details>
+      <MailLobby
+        name={name}
+        system={system}
+        onStarted={() => {
+          remember();
+          namePackage();
+        }}
+      />
 
       <hr />
       <button className="link" onClick={() => setGuide(true)}>

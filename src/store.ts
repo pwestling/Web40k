@@ -9,6 +9,7 @@ import {
   type Intent,
   type Player,
   type PlayerId,
+  type Rng,
   type UnitId,
 } from "./core";
 import { broadcastTransport } from "./net/broadcast";
@@ -46,6 +47,21 @@ export interface StartOptions {
   record?: GameRecord;
   /** Game system for a new game (host only); 40k when missing. */
   system?: string;
+  /** The host's dice (play by mail draws them from both players' seeds: src/mail/dice.ts). */
+  rng?: Rng;
+  /** Told of every intent the host resolves, in order (play by mail records them). */
+  onIntent?: (intent: Intent, by: PlayerId) => void;
+}
+
+/**
+ * A play-by-mail game on this screen (src/mail): the side this device plays,
+ * the first event of its current stretch (nothing before it can be undone),
+ * and whether it's waiting for the opponent's file (nothing can be done).
+ */
+export interface MailSeat {
+  seat: number;
+  floor: number;
+  locked: boolean;
 }
 
 /** The attack panel's choices before anything is rolled. Local to each player. */
@@ -144,6 +160,8 @@ interface Store {
   openReplay(record: GameRecord): void;
   /** Send an intent; in hotseat the host acts as `as` (default: the player whose turn it is). */
   dispatch(intent: Intent, as?: PlayerId): void;
+  /** Play by mail: this screen plays one side of a hotseat session. */
+  mail: MailSeat | null;
 }
 
 const SAVE_KEY = "open-battle:last-game";
@@ -243,6 +261,7 @@ export const useStore = create<Store>((set, get) => ({
   net: null,
   packagesWaived: {},
   seatAgain: null,
+  mail: null,
   arcs: true,
   eye: null,
   set: (patch) => set(patch),
@@ -257,7 +276,7 @@ export const useStore = create<Store>((set, get) => ({
   setScrub: (scrub) => set({ scrub }),
 
   start(options) {
-    const { role, mode, roomId, name, record, system } = options;
+    const { role, mode, roomId, name, record, system, rng, onIntent } = options;
     // WebRTC (Trystero) loads on demand, and usually already has: the front door prefetches it.
     if (mode !== "hotseat" && mode !== "local" && !trystero) {
       void loadTrystero().then(() => get().start(options));
@@ -279,6 +298,8 @@ export const useStore = create<Store>((set, get) => ({
       role,
       record: record ?? (role === "client" ? room?.record : undefined),
       resumed,
+      ...(rng ? { rng } : {}),
+      ...(onIntent ? { onIntent } : {}),
       // A peer missing one of the game's rules packages can't host it.
       ready: (state) =>
         (state.packages?.packages ?? []).every((p) => !!useLibrary.getState().packages[p.hash]),
@@ -320,6 +341,7 @@ export const useStore = create<Store>((set, get) => ({
       moment: null,
       packagesWaived: {},
       seatAgain: () => takeSeat(),
+      mail: null,
     });
 
     /**
@@ -366,6 +388,8 @@ export const useStore = create<Store>((set, get) => ({
       takeSeat();
       return;
     }
+    // A hotseat game picked up again (play by mail) already has its players.
+    if (record && mode === "hotseat") return;
     if (record) {
       // A resumed host first finds out whether the room has moved on without it
       // (it may stand down), then takes its seat back.
@@ -403,8 +427,16 @@ export const useStore = create<Store>((set, get) => ({
   },
 
   dispatch(intent, as) {
-    const { session, mode, game } = get();
+    const { session, mode, game, mail } = get();
     if (!session) return;
+    if (mail) {
+      // Play by mail: nothing while waiting for their file, and no taking back what they've seen.
+      if (mail.locked) return;
+      if (intent.type === "undo" && [intent.seq, ...(intent.also ?? [])].some((s) => s <= mail.floor)) return;
+      const me = Object.values(game.players).find((p) => p.seat === mail.seat);
+      session.dispatch(intent, as ?? me?.id);
+      return;
+    }
     if (mode === "hotseat") {
       const active = Object.values(game.players).find((p) => p.seat === game.turn.activeSeat);
       session.dispatch(intent, as ?? active?.id);
@@ -428,5 +460,8 @@ export function useCanControl(): (owner: PlayerId) => boolean {
   const mode = useStore((s) => s.mode);
   const role = useStore((s) => s.role);
   const selfId = useStore((s) => s.session?.selfId);
+  const mail = useStore((s) => s.mail);
+  const seatOf = useStore((s) => s.game.players);
+  if (mail) return (owner) => !mail.locked && seatOf[owner]?.seat === mail.seat;
   return (owner) => role !== "spectator" && (mode === "hotseat" || owner === selfId);
 }
