@@ -3,7 +3,7 @@ import { viewRef } from "./content/calls";
 import { procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
 import type { GameEvent, Intent, Rng } from "./actions";
-import { parseDice, rollDice } from "./dice";
+import { BadFace, NeedDice, parseDice, rollDice } from "./dice";
 import { tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
 import { currentSlot, systemOf } from "./content/turn";
@@ -205,6 +205,8 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
       input = value;
     }
   } catch (e) {
+    // Real dice still to roll at the table (#37): the caller asks the player for them.
+    if (e instanceof NeedDice || e instanceof BadFace) throw e;
     return stop(`"${script.procedure}" failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }

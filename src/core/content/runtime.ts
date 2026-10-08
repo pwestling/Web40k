@@ -1,3 +1,4 @@
+import { die } from "../dice";
 import { baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
 import { modelSight } from "../los";
 import { inArc as blockArc } from "../regiment";
@@ -464,7 +465,7 @@ export function rollSum(sum: DiceSum, rng: () => number): { rolls: number[]; tot
       continue;
     }
     for (let i = 0; i < Math.abs(t.count); i++) {
-      const r = 1 + Math.floor(rng() * t.sides);
+      const r = die(rng, t.sides);
       rolls.push(r);
       total += Math.sign(t.count) * r;
     }

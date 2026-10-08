@@ -1,3 +1,4 @@
+import { die as rollDie } from "../dice";
 import type { GameState } from "../types";
 import { bool, evaluate, matchesEvent, num, resolve, type EvalContext } from "./expr";
 import {
@@ -844,7 +845,7 @@ function runTest(
   const live = gatherEffects(env, run, planned.scope).filter((l) => l.effect.when.event === "die.result");
   const perInput = JSON.stringify(step.target).includes('"input.');
   const roll = (): { value: number; dice?: number[] } => {
-    const one = () => 1 + Math.floor(rng() * plan.sides);
+    const one = () => rollDie(rng, plan.sides);
     if (plan.sumOf > 1) {
       const dice = Array.from({ length: plan.sumOf }, one);
       return { value: dice.reduce((a, b) => a + b, 0), dice };
@@ -899,7 +900,7 @@ function runTest(
     if (j.success && step.overflow && target !== null && target > plan.sides * plan.sumOf) {
       const ctx = ctxFor(env, { ...planned.scope, test: { target } });
       const need = num(step.overflow.followUp, ctx);
-      followUp = 1 + Math.floor(rng() * plan.sides);
+      followUp = rollDie(rng, plan.sides);
       j = { ...j, success: followUp !== 1 && followUp >= need };
     }
     const die: RolledDie = {
@@ -1041,9 +1042,7 @@ function runDamage(
       const remaining = max - already;
       const wouldLose = Math.min(damage, remaining);
       const ignore =
-        plan.ignoreDamage === null
-          ? []
-          : Array.from({ length: wouldLose }, () => 1 + Math.floor(rng() * sides));
+        plan.ignoreDamage === null ? [] : Array.from({ length: wouldLose }, () => rollDie(rng, sides));
       const taken = wouldLose - ignore.filter((v) => v >= plan.ignoreDamage!).length;
       lost.set(victim.id, already + taken);
       const destroyed = remaining - taken <= 0;
@@ -1159,9 +1158,9 @@ function damageTrack(
   const boxes = parseTrack(text);
   const hit = new Set((view.flags ?? []).filter((f) => f.startsWith("box")));
   const out: Outcome[] = [];
-  const die = a.die ?? 6;
+  const sides = a.die ?? 6;
   for (let i = 0; i < run.tokens.length; i++) {
-    const roll = 1 + Math.floor(rng() * die);
+    const roll = rollDie(rng, sides);
     const idx = boxes.findIndex((b) => roll >= b.min && roll <= b.max);
     const box = boxes[idx];
     if (a.status) out.push({ kind: "status", unitId: view.id, status: a.status, value: true });

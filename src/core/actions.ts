@@ -15,7 +15,7 @@ import { advance, respond, type Outcome, type ProcedureRun } from "./content/run
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
-import { parseDice, rollDice } from "./dice";
+import { die, parseDice, rollDice } from "./dice";
 import {
   startScript,
   stepScript,
@@ -442,7 +442,7 @@ export function resolveIntent(
       const count = Math.floor(intent.count);
       const sides = Math.floor(intent.sides);
       if (count < 1 || count > MAX_DICE_PER_ROLL || sides < 2) return null;
-      const results = Array.from({ length: count }, () => 1 + Math.floor(rng() * sides));
+      const results = Array.from({ length: count }, () => die(rng, sides));
       const roll: DiceRoll = { by: from, sides, results };
       if (intent.faces?.length === sides) roll.faces = intent.faces;
       if (intent.label) roll.label = intent.label;
@@ -540,7 +540,7 @@ export function resolveIntent(
       const next =
         intent.type === "pool/spend"
           ? faces.filter((_, i) => !picked.has(i))
-          : faces.map((f, i) => (picked.has(i) ? 1 + Math.floor(rng() * sides) : f));
+          : faces.map((f, i) => (picked.has(i) ? die(rng, sides) : f));
       return {
         type: "pool/set",
         player: intent.player,

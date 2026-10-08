@@ -1,3 +1,4 @@
+import { die } from "../dice";
 import type { GameState, Model, PlayerId, Unit } from "../types";
 import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
 import { getSystem } from "./systems";
@@ -369,7 +370,7 @@ function turnAction(
   if (def?.kind === "dicePool") {
     const sides = def.sides ?? 6;
     const have = state.pools?.[player]?.[def.id] ?? [];
-    const rolled = Array.from({ length: Math.max(0, amount) }, () => 1 + Math.floor(rng() * sides));
+    const rolled = Array.from({ length: Math.max(0, amount) }, () => die(rng, sides));
     return {
       ...state,
       pools: { ...state.pools, [player]: { ...state.pools?.[player], [def.id]: [...have, ...rolled] } },
