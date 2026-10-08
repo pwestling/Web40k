@@ -29,6 +29,19 @@ export interface CampaignEvent {
   tables: { id: string; name: string }[];
   /** Each round's pairings, as they were made. */
   pairings: EventPairing[][];
+  /** Every drop and back-in with its time, so joining two copies keeps the latest of each (UX 224). */
+  dropLog?: { name: string; out: boolean; at: number }[];
+  /** Rounds another copy of the book paired differently, found when the copies were joined. */
+  conflicts?: number[];
+}
+
+/** The event with a player dropped (or back in), logged with the time. */
+export function setDropped(event: CampaignEvent, name: string, out: boolean, at = Date.now()): CampaignEvent {
+  return {
+    ...event,
+    dropped: out ? [...new Set([...event.dropped, name])] : event.dropped.filter((n) => n !== name),
+    dropLog: [...(event.dropLog ?? []), { name, out, at }],
+  };
 }
 
 export interface Standing {
@@ -314,11 +327,29 @@ export function mergeBooks(mine: CampaignBook, theirs: CampaignBook): CampaignBo
     const base = !event || theirs.event.pairings.length > event.pairings.length ? theirs.event : event;
     const other = base === event ? theirs.event : event;
     const same = (a: string[], b: string[]) => a.length === b.length && a.every((n) => b.includes(n));
+    // The same two players in the same round are the same pairing, whatever table each copy gave it.
     const settled = (round: number, p: EventPairing) =>
-      other?.pairings[round]?.find((o) => o.table === p.table && same(o.players, p.players))?.game;
+      other?.pairings[round]?.find((o) => same(o.players, p.players))?.game;
+    // Drops: the latest word on each player from either copy; copies without a log just join theirs.
+    const log = [...(base.dropLog ?? []), ...(other?.dropLog ?? [])]
+      .filter(
+        (d, i, all) => all.findIndex((x) => x.name === d.name && x.at === d.at && x.out === d.out) === i,
+      )
+      .sort((a, b) => a.at - b.at);
+    const latest = new Map(log.map((d) => [d.name, d.out]));
+    const unlogged = [...base.dropped, ...(other?.dropped ?? [])].filter((n) => !latest.has(n));
+    const dropped = [...new Set([...unlogged, ...[...latest].flatMap(([n, out]) => (out ? [n] : []))])];
+    // A round the other copy paired with someone else: results on its pairings can't settle this one's.
+    const conflicts = new Set(base.conflicts ?? []);
+    other?.pairings.forEach((round, r) => {
+      const mine = base.pairings[r];
+      if (mine && round.some((o) => !mine.some((p) => same(p.players, o.players)))) conflicts.add(r);
+    });
     event = {
       ...base,
-      dropped: [...new Set([...base.dropped, ...(other?.dropped ?? [])])],
+      dropped,
+      ...(log.length ? { dropLog: log } : {}),
+      ...(conflicts.size ? { conflicts: [...conflicts].sort((a, b) => a - b) } : {}),
       pairings: base.pairings.map((round, r) =>
         round.map((p) => {
           const game = p.game ?? settled(r, p);

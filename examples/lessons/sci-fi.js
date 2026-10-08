@@ -68,7 +68,7 @@ export const lessons = [
         until: { phase: "charge" },
       },
       {
-        say: "A unit can charge an enemy within 12\". Select your Line Troopers and press Charge (2D6): two dice say how far they can go. If nothing is close enough, press ▶.",
+        say: 'A unit can charge an enemy within 12". Select your Line Troopers and press Charge (2D6): two dice say how far they can go. If nothing is close enough, press ▶.',
         show: { seat: 0, unit: 0 },
         point: "Charge (2D6)",
         until: { any: [{ did: ["charge", "roll:charge"] }, { phase: "fight" }] },

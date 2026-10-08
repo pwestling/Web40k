@@ -235,8 +235,7 @@ export class Session {
     if (this.role === "host") {
       this.onIntent?.(intent, as ?? this.selfId);
       this.hostApply(intent, as ?? this.selfId);
-    }
-    else if (this.role === "client") {
+    } else if (this.role === "client") {
       if (this.hostId) this.transport.send({ t: "intent", intent }, this.hostId);
       else this.queue.push(intent);
     }

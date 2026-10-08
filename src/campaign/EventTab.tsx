@@ -8,6 +8,7 @@ import { gameId, leagueTable, type CampaignBook, type CampaignGame } from "./boo
 import {
   handResult,
   newEvent,
+  setDropped,
   openPairing,
   pairingTable,
   pairNextRound,
@@ -27,7 +28,13 @@ export function EventTab({ book, save }: { book: CampaignBook; save: (b: Campaig
 }
 
 function Setup({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => void }) {
-  const known = leagueTable(book).map((r) => r.name);
+  // The people at this table first (UX 220), then everyone who has played for the book.
+  const players = useStore((s) => s.game.players);
+  const here = Object.values(players)
+    .filter((p) => p.seat !== undefined)
+    .sort((a, b) => a.seat! - b.seat!)
+    .map((p) => p.name);
+  const known = [...new Set([...here, ...leagueTable(book).map((r) => r.name)])];
   const [entrants, setEntrants] = useState<string[]>(known);
   const [extra, setExtra] = useState<string[]>([]);
   const [adding, setAdding] = useState("");
@@ -156,18 +163,34 @@ function Running({
   const current = event.pairings.length - 1;
   const done = current >= 0 && roundDone(book, current);
   const over = done && event.pairings.length >= event.rounds;
-  const started = event.pairings[current]?.some((p) => p.game) ?? false;
   const withEvent = (e: CampaignEvent) => save({ ...book, event: e });
   const pairNext = () => withEvent({ ...event, pairings: [...event.pairings, pairNextRound(book)] });
-  const repair = () => {
-    const before = { ...book, event: { ...event, pairings: event.pairings.slice(0, -1) } };
-    withEvent({ ...event, pairings: [...before.event.pairings, pairNextRound(before)] });
-  };
-  const drop = (name: string, out: boolean) =>
+  const results = (event.pairings[current] ?? []).filter((p) => p.game).length;
+  const repair = (changed: CampaignEvent = event) => {
+    // A result already entered for this round is thrown away by drawing it again: ask first (UX 222).
+    if (
+      results &&
+      !confirm(
+        `Pairing round ${current + 1} again throws away ${results} result${results === 1 ? "" : "s"} entered for it (the games stay in the book). Pair it again?`,
+      )
+    )
+      return;
+    const before = { ...book, event: { ...changed, pairings: changed.pairings.slice(0, -1) } };
+    const conflicts = (changed.conflicts ?? []).filter((r) => r !== current);
     withEvent({
-      ...event,
-      dropped: out ? [...event.dropped, name] : event.dropped.filter((n) => n !== name),
+      ...changed,
+      conflicts,
+      pairings: [...before.event.pairings, pairNextRound(before)],
     });
+    setAfterDrop(null);
+  };
+  // After a drop or a back-in, the round as drawn may not fit any more: offer to draw it again.
+  const [afterDrop, setAfterDrop] = useState<{ name: string; out: boolean } | null>(null);
+  const drop = (name: string, out: boolean) => {
+    withEvent(setDropped(event, name, out));
+    const inRound = (event.pairings[current] ?? []).some((p) => p.players.includes(name));
+    if (!done && current >= 0 && inRound === out) setAfterDrop({ name, out });
+  };
   const system = book.games.at(-1)?.system ?? DEFAULT_SYSTEM;
   return (
     <div className="event">
@@ -182,12 +205,41 @@ function Running({
             Pair round {current + 2}
           </button>
         )}
-        {!done && !started && current >= 0 && (
-          <button className="small" onClick={repair} title="Draw this round again, e.g. after someone drops">
+        {!done && current >= 0 && !afterDrop && (
+          <button
+            className="small"
+            onClick={() => repair()}
+            title="Draw this round again, e.g. after someone drops"
+          >
             Pair this round again
           </button>
         )}
       </p>
+      {afterDrop && (
+        <div className="warn-box">
+          <p>
+            {afterDrop.out
+              ? `${afterDrop.name} is still paired in round ${current + 1}.`
+              : `${afterDrop.name} isn't paired in round ${current + 1}.`}{" "}
+            Pair round {current + 1} again {afterDrop.out ? "without" : "with"} {afterDrop.name}?
+          </p>
+          <div className="row">
+            <button className="small primary" onClick={() => repair()}>
+              Pair round {current + 1} again
+            </button>
+            <button className="small" onClick={() => setAfterDrop(null)}>
+              Keep the pairings
+            </button>
+          </div>
+        </div>
+      )}
+      {(event.conflicts ?? []).length > 0 && (
+        <p className="warn small">
+          Another copy of this book paired round{event.conflicts!.length === 1 ? "" : "s"}{" "}
+          {event.conflicts!.map((r) => r + 1).join(", ")} differently. Games played on those pairings are in
+          the Games tab but not here: enter them by hand if they should count.
+        </p>
+      )}
       <table className="league">
         <thead>
           <tr>
@@ -296,13 +348,15 @@ function PairingRow({
   const [a, b] = pairing.players as [string, string];
   const vpOf = (name: string) => game?.sides.find((s) => s.players.includes(name))?.vp ?? 0;
   const winner = game && game.winner !== null ? game.sides[game.winner]?.players[0] : null;
+  // The winner's score first: "Cy won 2–0" (UX 221).
+  const [first, second] = winner === b ? [b, a] : [a, b];
   return (
     <li>
       <span className="muted">{where}:</span> {a} vs {b}
       {game ? (
         <>
           {" · "}
-          <strong>{winner ? `${winner} won` : "Draw"}</strong> {vpOf(a)}–{vpOf(b)}
+          <strong>{winner ? `${winner} won` : "Draw"}</strong> {vpOf(first)}–{vpOf(second)}
           {game.byHand && <span className="muted"> (entered by hand)</span>}
         </>
       ) : typing ? (
@@ -365,8 +419,26 @@ export function EventLine({ book, game }: { book: CampaignBook; game: GameState 
   }, []);
   const record = useStore((s) => s.record);
   const id = gameId(record);
-  // This game is in the book already: it settled its pairing (or didn't count), and the next round isn't it.
-  if (!book.event || (id && book.games.some((g) => g.id === id))) return null;
+  if (!book.event) return null;
+  // This game is in the book already: say what it counted for, if anything (UX 223).
+  const counted = id ? book.games.find((g) => g.id === id) : undefined;
+  if (counted) {
+    const at = book.event.pairings.flatMap((round, r) =>
+      round.flatMap((p) => (p.game === counted.id ? [{ r, p }] : [])),
+    )[0];
+    if (!at) return null;
+    const won = counted.winner === null ? null : counted.sides[counted.winner];
+    const lost = counted.sides.find((s) => s !== won);
+    return (
+      <p className="muted small">
+        Counted for event round {at.r + 1}, table {at.p.table}:{" "}
+        {won
+          ? `${won.players.join(" & ")} won ${won.vp}–${lost?.vp ?? 0}`
+          : `a draw, ${counted.sides.map((s) => s.vp).join("–")}`}
+        .
+      </p>
+    );
+  }
   const names = Object.values(game.players)
     .filter((p) => p.seat !== undefined)
     .map((p) => p.name);

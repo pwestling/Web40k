@@ -6,15 +6,15 @@ the app makes a small file to pass on by email, chat or anything else. Code:
 
 ## How a game goes
 
-1. **Start.** In the lobby, open *Play by mail* and press *Start a mail game*.
+1. **Start.** In the lobby, open _Play by mail_ and press _Start a mail game_.
    You get a hotseat table for your chosen game. Set it up: armies, terrain,
-   deployment. Then press *Send invitation*. The invitation carries the game
+   deployment. Then press _Send invitation_. The invitation carries the game
    so far as a replay file, including figures and rules packages.
-2. **Join.** Your opponent opens the invitation with *Open a file from your
-   opponent*. They play the other side.
-3. **Take turns.** Whoever has the move plays, then presses *Send to …*. The
+2. **Join.** Your opponent opens the invitation with _Open a file from your
+   opponent_. They play the other side.
+3. **Take turns.** Whoever has the move plays, then presses _Send to …_. The
    file holds everything since the last one. The other player opens it with
-   *Open their file*, and it's their move.
+   _Open their file_, and it's their move.
 
 A move doesn't have to be a whole turn. When the game waits on the other side,
 for a reaction or a decision, the strip says "over to them now". Send the file
@@ -25,7 +25,7 @@ saves, because dice have no choices in them. Their decisions wait for them.
 Nothing before your stretch can be undone; it's already been seen.
 
 Games are kept on each device (`localStorage`) and listed in the lobby. The
-files are the backup: *Save mine again* re-saves the last one.
+files are the backup: _Save mine again_ re-saves the last one.
 
 ## What's checked
 
@@ -42,7 +42,7 @@ Every file is checked by the player who receives it.
   catches fudged rolls, edited events and moves the rules wouldn't resolve.
 
 If a file fails a check, the strip lists what failed, and the player chooses
-*Don't open it* or *Open it anyway*. Enforcement is advisory everywhere in
+_Don't open it_ or _Open it anyway_. Enforcement is advisory everywhere in
 Open Battle, and this is no different.
 
 ## Dice no one picks

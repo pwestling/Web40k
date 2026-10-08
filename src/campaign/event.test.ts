@@ -7,6 +7,7 @@ import {
   pairingTable,
   pairNextRound,
   roundDone,
+  setDropped,
   settlePairing,
   standings,
 } from "./event";
@@ -114,5 +115,33 @@ describe("event night", () => {
     expect(standings(other)).toEqual(standings(merged));
     // Merging a copy into itself changes nothing.
     expect(mergeBooks(merged, merged)).toEqual(merged);
+  });
+
+  it("keeps the latest drop or back-in when copies meet, and flags a round paired differently", () => {
+    const start = pair(eventBook(["Ana", "Bo", "Cy", "Di"]));
+    const dropped = { ...start, event: setDropped(start.event!, "Di", true, 100) };
+    const back = { ...dropped, event: setDropped(dropped.event!, "Di", false, 200) };
+    // Each copy has a game the other lacks, so they're joined, not replaced.
+    const [p1, p2] = start.event!.pairings[0]!;
+    const older = handResult(dropped, 0, p1!, [1, 0], "forty-k-11");
+    const newer = handResult(back, 0, p2!, [0, 1], "forty-k-11");
+    expect(mergeBooks(older, newer).event!.dropped).toEqual([]);
+    expect(mergeBooks(newer, older).event!.dropped).toEqual([]);
+    // Round 1 drawn again on one copy with different pairings: flagged, not silently lost.
+    const redrawn = {
+      ...start,
+      event: {
+        ...start.event!,
+        pairings: [
+          [
+            { table: 1, players: ["Ana", "Di"] },
+            { table: 2, players: ["Bo", "Cy"] },
+          ],
+        ],
+      },
+    };
+    const same = start.event!.pairings[0]!.some((p) => p.players.includes("Ana") && p.players.includes("Di"));
+    if (!same) expect(mergeBooks(start, redrawn).event!.conflicts).toEqual([0]);
+    expect(mergeBooks(start, start).event!.conflicts).toBeUndefined();
   });
 });

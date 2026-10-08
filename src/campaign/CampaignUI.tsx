@@ -22,7 +22,7 @@ import {
 } from "./book";
 import { useTables } from "../tables/library";
 import { applyLayout } from "../tables/actions";
-import { mergeBooks } from "./event";
+import { mergeBooks, openPairing } from "./event";
 import { EventLine, EventTab } from "./EventTab";
 import { requestCampaign, useCampaignSharing, useCampaignTransfers } from "./share";
 import { loadReplay, replayIds, saveReplay, useCampaigns } from "./store";
@@ -103,6 +103,33 @@ export function CampaignKeeper() {
       mine.id,
     );
   }, [live, ref, merged, game.players, canControl, dispatch]);
+  // An organiser's copy with an open event pairing for this table goes to the table by itself, so the
+  // other players see the pairing at once (UX 225).
+  useEffect(() => {
+    if (!live || !ref || !edited || game.turn.round > 0) return;
+    const book = books[ref.id];
+    const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
+    const mine = seated.find((p) => canControl(p.id));
+    const hash = useCampaigns.getState().hashes[ref.id];
+    if (
+      !book?.event ||
+      !mine ||
+      !hash ||
+      !openPairing(
+        book,
+        seated.map((p) => p.name),
+      )
+    )
+      return;
+    useCampaigns.setState((s) => ({ edited: { ...s.edited, [ref.id]: false } }));
+    dispatch(
+      {
+        type: "campaign/set",
+        ref: { id: ref.id, name: ref.name, hash, ...(ref.territory ? { territory: ref.territory } : {}) },
+      },
+      mine.id,
+    );
+  }, [live, ref, edited, books, game.turn.round, game.players, canControl, dispatch]);
   const shelf = useShelf((s) => s.armies);
   // Link each of this device's players to the shelf army they brought.
   useEffect(() => {
