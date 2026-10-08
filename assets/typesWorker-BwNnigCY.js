@@ -1282,8 +1282,6 @@ export interface PlayerActionTaken {
     /** For a custom action: the name the player gave it. */
     label?: string;
 }
-/** The player actions a player has: the system's, then their army's own stratagems. */
-export declare function playerActionDefs(state: GameState, player: PlayerId): ActionDef[];
 /** Any action by id, a faction stratagem's included. */
 export declare function findAction(state: GameState, id: string): ActionDef | undefined;
 /** The player actions (stratagems) a player could use now, with why not. */
