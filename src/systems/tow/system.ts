@@ -195,6 +195,12 @@ export const oldWorld: GameSystem = {
     { id: "rear", name: "Rear", from: 135, to: 225, origin: "baseCorners" },
     { id: "leftFlank", name: "Left flank", from: 225, to: 315, origin: "baseCorners" },
   ],
+  // Psychology marks on a regiment (combat.ts, psychology.ts); spells show as their own names.
+  statuses: [
+    { id: "fleeing", name: "Fleeing", on: "unit" },
+    { id: "stupid", name: "Stupid this turn", on: "unit" },
+    { id: "frenzyLost", name: "Frenzy lost", on: "unit" },
+  ],
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],
   terrain: [
     { id: "open", name: "Open ground" },

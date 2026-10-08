@@ -4,6 +4,15 @@ import type { GameState, Model, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { towRanks } from "./troops";
 import { opposed } from "../../core/teams";
+import {
+  causesFear,
+  causesTerror,
+  frenzied,
+  hasBattleStandard,
+  hates,
+  immune,
+  isGeneral,
+} from "./specialRules";
 
 /**
  * Close combat, charge reactions, break tests and Panic for rank-and-flank
@@ -18,6 +27,17 @@ import { opposed } from "../../core/teams";
  * high ground, overkill, special rules (Stubborn, Unbreakable...), and
  * supporting attacks assume every second-rank model may make one. Every
  * result is advisory and lands in the log.
+ *
+ * Psychology (roadmap #32), by special rule name, from general knowledge of
+ * the game and unverified: the General's Leadership within 12" (Inspiring
+ * Presence) and a re-roll of failed Leadership tests within 12" of the Battle
+ * Standard; Fear (a test to charge a Fear-causing enemy, and in combat a
+ * failed test means hitting only on 6s); Terror (charged by it: a test, and
+ * fleeing on a fail); Frenzy (+1 Attack, no restraint, lost on losing a
+ * combat); Hatred (re-roll misses the first time it fights a foe, no
+ * restraint); Immune to Psychology (no Panic, Fear or Terror tests, and it
+ * can't flee from a charge). Stupidity is tested at the start of the turn
+ * (psychology.ts).
  */
 
 type Roll = { rolls: number[]; total: number };
@@ -30,32 +50,61 @@ const GIVE_GROUND = 2;
 /** Pursuit distance. */
 const PURSUE_DICE = "2d6";
 
-function unitOf(view: GameView, id: unknown): Unit {
+export function unitOf(view: GameView, id: unknown): Unit {
   const u = view.state.units[String(id)];
   if (!u) throw new Error(`No unit "${String(id)}"`);
   return u;
 }
 
-const alive = (state: GameState, u: Unit) => blockModels(state, u);
-const charNum = (m: Model | undefined, k: string, d = 0) => {
+export const alive = (state: GameState, u: Unit) => blockModels(state, u);
+export const charNum = (m: Model | undefined, k: string, d = 0) => {
   const v = Number.parseFloat(m?.profile?.chars[k] ?? "");
   return Number.isFinite(v) ? v : d;
 };
 
 /** The unit's characteristic as its commonest profile has it (from the unit view). */
-function stat(view: GameView, u: Unit, id: string, d = 0): number {
+export function stat(view: GameView, u: Unit, id: string, d = 0): number {
   const v = (view.unit(u.id) as Record<string, unknown> | undefined)?.[id];
   return typeof v === "number" ? v : d;
 }
 
-/** Leadership: the best in the unit (a character or champion lends theirs), and whose it is. */
-function leadership(state: GameState, u: Unit): { ld: number; who: string } {
+/** How far the General's Leadership and the Battle Standard's re-roll reach. */
+export const AURA = 12;
+
+/** Friendly units (this one included) still standing and not fleeing within the aura, matching `is`. */
+function friendNear(state: GameState, u: Unit, is: (f: Unit) => boolean): Unit | undefined {
+  return Object.values(state.units).find(
+    (f) =>
+      !opposed(state, f.owner, u.owner) &&
+      !f.status?.fleeing &&
+      alive(state, f).length > 0 &&
+      is(f) &&
+      (f.id === u.id || unitGap(state, u, f) <= AURA),
+  );
+}
+
+/** The best Leadership among the unit's own models (a character or champion lends theirs). */
+function ownLeadership(state: GameState, u: Unit): { ld: number; who: string } {
   let best = { ld: 0, who: "" };
   for (const m of alive(state, u)) {
     const ld = charNum(m, "Ld");
     if (ld > best.ld) best = { ld, who: m.profile?.name ?? "" };
   }
   return best;
+}
+
+/**
+ * Leadership: the best in the unit, or the General's within 12" when it's
+ * higher (Inspiring Presence), and whose it is.
+ */
+export function leadership(state: GameState, u: Unit): { ld: number; who: string } {
+  const own = ownLeadership(state, u);
+  const general = friendNear(state, u, isGeneral);
+  if (general && general.id !== u.id) {
+    const g = ownLeadership(state, general);
+    if (g.ld > own.ld) return { ld: g.ld, who: `the General's, ${general.name}` };
+  }
+  return own;
 }
 
 /** "Ld 9, Warden Captain" when a model other than the rank and file lends its Leadership. */
@@ -105,7 +154,7 @@ const count = (r: Roll, target: number) => r.rolls.filter((x) => x !== 1 && x >=
 const hitsOf = (r: Roll, target: number) => r.rolls.filter((x) => x === 6 || (x !== 1 && x >= target)).length;
 
 /** To wound, then armour, ward and regeneration saves. Returns the unsaved wounds. */
-function* woundAndSave(
+export function* woundAndSave(
   ctx: Ctx,
   atk: Unit,
   def: Unit,
@@ -139,17 +188,28 @@ function* woundAndSave(
  * supporting attack from each model in the second rank, then to hit, to
  * wound, armour, ward and regeneration. Returns the unsaved wounds.
  */
-function* strike(ctx: Ctx, atk: Unit, def: Unit): Generator<Command, number, unknown> {
+function* strike(
+  ctx: Ctx,
+  atk: Unit,
+  def: Unit,
+  how: { afraid?: boolean; hatred?: boolean } = {},
+): Generator<Command, number, unknown> {
   const view = ctx.view;
   const state = view.state;
   const models = alive(state, atk).length;
   if (!models || !alive(state, def).length) return 0;
   const files = atk.formation.kind === "ranked" ? Math.min(atk.formation.files, models) : models;
   const support = atk.formation.kind === "ranked" ? Math.min(files, models - files) : 0;
-  const attacks = files * Math.max(1, stat(view, atk, "A", 1)) + support;
-  const hitOn = combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
-  const hit = (yield ctx.roll(`${attacks}d6`, "to hit", atk.id, hitOn)) as Roll;
-  const hits = hitsOf(hit, hitOn);
+  const frenzy = frenzied(atk) ? 1 : 0;
+  const attacks = files * (Math.max(1, stat(view, atk, "A", 1)) + frenzy) + support;
+  const hitOn = how.afraid ? 6 : combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
+  const label = `to hit${frenzy ? " (Frenzy +1 Attack)" : ""}${how.afraid ? " (afraid: 6s only)" : ""}`;
+  const hit = (yield ctx.roll(`${attacks}d6`, label, atk.id, hitOn)) as Roll;
+  let hits = hitsOf(hit, hitOn);
+  if (how.hatred && hits < attacks) {
+    const again = (yield ctx.roll(`${attacks - hits}d6`, "to hit re-roll (Hatred)", atk.id, hitOn)) as Roll;
+    hits += hitsOf(again, hitOn);
+  }
   if (!hits) return 0;
   return yield* woundAndSave(ctx, atk, def, hits, stat(view, atk, "S"));
 }
@@ -195,7 +255,7 @@ function* shoot(
 }
 
 /** Casualties come off the rear rank: wounded models first, then rank and file, the command group last. */
-function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, void, unknown> {
+export function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, void, unknown> {
   const state = ctx.view.state;
   const models = alive(state, def);
   const names = new Map<string, number>();
@@ -218,7 +278,7 @@ function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, vo
 }
 
 /** The nearest enemy unit still standing and not fleeing, to run from. */
-function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
+export function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
   let best: { e: Unit; d: number } | undefined;
   for (const e of Object.values(state.units)) {
     if (!opposed(state, e.owner, u.owner) || e.status?.fleeing || !alive(state, e).length) continue;
@@ -244,7 +304,12 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
 }
 
 /** The unit flees 2D6" from `from` and is marked fleeing. */
-function* flee(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
+export function* flee(
+  ctx: Ctx,
+  u: Unit,
+  from: Unit | undefined,
+  why: string,
+): Generator<Command, void, unknown> {
   const r = (yield ctx.roll(FLEE_DICE, "flee roll", u.id)) as Roll;
   yield ctx.emit({ type: "unit/status", id: u.id, key: "fleeing", value: true });
   yield* moveAway(ctx, unitOf(ctx.view, u.id), from, r.total, true);
@@ -264,23 +329,34 @@ function* fallBack(
   yield ctx.note(`${u.name} ${why} and falls back in good order ${inches}" (it rallies at the end)`);
 }
 
-/** Leadership test: 2D6 equal to or under Leadership. */
-function* leadershipTest(
+/**
+ * Leadership test: 2D6 (plus `mod`) equal to or under Leadership; a double 1
+ * always passes. A unit within 12" of its Battle Standard re-rolls a fail once.
+ */
+export function* leadershipTest(
   ctx: Ctx,
   u: Unit,
   name: string,
   mod = 0,
   why = "",
-): Generator<Command, { roll: Roll; ld: number; score: string }, unknown> {
+): Generator<Command, { roll: Roll; ld: number; score: string; passed: boolean }, unknown> {
   const state = ctx.view.state;
   const { ld } = leadership(state, u);
   // "Reaver Warband break test: 2D6 + 8 (lost by 8) against Ld 6, Reaver Chief"
   yield ctx.note(
     `${u.name} ${name}: 2D6${mod ? ` + ${mod}${why ? ` (${why})` : ""}` : ""} against ${ldLabel(state, u)}`,
   );
-  const roll = (yield ctx.roll("2d6", name, u.id)) as Roll;
+  const failed = (r: Roll) => !r.rolls.every((x) => x === 1) && r.total + mod > ld;
+  let roll = (yield ctx.roll("2d6", name, u.id)) as Roll;
+  const bsb = failed(roll) ? friendNear(state, u, (f) => hasBattleStandard(state, f)) : undefined;
+  if (bsb) {
+    yield ctx.note(
+      `${u.name} re-rolls its ${name} (rolled ${roll.total}): ${bsb.id === u.id ? "it carries" : `${bsb.name} is within ${AURA}" with`} the Battle Standard`,
+    );
+    roll = (yield ctx.roll("2d6", `${name} re-roll`, u.id)) as Roll;
+  }
   const score = mod ? `${roll.total} + ${mod} = ${roll.total + mod}` : `${roll.total}`;
-  return { roll, ld, score };
+  return { roll, ld, score, passed: !failed(roll) };
 }
 
 /** The charge declared for a unit (chargeReaction records it): the gap to the target and the arc. */
@@ -328,6 +404,30 @@ export const combat: CodeProcedure = function* (ctx, args) {
     const bonus = chargeBonus(ctx.view, u);
     if (bonus) yield ctx.note(`${u.name} charged: Initiative +${bonus}`);
   }
+  // Psychology before the blows: Fear tests, and Hatred the first time these two fight.
+  const how = new Map<string, { afraid?: boolean; hatred?: boolean }>();
+  for (const [u, foe] of [
+    [a, b],
+    [b, a],
+  ] as const) {
+    const h: { afraid?: boolean; hatred?: boolean } = {};
+    if (causesFear(foe) && !causesFear(u) && !immune(u)) {
+      const t = yield* leadershipTest(ctx, u, "Fear test", 0, "");
+      h.afraid = !t.passed;
+      yield ctx.note(
+        t.passed
+          ? `${u.name} masters its fear (${t.roll.total})`
+          : `${u.name} is afraid of ${foe.name} (rolled ${t.roll.total}, over Ld ${t.ld}): it hits only on 6s this round`,
+      );
+    }
+    const key = `hated:${u.id}:${foe.id}`;
+    if (hates(u) && !ctx.view.own[key]) {
+      h.hatred = true;
+      yield ctx.set(key, true);
+      yield ctx.note(`${u.name} hates ${foe.name}: it re-rolls missed hits this round`);
+    }
+    how.set(u.id, h);
+  }
   const steps = init(a) === init(b) ? [[a, b]] : init(a) > init(b) ? [[a], [b]] : [[b], [a]];
   const caused = new Map<string, number>([
     [a.id, 0],
@@ -339,7 +439,7 @@ export const combat: CodeProcedure = function* (ctx, args) {
     for (const u of step) {
       const atk = unitOf(ctx.view, u.id);
       const def = unitOf(ctx.view, (u.id === a.id ? b : a).id);
-      hits.push([def, yield* strike(ctx, atk, def)]);
+      hits.push([def, yield* strike(ctx, atk, def, how.get(u.id))]);
     }
     for (const [def, n] of hits) {
       const by = def.id === a.id ? b.id : a.id;
@@ -397,6 +497,10 @@ export const combat: CodeProcedure = function* (ctx, args) {
   }
   const [winner, loser, diff] = sa.s > sb.s ? [a, b, sa.s - sb.s] : [b, a, sb.s - sa.s];
   const lost = unitOf(ctx.view, loser.id);
+  if (frenzied(lost)) {
+    yield ctx.emit({ type: "unit/status", id: lost.id, key: "frenzyLost", value: true });
+    yield ctx.note(`${lost.name} lost the combat and its Frenzy with it`);
+  }
   if (!alive(ctx.view.state, lost).length) return;
 
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
@@ -423,19 +527,24 @@ export const combat: CodeProcedure = function* (ctx, args) {
     );
   }
 
-  const pick = yield ctx.ask(
-    owner(winner),
-    fled
-      ? `${lost.name} ${fled === "flees" ? "has broken and flees" : "falls back in good order"}. Does ${winner.name} pursue it?`
-      : `${lost.name} gave ground. Does ${winner.name} follow up?`,
-    [
-      { id: "go", label: fled ? "Pursue" : "Follow up" },
-      { id: "restrain", label: "Restrain (Leadership test)" },
-    ],
-  );
+  // Frenzied and hating units can't hold back.
+  const eager = frenzied(won) ? "Frenzy" : hates(won) ? "Hatred" : "";
+  if (eager) yield ctx.note(`${winner.name} must ${fled ? "pursue" : "follow up"} (${eager})`);
+  const pick = eager
+    ? "go"
+    : yield ctx.ask(
+        owner(winner),
+        fled
+          ? `${lost.name} ${fled === "flees" ? "has broken and flees" : "falls back in good order"}. Does ${winner.name} pursue it?`
+          : `${lost.name} gave ground. Does ${winner.name} follow up?`,
+        [
+          { id: "go", label: fled ? "Pursue" : "Follow up" },
+          { id: "restrain", label: "Restrain (Leadership test)" },
+        ],
+      );
   if (pick !== "go") {
     const t = yield* leadershipTest(ctx, won, "restraint test");
-    if (t.roll.total <= t.ld) {
+    if (t.passed) {
       yield ctx.note(`${winner.name} restrains and may reform (rolled ${t.roll.total})`);
       return;
     }
@@ -503,6 +612,19 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
     Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged") &&
     !target.status?.fleeing &&
     distance >= stat(ctx.view, charger, "M");
+  const now = ctx.view.state.turn;
+  // Charging something frightening takes nerve: a failed Fear test and the charge isn't made.
+  if (causesFear(target) && !causesFear(charger) && !immune(charger)) {
+    const t = yield* leadershipTest(ctx, charger, "Fear test", 0, "");
+    if (!t.passed) {
+      yield ctx.set(`fearTest:${charger.id}`, { round: now.round, seat: now.activeSeat });
+      yield ctx.note(
+        `${charger.name} is too afraid of ${target.name} to charge (rolled ${t.roll.total}, over Ld ${t.ld})`,
+      );
+      return;
+    }
+    yield ctx.note(`${charger.name} masters its fear of ${target.name} (${t.roll.total})`);
+  }
   yield ctx.note(`${charger.name} declares a charge against ${target.name} (${distance.toFixed(1)}" away)`);
   yield ctx.emit({ type: "unit/status", id: charger.id, key: "charged", value: true });
   const record: ChargeRecord = {
@@ -512,10 +634,25 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
     round: ctx.view.round,
   };
   yield ctx.set(`charge:${charger.id}`, record);
+  // Charged by something terrifying: a Terror test, and fleeing on a fail.
+  if (causesTerror(charger) && !causesTerror(target) && !immune(target) && !target.status?.fleeing) {
+    const t = yield* leadershipTest(ctx, target, "Terror test", 0, "");
+    if (!t.passed) {
+      yield* flee(
+        ctx,
+        target,
+        charger,
+        `is terrified of ${charger.name} (rolled ${t.roll.total}, over Ld ${t.ld})`,
+      );
+      return;
+    }
+    yield ctx.note(`${target.name} stands its ground against ${charger.name} (${t.roll.total})`);
+  }
   const options = [
     { id: "hold", label: "Hold" },
     ...(shoots ? [{ id: "shoot", label: `Stand and shoot at ${charger.name} (-1 to hit)` }] : []),
-    { id: "flee", label: "Flee" },
+    // Immune to Psychology (and frenzied) units won't flee.
+    ...(immune(target) ? [] : [{ id: "flee", label: "Flee" }]),
   ];
   const pick = yield ctx.ask(
     owner(target),
@@ -544,8 +681,8 @@ export const panic: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
   const now = ctx.view.state.turn;
   yield ctx.set(`panic:${u.id}`, { round: now.round, seat: now.activeSeat, phase: ctx.view.phase });
-  const { roll, ld } = yield* leadershipTest(ctx, u, "Panic test");
-  if (roll.total <= ld) {
+  const { roll, ld, passed } = yield* leadershipTest(ctx, u, "Panic test");
+  if (passed) {
     yield ctx.note(`${u.name} keeps its nerve (${roll.total} against ${ld})`);
     return;
   }
@@ -566,6 +703,7 @@ function panicAvailable(view: GameView, actor: { unitId?: string }): true | stri
   const u = state.units[actor.unitId ?? ""];
   if (!u) return "No unit";
   if (u.status?.fleeing) return "Already fleeing";
+  if (immune(u)) return frenzied(u) ? "Frenzied: immune to Panic" : "Immune to Psychology";
   if (view.phase !== "shooting" && view.phase !== "combat") return "Only after shooting or combat";
   const t = view.own[`panic:${u.id}`] as { round: number; seat: number; phase: string | null } | undefined;
   const now = state.turn;
@@ -623,6 +761,10 @@ export const towActions: CodeAction[] = [
       if (!u) return "No unit";
       if (u.status?.fleeing) return "Fleeing units can't charge";
       if (u.status?.charged) return "Already charged this turn";
+      const fear = view.own[`fearTest:${u.id}`] as { round: number; seat: number } | undefined;
+      const now = view.state.turn;
+      if (fear && fear.round === now.round && fear.seat === now.activeSeat)
+        return "Failed its Fear test this turn";
       return enemies(view, u.id, 24, false).length ? true : 'No enemy within 24"';
     },
     targets: (view, actor) =>

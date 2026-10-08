@@ -1,4 +1,4 @@
-import type { BaseShape, WeaponProfile } from "../../core";
+import type { Ability, BaseShape, Spell, WeaponProfile } from "../../core";
 import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
 
 /**
@@ -32,6 +32,7 @@ function regiment(
   points: number,
   extra: { name: string; stats: Stats; base?: BaseShape }[] = [],
   weapon?: { name: string; range: number; S?: number; AP?: number },
+  more: { rules?: string[]; keywords?: string[]; wizard?: number; spells?: Spell[] } = {},
 ): ImportedUnit {
   const weapons: Record<string, WeaponProfile> = weapon
     ? {
@@ -57,7 +58,13 @@ function regiment(
   return {
     name,
     base,
-    sheet: { weapons, abilities: [], keywords: [], points },
+    sheet: {
+      weapons,
+      abilities: (more.rules ?? []).map((name): Ability => ({ name, text: "", group: "Special rules" })),
+      keywords: more.keywords ?? [],
+      points,
+      ...(more.wizard ? { wizard: more.wizard, spells: more.spells ?? [] } : {}),
+    },
     models: [...leaders, ...troops],
   };
 }
@@ -77,15 +84,39 @@ const rider: Stats = {
   US: 2,
   Troop: "Light Cavalry",
 };
+const seer: Stats = { M: 4, WS: 3, BS: 3, S: 3, T: 3, W: 2, I: 3, A: 1, Ld: 8, Troop: "Regular Infantry" };
+
+/** Invented spells (names and numbers made up for Open Battle). */
+const HEDGE_LORE: Spell[] = [
+  { name: "Spark Lance", cv: 8, range: 18, kind: "missile", hits: "D6", strength: 4, lore: "Hedge" },
+  { name: "Ward of Thorns", cv: 7, range: 12, kind: "enchantment", lore: "Hedge" },
+  { name: "Mire Step", cv: 6, range: 12, kind: "conveyance", lore: "Hedge" },
+];
+const BONE_LORE: Spell[] = [
+  { name: "Bone Hail", cv: 7, range: 18, kind: "missile", hits: "D6", strength: 3, lore: "Bone" },
+  { name: "Leaden Limbs", cv: 8, range: 18, kind: "hex", remains: true, lore: "Bone" },
+  { name: "Gnashing Maw", cv: 6, range: 1, kind: "assailment", hits: "2D6", strength: 3, lore: "Bone" },
+];
+
 const captain: Stats = { M: 4, WS: 5, BS: 4, S: 4, T: 4, W: 2, I: 5, A: 3, Ld: 9, Troop: "Regular Infantry" };
 
 function marchwardens(): ImportedRoster {
   const units = [
-    regiment("Marchwarden Spears", 25, FOOT, spear, 150, [
-      { name: "Warden Captain", stats: captain, base: BIG_FOOT },
-      { name: "Spear Sergeant", stats: { ...spear, A: 2 } },
-      { name: "Standard Bearer", stats: spear },
-    ]),
+    regiment(
+      "Marchwarden Spears",
+      25,
+      FOOT,
+      spear,
+      150,
+      [
+        { name: "Warden Captain", stats: captain, base: BIG_FOOT },
+        { name: "Spear Sergeant", stats: { ...spear, A: 2 } },
+        { name: "Standard Bearer", stats: spear },
+        { name: "Hedge Seer", stats: seer },
+      ],
+      undefined,
+      { keywords: ["General"], wizard: 2, spells: HEDGE_LORE },
+    ),
     regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
     regiment("Riders of the Downs", 6, HORSE, rider, 130, [{ name: "Banner Rider", stats: rider }]),
     regiment(
@@ -126,11 +157,21 @@ function reavers(): ImportedRoster {
     Troop: "Regular Infantry",
   };
   const units = [
-    regiment("Reaver Warband", 30, FOOT, raider, 160, [
-      { name: "Reaver Chief", stats: { ...captain, Ld: 8 }, base: BIG_FOOT },
-      { name: "Drummer", stats: raider },
-    ]),
-    regiment("Tusk Brutes", 6, BRUTE, brute, 210),
+    regiment(
+      "Reaver Warband",
+      30,
+      FOOT,
+      raider,
+      160,
+      [
+        { name: "Reaver Chief", stats: { ...captain, Ld: 8 }, base: BIG_FOOT },
+        { name: "Drummer", stats: raider },
+        { name: "Bone Shaman", stats: { ...seer, Ld: 7 } },
+      ],
+      undefined,
+      { keywords: ["General"], wizard: 1, spells: BONE_LORE },
+    ),
+    regiment("Tusk Brutes", 6, BRUTE, brute, 210, [], undefined, { rules: ["Fear"] }),
     regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90),
     regiment("Reaver Slingers", 10, FOOT, raider, 60, [], { name: "Sling", range: 18, S: 3 }),
   ];

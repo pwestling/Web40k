@@ -78,6 +78,35 @@ export interface UnitSheet {
   abilities: Ability[];
   keywords: string[];
   points?: number;
+  /** A wizard's level (rank-and-flank magic): added to its casting and dispel rolls. */
+  wizard?: number;
+  /** The spells the unit's wizard knows, as the player brings them (see Spell). */
+  spells?: Spell[];
+}
+
+/** When a spell is cast and what it does, in rank-and-flank magic (src/systems/tow/magic.ts). */
+export type SpellKind = "missile" | "vortex" | "assailment" | "enchantment" | "hex" | "conveyance";
+
+/**
+ * A spell as player data: a name, numbers and an effect kind, never rules
+ * text. Players bring these in a spell list file or with their roster.
+ */
+export interface Spell {
+  name: string;
+  /** Casting value: 2D6 plus the wizard's level must reach it. */
+  cv: number;
+  /** Range in inches; 0 for the wizard's own unit only. */
+  range: number;
+  kind: SpellKind;
+  /** Damage spells (missile, vortex, assailment): hits like "D6", "2D6" or "3"... */
+  hits?: string;
+  /** ...at this Strength and armour piercing. Without them the effect is played by hand. */
+  strength?: number;
+  ap?: number;
+  /** Enchantments and hexes stay until dispelled, rather than until the start of the caster's next turn. */
+  remains?: boolean;
+  /** The lore it belongs to, to give wizards the right spells from a list. */
+  lore?: string;
 }
 
 /**

@@ -159,11 +159,26 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
               {s.id === "charged" && chargedText ? chargedText : s.name}
             </button>
           ))}
-          {flags.map((f) => (
-            <span key={f} className="chip on">
-              {f === "reserves" ? "In reserve" : f === "charged" && chargedText ? chargedText : f}
-            </span>
-          ))}
+          {flags.map((f) =>
+            // A spell on the unit (rank-and-flank magic): by its name, and a player can end it by hand.
+            f.startsWith("spell:") ? (
+              <button
+                key={f}
+                className="chip on"
+                disabled={!mine}
+                title="Click to end this spell"
+                onClick={() =>
+                  dispatch({ type: "unit/status", id: unit.id, key: f, value: null }, unit.owner)
+                }
+              >
+                {f.slice(6)}
+              </button>
+            ) : (
+              <span key={f} className="chip on">
+                {f === "reserves" ? "In reserve" : f === "charged" && chargedText ? chargedText : f}
+              </span>
+            ),
+          )}
           {chargedText && !statuses.some((s) => s.id === "charged") && !flags.includes("charged") && (
             <span className="chip on charged">{chargedText}</span>
           )}

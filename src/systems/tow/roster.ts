@@ -1,4 +1,4 @@
-import type { Ability, BaseShape, Characteristics, WeaponProfile } from "../../core";
+import type { Ability, BaseShape, Characteristics, Spell, SpellKind, WeaponProfile } from "../../core";
 import {
   modelGroups,
   parseRosterFile,
@@ -235,6 +235,29 @@ function weaponOf(p: RProfile): Omit<WeaponProfile, "id"> | undefined {
   };
 }
 
+const SPELL_KINDS: [RegExp, SpellKind][] = [
+  [/missile/i, "missile"],
+  [/vortex/i, "vortex"],
+  [/assail/i, "assailment"],
+  [/enchant|augment/i, "enchantment"],
+  [/hex|curse/i, "hex"],
+  [/convey|movement/i, "conveyance"],
+];
+
+/** A spell: a profile with a casting value. Its name, numbers and kind only, never its text. */
+function spellOf(p: RProfile): Spell | undefined {
+  const get = (re: RegExp) => p.chars.find((c) => re.test(c.name))?.value ?? "";
+  const cv = Number.parseInt(get(/casting\s*value|^cv$/i), 10);
+  if (!Number.isFinite(cv)) return undefined;
+  const range = Number.parseFloat(get(/range/i)) || 0;
+  const typed = `${get(/type|kind/i)} ${p.typeName}`;
+  const kind = SPELL_KINDS.find(([re]) => re.test(typed))?.[1] ?? "enchantment";
+  return { name: p.name.replace(/^\s*(➤|>|-)\s*/, "").trim(), cv, range, kind };
+}
+
+/** "Level 2 Wizard", "Wizard (Level 3)": the level, from a selection or rule name. */
+export const WIZARD_RE = /level\s*(\d)\s*wizard|wizard\s*\(?\s*level\s*(\d)/i;
+
 function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   // Mounts and crew are their own selection types in the community catalogues.
   const mountNodes = nodesOfType(sel, "mount");
@@ -348,9 +371,19 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   const carried: string[] = [];
   let points = 0;
   const keywords: string[] = [];
+  const spells: Spell[] = [];
+  let wizard = 0;
   walk(sel, (n) => {
     points += n.pts;
+    for (const name of [n.name, ...n.rules.map((r) => r.name)]) {
+      const m = WIZARD_RE.exec(name);
+      if (m) wizard = Math.max(wizard, Number(m[1] ?? m[2]));
+    }
     for (const p of n.profiles) {
+      const spell = spellOf(p);
+      // A spell's text (the player's own) still shows on the unit card.
+      if (spell && !spells.some((s) => s.name === spell.name))
+        spells.push(/\blore\b/i.test(n.name) ? { ...spell, lore: n.name } : spell);
       // Stat lines, the unit's troop type and size, bases and command are read elsewhere.
       if (isStatProfile(p) || /^(unit|base|command)$/i.test(p.typeName)) continue;
       const w = weaponOf(p);
@@ -397,7 +430,13 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
 
   const unit: ImportedUnit = {
     name: sel.name,
-    sheet: { weapons, abilities, keywords, ...(points > 0 ? { points } : {}) },
+    sheet: {
+      weapons,
+      abilities,
+      keywords,
+      ...(points > 0 ? { points } : {}),
+      ...(wizard || spells.length ? { wizard: wizard || 1, spells } : {}),
+    },
     models,
     base: baseOf(sel, mountNodes, troop),
   };

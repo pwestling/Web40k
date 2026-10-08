@@ -1,0 +1,45 @@
+{
+  "about": "Invented spells for trying Open Battle's rank-and-flank magic. Names and numbers are made up.",
+  "spells": [
+    {
+      "name": "Spark Lance",
+      "lore": "Hedge",
+      "cv": 8,
+      "range": 18,
+      "kind": "missile",
+      "hits": "D6",
+      "strength": 4
+    },
+    { "name": "Ward of Thorns", "lore": "Hedge", "cv": 7, "range": 12, "kind": "enchantment" },
+    { "name": "Mire Step", "lore": "Hedge", "cv": 6, "range": 12, "kind": "conveyance" },
+    {
+      "name": "Bone Hail",
+      "lore": "Bone",
+      "cv": 7,
+      "range": 18,
+      "kind": "missile",
+      "hits": "D6",
+      "strength": 3
+    },
+    { "name": "Leaden Limbs", "lore": "Bone", "cv": 8, "range": 18, "kind": "hex", "remains": true },
+    {
+      "name": "Gnashing Maw",
+      "lore": "Bone",
+      "cv": 6,
+      "range": 1,
+      "kind": "assailment",
+      "hits": "2D6",
+      "strength": 3
+    },
+    {
+      "name": "Whirling Ash",
+      "lore": "Ash",
+      "cv": 10,
+      "range": 24,
+      "kind": "vortex",
+      "hits": "2D6",
+      "strength": 5,
+      "ap": 1
+    }
+  ]
+}

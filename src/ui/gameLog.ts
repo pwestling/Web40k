@@ -595,6 +595,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (event.key === "fleeing")
         return event.value ? `${unitName(event.id)} is fleeing` : `${unitName(event.id)} rallied`;
       if (event.key === "lastFiles") return "";
+      if (event.key.startsWith("spell:"))
+        return event.value
+          ? `${unitName(event.id)} is under ${event.key.slice(6)}`
+          : `${event.key.slice(6)} on ${unitName(event.id)} ended`;
       // An override from the Table warnings panel (src/ui/warnings.ts).
       if (event.key.startsWith("ok."))
         return event.value === null

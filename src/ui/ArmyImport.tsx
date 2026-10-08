@@ -12,6 +12,7 @@ import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
 import { useStore } from "../store";
 import { DicePicker } from "./DicePicker";
+import { addSpells, importedWizard, parseSpellList } from "../systems/tow/spells";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
 const BASES: { label: string; base: BaseShape }[] = [
@@ -157,6 +158,22 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     setRoster({ ...roster, units });
   };
 
+  // Rank-and-flank magic (#32): the player's own spell list, for the roster's wizards.
+  const [spellNote, setSpellNote] = useState<string[]>([]);
+  const wizards = roster?.units.filter((u) => importedWizard(u) > 0).length ?? 0;
+  const loadSpells = async (file: File) => {
+    if (!roster) return;
+    const { spells, problems } = parseSpellList(await file.text());
+    const added = addSpells(roster, spells);
+    setRoster(added.roster);
+    setSpellNote([
+      ...(spells.length
+        ? [`${spells.length} spells read for ${added.wizards} ${added.wizards === 1 ? "wizard" : "wizards"}.`]
+        : []),
+      ...problems,
+    ]);
+  };
+
   const ownerSeat = players.find((p) => p.id === owner)?.seat ?? 0;
 
   return (
@@ -266,6 +283,14 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                       <td>
                         {u.name}
                         {details(u) && <div className="muted small">{details(u)}</div>}
+                        {importedWizard(u) > 0 && (
+                          <div className="muted small">
+                            Level {importedWizard(u)} wizard:{" "}
+                            {u.sheet.spells?.length
+                              ? u.sheet.spells.map((sp) => sp.name).join(", ")
+                              : "no spells yet"}
+                          </div>
+                        )}
                       </td>
                       <td>{u.sheet.points ?? "–"}</td>
                       {ranked && <td className="small">{troopType(u)}</td>}
@@ -385,6 +410,26 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 : "Bases are a guess from keywords and wounds"}
               ; check them against your models.
             </p>
+            {ranked && wizards > 0 && (
+              <div className="row wrap">
+                <label
+                  className="file button"
+                  title="A spell list file: names, casting values, ranges and kinds"
+                >
+                  Add spells from a list
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={(e) => e.target.files?.[0] && void loadSpells(e.target.files[0])}
+                  />
+                </label>
+                {spellNote.map((n) => (
+                  <span key={n} className="muted small">
+                    {n}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="row">
               <button className="primary" disabled={!roster.units.length} onClick={deploy}>
                 Deploy for {players.find((p) => p.id === owner)?.name}

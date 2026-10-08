@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addSpells, parseSpellList } from "./spells";
 import { importTowRoster, unitStrengthFor } from "./roster";
 
 // All names and numbers below are invented test data.
@@ -159,6 +160,17 @@ const CATALOGUE_SHAPE = `<roster name="Shape"><forces><force><selections>
             <selections><selection name="Tusker" type="mount"><profiles>${prof("Tusker", "Model", line("7 3 - 5 - - 2 4 -"))}</profiles></selection></selections>
           </selection>
           <selection name="Cart Crew" type="crew"><profiles>${prof("Cart Crew", "Model", line("- 4 3 3 - - 3 1 7"))}</profiles></selection>
+          <selection name="Level 2 Wizard" type="upgrade" />
+          <selection name="Lore of Herds" type="upgrade"><profiles>${prof("Stampede", "Spell", [
+            ["Casting Value", "9+"],
+            ["Range", '24"'],
+            ["Type", "Magic Missile"],
+            ["Effect", "x"],
+          ])}${prof("Thick Hide", "Spell", [
+            ["Casting Value", "7+"],
+            ["Range", "Self"],
+            ["Type", "Enchantment"],
+          ])}</profiles></selection>
         </selections>
       </selection>
     </selections>
@@ -199,10 +211,25 @@ describe("Old World roster import, catalogue shape", async () => {
       Troop: "Heavy Chariot",
     });
     expect(priest!.base).toEqual({ shape: "rect", widthMm: 50, depthMm: 100 });
-    expect(priest!.sheet.abilities.map((a) => a.name)).toEqual(["Tusk Cart", "Tusker", "Cart Crew"]);
+    expect(priest!.sheet.abilities.map((a) => a.name)).toEqual([
+      "Tusk Cart",
+      "Tusker",
+      "Cart Crew",
+      "Stampede",
+      "Thick Hide",
+    ]);
     // "W (+4)": the chariot adds its Wounds, the higher Toughness counts, and a heavy chariot is US 5.
     const c = priest!.models[0]!.profile.chars;
     expect([c.W, c.T, c.US]).toEqual(["6", "5", "5"]);
+  });
+
+  it("reads a wizard's level and spells: names, casting values, ranges and kinds", () => {
+    expect(priest!.sheet.wizard).toBe(2);
+    expect(priest!.sheet.spells).toEqual([
+      { name: "Stampede", cv: 9, range: 24, kind: "missile", lore: "Lore of Herds" },
+      { name: "Thick Hide", cv: 7, range: 0, kind: "enchantment", lore: "Lore of Herds" },
+    ]);
+    expect(herd!.sheet.spells).toBeUndefined();
   });
 
   it("takes command models from Command profiles, not magic standards or a Battle Standard Bearer", () => {
@@ -222,5 +249,33 @@ describe("skills a model doesn't have", () => {
     const roster = await importTowRoster("b.ros", new TextEncoder().encode(xml));
     const chars = roster.units[0]!.models[0]!.profile.chars;
     expect([chars.WS, chars.BS, chars.S]).toEqual(["4", "-", "6"]);
+  });
+});
+
+describe("Old World spell lists", async () => {
+  const roster = await importTowRoster("shape.ros", new TextEncoder().encode(CATALOGUE_SHAPE));
+  const list = JSON.stringify({
+    spells: [
+      { name: "Stampede", cv: 9, range: 24, kind: "missile", hits: "D6", strength: 4, lore: "Lore of Herds" },
+      { name: "Horn Call", cv: 6, range: 12, kind: "conveyance", lore: "Lore of Herds" },
+      { name: "Ember", cv: 7, range: 18, kind: "missile", lore: "Lore of Fire" },
+      { name: "", cv: 5, range: 6, kind: "hex" },
+      { name: "Odd", cv: 5, range: 6, kind: "song" },
+    ],
+  });
+
+  it("reads the player's spells and says what it left out", () => {
+    const { spells, problems } = parseSpellList(list);
+    expect(spells.map((s) => s.name)).toEqual(["Stampede", "Horn Call", "Ember"]);
+    expect(spells[0]).toMatchObject({ hits: "D6", strength: 4 });
+    expect(problems).toHaveLength(2);
+    expect(parseSpellList("nope").problems[0]).toMatch(/JSON/);
+  });
+
+  it("gives each wizard its own lore's spells, keeping those it knows", () => {
+    const { roster: out, wizards } = addSpells(roster, parseSpellList(list).spells);
+    expect(wizards).toBe(1);
+    expect(out.units[0]!.sheet.spells!.map((s) => s.name)).toEqual(["Stampede", "Thick Hide", "Horn Call"]);
+    expect(out.units[1]!.sheet.spells).toBeUndefined();
   });
 });

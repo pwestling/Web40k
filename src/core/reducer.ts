@@ -542,6 +542,10 @@ function mergeSheets(a: UnitSheet | undefined, b: UnitSheet | undefined): UnitSh
     abilities: [...(a?.abilities ?? []), ...(b?.abilities ?? []).filter((x) => !names.has(x.name))],
     keywords: [...new Set([...(a?.keywords ?? []), ...(b?.keywords ?? [])])],
     ...(a?.points || b?.points ? { points: (a?.points ?? 0) + (b?.points ?? 0) } : {}),
+    ...(a?.wizard || b?.wizard ? { wizard: Math.max(a?.wizard ?? 0, b?.wizard ?? 0) } : {}),
+    ...(a?.spells?.length || b?.spells?.length
+      ? { spells: [...(a?.spells ?? []), ...(b?.spells ?? [])] }
+      : {}),
   };
 }
 
