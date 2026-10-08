@@ -4,6 +4,7 @@ import {
   sha256Hex,
   stateAt,
   stateHash,
+  type GameEvent,
   type GameRecord,
   type GameState,
   type Intent,
@@ -55,6 +56,8 @@ export interface SoakOptions {
   drift?: number;
   /** Confirm every ability the system can play for you (40k #38) once the armies are down. */
   automate?: boolean;
+  /** Start the armies this many inches nearer the middle (a scenario that wants fighting early). */
+  closeIn?: number;
   /** Other armies than the system's samples (a scenario's), by seat. */
   armies?: (seat: 0 | 1) => ReturnType<ReturnType<typeof systemModule>["sample"]>;
   /**
@@ -62,7 +65,7 @@ export interface SoakOptions {
    * host's table (e.g. "damage re-rolled"). The report counts them, so a
    * scenario can check a closed rules gap really came up and stays fixed.
    */
-  watch?: (s: GameState) => string[];
+  watch?: (s: GameState, events: GameEvent[]) => string[];
 }
 
 export interface SoakReport {
@@ -217,6 +220,19 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       );
       for (const i of spawnIntents(room.host()!.current, id, units, `${id}-${seed}`, "sample")) as(id, i);
     }
+    if (opts.closeIn) {
+      // Each side steps towards the middle line, stopping 3" short of it.
+      const st = room.host()!.current;
+      const moves = Object.values(st.models).map((m) => {
+        const dy = Math.sign(m.position.y) * Math.min(opts.closeIn!, Math.max(0, Math.abs(m.position.y) - 3));
+        return { id: m.id, to: { x: m.position.x, y: m.position.y - dy } };
+      });
+      for (const p of new Set(Object.values(st.units).map((u) => u.owner)))
+        as(p, {
+          type: "models/move",
+          moves: moves.filter((mv) => st.units[st.models[mv.id]!.unitId ?? ""]?.owner === p),
+        });
+    }
     if (opts.automate && mod.recognizeAbility) {
       const rules = gameModule(system)!.system;
       for (const u of Object.values(room.host()!.current.units))
@@ -249,6 +265,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
 
     let mark = "";
     let stuck = 0;
+    const followUps: BotMove[] = [];
     for (; steps < maxSteps; steps++) {
       clock++;
       // Peers coming back.
@@ -325,9 +342,10 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
         fail(
           `the host dropped a legal ${move.intent.type} from ${move.as}: ${JSON.stringify(move.intent).slice(0, 200)}`,
         );
-      // A move that goes with it (a charge's move into contact).
-      if (move.then && room.host()) {
-        room.send(move.then);
+      // A move that goes with it (a charge's move into contact), once any question it raised is answered.
+      if (move.then) followUps.push(move.then);
+      if (followUps.length && room.host() && !room.host()!.current.script?.waiting) {
+        for (const f of followUps.splice(0)) room.send(f);
         if (engine) await sleep(0);
         if (errors.length) fail(errors[0]!);
       }
@@ -340,7 +358,14 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
         .join()}`;
       ctx.idle = m === mark ? ctx.idle + 1 : 0;
       mark = m;
-      if (opts.watch) for (const tag of new Set(opts.watch(s))) seen[tag] = (seen[tag] ?? 0) + 1;
+      if (opts.watch) {
+        // The events this move logged, for probes that read the log (notes from code procedures).
+        const fresh = room
+          .host()!
+          .log.events.filter((e) => e.seq > before)
+          .map((e) => e.event);
+        for (const tag of new Set(opts.watch(s, fresh))) seen[tag] = (seen[tag] ?? 0) + 1;
+      }
       lockstep(steps % 25 === 0, steps % 250 === 0);
     }
     await settle();

@@ -338,6 +338,8 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     as: u.owner,
     kind: "endActivation",
   }));
+  // Units in contact fight before the phase moves on (code actions such as The Old World's).
+  if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) yield* codeMoves(state, ctx, units);
   const r = ctx.rng();
   if (r < 0.6) yield* actions();
   else if (r < 0.75) yield* codeMoves(state, ctx, units);
@@ -442,7 +444,7 @@ function* codeMoves(state: GameState, ctx: BotContext, units: Unit[]): Generator
       if (r.available !== true) continue;
       const target = pick(ctx.rng, r.targets)?.unitId;
       if (r.targeted && !target) continue;
-      yield {
+      const move: BotMove = {
         intent: {
           type: "script/start",
           procedure: r.id,
@@ -451,6 +453,8 @@ function* codeMoves(state: GameState, ctx: BotContext, units: Unit[]): Generator
         as: u.owner,
         kind: `code:${r.id}`,
       };
+      // A declared charge (The Old World) goes on into contact with its target.
+      yield /charge/i.test(r.id) && target ? { ...move, then: chargeMove(state, u, ctx, 24, target) } : move;
     }
   }
 }
@@ -497,7 +501,7 @@ function moveUnit(state: GameState, u: Unit, ctx: BotContext, inches: number): B
 }
 
 /** Straight at the nearest enemy unit, stopping in base contact or after `inches`. */
-function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number): BotMove {
+function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number, targetId?: string): BotMove {
   const ms = aliveModels(state, u);
   const cx = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;
   const cy = ms.reduce((a, m) => a + m.position.y, 0) / ms.length;
@@ -505,6 +509,7 @@ function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number):
   let gap = Infinity;
   for (const e of Object.values(state.units)) {
     if (!opposed(state, e.owner, u.owner) || !alive(state, e)) continue;
+    if (targetId && e.id !== targetId) continue;
     const g = unitDistance(ms, aliveModels(state, e));
     if (g < gap) [foe, gap] = [e, g];
   }

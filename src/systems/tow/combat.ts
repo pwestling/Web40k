@@ -12,6 +12,8 @@ import {
   hates,
   immune,
   isGeneral,
+  stubborn,
+  unbreakable,
 } from "./specialRules";
 
 /**
@@ -23,10 +25,12 @@ import {
  * Checked against the community rules index (tow.whfb.app, 2026-10-07): the
  * Weapon Skill chart, charging Initiative, combat result bonuses, the three
  * break test outcomes, Panic, flee and fall back rolls, restraint, Stand &
- * Shoot (range and -1 to hit) and the shooting to-hit modifiers. Not covered:
- * high ground, overkill, special rules (Stubborn, Unbreakable...), and
- * supporting attacks assume every second-rank model may make one. Every
- * result is advisory and lands in the log.
+ * Shoot (range and -1 to hit) and the shooting to-hit modifiers; combat order
+ * (+1 at Unit Strength 10+), the high ground (+1 for a fighting rank standing
+ * higher), Stubborn (the first break test falls back in good order) and
+ * Unbreakable (no break test, it gives ground) (#40). Not covered: overkill
+ * (challenges), and supporting attacks assume every second-rank model may
+ * make one. Every result is advisory and lands in the log.
  *
  * Psychology (roadmap #32), by special rule name, from general knowledge of
  * the game and unverified: the General's Leadership within 12" (Inspiring
@@ -116,6 +120,29 @@ function ldLabel(state: GameState, u: Unit): string {
 function rankBonus(state: GameState, u: Unit): number {
   const ranks = rankCount(state, u, towRanks(state, u).width);
   return Math.min(Math.max(0, ranks - 1), towRanks(state, u).maxBonus);
+}
+
+/**
+ * Combat order: a close-order block at least as wide as it is deep. With Unit
+ * Strength 10 or more it adds +1 to the combat result (rules index).
+ */
+function combatOrder(state: GameState, u: Unit): boolean {
+  if (u.formation.kind !== "ranked") return false;
+  const order = u.formation.order ?? "close";
+  if (order !== "close") return false;
+  const files = u.formation.files;
+  return files >= Math.ceil(alive(state, u).length / Math.max(1, files));
+}
+
+/** How much higher one fighting rank must stand to hold the high ground, in inches. */
+const HIGH_GROUND = 0.5;
+
+/** The average height of a block's front rank (models stand at their floor's height). */
+function frontHeight(state: GameState, u: Unit): number {
+  const ms = alive(state, u);
+  const files = u.formation.kind === "ranked" ? u.formation.files : ms.length;
+  const front = ms.slice(0, Math.max(1, files));
+  return front.reduce((t, m) => t + (m.z ?? 0), 0) / Math.max(1, front.length);
 }
 
 const hasStandard = (state: GameState, u: Unit) =>
@@ -467,6 +494,8 @@ export const combat: CodeProcedure = function* (ctx, args) {
     if (hasStandard(state, u)) add(1, "standard +1");
     if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? "")))
       add(1, "battle standard +1");
+    if (combatOrder(state, u) && strength(u) >= 10) add(1, "combat order +1");
+    if (frontHeight(state, u) > frontHeight(state, other) + HIGH_GROUND) add(1, "high ground +1");
     const arc = inArc(state, other, u);
     if (arc === "rear") add(2, "rear +2");
     else if (arc === "left" || arc === "right") add(1, "flank +1");
@@ -503,6 +532,23 @@ export const combat: CodeProcedure = function* (ctx, args) {
   }
   if (!alive(ctx.view.state, lost).length) return;
 
+  // Unbreakable: no break test, it gives ground. Stubborn: its first break test is a fall back in good order.
+  const won0 = unitOf(ctx.view, winner.id);
+  const stubbornFirst = stubborn(lost) && !lost.status?.stubbornUsed;
+  if (unbreakable(lost) || stubbornFirst) {
+    let fled: "" | "falls back" = "";
+    if (unbreakable(lost)) {
+      yield* moveAway(ctx, lost, won0, GIVE_GROUND, false);
+      yield ctx.note(`${lost.name} is Unbreakable: no break test, it gives ground ${GIVE_GROUND}"`);
+    } else {
+      yield ctx.emit({ type: "unit/status", id: lost.id, key: "stubbornUsed", value: true });
+      yield* fallBack(ctx, lost, won0, "is Stubborn: its first break test, it falls back in good order");
+      fled = "falls back";
+    }
+    yield* afterBreak(ctx, winner, loser, fled);
+    return;
+  }
+
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
@@ -527,6 +573,18 @@ export const combat: CodeProcedure = function* (ctx, args) {
     );
   }
 
+  yield* afterBreak(ctx, winner, loser, fled);
+};
+
+/** The winner follows up or pursues, unless it restrains. */
+function* afterBreak(
+  ctx: Ctx,
+  winner: Unit,
+  loser: Unit,
+  fled: "" | "flees" | "falls back",
+): Generator<Command, void, unknown> {
+  const won = unitOf(ctx.view, winner.id);
+  const lost = unitOf(ctx.view, loser.id);
   // Frenzied and hating units can't hold back.
   const eager = frenzied(won) ? "Frenzy" : hates(won) ? "Hatred" : "";
   if (eager) yield ctx.note(`${winner.name} must ${fled ? "pursue" : "follow up"} (${eager})`);
@@ -551,7 +609,7 @@ export const combat: CodeProcedure = function* (ctx, args) {
     yield ctx.note(`${winner.name} fails to restrain (rolled ${t.roll.total})`);
   }
   yield* pursue(ctx, winner.id, loser.id, fled);
-};
+}
 
 /**
  * The winner goes after the loser. Following up (the loser gave ground) keeps

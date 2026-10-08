@@ -49,5 +49,8 @@ proposal.
 - `unit/automate {id, ability, auto | null}` switches one ability; only the
   unit's owner can send it.
 
-Re-rolls of damage rolls and save modifiers are not read yet: the attack
-procedure has no hook for them.
+Damage re-rolls ("re-roll a Damage roll of 1", "re-roll the Damage roll"),
+"add 1 to the saving throw" on attacks against the unit, and "subtract 1 from
+the Damage characteristic of that attack" are read too (#40). The damage step
+re-rolls (each 1, or a roll below average), never goes below 1 (`minAmount`),
+and the save step takes a capped modifier. AP changes are not read yet.

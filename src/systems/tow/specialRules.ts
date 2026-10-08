@@ -18,6 +18,8 @@ export const causesFear = (u: Unit) => causesTerror(u) || hasRule(u, /\bfear\b/i
 export const frenzied = (u: Unit) => hasRule(u, /\bfrenzy\b/i) && !u.status?.frenzyLost;
 export const hates = (u: Unit) => hasRule(u, /\bhatred\b/i);
 export const stupid = (u: Unit) => hasRule(u, /\bstupidity\b/i);
+export const stubborn = (u: Unit) => hasRule(u, /\bstubborn\b/i);
+export const unbreakable = (u: Unit) => hasRule(u, /\bunbreakable\b/i);
 /** Immune to Psychology; frenzied units are too while their frenzy lasts. */
 export const immune = (u: Unit) => hasRule(u, /immune to psychology/i) || frenzied(u);
 

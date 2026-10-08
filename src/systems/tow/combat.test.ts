@@ -46,6 +46,58 @@ describe("The Old World combat as code", () => {
     );
   });
 
+  it("adds combat order and the high ground; Stubborn and Unbreakable don't take break tests (#40)", () => {
+    const withRule = (t: ReturnType<typeof setup>["t"], id: string, name: string) => {
+      const u = t.s.units[id]!;
+      t.s = {
+        ...t.s,
+        units: { ...t.s.units, [id]: { ...u, sheet: { ...u.sheet!, abilities: [{ name, text: "" }] } } },
+      };
+      t.states.set(t.s.seq, t.s);
+    };
+    const fight = (rule: string | null, seed: number) => {
+      const { t, spears, warband } = setup();
+      if (rule) {
+        withRule(t, spears, rule);
+        withRule(t, warband, rule);
+      }
+      // The spears' front rank stands a little higher (on a hill's crest).
+      const models = { ...t.s.models };
+      for (const id of t.s.units[spears]!.modelIds) models[id] = { ...models[id]!, z: 1 };
+      t.s = { ...t.s, models };
+      t.states.set(t.s.seq, t.s);
+      toPhase(t, "combat");
+      t.play(
+        { type: "script/start", procedure: "combat", args: { unit: spears, target: warband } },
+        "p1",
+        seed,
+      );
+      if (t.s.script?.waiting)
+        t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player, 4);
+      return { t, spears, warband };
+    };
+    const plain = fight(null, 3);
+    const result = plain.t.notes().find((n) => n.startsWith("Combat result:"))!;
+    expect(result).toMatch(/Marchwarden Spears \d+ \([^)]*high ground \+1/);
+    // Unit Strength 10 or more in a block at least as wide as deep.
+    expect(result).toMatch(/combat order \+1/);
+    let unbroken = 0;
+    let stubborn = 0;
+    for (let seed = 1; seed < 12; seed++) {
+      const u = fight("Unbreakable", seed).t.notes();
+      if (u.some((n) => /is Unbreakable: no break test, it gives ground/.test(n))) unbroken++;
+      expect(u.some((n) => /break test/.test(n) && /rolled/.test(n))).toBe(false);
+      const st = fight("Stubborn", seed);
+      if (st.t.notes().some((n) => /is Stubborn/.test(n))) {
+        stubborn++;
+        const lost = [st.spears, st.warband].find((id) => st.t.s.units[id]!.status?.stubbornUsed);
+        expect(lost).toBeTruthy();
+      }
+    }
+    expect(unbroken).toBeGreaterThan(0);
+    expect(stubborn).toBeGreaterThan(0);
+  });
+
   it("charging adds +1 Initiative per full inch, up to +3 into the front", () => {
     const { t, spears, warband } = setup();
     // Pull the warband back 2.5" so the charge has distance, declare, then close in.
