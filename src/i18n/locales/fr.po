@@ -7540,7 +7540,17 @@ msgstr "Plus gros retournement : {title} : {result}"
 msgid "vs"
 msgstr "contre"
 
-#: src/ui/SandboxNotice.tsx:12
+#: src/ui/SandboxNotice.tsx:25
+#, fuzzy
+msgid "Retry"
+msgstr "Réessayer"
+
+#: src/ui/SandboxNotice.tsx:31
+#, fuzzy
+msgid "The game's rules are still loading."
+msgstr "Les règles du jeu sont encore en cours de chargement."
+
+#: src/ui/SandboxNotice.tsx:38
 #, fuzzy
 msgid "Dismiss"
 msgstr "Fermer"

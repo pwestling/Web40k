@@ -177,12 +177,36 @@ function packageMission(m: ProvidedMission): Mission {
   };
 }
 
+/** The packages the game wants running, and whether they've been started again after stopping. */
+let wantedNow: { hash: string; source: string }[] | null = null;
+let retried = false;
+
 function stop(why: string) {
   unload();
   sandbox = null;
   sent = null;
   setIntentRouter(null);
+  // Trusted packages get a second start before their rules are off: a busy page (a slow device
+  // loading the table) can starve the first (PX playtest of Rift Lanterns, item 7).
+  if (wantedNow && !retried) {
+    retried = true;
+    console.warn(`Rules sandbox stopped (${why}); starting it again`);
+    void start(wantedNow);
+    return;
+  }
   useSandbox.setState({ status: "stopped", error: why, code: {}, rows: {} });
+}
+
+/** Start the game's rules packages again, after they stopped (the notice's Retry). */
+export function retrySandbox(): void {
+  if (!wantedNow) return;
+  generation++;
+  sandbox?.stop();
+  unload();
+  sandbox = null;
+  sent = null;
+  retried = false;
+  void start(wantedNow);
 }
 
 /** Bumped when a start is cancelled (the packages changed, or the game screen went), so a start still loading stops itself. */
@@ -246,8 +270,11 @@ export function usePackageSandbox(): void {
   useEffect(() => {
     if (!key) return;
     const lib = useLibrary.getState().packages;
-    void start(key.split(",").map((hash) => ({ hash, source: lib[hash]!.source })));
+    wantedNow = key.split(",").map((hash) => ({ hash, source: lib[hash]!.source }));
+    retried = false;
+    void start(wantedNow);
     return () => {
+      wantedNow = null;
       generation++;
       sandbox?.stop();
       unload();

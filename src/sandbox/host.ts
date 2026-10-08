@@ -4,6 +4,13 @@ import type { FromSandbox, ToSandbox } from "./protocol";
 export const WATCHDOG_MS = 250;
 /** Loading packages and the first copy of the game get longer. */
 export const STARTUP_MS = 5000;
+/**
+ * Just after it starts, every call gets the startup allowance: the page is
+ * busiest then (the table and the army showcase loading, on a slow device
+ * software rendering), and a first game must not lose its rules to that
+ * (PX playtest of Rift Lanterns, item 7).
+ */
+export const WARMUP_MS = 15_000;
 
 /**
  * The iframe the worker starts in: no `allow-same-origin`, so it has an
@@ -27,7 +34,9 @@ onmessage = (e) => {
 type Pending = {
   resolve: (v: unknown) => void;
   reject: (e: Error) => void;
-  timer: ReturnType<typeof setTimeout>;
+  timeout: number;
+  /** Set once the call's watchdog is running: when every earlier call has been answered. */
+  timer: ReturnType<typeof setTimeout> | null;
 };
 
 /** The app's side of the package sandbox. */
@@ -35,6 +44,7 @@ export class Sandbox {
   private nextId = 1;
   private readonly pending = new Map<number, Pending>();
   private stopped = false;
+  private readonly startedAt = Date.now();
 
   private constructor(
     private readonly frame: HTMLIFrameElement,
@@ -46,10 +56,27 @@ export class Sandbox {
       const p = this.pending.get(m.id);
       if (!p) return;
       this.pending.delete(m.id);
-      clearTimeout(p.timer);
+      if (p.timer) clearTimeout(p.timer);
       if (m.t === "error") p.reject(new Error(m.error));
       else if (m.t === "ok") p.resolve(m.value);
+      this.watchNext();
     };
+  }
+
+  /**
+   * The worker answers in order, one call at a time, so a call's watchdog runs
+   * only once the calls before it are answered: a quick call queued behind a
+   * slow one (the first copy of the game) isn't blamed for the wait.
+   */
+  private watchNext(): void {
+    const [id, p] = this.pending.entries().next().value ?? [];
+    if (id === undefined || !p || p.timer) return;
+    const timeout = Date.now() - this.startedAt < WARMUP_MS ? Math.max(p.timeout, STARTUP_MS) : p.timeout;
+    p.timer = setTimeout(() => {
+      this.pending.delete(id);
+      p.reject(new Error(`A rules package didn't answer within ${timeout} ms`));
+      this.stop(`A rules package didn't answer within ${timeout} ms, so its rules are off.`);
+    }, timeout);
   }
 
   /** Start a sandbox running the bundled worker `source`; `onStop` hears why it stopped if it fails. */
@@ -84,13 +111,9 @@ export class Sandbox {
     if (this.stopped) return Promise.reject(new Error("The rules sandbox has stopped"));
     const id = this.nextId++;
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error(`A rules package didn't answer within ${timeout} ms`));
-        this.stop(`A rules package didn't answer within ${timeout} ms, so its rules are off.`);
-      }, timeout);
-      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer });
+      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timeout, timer: null });
       this.port.postMessage({ ...message, id });
+      this.watchNext();
     });
   }
 
@@ -101,7 +124,7 @@ export class Sandbox {
     this.frame.remove();
     this.port.close();
     for (const p of this.pending.values()) {
-      clearTimeout(p.timer);
+      if (p.timer) clearTimeout(p.timer);
       p.reject(new Error("The rules sandbox has stopped"));
     }
     this.pending.clear();
