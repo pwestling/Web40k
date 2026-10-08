@@ -25,7 +25,8 @@ export function App() {
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
-      void loadGame();
+      // The game screen first, then the 3D table behind it.
+      void loadGame().then((m) => m.loadBoard());
       void loadTrystero();
     });
   }, []);

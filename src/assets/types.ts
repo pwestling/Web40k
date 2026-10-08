@@ -103,3 +103,6 @@ export function assetBuffers(asset: ModelAsset): ArrayBuffer[] {
     (b): b is ArrayBuffer => b instanceof ArrayBuffer,
   );
 }
+
+/** The model files the importer reads (assets/parse.ts). Here, not there, so a file picker doesn't pull in three.js and its loaders. */
+export const MODEL_EXTENSIONS = [".glb", ".gltf", ".stl", ".obj", ".ply"];

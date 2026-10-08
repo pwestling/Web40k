@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Model, Unit } from "../core";
 import { bindingKey, restyleUnit, unitKeys, useAssets } from "../assets/store";
-import { MODEL_EXTENSIONS } from "../assets/parse";
+import { MODEL_EXTENSIONS } from "../assets/types";
 import { dressFromLibrary } from "../figures/actions";
 import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";

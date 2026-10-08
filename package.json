@@ -27,7 +27,8 @@
     "soak:browser": "node scripts/soak-browser.mjs",
     "smoke": "node scripts/smoke.mjs",
     "i18n": "node scripts/i18n.mjs",
-    "i18n:check": "node scripts/i18n.mjs --check"
+    "i18n:check": "node scripts/i18n.mjs --check",
+    "perf:phone": "node scripts/phone.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

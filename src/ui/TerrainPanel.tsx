@@ -27,7 +27,7 @@ import {
   useTableEdit,
 } from "../tables/edit";
 import { TableShelf } from "../tables/TableLibrary";
-import { SightlinesToggle } from "../tables/Sightlines";
+import { SightlinesToggle } from "../tables/SightlinesToggle";
 
 /** Rotate a terrain piece (and its group) by `deg` degrees (Q / E while editing). */
 export function rotateTerrain(id: string, deg: number) {

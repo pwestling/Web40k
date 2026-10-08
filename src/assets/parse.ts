@@ -13,7 +13,8 @@ export interface RawModel extends MeshData {
   sourceTexture?: [number, number];
 }
 
-export const MODEL_EXTENSIONS = [".glb", ".gltf", ".stl", ".obj", ".ply"];
+import { MODEL_EXTENSIONS } from "./types";
+export { MODEL_EXTENSIONS };
 
 /**
  * Read an uploaded model file into one triangle soup, y up, in the file's own

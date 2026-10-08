@@ -9,7 +9,7 @@ import { applyLayout, exportTable, importTableFile, saveTable } from "./actions"
 import { deploymentLine, modelsLine, useTables, type SavedTable } from "./library";
 import { starterLayout, starters } from "./starters";
 import { TableThumb } from "./TableThumb";
-import { SightlinesToggle } from "./Sightlines";
+import { SightlinesToggle } from "./SightlinesToggle";
 
 const systemName = (id: string) => {
   try {

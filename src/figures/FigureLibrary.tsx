@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { deleteStale, getCached, staleCached } from "../assets/cache";
-import { MODEL_EXTENSIONS } from "../assets/parse";
+import { MODEL_EXTENSIONS } from "../assets/types";
 import { useAssets } from "../assets/store";
 import type { AssetKind } from "../assets/types";
 import { useShelf } from "../packages/shelf";

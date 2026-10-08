@@ -5,9 +5,8 @@ import { TableWarningsPanel } from "./ui/TableWarnings";
 import { Announcer } from "./ui/Announcer";
 import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
-import { useEffect, Suspense } from "react";
+import { lazy, useEffect, Suspense } from "react";
 import { CompanionScreen } from "./companion/CompanionScreen";
-import { Board } from "./render/Board";
 import { t } from "./i18n";
 import { useStore } from "./store";
 import { useTalk } from "./talk/talk";
@@ -43,6 +42,10 @@ import { TopBar } from "./ui/TopBar";
 import { ReportBanner } from "./ui/Crash";
 import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
+
+/** three.js and the 3D table load on their own: the table companion (#37) never draws them. */
+export const loadBoard = () => import("./render/Board");
+const Board = lazy(() => loadBoard().then((m) => ({ default: m.Board })));
 
 /**
  * Keyboard: [ ] pick a unit, arrows move it, Enter opens its card; ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
@@ -243,7 +246,9 @@ export function GameScreen({ started }: { started: boolean }) {
   // The table is the front door's backdrop too; the panels come with a game.
   return (
     <>
-      <Board />
+      <Suspense fallback={null}>
+        <Board />
+      </Suspense>
       {started && BROADCAST ? (
         <BroadcastView />
       ) : started ? (
