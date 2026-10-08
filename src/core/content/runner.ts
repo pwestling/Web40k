@@ -68,6 +68,8 @@ export interface PoolPlan {
   count: string;
   /** Ids of the members counted (models in range), when the pool sums over some. */
   members?: string[];
+  /** Why this many (the step's `why`). */
+  why?: string;
 }
 
 export interface TestPlan {
@@ -653,7 +655,19 @@ function planStep(env: RunEnv, run: ProcedureRun, step: Step, scope: Record<stri
       if (!step.each) {
         const b = applyBefore(env, live, step, run, scope);
         const count = safeDice(step.count, ctxFor(env, b.scope));
-        return { plan: { kind: "pool", count }, fired: b.fired, reminders: b.reminders, scope: b.scope };
+        const why = step.why?.find((w) => {
+          try {
+            return w.if === undefined || bool(w.if, ctxFor(env, b.scope));
+          } catch {
+            return false;
+          }
+        })?.say;
+        return {
+          plan: { kind: "pool", count, ...(why ? { why } : {}) },
+          fired: b.fired,
+          reminders: b.reminders,
+          scope: b.scope,
+        };
       }
       const as = step.as ?? "it";
       const items = resolve(step.each, ctxFor(env, scope));

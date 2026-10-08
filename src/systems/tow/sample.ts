@@ -140,7 +140,16 @@ function marchwardens(): ImportedRoster {
         ],
       },
     ),
-    regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
+    regiment(
+      "Fen Bowmen",
+      15,
+      FOOT,
+      bow,
+      120,
+      [],
+      { name: "Longbow", range: 30, S: 3 },
+      { rules: ["Volley Fire"] },
+    ),
     regiment(
       "Riders of the Downs",
       6,

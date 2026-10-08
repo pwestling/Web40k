@@ -86,10 +86,13 @@ describe("The Old World shooting", () => {
         "shoot",
         procedureRoles(getSystem("tow-hand"), "shoot", bows.id, { weapon: "missile", targetId: warband.id }),
       );
-    // BS 3 within half range: 4+; the front rank of five shoots.
+    // BS 3 within half range: 4+; the front rank of five shoots, and Volley Fire adds 3 + 2 of the ranks behind.
     let p = plan(s);
     expect(p.plans.hit).toMatchObject({ target: 4 });
-    expect(p.plans.attacks).toMatchObject({ count: "5" });
+    expect(p.plans.attacks).toMatchObject({
+      count: "11",
+      why: "the front rank, and Volley Fire: half of each rank behind",
+    });
     // S3 against T3 wounds on 4+; no armour, no ward.
     expect(p.plans.wound).toMatchObject({ target: 4 });
     // Long range and having moved: 6+.
@@ -101,6 +104,8 @@ describe("The Old World shooting", () => {
     );
     p = plan(far);
     expect(p.plans.hit).toMatchObject({ target: 6 });
+    // Having moved: no Volley Fire, the front rank only (UX 332 names why).
+    expect(p.plans.attacks).toMatchObject({ count: "5", why: "the front rank" });
     expect(p.fired.hit).toEqual(["Long range", "Moved and shot"]);
   });
 

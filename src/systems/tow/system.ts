@@ -27,6 +27,23 @@ const shooting: Procedure = {
       kind: "pool",
       id: "attacks",
       count: { call: "shooters", args: [ref("attacker.id")] },
+      why: [
+        {
+          if: {
+            all: [
+              { call: "shootsOnHill", args: [ref("attacker.id")] },
+              { call: "shootsVolley", args: [ref("attacker.id")] },
+            ],
+          },
+          say: "two ranks on a hill, and Volley Fire: half of each rank behind",
+        },
+        {
+          if: { call: "shootsVolley", args: [ref("attacker.id")] },
+          say: "the front rank, and Volley Fire: half of each rank behind",
+        },
+        { if: { call: "shootsOnHill", args: [ref("attacker.id")] }, say: "two ranks: on a hill" },
+        { if: { call: "shootsRanked", args: [ref("attacker.id")] }, say: "the front rank" },
+      ],
     },
     {
       kind: "test",

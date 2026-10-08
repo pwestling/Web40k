@@ -38,7 +38,7 @@ export const lessons = [
         until: { phase: "shooting" },
       },
       {
-        say: "Your archers are selected. Press Shoot and pick an enemy in range, or press ▶ if nothing is close enough.",
+        say: "Your archers are selected. Normally only the front rank shoots, but these bowmen have Volley Fire: if they haven't moved this turn, half of each rank behind shoots over their heads too. Press Shoot and pick an enemy in range, or press ▶ if nothing is close enough.",
         show: { seat: 0, unit: 1 },
         until: { any: [{ did: "shoot" }, { phase: "combat" }] },
       },

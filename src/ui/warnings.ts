@@ -39,7 +39,16 @@ const NAMES: Record<string, () => string> = {
 };
 
 export function checkName(state: GameState, id: string): string {
-  return systemOf(state).checks?.find((c) => c.id === id)?.name ?? NAMES[id]?.() ?? id;
+  return systemOf(state).checks?.find((c) => c.id === id)?.name ?? NAMES[id]?.() ?? spelledOut(id);
+}
+
+/** A module check's id as words, "dangerousTerrain" as "Dangerous terrain" (UX 331). */
+function spelledOut(id: string): string {
+  const words = id
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /** Where a unit's models stand, as one number: an override lasts while it doesn't change. */

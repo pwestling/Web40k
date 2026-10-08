@@ -4,7 +4,7 @@ import { heavyLossesProcedure, towActions } from "./combat";
 import { magicActions } from "./magic";
 import { characterActions } from "./characters";
 import { itemActions } from "./items";
-import { shooters } from "./ranks";
+import { shooters, shootsOnHill, shootsRanked, shootsVolley } from "./ranks";
 import { terrainActions, terrainWarnings } from "./terrainTests";
 import { towHooks } from "./psychology";
 import type { SystemModule } from "../app";
@@ -23,7 +23,7 @@ export const towModule: GameModule<SystemModule> = {
   system: oldWorld,
   actions: [...towActions, ...magicActions, ...characterActions, ...itemActions, ...terrainActions],
   procedures: { heavyLosses: heavyLossesProcedure },
-  functions: { shooters },
+  functions: { shooters, shootsOnHill, shootsVolley, shootsRanked },
   checks: terrainWarnings,
   hooks: towHooks,
   app: {

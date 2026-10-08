@@ -300,7 +300,16 @@ export type StepKind =
    * with the item bound as `as` and filtered by `where` (in range). The items
    * kept are available to later steps as "step.<id>.members".
    */
-  | { kind: "pool"; id: Id; count: Expr; each?: Ref; as?: string; where?: Expr }
+  | {
+      kind: "pool";
+      id: Id;
+      count: Expr;
+      each?: Ref;
+      as?: string;
+      where?: Expr;
+      /** Why this many dice, shown with the count: the first line whose `if` holds ("two ranks: on a hill"). */
+      why?: { if?: Expr; say: string }[];
+    }
   /** Roll one die per input success and compare with a target number. */
   | {
       kind: "test";

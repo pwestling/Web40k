@@ -921,7 +921,10 @@ function label(id: string): string {
 
 function describePlan(plan: StepPlan | undefined): string | null {
   if (!plan) return null;
-  if (plan.kind === "pool") return t("{count} dice", { count: plan.count });
+  if (plan.kind === "pool")
+    return plan.why
+      ? t("{count} dice ({why})", { count: plan.count, why: plan.why })
+      : t("{count} dice", { count: plan.count });
   if (plan.kind === "damage") return t("{amount} each", { amount: plan.amount });
   if (plan.kind !== "test") return null;
   if (plan.skip) return t("skipped");

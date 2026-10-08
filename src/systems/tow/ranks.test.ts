@@ -25,6 +25,12 @@ describe("The Old World: shooting with more than one rank (#40)", () => {
     const { t } = setup();
     const bows = unitNamed(t.s, "Fen Bowmen").id;
     block(t, bows, -10, 5, 0);
+    // Without the sample bowmen's Volley Fire to begin with.
+    const plain = t.s.units[bows]!;
+    t.s = {
+      ...t.s,
+      units: { ...t.s.units, [bows]: { ...plain, sheet: { ...plain.sheet!, abilities: [] } } },
+    };
     const n = (opts = {}) => shooterCount(t.s, t.s.units[bows]!, opts);
     // 15 bowmen, 5 wide: three ranks.
     expect(n()).toBe(5);
