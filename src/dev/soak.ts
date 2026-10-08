@@ -19,13 +19,22 @@ import { systemOf } from "../core/content/turn";
 import { micOff, micOn, setMode, useVoice } from "../voice/voice";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 import { perf } from "./perf";
+import { gameId } from "../campaign/book";
+import { putNote, useNotes } from "../replay/notes";
 
 export const SOAK_SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd-1.7"];
 
 let ctx: BotContext = { rng: seededRng(1), kept: new Map() as Kept, idle: 0 };
 let mark = "";
 let timer: ReturnType<typeof setTimeout> | null = null;
-const stats = { games: 0, moves: 0, errors: [] as string[], system: "", lastMoveAt: 0 };
+const stats = {
+  games: 0,
+  moves: 0,
+  errors: [] as string[],
+  system: "",
+  lastMoveAt: 0,
+  reviewed: 0,
+};
 
 const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
 const me = () => useStore.getState().session?.selfId ?? "";
@@ -88,6 +97,12 @@ export const soakBrowser = {
       .getState()
       .start({ role, mode: "online", roomId, name: role === "host" ? "Soak A" : "Soak B", system });
     while (!useStore.getState().session) await frame();
+    // Chess clocks on, with round and game limits, so their ticking and time calls run too.
+    if (role === "host")
+      useStore.getState().dispatch({
+        type: "settings/set",
+        settings: { clock: { minutes: 60, roundMinutes: 15, gameMinutes: 150 } },
+      });
     if (role === "host" && system === "tow-hand")
       useStore.getState().dispatch({
         type: "game/packages",
@@ -142,7 +157,42 @@ export const soakBrowser = {
     soakBrowser.stop();
     micOff();
     useStore.getState().session?.leave();
-    useStore.setState({ session: null });
+    useStore.setState({ session: null, role: "host", scrub: null });
+  },
+  /**
+   * After a game: open its replay, annotate it (notes with arrows and areas,
+   * as a coach would) and step through it, then back to the lobby.
+   */
+  async review(notes = 12, stepMs = 400) {
+    const record = useStore.getState().record;
+    soakBrowser.leave();
+    useStore.getState().openReplay(record);
+    const id = gameId(record);
+    for (let i = 0; i < 300 && useNotes.getState().game !== id; i++) await frame();
+    const seqs = record.events.map((e) => e.seq);
+    const at = (k: number) => seqs[Math.floor((k / notes) * (seqs.length - 1))]!;
+    const { width, depth } = useStore.getState().game.table;
+    for (let k = 0; k < notes; k++) {
+      const p = () => ({ x: Math.random() * width, y: Math.random() * depth });
+      putNote({
+        id: `soak-${stats.games}-${k}`,
+        seq: at(k),
+        by: "Soak",
+        color: "#e11d48",
+        text: `Note ${k}: what went wrong here`,
+        marks: [
+          { kind: "arrow", from: p(), to: p() },
+          { kind: "area", at: p(), radius: 3 },
+        ],
+        at: Date.now(),
+      });
+    }
+    for (let k = 0; k < notes; k++) {
+      useStore.getState().setScrub(at(k));
+      await new Promise((r) => setTimeout(r, stepMs));
+    }
+    stats.reviewed++;
+    soakBrowser.leave();
   },
   stats() {
     const { record, game } = useStore.getState();

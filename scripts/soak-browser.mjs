@@ -6,6 +6,8 @@
 // nodes, listeners, frames and what the renderer holds. Results:
 // /mnt/project-files/perf/results.md.
 //
+// Chess clocks run in every game, and the host annotates each finished game's replay.
+//
 //   pnpm soak:browser -- --minutes 180 --sample 5 --out soak.jsonl [--dev-server]
 import { execFileSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, writeFileSync } from "node:fs";
@@ -19,7 +21,7 @@ const everyMs = Number(arg("--every", 300));
 const out = arg("--out", "soak-browser.jsonl");
 const PORT = 5196;
 const RELAY = 8797;
-const SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd"];
+const SYSTEMS = arg("--systems", "forty-k-11,tow-hand,conquest-hand,fsd").split(",");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const until = async (fn, ms) => {
   const end = Date.now() + ms;
@@ -158,6 +160,8 @@ try {
         const [h, g] = [await stats(host), await stats(guest)];
         if (h.over) {
           games.finished++;
+          // The host annotates the game's replay and steps through it before the next one.
+          await host.page.evaluate(() => window.openBattleSoak.review());
           break;
         }
         if (Math.min(h.quietMs, g.quietMs) > 90_000) {
