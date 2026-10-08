@@ -78,7 +78,12 @@ function momentFrame(record: GameRecord, m: Moment): { x: number; y: number; spa
     if (typeof e.id === "string" && state.models[e.id]) models.add(e.id);
   }
   for (const u of units) for (const id of state.units[u]?.modelIds ?? []) models.add(id);
-  const at = [...models].flatMap((id) => (state.models[id] ? [state.models[id]!.position] : []));
+  // Where they stood when it began: the fallen are moved off to a casualty pile by the end (PX share).
+  const start = stateAt(record, m.seq);
+  const at = [...models].flatMap((id) => {
+    const model = state.models[id]?.destroyed ? start.models[id] : state.models[id];
+    return model && !model.destroyed ? [model.position] : [];
+  });
   if (!at.length) return null;
   const x = at.reduce((n, p) => n + p.x, 0) / at.length;
   const y = at.reduce((n, p) => n + p.y, 0) / at.length;
@@ -108,7 +113,11 @@ async function saveRoundCard(round: number) {
   if (!summary) return;
   const from = rounds.find((r) => r.round === round - 1)?.seq ?? record.initial.seq;
   // What happened: the round's moments first (they read best), then its highlights.
-  const moments = momentsOf(record).filter((m) => m.round === round && m.kind !== "mvp");
+  // Moments that ended this round: a story that runs to the game's end (Last one standing) isn't round 1's (UX 56).
+  const moments = momentsOf(record).filter((m) => {
+    const done = Math.max(m.seq, m.end);
+    return m.kind !== "mvp" && done > from && done <= summary.seq;
+  });
   const marks = highlights.filter((h) => h.seq > from && h.seq <= summary.seq);
   const top = [...moments].sort((a, b) => b.score - a.score)[0];
   // Who lost models this round is part of what happened (UX 339), and the picture is on them when nothing stood out.

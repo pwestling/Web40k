@@ -80,7 +80,12 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
     // Until the canvas's pixels match its box (it is being resized), its frame is drawn small in a corner: skip it.
     if (!src.width || !r.width || Math.abs(src.width / src.height - r.width / r.height) > 0.02) return;
     // Cover the clip's frame with the table, keeping its middle; the overlays line up the same way.
-    const k = Math.max(width / r.width, height / r.height);
+    // A square or tall clip of a wide screen would crop the table's ends away (UX 356): it goes
+    // part way between covering and fitting, with dark bands for the caption and dice.
+    const cover = Math.max(width / r.width, height / r.height);
+    const fit = Math.min(width / r.width, height / r.height);
+    const narrow = Math.abs(width / height - r.width / r.height) > 0.2;
+    const k = narrow ? fit + (cover - fit) * 0.45 : cover;
     const dx = (width - r.width * k) / 2;
     const dy = (height - r.height * k) / 2;
     ctx.fillStyle = "#111318";
@@ -91,7 +96,7 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
       { left: r.left - dx / k, top: r.top - dy / k, scale: k },
       document,
       // Cropped from a screen of another shape, the tray would sit squeezed in a corner (UX 55).
-      Math.abs(width / height - r.width / r.height) > 0.2 ? { width, height } : undefined,
+      narrow ? { width, height, below: dy + r.height * k } : undefined,
     );
   });
 
@@ -122,7 +127,11 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
   recorder.start(1000);
   const began = performance.now();
 
+  // A tall clip stacks the caption (UX 356): its two columns would wrap word by word.
+  const narrowShape = width / height < 1.2;
+  if (narrowShape) document.body.classList.add("clip-narrow");
   const finish = () => {
+    document.body.classList.remove("clip-narrow");
     stopFrames();
     for (const t of tracks) t.stop();
     for (const s of sources) s.disconnect();

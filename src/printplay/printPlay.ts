@@ -1,4 +1,5 @@
 import { saveFile } from "../ui/files";
+import { t } from "../i18n";
 import { siteUrl } from "../share/site";
 import { figureHeight, figureImage } from "./figures";
 import { pdf, type PdfPage } from "./pdf";
@@ -33,6 +34,71 @@ const INK = "#1d1d1f";
 const MUTED = "#5f6168";
 
 type Ctx = CanvasRenderingContext2D;
+type Picture = HTMLImageElement | HTMLCanvasElement;
+
+/** Ink saver (UX 362): figures, bases and headers as outlines, no solid colour. Set for one run. */
+let inkSaver = false;
+
+/** A figure as an outline: white inside, a dark edge, a ghost of its shading. */
+function outlined(img: HTMLImageElement): HTMLCanvasElement {
+  const pad = 6;
+  const c = document.createElement("canvas");
+  c.width = img.width + 2 * pad;
+  c.height = img.height + 2 * pad;
+  const ctx = c.getContext("2d")!;
+  const mask = (color: string) => {
+    const m = document.createElement("canvas");
+    m.width = c.width;
+    m.height = c.height;
+    const mc = m.getContext("2d")!;
+    mc.drawImage(img, pad, pad);
+    mc.globalCompositeOperation = "source-in";
+    mc.fillStyle = color;
+    mc.fillRect(0, 0, m.width, m.height);
+    return m;
+  };
+  const edge = mask(INK);
+  const d = Math.max(2, Math.round(img.width / 120));
+  for (let a = 0; a < 16; a++)
+    ctx.drawImage(
+      edge,
+      Math.round(Math.cos((a * Math.PI) / 8) * d),
+      Math.round(Math.sin((a * Math.PI) / 8) * d),
+    );
+  ctx.drawImage(mask("#ffffff"), 0, 0);
+  ctx.globalAlpha = 0.22;
+  ctx.drawImage(img, pad, pad);
+  return c;
+}
+
+/** A figure's picture for the page, as an outline when saving ink. */
+async function figurePicture(src: string): Promise<Picture> {
+  const img = await load(src);
+  return inkSaver ? outlined(img) : img;
+}
+
+/** The 1" check: printed at 100% this line is an inch long. */
+function inchCheck(page: Page, x: number, y: number) {
+  const { ctx } = page;
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.35;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 1.5);
+  ctx.lineTo(x, y + 1.5);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + 25.4, y);
+  ctx.moveTo(x + 25.4, y - 1.5);
+  ctx.lineTo(x + 25.4, y + 1.5);
+  ctx.stroke();
+  page.font(6.5);
+  ctx.fillStyle = MUTED;
+  ctx.fillText(
+    'This line should measure 1" (25.4 mm). If not, print at 100% (actual size).',
+    x + 28,
+    y + 1.2,
+  );
+  ctx.fillStyle = INK;
+}
 
 /** A page being drawn, in millimetres. */
 class Page {
@@ -175,7 +241,8 @@ async function rulesPages(
     f.y,
   );
   ctx.fillStyle = INK;
-  f.y += 4;
+  inchCheck(f.page, MARGIN, f.y + 5);
+  f.y += 10;
   f.words(doc.intro, 10.5);
   for (const s of doc.sections) {
     f.heading(s.title);
@@ -243,14 +310,12 @@ function unitCard(
   y: number,
   a: RulebookDoc["armies"][number],
   u: RulebookUnit,
-  figure: HTMLImageElement | null,
+  figure: Picture | null,
   doc: RulebookDoc,
 ) {
   const { ctx } = page;
   cutMarks(ctx, x, y, CARD.width, CARD.height);
-  ctx.fillStyle = a.color;
-  ctx.fillRect(x, y, CARD.width, 11);
-  ctx.fillStyle = "#ffffff";
+  header(ctx, x, y, a.color, "#ffffff");
   page.font(11, 800);
   ctx.fillText(u.name, x + 3, y + 7.5, CARD.width - 6);
   ctx.fillStyle = INK;
@@ -309,17 +374,52 @@ function unitCard(
 }
 
 /** The quick-reference card, card-sized. */
+/** A card's title bar: filled, or outlined in its colour with the title in it when saving ink. */
+function header(ctx: Ctx, x: number, y: number, color: string, text: string) {
+  if (inkSaver) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(x + 0.3, y + 0.3, CARD.width - 0.6, 10.4);
+    ctx.fillStyle = color;
+  } else {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, CARD.width, 11);
+    ctx.fillStyle = text;
+  }
+}
+
 function quickCard(page: Page, x: number, y: number, doc: RulebookDoc) {
   const { ctx } = page;
   cutMarks(ctx, x, y, CARD.width, CARD.height);
-  ctx.fillStyle = "#26282e";
-  ctx.fillRect(x, y, CARD.width, 11);
-  ctx.fillStyle = "#ffd36b";
+  header(ctx, x, y, "#26282e", "#ffd36b");
   page.font(10, 800);
   ctx.fillText("Quick reference", x + 3, y + 7.5);
   ctx.fillStyle = INK;
   let yy = y + 16;
   for (const q of doc.quickRef) yy = rich(page, q, x + 3, yy, CARD.width - 6, 6.6, 1.25) + 0.8;
+}
+
+/** A mission on a card: what to set up and how it scores, for the table edge. */
+function missionCard(page: Page, x: number, y: number, doc: RulebookDoc, m: RulebookDoc["missions"][number]) {
+  const { ctx } = page;
+  cutMarks(ctx, x, y, CARD.width, CARD.height);
+  header(ctx, x, y, "#7a5a12", "#ffffff");
+  page.font(10, 800);
+  ctx.fillText(m.name, x + 3, y + 7.5, CARD.width - 6);
+  ctx.fillStyle = MUTED;
+  page.font(6.5);
+  ctx.fillText(`Mission · ${doc.name}`, x + 3, y + 15);
+  ctx.fillStyle = INK;
+  const yy = rich(page, m.summary, x + 3, y + 21, CARD.width - 6, 7.2, 1.3) + 1.5;
+  rich(
+    page,
+    `**Deploy:** a strip ${deployDepth(doc)}" deep along your long edge. **Lanterns:** ${m.objectives.length}, as on the map.`,
+    x + 3,
+    yy,
+    CARD.width - 6,
+    6.6,
+    1.25,
+  );
 }
 
 async function cardPages(
@@ -334,19 +434,22 @@ async function cardPages(
   const slots: ((page: Page, x: number, y: number) => void)[] = [];
   for (const a of doc.armies)
     for (const u of a.units) {
-      let figure: HTMLImageElement | null = null;
+      let figure: Picture | null = null;
       try {
-        figure = await load(figureImage(u, a.color, { px: 160 }));
+        figure = await figurePicture(figureImage(u, a.color, { px: 160 }));
       } catch {
         // No WebGL: the card does without its picture.
       }
       slots.push((p, x, y) => unitCard(p, x, y, a, u, figure, doc));
     }
-  // A quick-reference card for each player.
+  // A quick-reference card for each player, and each mission on a card (PX: no half-empty page).
   slots.push(
     (p, x, y) => quickCard(p, x, y, doc),
     (p, x, y) => quickCard(p, x, y, doc),
+    ...doc.missions.map((m) => (p: Page, x: number, y: number) => missionCard(p, x, y, doc, m)),
   );
+  // The last page's spare places: more quick references, one for the table edge.
+  while (slots.length % (cols * rows)) slots.push((p, x, y) => quickCard(p, x, y, doc));
   const pages: Page[] = [];
   slots.forEach((draw, i) => {
     const at = i % (cols * rows);
@@ -362,12 +465,14 @@ async function cardPages(
   return pages;
 }
 
-/** A ruler strip in inches, `inches` long. */
-function ruler(page: Page, x: number, y: number, inches: number, label: string) {
+/** A ruler strip in inches, `inches` long, numbered from `from` (the second half of a 12" ruler starts at 6). */
+function ruler(page: Page, x: number, y: number, inches: number, label: string, from = 0) {
   const { ctx } = page;
   const w = inches * 25.4;
-  ctx.fillStyle = "#fff8e6";
-  ctx.fillRect(x, y, w, 9);
+  if (!inkSaver) {
+    ctx.fillStyle = "#fff8e6";
+    ctx.fillRect(x, y, w, 9);
+  }
   cutMarks(ctx, x, y, w, 9);
   ctx.strokeStyle = INK;
   ctx.lineWidth = 0.25;
@@ -383,13 +488,14 @@ function ruler(page: Page, x: number, y: number, inches: number, label: string) 
       page.font(6, 700);
       ctx.fillStyle = INK;
       ctx.textAlign = "center";
-      ctx.fillText(String(i / 4), tx, y + 7.2);
+      ctx.fillText(String(from + i / 4), tx, y + 7.2);
       ctx.textAlign = "left";
     }
   }
+  // Above the strip, clear of its numbers (UX 362).
   page.font(5.5);
   ctx.fillStyle = MUTED;
-  ctx.fillText(label, x + 1, y + 8.2);
+  ctx.fillText(label, x, y - 0.8);
   ctx.fillStyle = INK;
 }
 
@@ -403,7 +509,8 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   ctx.fillStyle = MUTED;
   ctx.fillText(`Cut out along the dotted lines. ${footer}`, MARGIN, MARGIN + 11);
   ctx.fillStyle = INK;
-  let y = MARGIN + 18;
+  inchCheck(page, MARGIN, MARGIN + 16);
+  let y = MARGIN + 24;
   const circle = (cx: number, cy: number, r: number, fill: string, text: string, sub = "") => {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -431,11 +538,15 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   const names = [...new Set(doc.missions.flatMap((m) => m.objectives.map((o) => o.label)))];
   names.forEach((n, i) => {
     const cx = MARGIN + 20 + i * 44;
-    circle(cx, y + 20, 20, "#ffe9b0", "Lantern", n);
+    circle(cx, y + 20, 20, inkSaver ? "#ffffff" : "#ffe9b0", "Lantern", n);
     ctx.beginPath();
     ctx.arc(cx, y + 11, 4, 0, Math.PI * 2);
     ctx.fillStyle = "#ffb938";
-    ctx.fill();
+    if (inkSaver) {
+      ctx.strokeStyle = "#e09a20";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    } else ctx.fill();
     ctx.fillStyle = INK;
   });
   y += 46;
@@ -488,13 +599,75 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   // Rulers: 6" strips (tape two together for 12"), and the 3" a lantern reaches.
   page.font(10, 800);
   ctx.fillText("Rulers", MARGIN, y);
-  y += 4;
+  y += 7;
   const fit = Math.floor((paper.width - 2 * MARGIN) / 25.4);
   const strip = Math.min(6, fit);
-  ruler(page, MARGIN, y, strip, `${strip}" (tape two together for ${strip * 2}")`);
-  ruler(page, MARGIN, y + 12, strip, `${strip}"`);
-  ruler(page, MARGIN, y + 24, 3, `3": a lantern's reach`);
-  ruler(page, MARGIN + 3 * 25.4 + 6, y + 24, 1, `1": in a fight`);
+  // A 12" ruler in two strips: the second's tab goes under the first's end (PX print and play).
+  ruler(page, MARGIN, y, strip, `${strip * 2}" ruler, part 1 of 2`);
+  const tab = 8;
+  ruler(
+    page,
+    MARGIN + tab,
+    y + 13,
+    strip,
+    `${strip * 2}" ruler, part 2: glue the tab under part 1's end`,
+    strip,
+  );
+  ctx.setLineDash([1, 1]);
+  ctx.strokeStyle = "#9a9a9a";
+  ctx.lineWidth = 0.2;
+  ctx.strokeRect(MARGIN, y + 13, tab, 9);
+  ctx.setLineDash([]);
+  page.font(4.5);
+  ctx.fillStyle = MUTED;
+  ctx.fillText("glue", MARGIN + 1.5, y + 18.5);
+  ctx.fillStyle = INK;
+  ruler(page, MARGIN, y + 27, 3, `3": a lantern's reach`);
+  ruler(page, MARGIN + 3 * 25.4 + 6, y + 27, 1, `1": in a fight`);
+  y += 44;
+  // Lantern standees: fold-over, like the figures, to stand on the table where the lanterns are.
+  page.font(10, 800);
+  ctx.fillText("Lantern standees", MARGIN, y);
+  y += 4;
+  const W = 18;
+  const H = 38;
+  names.forEach((n, i) => {
+    const x = MARGIN + i * (2 * W + 6);
+    for (const side of [0, 1]) {
+      const sx = x + side * W;
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + W / 2, y + H - 2);
+      ctx.lineTo(sx + W / 2, y + 14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(sx + W / 2, y + 10, 5, 0, Math.PI * 2);
+      if (inkSaver) {
+        ctx.strokeStyle = "#e09a20";
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#ffb938";
+        ctx.fill();
+      }
+      page.font(5, 700);
+      ctx.fillStyle = INK;
+      ctx.textAlign = "center";
+      ctx.fillText(n, sx + W / 2, y + H - 4, W - 2);
+      ctx.textAlign = "left";
+    }
+    ctx.setLineDash([1, 1]);
+    ctx.strokeStyle = "#8a8a8a";
+    ctx.lineWidth = 0.2;
+    ctx.strokeRect(x, y, 2 * W, H);
+    ctx.strokeRect(x, y + H, 2 * W, 7);
+    ctx.setLineDash([2, 1]);
+    ctx.beginPath();
+    ctx.moveTo(x + W, y);
+    ctx.lineTo(x + W, y + H + 7);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
   return page;
 }
 
@@ -508,11 +681,11 @@ async function figurePages(
   const TAB = 8;
   const GAP = 4;
   for (const a of doc.armies) {
-    const items: { u: RulebookUnit; img: HTMLImageElement | null; w: number; h: number }[] = [];
+    const items: { u: RulebookUnit; img: Picture | null; w: number; h: number }[] = [];
     for (const u of a.units) {
-      let img: HTMLImageElement | null = null;
+      let img: Picture | null = null;
       try {
-        img = await load(figureImage(u, a.color, { px: 300, upright: true }));
+        img = await figurePicture(figureImage(u, a.color, { px: 300, upright: true }));
       } catch {
         // No WebGL: an outline the right size instead.
       }
@@ -628,13 +801,19 @@ async function figurePages(
         tallest = Math.max(tallest, 2 * r);
         ctx.beginPath();
         ctx.arc(bx + r, by + r, r, 0, Math.PI * 2);
-        ctx.fillStyle = "#3a3d44";
-        ctx.fill();
-        ctx.fillStyle = a.color;
-        ctx.beginPath();
-        ctx.arc(bx + r, by + r, r * 0.86, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
+        if (inkSaver) {
+          ctx.strokeStyle = a.color;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "#3a3d44";
+          ctx.fill();
+          ctx.fillStyle = a.color;
+          ctx.beginPath();
+          ctx.arc(bx + r, by + r, r * 0.86, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = inkSaver ? INK : "#ffffff";
         ctx.lineWidth = 0.4;
         ctx.beginPath();
         ctx.moveTo(bx + r * 0.45, by + r);
@@ -647,27 +826,44 @@ async function figurePages(
   return pages;
 }
 
-/** Make the print-and-play PDF and save it. */
-export async function printAndPlay(doc: RulebookDoc, paperName: "a4" | "letter"): Promise<void> {
+/** Make the print-and-play PDF and save it, saying how far it has got (UX 361). */
+export async function printAndPlay(
+  doc: RulebookDoc,
+  paperName: "a4" | "letter",
+  opts: { inkSaver?: boolean; progress?: (text: string) => void } = {},
+): Promise<void> {
   const paper = PAPER[paperName];
+  const say = opts.progress ?? (() => {});
   const footer = `${doc.name} ${doc.version}${doc.licence ? `, ${doc.licence}` : ""} · ${siteUrl()}`;
-  const pages = [
-    ...(await rulesPages(doc, paper, footer)),
-    ...(await cardPages(doc, paper, footer)),
-    tokenPage(doc, paper, footer),
-    ...(await figurePages(doc, paper, footer)),
-  ];
-  const out: PdfPage[] = [];
-  for (const p of pages) {
-    const blob = await new Promise<Blob>((resolve, reject) =>
-      p.canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("page"))), "image/jpeg", 0.88),
-    );
-    out.push({
-      width: (paper.width / 25.4) * 72,
-      height: (paper.height / 25.4) * 72,
-      jpeg: new Uint8Array(await blob.arrayBuffer()),
-      pixels: { width: p.canvas.width, height: p.canvas.height },
-    });
+  inkSaver = !!opts.inkSaver;
+  // A beat between steps, so the progress line paints.
+  const step = async (text: string) => {
+    say(text);
+    await new Promise((r) => setTimeout(r, 0));
+  };
+  try {
+    await step(t("Drawing the rules…"));
+    const pages = [...(await rulesPages(doc, paper, footer))];
+    await step(t("Drawing the unit cards…"));
+    pages.push(...(await cardPages(doc, paper, footer)), tokenPage(doc, paper, footer));
+    await step(t("Drawing the figures…"));
+    pages.push(...(await figurePages(doc, paper, footer)));
+    const out: PdfPage[] = [];
+    for (const [i, p] of pages.entries()) {
+      await step(t("Saving page {n} of {total}…", { n: i + 1, total: pages.length }));
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        p.canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("page"))), "image/jpeg", 0.88),
+      );
+      out.push({
+        width: (paper.width / 25.4) * 72,
+        height: (paper.height / 25.4) * 72,
+        jpeg: new Uint8Array(await blob.arrayBuffer()),
+        pixels: { width: p.canvas.width, height: p.canvas.height },
+      });
+    }
+    const name = `${doc.id}-print-and-play-${paperName}${inkSaver ? "-ink-saver" : ""}.pdf`;
+    saveFile(pdf(out, `${doc.name}: print and play`), name);
+  } finally {
+    inkSaver = false;
   }
-  saveFile(pdf(out, `${doc.name}: print and play`), `${doc.id}-print-and-play-${paperName}.pdf`);
 }

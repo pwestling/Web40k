@@ -4236,11 +4236,50 @@ body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
   line-height: 1.5;
   text-align: left;
 }
+/* The title and ✕ stay in reach however far down the page (UX 360). */
 .rules-sheet header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: -24px -28px 0;
+  padding: 16px 28px 8px;
+  background: #f6f1e7;
+  border-bottom: 1px solid #e3d9c4;
+}
+.rules-sheet header .close {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.3rem;
+  color: #1d1f24;
+  background: #ebe2cf;
+  border: 1px solid #d9cdb4;
+  border-radius: 8px;
+}
+/* A light second button on the cream page, not dark on dark (UX 357). */
+.rules-sheet .print-row button:not(.primary),
+.rules-sheet .play-row button:not(.primary) {
+  color: #1d1f24;
+  background: #fffaf0;
+  border: 1px solid #c9bb9c;
+}
+.rules-sheet .print-row button,
+.rules-sheet .play-row button {
+  min-height: 40px;
+}
+.rules-sheet .play-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 2px solid #d9cdb4;
+}
+.rules-page:focus {
+  outline: none;
 }
 .rules-sheet h1 {
   margin: 0;
@@ -4263,10 +4302,6 @@ body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
 }
 .rules-sheet .muted {
   color: #5d6068;
-}
-.rules-sheet button.quiet {
-  color: #1d1f24;
-  background: transparent;
 }
 .rules-sheet .print-row {
   display: flex;
@@ -4343,6 +4378,13 @@ body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
     border-radius: 0;
     padding: 16px;
   }
+  .rules-sheet header {
+    margin: -16px -16px 0;
+    padding: 10px 16px 6px;
+  }
+  .rules-sheet .play-row button {
+    flex: 1 1 100%;
+  }
 }
 /* The replay page's start card has the screen: the caption waits until it closes (UX 354). */
 body:has(.replay-title) .caption {
@@ -4401,4 +4443,64 @@ body:has(.replay-title) .caption {
   .share-shape .segmented {
     flex: 1;
   }
+}
+/* At a real table: the players' answers, one a row, box first (UX 359). */
+.code-action .told {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 2px;
+}
+.code-action .told label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 36px;
+  padding: 6px 4px;
+  border-radius: 6px;
+}
+.code-action .told label.need {
+  background: rgb(245 158 11 / 8%);
+}
+.code-action .told input {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin: 0;
+}
+/* The companion's units list: whose go it is (UX 363). */
+.companion-units section.going {
+  border-left: 3px solid currentColor;
+  padding-left: 8px;
+}
+.companion-units .go-now {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: #111318;
+  background: #fbbf24;
+  vertical-align: middle;
+}
+/* While a square or tall clip records, the caption stacks: round line above the event (UX 356). */
+body.clip-narrow .caption {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 420px;
+}
+/* On the companion, a rule's question sits in the page, not floating over it. */
+.companion .panel.script {
+  position: static;
+  transform: none;
+  max-width: none;
+  margin: 8px 0;
+  border-width: 2px;
+}
+.companion .panel.script .chips button {
+  min-height: 44px;
+  flex: 1;
+}
+.rules-sheet .map.hero {
+  margin: 12px 0 4px;
 }

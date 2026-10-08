@@ -84,3 +84,40 @@ export async function playRiftLanterns(): Promise<void> {
   };
   go();
 }
+
+/**
+ * At a real table (UX 358): Rift Lanterns on this one phone, kept as a
+ * companion for printed or real models. The players pick and deploy their
+ * warbands the companion's way.
+ */
+export async function playRiftAtTable(): Promise<void> {
+  const pkg = await installRiftLanterns();
+  if (!pkg) return;
+  useStore.getState().start({
+    role: "host",
+    mode: "hotseat",
+    name: localStorage.getItem("open-battle:name") ?? "",
+    system: RIFT_LANTERNS,
+  });
+  const { dispatch } = useStore.getState();
+  dispatch({
+    type: "game/packages",
+    app: APP_BUILD,
+    system: { id: RIFT_LANTERNS, builtIn: false },
+    packages: [refOf(pkg)],
+  });
+  dispatch({ type: "settings/set", settings: { companion: true } });
+  // The first mission, set once the rules have loaded (PX print and play): one less thing to find.
+  const session = useStore.getState().session;
+  const pick = () => {
+    const { game } = useStore.getState();
+    if (useStore.getState().session !== session || game.turn.round !== 0 || game.mission) return;
+    const mission = gameModule(RIFT_LANTERNS)?.app?.missions?.[0];
+    if (!mission || game.system !== RIFT_LANTERNS) return void setTimeout(pick, 100);
+    const { zones, objectives } = mission.setup(game.table);
+    useStore
+      .getState()
+      .dispatch({ type: "mission/set", mission: { id: mission.id, name: mission.name }, zones, objectives });
+  };
+  pick();
+}

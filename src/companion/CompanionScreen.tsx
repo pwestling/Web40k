@@ -1,3 +1,4 @@
+import { ScriptPanel } from "../ui/ScriptPanel";
 import { useState, Suspense } from "react";
 import { sideName, sidePlayers, sides, type GameState, type Unit } from "../core";
 import { t, tn } from "../i18n";
@@ -51,6 +52,8 @@ export function CompanionScreen() {
         <Invite />
         {mode !== "hotseat" && selfId && game.players[selfId] && <NameCard player={game.players[selfId]!} />}
         {reacting && <ReactionPrompt />}
+        {/* A game's own questions (a rule asking a player, a result to act on at the table). */}
+        <ScriptPanel />
         {attacking ? (
           <AttackPanel />
         ) : unit ? (
@@ -141,6 +144,7 @@ function Units({ game, before }: { game: GameState; before: boolean }) {
   const select = useStore((s) => s.select);
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   const mine = seated.filter((p) => canControl(p.id));
+  const going = (seat: number) => game.turn.round > 0 && game.turn.activeSeat === seat && !battleOver(game);
   return (
     <div className="companion-units">
       {sides(game).map((seat) => {
@@ -148,12 +152,14 @@ function Units({ game, before }: { game: GameState; before: boolean }) {
         const units = Object.values(game.units).filter((u) => players.some((p) => p.id === u.owner));
         const color = players[0]?.color;
         return (
-          <section key={seat}>
+          <section key={seat} className={going(seat) ? "going" : undefined}>
             <h2 style={{ color }}>
               <span className="side-shape" aria-hidden="true">
                 {playerShape(game, players[0]?.id)}
               </span>{" "}
               {sideName(game, seat)}
+              {/* Whose go it is, on the list itself (UX 363). */}
+              {going(seat) && <span className="go-now">{t("Their go")}</span>}
             </h2>
             {!units.length && <p className="muted small">{t("No army yet.")}</p>}
             <div className="tiles">

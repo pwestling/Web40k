@@ -1,4 +1,4 @@
-<!-- Made by `pnpm rulebook` from the rift-lanterns module (version 1.2.0). Don't edit by hand. -->
+<!-- Made by `pnpm rulebook` from the rift-lanterns module (version 1.3.0). Don't edit by hand. -->
 
 # Rift Lanterns: the rules
 
@@ -24,8 +24,8 @@ When one player has no units left to activate, the other activates theirs in tur
 
 Pick an enemy unit that a shooter can see and that is within the shooter's Range. A unit locked in a fight (an enemy within 1") can't shoot.
 
-- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.
-- The target rolls a die for each hit. Each die that rolls its **Saves on** or more is saved.
+- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** number or higher (4+ means a 4, 5 or 6) is a hit; it needs **one more** (5+ for a 4+) if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.
+- The target rolls a die for each hit. Each die that rolls the target's **Saves on** number or higher saves that hit.
 - Each hit not saved takes 1 wound. Models lose wounds in turn; a model with none left is out.
 
 ## Fighting
@@ -83,7 +83,7 @@ Both players deploy in a strip 6" deep along their long edge of a 36" x 24" tabl
 
 - **5 rounds.** Take turns activating one unit each.
 - **Activate:** move up to Move, then Shoot or Fight (or just move).
-- **Shoot:** see it, in Range, no enemy within 1". Shoot dice; hit on Hits on (+1 in cover).
-- **Fight:** an enemy within 1". Fight dice; hit on Hits on; they strike back.
-- **Saves:** a die per hit; Saves on or more saves. Each unsaved hit is a wound.
+- **Shoot:** see it, in Range, no enemy within 1". Shoot dice; each at the Hits on number or higher hits (one more in cover).
+- **Fight:** an enemy within 1". Fight dice; each at the Hits on number or higher hits; they strike back.
+- **Saves:** a die per hit; each at the Saves on number or higher saves it. Each unsaved hit is a wound.
 - **Lanterns:** most models within 3" holds it; a tie holds nothing.

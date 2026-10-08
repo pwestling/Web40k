@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.2.0",
+  version: "1.3.0",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,18 +34,18 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.2.0",
+  version: "1.3.0",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
   defaultTable: { width: 36, depth: 24 },
   characteristics: [
-    { id: "M", name: "Move", of: "model", type: "distance" },
+    { id: "M", name: "Move", of: "model", type: "distance", format: '{v}"' },
     { id: "Shoot", name: "Shoot", of: "model", type: "number" },
-    { id: "Range", name: "Range", of: "model", type: "distance" },
+    { id: "Range", name: "Range", of: "model", type: "distance", format: '{v}"' },
     { id: "Fight", name: "Fight", of: "model", type: "number" },
-    { id: "Hit", name: "Hits on", of: "model", type: "number" },
-    { id: "Save", name: "Saves on", of: "model", type: "number" },
+    { id: "Hit", name: "Hits on", of: "model", type: "number", format: "{v}+" },
+    { id: "Save", name: "Saves on", of: "model", type: "number", format: "{v}+" },
     { id: "W", name: "Wounds", of: "model", type: "number" },
   ],
   weaponKinds: [],
@@ -356,17 +356,32 @@ function inContact(view, unitId) {
  * takes them straight (Overcharge burns).
  */
 function* wound(ctx, target, hits, { saveMod = 0, why = "", saves = true } = {}) {
-  if (!hits) return 0;
+  if (!hits) {
+    if (ctx.view.atTable && saves)
+      yield ctx.ask(target.owner, `${target.name}: no hits, nothing to take off`, [
+        { id: "done", label: "Done" },
+      ]);
+    return 0;
+  }
   const state = ctx.view.state;
   const models = alive(state, target);
   if (!models.length) return 0;
   const save = Math.max(2, stat(models[0], "Save") - saveMod);
   let unsaved = hits;
   if (saves && save <= 6) {
+    // At a real table the phone goes to the defender for their saves (PX print and play).
+    if (ctx.view.atTable)
+      yield ctx.ask(
+        target.owner,
+        `roll ${hits} ${hits === 1 ? "save" : "saves"} for ${target.name} (${save}+)`,
+        [{ id: "roll", label: "Roll" }],
+      );
     const roll = yield ctx.roll(`${hits}d6`, `saves on ${save}+${why ? ` (${why})` : ""}`, target.id, save);
     unsaved = roll.rolls.filter((r) => r < save).length;
   }
   let dealt = 0;
+  let gone = 0;
+  let marked = 0;
   for (const m of models) {
     if (!unsaved) break;
     const left = stat(m, "W") - (m.woundsLost ?? 0);
@@ -375,6 +390,19 @@ function* wound(ctx, target, hits, { saveMod = 0, why = "", saves = true } = {})
     dealt += take;
     const woundsLost = (m.woundsLost ?? 0) + take;
     yield ctx.emit({ type: "model/wounds", id: m.id, woundsLost, destroyed: woundsLost >= stat(m, "W") });
+    if (woundsLost >= stat(m, "W")) gone++;
+    else marked += take;
+  }
+  // At a real table, what to do with the models: the app can't lift them off.
+  if (ctx.view.atTable) {
+    const what = gone
+      ? `take ${gone} ${gone === 1 ? "model" : "models"} off the table`
+      : marked
+        ? `mark ${marked} ${marked === 1 ? "wound" : "wounds"}`
+        : "every hit saved, nothing to take off";
+    const more =
+      gone && marked ? `, and mark ${marked} ${marked === 1 ? "wound" : "wounds"} on the next` : "";
+    yield ctx.ask(target.owner, `${target.name}: ${what}${more}`, [{ id: "done", label: "Done" }]);
   }
   return dealt;
 }
@@ -680,8 +708,8 @@ const RULEBOOK = {
       title: "Shooting",
       text: [
         "Pick an enemy unit that a shooter can see and that is within the shooter's Range. A unit locked in a fight (an enemy within 1\") can't shoot.",
-        "- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.",
-        "- The target rolls a die for each hit. Each die that rolls its **Saves on** or more is saved.",
+        "- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** number or higher (4+ means a 4, 5 or 6) is a hit; it needs **one more** (5+ for a 4+) if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.",
+        "- The target rolls a die for each hit. Each die that rolls the target's **Saves on** number or higher saves that hit.",
         "- Each hit not saved takes 1 wound. Models lose wounds in turn; a model with none left is out.",
       ].join("\n"),
     },
@@ -700,9 +728,9 @@ const RULEBOOK = {
   quickRef: [
     "**5 rounds.** Take turns activating one unit each.",
     "**Activate:** move up to Move, then Shoot or Fight (or just move).",
-    '**Shoot:** see it, in Range, no enemy within 1". Shoot dice; hit on Hits on (+1 in cover).',
-    '**Fight:** an enemy within 1". Fight dice; hit on Hits on; they strike back.',
-    "**Saves:** a die per hit; Saves on or more saves. Each unsaved hit is a wound.",
+    '**Shoot:** see it, in Range, no enemy within 1". Shoot dice; each at the Hits on number or higher hits (one more in cover).',
+    '**Fight:** an enemy within 1". Fight dice; each at the Hits on number or higher hits; they strike back.',
+    "**Saves:** a die per hit; each at the Saves on number or higher saves it. Each unsaved hit is a wound.",
     '**Lanterns:** most models within 3" holds it; a tie holds nothing.',
   ],
 };
@@ -714,7 +742,7 @@ const RULEBOOK = {
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.2.0",
+    version: "1.3.0",
     api: 1,
     system,
     app: {
@@ -757,7 +785,10 @@ export default {
             ...(has(target, "GLOAM")
               ? [{ id: "near", question: `${named("GLOAM")}: ${target.name} within 12"`, need: true }]
               : []),
-            { id: "cover", question: `Most of ${target.name} in cover` },
+            {
+              id: "cover",
+              question: `In cover: most of ${target.name} in or touching a ruin or thicket (hits need one more)`,
+            },
           ];
         },
         run: shoot,

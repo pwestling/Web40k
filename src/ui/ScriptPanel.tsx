@@ -51,17 +51,24 @@ export function ScriptPanel() {
       { type: "script/answer", answer: waiting.secret !== undefined ? keepSecret(id) : id },
       waiting.player,
     );
+  // In the colour of the side it asks (PX print and play): at a real table, whose hands it's in.
+  const color = game.players[waiting.player]?.color;
   return (
-    <div className="panel script">
+    <div className="panel script" style={color ? { borderColor: color } : undefined}>
       {/* The question leads with who decides (UX 90), and says so when it isn't you. */}
       <div className="label">
-        <strong>{who}:</strong> {waiting.question}
+        <strong style={color ? { color } : undefined}>{who}:</strong> {waiting.question}
         {waiting.secret !== undefined && <span className="muted"> {t("(in secret)")}</span>}
         {!mine && <span className="muted"> {t("(waiting for {name})", { name: who })}</span>}
       </div>
       <div className="chips">
         {waiting.options.map((o) => (
-          <button key={o.id} disabled={!mine} onClick={() => answer(o.id)}>
+          <button
+            key={o.id}
+            className={waiting.options.length === 1 ? "primary" : undefined}
+            disabled={!mine}
+            onClick={() => answer(o.id)}
+          >
             {o.label}
           </button>
         ))}

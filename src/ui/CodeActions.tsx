@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Unit } from "../core";
-import { currentSlot } from "../core/content/turn";
+import { currentSlot, plainActivations } from "../core/content/turn";
 import { gameView, toldFor } from "../core/script";
 import { useCanControl, useStore } from "../store";
 import { usePackageActions } from "../sandbox/runtime";
@@ -51,6 +51,9 @@ export function CodeActions({ unit }: { unit: Unit }) {
   if (!actions.length) return null;
   const mine = canControl(unit.owner);
   const busy = !!game.script;
+  // In alternating activations, only the side whose go it is acts.
+  const onTurn = (u: Unit) =>
+    !plainActivations(game) || game.turn.round === 0 || game.players[u.owner]?.seat === game.turn.activeSeat;
   return (
     <div className="code-actions">
       {actions.map((a) => {
@@ -62,12 +65,16 @@ export function CodeActions({ unit }: { unit: Unit }) {
         const answers = told[key] ?? {};
         const missing = questions.find((q) => q.need && !answers[q.id]);
         const why = ok !== true ? ok : busy ? "Another rule is still being resolved" : null;
+        // Not this side's to take: say so rather than grey it out with no reason (UX 363).
+        const notYours = !mine ? t("Not your unit") : !onTurn(unit) ? t("Not this side's go") : null;
         return (
           <div key={a.id} className="code-action">
             <div className="row">
               <button
-                disabled={!mine || !!why || (a.targeted && !target) || !!missing}
-                title={why ?? undefined}
+                // Lit once everything it needs is answered (PX print and play).
+                className={questions.length && !missing && !notYours && !why ? "primary" : undefined}
+                disabled={!!notYours || !!why || (a.targeted && !target) || !!missing}
+                title={notYours ?? why ?? undefined}
                 onClick={() =>
                   dispatch(
                     {
@@ -101,18 +108,22 @@ export function CodeActions({ unit }: { unit: Unit }) {
                 </select>
               )}
               {targets.length === 1 && <span className="muted"> {targets[0]!.label}</span>}
-              {why && mine && <span className="muted small"> {why}</span>}
+              {(notYours || why) && <span className="muted small"> {notYours ?? why}</span>}
             </div>
-            {mine && !why && questions.length > 0 && (
-              <div className="told">
+            {!notYours && !why && questions.length > 0 && (
+              // One question a row, the box first; the ones that may be left unticked say so (UX 359).
+              <div className="told" role="group" aria-label={t("On the table")}>
                 {questions.map((q) => (
                   <label key={q.id} className={q.need && !answers[q.id] ? "need" : ""}>
                     <input
                       type="checkbox"
                       checked={!!answers[q.id]}
                       onChange={(e) => setTold({ ...told, [key]: { ...answers, [q.id]: e.target.checked } })}
-                    />{" "}
-                    {q.question}
+                    />
+                    <span>
+                      {q.question}
+                      {!q.need && <span className="muted small"> {t("(optional)")}</span>}
+                    </span>
                   </label>
                 ))}
               </div>

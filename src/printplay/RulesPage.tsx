@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { t } from "../i18n";
 import riftBook from "../../games/rift-lanterns/rulebook.json";
@@ -59,34 +59,65 @@ function Figure({ unit, color }: { unit: RulebookDoc["armies"][number]["units"][
   return src ? <img className="figure" src={src} alt="" /> : <span className="figure" />;
 }
 
+export interface PlayChoice {
+  label: string;
+  primary?: boolean;
+  run: () => void;
+}
+
 export default function RulesPage({
   doc = RIFT_RULEBOOK,
   onClose,
+  play = [],
 }: {
   doc?: RulebookDoc;
   onClose: () => void;
+  /** Ways to start a game, at the end of the page and in its header (UX 360). */
+  play?: PlayChoice[];
 }) {
   const [printing, setPrinting] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [inkSaver, setInkSaver] = useState(false);
+  const page = useRef<HTMLDivElement>(null);
   const map = useMemo(
     () => `data:image/svg+xml;utf8,${encodeURIComponent(mapSvg(doc, { scale: 24 }))}`,
     [doc],
   );
   const stats = doc.characteristics;
   const print = (paper: "a4" | "letter") => {
+    setBusy(true);
     setPrinting(t("Making the PDF…"));
     void import("./printPlay")
-      .then(({ printAndPlay }) => printAndPlay(doc, paper))
-      .then(() => setPrinting(null))
-      .catch((e: unknown) => setPrinting(e instanceof Error ? e.message : String(e)));
+      .then(({ printAndPlay }) => printAndPlay(doc, paper, { inkSaver, progress: setPrinting }))
+      .then(() => setPrinting(t("Saved. Print it at 100% (actual size), not fit to page.")))
+      .catch((e: unknown) => setPrinting(e instanceof Error ? e.message : String(e)))
+      .finally(() => setBusy(false));
   };
+  // Escape closes it, wherever the focus is (UX 360); the page takes focus so keys reach it.
   useEffect(() => {
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    addEventListener("keydown", key);
-    return () => removeEventListener("keydown", key);
+    page.current?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    addEventListener("keydown", key, true);
+    return () => removeEventListener("keydown", key, true);
   }, [onClose]);
+  const choose = (c: PlayChoice) => {
+    onClose();
+    c.run();
+  };
   // On the page itself, not inside whatever opened it (the lobby's game cards style their words).
   return createPortal(
-    <div className="rules-page" role="dialog" aria-label={t("{game}: the rules", { game: doc.name })}>
+    <div
+      className="rules-page"
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      ref={page}
+      aria-label={t("{game}: the rules", { game: doc.name })}
+    >
       <div className="rules-sheet">
         <header>
           <div>
@@ -96,27 +127,29 @@ export default function RulesPage({
               {doc.licence ? ` · ${doc.licence}` : ""}
             </p>
           </div>
-          <button className="quiet" title={t("Close")} onClick={onClose}>
+          <button className="close" title={t("Close")} aria-label={t("Close")} onClick={onClose}>
             ✕
           </button>
         </header>
         <div className="print-row">
-          <button
-            className="primary"
-            disabled={!!printing && printing === t("Making the PDF…")}
-            onClick={() => print("a4")}
-          >
+          <button className="primary" disabled={busy} onClick={() => print("a4")}>
             {t("Print and play (A4 PDF)")}
           </button>
-          <button disabled={!!printing && printing === t("Making the PDF…")} onClick={() => print("letter")}>
+          <button disabled={busy} onClick={() => print("letter")}>
             {t("US Letter")}
           </button>
-          <span className="muted small">
+          <label className="small">
+            <input type="checkbox" checked={inkSaver} onChange={(e) => setInkSaver(e.target.checked)} />{" "}
+            {t("Ink saver (outlines)")}
+          </label>
+          <span className="muted small" role="status">
             {printing ??
               t("Rules sheet, a card per unit, tokens, a quick reference and cut-out figures, at true size.")}
           </span>
         </div>
         <p className="intro">{rich(doc.intro)}</p>
+        {/* The table first: what the game looks like before how it plays (PX). */}
+        <img className="map hero" src={map} alt={t("The starter table, from above")} />
 
         {doc.sections.map((s) => (
           <section key={s.id}>
@@ -167,13 +200,16 @@ export default function RulesPage({
               </div>
             </div>
           ))}
+          {/* The short headers spelled out; those that are words already need no key (PX). */}
           <p className="muted small">
-            {stats.map((c, i) => (
-              <Fragment key={c.id}>
-                {i > 0 && " · "}
-                <strong>{c.id}</strong> {c.name}
-              </Fragment>
-            ))}
+            {stats
+              .filter((c) => c.id !== c.name)
+              .map((c, i) => (
+                <Fragment key={c.id}>
+                  {i > 0 && " · "}
+                  <strong>{c.id}</strong> {c.name}
+                </Fragment>
+              ))}
           </p>
         </section>
 
@@ -219,6 +255,16 @@ export default function RulesPage({
               ))}
             </ul>
           </section>
+        )}
+
+        {play.length > 0 && (
+          <div className="play-row">
+            {play.map((c) => (
+              <button key={c.label} className={c.primary ? "primary" : ""} onClick={() => choose(c)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>,

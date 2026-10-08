@@ -76,6 +76,8 @@ function shown(c: CharacteristicDef, value: unknown, chars: Record<string, strin
   // So is a 0 the roster never gave (Conquest's Barrage or Cleave on a unit without them, UX 110).
   if (text === undefined && (c.type === "target" || c.of === "weapon" || value === 0) && value === c.default)
     return "–";
+  // The system's own way to write it: 4+, 5" (PX print and play).
+  if (c.format && text === undefined) return value === 0 ? "–" : c.format.replace("{v}", String(value));
   return String(value);
 }
 

@@ -10,7 +10,7 @@ import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
-import { installRiftLanterns, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import { installRiftLanterns, playRiftAtTable, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
 import { startSolo } from "../bot/startSolo";
 import { characterName, levelName, savedLevel } from "../bot/solo";
 import type { Level } from "../bot/player";
@@ -63,7 +63,7 @@ export function Lobby() {
       .filter((p) => !listSystems().some((s) => s.id === p.manifest.systems[0]))
       .map((p) => ({
         id: p.manifest.systems[0]!,
-        name: t("{name} {version} (package)", { name: p.manifest.name, version: p.manifest.version }),
+        name: t("{name} {version}", { name: p.manifest.name, version: p.manifest.version }),
       })),
   ];
   const [system, setSystem] = useState(() => {
@@ -236,13 +236,29 @@ export function Lobby() {
               <button className="small solo" onClick={() => setAsking(RIFT_LANTERNS)}>
                 {t("Play the computer")}
               </button>
+              <button
+                className="small"
+                title={t(
+                  "Printed or real models on your table: this phone keeps the cards, rolls and scores",
+                )}
+                onClick={() => void playRiftAtTable()}
+              >
+                {t("At a real table")}
+              </button>
               <button className="small" onClick={() => setRules(true)}>
                 {t("Rules, print and play")}
               </button>
             </div>
             {rules && (
               <Suspense fallback={null}>
-                <RulesPage onClose={() => setRules(false)} />
+                <RulesPage
+                  onClose={() => setRules(false)}
+                  play={[
+                    { label: t("Play now (both sides)"), primary: true, run: () => void playRiftLanterns() },
+                    { label: t("Play the computer"), run: () => setAsking(RIFT_LANTERNS) },
+                    { label: t("At a real table"), run: () => void playRiftAtTable() },
+                  ]}
+                />
               </Suspense>
             )}
             {asking === RIFT_LANTERNS && <HowHard system={RIFT_LANTERNS} onCancel={() => setAsking(null)} />}

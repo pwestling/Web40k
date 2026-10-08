@@ -50,7 +50,7 @@ export interface RulebookDoc {
   quickRef: string[];
   rounds: number | null;
   table: { width: number; depth: number };
-  characteristics: { id: string; name: string; type: string }[];
+  characteristics: { id: string; name: string; type: string; format?: string }[];
   terrain: { id: string; name: string; does: string }[];
   armies: RulebookArmy[];
   missions: RulebookMission[];
@@ -156,7 +156,7 @@ export function rulebookOf(source: RulebookSource): RulebookDoc {
     table: { width: table.width, depth: table.depth },
     characteristics: system.characteristics
       .filter((c) => c.of === "model")
-      .map((c) => ({ id: c.id, name: c.name, type: c.type })),
+      .map((c) => ({ id: c.id, name: c.name, type: c.type, ...(c.format ? { format: c.format } : {}) })),
     terrain: (system.terrain ?? []).map((t) => ({ id: t.id, name: t.name, does: does(t) })),
     armies,
     missions,
@@ -182,8 +182,8 @@ export function rulebookOf(source: RulebookSource): RulebookDoc {
 export function statText(doc: RulebookDoc, id: string, value: string | undefined): string {
   const c = doc.characteristics.find((x) => x.id === id);
   if (value === undefined || value === "" || value === "0") return id === "W" ? (value ?? "–") : "–";
+  if (c?.format) return c.format.replace("{v}", value);
   if (c?.type === "distance") return `${value}"`;
-  if (/^(Hit|Save)$/.test(id)) return `${value}+`;
   return value;
 }
 
