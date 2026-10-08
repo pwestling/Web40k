@@ -335,11 +335,12 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "mission/set":
       return `${who} chose the mission ${event.mission.name}`;
     case "score/confirm": {
-      // "Crossfire: controls 2 objectives" reads as "Crossfire (controls 2 objectives)".
-      const why = event.why.replace(/^([^:]+): (.+)$/, "$1 ($2)");
-      return event.skipped
-        ? `${sideName(game, event.seat)} passed on ${why}`
-        : `${sideName(game, event.seat)} scored ${event.vp} VP · ${why}`;
+      // "Crossfire: controls 2 objectives" reads as "Crossfire, controls 2 objectives".
+      const why = event.why.replace(/^([^:]+): /, "$1, ");
+      const side = sideName(game, event.seat);
+      if (event.skipped) return `${side} passed on ${why}`;
+      const changed = event.suggested !== undefined && event.suggested !== event.vp;
+      return `${side} scored ${event.vp} VP${changed ? ` (suggested ${event.suggested})` : ""} · ${why}`;
     }
     case "player/dice":
       return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;

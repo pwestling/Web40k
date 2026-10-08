@@ -125,6 +125,8 @@ export type Intent =
       round: number;
       vp: number;
       why: string;
+      /** The VP the mission suggested, when the player changed it. */
+      suggested?: number;
       skipped?: boolean;
     }
   | { type: "turn/next" }
@@ -252,6 +254,8 @@ export type GameEvent =
       round: number;
       vp: number;
       why: string;
+      /** The VP the mission suggested, when the player changed it. */
+      suggested?: number;
       skipped?: boolean;
       by: PlayerId;
     }
