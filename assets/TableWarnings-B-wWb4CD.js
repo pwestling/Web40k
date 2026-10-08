@@ -1,4 +1,4 @@
-import{i as e,t}from"./react-DB-4Zxce.js";import{Fr as n,J as r,Ot as i,St as a,Tr as o,a as s,d as c,dn as l,hn as u,hr as d,kt as f,ln as p,p as m,s as h,v as g,zr as _}from"./store-DBlrJWyO.js";import{c as ee,l as te,o as v,s as y}from"./gameLog-CMeRHT0k.js";import{t as b}from"./jsx-runtime-BtH0gOTJ.js";import{d as x}from"./index-CDP8g87h.js";var S=e(t(),1),C=5e3,w=`<!doctype html><meta charset="utf-8">
+import{i as e,t}from"./react-DB-4Zxce.js";import{Fr as n,J as r,Ot as i,St as a,Tr as o,a as s,d as c,dn as l,hn as u,hr as d,kt as f,ln as p,p as m,s as h,v as g,zr as _}from"./store-BkQpJ01c.js";import{c as ee,l as te,o as v,s as y}from"./gameLog-Cxya4EzE.js";import{t as b}from"./jsx-runtime-BtH0gOTJ.js";import{d as x}from"./index-B5-4iLGI.js";var S=e(t(),1),C=5e3,w=`<!doctype html><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; worker-src blob:">
 <script>
 onmessage = (e) => {
