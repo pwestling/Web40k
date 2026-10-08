@@ -1,3 +1,4 @@
+import { systemLabel } from "./systemLabels";
 import {
   applyEvent,
   phaseName,
@@ -547,7 +548,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? "" : " (didn't match what was locked in)"}`;
     }
     case "game/system":
-      return `Game: ${systemOf(game).name}`;
+      return `Game: ${systemLabel(game.system, systemOf(game).name)}`;
     case "player/action": {
       const name =
         event.label ?? systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;

@@ -6,7 +6,10 @@ import { NET_PARAMS } from "../net/config";
 import { BROADCAST } from "../broadcast/broadcast";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
+import { ArmyGuide } from "./ArmyGuide";
+import { startDemo } from "./demo";
 import { PackageLibrary, refOf } from "./Packages";
+import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Rejoin once per page load (effects run twice in development). */
@@ -20,6 +23,7 @@ export function Lobby() {
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
   // Players per side when hosting: 1 (1v1) or 2 (a 2v2 team game, core/teams.ts).
   const [teamSize, setTeamSize] = useState(1);
+  const [guide, setGuide] = useState(false);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
   useEffect(() => void useLibrary.getState().load(), []);
@@ -112,54 +116,54 @@ export function Lobby() {
     openReplay(await unbundleReplay(data));
   };
 
+  const demos = listSystems().filter((s) => FRONT[s.id]);
+
   return (
     <div className="panel lobby">
       <h1>Open Battle</h1>
-      <p className="muted">A peer-to-peer tabletop for miniatures wargames. Bring your own army list.</p>
+      <p className="pitch">
+        Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.
+      </p>
+
+      <h2>Try it now</h2>
+      <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>
+      <div className="demos">
+        {demos.map((g) => (
+          <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
+            <strong>{FRONT[g.id]!.title}</strong>
+            <span className="muted small">{FRONT[g.id]!.blurb}</span>
+          </button>
+        ))}
+      </div>
+
+      <h2>Play with friends</h2>
       <label>
         Your name{" "}
-        <input
-          value={name}
-          placeholder="Player 1 or 2, by seat"
-          autoFocus={!name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <input value={name} placeholder="Player 1 or 2, by seat" onChange={(e) => setName(e.target.value)} />
       </label>
       <label>
         Game{" "}
         <select value={system} onChange={(e) => setSystem(e.target.value)}>
           {systems.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name}
+              {systemLabel(s.id, s.name)}
             </option>
           ))}
         </select>
       </label>
-      <PackageLibrary system={system} onPick={setSystem} />
-      <button
-        className="primary"
-        onClick={() => {
-          remember();
-          start({ role: "host", mode: "hotseat", name, system });
-          namePackage();
-        }}
-      >
-        Play on this screen (hotseat)
+      <button className="primary" onClick={host}>
+        Host a game
       </button>
-      <hr />
+      <p className="muted small">You get a link to send; whoever opens it joins your table.</p>
       <label>
         Room{" "}
-        <input value={room} placeholder="blank = new room" onChange={(e) => setRoom(e.target.value.trim())} />
-      </label>
-      <label>
-        Players{" "}
-        <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
-          <option value={1}>1 vs 1</option>
-          <option value={2}>2 vs 2 (teams share CP and VP)</option>
-        </select>
+        <input
+          value={room}
+          placeholder="a room code to join"
+          onChange={(e) => setRoom(e.target.value.trim())}
+        />
       </label>
       <div className="row">
-        <button onClick={host}>Host online</button>
         <button disabled={!room} onClick={() => join("client")}>
           Join
         </button>
@@ -167,11 +171,35 @@ export function Lobby() {
           Watch
         </button>
       </div>
-      <label className="check">
-        <input type="checkbox" checked={sameBrowser} onChange={(e) => setSameBrowser(e.target.checked)} />
-        Same browser (play between two tabs, no network)
-      </label>
+      <details className="fold">
+        <summary>More ways to play</summary>
+        <label>
+          Players{" "}
+          <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
+            <option value={1}>1 vs 1</option>
+            <option value={2}>2 vs 2 (teams share CP and VP)</option>
+          </select>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={sameBrowser} onChange={(e) => setSameBrowser(e.target.checked)} />
+          Same browser (play between two tabs, no network)
+        </label>
+        <button
+          onClick={() => {
+            remember();
+            start({ role: "host", mode: "hotseat", name, system });
+            namePackage();
+          }}
+        >
+          Set up a game on this screen (hotseat)
+        </button>
+        <PackageLibrary system={system} onPick={setSystem} />
+      </details>
+
       <hr />
+      <button className="link" onClick={() => setGuide(true)}>
+        Bring your army: lists, figures and rules packages
+      </button>
       {saved && (
         <button onClick={resume}>
           Resume last game ({saved.mode}, {saved.record.events.length} events,{" "}
@@ -186,6 +214,7 @@ export function Lobby() {
           onChange={(e) => e.target.files?.[0] && loadReplay(e.target.files[0])}
         />
       </label>
+      {guide && <ArmyGuide system={system} onClose={() => setGuide(false)} />}
     </div>
   );
 }

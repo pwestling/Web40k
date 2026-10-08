@@ -5,7 +5,10 @@ import { useTalk } from "./talk/talk";
 import { AttackPanel } from "./ui/AttackPanel";
 import { DiceTray } from "./ui/DiceTray";
 import { useHold } from "./ui/hold";
+import { useHelp } from "./ui/help";
 import { Hud } from "./ui/Hud";
+import { KeysSheet } from "./ui/Keys";
+import { WhatNow } from "./ui/WhatNow";
 import { Lobby } from "./ui/Lobby";
 import { PlayPanel } from "./ui/PlayPanel";
 import { ScriptPanel } from "./ui/ScriptPanel";
@@ -30,7 +33,7 @@ import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
 /**
- * Keyboard: Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
+ * Keyboard: ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
  * Delete removes the selected terrain piece while editing; Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
@@ -39,6 +42,10 @@ function onKey(e: KeyboardEvent) {
     return;
   const s = useStore.getState();
   const key = e.key.toLowerCase();
+  if (e.key === "?") {
+    useHelp.setState((h) => ({ keys: !h.keys }));
+    return;
+  }
   if (key === "home") {
     s.resetView();
     return;
@@ -147,6 +154,8 @@ export function App() {
           <StatsScreen />
           <PackageCards />
           <SandboxNotice />
+          {!editing && <WhatNow />}
+          <KeysSheet />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">

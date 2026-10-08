@@ -1,3 +1,4 @@
+import { systemLabel } from "./systemLabels";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { DEFAULT_SYSTEM, type GamePackages, type PackageRef, type PlayerId } from "../core";
@@ -338,14 +339,16 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   );
 }
 
-/** The room card's "Rules: Old World · Old World Factions 1.2 ✓". */
+/** The room card's "Rules: Rank and flank · Regiments 1.2 ✓". */
 export function RulesLine() {
   const game = useGame();
   const system = game.system ?? DEFAULT_SYSTEM;
   const packages = useLibrary((s) => s.packages);
   const using = game.packages?.packages ?? [];
   const name =
-    listSystems().find((s) => s.id === system)?.name ??
+    listSystems()
+      .filter((s) => s.id === system)
+      .map((s) => systemLabel(s.id, s.name))[0] ??
     (game.packages?.system.builtIn === false && using[0] ? `${using[0].name}, not loaded yet` : system);
   return (
     <span className="muted small rules-line">

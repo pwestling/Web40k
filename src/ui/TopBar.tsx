@@ -1,3 +1,4 @@
+import { useHelp } from "./help";
 import { systemModule } from "../systems";
 import { useSound } from "./sound";
 import { useState } from "react";
@@ -260,6 +261,13 @@ export function TopBar() {
         )}
       </div>
       <SoundToggle />
+      <button
+        className="quiet help-key"
+        title="Controls (?)"
+        onClick={() => useHelp.setState({ keys: true })}
+      >
+        ?
+      </button>
       {/* Below the phase tracker, however the bar wraps. */}
       <NetBanner />
     </div>
