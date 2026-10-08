@@ -19,6 +19,7 @@ Players need only a browser. One player hosts, shares a link, and the browsers t
 - **Missions and secret objectives.** Pick a mission at setup. The app suggests each side's score and a player confirms it. Secret objectives and hidden orders stay on their owner's device until revealed, and every player can check they weren't changed.
 - **Replays and "What if".** The whole game is a log, so you can scrub back through it, download it as a replay file, or branch a new game from any moment to try another move.
 - **Online, 1v1 or 2v2.** Host a room and send the link. Others can join, watch, or take over as host if the host drops. Teams of two share CP and VP.
+- **Open tables.** No friend free tonight? Post your table on a public board with the game, size, time, language and whether you'll talk, and anyone browsing can join with one click. No accounts: just a name, with hide, block and report. Posts come down when the seats fill. Self-hosted sites have it off unless they turn it on.
 - **Table talk and voice.** Pings, arrows, areas, chat and reactions on the table, plus push-to-talk or open-mic voice over the same peer connections.
 - **Broadcast view.** A stream view with a commentator's camera, a spectator delay, and end-of-game moment cards.
 - **Rules packages.** Players can load sandboxed rules packages that add rules to a game, or a whole new game, shared peer to peer and checked by hash.

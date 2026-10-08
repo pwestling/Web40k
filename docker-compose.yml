@@ -25,6 +25,7 @@ services:
       TURN_URLS: ${TURN_URLS:-turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp}
       TURN_CHECK: host.docker.internal:3478
       MAILBOX_URL: "on"
+      OPEN_TABLES: ${OPEN_TABLES:-off}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

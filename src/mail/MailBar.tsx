@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { fileName, type MailFile } from "./file";
-import { inviteLink, pushKey, pushSupported, subscribePush } from "./mailbox";
+import { PostTable } from "../opentables/OpenTables";
+import { inviteCode, inviteLink, pushKey, pushSupported, subscribePush } from "./mailbox";
 import {
   acceptAnyway,
   checkMailbox,
@@ -234,6 +235,9 @@ export function MailBar() {
                 <button className="primary" onClick={copyLink}>
                   {t("Copy invite link")}
                 </button>
+              )}
+              {box && game.sent?.index === 1 && game.posted && (
+                <PostTable kind="mail" join={inviteCode(box)} seats={1} />
               )}
               <label className="file">
                 {t("Open their file")}

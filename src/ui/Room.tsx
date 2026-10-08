@@ -8,6 +8,8 @@ import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
 import { NetCheck } from "./NetCheck";
+import { openSeats, PostTable } from "../opentables/OpenTables";
+import { useOpenTables } from "../opentables/board";
 
 /** How long a guest looks for the host before we offer help (UX 169). */
 const STUCK_MS = 8000;
@@ -40,6 +42,7 @@ export function RoomCard() {
   const { roomId, mode, net, session, game, record, review } = useStore();
   const [copied, setCopied] = useState(false);
   const joining = useJoining();
+  const posted = useOpenTables((s) => s.mine?.post.join === roomId);
   const peerMissing = useTransfers((s) => s.peerMissing);
   useEffect(() => {
     if (!copied) return;
@@ -88,6 +91,12 @@ export function RoomCard() {
         </button>
       </div>
       <RulesLine />
+      {/* Open tables (#50): the host may put a waiting table on the public board. */}
+      {mode === "online" &&
+        net?.role === "host" &&
+        !review &&
+        game.turn.round === 0 &&
+        (waiting || posted) && <PostTable kind="live" join={roomId} seats={openSeats(game, record)} />}
       {/* A review room replays a finished game: its players are the record's, not people here (UX 258). */}
       {review ? (
         <p className="muted small">

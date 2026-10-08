@@ -15,6 +15,12 @@
  *   ?mailbox=https://battle.example.com/mailbox
  *                  where play-by-mail turns are posted (server/mailbox.mjs)
  *                                          VITE_MAILBOX_URL
+ *   ?openTables=0  hide Open tables, the public board of games (#50)
+ *                                          VITE_OPEN_TABLES=off
+ *
+ * Open tables posts to the public Nostr relays. A self-hosted site (or a page
+ * pointed at a private relay with ?signal=) has it off unless its config.json
+ * turns it on, and then it uses the site's own board (server/board.mjs).
  */
 export interface NetConfig {
   /** Self-hosted WebSocket signalling relays; when set, Nostr is not used. */
@@ -26,6 +32,15 @@ export interface NetConfig {
   forceTurn?: boolean;
   /** A play-by-mail mailbox (server/mailbox.mjs); without one, turns travel as files. */
   mailbox?: string;
+  /** Open tables (#50): whether the public board of games shows. */
+  openTables: boolean;
+  /** A self-hosted site's board (server/board.mjs); without it the board is on Nostr. */
+  board?: string;
+}
+
+/** What a site's config.json may say, beyond the relays. */
+interface SiteConfig extends Partial<Omit<NetConfig, "openTables">> {
+  openTables?: boolean;
 }
 
 const list = (v: string | null | undefined) =>
@@ -35,7 +50,9 @@ const list = (v: string | null | undefined) =>
     .filter(Boolean);
 
 /** What the site's config.json said, once loaded. */
-let site: Partial<NetConfig> = {};
+let site: SiteConfig = {};
+/** A self-hosted build reads its config.json; it gets no public board unless that says so. */
+let selfHosted = !!import.meta.env.VITE_SITE_CONFIG;
 
 /**
  * Fetch the site's config.json when this build asks for one. A self-hosted
@@ -49,12 +66,14 @@ export async function loadSiteConfig(
   try {
     const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(3000) });
     if (!res.ok) return;
-    const body = (await res.json()) as Partial<NetConfig>;
+    const body = (await res.json()) as SiteConfig;
     site = {
       ...(Array.isArray(body.signal) && body.signal.length ? { signal: body.signal } : {}),
       ...(Array.isArray(body.nostr) && body.nostr.length ? { nostr: body.nostr } : {}),
       ...(Array.isArray(body.turn) && body.turn.length ? { turn: body.turn } : {}),
       ...(typeof body.mailbox === "string" && body.mailbox ? { mailbox: body.mailbox } : {}),
+      ...(body.openTables === true ? { openTables: true } : {}),
+      ...(typeof body.board === "string" && /^https?:\/\//.test(body.board) ? { board: body.board } : {}),
     };
   } catch {
     // An unreachable or malformed config.json is the same as none.
@@ -62,8 +81,9 @@ export async function loadSiteConfig(
 }
 
 /** For tests. */
-export function setSiteConfig(config: Partial<NetConfig>): void {
+export function setSiteConfig(config: SiteConfig, hosted = true): void {
   site = config;
+  selfHosted = hosted;
 }
 
 export function netConfig(search = typeof location === "undefined" ? "" : location.search): NetConfig {
@@ -74,14 +94,24 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
   const credential = q.get("turnPass") ?? env.VITE_TURN_PASS;
   const fromUrl = (key: string) => (q.has(key) ? list(q.get(key)) : null);
   const mailbox = q.get("mailbox") ?? site.mailbox ?? (env.VITE_MAILBOX_URL as string | undefined);
+  const signal = fromUrl("signal") ?? site.signal ?? list(env.VITE_SIGNAL_URL);
+  // Off when asked, on a self-hosted site that didn't turn it on, or on a private relay.
+  const openTables =
+    q.get("openTables") === "0" || env.VITE_OPEN_TABLES === "off"
+      ? false
+      : selfHosted
+        ? site.openTables === true
+        : !signal.length || q.get("openTables") === "1";
   return {
-    signal: fromUrl("signal") ?? site.signal ?? list(env.VITE_SIGNAL_URL),
+    signal,
     nostr: fromUrl("nostr") ?? site.nostr ?? list(env.VITE_NOSTR_RELAYS),
     turn: turnUrls.length
       ? [{ urls: turnUrls, ...(username ? { username, credential } : {}) }]
       : (site.turn ?? []),
     ...(q.get("forceTurn") === "1" ? { forceTurn: true } : {}),
     ...(mailbox ? { mailbox } : {}),
+    openTables,
+    ...(openTables && selfHosted && site.board ? { board: site.board } : {}),
   };
 }
 

@@ -29,10 +29,14 @@
 //   TURN_TTL      lifetime of a TURN login in seconds (86400)
 //   MAILBOX_URL   the play-by-mail mailbox (server/mailbox.mjs) to tell the app
 //                 about; "on" means <the site>/mailbox, as the compose file runs it
+//   OPEN_TABLES   "on" turns on Open tables, a public board of games looking for
+//                 players, kept here (server/board.mjs, at /relay/board). Off by
+//                 default: a self-hosted site doesn't show the board otherwise
 import { createHmac } from "node:crypto";
 import dgram from "node:dgram";
 import { createServer } from "node:http";
 import { createWsRelayServer } from "@trystero-p2p/ws-relay/server";
+import { createBoard } from "./board.mjs";
 
 const env = process.env;
 const port = Number(env.PORT ?? 8787);
@@ -44,6 +48,7 @@ const list = (v) =>
 const turnUrls = list(env.TURN_URLS);
 const ttl = Number(env.TURN_TTL ?? 86400);
 const started = Date.now();
+const board = env.OPEN_TABLES === "on" ? createBoard() : null;
 
 // The secret signs TURN logins: anyone who knows it can use the TURN server.
 if (env.TURN_SECRET !== undefined && (env.TURN_SECRET === "change-me" || env.TURN_SECRET.length < 16)) {
@@ -83,13 +88,20 @@ function mailboxUrl(req) {
   return base ? new URL("/mailbox", base).toString() : null;
 }
 
+function boardUrl(req) {
+  const base = siteUrl(req);
+  return board && base ? new URL("/relay/board", base).toString() : null;
+}
+
 function siteConfig(req) {
   const signal = signalUrl(req);
   const mailbox = mailboxUrl(req);
+  const tables = boardUrl(req);
   return {
     signal: signal ? [signal] : [],
     turn: turnUrls.length && env.TURN_SECRET ? [turnLogin()] : [],
     ...(mailbox ? { mailbox } : {}),
+    ...(tables ? { openTables: true, board: tables } : {}),
   };
 }
 
@@ -128,6 +140,10 @@ const server = createServer(async (req, res) => {
     res.end(JSON.stringify(body));
   };
   if (path === "/config.json") return json(siteConfig(req));
+  const from = String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "")
+    .split(",")[0]
+    .trim();
+  if (board && (await board.handle(req, res, path, from))) return;
   if (path === "/health.json") {
     const target = turnTarget();
     const turn = target ? await stunPing(target) : null;
@@ -148,5 +164,6 @@ const server = createServer(async (req, res) => {
 createWsRelayServer({ server, onError: (err) => console.error(err) });
 server.listen(port, () => {
   console.log(`Open Battle relay listening on ws://localhost:${port}`);
+  if (board) console.log("Open tables: on, at /relay/board");
   if (turnUrls.length) console.log(`TURN: ${turnUrls.join(", ")}${env.TURN_SECRET ? " (with logins)" : ""}`);
 });

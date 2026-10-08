@@ -21,6 +21,7 @@ import { KeysSheet } from "./ui/Keys";
 import { WhatNow } from "./ui/WhatNow";
 import { Coach } from "./ui/Coach";
 import { MailBar } from "./mail/MailBar";
+import { MyTableKeeper } from "./opentables/OpenTables";
 import { PlayPanel } from "./ui/PlayPanel";
 import { ScriptPanel } from "./ui/ScriptPanel";
 import { ReactionPrompt } from "./ui/ProcedurePanels";
@@ -292,6 +293,7 @@ export function GameScreen({ started }: { started: boolean }) {
           {!editing && <Coach />}
           {!editing && <SoloBot />}
           {!editing && <MailBar />}
+          <MyTableKeeper />
           <KeysSheet />
           <CampaignKeeper />
           <ClockKeeper />

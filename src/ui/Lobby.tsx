@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
+import { boardOn, useOpenTables } from "../opentables/board";
 import { BROADCAST } from "../broadcast/broadcast";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
@@ -30,6 +31,10 @@ import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 const MailLobby = lazy(() => import("../mail/MailLobby").then((m) => ({ default: m.MailLobby })));
 /** Rift Lanterns' rules page (#47), with its print and play, on demand. */
 const RulesPage = lazy(() => import("../printplay/RulesPage"));
+/** Open tables (#50): the public board of games, read only when opened. */
+const OpenTablesBoard = lazy(() =>
+  import("../opentables/OpenTables").then((m) => ({ default: m.OpenTablesBoard })),
+);
 
 /** Rejoin once per page load (effects run twice in development). */
 let autoJoined = false;
@@ -44,6 +49,7 @@ export function Lobby() {
   const [teamSize, setTeamSize] = useState(1);
   const [guide, setGuide] = useState(false);
   const [rules, setRules] = useState(params.get("rules") === "rift-lanterns");
+  const [tables, setTables] = useState(params.get("tables") === "1");
   // Play the computer (#45): the game whose card asks "How hard?" (UX 350).
   const [asking, setAsking] = useState<string | null>(null);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
@@ -112,10 +118,10 @@ export function Lobby() {
     namePackage();
     useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
   };
-  const join = (role: "client" | "spectator") => {
+  const join = (role: "client" | "spectator", roomId = room) => {
     remember();
-    linkTo(room);
-    start({ role, mode, roomId: room, name });
+    linkTo(roomId);
+    start({ role, mode, roomId, name });
   };
   const resume = () => {
     if (!saved) return;
@@ -348,6 +354,32 @@ export function Lobby() {
               {t("Watch")}
             </button>
           </div>
+          {boardOn() && (
+            <>
+              <button className="open-tables-button" onClick={() => setTables(true)}>
+                <strong>{t("Open tables: find an opponent")}</strong>
+                <span className="muted small">
+                  {t("Games other players have put up. Join one, or post your own.")}
+                </span>
+              </button>
+              {tables && (
+                <Suspense fallback={null}>
+                  <OpenTablesBoard
+                    onClose={() => setTables(false)}
+                    onJoin={(code) => {
+                      setRoom(code);
+                      join("client", code);
+                    }}
+                    onHost={() => {
+                      setTables(false);
+                      useOpenTables.setState({ asked: true });
+                      host();
+                    }}
+                  />
+                </Suspense>
+              )}
+            </>
+          )}
           <NetCheck />
           <h2>{t("At a real table")}</h2>
           <p className="muted small">

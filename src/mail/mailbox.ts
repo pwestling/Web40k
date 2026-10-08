@@ -57,8 +57,12 @@ export async function fetchFiles(box: Box, after: number): Promise<MailFile[] | 
 
 /** A link that joins the game from its mailbox: the box rides in the hash, so no server sees it in a log. */
 export function inviteLink(box: Box): string {
-  const code = btoa(JSON.stringify(box)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  return `${location.origin}${location.pathname}#mail=${code}`;
+  return `${location.origin}${location.pathname}#mail=${inviteCode(box)}`;
+}
+
+/** The part of an invite link after #mail=. */
+export function inviteCode(box: Box): string {
+  return btoa(JSON.stringify(box)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export function readInviteHash(hash = typeof location === "undefined" ? "" : location.hash): Box | null {

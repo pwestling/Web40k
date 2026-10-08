@@ -105,6 +105,13 @@ A mail game's mailbox is named by a long random id that only its two players hav
 accounts. Files are kept in the `mailbox_data` volume, and a mailbox nobody has touched for 60 days
 (`MAILBOX_TTL_DAYS`) is forgotten. Players' devices keep their own copy of every game regardless.
 
+**Open tables**, the board where players post a game for strangers to join, is off on a self-hosted
+site. Set `OPEN_TABLES=on` in `.env` to turn it on for your group. The relay then keeps the board in
+memory (`server/board.mjs`, at `/relay/board`) and the app reads it from there, never from the public
+Nostr relays the hosted app uses. A post has only what its player typed: a display name, the game, its
+size and time, language, live or by mail, and whether voice is on. Posts come down when the seats fill,
+when the host leaves, or after their time, and three reports from different addresses hide one.
+
 coturn uses the host's network, so it sees players' real addresses and its relay ports need no mapping.
 It refuses to relay to private and loopback addresses, so nobody can use it to reach machines on your
 own network.

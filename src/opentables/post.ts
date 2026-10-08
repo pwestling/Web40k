@@ -1,0 +1,110 @@
+import { readInviteHash } from "../mail/mailbox";
+
+/**
+ * Open tables (#50): a public board of games looking for players. A post
+ * says what the table is and how to join it; nothing else about the player
+ * (no account, only the name they typed). Posts come from strangers, so
+ * everything read off the board goes through `readPost` first.
+ */
+
+export type TableKind = "live" | "mail";
+
+export interface TablePost {
+  /** Random, chosen by the poster; one post per table. */
+  id: string;
+  /** The poster's display name. */
+  name: string;
+  /** The game system's id, and its name as the poster's app shows it. */
+  system: string;
+  game: string;
+  /** Points or game size, as the poster put it ("1000 pts", "Incursion"). */
+  size: string;
+  /** When the game starts (epoch ms), or null for now. */
+  start: number | null;
+  /** The language spoken at the table (a language code). */
+  lang: string;
+  kind: TableKind;
+  voice: boolean;
+  /** Seats still open. */
+  seats: number;
+  note: string;
+  /** A live game's room code, or a mail game's invite code. */
+  join: string;
+  /** When the post goes away on its own (epoch ms). */
+  expires: number;
+}
+
+/** A post as read off the board. */
+export interface SeenPost extends TablePost {
+  /** Who posted it: a key per browser, not an account. */
+  key: string;
+  /** When this copy was published (epoch ms); a live table republishes while its host is there. */
+  at: number;
+}
+
+/** A live table's host republishes this often; a post not refreshed for ALIVE_MS has gone. */
+export const HEARTBEAT_MS = 8 * 60_000;
+export const ALIVE_MS = 20 * 60_000;
+/** The longest a post stays up. */
+export const LIVE_HOURS = [1, 2, 3, 4] as const;
+export const MAIL_TTL_MS = 2 * 24 * 3600_000;
+const MAX_LIVE_MS = 4 * 3600_000 + 60_000;
+
+export const LIMITS = { name: 32, game: 64, size: 40, note: 140 };
+
+const ROOM = /^[A-Za-z0-9_-]{4,64}$/;
+const MAIL = /^[A-Za-z0-9_-]{10,800}$/;
+
+/** Control characters and the ones that flip text direction (a name could disguise itself). */
+// eslint-disable-next-line no-control-regex
+const UNSAFE = new RegExp("[\\u0000-\\u001f\\u007f\\u202a-\\u202e\\u2066-\\u2069]", "g");
+
+/** Text from a stranger: a plain line, no control characters, cut to length. */
+function line(v: unknown, max: number): string | null {
+  if (typeof v !== "string") return null;
+  return v.replace(UNSAFE, " ").trim().slice(0, max);
+}
+
+/** A post read off the board, checked; null when it isn't one or is past its time. */
+export function readPost(raw: unknown, now = Date.now()): TablePost | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === "string" && /^[a-f0-9]{8,32}$/.test(r.id) ? r.id : null;
+  const name = line(r.name, LIMITS.name);
+  const system = typeof r.system === "string" && /^[\w.:@/-]{1,64}$/.test(r.system) ? r.system : null;
+  const game = line(r.game, LIMITS.game);
+  const kind = r.kind === "live" || r.kind === "mail" ? r.kind : null;
+  const join = typeof r.join === "string" ? r.join : "";
+  if (!id || !name || !system || !game || !kind) return null;
+  if (kind === "live" ? !ROOM.test(join) : !MAIL.test(join) || !readInviteHash(`#mail=${join}`)) return null;
+  const expires = typeof r.expires === "number" && Number.isFinite(r.expires) ? r.expires : 0;
+  if (expires <= now || expires > now + (kind === "live" ? MAX_LIVE_MS : MAIL_TTL_MS + 60_000)) return null;
+  const seats = typeof r.seats === "number" && Number.isInteger(r.seats) ? r.seats : 0;
+  if (seats < 1 || seats > 7) return null;
+  const start = typeof r.start === "number" && Number.isFinite(r.start) ? r.start : null;
+  const lang = typeof r.lang === "string" && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(r.lang) ? r.lang : "und";
+  return {
+    id,
+    name,
+    system,
+    game,
+    size: line(r.size, LIMITS.size) ?? "",
+    start,
+    lang,
+    kind,
+    voice: r.voice === true,
+    seats,
+    note: line(r.note, LIMITS.note) ?? "",
+    join,
+    expires,
+  };
+}
+
+/** Whether a post read earlier is still up. */
+export function isUp(p: SeenPost, now = Date.now()): boolean {
+  return p.expires > now && (p.kind === "mail" || now - p.at < ALIVE_MS);
+}
+
+export function newPostId(): string {
+  return [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
