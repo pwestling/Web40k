@@ -1,7 +1,7 @@
 import { systemModule } from "../systems";
 import { useSound } from "./sound";
 import { useState } from "react";
-import { systemOf, turnView } from "../core";
+import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
 import { useCanControl, useJoining, useStore } from "../store";
@@ -19,7 +19,9 @@ export function TopBar() {
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => a.seat! - b.seat!);
-  const active = players.find((p) => p.seat === game.turn.activeSeat);
+  // A side takes its turn together (team games: several players a side, core/teams.ts).
+  const activeSide = sidePlayers(game, game.turn.activeSeat);
+  const seats = sides(game);
   const deploying = game.turn.round === 0;
   const mode = useStore((s) => s.mode);
   // Whoever presses Start is ready by doing so; only the others are named.
@@ -35,7 +37,7 @@ export function TopBar() {
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
-  const myTurn = live && (deploying || (active ? canControl(active.id) : true));
+  const myTurn = live && (deploying || (activeSide.length ? activeSide.some((p) => canControl(p.id)) : true));
   const [menu, setMenu] = useState(false);
   const system = systemOf(game);
   const counters = (system.resources ?? []).filter((r) => r.kind !== "dicePool");
@@ -46,59 +48,76 @@ export function TopBar() {
   const step = (type: "turn/next" | "turn/prev") => {
     setMenu(false);
     const what = type === "turn/next" ? "Advance" : "Go back";
-    if (confirm(`${what} a phase during ${active?.name ?? "the other player"}'s turn?`)) dispatch({ type });
+    const whose = activeSide.length ? sideName(game, game.turn.activeSeat) : "the other player";
+    if (confirm(`${what} a phase during ${whose}'s turn?`)) dispatch({ type });
   };
 
   return (
     <div className="topbar">
-      {players.map((p) => (
-        <div
-          key={p.id}
-          className={`player ${p.seat === game.turn.activeSeat && !deploying ? "active" : ""}`}
-          style={{ borderColor: p.color }}
-        >
-          <strong style={{ color: p.color }}>{p.name}</strong>
-          {counters.map(({ id: r }) => (
-            <span key={r} className="counter">
-              {r} {game.resources[p.id]?.[r] ?? 0}
-              {live && canControl(p.id) && (
-                <>
-                  <button
-                    onClick={() =>
-                      dispatch({ type: "resource/adjust", player: p.id, resource: r, delta: -1 }, p.id)
-                    }
-                  >
-                    −
-                  </button>
-                  <button
-                    onClick={() =>
-                      dispatch({ type: "resource/adjust", player: p.id, resource: r, delta: 1 }, p.id)
-                    }
-                  >
-                    +
-                  </button>
-                </>
-              )}
-            </span>
-          ))}
-          {pools.map((pool) => (
-            <DicePool
-              key={pool.id}
-              label={pool.name}
-              faces={game.pools?.[p.id]?.[pool.id] ?? []}
-              editable={live && canControl(p.id)}
-              rerollOnce={pool.rerollOnce ? (poolUsed(game, p.id, pool.id) ?? "open") : undefined}
-              onReady={() => dispatch({ type: "pool/ready", player: p.id, resource: pool.id }, p.id)}
-              onSpend={(indices) =>
-                dispatch({ type: "pool/spend", player: p.id, resource: pool.id, indices }, p.id)
-              }
-              onReroll={(indices) =>
-                dispatch({ type: "pool/reroll", player: p.id, resource: pool.id, indices }, p.id)
-              }
-            />
-          ))}
-        </div>
-      ))}
+      {seats.map((seat) => {
+        // One chip a side: its players' names, and the side's counters (shared in a team game).
+        const team = sidePlayers(game, seat);
+        const lead = team[0]!;
+        const mine = team.find((p) => canControl(p.id));
+        return (
+          <div
+            key={seat}
+            className={`player ${seat === game.turn.activeSeat && !deploying ? "active" : ""}`}
+            style={{ borderColor: lead.color }}
+          >
+            {team.map((p, i) => (
+              <strong key={p.id} style={{ color: p.color }}>
+                {i > 0 && <span className="muted"> & </span>}
+                {p.name}
+              </strong>
+            ))}
+            {counters.map(({ id: r }) => (
+              <span key={r} className="counter">
+                {r} {game.resources[lead.id]?.[r] ?? 0}
+                {live && mine && (
+                  <>
+                    <button
+                      onClick={() =>
+                        dispatch(
+                          { type: "resource/adjust", player: mine.id, resource: r, delta: -1 },
+                          mine.id,
+                        )
+                      }
+                    >
+                      −
+                    </button>
+                    <button
+                      onClick={() =>
+                        dispatch({ type: "resource/adjust", player: mine.id, resource: r, delta: 1 }, mine.id)
+                      }
+                    >
+                      +
+                    </button>
+                  </>
+                )}
+              </span>
+            ))}
+            {team.flatMap((p) =>
+              pools.map((pool) => (
+                <DicePool
+                  key={`${p.id}-${pool.id}`}
+                  label={team.length > 1 ? `${p.name} ${pool.name}` : pool.name}
+                  faces={game.pools?.[p.id]?.[pool.id] ?? []}
+                  editable={live && canControl(p.id)}
+                  rerollOnce={pool.rerollOnce ? (poolUsed(game, p.id, pool.id) ?? "open") : undefined}
+                  onReady={() => dispatch({ type: "pool/ready", player: p.id, resource: pool.id }, p.id)}
+                  onSpend={(indices) =>
+                    dispatch({ type: "pool/spend", player: p.id, resource: pool.id, indices }, p.id)
+                  }
+                  onReroll={(indices) =>
+                    dispatch({ type: "pool/reroll", player: p.id, resource: pool.id, indices }, p.id)
+                  }
+                />
+              )),
+            )}
+          </div>
+        );
+      })}
       <div className="turn">
         {myTurn && (
           <button title="Previous phase" onClick={() => dispatch({ type: "turn/prev" })}>
@@ -110,16 +129,16 @@ export function TopBar() {
             <>
               <strong>Deployment</strong>
               <span className="muted">
-                {live && players.length === 2 ? (
+                {live && seats.length === 2 ? (
                   <>
                     First turn:{" "}
                     <select
                       value={game.turn.firstSeat}
                       onChange={(e) => dispatch({ type: "turn/first", seat: Number(e.target.value) })}
                     >
-                      {players.map((p) => (
-                        <option key={p.id} value={p.seat}>
-                          {p.name}
+                      {seats.map((seat) => (
+                        <option key={seat} value={seat}>
+                          {sideName(game, seat)}
                         </option>
                       ))}
                     </select>
@@ -138,7 +157,7 @@ export function TopBar() {
               <strong>
                 {over
                   ? "Battle over"
-                  : `Round ${game.turn.round}${rounds ? ` of ${rounds}` : ""} · ${active?.name ?? "?"}`}
+                  : `Round ${game.turn.round}${rounds ? ` of ${rounds}` : ""} · ${activeSide.length ? sideName(game, game.turn.activeSeat) : "?"}`}
               </strong>
               <span className="phases">
                 {view.phases.map((ph, i) => (

@@ -18,6 +18,8 @@ export function Lobby() {
   const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [room, setRoom] = useState(() => params.get("room") ?? "");
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
+  // Players per side when hosting: 1 (1v1) or 2 (a 2v2 team game, core/teams.ts).
+  const [teamSize, setTeamSize] = useState(1);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
   useEffect(() => void useLibrary.getState().load(), []);
@@ -69,6 +71,7 @@ export function Lobby() {
     linkTo(roomId);
     start({ role: "host", mode, roomId, name, system });
     namePackage();
+    if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
   };
   const join = (role: "client" | "spectator") => {
     remember();
@@ -147,6 +150,13 @@ export function Lobby() {
       <label>
         Room{" "}
         <input value={room} placeholder="blank = new room" onChange={(e) => setRoom(e.target.value.trim())} />
+      </label>
+      <label>
+        Players{" "}
+        <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
+          <option value={1}>1 vs 1</option>
+          <option value={2}>2 vs 2 (teams share CP and VP)</option>
+        </select>
       </label>
       <div className="row">
         <button onClick={host}>Host online</button>

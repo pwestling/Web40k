@@ -1,6 +1,7 @@
 import {
   applyEvent,
   phaseName,
+  sideName,
   rulerLength,
   systemOf,
   undoneSeqs,
@@ -241,8 +242,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
 function turnHeader(state: GameState): string {
   const { round, activeSeat } = state.turn;
   if (round === 0) return "Deployment";
-  const player =
-    Object.values(state.players).find((p) => p.seat === activeSeat)?.name ?? `Player ${activeSeat + 1}`;
+  const player = sideName(state, activeSeat);
   return `Round ${round} · ${player} · ${phaseName(state) ?? ""}`;
 }
 

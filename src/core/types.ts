@@ -341,6 +341,8 @@ export interface GameSettings {
    * The Old World). Missing means models see all around.
    */
   visionArc?: number;
+  /** Players per side (2 for a 2v2). Missing means one each. */
+  teamSize?: number;
 }
 
 /** Strike Force sized board: 44" x 60". */

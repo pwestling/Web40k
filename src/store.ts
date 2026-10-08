@@ -330,10 +330,14 @@ export const useStore = create<Store>((set, get) => ({
         return;
       }
       if (status.role === "host") return;
-      if (players.filter((p) => p.seat !== undefined).length >= 2) return;
+      // Sides fill up to the team size (2v2: two players each), the emptier side first.
+      const size = game.settings.teamSize ?? 1;
+      const count = (seat: number) => players.filter((p) => p.seat === seat).length;
+      if (count(0) >= size && count(1) >= size) return;
+      const seat = count(0) >= size ? 1 : count(1) >= size ? 0 : count(1) < count(0) ? 1 : 0;
       session.dispatch({
         type: "player/join",
-        player: { id: session.selfId, name, color: COLORS[1]!, seat: 1 },
+        player: { id: session.selfId, name, color: COLORS[seat + 2 * count(seat)] ?? COLORS[seat]!, seat },
       });
     }
 

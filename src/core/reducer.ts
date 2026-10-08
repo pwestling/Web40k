@@ -1,5 +1,6 @@
 import type { GameEvent } from "./actions";
 import { revealMatches } from "./secrets";
+import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
 import { applyAction, applyRunOutcomes, endReaction, setRun } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
@@ -15,15 +16,25 @@ import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } fr
  * (log.ts), which is the source of truth; this only folds one event in.
  */
 export function applyEvent(state: GameState, event: GameEvent): GameState {
+  // In a team game a side's counters (CP, VP) are one set (core/teams.ts).
+  return shareSideResources(state, reduce(state, event));
+}
+
+function reduce(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "player/join": {
       const known = state.players[event.player.id];
-      const seats = new Set(Object.values(state.players).map((p) => p.seat));
-      // First come, first seated; a rejoining player keeps their seat.
-      const seat = known?.seat ?? event.player.seat ?? (seats.has(0) ? (seats.has(1) ? undefined : 1) : 0);
+      // First come, first seated, filling the emptier side up to the team size; a rejoining player keeps their seat.
+      const size = state.settings.teamSize ?? 1;
+      const count = (seat: number) => Object.values(state.players).filter((p) => p.seat === seat).length;
+      const free = count(0) < size || count(1) < size;
+      const seat = known?.seat ?? event.player.seat ?? (free ? (count(1) < count(0) ? 1 : 0) : undefined);
       const player = { ...event.player, ...(seat === undefined ? {} : { seat }) };
       player.name = playerName(state, player);
-      const resources = state.resources[player.id] ?? initialResources(state);
+      // A player joining a side shares its counters.
+      const mate = seat === undefined ? undefined : sidePlayers(state, seat).find((p) => p.id !== player.id);
+      const resources =
+        state.resources[player.id] ?? (mate && state.resources[mate.id]) ?? initialResources(state);
       return {
         ...state,
         players: { ...state.players, [player.id]: player },
@@ -479,7 +490,11 @@ function upgradePiece(piece: TerrainPiece): TerrainPiece {
  * another player already has gets a number, so the two sides never look alike.
  */
 function playerName(state: GameState, player: Player): string {
-  const fallback = player.seat === undefined ? "Spectator" : `Player ${player.seat + 1}`;
+  // Teammates number on: side 1 has Players 1 and 3, side 2 has Players 2 and 4.
+  const before = Object.values(state.players).filter(
+    (p) => p.id !== player.id && p.seat === player.seat,
+  ).length;
+  const fallback = player.seat === undefined ? "Spectator" : `Player ${player.seat + 1 + 2 * before}`;
   const wanted = player.name.trim();
   const base = !wanted || wanted === "Player" ? fallback : wanted;
   const taken = new Set(

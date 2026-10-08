@@ -149,7 +149,9 @@ export function Hud() {
       </div>
       <GameSettings />
 
-      {role === "client" && !amSeated && seated.length >= 2 && <RejoinCard seated={seated} />}
+      {role === "client" && !amSeated && seated.length >= 2 * (liveGame.settings.teamSize ?? 1) && (
+        <RejoinCard seated={seated} />
+      )}
 
       {/* During the battle, setup tools and the dice tray fold away to keep the panel slim. */}
       {mine.length > 0 &&
