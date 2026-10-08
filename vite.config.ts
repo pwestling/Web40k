@@ -1,7 +1,9 @@
 /// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { build as viteBuild, defineConfig, type Plugin, type Rollup } from "vite";
 import pkg from "./package.json" with { type: "json" };
 
@@ -77,8 +79,59 @@ function sandboxWorker(): Plugin {
   };
 }
 
+/** Every file under a folder, as paths relative to it. */
+function filesIn(dir: string): string[] {
+  try {
+    return readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name);
+      return statSync(path).isDirectory() ? filesIn(path).map((f) => relative(dir, join(path, f))) : [name];
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * `sw.js`, the service worker (src/sw/sw.template.js), with the build's files
+ * to keep on the device and a version that changes with them, so browsers
+ * notice a new build. In development it keeps nothing, for play-by-mail push
+ * only.
+ */
+function serviceWorker(): Plugin {
+  const template = () => readFileSync("src/sw/sw.template.js", "utf8");
+  const fill = (files: string[], version: string) =>
+    template().replace("__VERSION__", version).replace("__FILES__", JSON.stringify(files));
+  return {
+    name: "service-worker",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split("?")[0] !== "/sw.js") return next();
+        res.setHeader("content-type", "text/javascript");
+        res.end(fill([], "dev"));
+      });
+    },
+    generateBundle(_, bundle) {
+      // index.html joins the bundle after this runs; the version still follows it, through the hashed
+      // file names it points at.
+      const files = [...new Set([...Object.keys(bundle), ...filesIn("public"), "index.html"])]
+        .filter((f) => !f.endsWith(".map"))
+        .sort();
+      // The version follows the files' contents, so any change to the build makes a new one.
+      const hash = createHash("sha256");
+      for (const f of files) {
+        const out = bundle[f];
+        hash.update(f);
+        if (out) hash.update(out.type === "chunk" ? out.code : out.source);
+        else if (f !== "index.html") hash.update(readFileSync(join("public", f)));
+      }
+      const version = hash.digest("hex").slice(0, 12);
+      this.emitFile({ type: "asset", fileName: "sw.js", source: fill(files, version) });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), sandboxWorker()],
+  plugins: [react(), sandboxWorker(), serviceWorker()],
   define: { __APP_BUILD__: JSON.stringify(build()) },
   // Relative asset paths so the build can be hosted under any sub-path
   // (e.g. GitHub Pages at /open-battle/).

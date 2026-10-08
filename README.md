@@ -40,6 +40,8 @@ There is no public hosted copy yet. To play, someone in your group runs it, in o
 - **Host it for your group** on any server or home machine with Docker: `cp .env.example .env`, fill it in, and `docker compose up -d`. Everyone then just opens your address in a browser. See [docs/self-host.md](docs/self-host.md).
 - **Run it on your own computer** with Node, as below. That's enough to try the demos, or to play a friend over the internet through public relays.
 
+Once opened, the app keeps itself on the device and can be installed (the browser's "Install" or "Add to Home Screen"). With no network, games on one screen, games against the computer, lessons, replays, saved armies and tables, and campaign books all still work. A new version is offered on the start page, never in the middle of a game.
+
 ## Getting started
 
 Requires Node 22+ and [pnpm](https://pnpm.io) (`corepack enable` will provide it).

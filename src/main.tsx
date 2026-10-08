@@ -7,6 +7,7 @@ import { useStore } from "./store";
 import "./styles.css";
 import { loadSiteConfig } from "./net/config";
 import { watchFigures } from "./figures/library";
+import { registerServiceWorker } from "./sw/register";
 import { watchErrors } from "./ui/report";
 import { applyTextSize } from "./ui/textSize";
 
@@ -16,6 +17,9 @@ watchErrors();
 applyTextSize();
 // Models joining this browser go into the figure library (#33).
 watchFigures();
+// The app kept on the device, for offline play and installing (#34). Not in development, where it
+// would hold on to old modules.
+if (import.meta.env.PROD) void registerServiceWorker()?.catch(() => {});
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
 void loadSiteConfig().then(() =>

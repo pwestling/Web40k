@@ -3330,3 +3330,15 @@ body.showcase
   gap: 8px;
   max-width: 420px;
 }
+
+/* Offline and updates (#34) */
+.update-toast {
+  align-items: center !important;
+}
+.update-toast span {
+  flex: 1;
+}
+.offline-note {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}

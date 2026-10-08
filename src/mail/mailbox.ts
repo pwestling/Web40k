@@ -1,6 +1,7 @@
 import { netConfig } from "../net/config";
 import { newSeed } from "./dice";
 import { parseFile, type MailFile } from "./file";
+import { registerServiceWorker } from "../sw/register";
 
 /**
  * A game's mailbox on a self-hosted server (server/mailbox.mjs): turns are
@@ -93,7 +94,7 @@ export const pushSupported = () =>
 
 /**
  * Ask to be told when the other player's file arrives. The push carries
- * nothing: it wakes mail-sw.js, which says "Your move", and the app fetches
+ * nothing: it wakes the service worker (src/sw), which says "Your move", and the app fetches
  * the file from the mailbox. Returns why it didn't work, or null.
  */
 export async function subscribePush(box: Box, player: string): Promise<string | null> {
@@ -103,7 +104,8 @@ export async function subscribePush(box: Box, player: string): Promise<string | 
   if ((await Notification.requestPermission()) !== "granted")
     return "Notifications are blocked for this site.";
   try {
-    const reg = await navigator.serviceWorker.register("./mail-sw.js");
+    // The app's own service worker shows the notifications (src/sw/sw.template.js).
+    const reg = await registerServiceWorker()!;
     await navigator.serviceWorker.ready;
     const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
     const sub =

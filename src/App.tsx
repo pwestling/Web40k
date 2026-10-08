@@ -4,6 +4,7 @@ import { CrashGuard } from "./ui/Crash";
 import { SavedToast } from "./ui/SavedNote";
 import { Lobby } from "./ui/Lobby";
 import { useLibraryOpen } from "./figures/open";
+import { UpdateToast } from "./sw/UpdateToast";
 
 /**
  * The 3D table, three.js and every in-game panel load as their own chunk,
@@ -36,6 +37,8 @@ export function App() {
         </Suspense>
       </CrashGuard>
       {!started && <Lobby />}
+      {/* A new version only between games, never mid-battle (#34). */}
+      {!started && <UpdateToast />}
       <SavedToast />
       {library && (
         <Suspense fallback={null}>

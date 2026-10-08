@@ -43,7 +43,7 @@ invitation, so only the two players have it.
 - If the mailbox can't be reached, the file is saved instead, to pass on by
   hand, and _Try the mailbox again_ retries. Files always work.
 - **Web push** is optional: when the server has VAPID keys, _Notify me when
-  it's my move_ subscribes this browser (`public/mail-sw.js`). The push is
+  it's my move_ subscribes this browser (`src/sw/sw.template.js`). The push is
   empty; the app fetches the file from the mailbox. Without push, the tab
   title says "● Your move".
 
