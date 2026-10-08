@@ -172,7 +172,8 @@ export type Intent =
   | { type: "turn/next" }
   | { type: "turn/prev" }
   | { type: "turn/pass" }
-  | { type: "turn/endActivation" }
+  /** `unit`: the unit whose go it was, when it only moved (a real table, where moves aren't on the board). */
+  | { type: "turn/endActivation"; unit?: UnitId }
   | { type: "turn/first"; seat: number }
   | { type: "game/system"; system: string }
   | { type: "resource/adjust"; player: PlayerId; resource: string; delta: number }
@@ -342,7 +343,8 @@ export type GameEvent =
   | { type: "turn/next"; seed?: number }
   | { type: "turn/prev" }
   | { type: "turn/pass"; seed?: number }
-  | { type: "turn/endActivation" }
+  /** `unit`: the unit whose go it was, when it only moved (a real table, where moves aren't on the board). */
+  | { type: "turn/endActivation"; unit?: UnitId }
   | { type: "turn/first"; seat: number }
   /** Choose the game system before the battle starts. */
   | { type: "game/system"; system: string }

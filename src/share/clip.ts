@@ -19,9 +19,28 @@ export interface ClipSound {
   voice: boolean;
 }
 
-/** Clips are at most this wide (a 4K screen would make a file too big to post). */
-const MAX_WIDTH = 1920;
+/** A clip's frame: 16:9 for video sites, square for feeds, 9:16 for phone stories (UX 337, PX share 6). */
+export type ClipShape = "wide" | "square" | "tall";
+const SIZES: Record<ClipShape, { width: number; height: number }> = {
+  wide: { width: 1920, height: 1080 },
+  square: { width: 1080, height: 1080 },
+  tall: { width: 1080, height: 1920 },
+};
 const FPS = 30;
+/** The end frame (the result and where to play) stays this long (PX share 5). */
+const END_MS = 1500;
+
+/** What the clip ends on. */
+export interface ClipEnding {
+  title: string;
+  line?: string;
+  url: string;
+}
+
+/** The shape that suits this screen: tall on a phone held upright, else wide. */
+export function defaultShape(): ClipShape {
+  return innerHeight > innerWidth * 1.2 ? "tall" : "wide";
+}
 
 /** Whether this browser can record clips. */
 export function canRecord(): boolean {
@@ -46,13 +65,11 @@ export interface Recording {
   cancel(): void;
 }
 
-export function startClip(sound: ClipSound): Recording | null {
+export function startClip(sound: ClipSound, shape: ClipShape, ending: () => ClipEnding): Recording | null {
   const table = tableCanvas();
   const type = mimeType();
   if (!table || !type) return null;
-  const rect = table.getBoundingClientRect();
-  const width = Math.min(MAX_WIDTH, table.width) & ~1;
-  const height = Math.round((width * rect.height) / Math.max(1, rect.width)) & ~1;
+  const { width, height } = SIZES[shape];
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -60,8 +77,16 @@ export function startClip(sound: ClipSound): Recording | null {
   const stopFrames = everyFrame((src) => {
     // The page may have scrolled or resized since: measure each frame.
     const r = src.getBoundingClientRect();
-    ctx.drawImage(src, 0, 0, width, height);
-    paintOverlays(ctx, { left: r.left, top: r.top, scale: width / Math.max(1, r.width) });
+    // Until the canvas's pixels match its box (it is being resized), its frame is drawn small in a corner: skip it.
+    if (!src.width || !r.width || Math.abs(src.width / src.height - r.width / r.height) > 0.02) return;
+    // Cover the clip's frame with the table, keeping its middle; the overlays line up the same way.
+    const k = Math.max(width / r.width, height / r.height);
+    const dx = (width - r.width * k) / 2;
+    const dy = (height - r.height * k) / 2;
+    ctx.fillStyle = "#111318";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(src, dx, dy, r.width * k, r.height * k);
+    paintOverlays(ctx, { left: r.left - dx / k, top: r.top - dy / k, scale: k });
   });
 
   const video = canvas.captureStream(FPS);
@@ -100,17 +125,62 @@ export function startClip(sound: ClipSound): Recording | null {
   return {
     stop: () =>
       new Promise<Blob>((resolve) => {
+        // The table stops; the end frame holds over its last picture, then the clip ends.
+        stopFrames();
+        const end = ending();
+        const last = document.createElement("canvas");
+        last.width = width;
+        last.height = height;
+        last.getContext("2d")!.drawImage(canvas, 0, 0);
+        const shown = performance.now();
+        const track = video.getVideoTracks()[0] as
+          (MediaStreamTrack & { requestFrame?: () => void }) | undefined;
+        const timer = setInterval(() => {
+          drawEnding(ctx, last, end, Math.min(1, (performance.now() - shown) / 300));
+          // Each end frame is sent on, not left for the stream to notice.
+          track?.requestFrame?.();
+          if (performance.now() - shown < END_MS) return;
+          clearInterval(timer);
+          // A beat for the encoder to catch up, so the end frame isn't dropped at the stop.
+          recorder.requestData();
+          setTimeout(() => recorder.stop(), 400);
+        }, 1000 / FPS);
         recorder.onstop = () => {
           finish();
           void withDuration(new Blob(chunks, { type: "video/webm" }), performance.now() - began).then(
             resolve,
           );
         };
-        recorder.stop();
       }),
     cancel: () => {
       recorder.onstop = finish;
       recorder.stop();
     },
   };
+}
+
+/** The clip's last frame: its last picture dimmed, the result, and where to play. */
+function drawEnding(ctx: CanvasRenderingContext2D, last: HTMLCanvasElement, end: ClipEnding, fade: number) {
+  const { width, height } = ctx.canvas;
+  ctx.drawImage(last, 0, 0);
+  ctx.fillStyle = `rgba(10, 11, 15, ${0.8 * fade})`;
+  ctx.fillRect(0, 0, width, height);
+  ctx.globalAlpha = fade;
+  ctx.textAlign = "center";
+  const unit = Math.min(width, height) / 1080;
+  const font = (size: number, weight: number) =>
+    (ctx.font = `${weight} ${size * unit}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`);
+  font(86, 800);
+  ctx.fillStyle = "#f4f1ea";
+  ctx.fillText(end.title, width / 2, height / 2 - 20 * unit, width * 0.9);
+  if (end.line) {
+    font(40, 500);
+    ctx.fillStyle = "#b9b4a8";
+    ctx.fillText(end.line, width / 2, height / 2 + 50 * unit, width * 0.9);
+  }
+  font(44, 700);
+  ctx.fillStyle = "#f5b942";
+  ctx.fillText(end.url, width / 2, height / 2 + 150 * unit, width * 0.9);
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
 }

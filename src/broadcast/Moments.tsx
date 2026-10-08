@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import type { GameRecord } from "../core";
 import { momentsOf, type Moment } from "../core/moments";
 import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
@@ -77,6 +78,34 @@ export function playMoment(m: Moment, done?: () => void): void {
     later(pace(record, seq), () => step(i + 1));
   };
   later(LEAD_MS, () => step(0));
+}
+
+/** About how long a moment takes to play (ms): its lead-up, its events at replay pace, the dice settling, the hold. */
+export function momentLength(record: GameRecord, m: Moment): number {
+  if (!playable(m)) return CARD_MS;
+  return stretchLength(record, m.seq, Math.max(m.seq, m.end));
+}
+
+/** About how long playing from `from` to `to` takes (ms), as `playMoment` paces it. */
+export function stretchLength(record: GameRecord, from: number, to: number): number {
+  let ms = LEAD_MS + HOLD_MS;
+  for (const e of record.events)
+    if (e.seq >= from && e.seq <= to)
+      // A roll also waits for the tray to settle.
+      ms += pace(record, e.seq) + (e.event.type === "attack/roll" || e.event.type === "dice/roll" ? 700 : 0);
+  return ms;
+}
+
+/** About how long the highlights reel runs (ms). */
+export function reelLength(record: GameRecord): number {
+  return momentsOf(record).reduce((n, m) => n + momentLength(record, m), 0);
+}
+
+/** Start the highlights reel, as at the end of a game (the replay page's first button, a clip). */
+export function startReel(): void {
+  useStore.getState().set({ stats: false, director: true });
+  useStore.getState().select(null);
+  useReel.setState({ index: 0, done: false });
 }
 
 /** Show a moment's card on its own: while it plays through, or for a few seconds. */

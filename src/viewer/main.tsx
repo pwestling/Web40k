@@ -44,6 +44,8 @@ async function main() {
     if (added.ok) useLibrary.getState().trust(hash, true);
   }
   useStore.getState().openReplay(record);
+  // The whole table first; the camera follows the action once they press play (UX 344).
+  useStore.getState().set({ director: false });
   createRoot(root).render(
     <StrictMode>
       <CrashGuard>

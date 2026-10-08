@@ -1,4 +1,14 @@
-import type { Command, CodeProcedure, Ctx, GameView, RunResult, TurnHooks } from "../sdk";
+import type {
+  Actor,
+  CodeAction,
+  Command,
+  CodeProcedure,
+  Ctx,
+  GameView,
+  RunResult,
+  TableQuestion,
+  TurnHooks,
+} from "../sdk";
 import { viewRef } from "./content/calls";
 import { actingUnits, procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
@@ -405,6 +415,7 @@ export function gameView(state: GameState, module: Id): GameView {
     distance: (a, b) => round4(Number(ask({ kind: "distance", from: "a", to: "b" }, a, b))),
     visible: (a, b) => !!ask({ kind: "visible", from: "a", to: "b" }, a, b),
     inCover: (a, b) => !!ask({ kind: "cover", from: "a", to: "b" }, a, b),
+    atTable: !!state.settings.companion,
     arc: (of, other) =>
       system.arcs?.find((arc) => !!ask({ kind: "inArc", from: "a", to: "b", arc: arc.id }, of, other))?.id ??
       null,
@@ -520,4 +531,20 @@ export function hookIntents(before: GameState, after: GameState, event: GameEven
     for (const t of tables) start(t.roundStart, after, now);
   if (after.turn.round > 0 && now) for (const t of tables) start(t.phaseStart?.[now], after, now);
   return out;
+}
+
+/** At a real table: each target's questions for the players (CodeAction.told), as plain data. */
+export function toldFor(
+  action: CodeAction,
+  view: GameView,
+  actor: Actor,
+  targets: { unitId?: string }[],
+): { told?: Record<string, TableQuestion[]> } {
+  if (!view.atTable || !action.told) return {};
+  const ids = action.targets ? targets.map((t) => t.unitId ?? "") : [""];
+  return {
+    told: Object.fromEntries(
+      ids.map((id) => [id, JSON.parse(JSON.stringify(action.told!(view, actor, id || undefined)))]),
+    ),
+  };
 }

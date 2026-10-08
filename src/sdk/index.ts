@@ -86,7 +86,22 @@ export interface CodeAction {
   /** True, or why not. */
   available(view: GameView, actor: Actor): true | string;
   targets?(view: GameView, actor: Actor): Target[];
+  /**
+   * At a real table (`view.atTable`, the table companion) nothing can be
+   * measured, so the players say: yes/no questions asked before the action
+   * starts, for this target. The answers reach `run` as `args.told[id]`; a
+   * question with `need` answered no stops the action ("Can they see it?").
+   */
+  told?(view: GameView, actor: Actor, target: Id | undefined): TableQuestion[];
   run: CodeProcedure;
+}
+
+/** A yes/no question the players answer from their real table (see `CodeAction.told`). */
+export interface TableQuestion {
+  id: Id;
+  question: string;
+  /** Without a yes, the action can't be taken. */
+  need?: boolean;
 }
 
 /**
@@ -170,6 +185,12 @@ export interface GameView {
   inCover(from: Id, to: Id): boolean;
   arc(of: Id, other: Id): Id | null;
   engaged(unitId: Id): Id[];
+  /**
+   * Played with real models on a real table (the table companion): the
+   * positions aren't the table's, so `distance`, `visible` and `inCover` mean
+   * nothing. Ask the players instead (`CodeAction.told`, `ctx.ask`).
+   */
+  atTable: boolean;
   /** This module's own state, `state.modules[id]`. */
   own: Record<string, unknown>;
   /** The whole game state, read-only (a worker holds the same replica). */

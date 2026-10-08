@@ -128,8 +128,9 @@ function provide(p: Provided): void {
   provided.push(p.system.id);
   const store = useStore.getState();
   if (store.session) store.session.refold();
-  // A replay (no session): fold it again with the real system; a new game also refreshes scrubbed views.
-  else useStore.setState({ game: stateAt(store.record) });
+  // A replay (no session): fold it again with the real system. A fresh record too, so everything
+  // read from it (its log lines, moments, title card) is read again with the game's own rules.
+  else useStore.setState({ game: stateAt(store.record), record: { ...store.record } });
   // A game just set up on the stand-in takes the real system's table, counters and layout.
   const game = useStore.getState().game;
   if (store.role === "host" && game.system === p.system.id && game.turn.round === 0) {

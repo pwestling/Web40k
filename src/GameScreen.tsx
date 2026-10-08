@@ -1,4 +1,5 @@
 import { SoloBot } from "./bot/SoloBot";
+import { VIEWER } from "./viewer/flag";
 import { NoteCaption, NotesPanel } from "./replay/NotesPanel";
 import { cameraForward, focusOn } from "./render/focus";
 import { aliveModels } from "./systems/wh40k/rules";
@@ -278,7 +279,8 @@ export function GameScreen({ started }: { started: boolean }) {
           {!editing && <NotesPanel />}
           <NoteCaption />
           <DiceTray />
-          {!editing && <TalkPanel />}
+          {/* A replay page has no one to ping or react to (UX 344, PX share 7). */}
+          {!editing && !VIEWER && <TalkPanel />}
           <VoiceRoom />
           <Moments />
           <Ambience />

@@ -3,6 +3,7 @@ import { systemOf } from "../core";
 import { evaluate } from "../core/content/expr";
 import { evalCtx, safeBool } from "../core/content/play";
 import { unitView } from "../core/content/runtime";
+import { distanceText } from "./distance";
 import type { CheckDef } from "../core/content/schema";
 import { gameView } from "../core/script";
 import { t } from "../i18n";
@@ -102,7 +103,11 @@ function dataWarnings(state: GameState, unit: Unit, checks: CheckDef[]): Omit<Ta
       out.push({
         checkId: check.id,
         unitId: unit.id,
-        message: check.message,
+        // A move check says by how much, so the line reads on its own (UX 334).
+        message:
+          moving && allowed !== null
+            ? `${check.message} (${distanceText(state, moved)} / ${distanceText(state, allowed)})`
+            : check.message,
         severity: check.severity ?? "warning",
       });
   }

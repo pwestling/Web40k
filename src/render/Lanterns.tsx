@@ -45,7 +45,7 @@ export interface LanternItem {
 /** More than any mission puts down; instance counts change, never the meshes. */
 const MAX = 8;
 /** Lamplight when nobody holds it, and the pale light of a contested one. */
-const LAMPLIGHT = new Color("#ffc46b");
+const NEUTRAL = new Color("#fff1d6");
 const PALE = new Color("#f4efe2");
 /** Lanterns stand a little taller than a trooper, so they read at table scale. */
 const SCALE = 1.35;
@@ -67,7 +67,7 @@ function ironGeometry(): BufferGeometry {
 const FLICKER = /* glsl */ `
 uniform float uTime;
 attribute vec3 aColor;
-attribute vec2 aInfo; // phase, contested
+attribute vec2 aInfo; // phase, then 0 held, 1 contested, 2 nobody's
 varying vec3 vColor;
 varying float vLight;
 varying vec2 vUv;
@@ -91,7 +91,7 @@ function glowMaterial() {
         vUv = uv;
         vColor = aColor;
         float f = flicker();
-        vLight = f * (aInfo.y > 0.5 ? 0.6 : 1.0);
+        vLight = f * (aInfo.y > 0.5 && aInfo.y < 1.5 ? 0.6 : 1.0);
         // A billboard: the quad turned to face the camera, centred on the flame.
         vec4 mv = modelViewMatrix * instanceMatrix * vec4(0.0, ${FLAME_Y.toFixed(2)}, 0.0, 1.0);
         mv.xy += position.xy * (3.6 + 0.3 * f);
@@ -106,7 +106,11 @@ function glowMaterial() {
         // A bright core and a soft, wide falloff (no bloom on phones, so the halo does the work).
         float core = 1.0 - smoothstep(0.0, 0.16, d);
         float halo = pow(max(0.0, 1.0 - d), 2.6);
-        vec3 c = mix(vColor, vec3(1.0, 0.97, 0.9), core * 0.35);
+        // Every holder's glow as bright as the next: dark colours (violet, green) lifted to the same
+        // lightness and toward white, so a held lantern never looks half snuffed (PX share).
+        float l = dot(vColor, vec3(0.299, 0.587, 0.114));
+        vec3 lit = min(vColor * (0.72 / max(l, 0.2)), vec3(1.0));
+        vec3 c = mix(lit, vec3(1.0, 0.97, 0.9), 0.3 + core * 0.35);
         gl_FragColor = vec4(c * (halo * 0.95 + core) * vLight, 1.0);
       }`,
   });
@@ -119,14 +123,17 @@ function poolMaterial(ring: number) {
     depthWrite: false,
     // Blended, not added: the ring is the holder's own colour, readable across the table (PX).
     vertexShader: /* glsl */ `${FLICKER}
+      varying float aInfoY;
       void main() {
         vUv = uv;
         vColor = aColor;
-        vLight = flicker() * (aInfo.y > 0.5 ? 0.6 : 1.0);
+        vLight = flicker() * (aInfo.y > 0.5 && aInfo.y < 1.5 ? 0.6 : 1.0);
+        aInfoY = aInfo.y;
         gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: /* glsl */ `
       uniform float uRing;
+      varying float aInfoY;
       varying vec3 vColor;
       varying float vLight;
       varying vec2 vUv;
@@ -137,7 +144,9 @@ function poolMaterial(ring: number) {
         float pool = pow(1.0 - d, 1.6) * 0.3 * vLight;
         float edge = smoothstep(1.0 - uRing * 2.0, 1.0 - uRing, d) * (1.0 - smoothstep(1.0 - uRing * 0.3, 1.0, d));
         // The pool tints the table; the ring at its edge is solid, to measure by and to see who holds it.
-        gl_FragColor = vec4(vColor, min(1.0, pool + edge * 0.9));
+        // Nobody's lantern has a grey ring, so it never reads as a side's colour (UX 346).
+        vec3 ring = aInfoY > 1.5 ? vec3(0.62, 0.62, 0.6) : vColor;
+        gl_FragColor = vec4(mix(vColor, ring, edge), min(1.0, pool + edge * (aInfoY > 1.5 ? 0.7 : 0.9)));
       }`,
   });
 }
@@ -299,12 +308,13 @@ function place(
       i,
       ring.makeScale(reach * 2, 1, reach * 2).setPosition(it.position.x, 0.02, it.position.y),
     );
-    c.copy(it.contested ? PALE : it.color ? new Color(it.color) : LAMPLIGHT);
+    // Unheld: a pale flame, so no side's colour is mistaken for it (UX 346).
+    c.copy(it.contested ? PALE : it.color ? new Color(it.color) : NEUTRAL);
     geo.color.setXYZ(i, c.r, c.g, c.b);
     // A phase from the id, so the lanterns never pulse together.
     let h = 0;
     for (const ch of it.id) h = (h * 31 + ch.charCodeAt(0)) % 997;
-    geo.info.setXY(i, h / 37, it.contested ? 1 : 0);
+    geo.info.setXY(i, h / 37, it.contested ? 1 : it.color ? 0 : 2);
   });
   for (const mesh of [iron, glow, pool]) {
     if (!mesh) continue;

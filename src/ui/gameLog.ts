@@ -953,7 +953,9 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "turn/pass":
       return t("{name} passed", { name: who });
     case "turn/endActivation":
-      return t("{name} ended the activation", { name: who });
+      return event.unit
+        ? t("{unit} moved and ended its go", { unit: unitName(event.unit) })
+        : t("{name} ended the activation", { name: who });
     case "pool/set":
       return t("{name} re-rolled or spent dice", { name: nameOf(event.player) });
     case "dice/place": {

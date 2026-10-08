@@ -33,7 +33,8 @@ export function NotesPanel() {
   const { notes, draft, game } = useNotes();
   const notesIn = useReview((s) => s.notesIn);
   const [tab, setTab] = useState<"notes" | "chapters">("notes");
-  const [open, setOpen] = useState(true);
+  // A replay page shows its notes only when asked, unless it carries some on a wide screen (UX 344).
+  const [open, setOpen] = useState(() => !VIEWER || (notes.length > 0 && innerWidth > 640));
   const id = gameId(record);
   useEffect(() => {
     if (annotating && id && id !== useNotes.getState().game) void loadNotes(record);

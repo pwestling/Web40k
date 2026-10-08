@@ -1,3 +1,6 @@
+import { VIEWER } from "../viewer/flag";
+import { reelLength, startReel } from "../broadcast/Moments";
+import { playFromStart } from "./ReplayBar";
 import { displayName } from "../i18n/names";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
@@ -78,8 +81,10 @@ export function ReplayTitle() {
   const [closedFor, setClosedFor] = useState<unknown>(null);
   // Playing or scrubbing away from the start closes it for good.
   if (isReplay && closedFor !== record && scrub !== null && scrub !== intro.startSeq) setClosedFor(record);
+  const reel = useMemo(() => (isReplay ? reelLength(record) : 0), [isReplay, record]);
   useEffect(() => {
-    if (!isReplay) return;
+    // On a replay page the card is the friend's way in: it stays until they pick (PX share 7).
+    if (!isReplay || VIEWER) return;
     const timer = setTimeout(() => setClosedFor(record), 8000);
     return () => clearTimeout(timer);
   }, [isReplay, record]);
@@ -121,7 +126,31 @@ export function ReplayTitle() {
           </span>
         </span>
       )}
-      <span className="muted small">{t("Press ▶ to watch from the start of the battle.")}</span>
+      {/* The good bits first: someone opening a link wants the highlights (PX share 7). */}
+      <div className="row wrap replay-start">
+        {reel > 0 && (
+          <button
+            className="primary"
+            onClick={() => {
+              setOpen(false);
+              startReel();
+            }}
+          >
+            {t("▶ Watch the highlights ({length})", {
+              length: t("about {n} s", { n: Math.max(5, Math.round(reel / 5000) * 5) }),
+            })}
+          </button>
+        )}
+        <button
+          className={reel > 0 ? "" : "primary"}
+          onClick={() => {
+            setOpen(false);
+            playFromStart();
+          }}
+        >
+          {t("Watch from the start")}
+        </button>
+      </div>
     </div>
   );
 }

@@ -404,7 +404,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case "turn/pass":
       return passTurn(state, event.seed);
     case "turn/endActivation":
-      return endActivation(state);
+      return endActivation(event.unit ? startActivation(state, event.unit) : state);
     case "pool/set": {
       const next = {
         ...state,

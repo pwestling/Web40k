@@ -1,6 +1,6 @@
 import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent, Objective, Zone } from "../core";
 import type { GameSystem } from "../core/content/schema";
-import type { MissionCard, PanelSpec, ScoringRule } from "../sdk";
+import type { MissionCard, PanelSpec, ScoringRule, TableQuestion } from "../sdk";
 import type { SystemModule } from "../systems/app";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Rng } from "../core/actions";
@@ -119,6 +119,8 @@ export interface ActionRow {
   targets: { unitId?: string; label: string }[];
   /** Whether it needs a target picked. */
   targeted: boolean;
+  /** At a real table: what to ask the players first, by target id ("" for none). */
+  told?: Record<string, TableQuestion[]>;
 }
 
 export type Resolved = GameEvent | null;

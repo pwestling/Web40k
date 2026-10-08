@@ -4105,6 +4105,83 @@ body.showcase
 
 /* Play the computer (#45): "How hard?" in the game's card (UX 350). */
 .lobby .how-hard {
+}
+
+/* Share the battle (#46): the panel over the replay bar, and the pill while a clip records. */
+.panel.share-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 76px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--below-bar, 64px) - 96px);
+  overflow-y: auto;
+  z-index: 25;
+  display: grid;
+  gap: 10px;
+}
+.share-panel section {
+  display: grid;
+  gap: 6px;
+}
+.share-panel h4 {
+  margin: 0;
+}
+.share-panel p {
+  margin: 0;
+}
+.share-options {
+  display: grid;
+  gap: 2px;
+}
+/* The whole row is the radio's (or checkbox's) tap target (UX 340). */
+.share-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.share-options label select {
+  margin-left: 6px;
+}
+.share-download {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+/* The stats sheet's Share… sits before its close button. */
+.stats-screen .head button:not(.quiet) {
+  margin-left: auto;
+}
+/* On a phone: an opaque full-width sheet over everything else, with 44 px rows (UX 340, 341). */
+@media (max-width: 640px), (pointer: coarse) {
+  .panel.share-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 88vh;
+    z-index: 70;
+    background: #15171d;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -12px 40px rgb(0 0 0 / 55%);
+  }
+  .share-panel button,
+  .share-options label {
+    min-height: 44px;
+  }
+  .share-options input[type="radio"],
+  .share-options input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+}
+.recording-pill {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 60;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -4119,4 +4196,16 @@ body.showcase
 .lobby .how-hard .quiet {
   align-self: flex-end;
   min-height: 0;
+}
+.replay-start {
+  margin-top: 6px;
+  gap: 8px;
+}
+.replay-start .primary {
+  font-size: 1.05em;
+  padding: 8px 14px;
+}
+/* A round's card has the top centre while it shows; the hint waits under it (UX 345). */
+body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
+  visibility: hidden;
 }

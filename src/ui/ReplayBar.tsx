@@ -5,17 +5,19 @@ import { playMoment, useMomentsAllowed } from "../broadcast/Moments";
 import { delaying } from "../broadcast/broadcast";
 import { useHold } from "./hold";
 import { replayRoll } from "./hooks";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { create } from "zustand";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
 import { pace } from "./pace";
 import { BackToOriginal, BranchButton } from "./Branch";
-import { readGame, type Highlight } from "./highlights";
+import { readGame, replayIntro, type Highlight } from "./highlights";
 import { useNotes } from "../replay/notes";
 import { reviewThisGame } from "../replay/review";
 import { battleOver } from "./StatsScreen";
-import { RecordingPill, SharePanel, useShare } from "../share/SharePanel";
+import { RecordingPill, SharePanel } from "../share/SharePanel";
+import { openShare, useShare } from "../share/store";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
@@ -37,6 +39,17 @@ function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string
  * track is marked with rounds and phases, and a caption says what is
  * happening at the current point, for spectators and anyone scrubbing.
  */
+/** Replay playback, here so the replay's title card can start it ("Watch from the start"). */
+const usePlayback = create<{ playing: boolean }>(() => ({ playing: false }));
+
+/** Play the replay from the start of the battle. */
+export function playFromStart(): void {
+  const { record, setScrub } = useStore.getState();
+  setScrub(replayIntro(record).startSeq + 1);
+  useStore.getState().set({ director: true });
+  usePlayback.setState({ playing: true });
+}
+
 export function ReplayBar() {
   const { record, scrub, setScrub, session: live, role, review } = useStore();
   // A review room is a replay watched together: there's no "live" in it.
@@ -44,7 +57,18 @@ export function ReplayBar() {
   const notes = useNotes((s) => s.notes);
   const over = useStore((s) => battleOver(s.game));
   const noted = useMemo(() => [...new Set(notes.map((n) => n.seq))], [notes]);
-  const [playing, setPlaying] = useState(false);
+  const playing = usePlayback((s) => s.playing);
+  const setPlaying = (playing: boolean) => usePlayback.setState({ playing });
+  // The track's width, so round labels that would collide thin out (UX 342).
+  const track = useRef<HTMLDivElement>(null);
+  const [trackWidth, setTrackWidth] = useState(600);
+  useEffect(() => {
+    const el = track.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setTrackWidth(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const last = record.events.at(-1)?.seq ?? 0;
   // A branched game's log starts mid-battle: the track runs from its first event.
   const first = record.initial.seq;
@@ -72,6 +96,15 @@ export function ReplayBar() {
     () => log.flatMap((l) => (l.kind === "header" && l.rules ? [{ seq: Number(l.key), text: l.text }] : [])),
     [log],
   );
+  const roundMarks = marks.filter((m) => m.round);
+  const closest = roundMarks
+    .slice(1)
+    .reduce(
+      (gap, m, i) => Math.min(gap, ((m.seq - roundMarks[i]!.seq) / Math.max(1, last - first)) * trackWidth),
+      Infinity,
+    );
+  // A label is about 24 px wide: label every round, every 2nd, 3rd... so they never touch.
+  const every = Number.isFinite(closest) ? Math.max(1, Math.ceil(26 / Math.max(1, closest))) : 1;
   const phase = [...marks].reverse().find((m) => m.seq <= pos);
   // The latest action in the current phase, or that the phase has just begun.
   const latest = [...log]
@@ -139,7 +172,7 @@ export function ReplayBar() {
         <button title={t("Replay: forward a phase")} onClick={() => jump(1)}>
           ⏭
         </button>
-        <div className="track">
+        <div className="track" ref={track}>
           <input
             type="range"
             min={first}
@@ -152,13 +185,16 @@ export function ReplayBar() {
           />
           {last > 0 &&
             marks.map((m) => (
+              // Every round keeps its tick; only every `every`th is labelled when they'd crowd.
               <span
                 key={m.seq}
                 className={`tick ${m.round ? "round" : ""}`}
                 style={{ left: at(m.seq) }}
                 title={m.text}
               >
-                {m.round && <span className="label">{t("R{round}", { round: m.round })}</span>}
+                {m.round && roundMarks.indexOf(m) % every === 0 && (
+                  <span className="label">{t("R{round}", { round: m.round })}</span>
+                )}
               </span>
             ))}
           {last > 0 &&
@@ -237,7 +273,13 @@ export function ReplayBar() {
         {(!session || over) && last > record.initial.seq && (
           <button
             title={t("Share the battle")}
-            onClick={() => useShare.setState({ open: !useShare.getState().open })}
+            onClick={() => {
+              if (useShare.getState().open) useShare.setState({ open: false });
+              else {
+                useStore.getState().set({ stats: false });
+                openShare();
+              }
+            }}
           >
             {t("Share…")}
           </button>

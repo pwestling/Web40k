@@ -34,8 +34,9 @@ export function paintOverlays(
 ): void {
   for (const sel of LAYERS)
     for (const el of root.querySelectorAll<HTMLElement>(sel))
-      // An empty box (a title between moments) would show as a stray frame; wound pips have no text.
-      if (sel === ".wounds" || el.textContent?.trim()) paintBox(ctx, el, frame, 1);
+      // A box with no words showing (a title between moments, a label whose text is hidden) would
+      // show as a stray frame (UX 337); wound pips have no text.
+      if (sel === ".wounds" || showsText(el)) paintBox(ctx, el, frame, 1);
   const tray = root.querySelector<HTMLElement>(".dice-tray.on");
   if (tray) paintTray(ctx, tray, frame);
 }
@@ -44,6 +45,23 @@ const visible = (style: CSSStyleDeclaration) =>
   style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0.01;
 
 const px = (v: string) => parseFloat(v) || 0;
+
+/** Whether any of an element's words are on screen: laid out, and in a visible, not see-through box. */
+function showsText(el: HTMLElement): boolean {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent?.trim() || !n.parentElement) continue;
+    range.selectNodeContents(n);
+    const r = range.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    let ok = true;
+    for (let p: HTMLElement | null = n.parentElement; p && ok; p = p === el ? null : p.parentElement)
+      ok = visible(getComputedStyle(p));
+    if (ok) return true;
+  }
+  return false;
+}
 
 function hasPaint(color: string): boolean {
   return !!color && color !== "transparent" && !/rgba\([^)]*,\s*0\)$/.test(color);
@@ -56,8 +74,14 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 /** An element's box, then its text and children, in page order. */
 function paintBox(ctx: CanvasRenderingContext2D, el: HTMLElement, f: Frame, alpha: number): void {
-  // Controls (Next, Skip) are for the person at the screen, not the clip.
-  if (el.tagName === "BUTTON" || el.tagName === "INPUT") return;
+  // Controls on the cards (Next, Skip, Close) are for the person at the screen, not the clip; a
+  // label that is a button (a casualty pile's) is drawn like any label.
+  if (
+    (el.tagName === "BUTTON" || el.tagName === "INPUT") &&
+    el.closest(".moment-card, .round-card, .dice-tray")
+  )
+    return;
+  if (el.tagName === "INPUT") return;
   const style = getComputedStyle(el);
   if (!visible(style)) return;
   const a = alpha * Number(style.opacity || 1);

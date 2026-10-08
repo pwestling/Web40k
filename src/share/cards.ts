@@ -4,6 +4,7 @@ import { t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import type { Highlight, RoundSummary } from "../ui/highlights";
 import { systemLabel } from "../ui/systemLabels";
+import { plainSystemName, siteUrl } from "./site";
 
 /**
  * Pictures to post (#46): the end-of-game card and a card for each round, as
@@ -22,7 +23,7 @@ const GOLD = "#f5b942";
 const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 /** A side as the cards show it: its name and colour, its armies, its VP. */
-interface Side {
+export interface Side {
   name: string;
   color: string;
   armies: string[];
@@ -51,35 +52,56 @@ function sidesOf(game: GameState): Side[] {
 
 function systemTitle(game: GameState): string {
   try {
-    return systemLabel(game.system, systemOf(game).name);
+    return plainSystemName(systemLabel(game.system, systemOf(game).name));
   } catch {
-    return game.system ?? "";
+    return plainSystemName(game.system ?? "");
   }
 }
 
-/** A fresh card with the table behind it, dimmed most where the words go (the left). */
+/** The words' column on the left; the table's picture fills the rest, undimmed (UX 339). */
+const COLUMN = 640;
+const LEFT = 56;
+/** The right edge of the words, where the scores line up. */
+const RIGHT = COLUMN - 36;
+const TEXT = RIGHT - LEFT;
+const BG = "#111318";
+
+/** A fresh card: the words' column, and the table's picture beside it. */
 function backdrop(table: HTMLCanvasElement | null): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = document.createElement("canvas");
   canvas.width = CARD.width;
   canvas.height = CARD.height;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#111318";
+  ctx.fillStyle = BG;
   ctx.fillRect(0, 0, CARD.width, CARD.height);
   if (table && table.width && table.height) {
-    // Cover the card, keeping the table's middle.
-    const k = Math.max(CARD.width / table.width, CARD.height / table.height);
+    // Cover the picture's area, keeping the middle (where the shot was framed).
+    const area = { x: COLUMN - 40, w: CARD.width - COLUMN + 40, h: CARD.height };
+    const k = Math.max(area.w / table.width, area.h / table.height);
     const w = table.width * k;
     const h = table.height * k;
-    // Shifted right, out from under the words.
-    ctx.drawImage(table, (CARD.width - w) / 2 + CARD.width * 0.18, (CARD.height - h) / 2, w, h);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(area.x, 0, area.w, area.h);
+    ctx.clip();
+    ctx.drawImage(table, area.x + (area.w - w) / 2, (area.h - h) / 2, w, h);
+    ctx.restore();
+    // A soft seam into the column.
+    const seam = ctx.createLinearGradient(area.x, 0, area.x + 80, 0);
+    seam.addColorStop(0, BG);
+    seam.addColorStop(1, "rgba(17, 19, 24, 0)");
+    ctx.fillStyle = seam;
+    ctx.fillRect(area.x, 0, 80, CARD.height);
   }
-  const shade = ctx.createLinearGradient(0, 0, CARD.width, 0);
-  shade.addColorStop(0, "rgba(10, 11, 15, 0.94)");
-  shade.addColorStop(0.55, "rgba(10, 11, 15, 0.78)");
-  shade.addColorStop(1, "rgba(10, 11, 15, 0.3)");
-  ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, CARD.width, CARD.height);
   return [canvas, ctx];
+}
+
+/** The biggest font (up to `size`) that fits `text` in `width`. */
+function fit(ctx: CanvasRenderingContext2D, text: string, size: number, weight: number, width: number) {
+  for (; size > 30; size -= 2) {
+    font(ctx, size, weight);
+    if (ctx.measureText(text).width <= width) return;
+  }
 }
 
 function font(ctx: CanvasRenderingContext2D, size: number, weight = 400) {
@@ -128,7 +150,7 @@ function kicker(ctx: CanvasRenderingContext2D, game: GameState, extra?: string) 
   font(ctx, 22, 600);
   ctx.fillStyle = GOLD;
   const bits = ["Open Battle", systemTitle(game), game.mission?.name, extra].filter(Boolean); // i18n-ignore
-  ctx.fillText(bits.join("  ·  ").toUpperCase(), 64, 76);
+  wrap(ctx, bits.join("  ·  ").toUpperCase(), LEFT, 76, TEXT, 26, 1);
 }
 
 /** One row a side: a colour bar, its name and armies, and its VP on the right. */
@@ -136,20 +158,21 @@ function sideRows(ctx: CanvasRenderingContext2D, rows: Side[], y: number, right:
   for (const [i, s] of rows.entries()) {
     ctx.fillStyle = s.color;
     ctx.beginPath();
-    ctx.roundRect(64, y - 34, 10, 66, 5);
+    ctx.roundRect(LEFT, y - 34, 10, 66, 5);
     ctx.fill();
-    font(ctx, 34, 700);
-    ctx.fillStyle = INK;
-    ctx.fillText(displayName(s.name), 92, y);
-    font(ctx, 22);
-    ctx.fillStyle = MUTED;
-    wrap(ctx, s.armies.join(", ") || " ", 92, y + 30, 520, 26, 1);
-    font(ctx, 44, 800);
+    // The score first (right-aligned beside the name), so the name gets what's left.
+    font(ctx, 40, 800);
     ctx.fillStyle = INK;
     ctx.textAlign = "right";
-    ctx.fillText(right[i] ?? "", 760, y + 8);
+    ctx.fillText(right[i] ?? "", RIGHT, y + 4);
+    const scoreWidth = ctx.measureText(right[i] ?? "").width + 20;
     ctx.textAlign = "left";
-    y += 96;
+    font(ctx, 32, 700);
+    wrap(ctx, displayName(s.name), LEFT + 26, y, TEXT - 26 - scoreWidth, 34, 1);
+    font(ctx, 20);
+    ctx.fillStyle = MUTED;
+    wrap(ctx, s.armies.join(", ") || " ", LEFT + 26, y + 28, TEXT - 26 - scoreWidth, 24, 1);
+    y += 90;
   }
   return y;
 }
@@ -164,19 +187,33 @@ function momentBlock(
 ): number {
   font(ctx, 20, 700);
   ctx.fillStyle = star ? GOLD : MUTED;
-  ctx.fillText(`${star ? "★ " : ""}${label}`.toUpperCase(), 64, y);
-  font(ctx, 28, 700);
+  wrap(ctx, `${star ? "★ " : ""}${label}`.toUpperCase(), LEFT, y, TEXT, 24, 1);
+  font(ctx, 26, 700);
   ctx.fillStyle = INK;
-  y = wrap(ctx, m.title, 64, y + 36, 700, 34, 1);
-  font(ctx, 22);
+  y = wrap(ctx, m.title, LEFT, y + 34, TEXT, 32, 1);
+  font(ctx, 20);
   ctx.fillStyle = MUTED;
-  return wrap(ctx, m.line, 64, y + 2, 700, 28, 2) + 18;
+  return wrap(ctx, m.line, LEFT, y + 2, TEXT, 26, 2) + 16;
 }
 
-function footer(ctx: CanvasRenderingContext2D, text: string) {
+/** "Played on Open Battle", and where: the address people can type. */
+function footer(ctx: CanvasRenderingContext2D) {
   font(ctx, 18);
   ctx.fillStyle = MUTED;
-  ctx.fillText(text, 64, CARD.height - 36);
+  ctx.fillText(t("Played on Open Battle"), LEFT, CARD.height - 36);
+  font(ctx, 18, 700);
+  ctx.fillStyle = GOLD;
+  ctx.textAlign = "right";
+  // On a dark pill, readable over any picture.
+  const url = siteUrl();
+  const w = ctx.measureText(url).width;
+  ctx.fillStyle = "rgba(10, 11, 15, 0.82)";
+  ctx.beginPath();
+  ctx.roundRect(CARD.width - 48 - w - 16, CARD.height - 62, w + 32, 38, 19);
+  ctx.fill();
+  ctx.fillStyle = GOLD;
+  ctx.fillText(url, CARD.width - 48, CARD.height - 36);
+  ctx.textAlign = "left";
 }
 
 /** The biggest story of the game, and the rarest roll if there was one. */
@@ -199,20 +236,14 @@ export function endCard(
   const rows = sidesOf(game);
   kicker(ctx, game);
   const scored = rows.some((s) => s.vp) || !!game.mission;
-  const best = Math.max(...rows.map((s) => s.vp));
-  const winners = rows.filter((s) => s.vp === best);
-  font(ctx, 64, 800);
-  ctx.fillStyle = INK;
-  const head = !scored
-    ? tn(Math.max(1, game.turn.round - 1), "{n} round played", "{n} rounds played")
-    : winners.length === 1
-      ? t("{side} wins", { side: displayName(winners[0]!.name) })
-      : t("A draw");
-  wrap(ctx, head, 64, 156, 1000, 70, 1);
   const lost = (s: Side) =>
     Object.values(game.models).filter(
       (m) => m.destroyed && sidePlayers(game, sides(game)[rows.indexOf(s)]!).some((p) => p.id === m.owner),
     ).length;
+  const head = headline(rows, scored, lost);
+  fit(ctx, head, 60, 800, TEXT);
+  ctx.fillStyle = INK;
+  wrap(ctx, head, LEFT, 152, TEXT, 64, 1);
   let y = sideRows(
     ctx,
     rows,
@@ -223,8 +254,41 @@ export function endCard(
   y += 8;
   if (decisive) y = momentBlock(ctx, t("Decisive moment · {when}", { when: decisive.when }), decisive, y);
   if (rare && y < CARD.height - 120) momentBlock(ctx, t("Against all odds"), rare, y, true);
-  footer(ctx, t("Played on Open Battle"));
+  footer(ctx);
   return canvas;
+}
+
+/** A game's result in a line, and what it was (a clip's end frame). */
+export function result(game: GameState): { title: string; line: string } {
+  const rows = sidesOf(game);
+  const scored = rows.some((s) => s.vp) || !!game.mission;
+  const lost = (s: Side) =>
+    Object.values(game.models).filter(
+      (m) => m.destroyed && sidePlayers(game, sides(game)[rows.indexOf(s)]!).some((p) => p.id === m.owner),
+    ).length;
+  return {
+    title: headline(rows, scored, lost),
+    line: [systemTitle(game), game.mission?.name].filter(Boolean).join("  ·  "),
+  };
+}
+
+/**
+ * The result, as people post it (PX share 1): "Player 1 wins 12–7", "Draw,
+ * 3–3"; with no VP, on losses: "Player 1 wins on losses: 0 to 2".
+ */
+export function headline(rows: Side[], scored: boolean, lost: (s: Side) => number): string {
+  const score = (s: Side) => (scored ? s.vp : -lost(s));
+  const order = [...rows].sort((a, b) => score(b) - score(a));
+  const [first, second] = order;
+  if (!first || !second) return first ? displayName(first.name) : "";
+  const vps = order.map((s) => s.vp).join("–");
+  const losses = order.map(lost).join(t(" to "));
+  if (score(first) === score(second))
+    return scored ? t("Draw, {score}", { score: vps }) : t("Draw on losses: {score}", { score: losses });
+  const side = displayName(first.name);
+  return scored
+    ? t("{side} wins {score}", { side, score: vps })
+    : t("{side} wins on losses: {score}", { side, score: losses });
 }
 
 /** A round's card: each side's VP and what it lost, and what happened that round. */
@@ -236,47 +300,48 @@ export function roundCard(
 ): HTMLCanvasElement {
   const [canvas, ctx] = backdrop(table);
   kicker(ctx, game);
-  font(ctx, 64, 800);
+  font(ctx, 60, 800);
   ctx.fillStyle = INK;
-  ctx.fillText(t("Round {n}", { n: summary.round }), 64, 156);
-  let y = 250;
+  ctx.fillText(t("Round {n}", { n: summary.round }), LEFT, 152);
+  let y = 240;
   for (const p of summary.players) {
     ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.roundRect(64, y - 34, 10, 66, 5);
+    ctx.roundRect(LEFT, y - 34, 10, 66, 5);
     ctx.fill();
-    font(ctx, 34, 700);
+    font(ctx, 40, 800);
     ctx.fillStyle = INK;
-    ctx.fillText(displayName(p.name), 92, y);
-    font(ctx, 22);
+    ctx.textAlign = "right";
+    const vp = t("{vp} VP", { vp: p.vp });
+    ctx.fillText(vp, RIGHT, y + 4);
+    const scoreWidth = ctx.measureText(vp).width + 20;
+    ctx.textAlign = "left";
+    font(ctx, 32, 700);
+    wrap(ctx, displayName(p.name), LEFT + 26, y, TEXT - 26 - scoreWidth, 34, 1);
+    font(ctx, 20);
     ctx.fillStyle = MUTED;
     const bits = [
       p.vpGained ? t("+{n} VP this round", { n: p.vpGained }) : "",
       p.modelsLost ? tn(p.modelsLost, "{n} model lost", "{n} models lost") : t("no losses"),
       p.unitsLost.length ? t("wiped out: {units}", { units: p.unitsLost.join(", ") }) : "",
     ].filter(Boolean);
-    wrap(ctx, bits.join(" · "), 92, y + 30, 560, 26, 1);
-    font(ctx, 44, 800);
-    ctx.fillStyle = INK;
-    ctx.textAlign = "right";
-    ctx.fillText(t("{vp} VP", { vp: p.vp }), 760, y + 8);
-    ctx.textAlign = "left";
-    y += 96;
+    wrap(ctx, bits.join(" · "), LEFT + 26, y + 28, TEXT - 26 - scoreWidth, 24, 1);
+    y += 90;
   }
   y += 8;
   font(ctx, 20, 700);
   ctx.fillStyle = MUTED;
-  if (happened.length) ctx.fillText(t("What happened").toUpperCase(), 64, y);
-  y += 36;
+  if (happened.length) ctx.fillText(t("What happened").toUpperCase(), LEFT, y);
+  y += 34;
   for (const h of happened.slice(0, 3)) {
     const rare = "kind" in h && h.kind === "rare";
-    font(ctx, 24, "line" in h ? 600 : 400);
+    font(ctx, 22, "line" in h ? 600 : 400);
     ctx.fillStyle = rare ? GOLD : INK;
-    const text = "line" in h ? `${rare ? "★ " : ""}${h.title}: ${h.line}` : h.text;
-    y = wrap(ctx, text, 64, y, 760, 30, 2) + 6;
+    const text = "line" in h ? `${rare ? "★ " : ""}${h.title}. ${h.line}` : h.text;
+    y = wrap(ctx, text, LEFT, y, TEXT, 28, 2) + 6;
     if (y > CARD.height - 80) break;
   }
-  footer(ctx, t("Played on Open Battle"));
+  footer(ctx);
   return canvas;
 }
 

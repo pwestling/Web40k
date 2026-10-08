@@ -1,17 +1,38 @@
+import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
-import { cameraForward, useFocus } from "./focus";
+import { cameraForward, shot, useFocus } from "./focus";
 
 const EASE_S = 0.2;
 
 /** Eases the camera to look at a requested point, keeping its angle and distance (src/render/focus.ts). */
 export function FocusCamera() {
+  const saved = useRef<{ target: Vector3; position: Vector3 } | null>(null);
   const controls = useThree((s) => s.controls) as unknown as {
     target: Vector3;
     object: { position: Vector3 };
     update: () => void;
   } | null;
   useFrame((_, dt) => {
+    if (controls && shot.request) {
+      // A picture's still: jump there, remembering where the camera was.
+      const { x, y, span } = shot.request;
+      shot.request = null;
+      saved.current ??= { target: controls.target.clone(), position: controls.object.position.clone() };
+      const offset = controls.object.position.clone().sub(controls.target);
+      controls.target.set(x, controls.target.y, y);
+      offset.setLength(Math.max(18, span * 1.6 + 12));
+      controls.object.position.copy(controls.target).add(offset);
+      controls.update();
+    } else if (controls && shot.restore) {
+      shot.restore = false;
+      if (saved.current) {
+        controls.target.copy(saved.current.target);
+        controls.object.position.copy(saved.current.position);
+        controls.update();
+        saved.current = null;
+      }
+    }
     if (controls) {
       const dx = controls.target.x - controls.object.position.x;
       const dy = controls.target.z - controls.object.position.z;

@@ -1,18 +1,21 @@
 import { useMemo, useState } from "react";
 import { VIEWER } from "../viewer/flag";
-import { create } from "zustand";
 import { stateAt, type GameRecord } from "../core";
 import { momentsOf, type Moment } from "../core/moments";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { useReel } from "../broadcast/reel";
-import { playMoment, stopMoment } from "../broadcast/Moments";
+import { playMoment, reelLength, startReel, stopMoment, stretchLength } from "../broadcast/Moments";
 import { readGame, replayIntro } from "../ui/highlights";
 import { battleOver } from "../ui/StatsScreen";
 import { voiceStreams } from "../voice/voice";
 import { grabTable, settle } from "./capture";
-import { endCard, pngOf, roundCard, saveFile, stamp } from "./cards";
-import { canRecord, startClip, type Recording } from "./clip";
+import { endCard, pngOf, result, roundCard, saveFile, stamp, standouts } from "./cards";
+import { siteUrl } from "./site";
+import { downloadReplay } from "../ui/Hud";
+import { shot } from "../render/focus";
+import { canRecord, defaultShape, startClip, type ClipShape } from "./clip";
+import { useShare } from "./store";
 
 /**
  * Share the battle (#46): one panel for everything that leaves the app. The
@@ -21,25 +24,62 @@ import { canRecord, startClip, type Recording } from "./clip";
  * each round.
  */
 
-interface ShareState {
-  open: boolean;
-  /** What is being made now, said in the panel (or on the recording pill). */
-  busy: string | null;
-  recording: Recording | null;
-  error: string | null;
-}
+export { useShare };
 
-export const useShare = create<ShareState>(() => ({ open: false, busy: null, recording: null, error: null }));
-
-/** Look at the table at `seq` for a moment, take its picture, then put the scrubber back. */
-async function tableAt(seq: number): Promise<HTMLCanvasElement | null> {
+/**
+ * Look at the table at `seq` for a moment, take its picture, then put the
+ * scrubber back. With a moment, the camera frames its units (PX share 3)
+ * rather than the whole table.
+ */
+async function tableAt(seq: number, moment?: Moment): Promise<HTMLCanvasElement | null> {
   const s = useStore.getState();
-  const was = s.scrub;
+  const was = { scrub: s.scrub, director: s.director };
+  s.set({ director: false });
   s.setScrub(seq);
+  // With no moment, the whole table, closer than the screen's view: the card's picture is narrower than a screen.
+  const { width, depth } = s.game.table;
+  const frame = (moment ? momentFrame(s.record, moment) : null) ?? {
+    x: 0,
+    y: 0,
+    span: Math.max(width, depth) * 0.25,
+  };
+  shot.request = frame;
   await settle();
   const picture = await grabTable();
-  useStore.getState().setScrub(was);
+  shot.restore = true;
+  useStore.getState().setScrub(was.scrub);
+  useStore.getState().set({ director: was.director });
   return picture;
+}
+
+/** Where a moment happened: the middle of the models it involved, and how far they spread. */
+export function momentFrame(record: GameRecord, m: Moment): { x: number; y: number; span: number } | null {
+  const state = stateAt(record, Math.max(m.seq, m.end));
+  const units = new Set(m.units);
+  const models = new Set<string>();
+  for (const { seq, event } of record.events) {
+    if (seq < m.seq || seq > Math.max(m.seq, m.end)) continue;
+    const e = event as Record<string, unknown> & {
+      attack?: { spec?: { attackerUnitId?: string; targetUnitId?: string } };
+      roll?: { unitId?: string };
+    };
+    for (const id of [
+      e.attack?.spec?.attackerUnitId,
+      e.attack?.spec?.targetUnitId,
+      e.roll?.unitId,
+      e.unitId,
+      e.targetId,
+    ])
+      if (typeof id === "string" && state.units[id]) units.add(id);
+    if (typeof e.id === "string" && state.models[e.id]) models.add(e.id);
+  }
+  for (const u of units) for (const id of state.units[u]?.modelIds ?? []) models.add(id);
+  const at = [...models].flatMap((id) => (state.models[id] ? [state.models[id]!.position] : []));
+  if (!at.length) return null;
+  const x = at.reduce((n, p) => n + p.x, 0) / at.length;
+  const y = at.reduce((n, p) => n + p.y, 0) / at.length;
+  const span = Math.max(4, ...at.map((p) => 2 * Math.hypot(p.x - x, p.y - y)));
+  return { x, y, span };
 }
 
 const lastSeq = (record: GameRecord) => record.events.at(-1)?.seq ?? record.initial.seq;
@@ -47,7 +87,11 @@ const lastSeq = (record: GameRecord) => record.events.at(-1)?.seq ?? record.init
 async function saveEndCard() {
   const { record } = useStore.getState();
   const end = lastSeq(record);
-  const picture = await tableAt(end);
+  // The picture is the decisive moment as it happened; the words are the result.
+  const { decisive } = standouts(record);
+  const picture = decisive
+    ? await tableAt(Math.max(decisive.seq, decisive.end), decisive)
+    : await tableAt(end);
   saveFile(await pngOf(endCard(record, stateAt(record, end), picture)), `${stamp()}-result.png`);
 }
 
@@ -60,18 +104,32 @@ async function saveRoundCard(round: number) {
   // What happened: the round's moments first (they read best), then its highlights.
   const moments = momentsOf(record).filter((m) => m.round === round && m.kind !== "mvp");
   const marks = highlights.filter((h) => h.seq > from && h.seq <= summary.seq);
-  const picture = await tableAt(summary.seq);
+  const top = [...moments].sort((a, b) => b.score - a.score)[0];
+  const picture = top ? await tableAt(Math.max(top.seq, top.end), top) : await tableAt(summary.seq);
   const card = roundCard(stateAt(record, summary.seq), summary, [...moments, ...marks], picture);
   saveFile(await pngOf(card), `${stamp()}-round-${round}.png`);
 }
 
+/** The director's setting while a clip records, put back after. */
+let directorWas: boolean | null = null;
+
 /** Record while `play` runs the table, until it calls its `done`. */
-function recordClip(play: (done: () => void) => void, sound: { sounds: boolean; voice: boolean }) {
-  const rec = startClip(sound);
+function recordClip(
+  play: (done: () => void) => void,
+  sound: { sounds: boolean; voice: boolean },
+  shape: ClipShape,
+) {
+  const rec = startClip(sound, shape, () => {
+    const { record } = useStore.getState();
+    return { ...result(stateAt(record)), url: siteUrl() };
+  });
   if (!rec) {
     useShare.setState({ error: t("This browser can't record the table.") });
     return;
   }
+  // The camera follows the action while it records, as the reel does (UX 337).
+  directorWas = useStore.getState().director;
+  useStore.getState().set({ director: true, stats: false });
   useShare.setState({ open: false, recording: rec, busy: t("Recording…") });
   play(() => void finishClip());
 }
@@ -82,14 +140,15 @@ export async function finishClip() {
   useShare.setState({ recording: null, busy: t("Saving the clip…") });
   stopMoment();
   const blob = await rec.stop();
+  if (directorWas !== null) useStore.getState().set({ director: directorWas });
+  directorWas = null;
   useShare.setState({ busy: null });
   saveFile(blob, `${stamp()}.webm`);
 }
 
 /** The end-of-game reel, from its first card until it hands back to the stats. */
 function playReel(done: () => void) {
-  useStore.getState().set({ stats: false });
-  useReel.setState({ index: 0, done: false });
+  startReel();
   const stop = useReel.subscribe((s) => {
     if (s.index !== null) return;
     stop();
@@ -113,6 +172,11 @@ function playStretch(from: number, to: number, done: () => void) {
   playMoment(stretch, done);
 }
 
+type Stretch = "reel" | "here-round" | "here-game" | "whole" | "round";
+
+/** "about 30 s": a length to say before recording (UX 338). */
+const about = (ms: number) => t("about {n} s", { n: Math.max(5, Math.round(ms / 5000) * 5) });
+
 export function SharePanel() {
   const open = useShare((s) => s.open);
   const busy = useShare((s) => s.busy);
@@ -121,7 +185,9 @@ export function SharePanel() {
   const scrub = useStore((s) => s.scrub);
   const [sounds, setSounds] = useState(true);
   const [voice, setVoice] = useState(false);
-  const [stretch, setStretch] = useState<"reel" | "round" | "game">("round");
+  const [shape, setShape] = useState<ClipShape>(defaultShape);
+  const [choice, setChoice] = useState<Stretch | null>(null);
+  const [round, setRound] = useState<number | null>(null);
   const final = useMemo(() => (open ? stateAt(record) : null), [open, record]);
   const rounds = useMemo(() => (open ? readGame(record).rounds : []), [open, record]);
   const reel = useMemo(() => (open ? momentsOf(record) : []), [open, record]);
@@ -129,8 +195,32 @@ export function SharePanel() {
   const over = !!final && battleOver(final);
   const last = lastSeq(record);
   const pos = scrub ?? last;
-  // The end of the round the scrubber is in.
+  const start = replayIntro(record).startSeq || record.initial.seq;
+  // At the end (or live), "from here" means nothing: offer the whole battle or a round (UX 338).
+  const atEnd = pos >= last;
   const roundEnd = rounds.find((r) => r.seq > pos)?.seq ?? last;
+  const shownRound = round ?? rounds.at(-1)?.round ?? null;
+  const roundSpan = (n: number): [number, number] => {
+    const at = rounds.findIndex((r) => r.round === n);
+    return [at > 0 ? rounds[at - 1]!.seq + 1 : start, rounds[at]?.seq ?? last];
+  };
+  const spans: Partial<Record<Stretch, [number, number]>> = atEnd
+    ? { whole: [start, last], ...(shownRound !== null ? { round: roundSpan(shownRound) } : {}) }
+    : { "here-round": [pos, roundEnd], "here-game": [pos, last] };
+  const options: Stretch[] = [
+    ...(Object.keys(spans) as Stretch[]),
+    ...(reel.length ? (["reel"] as const) : []),
+  ];
+  const stretch = choice && options.includes(choice) ? choice : options[0]!;
+  const length = (s: Stretch) =>
+    s === "reel" ? reelLength(record) : spans[s] ? stretchLength(record, ...spans[s]!) : 0;
+  const labels: Record<Stretch, string> = {
+    reel: t("The highlights reel"),
+    "here-round": t("From here to the end of the round"),
+    "here-game": t("From here to the end of the game"),
+    whole: t("The whole battle"),
+    round: t("A round"),
+  };
   const talk = voiceStreams().length > 0;
   const run = (what: string, job: () => Promise<void>) => {
     useShare.setState({ busy: what, error: null });
@@ -140,11 +230,10 @@ export function SharePanel() {
   };
   const clip = () => {
     const sound = { sounds, voice: voice && talk };
-    if (stretch === "reel") recordClip(playReel, sound);
+    if (stretch === "reel") recordClip(playReel, sound, shape);
     else {
-      // From the end, a clip starts where the battle does.
-      const from = pos >= last ? replayIntro(record).startSeq || record.initial.seq : pos;
-      recordClip((done) => playStretch(from, stretch === "round" ? roundEnd : last, done), sound);
+      const [from, to] = spans[stretch]!;
+      recordClip((done) => playStretch(from, to, done), sound, shape);
     }
   };
   return (
@@ -158,21 +247,28 @@ export function SharePanel() {
 
       {!VIEWER && (
         <section>
-          <h4>{t("A web page")}</h4>
-          <p className="muted small">
-            {t("The whole replay with its figures in one file: it opens in any browser, even offline.")}
-          </p>
-          <button
-            disabled={!!busy}
-            onClick={() =>
-              run(t("Making the page…"), async () => {
-                const { exportPage } = await import("./page");
-                await exportPage(useStore.getState().record);
-              })
-            }
-          >
-            {t("Download the replay page")}
-          </button>
+          <h4>{t("The replay")}</h4>
+          {/* Two downloads, each saying what it's for (UX 343). */}
+          <div className="share-download">
+            <button
+              disabled={!!busy}
+              onClick={() =>
+                run(t("Making the page…"), async () => {
+                  const { exportPage } = await import("./page");
+                  await exportPage(useStore.getState().record);
+                })
+              }
+            >
+              {t("Web page")}
+            </button>
+            <span className="muted small">{t("Opens in any browser, even offline: send it to anyone.")}</span>
+          </div>
+          <div className="share-download">
+            <button disabled={!!busy} onClick={() => void downloadReplay(useStore.getState().record)}>
+              {t("Replay file")}
+            </button>
+            <span className="muted small">{t("Opens in Open Battle, with notes and What if…")}</span>
+          </div>
         </section>
       )}
 
@@ -180,31 +276,59 @@ export function SharePanel() {
         <h4>{t("A clip")}</h4>
         {canRecord() ? (
           <>
-            <div className="share-options">
-              {reel.length > 0 && (
-                <label>
-                  <input type="radio" checked={stretch === "reel"} onChange={() => setStretch("reel")} />{" "}
-                  {t("The highlights reel")}
+            <div className="share-options" role="radiogroup" aria-label={t("What to record")}>
+              {options.map((s) => (
+                <label key={s}>
+                  <input type="radio" checked={stretch === s} onChange={() => setChoice(s)} />
+                  <span>
+                    {labels[s]}
+                    {s === "round" && shownRound !== null && (
+                      <select
+                        aria-label={t("Round")}
+                        value={shownRound}
+                        onChange={(e) => {
+                          setRound(Number(e.target.value));
+                          setChoice("round");
+                        }}
+                      >
+                        {rounds.map((r) => (
+                          <option key={r.round} value={r.round}>
+                            {t("Round {n}", { n: r.round })}
+                          </option>
+                        ))}
+                      </select>
+                    )}{" "}
+                    <span className="muted small">{about(length(s))}</span>
+                  </span>
                 </label>
+              ))}
+              {!reel.length && (
+                <p className="muted small">{t("No highlights reel: this game had no standout moments.")}</p>
               )}
-              <label>
-                <input type="radio" checked={stretch === "round"} onChange={() => setStretch("round")} />{" "}
-                {t("From here to the end of the round")}
-              </label>
-              <label>
-                <input type="radio" checked={stretch === "game"} onChange={() => setStretch("game")} />{" "}
-                {t("From here to the end of the game")}
-              </label>
+            </div>
+            <div className="share-options" role="radiogroup" aria-label={t("Shape")}>
+              {(
+                [
+                  ["wide", t("Wide (16:9)")],
+                  ["square", t("Square, for feeds")],
+                  ["tall", t("Tall (9:16), for stories")],
+                ] as const
+              ).map(([id, label]) => (
+                <label key={id}>
+                  <input type="radio" checked={shape === id} onChange={() => setShape(id)} />{" "}
+                  <span>{label}</span>
+                </label>
+              ))}
             </div>
             <div className="share-options">
               <label>
                 <input type="checkbox" checked={sounds} onChange={(e) => setSounds(e.target.checked)} />{" "}
-                {t("Dice and table sounds")}
+                <span>{t("Dice and table sounds")}</span>
               </label>
               {talk && (
                 <label>
                   <input type="checkbox" checked={voice} onChange={(e) => setVoice(e.target.checked)} />{" "}
-                  {t("Table talk")}
+                  <span>{t("Table talk")}</span>
                 </label>
               )}
             </div>

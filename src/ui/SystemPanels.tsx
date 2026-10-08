@@ -135,6 +135,9 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         ? moveAllowance(game, unit)
         : null;
   const moved = unitMoved(alive);
+  // At a real table (the companion) the board's positions mean nothing: no distances or sight here.
+  const companion = !!game.settings.companion;
+  const plain = plainActivations(game);
   const statuses = (system.statuses ?? []).filter((s) => view.statuses.includes(s.id));
   const flags = view.flags.filter(
     (f) =>
@@ -235,7 +238,8 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           )}
         </div>
       )}
-      {allowance !== null && (
+      {companion && plain && mine && game.turn.round > 0 && <MovedOnTable unit={unit} />}
+      {allowance !== null && !companion && (
         <p className={moved > allowance + 0.05 ? "warn" : "muted"}>
           {t("Moved {distance} of {allowance} this round.", {
             distance: fmt(moved / scale, system),
@@ -245,25 +249,27 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       )}
       <UnitWarnings unitId={unit.id} skip={allowance !== null ? ["moveDistance", "wheelDistance"] : []} />
 
-      <div className="row wrap">
-        <button
-          className={losFrom === unit.id ? "on" : ""}
-          onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
-        >
-          {t("Line of sight")}
-        </button>
-        <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
-        {mine && (
-          <>
-            <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
-              ⟲
-            </button>
-            <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
-              ⟳
-            </button>
-          </>
-        )}
-      </div>
+      {!companion && (
+        <div className="row wrap">
+          <button
+            className={losFrom === unit.id ? "on" : ""}
+            onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
+          >
+            {t("Line of sight")}
+          </button>
+          <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
+          {mine && (
+            <>
+              <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
+                ⟲
+              </button>
+              <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
+                ⟳
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <table className="stats">
         <thead>
@@ -1197,5 +1203,26 @@ export function ReactionPrompt() {
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * At a real table, a unit whose go is only a move: the move happened on the
+ * table, so its player says so here and the other side goes next.
+ */
+function MovedOnTable({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const dispatch = useStore((s) => s.dispatch);
+  if (game.players[unit.owner]?.seat !== game.turn.activeSeat || game.script) return null;
+  if (unit.status?.activated && !unit.status.acting)
+    return <p className="muted small">{t("Has had its go this round.")}</p>;
+  if (Object.values(game.units).some((u) => u.status?.acting && u.id !== unit.id)) return null;
+  return (
+    <button
+      title={t("It moved on the table and does nothing else: its go is over")}
+      onClick={() => dispatch({ type: "turn/endActivation", unit: unit.id }, unit.owner)}
+    >
+      {t("Moved only: end its go")}
+    </button>
   );
 }

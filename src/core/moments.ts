@@ -258,11 +258,19 @@ export function momentCandidates(record: GameRecord): Moment[] {
           end: swing.seq,
           round: swing.round,
           when: whenAt(record, swing.seq),
-          title: diff > 0 ? "The volley that broke them" : "Not a scratch",
+          // "Not a scratch" only when nothing was lost; fewer than feared is shrugging it off (PX share 2).
+          title:
+            diff > 0
+              ? "The volley that broke them"
+              : swing.actual === 0
+                ? "Not a scratch"
+                : "Shrugged it off",
           line:
             diff > 0
               ? `${attacker} killed ${swing.actual} ${target} (about ${Math.round(swing.expected)} expected)`
-              : `${target} shrugged off ${attacker}: ${swing.actual} lost, about ${Math.round(swing.expected)} expected`,
+              : swing.actual === 0
+                ? `${target} shrugged off ${attacker}, losing none (about ${Math.round(swing.expected)} expected)`
+                : `${target} shrugged off ${attacker}, losing ${swing.actual} (about ${Math.round(swing.expected)} expected)`,
           player: diff > 0 ? swing.player : other,
           units: [],
           score: RANK.swing + Math.abs(diff),

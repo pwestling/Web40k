@@ -1,3 +1,4 @@
+import { openShare } from "../share/store";
 import { displayName } from "../i18n/names";
 import { useEffect, useMemo } from "react";
 import { branchGame } from "./Branch";
@@ -62,6 +63,17 @@ export function StatsScreen() {
       <div className="head">
         <strong>{t("Battle stats")}</strong>
         <span className="muted">{tn(data.rounds, "{n} round", "{n} rounds")}</span>
+        {!BROADCAST && (
+          // Where a player is when the game ends (UX 336): the sheet makes way for Share.
+          <button
+            onClick={() => {
+              close();
+              openShare();
+            }}
+          >
+            {t("Share…")}
+          </button>
+        )}
         {!BROADCAST && (
           <button className="quiet" title={t("Close")} onClick={close}>
             ✕
