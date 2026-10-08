@@ -1,3 +1,4 @@
+import { shareLevels } from "./levels";
 import { PIPELINE_VERSION, type ModelAsset } from "./types";
 
 const DB = "open-battle-assets";
@@ -18,11 +19,16 @@ const key = (id: string) => `${id}:v${PIPELINE_VERSION}`;
 export async function getCached(id: string): Promise<ModelAsset | undefined> {
   try {
     const db = await open();
-    return await new Promise((resolve, reject) => {
+    const asset = await new Promise<ModelAsset | undefined>((resolve, reject) => {
       const req = db.transaction(STORE).objectStore(STORE).get(key(id));
       req.onsuccess = () => resolve(req.result as ModelAsset | undefined);
       req.onerror = () => reject(req.error);
     });
+    if (!asset) return undefined;
+    // Stored before decoded levels were shared: share them, and store it again at its real size.
+    const shared = shareLevels(asset);
+    if (shared !== asset) void putCached(shared);
+    return shared;
   } catch {
     return undefined;
   }

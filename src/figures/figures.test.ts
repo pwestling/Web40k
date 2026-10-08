@@ -55,7 +55,7 @@ describe("figure library", () => {
 
 describe("figure packs", () => {
   it("shares identical levels again after decoding, so a pack's model isn't stored twice", async () => {
-    const { shareLevels } = await import("./pack");
+    const { shareLevels } = await import("../assets/levels");
     const { assetBuffers } = await import("../assets/types");
     const mesh = () => ({
       positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),

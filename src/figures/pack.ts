@@ -2,7 +2,7 @@ import { getCached, putCached } from "../assets/cache";
 import { decodeAsset, encodeAsset } from "../assets/codec";
 import { fromBase64, toBase64 } from "../assets/base64";
 import { useAssets } from "../assets/store";
-import type { AssetKind, MeshData, ModelAsset } from "../assets/types";
+import type { AssetKind } from "../assets/types";
 import { stableJson } from "../core/secrets";
 import { useFigures, type FigureEntry } from "./library";
 
@@ -83,30 +83,6 @@ export interface PackResult {
   changed: boolean;
 }
 
-const sameArray = (a?: ArrayLike<number>, b?: ArrayLike<number>) => {
-  if (!a || !b) return a === b;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-};
-const sameMesh = (a: MeshData, b: MeshData) =>
-  sameArray(a.positions, b.positions) &&
-  sameArray(a.indices, b.indices) &&
-  sameArray(a.uvs, b.uvs) &&
-  sameArray(a.colors, b.colors);
-
-/**
- * A small model keeps one mesh for every level (it was already under budget),
- * but a decoded copy has a mesh per level: share them again, so a model from
- * a pack takes the space it took where it was made (UX 242).
- */
-export function shareLevels(asset: ModelAsset): ModelAsset {
-  const lods: MeshData[] = [];
-  for (const mesh of asset.lods) lods.push(lods.find((m) => sameMesh(m, mesh)) ?? mesh);
-  const proxy = lods.find((m) => sameMesh(m, asset.proxy)) ?? asset.proxy;
-  return { ...asset, lods, proxy };
-}
-
 /** Read a pack into the library. Names and tags the player already gave a figure are kept. */
 export async function openPack(text: string): Promise<PackResult | string> {
   let pack: Partial<FigurePack>;
@@ -136,7 +112,7 @@ export async function openPack(text: string): Promise<PackResult | string> {
       continue;
     }
     try {
-      const asset = shareLevels({ ...(await decodeAsset(fromBase64(f.data))), id: f.id });
+      const asset = { ...(await decodeAsset(fromBase64(f.data))), id: f.id };
       await putCached(asset);
       useAssets.getState().addAsset(asset);
       useFigures.getState().note(asset);

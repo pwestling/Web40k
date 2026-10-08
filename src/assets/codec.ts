@@ -1,5 +1,6 @@
 import { MeshoptDecoder, MeshoptEncoder } from "meshoptimizer";
 import type { AssetTexture, MeshData, ModelAsset } from "./types";
+import { shareLevels } from "./levels";
 
 /** Largest processed asset accepted from a peer. */
 export const MAX_ASSET_BYTES = 16 * 1024 * 1024;
@@ -158,7 +159,11 @@ export async function decodeAsset(bytes: Uint8Array): Promise<ModelAsset> {
     }
     return mesh;
   });
-  const asset: ModelAsset = { ...meta, lods: meshes.slice(0, -1), proxy: meshes[meshes.length - 1]! };
+  const asset: ModelAsset = shareLevels({
+    ...meta,
+    lods: meshes.slice(0, -1),
+    proxy: meshes[meshes.length - 1]!,
+  });
   if (tex) {
     if (!MIMES.includes(tex.mime)) throw new Error("Bad texture type");
     if (![tex.width, tex.height].every((n) => Number.isInteger(n) && n > 0 && n <= 4096))
@@ -192,7 +197,7 @@ function decodeV1(bytes: Uint8Array): ModelAsset {
     return { positions, indices: idx };
   });
   const { meshes: _m, ...meta } = header;
-  return { ...meta, lods: meshes.slice(0, -1), proxy: meshes[meshes.length - 1]! };
+  return shareLevels({ ...meta, lods: meshes.slice(0, -1), proxy: meshes[meshes.length - 1]! });
 }
 
 const bytesOf = (a: Uint32Array) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);

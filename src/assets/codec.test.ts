@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { decodeAsset, encodeAsset, fromBase64, toBase64 } from "./codec";
 import { processMesh, ready } from "./pipeline";
 import { synthMiniature } from "./synth";
-import type { ModelAsset } from "./types";
+import { assetBuffers, type ModelAsset } from "./types";
 
 beforeAll(() => ready);
 
@@ -54,6 +54,14 @@ describe("asset codec", () => {
     });
     expect(back.proxy.uvs).toBeUndefined();
     expect(back.texture).toEqual(asset.texture);
+  });
+
+  it("shares levels that were one mesh, so a small model isn't stored once per level", async () => {
+    const asset = processMesh(synthMiniature(400), { id: "s", name: "s.stl", kind: "miniature" });
+    expect(new Set(asset.lods).size).toBe(1);
+    const back = await decodeAsset(await encodeAsset(asset));
+    expect(new Set(back.lods).size).toBe(1);
+    expect(new Set(assetBuffers(back)).size).toBe(new Set(assetBuffers(asset)).size);
   });
 
   it("is small enough to send: about a third of the raw meshes", async () => {
