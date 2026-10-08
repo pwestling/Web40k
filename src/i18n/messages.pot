@@ -15,9 +15,79 @@ msgctxt "game"
 msgid "Order your stack, draw a card and activate a regiment, then trade turns."
 msgstr ""
 
+#: examples/lessons/conquest.js:25
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Each round you secretly put your regiments in order: your command stack. Then the sides take turns drawing the top card and activating that regiment."
+msgstr ""
+
+#: examples/lessons/conquest.js:28
+msgctxt "game"
+msgid "Open Command stack on the left, use the arrows to put your regiments in the order you want them to act, and press Lock in stack. Then press ▶ for the Action phase."
+msgstr ""
+
+#: examples/lessons/conquest.js:32
+msgctxt "game"
+msgid "Press ▶ when your stack is locked in."
+msgstr ""
+
+#: examples/lessons/conquest.js:36
+msgctxt "game"
+msgid "Press Draw in the Command stack to turn up your top card, then press Activate on that regiment's card."
+msgstr ""
+
+#: examples/lessons/conquest.js:40
+msgctxt "game"
+msgid "The regiment has two actions. March forwards, or Volley or Clash if an enemy is in reach."
+msgstr ""
+
+#: examples/lessons/conquest.js:44
+msgctxt "game"
+msgid "Take its second action if you like, then press End activation at the top."
+msgstr ""
+
+#: examples/lessons/conquest.js:48
+msgctxt "game"
+msgid "Red draws its top card and activates that regiment now."
+msgstr ""
+
+#: examples/lessons/conquest.js:52
+msgctxt "game"
+msgid "Your turn again: draw your next card. When every regiment has gone, the round ends and you build a new stack."
+msgstr ""
+
 #: examples/lessons/fsd.js:21
 msgctxt "game"
 msgid "Activate a unit, move and fire, then take turns with the other side."
+msgstr ""
+
+#: examples/lessons/fsd.js:30
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Each round both sides get activation dice. You take turns: one unit each, back and forth, until both sides run out."
+msgstr ""
+
+#: examples/lessons/fsd.js:33
+msgctxt "game"
+msgid "Your Rifle Squad is selected. Press Activate on its card to spend one of your activation dice on it."
+msgstr ""
+
+#: examples/lessons/fsd.js:38
+msgctxt "game"
+msgid "An activated unit has two actions. Press Move and drag it, or Fire at an enemy it can see."
+msgstr ""
+
+#: examples/lessons/fsd.js:42
+msgctxt "game"
+msgid "Use its second action if you like, then press End activation at the top."
+msgstr ""
+
+#: examples/lessons/fsd.js:46
+msgctxt "game"
+msgid "Red activates one of its units now. If it fires at you, the panel may offer a reaction or ask for a roll."
+msgstr ""
+
+#: examples/lessons/fsd.js:50
+msgctxt "game"
+msgid "Your turn again: activate another unit. Keep going until the dice run out; then the round is scored and a new one starts."
 msgstr ""
 
 #: examples/lessons/rank-and-flank.js:19
@@ -28,6 +98,91 @@ msgstr ""
 #: examples/lessons/rank-and-flank.js:21
 msgctxt "game"
 msgid "March a regiment, shoot with your archers, then watch the other side."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:25
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Your units are regiments: blocks of models in ranks that move together. A turn runs Strategy, Movement, Shooting and Combat."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:28
+msgctxt "game"
+msgid "Nothing happens in the Strategy phase of a first turn. Press ▶ at the top for Movement."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:32
+msgctxt "game"
+msgid "Your spear regiment is selected. Drag the block forwards: it keeps its ranks, and the ruler shows how far it has gone against its Move. The card has buttons to wheel and turn."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:37
+msgctxt "game"
+msgid "To charge, drag a block into contact with an enemy; the enemy may react first. Press ▶ for the Shooting phase."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:41
+msgctxt "game"
+msgid "Your archers are selected. Press Shoot and pick an enemy in range, or press ▶ if nothing is close enough."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:46
+msgctxt "game"
+msgid "Combat: blocks in contact fight. Press ▶ to end your turn when you're done."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:50
+msgctxt "game"
+msgid "Now red plays its turn. If it charges you, you'll be asked how to react."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:54
+msgctxt "game"
+msgid "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:102
+msgctxt "game"
+msgid "That's your turn. Press ▶ to end it: the red army goes next."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:107
+msgctxt "game"
+msgid "Red's turn. Watch it move and shoot. When it shoots you, your saves are yours to roll: press Roll saves in the panel when it comes up."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:111
+msgctxt "game"
+msgid "{lost} of yours down. Time for payback."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:112
+msgctxt "game"
+msgid "Not a scratch on you."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:118
+msgctxt "game"
+msgid "They charged you! In the Fight phase both sides fight. Select your unit in contact, press Fight, pick them, press Fight again and roll."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:122
+msgctxt "game"
+msgid "{slain} of them down. That'll teach them."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:123
+msgctxt "game"
+msgid "Nothing this time, but you stood your ground."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:127
+msgctxt "game"
+msgid "Red finishes its turn."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:131
+msgctxt "game"
+msgid "That's a whole round. The battle runs for five; play on as long as you like, and \"What can I do now?\" at the top of the screen always says what's possible."
 msgstr ""
 
 #: examples/lessons/sci-fi.js:135
@@ -43,6 +198,101 @@ msgstr ""
 #: examples/lessons/sci-fi.js:22
 msgctxt "game"
 msgid "Move, shoot, charge and fight, then watch the other side do the same."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:31
+msgctxt "game"
+msgid "You command the blue army at the near edge; the computer plays red. A turn runs through five phases: Command, Movement, Shooting, Charge and Fight. Let's play one."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:34
+msgctxt "game"
+msgid "This is the Command phase. Both sides gain a Command point (CP, top bar) to spend on stratagems later. Nothing else to do: press ▶ at the top for the Movement phase."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:39
+msgctxt "game"
+msgid "Your Line Troopers are selected. Drag them towards the enemy: their card shows how far they've moved against their Move of 6\"."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:42
+msgctxt "game"
+msgid "Good. Moving first lets you pick the fights."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:45
+msgctxt "game"
+msgid "Move any other units you like the same way. When you're done, press ▶ for the Shooting phase."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:50
+msgctxt "game"
+msgid "On the Line Troopers' card, press Shoot beside a weapon (the Rng column says how far it reaches), pick the Ashen Thralls as the target, then press Declare attack."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:56
+msgctxt "game"
+msgid "Now roll: the panel on the right goes hits, then wounds, then their saves, then damage. Press the blue button each time."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:60
+msgctxt "game"
+msgid "{slain} of the {target} down from one volley. They'll feel that."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:61
+msgctxt "game"
+msgid "{slain} of the {target} down. Every model counts."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:62
+msgctxt "game"
+msgid "Nothing got through that time. Dice are like that."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:66
+msgctxt "game"
+msgid "Shoot with other units if you like, then press ▶ for the Charge phase."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:71
+msgctxt "game"
+msgid "A unit can charge an enemy within 12\". Select your Line Troopers and press Charge (2D6): two dice say how far they can go. If nothing is close enough, press ▶."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:78
+msgctxt "game"
+msgid "You rolled {roll}\". If the gap to the enemy is no more than that, drag the Line Troopers into contact; the ruler shows how far they've gone. If it's too far, the charge fails: press ▶."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:81
+msgctxt "game"
+msgid "Contact! Charging units fight first."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:82
+msgctxt "game"
+msgid "Short. Charges fail sometimes; that's the game."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:86
+msgctxt "game"
+msgid "Press ▶ for the Fight phase."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:92
+msgctxt "game"
+msgid "Fight phase: press Fight on the Line Troopers' card, pick the unit they're in contact with, press Fight again under the target and roll."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:97
+msgctxt "game"
+msgid "{slain} cut down in the melee."
+msgstr ""
+
+#: examples/lessons/sci-fi.js:98
+msgctxt "game"
+msgid "They held. Combat can drag on into the next turn."
 msgstr ""
 
 #: src/App.tsx:37

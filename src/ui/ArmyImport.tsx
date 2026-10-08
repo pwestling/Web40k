@@ -1,4 +1,4 @@
-import { displayName } from "../i18n/names";
+import { displayName, playerName } from "../i18n/names";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
 import { SavedNote } from "./SavedNote";
@@ -447,9 +447,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 ))}
               </div>
             )}
-            <div className="row">
+            <div className="row modal-actions">
               <button className="primary" disabled={!roster.units.length} onClick={deploy}>
-                {t("Deploy for {name}", { name: players.find((p) => p.id === owner)?.name })}
+                {t("Deploy for {name}", { name: playerName(players.find((p) => p.id === owner)) })}
               </button>
               <button onClick={cancel}>{t("Cancel")}</button>
             </div>

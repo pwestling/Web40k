@@ -1,3 +1,4 @@
+import { gameText } from "../i18n";
 import { readLiteral, readManifest, type Manifest } from "../packages/manifest";
 
 /**
@@ -101,7 +102,7 @@ export function afterLine(step: LessonStep, facts: Facts): string | null {
   if (!step.after) return null;
   const lines = typeof step.after === "string" ? [{ say: step.after }] : step.after;
   const line = lines.find((l) => !l.if || factTest(l.if, facts));
-  return line ? fill(line.say, facts) : null;
+  return line ? fill(gameText(line.say), facts) : null;
 }
 
 /**

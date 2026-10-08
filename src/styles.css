@@ -697,6 +697,7 @@ details p {
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 32px));
   max-height: 80vh;
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   z-index: 51;
 }
@@ -3476,6 +3477,16 @@ body.showcase
   flex-direction: column;
   gap: 10px;
 }
+/* A dialog in the companion scrolls inside the screen (dvh: under the phone's browser bars). */
+.companion .modal-backdrop {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.companion .panel.modal {
+  max-height: none !important;
+  overflow: visible;
+}
 .companion .topbar,
 .companion .panel {
   position: static !important;
@@ -3734,4 +3745,41 @@ body.showcase
 .stratagem .die.on {
   background: #f59e0b;
   color: #111;
+}
+
+/* A dialog's own buttons stay in view while its body scrolls. */
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 8px 0;
+  background: rgb(17 19 24);
+  z-index: 1;
+}
+
+/* Fingers on the start page (UX 300): every control at least 44px tall, as in the companion. */
+@media (pointer: coarse) {
+  .lobby button,
+  .lobby select,
+  .lobby input:not([type="checkbox"]):not([type="file"]),
+  .lobby summary,
+  .lobby a,
+  .lobby label.file {
+    min-height: 44px;
+  }
+  .lobby button,
+  .lobby a,
+  .lobby summary,
+  .lobby label.file {
+    display: inline-flex;
+    align-items: center;
+  }
+  .lobby .demo .row button {
+    padding: 0 12px;
+  }
+  .lobby .own-army {
+    display: flex;
+  }
+  .lobby-settings .text-size button {
+    min-width: 44px;
+  }
 }

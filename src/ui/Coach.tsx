@@ -158,7 +158,7 @@ export function Coach() {
         </button>
       </div>
       {said && <p className="coach-said">{said}</p>}
-      <p>{fill(step.say, facts)}</p>
+      <p>{fill(gameText(step.say), facts)}</p>
       {finished && <p className="muted small">{t("Press Done on the dice panel to carry on.")}</p>}
       <div className="row">
         {!step.until && (

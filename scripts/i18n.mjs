@@ -138,7 +138,7 @@ for (const path of files(SRC)) {
 
 /**
  * The built-in games' own words (UX 256), shown through gameText() with the "game" context: phase and
- * action names and hints in src/core/content/examples, lesson titles and summaries in examples/lessons, and
+ * action names and hints in src/core/content/examples, lesson titles, summaries and coach lines in examples/lessons, and
  * each built-in module's name for its secret objectives.
  * Rule and keyword names stay as they are, since army lists use them.
  */
@@ -167,7 +167,8 @@ for (const path of DATA) {
   const visit = (n) => {
     if (ts.isObjectLiteralExpression(n)) {
       if (lesson) {
-        for (const name of ["title", "summary"]) {
+        // What the coach says (UX 301), and a step's closing line when it is plain text.
+        for (const name of ["title", "summary", "say", "after"]) {
           const v = prop(n, name);
           if (v) take(v);
         }

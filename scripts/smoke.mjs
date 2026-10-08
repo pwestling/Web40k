@@ -202,6 +202,32 @@ const checks = {
     return [...host.page.errors, ...guest.page.errors];
   },
 
+  // A small iPhone (390×664 inside Safari's bars): the army preview's Deploy must be reachable (P1, 2026-10-08).
+  async "small-phone"() {
+    const { page, context } = await device({
+      viewport: { width: 375, height: 600 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await lobby(page);
+    await page.getByRole("button", { name: "One phone for both of us" }).click();
+    await page.locator(".companion").waitFor();
+    for (const who of [0, 1]) {
+      const pick = page.getByLabel("Army for");
+      if (await pick.count()) await pick.selectOption({ index: who });
+      await page.getByRole("button", { name: "Sample army" }).click();
+      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+      await deploy.scrollIntoViewIfNeeded();
+      const box = await deploy.boundingBox();
+      if (!box || box.y + box.height > 600) throw new Error(`Deploy is off screen at y=${box?.y}`);
+      await deploy.tap();
+      await deploy.waitFor({ state: "detached" });
+    }
+    await page.getByRole("button", { name: /Start battle/ }).waitFor();
+    await context.close();
+    return page.errors;
+  },
+
   async replay() {
     const path = join(files, "replay.json");
     if (!existsSync(path)) throw new Error("no replay saved (the hotseat check makes it)");

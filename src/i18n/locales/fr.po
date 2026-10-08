@@ -18,11 +18,95 @@ msgctxt "game"
 msgid "Order your stack, draw a card and activate a regiment, then trade turns."
 msgstr "Ordonne ta pile, pioche une carte et active un régiment, puis alternez les tours."
 
+#: examples/lessons/conquest.js:25
+#, fuzzy
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Each round you secretly put your regiments in order: your command stack. Then the sides take turns drawing the top card and activating that regiment."
+msgstr "Tu commandes les bleus au bord proche ; l'ordinateur joue les rouges. À chaque round, tu ordonnes en secret tes régiments : ta pile de commandement. Puis chaque camp, à tour de rôle, tire la carte du dessus et active ce régiment."
+
+#: examples/lessons/conquest.js:28
+#, fuzzy
+msgctxt "game"
+msgid "Open Command stack on the left, use the arrows to put your regiments in the order you want them to act, and press Lock in stack. Then press ▶ for the Action phase."
+msgstr "Ouvre la Pile de commandement à gauche, utilise les flèches pour ranger tes régiments dans l'ordre où ils doivent agir, puis appuie sur Verrouiller la pile. Ensuite, appuie sur ▶ pour la phase d'Action."
+
+#: examples/lessons/conquest.js:32
+#, fuzzy
+msgctxt "game"
+msgid "Press ▶ when your stack is locked in."
+msgstr "Appuie sur ▶ une fois ta pile verrouillée."
+
+#: examples/lessons/conquest.js:36
+#, fuzzy
+msgctxt "game"
+msgid "Press Draw in the Command stack to turn up your top card, then press Activate on that regiment's card."
+msgstr "Appuie sur La tirer dans la Pile de commandement pour retourner ta carte du dessus, puis sur Activer sur la carte de ce régiment."
+
+#: examples/lessons/conquest.js:40
+#, fuzzy
+msgctxt "game"
+msgid "The regiment has two actions. March forwards, or Volley or Clash if an enemy is in reach."
+msgstr "Le régiment a deux actions. Marche vers l'avant, ou Volée ou Mêlée si un ennemi est à portée."
+
+#: examples/lessons/conquest.js:44
+#, fuzzy
+msgctxt "game"
+msgid "Take its second action if you like, then press End activation at the top."
+msgstr "Effectue sa deuxième action si tu veux, puis appuie sur Terminer l'activation en haut."
+
+#: examples/lessons/conquest.js:48
+#, fuzzy
+msgctxt "game"
+msgid "Red draws its top card and activates that regiment now."
+msgstr "Les rouges tirent leur carte du dessus et activent ce régiment."
+
+#: examples/lessons/conquest.js:52
+#, fuzzy
+msgctxt "game"
+msgid "Your turn again: draw your next card. When every regiment has gone, the round ends and you build a new stack."
+msgstr "À toi de nouveau : tire ta carte suivante. Quand tous les régiments ont agi, le round se termine et tu composes une nouvelle pile."
+
 #: examples/lessons/fsd.js:21
 #, fuzzy
 msgctxt "game"
 msgid "Activate a unit, move and fire, then take turns with the other side."
 msgstr "Active une unité, déplace-toi et tire, puis joue à tour de rôle avec l'autre camp."
+
+#: examples/lessons/fsd.js:30
+#, fuzzy
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Each round both sides get activation dice. You take turns: one unit each, back and forth, until both sides run out."
+msgstr "Tu commandes les bleus au bord proche ; l'ordinateur joue les rouges. À chaque round, les deux camps reçoivent des dés d'activation. Vous jouez chacun votre tour : une unité chacun, en alternance, jusqu'à ce que les deux camps n'en aient plus."
+
+#: examples/lessons/fsd.js:33
+#, fuzzy
+msgctxt "game"
+msgid "Your Rifle Squad is selected. Press Activate on its card to spend one of your activation dice on it."
+msgstr "Ton Rifle Squad est sélectionné. Appuie sur Activer sur sa carte pour lui consacrer un de tes dés d'activation."
+
+#: examples/lessons/fsd.js:38
+#, fuzzy
+msgctxt "game"
+msgid "An activated unit has two actions. Press Move and drag it, or Fire at an enemy it can see."
+msgstr "Une unité activée a deux actions. Appuie sur Déplacement et fais-la glisser, ou sur Feu contre un ennemi qu'elle voit."
+
+#: examples/lessons/fsd.js:42
+#, fuzzy
+msgctxt "game"
+msgid "Use its second action if you like, then press End activation at the top."
+msgstr "Utilise sa deuxième action si tu veux, puis appuie sur Terminer l'activation en haut."
+
+#: examples/lessons/fsd.js:46
+#, fuzzy
+msgctxt "game"
+msgid "Red activates one of its units now. If it fires at you, the panel may offer a reaction or ask for a roll."
+msgstr "Les rouges activent maintenant une de leurs unités. Si elle te tire dessus, le panneau peut te proposer une réaction ou te demander un jet."
+
+#: examples/lessons/fsd.js:50
+#, fuzzy
+msgctxt "game"
+msgid "Your turn again: activate another unit. Keep going until the dice run out; then the round is scored and a new one starts."
+msgstr "À toi de nouveau : active une autre unité. Continue jusqu'à épuisement des dés ; le round est alors décompté et un nouveau commence."
 
 #: examples/lessons/rank-and-flank.js:19
 #, fuzzy
@@ -35,6 +119,108 @@ msgstr "Déplacer les blocs"
 msgctxt "game"
 msgid "March a regiment, shoot with your archers, then watch the other side."
 msgstr "Fais marcher un régiment, tire avec tes archers, puis regarde l'autre camp."
+
+#: examples/lessons/rank-and-flank.js:25
+#, fuzzy
+msgctxt "game"
+msgid "You command blue at the near edge; the computer plays red. Your units are regiments: blocks of models in ranks that move together. A turn runs Strategy, Movement, Shooting and Combat."
+msgstr "Tu commandes les bleus au bord proche ; l'ordinateur joue les rouges. Tes unités sont des régiments : des blocs de figurines en rangs qui se déplacent ensemble. Un tour comprend Stratégie, Mouvement, Tir et Corps à corps."
+
+#: examples/lessons/rank-and-flank.js:28
+#, fuzzy
+msgctxt "game"
+msgid "Nothing happens in the Strategy phase of a first turn. Press ▶ at the top for Movement."
+msgstr "Rien ne se passe en phase de Stratégie au premier tour. Appuie sur ▶ en haut pour le Mouvement."
+
+#: examples/lessons/rank-and-flank.js:32
+#, fuzzy
+msgctxt "game"
+msgid "Your spear regiment is selected. Drag the block forwards: it keeps its ranks, and the ruler shows how far it has gone against its Move. The card has buttons to wheel and turn."
+msgstr "Ton régiment de lanciers est sélectionné. Fais glisser le bloc vers l'avant : il garde ses rangs, et la règle montre la distance parcourue par rapport à son Mouvement. La carte a des boutons pour pivoter et faire volte-face."
+
+#: examples/lessons/rank-and-flank.js:37
+#, fuzzy
+msgctxt "game"
+msgid "To charge, drag a block into contact with an enemy; the enemy may react first. Press ▶ for the Shooting phase."
+msgstr "Pour charger, fais glisser un bloc au contact d'un ennemi ; l'ennemi peut réagir d'abord. Appuie sur ▶ pour la phase de Tir."
+
+#: examples/lessons/rank-and-flank.js:41
+#, fuzzy
+msgctxt "game"
+msgid "Your archers are selected. Press Shoot and pick an enemy in range, or press ▶ if nothing is close enough."
+msgstr "Tes archers sont sélectionnés. Appuie sur Tirer et choisis un ennemi à portée, ou appuie sur ▶ si aucun n'est assez proche."
+
+#: examples/lessons/rank-and-flank.js:46
+#, fuzzy
+msgctxt "game"
+msgid "Combat: blocks in contact fight. Press ▶ to end your turn when you're done."
+msgstr "Corps à corps : les blocs au contact combattent. Appuie sur ▶ pour finir ton tour quand tu as terminé."
+
+#: examples/lessons/rank-and-flank.js:50
+#, fuzzy
+msgctxt "game"
+msgid "Now red plays its turn. If it charges you, you'll be asked how to react."
+msgstr "Maintenant, les rouges jouent leur tour. S'ils te chargent, on te demandera comment réagir."
+
+#: examples/lessons/rank-and-flank.js:54
+#, fuzzy
+msgctxt "game"
+msgid "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible."
+msgstr "Voilà un round complet. Mets tes blocs au contact pour combattre ; une unité qui perd lourdement peut fuir. Si tu continues, « Que puis-je faire maintenant ? » en haut de l'écran t'indique toujours ce qui est possible."
+
+#: examples/lessons/sci-fi.js:102
+#, fuzzy
+msgctxt "game"
+msgid "That's your turn. Press ▶ to end it: the red army goes next."
+msgstr "Voilà ton tour. Appuie sur ▶ pour le finir : l'armée rouge joue ensuite."
+
+#: examples/lessons/sci-fi.js:107
+#, fuzzy
+msgctxt "game"
+msgid "Red's turn. Watch it move and shoot. When it shoots you, your saves are yours to roll: press Roll saves in the panel when it comes up."
+msgstr "Tour des rouges. Regarde-les bouger et tirer. Quand ils te tirent dessus, c'est toi qui lances tes sauvegardes : appuie sur Jets de sauvegarde dans le panneau quand il apparaît."
+
+#: examples/lessons/sci-fi.js:111
+#, fuzzy
+msgctxt "game"
+msgid "{lost} of yours down. Time for payback."
+msgstr "{lost} des tiens à terre. L'heure de la revanche."
+
+#: examples/lessons/sci-fi.js:112
+#, fuzzy
+msgctxt "game"
+msgid "Not a scratch on you."
+msgstr "Pas une égratignure."
+
+#: examples/lessons/sci-fi.js:118
+#, fuzzy
+msgctxt "game"
+msgid "They charged you! In the Fight phase both sides fight. Select your unit in contact, press Fight, pick them, press Fight again and roll."
+msgstr "Ils t'ont chargé ! En phase de Combat, les deux camps combattent. Sélectionne ton unité au contact, appuie sur Combattre, choisis-les, appuie de nouveau sur Combattre et lance les dés."
+
+#: examples/lessons/sci-fi.js:122
+#, fuzzy
+msgctxt "game"
+msgid "{slain} of them down. That'll teach them."
+msgstr "{slain} des leurs à terre. Ça leur apprendra."
+
+#: examples/lessons/sci-fi.js:123
+#, fuzzy
+msgctxt "game"
+msgid "Nothing this time, but you stood your ground."
+msgstr "Rien cette fois, mais tu as tenu bon."
+
+#: examples/lessons/sci-fi.js:127
+#, fuzzy
+msgctxt "game"
+msgid "Red finishes its turn."
+msgstr "Les rouges finissent leur tour."
+
+#: examples/lessons/sci-fi.js:131
+#, fuzzy
+msgctxt "game"
+msgid "That's a whole round. The battle runs for five; play on as long as you like, and \"What can I do now?\" at the top of the screen always says what's possible."
+msgstr "Voilà un round complet. La bataille en compte cinq ; joue aussi longtemps que tu veux, et « Que puis-je faire maintenant ? » en haut de l'écran t'indique toujours ce qui est possible."
 
 #: examples/lessons/sci-fi.js:135
 #, fuzzy
@@ -53,6 +239,120 @@ msgstr "Ton premier tour"
 msgctxt "game"
 msgid "Move, shoot, charge and fight, then watch the other side do the same."
 msgstr "Déplace-toi, tire, charge et combats, puis regarde l'autre camp en faire autant."
+
+#: examples/lessons/sci-fi.js:31
+#, fuzzy
+msgctxt "game"
+msgid "You command the blue army at the near edge; the computer plays red. A turn runs through five phases: Command, Movement, Shooting, Charge and Fight. Let's play one."
+msgstr "Tu commandes l'armée bleue au bord proche ; l'ordinateur joue les rouges. Un tour passe par cinq phases : Commandement, Mouvement, Tir, Charge et Combat. Jouons-en un."
+
+#: examples/lessons/sci-fi.js:34
+#, fuzzy
+msgctxt "game"
+msgid "This is the Command phase. Both sides gain a Command point (CP, top bar) to spend on stratagems later. Nothing else to do: press ▶ at the top for the Movement phase."
+msgstr "Voici la phase de Commandement. Chaque camp gagne un point de commandement (CP, barre du haut) à dépenser plus tard en stratagèmes. Rien d'autre à faire : appuie sur ▶ en haut pour la phase de Mouvement."
+
+#: examples/lessons/sci-fi.js:39
+#, fuzzy
+msgctxt "game"
+msgid "Your Line Troopers are selected. Drag them towards the enemy: their card shows how far they've moved against their Move of 6\"."
+msgstr "Tes Line Troopers sont sélectionnés. Fais-les glisser vers l'ennemi : leur carte montre la distance parcourue par rapport à leur Mouvement de 6\"."
+
+#: examples/lessons/sci-fi.js:42
+#, fuzzy
+msgctxt "game"
+msgid "Good. Moving first lets you pick the fights."
+msgstr "Bien. Bouger en premier te permet de choisir tes combats."
+
+#: examples/lessons/sci-fi.js:45
+#, fuzzy
+msgctxt "game"
+msgid "Move any other units you like the same way. When you're done, press ▶ for the Shooting phase."
+msgstr "Déplace d'autres unités de la même façon si tu veux. Quand tu as terminé, appuie sur ▶ pour la phase de Tir."
+
+#: examples/lessons/sci-fi.js:50
+#, fuzzy
+msgctxt "game"
+msgid "On the Line Troopers' card, press Shoot beside a weapon (the Rng column says how far it reaches), pick the Ashen Thralls as the target, then press Declare attack."
+msgstr "Sur la carte des Line Troopers, appuie sur Tirer à côté d'une arme (la colonne Rng indique sa portée), choisis les Ashen Thralls comme cible, puis appuie sur Déclarer l'attaque."
+
+#: examples/lessons/sci-fi.js:56
+#, fuzzy
+msgctxt "game"
+msgid "Now roll: the panel on the right goes hits, then wounds, then their saves, then damage. Press the blue button each time."
+msgstr "Maintenant, lance les dés : le panneau de droite enchaîne touches, blessures, leurs sauvegardes, puis dégâts. Appuie à chaque fois sur le bouton bleu."
+
+#: examples/lessons/sci-fi.js:60
+#, fuzzy
+msgctxt "game"
+msgid "{slain} of the {target} down from one volley. They'll feel that."
+msgstr "{slain} des {target} abattus en une salve. Ils vont le sentir."
+
+#: examples/lessons/sci-fi.js:61
+#, fuzzy
+msgctxt "game"
+msgid "{slain} of the {target} down. Every model counts."
+msgstr "{slain} des {target} abattus. Chaque figurine compte."
+
+#: examples/lessons/sci-fi.js:62
+#, fuzzy
+msgctxt "game"
+msgid "Nothing got through that time. Dice are like that."
+msgstr "Rien n'est passé cette fois. C'est ça, les dés."
+
+#: examples/lessons/sci-fi.js:66
+#, fuzzy
+msgctxt "game"
+msgid "Shoot with other units if you like, then press ▶ for the Charge phase."
+msgstr "Tire avec d'autres unités si tu veux, puis appuie sur ▶ pour la phase de Charge."
+
+#: examples/lessons/sci-fi.js:71
+#, fuzzy
+msgctxt "game"
+msgid "A unit can charge an enemy within 12\". Select your Line Troopers and press Charge (2D6): two dice say how far they can go. If nothing is close enough, press ▶."
+msgstr "Une unité peut charger un ennemi à 12\" ou moins. Sélectionne tes Line Troopers et appuie sur Charge (2D6) : deux dés indiquent jusqu'où ils peuvent aller. Si rien n'est assez proche, appuie sur ▶."
+
+#: examples/lessons/sci-fi.js:78
+#, fuzzy
+msgctxt "game"
+msgid "You rolled {roll}\". If the gap to the enemy is no more than that, drag the Line Troopers into contact; the ruler shows how far they've gone. If it's too far, the charge fails: press ▶."
+msgstr "Tu as fait {roll}\". Si l'écart avec l'ennemi ne dépasse pas ça, fais glisser les Line Troopers au contact ; la règle montre la distance parcourue. Si c'est trop loin, la charge échoue : appuie sur ▶."
+
+#: examples/lessons/sci-fi.js:81
+#, fuzzy
+msgctxt "game"
+msgid "Contact! Charging units fight first."
+msgstr "Contact ! Les unités qui chargent combattent en premier."
+
+#: examples/lessons/sci-fi.js:82
+#, fuzzy
+msgctxt "game"
+msgid "Short. Charges fail sometimes; that's the game."
+msgstr "Trop court. Les charges échouent parfois ; c'est le jeu."
+
+#: examples/lessons/sci-fi.js:86
+#, fuzzy
+msgctxt "game"
+msgid "Press ▶ for the Fight phase."
+msgstr "Appuie sur ▶ pour la phase de Combat."
+
+#: examples/lessons/sci-fi.js:92
+#, fuzzy
+msgctxt "game"
+msgid "Fight phase: press Fight on the Line Troopers' card, pick the unit they're in contact with, press Fight again under the target and roll."
+msgstr "Phase de Combat : appuie sur Combattre sur la carte des Line Troopers, choisis l'unité à leur contact, appuie de nouveau sur Combattre sous la cible et lance les dés."
+
+#: examples/lessons/sci-fi.js:97
+#, fuzzy
+msgctxt "game"
+msgid "{slain} cut down in the melee."
+msgstr "{slain} taillés en pièces dans la mêlée."
+
+#: examples/lessons/sci-fi.js:98
+#, fuzzy
+msgctxt "game"
+msgid "They held. Combat can drag on into the next turn."
+msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 
 #: src/App.tsx:37
 #, fuzzy
