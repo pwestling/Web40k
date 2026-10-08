@@ -2416,3 +2416,12 @@ body.showcase
     transform: translate(-50%, -50%);
   }
 }
+
+/* The joiner's name prompt (Hud.tsx): the field takes the width, its button goes under it. */
+.name-card .row {
+  flex-wrap: wrap;
+}
+.name-card input {
+  flex: 1 1 100%;
+  min-width: 0;
+}

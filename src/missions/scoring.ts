@@ -18,6 +18,8 @@ export interface Moment {
   round: number;
   /** The table as it stood. */
   state: GameState;
+  /** The event that ended it. */
+  seq: number;
 }
 
 export interface Pending {
@@ -47,12 +49,13 @@ export function moments(record: GameRecord): Moment[] {
         seat: before.turn.activeSeat,
         round: before.turn.round,
         state: before,
+        seq: logged.seq,
       });
     if (state.turn.round > before.turn.round) {
-      out.push({ kind: "roundEnd", round: before.turn.round, state: before });
+      out.push({ kind: "roundEnd", round: before.turn.round, state: before, seq: logged.seq });
       const rounds = systemOf(state).turn.rounds;
       if (typeof rounds === "number" && state.turn.round > rounds)
-        out.push({ kind: "gameEnd", round: before.turn.round, state: before });
+        out.push({ kind: "gameEnd", round: before.turn.round, state: before, seq: logged.seq });
     }
   }
   return out;
@@ -70,7 +73,17 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
   if (!mission) return [];
   const done = new Set((game.scores ?? []).map((s) => s.key));
   const out: Pending[] = [];
-  for (const m of moments(record))
+  const all = moments(record);
+  // Cards turned up after the battle ended weren't played: they score nothing.
+  const end = all.find((m) => m.kind === "gameEnd")?.seq ?? Infinity;
+  const late = new Set(
+    record.events.flatMap(({ seq, event }) =>
+      seq > end && event.type === "secret/reveal" && event.key.startsWith("mission:")
+        ? [`${event.key}:${String(event.value)}`]
+        : [],
+    ),
+  );
+  for (const m of all)
     for (const rule of mission.scoring) {
       if (!matches(rule.at, m)) continue;
       for (const seat of m.kind === "phaseEnd" ? [m.seat!] : sides(m.state)) {
@@ -90,7 +103,7 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
       const key = `card:${player}:${secretKey}`;
       if (done.has(key)) continue;
       const card = mission.deck?.find((c) => c.id === e.revealed!.value);
-      if (!card) continue;
+      if (!card || late.has(`${secretKey}:${card.id}`)) continue;
       out.push({ key, seat, round: game.turn.round, rule: card.name, ...card.suggest(game, seat) });
     }
   }

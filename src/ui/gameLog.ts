@@ -12,6 +12,7 @@ import {
   type LoggedEvent,
 } from "../core";
 import { isPlaceholder } from "../core/content/systems";
+import { systemModule } from "../systems";
 
 /** A line of the game log as players read it. */
 export type LogItem =
@@ -329,7 +330,17 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "player/join":
       return `${game.players[event.player.id]?.name ?? event.player.name} joined`;
     case "player/claim":
-      return `${nameOf(event.by)} reconnected`;
+      // Seats in a What if game are taken afresh, not reconnected to.
+      return `${nameOf(event.by)} ${before.branch ? "took their seat" : "reconnected"}`;
+    case "mission/set":
+      return `${who} chose the mission ${event.mission.name}`;
+    case "score/confirm": {
+      // "Crossfire: controls 2 objectives" reads as "Crossfire (controls 2 objectives)".
+      const why = event.why.replace(/^([^:]+): (.+)$/, "$1 ($2)");
+      return event.skipped
+        ? `${sideName(game, event.seat)} passed on ${why}`
+        : `${sideName(game, event.seat)} scored ${event.vp} VP · ${why}`;
+    }
     case "player/dice":
       return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;
     case "player/rename":
@@ -543,7 +554,16 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "secret/reveal": {
       // A unit id reads as its name ("drew Warden Guard"); anything else as written.
       const v = event.value;
-      const shown = typeof v === "string" && game.units[v] ? game.units[v]!.name : JSON.stringify(v);
+      const card = event.key.startsWith("mission:")
+        ? systemModule(game.system)
+            .missions?.find((m) => m.id === game.mission?.id)
+            ?.deck?.find((c) => c.id === v)
+        : undefined;
+      const shown = card
+        ? card.name
+        : typeof v === "string" && game.units[v]
+          ? game.units[v]!.name
+          : JSON.stringify(v);
       const ok = game.secrets?.[event.player]?.[event.key]?.revealed;
       return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? "" : " (didn't match what was locked in)"}`;
     }
