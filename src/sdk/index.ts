@@ -80,6 +80,36 @@ export interface TurnHooks {
   phaseEnd?: Record<Id, CodeProcedure>;
   roundStart?: CodeProcedure;
   activationEnd?: CodeProcedure;
+  /**
+   * Campaign rules (roadmap 24b), for games played for a campaign book. The
+   * book starts `beforeGame` once the battle begins, and `afterGame` once it
+   * is over and scored, before it records the game. Both get
+   * `{ units: CampaignStory[] }`. `afterGame` hands out experience, honours
+   * and scars by emitting `{ type: "campaign/award", key, xp?, honour?, scar? }`
+   * (rolls through `ctx.roll`, so everyone sees them in the log);
+   * `beforeGame` applies carried-over effects with ordinary table events.
+   */
+  beforeGame?: CodeProcedure;
+  afterGame?: CodeProcedure;
+}
+
+/** A campaign unit's story as the campaign hooks see it (src/campaign/book.ts CampaignUnit). */
+export interface CampaignStory {
+  /** The campaign unit's key, for awards. */
+  key: Id;
+  /** The unit on the table. */
+  unitId: Id;
+  name: string;
+  owner: Id;
+  /** Before this game. */
+  games: number;
+  kills: number;
+  xp: number;
+  honours: string;
+  scars: string;
+  /** This game, for afterGame: enemy models it destroyed, and whether any of it is left. */
+  slain?: number;
+  survived?: boolean;
 }
 
 export type PureFn = (view: GameView, ...args: unknown[]) => unknown;

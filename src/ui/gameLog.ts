@@ -692,6 +692,15 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return "";
     case "log/note":
       return event.text;
+    case "campaign/award": {
+      const name = game.units[event.unitId ?? ""]?.name ?? "A unit";
+      const bits = [
+        event.xp ? `${event.xp > 0 ? "+" : ""}${event.xp} XP` : "",
+        event.honour ? `honour: ${event.honour}` : "",
+        event.scar ? `scar: ${event.scar}` : "",
+      ].filter(Boolean);
+      return bits.length ? `${name}: ${bits.join(", ")}` : "";
+    }
     case "procedure/outcomes": {
       const lost = event.outcomes
         .filter((o) => o.kind === "wounds")

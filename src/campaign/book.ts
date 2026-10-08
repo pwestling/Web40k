@@ -3,6 +3,7 @@ import type { GameRecord, GameState } from "../core";
 import { gameStats } from "../core/stats";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
 import { settlePairing, type CampaignEvent } from "./event";
+import { applyAwards, awardsIn } from "./rules";
 
 /**
  * The campaign book (roadmap 24a): a small file a group of players share,
@@ -64,6 +65,8 @@ export interface CampaignUnit {
   wounds: number;
   honours: string;
   scars: string;
+  /** Experience, from campaign rules (rules.ts); missing until a rule awards some. */
+  xp?: number;
 }
 
 export interface Territory {
@@ -223,6 +226,7 @@ export function recordGame(
       wounds: alive.reduce((n, m) => n + (m!.woundsLost ?? 0), 0),
       honours: was?.honours ?? "",
       scars: was?.scars ?? "",
+      ...(was?.xp !== undefined ? { xp: was.xp } : {}),
     };
   }
 
@@ -234,7 +238,12 @@ export function recordGame(
   );
 
   // At an event, the game settles its pairing.
-  return settlePairing({ ...book, players: roster, games: [...book.games, entry], units, map }, entry);
+  // What the campaign rules awarded after the battle (24b), from the log like everything else.
+  const awarded = applyAwards(units, awardsIn(record));
+  return settlePairing(
+    { ...book, players: roster, games: [...book.games, entry], units: awarded, map },
+    entry,
+  );
 }
 
 export interface LeagueRow {

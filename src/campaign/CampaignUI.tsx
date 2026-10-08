@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { afterGameDone, nextCampaignHook } from "./rules";
 import { sidePlayers, sides, type GameState } from "../core";
 import { pendingScores } from "../missions/scoring";
 import { getSystem } from "../core/content/systems";
@@ -155,10 +156,30 @@ export function CampaignKeeper() {
     }
   }, [live, ref, deployed, shelf, game.players, canControl, dispatch]);
   // When the battle is over and scored, the game goes in the book.
-  const over = useMemo(
+  const scored = useMemo(
     () => !!ref && battleOver(game) && pendingScores(record, game, missionOf(game)).length === 0,
     [ref, game, record],
   );
+  const asked = useRef(new Set<string>());
+  // Campaign rules (24b, rules.ts): before the battle, and after it before it's recorded. The leader starts them.
+  const over = scored && afterGameDone(record, game);
+  useEffect(() => {
+    if (!live || !ref || record.events.length === 0) return;
+    const book = books[ref.id];
+    const id = gameId(record);
+    if (!book || !id || book.games.some((g) => g.id === id)) return;
+    const first = sidePlayers(game, sides(game)[0] ?? 0)[0];
+    if (!first || !canControl(first.id)) return;
+    const next = scored
+      ? nextCampaignHook("afterGame", book, record, game)
+      : game.turn.round >= 1 && !battleOver(game)
+        ? nextCampaignHook("beforeGame", book, record, game)
+        : null;
+    // Asked once per game: a client's request takes a moment to come back from the host.
+    if (!next || next.type !== "script/start" || asked.current.has(`${id}:${next.procedure}`)) return;
+    asked.current.add(`${id}:${next.procedure}`);
+    dispatch(next, first.id);
+  }, [live, ref, books, record, game, scored, canControl, dispatch]);
   useEffect(() => {
     if (!live || !over || !ref) return;
     const book = books[ref.id];
@@ -461,6 +482,7 @@ export function CampaignUnitLine({ unitId }: { unitId: string }) {
       <strong>Campaign:</strong> {entry.kills} kill{entry.kills === 1 ? "" : "s"} · survived {entry.survived}/
       {entry.games} game{entry.games === 1 ? "" : "s"}
       {entry.wounds ? ` · carrying ${entry.wounds} wound${entry.wounds === 1 ? "" : "s"}` : ""}
+      {entry.xp ? ` · ${entry.xp} XP` : ""}
       {entry.honours && <span className="honours"> · Honours: {entry.honours}</span>}
       {entry.scars && <span className="scars"> · Scars: {entry.scars}</span>}
     </p>

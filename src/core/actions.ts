@@ -16,7 +16,14 @@ import { playerActions, poolUsed, type PlayerActionTaken } from "./content/playe
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { parseDice, rollDice } from "./dice";
-import { startScript, stepScript, type LogNote, type ModuleSet, type ScriptStep } from "./script";
+import {
+  startScript,
+  stepScript,
+  type CampaignAward,
+  type LogNote,
+  type ModuleSet,
+  type ScriptStep,
+} from "./script";
 import type {
   DiceRoll,
   GameSettings,
@@ -356,7 +363,8 @@ export type GameEvent =
   | ModuleSet
   /** A data procedure's table changes, run from code (`ctx.run`). */
   | { type: "procedure/outcomes"; outcomes: Outcome[] }
-  | LogNote;
+  | LogNote
+  | CampaignAward;
 
 /** Move every model in a unit as one rigid block: rotate by `turn` radians
  * around `pivot`, then translate by `delta`. A ranked unit's wheel is a turn

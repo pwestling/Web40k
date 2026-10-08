@@ -100,6 +100,40 @@ hooks: {
 
 The host starts them one after another, in this order: phase end, round start, phase start. If one asks a question, the next waits for the answer. `args.player` is the player whose turn it is.
 
+## Campaign rules
+
+Two more hooks run only in games played for a campaign book. A package can
+use them to add experience, honours and scars to a campaign (roadmap 24b):
+
+```js
+hooks: {
+  beforeGame: function* (ctx, args) { ... }, // once the battle starts
+  afterGame: function* (ctx, args) { ... },  // once it's over and scored, before the book records it
+}
+```
+
+Both get `args.units`: every campaign unit on the table, each with `key`,
+`unitId`, `name`, `owner` and its story so far (`games`, `kills`, `xp`,
+`honours`, `scars`). For `afterGame`, each unit also has this game's `slain`
+and `survived`.
+
+`afterGame` gives awards by emitting them:
+
+```js
+yield ctx.emit({ type: "campaign/award", key: u.key, unitId: u.unitId, xp: 1 });
+yield ctx.emit({ type: "campaign/award", key: u.key, unitId: u.unitId, scar: "Old wound" });
+```
+
+The book adds each award to the unit's story when it records the game. The
+awards are in the log, just like the rolls behind them, so every player's copy
+of the book comes out the same.
+
+`beforeGame` applies effects carried over from earlier games, using ordinary
+table events or notes.
+
+`examples/packages/battle-scars.js` is a worked example. Its rules are
+invented ones that work in any game.
+
 ## Data rules
 
 `rules`, `abilityTimings`, and `actions` entries without a `run`, are plain data in the system's rules schema (`src/core/content/schema.ts`). They are added to the system on every player's screen that runs the package, so previews and panels show them as well. A data rule with the same id as a built-in one replaces it.

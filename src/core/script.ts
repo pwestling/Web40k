@@ -76,6 +76,24 @@ export interface LogNote {
   text: string;
 }
 
+/**
+ * A campaign rule's award to one unit, emitted by a module's `afterGame`
+ * hook (sdk TurnHooks). It changes nothing on the table; the campaign book
+ * reads it from the log when it records the game (src/campaign/rules.ts).
+ */
+export interface CampaignAward {
+  type: "campaign/award";
+  /** The campaign unit (src/campaign/book.ts unitKey). */
+  key: string;
+  /** The unit on the table it was. */
+  unitId?: Id;
+  /** Experience gained (or lost, below zero). */
+  xp?: number;
+  /** A battle honour or scar to add, in the rule's words. */
+  honour?: string;
+  scar?: string;
+}
+
 export interface ModuleSet {
   type: "module/set";
   module: Id;
@@ -401,6 +419,9 @@ export interface HookTable {
   phaseEnd?: Record<Id, Id[]>;
   roundStart?: Id[];
   activationEnd?: Id[];
+  /** Campaign games only: started by the campaign book, not by turns (src/campaign/rules.ts). */
+  beforeGame?: Id[];
+  afterGame?: Id[];
 }
 
 const hooks = new Map<Id, Map<string, HookTable>>();
@@ -440,7 +461,18 @@ export function hookProcedures(
   }
   if (h.roundStart) table.roundStart = [add("roundStart", h.roundStart)];
   if (h.activationEnd) table.activationEnd = [add("activationEnd", h.activationEnd)];
+  if (h.beforeGame) table.beforeGame = [add("beforeGame", h.beforeGame)];
+  if (h.afterGame) table.afterGame = [add("afterGame", h.afterGame)];
   return { procedures, table };
+}
+
+/** A system's campaign hooks, module and packages together, in the order they were registered. */
+export function campaignHooks(system: Id): { beforeGame: Id[]; afterGame: Id[] } {
+  const tables = [...(hooks.get(system)?.values() ?? [])];
+  return {
+    beforeGame: tables.flatMap((t) => t.beforeGame ?? []),
+    afterGame: tables.flatMap((t) => t.afterGame ?? []),
+  };
 }
 
 /**

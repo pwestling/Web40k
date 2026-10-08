@@ -482,6 +482,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return { ...after, script: event.script };
     }
     case "log/note":
+    case "campaign/award":
       return state;
     case "procedure/outcomes":
       return applyRunOutcomes(state, event.outcomes);

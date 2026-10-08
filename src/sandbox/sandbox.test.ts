@@ -21,6 +21,7 @@ import { SandboxEngine } from "./engine";
 import { seededRng } from "./protocol";
 import arena from "../../examples/packages/arena.js?raw";
 import secondWind from "../../examples/packages/second-wind.js?raw";
+import battleScars from "../../examples/packages/battle-scars.js?raw";
 
 /** Node imports a package's source from a data: URL; the worker uses a blob. */
 const importSource = (source: string) =>
@@ -145,6 +146,40 @@ describe("the package sandbox", () => {
     const sixes = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r === 6).length : -1;
     expect(fallen()).toBe(6 - sixes);
     expect(t.sandbox.unitActions(unit.id, "p1")[0]!.available).toBe("Already used this battle");
+  });
+
+  it("loads campaign rules: the example Battle Scars hooks before and after a game", async () => {
+    const t = table("tow-hand", (seat) => towModule.app!.sample(seat));
+    const loaded = await t.sandbox.load([{ hash: "bs0123456789", source: battleScars }]);
+    expect(loaded.errors).toEqual([]);
+    expect(loaded.packages[0]!.hooks).toEqual({
+      beforeGame: ["hook:bs012345:beforeGame"],
+      afterGame: ["hook:bs012345:afterGame"],
+    });
+    const unit = Object.values(t.state.units).find((u) => u.owner === "p1")!;
+    const units = [
+      {
+        key: "a:0",
+        unitId: unit.id,
+        name: unit.name,
+        owner: "p1",
+        games: 2,
+        kills: 0,
+        xp: 2,
+        honours: "",
+        scars: "",
+        slain: 1,
+        survived: true,
+      },
+    ];
+    t.playBoxed({ type: "script/start", procedure: "hook:bs012345:afterGame", args: { units } }, "p1");
+    const last = t.record.events.at(-1)!.event;
+    const awards = last.type === "script/step" ? last.events.filter((e) => e.type === "campaign/award") : [];
+    expect(awards).toEqual([
+      { type: "campaign/award", key: "a:0", unitId: unit.id, xp: 2 },
+      { type: "campaign/award", key: "a:0", unitId: unit.id, honour: "Veteran" },
+    ]);
+    restoreSystems();
   });
 
   it("loads a package's data rules, functions and turn hooks", async () => {
