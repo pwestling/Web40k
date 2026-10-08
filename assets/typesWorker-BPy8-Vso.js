@@ -635,6 +635,8 @@ export interface PoolPlan {
     count: string;
     /** Ids of the members counted (models in range), when the pool sums over some. */
     members?: string[];
+    /** Why this many (the step's \`why\`). */
+    why?: string;
 }
 export interface TestPlan {
     kind: "test";
@@ -3576,6 +3578,11 @@ export type StepKind =
     each?: Ref;
     as?: string;
     where?: Expr;
+    /** Why this many dice, shown with the count: the first line whose \`if\` holds ("two ranks: on a hill"). */
+    why?: {
+        if?: Expr;
+        say: string;
+    }[];
 }
 /** Roll one die per input success and compare with a target number. */
  | {
