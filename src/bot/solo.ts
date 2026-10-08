@@ -18,19 +18,29 @@ export interface Solo {
   session: Session | null;
   policy: Policy | null;
   seed: number;
+  /** Paused from the ⋯ menu (UX 347): the computer waits and its side is yours to move. */
+  paused: boolean;
 }
 
-export const useSolo = create<Solo>(() => ({ level: null, seat: 1, session: null, policy: null, seed: 1 }));
+export const useSolo = create<Solo>(() => ({
+  level: null,
+  seat: 1,
+  session: null,
+  policy: null,
+  seed: 1,
+  paused: false,
+}));
 
 export const LEVEL_KEY = "open-battle:bot-level";
 
-/** The level picked last time on this device. */
+/** The level picked last time on this device (Easy if none). */
 export function savedLevel(): Level {
   try {
     const v = localStorage.getItem(LEVEL_KEY);
-    return v === "random" || v === "sharp" ? v : "steady";
+    // Easy the first time (UX 350), then whatever was picked last.
+    return v === "steady" || v === "sharp" ? v : "random";
   } catch {
-    return "steady";
+    return "random";
   }
 }
 
@@ -47,17 +57,20 @@ export function armSolo(level: Level, seat = 1): void {
     session: useStore.getState().session,
     policy: null,
     seed: Date.now() % 2 ** 31,
+    paused: false,
   });
+  // The camera follows the action, the computer's included (UX 348).
+  useStore.setState({ director: true });
 }
 
 export function endSolo(): void {
-  useSolo.setState({ level: null, session: null, policy: null });
+  useSolo.setState({ level: null, session: null, policy: null, paused: false });
 }
 
 /** Whether the computer plays this player in the game on screen. */
 export function soloPlays(game: GameState, player: string | undefined): boolean {
   const { level, seat, session } = useSolo.getState();
-  if (!level || !player || session !== useStore.getState().session) return false;
+  if (!level || useSolo.getState().paused || !player || session !== useStore.getState().session) return false;
   return game.players[player]?.seat === seat;
 }
 

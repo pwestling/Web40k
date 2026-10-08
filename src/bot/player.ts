@@ -10,7 +10,7 @@ import {
 import { opposed } from "../core/teams";
 import { actingUnits, actionTargets, unitActions } from "../core/content/play";
 import { playerActions } from "../core/content/player";
-import { currentSlot, plainActivations, systemOf } from "../core/content/turn";
+import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { seededRng } from "../sandbox/protocol";
 import { gameModule } from "../systems";
@@ -63,6 +63,8 @@ export interface BotOptions {
   weights?: Partial<Weights>;
   /** Tries per move with dice, other than the level's. */
   tries?: number;
+  /** How many of the best moves to judge with what could follow them, other than the level's. */
+  beam?: number;
 }
 
 /** The module's tuning for the bot, if it has any. */
@@ -119,6 +121,8 @@ class Thinker implements Policy {
   private readonly sim: Sim;
   private readonly judge: Judge;
   private readonly tries: number;
+  /** Sharp: how many of the best moves are judged with what could follow them. */
+  private readonly beam: number;
   private done = { phase: "", keys: new Set<string>(), decisions: 0 };
   private readonly weigh: BotContext;
 
@@ -142,7 +146,9 @@ class Thinker implements Policy {
       tuning,
     );
     if (sharp) this.judge.reach = (state, u) => reachOf(state, u, tuning);
+    this.judge.move = (state, u) => moveInches(state, u, tuning);
     this.tries = opts.tries ?? (sharp ? 4 : 2);
+    this.beam = opts.beam ?? (sharp ? 4 : 0);
     this.weigh = { ...ctx, weighing: true };
   }
 
@@ -227,15 +233,79 @@ class Thinker implements Policy {
     const base = evaluate(this.sim.settle(state, this.rng, new Map()), this.judge);
     let top: Candidate | null = null;
     let topScore = -Infinity;
+    const scored: { c: Candidate; score: number }[] = [];
     for (const c of pool) {
       const score =
         c.activates && mine ? this.activation(state, c, mine, base) : this.scoreOf(state, c, c.tries);
       if (score === null) continue;
+      scored.push({ c, score });
       if (score > topScore) [top, topScore] = [c, score];
     }
     if (!top) return fallback;
+    // Sharp, moving: the few best moves (and staying put), each judged after the enemy's guns
+    // answer it, so it doesn't walk into the open for a step nearer an objective.
+    const moves = scored.filter(({ c }) => isMove(c.move) && !c.activates);
+    if (this.beam && mine && moves.length > 1 && this.shootSlot(state) !== null) {
+      const stay = fallback ? this.answered(this.sim.settle(state, this.rng, new Map()), mine) : -Infinity;
+      let best = stay;
+      let pick: Candidate | null = null;
+      for (const { c } of moves.sort((a, b) => b.score - a.score).slice(0, this.beam)) {
+        const s = this.play(state, c.move);
+        if (!s) continue;
+        const v = this.answered(s, mine);
+        if (v > best + 0.01) [pick, best] = [c, v];
+      }
+      if (pick) return pick.move;
+      if (fallback && !must.length && moves.some(({ c }) => c === top)) return fallback;
+    }
     if (fallback && !must.length && topScore <= base + 0.01) return fallback;
     return top.move;
+  }
+
+  /** The enemy's attack phase in their turn (the first slot of a player's turn with targeted attacks), or null. */
+  private shootSlot(state: GameState): number | null {
+    const system = systemOf(state);
+    const slots = schedule(system);
+    const i = slots.findIndex(
+      (slot) =>
+        slot.playerTurn &&
+        slot.actions.some((id) => {
+          const def = system.actions.find((a) => a.id === id);
+          return !!def?.procedure && !!def.target && !/fight|melee|charge/i.test(id);
+        }),
+    );
+    return i < 0 ? null : i;
+  }
+
+  /**
+   * The table judged after the enemy shoots back: each enemy unit makes the
+   * attack that hurts most, picked from one try each (a quick, greedy reply).
+   */
+  private answered(s: GameState, mine: Set<PlayerId>): number {
+    const slot = this.shootSlot(s);
+    const enemy = Object.values(s.players).find((p) => p.seat !== undefined && p.seat !== this.seat)?.seat;
+    if (slot === null || enemy === undefined) return evaluate(s, this.judge);
+    let t: GameState = {
+      ...s,
+      procedure: null,
+      attack: null,
+      pending: null,
+      turn: { ...s.turn, activeSeat: enemy, phase: slot },
+    };
+    const theirs = new Set(sidePlayers(t, enemy).map((p) => p.id));
+    const byUnit = new Map<string, { c: Candidate; v: number }>();
+    for (const c of this.candidates(t, theirs)) {
+      const unit = c.move.intent.type === "action/take" ? c.move.intent.unitId : null;
+      if (!unit || !("targetId" in c.move.intent) || !c.move.intent.targetId) continue;
+      const v = this.scoreOf(t, c, 1);
+      if (v === null) continue;
+      const was = byUnit.get(`${unit}:${c.key}`);
+      if (!was || v < was.v) byUnit.set(`${unit}:${c.key}`, { c, v });
+    }
+    // Their worst for us, each weapon once.
+    for (const { c } of [...byUnit.values()].sort((a, b) => a.v - b.v)) t = this.play(t, c.move) ?? t;
+    void mine;
+    return evaluate(t, this.judge);
   }
 
   /** The table after a candidate, judged: the average over `tries` goes (null if the host would refuse it). */
@@ -367,7 +437,15 @@ class Thinker implements Policy {
         (/move/i.test(slot) || plain) &&
         !unitActions(state, u.id).some((o) => o.move !== undefined)
       )
-        for (const m of destinations(state, u, moveInches(state, u, tuningOf(state.system))))
+        for (const m of [
+          ...destinations(state, u, moveInches(state, u, tuningOf(state.system))),
+          // Into contact, for a unit that fights hand to hand.
+          ...(Object.values(u.sheet?.weapons ?? {}).some((w) => w.kind === "melee")
+            ? enemiesWithin(state, u, moveInches(state, u, tuningOf(state.system))).map((e) =>
+                chargeMove(state, u, this.ctx, moveInches(state, u, tuningOf(state.system)), e.id),
+              )
+            : []),
+        ])
           out.push({
             move: m,
             key: `${u.id}:move`,
@@ -458,6 +536,8 @@ class Thinker implements Policy {
     return out;
   }
 }
+
+const isMove = (m: BotMove) => m.intent.type === "models/move" || m.then?.intent.type === "models/move";
 
 const standing = (state: GameState, u: Unit) =>
   u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);

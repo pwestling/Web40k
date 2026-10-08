@@ -4103,11 +4103,20 @@ body.showcase
   margin-right: 2px;
 }
 
-/* Play the computer (#45): the level picker in the lobby. */
-.lobby .solo-level {
+/* Play the computer (#45): "How hard?" in the game's card (UX 350). */
+.lobby .how-hard {
   display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  margin-top: 6px;
+}
+.lobby .how-hard button {
+  text-align: left;
+  min-height: 36px;
+}
+.lobby .how-hard .quiet {
+  align-self: flex-end;
+  min-height: 0;
 }

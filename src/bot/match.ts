@@ -28,6 +28,10 @@ export interface MatchOptions {
   /** A whole game from a package (Rift Lanterns): its code resolves every intent. */
   systemPkg?: { source: string; importSource?: ImportSource };
   maxSteps?: number;
+  /** Both sides field the same sample army (this seat's), so the armies don't decide the game. */
+  mirror?: 0 | 1;
+  /** The side that takes the first turn. */
+  first?: number;
 }
 
 export interface MatchResult {
@@ -147,7 +151,7 @@ export async function playMatch(
     const ranked = (gameModule(system)?.system.unitShape.kind ?? "") === "ranked";
     for (const p of players) {
       const units = mod
-        .sample(p.seat === 1 ? 1 : 0)
+        .sample(opts.mirror ?? (p.seat === 1 ? 1 : 0))
         .units.map((u) =>
           ranked && !u.files
             ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
@@ -159,6 +163,7 @@ export async function playMatch(
     }
     for (const u of Object.values(host.current.units))
       if (u.status?.reserves) send({ type: "unit/reserve", id: u.id, reserve: false, moves: [] }, u.owner);
+    if (opts.first !== undefined) send({ type: "turn/first", seat: opts.first }, "p0");
     await settle();
     if (errors.length) throw new Error(errors[0]);
     const start = host.current;

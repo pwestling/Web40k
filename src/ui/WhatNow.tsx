@@ -8,6 +8,8 @@ import { useStore } from "../store";
 import { gameModule, systemModule } from "../systems";
 import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
+import { waitsOn } from "../teach/coach";
+import { useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
@@ -158,7 +160,13 @@ export function whatNow(
     lines.push(
       t("Mission · {name}: {summary}", { name: gameText(mission.name), summary: gameText(mission.summary) }),
     );
-  return { head: t("{side}'s turn · {phase}", { side: who, phase }), lines };
+  // Against the computer the side is just "You" (UX 349).
+  const solo = useSolo.getState();
+  const yours = !!solo.level && solo.session === useStore.getState().session;
+  return {
+    head: yours ? t("Your turn · {phase}", { phase }) : t("{side}'s turn · {phase}", { side: who, phase }),
+    lines,
+  };
 }
 
 const faces = (s: { min: number; max: number }) => (s.min === s.max ? `${s.min}` : `${s.min}–${s.max}`);
@@ -197,7 +205,30 @@ function inReach(game: GameState, unit: Unit): boolean {
   );
 }
 
+/** While the computer has the go in a solo game: what it's doing, in place of the usual hint. */
+function computerGo(
+  game: GameState,
+): { head: string; lines: string[]; units?: { id: string; text: string }[] } | null {
+  const solo = useSolo.getState();
+  if (!solo.level || solo.paused || solo.session !== useStore.getState().session || game.turn.round === 0)
+    return null;
+  if (battleOver(game) || !waitsOn(game, solo.seat)) return null;
+  const acting = actingUnits(game).find((u) => game.players[u.owner]?.seat === solo.seat);
+  return {
+    head: acting
+      ? t("The computer is playing {unit}…", { unit: acting.name })
+      : t("The computer is taking its turn…"),
+    // One line on a phone, so the table stays in view (UX 348).
+    lines: matchMedia("(max-width: 640px)").matches
+      ? []
+      : [t("A ring marks its unit and a line shows where it went.")],
+  };
+}
+
 export function WhatNow() {
+  // Re-read on the computer's turns (UX 347).
+  useSolo((s) => s.level);
+  useSolo((s) => s.paused);
   const game = useGame();
   const open = useHelp((s) => s.hint);
   const me = useStore((s) => s.session?.selfId ?? null);
@@ -216,7 +247,9 @@ export function WhatNow() {
         {t("What can I do now?")}
       </button>
     );
-  const { head, lines, units } = whatNow(game, me, hotseat, ready);
+  // The computer's go (UX 347): say so, in one line, and nothing to press.
+  const computer = computerGo(game);
+  const { head, lines, units } = computer ?? whatNow(game, me, hotseat, ready);
   return (
     <div className="panel whatnow">
       <div className="row spread">

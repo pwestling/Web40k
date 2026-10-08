@@ -1,3 +1,4 @@
+import { useSolo } from "./bot/solo";
 import { create } from "zustand";
 import { useLibrary } from "./packages/library";
 import {
@@ -502,6 +503,10 @@ export function useCanControl(): (owner: PlayerId) => boolean {
   const selfId = useStore((s) => s.session?.selfId);
   const mail = useStore((s) => s.mail);
   const seatOf = useStore((s) => s.game.players);
+  const session = useStore((s) => s.session);
+  const solo = useSolo((s) => (s.level && !s.paused && s.session === session ? s : null));
   if (mail) return (owner) => !mail.locked && seatOf[owner]?.seat === mail.seat;
+  // Solo against the computer (#45): its side is its own, not yours to play (UX 347).
+  if (solo) return (owner) => role !== "spectator" && seatOf[owner]?.seat !== solo.seat;
   return (owner) => role !== "spectator" && (mode === "hotseat" || owner === selfId);
 }

@@ -19,6 +19,14 @@ export interface Weights {
   projectLater: number;
   /** Pull towards objectives nobody holds yet, per inch, in VP. */
   approach: number;
+  /**
+   * Who could hold each objective by the next scoring: every unit near it
+   * counts, fading out over a move beyond it, as a share of one objective's
+   * worth in a round. What makes the bot go for objectives, not just sit near.
+   */
+  contest: number;
+  /** Units that fight only hand to hand want to close with the enemy: their share of the army's worth, per move nearer. */
+  engage: number;
   /** Threat: VP per unit of enemy value in reach of my units, minus mine in theirs. */
   threat: number;
   /**
@@ -28,11 +36,21 @@ export interface Weights {
   finish: number;
 }
 
-export const STEADY: Weights = { projectNext: 0.9, projectLater: 0.3, approach: 0.04, threat: 0, finish: 0 };
+export const STEADY: Weights = {
+  projectNext: 0.9,
+  projectLater: 0.3,
+  approach: 0.04,
+  contest: 1,
+  engage: 0.3,
+  threat: 0,
+  finish: 0,
+};
 export const SHARP: Weights = {
   projectNext: 1,
   projectLater: 0.45,
   approach: 0.05,
+  contest: 1,
+  engage: 0.3,
   threat: 0,
   finish: 0.35,
 };
@@ -95,6 +113,8 @@ export interface Judge {
   rounds: number;
   /** Ranged reach of each unit in inches (worked out once). */
   reach?: (state: GameState, u: Unit) => number;
+  /** How far a unit moves in a turn, in inches. */
+  move?: (state: GameState, u: Unit) => number;
 }
 
 export function judge(
@@ -171,10 +191,34 @@ function position(state: GameState, j: Judge): number {
     (s === j.seat ? mine : theirs).push(e);
   }
   let score = 0;
+  const move = (u: Unit) => Math.max(1, j.move?.(state, u) ?? 6);
+  // One objective held for a round, in VP: the share of a whole army's worth it makes up.
+  const objectiveVp = j.armyVp / Math.max(1, j.rounds * Math.max(1, state.objectives.length));
+  const left = state.turn.round <= j.rounds;
   for (const o of state.objectives) {
     const near = (xs: typeof mine) =>
       xs.reduce((d, e) => Math.min(d, Math.hypot(e.c.x - o.position.x, e.c.y - o.position.y)), 60);
     score += j.weights.approach * (near(theirs) - near(mine));
+    if (!j.weights.contest || !left) continue;
+    const pull = (xs: typeof mine) =>
+      xs.reduce((n, e) => {
+        const d = Math.max(0, Math.hypot(e.c.x - o.position.x, e.c.y - o.position.y) - 3);
+        return n + standing(state, e.u).length * Math.max(0, 1 - d / move(e.u));
+      }, 0);
+    const a = pull(mine);
+    const b = pull(theirs);
+    score += j.weights.contest * objectiveVp * ((a - b) / (a + b + 1));
+  }
+  if (j.weights.engage) {
+    const total = j.armies[j.seat] || 1;
+    for (const e of mine) {
+      if (Object.values(e.u.sheet?.weapons ?? {}).some((w) => w.kind === "ranged")) continue;
+      let d = Infinity;
+      for (const t of theirs) d = Math.min(d, Math.hypot(t.c.x - e.c.x, t.c.y - e.c.y));
+      if (!Number.isFinite(d)) continue;
+      // Nearer by a move is worth this unit's share of the army, scaled by `engage`.
+      score -= j.weights.engage * (e.v / total) * j.armyVp * Math.min(3, d / (move(e.u) * 3));
+    }
   }
   if (j.weights.threat && j.reach) {
     // How surely something of `by` can reach each of `xs` (fading over the last 6"), by value.

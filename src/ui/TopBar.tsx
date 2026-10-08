@@ -13,6 +13,7 @@ import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
 import { formatList, t, gameText } from "../i18n";
 import { useCanControl, useJoining, useStore } from "../store";
+import { useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
 
@@ -92,6 +93,10 @@ export function TopBar() {
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
   const myTurn = live && (deploying || (activeSide.length ? activeSide.some((p) => canControl(p.id)) : true));
   const [menu, setMenu] = useState(false);
+  // Solo against the computer (#45): its go is its own; ⋯ can pause it (UX 347).
+  const solo = useSolo((s) => (s.level && s.session === useStore.getState().session ? s : null));
+  const computerGo =
+    live && !!solo && !solo.paused && !deploying && activeSide.some((p) => p.seat === solo.seat);
   const system = systemOf(game);
   const counters = (system.resources ?? []).filter((r) => r.kind !== "dicePool");
   const pools = (system.resources ?? []).filter((r) => r.kind === "dicePool");
@@ -193,6 +198,12 @@ export function TopBar() {
         );
       })}
       <div className="turn">
+        {computerGo && <span className="muted computer-go">{t("The computer is playing…")}</span>}
+        {live && solo?.paused && (
+          <button className="quiet" onClick={() => useSolo.setState({ paused: false })}>
+            {t("Let the computer play")}
+          </button>
+        )}
         {myTurn && (
           <button title={t("Previous phase")} onClick={() => dispatch({ type: "turn/prev" })}>
             ◀
@@ -337,6 +348,16 @@ export function TopBar() {
                 </span>
               ) : (
                 <span className="menu">
+                  {computerGo && (
+                    <button
+                      onClick={() => {
+                        setMenu(false);
+                        useSolo.setState({ paused: true });
+                      }}
+                    >
+                      {t("Pause the computer")}
+                    </button>
+                  )}
                   <button onClick={() => step("turn/next")}>{t("Advance their phase")}</button>
                   <button onClick={() => step("turn/prev")}>{t("Back a phase")}</button>
                 </span>

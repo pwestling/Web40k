@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
-import { sidePlayers } from "../core";
+import { sidePlayers, type GameState, type Unit } from "../core";
+import { clearDrawings, hear } from "../talk/talk";
+import { t } from "../i18n";
+import { explain } from "./explain";
 import { pendingScores } from "../missions/scoring";
 import { sandboxBotMove } from "../sandbox/runtime";
 import { legal, type BotMove } from "../soak/bot";
@@ -7,7 +10,7 @@ import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
-import { useSolo } from "./solo";
+import { levelName, useSolo } from "./solo";
 import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
@@ -24,11 +27,12 @@ const ROLL_PACE = 1100;
 export function SoloBot() {
   const level = useSolo((s) => s.level);
   const mine = useSolo((s) => s.session);
+  const paused = useSolo((s) => s.paused);
   const session = useStore((s) => s.session);
   const game = useStore((s) => s.game);
   const scrub = useStore((s) => s.scrub);
   const timer = useRef<number | null>(null);
-  const on = !!level && mine === session && !!session;
+  const on = !!level && !paused && mine === session && !!session;
 
   useEffect(() => {
     if (!on || scrub !== null || timer.current !== null) return;
@@ -57,9 +61,19 @@ export function SoloBot() {
 async function play(): Promise<void> {
   const solo = useSolo.getState();
   const { record, game, dispatch, scrub, session } = useStore.getState();
-  if (!solo.level || solo.session !== session || scrub !== null || game.turn.round === 0) return;
+  if (!solo.level || solo.paused || solo.session !== session || scrub !== null || game.turn.round === 0)
+    return;
   const player = sidePlayers(game, solo.seat)[0]?.id;
   if (!player) return;
+  // The sides by who plays them (UX 349): "You" and "Computer (Steady)".
+  for (const p of Object.values(game.players)) {
+    if (p.seat === undefined) continue;
+    const name = p.seat === solo.seat ? t("Computer ({level})", { level: levelName(solo.level) }) : t("You");
+    if (p.name !== name) {
+      dispatch({ type: "player/rename", player: p.id, name }, p.id);
+      return;
+    }
+  }
   // Its own side's scores, as the mission suggests them.
   const due = pendingScores(record, game, missionOf(game)).find((p) => p.seat === solo.seat && !p.ask);
   if (due) {
@@ -80,7 +94,7 @@ async function play(): Promise<void> {
     let failed = false;
     move = (await (remote ?? worker)!.catch(() => ((failed = true), null))) as BotMove | null;
     // The game moved on while it thought: the next change asks again.
-    if (useStore.getState().record !== record) return;
+    if (useStore.getState().record !== record || useSolo.getState().paused) return;
     // Its worker didn't start: think on the page from now on.
     if (failed && worker && !canThinkOffThread()) return void window.setTimeout(() => void play(), BOT_PACE);
   } else {
@@ -95,6 +109,7 @@ async function play(): Promise<void> {
     if (waitsOn(game, solo.seat)) window.setTimeout(() => void play(), BOT_PACE);
     return;
   }
+  tell(game, move, player);
   dispatch(move.intent, move.as);
   if (move.then) {
     const after = useStore.getState();
@@ -102,4 +117,42 @@ async function play(): Promise<void> {
   }
   if (worker) sawOffThread(move);
   useSolo.getState().policy?.saw?.(useStore.getState().game, move);
+}
+
+/** The unit whose go the table was last shown. */
+let shown: string | null = null;
+
+/**
+ * Show a computer move on the table (PX 2-3, UX 348): a ring on the unit
+ * when its go starts (your own unit card closes), a line from where it was
+ * to where it went, and why, in one line in the chat. Table talk, so none of
+ * it goes in the game's log.
+ */
+function tell(game: GameState, move: BotMove, player: string): void {
+  const why = explain(game, move);
+  if (!why) return;
+  const unit = game.units[why.unitId];
+  if (!unit) return;
+  const now = Date.now();
+  const id = (k: string) => `bot${now.toString(36)}${k}`;
+  if (shown !== why.unitId) {
+    shown = why.unitId;
+    clearDrawings(player);
+    useStore.getState().select(null);
+    const at = why.from ?? centreOf(game, unit);
+    if (at) hear({ id: id("p"), kind: "ping", at, unitId: unit.id }, player, now);
+  }
+  if (why.from && why.to) hear({ id: id("a"), kind: "arrow", from: why.from, to: why.to }, player, now);
+  hear({ id: id("c"), kind: "chat", text: `${unit.name}: ${why.text}` }, player, now);
+}
+
+function centreOf(game: GameState, unit: Unit): { x: number; y: number } | null {
+  const ms = unit.modelIds.flatMap((m) =>
+    game.models[m] && !game.models[m]!.destroyed ? [game.models[m]!] : [],
+  );
+  if (!ms.length) return null;
+  return {
+    x: ms.reduce((a, m) => a + m.position.x, 0) / ms.length,
+    y: ms.reduce((a, m) => a + m.position.y, 0) / ms.length,
+  };
 }
