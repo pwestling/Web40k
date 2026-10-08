@@ -393,9 +393,15 @@ export function WatchEffects() {
         tone: c.over !== null ? "over" : c.target ? "hit" : "short",
       });
     }
+    // A new result over the target replaces the last one ("7 slain" takes over from "7 unsaved", PX-4 re-check).
+    const newBurst = fresh.some((e) => e.kind === "burst");
     if (fresh.length)
       setEffects((old) => [
-        ...old.filter((e) => now - e.start < (e.kind === "topple" ? TOPPLE_MS + 100 : EFFECT_MS * 2)),
+        ...old.filter(
+          (e) =>
+            !(newBurst && e.kind === "burst") &&
+            now - e.start < (e.kind === "topple" ? TOPPLE_MS + 100 : EFFECT_MS * 2),
+        ),
         ...fresh,
       ]);
     if (slain.length) {

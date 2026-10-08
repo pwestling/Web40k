@@ -9,7 +9,8 @@ import { useStore } from "../store";
  * event being staged; null shows everything. The tray lets go when its
  * queue is empty (and never holds for more than 30 s).
  */
-export const useHold = create<{ held: number | null }>(() => ({ held: null }));
+export const useHold = create<{ held: number | null; busy: boolean }>(() => ({ held: null, busy: false }));
+// `busy`: the tray has rolls queued or playing (replays too, which never hold), so the moments reel can wait for it.
 
 /**
  * Hold new events that roll dice, set in the same update as the event, before

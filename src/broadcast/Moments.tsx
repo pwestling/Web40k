@@ -4,6 +4,8 @@ import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
 import { useGame } from "../ui/hooks";
 import { pace } from "../ui/pace";
+import { clearTray } from "../ui/DiceTray";
+import { useHold } from "../ui/hold";
 import { legendSting, whoosh } from "../ui/sound";
 import { sendMoment, useTalk } from "../talk/talk";
 import { useBroadcast } from "./broadcast";
@@ -62,7 +64,12 @@ export function playMoment(m: Moment, done?: () => void): void {
   const step = (i: number) => {
     const seq = seqs[i];
     if (seq === undefined) {
-      if (done) later(HOLD_MS, done);
+      // The card stays until the tray has settled the moment's last roll, then a beat more.
+      const wait = (tries: number) => {
+        if (useHold.getState().busy && tries > 0) later(150, () => wait(tries - 1));
+        else if (done) later(HOLD_MS, done);
+      };
+      wait(100);
       return;
     }
     useStore.getState().setScrub(seq);
@@ -143,6 +150,8 @@ export function Moments() {
       finishReel(director.current);
       return;
     }
+    // Each card starts on a clear tray, not the last one's dice.
+    clearTray();
     if (m.kind === "rare") legendSting();
     else whoosh();
     playMoment(m, () => useReel.setState({ index: index + 1 }));

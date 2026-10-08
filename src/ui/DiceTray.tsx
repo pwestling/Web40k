@@ -38,9 +38,9 @@ export function DiceTray() {
 
   useEffect(() => {
     if (!ref.current) return;
-    stage.current = new Stage(
+    stage.current = current = new Stage(
       ref.current,
-      () => useHold.setState({ held: null }),
+      () => useHold.setState({ held: null, busy: false }),
       // A roll settled: show the table up to the next roll still to come.
       (next) => {
         const held = useHold.getState().held;
@@ -51,7 +51,8 @@ export function DiceTray() {
     return () => {
       unwatch();
       stage.current?.clear();
-      useHold.setState({ held: null });
+      current = null;
+      useHold.setState({ held: null, busy: false });
     };
   }, []);
 
@@ -105,6 +106,13 @@ export function DiceTray() {
   }, [pos, shown, record, scrub]);
 
   return <div ref={ref} className="dice-tray" aria-hidden="true" />;
+}
+
+let current: Stage | null = null;
+
+/** Put the dice tray away, if it has finished rolling. */
+export function clearTray(): void {
+  current?.reset();
 }
 
 /** One die's DOM in a set's colours and finish (PX-5b); a marbled die gets its own swirl. */
@@ -208,6 +216,7 @@ class Stage {
   ) {
     this.waiting++;
     this.seqs.push(seq);
+    useHold.setState({ busy: true });
     this.queue = this.queue.then(async () => {
       this.waiting--;
       this.active = true;
@@ -246,6 +255,11 @@ class Stage {
   private lingerThenHide() {
     clearTimeout(this.hideTimer);
     this.hideTimer = setTimeout(() => this.hideNow(), LINGER_MS);
+  }
+
+  /** Put the tray away now (the moments reel moving on to its next card). */
+  reset() {
+    if (!this.active) this.hideNow();
   }
 
   private hideNow() {
