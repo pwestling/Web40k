@@ -32,6 +32,7 @@ import type {
   Template,
   GamePackages,
   PackageRef,
+  TableSource,
   TerrainPiece,
   Unit,
   UnitId,
@@ -78,7 +79,8 @@ export type Intent =
       /** Named faces for a special die; `sides` is then their number. */
       faces?: string[];
     }
-  | { type: "layout/set"; layout: Layout }
+  /** `source`: the starter or library table it came from, so every player's picker can name it. */
+  | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   /** A player picks the name others see (invite joiners arrive as "Player N"). */
   | { type: "player/rename"; player: PlayerId; name: string }
@@ -230,7 +232,8 @@ export type GameEvent =
   | UnitForm
   | ModelsMove
   | { type: "dice/roll"; roll: DiceRoll }
-  | { type: "layout/set"; layout: Layout }
+  /** `source`: the starter or library table it came from, so every player's picker can name it. */
+  | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }

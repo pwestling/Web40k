@@ -139,11 +139,11 @@ export function SightlinesToggle() {
         <div className="legend sight-legend" role="note">
           {seated.map((p) => (
             <span key={p.id} style={{ ["--c" as string]: p.color }} className="seen-by">
-              Seen from much of {p.name}'s zone
+              In {p.name}'s colour: only {p.name}'s zone sees here
             </span>
           ))}
-          <span className="seen-both">Seen from both (no tint)</span>
-          <span className="seen-none">Hidden from both</span>
+          <span className="seen-both">No tint: both zones see here</span>
+          <span className="seen-none">Dark: neither zone sees here</span>
         </div>
       )}
     </>

@@ -1,7 +1,7 @@
 import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
-import type { Layout } from "../core";
+import type { Layout, TableSource } from "../core";
 import { useStore } from "../store";
 import { download } from "../ui/report";
 import {
@@ -33,9 +33,11 @@ export function saveTable(name: string, id?: string): string {
  * Set up a layout on the table. Its terrain models come out of this device's
  * cache first, so the other players can get them from here.
  */
-export async function applyLayout(layout: Layout): Promise<void> {
+export async function applyLayout(layout: Layout, source?: TableSource): Promise<void> {
   await Promise.all(layoutAssets(layout).map(asset));
-  useStore.getState().dispatch({ type: "layout/set", layout });
+  useStore
+    .getState()
+    .dispatch(source ? { type: "layout/set", layout, source } : { type: "layout/set", layout });
 }
 
 const fileName = (name: string) =>

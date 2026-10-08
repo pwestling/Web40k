@@ -284,6 +284,13 @@ export interface Table {
   depth: number;
 }
 
+/** A named table: a starter ("starter:close") or a library table ("table:<id>"). */
+export interface TableSource {
+  key: string;
+  name: string;
+  changed?: boolean;
+}
+
 export interface GameState {
   /** Sequence number of the last event folded into this state (0 = none). */
   seq: number;
@@ -294,6 +301,8 @@ export interface GameState {
   terrain: TerrainPiece[];
   objectives: Objective[];
   zones: Zone[];
+  /** Where this table's layout came from, if a starter or library table; `changed` once edited. */
+  tableSource?: TableSource | null;
   turn: TurnState;
   /** The game system being played (a GameSystem id); 40k when missing. */
   system?: string;

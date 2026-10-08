@@ -19,6 +19,7 @@ import {
   mirrorPiece,
   removePieces,
   twinOf,
+  atCentre,
   unpaired,
   updatePiece,
   updatePieces,
@@ -71,6 +72,55 @@ function meshShape(
     hull: asset.hull?.map((n) => n * scale),
     mesh: { asset: asset.id, name: asset.name, scale },
   };
+}
+
+const inches = (n: number) => `${Number(n.toFixed(1))}"`;
+
+/**
+ * How big an uploaded model came in, and how its file was read (millimetres
+ * or inches), with a one-press fix when that makes it figure-sized or huge.
+ */
+function ModelSize({
+  asset,
+  scale,
+  rescale,
+}: {
+  asset: ModelAsset;
+  scale: number;
+  rescale: (scale: number) => void;
+}) {
+  const { min, max } = asset.bounds;
+  const across = Math.max(max[0] - min[0], max[2] - min[2]);
+  const tall = max[1] - min[1];
+  const read = asset.stats.unitScale === 1 ? "inches" : "millimetres";
+  const size = `${inches((max[0] - min[0]) * scale)} × ${inches((max[2] - min[2]) * scale)}, ${inches(tall * scale)} tall`;
+  const small = across * scale < 2;
+  const big = across * scale > 24;
+  /** A scale that makes it 6" across, a typical ruin or crate stack. */
+  const fit = across > 0 ? Number((6 / across).toFixed(2)) : 1;
+  return (
+    <p className="muted small model-size">
+      {scale === 1 ? `Came in at ${size}: the file was read as ${read}.` : `Now ${size} (scale ${scale}×).`}
+      {small && " That's figure-sized for terrain."}
+      {big && " That's bigger than most terrain."}
+      {(small || big) && (
+        <>
+          {" "}
+          <button className="small" onClick={() => rescale(fit)}>
+            Make it 6" across
+          </button>
+        </>
+      )}
+      {scale !== 1 && (
+        <>
+          {" "}
+          <button className="small" onClick={() => rescale(1)}>
+            As it came in
+          </button>
+        </>
+      )}
+    </p>
+  );
 }
 
 /**
@@ -284,11 +334,14 @@ export function TerrainPanel() {
               </span>
             )}
           </div>
+          {piece.mesh && meshAsset && (
+            <ModelSize asset={meshAsset} scale={piece.mesh.scale} rescale={rescale} />
+          )}
           <div className="row wrap">
             <button className="small" onClick={() => duplicatePieces(inGroup ? group : [piece.id])}>
               {inGroup ? `Duplicate the group (${group.length})` : "Duplicate"}
             </button>
-            {symmetry && !twinOf(game.terrain, piece) && (
+            {symmetry && !atCentre(piece) && !twinOf(game.terrain, piece) && (
               <button
                 className="small"
                 title="Add the same piece across the table centre"

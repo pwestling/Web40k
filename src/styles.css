@@ -2968,8 +2968,8 @@ body.showcase
   position: static;
   transform: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
+  flex-direction: column;
+  gap: 4px;
   font-size: 0.8rem;
   padding: 0;
   background: none;
@@ -2977,11 +2977,11 @@ body.showcase
 .sight-legend span::before {
   content: "";
   display: inline-block;
-  width: 0.8em;
-  height: 0.8em;
-  margin-right: 4px;
-  vertical-align: -1px;
-  border-radius: 2px;
+  width: 1.4em;
+  height: 1em;
+  margin-right: 6px;
+  vertical-align: -2px;
+  border-radius: 3px;
 }
 .sight-legend .seen-by::before {
   background: var(--c);
@@ -3028,4 +3028,12 @@ body.showcase
 }
 .clock-bar .time-call {
   color: #fde047;
+}
+
+/* A terrain piece's name over the table: a label, not a readout (UX 215). */
+.ruler.terrain-label {
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
 }

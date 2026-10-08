@@ -167,15 +167,25 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return state;
     }
     case "layout/set":
-      return { ...state, ...event.layout, terrain: event.layout.terrain.map(upgradePiece) };
+      return {
+        ...state,
+        ...event.layout,
+        terrain: event.layout.terrain.map(upgradePiece),
+        tableSource: event.source ?? null,
+      };
     case "terrain/add":
     case "terrain/update":
       return {
         ...state,
         terrain: [...state.terrain.filter((t) => t.id !== event.piece.id), upgradePiece(event.piece)],
+        tableSource: changedSource(state),
       };
     case "terrain/remove":
-      return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
+      return {
+        ...state,
+        terrain: state.terrain.filter((t) => t.id !== event.id),
+        tableSource: changedSource(state),
+      };
     case "clock/pause":
     case "clock/adjust":
       // Read from the log by core/clock.ts; the table itself doesn't change.
@@ -594,3 +604,8 @@ function figureBands(m: Model, event: Extract<GameEvent, { type: "unit/figure" }
 }
 
 applyEventRef.fn = applyEvent;
+
+/** A named table, marked as changed once its terrain is edited. */
+function changedSource(state: GameState): GameState["tableSource"] {
+  return state.tableSource ? { ...state.tableSource, changed: true } : state.tableSource;
+}

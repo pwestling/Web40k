@@ -355,7 +355,10 @@ function TerritoryTable({ territory }: { territory: Territory | undefined }) {
       </p>
     );
   return (
-    <button className="small" onClick={() => void applyLayout(table.layout)}>
+    <button
+      className="small"
+      onClick={() => void applyLayout(table.layout, { key: `table:${table.id}`, name: table.name })}
+    >
       Set up {table.name} for {territory.name}
     </button>
   );

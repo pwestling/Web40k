@@ -579,7 +579,7 @@ function Scene() {
     if (!canEdit) return;
     // Shift-click: in or out of the group, no drag.
     if (shift) {
-      toggleGroup(piece.id);
+      toggleGroup(piece.id, useStore.getState().selectedTerrain);
       return;
     }
     setUi({ selectedTerrain: piece.id });
@@ -1483,7 +1483,7 @@ function Terrain({
           ),
         )}
       {selected && (
-        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler">
+        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler terrain-label">
           {piece.name} · {piece.category}
         </Html>
       )}

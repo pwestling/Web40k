@@ -137,18 +137,27 @@ export function duplicatePieces(ids: string[], offset: Vec2 = { x: 3, y: 3 }): s
 
 /** Give a piece a twin across the centre, if it has none. */
 export function mirrorPiece(piece: TerrainPiece) {
-  if (twinOf(game().terrain, piece) || Math.hypot(piece.position.x, piece.position.y) < 0.5) return;
+  if (twinOf(game().terrain, piece) || atCentre(piece)) return;
   dispatch({ type: "terrain/add", piece: opposite(piece, newId()) });
 }
 
+/** A piece at the table centre is its own twin. */
+export const atCentre = (piece: TerrainPiece) => Math.hypot(piece.position.x, piece.position.y) < 0.5;
+
 /** How many pieces have no twin: 0 means the table is the same from both sides. */
 export function unpaired(terrain: TerrainPiece[]): TerrainPiece[] {
-  return terrain.filter((t) => Math.hypot(t.position.x, t.position.y) >= 0.5 && !twinOf(terrain, t));
+  return terrain.filter((t) => !atCentre(t) && !twinOf(terrain, t));
 }
 
-/** Shift-click: a piece in or out of the group. */
-export function toggleGroup(id: string) {
-  useTableEdit.setState((s) => ({
-    group: s.group.includes(id) ? s.group.filter((g) => g !== id) : [...s.group, id],
-  }));
+/**
+ * Shift-click: a piece in or out of the group. Starting a group takes the
+ * piece already selected along with it, so click one, Shift-click another
+ * groups both.
+ */
+export function toggleGroup(id: string, selected?: string | null) {
+  useTableEdit.setState((s) => {
+    if (s.group.includes(id)) return { group: s.group.filter((g) => g !== id) };
+    const start = !s.group.length && selected && selected !== id ? [selected] : s.group;
+    return { group: [...start, id] };
+  });
 }

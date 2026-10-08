@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, type GameState } from "../core";
+import { applyEvent, createInitialState, type GameState } from "../core";
 import { standardLayout } from "../systems/wh40k/layout";
-import { twinOf, unpaired } from "./edit";
+import { toggleGroup, twinOf, unpaired, useTableEdit } from "./edit";
 import { deploymentLine, layoutAssets, readTable, TABLE_FORMAT, tableFromGame } from "./library";
 import { sightGrid } from "./Sightlines";
 import { starterLayout, starters } from "./starters";
@@ -69,5 +69,29 @@ describe("table library", () => {
     expect([...walled.seen].some((v) => v === 1)).toBe(true);
     expect([...walled.seen].some((v) => v === 2)).toBe(true);
     expect([...walled.seen].filter((v) => v === 3).length).toBeLessThan(walled.cols * 2);
+  });
+
+  it("starts a Shift-click group with the piece already selected", () => {
+    useTableEdit.setState({ group: [] });
+    toggleGroup("b", "a");
+    expect(useTableEdit.getState().group).toEqual(["a", "b"]);
+    toggleGroup("c", "b");
+    expect(useTableEdit.getState().group).toEqual(["a", "b", "c"]);
+    toggleGroup("b", "c");
+    expect(useTableEdit.getState().group).toEqual(["a", "c"]);
+  });
+
+  it("names the table a layout came from until it's edited", () => {
+    const layout = standardLayout();
+    let state = applyEvent(createInitialState(), {
+      type: "layout/set",
+      layout,
+      source: { key: "starter:close", name: "Close quarters" },
+    });
+    expect(state.tableSource).toEqual({ key: "starter:close", name: "Close quarters" });
+    state = applyEvent(state, { type: "terrain/remove", id: layout.terrain[0]!.id });
+    expect(state.tableSource?.changed).toBe(true);
+    state = applyEvent(state, { type: "layout/set", layout });
+    expect(state.tableSource).toBeNull();
   });
 });

@@ -12,7 +12,8 @@ import { SightlinesToggle } from "./Sightlines";
 
 const systemName = (id: string) => {
   try {
-    return getSystem(id).name;
+    // "(draft)" marks a system still being built; it means nothing to a player.
+    return getSystem(id).name.replace(/\s*\(draft\)\s*$/i, "");
   } catch {
     return id || "another game";
   }
@@ -44,7 +45,6 @@ export function TablePicker() {
   const tables = useTables((s) => s.tables);
   const colors = useColors();
   const [seed, setSeed] = useState<Record<string, number>>({});
-  const [picked, setPicked] = useState("");
   useEffect(() => {
     void useTables.getState().load();
   }, []);
@@ -52,17 +52,39 @@ export function TablePicker() {
   const mine = Object.values(tables)
     .filter((t) => t.system === (game.system ?? DEFAULT_SYSTEM))
     .sort((a, b) => b.savedAt - a.savedAt);
+  const all = starters();
   const pick = (value: string) => {
-    setPicked(value);
     if (value.startsWith("starter:")) {
       const id = value.slice(8);
-      void applyLayout(starterLayout(game.system, game.table, id, seed[id] ?? 1));
+      const s = all.find((x) => x.id === id);
+      void applyLayout(starterLayout(game.system, game.table, id, seed[id] ?? 1), {
+        key: value,
+        name: s?.name ?? "a starter table",
+      });
     } else if (value.startsWith("table:")) {
       const t = tables[value.slice(6)];
-      if (t) void applyLayout(t.layout);
+      if (t) void applyLayout(t.layout, { key: value, name: t.name });
     }
   };
-  const starter = picked.startsWith("starter:") ? picked.slice(8) : null;
+  // The table everyone is on, as the game has it: named in the list when this device has it too.
+  const source = game.tableSource;
+  const listed =
+    !!source &&
+    !source.changed &&
+    (source.key.startsWith("starter:")
+      ? all.some((s) => `starter:${s.id}` === source.key)
+      : mine.some((t) => `table:${t.id}` === source.key));
+  const value = listed ? source.key : "";
+  const starter = value.startsWith("starter:") ? value.slice(8) : null;
+  const current = starter ? all.find((s) => s.id === starter) : undefined;
+  const library = value.startsWith("table:") ? tables[value.slice(6)] : undefined;
+  const blurb = current
+    ? current.blurb
+    : library
+      ? [deploymentLine(library.layout.zones, library.table), modelsLine(library.layout)]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
   return (
     <div className="table-picker">
       <TableThumb
@@ -73,12 +95,14 @@ export function TablePicker() {
         label="This game's table from above"
       />
       <div className="col">
-        <select aria-label="Table" value={picked} onChange={(e) => pick(e.target.value)}>
-          <option value="">Table: as it is</option>
+        <select aria-label="Table" value={value} onChange={(e) => pick(e.target.value)}>
+          <option value="">
+            {source ? `Table: ${source.name}${source.changed ? ", changed" : ""}` : "Table: as it is"}
+          </option>
           <optgroup label="Starter tables">
-            {starters().map((s) => (
+            {all.map((s) => (
               <option key={s.id} value={`starter:${s.id}`}>
-                {s.name} · {s.blurb.toLowerCase()}
+                {s.name}
               </option>
             ))}
           </optgroup>
@@ -86,12 +110,13 @@ export function TablePicker() {
             <optgroup label="Your table library">
               {mine.map((t) => (
                 <option key={t.id} value={`table:${t.id}`}>
-                  {t.name} · {deploymentLine(t.layout.zones, t.table).toLowerCase()}
+                  {t.name}
                 </option>
               ))}
             </optgroup>
           )}
         </select>
+        {blurb && <span className="muted small">{blurb}</span>}
         <div className="row wrap">
           {starter && (
             <button
@@ -99,7 +124,10 @@ export function TablePicker() {
               onClick={() => {
                 const next = (seed[starter] ?? 1) + 1;
                 setSeed({ ...seed, [starter]: next });
-                void applyLayout(starterLayout(game.system, game.table, starter, next));
+                void applyLayout(starterLayout(game.system, game.table, starter, next), {
+                  key: `starter:${starter}`,
+                  name: current?.name ?? "a starter table",
+                });
               }}
             >
               Another like it
