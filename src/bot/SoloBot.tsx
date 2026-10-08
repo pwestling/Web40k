@@ -12,7 +12,7 @@ import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
-import { GLIDE_MS, levelName, useSolo } from "./solo";
+import { characterName, GLIDE_MS, levelName, useSolo } from "./solo";
 import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
@@ -89,10 +89,13 @@ async function play(): Promise<void> {
     return;
   const player = sidePlayers(game, solo.seat)[0]?.id;
   if (!player) return;
-  // The sides by who plays them (UX 349): "You" and "Computer (Steady)".
+  // The sides by who plays them (UX 349, PX 4): "You" and "The Warden of Ash (Steady)".
   for (const p of Object.values(game.players)) {
     if (p.seat === undefined) continue;
-    const name = p.seat === solo.seat ? t("Computer ({level})", { level: levelName(solo.level) }) : t("You");
+    const name =
+      p.seat === solo.seat
+        ? t("{name} ({level})", { name: characterName(solo.level), level: levelName(solo.level) })
+        : t("You");
     if (p.name !== name) {
       dispatch({ type: "player/rename", player: p.id, name }, p.id);
       return;

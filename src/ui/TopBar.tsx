@@ -13,7 +13,7 @@ import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
 import { formatList, t, gameText } from "../i18n";
 import { useCanControl, useJoining, useStore } from "../store";
-import { useSolo } from "../bot/solo";
+import { characterName, levelName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
 
@@ -140,7 +140,14 @@ export function TopBar() {
                 style={{ color: p.color }}
               >
                 {i > 0 && <span className="muted"> & </span>}
-                {displayName(p.name)}
+                {solo && p.seat === solo.seat ? (
+                  // The computer by name, its level in small type (PX 4).
+                  <>
+                    {characterName(solo.level!)} <small className="muted">{levelName(solo.level!)}</small>
+                  </>
+                ) : (
+                  displayName(p.name)
+                )}
               </strong>
             ))}
             {counters.map(({ id: r }) => (

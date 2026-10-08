@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import "../systems";
 import { appendEvent, createInitialState, createRecord, resolveLogged, stateAt, type Intent } from "../core";
 import { SandboxEngine } from "../sandbox/engine";
+import { gameStats } from "../core/stats";
 import { seededRng } from "../sandbox/protocol";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
@@ -66,6 +67,18 @@ describe("a computer opponent (#45)", () => {
       expect(r.error, system).toBeUndefined();
     }
   }, 240_000);
+
+  // PX: after a Rift Lanterns game the stats sheet showed no rolls and no damage dealt.
+  it("counts a package game's rolls and damage in the after-game stats", async () => {
+    const r = await playMatch(
+      { system: "rift-lanterns", systemPkg: { source: riftLanterns }, seed: 3 },
+      (start) => [botPolicy("steady", start, 0, { seed: 3 }), botPolicy("steady", start, 1, { seed: 4 })],
+    );
+    expect(r.error).toBeUndefined();
+    const stats = gameStats(r.record!);
+    expect(stats.units.reduce((a, u) => a + u.dealt, 0)).toBeGreaterThan(0);
+    for (const p of stats.players) expect(p.luck.map((l) => l.step)).toContain("hits");
+  }, 120_000);
 
   it("tries a move out on a copy of the table, leaving the game as it was", async () => {
     let start = createInitialState();

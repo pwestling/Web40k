@@ -1,4 +1,12 @@
-import { lastSeq, sha256Hex, sides, type GameState, type Intent, type PlayerId } from "../core";
+import {
+  lastSeq,
+  sha256Hex,
+  sides,
+  type GameRecord,
+  type GameState,
+  type Intent,
+  type PlayerId,
+} from "../core";
 import { createLoopbackNetwork } from "../net/loopback";
 import { Session, setIntentRouter } from "../net/session";
 import { SandboxEngine, type ImportSource } from "../sandbox/engine";
@@ -51,6 +59,8 @@ interface MatchResult {
   /** Decisions each side made. */
   decisions: [number, number];
   error?: string;
+  /** The game as logged, for checks that read it afterwards (stats, moments). */
+  record?: GameRecord;
 }
 
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
@@ -285,6 +295,7 @@ export async function playMatch(
         await settle();
       }
     const end = host.current;
+    result.record = host.log;
     result.finished = battleOver(end);
     result.rounds = end.turn.round;
     for (const s of end.scores ?? []) if (s.seat === 0 || s.seat === 1) result.vp[s.seat] += s.vp;

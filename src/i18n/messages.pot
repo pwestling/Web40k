@@ -408,23 +408,39 @@ msgstr ""
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
-#: src/bot/BestMoment.tsx:29
+#: src/bot/BestMoment.tsx:34
+msgid "{unit} took down {n} enemy model"
+msgid_plural "{unit} took down {n} enemy models"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/bot/BestMoment.tsx:41
+#: src/campaign/EventTab.tsx:318
+#: src/share/SharePanel.tsx:308
+#: src/share/SharePanel.tsx:382
+#: src/share/cards.ts:306
+#: src/ui/Missions.tsx:118
+msgid "Round {n}"
+msgstr ""
+
+#: src/bot/BestMoment.tsx:44
+#: src/bot/SoloBot.tsx:97
 msgid "{name} ({level})"
 msgstr ""
 
-#: src/bot/BestMoment.tsx:33
+#: src/bot/BestMoment.tsx:49
 msgid "{name}'s best moment, {when}: {line}"
 msgstr ""
 
-#: src/bot/BestMoment.tsx:34
+#: src/bot/BestMoment.tsx:50
+msgid "{name}'s best moment: {line}"
+msgstr ""
+
+#: src/bot/BestMoment.tsx:51
 msgid "You played {name}."
 msgstr ""
 
-#: src/bot/SoloBot.tsx:95
-msgid "Computer ({level})"
-msgstr ""
-
-#: src/bot/SoloBot.tsx:95
+#: src/bot/SoloBot.tsx:98
 msgid "You"
 msgstr ""
 
@@ -1170,15 +1186,6 @@ msgstr ""
 
 #: src/campaign/EventTab.tsx:306
 msgid "Drop"
-msgstr ""
-
-#: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:308
-#: src/share/SharePanel.tsx:382
-#: src/share/cards.ts:306
-#: src/ui/Missions.tsx:118
-#: src/ui/StatsScreen.tsx:299
-msgid "Round {n}"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:337
@@ -2932,7 +2939,7 @@ msgstr ""
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:42
 #: src/ui/TerrainPanel.tsx:375
-#: src/ui/TopBar.tsx:215
+#: src/ui/TopBar.tsx:222
 #: src/ui/WhatNow.tsx:41
 #: src/ui/gameLog.ts:383
 msgid "Deployment"
@@ -3985,7 +3992,7 @@ msgstr ""
 #: src/ui/AttackPanel.tsx:259
 #: src/ui/AttackPanel.tsx:268
 #: src/ui/AttackPanel.tsx:351
-#: src/ui/TopBar.tsx:413
+#: src/ui/TopBar.tsx:420
 msgid "none"
 msgstr ""
 
@@ -4611,7 +4618,7 @@ msgid "Redo this step"
 msgstr ""
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:301
+#: src/ui/TopBar.tsx:308
 msgid "Next phase"
 msgstr ""
 
@@ -5015,7 +5022,7 @@ msgid "Shorter dice rolls in the tray"
 msgstr ""
 
 #: src/ui/Hud.tsx:142
-#: src/ui/TopBar.tsx:522
+#: src/ui/TopBar.tsx:529
 msgid "Fast dice"
 msgstr ""
 
@@ -5473,7 +5480,7 @@ msgstr ""
 #: src/ui/Missions.tsx:147
 #: src/ui/Missions.tsx:272
 #: src/ui/SystemPanels.tsx:1033
-#: src/ui/TopBar.tsx:292
+#: src/ui/TopBar.tsx:299
 msgid "Pass"
 msgstr ""
 
@@ -6467,7 +6474,7 @@ msgid "Tell the other player you've finished deploying"
 msgstr ""
 
 #: src/ui/Room.tsx:204
-#: src/ui/TopBar.tsx:445
+#: src/ui/TopBar.tsx:452
 msgid "Ready"
 msgstr ""
 
@@ -6927,12 +6934,12 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:472
-#: src/ui/TopBar.tsx:274
+#: src/ui/TopBar.tsx:281
 msgid "End this activation; the other player goes next"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:478
-#: src/ui/TopBar.tsx:280
+#: src/ui/TopBar.tsx:287
 msgid "End activation"
 msgstr ""
 
@@ -7446,148 +7453,148 @@ msgstr ""
 msgid "Go back a phase during the other player's turn?"
 msgstr ""
 
-#: src/ui/TopBar.tsx:201
+#: src/ui/TopBar.tsx:208
 msgid "The computer is playing…"
 msgstr ""
 
-#: src/ui/TopBar.tsx:204
+#: src/ui/TopBar.tsx:211
 msgid "Let the computer play"
 msgstr ""
 
-#: src/ui/TopBar.tsx:208
+#: src/ui/TopBar.tsx:215
 msgid "Previous phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:219
+#: src/ui/TopBar.tsx:226
 msgid "First turn:"
 msgstr ""
 
-#: src/ui/TopBar.tsx:232
+#: src/ui/TopBar.tsx:239
 msgid "Place your units in your zone"
 msgstr ""
 
-#: src/ui/TopBar.tsx:234
+#: src/ui/TopBar.tsx:241
 msgid "Joining the game…"
 msgstr ""
 
-#: src/ui/TopBar.tsx:236
+#: src/ui/TopBar.tsx:243
 msgid "Players are deploying"
 msgstr ""
 
-#: src/ui/TopBar.tsx:244
+#: src/ui/TopBar.tsx:251
 msgid "Battle over"
 msgstr ""
 
-#: src/ui/TopBar.tsx:246
+#: src/ui/TopBar.tsx:253
 msgid "Round {round} of {rounds} · {side}"
 msgstr ""
 
-#: src/ui/TopBar.tsx:251
+#: src/ui/TopBar.tsx:258
 msgid "Round {round} · {side}"
 msgstr ""
 
-#: src/ui/TopBar.tsx:287
+#: src/ui/TopBar.tsx:294
 msgid "Both passed: the round moves on"
 msgstr ""
 
-#: src/ui/TopBar.tsx:288
+#: src/ui/TopBar.tsx:295
 msgid "Pass; the other player goes next"
 msgstr ""
 
-#: src/ui/TopBar.tsx:300
+#: src/ui/TopBar.tsx:307
 msgid "Waiting for {names} to be ready"
 msgstr ""
 
-#: src/ui/TopBar.tsx:312
+#: src/ui/TopBar.tsx:319
 msgid "Start battle ▶"
 msgstr ""
 
-#: src/ui/TopBar.tsx:325
+#: src/ui/TopBar.tsx:332
 msgid "Start anyway"
 msgstr ""
 
-#: src/ui/TopBar.tsx:325
+#: src/ui/TopBar.tsx:332
 msgid "Go on anyway"
 msgstr ""
 
-#: src/ui/TopBar.tsx:327
+#: src/ui/TopBar.tsx:334
 msgid "Not yet"
 msgstr ""
 
-#: src/ui/TopBar.tsx:334
+#: src/ui/TopBar.tsx:341
 msgid "Phase options"
 msgstr ""
 
-#: src/ui/TopBar.tsx:346
+#: src/ui/TopBar.tsx:353
 msgid "Skip to the next phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:358
+#: src/ui/TopBar.tsx:365
 msgid "Pause the computer"
 msgstr ""
 
-#: src/ui/TopBar.tsx:361
+#: src/ui/TopBar.tsx:368
 msgid "Advance their phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:362
+#: src/ui/TopBar.tsx:369
 msgid "Back a phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:372
+#: src/ui/TopBar.tsx:379
 msgid "Controls (?)"
 msgstr ""
 
-#: src/ui/TopBar.tsx:431
+#: src/ui/TopBar.tsx:438
 msgid "Already re-rolled this round"
 msgstr ""
 
-#: src/ui/TopBar.tsx:433
+#: src/ui/TopBar.tsx:440
 msgid "Re-roll the picked dice: once a round"
 msgstr ""
 
-#: src/ui/TopBar.tsx:434
+#: src/ui/TopBar.tsx:441
 msgid "Pick dice to re-roll first"
 msgstr ""
 
-#: src/ui/TopBar.tsx:438
+#: src/ui/TopBar.tsx:445
 msgid "Re-roll (once)"
 msgstr ""
 
-#: src/ui/TopBar.tsx:442
+#: src/ui/TopBar.tsx:449
 msgid "Keep these dice as they are: you give up this round's re-roll"
 msgstr ""
 
-#: src/ui/TopBar.tsx:452
+#: src/ui/TopBar.tsx:459
 msgid "Spend"
 msgstr ""
 
-#: src/ui/TopBar.tsx:453
+#: src/ui/TopBar.tsx:460
 msgid "Re-roll"
 msgstr ""
 
-#: src/ui/TopBar.tsx:494
-#: src/ui/TopBar.tsx:495
+#: src/ui/TopBar.tsx:501
+#: src/ui/TopBar.tsx:502
 msgid "Sound and dice"
 msgstr ""
 
-#: src/ui/TopBar.tsx:495
+#: src/ui/TopBar.tsx:502
 msgid "Sound muted"
 msgstr ""
 
-#: src/ui/TopBar.tsx:503
+#: src/ui/TopBar.tsx:510
 msgid "Sound"
 msgstr ""
 
-#: src/ui/TopBar.tsx:506
+#: src/ui/TopBar.tsx:513
 msgid "Volume"
 msgstr ""
 
-#: src/ui/TopBar.tsx:517
+#: src/ui/TopBar.tsx:524
 msgid "A quiet room under the game; the turn bell follows Sound"
 msgstr ""
 
-#: src/ui/TopBar.tsx:519
+#: src/ui/TopBar.tsx:526
 msgid "Table ambience"
 msgstr ""
 

@@ -23,7 +23,7 @@ import { useReel } from "../broadcast/reel";
 import { showcasing } from "./showcase";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
-import { GLIDE_MS, soloPlays } from "../bot/solo";
+import { GLIDE_MS, soloPlays, useSolo } from "../bot/solo";
 import { useGame } from "../ui/hooks";
 import { opposed } from "../core/teams";
 
@@ -461,7 +461,9 @@ export function WatchEffects() {
     // Distance: close enough to see the action (both shooter and target), or the whole table.
     const k = Math.max(table.width / 60, table.depth / 44);
     const full = Math.hypot(52, 44) * k;
-    const want = f.span === null ? full : Math.min(full, Math.max(22, f.span * 1.6 + 14));
+    // On the computer's go in a solo game, about the opening view's distance at the closest (PX solo 3).
+    const closest = computerGo() ? full * 0.85 : 22;
+    const want = f.span === null ? full : Math.min(full, Math.max(closest, f.span * 1.6 + 14));
     const offset = controls.object.position.clone().sub(controls.target);
     const len = offset.length();
     const step = (want - len) * ease;
@@ -636,6 +638,13 @@ function shownChargeHits(): boolean {
   if (!logged || (logged.event.type !== "unit/move" && logged.event.type !== "models/move")) return false;
   const state = upto === Infinity ? game : stateAt(record, upto);
   return !!chargeFor(logged.event, state, state)?.target;
+}
+
+/** The computer has the go in a solo game on this screen. */
+function computerGo(): boolean {
+  const s = useSolo.getState();
+  const { session, game } = useStore.getState();
+  return !!s.level && !s.paused && s.session === session && game.turn.activeSeat === s.seat;
 }
 
 /** Whether the newest event is a move the computer made in a solo game, so it glides. */

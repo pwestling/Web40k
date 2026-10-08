@@ -186,6 +186,9 @@ export function gameStats(record: GameRecord): GameStats {
   const points: Record<PlayerId, number[]> = {};
   const live: { attack?: Tracked; procedure?: Tracked } = {};
   let maxRounds = Infinity;
+  // Rolls made outside procedures (package code, the dice tray), by player and what they were for.
+  const rolled: Record<PlayerId, Record<string, StepLuck>> = {};
+  const rolledOrder: string[] = [];
 
   const unitStats = (s: GameState, id: UnitId): UnitStats | undefined => {
     const u = s.units[id];
@@ -232,7 +235,32 @@ export function gameStats(record: GameRecord): GameStats {
         acting = t;
       }
     }
-    const dealer = source ? unitRole(source, "attacker") : undefined;
+    // A package's code procedure (Rift Lanterns' shooting): the unit it was started for deals the damage,
+    // and its rolls that say what they need count for luck.
+    const ev = logged.event;
+    const script = ev.type === "script/step" ? (before.script ?? state.script) : null;
+    const scripted =
+      script && typeof script.args.unit === "string"
+        ? script.args.unit
+        : ev.type === "script/step"
+          ? ev.unit
+          : undefined;
+    const dealer = source ? unitRole(source, "attacker") : scripted;
+    const rolls =
+      ev.type === "dice/roll"
+        ? [ev.roll]
+        : ev.type === "script/step"
+          ? ev.events.flatMap((e) => (e.type === "dice/roll" ? [e.roll] : []))
+          : [];
+    for (const r of rolls) {
+      if (!r.need || r.faces || !r.results.length) continue;
+      const step = (r.label ?? "roll").replace(/\s+on\s+\d+\+.*$/, "").trim() || "roll";
+      const row = ((rolled[r.by] ??= {})[step] ??= { step, rolled: 0, actual: 0, expected: 0 });
+      row.rolled += r.results.length;
+      row.actual += r.results.filter((x) => x >= r.need!).length;
+      row.expected += (r.results.length * Math.max(0, r.sides - r.need + 1)) / r.sides;
+      if (!rolledOrder.includes(step)) rolledOrder.push(step);
+    }
 
     // Damage: every model whose wounds went up in this event.
     for (const [id, m] of Object.entries(state.models)) {
@@ -298,6 +326,14 @@ export function gameStats(record: GameRecord): GameStats {
       });
   }
 
+  for (const [player, rows] of Object.entries(rolled))
+    for (const r of Object.values(rows)) {
+      const row = ((luck[player] ??= {})[r.step] ??= { step: r.step, rolled: 0, actual: 0, expected: 0 });
+      row.rolled += r.rolled;
+      row.actual += r.actual;
+      row.expected += r.expected;
+    }
+  for (const s of rolledOrder) if (!order.includes(s)) order.push(s);
   const players = Object.values(state.players)
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => a.seat! - b.seat!)
