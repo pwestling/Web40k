@@ -1359,6 +1359,21 @@ label.file.button input {
   border-left: none;
   padding-left: 0;
 }
+/* Abilities that play themselves (#38). */
+.auto-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.4rem 0;
+}
+.auto-list li {
+  margin-bottom: 0.35rem;
+}
+.auto-list li .small {
+  margin-left: 1.6rem;
+}
+.ability-line p {
+  margin: 0.3rem 0;
+}
 .import-units .missing-stats td {
   padding-bottom: 6px;
 }

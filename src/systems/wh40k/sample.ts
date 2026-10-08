@@ -133,7 +133,12 @@ function vanguardLegion(): ImportedRoster {
     "Lance Team",
     ["Infantry", "Vanguard Legion"],
     120,
-    [{ name: "Braced Firing", text: "If this unit did not move this turn, re-roll hit rolls of 1." }],
+    [
+      {
+        name: "Braced Firing",
+        text: "Each time a model in this unit makes a ranged attack, if this unit Remained Stationary this turn, re-roll a Hit roll of 1.",
+      },
+    ],
     [
       {
         profile: "Lance Gunner",
@@ -152,6 +157,14 @@ function vanguardLegion(): ImportedRoster {
     [
       { name: "Invulnerable Save", text: "4+" },
       { name: "Rally Call", text: "Once per battle, a friendly unit nearby may ignore a Battle-shock test." },
+      {
+        name: "Steady Orders",
+        text: "While this model is leading a unit, each time a model in that unit makes a ranged attack, re-roll a Wound roll of 1.",
+      },
+      {
+        name: "Quartermaster",
+        text: "At the start of your Command phase, if this model is on the battlefield, you gain 1CP.",
+      },
     ],
     [
       {
@@ -261,7 +274,11 @@ function ashenHost(): ImportedRoster {
     [
       {
         name: "Smouldering Ward",
-        text: "Friendly units nearby get +1 to their saving throws against Torrent attacks.",
+        text: 'While a friendly Ashen Host unit is within 6" of this model, each time a ranged attack targets that unit, subtract 1 from the Hit roll.',
+      },
+      {
+        name: "Kindle the Pyre",
+        text: "Once per battle, at the start of any phase, this model can use this ability. If it does, until the end of the phase, each time a model in this unit makes a melee attack, add 1 to the Wound roll.",
       },
     ],
     [

@@ -157,7 +157,7 @@ export interface AbilityReminder {
 export const appliedKey = (ability: string) => `applied.${ability}`;
 
 /** Abilities that only describe a weapon keyword the unit carries (BSData lists those as abilities). */
-function describesWeaponKeyword(system: GameSystem, unit: Unit, ability: Ability): boolean {
+export function describesWeaponKeyword(system: GameSystem, unit: Unit, ability: Ability): boolean {
   const name = ability.name.trim().toLowerCase();
   for (const r of system.rules)
     if (
@@ -174,10 +174,11 @@ function describesWeaponKeyword(system: GameSystem, unit: Unit, ability: Ability
 }
 
 /**
- * Whether the engine already handles the ability: it binds to a system rule
- * that does something (not just a manual reminder).
+ * Whether the engine already handles the ability: the player automated it,
+ * or it binds to a system rule that does something (not just a manual reminder).
  */
 export function isAutomated(system: GameSystem, ability: Ability): boolean {
+  if (ability.auto) return true;
   const text = `${ability.name} ${ability.text}`.trim();
   const refs = [...bindRules(system.rules, [text], "unit"), ...bindRules(system.rules, [text], "model")];
   return lookupRules(system, refs).some((b) =>

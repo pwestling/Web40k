@@ -119,6 +119,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
       for (const id of unit.modelIds) delete models[id];
       return { ...state, units, models };
     }
+    case "unit/automate":
+      return updateUnit(state, event.id, (u) =>
+        u.sheet
+          ? {
+              ...u,
+              sheet: {
+                ...u.sheet,
+                abilities: u.sheet.abilities.map((a) => {
+                  if (a.name !== event.ability) return a;
+                  const { auto: _, ...rest } = a;
+                  return event.auto ? { ...rest, auto: event.auto } : rest;
+                }),
+              },
+            }
+          : u,
+      );
     case "unit/status": {
       const next = updateUnit(state, event.id, (u) => {
         const status = { ...u.status };

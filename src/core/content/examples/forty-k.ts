@@ -691,7 +691,8 @@ export const fortyK: GameSystem = {
       at: "playerTurn",
       flags: ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"],
     },
-    { at: "phase", flags: ["goneToGround", "smokescreen", "scouting", "arrived"] },
+    // "auto.*": once-per-battle abilities in use (#38) last until the end of the phase.
+    { at: "phase", flags: ["goneToGround", "smokescreen", "scouting", "arrived", "auto.*"] },
   ],
   abilityTimings,
   terrain: [

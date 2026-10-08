@@ -1,5 +1,5 @@
-import { die } from "../dice";
-import type { GameState, Model, PlayerId, Unit } from "../types";
+import { die, parseDice } from "../dice";
+import type { GameState, Model, PlayerId, Triggered, Unit } from "../types";
 import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
 import { getSystem } from "./systems";
 
@@ -185,7 +185,7 @@ function playerAt(state: GameState, seat: number): PlayerId | undefined {
  */
 export function advanceTurn(state: GameState, dir: 1 | -1, seed = 0): GameState {
   // Steps only run their actions: pass straight through them.
-  let next = stepTurn(state, dir, seed);
+  let next = stepTurn(state.triggered ? { ...state, triggered: null } : state, dir, seed);
   const slots = schedule(systemOf(state));
   for (let guard = 0; guard < slots.length; guard++) {
     if (next.turn.round === 0 || slots[next.turn.phase]?.kind !== "step") break;
@@ -198,6 +198,8 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   const system = systemOf(state);
   const slots = schedule(system);
   const rng = seeded(seed);
+  const left = state.turn.round > 0 && dir === 1 ? slots[state.turn.phase] : undefined;
+  if (left?.kind === "phase") state = runTriggers(state, left, "end", state.turn.activeSeat, rng);
   let { round, activeSeat, phase } = state.turn;
   const { firstSeat } = state.turn;
   let newRound = false;
@@ -278,7 +280,77 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   const opponent = playerAt(next, (activeSeat + 1) % SEATS);
   for (const action of slots[phase]?.onEnter ?? [])
     next = turnAction(next, system, action, owner, opponent, rng);
+  const entered = slots[phase];
+  if (entered?.kind === "phase") next = runTriggers(next, entered, "start", activeSeat, rng);
   return next;
+}
+
+/**
+ * Automated abilities that go off at the start or end of a phase (#38):
+ * "at the start of your Command phase, gain 1CP", "one model regains up to
+ * D3 lost wounds". Only on their owner's turn unless the ability says each turn.
+ */
+function runTriggers(
+  state: GameState,
+  slot: TurnSlot,
+  at: "start" | "end",
+  seat: number,
+  rng: () => number,
+): GameState {
+  const out: Triggered[] = [];
+  let next = state;
+  for (const unit of Object.values(state.units)) {
+    const alive = unit.modelIds.map((id) => state.models[id]).filter((m) => m && !m.destroyed) as Model[];
+    if (!alive.length || unit.status?.reserve) continue;
+    for (const a of unit.sheet?.abilities ?? []) {
+      const tr = a.auto?.trigger;
+      if (!tr || tr.phase !== slot.id || tr.at !== at) continue;
+      if (a.auto?.whileLeading && !unit.status?.attached) continue;
+      if (!tr.anyTurn && slot.playerTurn && state.players[unit.owner]?.seat !== seat) continue;
+      if (tr.gain) {
+        const own = next.resources[unit.owner] ?? {};
+        next = {
+          ...next,
+          resources: {
+            ...next.resources,
+            [unit.owner]: { ...own, [tr.gain.resource]: (own[tr.gain.resource] ?? 0) + tr.gain.amount },
+          },
+        };
+        out.push({ unitId: unit.id, ability: a.name, gained: tr.gain });
+      }
+      if (tr.heal) {
+        // The most hurt model regains them.
+        const hurt = alive
+          .map((m) => next.models[m.id]!)
+          .filter((m) => (m.woundsLost ?? 0) > 0)
+          .sort((x, y) => (y.woundsLost ?? 0) - (x.woundsLost ?? 0))[0];
+        if (!hurt) continue;
+        let roll: number | undefined;
+        let amount = Number(tr.heal);
+        if (!Number.isFinite(amount)) {
+          let d;
+          try {
+            d = parseDice(tr.heal);
+          } catch {
+            continue;
+          }
+          roll = Array.from({ length: d.count }, () => die(rng, d.sides)).reduce((x, y) => x + y, d.bonus);
+          amount = roll;
+        }
+        const wounds = Math.min(amount, hurt.woundsLost ?? 0);
+        next = {
+          ...next,
+          models: { ...next.models, [hurt.id]: { ...hurt, woundsLost: (hurt.woundsLost ?? 0) - wounds } },
+        };
+        out.push({
+          unitId: unit.id,
+          ability: a.name,
+          healed: { wounds, ...(roll !== undefined ? { roll } : {}) },
+        });
+      }
+    }
+  }
+  return out.length ? { ...next, triggered: [...(next.triggered ?? []), ...out] } : next;
 }
 
 /** Flags the engine keeps on a unit during its activation (see play.ts). */

@@ -1,4 +1,5 @@
 import { playerName } from "../i18n/names";
+import { triggeredLines } from "./autoText";
 import { checkName } from "./warnings";
 import { distanceText } from "./distance";
 import { systemLabel } from "./systemLabels";
@@ -93,6 +94,10 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       (event.type === "turn/next" || event.type === "turn/prev" || event.type === "turn/first")
     ) {
       items.push({ kind: "header", key, ...turnHeader(state) });
+      // Automated abilities that went off as the phase changed (#38).
+      triggeredLines(state).forEach((text, i) =>
+        items.push({ kind: "line", key: `${key}/t${i}`, seq: logged.seq, text, undone: false }),
+      );
       continue;
     }
     if (!skipped && event.type === "game/packages" && event.agreed && before.packages) {
@@ -765,8 +770,23 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         game,
         event.moves.map((m) => m.id),
       );
+    case "unit/automate":
+      return event.auto
+        ? t("{name} automated {unit}'s {ability}", {
+            name: who,
+            unit: unitName(event.id),
+            ability: event.ability,
+          })
+        : t("{name} stopped automating {unit}'s {ability}", {
+            name: who,
+            unit: unitName(event.id),
+            ability: event.ability,
+          });
     case "unit/status": {
       const p = { name: who, unit: unitName(event.id), spell: event.key.slice(6) };
+      if (event.key.startsWith("autoUsed.")) return "";
+      if (event.key.startsWith("auto."))
+        return event.value ? t("{unit} used {ability}", { ...p, ability: event.key.slice(5) }) : "";
       if (event.key === "marching")
         return event.value ? t("{unit} is marching", p) : t("{unit} stopped marching", p);
       if (event.key === "disrupted")
