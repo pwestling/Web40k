@@ -1,3 +1,4 @@
+import { isAlive } from "../../core/units";
 import { secretsWithPrefix } from "../../core/secrets";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeProcedure, GameView, PureFn } from "../../sdk";
@@ -12,12 +13,13 @@ import type { CodeProcedure, GameView, PureFn } from "../../sdk";
  */
 
 const pad = (n: number) => String(n).padStart(3, "0");
-export const stackPrefix = (round: number) => `stack:${pad(round)}:`;
+const stackPrefix = (round: number) => `stack:${pad(round)}:`;
 export const cardKey = (round: number, i: number) => `${stackPrefix(round)}${pad(i)}`;
 
 /** On the table: standing and not waiting in reserve (reinforce.ts). */
-const alive = (state: GameState, u: Unit | undefined) =>
-  !!u && !u.status?.reserves && u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
+
+/** On the table, not waiting in reserve. */
+const alive = (state: GameState, u: Unit | undefined) => !!u && !u.status?.reserves && isAlive(state, u);
 
 /** One command card: its secret's key, the commitment, and the regiment once revealed. */
 export interface Card {

@@ -117,7 +117,7 @@ export function triggeredLines(state: GameState): string[] {
 const signed = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
 
 /** What one rule did to the roll, in the reader's language: "−1 to hit", "re-roll 1s". */
-export function changeText(b: AttackBecause): string {
+function changeText(b: AttackBecause): string {
   const c = b.change;
   const step =
     b.step === "hit"

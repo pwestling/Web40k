@@ -14,7 +14,7 @@ import { towSample } from "./sample";
 
 /** Test helpers for the Old World code procedures: a tiny host and two blocks in contact. */
 
-export function rng(seed: number) {
+function rng(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;

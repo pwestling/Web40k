@@ -9,7 +9,7 @@ const KEY = "open-battle:mail-identity";
 const ALG = { name: "ECDSA", namedCurve: "P-256" } as const;
 const SIGN = { name: "ECDSA", hash: "SHA-256" } as const;
 
-export interface Identity {
+interface Identity {
   publicKey: JsonWebKey;
   privateKey: JsonWebKey;
 }

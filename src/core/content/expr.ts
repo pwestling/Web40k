@@ -177,7 +177,7 @@ export function matchesEvent(
   return pattern.where === undefined || bool(pattern.where, bind(ctx, "event", payload));
 }
 
-export interface TestModifiers {
+interface TestModifiers {
   modifier: number;
   targetModifier: number;
   reroll: "ones" | "failed" | "any" | null;

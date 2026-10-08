@@ -15,7 +15,7 @@ import { opposed, sidePlayers } from "./teams";
  * round, and how each player's dice ran against the odds.
  */
 
-export interface UnitStats {
+interface UnitStats {
   id: UnitId;
   name: string;
   owner: PlayerId;
@@ -65,7 +65,7 @@ export interface RunSwing {
   expected: number;
 }
 
-export interface GameStats {
+interface GameStats {
   units: UnitStats[];
   players: PlayerStats[];
   runs: RunSwing[];
@@ -118,7 +118,7 @@ function continues(before: ProcedureRun | undefined, after: ProcedureRun): boole
  * Expected dice reaching the end of a run, given the pool it actually rolled:
  * each test's odds applied to the expected number going in.
  */
-export function runExpectation(
+function runExpectation(
   records: StepRecord[],
   steps: Step[] = [],
 ): { actual: number; expected: number } | null {

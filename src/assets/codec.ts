@@ -12,7 +12,7 @@ const MIMES: AssetTexture["mime"][] = ["image/webp", "image/jpeg", "image/png"];
 /** "OBA2": the meshopt-compressed format. Older files (replays) start with the header length. */
 const MAGIC = 0x3241424f;
 
-export const codecReady = Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]).then(() => undefined);
+const codecReady = Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]).then(() => undefined);
 
 interface MeshHeader {
   vertices: number;

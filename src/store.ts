@@ -29,10 +29,10 @@ export const loadTrystero = () =>
   });
 
 /** Side colours, told apart with colour blindness too (blue, orange, teal, yellow; #25), each with a shape (ui/sides.ts). */
-export const COLORS = ["#3b82f6", "#f97316", "#2dd4bf", "#fde047"];
+const COLORS = ["#3b82f6", "#f97316", "#2dd4bf", "#fde047"];
 
 /** "eye" looks from a model's eye line (see `eye`). */
-export type View = "3d" | "top" | "eye";
+type View = "3d" | "top" | "eye";
 
 /**
  * How peers reach each other. "online" is WebRTC between browsers;
@@ -40,7 +40,7 @@ export type View = "3d" | "top" | "eye";
  */
 export type Mode = "online" | "local" | "hotseat";
 
-export interface StartOptions {
+interface StartOptions {
   role: Role;
   mode: Mode;
   roomId?: string;
@@ -62,7 +62,7 @@ export interface StartOptions {
  * the first event of its current stretch (nothing before it can be undone),
  * and whether it's waiting for the opponent's file (nothing can be done).
  */
-export interface MailSeat {
+interface MailSeat {
   seat: number;
   floor: number;
   locked: boolean;
@@ -172,7 +172,7 @@ interface Store {
 
 const SAVE_KEY = "open-battle:last-game";
 
-export interface SavedGame {
+interface SavedGame {
   mode: Mode;
   roomId: string | null;
   record: GameRecord;
@@ -189,7 +189,7 @@ export function loadSavedGame(): SavedGame | null {
 }
 
 /** What a peer keeps per room so a reload can rejoin: the log it holds and the player it was. */
-export interface SavedRoom {
+interface SavedRoom {
   record: GameRecord;
   playerId?: string;
   /** What this tab was in the room, so a reload rejoins the same way. */
@@ -213,7 +213,7 @@ export function loadRoom(roomId: string): SavedRoom | null {
  */
 const seatKey = (roomId: string) => `open-battle:seat:${roomId}`;
 
-export function deviceSeat(roomId: string): string | undefined {
+function deviceSeat(roomId: string): string | undefined {
   try {
     return localStorage.getItem(seatKey(roomId)) ?? undefined;
   } catch {
@@ -251,7 +251,7 @@ function saveGame(game: SavedGame) {
   }
 }
 
-export const HOTSEAT_PLAYERS: Player[] = [
+const HOTSEAT_PLAYERS: Player[] = [
   { id: "p1", name: "Player 1", color: COLORS[0]!, seat: 0 },
   { id: "p2", name: "Player 2", color: COLORS[1]!, seat: 1 },
 ];

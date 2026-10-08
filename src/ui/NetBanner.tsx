@@ -1,3 +1,4 @@
+import { saveJson } from "./files";
 import { displayName, playerName } from "../i18n/names";
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
@@ -81,10 +82,5 @@ function downloadReport(
   desync: { seq: number; host: number; mine: number; count: number },
 ) {
   const report = { kind: "open-battle/desync-report", desync, userAgent: navigator.userAgent, record };
-  const blob = new Blob([JSON.stringify(report)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `open-battle-desync-${desync.seq}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveJson(`open-battle-desync-${desync.seq}.json`, report);
 }

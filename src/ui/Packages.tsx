@@ -115,7 +115,7 @@ function LoadButton({
  * Before a package's code may run on this device: what it is, what it adds
  * (from its manifest) and where it runs. Once per hash.
  */
-export function ConsentSheet({
+function ConsentSheet({
   pkg,
   onClose,
   onTrusted,

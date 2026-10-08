@@ -5,7 +5,7 @@ import { useAssets } from "../assets/store";
 import type { AssetKind } from "../assets/types";
 import { useShelf } from "../packages/shelf";
 import { useTables } from "../tables/library";
-import { download } from "../ui/report";
+import { saveJson } from "../ui/files";
 import { formatNumber, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { useFigures, type FigureEntry } from "./library";
@@ -14,7 +14,7 @@ import { makePack, openPack, packFileName, shortHash, type PackResult } from "./
 import { makeThumb, releaseThumbs } from "./thumb";
 import { unused, usage, type Usage } from "./usage";
 
-export const mb = (bytes: number) =>
+const mb = (bytes: number) =>
   bytes >= 1e9
     ? `${tenths(bytes / 1e9)} GB`
     : bytes >= 1e6
@@ -156,7 +156,7 @@ function Figures() {
     setBusy(true);
     try {
       const p = await makePack(packName.trim() || t("Figures"), forPack);
-      download(packFileName(p), p);
+      saveJson(packFileName(p), p);
       setNote(
         tn(
           p.figures.length,

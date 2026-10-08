@@ -91,7 +91,7 @@ export function sawOffThread(move: BotMove): void {
 }
 
 /** The game ended or the page thinks for itself now: end the worker. */
-export function stopThinking(): void {
+function stopThinking(): void {
   worker?.terminate();
   worker = null;
   sent = null;

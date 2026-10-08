@@ -162,7 +162,7 @@ function averageColor(image: ImageBitmap): [number, number, number] {
 }
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-export const toSrgb = (x: number) => {
+const toSrgb = (x: number) => {
   x = clamp01(x);
   return x <= 0.0031308 ? x * 12.92 : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
 };

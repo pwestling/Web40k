@@ -10,7 +10,7 @@ import type { Mission, ScoreQuestion, ScoringMoment } from "../sdk";
  * `score/confirm`, which logs it once under its key.
  */
 
-export interface Moment {
+interface Moment {
   kind: "phaseEnd" | "roundEnd" | "gameEnd";
   /** The phase that ended (phaseEnd). */
   phase?: string;

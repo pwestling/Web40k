@@ -4,7 +4,7 @@
  * read and write. Only what the catalogs use: msgctxt, msgid, msgid_plural,
  * msgstr / msgstr[n], and the fuzzy flag, which marks a draft.
  */
-export interface PoEntry {
+interface PoEntry {
   context?: string;
   id: string;
   plural?: string;

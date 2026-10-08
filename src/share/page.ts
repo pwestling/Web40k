@@ -3,7 +3,8 @@ import { t } from "../i18n";
 import { bundleReplay } from "../ui/replayFile";
 import { replayIntro } from "../ui/highlights";
 import { pack } from "../viewer/pack";
-import { saveFile, stamp } from "./cards";
+import { stamp } from "./cards";
+import { saveFile } from "../ui/files";
 
 /**
  * The replay as one web page (#46): the viewer page the build made

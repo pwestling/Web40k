@@ -1,4 +1,5 @@
-import type { Ability, GameState, Unit } from "../../core/types";
+import { isAlive } from "../../core/units";
+import type { Ability, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView } from "../../sdk";
 import { ITEM_GROUP } from "./roster";
 
@@ -11,10 +12,10 @@ import { ITEM_GROUP } from "./roster";
  */
 
 /** Unit status key marking an item spent. */
-export const spentKey = (item: string) => `spent.${item}`;
+const spentKey = (item: string) => `spent.${item}`;
 
 /** Whether the item's text says it works once. */
-export const oneUse = (a: Ability) => /one use|single use|once per (game|battle)/i.test(a.text);
+const oneUse = (a: Ability) => /one use|single use|once per (game|battle)/i.test(a.text);
 
 /** A points-only option ("10 pts"): wargear, not an item to use. */
 const pointsOnly = (a: Ability) => /^\s*\d+\s*pts?\.?\s*$/i.test(a.text);
@@ -30,16 +31,13 @@ const usedNow = (view: GameView, u: Unit) => {
 };
 
 /** The unit's items it can still use: in the items group, with rules text, not spent, not used this phase. */
-export function usableItems(view: GameView, u: Unit | undefined): Ability[] {
+function usableItems(view: GameView, u: Unit | undefined): Ability[] {
   if (!u) return [];
   const now = usedNow(view, u);
   return (u.sheet?.abilities ?? []).filter(
     (a) => a.group === ITEM_GROUP && !pointsOnly(a) && !u.status?.[spentKey(a.name)] && !now.includes(a.name),
   );
 }
-
-const alive = (state: GameState, u: Unit) =>
-  u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
 
 const useItem: CodeProcedure = function* (ctx, args) {
   const u = ctx.view.state.units[String(args.unit ?? "")];
@@ -77,7 +75,7 @@ export const itemActions: CodeAction[] = [
     },
     available: (view, actor) => {
       const u = view.state.units[actor.unitId ?? ""];
-      if (!u || !alive(view.state, u)) return "The unit is gone";
+      if (!u || !isAlive(view.state, u)) return "The unit is gone";
       if (usableItems(view, u).length) return true;
       const items = (u.sheet?.abilities ?? []).filter((a) => a.group === ITEM_GROUP && !pointsOnly(a));
       const spent = items.filter((a) => u.status?.[spentKey(a.name)]).map((a) => a.name);

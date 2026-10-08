@@ -83,7 +83,7 @@ const TEST = /^\s*(roll|slain|lost|engaged)\s*(?:(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.
 const SAID = /^\s*said:\s*(\S.*)$/;
 
 /** Whether a lesson's `if` is a test the coach knows. */
-export const isFactTest = (test: string) => TEST.test(test) || SAID.test(test);
+const isFactTest = (test: string) => TEST.test(test) || SAID.test(test);
 
 export function factTest(test: string, facts: Facts): boolean {
   const said = SAID.exec(test);

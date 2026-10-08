@@ -1,3 +1,4 @@
+import { isAlive } from "../core/units";
 import {
   commitmentOf,
   resolveLogged,
@@ -125,9 +126,6 @@ const shuffle = <T>(rng: Rng, xs: readonly T[]): T[] => {
   return out;
 };
 
-const alive = (state: GameState, u: Unit) =>
-  u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
-
 /** Whether the host would log this move now. Dice don't matter for that, so any rng will do. */
 export function legal(record: GameRecord, state: GameState, move: BotMove): boolean {
   try {
@@ -138,7 +136,7 @@ export function legal(record: GameRecord, state: GameState, move: BotMove): bool
 }
 
 /** A secret kept on the bot's "device", committed with a salt from the bot's dice. */
-export function keep(ctx: BotContext, value: unknown): string {
+function keep(ctx: BotContext, value: unknown): string {
   const salt = Math.floor(ctx.rng() * 2 ** 48)
     .toString(16)
     .padStart(12, "0");
@@ -242,7 +240,7 @@ export function waitingOn(
     const react: BotMove[] = [];
     if (ctx.weighing || ctx.rng() < 0.4)
       for (const u of shuffle(ctx.rng, Object.values(state.units)))
-        if (seat.some((p) => p.id === u.owner) && alive(state, u) && !u.status?.reserves)
+        if (seat.some((p) => p.id === u.owner) && isAlive(state, u) && !u.status?.reserves)
           for (const o of unitActions(state, u.id))
             if (o.ok && o.def.reactTo)
               react.push({
@@ -297,7 +295,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     round === 0 ? state.players[p]?.seat !== undefined : side.some((x) => x.id === p);
   const units = shuffle(
     ctx.rng,
-    Object.values(state.units).filter((u) => mine(u.owner) && alive(state, u) && !u.status?.reserves),
+    Object.values(state.units).filter((u) => mine(u.owner) && isAlive(state, u) && !u.status?.reserves),
   );
   const acting = actingUnits(state);
   // Taking turns at activating units, ▶ ends the whole round: a tidy bot with units still to go gives
@@ -605,7 +603,7 @@ export function chargeMove(
   let foe: Unit | undefined;
   let gap = Infinity;
   for (const e of Object.values(state.units)) {
-    if (!opposed(state, e.owner, u.owner) || !alive(state, e)) continue;
+    if (!opposed(state, e.owner, u.owner) || !isAlive(state, e)) continue;
     if (targetId && e.id !== targetId) continue;
     const g = unitDistance(ms, aliveModels(state, e));
     if (g < gap) [foe, gap] = [e, g];
@@ -668,7 +666,7 @@ export function pointless(state: GameState, u: Unit, action: string): boolean {
   return !Object.values(state.units).some(
     (e) =>
       opposed(state, e.owner, u.owner) &&
-      alive(state, e) &&
+      isAlive(state, e) &&
       unitDistance(mine, aliveModels(state, e)) <= reach,
   );
 }
@@ -677,7 +675,7 @@ function nearestEnemy(state: GameState, u: Unit, cx: number, cy: number): { x: n
   let best: { x: number; y: number } | null = null;
   let dist = Infinity;
   for (const e of Object.values(state.units)) {
-    if (!opposed(state, e.owner, u.owner) || !alive(state, e)) continue;
+    if (!opposed(state, e.owner, u.owner) || !isAlive(state, e)) continue;
     const ms = e.modelIds.map((id) => state.models[id]!).filter((m) => m && !m.destroyed);
     const x = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;
     const y = ms.reduce((a, m) => a + m.position.y, 0) / ms.length;
@@ -702,7 +700,7 @@ export function commandStack(state: GameState, ctx: BotContext, players: PlayerI
       const ids = shuffle(
         ctx.rng,
         Object.values(state.units)
-          .filter((u) => u.owner === p && alive(state, u))
+          .filter((u) => u.owner === p && isAlive(state, u))
           .map((u) => u.id),
       );
       if (!ids.length || (!ctx.tidy && ctx.rng() < 0.3)) continue;

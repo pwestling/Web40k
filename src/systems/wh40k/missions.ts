@@ -17,7 +17,7 @@ function controlled(game: GameState, seat: number): string[] {
 
 const otherSeat = (seat: number) => (seat === 0 ? 1 : 0);
 
-export const crossfire: Mission = {
+const crossfire: Mission = {
   id: "crossfire",
   name: "Crossfire (sample)",
   summary:

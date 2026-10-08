@@ -1,24 +1,9 @@
+import { aliveModels, centreAbove } from "./units";
 import { opposed } from "./teams";
 import { baseSizeInches } from "./geometry";
-import { modelHeight } from "./terrain";
 import { phaseName } from "./content/turn";
 import type { GameEvent } from "./actions";
 import type { GameState, Model } from "./types";
-
-const alive = (g: GameState, unitId: string) =>
-  (g.units[unitId]?.modelIds ?? []).flatMap((id) => {
-    const m = g.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
-
-const centre = (models: Model[]): { x: number; y: number; z: number } => {
-  const n = Math.max(1, models.length);
-  return {
-    x: models.reduce((a, m) => a + m.position.x, 0) / n,
-    y: models.reduce((a, m) => a + m.position.y, 0) / n,
-    z: Math.max(0, ...models.map((m) => (m.z ?? 0) + modelHeight(m))),
-  };
-};
 
 /**
  * A charge move, if this event is one: a block's charge move, or a unit's
@@ -58,7 +43,7 @@ export function chargeFor(
   if (!unitId) return null;
   const roll = before.units[unitId]?.status?.charge;
   const over = typeof roll === "number" && distance > roll + 0.05 ? roll : null;
-  const mine = alive(after, unitId);
+  const mine = aliveModels(after, after.units[unitId]);
   if (!mine.length) return null;
   const owner = mine[0]!.owner;
   const half = (m: Model) => Math.max(baseSizeInches(m.base).width, baseSizeInches(m.base).depth) / 2;
@@ -75,12 +60,12 @@ export function chargeFor(
       }
     }
   }
-  const at = centre(mine);
+  const at = centreAbove(mine);
   if (!hit || !Number.isFinite(gap)) return null;
   if (gap > 1.05) return { unitId, at, distance, gap: Math.max(0, gap - 1), over, target: null };
   if (over !== null) return { unitId, at, distance, gap: 0, over, target: null };
-  const struck = hit.unitId ? alive(after, hit.unitId) : [hit];
-  const c = centre(struck);
+  const struck = hit.unitId ? aliveModels(after, after.units[hit.unitId]) : [hit];
+  const c = centreAbove(struck);
   const len = Math.hypot(c.x - at.x, c.y - at.y) || 1;
   return {
     unitId,

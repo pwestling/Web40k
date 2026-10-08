@@ -18,7 +18,7 @@ const NUMBERS: Record<string, number> = { a: 1, one: 1, two: 2, three: 3, four: 
 const PHASES = "command|movement|shooting|charge|fight";
 
 /** Lower case, plain quotes and inches, single spaces, no trailing full stop. */
-export function normalize(text: string): string {
+function normalize(text: string): string {
   return text
     .toLowerCase()
     .replace(/[‘’]/g, "'")
@@ -303,7 +303,7 @@ export function recognize(ability: Pick<Ability, "name" | "text">, system: GameS
   return auto;
 }
 
-export interface AbilityProposal {
+interface AbilityProposal {
   unitId: string;
   /** Index in the unit's abilities. */
   index: number;
@@ -311,7 +311,7 @@ export interface AbilityProposal {
   auto: AbilityAuto;
 }
 
-export interface Coverage {
+interface Coverage {
   /** Abilities the engine runs: core rules it knows, plus confirmed ones. */
   automated: number;
   total: number;

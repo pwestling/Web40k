@@ -21,7 +21,7 @@ import { t, tn, gameText } from "../i18n";
  * (the system's own actions, and a game module's code actions), how to do
  * them, and how to move on. For a first-time player, so they never stall.
  */
-export function whatNow(
+function whatNow(
   game: GameState,
   me: string | null,
   hotseat: boolean,

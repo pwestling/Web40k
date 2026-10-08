@@ -4,7 +4,7 @@ import { Session } from "../net/session";
 import type { MailFile } from "./file";
 import { t } from "../i18n";
 
-export type Verdict =
+type Verdict =
   | { ok: true }
   | {
       ok: false;

@@ -66,7 +66,7 @@ export function InstallLink() {
   return null;
 }
 
-export function useOnline(): boolean {
+function useOnline(): boolean {
   return useSyncExternalStore(
     (on) => {
       window.addEventListener("online", on);

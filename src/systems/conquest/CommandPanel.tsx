@@ -1,3 +1,4 @@
+import { isAlive } from "../../core/units";
 import { useEffect, useRef, useState } from "react";
 import { computerPlays } from "../../teach/store";
 import type { GameState, Player, Unit } from "../../core";
@@ -20,8 +21,7 @@ import {
 import { conquest } from "./system";
 import { t } from "../../i18n";
 
-const alive = (game: GameState, u: Unit) =>
-  !u.status?.reserves && u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed);
+const alive = (game: GameState, u: Unit) => !u.status?.reserves && isAlive(game, u);
 
 /**
  * The command stack. In the Command phase each player puts their regiments'

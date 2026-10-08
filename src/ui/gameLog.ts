@@ -519,7 +519,7 @@ function moveText(who: string, before: GameState, after: GameState, ids: string[
           );
 }
 
-export function describe(logged: LoggedEvent, before: GameState, game: GameState): string {
+function describe(logged: LoggedEvent, before: GameState, game: GameState): string {
   const text = describeEvent(logged, before, game);
   // The computer's reason for a move, in a solo game (PX solo review B).
   const why = reasonFor(logged);
@@ -1219,7 +1219,7 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
  * A scatter direction as seen on screen from the default view: seat 0's edge
  * (+y) is at the bottom, +x to the right.
  */
-export function bearing(facing: number): string {
+function bearing(facing: number): string {
   const dx = Math.sin(facing);
   const dy = Math.cos(facing);
   const names = [

@@ -58,7 +58,7 @@ export function fileName(m: Manifest): string {
   return `${m.id.replace(/[^\w.-]+/g, "-")}-${m.version}.js`;
 }
 
-export const REPO = "https://github.com/pwestling/Web40k";
+const REPO = "https://github.com/pwestling/Web40k";
 export const GALLERY = `${REPO}/blob/main/docs/community-modules.md`;
 export const GALLERY_EDIT = `${REPO}/edit/main/docs/community-modules.md`;
 

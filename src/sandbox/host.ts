@@ -1,7 +1,7 @@
 import type { FromSandbox, ToSandbox } from "./protocol";
 
 /** A call with no answer in this long stops the sandbox (perf/scripting-budget.md). */
-export const WATCHDOG_MS = 250;
+const WATCHDOG_MS = 250;
 /** Loading packages and the first copy of the game get longer. */
 export const STARTUP_MS = 5000;
 /**
@@ -10,7 +10,7 @@ export const STARTUP_MS = 5000;
  * software rendering), and a first game must not lose its rules to that
  * (PX playtest of Rift Lanterns, item 7).
  */
-export const WARMUP_MS = 15_000;
+const WARMUP_MS = 15_000;
 
 /**
  * The iframe the worker starts in: no `allow-same-origin`, so it has an

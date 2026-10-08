@@ -78,7 +78,7 @@ export interface UnitView {
   [characteristic: string]: unknown;
 }
 
-export interface WeaponView {
+interface WeaponView {
   kind: "weapon";
   id: string;
   name: string;
@@ -94,7 +94,7 @@ export interface WeaponView {
   [characteristic: string]: unknown;
 }
 
-export type View = ModelView | UnitView | WeaponView;
+type View = ModelView | UnitView | WeaponView;
 
 // ---------------------------------------------------------------------------
 // Characteristics
@@ -104,7 +104,7 @@ export type View = ModelView | UnitView | WeaponView;
  * Read an imported characteristic: "3+" → 3, '24"' → 24, "-1" → -1,
  * "D6+1" stays dice text (for dice characteristics), "-" or "N/A" → null.
  */
-export function parseValue(text: string | number | null | undefined, type: CharacteristicDef["type"]): Value {
+function parseValue(text: string | number | null | undefined, type: CharacteristicDef["type"]): Value {
   if (text === null || text === undefined) return null;
   if (typeof text === "number") return text;
   if (type === "text") return text.trim() && text.trim() !== "-" ? text.trim() : null;
@@ -191,7 +191,7 @@ function paramValue(raw: string): Value {
 }
 
 /** A RuleDef with its parameters as an expression scope. */
-export interface BoundRule {
+interface BoundRule {
   def: RuleDef;
   param: Record<string, unknown>;
 }
@@ -213,7 +213,7 @@ export function lookupRules(system: GameSystem, refs: RuleRef[], extra: RuleDef[
 // Views
 // ---------------------------------------------------------------------------
 
-export interface ViewOptions {
+interface ViewOptions {
   /** Pack or faction rules to bind on top of the system's. */
   rules?: RuleDef[];
 }
@@ -323,7 +323,7 @@ function unitsGap(state: GameState, a: Unit, b: Unit): number {
  * Rules from abilities the player automated (#38): the unit's own that are
  * on, and auras of units in range of it (its own aura included).
  */
-export function autoRules(state: GameState, unit: Unit): RuleRef[] {
+function autoRules(state: GameState, unit: Unit): RuleRef[] {
   const out: RuleRef[] = [];
   for (const a of unit.sheet?.abilities ?? [])
     if (a.auto && !a.auto.aura && !a.auto.trigger && autoActive(unit, a)) out.push(autoRef(a));
@@ -406,7 +406,7 @@ export function weaponView(
 }
 
 /** The model or unit a view was built from, for geometry. */
-export function sourceOf(view: unknown): Model | Unit | undefined {
+function sourceOf(view: unknown): Model | Unit | undefined {
   return view && typeof view === "object" ? (view as { source?: Model | Unit }).source : undefined;
 }
 
@@ -509,7 +509,7 @@ function normalise(sum: DiceSum): DiceSum {
     .map(([sides, count]) => ({ count, sides }));
 }
 
-export function sumDice(...sums: DiceSum[]): DiceSum {
+function sumDice(...sums: DiceSum[]): DiceSum {
   return normalise(sums.flat());
 }
 

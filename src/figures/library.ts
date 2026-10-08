@@ -33,7 +33,7 @@ export interface FigureEntry {
 const db = idbStore<FigureEntry>("open-battle-figures", "figures");
 
 /** A model file's name without its extension and download noise, for a first name. */
-export function cleanName(file: string): string {
+function cleanName(file: string): string {
   return (
     file
       .replace(/\.(glb|gltf|stl|obj|ply|3mf)$/i, "")
@@ -43,7 +43,7 @@ export function cleanName(file: string): string {
   );
 }
 
-export function entryFrom(asset: ModelAsset, at = Date.now()): FigureEntry {
+function entryFrom(asset: ModelAsset, at = Date.now()): FigureEntry {
   return {
     id: asset.id,
     name: cleanName(asset.name),
@@ -138,7 +138,7 @@ const pick = (e: FigureEntry): Partial<FigureEntry> => ({
 });
 
 /** Remember which units the figures on the table are dressing, for suggestions next time. */
-export function learnFromGame(): void {
+function learnFromGame(): void {
   const { game } = useStore.getState();
   const { entries, patch } = useFigures.getState();
   const learned = new Map<string, Set<string>>();

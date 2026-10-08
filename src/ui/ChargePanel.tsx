@@ -1,3 +1,4 @@
+import { inchText } from "./distance";
 import { useMemo, useState } from "react";
 import {
   awayFrom,
@@ -17,9 +18,8 @@ import { gameModule, systemModule } from "../systems";
 import { useGame } from "./hooks";
 import { moveBudget } from "./regiment";
 import { opposed } from "../core/teams";
-import { formatNumber, t, tc } from "../i18n";
+import { t, tc } from "../i18n";
 
-const fmt = (n: number) => `${formatNumber(Number(n.toFixed(1)), { maximumFractionDigits: 1 })}"`;
 /** The side of the enemy a charge meets, on screen. */
 const arcEdge = (arc: "front" | "rear" | "left" | "right") =>
   ({
@@ -124,14 +124,14 @@ export function ChargePanel({ unit }: { unit: Unit }) {
         <select aria-label={t("Enemy unit")} value={enemy.id} onChange={(e) => setPick(e.target.value)}>
           {near.map((e) => (
             <option key={e.unit.id} value={e.unit.id}>
-              {e.unit.name} ({fmt(e.d)})
+              {e.unit.name} ({inchText(e.d)})
             </option>
           ))}
           {far.length > 0 && (
             <optgroup label={t("Further away")}>
               {far.map((e) => (
                 <option key={e.unit.id} value={e.unit.id}>
-                  {e.unit.name} ({fmt(e.d)})
+                  {e.unit.name} ({inchText(e.d)})
                 </option>
               ))}
             </optgroup>
@@ -145,7 +145,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
             title={
               short
                 ? t("The roll falls {distance} short of {unit}", {
-                    distance: fmt(door.distance - chargeRange!),
+                    distance: inchText(door.distance - chargeRange!),
                     unit: enemy.name,
                   })
                 : t("Move into contact with {unit}'s {edge}, lined up flush", {
@@ -160,7 +160,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
           >
             {t("Charge into its {edge} ({distance})", {
               edge: arcEdge(door.arc),
-              distance: fmt(door.distance),
+              distance: inchText(door.distance),
             })}
           </button>
           {declares && !declaredHere && (
@@ -171,8 +171,8 @@ export function ChargePanel({ unit }: { unit: Unit }) {
           {chargeRange !== null && (
             <span className={`${short ? "warn" : "muted small"}${tense ? " tense" : ""}`}>
               {t("needs {distance} of {range} ({roll} + M {move})", {
-                distance: fmt(door.distance),
-                range: fmt(chargeRange),
+                distance: inchText(door.distance),
+                range: inchText(chargeRange),
                 roll: chargeDie,
                 move,
               })}
@@ -187,12 +187,12 @@ export function ChargePanel({ unit }: { unit: Unit }) {
             title={t("Line up flush with {unit}'s {edge}", { unit: enemy.name, edge: arcEdge(door.arc) })}
             onClick={() => dispatch(door.move, as)}
           >
-            {t("Close the door ({distance})", { distance: fmt(door.distance) })}
+            {t("Close the door ({distance})", { distance: inchText(door.distance) })}
           </button>
         </div>
       )}
       {charged > 0 && (
-        <p className="muted small">{t("Charged {distance} this phase.", { distance: fmt(charged) })}</p>
+        <p className="muted small">{t("Charged {distance} this phase.", { distance: inchText(charged) })}</p>
       )}
       {mod.fleeDice && (
         <>
@@ -230,9 +230,9 @@ export function ChargePanel({ unit }: { unit: Unit }) {
             {chase && (
               <span className={chase.caught ? "warn" : "muted small"}>
                 {chase.caught
-                  ? t("catches it after {distance}", { distance: fmt(chase.moved) })
+                  ? t("catches it after {distance}", { distance: inchText(chase.moved) })
                   : Number.isFinite(chase.gap)
-                    ? t("falls {distance} short", { distance: fmt(chase.gap) })
+                    ? t("falls {distance} short", { distance: inchText(chase.gap) })
                     : t("won't reach it")}
               </span>
             )}

@@ -1,6 +1,6 @@
 import { undoneSeqs, type GameRecord, type GameState, type PlayerId, type Unit, type Vec2 } from "../core";
 
-export interface DeployCheck {
+interface DeployCheck {
   unit: Unit;
   /** Not moved by hand since it arrived on the table, and not standing in its zone. */
   untouched: boolean;

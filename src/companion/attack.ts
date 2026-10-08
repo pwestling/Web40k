@@ -59,7 +59,7 @@ export function stillnessMatters(
 }
 
 /** An automated aura (#38) that could reach the attacker or the target, if its source is near enough. */
-export interface AuraQuestion {
+interface AuraQuestion {
   key: string;
   source: Unit;
   ability: Ability;

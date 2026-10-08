@@ -22,8 +22,6 @@ import { perf } from "./perf";
 import { gameId } from "../campaign/book";
 import { putNote, useNotes } from "../replay/notes";
 
-export const SOAK_SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd-1.7"];
-
 let ctx: BotContext = { rng: seededRng(1), kept: new Map() as Kept, idle: 0 };
 let mark = "";
 let timer: ReturnType<typeof setTimeout> | null = null;

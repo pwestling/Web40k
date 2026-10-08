@@ -1,3 +1,4 @@
+import { plainSystemName } from "../ui/systemLabels";
 import { useEffect, useState } from "react";
 import { getSystem } from "../core/content/systems";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
@@ -13,8 +14,7 @@ import { SightlinesToggle } from "./SightlinesToggle";
 
 const systemName = (id: string) => {
   try {
-    // "(draft)" marks a system still being built; it means nothing to a player.
-    return getSystem(id).name.replace(/\s*\(draft\)\s*$/i, "");
+    return plainSystemName(getSystem(id).name);
   } catch {
     return id || t("another game");
   }

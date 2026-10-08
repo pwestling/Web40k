@@ -24,7 +24,7 @@ import { t } from "../i18n";
  * the stretch we're playing (or the file we sent and are waiting on), and
  * what we know of the opponent (their key, their latest dice commitment).
  */
-export interface MailGame {
+interface MailGame {
   id: string;
   /** Our player and side. */
   me: PlayerId;
@@ -51,7 +51,7 @@ export interface MailGame {
 }
 
 /** A file that didn't check out, held until the player decides. */
-export interface Doubt {
+interface Doubt {
   file: MailFile;
   problems: string[];
 }
@@ -193,12 +193,6 @@ export async function resumeMailGame(id: string): Promise<void> {
   if (game) await open(game);
 }
 
-export function leaveMailGame(): void {
-  useMail.setState({ game: null, doubt: null, error: null });
-  useStore.setState({ mail: null });
-  dice = Math.random;
-}
-
 /**
  * Close our stretch and make its file: the invitation carries the whole game
  * so far; later files carry what we did since theirs.
@@ -234,7 +228,7 @@ export async function postAgain(): Promise<boolean> {
 }
 
 /** The opponent's next file in a game's mailbox, if it has come. */
-export async function nextFromMailbox(game: MailGame): Promise<MailFile | null> {
+async function nextFromMailbox(game: MailGame): Promise<MailFile | null> {
   if (!game.box || game.segment || !game.sent) return null;
   const files = await fetchFiles(game.box, game.sent.index);
   return files?.find((f) => f.index === game.sent!.index + 1 && f.from !== game.me) ?? null;

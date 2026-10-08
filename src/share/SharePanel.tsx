@@ -10,7 +10,8 @@ import { lossesBetween, readGame, replayIntro } from "../ui/highlights";
 import { battleOver } from "../ui/StatsScreen";
 import { voiceStreams } from "../voice/voice";
 import { grabTable, settle } from "./capture";
-import { endCard, pngOf, result, roundCard, saveFile, stamp, standouts } from "./cards";
+import { endCard, pngOf, result, roundCard, stamp, standouts } from "./cards";
+import { saveFile } from "../ui/files";
 import { siteUrl } from "./site";
 import { downloadReplay } from "../ui/Hud";
 import { shot } from "../render/focus";
@@ -23,8 +24,6 @@ import { useShare } from "./store";
  * stretch of the replay, and pictures: the end-of-game card and a card for
  * each round.
  */
-
-export { useShare };
 
 /**
  * Look at the table at `seq` for a moment, take its picture, then put the
@@ -58,7 +57,7 @@ async function tableAt(
 }
 
 /** Where a moment happened: the middle of the models it involved, and how far they spread. */
-export function momentFrame(record: GameRecord, m: Moment): { x: number; y: number; span: number } | null {
+function momentFrame(record: GameRecord, m: Moment): { x: number; y: number; span: number } | null {
   const state = stateAt(record, Math.max(m.seq, m.end));
   const units = new Set(m.units);
   const models = new Set<string>();
@@ -147,7 +146,7 @@ function recordClip(
   play(() => void finishClip());
 }
 
-export async function finishClip() {
+async function finishClip() {
   const rec = useShare.getState().recording;
   if (!rec) return;
   useShare.setState({ recording: null, busy: t("Saving the clip…") });

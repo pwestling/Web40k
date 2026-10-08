@@ -2,7 +2,7 @@ import { applyEvent, stateAt, systemOf, undoneSeqs, type GameRecord, type GameSt
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
 import { opposed, sidePlayers } from "../core/teams";
 import { t, tn } from "../i18n";
-import { plainSystemName } from "../share/site";
+import { plainSystemName } from "./systemLabels";
 
 /** A moment worth jumping to in a replay. */
 export interface Highlight {
@@ -179,7 +179,7 @@ function vpOf(state: GameState, player: string): number {
 }
 
 /** What a replay's title card says, and where the battle starts. */
-export interface ReplayIntro {
+interface ReplayIntro {
   /** Seq of the event that started round 1 (0 when the battle never started). */
   startSeq: number;
   players: { name: string; color: string }[];

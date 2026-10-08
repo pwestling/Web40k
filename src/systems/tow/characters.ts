@@ -1,3 +1,4 @@
+import { isAlive } from "../../core/units";
 import { unitCentre } from "../../core/manoeuvre";
 import { rotate } from "../../core/geometry";
 import { blockFrame, formBlock } from "../../core/regiment";
@@ -17,11 +18,8 @@ import type { CodeAction, CodeProcedure, GameView } from "../../sdk";
 
 const JOIN_RANGE = 2;
 
-const alive = (state: GameState, u: Unit) =>
-  u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
-
 /** A character on its own: one model, and not a monster, chariot or war machine. */
-export function loneCharacter(state: GameState, u: Unit | undefined): boolean {
+function loneCharacter(state: GameState, u: Unit | undefined): boolean {
   if (!u || u.modelIds.length !== 1 || u.joined?.length) return false;
   const m = state.models[u.modelIds[0]!];
   const troop = m?.profile?.chars.Troop ?? "";
@@ -45,7 +43,7 @@ function regimentsNear(view: GameView, unitId: string): { u: Unit; d: number }[]
         u.formation.kind === "ranked" &&
         u.modelIds.length > 1 &&
         !u.status?.fleeing &&
-        alive(state, u),
+        isAlive(state, u),
     )
     .map((u) => ({ u, d: view.distance(me.id, u.id) }))
     .filter((x) => x.d <= JOIN_RANGE)

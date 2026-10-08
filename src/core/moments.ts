@@ -70,7 +70,7 @@ function actor(s: GameState): { unit?: UnitId; target?: UnitId; key: string } | 
 }
 
 /** Every candidate moment in the game, in game order. */
-export function momentCandidates(record: GameRecord): Moment[] {
+function momentCandidates(record: GameRecord): Moment[] {
   const undone = undoneSeqs(record);
   const out: Moment[] = [];
   let state = record.initial;

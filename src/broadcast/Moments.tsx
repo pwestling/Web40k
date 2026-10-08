@@ -81,7 +81,7 @@ export function playMoment(m: Moment, done?: () => void): void {
 }
 
 /** About how long a moment takes to play (ms): its lead-up, its events at replay pace, the dice settling, the hold. */
-export function momentLength(record: GameRecord, m: Moment): number {
+function momentLength(record: GameRecord, m: Moment): number {
   if (!playable(m)) return CARD_MS;
   return stretchLength(record, m.seq, Math.max(m.seq, m.end));
 }
@@ -227,15 +227,7 @@ export function Moments() {
 }
 
 /** The lower third: big title with the player's colour, one line, and when. */
-export function MomentCard({
-  moment,
-  step,
-  children,
-}: {
-  moment: Moment;
-  step?: string;
-  children?: ReactNode;
-}) {
+function MomentCard({ moment, step, children }: { moment: Moment; step?: string; children?: ReactNode }) {
   const color = useStore((s) => (moment.player ? s.game.players[moment.player]?.color : undefined));
   return (
     <div className="moment-card" style={{ borderColor: color ?? "#b45309" }} role="status">

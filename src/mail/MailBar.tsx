@@ -1,3 +1,4 @@
+import { saveJson } from "../ui/files";
 import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
@@ -19,14 +20,7 @@ import { t } from "../i18n";
 /** How often a waiting game looks in its mailbox while the page is open. */
 const POLL_MS = 30_000;
 
-function download(file: MailFile): void {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(file)], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName(file);
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+const download = (file: MailFile) => saveJson(fileName(file), file);
 
 /** On a phone, hand the file to the share sheet (mail, chat); elsewhere, or if that fails, save it. */
 async function passOn(file: MailFile, to: string): Promise<"shared" | "saved"> {

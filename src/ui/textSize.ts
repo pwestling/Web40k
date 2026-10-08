@@ -7,7 +7,7 @@ export const TEXT_SIZES = [
   { id: "large", label: () => t("Large"), scale: 1.15 },
   { id: "larger", label: () => t("Larger"), scale: 1.3 },
 ] as const;
-export type TextSize = (typeof TEXT_SIZES)[number]["id"];
+type TextSize = (typeof TEXT_SIZES)[number]["id"];
 
 const KEY = "open-battle:text-size";
 

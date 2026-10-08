@@ -308,7 +308,7 @@ export function nextStep(system: GameSystem, run: ProcedureRun): Step | null {
   return findProcedure(system, run.procedure).steps[run.next] ?? null;
 }
 
-export interface Preview {
+interface Preview {
   plans: Record<Id, StepPlan>;
   fired: Record<Id, string[]>;
   /** By step, then rule name: what each rule changed. */
@@ -1224,7 +1224,7 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
 }
 
 /** One box of a damage track: the faces that hit it, its colour and effect. */
-export interface TrackBox {
+interface TrackBox {
   min: number;
   max: number;
   colour: "red" | "orange" | "white";
@@ -1232,7 +1232,7 @@ export interface TrackBox {
 }
 
 /** Read "1:red, 2-3:orange:ARM, 4:white:MOV" into boxes. */
-export function parseTrack(text: string): TrackBox[] {
+function parseTrack(text: string): TrackBox[] {
   const out: TrackBox[] = [];
   for (const part of text.split(/[,;\s]+/)) {
     const m = /^(\d+)(?:-(\d+))?:(red|orange|white)(?::(\w+))?$/i.exec(part.trim());

@@ -4,7 +4,7 @@ import { t } from "../i18n";
 import { reportProblem } from "./report";
 
 /** Where bug reports go: the bug form asks for the report file (.github/ISSUE_TEMPLATE). */
-export const ISSUE_URL = "https://github.com/pwestling/Web40k/issues/new?template=bug_report.yml";
+const ISSUE_URL = "https://github.com/pwestling/Web40k/issues/new?template=bug_report.yml";
 
 /** A translated sentence with one `{slot}` filled by markup. */
 function fill(text: string, slot: string, node: ReactNode): ReactNode {

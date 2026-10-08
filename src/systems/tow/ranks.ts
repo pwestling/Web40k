@@ -13,7 +13,7 @@ import { hasRule } from "./specialRules";
  */
 
 /** Whether most of the unit's front rank stands on a hill. */
-export function onHill(state: GameState, u: Unit): boolean {
+function onHill(state: GameState, u: Unit): boolean {
   const models = blockModels(state, u);
   const files = u.formation.kind === "ranked" ? Math.min(u.formation.files, models.length) : models.length;
   const front = models.slice(0, Math.max(1, files));
@@ -23,7 +23,7 @@ export function onHill(state: GameState, u: Unit): boolean {
 }
 
 /** Whether the unit shoots with Volley Fire now: it has the rule, didn't move and isn't standing and shooting. */
-export const volleys = (u: Unit, opts: { standAndShoot?: boolean } = {}) =>
+const volleys = (u: Unit, opts: { standAndShoot?: boolean } = {}) =>
   hasRule(u, /\bvolley fire\b/i) && !u.status?.moved && !u.status?.marching && !opts.standAndShoot;
 
 export function shooterCount(state: GameState, u: Unit, opts: { standAndShoot?: boolean } = {}): number {

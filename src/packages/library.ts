@@ -61,7 +61,7 @@ async function write(op: (store: IDBObjectStore) => void): Promise<void> {
   }
 }
 
-export type AddResult = { ok: true; pkg: StoredPackage } | { ok: false; error: string };
+type AddResult = { ok: true; pkg: StoredPackage } | { ok: false; error: string };
 
 interface Library {
   loaded: boolean;

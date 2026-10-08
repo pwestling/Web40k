@@ -17,7 +17,7 @@ import { applyAwards, awardsIn, campaignRulesIn, withRules } from "./rules";
 
 export const CAMPAIGN_FORMAT = "open-battle/campaign@1";
 
-export interface CampaignArmy {
+interface CampaignArmy {
   /** Its id on the shelf (src/packages/shelf.ts). */
   id: string;
   name: string;
@@ -102,7 +102,7 @@ export function campaignHash(book: CampaignBook): string {
   return sha256Hex(stableJson(book));
 }
 
-export const unitKey = (armyId: string, index: number) => `${armyId}:${index}`;
+const unitKey = (armyId: string, index: number) => `${armyId}:${index}`;
 
 /** The campaign unit a unit on the table is, if its player brought a shelf army for this book. */
 export function campaignUnitKey(game: GameState, unitId: string): string | null {
@@ -255,7 +255,7 @@ export function recordGame(
   );
 }
 
-export interface LeagueRow {
+interface LeagueRow {
   name: string;
   played: number;
   won: number;

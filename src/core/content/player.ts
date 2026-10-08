@@ -1,3 +1,4 @@
+import { isAlive } from "../units";
 import type { Ability, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
 import { bindRules, lookupRules, pattern, unitView } from "./runtime";
@@ -203,7 +204,7 @@ export function manualAbilities(system: GameSystem, unit: Unit): Ability[] {
 }
 
 /** The timing entries an ability's text fits, first match per phase or attack role. */
-export function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[] {
+function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[] {
   const out: AbilityTiming[] = [];
   const keys = new Set<string>();
   for (const t of system.abilityTimings ?? []) {
@@ -217,10 +218,6 @@ export function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[]
   return out;
 }
 
-function alive(state: GameState, unit: Unit): boolean {
-  return unit.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
-}
-
 /** Abilities whose text says they matter in the current phase, for both players. */
 export function abilityReminders(state: GameState): AbilityReminder[] {
   const system = systemOf(state);
@@ -229,7 +226,7 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
   if (!phase) return [];
   const out: AbilityReminder[] = [];
   for (const unit of Object.values(state.units)) {
-    if (!alive(state, unit)) continue;
+    if (!isAlive(state, unit)) continue;
     const active = seatOf(state, unit.owner) === state.turn.activeSeat;
     for (const ability of manualAbilities(system, unit)) {
       const fits = timingsOf(system, ability).some(

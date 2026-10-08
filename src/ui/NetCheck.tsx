@@ -12,7 +12,7 @@ import { netConfig } from "../net/config";
 
 type Verdict = "good" | "turn" | "bad";
 
-export interface NetReport {
+interface NetReport {
   relays: { url: string; ms: number | null }[];
   stun: boolean;
   /** "open" (no NAT), "cone" (easy), "symmetric" (hard: direct links often fail), or unknown. */
@@ -78,7 +78,7 @@ async function gather(servers: RTCIceServer[], relayOnly = false): Promise<RTCIc
 }
 
 /** Run every check. */
-export async function checkNetwork(): Promise<NetReport> {
+async function checkNetwork(): Promise<NetReport> {
   const config = netConfig();
   // Only load the relay library's defaults when someone asks for a check.
   const urls = config.signal.length

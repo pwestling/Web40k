@@ -14,7 +14,7 @@ import type { CodeProcedure } from "../../sdk";
 const standing = (state: GameState, u: Unit) =>
   u.modelIds.filter((id) => state.models[id] && !state.models[id]!.destroyed);
 
-export const roundKey = (unitId: string) => `round:${unitId}`;
+const roundKey = (unitId: string) => `round:${unitId}`;
 
 const aftermath: CodeProcedure = function* (ctx, args) {
   const view = ctx.view;

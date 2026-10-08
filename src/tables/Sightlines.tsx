@@ -37,7 +37,7 @@ function lookouts(zone: Zone): Vec2[] {
   return out;
 }
 
-export interface SightGrid {
+interface SightGrid {
   cols: number;
   rows: number;
   /** Per square, a bit per seat whose zone can see it. */

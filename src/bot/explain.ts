@@ -12,7 +12,7 @@ import type { BotMove } from "../soak/bot";
  * moves made in a package's sandbox. Null for moves that need no telling
  * (rolls, answers, moving the game on).
  */
-export interface Explained {
+interface Explained {
   unitId: string;
   text: string;
   /** Where a moving unit started and ended (centres). */

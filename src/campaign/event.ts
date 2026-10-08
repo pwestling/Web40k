@@ -45,7 +45,7 @@ export function setDropped(event: CampaignEvent, name: string, out: boolean, at 
   };
 }
 
-export interface Standing {
+interface Standing {
   name: string;
   points: number;
   played: number;
@@ -60,8 +60,8 @@ export interface Standing {
   dropped: boolean;
 }
 
-export const WIN = 3;
-export const DRAW = 1;
+const WIN = 3;
+const DRAW = 1;
 
 export function newEvent(entrants: string[], rounds: number, tables: CampaignEvent["tables"]): CampaignEvent {
   return { rounds, entrants: [...new Set(entrants)], dropped: [], tables, pairings: [] };

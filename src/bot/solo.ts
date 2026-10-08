@@ -11,7 +11,7 @@ import type { Policy } from "./policy";
  * game, and how well. Tied to the game's session, so opening another game
  * ends it. The computer's own memory (its policy) lives here too.
  */
-export interface Solo {
+interface Solo {
   level: Level | null;
   /** The computer's side. */
   seat: number;
@@ -37,7 +37,7 @@ export const useSolo = create<Solo>(() => ({
 /** The computer's moves glide, slow enough to follow (PX solo review 2). */
 export const GLIDE_MS = 900;
 
-export const LEVEL_KEY = "open-battle:bot-level";
+const LEVEL_KEY = "open-battle:bot-level";
 
 /** The level picked last time on this device (Easy if none). */
 export function savedLevel(): Level {
@@ -68,10 +68,6 @@ export function armSolo(level: Level, seat = 1): void {
   });
   // The camera follows the action, the computer's included (UX 348).
   useStore.setState({ director: true });
-}
-
-export function endSolo(): void {
-  useSolo.setState({ level: null, session: null, policy: null, paused: false, why: null });
 }
 
 /** Whether the computer plays this player in the game on screen. */

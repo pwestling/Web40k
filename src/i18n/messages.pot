@@ -392,7 +392,7 @@ msgstr ""
 
 #: src/GameScreen.tsx:311
 #: src/mail/MailLobby.tsx:165
-#: src/workshop/Workshop.tsx:379
+#: src/workshop/Workshop.tsx:380
 msgid "Open"
 msgstr ""
 
@@ -465,27 +465,27 @@ msgstr ""
 msgid "{action} at {target}"
 msgstr ""
 
-#: src/bot/solo.ts:87
+#: src/bot/solo.ts:83
 msgid "Rook the Novice"
 msgstr ""
 
-#: src/bot/solo.ts:89
+#: src/bot/solo.ts:85
 msgid "The Iron Tactician"
 msgstr ""
 
-#: src/bot/solo.ts:90
+#: src/bot/solo.ts:86
 msgid "The Warden of Ash"
 msgstr ""
 
-#: src/bot/solo.ts:95
+#: src/bot/solo.ts:91
 msgid "Easy"
 msgstr ""
 
-#: src/bot/solo.ts:95
+#: src/bot/solo.ts:91
 msgid "Sharp"
 msgstr ""
 
-#: src/bot/solo.ts:95
+#: src/bot/solo.ts:91
 msgid "Steady"
 msgstr ""
 
@@ -575,336 +575,336 @@ msgstr ""
 msgid "Skip to stats"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:287
+#: src/campaign/CampaignUI.tsx:279
 msgid "That file isn't an Open Battle campaign book."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:295
+#: src/campaign/CampaignUI.tsx:287
 msgid "Added {n} game from that copy to your {book}."
 msgid_plural "Added {n} games from that copy to your {book}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:303
+#: src/campaign/CampaignUI.tsx:295
 msgid "Your {book} already had everything in that copy."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:307
+#: src/campaign/CampaignUI.tsx:299
 msgid "{book} is on this device."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:314
+#: src/campaign/CampaignUI.tsx:306
 msgid "Campaign: {book}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:314
+#: src/campaign/CampaignUI.tsx:306
 msgid "Campaign"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:322
+#: src/campaign/CampaignUI.tsx:314
 msgid "The copy that came didn't match."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:323
+#: src/campaign/CampaignUI.tsx:315
 msgid "Getting the campaign book from the table…"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:325
-#: src/campaign/CampaignUI.tsx:351
+#: src/campaign/CampaignUI.tsx:317
+#: src/campaign/CampaignUI.tsx:343
 msgid "Ask again"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:333
+#: src/campaign/CampaignUI.tsx:325
 msgid "You've changed your copy of {book}. Share it, so everyone's book says the same?"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:339
+#: src/campaign/CampaignUI.tsx:331
 msgid "Share my copy"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:341
+#: src/campaign/CampaignUI.tsx:333
 msgid "Undo my changes"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:348
+#: src/campaign/CampaignUI.tsx:340
 msgid "The copy of {book} that came didn't match."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:349
+#: src/campaign/CampaignUI.tsx:341
 msgid "Getting the latest {book} from the table…"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:357
+#: src/campaign/CampaignUI.tsx:349
 msgid "Open the book"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:360
+#: src/campaign/CampaignUI.tsx:352
 msgid "Fighting over"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:364
+#: src/campaign/CampaignUI.tsx:356
 msgid "Fighting over nowhere"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:368
+#: src/campaign/CampaignUI.tsx:360
 msgid "Fighting over {place} ({holder}'s)"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:369
+#: src/campaign/CampaignUI.tsx:361
 msgid "Fighting over {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:382
+#: src/campaign/CampaignUI.tsx:374
 msgid "Stop playing for {book}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:389
+#: src/campaign/CampaignUI.tsx:381
 msgid "Play this game for a campaign book: the result, kills and honours go in it when the battle ends."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:396
+#: src/campaign/CampaignUI.tsx:388
 msgid "Play for a campaign"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:400
+#: src/campaign/CampaignUI.tsx:392
 msgid "Play for…"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:403
+#: src/campaign/CampaignUI.tsx:395
 msgid "{book} ({n} game)"
 msgid_plural "{book} ({n} games)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:409
+#: src/campaign/CampaignUI.tsx:401
 msgid "New campaign book"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:419
-#: src/campaign/CampaignUI.tsx:420
-#: src/campaign/CampaignUI.tsx:548
+#: src/campaign/CampaignUI.tsx:411
+#: src/campaign/CampaignUI.tsx:412
+#: src/campaign/CampaignUI.tsx:540
 msgid "Campaign name"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:426
+#: src/campaign/CampaignUI.tsx:418
 msgid "Start the book"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:431
+#: src/campaign/CampaignUI.tsx:423
 msgid "Open a campaign file"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:460
+#: src/campaign/CampaignUI.tsx:452
 msgid "{place} is fought on {table}, which isn't in this device's table library."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:471
+#: src/campaign/CampaignUI.tsx:463
 msgid "Set up {table} for {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:490
+#: src/campaign/CampaignUI.tsx:482
 msgid "a shelf army"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:493
+#: src/campaign/CampaignUI.tsx:485
 msgid "no shelf army yet (save it to your shelf to track its units)"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:511
+#: src/campaign/CampaignUI.tsx:503
 msgid "Campaign:"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:511
+#: src/campaign/CampaignUI.tsx:503
 msgid "{n} kill"
 msgid_plural "{n} kills"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:512
+#: src/campaign/CampaignUI.tsx:504
 msgid "survived {survived}/{n} game"
 msgid_plural "survived {survived}/{n} games"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:515
+#: src/campaign/CampaignUI.tsx:507
 msgid "carrying {n} wound"
 msgid_plural "carrying {n} wounds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:516
+#: src/campaign/CampaignUI.tsx:508
 msgid "{n} XP"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:518
+#: src/campaign/CampaignUI.tsx:510
 msgid "Honours: {honours}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:520
+#: src/campaign/CampaignUI.tsx:512
 msgid "Scars: {scars}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:544
+#: src/campaign/CampaignUI.tsx:536
 msgid "Campaign book: {book}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:553
+#: src/campaign/CampaignUI.tsx:546
 #: src/tables/TableLibrary.tsx:220
 #: src/ui/ArmyImport.tsx:549
-#: src/workshop/Workshop.tsx:321
+#: src/workshop/Workshop.tsx:322
 msgid "Export"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:554
+#: src/campaign/CampaignUI.tsx:548
 #: src/figures/FigureLibrary.tsx:81
 #: src/figures/FigureLibrary.tsx:81
 #: src/printplay/RulesPage.tsx:99
-#: src/share/SharePanel.tsx:256
+#: src/share/SharePanel.tsx:255
 #: src/ui/ArmyGuide.tsx:52
 msgid "Close"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:560
+#: src/campaign/CampaignUI.tsx:554
 msgid "Changes stay on this device until you share your copy in a game (Campaign in the menu), or send the exported file."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:575
+#: src/campaign/CampaignUI.tsx:569
 msgid "League"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:576
+#: src/campaign/CampaignUI.tsx:570
 msgid "Event"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:577
-#: src/campaign/CampaignUI.tsx:744
+#: src/campaign/CampaignUI.tsx:571
+#: src/campaign/CampaignUI.tsx:738
 msgid "Games"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:578
+#: src/campaign/CampaignUI.tsx:572
 #: src/companion/CompanionScreen.tsx:81
 #: src/ui/StatsScreen.tsx:145
 msgid "Units"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:579
+#: src/campaign/CampaignUI.tsx:573
 msgid "Map"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:580
+#: src/campaign/CampaignUI.tsx:574
 #: src/replay/NotesPanel.tsx:64
 msgid "Notes"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:594
+#: src/campaign/CampaignUI.tsx:588
 msgid "Campaign notes"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:597
+#: src/campaign/CampaignUI.tsx:591
 msgid "The story so far, house rules, who owes who a drink…"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:608
+#: src/campaign/CampaignUI.tsx:602
 msgid "No one has played for this book yet."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:615
+#: src/campaign/CampaignUI.tsx:609
 #: src/campaign/EventTab.tsx:268
 msgid "Player"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:616
+#: src/campaign/CampaignUI.tsx:610
 msgid "Played"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:616
+#: src/campaign/CampaignUI.tsx:610
 msgctxt "league table: games played"
 msgid "P"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:617
+#: src/campaign/CampaignUI.tsx:611
 msgid "Won"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:617
+#: src/campaign/CampaignUI.tsx:611
 msgctxt "league table: games won"
 msgid "W"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:618
+#: src/campaign/CampaignUI.tsx:612
 msgid "Drawn"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:618
+#: src/campaign/CampaignUI.tsx:612
 msgctxt "league table: games drawn"
 msgid "D"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:619
+#: src/campaign/CampaignUI.tsx:613
 #: src/ui/StatsScreen.tsx:154
 msgid "Lost"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:619
+#: src/campaign/CampaignUI.tsx:613
 msgctxt "league table: games lost"
 msgid "L"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:620
+#: src/campaign/CampaignUI.tsx:614
 #: src/campaign/EventTab.tsx:270
 msgid "Victory points scored and conceded"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:620
+#: src/campaign/CampaignUI.tsx:614
 #: src/campaign/EventTab.tsx:270
 #: src/ui/Missions.tsx:143
 #: src/ui/Missions.tsx:368
 msgid "VP"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:621
+#: src/campaign/CampaignUI.tsx:615
 msgid "Places held on the map"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:621
+#: src/campaign/CampaignUI.tsx:615
 msgid "Held"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:622
+#: src/campaign/CampaignUI.tsx:616
 msgid "3 for a win, 1 for a draw"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:622
+#: src/campaign/CampaignUI.tsx:616
 #: src/campaign/EventTab.tsx:272
 #: src/ui/ArmyImport.tsx:305
 msgid "Pts"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:653
+#: src/campaign/CampaignUI.tsx:647
 msgid "Games played for this book show here when they end."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:667
+#: src/campaign/CampaignUI.tsx:661
 #: src/campaign/EventTab.tsx:382
 msgid "Draw"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:668
+#: src/campaign/CampaignUI.tsx:662
 #: src/campaign/EventTab.tsx:382
 msgid "{players} won"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:670
+#: src/campaign/CampaignUI.tsx:664
 #: src/ui/Missions.tsx:361
 msgid "{scores} VP"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:675
+#: src/campaign/CampaignUI.tsx:669
 #: src/campaign/EventTab.tsx:384
 msgid "entered by hand"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:679
+#: src/campaign/CampaignUI.tsx:673
 #: src/ui/RoundCard.tsx:113
 #: src/ui/StatsScreen.tsx:69
 msgid "{n} round"
@@ -912,139 +912,139 @@ msgid_plural "{n} rounds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/campaign/CampaignUI.tsx:682
+#: src/campaign/CampaignUI.tsx:676
 msgid "for {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:688
+#: src/campaign/CampaignUI.tsx:682
 msgid "{side}: {slain} slain, {lost} lost"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:699
+#: src/campaign/CampaignUI.tsx:693
 msgid "Watch the replay"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:714
+#: src/campaign/CampaignUI.tsx:708
 msgid "Units show here after a game, when their army was brought from a shelf. Their kills, games and wounds fill in on their own; honours, scars and XP are yours to write, or your campaign rules add them."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:728
+#: src/campaign/CampaignUI.tsx:722
 msgid "Kills, games and wounds fill in after each game. Honours, scars and XP are yours to write, or your campaign rules add them."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:733
-#: src/ui/Hud.tsx:164
+#: src/campaign/CampaignUI.tsx:727
+#: src/ui/Hud.tsx:165
 msgid "Done editing"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:733
+#: src/campaign/CampaignUI.tsx:727
 #: src/replay/NotesPanel.tsx:183
 msgid "Edit"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:742
+#: src/campaign/CampaignUI.tsx:736
 #: src/ui/ArmyImport.tsx:304
 #: src/ui/StatsScreen.tsx:150
 msgid "Unit"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:743
+#: src/campaign/CampaignUI.tsx:737
 msgid "Kills"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:745
+#: src/campaign/CampaignUI.tsx:739
 msgid "Survived"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:746
+#: src/campaign/CampaignUI.tsx:740
 msgid "Wounds carried"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:747
+#: src/campaign/CampaignUI.tsx:741
 msgid "Experience, from campaign rules or written in"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:747
+#: src/campaign/CampaignUI.tsx:741
 msgid "XP"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:748
+#: src/campaign/CampaignUI.tsx:742
 msgid "Honours"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:749
+#: src/campaign/CampaignUI.tsx:743
 msgid "Scars"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:775
+#: src/campaign/CampaignUI.tsx:769
 msgid "{unit}: honours"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:786
+#: src/campaign/CampaignUI.tsx:780
 msgid "{unit}: scars"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:808
+#: src/campaign/CampaignUI.tsx:802
 msgid "{unit}: kills"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:810
+#: src/campaign/CampaignUI.tsx:804
 msgid "{unit}: games"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:812
+#: src/campaign/CampaignUI.tsx:806
 msgid "{unit}: survived"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:814
+#: src/campaign/CampaignUI.tsx:808
 msgid "{unit}: wounds carried"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:816
+#: src/campaign/CampaignUI.tsx:810
 msgid "{unit}: xp"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:836
+#: src/campaign/CampaignUI.tsx:830
 msgid "Places to fight over. Pick one under Campaign in the menu before a game, and the winner takes it."
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:845
+#: src/campaign/CampaignUI.tsx:839
 msgid "Held by"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:847
+#: src/campaign/CampaignUI.tsx:841
 msgid "Who holds {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:858
+#: src/campaign/CampaignUI.tsx:852
 msgid "nobody"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:867
+#: src/campaign/CampaignUI.tsx:861
 msgid "Played on"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:869
+#: src/campaign/CampaignUI.tsx:863
 msgid "Table for {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:883
+#: src/campaign/CampaignUI.tsx:877
 msgid "any table"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:896
+#: src/campaign/CampaignUI.tsx:890
 msgid "Remove {place}"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:912
+#: src/campaign/CampaignUI.tsx:906
 msgid "New place"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:913
+#: src/campaign/CampaignUI.tsx:907
 msgid "Hive Tertius, the Ash Wastes…"
 msgstr ""
 
-#: src/campaign/CampaignUI.tsx:917
+#: src/campaign/CampaignUI.tsx:911
 msgid "Add a place"
 msgstr ""
 
@@ -1173,9 +1173,9 @@ msgid "Drop"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:309
-#: src/share/SharePanel.tsx:383
-#: src/share/cards.ts:305
+#: src/share/SharePanel.tsx:308
+#: src/share/SharePanel.tsx:382
+#: src/share/cards.ts:306
 #: src/ui/Missions.tsx:118
 #: src/ui/StatsScreen.tsx:299
 msgid "Round {n}"
@@ -1312,8 +1312,8 @@ msgid "Copied ✓"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:126
-#: src/mail/MailBar.tsx:241
-#: src/ui/NetBanner.tsx:67
+#: src/mail/MailBar.tsx:235
+#: src/ui/NetBanner.tsx:68
 #: src/ui/Room.tsx:87
 msgid "Copy invite link"
 msgstr ""
@@ -1329,7 +1329,7 @@ msgid "No army yet."
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:172
-#: src/ui/Hud.tsx:190
+#: src/ui/Hud.tsx:191
 msgid "Add an army"
 msgstr ""
 
@@ -1364,7 +1364,7 @@ msgid "Number of dice"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:271
-#: src/ui/Hud.tsx:215
+#: src/ui/Hud.tsx:216
 msgid "D"
 msgstr ""
 
@@ -1373,18 +1373,18 @@ msgid "Sides"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:277
-#: src/ui/Hud.tsx:221
+#: src/ui/Hud.tsx:222
 #: src/ui/StatsScreen.tsx:206
 msgid "Roll"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:284
-#: src/ui/Hud.tsx:230
+#: src/ui/Hud.tsx:231
 msgid "Stats"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:286
-#: src/ui/Hud.tsx:233
+#: src/ui/Hud.tsx:234
 msgid "Download replay"
 msgstr ""
 
@@ -1464,7 +1464,7 @@ msgid "Roll on screen instead"
 msgstr ""
 
 #: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:271
+#: src/ui/RegimentPanel.tsx:272
 msgid "Back"
 msgstr ""
 
@@ -1559,7 +1559,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:55
 #: src/ui/AttackPanel.tsx:85
-#: src/ui/SystemPanels.tsx:314
+#: src/ui/SystemPanels.tsx:306
 msgid "Weapon"
 msgstr ""
 
@@ -2053,7 +2053,7 @@ msgid "Figure"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:359
+#: src/ui/SystemPanels.tsx:351
 msgid "{height}\" tall"
 msgstr ""
 
@@ -2208,163 +2208,163 @@ msgstr ""
 msgid "Player {n}"
 msgstr ""
 
-#: src/mail/MailBar.tsx:104
-#: src/mail/MailLobby.tsx:143
-msgid "your opponent"
-msgstr ""
-
-#: src/mail/MailBar.tsx:128
+#: src/mail/MailBar.tsx:122
 msgid "This browser will tell you when it's your move."
 msgstr ""
 
-#: src/mail/MailBar.tsx:134
+#: src/mail/MailBar.tsx:128
 msgid "Invite link copied. Send it to your opponent."
 msgstr ""
 
-#: src/mail/MailBar.tsx:142
+#: src/mail/MailBar.tsx:136
 #: src/mail/MailLobby.tsx:107
 msgid "Play by mail"
 msgstr ""
 
-#: src/mail/MailBar.tsx:153
+#: src/mail/MailBar.tsx:147
 #: src/mail/MailLobby.tsx:85
 #: src/mail/MailLobby.tsx:88
 msgid "Your name, for your opponent"
 msgstr ""
 
-#: src/mail/MailBar.tsx:157
+#: src/mail/MailBar.tsx:151
 #: src/ui/AttackPanel.tsx:259
-#: src/workshop/Workshop.tsx:277
+#: src/workshop/Workshop.tsx:278
 msgid "Save"
 msgstr ""
 
-#: src/mail/MailBar.tsx:163
+#: src/mail/MailBar.tsx:157
 msgid "{name}'s file doesn't check out"
 msgstr ""
 
-#: src/mail/MailBar.tsx:165
+#: src/mail/MailBar.tsx:159
 msgid "Open it anyway plays it into your game as it is, as if it had checked out. Don't open it leaves your game as it was; ask {name} to send it again."
 msgstr ""
 
-#: src/mail/MailBar.tsx:176
+#: src/mail/MailBar.tsx:170
 msgid "Don't open it"
 msgstr ""
 
-#: src/mail/MailBar.tsx:177
+#: src/mail/MailBar.tsx:171
 msgid "Open it anyway"
 msgstr ""
 
-#: src/mail/MailBar.tsx:183
+#: src/mail/MailBar.tsx:177
 msgid "Set up your side"
 msgstr ""
 
-#: src/mail/MailBar.tsx:183
+#: src/mail/MailBar.tsx:177
 msgid "Your move"
 msgstr ""
 
-#: src/mail/MailBar.tsx:187
+#: src/mail/MailBar.tsx:181
 msgid "· then send the invitation"
 msgstr ""
 
-#: src/mail/MailBar.tsx:189
+#: src/mail/MailBar.tsx:183
 msgid "· then send it back to {name}, who starts the battle when they have your file"
 msgstr ""
 
-#: src/mail/MailBar.tsx:193
+#: src/mail/MailBar.tsx:187
 msgid "· start the battle (▶ at the top) when you're ready, then send your file to {name}"
 msgstr ""
 
-#: src/mail/MailBar.tsx:200
+#: src/mail/MailBar.tsx:194
 msgid "· over to {name} now: send your file"
 msgstr ""
 
-#: src/mail/MailBar.tsx:201
+#: src/mail/MailBar.tsx:195
 msgid "· send your file to {name} when you're done"
 msgstr ""
 
-#: src/mail/MailBar.tsx:209
+#: src/mail/MailBar.tsx:203
 msgid "Send invitation"
 msgstr ""
 
-#: src/mail/MailBar.tsx:209
+#: src/mail/MailBar.tsx:203
 msgid "Send to {name}"
 msgstr ""
 
-#: src/mail/MailBar.tsx:216
+#: src/mail/MailBar.tsx:210
 msgid "Waiting for {name}"
 msgstr ""
 
-#: src/mail/MailBar.tsx:220
+#: src/mail/MailBar.tsx:214
 msgid " · the invitation is in the game's mailbox: send them the link"
 msgstr ""
 
-#: src/mail/MailBar.tsx:221
+#: src/mail/MailBar.tsx:215
 msgid " · your turn is in the game's mailbox; theirs will open here when it comes"
 msgstr ""
 
-#: src/mail/MailBar.tsx:222
+#: src/mail/MailBar.tsx:216
 msgid " · open their file when it comes"
 msgstr ""
 
-#: src/mail/MailBar.tsx:227
+#: src/mail/MailBar.tsx:221
 msgid "Sent {file}. "
 msgstr ""
 
-#: src/mail/MailBar.tsx:228
+#: src/mail/MailBar.tsx:222
 msgid "Saved {file} to your downloads: send it to {name} by email, chat or anything. "
 msgstr ""
 
-#: src/mail/MailBar.tsx:233
+#: src/mail/MailBar.tsx:227
 msgid "They open it from the lobby, under Play by mail."
 msgstr ""
 
-#: src/mail/MailBar.tsx:234
+#: src/mail/MailBar.tsx:228
 msgid "They open it with Open their file."
 msgstr ""
 
-#: src/mail/MailBar.tsx:245
+#: src/mail/MailBar.tsx:239
 msgid "Open their file"
 msgstr ""
 
-#: src/mail/MailBar.tsx:259
+#: src/mail/MailBar.tsx:253
 msgid "Save the file you sent, to pass it on by hand"
 msgstr ""
 
-#: src/mail/MailBar.tsx:262
-#: src/ui/Feedback.tsx:76
+#: src/mail/MailBar.tsx:256
+#: src/ui/Feedback.tsx:77
 msgid "Save as a file"
 msgstr ""
 
-#: src/mail/MailBar.tsx:262
+#: src/mail/MailBar.tsx:256
 msgid "Save mine again"
 msgstr ""
 
-#: src/mail/MailBar.tsx:270
+#: src/mail/MailBar.tsx:264
 msgid "The game's mailbox couldn't be reached, so pass your file on by hand."
 msgstr ""
 
-#: src/mail/MailBar.tsx:277
+#: src/mail/MailBar.tsx:271
 msgid "Try the mailbox again"
 msgstr ""
 
-#: src/mail/MailBar.tsx:284
+#: src/mail/MailBar.tsx:278
 msgid "Or leave this tab: the title says when it's your move."
 msgstr ""
 
-#: src/mail/MailBar.tsx:287
+#: src/mail/MailBar.tsx:281
 msgid "Notify me when it's my move"
 msgstr ""
 
-#: src/mail/MailBar.tsx:37
+#: src/mail/MailBar.tsx:31
 msgid "Open Battle: your move, {name}"
 msgstr ""
 
-#: src/mail/MailBar.tsx:99
+#: src/mail/MailBar.tsx:93
 msgid "● Your move · Open Battle"
 msgstr ""
 
-#: src/mail/MailBar.tsx:99
+#: src/mail/MailBar.tsx:93
 msgid "Waiting · Open Battle"
+msgstr ""
+
+#: src/mail/MailBar.tsx:98
+#: src/mail/MailLobby.tsx:143
+msgid "your opponent"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:109
@@ -2413,7 +2413,7 @@ msgstr ""
 
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:252
-#: src/ui/Hud.tsx:373
+#: src/ui/Hud.tsx:372
 #: src/ui/Lobby.tsx:297
 msgid "Your name"
 msgstr ""
@@ -2443,75 +2443,75 @@ msgstr ""
 msgid "Player 1"
 msgstr ""
 
-#: src/mail/store.ts:272
+#: src/mail/store.ts:266
 msgid "The game's mailbox can't be reached. Ask for the invitation file instead."
 msgstr ""
 
-#: src/mail/store.ts:278
+#: src/mail/store.ts:272
 msgid "That game's mailbox is empty: the invitation may have expired."
 msgstr ""
 
-#: src/mail/store.ts:305
+#: src/mail/store.ts:299
 msgid "That file is for a mail game this device doesn't have."
 msgstr ""
 
-#: src/mail/store.ts:307
+#: src/mail/store.ts:301
 msgid "That's your own file: send it to your opponent."
 msgstr ""
 
-#: src/mail/store.ts:310
+#: src/mail/store.ts:304
 msgid "It's your move in this game: you haven't sent your file yet."
 msgstr ""
 
-#: src/mail/store.ts:316
+#: src/mail/store.ts:310
 msgid "You've already had that file."
 msgstr ""
 
-#: src/mail/store.ts:317
+#: src/mail/store.ts:311
 msgid "A file is missing in between: ask them to send the one after yours."
 msgstr ""
 
-#: src/mail/store.ts:324
+#: src/mail/store.ts:318
 msgid "This file was changed after {name} made it."
 msgstr ""
 
-#: src/mail/store.ts:325
+#: src/mail/store.ts:319
 msgid "This file was changed after they made it."
 msgstr ""
 
-#: src/mail/store.ts:330
+#: src/mail/store.ts:324
 msgid "It was made on a different device from {name} earlier files: someone else may have sent it."
 msgstr ""
 
-#: src/mail/store.ts:333
+#: src/mail/store.ts:327
 msgid "It was made on a different device from their earlier files: someone else may have sent it."
 msgstr ""
 
-#: src/mail/store.ts:338
+#: src/mail/store.ts:332
 msgid "That file doesn't start where your last file ended: it belongs to another copy of this game."
 msgstr ""
 
-#: src/mail/store.ts:344
+#: src/mail/store.ts:338
 msgid "Its dice aren't the ones promised in their last file, so the rolls could have been picked."
 msgstr ""
 
-#: src/mail/store.ts:348
+#: src/mail/store.ts:342
 msgid "It leaves out the dice promised in their last file, so the rolls could have been picked."
 msgstr ""
 
-#: src/mail/store.ts:352
+#: src/mail/store.ts:346
 msgid "Its dice weren't mixed with yours, so the rolls could have been picked."
 msgstr ""
 
-#: src/mail/store.ts:377
+#: src/mail/store.ts:371
 msgid "That invitation is damaged (it has no game in it)."
 msgstr ""
 
-#: src/mail/store.ts:381
+#: src/mail/store.ts:375
 msgid "That's your own invitation: send it to your opponent."
 msgstr ""
 
-#: src/mail/store.ts:385
+#: src/mail/store.ts:379
 msgid "That invitation's signature doesn't match its contents."
 msgstr ""
 
@@ -2557,7 +2557,7 @@ msgstr ""
 
 #: src/printplay/RulesPage.tsx:144
 #: src/ui/Showcase.tsx:53
-#: src/ui/SystemPanels.tsx:177
+#: src/ui/SystemPanels.tsx:169
 #: src/ui/UnitCard.tsx:225
 msgid "{points} pts"
 msgstr ""
@@ -2684,7 +2684,7 @@ msgid "{used}\" of {allowed}\""
 msgstr ""
 
 #: src/render/Regiment.tsx:206
-#: src/ui/RegimentPanel.tsx:439
+#: src/ui/RegimentPanel.tsx:440
 msgid "off the table"
 msgstr ""
 
@@ -2750,7 +2750,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:148
-#: src/ui/SystemPanels.tsx:509
+#: src/ui/SystemPanels.tsx:501
 msgid "{n} action"
 msgid_plural "{n} actions"
 msgstr[0] ""
@@ -2776,8 +2776,8 @@ msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:186
 #: src/ui/Keys.tsx:26
-#: src/ui/TerrainPanel.tsx:365
-#: src/workshop/Workshop.tsx:289
+#: src/ui/TerrainPanel.tsx:364
+#: src/workshop/Workshop.tsx:290
 msgid "Delete"
 msgstr ""
 
@@ -2918,7 +2918,7 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
-#: src/ui/Hud.tsx:86
+#: src/ui/Hud.tsx:87
 #: src/ui/PlayPanel.tsx:71
 #: src/ui/TableWarnings.tsx:99
 #: src/ui/WhatNow.tsx:262
@@ -2931,7 +2931,7 @@ msgstr ""
 
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:42
-#: src/ui/TerrainPanel.tsx:376
+#: src/ui/TerrainPanel.tsx:375
 #: src/ui/TopBar.tsx:215
 #: src/ui/WhatNow.tsx:41
 #: src/ui/gameLog.ts:383
@@ -2946,204 +2946,204 @@ msgstr ""
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
 
-#: src/share/SharePanel.tsx:140
-#: src/share/SharePanel.tsx:365
+#: src/share/SharePanel.tsx:139
+#: src/share/SharePanel.tsx:364
 msgid "This browser can't record the table."
 msgstr ""
 
-#: src/share/SharePanel.tsx:146
+#: src/share/SharePanel.tsx:145
 msgid "Recording…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:153
+#: src/share/SharePanel.tsx:152
 msgid "Saving the clip…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:191
+#: src/share/SharePanel.tsx:190
 #: src/ui/RoundCard.tsx:140
 msgid "about {n} s"
 msgstr ""
 
-#: src/share/SharePanel.tsx:231
+#: src/share/SharePanel.tsx:230
 msgid "The highlights reel"
 msgstr ""
 
-#: src/share/SharePanel.tsx:232
+#: src/share/SharePanel.tsx:231
 msgid "From here to the end of the round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:233
+#: src/share/SharePanel.tsx:232
 msgid "From here to the end of the game"
 msgstr ""
 
-#: src/share/SharePanel.tsx:234
+#: src/share/SharePanel.tsx:233
 msgid "The whole battle"
 msgstr ""
 
-#: src/share/SharePanel.tsx:235
+#: src/share/SharePanel.tsx:234
 msgid "A round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:253
-#: src/share/SharePanel.tsx:255
+#: src/share/SharePanel.tsx:252
+#: src/share/SharePanel.tsx:254
 #: src/ui/ReplayBar.tsx:277
 msgid "Share the battle"
 msgstr ""
 
-#: src/share/SharePanel.tsx:263
+#: src/share/SharePanel.tsx:262
 msgid "The replay"
 msgstr ""
 
-#: src/share/SharePanel.tsx:269
+#: src/share/SharePanel.tsx:268
 msgid "Making the page…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:275
+#: src/share/SharePanel.tsx:274
 msgid "Web page"
 msgstr ""
 
-#: src/share/SharePanel.tsx:277
+#: src/share/SharePanel.tsx:276
 msgid "Opens in any browser, even offline: send it to anyone."
 msgstr ""
 
-#: src/share/SharePanel.tsx:281
+#: src/share/SharePanel.tsx:280
 msgid "Replay file"
 msgstr ""
 
-#: src/share/SharePanel.tsx:283
+#: src/share/SharePanel.tsx:282
 msgid "Opens in Open Battle, with notes and What if…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:289
+#: src/share/SharePanel.tsx:288
 msgid "A clip"
 msgstr ""
 
-#: src/share/SharePanel.tsx:292
+#: src/share/SharePanel.tsx:291
 msgid "What to record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:300
+#: src/share/SharePanel.tsx:299
 msgid "Round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:319
+#: src/share/SharePanel.tsx:318
 msgid "No highlights reel: this game had no standout moments."
 msgstr ""
 
-#: src/share/SharePanel.tsx:325
+#: src/share/SharePanel.tsx:324
 msgid "Shape"
 msgstr ""
 
-#: src/share/SharePanel.tsx:330
+#: src/share/SharePanel.tsx:329
 msgid "Wide"
 msgstr ""
 
-#: src/share/SharePanel.tsx:330
+#: src/share/SharePanel.tsx:329
 msgid "16:9, for screens and video sites"
 msgstr ""
 
-#: src/share/SharePanel.tsx:331
+#: src/share/SharePanel.tsx:330
 msgid "Square"
 msgstr ""
 
-#: src/share/SharePanel.tsx:331
+#: src/share/SharePanel.tsx:330
 msgid "1:1, for feeds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:332
+#: src/share/SharePanel.tsx:331
 msgid "Tall"
 msgstr ""
 
-#: src/share/SharePanel.tsx:332
+#: src/share/SharePanel.tsx:331
 msgid "9:16, for stories"
 msgstr ""
 
-#: src/share/SharePanel.tsx:351
+#: src/share/SharePanel.tsx:350
 msgid "Dice and table sounds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:356
+#: src/share/SharePanel.tsx:355
 msgid "Table talk"
 msgstr ""
 
-#: src/share/SharePanel.tsx:361
+#: src/share/SharePanel.tsx:360
 msgid "Record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:370
+#: src/share/SharePanel.tsx:369
 msgid "Pictures"
 msgstr ""
 
-#: src/share/SharePanel.tsx:373
-#: src/share/SharePanel.tsx:381
+#: src/share/SharePanel.tsx:372
+#: src/share/SharePanel.tsx:380
 msgid "Drawing the card…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:374
+#: src/share/SharePanel.tsx:373
 msgid "End-of-game card"
 msgstr ""
 
-#: src/share/SharePanel.tsx:387
+#: src/share/SharePanel.tsx:386
 msgid "Cards come once a round has ended."
 msgstr ""
 
-#: src/share/SharePanel.tsx:405
+#: src/share/SharePanel.tsx:404
 msgid "Recording"
 msgstr ""
 
-#: src/share/SharePanel.tsx:406
+#: src/share/SharePanel.tsx:405
 msgid "Stop"
 msgstr ""
 
-#: src/share/cards.ts:203
+#: src/share/cards.ts:204
 msgid "Played on Open Battle"
 msgstr ""
 
-#: src/share/cards.ts:251
-#: src/share/cards.ts:315
+#: src/share/cards.ts:252
+#: src/share/cards.ts:316
 #: src/ui/Missions.tsx:125
 msgid "{vp} VP"
 msgstr ""
 
-#: src/share/cards.ts:251
+#: src/share/cards.ts:252
 msgid "{n} lost"
 msgid_plural "{n} lost"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/share/cards.ts:255
+#: src/share/cards.ts:256
 msgid "Decisive moment · {when}"
 msgstr ""
 
-#: src/share/cards.ts:256
+#: src/share/cards.ts:257
 msgid "Against all odds"
 msgstr ""
 
-#: src/share/cards.ts:285
+#: src/share/cards.ts:286
 msgid " to "
 msgstr ""
 
-#: src/share/cards.ts:287
+#: src/share/cards.ts:288
 msgid "Draw, {score}"
 msgstr ""
 
-#: src/share/cards.ts:287
+#: src/share/cards.ts:288
 msgid "Draw on losses: {score}"
 msgstr ""
 
-#: src/share/cards.ts:290
+#: src/share/cards.ts:291
 msgid "{side} wins {score}"
 msgstr ""
 
-#: src/share/cards.ts:291
+#: src/share/cards.ts:292
 msgid "{side} wins on losses: {score}"
 msgstr ""
 
-#: src/share/cards.ts:324
+#: src/share/cards.ts:325
 msgid "+{n} VP this round"
 msgstr ""
 
-#: src/share/cards.ts:325
+#: src/share/cards.ts:326
 #: src/ui/RoundCard.tsx:114
 #: src/ui/gameLog.ts:1151
 msgid "{n} model lost"
@@ -3151,21 +3151,21 @@ msgid_plural "{n} models lost"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/share/cards.ts:325
+#: src/share/cards.ts:326
 #: src/ui/RoundCard.tsx:60
 #: src/ui/gameLog.ts:435
 msgid "no losses"
 msgstr ""
 
-#: src/share/cards.ts:326
+#: src/share/cards.ts:327
 msgid "wiped out: {units}"
 msgstr ""
 
-#: src/share/cards.ts:334
+#: src/share/cards.ts:335
 msgid "What happened"
 msgstr ""
 
-#: src/share/page.ts:16
+#: src/share/page.ts:17
 msgid "Making the replay page needs a connection."
 msgstr ""
 
@@ -3440,7 +3440,7 @@ msgstr ""
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:555
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:381
+#: src/ui/SystemPanels.tsx:373
 #: src/ui/TemplateTools.tsx:114
 msgid "Remove"
 msgstr ""
@@ -3463,7 +3463,7 @@ msgid "This game's table from above"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:99
-#: src/workshop/Workshop.tsx:263
+#: src/workshop/Workshop.tsx:264
 msgid "Table"
 msgstr ""
 
@@ -3471,18 +3471,18 @@ msgstr ""
 msgid "The table from above"
 msgstr ""
 
-#: src/tables/actions.ts:73
-#: src/tables/actions.ts:90
+#: src/tables/actions.ts:65
+#: src/tables/actions.ts:82
 msgid "That file isn't an Open Battle table."
 msgstr ""
 
 #: src/tables/library.ts:101
-#: src/ui/TerrainPanel.tsx:389
+#: src/ui/TerrainPanel.tsx:388
 msgid "Long edges ({depth}\")"
 msgstr ""
 
 #: src/tables/library.ts:103
-#: src/ui/TerrainPanel.tsx:390
+#: src/ui/TerrainPanel.tsx:389
 msgid "Short edges ({width}\")"
 msgstr ""
 
@@ -3709,8 +3709,8 @@ msgid "Models in the front rank"
 msgstr ""
 
 #: src/ui/ArmyImport.tsx:309
-#: src/ui/RegimentPanel.tsx:96
-#: src/ui/RegimentPanel.tsx:333
+#: src/ui/RegimentPanel.tsx:95
+#: src/ui/RegimentPanel.tsx:334
 msgid "Frontage"
 msgstr ""
 
@@ -3740,8 +3740,8 @@ msgid "Deploy as a loose spread instead of a block"
 msgstr ""
 
 #: src/ui/ArmyImport.tsx:381
-#: src/ui/RegimentPanel.tsx:25
-#: src/workshop/Workshop.tsx:49
+#: src/ui/RegimentPanel.tsx:26
+#: src/workshop/Workshop.tsx:50
 msgid "Skirmish"
 msgstr ""
 
@@ -3880,7 +3880,7 @@ msgid "({points} pts; units {units})"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:103
-#: src/ui/SystemPanels.tsx:843
+#: src/ui/SystemPanels.tsx:835
 msgid "Target…"
 msgstr ""
 
@@ -3889,12 +3889,12 @@ msgid "{unit} ({distance}\", out of range)"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:856
+#: src/ui/SystemPanels.tsx:848
 msgid "Click a target on the table…"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:856
+#: src/ui/SystemPanels.tsx:848
 msgid "Pick on table"
 msgstr ""
 
@@ -4119,7 +4119,7 @@ msgid "{n} unsaved"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:395
-#: src/ui/SystemPanels.tsx:1062
+#: src/ui/SystemPanels.tsx:1054
 msgid "The computer is rolling…"
 msgstr ""
 
@@ -4141,8 +4141,8 @@ msgstr ""
 
 #: src/ui/AttackPanel.tsx:430
 #: src/ui/Coach.tsx:87
-#: src/ui/SystemPanels.tsx:1073
-#: src/ui/TerrainPanel.tsx:186
+#: src/ui/SystemPanels.tsx:1065
+#: src/ui/TerrainPanel.tsx:185
 msgid "Done"
 msgstr ""
 
@@ -4193,7 +4193,7 @@ msgid "Defender: click a model to put it first."
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:96
-#: src/ui/SystemPanels.tsx:838
+#: src/ui/SystemPanels.tsx:830
 msgid "at"
 msgstr ""
 
@@ -4483,7 +4483,7 @@ msgid "Battle time limit"
 msgstr ""
 
 #: src/ui/Clocks.tsx:263
-#: src/ui/TerrainPanel.tsx:391
+#: src/ui/TerrainPanel.tsx:390
 msgid "None"
 msgstr ""
 
@@ -4728,7 +4728,7 @@ msgid "{name}'s dice"
 msgstr ""
 
 #: src/ui/DicePicker.tsx:59
-#: src/ui/Hud.tsx:202
+#: src/ui/Hud.tsx:203
 #: src/ui/StatsScreen.tsx:207
 msgid "Dice"
 msgstr ""
@@ -4760,7 +4760,7 @@ msgstr ""
 
 #: src/ui/DiceTray.tsx:350
 #: src/ui/StatsScreen.tsx:152
-#: src/ui/stakes.ts:93
+#: src/ui/stakes.ts:94
 msgid "Slain"
 msgstr ""
 
@@ -4772,35 +4772,35 @@ msgstr ""
 msgid "Click to continue"
 msgstr ""
 
-#: src/ui/Feedback.tsx:11
+#: src/ui/Feedback.tsx:12
 msgid "What was fun?"
 msgstr ""
 
-#: src/ui/Feedback.tsx:12
+#: src/ui/Feedback.tsx:13
 msgid "What was confusing or slow?"
 msgstr ""
 
-#: src/ui/Feedback.tsx:13
+#: src/ui/Feedback.tsx:14
 msgid "Anything broken?"
 msgstr ""
 
-#: src/ui/Feedback.tsx:46
+#: src/ui/Feedback.tsx:47
 msgid "How was it?"
 msgstr ""
 
-#: src/ui/Feedback.tsx:47
+#: src/ui/Feedback.tsx:48
 msgid "Optional, saved as a file on this device"
 msgstr ""
 
-#: src/ui/Feedback.tsx:49
+#: src/ui/Feedback.tsx:50
 msgid "Overall, out of 5"
 msgstr ""
 
-#: src/ui/Feedback.tsx:60
+#: src/ui/Feedback.tsx:61
 msgid "out of 5"
 msgstr ""
 
-#: src/ui/Feedback.tsx:76
+#: src/ui/Feedback.tsx:77
 msgid "Saved ✓"
 msgstr ""
 
@@ -4887,7 +4887,7 @@ msgid "+1 to save"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:37
-#: src/ui/SystemPanels.tsx:258
+#: src/ui/SystemPanels.tsx:250
 #: src/ui/UnitCard.tsx:350
 msgid "Line of sight"
 msgstr ""
@@ -4958,172 +4958,172 @@ msgid "Other units' models don't block line of sight."
 msgstr ""
 
 #: src/ui/Hud.tsx:100
+msgid "Play by mail: you play your side; send your file when you're done."
+msgstr ""
+
+#: src/ui/Hud.tsx:101
 msgid "Hotseat: you control both sides."
 msgstr ""
 
-#: src/ui/Hud.tsx:103
+#: src/ui/Hud.tsx:104
 msgid "Spectating."
 msgstr ""
 
-#: src/ui/Hud.tsx:108
+#: src/ui/Hud.tsx:109
 msgid "3D view"
 msgstr ""
 
-#: src/ui/Hud.tsx:108
+#: src/ui/Hud.tsx:109
 msgid "Top-down view"
 msgstr ""
 
-#: src/ui/Hud.tsx:110
+#: src/ui/Hud.tsx:111
 #: src/ui/Keys.tsx:24
 msgid "Home"
 msgstr ""
 
-#: src/ui/Hud.tsx:111
+#: src/ui/Hud.tsx:112
 msgid "Reset view"
 msgstr ""
 
-#: src/ui/Hud.tsx:116
+#: src/ui/Hud.tsx:117
 msgid "Drag between models or points to measure; both players see it (M)"
 msgstr ""
 
-#: src/ui/Hud.tsx:119
+#: src/ui/Hud.tsx:120
 msgid "Ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:124
+#: src/ui/Hud.tsx:125
 msgid "Clear the ruler (Esc)"
 msgstr ""
 
-#: src/ui/Hud.tsx:127
+#: src/ui/Hud.tsx:128
 msgid "Clear ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:131
+#: src/ui/Hud.tsx:132
 msgid "Unit names"
 msgstr ""
 
-#: src/ui/Hud.tsx:134
+#: src/ui/Hud.tsx:135
 msgid "X-ray terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:138
+#: src/ui/Hud.tsx:139
 msgid "Shorter dice rolls in the tray"
 msgstr ""
 
-#: src/ui/Hud.tsx:141
+#: src/ui/Hud.tsx:142
 #: src/ui/TopBar.tsx:522
 msgid "Fast dice"
 msgstr ""
 
-#: src/ui/Hud.tsx:145
+#: src/ui/Hud.tsx:146
 msgid "Camera follows the action: moves, shots and charges"
 msgstr ""
 
-#: src/ui/Hud.tsx:148
+#: src/ui/Hud.tsx:149
 msgid "Follow action"
 msgstr ""
 
-#: src/ui/Hud.tsx:158
+#: src/ui/Hud.tsx:159
 msgid "The battle has started. Unlock the terrain? Every change shows in the log."
 msgstr ""
 
-#: src/ui/Hud.tsx:164
+#: src/ui/Hud.tsx:165
 msgid "Unlock terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:164
-#: src/ui/TerrainPanel.tsx:185
+#: src/ui/Hud.tsx:165
+#: src/ui/TerrainPanel.tsx:184
 msgid "Edit terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:236
+#: src/ui/Hud.tsx:237
 #: src/ui/ReplayBar.tsx:292
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
-#: src/ui/Hud.tsx:237
+#: src/ui/Hud.tsx:238
 msgid "Review this game"
 msgstr ""
 
-#: src/ui/Hud.tsx:268
+#: src/ui/Hud.tsx:269
 msgid "Take back {what}"
 msgstr ""
 
-#: src/ui/Hud.tsx:269
+#: src/ui/Hud.tsx:270
 msgid "Take back your last action"
 msgstr ""
 
-#: src/ui/Hud.tsx:281
+#: src/ui/Hud.tsx:282
 msgid "Undo"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "three"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "four"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "five"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "six"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "seven"
 msgstr ""
 
-#: src/ui/Hud.tsx:338
+#: src/ui/Hud.tsx:337
 msgid "eight"
 msgstr ""
 
-#: src/ui/Hud.tsx:341
+#: src/ui/Hud.tsx:340
 msgid "Both players are here."
 msgstr ""
 
-#: src/ui/Hud.tsx:342
+#: src/ui/Hud.tsx:341
 msgid "All {count} seats are taken."
 msgstr ""
 
-#: src/ui/Hud.tsx:368
+#: src/ui/Hud.tsx:367
 msgid "You're {name}. What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:378
+#: src/ui/Hud.tsx:377
 msgid "Use this name"
 msgstr ""
 
-#: src/ui/Hud.tsx:405
+#: src/ui/Hud.tsx:404
 msgid "This game is already under way. Rejoining?"
 msgstr ""
 
-#: src/ui/Hud.tsx:412
+#: src/ui/Hud.tsx:411
 msgid "Rejoin as {name}"
 msgstr ""
 
-#: src/ui/Hud.tsx:419
+#: src/ui/Hud.tsx:418
 #: src/ui/Lobby.tsx:332
 msgid "Watch"
 msgstr ""
 
-#: src/ui/Hud.tsx:77
+#: src/ui/Hud.tsx:78
 msgid "☰ Menu"
 msgstr ""
 
-#: src/ui/Hud.tsx:92
+#: src/ui/Hud.tsx:93
 msgid "Lesson: the computer plays the other side."
 msgstr ""
 
-#: src/ui/Hud.tsx:94
+#: src/ui/Hud.tsx:95
 msgid "You play the near side; {name} plays the far side ({level})."
-msgstr ""
-
-#: src/ui/Hud.tsx:99
-msgid "Play by mail: you play your side; send your file when you're done."
 msgstr ""
 
 #: src/ui/Keys.tsx:10
@@ -5472,7 +5472,7 @@ msgstr ""
 #: src/ui/Missions.tsx:132
 #: src/ui/Missions.tsx:147
 #: src/ui/Missions.tsx:272
-#: src/ui/SystemPanels.tsx:1041
+#: src/ui/SystemPanels.tsx:1033
 #: src/ui/TopBar.tsx:292
 msgid "Pass"
 msgstr ""
@@ -5553,40 +5553,40 @@ msgstr ""
 msgid "None (score by hand)"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:32
+#: src/ui/NetBanner.tsx:33
 msgid "Host disconnected: waiting for it, or for a new host…"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:39
+#: src/ui/NetBanner.tsx:40
 msgid "Your table doesn't match the host's (since \"{since}\")."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:40
+#: src/ui/NetBanner.tsx:41
 msgid "Your table doesn't match the host's."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:42
+#: src/ui/NetBanner.tsx:43
 msgid "Your table doesn't match {name}'s (since \"{since}\")."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:43
+#: src/ui/NetBanner.tsx:44
 msgid "Your table doesn't match {name}'s."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:45
+#: src/ui/NetBanner.tsx:46
 msgid "Resync from host"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:48
+#: src/ui/NetBanner.tsx:49
 #: src/ui/SavedNote.tsx:82
 msgid "Report a problem"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:63
+#: src/ui/NetBanner.tsx:64
 msgid "Waiting for someone to take {names} ·"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:73
+#: src/ui/NetBanner.tsx:74
 msgid "{names} reconnecting…"
 msgstr ""
 
@@ -6075,7 +6075,7 @@ msgstr ""
 msgid "No abilities flagged for this phase."
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:124
+#: src/ui/RegimentPanel.tsx:123
 msgid "Form a block"
 msgstr ""
 
@@ -6083,253 +6083,253 @@ msgstr ""
 msgid "Half rate: costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:170
+#: src/ui/RegimentPanel.tsx:171
 msgid "Single model"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:170
+#: src/ui/RegimentPanel.tsx:171
 msgid "Regiment"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:173
+#: src/ui/RegimentPanel.tsx:174
 msgid "Unit strength {strength}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:177
+#: src/ui/RegimentPanel.tsx:178
 msgid "{files} wide · {n} rank. Casualties come off the rear rank."
 msgid_plural "{files} wide · {n} ranks. Casualties come off the rear rank."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:187
+#: src/ui/RegimentPanel.tsx:188
 msgid "{files} wide · {n} rank · unit strength {strength}"
 msgid_plural "{files} wide · {n} ranks · unit strength {strength}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:193
+#: src/ui/RegimentPanel.tsx:194
 msgid "rank bonus +{bonus}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:194
+#: src/ui/RegimentPanel.tsx:195
 msgid "disrupted"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:197
+#: src/ui/RegimentPanel.tsx:198
 msgid "Ranks count from {width} wide. Front to rear: {alive} models; the rear rank has {rear} of {files}. Casualties come off the rear rank."
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:207
+#: src/ui/RegimentPanel.tsx:208
 msgid "Formation"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:22
-msgid "Close order"
-msgstr ""
-
-#: src/ui/RegimentPanel.tsx:223
+#: src/ui/RegimentPanel.tsx:224
 msgid "Disrupted units lose their rank bonus"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:226
+#: src/ui/RegimentPanel.tsx:227
 msgid "Disrupted"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:23
-msgid "Column"
+msgid "Close order"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:232
+#: src/ui/RegimentPanel.tsx:233
 msgid "Show front, flank and rear arcs"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:234
+#: src/ui/RegimentPanel.tsx:235
 msgid "Arcs"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:24
+msgid "Column"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:25
 msgid "Open order"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:250
+#: src/ui/RegimentPanel.tsx:251
 msgid "Move up to {distance} now:"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:252
+#: src/ui/RegimentPanel.tsx:253
 msgid "Forward {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:254
+#: src/ui/RegimentPanel.tsx:255
 msgid "or drag, wheel or turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:262
+#: src/ui/RegimentPanel.tsx:263
 msgid "Inches to move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:269
+#: src/ui/RegimentPanel.tsx:270
 msgid "Forward"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:274
+#: src/ui/RegimentPanel.tsx:275
 msgid "Sideways left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:277
+#: src/ui/RegimentPanel.tsx:278
 msgid "Sideways right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:280
+#: src/ui/RegimentPanel.tsx:281
 msgid "A march is double Movement, straight ahead"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:286
+#: src/ui/RegimentPanel.tsx:287
 msgid "March"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:29
-msgid "same way"
-msgstr ""
-
-#: src/ui/RegimentPanel.tsx:293
+#: src/ui/RegimentPanel.tsx:294
 msgid "Degrees to wheel"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:30
-#: src/ui/gameLog.ts:1230
-msgid "left"
+msgid "same way"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:303
+#: src/ui/RegimentPanel.tsx:304
 msgid "Wheel left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:306
+#: src/ui/RegimentPanel.tsx:307
 msgid "Wheel right"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:31
-#: src/ui/gameLog.ts:1226
-msgid "right"
+#: src/ui/gameLog.ts:1230
+msgid "left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:312
-#: src/ui/RegimentPanel.tsx:318
-#: src/ui/RegimentPanel.tsx:324
+#: src/ui/RegimentPanel.tsx:313
+#: src/ui/RegimentPanel.tsx:319
+#: src/ui/RegimentPanel.tsx:325
 msgid "Costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:315
+#: src/ui/RegimentPanel.tsx:316
 msgid "Turn left"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:32
-msgid "about"
+#: src/ui/gameLog.ts:1226
+msgid "right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:321
+#: src/ui/RegimentPanel.tsx:322
 msgid "Turn right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:327
+#: src/ui/RegimentPanel.tsx:328
 msgid "About face"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:344
+#: src/ui/RegimentPanel.tsx:33
+msgid "about"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:345
 msgid "facing"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:346
+#: src/ui/RegimentPanel.tsx:347
 msgid "Facing after reforming"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:361
+#: src/ui/RegimentPanel.tsx:362
 msgid "Add or remove up to {max} models from the front rank; free before moving (Drilled)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:367
+#: src/ui/RegimentPanel.tsx:368
 msgid "Add or remove up to {max} models from the front rank; costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:377
+#: src/ui/RegimentPanel.tsx:378
 msgid "Redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:381
+#: src/ui/RegimentPanel.tsx:382
 msgid "Rebuild the block around its centre; costs all its move ({distance})"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:390
+#: src/ui/RegimentPanel.tsx:391
 msgid "Reform"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:395
+#: src/ui/RegimentPanel.tsx:396
 msgid "Marching blocks may only move straight ahead and wheel."
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:423
+#: src/ui/RegimentPanel.tsx:424
 msgid "Off the table"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:434
+#: src/ui/RegimentPanel.tsx:435
 msgid "Moved {used}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:436
+#: src/ui/RegimentPanel.tsx:437
 msgid "Moved {used} of {allowed} (marching)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:437
+#: src/ui/RegimentPanel.tsx:438
 msgid "Moved {used} of {allowed}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:438
+#: src/ui/RegimentPanel.tsx:439
 msgid "over its move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:444
+#: src/ui/RegimentPanel.tsx:445
 msgid "{n} manoeuvre this move ({list}): only one is allowed"
 msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:455
+#: src/ui/RegimentPanel.tsx:456
 msgid "{piece}: -{n} Movement"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:459
+#: src/ui/RegimentPanel.tsx:460
 msgid "a marching block may only move ahead and wheel"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:461
+#: src/ui/RegimentPanel.tsx:462
 msgid "failed its march test: normal move, counts as marched"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:469
+#: src/ui/RegimentPanel.tsx:470
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:484
+#: src/ui/RegimentPanel.tsx:485
 msgid "back"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:486
+#: src/ui/RegimentPanel.tsx:487
 msgid "sideways"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:488
+#: src/ui/RegimentPanel.tsx:489
 msgid "turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:490
+#: src/ui/RegimentPanel.tsx:491
 msgid "redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:492
+#: src/ui/RegimentPanel.tsx:493
 msgid "reform"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:84
+#: src/ui/RegimentPanel.tsx:83
 msgid "Skirmishing"
 msgstr ""
 
@@ -6728,7 +6728,7 @@ msgid "Dice that passed (hits, wounds, saves made)"
 msgstr ""
 
 #: src/ui/StatsScreen.tsx:208
-#: src/ui/stakes.ts:72
+#: src/ui/stakes.ts:73
 msgid "Passed"
 msgstr ""
 
@@ -6766,351 +6766,351 @@ msgstr ""
 msgid "Dice against the odds"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1003
-msgid "can't succeed"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:101
-msgid "Spent: {items}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:1049
-msgid "Unit destroyed"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:1068
-msgid "Roll {step}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:1093
-msgid "rolled {dice}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:110
+#: src/ui/SystemPanels.tsx:103
 msgid "(spent)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1107
+#: src/ui/SystemPanels.tsx:1041
+msgid "Unit destroyed"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:1060
+msgid "Roll {step}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:1085
+msgid "rolled {dice}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:1099
 msgid "{successes} of {count} saved"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1108
+#: src/ui/SystemPanels.tsx:1100
 msgid "{successes} of {count} succeed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1138
+#: src/ui/SystemPanels.tsx:1130
 #: src/ui/gameLog.ts:260
 #: src/ui/gameLog.ts:1085
 msgid "A unit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1151
+#: src/ui/SystemPanels.tsx:1143
 msgid "{unit}: {action} at {target}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1158
+#: src/ui/SystemPanels.tsx:1150
 msgid "is reacting to {what}."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1159
+#: src/ui/SystemPanels.tsx:1151
 msgid "Take its action, then finish the reaction."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1159
+#: src/ui/SystemPanels.tsx:1151
 msgid "Waiting on {name}."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1164
+#: src/ui/SystemPanels.tsx:1156
 msgid "react to {what}?"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1181
+#: src/ui/SystemPanels.tsx:1173
 msgid "Don't react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1187
+#: src/ui/SystemPanels.tsx:1179
 msgid "Waiting on {name} to decide whether to react."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1192
+#: src/ui/SystemPanels.tsx:1184
 msgid "{unit}'s {weapon} is prepared: check whether {actor} is within its range of {range}."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1218
+#: src/ui/SystemPanels.tsx:1210
 msgid "Has had its go this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1222
+#: src/ui/SystemPanels.tsx:1214
 msgid "It moved on the table and does nothing else: its go is over"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1225
+#: src/ui/SystemPanels.tsx:1217
 msgid "Moved only: end its go"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:162
+#: src/ui/SystemPanels.tsx:154
 msgid "Charged {distance}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:165
+#: src/ui/SystemPanels.tsx:157
 #: src/ui/UnitCard.tsx:194
 msgid "Selected unit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:176
+#: src/ui/SystemPanels.tsx:168
 msgid "{alive}/{n} model"
 msgid_plural "{alive}/{n} bases"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:195
+#: src/ui/SystemPanels.tsx:187
 msgid "Click to clear"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:213
+#: src/ui/SystemPanels.tsx:205
 msgid "Click to end this spell"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:214
+#: src/ui/SystemPanels.tsx:206
 msgid "Click when the token is used or lost"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:222
+#: src/ui/SystemPanels.tsx:214
 msgid "{weapon} prepared"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:227
+#: src/ui/SystemPanels.tsx:219
 msgid "In reserve"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:229
+#: src/ui/SystemPanels.tsx:221
 msgid "Interacting"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:244
+#: src/ui/SystemPanels.tsx:236
 msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:260
+#: src/ui/SystemPanels.tsx:252
 #: src/ui/UnitCard.tsx:352
 msgid "Model's eye view"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:263
+#: src/ui/SystemPanels.tsx:255
 #: src/ui/UnitCard.tsx:269
 msgid "Rotate left (Q)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:266
+#: src/ui/SystemPanels.tsx:258
 #: src/ui/UnitCard.tsx:272
 msgid "Rotate right (E)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:293
+#: src/ui/SystemPanels.tsx:285
 msgid "{value} on the card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:351
+#: src/ui/SystemPanels.tsx:343
 msgid "Bases"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:358
+#: src/ui/SystemPanels.tsx:350
 msgid "removed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:381
+#: src/ui/SystemPanels.tsx:373
 msgid "Return"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:448
+#: src/ui/SystemPanels.tsx:440
 msgid "Waiting for {name} to react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:462
+#: src/ui/SystemPanels.tsx:454
 msgid "Reacting: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:466
+#: src/ui/SystemPanels.tsx:458
 msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:480
+#: src/ui/SystemPanels.tsx:472
 #: src/ui/TopBar.tsx:274
 msgid "End this activation; the other player goes next"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:486
+#: src/ui/SystemPanels.tsx:478
 #: src/ui/TopBar.tsx:280
 msgid "End activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:499
+#: src/ui/SystemPanels.tsx:491
 msgid "Costs {cost}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:522
+#: src/ui/SystemPanels.tsx:514
 msgid "Hover a greyed-out action for its reason."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:528
+#: src/ui/SystemPanels.tsx:520
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:563
+#: src/ui/SystemPanels.tsx:555
 msgid "with {n}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:571
-#: src/ui/SystemPanels.tsx:1202
-msgid "Finish reaction"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:592
-msgid "Put a token on it: its effects last while the token stays"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:63
+#: src/ui/SystemPanels.tsx:56
 msgid "uses {faces}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:63
+#: src/ui/SystemPanels.tsx:56
 msgid "a {face}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:633
+#: src/ui/SystemPanels.tsx:563
+#: src/ui/SystemPanels.tsx:1194
+msgid "Finish reaction"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:584
+msgid "Put a token on it: its effects last while the token stays"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:625
 msgid "Placed on its AD slots: spent when it's used"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:634
+#: src/ui/SystemPanels.tsx:626
 msgid "On card:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:645
+#: src/ui/SystemPanels.tsx:637
 msgid "Place:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:650
+#: src/ui/SystemPanels.tsx:642
 msgid "Put a {face} from your Ready dice on this card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:665
+#: src/ui/SystemPanels.tsx:657
 msgid "Discard"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:697
+#: src/ui/SystemPanels.tsx:689
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:698
+#: src/ui/SystemPanels.tsx:690
 msgid "Pay with this die"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:719
+#: src/ui/SystemPanels.tsx:711
 msgid "inside minimum range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:720
+#: src/ui/SystemPanels.tsx:712
 msgid "out of range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:720
+#: src/ui/SystemPanels.tsx:712
 msgid "long range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:721
-#: src/ui/SystemPanels.tsx:881
+#: src/ui/SystemPanels.tsx:713
+#: src/ui/SystemPanels.tsx:873
 msgid "can't hit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:751
+#: src/ui/SystemPanels.tsx:743
 msgid "Rear charge: every {step} test fails"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:752
+#: src/ui/SystemPanels.tsx:744
 msgid "Every {step} test fails"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:847
+#: src/ui/SystemPanels.tsx:839
 msgid "not visible"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:876
+#: src/ui/SystemPanels.tsx:868
 msgid "Pick a target first: from the list, or on the table."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:880
-msgid "{reason}: no roll can succeed."
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:892
-msgid "Pick a target first"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:909
-msgid "anyway"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:913
-msgid "Distances in {units} ({scale}\" each)."
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:914
-msgid "inches"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:94
+#: src/ui/SystemPanels.tsx:87
 msgid "Abilities"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:943
+#: src/ui/SystemPanels.tsx:872
+msgid "{reason}: no roll can succeed."
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:884
+msgid "Pick a target first"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:901
+msgid "anyway"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:905
+msgid "Distances in {units} ({scale}\" each)."
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:906
+msgid "inches"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:935
 msgid "{count} dice ({why})"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:944
-#: src/ui/SystemPanels.tsx:1088
+#: src/ui/SystemPanels.tsx:936
+#: src/ui/SystemPanels.tsx:1080
 msgid "{count} dice"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:945
+#: src/ui/SystemPanels.tsx:937
 msgid "{amount} each"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:947
+#: src/ui/SystemPanels.tsx:939
 msgid "skipped"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:950
+#: src/ui/SystemPanels.tsx:94
+msgid "Spent: {items}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:942
 msgid "keep highest"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:950
+#: src/ui/SystemPanels.tsx:942
 msgid "keep lowest"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:955
+#: src/ui/SystemPanels.tsx:947
 msgid "no save"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:957
+#: src/ui/SystemPanels.tsx:949
 msgid "{dice}: every test fails"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:958
+#: src/ui/SystemPanels.tsx:950
 msgid "{dice}: can't succeed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:962
+#: src/ui/SystemPanels.tsx:954
 msgid "vs each hit roll"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:965
+#: src/ui/SystemPanels.tsx:957
 msgid "{target} or less"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:998
+#: src/ui/SystemPanels.tsx:990
 msgid "no save possible"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:995
+msgid "can't succeed"
 msgstr ""
 
 #: src/ui/TableWarnings.tsx:111
@@ -7242,186 +7242,186 @@ msgstr ""
 msgid "Roll the scatter and artillery dice and move it"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:108
+#: src/ui/TerrainPanel.tsx:107
 msgid "Now {size} (scale {scale}×)."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:110
+#: src/ui/TerrainPanel.tsx:109
 msgid "Came in at {size}: the file was read as inches."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:111
+#: src/ui/TerrainPanel.tsx:110
 msgid "Came in at {size}: the file was read as millimetres."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:112
+#: src/ui/TerrainPanel.tsx:111
 msgid "That's figure-sized for terrain."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:113
+#: src/ui/TerrainPanel.tsx:112
 msgid "That's bigger than most terrain."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:118
+#: src/ui/TerrainPanel.tsx:117
 msgid "Make it 6\" across"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:126
+#: src/ui/TerrainPanel.tsx:125
 msgid "As it came in"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:189
+#: src/ui/TerrainPanel.tsx:188
 msgid "Drag terrain and objectives on the table. Q / E rotate the selected piece, Delete removes it. Shift-click pieces to group them."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:196
+#: src/ui/TerrainPanel.tsx:195
 msgid "Every change is made to the piece's twin across the table centre too, so both halves stay the same"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:205
+#: src/ui/TerrainPanel.tsx:204
 msgid "Symmetry"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:207
+#: src/ui/TerrainPanel.tsx:206
 msgid "Pieces land on the half inch and turn in 15° steps"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:213
+#: src/ui/TerrainPanel.tsx:212
 msgid "Snap"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:218
+#: src/ui/TerrainPanel.tsx:217
 msgid "{n} piece has no twin"
 msgid_plural "{n} pieces have no twin"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/TerrainPanel.tsx:223
+#: src/ui/TerrainPanel.tsx:222
 msgid "Ungroup ({count})"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:233
+#: src/ui/TerrainPanel.tsx:232
 msgid "A .glb, .gltf, .stl, .obj or .ply terrain model"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:234
+#: src/ui/TerrainPanel.tsx:233
 msgid "+ From 3D model"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:264
+#: src/ui/TerrainPanel.tsx:263
 msgid "Category"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:279
+#: src/ui/TerrainPanel.tsx:278
 msgid "Sight"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:284
+#: src/ui/TerrainPanel.tsx:283
 msgid "Open: no effect"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:285
+#: src/ui/TerrainPanel.tsx:284
 msgid "Obscuring: gives cover"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:286
+#: src/ui/TerrainPanel.tsx:285
 msgid "Blocking: blocks sight"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:291
+#: src/ui/TerrainPanel.tsx:290
 msgid "Blocks sight by"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:296
+#: src/ui/TerrainPanel.tsx:295
 msgid "Game setting"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:297
+#: src/ui/TerrainPanel.tsx:296
 msgid "Its shape"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:298
-#: src/ui/TerrainPanel.tsx:304
+#: src/ui/TerrainPanel.tsx:297
+#: src/ui/TerrainPanel.tsx:303
 msgid "Stand-in height"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:316
+#: src/ui/TerrainPanel.tsx:315
 msgid "Replace this piece's shape with a terrain model"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:317
+#: src/ui/TerrainPanel.tsx:316
 msgid "Change 3D model"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:317
+#: src/ui/TerrainPanel.tsx:316
 msgid "Use 3D model"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:328
+#: src/ui/TerrainPanel.tsx:327
 msgid "Scale the model; its footprint and line-of-sight shape follow"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:329
+#: src/ui/TerrainPanel.tsx:328
 msgid "Scale"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:353
+#: src/ui/TerrainPanel.tsx:352
 msgid "Duplicate the group ({count})"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:353
+#: src/ui/TerrainPanel.tsx:352
 msgid "Duplicate"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:358
+#: src/ui/TerrainPanel.tsx:357
 msgid "Add the same piece across the table centre"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:361
+#: src/ui/TerrainPanel.tsx:360
 msgid "Give it a twin"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:365
+#: src/ui/TerrainPanel.tsx:364
 msgid "Delete the group ({count})"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:370
+#: src/ui/TerrainPanel.tsx:369
 msgid "Click a piece to select it."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:402
+#: src/ui/TerrainPanel.tsx:401
 msgid "Standard table"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:408
+#: src/ui/TerrainPanel.tsx:407
 msgid "Clear terrain"
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:422
+#: src/ui/TerrainPanel.tsx:421
 msgid "Cover for {kinds} in or touching it."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:423
+#: src/ui/TerrainPanel.tsx:422
 msgid "Cover in or touching it."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:425
+#: src/ui/TerrainPanel.tsx:424
 msgid "Blocks sight."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:426
+#: src/ui/TerrainPanel.tsx:425
 msgid "Gives cover when between shooter and target."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:427
+#: src/ui/TerrainPanel.tsx:426
 msgid "Impassable."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:428
+#: src/ui/TerrainPanel.tsx:427
 msgid "No effect."
 msgstr ""
 
-#: src/ui/TerrainPanel.tsx:96
+#: src/ui/TerrainPanel.tsx:95
 msgid "{width} × {depth}, {height} tall"
 msgstr ""
 
@@ -9119,44 +9119,44 @@ msgid_plural "{unit} lost {n} models"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/shelfActions.ts:96
-#: src/ui/shelfActions.ts:99
+#: src/ui/shelfActions.ts:88
+#: src/ui/shelfActions.ts:91
 msgid "That file isn't an Open Battle army."
 msgstr ""
 
-#: src/ui/stakes.ts:54
+#: src/ui/stakes.ts:55
 msgid "Charge!"
 msgstr ""
 
-#: src/ui/stakes.ts:54
+#: src/ui/stakes.ts:55
 msgid "Short"
 msgstr ""
 
-#: src/ui/stakes.ts:55
+#: src/ui/stakes.ts:56
 msgid "{reach}, needed {need} to reach {unit}"
 msgstr ""
 
-#: src/ui/stakes.ts:69
+#: src/ui/stakes.ts:70
 msgid "{n} or less"
 msgstr ""
 
-#: src/ui/stakes.ts:72
+#: src/ui/stakes.ts:73
 msgid "Failed"
 msgstr ""
 
-#: src/ui/stakes.ts:73
+#: src/ui/stakes.ts:74
 msgid "{test}: {total}, needed {need}"
 msgstr ""
 
-#: src/ui/stakes.ts:93
+#: src/ui/stakes.ts:94
 msgid "Saved"
 msgstr ""
 
-#: src/ui/stakes.ts:93
+#: src/ui/stakes.ts:94
 msgid "Wounded"
 msgstr ""
 
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:95
 msgid "{unit}, saving on {need}+: rolled {dice}"
 msgstr ""
 
@@ -9305,301 +9305,301 @@ msgstr ""
 msgid "No microphone was found."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:118
+#: src/workshop/Workshop.tsx:119
 msgid "Delete this draft? This can't be undone."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:131
+#: src/workshop/Workshop.tsx:132
 msgid "Opened from {url}. Read it before you test it: saving runs its code in the sandbox."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:165
+#: src/workshop/Workshop.tsx:166
 msgid "Not saved: the code doesn't parse at line {line}, column {column}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:172
-#: src/workshop/Workshop.tsx:177
+#: src/workshop/Workshop.tsx:173
+#: src/workshop/Workshop.tsx:178
 msgid "Not saved: your rules didn't load: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:201
+#: src/workshop/Workshop.tsx:202
 msgid "Saved. Nothing changed for the test table."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:208
+#: src/workshop/Workshop.tsx:209
 msgid "Saved, but your rules didn't load on the test table: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:215
+#: src/workshop/Workshop.tsx:216
 msgid "Saved and reloaded. The sample armies, missions or table changed: restart the test table to play with them."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:218
+#: src/workshop/Workshop.tsx:219
 msgid "Saved and reloaded onto the test table."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:221
+#: src/workshop/Workshop.tsx:222
 msgid "Saved."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:228
+#: src/workshop/Workshop.tsx:229
 msgid "Workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:237
-#: src/workshop/Workshop.tsx:240
+#: src/workshop/Workshop.tsx:238
+#: src/workshop/Workshop.tsx:241
 msgid "Module workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:243
+#: src/workshop/Workshop.tsx:244
 msgid "Draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:251
+#: src/workshop/Workshop.tsx:252
 msgid "Untitled draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:261
+#: src/workshop/Workshop.tsx:262
 msgid "Fold the workshop to the side"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:266
+#: src/workshop/Workshop.tsx:267
 msgid "Close the workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:276
+#: src/workshop/Workshop.tsx:277
 msgid "Save (Ctrl+S)"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:283
+#: src/workshop/Workshop.tsx:284
 msgid "Check the types, load it, and let a bot play two rounds"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:285
+#: src/workshop/Workshop.tsx:286
 msgid "Checking…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:285
+#: src/workshop/Workshop.tsx:286
 msgid "Check"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:288
+#: src/workshop/Workshop.tsx:289
 msgid "New draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:305
+#: src/workshop/Workshop.tsx:306
 msgid "Loading the editor…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:310
+#: src/workshop/Workshop.tsx:311
 msgid "The package's code"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:319
-#: src/workshop/Workshop.tsx:577
+#: src/workshop/Workshop.tsx:320
+#: src/workshop/Workshop.tsx:578
 msgid "Test table"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:320
+#: src/workshop/Workshop.tsx:321
 msgid "Soak bot"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:322
+#: src/workshop/Workshop.tsx:323
 msgid "SDK"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:349
+#: src/workshop/Workshop.tsx:350
 msgid "Write a whole game as one JavaScript file: its rules as data, with code where data won't do. Start from a template; the test table plays it as you go."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:370
+#: src/workshop/Workshop.tsx:371
 msgid "Open from a link"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:384
+#: src/workshop/Workshop.tsx:385
 msgid "Community modules"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:388
-#: src/workshop/Workshop.tsx:780
+#: src/workshop/Workshop.tsx:389
+#: src/workshop/Workshop.tsx:777
 msgid "How packages work"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:406
+#: src/workshop/Workshop.tsx:407
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:408
+#: src/workshop/Workshop.tsx:409
 msgid "That link answered {status}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:410
+#: src/workshop/Workshop.tsx:411
 msgid "That's too big for a module."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:412
+#: src/workshop/Workshop.tsx:413
 msgid "That isn't a rules package: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:429
+#: src/workshop/Workshop.tsx:430
 msgid "Checking: types, loading, then a short bot game…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:431
+#: src/workshop/Workshop.tsx:432
 msgid "Ready to share: nothing wrong found."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:432
+#: src/workshop/Workshop.tsx:433
 msgid "Not ready yet: {summary}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:450
+#: src/workshop/Workshop.tsx:451
 msgid "The draft has changed since: check again."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:470
+#: src/workshop/Workshop.tsx:471
 msgid "Problems"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:50
+#: src/workshop/Workshop.tsx:51
 msgid "Model by model: move, then fight."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:517
+#: src/workshop/Workshop.tsx:518
 msgid "the rules stopped"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:55
+#: src/workshop/Workshop.tsx:56
 msgid "Ranked"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:56
+#: src/workshop/Workshop.tsx:57
 msgid "Regiment blocks that wheel and clash."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:577
+#: src/workshop/Workshop.tsx:578
 msgid "Setting up…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:577
+#: src/workshop/Workshop.tsx:578
 msgid "Restart the test table"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:602
+#: src/workshop/Workshop.tsx:603
 msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:61
-msgid "Alternating activations"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:611
+#: src/workshop/Workshop.tsx:612
 msgid "Your rules are running."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:613
+#: src/workshop/Workshop.tsx:614
 msgid "Starting your rules…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:614
+#: src/workshop/Workshop.tsx:615
 msgid "Your rules aren't running."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:619
+#: src/workshop/Workshop.tsx:62
+msgid "Alternating activations"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:620
 msgid "{n} table warning"
 msgid_plural "{n} table warnings"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/workshop/Workshop.tsx:62
-msgid "Players take turns activating one unit each."
-msgstr ""
-
-#: src/workshop/Workshop.tsx:622
+#: src/workshop/Workshop.tsx:623
 msgid "Dice and log"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:645
+#: src/workshop/Workshop.tsx:63
+msgid "Players take turns activating one unit each."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:646
 msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:650
+#: src/workshop/Workshop.tsx:651
 msgid "Playing…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:650
+#: src/workshop/Workshop.tsx:651
 msgid "Play 3 bot games"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:657
+#: src/workshop/Workshop.tsx:658
 msgid "Game {seed}: fine, played to the end in {steps} moves."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:661
+#: src/workshop/Workshop.tsx:662
 msgid "Game {seed}: fine for {steps} moves, stopped in round {round}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:666
+#: src/workshop/Workshop.tsx:667
 msgid "Game {seed} went wrong: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:68
+#: src/workshop/Workshop.tsx:69
 msgid "A finished game of ours to take apart: four warbands, three missions."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:705
+#: src/workshop/Workshop.tsx:702
 msgid "{name} {version}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:714
+#: src/workshop/Workshop.tsx:711
 msgid "Download the package"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:717
+#: src/workshop/Workshop.tsx:714
 msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:721
+#: src/workshop/Workshop.tsx:718
 msgid "Share it in the gallery"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:723
+#: src/workshop/Workshop.tsx:720
 msgid "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button)."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:728
+#: src/workshop/Workshop.tsx:725
 msgid "Where the file is hosted (a raw link)"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:740
+#: src/workshop/Workshop.tsx:737
 msgid "Copied"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:740
+#: src/workshop/Workshop.tsx:737
 msgid "Copy the pull request text"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:743
+#: src/workshop/Workshop.tsx:740
 msgid "Edit the gallery on GitHub"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:774
+#: src/workshop/Workshop.tsx:771
 msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:775
+#: src/workshop/Workshop.tsx:772
 msgid "Commands a rule yields (ctx.)"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:776
+#: src/workshop/Workshop.tsx:773
 msgid "The game as it stands (view.)"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:777
+#: src/workshop/Workshop.tsx:774
 msgid "Keys and snippets"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:784
+#: src/workshop/Workshop.tsx:781
 msgid "The full types"
 msgstr ""
 

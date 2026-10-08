@@ -10,8 +10,3 @@ export function siteUrl(): string {
   if (!protocol.startsWith("http") || /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(hostname)) return PUBLIC;
   return `${host}${pathname.replace(/[^/]*$/, "")}`.replace(/\/$/, "");
 }
-
-/** A game's name for sharing: "(draft)" marks a system still being built inside the app, not for a post. */
-export function plainSystemName(name: string): string {
-  return name.replace(/\s*\(draft\)\s*$/i, "");
-}

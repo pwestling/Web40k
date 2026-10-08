@@ -49,7 +49,7 @@ let fallbackId: string | undefined;
 export const ownNote = (note: ReplayNote) => !note.author || note.author === deviceId();
 
 /** A note being written at a moment, before it's saved. */
-export interface NoteDraft {
+interface NoteDraft {
   seq: number;
   text: string;
   marks: NoteMark[];

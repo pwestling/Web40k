@@ -9,7 +9,7 @@ import { entryKey, parsePo } from "./po";
  * language. Game text (unit names, rules) comes from players' packages and is
  * never translated here. See docs/translating.md.
  */
-export interface Language {
+interface Language {
   id: string;
   /** The language's name in itself. */
   name: string;
@@ -35,7 +35,7 @@ let messages = new Map<string, string[]>();
 let rules = new Intl.PluralRules("en");
 
 /** The language chosen on this device, else the browser's first one we have, else English. */
-export function preferredLanguage(): string {
+function preferredLanguage(): string {
   let saved: string | null = null;
   try {
     saved = localStorage.getItem(KEY);

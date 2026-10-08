@@ -1,6 +1,7 @@
+import { isAlive } from "../../core/units";
 import { unitCentre } from "../../core/manoeuvre";
 import { blockFrame, formBlock } from "../../core/regiment";
-import type { GameState, Unit } from "../../core/types";
+import type { Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView } from "../../sdk";
 
 /**
@@ -17,14 +18,11 @@ const JOIN_RANGE = 3;
 
 const isCharacter = (u: Unit | undefined) => !!u?.sheet?.keywords.includes("Character");
 
-const alive = (state: GameState, u: Unit) =>
-  u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
-
 function regimentsNear(view: GameView, unitId: string): { u: Unit; d: number }[] {
   const me = view.state.units[unitId];
   if (!me) return [];
   return Object.values(view.state.units)
-    .filter((u) => u.owner === me.owner && u.id !== me.id && !isCharacter(u) && alive(view.state, u))
+    .filter((u) => u.owner === me.owner && u.id !== me.id && !isCharacter(u) && isAlive(view.state, u))
     .map((u) => ({ u, d: view.distance(me.id, u.id) }))
     .filter((x) => x.d <= JOIN_RANGE)
     .sort((a, b) => a.d - b.d);

@@ -1,3 +1,4 @@
+import { aliveModels } from "../../core/units";
 /**
  * 40k mechanics as code, for the first playable slice. These read the
  * characteristics a player imported (nothing here ships stats or rules
@@ -30,26 +31,20 @@ import { opposed, sidePlayers } from "../../core/teams";
 
 /** 11th edition values, from the research notes. */
 export const ENGAGEMENT_RANGE = 2;
-export const COHERENCY_NEAR = 2;
-export const COHERENCY_FAR = 9;
+const COHERENCY_NEAR = 2;
+const COHERENCY_FAR = 9;
 /** Vertical distance allowed for engagement and coherency. */
-export const VERTICAL_TOLERANCE = 5;
+const VERTICAL_TOLERANCE = 5;
 export const OBJECTIVE_RANGE = 3;
 export const OBJECTIVE_MARKER_MM = 40;
+
+export { aliveModels };
 
 /** "3+" → 3, '6"' → 6, "-1" → -1, "N/A" → null. */
 export function num(text: string | undefined): number | null {
   if (text === undefined) return null;
   const m = /-?\d+/.exec(text);
   return m ? Number(m[0]) : null;
-}
-
-export function aliveModels(state: GameState, unit: Unit | undefined): Model[] {
-  if (!unit) return [];
-  return unit.modelIds.flatMap((id) => {
-    const m = state.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
 }
 
 /** Closest base-to-base distance from one model to any model of a unit. */
@@ -65,7 +60,7 @@ export function unitDistance(a: Model[], b: Model[]): number {
   return best;
 }
 
-export function hasKeyword(keywords: string[], name: string): boolean {
+function hasKeyword(keywords: string[], name: string): boolean {
   const n = name.toLowerCase();
   return keywords.some((k) => k.trim().toLowerCase() === n);
 }
@@ -322,7 +317,7 @@ export function unitSight(state: GameState, shooters: Model[], targetUnit: Unit)
 }
 
 /** The rules of a terrain category; categories from other games count as exposed. */
-export function categoryRule(category: TerrainCategory) {
+function categoryRule(category: TerrainCategory) {
   return CATEGORY_RULES[category as keyof typeof CATEGORY_RULES] ?? CATEGORY_RULES.exposed;
 }
 

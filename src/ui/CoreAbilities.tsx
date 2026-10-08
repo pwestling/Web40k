@@ -1,3 +1,4 @@
+import { lengthText } from "./distance";
 import { lookupRules, unitView } from "../core/content/runtime";
 import { systemOf } from "../core/content/turn";
 import { inchesPerUnit } from "../core/content/runtime";
@@ -33,8 +34,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
   const system = systemOf(game);
   const anyReserve = system.reserves;
   const away = anyReserve ? anyReserve.distance * inchesPerUnit(system) : 9;
-  const unitName = typeof system.units === "object" ? system.units.name : '"';
-  const awayText = anyReserve ? `${anyReserve.distance} ${unitName}` : '9"';
+  const awayText = lengthText(system, away);
   const scouts = has("scouts");
   const scoutInches = Number(scouts?.param.x ?? 6);
   const enemies = Object.values(game.units).filter((u) => opposed(game, u.owner, unit.owner));
@@ -87,7 +87,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
             ? t("Arrived from reserves: within {distance} of an enemy ({actual}).", {
                 distance: awayText,
                 actual: anyReserve
-                  ? `${formatNumber(nearest / inchesPerUnit(system), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unitName}`
+                  ? lengthText(system, nearest)
                   : `${formatNumber(nearest, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}"`,
               })
             : t("Arrived from reserves: set up more than {distance} from enemies.", { distance: awayText })}
@@ -115,7 +115,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
 }
 
 /** Unit names listed by a Leader ability ("can be attached to the following units: ..."). */
-export function leaderOf(unit: Unit): string[] {
+function leaderOf(unit: Unit): string[] {
   const text = unit.sheet?.abilities.find((a) => /^leader\b/i.test(a.name))?.text ?? "";
   const list = text.split(/following units?:/i)[1];
   if (!list) return [];

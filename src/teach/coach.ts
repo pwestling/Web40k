@@ -25,7 +25,7 @@ export interface Progress {
 const NO_FACTS: Facts = { roll: 0, slain: 0, lost: 0, target: "", engaged: 0 };
 
 /** How many of a seat's units stand in contact with (within 1" of) an enemy unit. */
-export function engagedUnits(state: GameState, seat: number): number {
+function engagedUnits(state: GameState, seat: number): number {
   const seatOf = (owner: string) => state.players[owner]?.seat;
   const units = Object.values(state.units).filter((u) => aliveModels(state, u).length && !u.status?.reserves);
   return units.filter(
@@ -41,7 +41,7 @@ export function engagedUnits(state: GameState, seat: number): number {
 }
 
 /** What the learner's side did and suffered since `from` (see Facts). */
-export function factsSince(record: GameRecord, state: GameState, from: number, you: number): Facts {
+function factsSince(record: GameRecord, state: GameState, from: number, you: number): Facts {
   const learners = new Set(sidePlayers(state, you).map((p) => p.id));
   const undone = undoneSeqs(record);
   const before = stateAt(record, from);

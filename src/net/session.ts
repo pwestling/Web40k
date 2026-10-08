@@ -43,7 +43,7 @@ const KEEP_CHECKS = 32;
  * router returns how to resolve one there, or null to resolve it here. The
  * host draws a seed from its rng for the sandbox's dice.
  */
-export type IntentRouter = (
+type IntentRouter = (
   intent: Intent,
   from: string,
   state: GameState,
@@ -55,7 +55,7 @@ export function setIntentRouter(r: IntentRouter | null): void {
   router = r;
 }
 
-export interface SessionOptions {
+interface SessionOptions {
   transport: Transport;
   role: Role;
   onChange: (state: GameState, record: GameRecord) => void;
@@ -84,7 +84,7 @@ export interface SessionOptions {
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
-export function tailOf(record: GameRecord, seq = lastSeq(record)): string {
+function tailOf(record: GameRecord, seq = lastSeq(record)): string {
   const e = record.events.find((x) => x.seq === seq);
   return e ? `${e.seq}:${e.at}:${e.by}:${e.event.type}` : "";
 }

@@ -15,7 +15,7 @@ const isGeneral = (u: Unit) =>
 const hasStandard = (game: GameState, u: Unit) =>
   u.modelIds.some((id) => STANDARD.test(game.models[id]?.profile?.name ?? game.models[id]?.label ?? ""));
 
-export const fieldOfGlory: Mission = {
+const fieldOfGlory: Mission = {
   id: "field-of-glory",
   name: "Field of Glory (sample)",
   summary:

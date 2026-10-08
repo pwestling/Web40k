@@ -11,6 +11,7 @@ export * from "./checksum";
 export * from "./dice";
 export * from "./attack";
 export * from "./terrain";
+export * from "./units";
 export * from "./los";
 export * from "./ruler";
 export {

@@ -1,10 +1,10 @@
+import { safeFileName, saveJson } from "../ui/files";
 import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import type { Layout, TableSource } from "../core";
 import { t } from "../i18n";
 import { useStore } from "../store";
-import { download } from "../ui/report";
 import {
   layoutAssets,
   readTable,
@@ -41,14 +41,6 @@ export async function applyLayout(layout: Layout, source?: TableSource): Promise
     .dispatch(source ? { type: "layout/set", layout, source } : { type: "layout/set", layout });
 }
 
-const fileName = (name: string) =>
-  `${
-    name
-      .replace(/[^\w\- ]+/g, "")
-      .trim()
-      .replace(/\s+/g, "-") || "table"
-  }.table.json`;
-
 /** Download a table as a file, with its terrain models, to pass on or keep. */
 export async function exportTable(table: SavedTable): Promise<string> {
   const { encodeAsset } = await import("../assets/codec");
@@ -58,7 +50,7 @@ export async function exportTable(table: SavedTable): Promise<string> {
     if (a) assets[id] = toBase64(await encodeAsset(a));
   }
   const file: TableFile = { ...table, attachments: { assets } };
-  return download(fileName(table.name), file);
+  return saveJson(safeFileName(table.name, "table", ".table.json"), file);
 }
 
 /**

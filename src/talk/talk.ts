@@ -40,7 +40,7 @@ interface TalkState {
   cue: { seq: number; kind: string; by: string; at: number } | null;
 }
 
-export interface Caster {
+interface Caster {
   name: string;
   color: string;
   target: [number, number, number];

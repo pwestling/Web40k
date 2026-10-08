@@ -12,7 +12,7 @@ import { withDuration } from "./webmDuration";
  * MediaRecorder. Game sounds and table talk can go in the clip's sound.
  */
 
-export interface ClipSound {
+interface ClipSound {
   /** Dice, bells and the room. */
   sounds: boolean;
   /** Table talk: this device's mic and each player's voice. */
@@ -31,7 +31,7 @@ const FPS = 30;
 const END_MS = 1500;
 
 /** What the clip ends on. */
-export interface ClipEnding {
+interface ClipEnding {
   title: string;
   line?: string;
   url: string;

@@ -57,7 +57,7 @@ export function fit(entry: FigureEntry, unit: string): number {
 }
 
 /** Below this, a figure isn't suggested for a unit. */
-export const SUGGEST = 0.5;
+const SUGGEST = 0.5;
 
 /** Library figures for a unit, best first. */
 export function suggestions(entries: FigureEntry[], unit: string, limit = 5): FigureEntry[] {

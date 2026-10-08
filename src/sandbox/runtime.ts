@@ -334,7 +334,7 @@ export function sandboxBotMove(
 }
 
 /** A bot's move as the sandbox sends it (soak/bot.ts BotMove). */
-export interface BotMoveData {
+interface BotMoveData {
   intent: import("../core").Intent;
   as: string;
   kind: string;

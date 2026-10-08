@@ -2,7 +2,8 @@ import { useState } from "react";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { APP_BUILD } from "../version";
-import { download, stamp } from "./report";
+import { stamp } from "./report";
+import { saveJson } from "./files";
 import { SavedNote } from "./SavedNote";
 import { DEFAULT_SYSTEM } from "../core";
 
@@ -27,7 +28,7 @@ export function FeedbackCard() {
   if (!players) return null;
   const save = () => {
     const { game, record, mode } = useStore.getState();
-    const file = download(`open-battle-feedback-${stamp()}.json`, {
+    const file = saveJson(`open-battle-feedback-${stamp()}.json`, {
       format: "open-battle/feedback@1",
       at: new Date().toISOString(),
       build: APP_BUILD,

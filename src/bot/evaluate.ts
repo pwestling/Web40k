@@ -86,7 +86,7 @@ export function rangeOf(state: GameState, u: Unit): number {
 }
 
 /** A unit's full worth: its points, or its models' wounds (a module can say otherwise). */
-export function unitWorth(state: GameState, u: Unit, tuning?: BotTuning): number {
+function unitWorth(state: GameState, u: Unit, tuning?: BotTuning): number {
   if (tuning?.unitValue) return tuning.unitValue(state, u);
   const pts = u.sheet?.points;
   if (pts && pts > 0) return pts;
@@ -94,7 +94,7 @@ export function unitWorth(state: GameState, u: Unit, tuning?: BotTuning): number
 }
 
 /** The share of a unit still standing, by wounds left. */
-export function health(state: GameState, u: Unit): number {
+function health(state: GameState, u: Unit): number {
   let left = 0;
   let all = 0;
   for (const id of u.modelIds) {

@@ -24,14 +24,6 @@ export function useLiveGame(): GameState {
   return useMemo(() => (scrub === null ? game : stateAt(record, scrub)), [game, record, scrub]);
 }
 
-/** The last event shown: the scrubber's, else the newest one the dice tray has let through. */
-export function useShownSeq(): number {
-  const record = useStore((s) => s.record);
-  const scrub = useStore((s) => s.scrub);
-  const held = useHold((s) => s.held);
-  return scrub ?? (held !== null ? held - 1 : (record.events.at(-1)?.seq ?? record.initial.seq));
-}
-
 /** This browser's seat, or the active seat in hotseat; spectators see seat 0's side. */
 export function useSelfSeat(): number {
   const selfId = useStore((s) => s.session?.selfId);

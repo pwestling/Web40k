@@ -62,22 +62,6 @@ export function figureProxy(mesh: MeshData): FigureProxy {
   return { height: round(height), bands };
 }
 
-/**
- * Sight bands for a model wearing this figure, as `Model.bands` wants them:
- * inches above the bottom of the base, with the figure standing on a base
- * `baseTop` thick and scaled by `scale`.
- */
-export function sightBands(figure: FigureProxy, scale: number, baseTop: number, baseRadius: number) {
-  return [
-    { r: round(baseRadius), z0: 0, z1: baseTop },
-    ...figure.bands.map((b) => ({
-      r: round(b.r * scale),
-      z0: round(baseTop + b.z0 * scale),
-      z1: round(baseTop + b.z1 * scale),
-    })),
-  ];
-}
-
 /** A y-up mesh as a flat z-up triangle list (x right, y forward, z up), for `TerrainPiece.hull`. */
 export function hullTris(mesh: MeshData): number[] {
   const out: number[] = [];
@@ -87,7 +71,7 @@ export function hullTris(mesh: MeshData): number[] {
 }
 
 /** Most boxes a terrain piece's proxy may have. */
-export const MAX_BOXES = 32;
+const MAX_BOXES = 32;
 
 /**
  * Approximate a terrain mesh with at most `maxBoxes` axis-aligned boxes:

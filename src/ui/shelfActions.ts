@@ -1,3 +1,4 @@
+import { safeFileName, saveJson } from "./files";
 import { create } from "zustand";
 import type { PlayerId } from "../core";
 import { fromBase64, toBase64 } from "../assets/base64";
@@ -14,7 +15,6 @@ import {
 import { t } from "../i18n";
 import { useStore } from "../store";
 import type { ImportedRoster } from "../systems/wh40k/roster";
-import { download } from "./report";
 
 /** What each player deployed in this game, so it can go on the shelf (and from which shelf entry). */
 export const useDeployed = create<
@@ -67,14 +67,6 @@ export async function dressFromShelf(army: SavedArmy, owner: PlayerId, prefix: s
   }
 }
 
-const fileName = (name: string) =>
-  `${
-    name
-      .replace(/[^\w\- ]+/g, "")
-      .trim()
-      .replace(/\s+/g, "-") || "army"
-  }.army.json`;
-
 /** Download an army as a file, with its figures, to pass on or keep. */
 export async function exportArmy(army: SavedArmy): Promise<string> {
   const { encodeAsset } = await import("../assets/codec");
@@ -84,7 +76,7 @@ export async function exportArmy(army: SavedArmy): Promise<string> {
     if (a) assets[id] = toBase64(await encodeAsset(a));
   }
   const file: ArmyFile = { ...army, attachments: { assets } };
-  return download(fileName(army.name), file);
+  return saveJson(safeFileName(army.name, "army", ".army.json"), file);
 }
 
 /** Read an army file onto the shelf; its figures go into this device's cache. */

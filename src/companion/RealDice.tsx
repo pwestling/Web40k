@@ -26,7 +26,7 @@ export const useOwnDice = create<{ own: boolean; set: (own: boolean) => void }>(
 }));
 
 /** Only a table companion game offers real dice: on the 3D table the dice roll on screen. */
-export function useCompanion(): boolean {
+function useCompanion(): boolean {
   return useStore((s) => !!s.game.settings.companion);
 }
 

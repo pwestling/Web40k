@@ -27,9 +27,9 @@ export function importTowRoster(fileName: string, data: Uint8Array): Promise<Imp
 }
 
 /** Ability groups on the unit card. */
-export const MOUNT_GROUP = "Mount and crew";
+const MOUNT_GROUP = "Mount and crew";
 export const ITEM_GROUP = "Magic items and options";
-export const RULE_GROUP = "Special rules";
+const RULE_GROUP = "Special rules";
 
 /** Unit Strength per model by troop type (the rulebook's Troop Type table, via tow.whfb.app). */
 const UNIT_STRENGTH: [RegExp, number | "W"][] = [
@@ -51,7 +51,7 @@ export function unitStrengthFor(troop: string | undefined, wounds: string | unde
   return Number.isFinite(w) && w > 0 ? w : null;
 }
 
-export const TOW_STATS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"] as const;
+const TOW_STATS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"] as const;
 
 const STAT_KEYS: Record<string, string> = {
   M: "M",
@@ -117,7 +117,7 @@ function collect(force: RForce, out: RNode[]): void {
   for (const f of force.forces) collect(f, out);
 }
 
-export function extractTowUnits(roster: RRoster, warnings: string[]): ImportedUnit[] {
+function extractTowUnits(roster: RRoster, warnings: string[]): ImportedUnit[] {
   const sels: RNode[] = [];
   for (const f of roster.forces) collect(f, sels);
   return sels.map((s) => extractUnit(s, warnings));
@@ -195,7 +195,7 @@ function baseIn(sel: RNode): BaseShape | undefined {
 }
 
 /** A sensible default base by troop type; players can change it on import. */
-export function baseForTroop(troop: string | undefined): BaseShape {
+function baseForTroop(troop: string | undefined): BaseShape {
   const t = troop ?? "";
   const rect = (w: number, d: number): BaseShape => ({ shape: "rect", widthMm: w, depthMm: d });
   if (/heavy infantry/i.test(t)) return rect(25, 25);

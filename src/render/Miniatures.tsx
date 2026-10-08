@@ -24,13 +24,13 @@ import { toLinear } from "../assets/paint";
 import type { ModelAsset } from "../assets/types";
 
 /** Top of the plastic base the figure stands on (see ModelInstances). */
-export const BASE_TOP = 0.2;
+const BASE_TOP = 0.2;
 
 /**
  * On-screen height in pixels above which a figure gets each level. Below the
  * last threshold it gets the coarsest level.
  */
-export const LOD_PIXELS = [220, 70];
+const LOD_PIXELS = [220, 70];
 
 const CREASE = (40 * Math.PI) / 180;
 
@@ -206,10 +206,6 @@ export function useAssetLook(asset: ModelAsset): Look {
     };
   }, [asset]);
   return look;
-}
-
-export function useAssetGeometries(asset: ModelAsset): BufferGeometry[] {
-  return useAssetLook(asset).geometries;
 }
 
 const m4 = new Matrix4();

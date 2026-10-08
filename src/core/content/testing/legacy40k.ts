@@ -122,14 +122,14 @@ function allocateDamage(state: GameState, attack: AttackState, rng: Rng): Damage
 }
 
 /** "3+" → 3, '6"' → 6, "-1" → -1, "N/A" → null. */
-export function num(text: string | undefined): number | null {
+function num(text: string | undefined): number | null {
   if (text === undefined) return null;
   const m = /-?\d+/.exec(text);
   return m ? Number(m[0]) : null;
 }
 
 /** A weapon keyword with its parameter, e.g. "Sustained Hits 2" → 2. */
-export function keywordValue(weapon: WeaponProfile, name: string): number | null {
+function keywordValue(weapon: WeaponProfile, name: string): number | null {
   const re = new RegExp(`^${name}\\s*(D?\\d+)?`, "i");
   for (const k of weapon.keywords) {
     const m = re.exec(k.trim());
@@ -138,13 +138,13 @@ export function keywordValue(weapon: WeaponProfile, name: string): number | null
   return null;
 }
 
-export function hasKeyword(keywords: string[], name: string): boolean {
+function hasKeyword(keywords: string[], name: string): boolean {
   const n = name.toLowerCase();
   return keywords.some((k) => k.trim().toLowerCase() === n);
 }
 
 /** "Anti-Infantry 4+" against a target with that keyword → 4. */
-export function antiValue(weapon: WeaponProfile, targetKeywords: string[]): number | null {
+function antiValue(weapon: WeaponProfile, targetKeywords: string[]): number | null {
   let best: number | null = null;
   for (const k of weapon.keywords) {
     const m = /^anti-(.+?)\s+(\d)\+?$/i.exec(k.trim());
@@ -154,7 +154,7 @@ export function antiValue(weapon: WeaponProfile, targetKeywords: string[]): numb
 }
 
 /** S vs T: double or more 2+, more 3+, equal 4+, less 5+, half or less 6+. */
-export function woundTarget(s: number, t: number): number {
+function woundTarget(s: number, t: number): number {
   if (s >= 2 * t) return 2;
   if (s > t) return 3;
   if (s === t) return 4;
@@ -163,7 +163,7 @@ export function woundTarget(s: number, t: number): number {
 }
 
 /** Invulnerable save from the INV characteristic or an ability that names one. */
-export function invulnerable(model: Model, unit: Unit): number | null {
+function invulnerable(model: Model, unit: Unit): number | null {
   const inv = num(model.profile?.chars.INV);
   if (inv) return inv;
   for (const a of unit.sheet?.abilities ?? []) {
@@ -175,7 +175,7 @@ export function invulnerable(model: Model, unit: Unit): number | null {
   return null;
 }
 
-export function feelNoPain(unit: Unit): number | null {
+function feelNoPain(unit: Unit): number | null {
   for (const a of unit.sheet?.abilities ?? []) {
     const m = /feel no pain\s*(\d)\+/i.exec(`${a.name} ${a.text}`);
     if (m) return Number(m[1]);

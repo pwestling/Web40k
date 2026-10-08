@@ -1,3 +1,4 @@
+import { inchText } from "./distance";
 import { unitGap, type GameState, type TrayRoll, type Unit } from "../core";
 import { systemModule } from "../systems";
 import { aliveModels } from "../systems/wh40k/rules";
@@ -53,8 +54,8 @@ export function stakesOf(roll: TrayRoll, before: GameState, after: GameState): S
       good: made,
       big: made ? t("Charge!") : t("Short"),
       small: t("{reach}, needed {need} to reach {unit}", {
-        reach: fmt(ranked ? reach : total),
-        need: fmt(ranked ? gap : need),
+        reach: inchText(ranked ? reach : total),
+        need: inchText(ranked ? gap : need),
         unit: target.name,
       }),
     };
@@ -137,5 +138,3 @@ export function atLeastMax(n: number, sides: number, need: number): number {
   if (k > sides) return 0;
   return 1 - ((k - 1) / sides) ** n;
 }
-
-const fmt = (n: number) => `${Number(n.toFixed(1))}"`;

@@ -21,9 +21,9 @@ import { t, tn } from "../i18n";
  * read from the game state, so an undo puts a model back on the table.
  */
 
-export const FALL_MS = 350;
-export const REST_MS = 600;
-export const FADE_MS = 300;
+const FALL_MS = 350;
+const REST_MS = 600;
+const FADE_MS = 300;
 export const TOPPLE_MS = FALL_MS + REST_MS + FADE_MS;
 const PER_ROW = 14;
 const MAX_SHOWN = 60;
@@ -52,7 +52,7 @@ function fallen(game: GameState, owner: string): Model[] {
  * table edge, from the middle of it outwards (clear of the side panels), the
  * first row nearest the table.
  */
-export function pileSlot(game: GameState, owner: string, i: number): Vec2 {
+function pileSlot(game: GameState, owner: string, i: number): Vec2 {
   const side = sideOf(game, owner);
   const k = Math.min(i, MAX_SHOWN - 1);
   const row = Math.floor(k / PER_ROW);

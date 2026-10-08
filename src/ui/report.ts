@@ -1,3 +1,4 @@
+import { saveJson } from "./files";
 import { create } from "zustand";
 import { DEFAULT_SYSTEM } from "../core";
 import { useLibrary } from "../packages/library";
@@ -108,7 +109,7 @@ async function netStats(): Promise<unknown> {
 }
 
 /** The whole report as a replay file. */
-export async function buildReport(error?: ProblemReport["error"]): Promise<ReportFile> {
+async function buildReport(error?: ProblemReport["error"]): Promise<ReportFile> {
   const { record, game, role, mode, session } = useStore.getState();
   const library = useLibrary.getState().packages;
   const report: ProblemReport = {
@@ -142,24 +143,12 @@ export async function buildReport(error?: ProblemReport["error"]): Promise<Repor
   return { ...file, report };
 }
 
-/** Download a report (or any JSON) as a file; returns its name. */
-export function download(name: string, data: unknown): string {
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  return name;
-}
-
 /** To the second, so two files made in the same minute don't share a name (UX 171). */
 const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
 
 /** Build the report and download it; returns the file's name. */
 export async function reportProblem(error?: ProblemReport["error"]): Promise<string> {
-  return download(`open-battle-report-${stamp()}.json`, await buildReport(error));
+  return saveJson(`open-battle-report-${stamp()}.json`, await buildReport(error));
 }
 
 export { stamp };

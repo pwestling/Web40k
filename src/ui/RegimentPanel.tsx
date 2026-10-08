@@ -1,3 +1,4 @@
+import { inchText } from "./distance";
 import { useState } from "react";
 import {
   blockFrame,
@@ -31,8 +32,6 @@ const facings = (): { label: string; turn: number }[] => [
   { label: t("right"), turn: -Math.PI / 2 },
   { label: t("about"), turn: Math.PI },
 ];
-
-const fmt = (n: number) => `${Number(n.toFixed(1))}"`;
 
 /**
  * Manoeuvres for a regiment block (rank-and-flank games): move straight
@@ -140,7 +139,9 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
   const freeRedress = summary.drilled && used < 0.05 && manoeuvres.length === 0;
   const redressDistance = freeRedress ? 0 : cost(summary.redressCost);
   const slowTitle =
-    summary.slow > 1 ? t("Half rate: costs {distance}", { distance: fmt(ahead * summary.slow) }) : undefined;
+    summary.slow > 1
+      ? t("Half rate: costs {distance}", { distance: inchText(ahead * summary.slow) })
+      : undefined;
   const redress =
     facing === 0 && frontage !== summary.files && Math.abs(frontage - summary.files) <= summary.redressMax;
 
@@ -247,9 +248,9 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
       )}
       {mine && toGo > 0.05 && (
         <div className="row">
-          <span>{t("Move up to {distance} now:", { distance: fmt(toGo) })}</span>
+          <span>{t("Move up to {distance} now:", { distance: inchText(toGo) })}</span>
           <button className="primary" onClick={() => dispatch(forwardMove(frame, unit.id, toGo), as)}>
-            {t("Forward {distance}", { distance: fmt(toGo) })}
+            {t("Forward {distance}", { distance: inchText(toGo) })}
           </button>
           <span className="muted small">{t("or drag, wheel or turn")}</span>
         </div>
@@ -305,23 +306,23 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             <button onClick={() => dispatch(wheelMove(frame, unit.id, (degrees * Math.PI) / 180), as)}>
               {t("Wheel right")}
             </button>
-            <span className="muted small">{fmt(wheelCost)}</span>
+            <span className="muted small">{inchText(wheelCost)}</span>
           </div>
           <div className="row">
             <button
-              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost)) })}
+              title={t("Costs {distance}", { distance: inchText(cost(summary.turnCost)) })}
               onClick={() => form(summary.ranks, Math.PI / 2, "turn", cost(summary.turnCost))}
             >
               {t("Turn left")}
             </button>
             <button
-              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost)) })}
+              title={t("Costs {distance}", { distance: inchText(cost(summary.turnCost)) })}
               onClick={() => form(summary.ranks, -Math.PI / 2, "turn", cost(summary.turnCost))}
             >
               {t("Turn right")}
             </button>
             <button
-              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost * 2)) })}
+              title={t("Costs {distance}", { distance: inchText(cost(summary.turnCost * 2)) })}
               onClick={() => form(summary.files, Math.PI, "turn", cost(summary.turnCost * 2))}
             >
               {t("About face")}
@@ -366,7 +367,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
                         )
                       : t("Add or remove up to {max} models from the front rank; costs {distance}", {
                           max: summary.redressMax,
-                          distance: fmt(redressDistance),
+                          distance: inchText(redressDistance),
                         })
                   }
                   onClick={() => {
@@ -379,7 +380,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               )}
               <button
                 title={t("Rebuild the block around its centre; costs all its move ({distance})", {
-                  distance: fmt(cost(summary.reformCost)),
+                  distance: inchText(cost(summary.reformCost)),
                 })}
                 onClick={() => {
                   form(frontage, facings()[facing]!.turn, "reform", cost(summary.reformCost));
@@ -431,10 +432,10 @@ function MovedLine({
   return (
     <p className={over || marchNear || off || tooMany || marchManoeuvre ? "warn" : "muted"}>
       {allowed === null
-        ? t("Moved {used}", { used: fmt(used) })
+        ? t("Moved {used}", { used: inchText(used) })
         : marching
-          ? t("Moved {used} of {allowed} (marching)", { used: fmt(used), allowed: fmt(allowed) })
-          : t("Moved {used} of {allowed}", { used: fmt(used), allowed: fmt(allowed) })}
+          ? t("Moved {used} of {allowed} (marching)", { used: inchText(used), allowed: inchText(allowed) })
+          : t("Moved {used} of {allowed}", { used: inchText(used), allowed: inchText(allowed) })}
       {over ? <> · {t("over its move")}</> : ""}
       {off ? <> · {t("off the table")}</> : ""}
       {tooMany ? (

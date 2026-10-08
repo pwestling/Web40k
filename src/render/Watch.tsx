@@ -1,3 +1,4 @@
+import { aliveModels, centreAbove } from "../core/units";
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -36,13 +37,13 @@ import { opposed } from "../core/teams";
 
 const TWEEN_MS = 350;
 /** A charge move is quicker and speeds up into contact, then holds a moment before the blow lands (PX-3c). */
-export const CHARGE_TWEEN_MS = 250;
+const CHARGE_TWEEN_MS = 250;
 const HIT_STOP_MS = 60;
 /** How long a trail takes to fade once another unit moves. */
 const TRAIL_FADE_MS = 700;
 const EFFECT_MS = 1600;
 
-export interface Trail {
+interface Trail {
   id: string;
   from: Vec2;
   to: Vec2;
@@ -276,21 +277,6 @@ type Effect =
       text: string;
       tone: "hit" | "short" | "over";
     };
-
-const centre = (models: Model[]): { x: number; y: number; z: number } => {
-  const n = Math.max(1, models.length);
-  return {
-    x: models.reduce((a, m) => a + m.position.x, 0) / n,
-    y: models.reduce((a, m) => a + m.position.y, 0) / n,
-    z: Math.max(0, ...models.map((m) => (m.z ?? 0) + modelHeight(m))),
-  };
-};
-
-const alive = (g: GameState, unitId: string) =>
-  (g.units[unitId]?.modelIds ?? []).flatMap((id) => {
-    const m = g.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
 
 /** What the dice just did, in a few words, for the pop-up over the target. */
 function stageResult(a: AttackState): string | null {
@@ -534,10 +520,10 @@ function effectsFor(
 ): Effect[] {
   if (event.type === "attack/declare") {
     const s = event.attack.spec;
-    const shooters = alive(after, s.attackerUnitId).filter(
+    const shooters = aliveModels(after, after.units[s.attackerUnitId]).filter(
       (m) => !s.weaponId || !m.weapons || m.weapons.includes(s.weaponId),
     );
-    const targets = alive(after, s.targetUnitId);
+    const targets = aliveModels(after, after.units[s.targetUnitId]);
     if (!targets.length) return [];
     const points: number[] = [];
     for (const m of shooters.slice(0, 20)) {
@@ -561,11 +547,11 @@ function effectsFor(
   }
   if (event.type === "attack/roll") {
     const text = stageResult(event.attack);
-    const c = centre(alive(before, event.attack.spec.targetUnitId));
+    const c = centreAbove(aliveModels(before, before.units[event.attack.spec.targetUnitId]));
     return text ? [{ kind: "burst", key: `burst-${key}`, start: now, at: [c.x, c.z + 2.4, c.y], text }] : [];
   }
   if (event.type === "dice/roll" && event.roll.unitId) {
-    const c = centre(alive(after, event.roll.unitId));
+    const c = centreAbove(aliveModels(after, after.units[event.roll.unitId]));
     const total = event.roll.results.reduce((a, b) => a + b, 0);
     const label = event.roll.label ? `${event.roll.label} ` : "";
     return [
@@ -586,13 +572,13 @@ function focusFor(event: GameEvent | undefined, before: GameState, after: GameSt
   const ofModels = (ids: string[]): Focus | null => {
     const ms = ids.flatMap((id) => after.models[id] ?? []);
     if (!ms.length) return null;
-    const c = centre(ms);
+    const c = centreAbove(ms);
     const span = Math.max(4, ...ms.map((m) => 2 * Math.hypot(m.position.x - c.x, m.position.y - c.y)));
     return { ...c, span };
   };
   const pair = (attacker: string, target: string, state: GameState): Focus => {
-    const a = centre(alive(state, attacker));
-    const b = centre(alive(state, target));
+    const a = centreAbove(aliveModels(state, state.units[attacker]));
+    const b = centreAbove(aliveModels(state, state.units[target]));
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: 0, span: Math.hypot(a.x - b.x, a.y - b.y) + 4 };
   };
   switch (event.type) {
@@ -608,7 +594,9 @@ function focusFor(event: GameEvent | undefined, before: GameState, after: GameSt
     case "attack/roll":
       return pair(event.attack.spec.attackerUnitId, event.attack.spec.targetUnitId, before);
     case "dice/roll":
-      return event.roll.unitId ? ofModels(alive(after, event.roll.unitId).map((m) => m.id)) : null;
+      return event.roll.unitId
+        ? ofModels(aliveModels(after, after.units[event.roll.unitId]).map((m) => m.id))
+        : null;
     default:
       return null;
   }
@@ -621,7 +609,7 @@ function blowFrom(game: GameState, victim: Model | undefined): Vec2 | null {
   if (!victim) return null;
   const attacker = game.attack?.spec.attackerUnitId ?? game.procedure?.unitId;
   const unit = attacker ? game.units[attacker] : undefined;
-  const ms = unit ? alive(game, unit.id) : [];
+  const ms = unit ? aliveModels(game, game.units[unit.id]) : [];
   if (ms.length)
     return {
       x: ms.reduce((t, m) => t + m.position.x, 0) / ms.length,

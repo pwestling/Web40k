@@ -53,3 +53,8 @@ export const FRONT: Record<string, { title: string; blurb: string; army: string 
 export function systemLabel(id: string | undefined, name: string): string {
   return (id && FRONT[id]?.title) || name;
 }
+
+/** A game's name for players: "(draft)" marks a system still being built inside the app, not for a post or a list. */
+export function plainSystemName(name: string): string {
+  return name.replace(/\s*\(draft\)\s*$/i, "");
+}

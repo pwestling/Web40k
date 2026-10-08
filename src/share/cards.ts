@@ -4,7 +4,8 @@ import { t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import type { Highlight, RoundSummary } from "../ui/highlights";
 import { systemLabel } from "../ui/systemLabels";
-import { plainSystemName, siteUrl } from "./site";
+import { siteUrl } from "./site";
+import { plainSystemName } from "../ui/systemLabels";
 
 /**
  * Pictures to post (#46): the end-of-game card and a card for each round, as
@@ -15,7 +16,7 @@ import { plainSystemName, siteUrl } from "./site";
  * system gets them.
  */
 
-export const CARD = { width: 1200, height: 675 };
+const CARD = { width: 1200, height: 675 };
 
 const INK = "#f4f1ea";
 const MUTED = "#b9b4a8";
@@ -23,7 +24,7 @@ const GOLD = "#f5b942";
 const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 /** A side as the cards show it: its name and colour, its armies, its VP. */
-export interface Side {
+interface Side {
   name: string;
   color: string;
   armies: string[];
@@ -276,7 +277,7 @@ export function result(game: GameState): { title: string; line: string } {
  * The result, as people post it (PX share 1): "Player 1 wins 12–7", "Draw,
  * 3–3"; with no VP, on losses: "Player 1 wins on losses: 0 to 2".
  */
-export function headline(rows: Side[], scored: boolean, lost: (s: Side) => number): string {
+function headline(rows: Side[], scored: boolean, lost: (s: Side) => number): string {
   const score = (s: Side) => (scored ? s.vp : -lost(s));
   const order = [...rows].sort((a, b) => score(b) - score(a));
   const [first, second] = order;
@@ -349,15 +350,6 @@ export function pngOf(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no image"))), "image/png"),
   );
-}
-
-/** Save a file the browser's way. */
-export function saveFile(blob: Blob, name: string): void {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 }
 
 /** "open-battle-2026-10-08-1342": a file name for this moment. */

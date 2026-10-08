@@ -13,8 +13,6 @@ import { armyValue } from "./evaluate";
 import { missionOf, type Policy, type Seat } from "./policy";
 import { actingUnits } from "../core/content/play";
 
-export type { Policy, Seat } from "./policy";
-
 /**
  * A match between two bots (#45): one host session, no network trouble,
  * the system's sample armies on its first mission, played to the end. The
@@ -23,7 +21,7 @@ export type { Policy, Seat } from "./policy";
  * and on equal VP whoever kept more of their army.
  */
 
-export interface MatchOptions {
+interface MatchOptions {
   system: string;
   seed: number;
   /** A whole game from a package (Rift Lanterns): its code resolves every intent. */
@@ -37,7 +35,7 @@ export interface MatchOptions {
   blind?: boolean;
 }
 
-export interface MatchResult {
+interface MatchResult {
   system: string;
   seed: number;
   /** The winning seat, or null on a draw. */

@@ -21,7 +21,7 @@ const LAYERS = [
 ];
 
 /** Page pixels to canvas pixels: the table's place on the page and the scale. */
-export interface Frame {
+interface Frame {
   left: number;
   top: number;
   scale: number;

@@ -1,5 +1,4 @@
 import {
-  inFootprint,
   type Layout,
   type TerrainCategory,
   type TerrainPiece,
@@ -8,13 +7,8 @@ import {
   type Zone,
 } from "../../core";
 
-/** Point in a terrain piece's footprint. */
-export function pointInTerrain(p: Vec2, piece: TerrainPiece): boolean {
-  return inFootprint(piece, p);
-}
-
 /** One floor of a ruin is this tall. */
-export const STOREY = 3;
+const STOREY = 3;
 const WALL = 0.35;
 const FLOOR = 0.2;
 
@@ -70,7 +64,7 @@ function ruinSolids(w: number, d: number, floors: number): TerrainSolid[] {
   return solids;
 }
 
-export interface TerrainTemplate {
+interface TerrainTemplate {
   name: string;
   category: TerrainCategory;
   width: number;

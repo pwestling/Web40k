@@ -1,3 +1,4 @@
+import { inchText } from "./distance";
 import {
   footprintVisibility,
   standInHeight,
@@ -75,8 +76,6 @@ function meshShape(
   };
 }
 
-const inches = (n: number) => `${Number(n.toFixed(1))}"`;
-
 /**
  * How big an uploaded model came in, and how its file was read (millimetres
  * or inches), with a one-press fix when that makes it figure-sized or huge.
@@ -94,9 +93,9 @@ function ModelSize({
   const across = Math.max(max[0] - min[0], max[2] - min[2]);
   const tall = max[1] - min[1];
   const size = t("{width} × {depth}, {height} tall", {
-    width: inches((max[0] - min[0]) * scale),
-    depth: inches((max[2] - min[2]) * scale),
-    height: inches(tall * scale),
+    width: inchText((max[0] - min[0]) * scale),
+    depth: inchText((max[2] - min[2]) * scale),
+    height: inchText(tall * scale),
   });
   const small = across * scale < 2;
   const big = across * scale > 24;

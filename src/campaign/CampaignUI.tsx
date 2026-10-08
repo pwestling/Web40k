@@ -1,3 +1,4 @@
+import { safeFileName, saveJson } from "../ui/files";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { afterGameDone, nextCampaignHook } from "./rules";
 import { sidePlayers, sides, type GameState } from "../core";
@@ -6,7 +7,6 @@ import { getSystem } from "../core/content/systems";
 import { useShelf } from "../packages/shelf";
 import { useCanControl, useStore } from "../store";
 import { missionOf } from "../ui/Missions";
-import { download } from "../ui/report";
 import { useDeployed } from "../ui/shelfActions";
 import { battleOver } from "../ui/StatsScreen";
 import { systemLabel } from "../ui/systemLabels";
@@ -42,14 +42,6 @@ const systemName = (id: string) => {
     return id;
   }
 };
-
-const fileName = (name: string) =>
-  `${
-    name
-      .replace(/[^\w\- ]+/g, "")
-      .trim()
-      .replace(/\s+/g, "-") || "campaign"
-  }.campaign.json`;
 
 /** How this device's copy compares with the one the game is played for. */
 function useCopy(): "none" | "missing" | "same" | "different" {
@@ -550,7 +542,9 @@ export function CampaignBookDialog() {
           onChange={(e) => save({ ...book, name: e.target.value })}
         />
         <div className="row">
-          <button onClick={() => download(fileName(book.name), book)}>{t("Export")}</button>
+          <button onClick={() => saveJson(safeFileName(book.name, "campaign", ".campaign.json"), book)}>
+            {t("Export")}
+          </button>
           <button onClick={close} aria-label={t("Close")}>
             ✕
           </button>

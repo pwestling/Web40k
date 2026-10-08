@@ -789,20 +789,3 @@ export interface WeaponDef {
   characteristics: Record<Id, Value>;
   rules: RuleRef[];
 }
-
-/** One player's army, resolved from list-building choices. */
-export interface Roster {
-  name: string;
-  system: Id;
-  packs: Id[];
-  units: RosterUnit[];
-}
-
-export interface RosterUnit {
-  id: Id;
-  unit: Id;
-  models: { model: Id; count: number; weapons?: Id[] }[];
-  /** Extra rules from list building, e.g. enhancements. */
-  rules?: RuleRef[];
-  attachedTo?: Id;
-}

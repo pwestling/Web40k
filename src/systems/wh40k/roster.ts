@@ -246,7 +246,7 @@ function parseJson(json: string, warnings: string[]): RRoster | undefined {
 }
 
 /** Turns the normalised roster tree into units; each system brings its own. */
-export type RosterExtractor = (roster: RRoster, warnings: string[]) => ImportedUnit[];
+type RosterExtractor = (roster: RRoster, warnings: string[]) => ImportedUnit[];
 
 /** Parse roster text, auto-detecting XML or JSON. */
 export function parseRosterText(input: string, extract: RosterExtractor = extractUnits): ImportedRoster {

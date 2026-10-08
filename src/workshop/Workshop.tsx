@@ -1,3 +1,4 @@
+import { saveFile } from "../ui/files";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { sides } from "../core";
 import { t, tn } from "../i18n";
@@ -693,11 +694,7 @@ function ExportPane({ draft }: { draft: Draft }) {
   }, [draft.source]);
   if (typeof m === "string") return <p>{m}</p>;
   const download = () => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([draft.source], { type: "text/javascript" }));
-    a.download = fileName(m);
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    saveFile(new Blob([draft.source], { type: "text/javascript" }), fileName(m));
   };
   return (
     <div className="workshop-export">

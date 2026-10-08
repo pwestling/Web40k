@@ -18,7 +18,7 @@ export interface Manifest {
   changelog?: string;
 }
 
-export type ManifestResult = { manifest: Manifest } | { error: string };
+type ManifestResult = { manifest: Manifest } | { error: string };
 
 export const NOT_LITERAL = "manifest must be a plain literal";
 

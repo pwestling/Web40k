@@ -91,7 +91,7 @@ export interface MoveBudget {
 }
 
 /** The terrain the unit's move this phase touches that slows it most (its category's `slows`). */
-export function slowingTerrain(game: GameState, unit: Unit): { by: number; piece: string } | null {
+function slowingTerrain(game: GameState, unit: Unit): { by: number; piece: string } | null {
   const cats = new Map((systemOf(game).terrain ?? []).map((c) => [c.id, c.slows ?? 0]));
   let best: { by: number; piece: string } | null = null;
   for (const p of game.terrain) {
@@ -149,7 +149,7 @@ export function offTable(game: GameState, unit: Unit, positions?: Record<string,
   });
 }
 
-export interface BlockSummary extends MoveBudget {
+interface BlockSummary extends MoveBudget {
   files: number;
   ranks: number;
   /** Ranks wide enough to count, and how wide that is for this troop type. */

@@ -5,7 +5,7 @@ import type { RawModel } from "./parse";
 import { boxProxy, figureProxy, hullTris } from "./proxy";
 import { BUDGETS, type AssetKind, type AssetStats, type MeshData, type ModelAsset } from "./types";
 
-export interface ProcessOptions {
+interface ProcessOptions {
   id: string;
   name: string;
   kind: AssetKind;
@@ -181,7 +181,7 @@ function dropDegenerate(indices: Uint32Array): Uint32Array {
   return out.slice(0, n);
 }
 
-export function guessUnitScale(positions: Float32Array): number {
+function guessUnitScale(positions: Float32Array): number {
   let lo = Infinity;
   let hi = -Infinity;
   for (let i = 1; i < positions.length; i += 3) {

@@ -121,7 +121,7 @@ export function registerCode(system: Id, code: Record<Id, CodeProcedure>): void 
   procedures.set(system, { ...procedures.get(system), ...code });
 }
 
-export function codeProcedure(system: Id, id: Id): CodeProcedure | undefined {
+function codeProcedure(system: Id, id: Id): CodeProcedure | undefined {
   return procedures.get(system)?.[id];
 }
 

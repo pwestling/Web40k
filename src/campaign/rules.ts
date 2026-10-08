@@ -16,7 +16,7 @@ import { campaignUnitKey, type CampaignBook, type CampaignUnit } from "./book";
  */
 
 /** The campaign units on the table, as the hooks see them; with this game's numbers once it's over. */
-export function campaignStories(
+function campaignStories(
   book: CampaignBook,
   record: GameRecord,
   game: GameState,

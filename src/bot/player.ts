@@ -1,3 +1,4 @@
+import { aliveModels } from "../core/units";
 import {
   sidePlayers,
   type GameRecord,
@@ -60,9 +61,7 @@ import { Sim } from "./sim";
 
 export type Level = "random" | "steady" | "sharp";
 
-export const LEVELS: Level[] = ["random", "steady", "sharp"];
-
-export interface BotOptions {
+interface BotOptions {
   seed: number;
   /** Package code actions for a unit (a package game). */
   packageActions?: BotContext["packageActions"];
@@ -77,7 +76,7 @@ export interface BotOptions {
 }
 
 /** The module's tuning for the bot, if it has any. */
-export function tuningOf(system: string | undefined): BotTuning | undefined {
+function tuningOf(system: string | undefined): BotTuning | undefined {
   return gameModule(system)?.bot;
 }
 
@@ -111,8 +110,8 @@ function randomPolicy(ctx: BotContext & { mark?: string }, seat: number): Policy
 }
 
 /** Moves a policy may make in one activation, and in one phase with no unit acting, before it must move on. */
-export const ACTIVATION_CAP = 40;
-export const PHASE_CAP = 250;
+const ACTIVATION_CAP = 40;
+const PHASE_CAP = 250;
 
 /**
  * Whatever a policy thinks, a unit's go ends and the game moves on: past
@@ -666,11 +665,8 @@ function dedupe(moves: BotMove[]): BotMove[] {
   });
 }
 
-const alive = (state: GameState, u: Unit) =>
-  u.modelIds.flatMap((id) => (state.models[id] && !state.models[id]!.destroyed ? [state.models[id]!] : []));
-
 const centreOf = (state: GameState, u: Unit) => {
-  const ms = alive(state, u);
+  const ms = aliveModels(state, u);
   return {
     x: ms.reduce((a, m) => a + m.position.x, 0) / Math.max(1, ms.length),
     y: ms.reduce((a, m) => a + m.position.y, 0) / Math.max(1, ms.length),
@@ -680,7 +676,7 @@ const centreOf = (state: GameState, u: Unit) => {
 function enemiesWithin(state: GameState, u: Unit, inches: number): Unit[] {
   const c = centreOf(state, u);
   return Object.values(state.units)
-    .filter((e) => opposed(state, e.owner, u.owner) && alive(state, e).length && !e.status?.reserves)
+    .filter((e) => opposed(state, e.owner, u.owner) && aliveModels(state, e).length && !e.status?.reserves)
     .map((e) => ({ e, d: Math.hypot(centreOf(state, e).x - c.x, centreOf(state, e).y - c.y) }))
     .filter((x) => x.d <= inches + 6)
     .sort((a, b) => a.d - b.d)
@@ -696,7 +692,7 @@ const num = (s: string | undefined) => {
 /** How far a unit moves by hand: the module's say, else its Move characteristic, else 6". */
 function moveInches(state: GameState, u: Unit, tuning?: BotTuning): number {
   if (tuning?.moveInches) return tuning.moveInches(state, u);
-  const m = alive(state, u)[0];
+  const m = aliveModels(state, u)[0];
   return num(m?.profile?.chars.M) ?? 6;
 }
 
@@ -711,7 +707,7 @@ function reachOf(state: GameState, u: Unit, tuning?: BotTuning): number {
  * unit moves as a block, staying on the table.
  */
 function destinations(state: GameState, u: Unit, inches: number): BotMove[] {
-  const ms = alive(state, u);
+  const ms = aliveModels(state, u);
   if (!ms.length) return [];
   const c = centreOf(state, u);
   const goals: { x: number; y: number; stop: number }[] = state.objectives.map((o) => ({
@@ -719,7 +715,7 @@ function destinations(state: GameState, u: Unit, inches: number): BotMove[] {
     stop: 0.5,
   }));
   const foes = Object.values(state.units)
-    .filter((e) => opposed(state, e.owner, u.owner) && alive(state, e).length && !e.status?.reserves)
+    .filter((e) => opposed(state, e.owner, u.owner) && aliveModels(state, e).length && !e.status?.reserves)
     .map((e) => centreOf(state, e))
     .sort((a, b) => Math.hypot(a.x - c.x, a.y - c.y) - Math.hypot(b.x - c.x, b.y - c.y));
   if (foes[0]) {

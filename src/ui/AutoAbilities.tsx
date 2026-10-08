@@ -172,7 +172,7 @@ function Coverage({
 }
 
 /** Is this ability one the unit can use right now (once per battle, not used yet)? */
-export function oncePerBattleReady(unit: Unit, a: Ability): boolean {
+function oncePerBattleReady(unit: Unit, a: Ability): boolean {
   return !!a.auto?.oncePerBattle && !unit.status?.[`autoUsed.${a.name}`];
 }
 

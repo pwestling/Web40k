@@ -93,7 +93,7 @@ function paramDoc(fn: ts.SignatureDeclaration, owner: ts.Node): string | null {
 }
 
 /** Where the SDK's types go in a draft. */
-export function typeInserts(source: string): Insert[] {
+function typeInserts(source: string): Insert[] {
   const file = ts.createSourceFile(DRAFT, source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS);
   const out: Insert[] = [];
   const annotate = (s: ts.Statement, type: string) =>
@@ -339,5 +339,3 @@ export function createChecker(files: Record<string, string>) {
     },
   };
 }
-
-export type Checker = ReturnType<typeof createChecker>;

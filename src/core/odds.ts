@@ -13,12 +13,12 @@ import type { GameState, UnitId } from "./types";
  */
 
 /** A probability for each value: dist[n] = P(value = n). */
-export type Dist = number[];
+type Dist = number[];
 
 /** Most dice tracked through a procedure; beyond this the tail is folded in. */
 const MAX_TOKENS = 400;
 
-export function point(n: number): Dist {
+function point(n: number): Dist {
   const d = new Array<number>(Math.max(0, n) + 1).fill(0);
   d[Math.max(0, n)] = 1;
   return d;
@@ -96,7 +96,7 @@ export function damageDist(sum: DiceSum, reroll: string | undefined, floor = 0):
 }
 
 /** n dice each passing with chance p, for every n in `count`. */
-export function thin(count: Dist, p: number): Dist {
+function thin(count: Dist, p: number): Dist {
   const out = new Array<number>(count.length).fill(0);
   count.forEach((pn, n) => {
     if (!pn) return;
@@ -208,7 +208,7 @@ export interface Odds {
 }
 
 /** A target model: wounds it has left. Models take damage in this order. */
-export interface OddsModel {
+interface OddsModel {
   wounds: number;
 }
 

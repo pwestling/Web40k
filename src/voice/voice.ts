@@ -16,9 +16,9 @@ import { t } from "../i18n";
  * commentators. Voices dip under the dice tray's decisive moments.
  */
 
-export type VoiceMode = "ptt" | "open";
+type VoiceMode = "ptt" | "open";
 
-export interface VoiceState {
+interface VoiceState {
   /** My mic is on (in voice, whether or not I'm talking right now). */
   mic: boolean;
   mode: VoiceMode;

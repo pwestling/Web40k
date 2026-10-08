@@ -14,7 +14,7 @@ import { useFigures, type FigureEntry } from "./library";
  * device too. The pack's hash covers every figure, so two players can tell
  * they hold the same pack, and a pack changed since it was made says so.
  */
-export const PACK_FORMAT = "open-battle/figures@1";
+const PACK_FORMAT = "open-battle/figures@1";
 
 export interface PackFigure {
   id: string;
@@ -27,7 +27,7 @@ export interface PackFigure {
   data: string;
 }
 
-export interface FigurePack {
+interface FigurePack {
   format: typeof PACK_FORMAT;
   name: string;
   savedAt: number;

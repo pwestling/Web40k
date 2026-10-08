@@ -4,7 +4,7 @@ import type { Model, ModelFigure, UnitId } from "../core";
 import { useStore } from "../store";
 
 /** A library model, loaded into this page. */
-export async function libraryAsset(id: string) {
+async function libraryAsset(id: string) {
   const here = useAssets.getState().assets[id];
   if (here) return here;
   const cached = await getCached(id);

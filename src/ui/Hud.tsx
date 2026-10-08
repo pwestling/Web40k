@@ -1,3 +1,4 @@
+import { saveJson } from "./files";
 import { characterName, levelName, useSolo } from "../bot/solo";
 import { displayName } from "../i18n/names";
 import { VIEWER } from "../viewer/flag";
@@ -326,17 +327,15 @@ export function GameLog() {
 
 /** The record, with the figures, terrain models and rules packages it uses, as a file. */
 export async function downloadReplay(record: GameRecord) {
-  const blob = new Blob([JSON.stringify(await bundleReplay(record))], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `open-battle-${new Date().toISOString().slice(0, 16).replace(":", "")}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveJson(
+    `open-battle-${new Date().toISOString().slice(0, 16).replace(":", "")}.json`,
+    await bundleReplay(record),
+  );
 }
 
 const numberWord = (n: number): string | undefined =>
   [t("three"), t("four"), t("five"), t("six"), t("seven"), t("eight")][n - 3];
-export const seatsTaken = (n: number) =>
+const seatsTaken = (n: number) =>
   n <= 2
     ? t("Both players are here.")
     : t("All {count} seats are taken.", { count: numberWord(n) ?? String(n) });

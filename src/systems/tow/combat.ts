@@ -68,13 +68,13 @@ export const charNum = (m: Model | undefined, k: string, d = 0) => {
 };
 
 /** The unit's characteristic as its commonest profile has it (from the unit view). */
-export function stat(view: GameView, u: Unit, id: string, d = 0): number {
+function stat(view: GameView, u: Unit, id: string, d = 0): number {
   const v = (view.unit(u.id) as Record<string, unknown> | undefined)?.[id];
   return typeof v === "number" ? v : d;
 }
 
 /** How far the General's Leadership and the Battle Standard's re-roll reach. */
-export const AURA = 12;
+const AURA = 12;
 
 /** Friendly units (this one included) still standing and not fleeing within the aura, matching `is`. */
 function friendNear(state: GameState, u: Unit, is: (f: Unit) => boolean): Unit | undefined {
@@ -102,7 +102,7 @@ function ownLeadership(state: GameState, u: Unit): { ld: number; who: string } {
  * Leadership: the best in the unit, or the General's within 12" when it's
  * higher (Inspiring Presence), and whose it is.
  */
-export function leadership(state: GameState, u: Unit): { ld: number; who: string } {
+function leadership(state: GameState, u: Unit): { ld: number; who: string } {
   const own = ownLeadership(state, u);
   const general = friendNear(state, u, isGeneral);
   if (general && general.id !== u.id) {
@@ -339,7 +339,7 @@ export function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Comm
 }
 
 /** The nearest enemy unit still standing and not fleeing, to run from. */
-export function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
+function nearestEnemy(state: GameState, u: Unit): Unit | undefined {
   let best: { e: Unit; d: number } | undefined;
   for (const e of Object.values(state.units)) {
     if (!opposed(state, e.owner, u.owner) || e.status?.fleeing || !alive(state, e).length) continue;
@@ -359,12 +359,7 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
 }
 
 /** The unit flees 2D6" from `from` and is marked fleeing. */
-export function* flee(
-  ctx: Ctx,
-  u: Unit,
-  from: Unit | undefined,
-  why: string,
-): Generator<Command, void, unknown> {
+function* flee(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
   const r = (yield ctx.roll(FLEE_DICE, "flee roll", u.id)) as Roll;
   yield ctx.emit({ type: "unit/status", id: u.id, key: "fleeing", value: true });
   yield* moveAway(ctx, unitOf(ctx.view, u.id), from, r.total, true);
@@ -453,7 +448,7 @@ function foughtNow(view: GameView, unitId: string): Fought | undefined {
  * base contact with an enemy already in it, spreading outwards. Each side
  * starts with its named unit.
  */
-export function combatSides(state: GameState, a: Unit, b: Unit): [Unit[], Unit[]] {
+function combatSides(state: GameState, a: Unit, b: Unit): [Unit[], Unit[]] {
   const sides: [Unit[], Unit[]] = [[a], [b]];
   const side = new Map<string, 0 | 1>([
     [a.id, 0],
@@ -488,7 +483,7 @@ interface Duel {
 }
 
 /** Models that may fight a challenge: characters and champions, not the rank and file or musicians and standard bearers. */
-export function duellists(state: GameState, u: Unit): Model[] {
+function duellists(state: GameState, u: Unit): Model[] {
   const ms = alive(state, u);
   if (ms.length < 2) return [];
   const names = new Map<string, number>();
@@ -627,7 +622,7 @@ const samePhase = (view: GameView, v: unknown) => {
  * until one falls, or refuses, and one of its characters stands aside this
  * round (it strikes no blows).
  */
-export const challenge: CodeProcedure = function* (ctx, args) {
+const challenge: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
   const foe = unitOf(ctx.view, args.target);
   const state = ctx.view.state;
@@ -667,7 +662,7 @@ export const challenge: CodeProcedure = function* (ctx, args) {
 };
 
 /** A round of close combat: everyone in contact on both sides, then the combat result and break tests. */
-export const combat: CodeProcedure = function* (ctx, args) {
+const combat: CodeProcedure = function* (ctx, args) {
   const a = unitOf(ctx.view, args.unit);
   const b = unitOf(ctx.view, args.target);
   const sides = combatSides(ctx.view.state, a, b);
@@ -902,7 +897,7 @@ const PANIC_RANGE = 6;
  * destroyed) test straight away, unless they are fighting (`busy`), fleeing,
  * immune or already tested this phase.
  */
-export function* panicNear(
+function* panicNear(
   ctx: Ctx,
   u: Unit,
   why: string,
@@ -1018,7 +1013,7 @@ function* pursue(
 }
 
 /** The charged unit's reaction: hold, stand and shoot (missile troops, not too close), or flee. */
-export const chargeReaction: CodeProcedure = function* (ctx, args) {
+const chargeReaction: CodeProcedure = function* (ctx, args) {
   const charger = unitOf(ctx.view, args.unit);
   const target = unitOf(ctx.view, args.target);
   const distance = unitGap(ctx.view.state, charger, target);
@@ -1098,11 +1093,11 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
  * A Panic test: Leadership on 2D6. On a fail the unit falls back in good
  * order if more than half its models remain, else it flees.
  */
-export const panic: CodeProcedure = function* (ctx, args) {
+const panic: CodeProcedure = function* (ctx, args) {
   yield* panicTest(ctx, unitOf(ctx.view, args.unit));
 };
 
-export function* panicTest(ctx: Ctx, u: Unit): Generator<Command, void, unknown> {
+function* panicTest(ctx: Ctx, u: Unit): Generator<Command, void, unknown> {
   const now = ctx.view.state.turn;
   yield ctx.set(`panic:${u.id}`, { round: now.round, seat: now.activeSeat, phase: ctx.view.phase });
   const { roll, ld, passed } = yield* leadershipTest(ctx, u, "Panic test");
@@ -1125,7 +1120,7 @@ export function* panicTest(ctx: Ctx, u: Unit): Generator<Command, void, unknown>
 }
 
 /** Whether the unit has taken a Panic test this phase. */
-export function panicTested(view: GameView, unitId: string): boolean {
+function panicTested(view: GameView, unitId: string): boolean {
   const t = view.own[`panic:${unitId}`] as { round: number; seat: number; phase: string | null } | undefined;
   const now = view.state.turn;
   return !!t && t.round === now.round && t.seat === now.activeSeat && t.phase === view.phase;
@@ -1201,7 +1196,7 @@ const MARCH_BLOCK = 8;
  * counts as having marched. Drilled units don't test. The result is the
  * unit's `marchTest` status ("passed" 1, "failed" 0) until its next turn.
  */
-export const marchTest: CodeProcedure = function* (ctx, args) {
+const marchTest: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
   const t = yield* leadershipTest(ctx, u, "march test");
   yield ctx.emit({ type: "unit/status", id: u.id, key: "marchTest", value: t.passed ? 1 : 0 });

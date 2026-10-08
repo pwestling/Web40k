@@ -24,7 +24,7 @@ import { wizardLevel } from "./specialRules";
 type Roll = { rolls: number[]; total: number };
 
 /** Which phase each kind of spell is cast in. */
-export const SPELL_PHASE: Record<SpellKind, string> = {
+const SPELL_PHASE: Record<SpellKind, string> = {
   enchantment: "strategy",
   hex: "strategy",
   conveyance: "movement",
@@ -49,10 +49,10 @@ const CONTACT = 0.5;
 const DETONATION = { upTo: 4, hits: "1d6", strength: 6 };
 const BACKLASH_UP_TO = 9;
 
-export const spellsOf = (u: Unit): Spell[] => u.sheet?.spells ?? [];
+const spellsOf = (u: Unit): Spell[] => u.sheet?.spells ?? [];
 
 /** A spell lasting on the table: marked on its target until it ends. */
-export interface SpellInPlay {
+interface SpellInPlay {
   spell: string;
   kind: SpellKind;
   caster: string;
@@ -88,7 +88,7 @@ export const spellsInPlay = (view: GameView): SpellInPlay[] =>
   );
 
 /** Units a spell can be cast at from this wizard, nearest first. */
-export function spellTargets(view: GameView, caster: Unit, spell: Spell): { u: Unit; d: number }[] {
+function spellTargets(view: GameView, caster: Unit, spell: Spell): { u: Unit; d: number }[] {
   const state = view.state;
   if (!spell.range) return [{ u: caster, d: 0 }];
   const friendly = spell.kind === "enchantment" || spell.kind === "conveyance";
@@ -244,7 +244,7 @@ function* effect(ctx: Ctx, caster: Unit, target: Unit, spell: Spell, total: numb
 }
 
 /** Cast a spell: pick it, roll to cast, give the opponent a dispel, then its effect, and any miscast. */
-export const castSpell: CodeProcedure = function* (ctx, args) {
+const castSpell: CodeProcedure = function* (ctx, args) {
   const caster = unitOf(ctx.view, args.unit);
   const target = unitOf(ctx.view, args.target);
   const options = castable(ctx.view, caster).filter((s) =>
@@ -291,7 +291,7 @@ export const castSpell: CodeProcedure = function* (ctx, args) {
 };
 
 /** End a spell in play: its mark comes off the target. */
-export function* endSpell(ctx: Ctx, entry: SpellInPlay, why: string): Generator<Command, void, unknown> {
+function* endSpell(ctx: Ctx, entry: SpellInPlay, why: string): Generator<Command, void, unknown> {
   const left = spellsInPlay(ctx.view).filter((e) => e !== entry && !same(e, entry));
   yield ctx.set("inPlay", left);
   if (!left.some((e) => e.target === entry.target && e.spell === entry.spell))
@@ -313,7 +313,7 @@ function dispellable(view: GameView, u: Unit): SpellInPlay[] {
 }
 
 /** Dispel a spell the enemy keeps in play: 2D6 + level reaching its casting roll. */
-export const dispelInPlay: CodeProcedure = function* (ctx, args) {
+const dispelInPlay: CodeProcedure = function* (ctx, args) {
   const w = unitOf(ctx.view, args.unit);
   const entry = dispellable(ctx.view, w).find((e) => e.target === args.target);
   if (!entry) return;

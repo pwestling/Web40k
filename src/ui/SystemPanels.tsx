@@ -37,6 +37,7 @@ import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
 import { computerPlays } from "../teach/store";
 import { formatList, formatNumber, t, tn, gameText } from "../i18n";
+import { lengthText, unitSymbol } from "./distance";
 
 /**
  * Panels for any game system, built from its data: a unit card with the
@@ -49,14 +50,6 @@ import { formatList, formatNumber, t, tn, gameText } from "../i18n";
 /** A column header: the system's short label, a short id ("Cmd", "AP"), else the display name. */
 const header = (c: { id: string; name: string; short?: string }) =>
   c.short ?? (/^[A-Z][A-Za-z]{0,3}$/.test(c.id) ? c.id : c.name);
-
-const unitName = (sys: GameSystem) =>
-  typeof sys.units === "object" ? sys.units.name : sys.units === "cm" ? "cm" : '"';
-const fmt = (n: number, sys: GameSystem) => {
-  const u = unitName(sys);
-  const num = formatNumber(Number(n.toFixed(1)), { maximumFractionDigits: 1 });
-  return `${num}${u === '"' ? u : ` ${u}`}`;
-};
 
 /** "uses a 4 and a 6": the dice-pool faces an action pays with. */
 const usesFaces = (faces: (string | number)[]) =>
@@ -126,7 +119,6 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const owner = game.players[unit.owner];
   const all = unit.modelIds.flatMap((id) => game.models[id] ?? []);
   const alive = aliveModels(game, unit);
-  const scale = inchesPerUnit(system);
   // A game of plain activations (Rift Lanterns) moves on the unit's Move, with no move action to set it (UX 334).
   const allowance =
     typeof unit.status?.allowance === "number"
@@ -159,7 +151,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   // A charge that struck home this round stays on the card with its distance (PX-3c).
   const charged = useCharged(unit.id);
   const chargedText =
-    charged !== null ? t("Charged {distance}", { distance: fmt(charged / scale, system) }) : null;
+    charged !== null ? t("Charged {distance}", { distance: lengthText(system, charged) }) : null;
 
   return (
     <div className="panel unitcard" tabIndex={-1} aria-label={t("Selected unit")}>
@@ -242,8 +234,8 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       {allowance !== null && !companion && (
         <p className={moved > allowance + 0.05 ? "warn" : "muted"}>
           {t("Moved {distance} of {allowance} this round.", {
-            distance: fmt(moved / scale, system),
-            allowance: fmt(allowance / scale, system),
+            distance: lengthText(system, moved),
+            allowance: lengthText(system, allowance),
           })}
         </p>
       )}
@@ -843,7 +835,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           <option value="">{t("Target…")}</option>
           {targets.map((tg) => (
             <option key={tg.unitId} value={tg.unitId}>
-              {game.units[tg.unitId]?.name} ({fmt(tg.distance, system)}
+              {game.units[tg.unitId]?.name} ({lengthText(system, tg.distance * scale)}
               {tg.ok ? "" : `, ${t("not visible")}`}
               {notes[tg.unitId] ? `, ${notes[tg.unitId]}` : ""})
             </option>
@@ -911,7 +903,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
       </button>
       <p className="muted small">
         {t('Distances in {units} ({scale}" each).', {
-          units: unitName(system) === '"' ? t("inches") : unitName(system),
+          units: unitSymbol(system) === '"' ? t("inches") : unitSymbol(system),
           scale,
         })}
       </p>

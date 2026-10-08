@@ -38,7 +38,7 @@ import { opposed } from "../teams";
  * slot began), and "used.<action>" for once-per-round limits.
  */
 
-export const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
+const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
 
 /** Dice taken from a pool, or an amount from a counter, to pay for an action. */
 export interface Payment {
@@ -67,7 +67,7 @@ export interface ActionOption {
   commands?: { count: number; candidates: UnitId[] };
 }
 
-export interface ActionRequest {
+interface ActionRequest {
   weapon?: string;
   targetId?: UnitId;
   /** Dice-pool indices the player picked to pay with, tried before the lowest that fit. */
@@ -91,7 +91,7 @@ export function safeBool(expr: Expr, ctx: EvalContext): boolean {
   }
 }
 
-export function safeNum(expr: Expr, ctx: EvalContext, fallback = 0): number {
+function safeNum(expr: Expr, ctx: EvalContext, fallback = 0): number {
   try {
     return num(expr, ctx);
   } catch {
@@ -100,7 +100,7 @@ export function safeNum(expr: Expr, ctx: EvalContext, fallback = 0): number {
 }
 
 /** Whether a slot's actions are taken through activations. */
-export function usesActivations(system: GameSystem, slot: TurnSlot | null): boolean {
+function usesActivations(system: GameSystem, slot: TurnSlot | null): boolean {
   return !!slot?.actions.some((id) => system.actions.find((a) => a.id === id)?.activates !== undefined);
 }
 
@@ -128,7 +128,7 @@ function limitKey(def: ActionDef, req: ActionRequest): string {
 }
 
 /** Parse "4-6" or "1-2 1-2" into slots. */
-export function parseSlots(text: unknown): { min: number; max: number }[] {
+function parseSlots(text: unknown): { min: number; max: number }[] {
   if (typeof text !== "string") return [];
   const out: { min: number; max: number }[] = [];
   for (const m of text.matchAll(/(\d+)(?:\s*-\s*(\d+))?/g))
@@ -236,7 +236,7 @@ export function payFor(
  * Which placed dice fill which slots: each slot, narrowest first, takes the
  * lowest placed die that fits it. Slot index to index into `placed`.
  */
-export function matchSlots(slots: { min: number; max: number }[], placed: number[]): Record<number, number> {
+function matchSlots(slots: { min: number; max: number }[], placed: number[]): Record<number, number> {
   const fill: Record<number, number> = {};
   const used = new Set<number>();
   const order = slots.map((s, k) => ({ s, k })).sort((a, b) => a.s.max - a.s.min - (b.s.max - b.s.min));
@@ -709,7 +709,7 @@ export function pay(state: GameState, player: PlayerId, payment: Payment[]): Gam
 }
 
 /** Put a procedure run into the state, applying its outcomes once it is done. */
-export function withRun(state: GameState, trigger: ActionTrigger, run: ProcedureRun): GameState {
+function withRun(state: GameState, trigger: ActionTrigger, run: ProcedureRun): GameState {
   const system = systemOf(state);
   const def = system.actions.find((a) => a.id === trigger.action);
   const unit = state.units[trigger.unitId];
@@ -755,7 +755,7 @@ function finishRun(state: GameState): GameState {
 }
 
 /** Apply a reaction's results held back for the action it answered, then drop dice on switched-off actions. */
-export function applyDeferred(state: GameState): GameState {
+function applyDeferred(state: GameState): GameState {
   const held = state.deferred;
   const next = held?.length ? { ...applyRunOutcomes(state, held), deferred: null } : state;
   return dropDisabledPlacements(next);

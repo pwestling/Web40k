@@ -10,7 +10,7 @@ import { terrainDisruption } from "./terrainTests";
  * stupid unit is marked for the turn and played by hand (from general
  * knowledge: it stumbles straight ahead, and doesn't shoot or cast).
  */
-export const startOfTurn: CodeProcedure = function* (ctx, args) {
+const startOfTurn: CodeProcedure = function* (ctx, args) {
   const player = String(args.player ?? ctx.view.activePlayer ?? "");
   yield* expireSpells(ctx, player);
   for (const u of Object.values(ctx.view.state.units)) {

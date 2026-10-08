@@ -10,7 +10,7 @@ const PART_CHARS = 48 * 1024;
 /** A transfer that stalls this long (the sender left) can be asked for again. */
 const STALL_MS = 15000;
 
-export type Transfer =
+type Transfer =
   | { state: "asking"; at: number }
   | { state: "receiving"; got: number; parts: number; from: string; at: number }
   | { state: "checked" }
