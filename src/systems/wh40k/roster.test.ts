@@ -1,7 +1,17 @@
 import { strToU8, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { parseRosterFile, parseRosterText, suggestBase, type ImportedUnit, type UnitSheet } from "./roster";
+import {
+  loadRosterParsers,
+  parseRosterFile,
+  parseRosterText,
+  suggestBase,
+  type ImportedUnit,
+  type UnitSheet,
+} from "./roster";
 import { sampleRoster } from "./sample";
+
+// The XML reader loads on demand (front door bundle budget).
+await loadRosterParsers();
 
 // All names and numbers below are invented test data.
 const XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

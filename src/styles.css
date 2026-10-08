@@ -2425,3 +2425,12 @@ body.showcase
   flex: 1 1 100%;
   min-width: 0;
 }
+
+/* While the table's code loads after the front door (App.tsx). */
+.loading-table {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted, #9aa3ad);
+}

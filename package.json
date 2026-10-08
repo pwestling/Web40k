@@ -21,7 +21,8 @@
     "test:watch": "vitest",
     "soak": "SOAK=1 vitest run",
     "relay": "node server/relay.mjs",
-    "perf": "node scripts/perf.mjs"
+    "perf": "node scripts/perf.mjs",
+    "perf:load": "node scripts/load.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
