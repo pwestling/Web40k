@@ -4598,3 +4598,32 @@ body.clip-narrow .caption {
   width: min(360px, calc(100vw - 32px));
   background: #111318;
 }
+
+/* Teach it this rule (#53) */
+.teach-rule {
+  position: fixed;
+}
+.teach-rule fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  border: 1px solid #2d3340;
+  border-radius: 6px;
+  margin: 8px 0;
+  padding: 6px 10px 10px;
+}
+.teach-rule fieldset > .row,
+.teach-rule fieldset > [role="group"] {
+  width: 100%;
+}
+.teach-rule .teach-what {
+  gap: 8px;
+  align-items: center;
+}
+.teach-rule .teach-preview {
+  min-height: 1.4em;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 4%);
+}

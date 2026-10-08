@@ -4,6 +4,8 @@ import { describesWeaponKeyword, isAutomated, isWeaponRule } from "../core/conte
 import type { GameSystem } from "../core/content/schema";
 import { systemOf } from "../core/content/turn";
 import { describeAuto } from "./autoText";
+import { TeachRule } from "./TeachRule";
+import { teachAbility } from "./teachActions";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { systemModule } from "../systems";
@@ -416,15 +418,19 @@ function oncePerBattleReady(unit: Unit, a: Ability): boolean {
 /** One line in the unit card's abilities: its text, and what the app runs for it. */
 export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Ability; mine: boolean }) {
   const game = useStore((s) => s.game);
-  const dispatch = useStore((s) => s.dispatch);
   const system = systemOf(game);
   const recognize = systemModule(game.system).recognizeAbility;
+  const [teaching, setTeaching] = useState(false);
   const proposal = useMemo(
     () => (!ability.auto && recognize && !isAutomated(system, ability) ? recognize(ability, system) : null),
     [ability, recognize, system],
   );
-  const automate = (auto: AbilityAuto | null) =>
-    dispatch({ type: "unit/automate", id: unit.id, ability: ability.name, auto }, unit.owner);
+  const automate = (auto: AbilityAuto | null) => teachAbility(unit.owner, ability.name, auto);
+  // Anything the app only reminds the player of can be taught (#53); core rules and weapon keywords run already.
+  const teachable =
+    mine &&
+    !!recognize &&
+    (!!ability.auto || (!isAutomated(system, ability) && !describesWeaponKeyword(system, unit, ability)));
   return (
     <div className="ability-line">
       <p>
@@ -432,10 +438,13 @@ export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Abil
       </p>
       {ability.auto && (
         <p className="small auto-on">
-          ⚙ {t("Automated:")} {describeAuto(ability.auto, system)}
+          ⚙ {ability.auto.taught ? t("Taught:") : t("Automated:")} {describeAuto(ability.auto, system)}
           {mine && (
             <>
               {" "}
+              <button className="quiet small" onClick={() => setTeaching(true)}>
+                {t("Change")}
+              </button>
               <button className="quiet small" onClick={() => automate(null)}>
                 {t("Stop automating")}
               </button>
@@ -450,6 +459,25 @@ export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Abil
             {t("Automate this?")}
           </button>
         </p>
+      )}
+      {teachable && !ability.auto && (
+        <p className="small">
+          <button className="quiet small" onClick={() => setTeaching(true)}>
+            {proposal ? t("Not quite? Teach it this rule") : t("Teach it this rule")}
+          </button>
+        </p>
+      )}
+      {teaching && (
+        <TeachRule
+          name={ability.name}
+          {...(ability.auto || proposal ? { auto: (ability.auto ?? proposal)! } : {})}
+          system={system}
+          onSave={(auto) => {
+            automate(auto);
+            setTeaching(false);
+          }}
+          onClose={() => setTeaching(false)}
+        />
       )}
     </div>
   );

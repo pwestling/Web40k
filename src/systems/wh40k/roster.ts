@@ -657,7 +657,7 @@ function enhancementNodes(root: RNode): Set<RNode> {
   return out;
 }
 
-function stratagemId(name: string, taken: Set<string>): string {
+export function stratagemId(name: string, taken: Set<string>): string {
   const base = slug(name);
   let id = base;
   for (let i = 2; taken.has(id); i++) id = `${base}-${i}`;

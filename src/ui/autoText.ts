@@ -34,7 +34,9 @@ function attackText(p: Extract<AutoPart, { kind: "attack" }>): string {
         : p.reroll
           ? t("re-roll failed {roll} rolls", { roll: roll(p.roll!) })
           : p.roll === "damage"
-            ? t("−1 Damage (not below 1)")
+            ? (p.by ?? 0) > 0
+              ? t("+{n} Damage", { n: p.by ?? 0 })
+              : t("−1 Damage (not below 1)")
             : (p.by ?? 0) > 0
               ? t("+1 to {roll}", { roll: roll(p.roll!) })
               : t("−1 to {roll}", { roll: roll(p.roll!) });
@@ -53,6 +55,8 @@ function partText(p: AutoPart): string {
     case "fnp":
       // Rule names stay in English, as army lists use them.
       return `Feel No Pain ${p.x}+`;
+    case "invuln":
+      return t("a {x}+ invulnerable save", { x: p.x });
     case "gain":
       return t("gain {amount} {resource}", { amount: p.amount, resource: p.resource });
     case "heal":

@@ -4,6 +4,8 @@ import { narrow } from "./narrow";
 import type { Player } from "../core";
 import {
   abilityReminders,
+  armyStratagem,
+  isAutomated,
   playerActions,
   type AbilityReminder,
   type PlayerActionOption,
@@ -12,6 +14,10 @@ import { phaseName, systemOf } from "../core/content/turn";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { t, tn, gameText } from "../i18n";
+import { systemModule } from "../systems";
+import { describeAuto } from "./autoText";
+import { TeachRule, type StratagemSettings } from "./TeachRule";
+import { teachAbility, teachArmyRule, teachStratagem } from "./teachActions";
 
 /**
  * Stratagems and ability reminders for the current phase, from the game
@@ -102,6 +108,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
         <Stratagem
           key={o.def.id}
           option={o}
+          player={player.id}
           onUse={(targetId) =>
             dispatch(
               { type: "player/action", action: o.def.id, ...(targetId ? { targetId } : {}) },
@@ -135,12 +142,15 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           <ul className="small">
             {others.map((o) => (
               <li key={o.def.id}>
-                {gameText(o.def.name)} ({o.cost}): <span className="muted">{o.why}</span>
+                {gameText(o.def.name)} ({o.cost}): <span className="muted">{o.why}</span>{" "}
+                <TeachStratagem player={player.id} id={o.def.id} />
               </li>
             ))}
           </ul>
         </details>
       )}
+      <TeachStratagem player={player.id} id={null} />
+      <ArmyRules player={player.id} />
     </>
   );
   if (brief)
@@ -170,7 +180,15 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
   );
 }
 
-function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targetId?: string) => void }) {
+function Stratagem({
+  option,
+  player,
+  onUse,
+}: {
+  option: PlayerActionOption;
+  player: string;
+  onUse: (targetId?: string) => void;
+}) {
   const game = useGame();
   const [target, setTarget] = useState("");
   const targets = option.targets;
@@ -193,6 +211,7 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
         </button>
       </div>
       {option.def.hint && <span className="muted small">{gameText(option.def.hint)}</span>}
+      <TeachStratagem player={player} id={option.def.id} />
       {targets && (
         <select value={target} onChange={(e) => setTarget(e.target.value)}>
           <option value="">{t("On which unit…")}</option>
@@ -306,9 +325,22 @@ export function Reminders({
   const game = useGame();
   const { dispatch } = useStore();
   const canControl = useCanControl();
+  const [teaching, setTeaching] = useState<AbilityReminder | null>(null);
+  const teachable = !!systemModule(game.system).recognizeAbility;
   if (!items.length) return empty ? <p className="muted small">{empty}</p> : null;
   return (
     <ul className="reminders">
+      {teaching && (
+        <TeachRule
+          name={teaching.ability.name}
+          system={systemOf(game)}
+          onSave={(auto) => {
+            teachAbility(teaching.owner, teaching.ability.name, auto);
+            setTeaching(null);
+          }}
+          onClose={() => setTeaching(null)}
+        />
+      )}
       {items.map((r) => {
         const unit = game.units[r.unitId];
         return (
@@ -331,9 +363,107 @@ export function Reminders({
                 {t("Apply")}
               </button>
             )}
+            {live && canControl(r.owner) && teachable && (
+              <button className="quiet small" onClick={() => setTeaching(r)}>
+                {t("Teach it")}
+              </button>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/** "Teach it" on one of the army's stratagems, or "Teach a stratagem" for a new one (#53). */
+function TeachStratagem({ player, id }: { player: string; id: string | null }) {
+  const game = useGame();
+  const canControl = useCanControl();
+  const [open, setOpen] = useState(false);
+  const system = systemOf(game);
+  if (!systemModule(game.system).recognizeAbility || !canControl(player)) return null;
+  const s = id ? armyStratagem(game, id) : undefined;
+  if (id && !s) return null;
+  const settings: StratagemSettings = s
+    ? {
+        name: s.name,
+        cp: s.cp,
+        side: s.side,
+        ...(s.phases ? { phases: s.phases } : {}),
+        ...(s.once ? { once: s.once } : {}),
+      }
+    : { name: "", cp: 1, side: "either" };
+  return (
+    <>
+      {s?.auto && <span className="muted small">⚙ {describeAuto(s.auto, system)} </span>}
+      <button
+        className="quiet small"
+        title={s ? t("Teach the app what this stratagem does") : t("A stratagem your list didn't bring")}
+        onClick={() => setOpen(true)}
+      >
+        {s ? (s.auto ? t("Change") : t("Teach it")) : t("Teach a stratagem")}
+      </button>
+      {open && (
+        <TeachRule
+          {...(s ? { name: s.name } : {})}
+          {...(s?.auto ? { auto: s.auto } : {})}
+          system={system}
+          stratagem={settings}
+          onSave={(auto, next) => {
+            teachStratagem(player, s?.id ?? null, next ?? settings, auto);
+            setOpen(false);
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/** The army's detachment and army rules, with what the app plays of them, to teach the rest (#53). */
+function ArmyRules({ player }: { player: string }) {
+  const game = useGame();
+  const canControl = useCanControl();
+  const [teaching, setTeaching] = useState<string | null>(null);
+  const system = systemOf(game);
+  const rules = game.armies?.[player]?.rules ?? [];
+  if (!rules.length || !systemModule(game.system).recognizeAbility) return null;
+  const mine = canControl(player);
+  const rule = rules.find((r) => r.name === teaching);
+  return (
+    <details>
+      <summary className="muted">{tn(rules.length, "{n} army rule", "{n} army rules")}</summary>
+      <ul className="small">
+        {rules.map((r) => (
+          <li key={r.name}>
+            <strong>{gameText(r.name)}</strong>{" "}
+            {r.auto ? (
+              <span className="muted">⚙ {describeAuto(r.auto, system)}</span>
+            ) : isAutomated(system, r) ? (
+              <span className="muted">⚙ {t("The app plays it")}</span>
+            ) : (
+              <span className="muted">{t("A reminder; you play it")}</span>
+            )}{" "}
+            {mine && !(isAutomated(system, r) && !r.auto) && (
+              <button className="quiet small" onClick={() => setTeaching(r.name)}>
+                {r.auto ? t("Change") : t("Teach it this rule")}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {rule && (
+        <TeachRule
+          name={rule.name}
+          {...(rule.auto ? { auto: rule.auto } : {})}
+          system={system}
+          onSave={(auto) => {
+            teachArmyRule(player, rule.name, auto);
+            setTeaching(null);
+          }}
+          onClose={() => setTeaching(null)}
+        />
+      )}
+    </details>
   );
 }

@@ -96,6 +96,8 @@ export type AutoPart =
       stat?: "A" | "S" | "AP";
     }
   | { kind: "fnp"; x: number }
+  /** An invulnerable save of x+ (#53): the better of it and the model's own. */
+  | { kind: "invuln"; x: number }
   | { kind: "gain"; resource: string; amount: number }
   | { kind: "heal"; amount: string };
 
@@ -115,6 +117,8 @@ export interface AbilityAuto {
   effects: Effect[];
   /** Only while this unit has a leader attached (the leader's "while leading" abilities). */
   whileLeading?: boolean;
+  /** Built by the player with "Teach it this rule" (#53), not read from the text. */
+  taught?: boolean;
   /** Given to other units within range instead of this one. */
   aura?: { range: number; side: "friendly" | "enemy"; keyword?: string };
   /** Used by the player from the unit card; then runs until the end of the phase. */
@@ -148,6 +152,8 @@ export interface ArmyStratagem {
   /** Read from its Target line (UX 373): the unit's keywords ("Infantry"), and an action it mustn't have taken yet. */
   targetKeywords?: string;
   notYet?: "shot" | "fought" | "charged";
+  /** How often it can be used (#53); once per phase when not set. */
+  once?: "phase" | "turn" | "battle";
   /** The When, Target and Effect text, for the panel. */
   when?: string;
   target?: string;

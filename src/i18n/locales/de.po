@@ -1571,7 +1571,7 @@ msgstr "Spieler hinzufügen"
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:137
+#: src/ui/AutoAbilities.tsx:139
 #, fuzzy
 msgid "Add"
 msgstr "Hinzufügen"
@@ -2505,7 +2505,8 @@ msgid "Pick for a pack"
 msgstr "Für ein Paket auswählen"
 
 #: src/figures/FigureLibrary.tsx:364
-#: src/ui/PlayPanel.tsx:233
+#: src/ui/PlayPanel.tsx:252
+#: src/ui/TeachRule.tsx:105
 #, fuzzy
 msgid "Name"
 msgstr "Name"
@@ -3289,7 +3290,7 @@ msgstr "Beitreten"
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:87
-#: src/ui/PlayPanel.tsx:71
+#: src/ui/PlayPanel.tsx:77
 #: src/ui/TableWarnings.tsx:99
 #, fuzzy
 msgid "Hide"
@@ -3941,7 +3942,7 @@ msgid "Hide notes and chapters"
 msgstr "Notizen und Kapitel ausblenden"
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:42
+#: src/ui/PlayPanel.tsx:48
 #: src/ui/TerrainPanel.tsx:375
 #: src/ui/TopBar.tsx:226
 #: src/ui/WhatNow.tsx:41
@@ -4566,8 +4567,8 @@ msgid "This table is for another game"
 msgstr "Dieser Tisch ist für ein anderes Spiel"
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:192
-#: src/ui/PlayPanel.tsx:270
+#: src/ui/PlayPanel.tsx:210
+#: src/ui/PlayPanel.tsx:289
 #, fuzzy
 msgid "Use"
 msgstr "Verwenden"
@@ -4581,7 +4582,8 @@ msgstr "{name} aus deiner Sammlung entfernen?"
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:364
-#: src/ui/TemplateTools.tsx:114
+#: src/ui/TeachRule.tsx:491
+#: src/ui/TeachRule.tsx:492
 #, fuzzy
 msgid "Remove"
 msgstr "Entfernen"
@@ -5149,14 +5151,14 @@ msgid "no re-roll"
 msgstr "kein Wiederholungswurf"
 
 #: src/ui/AttackPanel.tsx:167
-#: src/ui/autoText.ts:141
-#: src/ui/autoText.ts:189
+#: src/ui/autoText.ts:145
+#: src/ui/autoText.ts:193
 #, fuzzy
 msgid "re-roll 1s"
 msgstr "1er wiederholen"
 
 #: src/ui/AttackPanel.tsx:168
-#: src/ui/autoText.ts:142
+#: src/ui/autoText.ts:146
 #, fuzzy
 msgid "re-roll fails"
 msgstr "Fehlwürfe wiederholen"
@@ -5207,6 +5209,7 @@ msgid "More options"
 msgstr "Weitere Optionen"
 
 #: src/ui/AttackPanel.tsx:221
+#: src/ui/TeachRule.tsx:446
 #, fuzzy
 msgid "Attacks"
 msgstr "Attacken"
@@ -5257,6 +5260,7 @@ msgstr "keine"
 
 #: src/ui/AttackPanel.tsx:263
 #: src/ui/AttackPanel.tsx:498
+#: src/ui/TeachRule.tsx:449
 #, fuzzy
 msgid "Damage"
 msgstr "Schaden"
@@ -5509,131 +5513,156 @@ msgstr "Verteidiger: Klicke auf ein Modell, um es nach vorn zu setzen."
 msgid "at"
 msgstr "auf"
 
-#: src/ui/AutoAbilities.tsx:113
+#: src/ui/AutoAbilities.tsx:115
 #, fuzzy
 msgid "Paste its name, then its When, Target and Effect."
 msgstr "Füge den Namen ein, dann Wann, Ziel und Effekt."
 
-#: src/ui/AutoAbilities.tsx:122
+#: src/ui/AutoAbilities.tsx:124
 #, fuzzy
 msgid "Add a stratagem"
 msgstr "Stratagem hinzufügen"
 
-#: src/ui/AutoAbilities.tsx:124
+#: src/ui/AutoAbilities.tsx:126
 #, fuzzy
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr "Listen enthalten keine Stratageme. Füge eins aus deinem Buch ein: den Namen in der ersten Zeile, dann Wann, Ziel und Effekt. Es bleibt auf deinem Gerät und am Tisch."
 
-#: src/ui/AutoAbilities.tsx:131
+#: src/ui/AutoAbilities.tsx:133
 #, fuzzy
 msgid "Stratagem text"
 msgstr "Stratagem-Text"
 
-#: src/ui/AutoAbilities.tsx:132
+#: src/ui/AutoAbilities.tsx:134
 #, fuzzy
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr "Name (1CP)\nWANN: …\nZIEL: …\nEFFEKT: …"
 
-#: src/ui/AutoAbilities.tsx:208
+#: src/ui/AutoAbilities.tsx:210
 #, fuzzy
 msgid "{name} ({cp} CP)"
 msgstr "{name} ({cp} CP)"
 
-#: src/ui/AutoAbilities.tsx:241
+#: src/ui/AutoAbilities.tsx:243
 #, fuzzy
 msgid "Your army"
 msgstr "Deine Armee"
 
-#: src/ui/AutoAbilities.tsx:247
+#: src/ui/AutoAbilities.tsx:249
 #, fuzzy
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] "Kontingent {name}: {done} von {n} Regel automatisiert"
 msgstr[1] "Kontingent {name}: {done} von {n} Regeln automatisiert"
 
-#: src/ui/AutoAbilities.tsx:258
+#: src/ui/AutoAbilities.tsx:260
 #, fuzzy
 msgid "No stratagems in this list: add your detachment's below."
 msgstr "Keine Stratageme in dieser Liste: füge die deines Kontingents unten hinzu."
 
-#: src/ui/AutoAbilities.tsx:264
+#: src/ui/AutoAbilities.tsx:266
 #, fuzzy
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] "{n} Stratagem in deinem Spielfeld-Panel"
 msgstr[1] "{n} Stratageme in deinem Spielfeld-Panel"
 
-#: src/ui/AutoAbilities.tsx:282
-#: src/ui/AutoAbilities.tsx:384
-#: src/ui/AutoAbilities.tsx:450
+#: src/ui/AutoAbilities.tsx:284
+#: src/ui/AutoAbilities.tsx:386
+#: src/ui/AutoAbilities.tsx:459
 #, fuzzy
 msgid "Automate this?"
 msgstr "Automatisieren?"
 
-#: src/ui/AutoAbilities.tsx:294
-#: src/ui/AutoAbilities.tsx:392
+#: src/ui/AutoAbilities.tsx:296
+#: src/ui/AutoAbilities.tsx:394
 #, fuzzy
 msgid "Automate all suggested"
 msgstr "Alle Vorschläge automatisieren"
 
-#: src/ui/AutoAbilities.tsx:299
-#: src/ui/AutoAbilities.tsx:399
+#: src/ui/AutoAbilities.tsx:301
+#: src/ui/AutoAbilities.tsx:401
 #, fuzzy
 msgid "{names}: the app reminds you of it; play it yourself."
 msgid_plural "{names}: the app reminds you of these; play them yourself."
 msgstr[0] "{names}: Die App erinnert dich daran; spiel sie selbst."
 msgstr[1] "{names}: Die App erinnert dich daran; spiel sie selbst."
 
-#: src/ui/AutoAbilities.tsx:350
+#: src/ui/AutoAbilities.tsx:352
 #, fuzzy
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] "{done} von {n} Fähigkeit automatisiert"
 msgstr[1] "{done} von {n} Fähigkeiten automatisiert"
 
-#: src/ui/AutoAbilities.tsx:358
+#: src/ui/AutoAbilities.tsx:360
 #, fuzzy
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] "{n} weitere geht, wenn du sie bestätigst"
 msgstr[1] "{n} weitere gehen, wenn du sie bestätigst"
 
-#: src/ui/AutoAbilities.tsx:364
+#: src/ui/AutoAbilities.tsx:366
 #, fuzzy
 msgid "Abilities the app can play for you"
 msgstr "Fähigkeiten, die die App für dich ausspielen kann"
 
-#: src/ui/AutoAbilities.tsx:366
+#: src/ui/AutoAbilities.tsx:368
 #, fuzzy
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr "Aus dem Text deiner Liste gelesen. Prüfe jede Regel an der Fähigkeit, bevor du sie ankreuzt; der Rest bleibt Erinnerung."
 
-#: src/ui/AutoAbilities.tsx:435
+#: src/ui/AutoAbilities.tsx:441
+#, fuzzy
+msgid "Taught:"
+msgstr "Beigebracht:"
+
+#: src/ui/AutoAbilities.tsx:441
 #, fuzzy
 msgid "Automated:"
 msgstr "Automatisiert:"
 
-#: src/ui/AutoAbilities.tsx:440
+#: src/ui/AutoAbilities.tsx:446
+#: src/ui/PlayPanel.tsx:404
+#: src/ui/PlayPanel.tsx:449
+#, fuzzy
+msgid "Change"
+msgstr "Ändern"
+
+#: src/ui/AutoAbilities.tsx:449
+#: src/ui/TeachRule.tsx:359
 #, fuzzy
 msgid "Stop automating"
 msgstr "Nicht mehr automatisieren"
 
-#: src/ui/AutoAbilities.tsx:474
+#: src/ui/AutoAbilities.tsx:466
+#, fuzzy
+msgid "Not quite? Teach it this rule"
+msgstr "Nicht ganz? Bring ihr diese Regel bei"
+
+#: src/ui/AutoAbilities.tsx:466
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/TeachRule.tsx:87
+#, fuzzy
+msgid "Teach it this rule"
+msgstr "Bring ihr diese Regel bei"
+
+#: src/ui/AutoAbilities.tsx:502
 #, fuzzy
 msgid "{ability}: on until the end of the phase"
 msgstr "{ability}: aktiv bis zum Ende der Phase"
 
-#: src/ui/AutoAbilities.tsx:480
+#: src/ui/AutoAbilities.tsx:508
 #, fuzzy
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr "Einmal pro Schlacht; gilt bis zum Ende der Phase"
 
-#: src/ui/AutoAbilities.tsx:483
+#: src/ui/AutoAbilities.tsx:511
 #, fuzzy
 msgid "Use {ability}"
 msgstr "{ability} einsetzen"
 
-#: src/ui/AutoAbilities.tsx:488
+#: src/ui/AutoAbilities.tsx:516
 #, fuzzy
 msgid "{ability} used"
 msgstr "{ability} eingesetzt"
@@ -6888,6 +6917,7 @@ msgid "Controls"
 msgstr "Steuerung"
 
 #: src/ui/Keys.tsx:52
+#: src/ui/TeachRule.tsx:92
 #, fuzzy
 msgid "Close (Esc)"
 msgstr "Schließen (Esc)"
@@ -7788,138 +7818,179 @@ msgstr "OK"
 msgid "Withdraw"
 msgstr "Zurückziehen"
 
-#: src/ui/PlayPanel.tsx:100
+#: src/ui/PlayPanel.tsx:106
 #, fuzzy
 msgid "No core stratagems fit this moment."
 msgstr "Keine Kern-Stratageme passen gerade."
 
-#: src/ui/PlayPanel.tsx:115
+#: src/ui/PlayPanel.tsx:122
 #, fuzzy
 msgid "No {cards} in this phase."
 msgstr "Keine {cards} in dieser Phase."
 
-#: src/ui/PlayPanel.tsx:121
+#: src/ui/PlayPanel.tsx:128
+#: src/ui/TeachRule.tsx:118
 #, fuzzy
 msgid "CP"
 msgstr "CP"
 
-#: src/ui/PlayPanel.tsx:122
+#: src/ui/PlayPanel.tsx:129
 #, fuzzy
 msgid "Other stratagem…"
 msgstr "Anderes Stratagem…"
 
-#: src/ui/PlayPanel.tsx:134
+#: src/ui/PlayPanel.tsx:141
 #, fuzzy
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] "{n} gerade nicht nutzbar"
 msgstr[1] "{n} gerade nicht nutzbar"
 
-#: src/ui/PlayPanel.tsx:153
+#: src/ui/PlayPanel.tsx:163
 #, fuzzy
 msgid "can react: {stratagems}"
 msgstr "kann reagieren: {stratagems}"
 
-#: src/ui/PlayPanel.tsx:154
+#: src/ui/PlayPanel.tsx:164
 #, fuzzy
 msgid "nothing to react with"
 msgstr "nichts zum Reagieren"
 
-#: src/ui/PlayPanel.tsx:155
+#: src/ui/PlayPanel.tsx:165
 #, fuzzy
 msgid "({cp} CP)"
 msgstr "({cp} CP)"
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:175
 #, fuzzy
 msgid "0 CP left"
 msgstr "0 CP übrig"
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:175
 #, fuzzy
 msgid "{cp} CP"
 msgstr "{cp} CP"
 
-#: src/ui/PlayPanel.tsx:186
+#: src/ui/PlayPanel.tsx:204
 #, fuzzy
 msgid "Pick a unit first"
 msgstr "Wähle zuerst eine Einheit"
 
-#: src/ui/PlayPanel.tsx:198
+#: src/ui/PlayPanel.tsx:217
 #, fuzzy
 msgid "On which unit…"
 msgstr "Auf welche Einheit…"
 
-#: src/ui/PlayPanel.tsx:243
+#: src/ui/PlayPanel.tsx:262
+#: src/ui/TeachRule.tsx:110
 #, fuzzy
 msgid "Cost"
 msgstr "Kosten"
 
-#: src/ui/PlayPanel.tsx:259
+#: src/ui/PlayPanel.tsx:278
 #, fuzzy
 msgid "Not enough {resource}"
 msgstr "Nicht genug {resource}"
 
-#: src/ui/PlayPanel.tsx:261
+#: src/ui/PlayPanel.tsx:280
 #, fuzzy
 msgid "Name it first"
 msgstr "Gib zuerst einen Namen ein"
 
-#: src/ui/PlayPanel.tsx:274
+#: src/ui/PlayPanel.tsx:293
 #, fuzzy
 msgid "Dice to spend"
 msgstr "Auszugebende Würfel"
 
-#: src/ui/PlayPanel.tsx:277
+#: src/ui/PlayPanel.tsx:296
 #, fuzzy
 msgid "Spends these {resource}:"
 msgstr "Gibt diese {resource} aus:"
 
-#: src/ui/PlayPanel.tsx:278
+#: src/ui/PlayPanel.tsx:297
 #, fuzzy
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr "Wähle die {resource} zum Ausgeben, sonst gehen die niedrigsten:"
 
-#: src/ui/PlayPanel.tsx:326
+#: src/ui/PlayPanel.tsx:358
 #, fuzzy
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr "Von Hand als abgehandelt markieren; erscheint im Protokoll"
 
-#: src/ui/PlayPanel.tsx:331
+#: src/ui/PlayPanel.tsx:363
 #, fuzzy
 msgid "Apply"
 msgstr "Anwenden"
 
-#: src/ui/PlayPanel.tsx:57
+#: src/ui/PlayPanel.tsx:368
+#: src/ui/PlayPanel.tsx:404
+#, fuzzy
+msgid "Teach it"
+msgstr "Beibringen"
+
+#: src/ui/PlayPanel.tsx:401
+#, fuzzy
+msgid "Teach the app what this stratagem does"
+msgstr "Bring der App bei, was diese Strategem bewirkt"
+
+#: src/ui/PlayPanel.tsx:401
+#, fuzzy
+msgid "A stratagem your list didn't bring"
+msgstr "Eine Strategem, die deine Liste nicht mitbrachte"
+
+#: src/ui/PlayPanel.tsx:404
+#: src/ui/TeachRule.tsx:91
+#, fuzzy
+msgid "Teach a stratagem"
+msgstr "Strategem beibringen"
+
+#: src/ui/PlayPanel.tsx:435
+#, fuzzy
+msgid "{n} army rule"
+msgid_plural "{n} army rules"
+msgstr[0] "{n} Armeeregel"
+msgstr[1] "{n} Armeeregeln"
+
+#: src/ui/PlayPanel.tsx:443
+#, fuzzy
+msgid "The app plays it"
+msgstr "Die App spielt sie"
+
+#: src/ui/PlayPanel.tsx:445
+#, fuzzy
+msgid "A reminder; you play it"
+msgstr "Eine Erinnerung; du spielst sie selbst"
+
+#: src/ui/PlayPanel.tsx:63
 #, fuzzy
 msgid "{phase}: {cards}"
 msgstr "{phase}: {cards}"
 
-#: src/ui/PlayPanel.tsx:58
+#: src/ui/PlayPanel.tsx:64
 #, fuzzy
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] "{phase}: {n} Stratagem"
 msgstr[1] "{phase}: {n} Stratageme"
 
-#: src/ui/PlayPanel.tsx:59
+#: src/ui/PlayPanel.tsx:65
 #, fuzzy
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] "{n} Fähigkeit"
 msgstr[1] "{n} Fähigkeiten"
 
-#: src/ui/PlayPanel.tsx:68
+#: src/ui/PlayPanel.tsx:74
 #, fuzzy
 msgid "{phase}: {cards} and abilities"
 msgstr "{phase}: {cards} und Fähigkeiten"
 
-#: src/ui/PlayPanel.tsx:69
+#: src/ui/PlayPanel.tsx:75
 #, fuzzy
 msgid "{phase}: stratagems and abilities"
 msgstr "{phase}: Stratageme und Fähigkeiten"
 
-#: src/ui/PlayPanel.tsx:76
+#: src/ui/PlayPanel.tsx:82
 #, fuzzy
 msgid "No abilities flagged for this phase."
 msgstr "Keine Fähigkeiten für diese Phase markiert."
@@ -9321,6 +9392,328 @@ msgstr "Sag was…"
 msgid "Chat message"
 msgstr "Chatnachricht"
 
+#: src/ui/TeachRule.tsx:102
+#, fuzzy
+msgid "The stratagem"
+msgstr "Die Strategem"
+
+#: src/ui/TeachRule.tsx:121
+#, fuzzy
+msgid "Use it"
+msgstr "Einsetzbar"
+
+#: src/ui/TeachRule.tsx:126
+#, fuzzy
+msgid "once per phase"
+msgstr "einmal pro Phase"
+
+#: src/ui/TeachRule.tsx:127
+#, fuzzy
+msgid "once per turn"
+msgstr "einmal pro Zug"
+
+#: src/ui/TeachRule.tsx:128
+#, fuzzy
+msgid "once per battle"
+msgstr "einmal pro Schlacht"
+
+#: src/ui/TeachRule.tsx:132
+#, fuzzy
+msgid "In"
+msgstr "In"
+
+#: src/ui/TeachRule.tsx:137
+#, fuzzy
+msgid "your turn"
+msgstr "deinem Zug"
+
+#: src/ui/TeachRule.tsx:138
+#, fuzzy
+msgid "your opponent's turn"
+msgstr "dem Zug des Gegners"
+
+#: src/ui/TeachRule.tsx:139
+#, fuzzy
+msgid "either player's turn"
+msgstr "jedem Zug"
+
+#: src/ui/TeachRule.tsx:142
+#, fuzzy
+msgid "Phases"
+msgstr "Phasen"
+
+#: src/ui/TeachRule.tsx:160
+#, fuzzy
+msgid "(any phase)"
+msgstr "(jede Phase)"
+
+#: src/ui/TeachRule.tsx:167
+#, fuzzy
+msgid "When"
+msgstr "Wann"
+
+#: src/ui/TeachRule.tsx:187
+#, fuzzy
+msgid "When it attacks or is attacked"
+msgstr "Wenn sie angreift oder angegriffen wird"
+
+#: src/ui/TeachRule.tsx:188
+#, fuzzy
+msgid "At the start of a phase"
+msgstr "Zu Beginn einer Phase"
+
+#: src/ui/TeachRule.tsx:189
+#, fuzzy
+msgid "At the end of a phase"
+msgstr "Am Ende einer Phase"
+
+#: src/ui/TeachRule.tsx:210
+#, fuzzy
+msgid "in your turn"
+msgstr "in deinem Zug"
+
+#: src/ui/TeachRule.tsx:211
+#, fuzzy
+msgid "in each player's turn"
+msgstr "im Zug jedes Spielers"
+
+#: src/ui/TeachRule.tsx:219
+#, fuzzy
+msgid "Which attacks"
+msgstr "Welche Attacken"
+
+#: src/ui/TeachRule.tsx:219
+#, fuzzy
+msgid "Only"
+msgstr "Nur"
+
+#: src/ui/TeachRule.tsx:228
+#, fuzzy
+msgid "any attacks"
+msgstr "alle Attacken"
+
+#: src/ui/TeachRule.tsx:229
+#, fuzzy
+msgid "ranged attacks"
+msgstr "Fernkampfattacken"
+
+#: src/ui/TeachRule.tsx:23
+#: src/ui/TopBar.tsx:470
+#, fuzzy
+msgid "Re-roll"
+msgstr "Neu würfeln"
+
+#: src/ui/TeachRule.tsx:230
+#, fuzzy
+msgid "melee attacks"
+msgstr "Nahkampfattacken"
+
+#: src/ui/TeachRule.tsx:24
+#, fuzzy
+msgid "+1 or −1 to its rolls"
+msgstr "+1 oder −1 auf ihre Würfe"
+
+#: src/ui/TeachRule.tsx:240
+#, fuzzy
+msgid "always"
+msgstr "immer"
+
+#: src/ui/TeachRule.tsx:241
+#, fuzzy
+msgid "after it charged"
+msgstr "nachdem sie angegriffen hat"
+
+#: src/ui/TeachRule.tsx:242
+#: src/ui/autoText.ts:46
+#, fuzzy
+msgid "if it stayed still"
+msgstr "wenn sie stehen blieb"
+
+#: src/ui/TeachRule.tsx:245
+#, fuzzy
+msgid "against"
+msgstr "gegen"
+
+#: src/ui/TeachRule.tsx:248
+#, fuzzy
+msgid "any unit, or a keyword"
+msgstr "jede Einheit oder ein Schlüsselwort"
+
+#: src/ui/TeachRule.tsx:261
+#, fuzzy
+msgid "Who"
+msgstr "Wer"
+
+#: src/ui/TeachRule.tsx:27
+#, fuzzy
+msgid "+1 or −1 to attacks against it"
+msgstr "+1 oder −1 auf Attacken gegen sie"
+
+#: src/ui/TeachRule.tsx:276
+#, fuzzy
+msgid "This unit"
+msgstr "Diese Einheit"
+
+#: src/ui/TeachRule.tsx:277
+#, fuzzy
+msgid "The unit it leads, while leading"
+msgstr "Die Einheit, die sie anführt"
+
+#: src/ui/TeachRule.tsx:278
+#, fuzzy
+msgid "Units within range"
+msgstr "Einheiten in Reichweite"
+
+#: src/ui/TeachRule.tsx:286
+#, fuzzy
+msgid "friendly"
+msgstr "befreundete"
+
+#: src/ui/TeachRule.tsx:287
+#, fuzzy
+msgid "enemy"
+msgstr "feindliche"
+
+#: src/ui/TeachRule.tsx:290
+#, fuzzy
+msgid "within"
+msgstr "innerhalb von"
+
+#: src/ui/TeachRule.tsx:30
+#, fuzzy
+msgid "+1 to its saves"
+msgstr "+1 auf ihre Rettungswürfe"
+
+#: src/ui/TeachRule.tsx:302
+#, fuzzy
+msgid "keyword (optional)"
+msgstr "Schlüsselwort (optional)"
+
+#: src/ui/TeachRule.tsx:31
+#, fuzzy
+msgid "Invulnerable save"
+msgstr "Rettungswurf (unmodifiziert)"
+
+#: src/ui/TeachRule.tsx:315
+#, fuzzy
+msgid "What"
+msgstr "Was"
+
+#: src/ui/TeachRule.tsx:32
+#, fuzzy
+msgid "Feel No Pain"
+msgstr "Feel No Pain"
+
+#: src/ui/TeachRule.tsx:321
+#, fuzzy
+msgid "Add an effect"
+msgstr "Effekt hinzufügen"
+
+#: src/ui/TeachRule.tsx:327
+#, fuzzy
+msgid "Add another effect…"
+msgstr "Weiteren Effekt hinzufügen…"
+
+#: src/ui/TeachRule.tsx:327
+#, fuzzy
+msgid "Add an effect…"
+msgstr "Effekt hinzufügen…"
+
+#: src/ui/TeachRule.tsx:33
+#, fuzzy
+msgid "+X to a weapon stat"
+msgstr "+X auf einen Waffenwert"
+
+#: src/ui/TeachRule.tsx:34
+#, fuzzy
+msgid "Gain CP"
+msgstr "CP erhalten"
+
+#: src/ui/TeachRule.tsx:343
+#, fuzzy
+msgid "Once per battle: you switch it on from the unit card, for one phase"
+msgstr "Einmal pro Schlacht: du schaltest sie auf der Einheitenkarte für eine Phase ein"
+
+#: src/ui/TeachRule.tsx:35
+#, fuzzy
+msgid "Heal wounds"
+msgstr "Lebenspunkte heilen"
+
+#: src/ui/TeachRule.tsx:351
+#, fuzzy
+msgid "Those don't fit together; check the numbers."
+msgstr "Das passt nicht zusammen; prüfe die Zahlen."
+
+#: src/ui/TeachRule.tsx:353
+#, fuzzy
+msgid "Add what it does, and the rule shows here."
+msgstr "Füge hinzu, was sie bewirkt, dann erscheint die Regel hier."
+
+#: src/ui/TeachRule.tsx:365
+#, fuzzy
+msgid "Save the rule"
+msgstr "Regel speichern"
+
+#: src/ui/TeachRule.tsx:385
+#, fuzzy
+msgid "to hit"
+msgstr "auf Treffer"
+
+#: src/ui/TeachRule.tsx:386
+#, fuzzy
+msgid "to wound"
+msgstr "auf Verwunden"
+
+#: src/ui/TeachRule.tsx:40
+#, fuzzy
+msgid "Hit rolls"
+msgstr "Trefferwürfe"
+
+#: src/ui/TeachRule.tsx:40
+#, fuzzy
+msgid "Wound rolls"
+msgstr "Verwundungswürfe"
+
+#: src/ui/TeachRule.tsx:40
+#, fuzzy
+msgid "Damage rolls"
+msgstr "Schadenswürfe"
+
+#: src/ui/TeachRule.tsx:407
+#, fuzzy
+msgid "rolls of 1"
+msgstr "Würfe von 1"
+
+#: src/ui/TeachRule.tsx:408
+#, fuzzy
+msgid "failed rolls"
+msgstr "misslungene Würfe"
+
+#: src/ui/TeachRule.tsx:433
+#, fuzzy
+msgid "+1 to its saving throws"
+msgstr "+1 auf ihre Schutzwürfe"
+
+#: src/ui/TeachRule.tsx:447
+#, fuzzy
+msgid "Strength"
+msgstr "Stärke"
+
+#: src/ui/TeachRule.tsx:448
+#, fuzzy
+msgid "AP (improved)"
+msgstr "DS (verbessert)"
+
+#: src/ui/TeachRule.tsx:91
+#, fuzzy
+msgid "Teach it {rule}"
+msgstr "{rule} beibringen"
+
+#: src/ui/TeachRule.tsx:97
+#, fuzzy
+msgid "Pick when it works, who it works on and what it does. The app plays it from then on."
+msgstr "Wähle, wann sie wirkt, auf wen und was sie bewirkt. Ab dann spielt die App sie."
+
 #: src/ui/TemplateTools.tsx:110
 #, fuzzy
 msgid "Scatter"
@@ -9774,11 +10167,6 @@ msgstr "Diese Würfel behalten: du verzichtest auf den Wurf dieser Runde"
 #, fuzzy
 msgid "Spend"
 msgstr "Ausgeben"
-
-#: src/ui/TopBar.tsx:470
-#, fuzzy
-msgid "Re-roll"
-msgstr "Neu würfeln"
 
 #: src/ui/TopBar.tsx:511
 #: src/ui/TopBar.tsx:512
@@ -10315,31 +10703,36 @@ msgstr "Was ist neu"
 msgid "The full list of changes"
 msgstr "Alle Änderungen"
 
-#: src/ui/autoText.ts:106
+#: src/ui/autoText.ts:102
+#, fuzzy
+msgid "{unit}'s {ability}: +{amount} {resource}"
+msgstr "{ability} von {unit}: +{amount} {resource}"
+
+#: src/ui/autoText.ts:110
 #, fuzzy
 msgid "{unit}'s {ability}: rolled {roll}, {n} wound regained"
 msgid_plural "{unit}'s {ability}: rolled {roll}, {n} wounds regained"
 msgstr[0] "{ability} von {unit}: {roll} gewürfelt, {n} Lebenspunkt zurück"
 msgstr[1] "{ability} von {unit}: {roll} gewürfelt, {n} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:116
+#: src/ui/autoText.ts:120
 #, fuzzy
 msgid "{unit}'s {ability}: {n} wound regained"
 msgid_plural "{unit}'s {ability}: {n} wounds regained"
 msgstr[0] "{ability} von {unit}: {n} Lebenspunkt zurück"
 msgstr[1] "{ability} von {unit}: {n} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:139
+#: src/ui/autoText.ts:143
 #, fuzzy
 msgid "{by} to {roll}"
 msgstr "{by} auf {roll}"
 
-#: src/ui/autoText.ts:140
+#: src/ui/autoText.ts:144
 #, fuzzy
 msgid "{roll} target {by}"
 msgstr "{roll}-Zielwert {by}"
 
-#: src/ui/autoText.ts:143
+#: src/ui/autoText.ts:147
 #, fuzzy
 msgid "criticals on {n}+"
 msgstr "kritisch bei {n}+"
@@ -10359,7 +10752,7 @@ msgstr "Ihre Nahkampfattacken"
 msgid "Its attacks"
 msgstr "Ihre Attacken"
 
-#: src/ui/autoText.ts:191
+#: src/ui/autoText.ts:195
 #, fuzzy
 msgid "re-roll"
 msgstr "neu würfeln"
@@ -10409,119 +10802,119 @@ msgstr "{roll}würfe von 1 wiederholen"
 msgid "re-roll failed {roll} rolls"
 msgstr "misslungene {roll}würfe wiederholen"
 
-#: src/ui/autoText.ts:37
+#: src/ui/autoText.ts:38
+#, fuzzy
+msgid "+{n} Damage"
+msgstr "+{n} Schaden"
+
+#: src/ui/autoText.ts:39
 #, fuzzy
 msgid "−1 Damage (not below 1)"
 msgstr "−1 Damage (nicht unter 1)"
 
-#: src/ui/autoText.ts:39
+#: src/ui/autoText.ts:41
 #, fuzzy
 msgid "+1 to {roll}"
 msgstr "+1 auf {roll}"
 
-#: src/ui/autoText.ts:40
+#: src/ui/autoText.ts:42
 #, fuzzy
 msgid "−1 to {roll}"
 msgstr "−1 auf {roll}"
 
-#: src/ui/autoText.ts:42
+#: src/ui/autoText.ts:44
 #, fuzzy
 msgid "against {keywords}"
 msgstr "gegen {keywords}"
 
-#: src/ui/autoText.ts:42
+#: src/ui/autoText.ts:44
 #, fuzzy
 msgid " or "
 msgstr " oder "
 
-#: src/ui/autoText.ts:43
+#: src/ui/autoText.ts:45
 #, fuzzy
 msgid "after charging"
 msgstr "nach einem Angriff"
 
-#: src/ui/autoText.ts:44
+#: src/ui/autoText.ts:59
 #, fuzzy
-msgid "if it stayed still"
-msgstr "wenn sie stehen blieb"
+msgid "a {x}+ invulnerable save"
+msgstr "ein unmodifizierter Rettungswurf von {x}+"
 
-#: src/ui/autoText.ts:57
+#: src/ui/autoText.ts:61
 #, fuzzy
 msgid "gain {amount} {resource}"
 msgstr "{amount} {resource} erhalten"
 
-#: src/ui/autoText.ts:59
+#: src/ui/autoText.ts:63
 #, fuzzy
 msgid "its most hurt model regains up to {amount} wounds"
 msgstr "ihr am stärksten verwundetes Modell erhält bis zu {amount} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:67
+#: src/ui/autoText.ts:71
 #, fuzzy
 msgid "While leading a unit"
 msgstr "Solange sie eine Einheit anführt"
 
-#: src/ui/autoText.ts:71
+#: src/ui/autoText.ts:75
 #, fuzzy
 msgid "Enemy {keyword}units within {range}\""
 msgstr "Feindliche {keyword}Einheiten innerhalb von {range}\""
 
-#: src/ui/autoText.ts:75
+#: src/ui/autoText.ts:79
 #, fuzzy
 msgid "Friendly {keyword}units within {range}\""
 msgstr "Befreundete {keyword}Einheiten innerhalb von {range}\""
 
-#: src/ui/autoText.ts:80
+#: src/ui/autoText.ts:84
 #, fuzzy
 msgid "Once per battle, for one phase"
 msgstr "Einmal pro Schlacht, für eine Phase"
 
-#: src/ui/autoText.ts:83
+#: src/ui/autoText.ts:87
 #, fuzzy
 msgid "each"
 msgstr "jeder"
 
-#: src/ui/autoText.ts:83
+#: src/ui/autoText.ts:87
 #, fuzzy
 msgid "your"
 msgstr "deiner"
 
-#: src/ui/autoText.ts:86
-#, fuzzy
-msgid "At the end of {turn} {phase} phase"
-msgstr "Am Ende {turn} Phase {phase}"
-
-#: src/ui/autoText.ts:87
-#, fuzzy
-msgid "At the start of {turn} {phase} phase"
-msgstr "Zu Beginn {turn} Phase {phase}"
-
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:130
+#: src/ui/autoText.ts:134
 #, fuzzy
 msgid "hit"
 msgstr "Treffer"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:132
+#: src/ui/autoText.ts:136
 #, fuzzy
 msgid "wound"
 msgstr "Verwundungs"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:134
+#: src/ui/autoText.ts:138
 #, fuzzy
 msgid "save"
 msgstr "Rettungswurf"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:136
+#: src/ui/autoText.ts:140
 #, fuzzy
 msgid "damage"
 msgstr "Schaden"
 
-#: src/ui/autoText.ts:98
+#: src/ui/autoText.ts:90
 #, fuzzy
-msgid "{unit}'s {ability}: +{amount} {resource}"
-msgstr "{ability} von {unit}: +{amount} {resource}"
+msgid "At the end of {turn} {phase} phase"
+msgstr "Am Ende {turn} Phase {phase}"
+
+#: src/ui/autoText.ts:91
+#, fuzzy
+msgid "At the start of {turn} {phase} phase"
+msgstr "Zu Beginn {turn} Phase {phase}"
 
 #: src/ui/diceSets.ts:11
 #, fuzzy

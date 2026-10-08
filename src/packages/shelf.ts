@@ -131,7 +131,15 @@ export function armyFromGame(
     if (unit.owner !== owner) continue;
     const i = indexOf(unit.id, deployed.prefix);
     if (i === null || !units[i]) continue;
-    units[i] = { ...units[i]!, name: unit.name };
+    // Abilities automated or taught at the table (#38, #53) go back with the army.
+    const roster = units[i]!;
+    const abilities = roster.sheet.abilities.map((a) => {
+      const played = unit.sheet?.abilities.find((b) => b.name === a.name);
+      if (!played || played.auto === a.auto) return a;
+      const { auto: _, ...rest } = a;
+      return played.auto ? { ...rest, auto: played.auto } : rest;
+    });
+    units[i] = { ...roster, name: unit.name, sheet: { ...roster.sheet, abilities } };
     for (const mid of unit.modelIds) {
       const m = game.models[mid];
       if (!m?.figure) continue;

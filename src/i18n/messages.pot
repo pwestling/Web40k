@@ -1288,7 +1288,7 @@ msgstr ""
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:137
+#: src/ui/AutoAbilities.tsx:139
 msgid "Add"
 msgstr ""
 
@@ -2062,7 +2062,8 @@ msgid "Pick for a pack"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:364
-#: src/ui/PlayPanel.tsx:233
+#: src/ui/PlayPanel.tsx:252
+#: src/ui/TeachRule.tsx:105
 msgid "Name"
 msgstr ""
 
@@ -2697,7 +2698,7 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:87
-#: src/ui/PlayPanel.tsx:71
+#: src/ui/PlayPanel.tsx:77
 #: src/ui/TableWarnings.tsx:99
 msgid "Hide"
 msgstr ""
@@ -3228,7 +3229,7 @@ msgid "Hide notes and chapters"
 msgstr ""
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:42
+#: src/ui/PlayPanel.tsx:48
 #: src/ui/TerrainPanel.tsx:375
 #: src/ui/TopBar.tsx:226
 #: src/ui/WhatNow.tsx:41
@@ -3734,8 +3735,8 @@ msgid "This table is for another game"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:192
-#: src/ui/PlayPanel.tsx:270
+#: src/ui/PlayPanel.tsx:210
+#: src/ui/PlayPanel.tsx:289
 msgid "Use"
 msgstr ""
 
@@ -3747,7 +3748,8 @@ msgstr ""
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:364
-#: src/ui/TemplateTools.tsx:114
+#: src/ui/TeachRule.tsx:491
+#: src/ui/TeachRule.tsx:492
 msgid "Remove"
 msgstr ""
 
@@ -4209,13 +4211,13 @@ msgid "no re-roll"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:167
-#: src/ui/autoText.ts:141
-#: src/ui/autoText.ts:189
+#: src/ui/autoText.ts:145
+#: src/ui/autoText.ts:193
 msgid "re-roll 1s"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:168
-#: src/ui/autoText.ts:142
+#: src/ui/autoText.ts:146
 msgid "re-roll fails"
 msgstr ""
 
@@ -4256,6 +4258,7 @@ msgid "More options"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:221
+#: src/ui/TeachRule.tsx:446
 msgid "Attacks"
 msgstr ""
 
@@ -4297,6 +4300,7 @@ msgstr ""
 
 #: src/ui/AttackPanel.tsx:263
 #: src/ui/AttackPanel.tsx:498
+#: src/ui/TeachRule.tsx:449
 msgid "Damage"
 msgstr ""
 
@@ -4503,109 +4507,130 @@ msgstr ""
 msgid "at"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:113
+#: src/ui/AutoAbilities.tsx:115
 msgid "Paste its name, then its When, Target and Effect."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:122
+#: src/ui/AutoAbilities.tsx:124
 msgid "Add a stratagem"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:124
+#: src/ui/AutoAbilities.tsx:126
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:131
+#: src/ui/AutoAbilities.tsx:133
 msgid "Stratagem text"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:132
+#: src/ui/AutoAbilities.tsx:134
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:208
+#: src/ui/AutoAbilities.tsx:210
 msgid "{name} ({cp} CP)"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:241
+#: src/ui/AutoAbilities.tsx:243
 msgid "Your army"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:247
+#: src/ui/AutoAbilities.tsx:249
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:258
+#: src/ui/AutoAbilities.tsx:260
 msgid "No stratagems in this list: add your detachment's below."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:264
+#: src/ui/AutoAbilities.tsx:266
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:282
-#: src/ui/AutoAbilities.tsx:384
-#: src/ui/AutoAbilities.tsx:450
+#: src/ui/AutoAbilities.tsx:284
+#: src/ui/AutoAbilities.tsx:386
+#: src/ui/AutoAbilities.tsx:459
 msgid "Automate this?"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:294
-#: src/ui/AutoAbilities.tsx:392
+#: src/ui/AutoAbilities.tsx:296
+#: src/ui/AutoAbilities.tsx:394
 msgid "Automate all suggested"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:299
-#: src/ui/AutoAbilities.tsx:399
+#: src/ui/AutoAbilities.tsx:301
+#: src/ui/AutoAbilities.tsx:401
 msgid "{names}: the app reminds you of it; play it yourself."
 msgid_plural "{names}: the app reminds you of these; play them yourself."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:350
+#: src/ui/AutoAbilities.tsx:352
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:358
+#: src/ui/AutoAbilities.tsx:360
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:364
+#: src/ui/AutoAbilities.tsx:366
 msgid "Abilities the app can play for you"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:366
+#: src/ui/AutoAbilities.tsx:368
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:435
+#: src/ui/AutoAbilities.tsx:441
+msgid "Taught:"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:441
 msgid "Automated:"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:440
+#: src/ui/AutoAbilities.tsx:446
+#: src/ui/PlayPanel.tsx:404
+#: src/ui/PlayPanel.tsx:449
+msgid "Change"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:449
+#: src/ui/TeachRule.tsx:359
 msgid "Stop automating"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:474
+#: src/ui/AutoAbilities.tsx:466
+msgid "Not quite? Teach it this rule"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:466
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/TeachRule.tsx:87
+msgid "Teach it this rule"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:502
 msgid "{ability}: on until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:480
+#: src/ui/AutoAbilities.tsx:508
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:483
+#: src/ui/AutoAbilities.tsx:511
 msgid "Use {ability}"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:488
+#: src/ui/AutoAbilities.tsx:516
 msgid "{ability} used"
 msgstr ""
 
@@ -5615,6 +5640,7 @@ msgid "Controls"
 msgstr ""
 
 #: src/ui/Keys.tsx:52
+#: src/ui/TeachRule.tsx:92
 msgid "Close (Esc)"
 msgstr ""
 
@@ -6339,113 +6365,147 @@ msgstr ""
 msgid "Withdraw"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:100
+#: src/ui/PlayPanel.tsx:106
 msgid "No core stratagems fit this moment."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:115
+#: src/ui/PlayPanel.tsx:122
 msgid "No {cards} in this phase."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:121
+#: src/ui/PlayPanel.tsx:128
+#: src/ui/TeachRule.tsx:118
 msgid "CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:122
+#: src/ui/PlayPanel.tsx:129
 msgid "Other stratagem…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:134
+#: src/ui/PlayPanel.tsx:141
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:153
+#: src/ui/PlayPanel.tsx:163
 msgid "can react: {stratagems}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:154
+#: src/ui/PlayPanel.tsx:164
 msgid "nothing to react with"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:155
+#: src/ui/PlayPanel.tsx:165
 msgid "({cp} CP)"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:175
 msgid "0 CP left"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:175
 msgid "{cp} CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:186
+#: src/ui/PlayPanel.tsx:204
 msgid "Pick a unit first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:198
+#: src/ui/PlayPanel.tsx:217
 msgid "On which unit…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:243
+#: src/ui/PlayPanel.tsx:262
+#: src/ui/TeachRule.tsx:110
 msgid "Cost"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:259
+#: src/ui/PlayPanel.tsx:278
 msgid "Not enough {resource}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:261
+#: src/ui/PlayPanel.tsx:280
 msgid "Name it first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:274
+#: src/ui/PlayPanel.tsx:293
 msgid "Dice to spend"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:277
+#: src/ui/PlayPanel.tsx:296
 msgid "Spends these {resource}:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:278
+#: src/ui/PlayPanel.tsx:297
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:326
+#: src/ui/PlayPanel.tsx:358
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:331
+#: src/ui/PlayPanel.tsx:363
 msgid "Apply"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:57
+#: src/ui/PlayPanel.tsx:368
+#: src/ui/PlayPanel.tsx:404
+msgid "Teach it"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:401
+msgid "Teach the app what this stratagem does"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:401
+msgid "A stratagem your list didn't bring"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:404
+#: src/ui/TeachRule.tsx:91
+msgid "Teach a stratagem"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:435
+msgid "{n} army rule"
+msgid_plural "{n} army rules"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui/PlayPanel.tsx:443
+msgid "The app plays it"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:445
+msgid "A reminder; you play it"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:63
 msgid "{phase}: {cards}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:58
+#: src/ui/PlayPanel.tsx:64
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:59
+#: src/ui/PlayPanel.tsx:65
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:68
+#: src/ui/PlayPanel.tsx:74
 msgid "{phase}: {cards} and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:69
+#: src/ui/PlayPanel.tsx:75
 msgid "{phase}: stratagems and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:76
+#: src/ui/PlayPanel.tsx:82
 msgid "No abilities flagged for this phase."
 msgstr ""
 
@@ -7576,6 +7636,264 @@ msgstr ""
 msgid "Chat message"
 msgstr ""
 
+#: src/ui/TeachRule.tsx:102
+msgid "The stratagem"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:121
+msgid "Use it"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:126
+msgid "once per phase"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:127
+msgid "once per turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:128
+msgid "once per battle"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:132
+msgid "In"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:137
+msgid "your turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:138
+msgid "your opponent's turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:139
+msgid "either player's turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:142
+msgid "Phases"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:160
+msgid "(any phase)"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:167
+msgid "When"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:187
+msgid "When it attacks or is attacked"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:188
+msgid "At the start of a phase"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:189
+msgid "At the end of a phase"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:210
+msgid "in your turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:211
+msgid "in each player's turn"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:219
+msgid "Which attacks"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:219
+msgid "Only"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:228
+msgid "any attacks"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:229
+msgid "ranged attacks"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:23
+#: src/ui/TopBar.tsx:470
+msgid "Re-roll"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:230
+msgid "melee attacks"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:24
+msgid "+1 or −1 to its rolls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:240
+msgid "always"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:241
+msgid "after it charged"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:242
+#: src/ui/autoText.ts:46
+msgid "if it stayed still"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:245
+msgid "against"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:248
+msgid "any unit, or a keyword"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:261
+msgid "Who"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:27
+msgid "+1 or −1 to attacks against it"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:276
+msgid "This unit"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:277
+msgid "The unit it leads, while leading"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:278
+msgid "Units within range"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:286
+msgid "friendly"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:287
+msgid "enemy"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:290
+msgid "within"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:30
+msgid "+1 to its saves"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:302
+msgid "keyword (optional)"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:31
+msgid "Invulnerable save"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:315
+msgid "What"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:32
+msgid "Feel No Pain"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:321
+msgid "Add an effect"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:327
+msgid "Add another effect…"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:327
+msgid "Add an effect…"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:33
+msgid "+X to a weapon stat"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:34
+msgid "Gain CP"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:343
+msgid "Once per battle: you switch it on from the unit card, for one phase"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:35
+msgid "Heal wounds"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:351
+msgid "Those don't fit together; check the numbers."
+msgstr ""
+
+#: src/ui/TeachRule.tsx:353
+msgid "Add what it does, and the rule shows here."
+msgstr ""
+
+#: src/ui/TeachRule.tsx:365
+msgid "Save the rule"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:385
+msgid "to hit"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:386
+msgid "to wound"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:40
+msgid "Hit rolls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:40
+msgid "Wound rolls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:40
+msgid "Damage rolls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:407
+msgid "rolls of 1"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:408
+msgid "failed rolls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:433
+msgid "+1 to its saving throws"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:447
+msgid "Strength"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:448
+msgid "AP (improved)"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:91
+msgid "Teach it {rule}"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:97
+msgid "Pick when it works, who it works on and what it does. The app plays it from then on."
+msgstr ""
+
 #: src/ui/TemplateTools.tsx:110
 msgid "Scatter"
 msgstr ""
@@ -7938,10 +8256,6 @@ msgstr ""
 
 #: src/ui/TopBar.tsx:469
 msgid "Spend"
-msgstr ""
-
-#: src/ui/TopBar.tsx:470
-msgid "Re-roll"
 msgstr ""
 
 #: src/ui/TopBar.tsx:511
@@ -8374,27 +8688,31 @@ msgstr ""
 msgid "The full list of changes"
 msgstr ""
 
-#: src/ui/autoText.ts:106
+#: src/ui/autoText.ts:102
+msgid "{unit}'s {ability}: +{amount} {resource}"
+msgstr ""
+
+#: src/ui/autoText.ts:110
 msgid "{unit}'s {ability}: rolled {roll}, {n} wound regained"
 msgid_plural "{unit}'s {ability}: rolled {roll}, {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:116
+#: src/ui/autoText.ts:120
 msgid "{unit}'s {ability}: {n} wound regained"
 msgid_plural "{unit}'s {ability}: {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:139
+#: src/ui/autoText.ts:143
 msgid "{by} to {roll}"
 msgstr ""
 
-#: src/ui/autoText.ts:140
+#: src/ui/autoText.ts:144
 msgid "{roll} target {by}"
 msgstr ""
 
-#: src/ui/autoText.ts:143
+#: src/ui/autoText.ts:147
 msgid "criticals on {n}+"
 msgstr ""
 
@@ -8410,7 +8728,7 @@ msgstr ""
 msgid "Its attacks"
 msgstr ""
 
-#: src/ui/autoText.ts:191
+#: src/ui/autoText.ts:195
 msgid "re-roll"
 msgstr ""
 
@@ -8450,96 +8768,96 @@ msgstr ""
 msgid "re-roll failed {roll} rolls"
 msgstr ""
 
-#: src/ui/autoText.ts:37
-msgid "−1 Damage (not below 1)"
+#: src/ui/autoText.ts:38
+msgid "+{n} Damage"
 msgstr ""
 
 #: src/ui/autoText.ts:39
+msgid "−1 Damage (not below 1)"
+msgstr ""
+
+#: src/ui/autoText.ts:41
 msgid "+1 to {roll}"
 msgstr ""
 
-#: src/ui/autoText.ts:40
+#: src/ui/autoText.ts:42
 msgid "−1 to {roll}"
 msgstr ""
 
-#: src/ui/autoText.ts:42
+#: src/ui/autoText.ts:44
 msgid "against {keywords}"
 msgstr ""
 
-#: src/ui/autoText.ts:42
+#: src/ui/autoText.ts:44
 msgid " or "
 msgstr ""
 
-#: src/ui/autoText.ts:43
+#: src/ui/autoText.ts:45
 msgid "after charging"
 msgstr ""
 
-#: src/ui/autoText.ts:44
-msgid "if it stayed still"
+#: src/ui/autoText.ts:59
+msgid "a {x}+ invulnerable save"
 msgstr ""
 
-#: src/ui/autoText.ts:57
+#: src/ui/autoText.ts:61
 msgid "gain {amount} {resource}"
 msgstr ""
 
-#: src/ui/autoText.ts:59
+#: src/ui/autoText.ts:63
 msgid "its most hurt model regains up to {amount} wounds"
 msgstr ""
 
-#: src/ui/autoText.ts:67
+#: src/ui/autoText.ts:71
 msgid "While leading a unit"
 msgstr ""
 
-#: src/ui/autoText.ts:71
+#: src/ui/autoText.ts:75
 msgid "Enemy {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:75
+#: src/ui/autoText.ts:79
 msgid "Friendly {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:80
+#: src/ui/autoText.ts:84
 msgid "Once per battle, for one phase"
 msgstr ""
 
-#: src/ui/autoText.ts:83
+#: src/ui/autoText.ts:87
 msgid "each"
 msgstr ""
 
-#: src/ui/autoText.ts:83
-msgid "your"
-msgstr ""
-
-#: src/ui/autoText.ts:86
-msgid "At the end of {turn} {phase} phase"
-msgstr ""
-
 #: src/ui/autoText.ts:87
-msgid "At the start of {turn} {phase} phase"
-msgstr ""
-
-#: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:130
-msgid "hit"
-msgstr ""
-
-#: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:132
-msgid "wound"
+msgid "your"
 msgstr ""
 
 #: src/ui/autoText.ts:9
 #: src/ui/autoText.ts:134
-msgid "save"
+msgid "hit"
 msgstr ""
 
 #: src/ui/autoText.ts:9
 #: src/ui/autoText.ts:136
+msgid "wound"
+msgstr ""
+
+#: src/ui/autoText.ts:9
+#: src/ui/autoText.ts:138
+msgid "save"
+msgstr ""
+
+#: src/ui/autoText.ts:9
+#: src/ui/autoText.ts:140
 msgid "damage"
 msgstr ""
 
-#: src/ui/autoText.ts:98
-msgid "{unit}'s {ability}: +{amount} {resource}"
+#: src/ui/autoText.ts:90
+msgid "At the end of {turn} {phase} phase"
+msgstr ""
+
+#: src/ui/autoText.ts:91
+msgid "At the start of {turn} {phase} phase"
 msgstr ""
 
 #: src/ui/diceSets.ts:11

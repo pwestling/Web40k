@@ -291,7 +291,8 @@ function compileAttack(p: AttackPart, system: GameSystem): Effect[] | null {
   return action && p.roll ? [{ when: step(p.roll), if: and(), do: [action] }] : null;
 }
 
-function compile(parts: AutoPart[], system: GameSystem): Effect[] | null {
+/** The effects parts compile to (shared with "Teach it this rule", #53); null when one can't be. */
+export function compile(parts: AutoPart[], system: GameSystem): Effect[] | null {
   const out: Effect[] = [];
   for (const p of parts) {
     if (p.kind === "attack") {
@@ -300,6 +301,24 @@ function compile(parts: AutoPart[], system: GameSystem): Effect[] | null {
       out.push(...e);
     } else if (p.kind === "fnp")
       out.push({ when: { event: "always" }, do: [{ do: "ignoreDamage", atLeast: p.x }] });
+    else if (p.kind === "invuln")
+      // The better of this and the model's own invulnerable save, for attacks against it.
+      out.push({
+        when: step("save"),
+        if: { is: "ruleOwner", value: "target" },
+        do: [
+          {
+            do: "setCharacteristic",
+            target: "model",
+            characteristic: "InSv",
+            to: {
+              if: { cmp: ">", a: { ref: "model.InSv" }, b: 0 },
+              then: { op: "min", args: [{ ref: "model.InSv" }, p.x] },
+              else: p.x,
+            },
+          },
+        ],
+      });
     // Gains and heals run from the trigger (turn.ts), not as effects.
   }
   return out;

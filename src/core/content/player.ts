@@ -65,7 +65,7 @@ function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
     side: s.side,
     ...(s.phases?.length ? { phases: s.phases } : {}),
     cost: [{ resource: "CP", amount: s.cp }],
-    limit: { count: 1, per: "phase" },
+    limit: { count: 1, per: s.once ?? "phase" },
     ...(s.targetsUnit ? { target: { filter: { same: ["it.owner", "player.id"] } } } : {}),
     // On the unit for the phase: it runs when automated, and is a reminder on its attacks when not (UX 370).
     ...(s.targetsUnit ? { do: [{ do: "applyStatus", status: `strat.${s.id}` }] } : {}),
@@ -80,7 +80,7 @@ function playerActionDefs(state: GameState, player: PlayerId): ActionDef[] {
 }
 
 /** The faction stratagem behind an action id, if it is one. */
-function armyStratagem(state: GameState, id: string): ArmyStratagem | undefined {
+export function armyStratagem(state: GameState, id: string): ArmyStratagem | undefined {
   const army = ARMY.exec(id);
   return army ? state.armies?.[army[1]!]?.stratagems.find((x) => x.id === army[2]) : undefined;
 }
