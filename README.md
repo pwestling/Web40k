@@ -23,7 +23,16 @@ Players need only a browser. One player hosts, shares a link, and the browsers t
 - **Broadcast view.** A stream view with a commentator's camera, a spectator delay, and end-of-game moment cards.
 - **Rules packages.** Players can load sandboxed rules packages that add rules to a game, or a whole new game, shared peer to peer and checked by hash.
 - **Rules are advisory.** The app measures, rolls and reminds, but never blocks a move. Every wound, status and score can be edited, and Undo takes back your last action.
+- **Table companion.** Playing with real models on a real table? Open the companion on a phone (one for both of you, or one each). It keeps the turn, the wounds and the score, takes the dice you roll by hand, and asks what it can't see, such as how many models are in range.
+- **Learn to play.** A guided first game for each system against the computer, with a coach saying what to do next.
+- **Campaigns, events and play by mail.** A shared campaign book with a league table, map and unit stories; chess clocks and Swiss rounds for event nights; and games that last for days through signed turn files.
+- **Annotated replays.** Notes and marks on moments, chapters, and review rooms where a coach leads and others follow.
+- **For everyone.** German and French translations, keyboard play, text size, colour-blind side colours with shapes, and a screen-reader announcer.
 - **Built to be tested.** A soak bot plays hundreds of seeded games every night, with dropped players and host changes thrown in, and the in-app **Report a problem** button downloads a replay of the game with the errors that went with it.
+
+![A guided first game: the coach explains the turn](docs/screenshots/lesson.png)
+
+<img src="docs/screenshots/companion.png" width="300" alt="The table companion on a phone: typing in the faces of 16 real dice">
 
 ![Line of sight from a selected squad: green fully visible, yellow partly visible or in cover](docs/screenshots/line-of-sight.png)
 
@@ -67,6 +76,7 @@ Click one of the **Try it now** cards to play both sides of a demo game on one s
 | `pnpm perf`         | Rendering benchmark with sample armies                 |
 | `pnpm perf:load`    | Landing page load benchmark on a throttled network     |
 | `pnpm soak:browser` | The soak bot in two real browser tabs, for leak checks |
+| `pnpm smoke`        | Browser smoke tests through each way into the app      |
 
 ## Hosting your own
 
@@ -87,6 +97,10 @@ For a full self-hosted stack, with the app, your own signalling relay and a TURN
 | State        | [Zustand](https://zustand.docs.pmnd.rs) holding a pure, serialisable game state                                       |
 | Networking   | WebRTC data and audio via [Trystero](https://github.com/dmotz/trystero) (Nostr or a WebSocket relay for signalling)   |
 | Build / test | Vite, Vitest, TypeScript, ESLint, Prettier                                                                            |
+
+## Releases
+
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md), and the start page's **What's new** shows the highlights. Pushing a `v*` tag publishes a GitHub release with that version's notes.
 
 ## Contributing
 
