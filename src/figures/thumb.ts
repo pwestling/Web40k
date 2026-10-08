@@ -73,3 +73,10 @@ export async function makeThumb(asset: ModelAsset): Promise<string | null> {
     return null;
   }
 }
+
+/** Let go of the thumbnail renderer's WebGL context once the pictures are drawn; the table keeps its own. */
+export function releaseThumbs(): void {
+  renderer?.dispose();
+  renderer?.forceContextLoss();
+  renderer = null;
+}

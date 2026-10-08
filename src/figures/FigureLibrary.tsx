@@ -10,7 +10,7 @@ import { useStore } from "../store";
 import { useFigures, type FigureEntry } from "./library";
 import { closeLibrary, useLibraryOpen } from "./open";
 import { makePack, openPack, packFileName, shortHash, type PackResult } from "./pack";
-import { makeThumb } from "./thumb";
+import { makeThumb, releaseThumbs } from "./thumb";
 import { unused, usage, type Usage } from "./usage";
 
 export const mb = (bytes: number) =>
@@ -38,6 +38,7 @@ async function drawThumbs(): Promise<void> {
     }
   } finally {
     drawing = false;
+    releaseThumbs();
   }
 }
 
