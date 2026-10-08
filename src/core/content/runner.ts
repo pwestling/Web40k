@@ -1000,7 +1000,8 @@ function runTest(
     if (plan.passOn === "successes") {
       if (j.success) out.push(self, ...added);
     } else if (plan.passOn === "failures") {
-      if (!j.success) out.push(self);
+      // Extra outputs from a failed die (Conquest's Deadly Blades: a 6 costs two wounds).
+      if (!j.success) out.push(self, ...added);
     } else {
       out.push(token);
       if (!j.success) out.push(self);
@@ -1245,7 +1246,34 @@ function damageTrack(
   const hit = new Set((view.flags ?? []).filter((f) => f.startsWith("box")));
   const out: Outcome[] = [];
   const sides = a.die ?? 6;
+  // A shielding part's chart (behemoth systems): it soaks the hit unless the result would destroy.
+  const partText = a.through ? resolve(a.through.chart, ctx) : undefined;
+  const part = typeof partText === "string" ? parseTrack(partText) : null;
+  const prefix = a.through?.prefix ?? "";
+  const partName = a.through?.name ? String(resolve(a.through.name, ctx) ?? "") : "";
+  const partHit = new Set((view.flags ?? []).filter((f) => prefix && f.startsWith(`${prefix}box`)));
   for (let i = 0; i < run.tokens.length; i++) {
+    if (part) {
+      const roll = rollDie(rng, sides);
+      const idx = part.findIndex((b) => roll >= b.min && roll <= b.max);
+      const box = part[idx];
+      const name = partName || "System";
+      if (!box) {
+        out.push({ kind: "note", text: `${name} damage roll ${roll}: no box` });
+        continue;
+      }
+      const again = partHit.has(`${prefix}box${idx}`);
+      const label = `${box.colour}${box.effect ? ` ${box.effect}` : ""}`;
+      if (!(box.colour === "red" || (box.colour === "orange" && again))) {
+        partHit.add(`${prefix}box${idx}`);
+        out.push({ kind: "status", unitId: view.id, status: `${prefix}box${idx}`, value: true });
+        if (box.effect === "WPN")
+          out.push({ kind: "status", unitId: view.id, status: "damageWPN", value: true });
+        out.push({ kind: "note", text: `${name} damage roll ${roll}: ${label}` });
+        continue;
+      }
+      out.push({ kind: "note", text: `${name} damage roll ${roll}: ${label}, through to the core` });
+    }
     const roll = rollDie(rng, sides);
     const idx = boxes.findIndex((b) => roll >= b.min && roll <= b.max);
     const box = boxes[idx];

@@ -28,9 +28,14 @@ import type { Expr, GameSystem } from "../schema";
  * support cards (named by the player, paid in ADs); and areas of control as
  * table warnings (src/systems/fsd/checks.ts).
  *
+ * Behemoths: Systems that shield the Core from a side (their own Defense,
+ * Save and damage chart, only a destroying result going through to the
+ * Core), Attachments lost to a WPN box, Parts activating with the Core, no
+ * rear penalty, and pinned only by Core damage.
+ *
  * Left to the players: what a prepared action or support card does while it
- * applies, triggered abilities, and behemoths (multi-card units whose core,
- * systems and attachments activate and take damage separately).
+ * applies, triggered abilities, a behemoth System reacting on its own, and
+ * a behemoth's 45° turning limit.
  */
 
 const ref = (r: string): Expr => ({ ref: r });
@@ -54,11 +59,79 @@ const systemDamaged = (n: number): Expr => ({
   ],
 });
 const damagedSystems = [1, 2, 3, 4].map((n) => ({ if: systemDamaged(n), why: `System ${n} is damaged` }));
+/** A behemoth Attachment's weapon (WPN) once a WPN box is hit. */
+const attachmentLost = {
+  if: {
+    all: [
+      { hasStatus: "self", status: "damageWPN" },
+      { hasKeyword: "weapon", keyword: "WPN" },
+    ],
+  },
+  why: "The attachment is destroyed",
+};
 /** A special action marked prepared on the card (a square slot on its right). */
 const prepared: Expr = { hasKeyword: "weapon", keyword: "Prepared" };
 /** Taking another action ends interacting with an objective. */
 const dropInteract = { do: "setFlag", target: "self", flag: "interacting", value: false } as const;
 const notPinned: Expr = { not: { hasStatus: "self", status: "pinned" } };
+
+/**
+ * Behemoths (multi-card units): the Core is the unit's one base, and up to
+ * four System cards are characteristics on it: Sys1Name, Sys1Arc (the side
+ * it shields: front, left, right or rear), Sys1Def, Sys1Save ("d10(2)") and
+ * Sys1Chart. An attack from a shielded side hits that System: its Defense,
+ * Save and damage chart, with only a result that would destroy going through
+ * to the Core's chart. Parts counts the Systems and Attachments that
+ * activate with the Core (two actions each); an Attachment's weapons carry
+ * the WPN keyword and are lost when a WPN box is hit.
+ */
+const SYSTEMS = [1, 2, 3, 4] as const;
+const SIDES = ["front", "right", "rear", "left"] as const;
+const isBehemoth = (role: string): Expr => ({ hasKeyword: role, keyword: "BEHEMOTH" });
+/** System n shields the target from where the attacker stands. */
+const shields = (n: number): Expr => ({
+  all: [
+    isBehemoth("target"),
+    {
+      any: SIDES.map((side) => ({
+        all: [
+          { is: `target.Sys${n}Arc`, value: side },
+          { query: { kind: "inArc", from: "target", to: "attacker", arc: `${side}Side` } },
+        ],
+      })),
+    },
+  ],
+});
+/** The shielding System's value of a characteristic, else the target's own. */
+const shielded = (char: string): Expr =>
+  SYSTEMS.reduceRight<Expr>(
+    (rest, n) => ({ if: shields(n), then: ref(`target.Sys${n}${char}`), else: rest }),
+    ref(`target.${char}`),
+  );
+const unshielded: Expr = { not: { any: SYSTEMS.map(shields) } };
+const behemothChars = SYSTEMS.flatMap((n) => [
+  { id: `Sys${n}Name`, name: `System ${n}`, of: "model" as const, type: "text" as const },
+  { id: `Sys${n}Arc`, name: `System ${n} shields`, of: "model" as const, type: "text" as const },
+  { id: `Sys${n}Def`, name: `System ${n} Defense`, of: "model" as const, type: "number" as const },
+  {
+    id: `Sys${n}saveDie`,
+    name: `System ${n} save die`,
+    of: "model" as const,
+    type: "number" as const,
+    aliases: [`Sys${n}Save`],
+    pattern: "d(\\d+)",
+  },
+  {
+    id: `Sys${n}saveDice`,
+    name: `System ${n} save dice`,
+    of: "model" as const,
+    type: "number" as const,
+    aliases: [`Sys${n}Save`],
+    pattern: "\\((\\d+)\\)",
+    default: 1,
+  },
+  { id: `Sys${n}Chart`, name: `System ${n} damage chart`, of: "model" as const, type: "text" as const },
+]);
 
 export const fsd: GameSystem = {
   id: "fsd-1.7",
@@ -144,6 +217,9 @@ export const fsd: GameSystem = {
       aliases: ["Line", "System", "Sys"],
       default: 0,
     },
+    // Behemoths: Systems and Attachments activating with the Core.
+    { id: "Parts", name: "Parts", of: "model", type: "number", default: 0 },
+    ...behemothChars,
   ],
   weaponKinds: ["ranged", "melee"],
   unitShape: { kind: "skirmish" },
@@ -151,6 +227,11 @@ export const fsd: GameSystem = {
   arcs: [
     { id: "front", name: "Front", from: -90, to: 90, origin: "centre" },
     { id: "rear", name: "Rear", from: 90, to: 270, origin: "centre" },
+    // A behemoth's four sides, for the Systems that shield its Core.
+    { id: "frontSide", name: "Front side", from: -45, to: 45, origin: "centre" },
+    { id: "rightSide", name: "Right side", from: 45, to: 135, origin: "centre" },
+    { id: "rearSide", name: "Rear side", from: 135, to: 225, origin: "centre" },
+    { id: "leftSide", name: "Left side", from: 225, to: 315, origin: "centre" },
   ],
   terrain: [
     { id: "open", name: "Open", visibility: "open" },
@@ -204,6 +285,7 @@ export const fsd: GameSystem = {
     { id: "damageS2", name: "System 2 damaged", on: "unit" },
     { id: "damageS3", name: "System 3 damaged", on: "unit" },
     { id: "damageS4", name: "System 4 damaged", on: "unit" },
+    { id: "damageWPN", name: "Attachment destroyed", on: "unit" },
   ],
   resources: [
     // Rolled each round; the faces matter for AD slots.
@@ -249,7 +331,7 @@ export const fsd: GameSystem = {
           target: {
             op: "+",
             args: [
-              ref("target.Def"),
+              shielded("Def"),
               // Cover: +2 for infantry, +1 for vehicles and mechs; not in close combat or with IC.
               {
                 if: {
@@ -287,15 +369,17 @@ export const fsd: GameSystem = {
           // rear of a vehicle saves with a die one size smaller.
           kind: "test",
           id: "save",
+          // A behemoth doesn't suffer from attacks from the rear; a System it is shielded by saves.
           die: {
             if: {
               all: [
                 { hasKeyword: "target", keyword: "VEHICLE" },
+                { not: isBehemoth("target") },
                 { query: { kind: "inArc", from: "target", to: "attacker", arc: "rear" } },
               ],
             },
             then: { op: "max", args: [6, { op: "-", args: [ref("target.saveDie"), 2] }] },
-            else: ref("target.saveDie"),
+            else: shielded("saveDie"),
           },
           dicePerInput: {
             op: "max",
@@ -304,7 +388,7 @@ export const fsd: GameSystem = {
               {
                 op: "-",
                 args: [
-                  ref("target.saveDice"),
+                  shielded("saveDice"),
                   { if: close, then: { op: "max", args: [1, ref("weapon.AP")] }, else: ref("weapon.AP") },
                 ],
               },
@@ -321,9 +405,24 @@ export const fsd: GameSystem = {
           // Units with a damage chart roll on it for each damage, and are pinned.
           kind: "do",
           id: "chart",
-          if: { has: "target.Chart" },
+          if: { all: [{ has: "target.Chart" }, unshielded] },
           do: [{ do: "damageTrack", target: "target", chart: "target.Chart", status: "pinned" }],
         },
+        // A behemoth's shielding System takes the damage on its own chart first.
+        ...SYSTEMS.map((n) => ({
+          kind: "do" as const,
+          id: `chartS${n}`,
+          if: { all: [{ has: "target.Chart" }, shields(n)] },
+          do: [
+            {
+              do: "damageTrack" as const,
+              target: "target",
+              chart: "target.Chart",
+              status: "pinned",
+              through: { chart: `target.Sys${n}Chart`, prefix: `s${n}`, name: `target.Sys${n}Name` },
+            },
+          ],
+        })),
         {
           // Units without one lose the closest base per unsaved hit, and are pinned.
           kind: "do",
@@ -348,7 +447,8 @@ export const fsd: GameSystem = {
       name: "Activate",
       by: "unit",
       side: "active",
-      activates: 2,
+      // A behemoth's Systems and Attachments activate with its Core, two actions each.
+      activates: { op: "*", args: [2, { op: "+", args: [1, ref("self.Parts")] }] },
       if: {
         all: [
           { not: { hasStatus: "self", status: "activated" } },
@@ -450,7 +550,7 @@ export const fsd: GameSystem = {
       forWeapons: { not: prepared },
       target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
       limit: { count: 1, per: "round", perUnit: true },
-      notWhen: damagedSystems,
+      notWhen: [...damagedSystems, attachmentLost],
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
       procedure: "attack",
       do: [dropInteract],
@@ -465,7 +565,7 @@ export const fsd: GameSystem = {
       forWeapons: prepared,
       prepares: true,
       limit: { count: 1, per: "round", perUnit: true },
-      notWhen: damagedSystems,
+      notWhen: [...damagedSystems, attachmentLost],
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
       do: [dropInteract],
     },

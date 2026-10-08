@@ -124,6 +124,12 @@ export function evaluate(expr: Expr, ctx: EvalContext): ExprValue {
     if (!where) return items.length;
     return items.filter((item) => bool(where, bind(ctx, as ?? "it", item))).length;
   }
+  if ("least" in expr || "most" in expr) {
+    const over = "least" in expr ? expr.least : expr.most;
+    const values = collection(over, ctx).map((item) => num(expr.of, bind(ctx, expr.as, item)));
+    if (!values.length) return 0;
+    return "least" in expr ? Math.min(...values) : Math.max(...values);
+  }
   if ("query" in expr) {
     if (!ctx.geometry) throw new Error(`No geometry available for "${expr.query.kind}"`);
     return ctx.geometry(expr.query, ctx);

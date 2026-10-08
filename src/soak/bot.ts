@@ -399,13 +399,21 @@ function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMo
       as: u.owner,
       kind: `action:${o.def.id}`,
     };
+    // A charge goes at the nearest enemy, into contact if it reaches (so fights happen, #40).
+    const go = (inches: number) =>
+      o.def.move?.kind === "charge" ? chargeMove(state, u, ctx, inches) : moveUnit(state, u, ctx, inches);
+    // A charge the player moves by hand (Conquest): D6 + March or so, at the nearest enemy.
+    if (o.move === undefined && /charge/i.test(o.def.id)) {
+      yield { ...take, then: chargeMove(state, u, ctx, 6 + 2 + Math.floor(ctx.rng() * 6)) };
+      continue;
+    }
     // A tidy bot moves the unit as part of its move action; the fuzzer may or may not get round to it.
     if (ctx.tidy && o.move !== undefined) {
-      yield { ...take, then: moveUnit(state, u, ctx, Math.max(1, o.move)) };
+      yield { ...take, then: go(Math.max(1, o.move)) };
       continue;
     }
     yield take;
-    if (o.move !== undefined) yield moveUnit(state, u, ctx, Math.max(1, o.move));
+    if (o.move !== undefined) yield go(Math.max(1, o.move));
   }
 }
 
@@ -478,6 +486,35 @@ function moveUnit(state: GameState, u: Unit, ctx: BotContext, inches: number): B
   const clamp = (v: number, h: number) => Math.max(-h, Math.min(h, v));
   const dx = clamp(cx + Math.sin(angle) * d, hx) - cx;
   const dy = clamp(cy + Math.cos(angle) * d, hy) - cy;
+  return {
+    intent: {
+      type: "models/move",
+      moves: ms.map((m) => ({ id: m.id, to: { x: m.position.x + dx, y: m.position.y + dy } })),
+    } as Intent,
+    as: u.owner,
+    kind: "move",
+  };
+}
+
+/** Straight at the nearest enemy unit, stopping in base contact or after `inches`. */
+function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number): BotMove {
+  const ms = aliveModels(state, u);
+  const cx = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;
+  const cy = ms.reduce((a, m) => a + m.position.y, 0) / ms.length;
+  let foe: Unit | undefined;
+  let gap = Infinity;
+  for (const e of Object.values(state.units)) {
+    if (!opposed(state, e.owner, u.owner) || !alive(state, e)) continue;
+    const g = unitDistance(ms, aliveModels(state, e));
+    if (g < gap) [foe, gap] = [e, g];
+  }
+  if (!foe) return moveUnit(state, u, ctx, inches);
+  const fs = aliveModels(state, foe);
+  const fx = fs.reduce((a, m) => a + m.position.x, 0) / fs.length;
+  const fy = fs.reduce((a, m) => a + m.position.y, 0) / fs.length;
+  const len = Math.hypot(fx - cx, fy - cy) || 1;
+  const d = Math.max(0, Math.min(inches, gap - 0.02));
+  const [dx, dy] = [((fx - cx) / len) * d, ((fy - cy) / len) * d];
   return {
     intent: {
       type: "models/move",

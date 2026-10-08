@@ -41,6 +41,7 @@ function unit(
   base: BaseShape,
   chars: { Cmd: number; Def: number; Save: string; Move: number; Chart?: string },
   weapons: WeaponSpec[],
+  extra: Record<string, string> = {},
 ): ImportedUnit {
   const profiles = weapons.map(weapon);
   const stats: Record<string, string> = {
@@ -50,6 +51,7 @@ function unit(
     Move: String(chars.Move),
   };
   if (chars.Chart) stats.Chart = chars.Chart;
+  Object.assign(stats, extra);
   return {
     name,
     base,
@@ -172,6 +174,53 @@ function syndicate(): ImportedRoster {
     ),
   ];
   return { name: "Syndicate Warband", points: total(units), units, warnings: [] };
+}
+
+const BEHEMOTH: BaseShape = { shape: "rect", widthMm: 100, depthMm: 150 };
+
+/**
+ * An invented behemoth: a Core with two Systems shielding its flanks and a
+ * front one, and an Attachment (the WPN weapon). Not in the everyday
+ * samples (behemoths are by agreement); used by the behemoth soak scenario.
+ */
+function siegeHauler(): ImportedUnit {
+  return unit(
+    "Siege Hauler",
+    ["VEHICLE", "BEHEMOTH"],
+    40,
+    1,
+    BEHEMOTH,
+    { Cmd: 1, Def: 3, Save: "d10(2)", Move: 2, Chart: "1:red, 2-3:orange:ARM, 4:white:WPN, 5-6:white:PIN" },
+    [
+      { name: "Hull Guns", range: 4, attack: "3d6" },
+      { name: "Bastion Cannon", range: 8, attack: "1d12", ap: 2, ad: "5-6", keywords: ["WPN"] },
+    ],
+    {
+      Parts: "4",
+      Sys1Name: "Prow Plate",
+      Sys1Arc: "front",
+      Sys1Def: "3",
+      Sys1Save: "d8(1)",
+      Sys1Chart: "1:red, 2-4:white:S1, 5-6:white",
+      Sys2Name: "Port Plate",
+      Sys2Arc: "left",
+      Sys2Def: "4",
+      Sys2Save: "d8(1)",
+      Sys2Chart: "1:red, 2-3:orange, 4:white:WPN, 5-6:white",
+      Sys3Name: "Starboard Plate",
+      Sys3Arc: "right",
+      Sys3Def: "3",
+      Sys3Save: "d8(1)",
+      Sys3Chart: "1:red, 2-3:orange, 4-6:white",
+    },
+  );
+}
+
+/** A sample warband with a behemoth in it (for the behemoth soak scenario). */
+export function fsdBehemothSample(variant: 0 | 1): ImportedRoster {
+  const roster = fsdSample(variant);
+  const units = [...roster.units, siegeHauler()];
+  return { ...roster, units, points: total(units) };
 }
 
 function total(units: ImportedUnit[]): number {

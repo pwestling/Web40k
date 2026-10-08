@@ -12,7 +12,7 @@ import { actionTargets, cantPlace, unitActions } from "../../core/content/play";
 import { poolUsed } from "../../core/content/player";
 import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
-import { fsdSample } from "./sample";
+import { fsdBehemothSample, fsdSample } from "./sample";
 import { fsdChecks } from "./checks";
 import { gameView } from "../../core/script";
 
@@ -35,7 +35,7 @@ function play(state: GameState, intent: Intent, from: PlayerId, r = rng(1)): Gam
 }
 
 /** Two seated players, FSD chosen, the sample table and warbands deployed. */
-function setup(): GameState {
+function setup(sample = fsdSample): GameState {
   let s = createInitialState();
   s = play(s, { type: "player/join", player: { id: "p1", name: "A", color: "#00f", seat: 0 } }, "p1");
   s = play(s, { type: "player/join", player: { id: "p2", name: "B", color: "#f00", seat: 1 } }, "p2");
@@ -45,7 +45,7 @@ function setup(): GameState {
     ["p1", 0],
     ["p2", 1],
   ] as const)
-    for (const i of spawnIntents(s, p, fsdSample(seat).units, p, "army")) s = play(s, i, p);
+    for (const i of spawnIntents(s, p, sample(seat).units, p, "army")) s = play(s, i, p);
   return s;
 }
 
@@ -243,6 +243,51 @@ describe("Full Spectrum Dominance in play", () => {
     expect(notes).toBeGreaterThan(0);
     expect(pinned).toBe(true);
   });
+  it("a behemoth's Systems shield its Core from their side, and activate with it (#40)", () => {
+    let s = setup(fsdBehemothSample);
+    const hauler = unitNamed(s, "Siege Hauler", "p2");
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const core = hauler.modelIds[0]!;
+    s = applyEvent(s, { type: "model/move", id: core, to: { x: 0, y: 0 }, facing: 0 });
+    s = toActivations(s);
+    const shoot = (from: { x: number; y: number }, seed: number) => {
+      let t = place(s, tank.id, from.x, from.y);
+      t = play(t, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+      t = play(
+        t,
+        { type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: hauler.id },
+        "p1",
+      );
+      if (t.pending) t = play(t, { type: "reaction/pass" }, "p2");
+      const r = rng(seed);
+      while (t.procedure && !t.procedure.run.done) t = play(t, { type: "procedure/roll" }, "p1", r);
+      return t;
+    };
+    const rec = (t: GameState, id: string) => t.procedure?.run.records.find((r) => r.id === id);
+    // From the left the Port Plate takes it: Defense 4 and a d8 save.
+    let throughs = 0;
+    let soaked = 0;
+    for (let seed = 1; seed < 30; seed++) {
+      const t = shoot({ x: -6, y: 0 }, seed);
+      expect((rec(t, "hit")!.plan as { target: number }).target).toBe(4);
+      expect((rec(t, "save")?.plan as { sides?: number } | undefined)?.sides ?? 8).toBe(8);
+      const notes = (t.procedure?.run.outcomes ?? []).filter((o) => o.kind === "note").map((o) => o.text);
+      throughs += notes.filter((n) => /through to the core/.test(n)).length;
+      soaked += notes.filter((n) => /^Port Plate damage roll \d: (white|orange)/.test(n)).length;
+      // Soaked hits don't pin it; only the Core's own damage does.
+      if (!throughs) expect(t.units[hauler.id]?.status?.pinned).toBeFalsy();
+    }
+    expect(soaked).toBeGreaterThan(0);
+    expect(throughs).toBeGreaterThan(0);
+    // From behind nothing shields it: the Core's Defense 3, and no rear penalty to its d10 save.
+    const rear = shoot({ x: 0, y: -6 }, 3);
+    expect((rec(rear, "hit")!.plan as { target: number }).target).toBe(3);
+    // The Core and its four parts: two actions each.
+    let a = play(s, { type: "turn/pass" }, "p1");
+    a = play(a, { type: "action/take", unitId: hauler.id, action: "activate" }, "p2");
+    expect(a.units[hauler.id]?.status?.actionBudget).toBe(10);
+  });
+
   it("pre-assigns dice to card slots, and a reacting unit fires with them", () => {
     let s = setup();
     const tank = unitNamed(s, "Lancer Tank", "p1");

@@ -173,6 +173,80 @@ describe("Conquest", () => {
     expect(lost).toBe(Math.min(9, Math.floor(wounds / 4)));
   });
 
+  it("plays special rules, and tests Resolve on the best stand, or the worst when Broken (#40)", () => {
+    let base = setup();
+    const guard = unitNamed(base, "Warden Guard");
+    const thralls = unitNamed(base, "Thrall Host");
+    base = toCentre(base, guard.id, 0.25);
+    base = toCentre(base, thralls.id, 0.25);
+    const named = (names: string[]) => names.map((name) => ({ name, text: "" }));
+    const withAbilities = (s: GameState, id: string, names: string[]): GameState => ({
+      ...s,
+      units: {
+        ...s.units,
+        [id]: { ...s.units[id]!, sheet: { ...s.units[id]!.sheet!, abilities: named(names) } },
+      },
+    });
+    base = withAbilities(base, guard.id, ["Flurry", "Terrifying (2)", "Deadly Blades", "Relentless Blows"]);
+    base = withAbilities(base, thralls.id, ["Hardened (1)", "Shield"]);
+    // One Thrall stand (a champion, say) has Resolve 3.
+    const champ = thralls.modelIds[0]!;
+    const m = base.models[champ]!;
+    base = {
+      ...base,
+      models: {
+        ...base.models,
+        [champ]: { ...m, profile: { ...m.profile!, chars: { ...m.profile!.chars, R: "3" } } },
+      },
+    };
+    base = play(base, { type: "turn/next" }, "p1");
+    base = play(base, { type: "turn/next" }, "p1");
+    if (base.turn.activeSeat !== 0) base = play(base, { type: "turn/pass" }, "p2");
+    base = play(base, { type: "action/take", unitId: guard.id, action: "activate" }, "p1");
+    const clash = (s: GameState, seed: number) => {
+      s = play(s, { type: "action/take", unitId: guard.id, action: "clash", targetId: thralls.id }, "p1");
+      const r = rng(seed);
+      while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+      return s;
+    };
+    let s = clash(base, 3);
+    const plan = (id: string) => step(s, id)?.plan as { target: number | null; reroll: string };
+    // Flurry: missed hits re-rolled.
+    expect(plan("hit").reroll).toBe("failed");
+    // Defense 1, Cleave 1 less Hardened 1, +1 Shield from the front.
+    expect(plan("defense").target).toBe(2);
+    // Best Resolve 3, +2 for 7-9 stands, −2 Terrifying.
+    expect(plan("resolve").target).toBe(3);
+    // Relentless Blows: each natural 1 to hit is two hits. Deadly Blades: each defense 6 two wounds.
+    const hit = step(s, "hit")!;
+    const ones = (hit.dice ?? []).filter((d) => d.value === 1).length;
+    expect(hit.out).toBe((hit.dice ?? []).filter((d) => d.success).length + ones);
+    const defense = step(s, "defense")!;
+    const sixes = (defense.dice ?? []).filter((d) => d.value === 6).length;
+    expect(defense.out).toBe((defense.dice ?? []).filter((d) => !d.success).length + sixes);
+    // Broken: the worst Resolve, 1.
+    s = clash(applyEvent(base, { type: "unit/status", id: thralls.id, key: "broken", value: true }), 3);
+    expect(plan("resolve").target).toBe(1);
+  });
+
+  it("rolls off for Supremacy each round; the higher goes first (#40)", () => {
+    let s = setup();
+    const firsts = new Set<number>();
+    const dice = rng(5);
+    for (let round = 0; round < 6; round++) {
+      do s = play(s, { type: "turn/next" }, "p1", dice);
+      while (currentSlot(s)?.id !== "command");
+      const r = s.rolledOff!;
+      expect(r).toBeTruthy();
+      const last = r.rolls.map((rolls) => rolls.at(-1)!);
+      expect(last[r.seat]).toBe(Math.max(...last));
+      expect(new Set(last).size).toBe(2);
+      expect(s.turn.firstSeat).toBe(r.seat);
+      firsts.add(r.seat);
+    }
+    expect(firsts.size).toBe(2);
+  });
+
   it("breaks a regiment that lost half its stands this round, and shatters it if it loses half again", () => {
     let s = setup();
     s = play(s, { type: "turn/next" }, "p1");

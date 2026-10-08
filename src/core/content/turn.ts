@@ -185,7 +185,11 @@ function playerAt(state: GameState, seat: number): PlayerId | undefined {
  */
 export function advanceTurn(state: GameState, dir: 1 | -1, seed = 0): GameState {
   // Steps only run their actions: pass straight through them.
-  let next = stepTurn(state.triggered ? { ...state, triggered: null } : state, dir, seed);
+  let next = stepTurn(
+    state.triggered || state.rolledOff ? { ...state, triggered: null, rolledOff: null } : state,
+    dir,
+    seed,
+  );
   const slots = schedule(systemOf(state));
   for (let guard = 0; guard < slots.length; guard++) {
     if (next.turn.round === 0 || slots[next.turn.phase]?.kind !== "step") break;
@@ -200,8 +204,8 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   const rng = seeded(seed);
   const left = state.turn.round > 0 && dir === 1 ? slots[state.turn.phase] : undefined;
   if (left?.kind === "phase") state = runTriggers(state, left, "end", state.turn.activeSeat, rng);
-  let { round, activeSeat, phase } = state.turn;
-  const { firstSeat } = state.turn;
+  let { round, activeSeat, phase, firstSeat } = state.turn;
+  let rolledOff: GameState["rolledOff"] = null;
   let newRound = false;
   let newPlayerTurn = false;
 
@@ -209,6 +213,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     if (dir === -1) return state;
     round = 1;
     phase = 0;
+    ({ firstSeat, rolledOff } = rollForFirst(system, firstSeat, rng));
     activeSeat = firstSeat;
     newRound = true;
     newPlayerTurn = true;
@@ -224,6 +229,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     } else if (phase + 1 >= slots.length) {
       round += 1;
       phase = 0;
+      ({ firstSeat, rolledOff } = rollForFirst(system, firstSeat, rng));
       activeSeat = firstSeat;
       newRound = true;
       newPlayerTurn = true;
@@ -264,6 +270,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
       procedure: null,
       pending: null,
       turn: { round, activeSeat, phase, firstSeat, passes: 0 },
+      ...(rolledOff ? { rolledOff } : {}),
     },
     [
       ...ACTIVATION_FLAGS,
@@ -283,6 +290,31 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   const entered = slots[phase];
   if (entered?.kind === "phase") next = runTriggers(next, entered, "start", activeSeat, rng);
   return next;
+}
+
+/**
+ * A roll-off at the start of each round (`initiative: "rollOffEachRound"`,
+ * Conquest's Supremacy): each side rolls a D6, ties roll again, and the
+ * higher goes first. Otherwise whoever went first still does.
+ */
+function rollForFirst(
+  system: GameSystem,
+  firstSeat: number,
+  rng: () => number,
+): { firstSeat: number; rolledOff: GameState["rolledOff"] } {
+  if (system.turn.initiative !== "rollOffEachRound") return { firstSeat, rolledOff: null };
+  const rolls: number[][] = Array.from({ length: SEATS }, () => []);
+  for (let tries = 0; tries < 20; tries++) {
+    const round = rolls.map((r) => {
+      const v = die(rng, 6);
+      r.push(v);
+      return v;
+    });
+    const top = Math.max(...round);
+    const winners = round.flatMap((v, seat) => (v === top ? [seat] : []));
+    if (winners.length === 1) return { firstSeat: winners[0]!, rolledOff: { rolls, seat: winners[0]! } };
+  }
+  return { firstSeat, rolledOff: { rolls, seat: firstSeat } };
 }
 
 /**

@@ -104,6 +104,20 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
           turn: t("The battle is over"),
         });
       else items.push({ kind: "header", key, ...turnHeader(state) });
+      // A roll-off for who goes first this round (Conquest's Supremacy, #40).
+      if (state.rolledOff) {
+        const r = state.rolledOff;
+        items.push({
+          kind: "line",
+          key: `${key}/r`,
+          seq: logged.seq,
+          text: t("Roll-off: {rolls}. {side} goes first.", {
+            rolls: r.rolls.map((rolls, seat) => `${sideName(state, seat)} ${rolls.join(", ")}`).join(" · "),
+            side: sideName(state, r.seat),
+          }),
+          undone: false,
+        });
+      }
       // Automated abilities that went off as the phase changed (#38).
       triggeredLines(state).forEach((text, i) =>
         items.push({ kind: "line", key: `${key}/t${i}`, seq: logged.seq, text, undone: false }),

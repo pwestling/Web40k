@@ -39,7 +39,7 @@ export function soakSuite(system: string, teamSize: 1 | 2 = 1): void {
 export function scenarioSuite(
   name: string,
   system: string,
-  options: Pick<SoakOptions, "automate" | "watch">,
+  options: Pick<SoakOptions, "automate" | "watch" | "armies">,
   tags: string[],
   /** Tags that must never come up (a rule broken again). */
   never: string[] = [],

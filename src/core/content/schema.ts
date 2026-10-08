@@ -67,6 +67,9 @@ export type Expr =
   | { every: Ref; as: string; test: Expr }
   | { some: Ref; as: string; test: Expr }
   | { count: Ref; as?: string; where?: Expr }
+  /** The lowest or highest of a value over a collection, e.g. a regiment's lowest Resolve (0 if empty). */
+  | { least: Ref; as: string; of: Expr }
+  | { most: Ref; as: string; of: Expr }
   /** Engine-computed geometry. */
   | { query: GeoQuery }
   /**
@@ -204,8 +207,22 @@ export type EffectAction =
    * white box applies its effect. The effect becomes a unit status
    * "damage<effect>" (damageMOV), so statuses can change characteristics.
    * Every roll also applies `status` (pinned) when given.
+   *
+   * With `through`, the roll is on a shielding part's chart first (FSD
+   * behemoth systems): its boxes are flags "<prefix>box<n>", only a result
+   * that would destroy goes through to `chart` (and only then `status`), and
+   * the part itself is never destroyed. A WPN effect anywhere destroys the
+   * attachment (status damageWPN); a part's other effects are noted for the
+   * players.
    */
-  | { do: "damageTrack"; target: Ref; chart: Ref; die?: number; status?: Id }
+  | {
+      do: "damageTrack";
+      target: Ref;
+      chart: Ref;
+      die?: number;
+      status?: Id;
+      through?: { chart: Ref; prefix: string; name?: Ref };
+    }
   /** Not automated yet. The reminder text is supplied by the player's pack, never the repo. */
   | { do: "manual"; reminder: string }
   /**
@@ -376,8 +393,12 @@ export type StepKind =
  */
 export interface TurnStructure {
   rounds: Expr;
-  /** Who goes first each round. */
-  initiative?: "fixed" | "rollOff" | { expr: Expr };
+  /**
+   * Who goes first: "fixed" or "rollOff" keep the seat chosen before the
+   * battle (a roll-off the players make, then turn/first); "rollOffEachRound"
+   * rolls a D6 a side at the start of every round, ties again (Conquest).
+   */
+  initiative?: "fixed" | "rollOff" | "rollOffEachRound" | { expr: Expr };
   round: Segment[];
 }
 

@@ -26,7 +26,13 @@ const chars = (s: Stats): Record<string, string> =>
   Object.fromEntries(Object.entries(s).map(([k, v]) => [k, k === "Range" ? `${v}"` : String(v)]));
 
 /** A regiment of `stands`, three wide (or fewer), the command stand first so it leads the front rank. */
-function regiment(name: string, stands: number, stats: Stats, points: number): ImportedUnit {
+function regiment(
+  name: string,
+  stands: number,
+  stats: Stats,
+  points: number,
+  rules: string[] = [],
+): ImportedUnit {
   const base =
     stats.Type === "Infantry" || stats.Type === "Character"
       ? INFANTRY
@@ -40,7 +46,13 @@ function regiment(name: string, stands: number, stats: Stats, points: number): I
   return {
     name,
     base,
-    sheet: { weapons: {}, abilities: [], keywords: [stats.Type, stats.Class], points },
+    // Special rules by name, as the engine finds them ("Hardened (1)").
+    sheet: {
+      weapons: {},
+      abilities: rules.map((rule) => ({ name: rule, text: "" })),
+      keywords: [stats.Type, stats.Class],
+      points,
+    },
     models,
     files: Math.min(3, stands),
   };
@@ -53,6 +65,7 @@ function ironmarch(): ImportedRoster {
       6,
       { M: 5, V: 1, C: 2, A: 4, W: 4, R: 2, D: 3, Support: 2, Type: "Infantry", Class: "Medium" },
       160,
+      ["Shield"],
     ),
     regiment(
       "Ironmarch Crossbows",
@@ -65,6 +78,7 @@ function ironmarch(): ImportedRoster {
       6,
       { M: 5, V: 1, C: 3, A: 5, W: 4, R: 3, D: 4, Cleave: 1, Type: "Infantry", Class: "Heavy" },
       210,
+      ["Hardened (1)"],
     ),
     regiment(
       "Marshal of the March",
@@ -77,6 +91,7 @@ function ironmarch(): ImportedRoster {
       3,
       { M: 8, V: 1, C: 3, A: 4, W: 4, R: 3, D: 4, Cleave: 1, Impact: 2, Type: "Cavalry", Class: "Heavy" },
       190,
+      ["Flurry"],
     ),
   ];
   return { name: "Ironmarch Compact", points: total(units), units, warnings: [] };
@@ -89,6 +104,7 @@ function ashen(): ImportedRoster {
       9,
       { M: 5, V: 0, C: 1, A: 4, W: 4, R: 1, D: 1, Type: "Infantry", Class: "Light" },
       120,
+      ["Relentless Blows"],
     ),
     regiment(
       "Bone Archers",
@@ -101,6 +117,7 @@ function ashen(): ImportedRoster {
       4,
       { M: 9, V: 0, C: 3, A: 3, W: 5, R: 2, D: 2, E: 2, Impact: 1, Type: "Brute", Class: "Medium" },
       170,
+      ["Flurry", "Terrifying (1)"],
     ),
     regiment(
       "Hollow Cantor",
@@ -113,6 +130,7 @@ function ashen(): ImportedRoster {
       1,
       { M: 6, V: 0, C: 3, A: 9, W: 16, R: 4, D: 3, Cleave: 2, Impact: 4, Type: "Monster", Class: "Heavy" },
       240,
+      ["Deadly Blades", "Unstoppable"],
     ),
   ];
   return { name: "Ashen Chorus", points: total(units), units, warnings: [] };

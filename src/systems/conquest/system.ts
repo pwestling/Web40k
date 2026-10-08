@@ -1,4 +1,4 @@
-import type { ArcDef, Effect, Expr, GameSystem, Procedure } from "../../core/content";
+import type { ArcDef, Effect, Expr, GameSystem, Procedure, RuleDef } from "../../core/content";
 
 /**
  * Conquest: The Last Argument of Kings, played with the engine's help:
@@ -9,9 +9,10 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure } from "../../core/con
  *
  * Written from the paraphrased core rules notes in research/conquest-rules.md
  * (2.0, 2026). No rules text, profiles or points: the sample armies are
- * invented. Not covered yet: reinforcements (every regiment starts on the
- * table), characters and special rules
- * beyond Cleave, Support and Barrage.
+ * invented. Special rules: Cleave, Support, Barrage, Impact, Flurry,
+ * Shield, Hardened, Terrifying, Deadly Blades and Relentless Blows play
+ * themselves; Unstoppable and Oblivious are reminders. Supremacy is a
+ * roll-off each round (no modifiers yet).
  */
 
 const ref = (r: string): Expr => ({ ref: r });
@@ -24,11 +25,19 @@ const rearStands = (unit: string): Expr => ({
 });
 const frontStands = (unit: string): Expr => ({ op: "min", args: [count(unit), ref(`${unit}.files`)] });
 
-/** Resolve rises with the regiment's size: +1 for 4-6 stands, +2 for 7-9, +3 for 10 or more. */
+/**
+ * The regiment tests on its best Resolve among its stands (an attached
+ * character's counts); a Broken regiment on its lowest instead. Resolve rises
+ * with the regiment's size: +1 for 4-6 stands, +2 for 7-9, +3 for 10 or more.
+ */
 const resolveTarget: Expr = {
   op: "+",
   args: [
-    ref("target.R"),
+    {
+      if: { hasStatus: "target", status: "broken" },
+      then: { least: "target.models", as: "stand", of: ref("stand.R") },
+      else: { most: "target.models", as: "stand", of: ref("stand.R") },
+    },
     {
       if: { cmp: ">=", a: count("target"), b: 10 },
       then: 3,
@@ -79,7 +88,17 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
         compare: "atMost",
         target: {
           op: "max",
-          args: [0, { op: "-", args: [ref("target.D"), cleave] }, ref("target.E")],
+          args: [
+            0,
+            {
+              op: "-",
+              args: [
+                ref("target.D"),
+                { op: "max", args: [0, { op: "-", args: [cleave, ref("target.Hardened")] }] },
+              ],
+            },
+            ref("target.E"),
+          ],
         },
         roller: "defender",
         passOn: "failures",
@@ -190,6 +209,116 @@ const effects: Effect[] = [
   },
 ];
 
+const owns = (role: "attacker" | "target"): Expr => ({ is: "ruleOwner", value: role });
+const beforeStep = (step: string): Effect["when"] => ({
+  event: "step.before",
+  where: { is: "event.step", value: step },
+});
+/** A die of this step that rolled this natural value. */
+const onDie = (step: string, natural: number, procedure?: string): Effect["when"] => ({
+  event: "die.result",
+  where: {
+    all: [
+      { is: "event.step", value: step },
+      { cmp: "==", a: ref("event.natural"), b: natural },
+      ...(procedure ? [{ is: "event.procedure", value: procedure }] : []),
+    ],
+  },
+});
+const reminder = (id: string, name: string, match: string): RuleDef => ({
+  id,
+  name,
+  match,
+  appliesTo: ["unit"],
+  effects: [{ when: { event: "action.declared" }, do: [{ do: "manual", reminder: id }] }],
+});
+
+/**
+ * Special rules, found in a regiment's ability names ("Flurry", "Hardened (1)").
+ * Written from the paraphrased notes (secondary sources; see conquest.md).
+ */
+const specialRules: RuleDef[] = [
+  {
+    // Re-roll missed Clash hits.
+    id: "flurry",
+    name: "Flurry",
+    match: "^flurry\\b",
+    appliesTo: ["unit"],
+    effects: [{ when: beforeHit("clash"), if: owns("attacker"), do: [{ do: "reroll", which: "failed" }] }],
+  },
+  {
+    // +1 Defense against attacks from the front.
+    id: "shield",
+    name: "Shield",
+    match: "^shield\\b",
+    appliesTo: ["unit"],
+    effects: [
+      {
+        when: beforeStep("defense"),
+        if: {
+          all: [owns("target"), { query: { kind: "inArc", from: "target", to: "attacker", arc: "front" } }],
+        },
+        do: [{ do: "modifyTarget", by: 1 }],
+      },
+    ],
+  },
+  {
+    // Cleave against it is X less (the defense step reads Hardened).
+    id: "hardened",
+    name: "Hardened",
+    params: [{ id: "x", type: "number", default: 1 }],
+    match: "^hardened\\s*\\(?\\s*(?<x>\\d+)?",
+    appliesTo: ["unit"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "Hardened", to: ref("param.x") }],
+      },
+    ],
+  },
+  {
+    // Regiments testing Resolve against it do so at −X.
+    id: "terrifying",
+    name: "Terrifying",
+    params: [{ id: "x", type: "number", default: 1 }],
+    match: "^terrifying\\s*\\(?\\s*(?<x>\\d+)?",
+    appliesTo: ["unit"],
+    effects: [
+      {
+        when: beforeStep("resolve"),
+        if: owns("attacker"),
+        do: [{ do: "modifyTarget", by: { op: "-", args: [0, ref("param.x")] } }],
+      },
+      {
+        when: beforeStep("resolve_flanked"),
+        if: owns("attacker"),
+        do: [{ do: "modifyTarget", by: { op: "-", args: [0, ref("param.x")] } }],
+      },
+    ],
+  },
+  {
+    // A defense roll of 6 costs two wounds.
+    id: "deadlyBlades",
+    name: "Deadly Blades",
+    match: "^deadly blades\\b",
+    appliesTo: ["unit"],
+    effects: [{ when: onDie("defense", 6), if: owns("attacker"), do: [{ do: "addSuccesses", count: 1 }] }],
+  },
+  {
+    // A Clash hit roll of 1 scores a second hit.
+    id: "relentlessBlows",
+    name: "Relentless Blows",
+    match: "^relentless blows\\b",
+    appliesTo: ["unit"],
+    effects: [
+      { when: onDie("hit", 1, "clash"), if: owns("attacker"), do: [{ do: "addSuccesses", count: 1 }] },
+    ],
+  },
+  // Played by hand for now: listed as reminders when they come up.
+  reminder("unstoppable", "Unstoppable", "^unstoppable\\b"),
+  reminder("oblivious", "Oblivious", "^oblivious\\b"),
+];
+
 const arcs: ArcDef[] = [
   { id: "front", name: "Front", from: -45, to: 45, origin: "baseCorners" },
   { id: "rightFlank", name: "Right flank", from: 45, to: 135, origin: "baseCorners" },
@@ -232,6 +361,8 @@ export const conquest: GameSystem = {
     { id: "Cleave", name: "Cleave", of: "model", type: "number", default: 0 },
     { id: "Support", name: "Support", of: "model", type: "number", default: 0 },
     { id: "Impact", name: "Impact", of: "model", type: "number", default: 0 },
+    // Set by the Hardened(X) special rule: Cleave against it is X less.
+    { id: "Hardened", name: "Hardened", of: "model", type: "number", default: 0 },
     { id: "Type", name: "Type", of: "model", type: "text" },
     { id: "Class", name: "Class", of: "model", type: "text" },
   ],
@@ -256,7 +387,7 @@ export const conquest: GameSystem = {
     { id: "garrison", name: "Garrison", cover: true, blocksSight: true },
     { id: "defensible", name: "Defensible obstacle", cover: true },
   ],
-  rules: [],
+  rules: specialRules,
   procedures: [volley, clash, impact],
   coreEffects: effects,
   actions: [
@@ -397,9 +528,10 @@ export const conquest: GameSystem = {
     },
   ],
   turn: {
-    // Unverified: the notes give 10 rounds for a standard game.
+    // 10 rounds: two secondary sources agree ("almost always 10"); the rulebook itself isn't in research.
     rounds: 10,
-    initiative: "rollOff",
+    // Supremacy: a roll-off each round, the higher goes first (secondary sources; modifiers aren't modelled).
+    initiative: "rollOffEachRound",
     round: [
       // Each player orders their command stack (command.ts).
       { kind: "phase", id: "command", name: "Command" },

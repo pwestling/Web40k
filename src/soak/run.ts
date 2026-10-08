@@ -55,6 +55,8 @@ export interface SoakOptions {
   drift?: number;
   /** Confirm every ability the system can play for you (40k #38) once the armies are down. */
   automate?: boolean;
+  /** Other armies than the system's samples (a scenario's), by seat. */
+  armies?: (seat: 0 | 1) => ReturnType<ReturnType<typeof systemModule>["sample"]>;
   /**
    * A scenario's probe: after each move, tags for what it's looking for on the
    * host's table (e.g. "damage re-rolled"). The report counts them, so a
@@ -208,13 +210,11 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       });
     const ranked = (gameModule(system)?.system.unitShape.kind ?? "") === "ranked";
     for (const [id, seat] of seats) {
-      const units = mod
-        .sample(seat === 1 ? 1 : 0)
-        .units.map((u) =>
-          ranked && !u.files
-            ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
-            : u,
-        );
+      const units = (opts.armies ?? mod.sample)(seat === 1 ? 1 : 0).units.map((u) =>
+        ranked && !u.files
+          ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
+          : u,
+      );
       for (const i of spawnIntents(room.host()!.current, id, units, `${id}-${seed}`, "sample")) as(id, i);
     }
     if (opts.automate && mod.recognizeAbility) {
@@ -325,6 +325,12 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
         fail(
           `the host dropped a legal ${move.intent.type} from ${move.as}: ${JSON.stringify(move.intent).slice(0, 200)}`,
         );
+      // A move that goes with it (a charge's move into contact).
+      if (move.then && room.host()) {
+        room.send(move.then);
+        if (engine) await sleep(0);
+        if (errors.length) fail(errors[0]!);
+      }
       const s = room.host()!.current;
       const m = `${s.turn.round}:${s.turn.activeSeat}:${currentSlot(s)?.id}:${s.turn.phase}:${Object.values(
         s.units,

@@ -417,6 +417,8 @@ export interface GameState {
   placed?: Record<PlayerId, Record<string, number[]>>;
   /** Automated abilities that went off as the turn marker last moved (for the log). */
   triggered?: Triggered[] | null;
+  /** The roll-off for who goes first, when the turn marker last started a round with one (Conquest's Supremacy). */
+  rolledOff?: { rolls: number[][]; seat: number } | null;
   /** Player actions taken (stratagems), for their once-per-phase limits. */
   used?: Record<PlayerId, PlayerActionUse[]>;
   /** The last measurement a player shared, shown to everyone until cleared. */
