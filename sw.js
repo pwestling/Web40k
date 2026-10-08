@@ -8,8 +8,8 @@
 // - It shows play-by-mail notifications (src/mail/mailbox.ts). A push from
 //   the mailbox carries nothing about the game: it only says a file has come,
 //   and the app fetches it from the mailbox when it opens.
-const VERSION = "8f36e3c02bd6";
-const FILES = ["assets/FigureLibrary-DZfJR2ca.js","assets/GameScreen-BPFL18Hj.js","assets/Miniatures-CiWZYwl0.js","assets/_virtual_sandbox-worker-CHBIf2f8.js","assets/browser-bopAeLbn.js","assets/codec-DswBLtqW.js","assets/config-sq2W6zqc.js","assets/de-uapudkap.js","assets/dist-D0EAIOa9.js","assets/fr-Dnm81qpJ.js","assets/fxp-CNHNYw_7.js","assets/index-C0we_oc0.css","assets/index-CVR1atla.js","assets/levels-DlkUqTaf.js","assets/library-DmRRDU8K.js","assets/rolldown-runtime-hePW80VL.js","assets/trystero-DM003VXL.js","assets/worker-BRBYgEIG.js","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/icon.svg","icons/maskable-512.png","index.html","manifest.webmanifest"];
+const VERSION = "f6de9b7e4c88";
+const FILES = ["assets/CommandPanel-DKLwCIII.js","assets/FigureLibrary-CMz0qAKe.js","assets/GameScreen-DSrGG3tP.js","assets/MailLobby-yXql-H6s.js","assets/Miniatures-ByR5gwcM.js","assets/_virtual_sandbox-worker-ChYHeYlY.js","assets/browser-bopAeLbn.js","assets/codec-DswBLtqW.js","assets/de-uapudkap.js","assets/dist-D0EAIOa9.js","assets/fr-Dnm81qpJ.js","assets/fxp-CNHNYw_7.js","assets/idb-B39o_Iii.js","assets/index-C0we_oc0.css","assets/index-Cl_Jc5_X.js","assets/levels-DlkUqTaf.js","assets/library-eo5QaNxe.js","assets/local-UE845IgX.js","assets/replayFile-CS453xWI.js","assets/rolldown-runtime-hePW80VL.js","assets/store-B75bq1rG.js","assets/store-a49Lvddm.js","assets/store-z3QZ_Km-.js","assets/talk-BTFvzkl0.js","assets/trystero-Dtr5Od80.js","assets/worker-BRBYgEIG.js","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/icon.svg","icons/maskable-512.png","index.html","manifest.webmanifest"];
 const CACHE = `open-battle-${VERSION}`;
 const DEV = VERSION === "dev";
 const at = (path) => new URL(path, self.registration.scope).href;
@@ -19,7 +19,13 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(FILES.map((f) => new Request(at(f), { cache: "reload" })))),
+      // Hashed build files never change, so the copies the page just loaded will do; the rest
+      // (index.html, the manifest, icons) are fetched fresh.
+      .then((cache) =>
+        cache.addAll(
+          FILES.map((f) => new Request(at(f), { cache: /-[\w-]{8}\.\w+$/.test(f) ? "default" : "reload" })),
+        ),
+      ),
   );
 });
 
