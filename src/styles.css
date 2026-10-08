@@ -190,8 +190,25 @@ label.file.button.small {
   text-align: left;
   border-color: #4b5563;
 }
-.lobby .demo:hover {
+.lobby .demo {
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+}
+.lobby .demo .row {
+  margin-top: auto;
+  padding-top: 6px;
+}
+.lobby .own-army {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
   border-color: #f59e0b;
+}
+.lobby .own-army strong {
+  color: #fbbf24;
 }
 .lobby .demo strong {
   color: #fbbf24;

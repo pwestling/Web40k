@@ -9,7 +9,7 @@ import { systemModule } from "../systems";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
-import { t, tc, tn } from "../i18n";
+import { t, tc, tn, translated } from "../i18n";
 
 /** The game's chosen mission (SystemModule.missions), if any. */
 export function missionOf(game: GameState): Mission | undefined {
@@ -17,7 +17,13 @@ export function missionOf(game: GameState): Mission | undefined {
 }
 
 /** Logs a side's score (or that it passed, with no vp), noting the suggestion when the player changed it. */
-function confirmScore(dispatch: (intent: Intent, as?: string) => void, p: Pending, by: string, vp?: number) {
+function confirmScore(
+  dispatch: (intent: Intent, as?: string) => void,
+  p: Pending,
+  by: string,
+  vp?: number,
+  why = p.why,
+) {
   dispatch(
     {
       type: "score/confirm",
@@ -25,8 +31,9 @@ function confirmScore(dispatch: (intent: Intent, as?: string) => void, p: Pendin
       seat: p.seat,
       round: p.round,
       vp: vp ?? 0,
-      why: `${p.rule}: ${p.why}`,
-      ...(vp === undefined ? { skipped: true } : vp !== p.vp ? { suggested: p.vp } : {}),
+      why: `${p.rule}: ${why}`,
+      // At a real table there was no suggestion to note (UX 278).
+      ...(vp === undefined ? { skipped: true } : p.guessed && vp !== p.vp ? { suggested: p.vp } : {}),
     },
     by,
   );
@@ -92,7 +99,22 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
             <span>
               {t("Round {n}", { n: p.round })} · <strong>{sideName(game, p.seat)}</strong> · {p.rule}: {p.why}
             </span>
-            {mine ? (
+            {mine && p.ask ? (
+              <div className="row wrap score-ask">
+                {p.ask.answers.map((a) => (
+                  <button
+                    key={a.label}
+                    title={t("{vp} VP", { vp: a.vp })}
+                    onClick={() => confirmScore(dispatch, p, mine.id, a.vp, a.why)}
+                  >
+                    {translated(a.label)}
+                  </button>
+                ))}
+                <button className="quiet" onClick={() => confirm(true)}>
+                  {t("Pass")}
+                </button>
+              </div>
+            ) : mine ? (
               <div className="row">
                 <input
                   type="number"
@@ -108,10 +130,12 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
               </div>
             ) : (
               <span className="muted small">
-                {t("Suggested {vp} VP · waiting for {side} to confirm", {
-                  vp: p.vp,
-                  side: sideName(game, p.seat),
-                })}
+                {p.guessed
+                  ? t("Suggested {vp} VP · waiting for {side} to confirm", {
+                      vp: p.vp,
+                      side: sideName(game, p.seat),
+                    })
+                  : t("Waiting for {side} to score it", { side: sideName(game, p.seat) })}
               </span>
             )}
           </div>

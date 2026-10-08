@@ -82,6 +82,18 @@ describe("missions and scoring", () => {
     expect(vpByRound(s).rounds.every((n) => n >= 2)).toBe(true);
   });
 
+  it("at a real table asks the mission's question, with no suggestion to note (UX 278)", () => {
+    const mission = wh40kModule.app!.missions![0]!;
+    let r = game(wh40kModule, mission);
+    r = host(r, { type: "settings/set", settings: { companion: true } }, "p1");
+    for (let i = 0; i < 200 && !pendingScores(r, stateAt(r), mission).length; i++)
+      r = host(r, { type: "turn/next" }, "p1");
+    const [p] = pendingScores(r, stateAt(r), mission);
+    expect(p?.guessed).toBe(false);
+    expect(p?.why).toBe("How many objectives do you control?");
+    expect(p?.ask?.answers.map((a) => a.vp)).toEqual([0, 5, 10, 15]);
+  });
+
   it("won't log the same score twice", () => {
     const mission = wh40kModule.app!.missions![0]!;
     const r = host(

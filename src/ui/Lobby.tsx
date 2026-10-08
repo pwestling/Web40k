@@ -159,6 +159,25 @@ export function Lobby() {
     .filter(
       (l, i, all) => lessonSystem(l) && all.findIndex((x) => x.id === l.id && x.system === l.system) === i,
     );
+  // One card per game, with its lessons and its demo (UX 284); lesson packages for other games get cards too.
+  const games = [
+    ...demos.map((g) => ({
+      id: g.id,
+      title: FRONT[g.id]!.title,
+      blurb: FRONT[g.id]!.blurb,
+      demo: true,
+      lessons: lessons.filter((l) => lessonSystem(l) === g.id),
+    })),
+    ...[...new Set(lessons.map((l) => lessonSystem(l)!))]
+      .filter((id) => !FRONT[id])
+      .map((id) => ({
+        id,
+        title: systemLabel(id, ""),
+        blurb: "",
+        demo: false,
+        lessons: lessons.filter((l) => lessonSystem(l) === id),
+      })),
+  ];
 
   return (
     <div className="panel lobby">
@@ -172,34 +191,41 @@ export function Lobby() {
       <OfflineNote />
       <TextSizePicker />
       <LanguagePicker />
-      <h2>{t("Learn to play")}</h2>
+      <button className="own-army" onClick={() => setGuide(true)}>
+        <strong>{t("Play your own army: import a list")}</strong>
+        <span className="muted small">
+          {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
+        </span>
+      </button>
+      <h2>{t("Pick a game")}</h2>
       <p className="muted small">
-        {t("A guided first game: you play blue, the computer plays red, and a coach says what to do next.")}
+        {t(
+          "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides.",
+        )}
       </p>
       <div className="demos">
-        {lessons.map((l) => (
-          <button
-            key={`${l.system}/${l.id}`}
-            className="demo"
-            onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
-          >
-            <strong>
-              {systemLabel(lessonSystem(l), "")}: {gameText(l.title)}
-            </strong>
-            <span className="muted small">{gameText(l.summary)}</span>
-          </button>
-        ))}
-      </div>
-      <h2>{t("Try it now")}</h2>
-      <p className="muted small">
-        {t("Two sample armies, set up and ready. You play both sides on this screen.")}
-      </p>
-      <div className="demos">
-        {demos.map((g) => (
-          <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
-            <strong>{FRONT[g.id]!.title}</strong>
-            <span className="muted small">{FRONT[g.id]!.blurb}</span>
-          </button>
+        {games.map((g) => (
+          <div key={g.id} className="demo">
+            <strong>{g.title}</strong>
+            <span className="muted small">{g.blurb}</span>
+            <div className="row wrap">
+              {g.lessons.map((l, i) => (
+                <button
+                  key={l.id}
+                  className={i === 0 ? "primary small learn" : "small learn"}
+                  title={gameText(l.summary)}
+                  onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+                >
+                  {i === 0 ? t("Learn (guided)") : gameText(l.title)}
+                </button>
+              ))}
+              {g.demo && (
+                <button className="small try" onClick={() => startDemo(g.id)}>
+                  {t("Try (both sides)")}
+                </button>
+              )}
+            </div>
+          </div>
         ))}
       </div>
       <h2>{t("Play with friends")}</h2>
@@ -294,9 +320,6 @@ export function Lobby() {
       </Suspense>
       <InstallLink />
       <hr />
-      <button className="link" onClick={() => setGuide(true)}>
-        {t("Bring your army: lists, figures and rules packages")}
-      </button>
       <button className="link" onClick={() => openLibrary()}>
         {t("Figure library: your models, packs and storage")}
       </button>

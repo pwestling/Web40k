@@ -449,8 +449,8 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:620
 #: src/campaign/EventTab.tsx:270
-#: src/ui/Missions.tsx:103
-#: src/ui/Missions.tsx:314
+#: src/ui/Missions.tsx:125
+#: src/ui/Missions.tsx:338
 msgid "VP"
 msgstr ""
 
@@ -487,7 +487,7 @@ msgid "{players} won"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:670
-#: src/ui/Missions.tsx:307
+#: src/ui/Missions.tsx:331
 msgid "{scores} VP"
 msgstr ""
 
@@ -765,7 +765,7 @@ msgid "Drop"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:318
-#: src/ui/Missions.tsx:93
+#: src/ui/Missions.tsx:100
 #: src/ui/StatsScreen.tsx:282
 msgid "Round {n}"
 msgstr ""
@@ -976,7 +976,7 @@ msgid "← All units"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:82
-#: src/ui/Missions.tsx:51
+#: src/ui/Missions.tsx:58
 msgid "Mission"
 msgstr ""
 
@@ -985,7 +985,7 @@ msgid "Log"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:84
-#: src/ui/Lobby.tsx:216
+#: src/ui/Lobby.tsx:242
 msgid "Game"
 msgstr ""
 
@@ -1872,7 +1872,7 @@ msgstr ""
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:250
 #: src/ui/Hud.tsx:364
-#: src/ui/Lobby.tsx:208
+#: src/ui/Lobby.tsx:234
 msgid "Your name"
 msgstr ""
 
@@ -1992,7 +1992,7 @@ msgstr ""
 msgid "A roll or result in it doesn't match what its moves and dice give here: it was changed."
 msgstr ""
 
-#: src/missions/scoring.ts:95
+#: src/missions/scoring.ts:100
 msgid "count it on your table"
 msgstr ""
 
@@ -2476,7 +2476,7 @@ msgid "no stack: any regiment"
 msgstr ""
 
 #: src/systems/conquest/CommandPanel.tsx:88
-#: src/ui/Missions.tsx:194
+#: src/ui/Missions.tsx:218
 #: src/ui/SecretObjectives.tsx:68
 msgid "{n} face down"
 msgstr ""
@@ -4227,7 +4227,7 @@ msgid "Rejoin as {name}"
 msgstr ""
 
 #: src/ui/Hud.tsx:410
-#: src/ui/Lobby.tsx:242
+#: src/ui/Lobby.tsx:268
 msgid "Watch"
 msgstr ""
 
@@ -4408,126 +4408,130 @@ msgstr ""
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:168
+#: src/ui/Lobby.tsx:187
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:175
-msgid "Learn to play"
-msgstr ""
-
-#: src/ui/Lobby.tsx:177
-msgid "A guided first game: you play blue, the computer plays red, and a coach says what to do next."
-msgstr ""
-
-#: src/ui/Lobby.tsx:193
-msgid "Try it now"
-msgstr ""
-
 #: src/ui/Lobby.tsx:195
-msgid "Two sample armies, set up and ready. You play both sides on this screen."
+msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:205
+#: src/ui/Lobby.tsx:197
+msgid "From New Recruit or BattleScribe, with your own figures if you have them."
+msgstr ""
+
+#: src/ui/Lobby.tsx:200
+msgid "Pick a game"
+msgstr ""
+
+#: src/ui/Lobby.tsx:202
+msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
+msgstr ""
+
+#: src/ui/Lobby.tsx:219
+msgid "Learn (guided)"
+msgstr ""
+
+#: src/ui/Lobby.tsx:224
+msgid "Try (both sides)"
+msgstr ""
+
+#: src/ui/Lobby.tsx:231
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:211
+#: src/ui/Lobby.tsx:237
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:226
+#: src/ui/Lobby.tsx:252
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:228
+#: src/ui/Lobby.tsx:254
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:230
+#: src/ui/Lobby.tsx:256
 #: src/ui/Room.tsx:77
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:233
+#: src/ui/Lobby.tsx:259
 msgid "a room code to join"
 msgstr ""
 
-#: src/ui/Lobby.tsx:239
+#: src/ui/Lobby.tsx:265
 msgid "Join"
 msgstr ""
 
-#: src/ui/Lobby.tsx:246
+#: src/ui/Lobby.tsx:272
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:248
+#: src/ui/Lobby.tsx:274
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:253
+#: src/ui/Lobby.tsx:279
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:256
+#: src/ui/Lobby.tsx:282
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:258
+#: src/ui/Lobby.tsx:284
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:262
+#: src/ui/Lobby.tsx:288
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:264
+#: src/ui/Lobby.tsx:290
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:266
+#: src/ui/Lobby.tsx:292
 msgid "1 vs 1"
 msgstr ""
 
-#: src/ui/Lobby.tsx:267
+#: src/ui/Lobby.tsx:293
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:272
+#: src/ui/Lobby.tsx:298
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:281
+#: src/ui/Lobby.tsx:307
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:298
-msgid "Bring your army: lists, figures and rules packages"
-msgstr ""
-
-#: src/ui/Lobby.tsx:301
+#: src/ui/Lobby.tsx:324
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:305
+#: src/ui/Lobby.tsx:328
 msgid "Resume last game ({mode}, {n} event, {date})"
 msgid_plural "Resume last game ({mode}, {n} events, {date})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:311
+#: src/ui/Lobby.tsx:334
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:311
+#: src/ui/Lobby.tsx:334
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:311
+#: src/ui/Lobby.tsx:334
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:325
+#: src/ui/Lobby.tsx:348
 msgid "Open a replay file"
 msgstr ""
 
@@ -4535,92 +4539,101 @@ msgstr ""
 msgid "{name} {version} (package)"
 msgstr ""
 
-#: src/ui/Missions.tsx:105
-msgid "Score it"
+#: src/ui/Missions.tsx:107
+msgid "{vp} VP"
 msgstr ""
 
-#: src/ui/Missions.tsx:107
-#: src/ui/Missions.tsx:224
+#: src/ui/Missions.tsx:114
+#: src/ui/Missions.tsx:129
+#: src/ui/Missions.tsx:248
 #: src/ui/SystemPanels.tsx:1012
 #: src/ui/TopBar.tsx:281
 msgid "Pass"
 msgstr ""
 
-#: src/ui/Missions.tsx:111
+#: src/ui/Missions.tsx:121
+msgid "VP for {rule}"
+msgstr ""
+
+#: src/ui/Missions.tsx:127
+msgid "Score it"
+msgstr ""
+
+#: src/ui/Missions.tsx:134
 msgid "Suggested {vp} VP · waiting for {side} to confirm"
 msgstr ""
 
-#: src/ui/Missions.tsx:167
+#: src/ui/Missions.tsx:138
+msgid "Waiting for {side} to score it"
+msgstr ""
+
+#: src/ui/Missions.tsx:191
 msgid "Secret missions"
 msgstr ""
 
-#: src/ui/Missions.tsx:216
+#: src/ui/Missions.tsx:240
 msgid "(drawn on another device)"
 msgstr ""
 
-#: src/ui/Missions.tsx:222
+#: src/ui/Missions.tsx:246
 msgid "Score {n} VP"
 msgstr ""
 
-#: src/ui/Missions.tsx:232
+#: src/ui/Missions.tsx:256
 msgid "passed"
 msgstr ""
 
-#: src/ui/Missions.tsx:233
+#: src/ui/Missions.tsx:257
 msgid "scored {n} VP"
 msgstr ""
 
-#: src/ui/Missions.tsx:235
+#: src/ui/Missions.tsx:259
 msgid "revealed, waiting for {player} to score it"
 msgstr ""
 
-#: src/ui/Missions.tsx:238
+#: src/ui/Missions.tsx:262
 msgid "not scored"
 msgstr ""
 
-#: src/ui/Missions.tsx:259
+#: src/ui/Missions.tsx:283
 msgid "Reveal to score"
 msgstr ""
 
-#: src/ui/Missions.tsx:267
+#: src/ui/Missions.tsx:291
 msgid "Draw a card"
 msgstr ""
 
-#: src/ui/Missions.tsx:295
+#: src/ui/Missions.tsx:319
 msgid "Result"
 msgstr ""
 
-#: src/ui/Missions.tsx:303
+#: src/ui/Missions.tsx:327
 msgid "{side} wins"
 msgstr ""
 
-#: src/ui/Missions.tsx:305
+#: src/ui/Missions.tsx:329
 msgid "A draw"
 msgstr ""
 
-#: src/ui/Missions.tsx:316
+#: src/ui/Missions.tsx:340
 msgid "R{n}"
 msgstr ""
 
-#: src/ui/Missions.tsx:318
+#: src/ui/Missions.tsx:342
 msgid "Total"
 msgstr ""
 
-#: src/ui/Missions.tsx:53
+#: src/ui/Missions.tsx:60
 msgid "None (score by hand)"
 msgstr ""
 
-#: src/ui/Missions.tsx:84
+#: src/ui/Missions.tsx:91
 msgid "Scores to confirm"
 msgstr ""
 
-#: src/ui/Missions.tsx:84
+#: src/ui/Missions.tsx:91
 msgctxt "noun"
 msgid "Score"
-msgstr ""
-
-#: src/ui/Missions.tsx:99
-msgid "VP for {rule}"
 msgstr ""
 
 #: src/ui/NetBanner.tsx:32

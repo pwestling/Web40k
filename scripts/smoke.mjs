@@ -82,12 +82,16 @@ const checks = {
   async "try-it-now"() {
     const { page, context } = await device();
     await lobby(page);
-    const demos = await page.locator(".demos").nth(1).locator(".demo").count();
-    if (demos < 4) throw new Error(`only ${demos} games under Try it now`);
+    const demos = await page.locator(".demos .try").count();
+    if (demos < 4) throw new Error(`only ${demos} games to try`);
     for (let i = 0; i < demos; i++) {
       await lobby(page);
-      const name = await page.locator(".demos").nth(1).locator(".demo strong").nth(i).textContent();
-      await page.locator(".demos").nth(1).locator(".demo").nth(i).click();
+      const card = page
+        .locator(".demos .demo")
+        .filter({ has: page.locator(".try") })
+        .nth(i);
+      const name = await card.locator("strong").textContent();
+      await card.locator(".try").click();
       await page.locator(".topbar").waitFor();
       await page.locator("canvas").first().waitFor();
       await page.waitForTimeout(1500);
@@ -101,7 +105,7 @@ const checks = {
   async lesson() {
     const { page, context } = await device();
     await lobby(page);
-    await page.locator(".demos").first().locator(".demo").first().click();
+    await page.locator(".demos .learn").first().click();
     await page.locator(".coach").waitFor();
     await page.getByRole("button", { name: "Got it" }).click();
     await page
@@ -236,7 +240,7 @@ const checks = {
     await page.reload();
     await page.locator(".lobby").waitFor();
     await page.getByText("You're offline").first().waitFor();
-    await page.locator(".demos").nth(1).locator(".demo").first().click();
+    await page.locator(".demos .try").first().click();
     await page.locator(".topbar").waitFor();
     await context.close();
     return page.errors;
@@ -259,9 +263,9 @@ const checks = {
     const { page, context } = await device();
     await lobby(page);
     await page.locator(".language-picker select").selectOption("de");
-    await page.getByRole("heading", { name: "Spielen lernen" }).waitFor();
+    await page.getByRole("heading", { name: "Wähle ein Spiel" }).waitFor();
     await page.locator(".language-picker select").selectOption("fr");
-    await page.getByRole("heading", { name: "Apprendre à jouer" }).waitFor();
+    await page.getByRole("heading", { name: "Choisis un jeu" }).waitFor();
     await context.close();
     return page.errors;
   },

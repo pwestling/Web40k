@@ -271,6 +271,14 @@ export interface ScoringRule {
   at: ScoringMoment;
   /** The side's score at that moment, as the table stood then; null when it scores nothing. */
   suggest(game: GameState, seat: number): { vp: number; why: string } | null;
+  /** At a real table (table companion), what to ask the player instead, the app working out the VP. */
+  ask?: ScoreQuestion;
+}
+
+/** A scoring rule's question for players at a real table (UX 278), and what each answer scores. */
+export interface ScoreQuestion {
+  question: string;
+  answers: { label: string; vp: number; why: string }[];
 }
 
 export interface MissionCard {
@@ -280,4 +288,6 @@ export interface MissionCard {
   text: string;
   /** Its score when revealed, as the table stands. */
   suggest(game: GameState, seat: number): { vp: number; why: string };
+  /** At a real table, the question that scores it. */
+  ask?: ScoreQuestion;
 }

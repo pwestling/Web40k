@@ -1,7 +1,7 @@
 import { t } from "../i18n";
 import { applyEvent, sides, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { currentSlot, systemOf } from "../core/content/turn";
-import type { Mission, ScoringMoment } from "../sdk";
+import type { Mission, ScoreQuestion, ScoringMoment } from "../sdk";
 
 /**
  * Scoring moments and the scores waiting on a player. The app works out each
@@ -30,6 +30,10 @@ export interface Pending {
   rule: string;
   vp: number;
   why: string;
+  /** At a real table: the question to ask instead of a number (UX 278). */
+  ask?: ScoreQuestion;
+  /** Whether `vp` is a real suggestion; at a real table the app has none to make. */
+  guessed: boolean;
 }
 
 /** Every scoring moment so far: each move to the next phase ends one, and maybe a round or the battle. */
@@ -91,11 +95,20 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
         const key = `${rule.id}:${m.round}:${seat}`;
         if (done.has(key)) continue;
         // At a real table (#37) the positions here mean nothing: each moment is the players' to count.
-        const s = game.settings.companion
-          ? { vp: 0, why: t("count it on your table") }
+        const companion = !!game.settings.companion;
+        const s = companion
+          ? { vp: 0, why: rule.ask?.question ?? t("count it on your table") }
           : rule.suggest(m.state, seat);
         if (!s) continue;
-        out.push({ key, seat, round: m.round, rule: rule.name, ...s });
+        out.push({
+          key,
+          seat,
+          round: m.round,
+          rule: rule.name,
+          ...s,
+          guessed: !companion,
+          ...(companion && rule.ask ? { ask: rule.ask } : {}),
+        });
       }
     }
   // Secret mission cards revealed and not yet scored: scored as the table stands now.
@@ -108,8 +121,17 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
       if (done.has(key)) continue;
       const card = mission.deck?.find((c) => c.id === e.revealed!.value);
       if (!card || late.has(`${secretKey}:${card.id}`)) continue;
-      const s = game.settings.companion ? { vp: 0, why: card.text } : card.suggest(game, seat);
-      out.push({ key, seat, round: game.turn.round, rule: card.name, ...s });
+      const companion = !!game.settings.companion;
+      const s = companion ? { vp: 0, why: card.ask?.question ?? card.text } : card.suggest(game, seat);
+      out.push({
+        key,
+        seat,
+        round: game.turn.round,
+        rule: card.name,
+        ...s,
+        guessed: !companion,
+        ...(companion && card.ask ? { ask: card.ask } : {}),
+      });
     }
   }
   return out;

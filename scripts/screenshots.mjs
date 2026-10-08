@@ -54,7 +54,7 @@ try {
   }
   {
     const p = await page();
-    await p.locator(".demos").first().locator(".demo").first().click();
+    await p.locator(".demos .learn").first().click();
     await p.locator(".coach").waitFor();
     await p.waitForTimeout(4000);
     await p.screenshot({ path: `${OUT}/lesson.png` });
