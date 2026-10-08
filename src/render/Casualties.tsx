@@ -204,7 +204,8 @@ function Pile({
           ),
         )}
       <Html
-        position={[labelX, 1.2, first.y + side * (rows * ROW_STEP)]}
+        // A row further out than the pile, clear of name plates over the table (UX 194).
+        position={[labelX, 0.6, first.y + side * ((rows + 1) * ROW_STEP)]}
         center
         zIndexRange={[9, 0]}
         className="ruler casualty-pile"

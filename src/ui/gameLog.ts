@@ -57,8 +57,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
   // Back-to-back drags of one unit by one player (arrow-key nudges, say) add up on one line (UX 180).
-  let dragLine: (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; inches: number }) | null =
-    null;
+  // Measured from where the first one started, as the unit card measures moves (UX 200).
+  let dragLine:
+    (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; from: GameState }) | null = null;
   // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
   const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
@@ -206,8 +207,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       dragLine.unitId === event.id &&
       items.at(-1) === dragLine
     ) {
-      dragLine.inches += Math.abs(event.distance);
-      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} moved ${state.units[event.id]?.name ?? "a unit"} ${distanceText(state, dragLine.inches)}`;
+      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} ${moveText(dragLine.from, state, state.units[event.id]?.modelIds ?? [])}`;
       continue;
     }
     if (event.type !== "undo") dragLine = null;
@@ -290,7 +290,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         settle: { unitId: event.id },
         by: logged.by,
         unitId: event.id,
-        inches: Math.abs(event.distance),
+        from: before,
       };
       items.push(dragLine);
       continue;
@@ -408,6 +408,33 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
     case "player/color":
       return `${game.players[event.player]?.name ?? who} changed their colour`;
+    case "clock/pause":
+      if (!event.paused) return `${who} restarted the clocks`;
+      return event.reason === "disconnect"
+        ? "The clocks stopped: a player is disconnected"
+        : `${who} stopped the clocks`;
+    case "clock/adjust": {
+      const mins = Math.round(Math.abs(event.ms) / 60_000);
+      const amount = mins
+        ? `${mins} minute${mins === 1 ? "" : "s"}`
+        : `${Math.round(Math.abs(event.ms) / 1000)} seconds`;
+      return event.ms >= 0
+        ? `${who} gave ${sideName(game, event.seat)} ${amount} on the clock`
+        : `${who} took ${amount} off ${sideName(game, event.seat)}'s clock`;
+    }
+    case "campaign/set":
+      if (!event.ref) return `${who} stopped playing for a campaign`;
+      if (before.campaign?.id !== event.ref.id) return `${who} brought the campaign book ${event.ref.name}`;
+      if (before.campaign.territory !== event.ref.territory)
+        return event.ref.territory
+          ? `${who} set the stakes: ${event.ref.territory}`
+          : `${who} took the territory off the table`;
+      if (event.merged) return `${event.ref.name}: games from ${who}'s copy were added to the table's`;
+      return event.recorded
+        ? `${event.ref.name} recorded this game`
+        : `${who} shared their copy of ${event.ref.name}`;
+    case "campaign/army":
+      return "";
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
       // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.

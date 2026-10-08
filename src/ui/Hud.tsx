@@ -1,4 +1,6 @@
 import { ReportButton } from "./SavedNote";
+import { CampaignFold } from "../campaign/CampaignUI";
+import { TablePicker } from "../tables/TableLibrary";
 import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
@@ -173,7 +175,10 @@ export function Hud() {
             {mode !== "hotseat" && selfId && liveGame.players[selfId] && (
               <NameCard player={liveGame.players[selfId]!} />
             )}
+            <TablePicker />
             <MissionPicker />
+            {/* Near the top before the battle, where a host sets the game up (UX 203). */}
+            <CampaignFold />
             <ArmyImport players={mine} />
             <DeployTray players={mine} />
           </>
@@ -185,6 +190,7 @@ export function Hud() {
         ))}
       <SecretObjectives players={mine} />
       <SecretMissions players={mine} />
+      {!(mine.length > 0 && round === 0) && <CampaignFold />}
 
       {role !== "spectator" && (
         <div className="row undo-row">
