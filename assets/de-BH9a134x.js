@@ -7232,42 +7232,47 @@ msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] "{n} Manöver in dieser Bewegung ({list}): nur eines ist erlaubt"
 msgstr[1] "{n} Manöver in dieser Bewegung ({list}): nur eines ist erlaubt"
 
-#: src/ui/RegimentPanel.tsx:454
+#: src/ui/RegimentPanel.tsx:455
+#, fuzzy
+msgid "{piece}: -{n} Movement"
+msgstr "{piece}: -{n} Bewegung"
+
+#: src/ui/RegimentPanel.tsx:459
 #, fuzzy
 msgid "a marching block may only move ahead and wheel"
 msgstr "ein marschierender Block darf nur geradeaus gehen und schwenken"
 
-#: src/ui/RegimentPanel.tsx:456
+#: src/ui/RegimentPanel.tsx:461
 #, fuzzy
 msgid "failed its march test: normal move, counts as marched"
 msgstr "Marschtest nicht bestanden: normale Bewegung, zählt als marschiert"
 
-#: src/ui/RegimentPanel.tsx:464
+#: src/ui/RegimentPanel.tsx:469
 #, fuzzy
 msgid "an enemy is within {distance}\\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr "ein Feind ist innerhalb von {distance}\\": Marschieren erfordert einen Moralwerttest (bei Misserfolg bewegt sie sich normal, zählt aber als marschiert)"
 
-#: src/ui/RegimentPanel.tsx:479
+#: src/ui/RegimentPanel.tsx:484
 #, fuzzy
 msgid "back"
 msgstr "zurück"
 
-#: src/ui/RegimentPanel.tsx:481
+#: src/ui/RegimentPanel.tsx:486
 #, fuzzy
 msgid "sideways"
 msgstr "seitlich"
 
-#: src/ui/RegimentPanel.tsx:483
+#: src/ui/RegimentPanel.tsx:488
 #, fuzzy
 msgid "turn"
 msgstr "drehen"
 
-#: src/ui/RegimentPanel.tsx:485
+#: src/ui/RegimentPanel.tsx:490
 #, fuzzy
 msgid "redress"
 msgstr "Glieder ordnen"
 
-#: src/ui/RegimentPanel.tsx:487
+#: src/ui/RegimentPanel.tsx:492
 #, fuzzy
 msgid "reform"
 msgstr "neu formieren"
