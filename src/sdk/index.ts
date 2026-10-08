@@ -28,7 +28,10 @@ export interface GameModule<App = unknown> {
   hooks?: TurnHooks;
   /** Pure functions data can call with `{ call: "id", args }`. */
   functions?: Record<Id, PureFn>;
-  /** Advisory warnings, run on every peer against its own state. */
+  /**
+   * Advisory warnings, run on every peer against its own state. Nothing shows
+   * them yet: the table warnings panel that reads them is still to come.
+   */
   checks?: (view: GameView) => Warning[];
 }
 
