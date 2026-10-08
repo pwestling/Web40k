@@ -238,7 +238,7 @@ describe("Old World psychology", () => {
     toPhase(t, "combat");
     t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 3);
     if (t.s.script?.waiting) t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player);
-    const hit = rolls(t, /^to hit \(Frenzy/)[0]!;
+    const hit = rolls(t, /^to hit .*Frenzy/)[0]!;
     // 5 files of 2 Attacks (1 + Frenzy) and 5 supporting attacks.
     expect(hit.results.length).toBe(15);
     expect(t.notes().join(" ")).toMatch(/hates Reaver Warband/);

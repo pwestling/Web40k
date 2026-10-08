@@ -68,10 +68,22 @@ export const itemActions: CodeAction[] = [
     by: "unit",
     applies: (view: GameView, actor) =>
       (view.state.units[actor.unitId ?? ""]?.sheet?.abilities ?? []).some((a) => a.group === ITEM_GROUP),
+    // The item by name when there's one to use (UX 322).
+    label: (view, actor) => {
+      const items = usableItems(view, view.state.units[actor.unitId ?? ""]);
+      return items.length === 1
+        ? `Use ${items[0]!.name}${oneUse(items[0]!) ? " (one use)" : ""}`
+        : "Use a magic item";
+    },
     available: (view, actor) => {
       const u = view.state.units[actor.unitId ?? ""];
       if (!u || !alive(view.state, u)) return "The unit is gone";
-      return usableItems(view, u).length ? true : "Its magic items are spent or used this phase";
+      if (usableItems(view, u).length) return true;
+      const items = (u.sheet?.abilities ?? []).filter((a) => a.group === ITEM_GROUP && !pointsOnly(a));
+      const spent = items.filter((a) => u.status?.[spentKey(a.name)]).map((a) => a.name);
+      const used = items.filter((a) => !spent.includes(a.name)).map((a) => a.name);
+      if (!used.length) return `${spent.join(", ")} ${spent.length > 1 ? "are" : "is"} spent`;
+      return `${used.join(", ")} ${used.length > 1 ? "were" : "was"} used this phase`;
     },
     run: useItem,
   },

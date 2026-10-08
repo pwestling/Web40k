@@ -21,6 +21,11 @@ export interface Lesson {
   /** Where some units start, so the lesson has something to shoot and charge. */
   place?: Placement[];
   steps: LessonStep[];
+  /**
+   * Answers the computer gives whenever a question offers one, first match
+   * first (like "hold", so red holds against a charge rather than flee).
+   */
+  answers?: string[];
   /** The finish card: a title and what the learner did, ticked off from the log. */
   done?: { title: string; ticks: { label: string; did: string | string[] }[] };
 }
@@ -41,7 +46,7 @@ export interface LessonStep {
   show?: { seat: number; unit: number };
   /** The button the step names (its text, like "Declare attack" or "▶"): it pulses while the step is open. */
   point?: string;
-  /** Only when this holds as the step comes up (a Fact test, like "engaged > 0"); otherwise it's skipped. */
+  /** Only when this holds as the step comes up (a Fact test, like "engaged > 0" or "said:flees"); otherwise it's skipped. */
   if?: string;
   /**
    * What the coach says once the step is done, about how it went: the first
@@ -58,7 +63,9 @@ export interface LessonStep {
  * - roll: the total of the learner's last roll (a charge, an advance);
  * - slain / lost: enemy / own models destroyed;
  * - target: the unit the learner last attacked;
- * - engaged: how many of the learner's units are in contact with an enemy now.
+ * - engaged: how many of the learner's units are in contact with an enemy now;
+ * - said: what the rules logged during the step (a test "said:keeps its nerve"
+ *   holds if a log line contains that text, any case).
  */
 export interface Facts {
   roll: number;
@@ -66,12 +73,21 @@ export interface Facts {
   lost: number;
   target: string;
   engaged: number;
+  said?: string;
 }
 
 /** A Fact test: "slain > 0", "roll >= 7", or a bare "engaged" (more than 0). */
 const TEST = /^\s*(roll|slain|lost|engaged)\s*(?:(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.\d+)?))?\s*$/;
 
+/** A test on what the rules logged: "said:<text>". */
+const SAID = /^\s*said:\s*(\S.*)$/;
+
+/** Whether a lesson's `if` is a test the coach knows. */
+export const isFactTest = (test: string) => TEST.test(test) || SAID.test(test);
+
 export function factTest(test: string, facts: Facts): boolean {
+  const said = SAID.exec(test);
+  if (said) return (facts.said ?? "").toLowerCase().includes(said[1]!.trim().toLowerCase());
   const m = TEST.exec(test);
   if (!m) return false;
   const a = facts[m[1] as "roll" | "slain" | "lost" | "engaged"];
@@ -175,6 +191,8 @@ function lessonProblem(l: unknown): string | null {
       )
         return "each place needs seat, unit and at {x, y}";
   }
+  if (l.answers !== undefined && !(Array.isArray(l.answers) && l.answers.every(isStr)))
+    return "answers must be a list of answer ids";
   if (!Array.isArray(l.steps) || !l.steps.length) return "no steps";
   if (l.done !== undefined) {
     const d = l.done;
@@ -193,7 +211,8 @@ function lessonProblem(l: unknown): string | null {
     if (s.until !== undefined && !untilOk(s.until)) return `step ${i + 1}: until isn't one the coach knows`;
     for (const k of ["point", "if"] as const)
       if (s[k] !== undefined && !isStr(s[k])) return `step ${i + 1}: ${k} must be text`;
-    if (typeof s.if === "string" && !TEST.test(s.if)) return `step ${i + 1}: if isn't a test the coach knows`;
+    if (typeof s.if === "string" && !isFactTest(s.if))
+      return `step ${i + 1}: if isn't a test the coach knows`;
     if (s.after !== undefined && !afterOk(s.after))
       return `step ${i + 1}: after must be text or a list of { if?, say }`;
     if (s.hold !== undefined && typeof s.hold !== "boolean")
@@ -213,7 +232,7 @@ function afterOk(a: unknown): boolean {
     Array.isArray(a) &&
     a.length > 0 &&
     a.every(
-      (l) => isObj(l) && isStr(l.say) && (l.if === undefined || (isStr(l.if) && TEST.test(l.if as string))),
+      (l) => isObj(l) && isStr(l.say) && (l.if === undefined || (isStr(l.if) && isFactTest(l.if as string))),
     )
   );
 }

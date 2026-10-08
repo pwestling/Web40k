@@ -29,9 +29,8 @@ import {
  * Shoot (range and -1 to hit) and the shooting to-hit modifiers; combat order
  * (+1 at Unit Strength 10+), the high ground (+1 for a fighting rank standing
  * higher), Stubborn (the first break test falls back in good order) and
- * Unbreakable (no break test, it gives ground) (#40). Not covered: overkill
- * (challenges), and supporting attacks assume every second-rank model may
- * make one. Every result is advisory and lands in the log.
+ * Unbreakable (no break test, it gives ground) (#40). Supporting attacks
+ * follow troop type, arc and Fight in Extra Rank (supportingAttacks). Every result is advisory and lands in the log.
  *
  * Psychology (roadmap #32), by special rule name, from general knowledge of
  * the game and unverified: the General's Leadership within 12" (Inspiring
@@ -217,9 +216,32 @@ export function* woundAndSave(
 }
 
 /**
- * One side's attacks against another: the front rank's Attacks plus one
- * supporting attack from each model in the second rank, then to hit, to
- * wound, armour, ward and regeneration. Returns the unsaved wounds.
+ * Supporting attacks: infantry fighting an enemy in their front arc get one
+ * attack from each model in the rank behind the fighting rank (Monstrous
+ * Infantry up to three each, their Attacks); Fight in Extra Rank adds the
+ * rank behind that. None to the flank or rear, and none for cavalry,
+ * chariots or monsters. From general knowledge of the game, partly checked
+ * on tow.whfb.app (2026-10-08): no supporting attacks into a flank or rear.
+ */
+export function supportingAttacks(view: GameView, atk: Unit, def: Unit): number {
+  const state = view.state;
+  if (atk.formation.kind !== "ranked") return 0;
+  const first = alive(state, atk)[0];
+  const troop = first?.profile?.chars.Troop ?? "Regular Infantry";
+  if (!/infantry/i.test(troop)) return 0;
+  if ((inArc(state, atk, def) ?? "front") !== "front") return 0;
+  const models = alive(state, atk).length;
+  const files = Math.min(atk.formation.files, models);
+  const ranks = hasRule(atk, /fight in extra rank/i) ? 2 : 1;
+  const behind = Math.max(0, Math.min(files * ranks, models - files));
+  const each = /monstrous/i.test(troop) ? Math.min(3, Math.max(1, stat(view, atk, "A", 1))) : 1;
+  return behind * each;
+}
+
+/**
+ * One side's attacks against another: the front rank's Attacks plus the
+ * supporting attacks (above), then to hit, to wound, armour, ward and
+ * regeneration. Returns the unsaved wounds.
  */
 function* strike(
   ctx: Ctx,
@@ -233,13 +255,13 @@ function* strike(
   const models = alive(state, atk).length;
   if (!models || !alive(state, def).length) return 0;
   const files = atk.formation.kind === "ranked" ? Math.min(atk.formation.files, models) : models;
-  const support = atk.formation.kind === "ranked" ? Math.min(files, models - files) : 0;
+  const support = supportingAttacks(view, atk, def);
   const frenzy = frenzied(atk) ? 1 : 0;
   // A model fighting a challenge strikes there, not at the unit.
   const attacks = Math.max(0, files - duelling) * (Math.max(1, stat(view, atk, "A", 1)) + frenzy) + support;
   if (!attacks) return 0;
   const hitOn = how.afraid ? 6 : combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
-  const label = `to hit${frenzy ? " (Frenzy +1 Attack)" : ""}${how.afraid ? " (afraid: 6s only)" : ""}`;
+  const label = `to hit${support ? ` (${support} supporting)` : ""}${frenzy ? " (Frenzy +1 Attack)" : ""}${how.afraid ? " (afraid: 6s only)" : ""}`;
   const hit = (yield ctx.roll(`${attacks}d6`, label, atk.id, hitOn)) as Roll;
   let hits = hitsOf(hit, hitOn);
   if (how.hatred && hits < attacks) {
@@ -272,6 +294,7 @@ function* shoot(
   const range = Number.parseFloat(weapon.chars.Range ?? "") || 0;
   const mods = [...penalties];
   if (range && unitGap(state, shooter, target) > range / 2) mods.push("long range");
+  if (view.inCover(shooter.id, target.id)) mods.push("cover");
   const need = 7 - stat(view, shooter, "BS") + mods.length;
   const label = `to hit${need >= 7 ? ` (6 then ${need - 3}+)` : ""}${mods.length ? ` (${mods.join(", ")})` : ""}`;
   if (need >= 10) {
@@ -827,7 +850,11 @@ function* breakTest(
   } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
   const double1 = r.rolls.every((x) => x === 1);
   if (!double1 && r.total > ld) {
-    yield* flee(ctx, lost, won, `breaks (rolled ${r.total}, over Ld ${ld})`);
+    // The same sum as the test line, and why it's the dice that count (UX 320).
+    const why = diff
+      ? `breaks (${total}: the dice alone, ${r.total}, are over Ld ${ld})`
+      : `breaks (rolled ${r.total}, over Ld ${ld})`;
+    yield* flee(ctx, lost, won, why);
     return "flees";
   }
   if (!double1 && r.total + diff > ld) {
@@ -1083,9 +1110,16 @@ export function* panicTest(ctx: Ctx, u: Unit): Generator<Command, void, unknown>
   }
   const from = nearestEnemy(ctx.view.state, u);
   const left = alive(ctx.view.state, u).length;
+  // A failed Panic test: more than half the unit left falls back in good order, otherwise it
+  // flees (tow.whfb.app, panic tests, checked 2026-10-08; UX 320).
   if (left * 2 > u.modelIds.length)
-    yield* fallBack(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
-  else yield* flee(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
+    yield* fallBack(
+      ctx,
+      u,
+      from,
+      `fails its Panic test (rolled ${roll.total}, over Ld ${ld}), keeps more than half its models,`,
+    );
+  else yield* flee(ctx, u, from, `fails its Panic test (rolled ${roll.total}, over Ld ${ld})`);
 }
 
 /** Whether the unit has taken a Panic test this phase. */
@@ -1194,6 +1228,13 @@ export const towActions: CodeAction[] = [
       if (u.status?.fleeing) return "Fleeing units can't charge";
       if (u.status?.charged) return "Already charged this turn";
       if (u.status?.stupid) return "Stupid this turn: it can't declare a charge";
+      // Charges are declared at the start of the Movement phase, before anything moves (UX 323).
+      const moved = alive(view.state, u).some(
+        (m) =>
+          m.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) > 0.05,
+      );
+      if (moved || u.status?.marching)
+        return "It has already moved this turn: charges are declared before moving";
       const fear = view.own[`fearTest:${u.id}`] as { round: number; seat: number } | undefined;
       const now = view.state.turn;
       if (fear && fear.round === now.round && fear.seat === now.activeSeat)

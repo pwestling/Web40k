@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { createInitialState, type LoggedEvent } from "../../core";
+import { buildLog } from "../../ui/gameLog";
 import { gameView } from "../../core/script";
 import { blockSlots } from "../../core/regiment";
 import { characterActions } from "./characters";
@@ -49,5 +51,15 @@ describe("Old World characters join and leave regiments (#40)", () => {
     expect(spearsAfter.status?.attached).toBeUndefined();
     expect(spearsAfter.sheet!.keywords).not.toContain("Character");
     expect(t.notes().at(-1)).toBe("Fen Marshal left Marchwarden Spears");
+
+    // The log says each in one line, without the reshuffles behind it (UX 321).
+    const record = { initial: createInitialState(), events: [] as LoggedEvent[] };
+    t.events.forEach((event, i) => record.events.push({ seq: i + 1, by: "p1", at: 0, event }));
+    const texts = buildLog(record as never).flatMap((l) =>
+      l.kind === "line" ? [l.text, ...(l.detail ?? [])] : [],
+    );
+    expect(texts).toContain("Fen Marshal joined Marchwarden Spears");
+    expect(texts).toContain("Fen Marshal left Marchwarden Spears");
+    expect(texts.join("\n")).not.toMatch(/attached a unit|reformed|moved a model/);
   });
 });

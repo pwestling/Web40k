@@ -1106,6 +1106,7 @@ function scriptLines(
 ) {
   const unitName = (id: string) => game.units[id]?.name ?? t("a unit");
   const by = event.script?.by ?? "";
+  const noted = event.events.some((e) => e.type === "log/note");
   const lines: string[] = [];
   for (let i = 0; i < event.events.length; i++) {
     const e = event.events[i]!;
@@ -1133,8 +1134,17 @@ function scriptLines(
       lines.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
       continue;
     }
-    // A unit moved by the rule (fleeing, giving ground) is said by the rule's own note.
+    // A unit moved by the rule (fleeing, giving ground) is said by the rule's own note; so are a
+    // regiment's reshuffles when a step says what happened ("Fen Marshal joined Fen Bowmen", UX 321).
     if (e.type === "unit/move") continue;
+    if (
+      noted &&
+      (e.type === "unit/attach" ||
+        e.type === "unit/detach" ||
+        e.type === "unit/form" ||
+        e.type === "models/move")
+    )
+      continue;
     const text = describe({ by, event: e, seq: 0, at: 0 }, before, game);
     if (text) lines.push(text);
   }

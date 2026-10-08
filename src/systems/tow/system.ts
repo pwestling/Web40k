@@ -120,11 +120,24 @@ const shootingModifiers: Effect[] = [
     if: { hasFlag: "attacker", flag: "moved" },
     do: [{ do: "modifyTarget", by: 1 }],
   },
+  // Graded cover (tow.whfb.app, checked 2026-10-08): up to half the target's
+  // models obscured is partial cover, -1 to hit; more than half is full cover, -2.
   {
-    id: "Cover",
+    id: "Partial cover",
     when: beforeHit,
-    if: { query: { kind: "cover", from: "attacker", to: "target" } },
+    if: {
+      all: [
+        { cmp: ">", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0 },
+        { cmp: "<=", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0.5 },
+      ],
+    },
     do: [{ do: "modifyTarget", by: 1 }],
+  },
+  {
+    id: "Full cover",
+    when: beforeHit,
+    if: { cmp: ">", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0.5 },
+    do: [{ do: "modifyTarget", by: 2 }],
   },
 ];
 

@@ -93,8 +93,11 @@ function AbilityList({ abilities, spent }: { abilities: Ability[]; spent?: (name
     const g = a.group ?? t("Abilities");
     groups.set(g, [...(groups.get(g) ?? []), a]);
   }
+  // Spent items show on the card face, not only inside their fold (UX 322).
+  const used = abilities.filter((a) => spent?.(a.name)).map((a) => a.name);
   return (
     <>
+      {used.length > 0 && <p className="small muted">{t("Spent: {items}", { items: used.join(", ") })}</p>}
       {[...groups].map(([group, list]) => (
         <details key={group} className="abilities">
           <summary>

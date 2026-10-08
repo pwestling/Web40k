@@ -669,6 +669,8 @@ export function tableGeometry(state: GameState, system?: GameSystem): NonNullabl
     }
     if (query.kind === "cover")
       return inCover(state, system, resolve(query.from, ctx), resolve(query.to, ctx));
+    if (query.kind === "coverShare")
+      return coverShare(state, system, resolve(query.from, ctx), resolve(query.to, ctx));
     if (query.kind === "inArea") {
       // Some model (every model, `wholly`) of the subject is in the area.
       const models = modelsOf(resolve(query.subject, ctx), state);
@@ -758,6 +760,23 @@ function ownUnits(state: GameState, models: Model[]): Set<string> {
  * its keywords, or is seen only past an obscuring piece.
  */
 function inCover(state: GameState, system: GameSystem | undefined, from: unknown, to: unknown): boolean {
+  return coverOf(state, system, from, to).covered > 0;
+}
+
+/** Of the target's models the shooters can see, the share in cover (0 when none is seen). */
+function coverShare(state: GameState, system: GameSystem | undefined, from: unknown, to: unknown): number {
+  const { seen, covered } = coverOf(state, system, from, to, true);
+  return seen ? covered / seen : 0;
+}
+
+/** How many of the target's models the shooters see, and how many of those are in cover (`all`: count every one). */
+function coverOf(
+  state: GameState,
+  system: GameSystem | undefined,
+  from: unknown,
+  to: unknown,
+  all = false,
+): { seen: number; covered: number } {
   const shooters = modelsOf(from, state);
   const targets = modelsOf(to, state);
   const ignore = ownUnits(state, [...shooters, ...targets]);
@@ -768,18 +787,24 @@ function inCover(state: GameState, system: GameSystem | undefined, from: unknown
     if (!c?.cover) return false;
     return !c.coverFor || c.coverFor.some((k) => keywords.includes(k.toUpperCase()));
   };
-  return targets.some((t) => {
+  let seen = 0;
+  let covered = 0;
+  for (const t of targets) {
     const r = Math.max(baseSizeInches(t.base).width, baseSizeInches(t.base).depth) / 2;
-    const seen = shooters.some(
-      (s) => modelSight(state, s, t, { modelsBlock: state.settings.modelsBlock, ignore }).visible,
+    const sights = shooters.map((s) =>
+      modelSight(state, s, t, { modelsBlock: state.settings.modelsBlock, ignore }),
     );
-    if (!seen) return false;
-    if (state.terrain.some((p) => givesCover(p) && inFootprint(p, t.position, r))) return true;
-    return shooters.some((s) => {
-      const sight = modelSight(state, s, t, { modelsBlock: state.settings.modelsBlock, ignore });
-      return (
-        sight.visible && sight.obscuredBy.some((p) => footprintVisibility(p) === "obscuring" || givesCover(p))
-      );
-    });
-  });
+    if (!sights.some((x) => x.visible)) continue;
+    seen++;
+    if (
+      state.terrain.some((p) => givesCover(p) && inFootprint(p, t.position, r)) ||
+      sights.some(
+        (x) => x.visible && x.obscuredBy.some((p) => footprintVisibility(p) === "obscuring" || givesCover(p)),
+      )
+    ) {
+      covered++;
+      if (!all) break;
+    }
+  }
+  return { seen, covered };
 }

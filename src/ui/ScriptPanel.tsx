@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { t } from "../i18n";
 import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { useCanControl, useStore } from "../store";
+import { computerPlays, useCoach } from "../teach/store";
 import { useGame } from "./hooks";
 
 /**
@@ -17,7 +18,9 @@ export function ScriptPanel() {
   const canControl = useCanControl();
   const kept = useLocalSecrets((s) => s.kept);
   const waiting = game.script?.waiting;
-  const mine = !!waiting && canControl(waiting.player);
+  // In a lesson the computer answers for its side: its questions aren't the learner's (UX 318).
+  useCoach((s) => s.lesson);
+  const mine = !!waiting && canControl(waiting.player) && !computerPlays(game, waiting.player);
   // The commitment this device made for the secret it's asked to reveal.
   const commitment = waiting?.reveal
     ? game.secrets?.[waiting.player]?.[waiting.reveal]?.commitment

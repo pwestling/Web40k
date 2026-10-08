@@ -12,10 +12,11 @@ describe("Old World magic items (#40)", () => {
     const actor = { player: "p1", unitId: spears };
     expect(use.applies!(view(), actor)).toBe(true);
     expect(use.available(view(), actor)).toBe(true);
+    expect(use.label!(view(), actor)).toBe("Use Marsh Lantern (one use)");
     t.play({ type: "script/start", procedure: "useItem", args: { unit: spears } }, "p1");
     expect(t.notes().at(-1)).toBe("Marchwarden Spears uses Marsh Lantern (one use: now spent)");
     expect(t.s.units[spears]!.status?.["spent.Marsh Lantern"]).toBe(true);
-    expect(use.available(view(), actor)).toBe("Its magic items are spent or used this phase");
+    expect(use.available(view(), actor)).toBe("Marsh Lantern is spent");
     // A unit without items isn't offered the action at all.
     const bowmen = unitNamed(t.s, "Fen Bowmen").id;
     expect(use.applies!(view(), { player: "p1", unitId: bowmen })).toBe(false);
@@ -27,7 +28,9 @@ describe("Old World magic items (#40)", () => {
     const actor = { player: warband.owner, unitId: warband.id };
     t.play({ type: "script/start", procedure: "useItem", args: { unit: warband.id } }, warband.owner);
     expect(t.notes().at(-1)).toBe("Reaver Warband uses Bone Charm");
-    expect(itemActions[0]!.available(gameView(t.s, "tow-hand"), actor)).toMatch(/used this phase/);
+    expect(itemActions[0]!.available(gameView(t.s, "tow-hand"), actor)).toBe(
+      "Bone Charm was used this phase",
+    );
     toPhase(t, "shooting");
     expect(itemActions[0]!.available(gameView(t.s, "tow-hand"), actor)).toBe(true);
   });

@@ -55,9 +55,17 @@ export function factsSince(record: GameRecord, state: GameState, from: number, y
     }
   let roll = 0;
   let target = "";
+  const said: string[] = [];
   for (const l of record.events) {
-    if (undone.has(l.seq) || !learners.has(l.by)) continue;
+    if (undone.has(l.seq)) continue;
     const e = l.event;
+    // What rules written as code logged (a break test, a Panic test), whoever's rule it was.
+    if (l.seq > from) {
+      const steps =
+        e.type === "script/step" ? [e] : e.type === "procedure/clear" && e.script ? [e.script] : [];
+      for (const x of steps) for (const n of x.events) if (n.type === "log/note") said.push(n.text);
+    }
+    if (!learners.has(l.by)) continue;
     // The target can be picked a step earlier (declare, then roll), so look back for it.
     if (e.type === "dice/roll" && l.seq > from) roll = e.roll.results.reduce((a, b) => a + b, 0);
     const hit =
@@ -68,7 +76,7 @@ export function factsSince(record: GameRecord, state: GameState, from: number, y
           : undefined;
     if (hit && state.units[hit]) target = state.units[hit]!.name;
   }
-  return { roll, slain, lost, target, engaged: engagedUnits(state, you) };
+  return { roll, slain, lost, target, engaged: engagedUnits(state, you), said: said.join("\n") };
 }
 
 /**

@@ -23,10 +23,22 @@ export function opponentMove(
   seat: number,
   /** Play on, but don't move the game on to the next phase or activation (a step where the learner acts too). */
   hold = false,
+  /** The lesson's preferred answers to questions (Lesson.answers). */
+  answers: string[] = [],
 ): BotMove | null {
   if (state.turn.round === 0) return null;
   const mine = new Set(sidePlayers(state, seat).map((p) => p.id));
   const waiting = waitingOn(record, state, ctx);
+  const asked = state.script?.waiting;
+  if (asked && mine.has(asked.player) && !asked.secret && asked.reveal === undefined) {
+    const id = answers.find((x) => asked.options.some((o) => o.id === x));
+    const move: BotMove = {
+      intent: { type: "script/answer", answer: id ?? "" },
+      as: asked.player,
+      kind: "answer",
+    };
+    if (id && legal(record, state, move)) return move;
+  }
   if (waiting) {
     // The likeliest answer first: if that's the learner's to give, it's theirs.
     const first = waiting.moves.find((m) => legal(record, state, m));

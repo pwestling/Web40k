@@ -61,6 +61,8 @@ export const lessons = [
     system: "tow",
     summary: "Charge a small unit, break it, and watch its friends test for Panic.",
     you: 0,
+    // Red holds against your charge, so the fight happens (UX 317).
+    answers: ["hold"],
     // Your spears face red's slingers a couple of inches away.
     place: [
       { seat: 0, unit: 0, at: { x: 0, y: 6.5 } },
@@ -93,13 +95,34 @@ export const lessons = [
         point: "Fight",
         // If the charge fell short there's nothing to fight: the step ends with the turn.
         until: { any: [{ did: "combat" }, { theirTurn: true }] },
+        // Keyed on what the rules logged: the break test, then the Bog Hulk's Panic test (UX 319).
         after: [
           {
-            if: "slain >= 4",
-            say: "The slingers took a beating. If they broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
+            if: "said:keeps more than half its models",
+            say: "The slingers broke and fled, and the Bog Hulk failed its Panic test: it fell back in good order, and rallies at the end of the move.",
           },
           {
-            say: "The fight goes on. If the slingers broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
+            if: "said:fails its Panic test",
+            say: "The slingers broke and fled, and the Bog Hulk failed its Panic test and fled with them.",
+          },
+          {
+            if: "said:keeps its nerve",
+            say: "The slingers broke and fled. The Bog Hulk beside them took a Panic test and kept its nerve.",
+          },
+          {
+            if: "said:breaks (",
+            say: "The slingers broke and fled.",
+          },
+          {
+            if: "said:falls back in good order",
+            say: "The slingers lost and fell back in good order: that isn't fleeing, so nobody tests for Panic.",
+          },
+          {
+            if: "said:Combat result",
+            say: "The slingers held. The fight goes on next turn.",
+          },
+          {
+            say: "Your charge didn't reach them this time, so there was no fight.",
           },
         ],
       },

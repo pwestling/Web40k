@@ -106,7 +106,12 @@ export type GeoQuery =
    * see stands in or touches terrain whose category gives cover, or is seen
    * past an obscuring piece. Categories come from the system's `terrain`.
    */
-  | { kind: "cover"; from: Ref; to: Ref };
+  | { kind: "cover"; from: Ref; to: Ref }
+  /**
+   * Of `to`'s models that `from` can see, the share (0 to 1) in cover as the
+   * "cover" query has it, for graded cover (The Old World's partial and full).
+   */
+  | { kind: "coverShare"; from: Ref; to: Ref };
 
 // ---------------------------------------------------------------------------
 // Effects: "when <event>, if <condition>, do <actions>"

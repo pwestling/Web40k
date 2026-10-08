@@ -36,7 +36,7 @@ export function CodeActions({ unit }: { unit: Unit }) {
           const available = a.available(view, actor);
           return {
             id: a.id,
-            name: a.name,
+            name: a.label?.(view, actor) ?? a.name,
             available,
             targets: available === true && a.targets ? a.targets(view, actor) : [],
             targeted: !!a.targets,

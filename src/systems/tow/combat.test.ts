@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, type GameEvent, type GameState } from "../../core";
 import { buildLog } from "../../ui/gameLog";
 import { gameView } from "../../core/script";
-import { combatHit, toWound, towActions } from "./combat";
+import { combatHit, supportingAttacks, toWound, towActions } from "./combat";
 import { block, setup, standing, toPhase, unitNamed } from "./testing";
 
 describe("The Old World combat as code", () => {
@@ -19,6 +19,48 @@ describe("The Old World combat as code", () => {
     expect(toWound(5, 3)).toBe(2);
     expect(toWound(3, 6)).toBe(6);
     expect(toWound(3, 7)).toBeNull();
+  });
+
+  it("supporting attacks: the rank behind, Fight in Extra Rank, none to the rear", () => {
+    const { t, spears, warband } = setup();
+    const view = () => gameView(t.s, "tow-hand");
+    const u = (id: string) => t.s.units[id]!;
+    expect(supportingAttacks(view(), u(spears), u(warband))).toBe(5);
+    expect(supportingAttacks(view(), u(warband), u(spears))).toBe(6);
+    const sheet = u(spears).sheet!;
+    t.s = {
+      ...t.s,
+      units: {
+        ...t.s.units,
+        [spears]: {
+          ...u(spears),
+          sheet: { ...sheet, abilities: [...sheet.abilities, { name: "Fight in Extra Rank", text: "" }] },
+        },
+      },
+    };
+    expect(supportingAttacks(view(), u(spears), u(warband))).toBe(10);
+    // Turned about, the warband is behind the spears: no supporting attacks into it.
+    block(t, spears, -4, 5, Math.PI);
+    expect(supportingAttacks(view(), u(spears), u(warband))).toBe(0);
+    // Cavalry don't make them.
+    const riders = unitNamed(t.s, "Riders of the Downs").id;
+    block(t, riders, 0, 3, 0);
+    expect(supportingAttacks(view(), u(riders), u(warband))).toBe(0);
+  });
+
+  it("a unit that has moved can't declare a charge (UX 323)", () => {
+    const { t, spears, warband } = setup();
+    block(t, warband, 10, 6, Math.PI);
+    toPhase(t, "movement");
+    const declare = towActions.find((a) => a.id === "chargeReaction")!;
+    const actor = { player: "p1", unitId: spears };
+    expect(declare.available(gameView(t.s, "tow-hand"), actor)).toBe(true);
+    const moves = t.s.units[spears]!.modelIds.map((id) => ({
+      id,
+      to: { x: t.s.models[id]!.position.x, y: t.s.models[id]!.position.y + 1 },
+    }));
+    t.play({ type: "models/move", moves }, "p1");
+    expect(declare.available(gameView(t.s, "tow-hand"), actor)).toMatch(/already moved this turn/);
   });
 
   it("a round of combat: strikes, casualties off the rear, the result and a break test", () => {
@@ -201,7 +243,7 @@ describe("The Old World combat as code", () => {
     const item = log.find((l) => l.kind === "line" && l.text === "Marchwarden Spears fight Reaver Warband");
     expect(item && item.kind === "line" && item.detail?.length).toBeGreaterThan(3);
     const lines = item && item.kind === "line" ? item.detail!.join("\n") : "";
-    expect(lines).toMatch(/to hit \d\+: \d+ of \d+/);
+    expect(lines).toMatch(/to hit (\(\d+ supporting\) )?\d\+: \d+ of \d+/);
     expect(lines).not.toMatch(/to choose|= true|updated/);
   });
 

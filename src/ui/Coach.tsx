@@ -52,7 +52,7 @@ export function Coach() {
         if (!now || scrub !== null) return;
         const seat = 1 - (now.you ?? 0);
         const hold = !!now.steps[progress.step]?.hold;
-        const move = opponentMove(record, game, bot, seat, hold);
+        const move = opponentMove(record, game, bot, seat, hold, now.answers);
         // Nothing the rules allow just yet (a roll still settling): look again shortly.
         if (!move) {
           if (waitsOn(game, seat) && !hold) timer.current = window.setTimeout(play, BOT_PACE);

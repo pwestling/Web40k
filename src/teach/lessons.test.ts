@@ -100,7 +100,7 @@ function walk(
       continue;
     }
     const state = host.current;
-    const theirs = opponentMove(host.log, state, bot, 1 - you, step.hold);
+    const theirs = opponentMove(host.log, state, bot, 1 - you, step.hold, lesson.answers);
     const move = theirs ?? studentMove(host.log, state, student, you, wanted(step.until));
     // A step held for the learner that the student can't do from here: skip it, as the card's Skip does.
     if (!move && step.hold) {
