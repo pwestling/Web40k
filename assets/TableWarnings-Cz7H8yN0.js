@@ -1,4 +1,4 @@
-import{r as e}from"./rolldown-runtime-hePW80VL.js";import{t}from"./react-Cvdyeg_0.js";import{Et as n,Hn as r,I as i,Kn as a,P as o,T as s,U as c,xt as l,yt as u}from"./layout-CSzzIOPF.js";import{J as d,_ as f,a as ee,h as p,s as m,st as h,vt as g}from"./store-ByQifvSE.js";import{a as _,c as v,o as te,s as ne}from"./gameLog-DV3dw3B6.js";import{t as y}from"./jsx-runtime-NZYk81nU.js";import{n as b}from"./hooks-D24J90GG.js";var x=e(t(),1),re=250,S=5e3,C=15e3,ie=`<!doctype html><meta charset="utf-8">
+import{r as e}from"./rolldown-runtime-hePW80VL.js";import{t}from"./react-Cvdyeg_0.js";import{Et as n,Hn as r,I as i,Kn as a,P as o,T as s,U as c,xt as l,yt as u}from"./layout-Ber1TDyj.js";import{J as d,_ as f,a as ee,h as p,s as m,st as h,vt as g}from"./store-DmA0UAAJ.js";import{a as _,c as v,o as te,s as ne}from"./gameLog-ByvdqX03.js";import{t as y}from"./jsx-runtime-NZYk81nU.js";import{n as b}from"./hooks-D9F2Bzmt.js";var x=e(t(),1),re=250,S=5e3,C=15e3,ie=`<!doctype html><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; worker-src blob:">
 <script>
 onmessage = (e) => {

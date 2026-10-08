@@ -490,14 +490,14 @@ msgstr "Blockierend: keine Sicht"
 msgid "Leave model's eye view (Esc)"
 msgstr "Modellperspektive verlassen (Esc)"
 
-#: src/bot/BestMoment.tsx:34
+#: src/bot/BestMoment.tsx:35
 #, fuzzy
-msgid "{unit} took down {n} enemy model"
-msgid_plural "{unit} took down {n} enemy models"
-msgstr[0] "{unit} hat {n} gegnerisches Modell ausgeschaltet"
-msgstr[1] "{unit} hat {n} gegnerische Modelle ausgeschaltet"
+msgid "{unit} took down {n} of your {victim}"
+msgid_plural "{unit} took down {n} of your {victim}"
+msgstr[0] "{unit} hat {n} deiner {victim} ausgeschaltet"
+msgstr[1] "{unit} hat {n} deiner {victim} ausgeschaltet"
 
-#: src/bot/BestMoment.tsx:41
+#: src/bot/BestMoment.tsx:43
 #: src/campaign/EventTab.tsx:318
 #: src/share/SharePanel.tsx:308
 #: src/share/SharePanel.tsx:382
@@ -507,23 +507,23 @@ msgstr[1] "{unit} hat {n} gegnerische Modelle ausgeschaltet"
 msgid "Round {n}"
 msgstr "Runde {n}"
 
-#: src/bot/BestMoment.tsx:44
+#: src/bot/BestMoment.tsx:46
 #: src/bot/SoloBot.tsx:97
 #, fuzzy
 msgid "{name} ({level})"
 msgstr "{name} ({level})"
 
-#: src/bot/BestMoment.tsx:49
+#: src/bot/BestMoment.tsx:51
 #, fuzzy
 msgid "{name}'s best moment, {when}: {line}"
 msgstr "Bester Moment von {name}, {when}: {line}"
 
-#: src/bot/BestMoment.tsx:50
+#: src/bot/BestMoment.tsx:52
 #, fuzzy
 msgid "{name}'s best moment: {line}"
 msgstr "Bester Moment von {name}: {line}"
 
-#: src/bot/BestMoment.tsx:51
+#: src/bot/BestMoment.tsx:53
 #, fuzzy
 msgid "You played {name}."
 msgstr "Du hast gegen {name} gespielt."
@@ -1061,7 +1061,7 @@ msgstr "Erzielte und kassierte Siegpunkte"
 #: src/campaign/CampaignUI.tsx:614
 #: src/campaign/EventTab.tsx:270
 #: src/ui/Missions.tsx:143
-#: src/ui/Missions.tsx:368
+#: src/ui/Missions.tsx:374
 #, fuzzy
 msgid "VP"
 msgstr "VP"
@@ -1106,7 +1106,7 @@ msgid "{players} won"
 msgstr "{players} gewinnt"
 
 #: src/campaign/CampaignUI.tsx:664
-#: src/ui/Missions.tsx:361
+#: src/ui/Missions.tsx:362
 #, fuzzy
 msgid "{scores} VP"
 msgstr "{scores} VP"
@@ -3574,7 +3574,7 @@ msgstr "Kapitel"
 #: src/ui/Hud.tsx:87
 #: src/ui/PlayPanel.tsx:71
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:262
+#: src/ui/WhatNow.tsx:263
 #, fuzzy
 msgid "Hide"
 msgstr "Ausblenden"
@@ -3587,7 +3587,7 @@ msgstr "Notizen und Kapitel ausblenden"
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:42
 #: src/ui/TerrainPanel.tsx:375
-#: src/ui/TopBar.tsx:222
+#: src/ui/TopBar.tsx:226
 #: src/ui/WhatNow.tsx:41
 #: src/ui/gameLog.ts:383
 #, fuzzy
@@ -4884,7 +4884,7 @@ msgstr "Verheerend"
 #: src/ui/AttackPanel.tsx:259
 #: src/ui/AttackPanel.tsx:268
 #: src/ui/AttackPanel.tsx:351
-#: src/ui/TopBar.tsx:420
+#: src/ui/TopBar.tsx:424
 #, fuzzy
 msgid "none"
 msgstr "keine"
@@ -5655,7 +5655,7 @@ msgid "Redo this step"
 msgstr "Schritt wiederholen"
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:308
+#: src/ui/TopBar.tsx:312
 #, fuzzy
 msgid "Next phase"
 msgstr "Nächste Phase"
@@ -6157,7 +6157,7 @@ msgid "Shorter dice rolls in the tray"
 msgstr "Kürzere Würfelwürfe in der Schale"
 
 #: src/ui/Hud.tsx:142
-#: src/ui/TopBar.tsx:529
+#: src/ui/TopBar.tsx:533
 #, fuzzy
 msgid "Fast dice"
 msgstr "Schnelle Würfel"
@@ -6726,7 +6726,7 @@ msgstr "Punktestand"
 #: src/ui/Missions.tsx:147
 #: src/ui/Missions.tsx:272
 #: src/ui/SystemPanels.tsx:1033
-#: src/ui/TopBar.tsx:299
+#: src/ui/TopBar.tsx:303
 #, fuzzy
 msgid "Pass"
 msgstr "Passen"
@@ -6811,12 +6811,12 @@ msgstr "{side} gewinnt"
 msgid "A draw"
 msgstr "Unentschieden"
 
-#: src/ui/Missions.tsx:370
+#: src/ui/Missions.tsx:376
 #, fuzzy
 msgid "R{n}"
 msgstr "R{n}"
 
-#: src/ui/Missions.tsx:372
+#: src/ui/Missions.tsx:378
 #, fuzzy
 msgid "Total"
 msgstr "Gesamt"
@@ -7959,7 +7959,7 @@ msgid "Tell the other player you've finished deploying"
 msgstr "Sag dem anderen Spieler, dass du mit dem Aufstellen fertig bist"
 
 #: src/ui/Room.tsx:204
-#: src/ui/TopBar.tsx:452
+#: src/ui/TopBar.tsx:456
 #, fuzzy
 msgid "Ready"
 msgstr "Bereit"
@@ -8530,13 +8530,13 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr "Aktiviert: {used} von {budget} Aktionen genutzt."
 
 #: src/ui/SystemPanels.tsx:472
-#: src/ui/TopBar.tsx:281
+#: src/ui/TopBar.tsx:285
 #, fuzzy
 msgid "End this activation; the other player goes next"
 msgstr "Diese Aktivierung beenden; der andere Spieler ist dran"
 
 #: src/ui/SystemPanels.tsx:478
-#: src/ui/TopBar.tsx:287
+#: src/ui/TopBar.tsx:291
 #, fuzzy
 msgid "End activation"
 msgstr "Aktivierung beenden"
@@ -9176,183 +9176,183 @@ msgstr "Im Zug von {side} eine Phase zurückgehen?"
 msgid "Go back a phase during the other player's turn?"
 msgstr "Im Zug des anderen Spielers eine Phase zurückgehen?"
 
-#: src/ui/TopBar.tsx:208
+#: src/ui/TopBar.tsx:210
 #, fuzzy
-msgid "The computer is playing…"
-msgstr "Der Computer ist am Zug…"
+msgid "{name} is playing…"
+msgstr "{name} ist am Zug…"
 
-#: src/ui/TopBar.tsx:211
+#: src/ui/TopBar.tsx:215
 #, fuzzy
 msgid "Let the computer play"
 msgstr "Computer weiterspielen lassen"
 
-#: src/ui/TopBar.tsx:215
+#: src/ui/TopBar.tsx:219
 #, fuzzy
 msgid "Previous phase"
 msgstr "Vorherige Phase"
 
-#: src/ui/TopBar.tsx:226
+#: src/ui/TopBar.tsx:230
 #, fuzzy
 msgid "First turn:"
 msgstr "Erster Zug:"
 
-#: src/ui/TopBar.tsx:239
+#: src/ui/TopBar.tsx:243
 #, fuzzy
 msgid "Place your units in your zone"
 msgstr "Stell deine Einheiten in deiner Zone auf"
 
-#: src/ui/TopBar.tsx:241
+#: src/ui/TopBar.tsx:245
 #, fuzzy
 msgid "Joining the game…"
 msgstr "Trete dem Spiel bei…"
 
-#: src/ui/TopBar.tsx:243
+#: src/ui/TopBar.tsx:247
 #, fuzzy
 msgid "Players are deploying"
 msgstr "Spieler stellen auf"
 
-#: src/ui/TopBar.tsx:251
+#: src/ui/TopBar.tsx:255
 #, fuzzy
 msgid "Battle over"
 msgstr "Schlacht vorbei"
 
-#: src/ui/TopBar.tsx:253
+#: src/ui/TopBar.tsx:257
 #, fuzzy
 msgid "Round {round} of {rounds} · {side}"
 msgstr "Runde {round} von {rounds} · {side}"
 
-#: src/ui/TopBar.tsx:258
+#: src/ui/TopBar.tsx:262
 #, fuzzy
 msgid "Round {round} · {side}"
 msgstr "Runde {round} · {side}"
 
-#: src/ui/TopBar.tsx:294
+#: src/ui/TopBar.tsx:298
 #, fuzzy
 msgid "Both passed: the round moves on"
 msgstr "Beide haben gepasst: Die Runde geht weiter"
 
-#: src/ui/TopBar.tsx:295
+#: src/ui/TopBar.tsx:299
 #, fuzzy
 msgid "Pass; the other player goes next"
 msgstr "Passen; der andere Spieler ist dran"
 
-#: src/ui/TopBar.tsx:307
+#: src/ui/TopBar.tsx:311
 #, fuzzy
 msgid "Waiting for {names} to be ready"
 msgstr "Warte darauf, dass {names} bereit sind"
 
-#: src/ui/TopBar.tsx:319
+#: src/ui/TopBar.tsx:323
 #, fuzzy
 msgid "Start battle ▶"
 msgstr "Schlacht starten ▶"
 
-#: src/ui/TopBar.tsx:332
+#: src/ui/TopBar.tsx:336
 #, fuzzy
 msgid "Start anyway"
 msgstr "Trotzdem starten"
 
-#: src/ui/TopBar.tsx:332
+#: src/ui/TopBar.tsx:336
 #, fuzzy
 msgid "Go on anyway"
 msgstr "Trotzdem weiter"
 
-#: src/ui/TopBar.tsx:334
+#: src/ui/TopBar.tsx:338
 #, fuzzy
 msgid "Not yet"
 msgstr "Noch nicht"
 
-#: src/ui/TopBar.tsx:341
+#: src/ui/TopBar.tsx:345
 #, fuzzy
 msgid "Phase options"
 msgstr "Phasenoptionen"
 
-#: src/ui/TopBar.tsx:353
+#: src/ui/TopBar.tsx:357
 #, fuzzy
 msgid "Skip to the next phase"
 msgstr "Zur nächsten Phase springen"
 
-#: src/ui/TopBar.tsx:365
+#: src/ui/TopBar.tsx:369
 #, fuzzy
 msgid "Pause the computer"
 msgstr "Computer anhalten"
 
-#: src/ui/TopBar.tsx:368
+#: src/ui/TopBar.tsx:372
 #, fuzzy
 msgid "Advance their phase"
 msgstr "Ihre Phase weiterschalten"
 
-#: src/ui/TopBar.tsx:369
+#: src/ui/TopBar.tsx:373
 #, fuzzy
 msgid "Back a phase"
 msgstr "Eine Phase zurück"
 
-#: src/ui/TopBar.tsx:379
+#: src/ui/TopBar.tsx:383
 #, fuzzy
 msgid "Controls (?)"
 msgstr "Steuerung (?)"
 
-#: src/ui/TopBar.tsx:438
+#: src/ui/TopBar.tsx:442
 #, fuzzy
 msgid "Already re-rolled this round"
 msgstr "In dieser Runde schon neu gewürfelt"
 
-#: src/ui/TopBar.tsx:440
+#: src/ui/TopBar.tsx:444
 #, fuzzy
 msgid "Re-roll the picked dice: once a round"
 msgstr "Gewählte Würfel neu werfen: einmal pro Runde"
 
-#: src/ui/TopBar.tsx:441
+#: src/ui/TopBar.tsx:445
 #, fuzzy
 msgid "Pick dice to re-roll first"
 msgstr "Wähl zuerst Würfel zum Neuwürfeln"
 
-#: src/ui/TopBar.tsx:445
+#: src/ui/TopBar.tsx:449
 #, fuzzy
 msgid "Re-roll (once)"
 msgstr "Neu werfen (einmal)"
 
-#: src/ui/TopBar.tsx:449
+#: src/ui/TopBar.tsx:453
 #, fuzzy
 msgid "Keep these dice as they are: you give up this round's re-roll"
 msgstr "Diese Würfel behalten: du verzichtest auf den Wurf dieser Runde"
 
-#: src/ui/TopBar.tsx:459
+#: src/ui/TopBar.tsx:463
 #, fuzzy
 msgid "Spend"
 msgstr "Ausgeben"
 
-#: src/ui/TopBar.tsx:460
+#: src/ui/TopBar.tsx:464
 #, fuzzy
 msgid "Re-roll"
 msgstr "Neu würfeln"
 
-#: src/ui/TopBar.tsx:501
-#: src/ui/TopBar.tsx:502
+#: src/ui/TopBar.tsx:505
+#: src/ui/TopBar.tsx:506
 #, fuzzy
 msgid "Sound and dice"
 msgstr "Sound und Würfel"
 
-#: src/ui/TopBar.tsx:502
+#: src/ui/TopBar.tsx:506
 #, fuzzy
 msgid "Sound muted"
 msgstr "Sound stumm"
 
-#: src/ui/TopBar.tsx:510
+#: src/ui/TopBar.tsx:514
 #, fuzzy
 msgid "Sound"
 msgstr "Sound"
 
-#: src/ui/TopBar.tsx:513
+#: src/ui/TopBar.tsx:517
 #, fuzzy
 msgid "Volume"
 msgstr "Lautstärke"
 
-#: src/ui/TopBar.tsx:524
+#: src/ui/TopBar.tsx:528
 #, fuzzy
 msgid "A quiet room under the game; the turn bell follows Sound"
 msgstr "Ein leiser Raum unter dem Spiel; die Zugglocke folgt der Sound-Einstellung"
 
-#: src/ui/TopBar.tsx:526
+#: src/ui/TopBar.tsx:530
 #, fuzzy
 msgid "Table ambience"
 msgstr "Tischatmosphäre"
@@ -9677,32 +9677,32 @@ msgstr "{unit} · {weapon} nimmt {faces}"
 msgid "(placed: {n})"
 msgstr "(gelegt: {n})"
 
-#: src/ui/WhatNow.tsx:220
-#, fuzzy
-msgid "The computer is playing {unit}…"
-msgstr "Der Computer spielt {unit}…"
-
 #: src/ui/WhatNow.tsx:221
 #, fuzzy
-msgid "The computer is taking its turn…"
-msgstr "Der Computer macht seinen Zug…"
+msgid "{name} is playing {unit}…"
+msgstr "{name} spielt {unit}…"
 
-#: src/ui/WhatNow.tsx:227
+#: src/ui/WhatNow.tsx:222
+#, fuzzy
+msgid "{name} is taking its turn…"
+msgstr "{name} macht seinen Zug…"
+
+#: src/ui/WhatNow.tsx:228
 #, fuzzy
 msgid "A ring marks its unit and a line shows where it went."
 msgstr "Ein Ring markiert seine Einheit, eine Linie zeigt, wohin sie ging."
 
-#: src/ui/WhatNow.tsx:252
+#: src/ui/WhatNow.tsx:253
 #, fuzzy
 msgid "What can I do now?"
 msgstr "Was kann ich jetzt tun?"
 
-#: src/ui/WhatNow.tsx:281
+#: src/ui/WhatNow.tsx:282
 #, fuzzy
 msgid "Press"
 msgstr "Drück"
 
-#: src/ui/WhatNow.tsx:281
+#: src/ui/WhatNow.tsx:282
 #, fuzzy
 msgid "for all the controls."
 msgstr "für alle Steuerelemente."
