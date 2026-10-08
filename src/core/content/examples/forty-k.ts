@@ -800,7 +800,8 @@ export const fortyK: GameSystem = {
       if: {
         any: [
           { hasStatus: "self", status: "battleShocked" },
-          { cmp: "<=", a: { count: "self.models" }, b: { op: "half", args: [ref("self.startingStrength")] } },
+          // Below half-strength (wh40k/module.ts): a lone model counts its wounds instead.
+          { call: "belowHalf", args: [ref("self.id")] },
         ],
       },
       procedure: "battleShockTest",

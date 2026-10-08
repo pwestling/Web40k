@@ -1,3 +1,5 @@
+import { checkName } from "./warnings";
+import { distanceText } from "./distance";
 import { systemLabel } from "./systemLabels";
 import {
   applyEvent,
@@ -18,7 +20,16 @@ import { systemModule } from "../systems";
 export type LogItem =
   /** A phase change, or (`rules`) a rules change both players agreed to mid-game. */
   | { kind: "header"; key: string; text: string; rules?: true }
-  | { kind: "line"; key: string; seq: number; text: string; undone: boolean; detail?: string[] };
+  | {
+      kind: "line";
+      key: string;
+      seq: number;
+      text: string;
+      undone: boolean;
+      detail?: string[];
+      /** A line that grows while a player keeps nudging a unit: read out once they stop (UX 180). */
+      settle?: { unitId: string };
+    };
 
 /**
  * The event log in words: phase changes become headers, each attack is one
@@ -45,6 +56,10 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
+  // Back-to-back drags of one unit by one player (arrow-key nudges, say) add up on one line (UX 180).
+  // Measured from where the first one started, as the unit card measures moves (UX 200).
+  let dragLine:
+    (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; from: GameState }) | null = null;
   // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
   const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
@@ -178,10 +193,24 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       !(event.type === "unit/move" && event.how && !["forward", "wheel"].includes(event.how))
     ) {
       moveLine.inches += Math.abs(event.distance);
-      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${moveLine.inches.toFixed(1)}"`;
+      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${distanceText(state, moveLine.inches)}`;
       continue;
     }
     if (event.type !== "undo") moveLine = null;
+    if (
+      event.type === "unit/move" &&
+      !skipped &&
+      event.how === "drag" &&
+      event.turn === 0 &&
+      event.distance !== undefined &&
+      dragLine?.by === logged.by &&
+      dragLine.unitId === event.id &&
+      items.at(-1) === dragLine
+    ) {
+      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} ${moveText(dragLine.from, state, state.units[event.id]?.modelIds ?? [])}`;
+      continue;
+    }
+    if (event.type !== "undo") dragLine = null;
     if (event.type === "undo") {
       // Say what was taken back (UX 130): an attack by name, else the line it made.
       const who = state.players[logged.by]?.name ?? "Someone";
@@ -243,6 +272,28 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         items.push(moveLine);
         continue;
       }
+    }
+    if (
+      event.type === "unit/move" &&
+      !skipped &&
+      event.how === "drag" &&
+      event.turn === 0 &&
+      event.distance !== undefined &&
+      text
+    ) {
+      dragLine = {
+        kind: "line",
+        key,
+        seq: logged.seq,
+        text,
+        undone: false,
+        settle: { unitId: event.id },
+        by: logged.by,
+        unitId: event.id,
+        from: before,
+      };
+      items.push(dragLine);
+      continue;
     }
     // Bookkeeping events (an empty description) stay out of the log.
     if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });
@@ -328,7 +379,7 @@ function moveText(before: GameState, after: GameState, ids: string[]): string {
       ? unit.name
       : `${ids.length === 1 ? "a model of" : `${ids.length} models of`} ${unit.name}`
     : "models";
-  return far < 0.05 ? `turned ${what}` : `moved ${what} ${far.toFixed(1)}"`;
+  return far < 0.05 ? `turned ${what}` : `moved ${what} ${distanceText(after, far)}`;
 }
 
 export function describe({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
@@ -344,16 +395,46 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "mission/set":
       return `${who} chose the mission ${event.mission.name}`;
     case "score/confirm": {
-      // "Crossfire: controls 2 objectives" reads as "Crossfire (controls 2 objectives)".
-      const why = event.why.replace(/^([^:]+): (.+)$/, "$1 ($2)");
-      return event.skipped
-        ? `${sideName(game, event.seat)} passed on ${why}`
-        : `${sideName(game, event.seat)} scored ${event.vp} VP · ${why}`;
+      // "Crossfire: controls 2 objectives" reads as "Crossfire, controls 2 objectives".
+      const why = event.why.replace(/^([^:]+): /, "$1, ");
+      const side = sideName(game, event.seat);
+      if (event.skipped) return `${side} passed on ${why}`;
+      const changed = event.suggested !== undefined && event.suggested !== event.vp;
+      return `${side} scored ${event.vp} VP${changed ? ` (suggested ${event.suggested})` : ""} · ${why}`;
     }
     case "player/dice":
       return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;
     case "player/rename":
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
+    case "player/color":
+      return `${game.players[event.player]?.name ?? who} changed their colour`;
+    case "clock/pause":
+      if (!event.paused) return `${who} restarted the clocks`;
+      return event.reason === "disconnect"
+        ? "The clocks stopped: a player is disconnected"
+        : `${who} stopped the clocks`;
+    case "clock/adjust": {
+      const mins = Math.round(Math.abs(event.ms) / 60_000);
+      const amount = mins
+        ? `${mins} minute${mins === 1 ? "" : "s"}`
+        : `${Math.round(Math.abs(event.ms) / 1000)} seconds`;
+      return event.ms >= 0
+        ? `${who} gave ${sideName(game, event.seat)} ${amount} on the clock`
+        : `${who} took ${amount} off ${sideName(game, event.seat)}'s clock`;
+    }
+    case "campaign/set":
+      if (!event.ref) return `${who} stopped playing for a campaign`;
+      if (before.campaign?.id !== event.ref.id) return `${who} brought the campaign book ${event.ref.name}`;
+      if (before.campaign.territory !== event.ref.territory)
+        return event.ref.territory
+          ? `${who} set the stakes: ${event.ref.territory}`
+          : `${who} took the territory off the table`;
+      if (event.merged) return `${event.ref.name}: games from ${who}'s copy were added to the table's`;
+      return event.recorded
+        ? `${event.ref.name} recorded this game`
+        : `${who} shared their copy of ${event.ref.name}`;
+    case "campaign/army":
+      return "";
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
       // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.
@@ -431,7 +512,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (!r) return `${who} cleared the ruler`;
       const name = (id?: string) => (id ? (game.models[id]?.label ?? "a model") : "a point");
       const ends = r.fromModel || r.toModel ? ` (${name(r.fromModel)} to ${name(r.toModel)})` : "";
-      return `${who} measured ${rulerLength(game, r).toFixed(1)}"${ends}`;
+      return `${who} measured ${distanceText(game, rulerLength(game, r))}${ends}`;
     }
     case "objective/move":
       return `${who} moved an objective`;
@@ -460,14 +541,14 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const name = unitName(event.id);
       const deg = Math.round((Math.abs(event.turn) * 180) / Math.PI);
       if (event.how === "wheel")
-        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${(event.distance ?? 0).toFixed(1)}")`;
-      const inches = `${(event.distance ?? 0).toFixed(1)}"`;
+        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${distanceText(game, event.distance ?? 0)})`;
+      const inches = distanceText(game, event.distance ?? 0);
       if (event.how === "door") return `${who} closed the door: ${name} lined up with its target (${inches})`;
       if (event.how === "charge") return `${name} charged ${inches}`;
       if (event.how === "flee") return `${name} fled ${inches}`;
       if (event.how === "pursue") return `${name} pursued ${inches}`;
       if (event.how === "forward")
-        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${Math.abs(event.distance ?? 0).toFixed(1)}"`;
+        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${distanceText(game, Math.abs(event.distance ?? 0))}`;
       return `${who} ${moveText(before, game, game.units[event.id]?.modelIds ?? [])}`;
     }
     case "unit/form": {
@@ -492,6 +573,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "model/move":
       return `${who} ${moveText(before, game, [event.id])}`;
     case "models/move":
+      if (event.setup) return "";
       if (event.snap !== undefined) {
         const unitId = game.models[event.moves[0]?.id ?? ""]?.unitId;
         return `${unitName(unitId ?? "")} snapped back to ${event.snap}"`;
@@ -511,6 +593,11 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (event.key === "fleeing")
         return event.value ? `${unitName(event.id)} is fleeing` : `${unitName(event.id)} rallied`;
       if (event.key === "lastFiles") return "";
+      // An override from the Table warnings panel (src/ui/warnings.ts).
+      if (event.key.startsWith("ok."))
+        return event.value === null
+          ? ""
+          : `${who} marked ${unitName(event.id)} as fine: ${checkName(game, event.key.slice(3)).toLowerCase()}`;
       return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
     case "model/wounds":
       return `${who} set wounds on ${game.models[event.id]?.label ?? "a model"}${event.destroyed ? " (destroyed)" : ""}`;

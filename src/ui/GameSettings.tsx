@@ -1,3 +1,4 @@
+import { ClockSettingsRow } from "./Clocks";
 import type { GameSettings as Settings } from "../core";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -64,6 +65,7 @@ export function GameSettings() {
               <option value={90}>In a 90° front arc</option>
             </select>
           </label>
+          <ClockSettingsRow value={game.settings.clock} change={(clock) => change({ clock })} />
           <label className="check">
             <input
               type="checkbox"

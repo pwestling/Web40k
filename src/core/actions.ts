@@ -32,6 +32,7 @@ import type {
   Template,
   GamePackages,
   PackageRef,
+  TableSource,
   TerrainPiece,
   Unit,
   UnitId,
@@ -39,6 +40,7 @@ import type {
   Zone,
   Formation,
   DiceSet,
+  CampaignRef,
 } from "./types";
 
 /** The table layout: terrain, objectives and deployment zones. */
@@ -77,12 +79,30 @@ export type Intent =
       /** Named faces for a special die; `sides` is then their number. */
       faces?: string[];
     }
-  | { type: "layout/set"; layout: Layout }
+  /** `source`: the starter or library table it came from, so every player's picker can name it. */
+  | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   /** A player picks the name others see (invite joiners arrive as "Player N"). */
   | { type: "player/rename"; player: PlayerId; name: string }
   /** Pick your own dice (PX-5b); null goes back to dice in your colour. */
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
+  /** A side colour, e.g. from a saved army (#27). */
+  | { type: "player/color"; player: PlayerId; color: string }
+  /**
+   * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
+   * changes; `recorded` says the change is the book taking in this game's result.
+   */
+  /** `recorded`: the leader wrote this game in; `merged`: games from another table's copy were joined in. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean; merged?: boolean }
+  /** Which shelf army a player brought, for the campaign book, with its name. */
+  | {
+      type: "campaign/army";
+      player: PlayerId;
+      armyId: string;
+      prefix: string;
+      name?: string;
+      system?: string;
+    }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -115,6 +135,10 @@ export type Intent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Stop or restart the chess clocks (#29): by hand, or by the host while a player is disconnected. */
+  | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
+  /** Give a side's clock time (or take it away), in milliseconds. */
+  | { type: "clock/adjust"; seat: number; ms: number }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -125,6 +149,8 @@ export type Intent =
       round: number;
       vp: number;
       why: string;
+      /** The VP the mission suggested, when the player changed it. */
+      suggested?: number;
       skipped?: boolean;
     }
   | { type: "turn/next" }
@@ -207,10 +233,28 @@ export type GameEvent =
   | UnitForm
   | ModelsMove
   | { type: "dice/roll"; roll: DiceRoll }
-  | { type: "layout/set"; layout: Layout }
+  /** `source`: the starter or library table it came from, so every player's picker can name it. */
+  | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
+  /** A side colour, e.g. from a saved army (#27). */
+  | { type: "player/color"; player: PlayerId; color: string }
+  /**
+   * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
+   * changes; `recorded` says the change is the book taking in this game's result.
+   */
+  /** `recorded`: the leader wrote this game in; `merged`: games from another table's copy were joined in. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean; merged?: boolean }
+  /** Which shelf army a player brought, for the campaign book, with its name. */
+  | {
+      type: "campaign/army";
+      player: PlayerId;
+      armyId: string;
+      prefix: string;
+      name?: string;
+      system?: string;
+    }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -242,6 +286,10 @@ export type GameEvent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Stop or restart the chess clocks (#29): by hand, or by the host while a player is disconnected. */
+  | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
+  /** Give a side's clock time (or take it away), in milliseconds. */
+  | { type: "clock/adjust"; seat: number; ms: number }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -252,6 +300,8 @@ export type GameEvent =
       round: number;
       vp: number;
       why: string;
+      /** The VP the mission suggested, when the player changed it. */
+      suggested?: number;
       skipped?: boolean;
       by: PlayerId;
     }
@@ -342,6 +392,8 @@ export interface ModelsMove {
   moves: { id: ModelId; to: Vec2; z?: number }[];
   /** Set when this pulls an over-long move back to its limit, for the log. */
   snap?: number;
+  /** Setting the table up (a lesson placing its units), not a move: the log leaves it out. */
+  setup?: boolean;
 }
 
 export type Rng = () => number;
@@ -400,6 +452,58 @@ export function resolveIntent(
         ? { type: "player/dice", player: intent.player, dice }
         : null;
     }
+    case "player/color":
+      return state?.players[intent.player] && intent.player === from && /^#[0-9a-f]{6}$/i.test(intent.color)
+        ? { type: "player/color", player: intent.player, color: intent.color.toLowerCase() }
+        : null;
+    case "clock/pause":
+      return state?.players[from] && typeof intent.paused === "boolean"
+        ? {
+            type: "clock/pause",
+            paused: intent.paused,
+            ...(intent.paused ? { reason: intent.reason === "disconnect" ? "disconnect" : "hand" } : {}),
+          }
+        : null;
+    case "clock/adjust":
+      return state?.players[from] &&
+        Number.isInteger(intent.seat) &&
+        Number.isFinite(intent.ms) &&
+        Math.abs(intent.ms) <= 24 * 3_600_000
+        ? { type: "clock/adjust", seat: intent.seat, ms: Math.round(intent.ms) }
+        : null;
+    case "campaign/set": {
+      if (!state?.players[from]) return null;
+      const r = intent.ref;
+      if (r === null) return { type: "campaign/set", ref: null };
+      const text = (v: unknown, max: number) => typeof v === "string" && v.length > 0 && v.length <= max;
+      if (!text(r.id, 64) || !text(r.name, 120) || !/^[0-9a-f]{64}$/.test(r.hash)) return null;
+      if (r.territory !== undefined && !text(r.territory, 120)) return null;
+      return {
+        type: "campaign/set",
+        ref: { id: r.id, name: r.name, hash: r.hash, ...(r.territory ? { territory: r.territory } : {}) },
+        ...(intent.recorded ? { recorded: true } : {}),
+        ...(intent.merged ? { merged: true } : {}),
+      };
+    }
+    case "campaign/army":
+      return state?.campaign &&
+        state.players[intent.player] &&
+        intent.player === from &&
+        typeof intent.armyId === "string" &&
+        intent.armyId.length <= 64 &&
+        typeof intent.prefix === "string" &&
+        intent.prefix.length <= 64
+        ? {
+            type: "campaign/army",
+            player: intent.player,
+            armyId: intent.armyId,
+            prefix: intent.prefix,
+            ...(typeof intent.name === "string" && intent.name ? { name: intent.name.slice(0, 120) } : {}),
+            ...(typeof intent.system === "string" && intent.system
+              ? { system: intent.system.slice(0, 64) }
+              : {}),
+          }
+        : null;
     case "player/claim":
       return state?.players[intent.player] && intent.player !== from
         ? { type: "player/claim", player: intent.player, by: from }

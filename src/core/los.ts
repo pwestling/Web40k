@@ -327,3 +327,27 @@ function crossesBase(a: Vec2, b: Vec2, m: Model): boolean {
   if (t < 0.02 || t > 0.98) return false;
   return segmentPointDistance2D(a, b, m.position) < baseRadius(m) * 0.8;
 }
+
+/**
+ * Whether the table's terrain blocks a line between two points, under the
+ * game's line-of-sight rules, models aside: for the pre-game sightline view
+ * (#28), which is about the table, not any unit. True LOS uses each piece's
+ * shape, stand-in heights its block (unless an end is inside it), footprint
+ * LOS any blocking piece the line crosses (unless an end is inside it).
+ */
+export function terrainBlocksLine(state: GameState, a: Vec3, b: Vec3): boolean {
+  const game = state.settings.los ?? "true";
+  const shaped: TerrainPiece[] = [];
+  for (const piece of state.terrain) {
+    if (inFootprint(piece, a) || inFootprint(piece, b)) {
+      if (game === "footprint" || (piece.sight ?? game) !== "true") continue;
+    }
+    if (game === "footprint") {
+      if (footprintVisibility(piece) === "blocking" && segmentCrossesFootprint2D(piece, a, b)) return true;
+      continue;
+    }
+    if ((piece.sight ?? game) === "true") shaped.push(piece);
+    else if (segmentCrossesFootprint(piece, a, b, standInHeight(piece))) return true;
+  }
+  return shaped.length > 0 && sightBlockedBy(shaped, a, b) !== null;
+}

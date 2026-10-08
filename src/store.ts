@@ -25,7 +25,8 @@ export const loadTrystero = () =>
     trystero = m.trysteroTransport;
   });
 
-export const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
+/** Side colours, told apart with colour blindness too (blue, orange, teal, yellow; #25), each with a shape (ui/sides.ts). */
+export const COLORS = ["#3b82f6", "#f97316", "#2dd4bf", "#fde047"];
 
 /** "eye" looks from a model's eye line (see `eye`). */
 export type View = "3d" | "top" | "eye";
@@ -193,6 +194,13 @@ function saveRoom(roomId: string, record: GameRecord, seatedAs: string | undefin
   } catch {
     // Storage full or blocked: a reload rejoins from scratch.
   }
+}
+
+/** Save what this screen has of the game now, whatever its role (the crash screen: src/ui/Crash.tsx). */
+export function saveNow(): void {
+  const { record, mode, session, roomId } = useStore.getState();
+  if (!session || !record.events.length || !mode) return;
+  saveGame({ mode, roomId, record, savedAt: Date.now() });
 }
 
 function saveGame(game: SavedGame) {

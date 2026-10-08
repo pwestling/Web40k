@@ -1,0 +1,48 @@
+# Open Battle, self-hosted: `cp .env.example .env`, edit it, then
+# `docker compose up -d`. See docs/self-host.md.
+services:
+  # The app and the health page over HTTPS, routing /relay to the relay.
+  app:
+    build: { context: ., target: app }
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-${DOMAIN:?Set DOMAIN in .env}}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [relay]
+
+  # Where browsers find each other, and where they get TURN logins.
+  relay:
+    build: { context: ., target: relay }
+    restart: unless-stopped
+    environment:
+      TURN_SECRET: ${TURN_SECRET:?Set TURN_SECRET in .env}
+      TURN_URLS: ${TURN_URLS:-turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp}
+      TURN_CHECK: host.docker.internal:3478
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # TURN: relays game traffic for players whose networks block a direct link.
+  # Host networking, so it sees real addresses and its relay ports need no mapping.
+  turn:
+    image: coturn/coturn:4.7
+    restart: unless-stopped
+    network_mode: host
+    entrypoint: ["/bin/sh", "/coturn.sh"]
+    environment:
+      DOMAIN: ${DOMAIN}
+      TURN_SECRET: ${TURN_SECRET}
+      TURN_EXTERNAL_IP: ${TURN_EXTERNAL_IP:-}
+      TURN_ALLOW_PRIVATE: ${TURN_ALLOW_PRIVATE:-}
+      TURN_EXTRA_ARGS: ${TURN_EXTRA_ARGS:-}
+    volumes:
+      - ./deploy/coturn.sh:/coturn.sh:ro
+
+volumes:
+  caddy_data:
+  caddy_config:

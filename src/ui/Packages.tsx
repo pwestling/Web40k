@@ -1,3 +1,4 @@
+import { readLessonPackage } from "../teach/lesson";
 import { systemLabel } from "./systemLabels";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -78,6 +79,11 @@ function LoadButton({
             if (typeof got === "string") {
               if (onError) onError(got);
               else setError(got);
+            } else if (got.manifest.kind === "lesson") {
+              // Lessons are data, read without running anything: there's nothing to trust.
+              const read = readLessonPackage(got.source);
+              if ("error" in read) setError(read.error);
+              else onTrusted?.(got);
             } else if (!got.trusted) setAsking(got);
             else onTrusted?.(got);
           }}
@@ -195,7 +201,9 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
         <span>
           {label(pkg.manifest)}
           {pkg.own ? " (yours)" : ""} <Fp hash={pkg.hash} />{" "}
-          {pkg.trusted ? (
+          {pkg.manifest.kind === "lesson" ? (
+            <span className="muted small">lessons · in Learn to play</span>
+          ) : pkg.trusted ? (
             <span className="muted small">trusted</span>
           ) : (
             <button className="link" onClick={() => setAsking(true)}>
@@ -207,7 +215,9 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
           <summary aria-label={`More for ${pkg.manifest.name}`}>⋯</summary>
           <div className="menu-items">
             <button onClick={() => setDetails(!details)}>Details</button>
-            {pkg.trusted && <button onClick={() => lib.trust(pkg.hash, false)}>Stop trusting</button>}
+            {pkg.trusted && pkg.manifest.kind !== "lesson" && (
+              <button onClick={() => lib.trust(pkg.hash, false)}>Stop trusting</button>
+            )}
             <button
               onClick={() =>
                 confirm(`Remove ${pkg.manifest.name} ${pkg.manifest.version}?`) && lib.remove(pkg.hash)
@@ -227,8 +237,12 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
             </button>
           </div>
           <div>
-            {pkg.manifest.kind === "system" ? "Game system" : "Extension"} for{" "}
-            {pkg.manifest.systems.join(", ") || "any game"} · API {pkg.manifest.api} ·{" "}
+            {pkg.manifest.kind === "system"
+              ? "Game system"
+              : pkg.manifest.kind === "lesson"
+                ? "Lessons"
+                : "Extension"}{" "}
+            for {pkg.manifest.systems.join(", ") || "any game"} · API {pkg.manifest.api} ·{" "}
             {formatBytes(pkg.bytes)}
           </div>
           {pkg.manifest.adds && <div>Adds: {pkg.manifest.adds}</div>}
@@ -257,7 +271,8 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const chosen = draft ?? using;
   const started = game.turn.round > 0;
   const canChoose = editable && (role === "host" || mode === "hotseat");
-  const options = packagesFor(packages, all ? undefined : system);
+  // Lessons aren't rules: they start from Learn to play, never inside a game.
+  const options = packagesFor(packages, all ? undefined : system).filter((p) => p.manifest.kind !== "lesson");
   const names = listSystems().find((s) => s.id === system)?.name ?? system;
   const apply = (next: PackageRef[], agreed?: PlayerId[]) => {
     const event: GamePackages = {

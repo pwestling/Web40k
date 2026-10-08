@@ -41,6 +41,9 @@ export type SideMessage =
   | { t: "package/part"; hash: string; part: number; parts: number; data: string }
   /** Which of the game's packages this peer is still getting (empty when it has them all). */
   | { t: "package/status"; missing: string[] }
+  /** Campaign books, by the SHA-256 of their contents (src/campaign/share.ts). */
+  | { t: "campaign/want"; hash: string }
+  | { t: "campaign/part"; hash: string; part: number; parts: number; data: string }
   /** Table talk (src/talk): pings, drawings, chat and reactions. Never logged or checksummed. */
   /** `name`: what a spectator calls themselves (players go by their seat's name). */
   | { t: "talk"; item: TalkItem; name?: string }
@@ -86,4 +89,6 @@ export interface Transport {
   leave(): void;
   /** Media streams, where the transport can carry them. */
   readonly media?: MediaChannel;
+  /** The WebRTC connection to each peer, for connection stats in a problem report. */
+  connections?(): Record<string, RTCPeerConnection>;
 }

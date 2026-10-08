@@ -5,6 +5,29 @@ import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
+import { NetCheck } from "./NetCheck";
+
+/** How long a guest looks for the host before we offer help (UX 169). */
+const STUCK_MS = 8000;
+
+/** A guest still looking for the host after a while: maybe an old link, maybe the network. */
+function StillLooking() {
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStuck(true), STUCK_MS);
+    return () => clearTimeout(t);
+  }, []);
+  if (!stuck) return null;
+  return (
+    <div className="still-looking">
+      <p>
+        Still looking. The host may have closed their page, or the link is from an old game. If the host is
+        there, your connection may be the problem:
+      </p>
+      <NetCheck auto />
+    </div>
+  );
+}
 
 /**
  * The room: a big invite button, and who is here: each player (connected,
@@ -96,6 +119,7 @@ export function RoomCard() {
             <button className="link" onClick={() => (location.href = location.pathname)}>
               Back to the lobby
             </button>
+            {!net?.hostId && <StillLooking />}
           </li>
         ) : (
           waiting && <li className="muted">Waiting for an opponent to join…</li>

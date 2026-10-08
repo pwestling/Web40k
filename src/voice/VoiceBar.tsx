@@ -10,96 +10,124 @@ export function VoiceRoom() {
 }
 
 /**
- * The voice controls over the table talk: turn the mic on, hold to talk (or
- * leave it open), and everyone else in voice with a mute and a volume each.
- * Spectators listen until they choose to speak.
+ * Voice in the talk bar's row (UX 166): 🎙 turns the mic on, then is the
+ * hold-to-talk button (or shows the open mic). ▾ opens the rest: push to
+ * talk or open mic, mic off, and everyone in voice with a mute and a volume
+ * each. Spectators listen until they choose to speak.
  */
-export function VoiceBar() {
+export function VoiceButton() {
   const media = useStore((s) => !!s.session?.media);
   const spectator = useStore((s) => s.role === "spectator");
   const me = useStore((s) => s.session?.selfId ?? "");
   useStore((s) => s.game.players);
-  const { mic, mode, live, error, peers, speaking, muted, volume } = useVoice();
-  const [people, setPeople] = useState(false);
+  const { mic, mode, live, error, peers, speaking, muted, volume, used } = useVoice();
+  const [menu, setMenu] = useState(false);
   if (!media) return null;
   const others = Object.entries(peers).filter(([id]) => id !== me);
+  const ptt = mic && mode === "ptt";
 
   return (
-    <div className="panel voice">
-      <div className="row">
-        {!mic ? (
-          <button title="Talk to the table with your microphone" onClick={() => void micOn()}>
-            🎙 {spectator ? "Speak too" : "Voice"}
-          </button>
-        ) : mode === "ptt" ? (
-          <button
-            className={`ptt${live ? " live" : ""}${speaking[me] ? " speaking" : ""}`}
-            title="Hold to talk (or hold V)"
-            onPointerDown={() => pushToTalk(true)}
-            onPointerUp={() => pushToTalk(false)}
-            onPointerLeave={() => pushToTalk(false)}
-          >
-            {live ? "Talking…" : "Hold to talk (V)"}
-          </button>
-        ) : (
-          <span className={`open-mic${speaking[me] ? " speaking" : ""}`}>🎙 Mic open</span>
-        )}
-        {mic && (
-          <>
-            <select
-              value={mode}
-              aria-label="How your mic works"
-              onChange={(e) => setMode(e.target.value as "ptt" | "open")}
-            >
-              <option value="ptt">Push to talk</option>
-              <option value="open">Open mic</option>
-            </select>
-            <button className="quiet" title="Turn your mic off" onClick={micOff}>
-              Mic off
-            </button>
-          </>
-        )}
-        {others.length > 0 && (
-          <button className="quiet" title="Who is in voice" onClick={() => setPeople(!people)}>
-            {others.length} in voice {people ? "▴" : "▾"}
-          </button>
-        )}
-      </div>
-      {error && <p className="warn small">{error}</p>}
-      {spectator && !mic && others.length > 0 && <p className="muted small">You're listening.</p>}
-      {people && (
-        <ul className="voice-people">
-          {others.map(([id, p]) => {
-            const { name, color } = who(id, p.name);
-            return (
-              <li key={id} className={speaking[id] ? "speaking" : ""}>
-                <span className="dot" style={{ background: color }} />
-                <span className="name" style={{ color }}>
-                  {name}
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={volume[id] ?? 1}
-                  aria-label={`${name}'s volume`}
-                  disabled={!!muted[id]}
-                  onChange={(e) => setVolume(id, Number(e.target.value))}
-                />
-                <button
-                  className="quiet"
-                  title={muted[id] ? "Unmute" : "Mute"}
-                  onClick={() => setMuted(id, !muted[id])}
-                >
-                  {muted[id] ? "🔇" : "🔊"}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+    <span className="voice-controls">
+      <button
+        className={`quiet mic${mic ? " on" : ""}${live ? " live" : ""}${speaking[me] ? " speaking" : ""}`}
+        title={
+          !mic
+            ? spectator
+              ? "Speak too: talk to the table with your microphone"
+              : "Voice: talk to the table with your microphone"
+            : ptt
+              ? "Hold to talk (or hold V)"
+              : "Your mic is open"
+        }
+        aria-pressed={live}
+        onClick={() => {
+          if (!mic) void micOn();
+          else if (!ptt) setMenu(!menu);
+        }}
+        onPointerDown={() => ptt && pushToTalk(true)}
+        onPointerUp={() => ptt && pushToTalk(false)}
+        onPointerLeave={() => ptt && pushToTalk(false)}
+      >
+        {used ? "🎙" : spectator ? "🎙 Speak" : "🎙 Voice"}
+      </button>
+      {(mic || others.length > 0 || error) && (
+        <button
+          className="quiet voice-more"
+          title="Voice settings and who is in voice"
+          onClick={() => setMenu(!menu)}
+        >
+          {others.length > 0 ? others.length : ""}▾
+        </button>
       )}
-    </div>
+      {(menu || error) && (
+        <div className="panel voice-pop">
+          <button
+            className="quiet close"
+            title="Close"
+            onClick={() => {
+              setMenu(false);
+              useVoice.setState({ error: null });
+            }}
+          >
+            ✕
+          </button>
+          {error && <p className="warn small">{error}</p>}
+          {mic ? (
+            <div className="row">
+              <select
+                value={mode}
+                aria-label="How your mic works"
+                onChange={(e) => setMode(e.target.value as "ptt" | "open")}
+              >
+                <option value="ptt">Push to talk (hold 🎙 or V)</option>
+                <option value="open">Open mic</option>
+              </select>
+              <button className="quiet" onClick={micOff}>
+                Mic off
+              </button>
+            </div>
+          ) : (
+            !error && (
+              <p className="muted small">
+                {spectator ? "You're listening. 🎙 to speak too." : "🎙 turns your mic on."}
+              </p>
+            )
+          )}
+          {others.length > 0 && (
+            <ul className="voice-people">
+              {others.map(([id, p]) => {
+                const { name, color } = who(id, p.name);
+                return (
+                  <li key={id} className={speaking[id] ? "speaking" : ""}>
+                    <span className="dot" style={{ background: color }} />
+                    <span className="name" style={{ color }}>
+                      {name}
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={volume[id] ?? 1}
+                      aria-label={`${name}'s volume`}
+                      disabled={!!muted[id]}
+                      onChange={(e) => setVolume(id, Number(e.target.value))}
+                    />
+                    <button
+                      className="quiet"
+                      title={muted[id] ? "Unmute" : "Mute"}
+                      onClick={() => setMuted(id, !muted[id])}
+                    >
+                      {muted[id] ? "🔇" : "🔊"}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+    </span>
   );
 }
 

@@ -57,3 +57,51 @@ describe("40k charge", () => {
     expect(charge().ok).toBe(true);
   });
 });
+
+describe("40k Battle-shock test", () => {
+  it("is offered only below half-strength, counting a lone model's wounds", () => {
+    let r: GameRecord = createRecord(createInitialState());
+    const host = (i: Intent, by: string) => {
+      const l = resolveLogged(r, i, by, () => 0.5, 0);
+      if (!l) throw new Error(`Rejected ${i.type}`);
+      r = appendEvent(r, l);
+    };
+    host({ type: "player/join", player: { id: "a", name: "A", color: "#00f", seat: 0 } }, "a");
+    host({ type: "player/join", player: { id: "b", name: "B", color: "#f00", seat: 1 } }, "b");
+    host({ type: "game/system", system: wh40kModule.system.id }, "a");
+    for (const i of spawnIntents(stateAt(r), "a", wh40kModule.app!.sample(0).units, "a", "x")) host(i, "a");
+    host({ type: "turn/next" }, "a");
+    const s = stateAt(r);
+    const units = Object.values(s.units).filter((u) => u.owner === "a");
+    const lone = units.find(
+      (u) => u.modelIds.length === 1 && Number(s.models[u.modelIds[0]!]!.profile?.chars.W) > 1,
+    )!;
+    const squad = units.find((u) => u.modelIds.length >= 4)!;
+    const shock = (id: string) => unitActions(stateAt(r), id).find((o) => o.def.id === "battleShockTest")!.ok;
+    expect(lone && squad).toBeTruthy();
+    expect(shock(lone.id)).toBe(false);
+    expect(shock(squad.id)).toBe(false);
+    const w = Number(s.models[lone.modelIds[0]!]!.profile!.chars.W);
+    host(
+      { type: "model/wounds", id: lone.modelIds[0]!, woundsLost: Math.ceil(w / 2) - 1, destroyed: false },
+      "a",
+    );
+    expect(shock(lone.id)).toBe(false);
+    host(
+      {
+        type: "model/wounds",
+        id: lone.modelIds[0]!,
+        woundsLost: w - Math.floor((w - 1) / 2),
+        destroyed: false,
+      },
+      "a",
+    );
+    expect(shock(lone.id)).toBe(true);
+    const half = Math.ceil(squad.modelIds.length / 2);
+    for (const id of squad.modelIds.slice(0, squad.modelIds.length - half))
+      host({ type: "model/wounds", id, woundsLost: 1, destroyed: true }, "a");
+    expect(shock(squad.id)).toBe(false);
+    host({ type: "model/wounds", id: squad.modelIds.at(-1)!, woundsLost: 1, destroyed: true }, "a");
+    expect(shock(squad.id)).toBe(true);
+  });
+});

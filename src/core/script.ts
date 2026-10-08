@@ -65,6 +65,8 @@ export interface ScriptStep {
   events: GameEvent[];
   /** Why it stopped early: an error in the module, or a nondeterministic replay. */
   error?: string;
+  /** On the step that starts a procedure: its id (the script is gone already if it ended at once). */
+  started?: Id;
 }
 
 /** A module's own state, `state.modules[module][key]`. */
@@ -111,7 +113,7 @@ export function startScript(
     startSeq: state.seq,
     results: [],
   };
-  return stepScript(script, state, rng);
+  return { ...stepScript(script, state, rng), started: procedure };
 }
 
 /**

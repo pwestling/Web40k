@@ -139,6 +139,8 @@ export class Session {
   private pendingCheck: number | null = null;
   private desync: NetStatus["desync"] = null;
   private desyncs = 0;
+  /** Recent checksums, the host's and this peer's, for a problem report. */
+  private readonly checkLog: { seq: number; host?: number; mine?: number }[] = [];
 
   constructor({
     transport,
@@ -265,6 +267,21 @@ export class Session {
     this.onChange(this.state, this.record);
   }
 
+  /** The latest checksums sent (as host) or compared (as a client), oldest first. */
+  get checkHistory(): { seq: number; host?: number; mine?: number }[] {
+    return [...this.checkLog];
+  }
+
+  /** The transport's WebRTC connections, where it has them. */
+  connections(): Record<string, RTCPeerConnection> {
+    return this.transport.connections?.() ?? {};
+  }
+
+  private logCheck(entry: { seq: number; host?: number; mine?: number }): void {
+    this.checkLog.push(entry);
+    if (this.checkLog.length > 64) this.checkLog.shift();
+  }
+
   checksumAt(seq: number): number | undefined {
     const c = this.checks.get(seq);
     if (!c) return undefined;
@@ -279,7 +296,12 @@ export class Session {
   }
 
   private receive(message: NetMessage, from: string): void {
-    if (message.t.startsWith("asset/") || message.t.startsWith("package/") || message.t.startsWith("talk")) {
+    if (
+      message.t.startsWith("asset/") ||
+      message.t.startsWith("package/") ||
+      message.t.startsWith("campaign/") ||
+      message.t.startsWith("talk")
+    ) {
       for (const l of this.side.values()) l.onSide(message as SideMessage, from);
       return;
     }
@@ -498,6 +520,7 @@ export class Session {
     this.pendingCheck = null;
     this.append(logged);
     const hash = due !== null ? this.checksumAt(due) : undefined;
+    if (hash !== undefined) this.logCheck({ seq: due!, host: hash });
     this.transport.send({
       t: "event",
       logged,
@@ -510,6 +533,7 @@ export class Session {
   /** Compare the host's checksum with ours at the same point. */
   private verify(check: Check): void {
     const mine = this.checksumAt(check.seq);
+    this.logCheck({ seq: check.seq, host: check.hash, ...(mine !== undefined ? { mine } : {}) });
     if (mine === undefined || mine === check.hash) return;
     if (this.desync) return;
     this.desyncs++;

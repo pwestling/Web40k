@@ -1,3 +1,7 @@
+import { CampaignUnitLine } from "../campaign/CampaignUI";
+import { focusSoon } from "./focusSoon";
+import { UnitWarnings } from "./TableWarnings";
+import { playerShape } from "./sides";
 import { CodeActions } from "./CodeActions";
 import { useCharged } from "../render/charges";
 import {
@@ -16,7 +20,6 @@ import {
   blockedMoves,
   carriers,
   engagedWith,
-  incoherentModels,
   clampFraction,
   mainWeapon,
   moveAllowance,
@@ -144,6 +147,7 @@ export function UnitCard() {
   if (!systemModule(game.system).dedicatedUi)
     return (
       <SystemUnitCard unit={unit}>
+        <CampaignUnitLine unitId={unit.id} />
         <CodeActions unit={unit} />
         <RegimentPanel unit={unit} />
       </SystemUnitCard>
@@ -156,7 +160,6 @@ export function UnitCard() {
   const as = unit.owner;
   const allowed = moveAllowance(game, unit);
   const moved = unitMoved(alive);
-  const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
   const phase = phaseName(game);
   // Floor buttons only show when the unit stands where there is a floor to climb to.
@@ -175,9 +178,12 @@ export function UnitCard() {
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
   return (
-    <div className="panel unitcard">
+    <div className="panel unitcard" tabIndex={-1} aria-label="Selected unit">
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
+          <span className="side-shape" aria-hidden="true">
+            {playerShape(game, unit.owner)}
+          </span>{" "}
           {unit.name}
           {stars.map((m) => (
             <button
@@ -197,43 +203,8 @@ export function UnitCard() {
         {owner?.name} · {alive.length}/{all.length} models
         {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
       </p>
-      <div className="chips">
-        {FLAGS.map(([key, label]) => (
-          <button
-            key={key}
-            className={`chip ${status[key] ? "on" : ""}`}
-            disabled={!mine}
-            onClick={() => flag(key, !status[key])}
-          >
-            {label}
-          </button>
-        ))}
-        {typeof status.advance === "number" && <span className="chip on">Advanced +{status.advance}"</span>}
-        {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
-        {charged !== null && <span className="chip on charged">Charged {charged.toFixed(1)}"</span>}
-      </div>
-      <CoreAbilities unit={unit} />
-      <CodeActions unit={unit} />
-      <p className="muted">
-        {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
-          <span className={moved > allowed + 0.05 ? "warn" : ""}>
-            Moved {moved.toFixed(1)}" of {allowed}" this phase.{" "}
-          </span>
-        )}
-        {mine && (game.turn.round > 0 || !!status.scouting) && allowed !== null && moved > allowed + 0.05 && (
-          <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
-            Snap back to {allowed}"
-          </button>
-        )}
-        {incoherent > 0 && <span className="warn">{incoherent} model(s) out of coherency. </span>}
-        {blocked.length > 0 && (
-          <span className="warn">Moved through {blocked.map((p) => p.name.toLowerCase()).join(", ")}. </span>
-        )}
-        {engaged.length > 0 && (
-          <span className="warn">Engaged with {engaged.map((id) => game.units[id]?.name).join(", ")}.</span>
-        )}
-      </p>
-
+      <CampaignUnitLine unitId={unit.id} />
+      {/* The unit's actions come first, so they're the first Tab stops in the card (UX 182). */}
       {mine && (
         <div className="row wrap">
           {(["ranged", "melee"] as const).map((kind) => {
@@ -243,7 +214,10 @@ export function UnitCard() {
                 <button
                   key={kind}
                   className={phase === (kind === "ranged" ? "Shooting" : "Fight") ? "primary" : ""}
-                  onClick={() => setDraft({ attackerId: unit.id, kind, weaponId, picking: true })}
+                  onClick={() => {
+                    setDraft({ attackerId: unit.id, kind, weaponId, picking: true });
+                    focusSoon('.panel.attack select[aria-label="Target"]');
+                  }}
                 >
                   {kind === "ranged" ? "Shoot" : "Fight"}
                 </button>
@@ -282,6 +256,43 @@ export function UnitCard() {
           )}
         </div>
       )}
+      <div className="chips">
+        {FLAGS.map(([key, label]) => (
+          <button
+            key={key}
+            className={`chip ${status[key] ? "on" : ""}`}
+            disabled={!mine}
+            onClick={() => flag(key, !status[key])}
+          >
+            {label}
+          </button>
+        ))}
+        {typeof status.advance === "number" && <span className="chip on">Advanced +{status.advance}"</span>}
+        {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
+        {charged !== null && <span className="chip on charged">Charged {charged.toFixed(1)}"</span>}
+      </div>
+      <CoreAbilities unit={unit} />
+      <CodeActions unit={unit} />
+      <p className="muted">
+        {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
+          <span className={moved > allowed + 0.05 ? "warn" : ""}>
+            Moved {moved.toFixed(1)}" of {allowed}" this phase.{" "}
+          </span>
+        )}
+        {mine && (game.turn.round > 0 || !!status.scouting) && allowed !== null && moved > allowed + 0.05 && (
+          <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
+            Snap back to {allowed}"
+          </button>
+        )}
+        {blocked.length > 0 && (
+          <span className="warn">Moved through {blocked.map((p) => p.name.toLowerCase()).join(", ")}. </span>
+        )}
+        {engaged.length > 0 && (
+          <span className="warn">Engaged with {engaged.map((id) => game.units[id]?.name).join(", ")}.</span>
+        )}
+      </p>
+      {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
+      <UnitWarnings unitId={unit.id} skip={["moveDistance"]} />
 
       <div className="row wrap">
         <button
@@ -451,7 +462,13 @@ function WeaponRow({
         <td>{c.D}</td>
         <td>
           {canUse && count > 0 && (
-            <button className="small" onClick={onUse}>
+            <button
+              className="small"
+              onClick={() => {
+                onUse();
+                focusSoon('.panel.attack select[aria-label="Target"]');
+              }}
+            >
               {weapon.kind === "ranged" ? "Shoot" : "Fight"}
             </button>
           )}

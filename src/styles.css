@@ -1,7 +1,14 @@
 :root {
+  /* --below-bar: where the top bar ends, kept up to date by TopBar (it wraps with wide dice pools). */
   color-scheme: dark;
   font-family: system-ui, sans-serif;
-  font-size: 14px;
+  /* --text-scale: the player's text size (src/ui/textSize.ts). Every other size is in rem. */
+  font-size: calc(14px * var(--text-scale, 1));
+}
+/* Keyboard play (#25): always show where focus is. */
+:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
 }
 html,
 body,
@@ -207,7 +214,7 @@ label.file.button.small {
 .whatnow-toggle {
   z-index: 19;
   position: absolute;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.85rem;
@@ -215,7 +222,7 @@ label.file.button.small {
 }
 .panel.whatnow {
   z-index: 19;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 32px));
@@ -225,6 +232,63 @@ label.file.button.small {
 .panel.whatnow p {
   margin: 0;
   font-size: 0.9rem;
+}
+/* Teaching mode's coach card (ui/Coach.tsx) */
+.panel.coach {
+  z-index: 19;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 32px));
+  gap: 6px;
+  border-color: #22c55e;
+}
+.panel.coach p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.panel.coach .coach-said {
+  color: #86efac;
+  font-weight: 600;
+}
+.panel.coach .coach-title {
+  font-size: 1.15rem;
+}
+.panel.coach .coach-ticks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted, #9ca3af);
+}
+.panel.coach .coach-ticks .ok {
+  color: #86efac;
+}
+/* In a lesson the left panel keeps only its title, Undo and the log (PX review). */
+body.lesson .panel.hud > :not(:first-child):not(.log):not(.undo-row) {
+  display: none;
+}
+/* The control a lesson step names (ui/Coach.tsx). */
+button.coach-pulse {
+  animation: coach-pulse 1.6s ease-in-out infinite;
+}
+@keyframes coach-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.coach-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8);
+  }
 }
 .keys-sheet table {
   border-collapse: collapse;
@@ -264,6 +328,7 @@ kbd {
   border-color: #f59e0b;
   color: #fbbf24;
 }
+body.showcase .coach,
 body.showcase .whatnow,
 body.showcase .whatnow-toggle,
 body.reeling .whatnow,
@@ -279,7 +344,7 @@ body.reeling .whatnow-toggle {
 
 /* Left panel */
 .hud {
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 12px;
   width: 300px;
   max-height: calc(100vh - 300px);
@@ -295,6 +360,8 @@ body.reeling .whatnow-toggle {
   font-size: 0.85rem;
   line-height: 1.35;
   max-height: 260px;
+  /* A few lines of it at least, however big the text: the menu scrolls instead (UX 183). */
+  min-height: min(7rem, 25vh);
   overflow-y: auto;
 }
 .log li {
@@ -383,10 +450,11 @@ body.reeling .whatnow-toggle {
 
 /* Unit card */
 .unitcard {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
-  max-height: calc(100vh - 140px);
+  /* Clear of the stratagems button below it, at any text size (UX 183). */
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
   overflow-y: auto;
 }
 .chips {
@@ -460,10 +528,10 @@ details p {
 
 /* Attack panel */
 .attack {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
   overflow-y: auto;
 }
 .attack .grid {
@@ -512,6 +580,8 @@ details p {
 .die.ok {
   background: #166534;
   color: #ecfdf5;
+  /* A ring as well as the colour, for colour-blind players (#25). */
+  box-shadow: inset 0 0 0 2px #bbf7d0;
 }
 .die.crit {
   background: #ca8a04;
@@ -543,7 +613,7 @@ details p {
   z-index: 20;
   position: absolute;
   bottom: 10px;
-  left: 50%;
+  left: max(50%, 540px);
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
@@ -552,7 +622,9 @@ details p {
   border: 1px solid #2d3340;
   border-radius: 8px;
   padding: 4px 10px;
-  width: min(720px, calc(100vw - 24px));
+  /* Centred and clear of the talk dock on the left (300px + margins). */
+  width: min(720px, calc(100vw - 660px));
+  min-width: 420px;
   box-sizing: border-box;
 }
 .replaybar .track {
@@ -682,7 +754,7 @@ details p {
 
 /* Terrain editor */
 .terrainpanel {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 360px;
   max-height: calc(100vh - 140px);
@@ -1048,7 +1120,8 @@ input.frontage {
 .net-banner {
   z-index: 30;
   position: absolute;
-  top: 64px;
+  /* Inside the top bar: just under it, however it wraps. */
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   padding: 6px 14px;
@@ -1119,7 +1192,7 @@ input.frontage {
   padding: 2px 6px;
   background: rgb(0 0 0 / 65%);
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.786rem;
   color: #f4f4f5;
   pointer-events: none;
 }
@@ -1133,7 +1206,7 @@ input.frontage {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.857rem;
 }
 
 /* Rules packages */
@@ -1308,7 +1381,7 @@ p.odds {
 }
 .stats-screen h4 {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: 0.857rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #9ca3af;
@@ -1336,7 +1409,7 @@ p.odds {
   stroke-width: 1;
 }
 .points-chart text {
-  font-size: 11px;
+  font-size: 0.786rem;
   text-anchor: middle;
 }
 .points-chart .value {
@@ -1353,7 +1426,7 @@ p.odds {
 .stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.929rem;
 }
 .stats-table th,
 .stats-table td {
@@ -1375,7 +1448,7 @@ p.odds {
   color: #fca5a5;
 }
 .round-card .swing-line {
-  font-size: 13px;
+  font-size: 0.929rem;
   color: #93c5fd;
 }
 /* Long package names wrap; the fingerprint stays whole on its line (UX 82). */
@@ -1444,7 +1517,7 @@ p.odds {
   top: 14px;
   z-index: 4;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.929rem;
   letter-spacing: 0.04em;
   color: #e7e3da;
   text-shadow: 0 1px 4px #000;
@@ -1592,7 +1665,7 @@ p.odds {
   background: var(--c);
   color: #10141a;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 1.286rem;
 }
 .dice-tray .tray-count.fail {
   filter: saturate(0.15) brightness(0.55);
@@ -1661,13 +1734,13 @@ p.odds {
 }
 .moment-title strong {
   font-weight: 900;
-  font-size: 26px;
+  font-size: 1.857rem;
   text-transform: uppercase;
   color: #e0b354;
   text-shadow: 0 3px 14px #000c;
 }
 .moment-title span {
-  font-size: 13px;
+  font-size: 0.929rem;
   color: #e0b354;
   text-shadow: 0 2px 6px #000;
 }
@@ -1903,11 +1976,20 @@ button.rare-star:hover {
 .ruler.casualty-pile {
   pointer-events: auto;
   font-size: 0.8rem;
+  /* A label, not a readout (UX 194). */
+  font-family: inherit;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
 }
 .ruler.casualty-pile button {
   color: inherit;
   font: inherit;
   padding: 0;
+  text-decoration: none;
+}
+.ruler.casualty-pile button::after {
+  content: " ▾";
+  opacity: 0.6;
 }
 .ruler.casualty-pile ul {
   margin: 4px 0 0;
@@ -2108,6 +2190,8 @@ body.broadcast .caption {
     bottom: 68px;
     width: auto;
     max-height: 45vh;
+    /* Opaque: name plates on the table mustn't show through (UX 164). */
+    background: #111318;
     overflow-y: auto;
   }
   .hud.collapsed,
@@ -2144,6 +2228,20 @@ body.broadcast .caption {
   .caption {
     max-width: calc(100vw - 16px);
   }
+  /* Everything on the replay bar fits, What if… included (UX 152). */
+  .replaybar {
+    gap: 4px;
+    min-width: 0;
+  }
+  .replaybar .track,
+  .replaybar input[type="range"] {
+    min-width: 0;
+  }
+  .replaybar .where {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   /* Below the phase bar, which wraps to two rows here (UX 153). */
   .panel.whatnow,
   .whatnow-toggle {
@@ -2167,7 +2265,7 @@ body.reeling
 }
 /* Top right, clear of the round card that opens top centre at the same moment. */
 .panel.score-panel {
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   max-width: min(400px, calc(100vw - 32px));
   display: flex;
@@ -2438,35 +2536,41 @@ body.showcase
   min-width: 0;
 }
 
-/* Voice at the table */
-.talk-dock .panel.voice {
-  position: static;
-  gap: 4px;
-  padding: 6px 8px;
+/* Voice at the table: 🎙 in the talk bar's row, the rest in a pop-over above it (UX 166). */
+.voice-controls {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
 }
-.panel.voice .row {
-  gap: 4px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.panel.voice select {
-  font-size: 0.8rem;
-}
-.panel.voice .ptt {
-  flex: 1;
+.voice-controls .mic {
   user-select: none;
   touch-action: none;
 }
-.panel.voice .ptt.live {
+.voice-controls .mic.on {
+  border-color: #4b5563;
+}
+.voice-controls .mic.live {
   background: #b45309;
   border-color: #f59e0b;
-  color: #fff;
 }
-.panel.voice .open-mic {
-  flex: 1;
-  font-size: 0.85rem;
-  padding: 3px 6px;
-  border-radius: 6px;
+.voice-controls .voice-more {
+  padding: 0 4px;
+  font-size: 0.8rem;
+}
+.panel.voice-pop {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: -44px;
+  width: 280px;
+  gap: 6px;
+  z-index: 30;
+}
+.panel.voice-pop .close {
+  align-self: flex-end;
+  margin-bottom: -6px;
+}
+.panel.voice-pop select {
+  font-size: 0.8rem;
 }
 .voice-people {
   margin: 0;
@@ -2515,7 +2619,7 @@ body.showcase
 .on-air {
   z-index: 25;
   position: absolute;
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   padding: 4px 10px;
   border-radius: 999px;
@@ -2551,4 +2655,461 @@ body.showcase
   margin-top: 4px;
   padding-top: 6px;
   border-top: 1px solid #2d3340;
+}
+/* Room for 🎙 in the talk bar's row (UX 166). */
+.panel.talk > .row:first-child > button,
+.panel.talk .voice-controls button {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.panel.talk > .row:first-child {
+  gap: 3px;
+}
+
+/* Playtest kit: the crash screen (src/ui/Crash.tsx). */
+.panel.crash {
+  z-index: 60;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  gap: 8px;
+  border-color: #f59e0b;
+}
+.panel.crash h2,
+.panel.crash p {
+  margin: 0;
+}
+.panel.crash pre {
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.panel.report-banner {
+  top: calc(var(--below-bar, 64px) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  gap: 4px;
+  border-color: #f59e0b;
+}
+/* The lobby's connection check (src/ui/NetCheck.tsx). */
+.net-check {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.net-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-left: 3px solid #6b7280;
+  border-radius: 4px;
+  background: #1f2430;
+}
+.net-verdict.good {
+  border-color: #22c55e;
+}
+.net-verdict.turn {
+  border-color: #f59e0b;
+}
+.net-verdict.bad {
+  border-color: #ef4444;
+}
+/* The optional post-game feedback (src/ui/Feedback.tsx). */
+.feedback label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.feedback textarea {
+  font: inherit;
+  color: inherit;
+  background: #1f2430;
+  border: 1px solid #374151;
+  border-radius: 4px;
+}
+.feedback .on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.feedback h4 .muted {
+  font-weight: normal;
+}
+/* Where a downloaded report or feedback file went (src/ui/SavedNote.tsx). */
+.saved-note {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+.saved-note code {
+  overflow-wrap: anywhere;
+}
+/* The saved-file toast (UX 173). */
+.panel.saved-toast {
+  z-index: 60;
+  position: fixed;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+  background: #1b1f27;
+  border: 1px solid #3b4252;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 50%);
+}
+.panel.saved-toast .saved-note {
+  margin: 0;
+  flex: 1;
+}
+/* A guest still looking for the host (src/ui/Room.tsx). */
+.still-looking {
+  margin-top: 6px;
+  color: #e5e7eb;
+}
+.still-looking p {
+  margin: 0 0 4px;
+}
+
+/* Table warnings (src/ui/TableWarnings.tsx). */
+.topbar > .warnings-button {
+  color: #e5e7eb;
+  cursor: pointer;
+}
+.topbar > .warnings-button.has {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.topbar > .warnings-button.on {
+  background: #3a2a0c;
+}
+.panel.table-warnings {
+  z-index: 25;
+  background: #15181f;
+  position: absolute;
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: 50vh;
+  overflow: auto;
+  box-sizing: border-box;
+}
+/* Beside the unit card (about 400px wide on the right), on screens wide enough for both. */
+@media (min-width: 1100px) {
+  .panel.table-warnings.beside-card {
+    right: 424px;
+  }
+}
+.table-warnings h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.table-warnings ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-warnings li {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}
+.table-warnings li.info {
+  border-color: #6b7280;
+}
+.unit-warnings {
+  margin: 4px 0;
+}
+.table-warnings li > .link {
+  text-align: left;
+}
+
+/* A side's shape next to its colour (src/ui/sides.ts, #25). */
+.side-shape {
+  font-size: 0.85em;
+}
+
+/* Read by screen readers, not shown (src/ui/Announcer.tsx). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The army shelf (src/ui/ArmyImport.tsx, #27). */
+.shelf ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shelf li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Campaign book (24a). */
+.campaign .warn-box {
+  border: 1px solid #b45309;
+  background: rgb(120 53 15 / 35%);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.campaign .warn-box p {
+  margin: 0 0 6px;
+}
+.campaign-armies {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+.campaign-unit {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d6c48a;
+}
+.campaign-book {
+  position: fixed;
+  z-index: 60;
+  inset: max(var(--below-bar, 64px), 5vh) max(16px, calc(50vw - 420px)) 5vh;
+  background: rgb(17 19 24 / 97%);
+  border: 1px solid #2d3340;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-book .title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  min-width: 0;
+  flex: 1;
+}
+.campaign-book .title:hover,
+.campaign-book .title:focus {
+  border-color: #39404f;
+}
+.campaign-book .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.campaign-book .body {
+  overflow: auto;
+  flex: 1;
+}
+.campaign-book table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.campaign-book th,
+.campaign-book td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid #262b36;
+}
+.campaign-units input {
+  width: 100%;
+  min-width: 3.5rem;
+  box-sizing: border-box;
+}
+.campaign-games,
+.campaign-map {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-map li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.campaign-map li span {
+  flex: 1;
+}
+.campaign-book textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.shelf-select {
+  max-width: 100%;
+}
+
+/* Table library (#28). */
+.table-picker {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.table-picker .col,
+.table-shelf .col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.table-picker select {
+  max-width: 100%;
+}
+.table-thumb {
+  flex: none;
+  border: 1px solid #2d3340;
+  border-radius: 3px;
+}
+.table-shelf ul.tables {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-shelf li {
+  display: flex;
+  gap: 8px;
+}
+.table-shelf li.other {
+  opacity: 0.6;
+}
+.edit-aids {
+  align-items: center;
+}
+.sight-legend {
+  position: static;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  padding: 0;
+  background: none;
+}
+.sight-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 1.4em;
+  height: 1em;
+  margin-right: 6px;
+  vertical-align: -2px;
+  border-radius: 3px;
+}
+.sight-legend .seen-by::before {
+  background: var(--c);
+}
+.sight-legend .seen-both::before {
+  background: #4b5a3a;
+  border: 1px solid #777;
+}
+.sight-legend .seen-none::before {
+  background: #0a0a0e;
+  border: 1px solid #555;
+}
+
+/* Chess clocks (#29). */
+.side-clock {
+  font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+.side-clock.running {
+  opacity: 1;
+  background: rgb(255 255 255 / 12%);
+  font-weight: 600;
+}
+.side-clock.out {
+  color: #fca5a5;
+  opacity: 1;
+}
+.side-clock button {
+  font-size: 0.75rem;
+  padding: 0 4px;
+  margin-left: 2px;
+}
+.topbar .clock-bar {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+.clock-bar .time-call {
+  color: #fde047;
+}
+
+/* A terrain piece's name over the table: a label, not a readout (UX 215). */
+.ruler.terrain-label {
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
+}
+
+/* Event night (#29): setup, standings and rounds in the campaign book. */
+.event-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.event-setup fieldset {
+  border: 1px solid #2d3340;
+  border-radius: 6px;
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.event-setup input[aria-label="Add a player"] {
+  max-width: 14em;
+}
+.event-round h4 {
+  margin: 12px 0 4px;
+}
+.event-round ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.event-round .hand-result {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 6px;
+}
+.event-round .hand-result input {
+  width: 4em;
+}
+.event-line p {
+  margin: 4px 0;
 }

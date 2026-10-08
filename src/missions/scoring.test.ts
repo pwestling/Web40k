@@ -151,12 +151,20 @@ describe("missions and scoring", () => {
     const s = pendingScores(r, stateAt(r), mission).find((p) => p.key === "card:p1:mission:000")!;
     r = host(
       r,
-      { type: "score/confirm", key: s.key, seat: 0, round: s.round, vp: 5, why: `${s.rule}: ${s.why}` },
+      {
+        type: "score/confirm",
+        key: s.key,
+        seat: 0,
+        round: s.round,
+        vp: 3,
+        suggested: s.vp,
+        why: `${s.rule}: ${s.why}`,
+      },
       "p1",
     );
     const lines = buildLog(r).flatMap((i) => (i.kind === "line" ? [i.text] : []));
     expect(lines).toContain("Ana chose the mission Crossfire (sample)");
     expect(lines.some((l) => /^Ana revealed a secret mission card: Seize the centre$/.test(l))).toBe(true);
-    expect(lines.some((l) => /^Ana scored 5 VP · Seize the centre \(/.test(l))).toBe(true);
+    expect(lines).toContain(`Ana scored 3 VP (suggested ${s.vp}) · Seize the centre, ${s.why}`);
   });
 });

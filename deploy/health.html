@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Battle health</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        background: #111318;
+        color: #e8e8ea;
+      }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      p {
+        color: #a0a4ad;
+        margin: 0 0 24px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 4px 8px;
+        padding: 12px 0;
+        border-top: 1px solid #2a2d35;
+      }
+      li small {
+        grid-column: 2;
+        color: #a0a4ad;
+        overflow-wrap: anywhere;
+      }
+      #verdict {
+        margin-top: 24px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Open Battle health</h1>
+      <p>Checks the three parts of this server from your browser.</p>
+      <ul>
+        <li id="app"><span>…</span><strong>Web app</strong><small>Checking…</small></li>
+        <li id="relay"><span>…</span><strong>Signalling relay</strong><small>Checking…</small></li>
+        <li id="turn"><span>…</span><strong>TURN</strong><small>Checking…</small></li>
+      </ul>
+      <div id="verdict"></div>
+    </main>
+    <script>
+      const show = (id, ok, text) => {
+        const row = document.getElementById(id);
+        row.querySelector("span").textContent = ok ? "✅" : "❌";
+        row.querySelector("small").textContent = text;
+        row.dataset.ok = String(ok);
+      };
+      const timeout = (ms, value) => new Promise((done) => setTimeout(() => done(value), ms));
+
+      async function checkApp() {
+        const res = await fetch("./", { cache: "no-store" });
+        const html = await res.text();
+        const ok = res.ok && html.includes('id="root"');
+        show("app", ok, ok ? "The app is being served." : `Got ${res.status} instead of the app.`);
+      }
+
+      async function checkRelay(config) {
+        const url = config.signal?.[0];
+        if (!url) return show("relay", false, "config.json names no relay.");
+        const t0 = performance.now();
+        const opened = await Promise.race([
+          new Promise((done) => {
+            const ws = new WebSocket(url);
+            ws.onopen = () => (ws.close(), done(true));
+            ws.onerror = () => done(false);
+          }),
+          timeout(5000, false),
+        ]);
+        show(
+          "relay",
+          opened,
+          opened ? `${url} answered in ${Math.round(performance.now() - t0)} ms.` : `${url} didn't answer.`,
+        );
+      }
+
+      /** Ask TURN for a relay address with this server's own login: the real test of TURN. */
+      async function checkTurn(config, server) {
+        const turn = config.turn ?? [];
+        if (!turn.length) return show("turn", false, "config.json has no TURN login: is TURN_SECRET set?");
+        const pc = new RTCPeerConnection({ iceServers: turn, iceTransportPolicy: "relay" });
+        pc.createDataChannel("health");
+        const relayed = new Promise((done) => {
+          pc.onicecandidate = (e) => {
+            if (e.candidate?.candidate.includes(" typ relay")) done(e.candidate.address ?? true);
+            if (!e.candidate) done(null);
+          };
+        });
+        await pc.setLocalDescription(await pc.createOffer());
+        const got = await Promise.race([relayed, timeout(6000, null)]);
+        pc.close();
+        const side = server?.turn
+          ? ` The server's own check: ${server.turn.ok ? "answering" : "no answer"} at ${server.turn.checked}.`
+          : "";
+        show(
+          "turn",
+          !!got,
+          got
+            ? `TURN gave this browser a relay address${typeof got === "string" ? ` (${got})` : ""}.${side}`
+            : `TURN didn't give this browser a relay address. Check UDP/TCP 3478 and the relay ports in your firewall.${side}`,
+        );
+      }
+
+      (async () => {
+        await checkApp().catch((e) => show("app", false, String(e)));
+        let config = {};
+        try {
+          config = await (await fetch("config.json", { cache: "no-store" })).json();
+        } catch (e) {
+          show("relay", false, "No config.json: is the relay container running?");
+          show("turn", false, "No config.json.");
+        }
+        const server = await fetch("health.json", { cache: "no-store" })
+          .then((r) => r.json())
+          .catch(() => null);
+        if (config.signal) await Promise.all([checkRelay(config), checkTurn(config, server)]);
+        const rows = [...document.querySelectorAll("li")];
+        const ok = rows.every((r) => r.dataset.ok === "true");
+        document.getElementById("verdict").textContent = ok
+          ? "All good: open the app and host a game."
+          : "Something needs fixing: see docs/self-host.md.";
+        document.body.dataset.done = ok ? "ok" : "fail";
+      })();
+    </script>
+  </body>
+</html>

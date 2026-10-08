@@ -1,3 +1,7 @@
+import { toggleGroup, updatePieces, useTableEdit } from "../tables/edit";
+import { Sightlines } from "../tables/Sightlines";
+import { FocusCamera } from "./FocusCamera";
+import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -429,12 +433,17 @@ function Scene() {
           }),
         });
       } else if (d.kind === "terrain") {
-        const piece = terrain.find((t) => t.id === d.id);
-        if (piece)
-          dispatch({
-            type: "terrain/update",
-            piece: { ...piece, position: { x: d.start.x + dx, y: d.start.y + dy } },
-          });
+        // The piece's group moves with it; with symmetry on, each twin moves the other way (#28).
+        const { group } = useTableEdit.getState();
+        const ids = group.includes(d.id) ? group : [d.id];
+        updatePieces(
+          terrain
+            .filter((t) => ids.includes(t.id))
+            .map((t) => ({
+              before: t,
+              after: { ...t, position: { x: t.position.x + dx, y: t.position.y + dy } },
+            })),
+        );
       } else dispatch({ type: "objective/move", id: d.id, to: { x: d.start.x + dx, y: d.start.y + dy } });
     };
     window.addEventListener("pointermove", move);
@@ -565,8 +574,14 @@ function Scene() {
   };
 
   const canEdit = editing && live && useStore.getState().role !== "spectator";
-  const onTerrainDown = (piece: TerrainPiece) => {
+  const group = useTableEdit((s) => s.group);
+  const onTerrainDown = (piece: TerrainPiece, shift: boolean) => {
     if (!canEdit) return;
+    // Shift-click: in or out of the group, no drag.
+    if (shift) {
+      toggleGroup(piece.id, useStore.getState().selectedTerrain);
+      return;
+    }
     setUi({ selectedTerrain: piece.id });
     setDrag({
       kind: "terrain",
@@ -676,6 +691,7 @@ function Scene() {
       y: number;
       z: number;
       name?: string;
+      shape?: string;
       color: string;
       sight?: (typeof sightLabels)[number];
     }[] = [];
@@ -717,6 +733,7 @@ function Scene() {
         z,
         ...(plate ? { name: u.name } : {}),
         color: game.players[u.owner]?.color ?? "#999",
+        shape: playerShape(game, u.owner),
         ...(sight ? { sight } : {}),
       });
     }
@@ -819,6 +836,7 @@ function Scene() {
         <meshStandardMaterial color="#4b5a3a" />
       </mesh>
       <InchGrid width={width} depth={depth} />
+      {(editing || game.turn.round === 0) && <Sightlines game={game} />}
       {/* In a team game each teammate's share of the side's zone shows in their own colour. */}
       {game.zones.flatMap((z) => {
         const team = sidePlayers(game, z.seat);
@@ -843,7 +861,8 @@ function Scene() {
           standIn={
             (t.sight ?? game.settings.los) === "heights" && (xray || editing) ? standInHeight(t) : null
           }
-          onDown={() => onTerrainDown(t)}
+          grouped={editing && group.includes(t.id)}
+          onDown={(shift) => onTerrainDown(t, shift)}
         />
       ))}
       {game.objectives.map((o) => {
@@ -917,7 +936,14 @@ function Scene() {
           className="plate"
           style={{ borderColor: l.color }}
         >
-          {l.name && <div>{l.name}</div>}
+          {l.name && (
+            <div>
+              <span className="side-shape" style={{ color: l.color }} aria-hidden="true">
+                {l.shape}
+              </span>{" "}
+              {l.name}
+            </div>
+          )}
           {l.sight && <div className={`sightlabel ${l.sight.state}`}>{l.sight.text}</div>}
         </Html>
       ))}
@@ -974,6 +1000,7 @@ function Scene() {
       <FeelLayer />
       <CasterCamera />
       <ShowcaseCamera />
+      <FocusCamera />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (
@@ -1189,7 +1216,7 @@ function SightLine({
 
 function seatColor(game: GameState, seat: number): string {
   return (
-    Object.values(game.players).find((p) => p.seat === seat)?.color ?? (seat === 0 ? "#3b82f6" : "#ef4444")
+    Object.values(game.players).find((p) => p.seat === seat)?.color ?? (seat === 0 ? "#3b82f6" : "#f97316")
   );
 }
 
@@ -1369,6 +1396,7 @@ function Terrain({
   selected,
   standIn,
   footprint,
+  grouped,
   onDown,
 }: {
   piece: TerrainPiece;
@@ -1379,14 +1407,15 @@ function Terrain({
   standIn: number | null;
   /** Sight class to tint the footprint with, in "footprint" line of sight. */
   footprint: "open" | "obscuring" | "blocking" | null;
-  onDown: () => void;
+  grouped?: boolean;
+  onDown: (shift: boolean) => void;
 }) {
   const handlers = editable
     ? {
         onPointerDown: (e: ThreeEvent<PointerEvent>) => {
           if (e.button !== 0) return;
           e.stopPropagation();
-          onDown();
+          onDown(e.shiftKey);
         },
         onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
       }
@@ -1415,7 +1444,7 @@ function Terrain({
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial
-          color={selected ? "#a16207" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
+          color={selected ? "#a16207" : grouped ? "#7c3aed" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
           transparent
           opacity={0.8}
         />
@@ -1454,7 +1483,7 @@ function Terrain({
           ),
         )}
       {selected && (
-        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler">
+        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler terrain-label">
           {piece.name} · {piece.category}
         </Html>
       )}

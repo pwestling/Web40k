@@ -10,7 +10,8 @@ export interface Manifest {
   version: string;
   author?: string;
   api: number;
-  kind: "system" | "extension";
+  /** A lesson package (src/teach) is data only: its lessons are read like the manifest, never run. */
+  kind: "system" | "extension" | "lesson";
   systems: string[];
   requires: { id: string; hash?: string }[];
   adds?: string;
@@ -34,6 +35,20 @@ export function readManifest(source: string): ManifestResult {
   return check(value);
 }
 
+/** Another `export const <name> = <literal>` in a package, read as data the same way (undefined if absent). */
+export function readLiteral(
+  source: string,
+  name: string,
+): { value: unknown } | { error: string } | undefined {
+  const m = new RegExp(`export\\s+const\\s+${name}\\s*(?::[^=]+)?=\\s*`).exec(source);
+  if (!m) return undefined;
+  try {
+    return { value: new LiteralParser(source, m.index + m[0].length).value() };
+  } catch (e) {
+    return { error: `${name} must be a plain literal (${e instanceof Error ? e.message : String(e)})` };
+  }
+}
+
 function check(v: unknown): ManifestResult {
   if (!v || typeof v !== "object" || Array.isArray(v)) return { error: NOT_LITERAL };
   const o = v as Record<string, unknown>;
@@ -46,7 +61,7 @@ function check(v: unknown): ManifestResult {
     !name && "name",
     !version && "version",
     typeof o.api !== "number" && "api",
-    o.kind !== "system" && o.kind !== "extension" && "kind",
+    o.kind !== "system" && o.kind !== "extension" && o.kind !== "lesson" && "kind",
     !(Array.isArray(o.systems) && o.systems.every((x) => typeof x === "string")) && "systems",
   ].filter(Boolean);
   if (missing.length) return { error: `The manifest is missing ${missing.join(", ")}.` };

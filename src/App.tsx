@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { loadTrystero, useStore } from "./store";
+import { CrashGuard } from "./ui/Crash";
+import { SavedToast } from "./ui/SavedNote";
 import { Lobby } from "./ui/Lobby";
 
 /**
@@ -22,10 +24,13 @@ export function App() {
   }, []);
   return (
     <>
-      <Suspense fallback={started ? <div className="loading-table">Setting up the table…</div> : null}>
-        <GameScreen started={started} />
-      </Suspense>
+      <CrashGuard>
+        <Suspense fallback={started ? <div className="loading-table">Setting up the table…</div> : null}>
+          <GameScreen started={started} />
+        </Suspense>
+      </CrashGuard>
       {!started && <Lobby />}
+      <SavedToast />
     </>
   );
 }

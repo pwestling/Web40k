@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { sideName, sidePlayers, sides, type GameState } from "../core";
+import { sideName, sidePlayers, sides, type GameState, type Intent } from "../core";
 import { secretsWithPrefix } from "../core/secrets";
-import { pendingScores, vpByRound } from "../missions/scoring";
+import { pendingScores, vpByRound, type Pending } from "../missions/scoring";
 import type { Mission } from "../sdk";
 import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { systemModule } from "../systems";
@@ -12,6 +12,22 @@ import { battleOver } from "./StatsScreen";
 /** The game's chosen mission (SystemModule.missions), if any. */
 export function missionOf(game: GameState): Mission | undefined {
   return systemModule(game.system).missions?.find((m) => m.id === game.mission?.id);
+}
+
+/** Logs a side's score (or that it passed, with no vp), noting the suggestion when the player changed it. */
+function confirmScore(dispatch: (intent: Intent, as?: string) => void, p: Pending, by: string, vp?: number) {
+  dispatch(
+    {
+      type: "score/confirm",
+      key: p.key,
+      seat: p.seat,
+      round: p.round,
+      vp: vp ?? 0,
+      why: `${p.rule}: ${p.why}`,
+      ...(vp === undefined ? { skipped: true } : vp !== p.vp ? { suggested: p.vp } : {}),
+    },
+    by,
+  );
 }
 
 /** Before the battle: pick a mission, which sets the deployment zones and objectives. */
@@ -68,19 +84,7 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
         const mine =
           role !== "spectator" ? sidePlayers(game, p.seat).find((x) => canControl(x.id)) : undefined;
         const vp = edits[p.key] ?? p.vp;
-        const confirm = (skipped?: boolean) =>
-          dispatch(
-            {
-              type: "score/confirm",
-              key: p.key,
-              seat: p.seat,
-              round: p.round,
-              vp: skipped ? 0 : vp,
-              why: `${p.rule}: ${vp !== p.vp ? `${p.why} (changed from ${p.vp})` : p.why}`,
-              ...(skipped ? { skipped } : {}),
-            },
-            mine!.id,
-          );
+        const confirm = (skipped?: boolean) => confirmScore(dispatch, p, mine!.id, skipped ? undefined : vp);
         return (
           <div key={p.key} className="score-item">
             <span>
@@ -123,6 +127,8 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   const mission = missionOf(game);
   const live = useStore((s) => s.scrub === null);
   const over = battleOver(game);
+  const record = useStore((s) => s.record);
+  const pending = useMemo(() => pendingScores(record, game, mission), [record, game, mission]);
   // Once the battle is over, cards still face down are turned up, unscored (missions/scoring.ts).
   const unplayed = over
     ? players.flatMap((p) =>
@@ -149,6 +155,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   }, [turnUp, live]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!mission?.deck?.length || game.turn.round === 0) return null;
   const deck = mission.deck;
+  const pendingCard = (k: string) => pending.find((x) => x.key === k);
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   return (
     <details className="fold secret-objectives" open>
@@ -188,6 +195,10 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                     : undefined;
                 const card = deck.find((c) => c.id === id);
                 if (!e.revealed && !mine) return null;
+                // Revealed during play and not yet confirmed: still to score, even after the battle (the result lists it too).
+                const open = e.revealed ? pendingCard(`card:${p.id}:${key}`) : undefined;
+                const due = mine ? open : undefined;
+                const scored = game.scores?.find((x) => x.key === `card:${p.id}:${key}`);
                 return (
                   <li key={key}>
                     {card ? (
@@ -197,12 +208,26 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                     ) : (
                       <span className="muted">(drawn on another device)</span>
                     )}
-                    {e.revealed && (
-                      <span className="muted small">
-                        {over && !game.scores?.some((x) => x.key === `card:${p.id}:${key}`)
-                          ? " · not scored"
-                          : " · revealed"}
+                    {due ? (
+                      <span className="row">
+                        <span className="muted small">{due.why}</span>
+                        <button className="primary" onClick={() => confirmScore(dispatch, due, p.id, due.vp)}>
+                          Score {due.vp} VP
+                        </button>
+                        <button onClick={() => confirmScore(dispatch, due, p.id)}>Pass</button>
                       </span>
+                    ) : (
+                      e.revealed && (
+                        <span className="muted small">
+                          {scored
+                            ? scored.skipped
+                              ? " · passed"
+                              : ` · scored ${scored.vp} VP`
+                            : open || !over
+                              ? ` · revealed, waiting for ${p.name} to score it`
+                              : " · not scored"}
+                        </span>
+                      )
                     )}
                     {mine && !e.revealed && card && !over && (
                       <button

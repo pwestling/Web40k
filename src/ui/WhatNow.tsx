@@ -6,6 +6,7 @@ import { gameView } from "../core/script";
 import { useStore } from "../store";
 import { gameModule } from "../systems";
 import { useHelp } from "./help";
+import { useCoach } from "../teach/store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
 
@@ -123,7 +124,9 @@ export function WhatNow() {
   const hotseat = useStore((s) => s.mode === "hotseat");
   const spectator = useStore((s) => s.role === "spectator");
   const scrub = useStore((s) => s.scrub);
-  if (spectator || scrub !== null) return null;
+  // A lesson's coach card says what to do instead.
+  const coaching = useCoach((s) => s.lesson !== null && !s.free);
+  if (spectator || scrub !== null || coaching) return null;
   if (!open)
     return (
       <button className="whatnow-toggle" onClick={() => useHelp.setState({ hint: true })}>
@@ -132,7 +135,7 @@ export function WhatNow() {
     );
   const { head, lines } = whatNow(game, me, hotseat);
   return (
-    <div className="panel whatnow" role="status">
+    <div className="panel whatnow">
       <div className="row spread">
         <strong>{head}</strong>
         <button className="quiet" title="Hide" onClick={() => useHelp.setState({ hint: false })}>

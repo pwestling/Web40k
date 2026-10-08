@@ -20,7 +20,7 @@ import { micOff, micOn, setMode, useVoice } from "../voice/voice";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 import { perf } from "./perf";
 
-export const SOAK_SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd"];
+export const SOAK_SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd-1.7"];
 
 let ctx: BotContext = { rng: seededRng(1), kept: new Map() as Kept, idle: 0 };
 let mark = "";

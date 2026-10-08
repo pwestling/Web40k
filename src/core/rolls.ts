@@ -165,6 +165,29 @@ function unitOf(ref: RoleRef | undefined): string | undefined {
   return ref && "unit" in ref ? ref.unit : undefined;
 }
 
+/**
+ * Who rolls a procedure's next dice: the attacker for a pool, the test's
+ * roller for a test (a save is the defender's). Undefined when unsure.
+ */
+export function nextRoller(state: GameState, run: ProcedureRun): PlayerId | undefined {
+  let steps;
+  try {
+    steps = findProcedure(getSystem(run.system), run.procedure).steps;
+  } catch {
+    return undefined;
+  }
+  for (const step of steps.slice(run.next)) {
+    if (step.kind !== "test" && step.kind !== "pool") continue;
+    const roller = step.kind === "test" ? step.roller : "attacker";
+    const defender = roller === "defender" || roller === "opponent";
+    return ownerOf(
+      state,
+      defender ? (run.roles.target ?? run.roles.defender) : (run.roles.attacker ?? run.roles.target),
+    );
+  }
+  return undefined;
+}
+
 function ownerOf(state: GameState, ref: RoleRef | undefined): PlayerId | undefined {
   if (!ref) return undefined;
   if ("player" in ref) return ref.player;

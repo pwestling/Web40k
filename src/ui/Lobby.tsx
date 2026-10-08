@@ -1,4 +1,5 @@
 import { unbundleReplay, type ReplayFile } from "./replayFile";
+import { useOpenReport, type ReportFile } from "./report";
 import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
@@ -7,7 +8,11 @@ import { BROADCAST } from "../broadcast/broadcast";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
+import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
+import { TextSizePicker } from "./TextSizePicker";
+import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
+import { startLesson } from "../teach/store";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
@@ -114,9 +119,26 @@ export function Lobby() {
     const data = JSON.parse(await file.text()) as ReplayFile;
     if (data.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");
     openReplay(await unbundleReplay(data));
+    // A problem report opens at the moment it was made (src/ui/report.ts).
+    const report = (data as Partial<ReportFile>).report;
+    if (report && Number.isFinite(report.seq)) {
+      useOpenReport.setState({ report });
+      useStore.getState().setScrub(report.seq);
+    }
   };
 
   const demos = listSystems().filter((s) => FRONT[s.id]);
+  // The built-in lessons, then any lesson packages loaded on this device (data only: nothing to trust).
+  const lessons = lessonPackages([
+    ...BUILT_IN_LESSONS,
+    ...Object.values(library)
+      .filter((p) => p.manifest.kind === "lesson")
+      .map((p) => p.source),
+  ])
+    .flatMap((p) => p.lessons)
+    .filter(
+      (l, i, all) => lessonSystem(l) && all.findIndex((x) => x.id === l.id && x.system === l.system) === i,
+    );
 
   return (
     <div className="panel lobby">
@@ -124,6 +146,23 @@ export function Lobby() {
       <p className="pitch">
         Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.
       </p>
+
+      <TextSizePicker />
+
+      <h2>Learn to play</h2>
+      <p className="muted small">
+        A guided first game: you play blue, the computer plays red, and a coach says what to do next.
+      </p>
+      <div className="demos">
+        {lessons.map((l) => (
+          <button key={`${l.system}/${l.id}`} className="demo" onClick={() => startLesson(l)}>
+            <strong>
+              {systemLabel(lessonSystem(l), "")}: {l.title}
+            </strong>
+            <span className="muted small">{l.summary}</span>
+          </button>
+        ))}
+      </div>
 
       <h2>Try it now</h2>
       <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>
@@ -171,6 +210,7 @@ export function Lobby() {
           Watch
         </button>
       </div>
+      <NetCheck />
       <details className="fold">
         <summary>More ways to play</summary>
         <label>

@@ -14,6 +14,7 @@ import type { Secrets } from "./secrets";
 import type { AttackState } from "./attack";
 import type { ProcedureRun } from "./content/runner";
 import type { ScriptState } from "./script";
+import type { ClockSettings } from "./clock";
 
 export type PlayerId = string;
 export type ModelId = string;
@@ -283,6 +284,13 @@ export interface Table {
   depth: number;
 }
 
+/** A named table: a starter ("starter:close") or a library table ("table:<id>"). */
+export interface TableSource {
+  key: string;
+  name: string;
+  changed?: boolean;
+}
+
 export interface GameState {
   /** Sequence number of the last event folded into this state (0 = none). */
   seq: number;
@@ -293,6 +301,8 @@ export interface GameState {
   terrain: TerrainPiece[];
   objectives: Objective[];
   zones: Zone[];
+  /** Where this table's layout came from, if a starter or library table; `changed` once edited. */
+  tableSource?: TableSource | null;
   turn: TurnState;
   /** The game system being played (a GameSystem id); 40k when missing. */
   system?: string;
@@ -328,8 +338,32 @@ export interface GameState {
   mission?: { id: string; name: string };
   /** Victory points players confirmed, each from a suggestion at a scoring moment. */
   scores?: ScoreEntry[];
+  /** The campaign book this game is played for (src/campaign), and which shelf army each player brought. */
+  campaign?: CampaignRef;
   /** Table options the players agreed on. */
   settings: GameSettings;
+}
+
+/**
+ * A campaign book, by the hash of its contents: each peer keeps its own copy
+ * and is warned when it differs from this one.
+ */
+export interface CampaignRef {
+  id: string;
+  name: string;
+  hash: string;
+  /** A place on the campaign map this game is fought over; the winner takes it. */
+  territory?: string;
+  /** Each player's army as it sits on their shelf: units are `${prefix}-${index in its roster}`. */
+  armies: Record<PlayerId, CampaignArmyLink>;
+}
+
+/** A player's shelf army in a campaign game, named here so every peer writes the same book. */
+export interface CampaignArmyLink {
+  armyId: string;
+  prefix: string;
+  name?: string;
+  system?: string;
 }
 
 export interface GameSettings {
@@ -356,6 +390,8 @@ export interface GameSettings {
   visionArc?: number;
   /** Players per side (2 for a 2v2). Missing means one each. */
   teamSize?: number;
+  /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
+  clock?: ClockSettings | null;
 }
 
 /** Victory points a side scored at one scoring moment (or chose not to). */

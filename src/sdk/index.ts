@@ -28,8 +28,15 @@ export interface GameModule<App = unknown> {
   hooks?: TurnHooks;
   /** Pure functions data can call with `{ call: "id", args }`. */
   functions?: Record<Id, PureFn>;
-  /** Advisory warnings, run on every peer against its own state. */
+  /**
+   * Advisory warnings, run on every peer against its own state and shown in
+   * the Table warnings panel (src/ui/warnings.ts), next to the system's data
+   * `checks`. A warning whose `id` matches a data check replaces that check.
+   * Built-in modules only for now: a package's code stays in its sandbox.
+   */
   checks?: (view: GameView) => Warning[];
+  /** Data check ids that `checks` replaces, so they don't run twice. */
+  replacesChecks?: Id[];
 }
 
 /** What a package's default export holds: additions to one or more systems. */
@@ -90,8 +97,11 @@ export interface Target {
 }
 
 export interface Warning {
+  /** Which check this is, e.g. "coherency"; the same id as a data check replaces it. */
+  id?: Id;
   unitId?: Id;
   message: string;
+  severity?: "info" | "warning";
 }
 
 /** Read-only game access; the runtime views in core/content/runtime.ts. */

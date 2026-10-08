@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest something Open Battle should do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please describe rules in your own words: don't paste publisher rules text, stats or artwork.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The situation at the table, and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: How you picture it working. Rough is fine.
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: Which game is it for?
+      multiple: true
+      options:
+        - Any game
+        - Sci-fi battle
+        - Rank and flank
+        - Conquest
+        - Full Spectrum Dominance
+        - A new game system
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: How do you handle it now?
+      description: A workaround, another tool, or doing it by hand.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Helping out
+      options:
+        - label: I'd like to work on this (see CONTRIBUTING.md).
