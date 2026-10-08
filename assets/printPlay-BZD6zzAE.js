@@ -1,4 +1,4 @@
-import{n as e}from"./files-CdfAAl3C.js";import{t}from"./site-B823XLVz.js";import{a as n,c as r,i,n as a,o,r as s,s as c}from"./RulesPage-DI7vAm5k.js";var l=new TextEncoder;function u(e,t=`Open Battle`){let n=[],r=[],i=0,a=e=>{let t=typeof e==`string`?l.encode(e):e;n.push(t),i+=t.length},o=(e,t)=>{r[e]=i,a(`${e} 0 obj\n`),t(),a(`
+import{n as e}from"./files-CdfAAl3C.js";import{t}from"./site-B823XLVz.js";import{a as n,c as r,i,n as a,o,r as s,s as c}from"./RulesPage-_Urx1g98.js";var l=new TextEncoder;function u(e,t=`Open Battle`){let n=[],r=[],i=0,a=e=>{let t=typeof e==`string`?l.encode(e):e;n.push(t),i+=t.length},o=(e,t)=>{r[e]=i,a(`${e} 0 obj\n`),t(),a(`
 endobj
 `)};a(`%PDF-1.4
 %âãÏÓ
