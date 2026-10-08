@@ -197,15 +197,5 @@ function decodeV1(bytes: Uint8Array): ModelAsset {
 
 const bytesOf = (a: Uint32Array) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
-export function toBase64(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-
-export function fromBase64(text: string): Uint8Array {
-  const s = atob(text);
-  const out = new Uint8Array(s.length);
-  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
-  return out;
-}
+// Kept here for existing importers; the helpers live in base64.ts (no meshoptimizer).
+export { fromBase64, toBase64 } from "./base64";

@@ -9,8 +9,6 @@
  *
  * Nothing here throws on bad input: problems are reported in `warnings`.
  */
-import { XMLParser, XMLValidator } from "fast-xml-parser";
-import { unzipSync } from "fflate";
 import type { Ability, BaseShape, Characteristics, UnitSheet, WeaponProfile } from "../../core";
 
 export type { Ability, Characteristics, UnitSheet, WeaponProfile };
@@ -189,7 +187,19 @@ const XML_ARRAY_TAGS = new Set([
   "cost",
 ]);
 
+let xmlReader: typeof import("fast-xml-parser") | null = null;
+
+/** The XML reader loads on demand, so the front door doesn't carry it. parseRosterFile waits for it. */
+export async function loadRosterParsers(): Promise<void> {
+  xmlReader ??= await import("fast-xml-parser");
+}
+
 function parseXml(xml: string, warnings: string[]): RRoster | undefined {
+  if (!xmlReader) {
+    warnings.push("The roster reader isn't loaded yet (call loadRosterParsers first).");
+    return undefined;
+  }
+  const { XMLParser, XMLValidator } = xmlReader;
   const valid = XMLValidator.validate(xml);
   if (valid !== true) {
     warnings.push(`Could not read roster XML: ${valid.err.msg} (line ${valid.err.line})`);
@@ -259,10 +269,12 @@ export async function parseRosterFile(
   if (!["ros", "rosz", "json", "xml", "txt"].includes(ext)) {
     pre.push(`Unknown file type "${fileName}"; guessing the format from its contents.`);
   }
+  await loadRosterParsers();
   let textContent: string;
   if (isZip) {
     let files: Record<string, Uint8Array>;
     try {
+      const { unzipSync } = await import("fflate");
       files = unzipSync(data);
     } catch (e) {
       return {

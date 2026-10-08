@@ -14,9 +14,16 @@ import {
 import { broadcastTransport } from "./net/broadcast";
 import { createLoopbackNetwork } from "./net/loopback";
 import { Session, type NetStatus, type Role } from "./net/session";
-import { trysteroTransport } from "./net/trystero";
+import type { trysteroTransport as TrysteroTransport } from "./net/trystero";
 import { systemModule } from "./systems";
 import { replayIntro } from "./ui/highlights";
+
+let trystero: typeof TrysteroTransport | null = null;
+/** The WebRTC transport's chunk; the lobby calls this when idle so an online game starts at once. */
+export const loadTrystero = () =>
+  import("./net/trystero").then((m) => {
+    trystero = m.trysteroTransport;
+  });
 
 export const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"];
 
@@ -241,14 +248,20 @@ export const useStore = create<Store>((set, get) => ({
   setDraft: (draft) => set({ draft }),
   setScrub: (scrub) => set({ scrub }),
 
-  start({ role, mode, roomId, name, record, system }) {
+  start(options) {
+    const { role, mode, roomId, name, record, system } = options;
+    // WebRTC (Trystero) loads on demand, and usually already has: the front door prefetches it.
+    if (mode !== "hotseat" && mode !== "local" && !trystero) {
+      void loadTrystero().then(() => get().start(options));
+      return;
+    }
     get().session?.leave();
     const transport =
       mode === "hotseat"
         ? createLoopbackNetwork().connect("solo")
         : mode === "local"
           ? broadcastTransport(roomId!)
-          : trysteroTransport(roomId!);
+          : trystero!(roomId!);
     // A client coming back to a room picks up the log it saved there, and asks only for what it missed.
     const room = mode === "hotseat" || !roomId ? null : loadRoom(roomId);
     const resumed = role === "host" && !!record && mode !== "hotseat";

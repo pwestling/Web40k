@@ -1,5 +1,5 @@
 import type { GameRecord } from "../core";
-import { decodeAsset, encodeAsset, fromBase64, toBase64 } from "../assets/codec";
+import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import { useLibrary } from "../packages/library";
@@ -43,6 +43,8 @@ export function replayRefs(record: GameRecord): { assets: string[]; packages: st
 /** The record with every figure, terrain model and package this device has for it. */
 export async function bundleReplay(record: GameRecord): Promise<ReplayFile> {
   const refs = replayRefs(record);
+  // The codec (meshoptimizer) loads on demand: the front door doesn't need it.
+  const { encodeAsset } = await import("../assets/codec");
   const assets: Record<string, string> = {};
   for (const id of refs.assets) {
     const asset = useAssets.getState().assets[id] ?? (await getCached(id));
@@ -63,6 +65,7 @@ export async function bundleReplay(record: GameRecord): Promise<ReplayFile> {
  */
 export async function unbundleReplay(file: ReplayFile): Promise<GameRecord> {
   const { attachments, ...record } = file;
+  const { decodeAsset } = await import("../assets/codec");
   for (const [id, data] of Object.entries(attachments?.assets ?? {})) {
     if (!HASH.test(id) || useAssets.getState().assets[id]) continue;
     try {

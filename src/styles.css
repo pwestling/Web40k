@@ -2511,3 +2511,11 @@ body.showcase
   border: 1px solid #22c55e;
   font-weight: 600;
 }
+/* While the table's code loads after the front door (App.tsx). */
+.loading-table {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted, #9aa3ad);
+}

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
-import { fromBase64, toBase64 } from "../assets/codec";
+import { fromBase64, toBase64 } from "../assets/base64";
 import type { SideMessage } from "../net/transport";
 import { useStore } from "../store";
 import { MAX_PEER_BYTES, useLibrary } from "./library";

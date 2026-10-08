@@ -129,7 +129,7 @@ const shootingModifiers: Effect[] = [
  */
 export const oldWorld: GameSystem = {
   id: "tow-hand",
-  name: "Rank and flank (The Old World, by hand)",
+  name: "Rank and flank (by hand)",
   version: "0.1.0",
   units: "inch",
   defaultTable: { width: 72, depth: 48 },
