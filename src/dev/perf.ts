@@ -6,7 +6,7 @@
  *   await openBattlePerf.dress(500_000)        // a 500k-triangle sculpt per profile
  *   await openBattlePerf.measure()             // frame times and what the GPU drew
  */
-import type { BufferGeometry, Mesh, Object3D, WebGLRenderer } from "three";
+import { BufferGeometry, type Mesh, type Object3D, type WebGLRenderer } from "three";
 import { unitKeys, useAssets } from "../assets/store";
 import { processMesh, processModel, ready, weld } from "../assets/pipeline";
 import { bakePaint } from "../assets/paint";
@@ -24,6 +24,8 @@ import secondWind from "../../examples/packages/second-wind.js?raw";
 
 let renderer: WebGLRenderer | null = null;
 let scene: Object3D | null = null;
+const made = new WeakMap<BufferGeometry, string>();
+const onGpu = new Set<BufferGeometry>();
 export function setPerfRenderer(gl: WebGLRenderer, root?: Object3D) {
   renderer = gl;
   scene = root ?? null;
@@ -273,6 +275,63 @@ export const perf = {
       textures: info?.memory.textures,
       programs: info?.programs?.length,
     };
+  },
+
+  /**
+   * Remember where each geometry was made, and which are on the GPU; then
+   * offScene() says what holds GPU geometries that aren't in the scene.
+   */
+  trackGeometries() {
+    const proto = BufferGeometry.prototype as BufferGeometry & { __tracked?: boolean };
+    if (proto.__tracked) return;
+    proto.__tracked = true;
+    const setAttribute = proto.setAttribute;
+    proto.setAttribute = function (
+      this: BufferGeometry,
+      ...args: Parameters<BufferGeometry["setAttribute"]>
+    ) {
+      if (!made.has(this))
+        made.set(
+          this,
+          (new Error().stack ?? "")
+            .split("\n")
+            .slice(2)
+            .slice(0, 6)
+            .map((l) =>
+              l
+                .trim()
+                .replace(/\(?https?:\/\/[^/]+/, "")
+                .replace(/\?[^:]*/, ""),
+            )
+            .join(" < "),
+        );
+      return setAttribute.apply(this, args);
+    } as BufferGeometry["setAttribute"];
+    const add = proto.addEventListener;
+    proto.addEventListener = function (
+      this: BufferGeometry,
+      ...args: Parameters<BufferGeometry["addEventListener"]>
+    ) {
+      if (args[0] === "dispose") onGpu.add(this);
+      return add.apply(this, args);
+    } as BufferGeometry["addEventListener"];
+    const dispose = proto.dispose;
+    proto.dispose = function (this: BufferGeometry) {
+      onGpu.delete(this);
+      return dispose.call(this);
+    };
+  },
+  offScene(top = 10) {
+    const inScene = new Set<BufferGeometry>();
+    scene?.traverse((o) => (o as Mesh).geometry && inScene.add((o as Mesh).geometry));
+    const by = new Map<string, number>();
+    for (const g of onGpu)
+      if (!inScene.has(g)) {
+        const p = (g as BufferGeometry & { parameters?: Record<string, number> }).parameters;
+        const k = `${g.type} ${p ? JSON.stringify(p).slice(0, 80) : ""}`;
+        by.set(k, (by.get(k) ?? 0) + 1);
+      }
+    return [...by].sort((a, b) => b[1] - a[1]).slice(0, top);
   },
 
   /** The scene's geometries by kind and the object holding them, most first: who is behind gpu().geometries. */

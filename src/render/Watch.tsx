@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LineBasicMaterial, MeshBasicMaterial } from "three";
-import { Vector3 } from "three";
+import { PlaneGeometry, Vector3 } from "three";
 import {
   modelHeight,
   type AttackState,
@@ -196,6 +196,9 @@ export function Trails({ trails }: { trails: Trail[] }) {
   );
 }
 
+/** One plane for every ribbon, stretched to length: a regiment's move makes a ribbon per model. */
+const ribbonPlane = new PlaneGeometry(0.35, 1);
+
 function Ribbon({ trail }: { trail: Trail }) {
   const material = useRef<MeshBasicMaterial>(null);
   const dx = trail.to.x - trail.from.x;
@@ -212,8 +215,7 @@ function Ribbon({ trail }: { trail: Trail }) {
       position={[(trail.from.x + trail.to.x) / 2, trail.z + 0.05, (trail.from.y + trail.to.y) / 2]}
       rotation-y={Math.atan2(dx, dy)}
     >
-      <mesh rotation-x={-Math.PI / 2} raycast={() => null}>
-        <planeGeometry args={[0.35, length]} />
+      <mesh rotation-x={-Math.PI / 2} scale-y={length} geometry={ribbonPlane} raycast={() => null}>
         <meshBasicMaterial ref={material} color={trail.color} transparent opacity={0.55} depthWrite={false} />
       </mesh>
     </group>
