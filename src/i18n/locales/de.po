@@ -108,6 +108,12 @@ msgctxt "game"
 msgid "Your turn again: activate another unit. Keep going until the dice run out; then the round is scored and a new one starts."
 msgstr "Du bist wieder dran: Aktiviere eine weitere Einheit. Mach weiter, bis die Würfel aufgebraucht sind; dann wird die Runde gewertet und eine neue beginnt."
 
+#: examples/lessons/rank-and-flank.js:104
+#, fuzzy
+msgctxt "game"
+msgid "Panic tests also come when a unit loses a quarter of its models to shooting or magic. You can roll one by hand from a unit's card when the rules call for it."
+msgstr "Panic-Tests kommen auch, wenn eine Einheit ein Viertel ihrer Modelle durch Beschuss oder Magie verliert. Du kannst einen auch von Hand über die Karte der Einheit würfeln, wenn die Regeln es verlangen."
+
 #: examples/lessons/rank-and-flank.js:19
 #, fuzzy
 msgctxt "game"
@@ -167,6 +173,60 @@ msgstr "Jetzt spielt Rot seinen Spielzug. Wenn es dich angreift, wirst du gefrag
 msgctxt "game"
 msgid "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible."
 msgstr "Das war eine ganze Runde. Bring deine Blöcke in Kontakt, um zu kämpfen; eine Einheit, die schwer verliert, kann fliehen. Wenn du weiterspielst, sagt dir „Was kann ich jetzt tun?“ oben auf dem Bildschirm immer, was möglich ist."
+
+#: examples/lessons/rank-and-flank.js:60
+#, fuzzy
+msgctxt "game"
+msgid "Break and panic"
+msgstr "Bruch und Panik"
+
+#: examples/lessons/rank-and-flank.js:62
+#, fuzzy
+msgctxt "game"
+msgid "Charge a small unit, break it, and watch its friends test for Panic."
+msgstr "Greif eine kleine Einheit an, brich sie und sieh zu, wie ihre Freunde auf Panik testen."
+
+#: examples/lessons/rank-and-flank.js:72
+#, fuzzy
+msgctxt "game"
+msgid "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with the warband beside them."
+msgstr "Ein Regiment, das bricht, erschüttert seine Freunde: Jede Einheit bis 6\" von einem Freund, der aus dem Nahkampf flieht oder vernichtet wird, macht einen Panik-Test und flieht vielleicht auch. Die roten Schleuderer stehen direkt vor deinen Speeren, die Kriegsschar daneben."
+
+#: examples/lessons/rank-and-flank.js:75
+#, fuzzy
+msgctxt "game"
+msgid "Your spears are Drilled: they march near the enemy without a test, and may redress their ranks for free before moving. Press ▶ for Movement."
+msgstr "Deine Speere sind Drilled: Sie marschieren ohne Test nahe am Feind und dürfen vor der Bewegung kostenlos ihre Glieder ordnen. Drück ▶ für die Bewegung."
+
+#: examples/lessons/rank-and-flank.js:79
+#, fuzzy
+msgctxt "game"
+msgid "Your spears are selected. Press Declare charge and pick the slingers, then move into contact with the Charge panel or by dragging."
+msgstr "Deine Speere sind ausgewählt. Drück Declare charge und wähl die Schleuderer, dann geh mit dem Angriffsfeld oder per Ziehen in Kontakt."
+
+#: examples/lessons/rank-and-flank.js:85
+#, fuzzy
+msgctxt "game"
+msgid "Press ▶ until the Combat phase."
+msgstr "Drück ▶ bis zur Nahkampfphase."
+
+#: examples/lessons/rank-and-flank.js:89
+#, fuzzy
+msgctxt "game"
+msgid "Press Fight. Both sides strike, then the loser takes a break test."
+msgstr "Drück Fight. Beide Seiten schlagen zu, dann macht der Verlierer einen Aufriebstest."
+
+#: examples/lessons/rank-and-flank.js:96
+#, fuzzy
+msgctxt "game"
+msgid "The slingers took a beating. If they broke, the warband next to them tested for Panic by itself: the log shows how it went."
+msgstr "Die Schleuderer haben Prügel bezogen. Wenn sie gebrochen sind, hat die Kriegsschar daneben von selbst auf Panik getestet: Das Protokoll zeigt, wie es ausging."
+
+#: examples/lessons/rank-and-flank.js:99
+#, fuzzy
+msgctxt "game"
+msgid "The fight goes on. If the slingers broke, the warband next to them tested for Panic by itself: the log shows how it went."
+msgstr "Der Kampf geht weiter. Wenn die Schleuderer gebrochen sind, hat die Kriegsschar daneben von selbst auf Panik getestet: Das Protokoll zeigt, wie es ausging."
 
 #: examples/lessons/sci-fi.js:102
 #, fuzzy

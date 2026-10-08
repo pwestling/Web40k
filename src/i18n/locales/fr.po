@@ -108,6 +108,12 @@ msgctxt "game"
 msgid "Your turn again: activate another unit. Keep going until the dice run out; then the round is scored and a new one starts."
 msgstr "À toi de nouveau : active une autre unité. Continue jusqu'à épuisement des dés ; le round est alors décompté et un nouveau commence."
 
+#: examples/lessons/rank-and-flank.js:104
+#, fuzzy
+msgctxt "game"
+msgid "Panic tests also come when a unit loses a quarter of its models to shooting or magic. You can roll one by hand from a unit's card when the rules call for it."
+msgstr "Les tests de Panique arrivent aussi quand une unité perd un quart de ses figurines par le tir ou la magie. Tu peux en lancer un à la main depuis la carte de l'unité quand les règles le demandent."
+
 #: examples/lessons/rank-and-flank.js:19
 #, fuzzy
 msgctxt "game"
@@ -167,6 +173,60 @@ msgstr "Maintenant, les rouges jouent leur tour. S'ils te chargent, on te demand
 msgctxt "game"
 msgid "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible."
 msgstr "Voilà un round complet. Mets tes blocs au contact pour combattre ; une unité qui perd lourdement peut fuir. Si tu continues, « Que puis-je faire maintenant ? » en haut de l'écran t'indique toujours ce qui est possible."
+
+#: examples/lessons/rank-and-flank.js:60
+#, fuzzy
+msgctxt "game"
+msgid "Break and panic"
+msgstr "Déroute et panique"
+
+#: examples/lessons/rank-and-flank.js:62
+#, fuzzy
+msgctxt "game"
+msgid "Charge a small unit, break it, and watch its friends test for Panic."
+msgstr "Charge une petite unité, mets-la en déroute et regarde ses alliés tester la Panique."
+
+#: examples/lessons/rank-and-flank.js:72
+#, fuzzy
+msgctxt "game"
+msgid "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with the warband beside them."
+msgstr "Un régiment en déroute ébranle ses alliés : toute unité à 6\" ou moins d'un allié qui fuit le corps à corps ou est détruit fait un test de Panique, et peut fuir aussi. Les frondeurs rouges sont juste devant tes lances, la bande de guerre à côté."
+
+#: examples/lessons/rank-and-flank.js:75
+#, fuzzy
+msgctxt "game"
+msgid "Your spears are Drilled: they march near the enemy without a test, and may redress their ranks for free before moving. Press ▶ for Movement."
+msgstr "Tes lances sont Drilled : elles marchent près de l'ennemi sans test et peuvent réaligner leurs rangs gratuitement avant de bouger. Appuie sur ▶ pour le Mouvement."
+
+#: examples/lessons/rank-and-flank.js:79
+#, fuzzy
+msgctxt "game"
+msgid "Your spears are selected. Press Declare charge and pick the slingers, then move into contact with the Charge panel or by dragging."
+msgstr "Tes lances sont sélectionnées. Appuie sur Declare charge et choisis les frondeurs, puis entre en contact avec le panneau de charge ou en faisant glisser."
+
+#: examples/lessons/rank-and-flank.js:85
+#, fuzzy
+msgctxt "game"
+msgid "Press ▶ until the Combat phase."
+msgstr "Appuie sur ▶ jusqu'à la phase de Corps à corps."
+
+#: examples/lessons/rank-and-flank.js:89
+#, fuzzy
+msgctxt "game"
+msgid "Press Fight. Both sides strike, then the loser takes a break test."
+msgstr "Appuie sur Fight. Les deux camps frappent, puis le perdant fait un test de moral."
+
+#: examples/lessons/rank-and-flank.js:96
+#, fuzzy
+msgctxt "game"
+msgid "The slingers took a beating. If they broke, the warband next to them tested for Panic by itself: the log shows how it went."
+msgstr "Les frondeurs ont pris cher. S'ils ont fui, la bande de guerre à côté a testé la Panique d'elle-même : le journal montre le résultat."
+
+#: examples/lessons/rank-and-flank.js:99
+#, fuzzy
+msgctxt "game"
+msgid "The fight goes on. If the slingers broke, the warband next to them tested for Panic by itself: the log shows how it went."
+msgstr "Le combat continue. Si les frondeurs ont fui, la bande de guerre à côté a testé la Panique d'elle-même : le journal montre le résultat."
 
 #: examples/lessons/sci-fi.js:102
 #, fuzzy

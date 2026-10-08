@@ -116,7 +116,7 @@ function marchwardens(): ImportedRoster {
         { name: "Hedge Seer", stats: seer },
       ],
       undefined,
-      { keywords: ["General"], wizard: 2, spells: HEDGE_LORE },
+      { keywords: ["General"], rules: ["Drilled"], wizard: 2, spells: HEDGE_LORE },
     ),
     regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
     regiment(

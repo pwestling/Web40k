@@ -50,6 +50,6 @@ describe("rules gaps: Old World challenges", () =>
   scenarioSuite(
     "Old World challenges, crowded fights and Panic",
     "tow-hand",
-    { watch, closeIn: 14, lineUp: true, armies: crowded, minSeeds: 6 },
+    { watch, closeIn: 14, lineUp: true, armies: crowded, minSeeds: 10 },
     ["challenge", "multi-unit combat", "automatic Panic"],
   ));

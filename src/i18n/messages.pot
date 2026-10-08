@@ -90,6 +90,11 @@ msgctxt "game"
 msgid "Your turn again: activate another unit. Keep going until the dice run out; then the round is scored and a new one starts."
 msgstr ""
 
+#: examples/lessons/rank-and-flank.js:104
+msgctxt "game"
+msgid "Panic tests also come when a unit loses a quarter of its models to shooting or magic. You can roll one by hand from a unit's card when the rules call for it."
+msgstr ""
+
 #: examples/lessons/rank-and-flank.js:19
 msgctxt "game"
 msgid "Moving blocks"
@@ -138,6 +143,51 @@ msgstr ""
 #: examples/lessons/rank-and-flank.js:54
 msgctxt "game"
 msgid "That's a whole round. Bring your blocks into contact to fight; a unit that loses badly may flee. Once you play on, \"What can I do now?\" at the top of the screen always says what's possible."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:60
+msgctxt "game"
+msgid "Break and panic"
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:62
+msgctxt "game"
+msgid "Charge a small unit, break it, and watch its friends test for Panic."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:72
+msgctxt "game"
+msgid "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with the warband beside them."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:75
+msgctxt "game"
+msgid "Your spears are Drilled: they march near the enemy without a test, and may redress their ranks for free before moving. Press ▶ for Movement."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:79
+msgctxt "game"
+msgid "Your spears are selected. Press Declare charge and pick the slingers, then move into contact with the Charge panel or by dragging."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:85
+msgctxt "game"
+msgid "Press ▶ until the Combat phase."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:89
+msgctxt "game"
+msgid "Press Fight. Both sides strike, then the loser takes a break test."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:96
+msgctxt "game"
+msgid "The slingers took a beating. If they broke, the warband next to them tested for Panic by itself: the log shows how it went."
+msgstr ""
+
+#: examples/lessons/rank-and-flank.js:99
+msgctxt "game"
+msgid "The fight goes on. If the slingers broke, the warband next to them tested for Panic by itself: the log shows how it went."
 msgstr ""
 
 #: examples/lessons/sci-fi.js:102

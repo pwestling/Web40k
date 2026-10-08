@@ -380,8 +380,9 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
       ctx,
       side.map((p) => p.id),
     );
-  else if (r < 0.95 && units[0] && (!ctx.tidy || /move/i.test(currentSlot(state)?.id ?? "")))
-    yield moveUnit(state, units[0], ctx, 6);
+  // A loose move: the fuzzer's. A tidy bot moves each unit once, through its move action or the
+  // movement step above, so a unit that stayed put stays put (UX 305).
+  else if (r < 0.95 && units[0] && !ctx.tidy) yield moveUnit(state, units[0], ctx, 6);
   // Move the game on: end an activation, or the phase, more surely the longer it sits.
   if (ctx.rng() < onward) yield* end;
   if (ctx.idle > patience && ctx.rng() < onward) yield* next;

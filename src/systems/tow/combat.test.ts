@@ -432,6 +432,10 @@ describe("March test (#40)", () => {
     const { t, spears } = setup();
     const act = towActions.find((a) => a.id === "marchTest")!;
     const offered = (id: string) => act.available(gameView(t.s, "tow-hand"), { player: "p1", unitId: id });
+    // The sample spears are Drilled; these ones aren't.
+    const sp = t.s.units[spears]!;
+    t.s = { ...t.s, units: { ...t.s.units, [spears]: { ...sp, sheet: { ...sp.sheet!, abilities: [] } } } };
+    t.states.set(t.s.seq, t.s);
     toPhase(t, "movement");
     expect(offered(spears)).toBe(true);
     t.play({ type: "script/start", procedure: "marchTest", args: { unit: spears } }, "p1", 4);
