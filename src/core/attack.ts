@@ -66,10 +66,14 @@ export interface AttackSpec {
   devastating: boolean;
   /** Needed to save (X+) after AP, cover and invulnerable saves, or null for no save. */
   save: number | null;
+  /** Save roll modifier (e.g. +1 from an ability). */
+  saveMod?: number;
   /** Damage per unsaved wound, e.g. "1", "D6+1". */
   damage: string;
   /** Feel no pain X+, or null. */
   fnp: number | null;
+  /** Re-roll damage: "ones" each 1, "failed"/"any" a below-average roll. */
+  rerollDamage?: Reroll;
 }
 
 export type Reroll = "none" | "ones" | "failed";
@@ -86,6 +90,8 @@ export interface DamageResult {
   modelId: ModelId;
   /** Damage rolled for this unsaved wound. */
   damage: number;
+  /** The damage first rolled, when a re-roll replaced it. */
+  rerolledFrom?: number;
   /** Feel-no-pain dice, one per wound the model would lose. */
   fnp: number[];
   /** Wounds actually lost. */
@@ -164,8 +170,8 @@ export function specToRun(spec: AttackSpec): StartOptions {
         criticalOn: spec.critWound,
         reroll: spec.rerollWounds,
       },
-      save: { target: spec.save, modifier: 0, criticalOn: null, reroll: "none" },
-      damage: { amount: spec.damage, ignoreDamage: spec.fnp },
+      save: { target: spec.save, modifier: spec.saveMod ?? 0, criticalOn: null, reroll: "none" },
+      damage: { amount: spec.damage, ignoreDamage: spec.fnp, reroll: spec.rerollDamage ?? "none" },
     },
   };
 }
@@ -217,6 +223,7 @@ export function projectAttack(spec: AttackSpec, run: ProcedureRun): AttackState 
     out.damage = (damage.damage ?? []).map((e) => ({
       modelId: e.modelId,
       damage: e.damage,
+      ...(e.rerolledFrom !== undefined ? { rerolledFrom: e.rerolledFrom } : {}),
       fnp: e.ignore,
       lost: e.lost,
       destroyed: e.destroyed,
@@ -330,7 +337,9 @@ export function previewAttack(
     rerollWounds: reroll(wound.reroll),
     devastating: !!has("devastatingWounds"),
     save: save.target === null || save.target > 6 ? null : save.target,
+    ...(save.modifier ? { saveMod: save.modifier } : {}),
     damage: damage.amount,
+    ...(damage.reroll && damage.reroll !== "none" ? { rerollDamage: reroll(damage.reroll) } : {}),
     fnp: damage.ignoreDamage,
   };
   const because = Object.entries(p.changes).flatMap(([step, byName]) =>

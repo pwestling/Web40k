@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Step } from "./content/schema";
 import type { StepPlan, TestPlan } from "./content/runner";
-import { passChance, procedureOdds, sumDist } from "./odds";
+import { damageDist, mean, passChance, procedureOdds, sumDist } from "./odds";
 
 const test = (target: number | null, more: Partial<TestPlan> = {}): TestPlan => ({
   kind: "test",
@@ -57,6 +57,19 @@ describe("odds", () => {
       { count: -3, sides: 0 },
     ]);
     expect(neg[0]).toBeCloseTo(3 / 6); // 1, 2 and 3 all count as 0
+  });
+
+  it("re-rolls damage and keeps it at its floor (#40)", () => {
+    const d6 = [{ count: 1, sides: 6 }];
+    expect(mean(damageDist(d6, undefined))).toBeCloseTo(3.5);
+    // A 1 re-rolled: 3.5 + (1/6)(3.5 − 1).
+    expect(mean(damageDist(d6, "ones"))).toBeCloseTo(3.5 + 2.5 / 6);
+    // 1–3 re-rolled: half the time 5 on average, half the time 3.5.
+    expect(mean(damageDist(d6, "failed"))).toBeCloseTo(0.5 * 5 + 0.5 * 3.5);
+    // D6 − 1, never below 1.
+    const minus = damageDist([...d6, { count: -1, sides: 0 }], undefined, 1);
+    expect(minus[0]).toBe(0);
+    expect(minus[1]).toBeCloseTo(2 / 6);
   });
 
   it("carries the average through hit, wound, save and damage", () => {

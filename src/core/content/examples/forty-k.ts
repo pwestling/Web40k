@@ -762,10 +762,13 @@ export const fortyK: GameSystem = {
           target: saveTarget,
           impossibleIf: { cmp: ">", a: saveTarget, b: 6 },
           alwaysFail: [1],
+          // A save roll is modified by no more than 1 either way, like hit and wound rolls.
+          modifierCap: 1,
           roller: "defender",
           passOn: "failures",
         },
-        { kind: "damage", id: "damage", amount: { dice: ref("weapon.D") }, spillover: false },
+        // Damage after modifiers is never below 1.
+        { kind: "damage", id: "damage", amount: { dice: ref("weapon.D") }, spillover: false, minAmount: 1 },
       ],
     },
     {

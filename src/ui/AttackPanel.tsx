@@ -4,7 +4,7 @@ import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
 import { focusSoon } from "./focusSoon";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
+import { passes, type AttackSpec, type AttackState, type Die, type GameState, type Reroll } from "../core";
 import {
   aliveModels,
   carriers,
@@ -256,11 +256,13 @@ export function SpecEditor({
             {t("Devastating")}
           </label>
           <label>
-            {t("Save")} {target(spec.save, (v) => set("save", v), t("none"))}
+            {t("Save")} {target(spec.save, (v) => set("save", v), t("none"))}{" "}
+            {mod(spec.saveMod ?? 0, (v) => set("saveMod", v))}
           </label>
           <label>
             {t("Damage")}{" "}
-            <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />
+            <input value={spec.damage} onChange={(e) => set("damage", e.target.value)} size={6} />{" "}
+            {reroll(spec.rerollDamage ?? "none", (v) => set("rerollDamage", v))}
           </label>
           <label>
             {t("Feel no pain")} {target(spec.fnp, (v) => set("fnp", v), t("none"))}
@@ -345,8 +347,12 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
             value: spec.hit === null ? t("auto") : `${spec.hit}+${stepMods(spec, "hit", spec.hitMod)}`,
           }),
           t("wound {value}", { value: `${spec.wound}+${stepMods(spec, "wound", spec.woundMod)}` }),
-          t("save {value}", { value: spec.save ? `${spec.save}+` : t("none") }),
-          t("D {value}", { value: spec.damage }),
+          t("save {value}", {
+            value: spec.save ? `${spec.save}+${stepMods(spec, "save", spec.saveMod ?? 0)}` : t("none"),
+          }),
+          t("D {value}", {
+            value: `${spec.damage}${spec.rerollDamage && spec.rerollDamage !== "none" ? ` (${t("re-roll")})` : ""}`,
+          }),
           ...(spec.fnp ? [t("FNP {value}", { value: `${spec.fnp}+` })] : []),
         ].join(" · ")}
       </p>
@@ -375,7 +381,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         <Stage
           label={t("Saves")}
           dice={attack.saveDice}
-          judge={(v) => (spec.save !== null && v !== 1 && v >= spec.save ? "ok" : "fail")}
+          judge={(v) => (spec.save !== null && passes(v, spec.save, spec.saveMod ?? 0) ? "ok" : "fail")}
         >
           {t("{n} unsaved", { n: attack.unsaved ?? "" })}
         </Stage>
@@ -497,9 +503,14 @@ function DamageSummary({ game, attack }: { game: GameState; attack: AttackState 
           <span
             key={i}
             className={`die ${d.destroyed ? "crit" : "ok"}`}
-            title={game.models[d.modelId]?.label}
+            title={
+              d.rerolledFrom !== undefined
+                ? `${game.models[d.modelId]?.label ?? ""} · ${t("re-rolled from {n}", { n: d.rerolledFrom })}`
+                : game.models[d.modelId]?.label
+            }
           >
             {d.damage}
+            {d.rerolledFrom !== undefined && <sup>↻</sup>}
           </span>
         ))}
       </span>

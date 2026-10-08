@@ -4,6 +4,8 @@ import {
   createInitialState,
   previewAttack,
   resolveIntent,
+  rollStage,
+  startAttack,
   type Ability,
   type GameState,
   type Model,
@@ -12,6 +14,7 @@ import { manualAbilities } from "../../core/content/player";
 import { getSystem } from "../../core/content/systems";
 import { coverage, recognize } from "./recognize";
 import { sampleRoster } from "./sample";
+import { seededRng } from "../../sandbox/protocol";
 import { aurasFor, firstAnswers, tableAttack } from "../../companion/attack";
 
 const next = (s: GameState) => applyEvent(s, { type: "turn/next", seed: 1 });
@@ -93,6 +96,28 @@ describe("reading ability text", () => {
       at: "end",
       heal: "D3",
     });
+  });
+
+  it("reads damage re-rolls, save modifiers and Damage −1 (#40)", () => {
+    expect(
+      read("Each time a model in this unit makes an attack, you can re-roll the Damage roll.")?.parts,
+    ).toEqual([{ kind: "attack", side: "making", roll: "damage", reroll: "failed" }]);
+    expect(
+      read("Each time a model in this unit makes a melee attack, re-roll a Damage roll of 1.")?.parts,
+    ).toEqual([{ kind: "attack", side: "making", weapon: "melee", roll: "damage", reroll: "ones" }]);
+    expect(read("Each time a ranged attack targets this unit, add 1 to the saving throw.")?.parts).toEqual([
+      { kind: "attack", side: "targeted", weapon: "ranged", roll: "save", by: 1 },
+    ]);
+    const tough = read(
+      "Each time an attack targets this unit, subtract 1 from the Damage characteristic of that attack.",
+    );
+    expect(tough?.parts).toEqual([{ kind: "attack", side: "targeted", roll: "damage", by: -1 }]);
+    expect(tough?.effects[0]?.do).toEqual([
+      { do: "modifyCharacteristic", target: "weapon", characteristic: "D", by: -1 },
+    ]);
+    // Only the defender's own side can make its save better or the damage less.
+    expect(read("Each time a model in this unit makes an attack, add 1 to the saving throw.")).toBeNull();
+    expect(read("Each time an attack targets this unit, you can re-roll the Damage roll.")).toBeNull();
   });
 
   it("leaves anything not read in full as a reminder", () => {
@@ -235,6 +260,49 @@ describe("automated abilities at the table", () => {
     ).toBeNull();
   });
 
+  it("re-rolls damage, improves the save and lowers Damage, never below 1 (#40)", () => {
+    const brutal: Ability = {
+      name: "Brutal",
+      text: "Each time a model in this unit makes an attack, re-roll a Damage roll of 1.",
+    };
+    const ward: Ability = {
+      name: "Ward",
+      text: "Each time an attack targets this unit, add 1 to the saving throw.",
+    };
+    const hide: Ability = {
+      name: "Hide",
+      text: "Each time an attack targets this unit, subtract 1 from the Damage characteristic of that attack.",
+    };
+    let s = setup({ shooters: [brutal], targets: [ward, hide] });
+    for (const [id, a] of [
+      ["shooters", brutal],
+      ["targets", ward],
+      ["targets", hide],
+    ] as const)
+      s = automate(s, id, a);
+    const p = previewAttack(s, "shooters", "gun", "targets")!;
+    expect(p.spec.rerollDamage).toBe("ones");
+    expect(p.spec.saveMod).toBe(1);
+    // D1 − 1 stays 1.
+    expect(p.spec.damage).toBe("1");
+    expect(p.spec.because).toEqual(
+      expect.arrayContaining([
+        { name: "Brutal", step: "damage", change: { reroll: "ones" } },
+        { name: "Ward", step: "save", change: { mod: 1 } },
+        { name: "Hide", step: "damage", change: { mod: -1 } },
+      ]),
+    );
+    // Rolled through: with D6 damage, a 1 is rolled again (two models, so two rolls an attack; a few seeds).
+    const d6 = { ...p.spec, damage: "D6", hit: 2, wound: 2, save: null, attacks: "10" };
+    const rolled = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].flatMap((seed) => {
+      let a = startAttack(d6, seededRng(seed), s);
+      for (let i = 0; i < 6 && a.stage !== "done"; i++) a = rollStage(s, a, seededRng(seed * 10 + i));
+      return a.damage ?? [];
+    });
+    expect(rolled.some((d) => d.rerolledFrom === 1)).toBe(true);
+    expect(rolled.every((d) => d.rerolledFrom === undefined || d.rerolledFrom === 1)).toBe(true);
+  });
+
   it("gives an aura to units in range with the keyword", () => {
     let s = setup({ captain: [banner] });
     s = automate(s, "captain", banner);
@@ -318,6 +386,9 @@ describe("the sample armies", () => {
         "Quartermaster",
         "Smouldering Ward",
         "Kindle the Pyre",
+        "Armoured Hull",
+        "Searing Grip",
+        "Fused Plates",
       ]),
     );
   });

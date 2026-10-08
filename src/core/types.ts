@@ -86,8 +86,9 @@ export type AutoPart =
       /** Only against targets with these keywords (any of them). */
       against?: string[];
       when?: "charged" | "stationary";
-      roll?: "hit" | "wound";
+      roll?: "hit" | "wound" | "save" | "damage";
       reroll?: "ones" | "failed";
+      /** A roll modifier; on "damage" it changes the attack's Damage characteristic (never below 1). */
       by?: number;
       /** A weapon ability its attacks gain, e.g. "Lethal Hits". */
       grant?: string;

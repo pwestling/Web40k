@@ -1,6 +1,6 @@
 import type { Step } from "./content/schema";
 import { parseDiceSum, type DiceSum } from "./content/runtime";
-import type { StepPlan, StepRecord, TestPlan } from "./content/runner";
+import type { DamagePlan, StepPlan, StepRecord, TestPlan } from "./content/runner";
 import { evaluate } from "./content/expr";
 import type { GameState, UnitId } from "./types";
 
@@ -41,7 +41,7 @@ function convolve(a: Dist, b: Dist): Dist {
 }
 
 /** Distribution of a dice sum such as "2D6+1" (negative totals count as 0). */
-export function sumDist(sum: DiceSum): Dist {
+export function sumDist(sum: DiceSum, rerollOnes = false): Dist {
   let offset = 0;
   let d: Dist = [1];
   for (const t of sum) {
@@ -50,10 +50,14 @@ export function sumDist(sum: DiceSum): Dist {
       continue;
     }
     // A subtracted die -v is (s - v) - s: a 0..s-1 die and an offset.
+    const s = t.sides;
     const die =
       t.count > 0
-        ? [0, ...new Array<number>(t.sides).fill(1 / t.sides)]
-        : new Array<number>(t.sides).fill(1 / t.sides);
+        ? rerollOnes
+          ? // A 1 is rolled again once: 1 only on 1 then 1, every other face gains the re-roll's share.
+            [0, 1 / (s * s), ...new Array<number>(s - 1).fill(1 / s + 1 / (s * s))]
+          : [0, ...new Array<number>(s).fill(1 / s)]
+        : new Array<number>(s).fill(1 / s);
     for (let i = 0; i < Math.abs(t.count); i++) {
       d = convolve(d, die);
       if (t.count < 0) offset -= t.sides;
@@ -66,6 +70,29 @@ export function sumDist(sum: DiceSum): Dist {
   });
   for (let i = 0; i < out.length; i++) out[i] ??= 0;
   return out;
+}
+
+/**
+ * One attack's damage: re-rolled as the plan says ("ones" each 1; "failed" or
+ * "any" a roll below average), and never below the floor.
+ */
+export function damageDist(sum: DiceSum, reroll: string | undefined, floor = 0): Dist {
+  let d = sumDist(sum, reroll === "ones");
+  if (reroll === "failed" || reroll === "any") {
+    const avg = mean(d);
+    const low = d.reduce((a, p, v) => (v < avg ? a + p : a), 0);
+    d = d.map((p, v) => (v < avg ? 0 : p) + low * p);
+  }
+  if (floor > 0) {
+    const out = d.slice();
+    for (let v = 0; v < Math.min(floor, out.length); v++) {
+      out[floor] = (out[floor] ?? 0) + out[v]!;
+      out[v] = 0;
+    }
+    for (let i = 0; i < out.length; i++) out[i] ??= 0;
+    d = out;
+  }
+  return d;
 }
 
 /** n dice each passing with chance p, for every n in `count`. */
@@ -244,7 +271,7 @@ export function procedureOdds(
       }
     } else if (plan.kind === "damage") {
       out.steps.push({ id: step.id, kind: step.kind, expected: mean(count) });
-      const result = slainDist(count, plan.amount, plan.ignoreDamage, plan.spillover, models, ignoreSides);
+      const result = slainDist(count, plan, models, ignoreSides);
       if (result) {
         out.slain = mean(result.slain);
         out.wipe = models.length ? (result.slain[models.length] ?? 0) : 0;
@@ -267,16 +294,15 @@ export function procedureOdds(
  */
 function slainDist(
   count: Dist,
-  amount: string,
-  ignoreOn: number | null,
-  spillover: boolean,
+  plan: DamagePlan,
   models: OddsModel[],
   ignoreSides: number,
 ): { slain: Dist; damage: number } | null {
   if (!models.length) return null;
+  const { ignoreDamage: ignoreOn, spillover } = plan;
   let dmg: Dist;
   try {
-    dmg = sumDist(parseDiceSum(amount));
+    dmg = damageDist(parseDiceSum(plan.amount), plan.reroll, plan.minAmount);
   } catch {
     return null;
   }

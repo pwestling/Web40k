@@ -53,6 +53,14 @@ export interface SoakOptions {
   maxSteps?: number;
   /** Test the checks themselves: from this move on, a guest's table keeps drifting from the host's (a reducer bug). */
   drift?: number;
+  /** Confirm every ability the system can play for you (40k #38) once the armies are down. */
+  automate?: boolean;
+  /**
+   * A scenario's probe: after each move, tags for what it's looking for on the
+   * host's table (e.g. "damage re-rolled"). The report counts them, so a
+   * scenario can check a closed rules gap really came up and stays fixed.
+   */
+  watch?: (s: GameState) => string[];
 }
 
 export interface SoakReport {
@@ -68,6 +76,8 @@ export interface SoakReport {
   trouble: string[];
   /** Moves made, by kind. */
   kinds: Record<string, number>;
+  /** Tags from `watch`, counted once per move they were seen after. */
+  seen: Record<string, number>;
 }
 
 const GRACE = 5;
@@ -147,6 +157,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
   const errors: string[] = [];
   const done: string[] = [];
   const kinds: Record<string, number> = {};
+  const seen: Record<string, number> = {};
   let clock = 1;
   const now = () => clock;
   let room = new Room(seed, now, errors);
@@ -205,6 +216,14 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
             : u,
         );
       for (const i of spawnIntents(room.host()!.current, id, units, `${id}-${seed}`, "sample")) as(id, i);
+    }
+    if (opts.automate && mod.recognizeAbility) {
+      const rules = gameModule(system)!.system;
+      for (const u of Object.values(room.host()!.current.units))
+        for (const ability of u.sheet?.abilities ?? []) {
+          const auto = mod.recognizeAbility(ability, rules);
+          if (auto) as(u.owner, { type: "unit/automate", id: u.id, ability: ability.name, auto });
+        }
     }
     // Everything starts on the table, so the game has something to do from round 1.
     for (const u of Object.values(room.host()!.current.units))
@@ -315,6 +334,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
         .join()}`;
       ctx.idle = m === mark ? ctx.idle + 1 : 0;
       mark = m;
+      if (opts.watch) for (const tag of new Set(opts.watch(s))) seen[tag] = (seen[tag] ?? 0) + 1;
       lockstep(steps % 25 === 0, steps % 250 === 0);
     }
     await settle();
@@ -466,6 +486,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
     events: host ? lastSeq(host.log) : 0,
     trouble: done,
     kinds,
+    seen,
   };
 
   /** Every peer holds the host's log; with `deep`, their tables hash the same and fold back from their logs. */

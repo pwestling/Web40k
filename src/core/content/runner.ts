@@ -8,6 +8,7 @@ import {
   modelView,
   parseDiceSum,
   rollSum,
+  averageSum,
   tableGeometry,
   unitView,
   weaponView,
@@ -94,6 +95,9 @@ export interface DamagePlan {
   /** Roll per wound lost and ignore it on this or more (feel no pain). */
   ignoreDamage: number | null;
   spillover: boolean;
+  /** Re-roll damage dice: "ones" re-rolls each 1; "failed" or "any" re-rolls a roll below average. */
+  reroll?: Reroll;
+  minAmount?: number;
 }
 
 export type StepPlan = PoolPlan | TestPlan | DamagePlan | { kind: "other" };
@@ -108,6 +112,8 @@ export type PlanOverride = Partial<Omit<PoolPlan, "kind">> &
 export interface DamageEntry {
   modelId: string;
   damage: number;
+  /** The damage rolled first, when a re-roll replaced it. */
+  rerolledFrom?: number;
   /** Dice rolled to ignore wounds (feel no pain). */
   ignore: number[];
   lost: number;
@@ -607,6 +613,13 @@ function applyBefore(
         const src = (view as { source?: unknown }).source;
         if (src) Object.defineProperty(patched, "source", { value: src, enumerable: false });
         s = { ...s, [role]: patched };
+        // A flat change to Damage shows as "+2 to damage" / "−1 to damage" on the attack.
+        if (
+          action.do === "modifyCharacteristic" &&
+          action.characteristic === "D" &&
+          typeof action.by === "number"
+        )
+          change(l).mod = (change(l).mod ?? 0) + action.by;
         return true;
       }
       case "ignoreDamage": {
@@ -716,15 +729,28 @@ function planStep(env: RunEnv, run: ProcedureRun, step: Step, scope: Record<stri
             if (!b.fired.includes(l.name)) b.fired.push(l.name);
           }
       }
+      let amount = override.amount ?? safeDice(step.amount, ctx);
+      // A flat Damage taken below the floor (e.g. 1 − 1) reads as the floor.
+      const sum = step.minAmount === undefined ? [] : safeSum(amount);
+      if (step.minAmount !== undefined && sum.every((t) => !t.sides)) {
+        const flat = sum.reduce((n, t) => n + t.count, 0);
+        if (flat < step.minAmount) amount = String(step.minAmount);
+      }
       const plan: DamagePlan = {
         kind: "damage",
-        amount: override.amount ?? safeDice(step.amount, ctx),
+        amount,
         ignoreDamage: ignore,
         spillover: step.spillover,
+        ...(b.reroll !== "none" ? { reroll: b.reroll } : {}),
+        ...(step.minAmount !== undefined ? { minAmount: step.minAmount } : {}),
       };
       return {
-        plan: { ...plan, ...pick(override, ["amount", "ignoreDamage", "spillover"]) } as DamagePlan,
+        plan: {
+          ...plan,
+          ...pick(override, ["amount", "ignoreDamage", "spillover", "reroll"]),
+        } as DamagePlan,
         fired: b.fired,
+        changes: b.changes,
         reminders: b.reminders,
         scope: b.scope,
       };
@@ -750,6 +776,14 @@ function safeDice(expr: Expr, ctx: EvalContext): string {
     return formatDice(diceTerm(expr, ctx));
   } catch {
     return "0";
+  }
+}
+
+function safeSum(text: string): ReturnType<typeof parseDiceSum> {
+  try {
+    return parseDiceSum(text);
+  } catch {
+    return [{ count: 0, sides: 1 }];
   }
 }
 
@@ -1056,8 +1090,23 @@ function runDamage(
   const sides = sidesOf(env, undefined, ctxFor(env, planned.scope));
   const amount = parseDiceSum(plan.amount);
   const entries: DamageEntry[] = [];
+  const floor = plan.minAmount ?? 0;
+  // One attack's damage, re-rolled as the plan says (UX: damage re-rolls, #40).
+  const rollDamage = (): { damage: number; rerolledFrom?: number } => {
+    const first = rollSum(amount, rng);
+    const reroll = plan.reroll ?? "none";
+    if (reroll === "none" || !first.rolls.length) return { damage: Math.max(floor, first.total) };
+    let total = first.total;
+    if (reroll === "ones") {
+      if (!first.rolls.includes(1)) return { damage: Math.max(floor, total) };
+      for (const r of first.rolls) if (r === 1) total += rollDie(rng, sidesOfSum(amount)) - 1;
+    } else if (first.total < averageSum(amount)) total = rollSum(amount, rng).total;
+    else return { damage: Math.max(floor, total) };
+    return { damage: Math.max(floor, total), rerolledFrom: Math.max(floor, first.total) };
+  };
   outer: for (let i = 0; i < run.tokens.length; i++) {
-    let damage = Math.max(0, rollSum(amount, rng).total);
+    const rolled = rollDamage();
+    let damage = Math.max(0, rolled.damage);
     // With spillover, damage beyond a slain model's wounds goes on to the next.
     for (;;) {
       const victim = allocationOrder(env, planned.scope, alloc, lost, run.overrides?.[alloc.id]?.order)[0];
@@ -1071,7 +1120,14 @@ function runDamage(
       const taken = wouldLose - ignore.filter((v) => v >= plan.ignoreDamage!).length;
       lost.set(victim.id, already + taken);
       const destroyed = remaining - taken <= 0;
-      entries.push({ modelId: victim.id, damage, ignore, lost: taken, destroyed });
+      entries.push({
+        modelId: victim.id,
+        damage,
+        ...(rolled.rerolledFrom !== undefined ? { rerolledFrom: rolled.rerolledFrom } : {}),
+        ignore,
+        lost: taken,
+        destroyed,
+      });
       if (!plan.spillover || !destroyed || damage <= wouldLose) break;
       damage -= wouldLose;
     }
@@ -1080,6 +1136,11 @@ function runDamage(
     .filter((e) => e.lost > 0)
     .map((e) => ({ kind: "wounds", modelId: e.modelId, lost: e.lost }));
   return finish({ ...base, damage: entries }, [], outcomes);
+}
+
+/** The die size of a damage roll ("D6+1" → 6), for re-rolling one die. */
+function sidesOfSum(sum: ReturnType<typeof parseDiceSum>): number {
+  return sum.find((t) => t.sides)?.sides ?? 6;
 }
 
 function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx: EvalContext): Outcome[] {

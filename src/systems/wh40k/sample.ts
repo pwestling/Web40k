@@ -201,7 +201,12 @@ function vanguardLegion(): ImportedRoster {
     "Rampart Battle Tank",
     ["Vehicle", "Vanguard Legion"],
     190,
-    [{ name: "Armoured Hull", text: "Subtract 1 from the Damage of attacks that target this model." }],
+    [
+      {
+        name: "Armoured Hull",
+        text: "Each time an attack targets this model, subtract 1 from the Damage characteristic of that attack.",
+      },
+    ],
     [
       {
         profile: "Rampart Battle Tank",
@@ -303,6 +308,10 @@ function ashenHost(): ImportedRoster {
         name: "Burning Bulk",
         text: "After this model ends a Charge move, roll a D6 for each enemy unit nearby.",
       },
+      {
+        name: "Searing Grip",
+        text: "Each time this model makes an attack, re-roll a Damage roll of 1.",
+      },
     ],
     [
       {
@@ -321,7 +330,13 @@ function ashenHost(): ImportedRoster {
     "Slag Crawler",
     ["Vehicle", "Ashen Host"],
     160,
-    [{ name: "Molten Plating", text: "Attacks with AP -1 against this model are treated as AP 0." }],
+    [
+      { name: "Molten Plating", text: "Attacks with AP -1 against this model are treated as AP 0." },
+      {
+        name: "Fused Plates",
+        text: "Each time a ranged attack targets this model, add 1 to the saving throw.",
+      },
+    ],
     [
       {
         profile: "Slag Crawler",

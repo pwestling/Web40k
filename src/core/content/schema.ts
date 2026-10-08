@@ -336,7 +336,8 @@ export type StepKind =
       formation?: "rearRankFirst";
     }
   /** Turn input successes into lost wounds. */
-  | { kind: "damage"; id: Id; amount: Expr; spillover: boolean }
+  /** `minAmount`: no attack does less than this after modifiers (40k: 1). */
+  | { kind: "damage"; id: Id; amount: Expr; spillover: boolean; minAmount?: number }
   /** Compare two totals and branch, e.g. combat resolution. */
   | { kind: "compare"; id: Id; a: Expr; b: Expr; outcomes: { when: Expr; do: EffectAction[] }[] }
   /**

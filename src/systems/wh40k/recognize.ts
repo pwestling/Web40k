@@ -49,6 +49,14 @@ function readEffect(text: string): Partial<AttackPart> | null {
   if (m) return { roll: m[2] as "hit" | "wound", by: 1 };
   m = /^subtract (1|one) from the (hit|wound) roll$/.exec(text);
   if (m) return { roll: m[2] as "hit" | "wound", by: -1 };
+  m = /^(?:you can )?re-roll (?:a|the) damage roll of (?:1|one)$/.exec(text);
+  if (m) return { roll: "damage", reroll: "ones" };
+  m = /^(?:you can )?re-roll the damage roll$/.exec(text);
+  if (m) return { roll: "damage", reroll: "failed" };
+  m = /^add (1|one) to the (?:armou?r )?saving throw$/.exec(text);
+  if (m) return { roll: "save", by: 1 };
+  m = /^subtract (1|one) from the damage characteristic of (?:that|the) attack$/.exec(text);
+  if (m) return { roll: "damage", by: -1 };
   m = /^(?:that attack|that weapon|the attack) has the \[?([a-z0-9 +-]+?)\]? ability$/.exec(text);
   if (m) return { grant: m[1]!.trim() };
   return null;
@@ -90,8 +98,14 @@ function readAttack(text: string): AttackPart[] | null {
   }
   const effects = readEffects(rest);
   if (!effects) return null;
-  // Defensively only the attacker's roll can change; re-rolls and grants are for one's own attacks.
-  if (!making && effects.some((e) => e.reroll || e.grant || (e.by ?? 0) > 0)) return null;
+  // Defensively: worse hit/wound rolls, a better save, less damage. Re-rolls and grants are for one's own attacks.
+  if (
+    !making &&
+    effects.some((e) => e.reroll || e.grant || (e.roll === "save" ? (e.by ?? 0) < 0 : (e.by ?? 0) > 0))
+  )
+    return null;
+  // Attacking: the save and the damage characteristic only change from the defender's side here.
+  if (making && effects.some((e) => (e.roll === "save" || e.roll === "damage") && e.by)) return null;
   return effects.map((e) => ({ ...part, ...e }));
 }
 
@@ -219,9 +233,11 @@ function compileAttack(p: AttackPart, system: GameSystem): Effect[] | null {
   }
   const action: EffectAction | null = p.reroll
     ? { do: "reroll", which: p.reroll }
-    : p.by
-      ? { do: "modifyRoll", by: p.by }
-      : null;
+    : p.by && p.roll === "damage"
+      ? { do: "modifyCharacteristic", target: "weapon", characteristic: "D", by: p.by }
+      : p.by
+        ? { do: "modifyRoll", by: p.by }
+        : null;
   return action && p.roll ? [{ when: step(p.roll), if: and(), do: [action] }] : null;
 }
 

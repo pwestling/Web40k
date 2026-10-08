@@ -5,7 +5,8 @@ import { t, tn } from "../i18n";
 
 /** Automated abilities (#38) in the reader's language: the rule, and what went off at a phase change. */
 
-const roll = (r: "hit" | "wound") => (r === "hit" ? t("hit") : t("wound"));
+const roll = (r: "hit" | "wound" | "save" | "damage") =>
+  r === "hit" ? t("hit") : r === "wound" ? t("wound") : r === "save" ? t("save") : t("damage");
 
 function attackText(p: Extract<AutoPart, { kind: "attack" }>): string {
   const who =
@@ -26,9 +27,11 @@ function attackText(p: Extract<AutoPart, { kind: "attack" }>): string {
       ? t("re-roll {roll} rolls of 1", { roll: roll(p.roll!) })
       : p.reroll
         ? t("re-roll failed {roll} rolls", { roll: roll(p.roll!) })
-        : (p.by ?? 0) > 0
-          ? t("+1 to {roll}", { roll: roll(p.roll!) })
-          : t("−1 to {roll}", { roll: roll(p.roll!) });
+        : p.roll === "damage"
+          ? t("−1 Damage (not below 1)")
+          : (p.by ?? 0) > 0
+            ? t("+1 to {roll}", { roll: roll(p.roll!) })
+            : t("−1 to {roll}", { roll: roll(p.roll!) });
   const conds = [
     ...(p.against ? [t("against {keywords}", { keywords: p.against.join(t(" or ")) })] : []),
     ...(p.when === "charged" ? [t("after charging")] : []),
@@ -116,7 +119,16 @@ const signed = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
 /** What one rule did to the roll, in the reader's language: "−1 to hit", "re-roll 1s". */
 export function changeText(b: AttackBecause): string {
   const c = b.change;
-  const step = b.step === "hit" ? t("hit") : b.step === "wound" ? t("wound") : b.step;
+  const step =
+    b.step === "hit"
+      ? t("hit")
+      : b.step === "wound"
+        ? t("wound")
+        : b.step === "save"
+          ? t("save")
+          : b.step === "damage"
+            ? t("damage")
+            : b.step;
   const parts: string[] = [];
   if (c.mod) parts.push(t("{by} to {roll}", { by: signed(c.mod), roll: step }));
   if (c.target) parts.push(t("{roll} target {by}", { by: signed(c.target), roll: step }));
@@ -127,7 +139,7 @@ export function changeText(b: AttackBecause): string {
 }
 
 /** The modifiers on one step, each shown: " (+1 −1)" rather than the net 0 (UX 290). */
-export function stepMods(spec: AttackSpec, step: "hit" | "wound", net: number): string {
+export function stepMods(spec: AttackSpec, step: "hit" | "wound" | "save", net: number): string {
   const mods = (spec.because ?? [])
     .filter((b) => b.step === step && b.change.mod)
     .map((b) => signed(b.change.mod!));
