@@ -182,6 +182,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = state.players[event.player];
       return p ? { ...state, players: { ...state.players, [p.id]: { ...p, name: event.name } } } : state;
     }
+    case "player/color": {
+      const p = state.players[event.player];
+      return p ? { ...state, players: { ...state.players, [p.id]: { ...p, color: event.color } } } : state;
+    }
     case "player/dice": {
       const p = state.players[event.player];
       if (!p) return state;

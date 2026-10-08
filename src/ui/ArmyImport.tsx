@@ -1,4 +1,6 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { useShelf, type SavedArmy } from "../packages/shelf";
+import { dressFromShelf, exportArmy, importArmyFile, saveToShelf, useDeployed } from "./shelfActions";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
@@ -58,6 +60,8 @@ const baseKey = (b: BaseShape) => JSON.stringify(b);
 export function ArmyImport({ players }: { players: { id: PlayerId; name: string; seat?: number }[] }) {
   const { game, dispatch } = useStore();
   const [roster, setRoster] = useState<ImportedRoster | null>(null);
+  // The shelf army being deployed, if the roster came from the shelf (#27).
+  const [fromShelf, setFromShelf] = useState<SavedArmy | null>(null);
   const [owner, setOwner] = useState<PlayerId>(players[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   // Rank-and-flank systems deploy units as blocks; the player picks each frontage.
@@ -73,6 +77,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     setBusy(true);
     try {
       const read = systemModule(game.system).importRoster ?? parseRosterFile;
+      setFromShelf(null);
       setRoster(await read(file.name, new Uint8Array(await file.arrayBuffer())));
     } finally {
       setBusy(false);
@@ -88,6 +93,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         )
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+    useDeployed.setState({ [owner]: { roster: { ...roster, units }, prefix, shelfId: fromShelf?.id } });
+    if (fromShelf) void dressFromShelf(fromShelf, owner, prefix);
+    setFromShelf(null);
     // On one screen, the next army is for whoever has none yet (UX 155).
     const next = players.find(
       (p) => p.id !== owner && !Object.values(game.units).some((u) => u.owner === p.id),
@@ -96,6 +104,10 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     setRoster(null);
     setFiles({});
     setLoose({});
+  };
+  const cancel = () => {
+    setRoster(null);
+    setFromShelf(null);
   };
 
   /** Fill a characteristic the list left out, for every model of the unit that lacks it. */
@@ -143,11 +155,27 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
             />
           </label>
-          <button onClick={() => setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0))}>
+          <button
+            onClick={() => {
+              setFromShelf(null);
+              setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0));
+            }}
+          >
             Sample army
           </button>
+          <ShelfSelect
+            system={game.system ?? ""}
+            onPick={(army) => {
+              setFromShelf(army);
+              setRoster(army.roster);
+            }}
+          />
         </div>
       )}
+      <ShelfManager system={game.system ?? ""} />
+      {players.map((p) => (
+        <SaveToShelf key={p.id} owner={p.id} name={players.length > 1 ? p.name : null} />
+      ))}
       {owner && <DicePicker key={owner} player={owner} />}
       {roster && (
         <div className="modal-backdrop">
@@ -268,11 +296,125 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               <button className="primary" disabled={!roster.units.length} onClick={deploy}>
                 Deploy for {players.find((p) => p.id === owner)?.name}
               </button>
-              <button onClick={() => setRoster(null)}>Cancel</button>
+              <button onClick={cancel}>Cancel</button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** "From your shelf": armies saved on this device for this game (#27). */
+function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedArmy) => void }) {
+  const { armies, load } = useShelf();
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const here = Object.values(armies)
+    .filter((a) => a.system === system)
+    .sort((a, b) => b.savedAt - a.savedAt);
+  return (
+    <>
+      {here.length > 0 && (
+        <select
+          aria-label="From your shelf"
+          value=""
+          onChange={(e) => {
+            const army = armies[e.target.value];
+            if (army) onPick(army);
+          }}
+        >
+          <option value="">From your shelf…</option>
+          {here.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+      )}
+    </>
+  );
+}
+
+/** The shelf itself: every saved army, to export or remove, and a way in for army files. */
+function ShelfManager({ system }: { system: string }) {
+  const { armies, loaded, remove } = useShelf();
+  const [note, setNote] = useState<string | null>(null);
+  const all = Object.values(armies).sort((a, b) => b.savedAt - a.savedAt);
+  return (
+    <>
+      <details className="fold shelf">
+        <summary>Your army shelf{loaded ? ` (${all.length})` : ""}</summary>
+        <p className="muted small">
+          Armies saved on this device. Save one after deploying it; pass one on as a file, figures included.
+        </p>
+        <ul>
+          {all.map((a) => (
+            <li key={a.id}>
+              <span>
+                {a.name}
+                {a.system !== system && <span className="muted small"> · another game</span>}
+              </span>
+              <span className="row">
+                <button
+                  className="small"
+                  onClick={() => void exportArmy(a).then((f) => setNote(`Saved ${f}`))}
+                >
+                  Export
+                </button>
+                <button
+                  className="quiet small"
+                  onClick={() => confirm(`Take ${a.name} off your shelf?`) && remove(a.id)}
+                >
+                  Remove
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <label className="file button small">
+          Open an army file
+          <input
+            type="file"
+            accept=".json"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file)
+                void importArmyFile(file).then((r) =>
+                  setNote(typeof r === "string" ? r : `${r.name} is on your shelf.`),
+                );
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {note && <p className="muted small">{note}</p>}
+      </details>
+    </>
+  );
+}
+
+/** Save the army a player deployed in this game (its names, figures, dice and colour as they are now). */
+function SaveToShelf({ owner, name }: { owner: PlayerId; name: string | null }) {
+  const deployed = useDeployed((s) => s[owner]);
+  const [saved, setSaved] = useState(false);
+  if (!deployed) return null;
+  return (
+    <div className="row">
+      <button
+        className="small"
+        title="Keep this army on this device for later games, with its unit names, figures, dice and colour"
+        onClick={() => {
+          saveToShelf(owner);
+          setSaved(true);
+        }}
+      >
+        {saved
+          ? `Saved ✓${name ? ` ${name}'s army` : ""} (save again after changes)`
+          : deployed.shelfId
+            ? `Update ${name ? `${name}'s army` : "it"} on your shelf`
+            : `Save ${name ? `${name}'s army` : "army"} to your shelf`}
+      </button>
     </div>
   );
 }
