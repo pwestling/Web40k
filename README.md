@@ -88,6 +88,8 @@ For a full self-hosted stack, with the app, your own signalling relay and a TURN
 
 ## How it works
 
+For where things live in the code, see [docs/architecture.md](docs/architecture.md).
+
 - **The game is an event log.** Players send intents. The host turns each one into a numbered, fully resolved event (this is where dice are rolled) and every peer applies the same events in the same order. Live sync, undo, late joining, spectating, replays and branching all come from that one log, and if the host leaves another player takes over.
 - **Game modules are code.** Each game is a typed TypeScript module: its rules as data (characteristics, dice, turn structure, keyword rules, attack procedures) plus code for what data can't say well (combat sequences, reactions, command stacks). See [docs/system-modules.md](docs/system-modules.md), and [docs/packages.md](docs/packages.md) for rules packages loaded at runtime.
 - **Units and bases.** One world unit is one inch. Base sizes are kept in millimetres, as they are printed, and can be round, oval or rectangular, with a facing.
