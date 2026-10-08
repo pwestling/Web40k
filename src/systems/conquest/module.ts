@@ -20,6 +20,8 @@ export const conquestModule: GameModule<SystemModule> = {
   procedures: { ...conquestProcedures, ...moraleProcedures, ...reinforceProcedures },
   functions: conquestFunctions,
   actions: characterActions,
+  // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.
+  bot: { threat: 0 },
   app: {
     sample: conquestSample,
     layout: (t) => conquestLayout(t.width, t.depth),

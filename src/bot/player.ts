@@ -192,7 +192,11 @@ class Thinker implements Policy {
     this.judge = judge(
       start,
       seat,
-      { ...(sharp ? SHARP : STEADY), ...opts.weights },
+      {
+        ...(sharp ? SHARP : STEADY),
+        ...(tuning?.threat !== undefined ? { threat: tuning.threat } : {}),
+        ...opts.weights,
+      },
       missionOf(start),
       tuning,
     );

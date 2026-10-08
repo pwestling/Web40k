@@ -250,7 +250,11 @@ export function waitingOn(
               });
     return {
       what: "a reaction",
-      moves: [...react, ...seat.flatMap((p) => everyone({ type: "reaction/pass" }, "pass", p.id))],
+      // Only the reacting side passes: the acting side passing for it would take its reaction away.
+      moves: [
+        ...react,
+        ...seat.map((p) => ({ intent: { type: "reaction/pass" } as Intent, as: p.id, kind: "pass" })),
+      ],
     };
   }
 
