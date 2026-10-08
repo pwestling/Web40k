@@ -1940,11 +1940,20 @@ button.rare-star:hover {
 .ruler.casualty-pile {
   pointer-events: auto;
   font-size: 0.8rem;
+  /* A label, not a readout (UX 194). */
+  font-family: inherit;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
 }
 .ruler.casualty-pile button {
   color: inherit;
   font: inherit;
   padding: 0;
+  text-decoration: none;
+}
+.ruler.casualty-pile button::after {
+  content: " ▾";
+  opacity: 0.6;
 }
 .ruler.casualty-pile ul {
   margin: 4px 0 0;
@@ -2910,4 +2919,7 @@ body.showcase
 .campaign-book textarea {
   width: 100%;
   box-sizing: border-box;
+}
+.shelf-select {
+  max-width: 100%;
 }

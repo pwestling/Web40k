@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
-import { useShelf, type SavedArmy } from "../packages/shelf";
+import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
+import { SavedNote } from "./SavedNote";
 import { dressFromShelf, exportArmy, importArmyFile, saveToShelf, useDeployed } from "./shelfActions";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
@@ -148,7 +149,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       ) : (
         <div className="row">
           <label className="file button">
-            {busy ? "Reading…" : "Import army list"}
+            {busy ? "Reading…" : "Import a list"}
             <input
               type="file"
               accept=".ros,.rosz,.json,.xml"
@@ -163,14 +164,16 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
           >
             Sample army
           </button>
-          <ShelfSelect
-            system={game.system ?? ""}
-            onPick={(army) => {
-              setFromShelf(army);
-              setRoster(army.roster);
-            }}
-          />
         </div>
+      )}
+      {!(game.system && isPlaceholder(game.system)) && (
+        <ShelfSelect
+          system={game.system ?? ""}
+          onPick={(army) => {
+            setFromShelf(army);
+            setRoster(army.roster);
+          }}
+        />
       )}
       <ShelfManager system={game.system ?? ""} />
       {players.map((p) => (
@@ -319,6 +322,7 @@ function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedA
       {here.length > 0 && (
         <select
           aria-label="From your shelf"
+          className="shelf-select"
           value=""
           onChange={(e) => {
             const army = armies[e.target.value];
@@ -328,7 +332,7 @@ function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedA
           <option value="">From your shelf…</option>
           {here.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.name}
+              {a.name} · {shelfLine(a)}
             </option>
           ))}
         </select>
@@ -341,6 +345,7 @@ function ShelfSelect({ system, onPick }: { system: string; onPick: (army: SavedA
 function ShelfManager({ system }: { system: string }) {
   const { armies, loaded, remove } = useShelf();
   const [note, setNote] = useState<string | null>(null);
+  const [exported, setExported] = useState<string | null>(null);
   const all = Object.values(armies).sort((a, b) => b.savedAt - a.savedAt);
   return (
     <>
@@ -354,13 +359,14 @@ function ShelfManager({ system }: { system: string }) {
             <li key={a.id}>
               <span>
                 {a.name}
-                {a.system !== system && <span className="muted small"> · another game</span>}
+                <span className="muted small">
+                  {" "}
+                  · {shelfLine(a)}
+                  {a.system !== system && " · another game"}
+                </span>
               </span>
               <span className="row">
-                <button
-                  className="small"
-                  onClick={() => void exportArmy(a).then((f) => setNote(`Saved ${f}`))}
-                >
+                <button className="small" onClick={() => void exportArmy(a).then((f) => setExported(f))}>
                   Export
                 </button>
                 <button
@@ -388,32 +394,44 @@ function ShelfManager({ system }: { system: string }) {
             }}
           />
         </label>
+        {exported && <SavedNote file={exported} kind="army" />}
         {note && <p className="muted small">{note}</p>}
       </details>
     </>
   );
 }
 
+/** "5 units · saved 8 Oct, 03:12": enough to tell two saves of one army apart (UX 196). */
+function shelfLine(a: SavedArmy): string {
+  const when = new Date(a.savedAt).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${a.roster.units.length} unit${a.roster.units.length === 1 ? "" : "s"} · saved ${when}`;
+}
+
 /** Save the army a player deployed in this game (its names, figures, dice and colour as they are now). */
 function SaveToShelf({ owner, name }: { owner: PlayerId; name: string | null }) {
   const deployed = useDeployed((s) => s[owner]);
-  const [saved, setSaved] = useState(false);
+  const game = useStore((s) => s.game);
+  const saved = useShelf((s) => (deployed?.shelfId ? s.armies[deployed.shelfId] : undefined));
   if (!deployed) return null;
+  const whose = name ? `${name}'s army` : "This army";
+  // On the shelf as it stands: say so, rather than offer a button that does nothing (UX 195, 196).
+  if (saved && sameArmy(saved, { ...armyFromGame(game, owner, deployed, saved.id), savedAt: saved.savedAt }))
+    return <p className="muted small">✓ {whose} is on your shelf as it is now.</p>;
   return (
     <div className="row">
       <button
         className="small"
         title="Keep this army on this device for later games, with its unit names, figures, dice and colour"
-        onClick={() => {
-          saveToShelf(owner);
-          setSaved(true);
-        }}
+        onClick={() => saveToShelf(owner)}
       >
         {saved
-          ? `Saved ✓${name ? ` ${name}'s army` : ""} (save again after changes)`
-          : deployed.shelfId
-            ? `Update ${name ? `${name}'s army` : "it"} on your shelf`
-            : `Save ${name ? `${name}'s army` : "army"} to your shelf`}
+          ? `Update ${name ? `${name}'s army` : "it"} on your shelf`
+          : `Save ${name ? `${name}'s army` : "army"} to your shelf`}
       </button>
     </div>
   );

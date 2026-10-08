@@ -50,12 +50,20 @@ export function Announcer() {
     }
     if (scrub !== null) return;
     const fresh = log.filter((item) => item.text && said.current!.get(item.key) !== spoken(item));
-    for (const item of fresh) said.current.set(item.key, spoken(item));
     if (!fresh.length) return;
+    // A line that grew (an attack as it's rolled) is read from where it left off (UX 198).
+    const news = fresh.slice(-4).map((item) => {
+      const was = said.current!.get(item.key);
+      const now = spoken(item);
+      return was && now.startsWith(was) && !(item.kind === "line" && item.settle)
+        ? now.slice(was.length).replace(/^[\s,.:;·]+/, "")
+        : now;
+    });
+    for (const item of fresh) said.current.set(item.key, spoken(item));
     clearTimeout(timer.current);
     const say = (words: string) => setText((t) => ({ words, odd: !t.odd }));
     const last = fresh.at(-1)!;
-    const words = fresh.slice(-4).map(spoken).join(". ");
+    const words = news.filter(Boolean).join(". ");
     if (last.kind === "line" && last.settle) {
       const unitId = last.settle.unitId;
       timer.current = setTimeout(() => say(`${words}${left(unitId)}`), SETTLE_MS);

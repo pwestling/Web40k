@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { stableJson } from "../core/secrets";
 import type { DiceSet, GameState, ModelFigure, PlayerId } from "../core";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 
@@ -178,4 +179,10 @@ export function readArmy(data: unknown): SavedArmy | null {
     figures: army.figures ?? {},
     id: typeof army.id === "string" ? army.id : crypto.randomUUID(),
   };
+}
+
+/** Whether two saves hold the same army (when they were saved aside). */
+export function sameArmy(a: SavedArmy, b: SavedArmy): boolean {
+  const body = ({ savedAt: _s, ...rest }: SavedArmy) => stableJson(rest);
+  return body(a) === body(b);
 }

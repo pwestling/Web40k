@@ -1,5 +1,5 @@
 import { focusSoon } from "./focusSoon";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
 import {
   aliveModels,
@@ -252,6 +252,13 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const rollAll = () => {
     for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
   };
+  // After the last roll its button goes: focus moves on to Done rather than dropping to the page (UX 199).
+  const done = useRef<HTMLButtonElement>(null);
+  const finished = attack.stage === "done";
+  useEffect(() => {
+    if (finished && (document.activeElement === document.body || !document.activeElement))
+      done.current?.focus();
+  }, [finished]);
 
   return (
     <div className="panel attack">
@@ -308,6 +315,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
             </>
           )}
           <button
+            ref={done}
             className="attack-done"
             onClick={() => {
               dispatch({ type: "attack/clear" }, attacker?.owner);

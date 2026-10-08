@@ -57,8 +57,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
   // Back-to-back drags of one unit by one player (arrow-key nudges, say) add up on one line (UX 180).
-  let dragLine: (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; inches: number }) | null =
-    null;
+  // Measured from where the first one started, as the unit card measures moves (UX 200).
+  let dragLine:
+    (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; from: GameState }) | null = null;
   // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
   const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
@@ -206,8 +207,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       dragLine.unitId === event.id &&
       items.at(-1) === dragLine
     ) {
-      dragLine.inches += Math.abs(event.distance);
-      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} moved ${state.units[event.id]?.name ?? "a unit"} ${distanceText(state, dragLine.inches)}`;
+      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} ${moveText(dragLine.from, state, state.units[event.id]?.modelIds ?? [])}`;
       continue;
     }
     if (event.type !== "undo") dragLine = null;
@@ -290,7 +290,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         settle: { unitId: event.id },
         by: logged.by,
         unitId: event.id,
-        inches: Math.abs(event.distance),
+        from: before,
       };
       items.push(dragLine);
       continue;

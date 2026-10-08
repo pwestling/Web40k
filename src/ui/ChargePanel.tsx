@@ -136,7 +136,8 @@ export function ChargePanel({ unit }: { unit: Unit }) {
                 ? `The roll falls ${fmt(door.distance - chargeRange!)} short of ${enemy.name}`
                 : `Move into contact with ${enemy.name}'s ${ARC_EDGE[door.arc]}, lined up flush`
             }
-            className={short ? "" : "primary"}
+            // The next step only once a roll says it reaches (UX 192).
+            className={chargeRange !== null && !short ? "primary" : ""}
             disabled={short}
             onClick={() => dispatch({ ...door.move, how: "charge" }, as)}
           >
