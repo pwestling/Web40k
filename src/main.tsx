@@ -5,6 +5,10 @@ import { useAssets } from "./assets/store";
 import * as core from "./core";
 import { useStore } from "./store";
 import "./styles.css";
+import { watchErrors } from "./ui/report";
+
+// Recent errors go into a problem report (src/ui/report.ts).
+watchErrors();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

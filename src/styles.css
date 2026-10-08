@@ -543,7 +543,7 @@ details p {
   z-index: 20;
   position: absolute;
   bottom: 10px;
-  left: 50%;
+  left: max(50%, 540px);
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
@@ -552,7 +552,9 @@ details p {
   border: 1px solid #2d3340;
   border-radius: 8px;
   padding: 4px 10px;
-  width: min(720px, calc(100vw - 24px));
+  /* Centred and clear of the talk dock on the left (300px + margins). */
+  width: min(720px, calc(100vw - 660px));
+  min-width: 420px;
   box-sizing: border-box;
 }
 .replaybar .track {
@@ -2149,6 +2151,7 @@ body.broadcast .caption {
   /* Everything on the replay bar fits, What if… included (UX 152). */
   .replaybar {
     gap: 4px;
+    min-width: 0;
   }
   .replaybar .track,
   .replaybar input[type="range"] {
@@ -2581,4 +2584,78 @@ body.showcase
 }
 .panel.talk > .row:first-child {
   gap: 3px;
+}
+
+/* Playtest kit: the crash screen (src/ui/Crash.tsx). */
+.panel.crash {
+  z-index: 60;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  gap: 8px;
+  border-color: #f59e0b;
+}
+.panel.crash h2,
+.panel.crash p {
+  margin: 0;
+}
+.panel.crash pre {
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.panel.report-banner {
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  gap: 4px;
+  border-color: #f59e0b;
+}
+/* The lobby's connection check (src/ui/NetCheck.tsx). */
+.net-check {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.net-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-left: 3px solid #6b7280;
+  border-radius: 4px;
+  background: #1f2430;
+}
+.net-verdict.good {
+  border-color: #22c55e;
+}
+.net-verdict.turn {
+  border-color: #f59e0b;
+}
+.net-verdict.bad {
+  border-color: #ef4444;
+}
+/* The optional post-game feedback (src/ui/Feedback.tsx). */
+.feedback label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.feedback textarea {
+  font: inherit;
+  color: inherit;
+  background: #1f2430;
+  border: 1px solid #374151;
+  border-radius: 4px;
+}
+.feedback .on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.feedback-open {
+  margin-top: 8px;
 }

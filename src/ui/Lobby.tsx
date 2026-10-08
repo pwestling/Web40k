@@ -1,4 +1,5 @@
 import { unbundleReplay, type ReplayFile } from "./replayFile";
+import { useOpenReport, type ReportFile } from "./report";
 import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
@@ -7,6 +8,7 @@ import { BROADCAST } from "../broadcast/broadcast";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
+import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
@@ -114,6 +116,12 @@ export function Lobby() {
     const data = JSON.parse(await file.text()) as ReplayFile;
     if (data.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");
     openReplay(await unbundleReplay(data));
+    // A problem report opens at the moment it was made (src/ui/report.ts).
+    const report = (data as Partial<ReportFile>).report;
+    if (report && Number.isFinite(report.seq)) {
+      useOpenReport.setState({ report });
+      useStore.getState().setScrub(report.seq);
+    }
   };
 
   const demos = listSystems().filter((s) => FRONT[s.id]);
@@ -171,6 +179,7 @@ export function Lobby() {
           Watch
         </button>
       </div>
+      <NetCheck />
       <details className="fold">
         <summary>More ways to play</summary>
         <label>

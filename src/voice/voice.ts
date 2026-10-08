@@ -32,6 +32,8 @@ export interface VoiceState {
   muted: Record<string, boolean>;
   /** 0–1 per peer; 1 when unset. */
   volume: Record<string, number>;
+  /** I've had my mic on before, here: the button can drop its word (UX 168). */
+  used: boolean;
 }
 
 const MODE_KEY = "open-battle:voice-mode";
@@ -40,6 +42,15 @@ const storedMode = (): VoiceMode => {
     return localStorage.getItem(MODE_KEY) === "open" ? "open" : "ptt";
   } catch {
     return "ptt";
+  }
+};
+
+const USED_KEY = "open-battle:voice-used";
+const storedUsed = (): boolean => {
+  try {
+    return localStorage.getItem(USED_KEY) === "1";
+  } catch {
+    return false;
   }
 };
 
@@ -52,6 +63,7 @@ export const useVoice = create<VoiceState>(() => ({
   speaking: {},
   muted: {},
   volume: {},
+  used: storedUsed(),
 }));
 
 /** How far voices dip under a decisive die. */
@@ -155,14 +167,21 @@ export async function micOn(): Promise<void> {
   } catch (e) {
     const denied = e instanceof DOMException && e.name === "NotAllowedError";
     useVoice.setState({
-      error: denied ? "The browser didn't allow the microphone." : "No microphone was found.",
+      error: denied
+        ? "Allow the microphone for this site (the icon in the address bar), then press 🎙 again."
+        : "No microphone was found.",
     });
     return;
   }
   localAnalyser = analyse(local);
   setLive(useVoice.getState().mode === "open");
   session.media.addStream(local);
-  useVoice.setState({ mic: true, error: null });
+  useVoice.setState({ mic: true, error: null, used: true });
+  try {
+    localStorage.setItem(USED_KEY, "1");
+  } catch {
+    // Private windows: the word just comes back next time.
+  }
   session.sendSide({ t: "talk/voice", on: true, ...name() });
 }
 

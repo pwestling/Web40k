@@ -5,6 +5,7 @@ import { momentsOf } from "../core/moments";
 import { playMoment } from "../broadcast/Moments";
 import { useReel } from "../broadcast/reel";
 import { BROADCAST } from "../broadcast/broadcast";
+import { FeedbackCard } from "./Feedback";
 import { Result } from "./Missions";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
@@ -152,6 +153,7 @@ export function StatsScreen() {
           <p className="muted">No damage dealt yet.</p>
         )}
       </section>
+      {!BROADCAST && <FeedbackCard />}
     </div>
   );
 }

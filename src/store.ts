@@ -195,6 +195,13 @@ function saveRoom(roomId: string, record: GameRecord, seatedAs: string | undefin
   }
 }
 
+/** Save what this screen has of the game now, whatever its role (the crash screen: src/ui/Crash.tsx). */
+export function saveNow(): void {
+  const { record, mode, session, roomId } = useStore.getState();
+  if (!session || !record.events.length || !mode) return;
+  saveGame({ mode, roomId, record, savedAt: Date.now() });
+}
+
 function saveGame(game: SavedGame) {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(game));

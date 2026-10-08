@@ -29,6 +29,7 @@ import { Moments } from "./broadcast/Moments";
 import { Ambience } from "./ui/Ambience";
 import { Showcase } from "./ui/Showcase";
 import { TopBar } from "./ui/TopBar";
+import { ReportBanner } from "./ui/Crash";
 import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -147,6 +148,7 @@ export function GameScreen({ started }: { started: boolean }) {
             {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}
           </div>
           <ReplayBar />
+          <ReportBanner />
           <RoundCard />
           <ReplayTitle />
           <DiceTray />

@@ -20,7 +20,7 @@ export function VoiceButton() {
   const spectator = useStore((s) => s.role === "spectator");
   const me = useStore((s) => s.session?.selfId ?? "");
   useStore((s) => s.game.players);
-  const { mic, mode, live, error, peers, speaking, muted, volume } = useVoice();
+  const { mic, mode, live, error, peers, speaking, muted, volume, used } = useVoice();
   const [menu, setMenu] = useState(false);
   if (!media) return null;
   const others = Object.entries(peers).filter(([id]) => id !== me);
@@ -48,7 +48,7 @@ export function VoiceButton() {
         onPointerUp={() => ptt && pushToTalk(false)}
         onPointerLeave={() => ptt && pushToTalk(false)}
       >
-        🎙
+        {used ? "🎙" : spectator ? "🎙 Speak" : "🎙 Voice"}
       </button>
       {(mic || others.length > 0 || error) && (
         <button
