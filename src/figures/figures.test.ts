@@ -52,3 +52,33 @@ describe("figure library", () => {
     expect(await packHash([a, b])).not.toBe(await packHash([a, { ...b, name: "C" }]));
   });
 });
+
+describe("figure packs", () => {
+  it("shares identical levels again after decoding, so a pack's model isn't stored twice", async () => {
+    const { shareLevels } = await import("./pack");
+    const { assetBuffers } = await import("../assets/types");
+    const mesh = () => ({
+      positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+      indices: new Uint32Array([0, 1, 2]),
+    });
+    const asset = {
+      id: "x",
+      name: "x",
+      kind: "miniature" as const,
+      lods: [mesh(), mesh(), mesh()],
+      proxy: mesh(),
+      bounds: { min: [0, 0, 0] as [number, number, number], max: [1, 1, 0] as [number, number, number] },
+      stats: {
+        sourceTriangles: 1,
+        sourceVertices: 3,
+        lodTriangles: [1, 1, 1],
+        proxyTriangles: 1,
+        lodErrors: [0, 0, 0],
+        unitScale: 1,
+        ms: 0,
+      },
+    };
+    expect(assetBuffers(asset)).toHaveLength(8);
+    expect(assetBuffers(shareLevels(asset))).toHaveLength(2);
+  });
+});

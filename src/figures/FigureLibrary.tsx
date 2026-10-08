@@ -61,6 +61,9 @@ export function FigureLibrary() {
     void useFigures.getState().load().then(drawThumbs);
     void useShelf.getState().load();
     void useTables.getState().load();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && closeLibrary();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
   }, []);
   if (!tab) return null;
   return (
@@ -128,11 +131,18 @@ function Figures() {
   const adding = Object.entries(status).filter(([key]) => key.startsWith("library:"));
 
   const add = (files: FileList) => {
-    for (const file of Array.from(files))
+    for (const file of Array.from(files)) {
+      const before = useFigures.getState().entries;
       void useAssets
         .getState()
         .importFile(file, `library:${file.name}`, addAs)
-        .then(() => void drawThumbs());
+        .then((asset) => {
+          // The same file twice is one model: say so rather than adding nothing quietly (UX 243).
+          const same = asset && before[asset.id];
+          if (same) setNote(`${file.name} is the same model as ${same.name}, already in your library.`);
+          void drawThumbs();
+        });
+    }
   };
   const pack = async () => {
     setBusy(true);
@@ -319,6 +329,7 @@ function FigureCard({
           aria-label="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           onBlur={() => name.trim() && name !== entry.name && patch(entry.id, { name: name.trim() })}
         />
         <span className="muted small">
@@ -331,6 +342,7 @@ function FigureCard({
           placeholder="Tags, e.g. orks, painted"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           onBlur={() => {
             const next = [
               ...new Set(

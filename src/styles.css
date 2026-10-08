@@ -3234,6 +3234,11 @@ body.showcase
 .modal.figure-library {
   width: min(760px, calc(100vw - 32px));
   background: #111827;
+  /* Pinned at the top, not centred: a row appearing (tag chips) mustn't move the close button from
+     under a click (UX 240). */
+  top: 6vh;
+  transform: translateX(-50%);
+  max-height: 88vh;
 }
 .figure-library .tabs {
   display: flex;

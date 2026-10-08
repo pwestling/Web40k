@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { deleteCached, getCached, listCached } from "../assets/cache";
-import { bindingKey, useAssets } from "../assets/store";
+import { useAssets } from "../assets/store";
 import { assetBuffers, type AssetKind, type ModelAsset } from "../assets/types";
 import { idbStore } from "../packages/idb";
 import { useStore } from "../store";
@@ -148,8 +148,8 @@ export function learnFromGame(): void {
       const entry = m?.figure && entries[m.figure.asset];
       if (!entry) continue;
       const names = learned.get(entry.id) ?? new Set(entry.units);
+      // Units, not their models' profiles: "Dresses Line Troopers", not each profile too (UX 241).
       names.add(unit.name);
-      names.add(bindingKey(m));
       learned.set(entry.id, names);
     }
   for (const [id, names] of learned)
