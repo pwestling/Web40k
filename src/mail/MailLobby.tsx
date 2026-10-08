@@ -1,5 +1,19 @@
-import { useState } from "react";
-import { forgetMailGame, mailGames, receiveFile, resumeMailGame, startMailGame, useMail } from "./store";
+import { useEffect, useState } from "react";
+import type { MailFile } from "./file";
+import { readInviteHash } from "./mailbox";
+import {
+  arrivals,
+  forgetMailGame,
+  joinFromMailbox,
+  mailGames,
+  receiveFile,
+  resumeMailGame,
+  startMailGame,
+  useMail,
+} from "./store";
+
+/** The invite link last followed, so it's followed once (StrictMode mounts twice). */
+let followed: string | null = null;
 
 /**
  * The lobby's "Play by mail" section: start a game that lives across days,
@@ -17,17 +31,39 @@ export function MailLobby({
   const error = useMail((s) => s.error);
   const [games, setGames] = useState(mailGames);
   const [busy, setBusy] = useState(false);
-  const run = (f: () => Promise<void>) => {
+  const [arrived, setArrived] = useState<Record<string, MailFile>>({});
+  const run = (f: () => Promise<unknown>) => {
     setBusy(true);
     void f().finally(() => setBusy(false));
   };
+
+  // Opponents' turns waiting in their games' mailboxes.
+  useEffect(() => {
+    let live = true;
+    void arrivals().then((a) => live && setArrived(a));
+    return () => void (live = false);
+  }, []);
+
+  // An invite link (#mail=…) joins its game from the mailbox, opened fresh or pasted into this tab.
+  useEffect(() => {
+    const follow = () => {
+      const box = readInviteHash();
+      if (!box || followed === box.id) return;
+      followed = box.id;
+      history.replaceState(null, "", location.pathname + location.search);
+      void joinFromMailbox(box, name);
+    };
+    follow();
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, [name]);
   return (
     <details className="fold">
       <summary>Play by mail</summary>
       <p className="muted small">
-        A game that lives across days: take your turn when you can, then send the file it makes to your
-        opponent (email, chat, anything). Every roll is checked on their side, and neither of you can pick the
-        dice.
+        A game that lives across days: take your turn when you can, then send it to your opponent. On a server
+        with a mailbox, turns go there and open on their side; otherwise you pass a file (email, chat,
+        anything). Every roll is checked on their side, and neither of you can pick the dice.
       </p>
       <div className="row wrap">
         <button
@@ -60,13 +96,27 @@ export function MailLobby({
             <li key={g.id} className="row spread">
               <span>
                 vs {g.vs || "your opponent"} ·{" "}
-                <strong className={g.yours ? "" : "muted"}>
-                  {g.yours ? "your move" : "waiting for their file"}
+                <strong className={g.yours || arrived[g.id] ? "" : "muted"}>
+                  {g.yours
+                    ? "your move"
+                    : arrived[g.id]
+                      ? "● their turn is here: your move"
+                      : g.box
+                        ? "waiting for their turn"
+                        : "waiting for their file"}
                 </strong>{" "}
                 <span className="muted small">{new Date(g.at).toLocaleDateString()}</span>
               </span>
               <span className="row">
-                <button disabled={busy} onClick={() => run(() => resumeMailGame(g.id))}>
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    run(() => {
+                      const file = arrived[g.id];
+                      return file ? receiveFile(JSON.stringify(file)) : resumeMailGame(g.id);
+                    })
+                  }
+                >
                   Open
                 </button>
                 <button

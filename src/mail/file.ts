@@ -10,6 +10,7 @@ import {
 import type { ReplayFile } from "../ui/replayFile";
 import { commitTo, newSeed, segmentRng, type DiceKey } from "./dice";
 import { identity, sign, verifySignature } from "./keys";
+import type { Box } from "./mailbox";
 
 /**
  * Play by mail (roadmap #23): a game that lives across days, passed back and
@@ -44,6 +45,8 @@ export interface MailFile {
   events: LoggedEvent[];
   /** The invitation only: the whole game so far. */
   record?: ReplayFile;
+  /** The invitation only: the game's mailbox, when it has one (mailbox.ts). */
+  box?: Box;
   /** ECDSA signature of everything above (the file without `sig`). */
   sig: string;
 }
@@ -92,8 +95,9 @@ export async function buildFile(args: {
   segment: Segment;
   record: GameRecord;
   invitation?: ReplayFile;
+  box?: Box | null;
 }): Promise<MailFile> {
-  const { game, from, name, segment, record, invitation } = args;
+  const { game, from, name, segment, record, invitation, box } = args;
   const id = await identity();
   const body: Omit<MailFile, "sig"> = {
     format: "open-battle/mail@1",
@@ -109,6 +113,7 @@ export async function buildFile(args: {
     intents: segment.intents,
     events: record.events.filter((e) => e.seq > segment.base.seq),
     ...(invitation ? { record: invitation } : {}),
+    ...(invitation && box ? { box } : {}),
   };
   return { ...body, sig: await sign(unsigned(body), id) };
 }

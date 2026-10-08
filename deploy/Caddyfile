@@ -15,6 +15,14 @@
 		reverse_proxy relay:8787
 	}
 
+	# Play by mail: turns posted and picked up (server/mailbox.mjs).
+	handle /mailbox* {
+		request_body {
+			max_size 17MB
+		}
+		reverse_proxy mailbox:8790
+	}
+
 	handle /health {
 		rewrite * /health.html
 		file_server {

@@ -12,6 +12,9 @@
  *   ?turn=turn:host:3478&turnUser=u&turnPass=p
  *                                          VITE_TURN_URL, VITE_TURN_USER, VITE_TURN_PASS
  *   ?forceTurn=1   send everything through TURN, to test a TURN server
+ *   ?mailbox=https://battle.example.com/mailbox
+ *                  where play-by-mail turns are posted (server/mailbox.mjs)
+ *                                          VITE_MAILBOX_URL
  */
 export interface NetConfig {
   /** Self-hosted WebSocket signalling relays; when set, Nostr is not used. */
@@ -21,6 +24,8 @@ export interface NetConfig {
   turn: RTCIceServer[];
   /** Only connect through TURN (a test of the TURN server). */
   forceTurn?: boolean;
+  /** A play-by-mail mailbox (server/mailbox.mjs); without one, turns travel as files. */
+  mailbox?: string;
 }
 
 const list = (v: string | null | undefined) =>
@@ -49,6 +54,7 @@ export async function loadSiteConfig(
       ...(Array.isArray(body.signal) && body.signal.length ? { signal: body.signal } : {}),
       ...(Array.isArray(body.nostr) && body.nostr.length ? { nostr: body.nostr } : {}),
       ...(Array.isArray(body.turn) && body.turn.length ? { turn: body.turn } : {}),
+      ...(typeof body.mailbox === "string" && body.mailbox ? { mailbox: body.mailbox } : {}),
     };
   } catch {
     // An unreachable or malformed config.json is the same as none.
@@ -67,6 +73,7 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
   const username = q.get("turnUser") ?? env.VITE_TURN_USER;
   const credential = q.get("turnPass") ?? env.VITE_TURN_PASS;
   const fromUrl = (key: string) => (q.has(key) ? list(q.get(key)) : null);
+  const mailbox = q.get("mailbox") ?? site.mailbox ?? (env.VITE_MAILBOX_URL as string | undefined);
   return {
     signal: fromUrl("signal") ?? site.signal ?? list(env.VITE_SIGNAL_URL),
     nostr: fromUrl("nostr") ?? site.nostr ?? list(env.VITE_NOSTR_RELAYS),
@@ -74,8 +81,9 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
       ? [{ urls: turnUrls, ...(username ? { username, credential } : {}) }]
       : (site.turn ?? []),
     ...(q.get("forceTurn") === "1" ? { forceTurn: true } : {}),
+    ...(mailbox ? { mailbox } : {}),
   };
 }
 
 /** The URL parameters to keep on an invite link so the guest uses the same relays. */
-export const NET_PARAMS = ["signal", "nostr", "turn", "turnUser", "turnPass", "forceTurn"];
+export const NET_PARAMS = ["signal", "nostr", "turn", "turnUser", "turnPass", "forceTurn", "mailbox"];

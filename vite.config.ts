@@ -87,7 +87,7 @@ export default defineConfig({
   build: { chunkSizeWarningLimit: 2000 },
   test: {
     // The soak games (src/soak) run on their own, in CI's soak job: `pnpm soak`.
-    include: process.env.SOAK ? ["src/soak/*.soak.test.ts"] : ["src/**/*.test.ts"],
+    include: process.env.SOAK ? ["src/soak/*.soak.test.ts"] : ["src/**/*.test.ts", "server/**/*.test.ts"],
     exclude: process.env.SOAK ? ["**/node_modules/**"] : ["**/node_modules/**", "src/**/*.soak.test.ts"],
   },
 });

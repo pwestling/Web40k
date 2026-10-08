@@ -6,3 +6,4 @@ dist
 
 # Self-host settings (docker-compose); see .env.example
 .env
+mailbox-data/

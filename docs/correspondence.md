@@ -27,6 +27,30 @@ Nothing before your stretch can be undone; it's already been seen.
 Games are kept on each device (`localStorage`) and listed in the lobby. The
 files are the backup: _Save mine again_ re-saves the last one.
 
+## The mailbox
+
+On a self-hosted server ([self-host.md](self-host.md)), or with `?mailbox=`,
+each new mail game gets a mailbox (`server/mailbox.mjs`, client in
+`mailbox.ts`). Its id is a long random string carried inside the signed
+invitation, so only the two players have it.
+
+- _Send invitation_ posts the invitation there and offers _Copy invite link_.
+  The link carries the mailbox in its `#mail=` hash; opening it joins the game.
+- _Send to …_ posts each turn there. The same signed file, checked the same
+  way on arrival.
+- While a game waits, its page looks in the mailbox every 30 seconds and when
+  the tab comes back into view. The lobby marks games whose turn has come.
+- If the mailbox can't be reached, the file is saved instead, to pass on by
+  hand, and _Try the mailbox again_ retries. Files always work.
+- **Web push** is optional: when the server has VAPID keys, _Notify me when
+  it's my move_ subscribes this browser (`public/mail-sw.js`). The push is
+  empty; the app fetches the file from the mailbox. Without push, the tab
+  title says "● Your move".
+
+The mailbox stores files in order and refuses a different file under a
+number it already has, but it doesn't vouch for anything: a server could
+withhold a file, never forge one.
+
 ## What's checked
 
 Every file is checked by the player who receives it.
@@ -73,6 +97,4 @@ Limits, stated plainly:
 
 ## Not yet
 
-- A mailbox on the self-hosted relay, so files pass without copying.
-- Web push notifications. The tab title says when it's your move.
 - Compressed text, for pasting a file into chat.

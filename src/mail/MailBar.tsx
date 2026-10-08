@@ -2,7 +2,21 @@ import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { fileName, type MailFile } from "./file";
-import { acceptAnyway, receiveFile, rejectDoubt, sendTurn, setMailName, useMail } from "./store";
+import { inviteLink, pushKey, pushSupported, subscribePush } from "./mailbox";
+import {
+  acceptAnyway,
+  checkMailbox,
+  postAgain,
+  receiveFile,
+  rejectDoubt,
+  sendTurn,
+  setMailName,
+  setPush,
+  useMail,
+} from "./store";
+
+/** How often a waiting game looks in its mailbox while the page is open. */
+const POLL_MS = 30_000;
 
 function download(file: MailFile): void {
   const url = URL.createObjectURL(new Blob([JSON.stringify(file)], { type: "application/json" }));
@@ -47,7 +61,35 @@ export function MailBar() {
   const [passed, setPassed] = useState<{ file: string; how: "shared" | "saved"; invite: boolean } | null>(
     null,
   );
+  const [note, setNote] = useState<string | null>(null);
+  const [pushBox, setPushBox] = useState<string | null>(null);
   const yours = !!game?.segment;
+  const box = game?.box ?? null;
+  const waiting = !!game && !yours && !doubt;
+
+  // While we wait, look in the mailbox now, every so often, and whenever the page comes back into view.
+  useEffect(() => {
+    if (!box || !waiting) return;
+    const look = () => void (document.visibilityState === "visible" && checkMailbox());
+    look();
+    const timer = setInterval(look, POLL_MS);
+    document.addEventListener("visibilitychange", look);
+    window.addEventListener("focus", look);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", look);
+      window.removeEventListener("focus", look);
+    };
+  }, [box, waiting]);
+
+  // Offer notifications only when the mailbox sends them and this browser can show them.
+  useEffect(() => {
+    if (!box || !pushSupported()) return;
+    let live = true;
+    void pushKey(box).then((k) => live && k && setPushBox(box.id));
+    return () => void (live = false);
+  }, [box]);
+  const canPush = !!box && pushBox === box.id;
 
   // The tab says when it's your move, for a game left open in the background.
   useEffect(() => {
@@ -66,12 +108,32 @@ export function MailBar() {
   };
   const send = () =>
     run(async () => {
+      setNote(null);
       const file = await sendTurn();
-      if (file) setPassed({ file: fileName(file), how: await passOn(file, them), invite: file.index === 1 });
+      // With a mailbox, the file only needs passing on when the mailbox can't be reached.
+      if (file && box && useMail.getState().game?.posted) setPassed(null);
+      else if (file)
+        setPassed({ file: fileName(file), how: await passOn(file, them), invite: file.index === 1 });
     });
   // Before the battle: each side sets up, and the one who made the game starts it.
   const setup = state.turn.round === 0;
   const creator = game.me === "p1";
+  const notify = () =>
+    run(async () => {
+      const why = await subscribePush(box!, game.me);
+      if (why) setNote(why);
+      else {
+        setPush(true);
+        setNote("This browser will tell you when it's your move.");
+      }
+    });
+  const copyLink = () => {
+    const link = inviteLink(box!);
+    void navigator.clipboard?.writeText(link).then(
+      () => setNote("Invite link copied. Send it to your opponent."),
+      () => setNote(link),
+    );
+  };
   // Mid-turn hand-offs: their turn, or a question or roll that's theirs to answer.
   const handOff = yours && !invitation && waitsOn(state, 1 - game.seat);
 
@@ -138,46 +200,82 @@ export function MailBar() {
           </button>
         </div>
       ) : (
-        <div className="row spread wrap">
-          <span>
-            <strong>Waiting for {them}</strong>
-            <span className="muted small"> · open their file when it comes</span>
-            {passed && (
-              <span className="small mail-passed">
-                {passed.how === "shared"
-                  ? `Sent ${passed.file}. `
-                  : `Saved ${passed.file} to your downloads: send it to ${them} by email, chat or anything. `}
-                {passed.invite
-                  ? "They open it from the lobby, under Play by mail."
-                  : "They open it with Open their file."}
+        <>
+          <div className="row spread wrap">
+            <span>
+              <strong>Waiting for {them}</strong>
+              <span className="muted small">
+                {box && game.posted
+                  ? game.sent?.index === 1
+                    ? " · the invitation is in the game's mailbox: send them the link"
+                    : " · your turn is in the game's mailbox; theirs will open here when it comes"
+                  : " · open their file when it comes"}
               </span>
-            )}
-          </span>
-          <span className="row">
-            <label className="file">
-              Open their file
-              <input
-                type="file"
-                accept=".json,application/json"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) run(async () => receiveFile(await f.text()));
-                }}
-              />
-            </label>
-            {game.sent && (
+              {passed && (
+                <span className="small mail-passed">
+                  {passed.how === "shared"
+                    ? `Sent ${passed.file}. `
+                    : `Saved ${passed.file} to your downloads: send it to ${them} by email, chat or anything. `}
+                  {passed.invite
+                    ? "They open it from the lobby, under Play by mail."
+                    : "They open it with Open their file."}
+                </span>
+              )}
+            </span>
+            <span className="row">
+              {box && game.sent?.index === 1 && game.posted && (
+                <button className="primary" onClick={copyLink}>
+                  Copy invite link
+                </button>
+              )}
+              <label className="file">
+                Open their file
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) run(async () => receiveFile(await f.text()));
+                  }}
+                />
+              </label>
+              {game.sent && (
+                <button
+                  className="quiet"
+                  title="Save the file you sent, to pass it on by hand"
+                  onClick={() => download(game.sent!)}
+                >
+                  {box && game.posted ? "Save as a file" : "Save mine again"}
+                </button>
+              )}
+            </span>
+          </div>
+          {box && game.sent && !game.posted && (
+            <div className="row wrap">
+              <span className="warn small">
+                The game's mailbox couldn't be reached, so pass your file on by hand.
+              </span>
               <button
                 className="quiet"
-                title="Save the file you sent again"
-                onClick={() => download(game.sent!)}
+                disabled={busy}
+                onClick={() => run(async () => (await postAgain()) && setPassed(null))}
               >
-                Save mine again
+                Try the mailbox again
               </button>
-            )}
-          </span>
-        </div>
+            </div>
+          )}
+          {box && game.posted && canPush && !game.push && (
+            <div className="row wrap">
+              <span className="muted small">Or leave this tab: the title says when it's your move.</span>
+              <button className="quiet" disabled={busy} onClick={notify}>
+                Notify me when it's my move
+              </button>
+            </div>
+          )}
+        </>
       )}
+      {note && waiting && <p className="small">{note}</p>}
       {error && <p className="warn small">{error}</p>}
     </div>
   );

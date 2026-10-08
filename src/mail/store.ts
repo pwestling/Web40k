@@ -15,6 +15,7 @@ import {
   type Segment,
 } from "./file";
 import { keyId } from "./keys";
+import { fetchFiles, newBox, postFile, type Box } from "./mailbox";
 import { replaySegment } from "./verify";
 
 /**
@@ -40,6 +41,12 @@ export interface MailGame {
   theirCommit: string | null;
   /** When it last changed hands, for the list. */
   at: number;
+  /** The game's mailbox, when it has one; turns are posted there as well as saved as files. */
+  box?: Box | null;
+  /** Whether our last file reached the mailbox. */
+  posted?: boolean;
+  /** Whether this device asked to be notified of their files. */
+  push?: boolean;
 }
 
 /** A file that didn't check out, held until the player decides. */
@@ -61,7 +68,7 @@ const LIST = "open-battle:mail-games";
 const key = (id: string) => `open-battle:mail:${id}`;
 
 /** The mail games on this device, newest first. */
-export function mailGames(): { id: string; at: number; yours: boolean; vs: string }[] {
+export function mailGames(): { id: string; at: number; yours: boolean; vs: string; box: boolean }[] {
   try {
     const ids = JSON.parse(localStorage.getItem(LIST) ?? "[]") as string[];
     return ids
@@ -71,6 +78,7 @@ export function mailGames(): { id: string; at: number; yours: boolean; vs: strin
         id: g.id,
         at: g.at,
         yours: !!g.segment,
+        box: !!g.box,
         vs: Object.entries(g.names).find(([p]) => p !== g.me)?.[1] ?? "Waiting for someone to join",
       }))
       .sort((a, b) => b.at - a.at);
@@ -173,6 +181,7 @@ export async function startMailGame(name: string, system?: string): Promise<void
     theirKey: null,
     theirCommit: null,
     at: Date.now(),
+    box: newBox(),
   };
   await open(game);
   if (name) useStore.getState().dispatch({ type: "player/rename", player: "p1", name });
@@ -206,11 +215,76 @@ export async function sendTurn(): Promise<MailFile | null> {
     name: g.names[g.me] ?? "",
     segment,
     record,
-    ...(invitation ? { invitation: await bundleReplay(record) } : {}),
+    ...(invitation ? { invitation: await bundleReplay(record), box: g.box } : {}),
   });
-  update({ record, segment: null, sent: file, committed: segment.next, at: Date.now() });
+  update({ record, segment: null, sent: file, committed: segment.next, at: Date.now(), posted: false });
   seat();
+  if (g.box) await postAgain();
   return file;
+}
+
+/** Post our last file to the mailbox (again); true when it's there. */
+export async function postAgain(): Promise<boolean> {
+  const g = useMail.getState().game;
+  if (!g?.box || !g.sent) return false;
+  const ok = await postFile(g.box, g.sent);
+  if (useMail.getState().game?.id === g.id) update({ posted: ok });
+  return ok;
+}
+
+/** The opponent's next file in a game's mailbox, if it has come. */
+export async function nextFromMailbox(game: MailGame): Promise<MailFile | null> {
+  if (!game.box || game.segment || !game.sent) return null;
+  const files = await fetchFiles(game.box, game.sent.index);
+  return files?.find((f) => f.index === game.sent!.index + 1 && f.from !== game.me) ?? null;
+}
+
+/** Look in the open game's mailbox, and open their file if it's there. */
+export async function checkMailbox(): Promise<boolean> {
+  const g = useMail.getState().game;
+  if (!g || useMail.getState().doubt) return false;
+  const file = await nextFromMailbox(g);
+  // The game may have changed hands while we looked.
+  if (!file || useMail.getState().game?.id !== g.id || useMail.getState().game?.segment) return false;
+  await receiveFile(JSON.stringify(file));
+  return true;
+}
+
+/** Mail games on this device whose opponent's file is waiting in their mailbox. */
+export async function arrivals(): Promise<Record<string, MailFile>> {
+  const out: Record<string, MailFile> = {};
+  await Promise.all(
+    mailGames().map(async ({ id }) => {
+      const g = loadGame(id);
+      const file = g && (await nextFromMailbox(g));
+      if (file) out[id] = file;
+    }),
+  );
+  return out;
+}
+
+/** Join a game from an invite link: its invitation is the mailbox's first file. */
+export async function joinFromMailbox(box: Box, name?: string): Promise<boolean> {
+  const files = await fetchFiles(box, 0);
+  if (!files) {
+    useMail.setState({ error: "The game's mailbox can't be reached. Ask for the invitation file instead." });
+    return false;
+  }
+  const invitation = files.find((f) => f.index === 1);
+  if (!invitation) {
+    useMail.setState({ error: "That game's mailbox is empty: the invitation may have expired." });
+    return false;
+  }
+  await receiveFile(JSON.stringify(invitation), { name });
+  // A game already on this device picks up where it is.
+  const g = useMail.getState().game;
+  if (g?.id === invitation.game) await checkMailbox();
+  return useMail.getState().game?.id === invitation.game;
+}
+
+/** Note that this device will be told of their files. */
+export function setPush(on: boolean): void {
+  update({ push: on });
 }
 
 /** Open a file from the opponent: a new game from an invitation, or their next stretch of ours. */
@@ -307,6 +381,7 @@ async function joinFromInvitation(file: MailFile, typed?: string): Promise<void>
     theirKey: file.key,
     theirCommit: file.commit,
     at: Date.now(),
+    box: file.box ?? null,
   });
   // The name typed in the lobby, else the last one used; with neither, they type it on the strip.
   let name = typed?.trim() ?? "";

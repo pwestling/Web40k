@@ -14,7 +14,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-    depends_on: [relay]
+    depends_on: [relay, mailbox]
 
   # Where browsers find each other, and where they get TURN logins.
   relay:
@@ -24,8 +24,22 @@ services:
       TURN_SECRET: ${TURN_SECRET:?Set TURN_SECRET in .env}
       TURN_URLS: ${TURN_URLS:-turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp}
       TURN_CHECK: host.docker.internal:3478
+      MAILBOX_URL: "on"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # Play by mail: players post their turns here and the other side's app picks
+  # them up. Web push is optional: set the VAPID keys in .env to turn it on.
+  mailbox:
+    build: { context: ., target: mailbox }
+    restart: unless-stopped
+    environment:
+      TTL_DAYS: ${MAILBOX_TTL_DAYS:-60}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@${DOMAIN}}
+    volumes:
+      - mailbox_data:/data
 
   # TURN: relays game traffic for players whose networks block a direct link.
   # Host networking, so it sees real addresses and its relay ports need no mapping.
@@ -46,3 +60,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  mailbox_data:

@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "soak": "SOAK=1 vitest run",
     "relay": "node server/relay.mjs",
+    "mailbox": "node server/mailbox.mjs",
     "perf": "node scripts/perf.mjs",
     "perf:load": "node scripts/load.mjs",
     "soak:browser": "node scripts/soak-browser.mjs"

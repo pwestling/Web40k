@@ -27,6 +27,8 @@
 //   TURN_CHECK    host:port the health check sends a STUN request to
 //                 (default: the first TURN_URLS host)
 //   TURN_TTL      lifetime of a TURN login in seconds (86400)
+//   MAILBOX_URL   the play-by-mail mailbox (server/mailbox.mjs) to tell the app
+//                 about; "on" means <the site>/mailbox, as the compose file runs it
 import { createHmac } from "node:crypto";
 import dgram from "node:dgram";
 import { createServer } from "node:http";
@@ -51,11 +53,15 @@ if (env.TURN_SECRET !== undefined && (env.TURN_SECRET === "change-me" || env.TUR
   process.exit(1);
 }
 
-function signalUrl(req) {
-  if (env.SIGNAL_URL) return env.SIGNAL_URL;
+function siteUrl(req) {
   const host = req?.headers["x-forwarded-host"] ?? req?.headers.host;
   const proto = req?.headers["x-forwarded-proto"] ?? "http";
-  const base = env.PUBLIC_URL ?? (host ? `${String(proto).split(",")[0]}://${host}` : null);
+  return env.PUBLIC_URL ?? (host ? `${String(proto).split(",")[0]}://${host}` : null);
+}
+
+function signalUrl(req) {
+  if (env.SIGNAL_URL) return env.SIGNAL_URL;
+  const base = siteUrl(req);
   if (!base) return null;
   const url = new URL(base);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
@@ -70,11 +76,20 @@ function turnLogin() {
   return { urls: turnUrls, username, credential };
 }
 
+function mailboxUrl(req) {
+  if (!env.MAILBOX_URL) return null;
+  if (env.MAILBOX_URL !== "on") return env.MAILBOX_URL;
+  const base = siteUrl(req);
+  return base ? new URL("/mailbox", base).toString() : null;
+}
+
 function siteConfig(req) {
   const signal = signalUrl(req);
+  const mailbox = mailboxUrl(req);
   return {
     signal: signal ? [signal] : [],
     turn: turnUrls.length && env.TURN_SECRET ? [turnLogin()] : [],
+    ...(mailbox ? { mailbox } : {}),
   };
 }
 
