@@ -265,6 +265,21 @@ describe("The Old World combat as code", () => {
     }
   });
 
+  it("Panic is offered only when there's a cause, in shooting or combat, once a phase", () => {
+    const { t, spears } = setup();
+    const panic = towActions.find((a) => a.id === "panic")!;
+    const offered = () => panic.available(gameView(t.s, "tow-hand"), { player: "p1", unitId: spears });
+    toPhase(t, "movement");
+    expect(offered()).toBe("Only after shooting or combat");
+    toPhase(t, "combat");
+    expect(offered()).toMatch(/Nothing to panic about/);
+    const lost = t.s.units[spears]!.modelIds.at(-1)!;
+    t.play({ type: "model/wounds", id: lost, woundsLost: 1, destroyed: true }, "p1");
+    expect(offered()).toBe(true);
+    t.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1");
+    if (!t.s.units[spears]!.status?.fleeing) expect(offered()).toBe("Already tested this phase");
+  });
+
   it("pursuit is rolled in the procedure: catching a fleeing unit destroys it", () => {
     let seen = 0;
     for (let seed = 1; seed < 80 && seen < 2; seed++) {

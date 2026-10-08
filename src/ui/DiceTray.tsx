@@ -13,7 +13,7 @@ import { useStore } from "../store";
 import { diceLook } from "./diceSets";
 import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
-import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
+import { chime, click, duckVoices, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
 
 /**
@@ -319,6 +319,7 @@ class Stage {
       this.banner.className = `tray-banner on ${stakes.good ? "good" : "bad"}`;
       ds.forEach((d) => d.el.classList.add(stakes.good ? "crit" : "fail"));
       sting(stakes.good);
+      duckVoices(1600);
       if (/slain/i.test(stakes.big)) thump(0, 0.6);
       await wait(this.skip ? 400 : 1400);
     }
@@ -333,11 +334,13 @@ class Stage {
   private async moment(rare: RareOutcome, live: boolean) {
     clearTimeout(this.hideTimer);
     this.show();
+    duckVoices(this.skip ? 0 : 450);
     await wait(this.skip ? 0 : 450);
     this.root.classList.add("legendary");
     this.dice.forEach((d) => d.el.classList.add("tray-legend"));
     if (rare.lucky) legendSting();
     else womp();
+    duckVoices(2200);
     this.banner.innerHTML = "";
     const big = div("big");
     big.textContent = rare.title;
@@ -447,7 +450,11 @@ class Stage {
         };
       });
       // A heartbeat under a decisive die.
-      if (slowLast && !this.skip) [0.5, 1.0, 1.5].forEach((t, i) => thump(fast ? t / 2 : t, 0.3 + i * 0.05));
+      if (slowLast && !this.skip) {
+        [0.5, 1.0, 1.5].forEach((t, i) => thump(fast ? t / 2 : t, 0.3 + i * 0.05));
+        // Voices hush for the last die and its verdict.
+        duckVoices(fast ? 1800 : 3400);
+      }
       const t0 = performance.now();
       const frame = (now: number) => {
         let alive = 0;

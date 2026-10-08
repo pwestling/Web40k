@@ -15,7 +15,7 @@ import {
   type Rng,
 } from "../core";
 import { hookIntents } from "../core/script";
-import type { Check, NetMessage, SideMessage, Transport } from "./transport";
+import type { Check, MediaChannel, NetMessage, SideMessage, Transport } from "./transport";
 
 /** Spectators receive the game like clients but never send intents. */
 export type Role = "host" | "client" | "spectator";
@@ -188,6 +188,11 @@ export class Session {
 
   get selfId(): string {
     return this.transport.selfId;
+  }
+
+  /** Audio between peers, where the transport carries it (WebRTC, not the same-browser channel). */
+  get media(): MediaChannel | undefined {
+    return this.transport.media;
   }
 
   get current(): GameState {

@@ -582,7 +582,7 @@ const stratagems: ActionDef[] = [
 
 export const fortyK: GameSystem = {
   id: "forty-k-11",
-  name: "40k (11th edition mechanics, draft)",
+  name: "Sci-fi battle (draft)",
   version: "0.1.0",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
@@ -853,6 +853,13 @@ export const fortyK: GameSystem = {
           { not: { hasFlag: "self", flag: "fellBack" } },
         ],
       },
+      // A charge needs an enemy unit within 12" to declare against (the 40k module's function).
+      notWhen: [
+        {
+          if: { cmp: ">", a: { call: "enemyGap", args: [ref("self.id")] }, b: 12 },
+          why: 'No enemy within 12"',
+        },
+      ],
       move: { kind: "charge", distance: { dice: "2D6" } },
       sets: ["charged"],
     },

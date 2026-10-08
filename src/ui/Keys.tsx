@@ -10,6 +10,7 @@ const KEYS: [string, string][] = [
   ["R / F", "Move the selected unit up or down a floor"],
   ["M", "Measure: then drag across the table"],
   ["Alt + click", "Ping a spot for everyone"],
+  ["Hold V", "Talk, once your mic is on (Voice, bottom left)"],
   ["Left drag on the table", "Turn the camera"],
   ["Right drag", "Slide the camera"],
   ["Wheel", "Zoom"],
