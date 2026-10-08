@@ -12,6 +12,13 @@ body,
   color: #e5e7eb;
   overflow: hidden;
 }
+/* Nothing past the screen's edge (name plates beyond the table) may widen a phone's page (UX 152). */
+#root {
+  position: fixed;
+  inset: 0;
+  overflow: clip;
+  contain: paint;
+}
 button,
 select,
 input {
@@ -2098,7 +2105,7 @@ body.broadcast .caption {
     top: auto;
     left: 8px;
     right: 8px;
-    bottom: 52px;
+    bottom: 68px;
     width: auto;
     max-height: 45vh;
     overflow-y: auto;
@@ -2107,7 +2114,7 @@ body.broadcast .caption {
   .play.collapsed {
     position: fixed;
     top: auto;
-    bottom: 52px;
+    bottom: 68px;
   }
   .hud.collapsed {
     left: 8px;
@@ -2119,7 +2126,7 @@ body.broadcast .caption {
   .talk-dock {
     left: 8px;
     right: 8px;
-    bottom: 96px;
+    bottom: 120px;
     width: auto;
   }
   body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play, .talk-dock),
@@ -2136,6 +2143,15 @@ body.broadcast .caption {
   }
   .caption {
     max-width: calc(100vw - 16px);
+  }
+  /* Below the phase bar, which wraps to two rows here (UX 153). */
+  .panel.whatnow,
+  .whatnow-toggle {
+    top: 126px;
+  }
+  .panel.whatnow {
+    max-height: 30vh;
+    overflow-y: auto;
   }
 }
 
@@ -2199,17 +2215,9 @@ body.broadcast:has(.stats-screen) .caption {
 :is(.dice-tray, .dice-try) .die.finish-marbled .body {
   background:
     radial-gradient(circle at 30% 25%, #fff3, transparent 45%),
-    conic-gradient(
-      from var(--a, 0deg) at 60% 40%,
-      var(--c),
-      color-mix(in srgb, var(--c) 45%, #fff) 12%,
-      var(--c) 24%,
-      color-mix(in srgb, var(--c) 70%, #000) 40%,
-      color-mix(in srgb, var(--c) 55%, #fff) 55%,
-      var(--c) 68%,
-      color-mix(in srgb, var(--c) 40%, #fff) 82%,
-      var(--c)
-    );
+    var(--marble, none) center / 160% 160%,
+    var(--c);
+  background-blend-mode: normal, overlay, normal;
 }
 :is(.dice-tray, .dice-try) .die.finish-metallic .body {
   background: linear-gradient(
@@ -2309,6 +2317,10 @@ body.broadcast:has(.stats-screen) .caption {
 }
 .dice-try .die .pip.on {
   visibility: visible;
+}
+/* At picker size the far side's pips read as a 9-grid: fainter there. */
+.dice-try .die.finish-translucent .pip:not(.on) {
+  opacity: 0.06;
 }
 .dice-try .die.rolling {
   animation: die-try 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
@@ -2518,4 +2530,25 @@ body.showcase
   display: grid;
   place-items: center;
   color: var(--muted, #9aa3ad);
+}
+.showcase-card .skip {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+.sound-menu {
+  min-width: 250px;
+}
+.sound-menu .volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sound-menu .volume input {
+  flex: 1;
+}
+.sound-menu .dice-picker {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #2d3340;
 }

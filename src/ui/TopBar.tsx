@@ -1,8 +1,9 @@
 import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
+import { DicePicker } from "./DicePicker";
 import { systemModule } from "../systems";
 import { useSound } from "./sound";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
@@ -35,11 +36,22 @@ export function TopBar() {
       : [];
   // The system's own reasons to think twice before moving on (Conquest: reinforcements not in).
   const leaving = deploying ? [] : (systemModule(game.system).leaving?.(game) ?? []);
-  const warning = notReady.length
-    ? notReady.length > 2
-      ? `${notReady.length} players aren't ready yet`
-      : `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
-    : leaving.join(" · ");
+  // A side with no army yet is worth a second thought before the battle starts (UX 155).
+  const armyless = deploying
+    ? seats
+        .filter(
+          (seat) =>
+            !sidePlayers(game, seat).some((p) => Object.values(game.units).some((u) => u.owner === p.id)),
+        )
+        .map((seat) => sideName(game, seat))
+    : [];
+  const warning = armyless.length
+    ? `${armyless.join(" and ")} ${armyless.length > 1 ? "have" : "has"} no army yet`
+    : notReady.length
+      ? notReady.length > 2
+        ? `${notReady.length} players aren't ready yet`
+        : `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
+      : leaving.join(" · ");
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
@@ -348,23 +360,59 @@ function DicePool({
 
 /** Sound on or off, with the table's ambience and fast dice in a small menu (PX-5c), for this device. */
 function SoundToggle() {
-  const { on, toggle, ambience, toggleAmbience, fast, toggleFast } = useSound();
+  const { on, toggle, ambience, toggleAmbience, fast, toggleFast, volume, setVolume } = useSound();
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  // Your dice live here too, for everyone this screen plays (UX 159).
+  const mineKey = useStore((s) =>
+    s.role === "spectator"
+      ? ""
+      : Object.values(s.game.players)
+          .filter((p) => p.seat !== undefined && (s.mode === "hotseat" || p.id === s.session?.selfId))
+          .map((p) => p.id)
+          .join(","),
+  );
+  // Closes on Esc or a click anywhere else (UX 158).
+  useEffect(() => {
+    if (!open) return;
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    addEventListener("keydown", key);
+    addEventListener("pointerdown", away, { capture: true });
+    return () => {
+      removeEventListener("keydown", key);
+      removeEventListener("pointerdown", away, { capture: true });
+    };
+  }, [open]);
   return (
-    <div className="sound-toggle overflow">
+    <div className="sound-toggle overflow" ref={box}>
       <button
         className="quiet"
         aria-expanded={open}
-        aria-label="Sound"
-        title={on ? "Sound on" : "Sound muted"}
+        aria-label="Sound and dice"
+        title={on ? "Sound and dice" : "Sound muted"}
         onClick={() => setOpen(!open)}
       >
         {on ? "🔊" : "🔇"}
       </button>
       {open && (
-        <div className="menu" role="menu" onMouseLeave={() => setOpen(false)}>
+        <div className="menu sound-menu" role="menu">
           <label className="check">
             <input type="checkbox" checked={on} onChange={toggle} /> Sound
+          </label>
+          <label className="volume">
+            Volume{" "}
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              disabled={!on}
+              onChange={(e) => setVolume(Number(e.target.value))}
+            />
           </label>
           <label className="check" title="A quiet room under the game; the turn bell follows Sound">
             <input type="checkbox" checked={ambience} disabled={!on} onChange={toggleAmbience} /> Table
@@ -373,6 +421,7 @@ function SoundToggle() {
           <label className="check">
             <input type="checkbox" checked={fast} onChange={toggleFast} /> Fast dice
           </label>
+          {mineKey && mineKey.split(",").map((id) => <DicePicker key={id} player={id} />)}
         </div>
       )}
     </div>
