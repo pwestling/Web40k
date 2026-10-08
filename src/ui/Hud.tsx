@@ -16,6 +16,7 @@ import { SecretObjectives } from "./SecretObjectives";
 import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
 import { battleOver } from "./StatsScreen";
+import { reviewThisGame } from "../replay/review";
 import { useGame } from "./hooks";
 import { useCoach } from "../teach/store";
 import { narrow } from "./narrow";
@@ -270,6 +271,12 @@ export function Hud() {
           </button>
         )}
         <button onClick={() => void downloadReplay(record)}>Download replay</button>
+        {/* Notes go on a replay: the game just played becomes one (UX 231). */}
+        {session && battleOver(shown) && (
+          <button title="Open this game as a replay to add notes and marks" onClick={reviewThisGame}>
+            Review this game
+          </button>
+        )}
         <ReportButton />
       </div>
     </div>

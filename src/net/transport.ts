@@ -67,7 +67,7 @@ export type SideMessage =
   /** Someone has the record and is ready for the room's notes and the leader's place. */
   | { t: "review/hello" }
   | { t: "review/note"; note: unknown }
-  | { t: "review/unnote"; id: string }
+  | { t: "review/unnote"; id: string; author?: string }
   | { t: "review/notes"; notes: unknown[] };
 
 /** A short-lived message over the table, from whoever sent it. */

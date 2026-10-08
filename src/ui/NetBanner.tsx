@@ -46,7 +46,8 @@ export function NetBanner() {
   const gone = Object.values(players).filter(
     (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id),
   );
-  if (!gone.length) return null;
+  // A review room watches a finished game: its players aren't expected back (UX 233).
+  if (!gone.length || useStore.getState().review) return null;
   // A branch's seats nobody has taken yet are waiting for a guest, not reconnecting (UX 136).
   const open = gone.filter((p) => untakenSeat(record, p.id));
   if (open.length)

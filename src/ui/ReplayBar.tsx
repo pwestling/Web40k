@@ -11,6 +11,8 @@ import { pace } from "./pace";
 import { BackToOriginal, BranchButton } from "./Branch";
 import { readGame, type Highlight } from "./highlights";
 import { useNotes } from "../replay/notes";
+import { reviewThisGame } from "../replay/review";
+import { battleOver } from "./StatsScreen";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
@@ -37,6 +39,7 @@ export function ReplayBar() {
   // A review room is a replay watched together: there's no "live" in it.
   const session = review ? null : live;
   const notes = useNotes((s) => s.notes);
+  const over = useStore((s) => battleOver(s.game));
   const noted = useMemo(() => [...new Set(notes.map((n) => n.seq))], [notes]);
   const [playing, setPlaying] = useState(false);
   const last = record.events.at(-1)?.seq ?? 0;
@@ -227,6 +230,11 @@ export function ReplayBar() {
         {last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
         <BackToOriginal />
         {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
+        {scrub !== null && session && over && (
+          <button title="Open this game as a replay to add notes and marks" onClick={reviewThisGame}>
+            Review with notes
+          </button>
+        )}
         {!session && (
           <button
             onClick={() => {

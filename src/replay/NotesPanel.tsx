@@ -3,8 +3,8 @@ import { gameId } from "../campaign/book";
 import { useStore } from "../store";
 import { myName, setMyName, useTalk, who } from "../talk/talk";
 import { chapters, type Chapter } from "./chapters";
-import { loadNotes, removeNote, saveDraft, startDraft, useNotes, type ReplayNote } from "./notes";
-import { followLeader, startReview, takeLead, useReview, useReviewRoom } from "./review";
+import { loadNotes, ownNote, removeNote, saveDraft, startDraft, useNotes, type ReplayNote } from "./notes";
+import { followLeader, goTo, startReview, takeLead, useReview, useReviewRoom } from "./review";
 
 /** Whether notes can be written here: a replay, or a review room. */
 export function useAnnotating(): boolean {
@@ -27,9 +27,9 @@ export function NotesPanel() {
   const annotating = useAnnotating();
   const record = useStore((s) => s.record);
   const scrub = useStore((s) => s.scrub);
-  const setScrub = useStore((s) => s.setScrub);
   const review = useStore((s) => s.review);
   const { notes, draft, game } = useNotes();
+  const notesIn = useReview((s) => s.notesIn);
   const [tab, setTab] = useState<"notes" | "chapters">("notes");
   const [open, setOpen] = useState(true);
   const id = gameId(record);
@@ -87,13 +87,14 @@ export function NotesPanel() {
               chapter={c}
               current={c === current}
               notes={notes.filter((n) => chapterOf(n.seq) === c).length}
-              go={() => setScrub(c.seq)}
+              go={() => goTo(c.seq)}
             />
           ))}
         </ol>
       ) : (
         <>
           {current && <p className="muted small">{current.title}</p>}
+          {review && !notesIn && <p className="muted small">Getting the notes…</p>}
           {here.map((n) => (
             <NoteView key={n.id} note={n} />
           ))}
@@ -108,7 +109,7 @@ export function NotesPanel() {
             <ol className="note-list">
               {notes.map((n) => (
                 <li key={n.id} className={n.seq === pos ? "on" : undefined}>
-                  <button className="link" onClick={() => setScrub(n.seq)}>
+                  <button className="link" onClick={() => goTo(n.seq)}>
                     <span className="muted">{chapterOf(n.seq)?.title ?? "Setup"}:</span>{" "}
                     {n.text || `${n.marks.length} mark${n.marks.length === 1 ? "" : "s"}`}
                   </button>
@@ -156,6 +157,8 @@ function ChapterRow({
 }
 
 function NoteView({ note }: { note: ReplayNote }) {
+  // In a review room, only a note's writer changes it; a replay on this device is yours to tidy.
+  const review = useStore((s) => s.review);
   return (
     <div className="note" style={{ borderColor: note.color }}>
       <strong style={{ color: note.color }}>{note.by}</strong>
@@ -165,14 +168,16 @@ function NoteView({ note }: { note: ReplayNote }) {
           {note.marks.length} mark{note.marks.length === 1 ? "" : "s"} on the table
         </span>
       )}
-      <div className="row">
-        <button className="small link" onClick={() => startDraft(note.seq, note)}>
-          Edit
-        </button>
-        <button className="small link" onClick={() => removeNote(note.id)}>
-          Delete
-        </button>
-      </div>
+      {(ownNote(note) || !review) && (
+        <div className="row">
+          <button className="small link" onClick={() => startDraft(note.seq, note)}>
+            Edit
+          </button>
+          <button className="small link" onClick={() => removeNote(note.id)}>
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -305,9 +310,11 @@ function ReviewBar() {
         {" · "}
         {leading
           ? "you lead: everyone following sees what you scrub to"
-          : following
-            ? `following ${leaderName || "the leader"}`
-            : "on your own"}
+          : !leader
+            ? "finding who's leading…"
+            : following
+              ? `following ${leaderName || "the leader"}`
+              : "on your own"}
       </p>
       <div className="row wrap">
         {!leading && !following && leader && (

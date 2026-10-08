@@ -5,7 +5,7 @@ import { gameId } from "../campaign/book";
 import { useStore } from "../store";
 import { myName } from "../talk/talk";
 import { NET_PARAMS } from "../net/config";
-import { cleanNote, cleanNotes, putNote, removeNote, useNotes } from "./notes";
+import { cleanNote, cleanNotes, deviceId, putNote, removeNote, useNotes } from "./notes";
 
 /**
  * A review room (roadmap #30, coach mode): a replay watched together online.
@@ -23,6 +23,8 @@ interface Review {
   leaderSeq: number | null;
   /** Whether this viewer follows the leader (until they scrub on their own). */
   following: boolean;
+  /** Whether the room's notes have arrived (the host has them from the start). */
+  notesIn: boolean;
 }
 
 export const useReview = create<Review>(() => ({
@@ -30,6 +32,7 @@ export const useReview = create<Review>(() => ({
   leaderName: "",
   leaderSeq: null,
   following: true,
+  notesIn: false,
 }));
 
 /** True while a scrub comes from following the leader, not this viewer's own hand. */
@@ -53,6 +56,17 @@ export function takeLead(): void {
   const self = useStore.getState().session?.selfId ?? null;
   useReview.setState({ leader: self, leaderName: myName() ?? "", following: true });
   sendLead();
+}
+
+/**
+ * Go to a moment by hand (a chapter or a note). In a review room that stops
+ * following the leader, even when the leader is already there (UX 232).
+ */
+export function goTo(seq: number): void {
+  const { review, session } = useStore.getState();
+  const r = useReview.getState();
+  if (review && r.leader !== session?.selfId && r.following) useReview.setState({ following: false });
+  useStore.getState().setScrub(seq);
 }
 
 /** Follow the leader again, from where they are now. */
@@ -84,11 +98,16 @@ function receive(message: SideMessage, from: string) {
     if (useReview.getState().following) follow(message.seq);
   } else if (message.t === "review/note") {
     const note = cleanNote(message.note);
-    if (note) putNote(note, true);
+    // Someone else's note is theirs to change (UX 234).
+    const was = note && useNotes.getState().notes.find((n) => n.id === note.id);
+    if (note && (!was?.author || was.author === note.author)) putNote(note, true);
   } else if (message.t === "review/unnote") {
-    if (typeof message.id === "string") removeNote(message.id, true);
+    const was = useNotes.getState().notes.find((n) => n.id === message.id);
+    if (typeof message.id === "string" && (!was?.author || was.author === message.author))
+      removeNote(message.id, true);
   } else if (message.t === "review/notes") {
     for (const n of cleanNotes(message.notes)) putNote(n, true);
+    useReview.setState({ notesIn: true });
   }
 }
 
@@ -105,12 +124,13 @@ export function useReviewRoom(): void {
       leaderName: hosting ? (myName() ?? "") : "",
       leaderSeq: null,
       following: !hosting,
+      notesIn: hosting,
     });
     useNotes.setState({
       onChange: (change) =>
         "put" in change
           ? session.sendSide({ t: "review/note", note: change.put })
-          : session.sendSide({ t: "review/unnote", id: change.remove }),
+          : session.sendSide({ t: "review/unnote", id: change.remove, author: deviceId() }),
     });
     session.listenSide(receive, null, "review");
     // Once this viewer has the record and its own notes for it, ask the room for theirs (and where the
@@ -149,4 +169,20 @@ export function startReview(): string {
   history.replaceState(null, "", `?${q}`);
   start({ role: "host", mode: "online", roomId, name: myName() ?? "", record, review: true });
   return location.href;
+}
+
+/**
+ * Open the game just played as a replay, to add notes (UX 231). An online
+ * game's room is left (the game stays saved to resume); a hotseat game simply
+ * becomes its replay.
+ */
+export function reviewThisGame(): void {
+  const { record, mode, session } = useStore.getState();
+  if (
+    session &&
+    mode === "online" &&
+    !confirm("Reviewing leaves this game's room. The game stays saved, to resume from the start page.")
+  )
+    return;
+  useStore.getState().openReplay(record);
 }

@@ -254,6 +254,10 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
+  // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
+  const canControl = useCanControl();
+  const theirs = !!roller && attack.stage === "save" && !canControl(roller);
+  const rollerName = roller ? game.players[roller]?.name || "Your opponent" : "";
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
   const botAttacks = computerPlays(game, attacker?.owner);
@@ -316,7 +320,19 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       {canAct && botRolls && attack.stage !== "done" && <p className="muted">The computer is rolling…</p>}
       {canAct && !(botRolls && botAttacks) && (
         <div className="row">
-          {attack.stage !== "done" && !botRolls && (
+          {attack.stage !== "done" && !botRolls && theirs && (
+            <>
+              <span className="muted">{rollerName} rolls the saves</span>
+              <button
+                className="quiet small"
+                title="Dice hold no choices, so either player may roll them"
+                onClick={roll}
+              >
+                Roll for them
+              </button>
+            </>
+          )}
+          {attack.stage !== "done" && !botRolls && !theirs && (
             <>
               <button className="primary attack-roll" onClick={roll}>
                 {STAGE_LABEL[attack.stage]}

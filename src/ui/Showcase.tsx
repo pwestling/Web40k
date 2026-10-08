@@ -94,6 +94,8 @@ export function Showcase() {
     last.current = turn.round;
     // The battle starting on this screen: live, behind the delay, or a replay playing through it.
     if (was !== 0 || turn.round < 1 || played.has(initial) || useReel.getState().index !== null) return;
+    // Not for a review room: it goes over a game, it isn't one starting (UX 233).
+    if (useStore.getState().review) return;
     if (scrub !== null && !delaying() && !useStore.getState().record.events.length) return;
     played.add(initial);
     const s = useStore.getState();

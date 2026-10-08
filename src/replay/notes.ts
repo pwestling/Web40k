@@ -29,7 +29,24 @@ export interface ReplayNote {
   marks: NoteMark[];
   /** When it was written (ms). */
   at: number;
+  /** The device that wrote it (deviceId): only it edits or deletes the note in a review room (UX 234). */
+  author?: string;
 }
+
+/** A random id for this browser, kept across visits; it names whose notes are whose. */
+export function deviceId(): string {
+  try {
+    let id = localStorage.getItem("open-battle:device");
+    if (!id) localStorage.setItem("open-battle:device", (id = crypto.randomUUID().slice(0, 12)));
+    return id;
+  } catch {
+    return (fallbackId ??= crypto.randomUUID().slice(0, 12));
+  }
+}
+let fallbackId: string | undefined;
+
+/** Whether this device may change a note: its own, or one from before notes had authors. */
+export const ownNote = (note: ReplayNote) => !note.author || note.author === deviceId();
 
 /** A note being written at a moment, before it's saved. */
 export interface NoteDraft {
@@ -132,6 +149,7 @@ export function saveDraft(by: string, color: string): void {
     text: draft.text.trim().slice(0, MAX_TEXT),
     marks: draft.marks.slice(0, MAX_MARKS),
     at: Date.now(),
+    author: deviceId(),
   });
 }
 
@@ -192,6 +210,7 @@ export function cleanNote(n: unknown): ReplayNote | null {
     text: x.text.slice(0, MAX_TEXT),
     marks: x.marks.slice(0, MAX_MARKS).flatMap((m) => cleanMark(m) ?? []),
     at: Number.isFinite(x.at) ? x.at! : 0,
+    ...(typeof x.author === "string" ? { author: x.author.slice(0, 24) } : {}),
   };
 }
 
