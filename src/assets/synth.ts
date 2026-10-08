@@ -6,7 +6,7 @@ import type { MeshData } from "./types";
  * miniature files can't live in the repo. Height is in `units`
  * (25.4 per inch gives a millimetre file, like a print file).
  */
-export function synthMiniature(triangles: number, units = 25.4): MeshData {
+export function synthMiniature(triangles: number, units = 25.4, painted = false): MeshData {
   // A UV sphere with `rings` x `segments` quads has ~2 * rings * segments triangles.
   const n = Math.max(4, Math.round(Math.sqrt(triangles / 4)));
   const rings = n;
@@ -43,5 +43,16 @@ export function synthMiniature(triangles: number, units = 25.4): MeshData {
       indices[i++] = b + 1;
     }
   }
-  return { positions, indices };
+  if (!painted) return { positions, indices };
+  // Painted: uvs wrap the sphere (a seam where u goes 1 -> 0, like a real unwrap), and colour bands.
+  const uvs = new Float32Array((rings + 1) * (segments + 1) * 2);
+  const colors = new Uint8Array((rings + 1) * (segments + 1) * 4);
+  for (let r = 0, v = 0; r <= rings; r++)
+    for (let s = 0; s <= segments; s++, v++) {
+      uvs[v * 2] = s / segments;
+      uvs[v * 2 + 1] = r / rings;
+      const band = Math.floor((r / rings) * 5) % 2;
+      colors.set(band ? [200, 180, 150, 255] : [255, 255, 255, 255], v * 4);
+    }
+  return { positions, indices, uvs, colors };
 }

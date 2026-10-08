@@ -1,7 +1,7 @@
 import { Detailed } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { ModelAsset } from "../assets/types";
-import { shadowMaterial, useAssetGeometries } from "./Miniatures";
+import { shadowMaterial, useAssetLook } from "./Miniatures";
 
 /** Camera distances (inches) at which each level of detail takes over. */
 const LOD_DISTANCES = [0, 40, 90];
@@ -29,19 +29,23 @@ export function TerrainModel({
     raycast: () => null;
   }>;
 }) {
-  const geometries = useAssetGeometries(asset);
+  const { geometries, material, painted } = useAssetLook(asset);
+  // Painted terrain shows its paint; selected or x-rayed, the plain tint.
+  const own = painted && !xray && !selected;
   return (
     <group scale={scale}>
       <Detailed distances={LOD_DISTANCES.slice(0, geometries.length)}>
         {geometries.map((g, i) => (
-          <mesh key={i} geometry={g} receiveShadow {...handlers}>
-            <meshStandardMaterial
-              color={selected ? "#c08a3e" : "#8a8178"}
-              roughness={0.9}
-              transparent={xray}
-              opacity={xray ? 0.25 : 1}
-              depthWrite={!xray}
-            />
+          <mesh key={`${i}:${own}`} geometry={g} receiveShadow {...handlers} {...(own ? { material } : {})}>
+            {!own && (
+              <meshStandardMaterial
+                color={selected ? "#c08a3e" : "#8a8178"}
+                roughness={0.9}
+                transparent={xray}
+                opacity={xray ? 0.25 : 1}
+                depthWrite={!xray}
+              />
+            )}
           </mesh>
         ))}
       </Detailed>

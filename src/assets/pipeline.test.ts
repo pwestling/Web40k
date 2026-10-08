@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { processMesh, ready } from "./pipeline";
+import { processMesh, ready, weld } from "./pipeline";
 import { synthMiniature } from "./synth";
 import { BUDGETS } from "./types";
 
@@ -63,5 +63,32 @@ describe("rules proxies", () => {
     // Hull is z up: its top is the rock's height.
     const zs = ruin.hull!.filter((_, i) => i % 3 === 2);
     expect(Math.max(...zs)).toBeCloseTo(ruin.bounds.max[1], 0);
+  });
+});
+
+describe("painted models", () => {
+  it("keeps uvs and colours through every level, within budget, and leaves the proxy plain", () => {
+    const asset = processMesh(synthMiniature(200_000, 25.4, true), { id: "p", name: "p", kind: "miniature" });
+    asset.lods.forEach((l, i) => {
+      const vertices = l.positions.length / 3;
+      expect(l.uvs!.length).toBe(vertices * 2);
+      expect(l.colors!.length).toBe(vertices * 4);
+      expect(l.indices.length / 3).toBeLessThanOrEqual(BUDGETS.miniature.lods[i]! * 1.1);
+    });
+    expect(asset.proxy.uvs).toBeUndefined();
+    expect(asset.proxy.colors).toBeUndefined();
+    // Both colour bands survive simplification.
+    const tints = new Set<number>();
+    const last = asset.lods.at(-1)!.colors!;
+    for (let v = 0; v < last.length; v += 4) tints.add(last[v]!);
+    expect(tints.has(255) && tints.has(200)).toBe(true);
+  });
+
+  it("welds by position and paint: the uv seam stays split", () => {
+    const raw = synthMiniature(2_000, 25.4, true);
+    const plain = weld({ positions: raw.positions.slice(), indices: raw.indices });
+    const painted = weld({ ...raw, positions: raw.positions.slice() });
+    // The seam column (u = 0 and u = 1 at one position) keeps both copies.
+    expect(painted.positions.length).toBeGreaterThan(plain.positions.length);
   });
 });

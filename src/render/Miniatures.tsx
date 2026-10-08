@@ -11,13 +11,16 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   Quaternion,
+  SRGBColorSpace,
   Sphere,
+  Texture,
   Vector3,
 } from "three";
 import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
 import type { Model, ModelFigure, Vec2 } from "../core";
 import { useAssets } from "../assets/store";
 import { poseOf } from "./feel";
+import { toLinear } from "../assets/paint";
 import type { ModelAsset } from "../assets/types";
 
 /** Top of the plastic base the figure stands on (see ModelInstances). */
@@ -100,37 +103,113 @@ export function toGeometry(mesh: ModelAsset["lods"][number]): BufferGeometry {
   const g = new BufferGeometry();
   g.setAttribute("position", new BufferAttribute(mesh.positions, 3));
   g.setIndex(new BufferAttribute(mesh.indices, 1));
+  if (mesh.uvs) g.setAttribute("uv", new BufferAttribute(mesh.uvs, 2));
+  if (mesh.colors) {
+    // Stored as sRGB bytes; shaders want linear.
+    const linear = new Float32Array((mesh.colors.length / 4) * 3);
+    for (let v = 0; v < linear.length / 3; v++)
+      for (let c = 0; c < 3; c++) linear[v * 3 + c] = SRGB_TO_LINEAR[mesh.colors[v * 4 + c]!]!;
+    g.setAttribute("color", new BufferAttribute(linear, 3));
+  }
   // Creased normals keep armour plates flat and edges sharp after decimation.
   const creased = toCreasedNormals(g, CREASE);
   g.dispose();
   return creased;
 }
 
-/**
- * Render geometry per asset, shared by everything that draws it (figures,
- * and every terrain piece using the same upload) and freed when the last
- * user goes. Creased normals make each level about 3x its indexed size, so
- * building one copy per piece adds up quickly.
- */
-const shared = new Map<string, { geometries: BufferGeometry[]; users: number }>();
+const SRGB_TO_LINEAR = Float32Array.from({ length: 256 }, (_, i) => toLinear(i / 255));
 
-export function useAssetGeometries(asset: ModelAsset): BufferGeometry[] {
-  const geometries = useMemo(() => {
+interface Look {
+  geometries: BufferGeometry[];
+  /** Painted assets: their own material (texture and vertex colours). Others share the grey one. */
+  material: MeshStandardMaterial;
+  painted: boolean;
+  dispose(): void;
+}
+
+/**
+ * Render geometry and material per asset, shared by everything that draws it
+ * (figures, and every terrain piece using the same upload) and freed when
+ * the last user goes. Creased normals make each level about 3x its indexed
+ * size, so building one copy per piece adds up quickly.
+ */
+const shared = new Map<string, { look: Look; users: number; timer?: ReturnType<typeof setTimeout> }>();
+
+function makeLook(asset: ModelAsset): Look {
+  const geometries = asset.lods.map(toGeometry);
+  const top = asset.lods[0];
+  const painted = !!(asset.texture || top?.colors);
+  if (!painted)
+    return { geometries, material, painted, dispose: () => geometries.forEach((g) => g.dispose()) };
+  const own = new MeshStandardMaterial({
+    color: "#ffffff",
+    roughness: 0.75,
+    metalness: 0.05,
+    vertexColors: !!top?.colors,
+  });
+  let texture: Texture | null = null;
+  let gone = false;
+  if (asset.texture) {
+    const { bytes, mime } = asset.texture;
+    void createImageBitmap(new Blob([bytes as BlobPart], { type: mime }))
+      .then((bitmap) => {
+        if (gone) return bitmap.close();
+        texture = new Texture(bitmap);
+        // glTF uvs: v runs down the image, as ImageBitmap rows do.
+        texture.flipY = false;
+        texture.colorSpace = SRGBColorSpace;
+        texture.anisotropy = 4;
+        texture.needsUpdate = true;
+        own.map = texture;
+        own.needsUpdate = true;
+      })
+      .catch(() => {
+        // An image this browser can't decode: the figure keeps its colours.
+      });
+  }
+  return {
+    geometries,
+    material: own,
+    painted,
+    dispose() {
+      gone = true;
+      geometries.forEach((g) => g.dispose());
+      own.dispose();
+      if (texture) {
+        (texture.image as ImageBitmap).close();
+        texture.dispose();
+      }
+    },
+  };
+}
+
+export function useAssetLook(asset: ModelAsset): Look {
+  const look = useMemo(() => {
     let entry = shared.get(asset.id);
-    if (!entry) shared.set(asset.id, (entry = { geometries: asset.lods.map(toGeometry), users: 0 }));
-    return entry.geometries;
+    if (!entry) shared.set(asset.id, (entry = { look: makeLook(asset), users: 0 }));
+    return entry.look;
   }, [asset]);
   useEffect(() => {
     const entry = shared.get(asset.id);
     if (!entry) return;
     entry.users++;
+    clearTimeout(entry.timer);
     return () => {
       if (--entry.users > 0) return;
-      entry.geometries.forEach((g) => g.dispose());
-      shared.delete(asset.id);
+      // Freed a moment later, so a remount (React's dev double effects, a figure swapped
+      // between units) keeps the loaded texture instead of throwing it away.
+      entry.timer = setTimeout(() => {
+        if (entry.users > 0) return;
+        entry.look.dispose();
+        shared.delete(asset.id);
+      }, 1000);
     };
   }, [asset]);
-  return geometries;
+  return look;
+}
+
+export function useAssetGeometries(asset: ModelAsset): BufferGeometry[] {
+  return useAssetLook(asset).geometries;
 }
 
 const m4 = new Matrix4();
@@ -155,7 +234,7 @@ function AssetInstances({
   positions: Record<string, Vec2>;
   heights: Record<string, number>;
 }) {
-  const geometries = useAssetGeometries(asset);
+  const { geometries, material: look } = useAssetLook(asset);
   const lodRefs = useRef<(InstancedMesh | null)[]>([]);
   const shadowRef = useRef<InstancedMesh | null>(null);
   const capacity = entries.length;
@@ -222,7 +301,7 @@ function AssetInstances({
           ref={(m) => {
             lodRefs.current[lod] = m;
           }}
-          args={[g, material, capacity]}
+          args={[g, look, capacity]}
           frustumCulled={false}
           receiveShadow
           raycast={() => null}
