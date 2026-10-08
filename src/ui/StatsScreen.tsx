@@ -2,7 +2,9 @@ import { useEffect, useMemo } from "react";
 import { branchGame } from "./Branch";
 import { systemOf, type GameState } from "../core";
 import { momentsOf } from "../core/moments";
-import { playMoment, useReel } from "../broadcast/Moments";
+import { playMoment } from "../broadcast/Moments";
+import { useReel } from "../broadcast/reel";
+import { BROADCAST } from "../broadcast/broadcast";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -56,9 +58,11 @@ export function StatsScreen() {
         <span className="muted">
           {data.rounds} round{data.rounds === 1 ? "" : "s"}
         </span>
-        <button className="quiet" title="Close" onClick={close}>
-          ✕
-        </button>
+        {!BROADCAST && (
+          <button className="quiet" title="Close" onClick={close}>
+            ✕
+          </button>
+        )}
       </div>
 
       <section>
@@ -82,18 +86,23 @@ export function StatsScreen() {
             {moments.map((m) => (
               <li key={`${m.kind}-${m.seq}-${m.player ?? ""}`}>
                 {m.kind === "rare" && <span className="rare-star">★</span>} {m.when} ·{" "}
-                <button
-                  className="link"
-                  title="Watch it again on the table"
-                  onClick={() => {
-                    close();
-                    playMoment(m);
-                  }}
-                >
+                {/* The stream view is read-only (UX 143). */}
+                {BROADCAST ? (
                   <strong>{m.title}</strong>
-                </button>
+                ) : (
+                  <button
+                    className="link"
+                    title="Watch it again on the table"
+                    onClick={() => {
+                      close();
+                      playMoment(m);
+                    }}
+                  >
+                    <strong>{m.title}</strong>
+                  </button>
+                )}
                 : {m.line}{" "}
-                {m.kind !== "mvp" && (
+                {m.kind !== "mvp" && !BROADCAST && (
                   <button
                     className="quiet small"
                     title="A new game on this screen, just before this moment"

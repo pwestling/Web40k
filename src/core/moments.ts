@@ -17,8 +17,10 @@ export type MomentKind = "rare" | "swing" | "wipe" | "last" | "charge" | "giant"
 
 export interface Moment {
   kind: MomentKind;
-  /** The event to jump to (the moment happens as it is shown). */
+  /** Where the moment starts: replays play it from here... */
   seq: number;
+  /** ...to here (the same event for a single roll or move). */
+  end: number;
   round: number;
   /** "Round 2 · Shooting". */
   when: string;
@@ -73,7 +75,19 @@ export function momentCandidates(record: GameRecord): Moment[] {
   const out: Moment[] = [];
   let state = record.initial;
   // The run going on, and the target's models standing when it began.
-  let run = null as { key: string; seq: number; unit?: UnitId; target?: UnitId; standing: number } | null;
+  let run = null as {
+    key: string;
+    seq: number;
+    last: number;
+    unit?: UnitId;
+    target?: UnitId;
+    standing: number;
+  } | null;
+  // Every attack or procedure, first event to last, so a moment can play through to its result.
+  const runs: { seq: number; end: number }[] = [];
+  const close = (r: NonNullable<typeof run>) => runs.push({ seq: r.seq, end: r.last });
+  // When each unit last rolled its charge, so a charge plays from the roll.
+  const chargeRolled = new Map<UnitId, number>();
   // Units down to one model: since when, and how many enemy attacks it has lived through since.
   const alone = new Map<UnitId, { seq: number; round: number; survived: number }>();
   const killed: Record<UnitId, { units: Set<UnitId>; pts: number; seq: number }> = {};
@@ -98,17 +112,26 @@ export function momentCandidates(record: GameRecord): Moment[] {
     const act = actor(state);
     if (act && act.key !== run?.key) {
       // A new attack: a unit on its own that was targeted by the last one has lived through it.
-      if (run) survive(run, state);
+      if (run) {
+        survive(run, state);
+        close(run);
+      }
       run = {
         key: act.key,
         seq,
+        last: seq,
         unit: act.unit,
         target: act.target,
         standing: act.target ? aliveIn(before, act.target) : 0,
       };
     } else if (!act && run) {
       survive(run, state);
+      close(run);
       run = null;
+    } else if (run) run.last = seq;
+    for (const [id, u] of Object.entries(state.units)) {
+      const rolled = u.status?.charge;
+      if (rolled !== undefined && rolled !== before.units[id]?.status?.charge) chargeRolled.set(id, seq);
     }
 
     // Charges: the longest one that struck home, if it needed 9" or more.
@@ -123,7 +146,8 @@ export function momentCandidates(record: GameRecord): Moment[] {
       const owner = state.units[charge.unitId]?.owner;
       longest = {
         kind: "charge",
-        seq,
+        seq: chargeRolled.get(charge.unitId) ?? seq,
+        end: seq,
         round,
         when: when(state),
         title: charge.distance >= 11.5 ? `${Math.round(charge.distance)}-inch charge` : "The long charge",
@@ -160,6 +184,7 @@ export function momentCandidates(record: GameRecord): Moment[] {
           out.push({
             kind: "wipe",
             seq: run.seq,
+            end: seq,
             round,
             when: when(state),
             title: "Gone in one go",
@@ -174,6 +199,7 @@ export function momentCandidates(record: GameRecord): Moment[] {
           out.push({
             kind: "giant",
             seq: run?.seq ?? seq,
+            end: seq,
             round,
             when: when(state),
             title: "Giant-killer",
@@ -186,6 +212,14 @@ export function momentCandidates(record: GameRecord): Moment[] {
     }
   }
 
+  if (run) close(run);
+  // Plays through to the end of the attack it is part of.
+  const through = (m: Moment): Moment => {
+    const r = runs.find((r) => r.seq <= m.seq && m.seq <= r.end);
+    return r && r.end > m.end ? { ...m, end: r.end } : m;
+  };
+  for (const [i, m] of out.entries()) out[i] = through(m);
+
   // A lone model still standing at the end.
   for (const [unit, lone] of alone)
     if (aliveIn(state, unit) === 1) out.push(lastStanding(state, unit, lone, stats.rounds, true));
@@ -196,6 +230,7 @@ export function momentCandidates(record: GameRecord): Moment[] {
     out.push({
       kind: "rare",
       seq: r.seq,
+      end: r.seq,
       round: Math.max(1, r.round),
       when: whenAt(record, r.seq),
       title: r.title,
@@ -216,20 +251,23 @@ export function momentCandidates(record: GameRecord): Moment[] {
       const attacker = swing.title.split(" at ")[0];
       const target = swing.title.split(" at ")[1] ?? "the enemy";
       const other = stats.players.find((p) => p.id !== swing.player)?.id;
-      out.push({
-        kind: "swing",
-        seq: swing.seq,
-        round: swing.round,
-        when: whenAt(record, swing.seq),
-        title: diff > 0 ? "The volley that broke them" : "Not a scratch",
-        line:
-          diff > 0
-            ? `${attacker} killed ${swing.actual} of ${target} (about ${Math.round(swing.expected)} expected)`
-            : `${target} shrugged off ${attacker}: ${swing.actual} lost, about ${Math.round(swing.expected)} expected`,
-        player: diff > 0 ? swing.player : other,
-        units: [],
-        score: RANK.swing + Math.abs(diff),
-      });
+      out.push(
+        through({
+          kind: "swing",
+          seq: swing.seq,
+          end: swing.seq,
+          round: swing.round,
+          when: whenAt(record, swing.seq),
+          title: diff > 0 ? "The volley that broke them" : "Not a scratch",
+          line:
+            diff > 0
+              ? `${attacker} killed ${swing.actual} ${target} (about ${Math.round(swing.expected)} expected)`
+              : `${target} shrugged off ${attacker}: ${swing.actual} lost, about ${Math.round(swing.expected)} expected`,
+          player: diff > 0 ? swing.player : other,
+          units: [],
+          score: RANK.swing + Math.abs(diff),
+        }),
+      );
     }
   }
 
@@ -249,6 +287,7 @@ export function momentCandidates(record: GameRecord): Moment[] {
       out.push({
         kind: "turning",
         seq,
+        end: seq,
         round: best + 1,
         when: `Round ${best + 1}`,
         title: "The turning point",
@@ -270,6 +309,7 @@ export function momentCandidates(record: GameRecord): Moment[] {
     out.push({
       kind: "mvp",
       seq: k.seq,
+      end: k.seq,
       round: Math.max(1, state.turn.round),
       when: "The whole game",
       title: `${p.name}'s most valuable unit`,
@@ -300,6 +340,7 @@ function lastStanding(
   return {
     kind: "last",
     seq: lone.seq,
+    end: lone.seq,
     round: lone.round,
     when: `Round ${lone.round}`,
     title: "Last one standing",

@@ -1,25 +1,17 @@
 import { rareMoments } from "../core";
 import { momentsOf } from "../core/moments";
 import { playMoment, useMomentsAllowed } from "../broadcast/Moments";
+import { delaying } from "../broadcast/broadcast";
 import { useHold } from "./hold";
 import { replayRoll } from "./hooks";
 import { useEffect, useMemo, useState } from "react";
-import type { GameRecord } from "../core";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
+import { pace } from "./pace";
 import { BranchButton } from "./Branch";
 import { readGame, type Highlight } from "./highlights";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
-
-/** How long playback lingers on an event: dice and phase changes get time to read. */
-function pace(record: GameRecord, seq: number): number {
-  const type = record.events.find((e) => e.seq === seq)?.event.type ?? "";
-  if (type === "attack/roll" || type === "dice/roll") return 1000;
-  if (type.startsWith("turn/")) return 900;
-  if (type === "unit/add") return 150;
-  return 450;
-}
 
 /** Phase changes on the replay track, with the first one of each round marked "R1", "R2"... */
 function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string }[] {
@@ -209,7 +201,8 @@ export function ReplayBar() {
           {scrub === null ? "Live" : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? "Setup")}
         </span>
         {/* What if: a new game from the point on the track (UX: roadmap #14). */}
-        {scrub !== null && last > record.initial.seq && <BranchButton seq={pos} />}
+        {/* Not for a viewer held back by the delay: it would branch from where the game really is (UX 146). */}
+        {scrub !== null && last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
         {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
         {!session && <button onClick={() => location.reload()}>Close replay</button>}
       </div>

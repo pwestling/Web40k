@@ -2017,3 +2017,9 @@ body.broadcast .caption {
     max-width: calc(100vw - 16px);
   }
 }
+
+/* The end-of-game reel: a clean stage under the moment cards (PX-4 tuning). */
+body.reeling
+  :is(.hud, .unitcard, .attack, .play, .terrainpanel, .caption, .replaybar, .talk-dock, .broadcast-controls) {
+  display: none;
+}

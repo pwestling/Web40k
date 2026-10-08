@@ -31,7 +31,8 @@ export function RoomCard() {
     peers.includes(id) && (peerMissing[id]?.length ?? 0) > 0 && !game.players[id]?.rulesMismatch;
   const joiners = peers.filter((id) => !seated.some((p) => p.id === id) && fetching(id)).length;
   const watchers = peers.filter((id) => !seated.some((p) => p.id === id)).length;
-  const watching = watchers - joiners;
+  // A spectator's own screen isn't among its peers: count it too (UX 146).
+  const watching = watchers - joiners + (net?.role === "spectator" ? 1 : 0);
   const state = (p: Player) =>
     p.id === selfId ? "you" : peers.includes(p.id) ? "connected" : "reconnecting…";
   return (

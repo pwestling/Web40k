@@ -136,7 +136,16 @@ function hash(text: string): number {
 }
 
 /** This peer's name from the lobby, for when it isn't seated. */
-function myName(): string | undefined {
+/** Remember what this screen calls itself (spectators name themselves to commentate). */
+export function setMyName(name: string): void {
+  try {
+    localStorage.setItem("open-battle:name", name);
+  } catch {
+    // Private mode: the name lasts as long as nothing else needs it.
+  }
+}
+
+export function myName(): string | undefined {
   try {
     return localStorage.getItem("open-battle:name") ?? undefined;
   } catch {

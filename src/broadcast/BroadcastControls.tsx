@@ -1,9 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { momentsOf } from "../core/moments";
 import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
 import { castMoment } from "./Moments";
-import { currentCaster, useTalk } from "../talk/talk";
+import { currentCaster, myName, setMyName, useTalk } from "../talk/talk";
 import { CASTER_FRESH_MS, DELAYS, useBroadcast, useNow } from "./broadcast";
 
 const delayLabel = (s: number) => (s === 0 ? "Live" : s < 60 ? `${s} s behind` : `${s / 60} min behind`);
@@ -25,6 +25,13 @@ export function BroadcastControls() {
   // Once the game is over the commentator can bring up any moment for the audience.
   const over = useStore((s) => battleOver(s.game));
   const record = useStore((s) => s.record);
+  // Commentators go on air under a name (UX 145): asked for once, if this screen has none.
+  const [naming, setNaming] = useState<string | null>(null);
+  const goOnAir = (name: string) => {
+    setMyName(name.trim());
+    setNaming(null);
+    useBroadcast.setState({ casting: true, follow: false });
+  };
   const moments = useMemo(() => (casting && over ? momentsOf(record) : []), [casting, over, record]);
   const streamLink = () => {
     const q = new URLSearchParams(location.search);
@@ -41,7 +48,10 @@ export function BroadcastControls() {
         <button
           className={casting ? "on" : ""}
           title="Your camera goes out to everyone watching who follows it; draw with Ping, Arrow and Area"
-          onClick={() => useBroadcast.setState({ casting: !casting, follow: false })}
+          onClick={() => {
+            if (!casting && !myName()) setNaming(naming === null ? "" : null);
+            else useBroadcast.setState({ casting: !casting, follow: false });
+          }}
         >
           🎙 {casting ? "Commentating" : "Commentate"}
         </button>
@@ -93,6 +103,27 @@ export function BroadcastControls() {
           Stream view ↗
         </button>
       </div>
+      {naming !== null && (
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (naming.trim()) goOnAir(naming);
+          }}
+        >
+          <input
+            autoFocus
+            aria-label="Your name on air"
+            placeholder="Your name on air"
+            maxLength={24}
+            value={naming}
+            onChange={(e) => setNaming(e.target.value)}
+          />
+          <button type="submit" className="primary" disabled={!naming.trim()}>
+            Go on air
+          </button>
+        </form>
+      )}
     </div>
   );
 }

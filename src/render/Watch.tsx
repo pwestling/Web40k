@@ -18,6 +18,7 @@ import { markCharge } from "./charges";
 import { chargeFor } from "../core/charge";
 import { delaying, followed } from "../broadcast/broadcast";
 import { CasualtyPiles, Topple, TOPPLE_MS } from "./Casualties";
+import { useReel } from "../broadcast/reel";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
@@ -425,7 +426,7 @@ export function WatchEffects() {
   } | null;
   // Once the action has been quiet a while, it eases back out to the whole table.
   const table = game.table;
-  useFrame(() => {
+  useFrame((_, dt) => {
     // 0.15" toward the charge's target and back over 200 ms; 3D only, never with reduced motion.
     const n = nudge.current;
     if (n && controls && useStore.getState().view === "3d" && !reducedMotion()) {
@@ -449,14 +450,17 @@ export function WatchEffects() {
     const f = focus.current;
     if (!f) return;
     const goal = new Vector3(f.x, 0, f.y);
-    const delta = goal.sub(controls.target).multiplyScalar(0.06);
+    // Eased by time, not frames; a moment of the game cuts there in well under 600 ms (PX-4 tuning).
+    const reel = useReel.getState();
+    const ease = 1 - Math.exp(-Math.min(dt, 0.1) / (reel.index !== null || reel.replay ? 0.12 : 0.27));
+    const delta = goal.sub(controls.target).multiplyScalar(ease);
     // Distance: close enough to see the action (both shooter and target), or the whole table.
     const k = Math.max(table.width / 60, table.depth / 44);
     const full = Math.hypot(52, 44) * k;
     const want = f.span === null ? full : Math.min(full, Math.max(22, f.span * 1.6 + 14));
     const offset = controls.object.position.clone().sub(controls.target);
     const len = offset.length();
-    const step = (want - len) * 0.06;
+    const step = (want - len) * ease;
     if (delta.lengthSq() < 1e-4 && Math.abs(want - len) < 0.05) {
       focus.current = null;
       return;
