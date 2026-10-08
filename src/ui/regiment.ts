@@ -12,6 +12,7 @@ import {
 } from "../core";
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
+import { opposed } from "../core/teams";
 
 const SPECIAL = new Set(["charge", "door", "flee", "pursue"]);
 
@@ -54,7 +55,7 @@ export function moveBudget(game: GameState, unit: Unit): MoveBudget {
   const nearestEnemy = Math.min(
     Infinity,
     ...Object.values(game.units)
-      .filter((u) => u.owner !== unit.owner && u.status?.fleeing !== true)
+      .filter((u) => opposed(game, u.owner, unit.owner) && u.status?.fleeing !== true)
       .map((u) => aliveModels(game, u))
       .filter((ms) => ms.length)
       .map((ms) => unitDistance(mine, ms)),

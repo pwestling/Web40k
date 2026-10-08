@@ -22,6 +22,7 @@ import { useReel } from "../broadcast/reel";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
+import { opposed } from "../core/teams";
 
 /**
  * Watch mode: what makes a game readable to someone who didn't make the
@@ -611,7 +612,7 @@ function blowFrom(game: GameState, victim: Model | undefined): Vec2 | null {
     };
   let best: Model | null = null;
   for (const m of Object.values(game.models))
-    if (!m.destroyed && m.owner !== victim.owner)
+    if (!m.destroyed && opposed(game, m.owner, victim.owner))
       if (
         !best ||
         Math.hypot(m.position.x - victim.position.x, m.position.y - victim.position.y) <

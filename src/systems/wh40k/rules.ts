@@ -25,6 +25,7 @@ import {
   type Unit,
   type Vec2,
 } from "../../core";
+import { opposed, sidePlayers } from "../../core/teams";
 
 /** 11th edition values, from the research notes. */
 export const ENGAGEMENT_RANGE = 2;
@@ -366,7 +367,7 @@ export function incoherentModels(models: Model[]): Set<string> {
 export function engagedWith(state: GameState, unit: Unit): string[] {
   const mine = aliveModels(state, unit);
   return Object.values(state.units)
-    .filter((u) => u.owner !== unit.owner)
+    .filter((u) => opposed(state, u.owner, unit.owner))
     .filter((u) => {
       const theirs = aliveModels(state, u);
       return mine.some((m) =>
@@ -383,6 +384,11 @@ export function objectiveControl(
   state: GameState,
 ): { id: string; oc: Record<string, number>; controller: string | null }[] {
   const markerRadius = OBJECTIVE_MARKER_MM / 25.4 / 2;
+  // Teammates' OC adds up: a side's total goes to its first player.
+  const lead = (id: string) => {
+    const seat = state.players[id]?.seat;
+    return (seat === undefined ? undefined : sidePlayers(state, seat)[0]?.id) ?? id;
+  };
   return state.objectives.map((o) => {
     const oc: Record<string, number> = {};
     for (const m of Object.values(state.models)) {
@@ -392,7 +398,7 @@ export function objectiveControl(
       const d = Math.hypot(m.position.x - o.position.x, m.position.y - o.position.y) - r - markerRadius;
       if (d > OBJECTIVE_RANGE + 1e-6) continue;
       const value = unit?.status?.battleShocked ? 0 : (num(m.profile?.chars.OC) ?? 1);
-      oc[m.owner] = (oc[m.owner] ?? 0) + value;
+      oc[lead(m.owner)] = (oc[lead(m.owner)] ?? 0) + value;
     }
     const sorted = Object.entries(oc).sort((a, b) => b[1] - a[1]);
     const controller = sorted[0] && sorted[0][1] > 0 && sorted[0][1] !== sorted[1]?.[1] ? sorted[0][0] : null;

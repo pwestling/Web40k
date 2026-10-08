@@ -2,6 +2,7 @@ import { unitGap, type GameState, type TrayRoll, type Unit } from "../core";
 import { systemModule } from "../systems";
 import { aliveModels } from "../systems/wh40k/rules";
 import { moveBudget } from "./regiment";
+import { opposed } from "../core/teams";
 
 /**
  * A decisive roll: a charge, a summed test (leadership, break) or the save
@@ -96,7 +97,7 @@ function chargeTarget(state: GameState, unit: Unit): Unit | undefined {
   let best: Unit | undefined;
   let gap = Infinity;
   for (const u of Object.values(state.units)) {
-    if (u.owner === unit.owner || !aliveModels(state, u).length) continue;
+    if (!opposed(state, u.owner, unit.owner) || !aliveModels(state, u).length) continue;
     const d = unitGap(state, unit, u);
     if (d < gap) [best, gap] = [u, d];
   }

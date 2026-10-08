@@ -1,3 +1,4 @@
+import { holdTheField } from "../../missions/holdTheField";
 import { fsd } from "../../core/content/examples/fsd";
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
@@ -14,5 +15,6 @@ export const fsdModule: GameModule<SystemModule> = {
     sample: fsdSample,
     layout: (t) => fsdLayout(t.width, t.depth),
     templateCategory: FSD_CATEGORIES,
+    missions: [holdTheField()],
   },
 };

@@ -1,3 +1,4 @@
+import { holdTheField } from "../../missions/holdTheField";
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
 import { characterActions } from "./characters";
@@ -26,6 +27,7 @@ export const conquestModule: GameModule<SystemModule> = {
     rankRules: () => ({ width: 2, maxBonus: 0 }),
     chargeRoll: { count: 1, sides: 6, keep: "sum" },
     panel: CommandPanel,
+    missions: [holdTheField()],
     leaving: leavingCommand,
   },
 };

@@ -16,6 +16,7 @@ import {
 import { blockSlots } from "../regiment";
 import { callFor } from "./calls";
 import type { Effect, EffectAction, Expr, GameSystem, Id, Procedure, RuleDef, RuleRef, Step } from "./schema";
+import { opposed } from "../teams";
 
 /**
  * The procedure runner: executes a system's dice pipelines (an attack
@@ -1069,7 +1070,7 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
     const first = roles.find((r) => "unit" in r) as { unit: string } | undefined;
     const owner = first ? env.state.units[first.unit]?.owner : undefined;
     if (who !== "opponent") return owner;
-    return Object.keys(env.state.players).find((p) => p !== owner);
+    return Object.keys(env.state.players).find((p) => opposed(env.state, p, owner));
   };
   for (const a of actions) {
     switch (a.do) {

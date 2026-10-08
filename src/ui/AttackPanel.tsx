@@ -15,6 +15,7 @@ import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
+import { opposed } from "../core/teams";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -46,7 +47,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
   // Closest models carrying the weapon; enemies out of its reach go last and say so.
   const shooters = weapon ? carriers(game, attacker, weapon.id) : aliveModels(game, attacker);
   const enemies = Object.values(game.units)
-    .filter((u) => u.owner !== attacker.owner && aliveModels(game, u).length > 0)
+    .filter((u) => opposed(game, u.owner, attacker.owner) && aliveModels(game, u).length > 0)
     .map((u) => {
       const distance = unitDistance(shooters, aliveModels(game, u));
       return { unit: u, distance, out: reach !== null && distance > reach };

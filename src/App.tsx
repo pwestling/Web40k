@@ -15,6 +15,7 @@ import { ReplayTitle, RoundCard } from "./ui/RoundCard";
 import { StatsScreen } from "./ui/StatsScreen";
 import { systemModule } from "./systems";
 import { PackageCards } from "./ui/Packages";
+import { ScorePanel } from "./ui/Missions";
 import { PackagePanel } from "./ui/PackagePanel";
 import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
@@ -126,6 +127,7 @@ export function App() {
           {!editing && <PlayPanel />}
           {!editing && SystemPanel && <SystemPanel />}
           {!editing && <PackagePanel />}
+          {!editing && <ScorePanel />}
           {/* While the dice tray rolls, the panels show the table before the roll: no clicking ahead. */}
           <div className={holding ? "panels holding" : "panels"} style={{ display: "contents" }}>
             {editing ? <TerrainPanel /> : attacking ? <AttackPanel /> : <UnitCard />}

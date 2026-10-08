@@ -7,6 +7,7 @@ import { applyEvent } from "./reducer";
 import { followUpNeed, passChance, procedureOdds, recordLuck, targetModels } from "./odds";
 import type { Step } from "./content/schema";
 import type { GameState, Model, PlayerId, UnitId } from "./types";
+import { opposed, sidePlayers } from "./teams";
 
 /**
  * After-game numbers, worked out from the event log alone (so a replay gives
@@ -250,16 +251,16 @@ export function gameStats(record: GameRecord): GameStats {
         if (died) acting.slain++;
       }
       const by = dealer ? unitStats(state, dealer) : undefined;
-      if (by && by.owner !== m.owner) {
+      if (by && opposed(state, by.owner, m.owner)) {
         by.dealt += Math.max(0, gained);
         if (died) by.slain++;
       }
       if (died && unitId) {
         const unit = state.units[unitId]!;
         const each = (unit.sheet?.points ?? 0) / Math.max(1, unit.modelIds.length);
-        // Credited to every other seated player (in a two-player game, the opponent).
+        // Credited to each other side (in a two-player game, the opponent), once per side.
         for (const p of Object.values(state.players))
-          if (p.seat !== undefined && p.id !== m.owner) {
+          if (p.seat !== undefined && opposed(state, p.id, m.owner) && sidePlayers(state, p.seat)[0] === p) {
             const row = (points[p.id] ??= []);
             row[round - 1] = (row[round - 1] ?? 0) + each;
           }

@@ -32,7 +32,9 @@ export function TopBar() {
   // The system's own reasons to think twice before moving on (Conquest: reinforcements not in).
   const leaving = deploying ? [] : (systemModule(game.system).leaving?.(game) ?? []);
   const warning = notReady.length
-    ? `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
+    ? notReady.length > 2
+      ? `${notReady.length} players aren't ready yet`
+      : `${notReady.join(" and ")} ${notReady.length > 1 ? "aren't" : "isn't"} ready yet`
     : leaving.join(" · ");
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still

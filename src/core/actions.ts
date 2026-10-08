@@ -78,6 +78,8 @@ export type Intent =
     }
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
+  /** A player picks the name others see (invite joiners arrive as "Player N"). */
+  | { type: "player/rename"; player: PlayerId; name: string }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -110,6 +112,18 @@ export type Intent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
+  | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
+  /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
+  | {
+      type: "score/confirm";
+      key: string;
+      seat: number;
+      round: number;
+      vp: number;
+      why: string;
+      skipped?: boolean;
+    }
   | { type: "turn/next" }
   | { type: "turn/prev" }
   | { type: "turn/pass" }
@@ -192,6 +206,7 @@ export type GameEvent =
   | { type: "dice/roll"; roll: DiceRoll }
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
+  | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -223,6 +238,19 @@ export type GameEvent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
+  | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
+  /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
+  | {
+      type: "score/confirm";
+      key: string;
+      seat: number;
+      round: number;
+      vp: number;
+      why: string;
+      skipped?: boolean;
+      by: PlayerId;
+    }
   /** `seed` drives any dice rolled on the way, e.g. activation dice at the start of a round. */
   | { type: "turn/next"; seed?: number }
   | { type: "turn/prev" }
@@ -356,6 +384,12 @@ export function resolveIntent(
     }
     case "player/join":
       return intent.player.id === from ? intent : null;
+    case "player/rename": {
+      const name = intent.name.trim().slice(0, 32);
+      return state?.players[intent.player] && intent.player === from && name
+        ? { type: "player/rename", player: intent.player, name }
+        : null;
+    }
     case "player/claim":
       return state?.players[intent.player] && intent.player !== from
         ? { type: "player/claim", player: intent.player, by: from }
@@ -524,6 +558,14 @@ export function resolveIntent(
       const unit = state?.units[intent.unitId];
       if (!unit || !unit.sheet?.abilities.some((a) => a.name === intent.ability)) return null;
       return intent;
+    }
+    case "mission/set":
+      return state?.players[from]?.seat !== undefined ? intent : null;
+    case "score/confirm": {
+      // A side's own players confirm its score; anyone seated may in a hotseat game (from is the active player).
+      if (!state || state.players[from]?.seat === undefined) return null;
+      if (state.scores?.some((s) => s.key === intent.key)) return null;
+      return { ...intent, vp: Math.round(intent.vp), by: from };
     }
     case "secret/commit": {
       if (!state?.players[intent.player] || intent.player !== from || !intent.secrets.length) return null;

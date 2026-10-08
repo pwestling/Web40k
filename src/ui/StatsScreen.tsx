@@ -5,6 +5,7 @@ import { momentsOf } from "../core/moments";
 import { playMoment } from "../broadcast/Moments";
 import { useReel } from "../broadcast/reel";
 import { BROADCAST } from "../broadcast/broadcast";
+import { Result } from "./Missions";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -64,6 +65,8 @@ export function StatsScreen() {
           </button>
         )}
       </div>
+
+      <Result />
 
       <section>
         <h4>Points destroyed per round</h4>

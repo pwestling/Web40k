@@ -329,6 +329,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${game.players[event.player.id]?.name ?? event.player.name} joined`;
     case "player/claim":
       return `${nameOf(event.by)} reconnected`;
+    case "player/rename":
+      return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
       // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.
@@ -528,7 +530,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const rule = b.droppedScript
         ? ` "${b.droppedScript}" was waiting on a player and didn't carry over.`
         : "";
-      return `What if: branched from ${b.title} (game ${b.parentHash.slice(0, 8)}, event ${b.parentSeq}).${again}${rule}`;
+      // The moment in words (UX 137); the parent's hash stays on the replay's title card.
+      return `What if: from ${b.moment ?? b.title}.${again}${rule}`;
     }
     case "secret/commit": {
       const n = event.secrets.length;

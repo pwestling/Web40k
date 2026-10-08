@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
 import { useJoining, useStore } from "../store";
+import { untakenSeat } from "./Branch";
 import { buildLog } from "./gameLog";
 
 /**
@@ -46,6 +47,15 @@ export function NetBanner() {
     (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id),
   );
   if (!gone.length) return null;
+  // A branch's seats nobody has taken yet are waiting for a guest, not reconnecting (UX 136).
+  const open = gone.filter((p) => untakenSeat(record, p.id));
+  if (open.length)
+    return (
+      <div className="net-banner">
+        Waiting for someone to take {open.map((p) => p.name).join(" and ")} ·{" "}
+        <button onClick={() => void navigator.clipboard?.writeText(location.href)}>Copy invite link</button>
+      </div>
+    );
   return <div className="net-banner">{gone.map((p) => p.name).join(" and ")} reconnecting…</div>;
 }
 

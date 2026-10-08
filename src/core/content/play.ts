@@ -20,6 +20,7 @@ import {
 } from "./runtime";
 import type { ActionDef, EffectAction, Expr, GameSystem, Id } from "./schema";
 import { currentSlot, systemOf, type TurnSlot } from "./turn";
+import { opposed } from "../teams";
 
 /**
  * Taking a system's actions in play: which actions a unit can take now, what
@@ -294,7 +295,7 @@ export function actionTargets(
   const ctx = evalCtx(state, system, { self });
   const geometry = tableGeometry(state, system);
   return Object.values(state.units)
-    .filter((u) => u.owner !== unit.owner)
+    .filter((u) => opposed(state, u.owner, unit.owner))
     .map((u) => {
       const it = unitView(state, system, u);
       const c = { ...ctx, scope: { ...ctx.scope, it } };

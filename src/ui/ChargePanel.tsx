@@ -16,6 +16,7 @@ import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { useGame } from "./hooks";
 import { moveBudget } from "./regiment";
+import { opposed } from "../core/teams";
 
 const fmt = (n: number) => `${Number(n.toFixed(1))}"`;
 const ARC_EDGE = { front: "front", rear: "rear", left: "left flank", right: "right flank" } as const;
@@ -46,7 +47,9 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const enemies = useMemo(
     () =>
       Object.values(game.units)
-        .filter((u) => u.owner !== unit.owner && u.modelIds.some((id) => !game.models[id]?.destroyed))
+        .filter(
+          (u) => opposed(game, u.owner, unit.owner) && u.modelIds.some((id) => !game.models[id]?.destroyed),
+        )
         .map((u) => ({ unit: u, d: unitGap(game, unit, u) }))
         .sort((a, b) => a.d - b.d),
     [game, unit],

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { untakenSeat } from "./Branch";
 import type { Player } from "../core";
 import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
@@ -10,7 +11,7 @@ import { RulesLine } from "./Packages";
  * you, or reconnecting), who is host, and how many are watching.
  */
 export function RoomCard() {
-  const { roomId, mode, net, session, game } = useStore();
+  const { roomId, mode, net, session, game, record } = useStore();
   const [copied, setCopied] = useState(false);
   const joining = useJoining();
   const peerMissing = useTransfers((s) => s.peerMissing);
@@ -25,7 +26,8 @@ export function RoomCard() {
     .filter((p) => p.seat !== undefined)
     .sort((a, b) => a.seat! - b.seat!);
   const peers = net?.peers ?? [];
-  const waiting = seated.length < 2;
+  const untaken = (p: Player) => !peers.includes(p.id) && p.id !== selfId && untakenSeat(record, p.id);
+  const waiting = seated.length < 2 || seated.some(untaken);
   // Still receiving the game's rules packages (and not playing without them by choice).
   const fetching = (id: string) =>
     peers.includes(id) && (peerMissing[id]?.length ?? 0) > 0 && !game.players[id]?.rulesMismatch;
@@ -34,7 +36,13 @@ export function RoomCard() {
   // A spectator's own screen isn't among its peers: count it too (UX 146).
   const watching = watchers - joiners + (net?.role === "spectator" ? 1 : 0);
   const state = (p: Player) =>
-    p.id === selfId ? "you" : peers.includes(p.id) ? "connected" : "reconnecting…";
+    p.id === selfId
+      ? "you"
+      : peers.includes(p.id)
+        ? "connected"
+        : untaken(p)
+          ? "waiting for someone to take this seat"
+          : "reconnecting…";
   return (
     <div className="room">
       <div className="row spread">

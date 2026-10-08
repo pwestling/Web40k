@@ -111,7 +111,8 @@ export function ReplayTitle() {
       </span>
       {branch && (
         <span className="small branched">
-          Branched from {branch.title}{" "}
+          Branched from {branch.title}
+          {branch.moment ? `, ${branch.moment}` : ""}{" "}
           <span className="muted">
             (game {branch.parentHash.slice(0, 8)}, event {branch.parentSeq})
           </span>
