@@ -89,7 +89,7 @@ export const lessons = [
       },
       {
         if: "engaged",
-        say: "Fight phase: press Fight on the Line Troopers' card, pick the unit they're in contact with, press Declare attack and roll.",
+        say: "Fight phase: press Fight on the Line Troopers' card, pick the unit they're in contact with, press Fight again under the target and roll.",
         show: { seat: 0, unit: 0 },
         point: "Fight",
         until: { any: [{ did: ["attack:done", "attack/clear", "procedure/clear"] }, { theirTurn: true }] },
@@ -115,7 +115,7 @@ export const lessons = [
       {
         if: "engaged",
         hold: true,
-        say: "They charged you! In the Fight phase both sides fight. Select your unit in contact, press Fight, pick them, Declare attack and roll.",
+        say: "They charged you! In the Fight phase both sides fight. Select your unit in contact, press Fight, pick them, press Fight again and roll.",
         point: "Fight",
         until: { any: [{ did: ["attack:done", "attack/clear", "procedure/clear"] }, { yourTurn: true }] },
         after: [

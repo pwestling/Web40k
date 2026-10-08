@@ -93,7 +93,17 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       !skipped &&
       (event.type === "turn/next" || event.type === "turn/prev" || event.type === "turn/first")
     ) {
-      items.push({ kind: "header", key, ...turnHeader(state) });
+      // Past the last round the battle is over: no "Round 6" that never happens (UX 280).
+      const rounds = systemOf(state).turn.rounds;
+      if (typeof rounds === "number" && state.turn.round > rounds)
+        items.push({
+          kind: "header",
+          key,
+          text: t("The battle is over"),
+          round: state.turn.round,
+          turn: t("The battle is over"),
+        });
+      else items.push({ kind: "header", key, ...turnHeader(state) });
       // Automated abilities that went off as the phase changed (#38).
       triggeredLines(state).forEach((text, i) =>
         items.push({ kind: "line", key: `${key}/t${i}`, seq: logged.seq, text, undone: false }),

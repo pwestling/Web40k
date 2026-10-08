@@ -174,12 +174,14 @@ export function SpecEditor({
   return (
     <div className="spec">
       <p className="muted">
-        {t("{inRange}/{carriers} models in range · {visible}/{targets} targets visible", {
-          inRange: s.inRange,
-          carriers: s.carriers,
-          visible: s.visible,
-          targets: s.targetModels,
-        })}
+        {spec.kind === "melee"
+          ? t("{inRange}/{carriers} models in engagement range", { inRange: s.inRange, carriers: s.carriers })
+          : t("{inRange}/{carriers} models in range · {visible}/{targets} targets visible", {
+              inRange: s.inRange,
+              carriers: s.carriers,
+              visible: s.visible,
+              targets: s.targetModels,
+            })}
         {s.inCover ? <> · {t("{n} in cover", { n: s.inCover })}</> : ""}
       </p>
       {s.notes.length > 0 && (
@@ -208,7 +210,7 @@ export function SpecEditor({
         </button>
       ) : (
         <button className="primary" onClick={() => onDeclare(spec)}>
-          {t("Declare attack")}
+          {spec.kind === "melee" ? t("Fight") : t("Declare attack")}
         </button>
       )}
       {/* In a lesson the numbers fold away: the form is just weapon, target and Declare (PX review). */}

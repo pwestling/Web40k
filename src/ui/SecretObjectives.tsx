@@ -6,7 +6,7 @@ import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { systemModule } from "../systems";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
-import { t } from "../i18n";
+import { t, gameText } from "../i18n";
 
 const PREFIX = "objective:";
 
@@ -30,7 +30,7 @@ export function SecretObjectives({ players }: { players: Player[] }) {
   return (
     <details className="fold secret-objectives">
       <summary>
-        {name}
+        {gameText(name)}
         {count ? ` (${count})` : ""}
       </summary>
       {seated.map((p) => (

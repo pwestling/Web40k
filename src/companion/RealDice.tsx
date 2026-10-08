@@ -138,9 +138,10 @@ function DiceEntry({
   const have = Object.values(counts).reduce((a, b) => a + b, 0);
   const setCount = (face: number, n: number) => {
     if (!batch) return;
-    const next = { ...counts, [face]: Math.max(0, Math.min(n, batch.count - have + (counts[face] ?? 0))) };
+    // A count past the dice rolled stands, and says so: at a table that is usually a miscount (UX 281).
+    const next = { ...counts, [face]: Math.max(0, n) };
     const total = Object.values(next).reduce((a, b) => a + b, 0);
-    if (total < batch.count) return setCounts(next);
+    if (total !== batch.count) return setCounts(next);
     // The batch is complete: its faces go in (highest first) and the next batch, if any, is asked for.
     const faces = Object.entries(next)
       .flatMap(([f, k]) => Array.from({ length: k }, () => Number(f)))
@@ -168,11 +169,15 @@ function DiceEntry({
             {tn(wanted.count, "Roll {n} more D{sides}", "Roll {n} more D{sides}", { sides: wanted.sides })}
           </strong>
         )}{" "}
-        {batch && (
+        {batch && have > batch.count ? (
+          <span className="warn">
+            {t("{have} of {all}, {n} too many", { have, all: batch.count, n: have - batch.count })}
+          </span>
+        ) : batch ? (
           <span className="muted small">
             {t("{have} of {all}: how many show each face?", { have, all: batch.count })}
           </span>
-        )}
+        ) : null}
       </p>
       {done.length > 0 && (
         <div className="row wrap told">

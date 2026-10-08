@@ -75,7 +75,7 @@ export function TableAttackSetup({ draft }: { draft: AttackDraft }) {
         <div className="answers">
           <p className="muted small">{t("On your table:")}</p>
           <div className="row stepper">
-            <span>{ranged ? t("Models in range") : t("Models fighting")}</span>
+            <span>{ranged ? t("Models in range") : t("Models in engagement range")}</span>
             <button
               aria-label={t("Fewer")}
               disabled={a.inRange <= 0}
@@ -132,7 +132,11 @@ export function TableAttackSetup({ draft }: { draft: AttackDraft }) {
             <>
               {(a?.inRange === 0 || (ranged && !a?.visible)) && (
                 <p className="warn">
-                  {a?.inRange === 0 ? t("No models in range.") : t("The target can't be seen.")}
+                  {a?.inRange === 0
+                    ? ranged
+                      ? t("No models in range.")
+                      : t("No models in engagement range.")
+                    : t("The target can't be seen.")}
                 </p>
               )}
               <RollButton
@@ -141,7 +145,7 @@ export function TableAttackSetup({ draft }: { draft: AttackDraft }) {
                 as={attacker.owner}
                 onRolled={() => setDraft(null)}
               >
-                {t("Declare attack")}
+                {ranged ? t("Declare attack") : t("Fight")}
               </RollButton>
               <span className="muted small">
                 {tn(suggestion.inRange, "{n} model attacking", "{n} models attacking")}

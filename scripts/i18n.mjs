@@ -9,7 +9,7 @@
 // literal text. Text in JSX, and title / placeholder / aria-label / alt / label attributes, must
 // go through them; mark a deliberate exception with an {/* i18n-ignore */} or // i18n-ignore
 // comment on the line.
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import ts from "typescript";
 
@@ -138,12 +138,16 @@ for (const path of files(SRC)) {
 
 /**
  * The built-in games' own words (UX 256), shown through gameText() with the "game" context: phase and
- * action names in src/core/content/examples, and lesson titles and summaries in examples/lessons.
+ * action names and hints in src/core/content/examples, lesson titles and summaries in examples/lessons, and
+ * each built-in module's name for its secret objectives.
  * Rule and keyword names stay as they are, since army lists use them.
  */
 const DATA = [
   ...readdirSync(join(SRC, "core/content/examples")).map((f) => join(SRC, "core/content/examples", f)),
   ...readdirSync(join(ROOT, "examples/lessons")).map((f) => join(ROOT, "examples/lessons", f)),
+  ...readdirSync(join(SRC, "systems"))
+    .map((d) => join(SRC, "systems", d, "module.ts"))
+    .filter((f) => existsSync(f)),
 ].filter((f) => /\.(ts|js)$/.test(f) && !/\.test\./.test(f));
 for (const path of DATA) {
   const file = relative(ROOT, path);
@@ -169,14 +173,22 @@ for (const path of DATA) {
         }
       } else {
         const kind = prop(n, "kind");
+        // In an `actions: [...]` list, or a list typed ActionDef[] (the stratagems).
         const inActions =
           ts.isArrayLiteralExpression(n.parent) &&
-          ts.isPropertyAssignment(n.parent.parent) &&
-          n.parent.parent.name.getText() === "actions";
+          ((ts.isPropertyAssignment(n.parent.parent) && n.parent.parent.name.getText() === "actions") ||
+            (ts.isVariableDeclaration(n.parent.parent) &&
+              /ActionDef\[\]/.test(n.parent.parent.type?.getText() ?? "")));
         if ((kind && literal(kind) === "phase") || inActions) {
           const v = prop(n, "name");
           if (v) take(v);
         }
+        if (inActions) {
+          const v = prop(n, "hint");
+          if (v) take(v);
+        }
+        const secret = prop(n, "secretObjectives");
+        if (secret) take(secret);
       }
     }
     ts.forEachChild(n, visit);

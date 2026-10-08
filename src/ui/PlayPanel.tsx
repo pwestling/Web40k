@@ -135,7 +135,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           <ul className="small">
             {others.map((o) => (
               <li key={o.def.id}>
-                {o.def.name} ({o.cost}): <span className="muted">{o.why}</span>
+                {gameText(o.def.name)} ({o.cost}): <span className="muted">{o.why}</span>
               </li>
             ))}
           </ul>
@@ -149,7 +149,8 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
         <summary>
           <span style={{ color: player.color }}>{displayName(player.name)}</span>
           {usable.length
-            ? " " + t("can react: {stratagems}", { stratagems: usable.map((o) => o.def.name).join(", ") })
+            ? " " +
+              t("can react: {stratagems}", { stratagems: usable.map((o) => gameText(o.def.name)).join(", ") })
             : `: ${t("nothing to react with")}`}
           {cp !== undefined && <span className="muted"> {t("({cp} CP)", { cp })}</span>}
         </summary>
@@ -174,8 +175,8 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
   return (
     <div className="stratagem">
       <div className="row spread">
-        <span title={option.def.hint}>
-          <strong>{option.def.name}</strong> <span className="muted">{option.cost}</span>
+        <span title={option.def.hint && gameText(option.def.hint)}>
+          <strong>{gameText(option.def.name)}</strong> <span className="muted">{option.cost}</span>
         </span>
         <button
           className="small"
@@ -189,7 +190,7 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
           {t("Use")}
         </button>
       </div>
-      {option.def.hint && <span className="muted small">{option.def.hint}</span>}
+      {option.def.hint && <span className="muted small">{gameText(option.def.hint)}</span>}
       {targets && (
         <select value={target} onChange={(e) => setTarget(e.target.value)}>
           <option value="">{t("On which unit…")}</option>

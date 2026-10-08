@@ -161,6 +161,51 @@ label.file.button.small {
 .lobby h1 {
   margin: 0;
 }
+.lobby-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.lobby-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+}
+.lobby-settings .text-size button {
+  padding: 2px 6px;
+}
+.lobby-settings .language-picker select {
+  font-size: 0.8rem;
+}
+.lobby-cols,
+.lobby-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lobby-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  border-top: 1px solid #2d3340;
+  padding-top: 8px;
+}
+@media (min-width: 1000px) {
+  .lobby {
+    width: min(960px, calc(100vw - 64px));
+  }
+  .lobby-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
 .lobby .pitch {
   margin: 0 0 4px;
   font-size: 1.05rem;

@@ -181,178 +181,221 @@ export function Lobby() {
 
   return (
     <div className="panel lobby">
-      {/* i18n-ignore */}
-      <h1>Open Battle</h1>
+      <div className="lobby-head">
+        {/* i18n-ignore */}
+        <h1>Open Battle</h1>
+        {/* Settings out of the way, but in sight (UX 285). */}
+        <div className="lobby-settings">
+          <TextSizePicker />
+          <LanguagePicker />
+        </div>
+      </div>
       <p className="pitch">
         {t("Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.")}
       </p>
       <WhatsNew />
       <UpdateToast />
       <OfflineNote />
-      <TextSizePicker />
-      <LanguagePicker />
-      <button className="own-army" onClick={() => setGuide(true)}>
-        <strong>{t("Play your own army: import a list")}</strong>
-        <span className="muted small">
-          {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
-        </span>
-      </button>
-      <h2>{t("Pick a game")}</h2>
-      <p className="muted small">
-        {t(
-          "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides.",
-        )}
-      </p>
-      <div className="demos">
-        {games.map((g) => (
-          <div key={g.id} className="demo">
-            <strong>{g.title}</strong>
-            <span className="muted small">{g.blurb}</span>
-            <div className="row wrap">
-              {g.lessons.map((l, i) => (
-                <button
-                  key={l.id}
-                  className={i === 0 ? "primary small learn" : "small learn"}
-                  title={gameText(l.summary)}
-                  onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
-                >
-                  {i === 0 ? t("Learn (guided)") : gameText(l.title)}
-                </button>
-              ))}
-              {g.demo && (
-                <button className="small try" onClick={() => startDemo(g.id)}>
-                  {t("Try (both sides)")}
-                </button>
-              )}
-            </div>
+      {/* Two columns on a wide screen (UX 288): getting started, then playing with people. */}
+      <div className="lobby-cols">
+        <div className="lobby-col">
+          <button className="own-army" onClick={() => setGuide(true)}>
+            <strong>{t("Play your own army: import a list")}</strong>
+            <span className="muted small">
+              {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
+            </span>
+          </button>
+          <h2>{t("Pick a game")}</h2>
+          <p className="muted small">
+            {t(
+              "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides.",
+            )}
+          </p>
+          <p className="muted small">
+            {t(
+              "These are built-in sample rules. For your own game system, load its rules package under More ways to play.",
+            )}
+          </p>
+          <div className="demos">
+            {games.map((g) => (
+              <div key={g.id} className="demo">
+                <strong>{g.title}</strong>
+                <span className="muted small">{g.blurb}</span>
+                <div className="row wrap">
+                  {g.lessons.map((l, i) => (
+                    <button
+                      key={l.id}
+                      className={i === 0 ? "primary small learn" : "small learn"}
+                      title={gameText(l.summary)}
+                      onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+                    >
+                      {i === 0 ? t("Learn (guided)") : gameText(l.title)}
+                    </button>
+                  ))}
+                  {g.demo && (
+                    <button className="small try" onClick={() => startDemo(g.id)}>
+                      {t("Try (both sides)")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <h2>{t("Play with friends")}</h2>
-      <OfflineForFriends />
-      <label>
-        {t("Your name")}{" "}
-        <input
-          value={name}
-          placeholder={t("Player 1 or 2, by seat")}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </label>
-      <label>
-        {t("Game")}{" "}
-        <select value={system} onChange={(e) => setSystem(e.target.value)}>
-          {systems.map((s) => (
-            <option key={s.id} value={s.id}>
-              {systemLabel(s.id, s.name)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button className="primary" onClick={() => host()}>
-        {t("Host a game")}
-      </button>
-      <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
-      <label>
-        {t("Room")}{" "}
-        <input
-          value={room}
-          placeholder={t("a room code to join")}
-          onChange={(e) => setRoom(e.target.value.trim())}
-        />
-      </label>
-      <div className="row">
-        <button disabled={!room} onClick={() => join("client")}>
-          {t("Join")}
-        </button>
-        <button disabled={!room} onClick={() => join("spectator")}>
-          {t("Watch")}
-        </button>
-      </div>
-      <NetCheck />
-      <h2>{t("At a real table")}</h2>
-      <p className="muted small">
-        {t(
-          "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in.",
-        )}
-      </p>
-      <div className="row wrap">
-        <button onClick={companionHere}>{t("One phone for both of us")}</button>
-        <button
-          onClick={() => host(true)}
-          title={t("You get a link to send; the other player opens it on their phone")}
-        >
-          {t("A phone each")}
-        </button>
-      </div>
-      <details className="fold">
-        <summary>{t("More ways to play")}</summary>
-        <label>
-          {t("Players")}{" "}
-          <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
-            <option value={1}>{t("1 vs 1")}</option>
-            <option value={2}>{t("2 vs 2 (teams share CP and VP)")}</option>
-          </select>
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={sameBrowser} onChange={(e) => setSameBrowser(e.target.checked)} />
-          {t("Same browser (play between two tabs, no network)")}
-        </label>
-        <button
-          onClick={() => {
-            remember();
-            start({ role: "host", mode: "hotseat", name, system });
-            namePackage();
-          }}
-        >
-          {t("Set up a game on this screen (hotseat)")}
-        </button>
-        <PackageLibrary system={system} onPick={setSystem} />
-      </details>
-      <Suspense fallback={null}>
-        <MailLobby
-          name={name}
-          system={system}
-          onStarted={() => {
-            remember();
-            namePackage();
-          }}
-        />
-      </Suspense>
-      <InstallLink />
-      <hr />
-      <button className="link" onClick={() => openLibrary()}>
-        {t("Figure library: your models, packs and storage")}
-      </button>
-      {saved && (
-        <button onClick={resume}>
-          {tn(
-            saved.record.events.length,
-            "Resume last game ({mode}, {n} event, {date})",
-            "Resume last game ({mode}, {n} events, {date})",
-            {
-              mode:
-                { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ?? saved.mode,
-              date: formatDate(new Date(saved.savedAt), {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric",
-              }),
-            },
+        </div>
+        <div className="lobby-col">
+          <h2>{t("Play with friends")}</h2>
+          <OfflineForFriends />
+          <label>
+            {t("Your name")}{" "}
+            <input
+              value={name}
+              placeholder={t("Player 1 or 2, by seat")}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label>
+            {t("Game")}{" "}
+            <select value={system} onChange={(e) => setSystem(e.target.value)}>
+              {systems.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {systemLabel(s.id, s.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="primary" onClick={() => host()}>
+            {t("Host a game")}
+          </button>
+          <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
+          <label>
+            {t("Room")}{" "}
+            <input
+              value={room}
+              placeholder={t("a room code or invite link")}
+              onChange={(e) => setRoom(roomFrom(e.target.value))}
+            />
+          </label>
+          {!room && <p className="muted small">{t("Paste a room code or invite link to join.")}</p>}
+          <div className="row">
+            <button disabled={!room} onClick={() => join("client")}>
+              {t("Join")}
+            </button>
+            <button disabled={!room} onClick={() => join("spectator")}>
+              {t("Watch")}
+            </button>
+          </div>
+          <NetCheck />
+          <h2>{t("At a real table")}</h2>
+          <p className="muted small">
+            {t(
+              "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in.",
+            )}
+          </p>
+          <div className="row wrap">
+            <button onClick={companionHere}>{t("One phone for both of us")}</button>
+            <button
+              onClick={() => host(true)}
+              title={t("You get a link to send; the other player opens it on their phone")}
+            >
+              {t("A phone each")}
+            </button>
+          </div>
+          <details className="fold">
+            <summary>{t("More ways to play")}</summary>
+            <label>
+              {t("Players")}{" "}
+              <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
+                <option value={1}>{t("1 vs 1")}</option>
+                <option value={2}>{t("2 vs 2 (teams share CP and VP)")}</option>
+              </select>
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={sameBrowser}
+                onChange={(e) => setSameBrowser(e.target.checked)}
+              />
+              {t("Same browser (play between two tabs, no network)")}
+            </label>
+            <button
+              onClick={() => {
+                remember();
+                start({ role: "host", mode: "hotseat", name, system });
+                namePackage();
+              }}
+            >
+              {t("Set up a game on this screen (hotseat)")}
+            </button>
+            <PackageLibrary system={system} onPick={setSystem} />
+          </details>
+          <Suspense fallback={null}>
+            <MailLobby
+              name={name}
+              system={system}
+              onStarted={() => {
+                remember();
+                namePackage();
+              }}
+            />
+          </Suspense>
+          <InstallLink />
+          <hr />
+          <button className="link" onClick={() => openLibrary()}>
+            {t("Figure library: your models, packs and storage")}
+          </button>
+          {saved && (
+            <button onClick={resume}>
+              {tn(
+                saved.record.events.length,
+                "Resume last game ({mode}, {n} event, {date})",
+                "Resume last game ({mode}, {n} events, {date})",
+                {
+                  mode:
+                    { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
+                    saved.mode,
+                  date: formatDate(new Date(saved.savedAt), {
+                    year: "numeric",
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric",
+                  }),
+                },
+              )}
+            </button>
           )}
-        </button>
-      )}
-      <label className="file">
-        {t("Open a replay file")}
-        <input
-          type="file"
-          accept=".json,application/json"
-          onChange={(e) => e.target.files?.[0] && loadReplay(e.target.files[0])}
-        />
-      </label>
+          <label className="file">
+            {t("Open a replay file")}
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={(e) => e.target.files?.[0] && loadReplay(e.target.files[0])}
+            />
+          </label>
+        </div>
+      </div>
+      <footer className="lobby-foot muted small">
+        <span>{t("No account: games run between your browsers.")}</span>
+        <span>
+          {/* i18n-ignore */}
+          Open Battle {APP_BUILD.split("+")[0]} ·{" "}
+          <a href="https://github.com/pwestling/Web40k" target="_blank" rel="noreferrer">
+            {t("Source code")}
+          </a>
+        </span>
+      </footer>
       {guide && <ArmyGuide system={system} onClose={() => setGuide(false)} />}
     </div>
   );
+}
+
+/** A room code, or the room in a pasted invite link (UX 289). */
+function roomFrom(text: string): string {
+  const v = text.trim();
+  try {
+    return new URL(v).searchParams.get("room") ?? v;
+  } catch {
+    return v;
+  }
 }

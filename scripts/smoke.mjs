@@ -119,7 +119,7 @@ const checks = {
   async hotseat() {
     const { page, context } = await device();
     await lobby(page);
-    await page.getByText("More ways to play").click();
+    await page.locator("summary", { hasText: "More ways to play" }).click();
     await page.getByRole("button", { name: /hotseat/ }).click();
     await page.locator(".panel.hud").waitFor();
     await sampleArmies(page);
@@ -216,7 +216,7 @@ const checks = {
   async campaign() {
     const { page, context } = await device();
     await lobby(page);
-    await page.getByText("More ways to play").click();
+    await page.locator("summary", { hasText: "More ways to play" }).click();
     await page.getByRole("button", { name: /hotseat/ }).click();
     await page.locator("details.campaign summary").click();
     await page.getByRole("button", { name: "New campaign book" }).click();
