@@ -1,5 +1,5 @@
 import type { GameSystem, Id } from "../core/content/schema";
-import type { GameState } from "../core/types";
+import type { GameState, Objective, Zone } from "../core/types";
 import type { Outcome, RoleRef } from "../core/content/runner";
 
 /**
@@ -199,4 +199,45 @@ export interface PackageApp {
   templateCategory?: Record<string, string>;
   fleeDice?: string;
   chargeRoll?: { count: number; sides: number; keep: "highest" | "sum" };
+}
+
+/**
+ * A mission: where the armies deploy, where the objectives are, how victory
+ * points are scored and, optionally, a deck of secret mission cards. Players
+ * pick one at setup. At each scoring moment the app suggests each side's
+ * score from `suggest` and a player of that side confirms it (or changes it);
+ * nothing is scored without a person saying so.
+ */
+export interface Mission {
+  id: Id;
+  name: string;
+  /** One or two sentences for the picker. */
+  summary: string;
+  /** Deployment zones and objective markers for a table this size (terrain is left alone). */
+  setup(table: { width: number; depth: number }): { zones: Zone[]; objectives: Objective[] };
+  scoring: ScoringRule[];
+  /** Secret mission cards: each player draws in secret (src/core/secrets.ts) and reveals one to score it. */
+  deck?: MissionCard[];
+  /** Cards each player may hold at once. */
+  hand?: number;
+}
+
+/** When a rule scores: the end of a phase (the side whose turn it was), the end of each round, or the battle's end (every side). */
+export type ScoringMoment = { phaseEnd: Id; fromRound?: number } | { roundEnd: true } | { gameEnd: true };
+
+export interface ScoringRule {
+  id: Id;
+  name: string;
+  at: ScoringMoment;
+  /** The side's score at that moment, as the table stood then; null when it scores nothing. */
+  suggest(game: GameState, seat: number): { vp: number; why: string } | null;
+}
+
+export interface MissionCard {
+  id: Id;
+  name: string;
+  /** What it asks for, in the player's words. */
+  text: string;
+  /** Its score when revealed, as the table stands. */
+  suggest(game: GameState, seat: number): { vp: number; why: string };
 }

@@ -82,3 +82,13 @@ describe("team games", () => {
     expect(zoneSlice(zone, 0, 1)).toBe(zone);
   });
 });
+
+describe("renaming", () => {
+  it("lets a player rename only themselves", () => {
+    const s = twoVsTwo();
+    const after = play(s, { type: "player/rename", player: "c", name: "  Cy " }, "c");
+    expect(after.players.c?.name).toBe("Cy");
+    expect(resolveIntent({ type: "player/rename", player: "c", name: "X" }, "a", () => 0.5, s)).toBeNull();
+    expect(resolveIntent({ type: "player/rename", player: "c", name: " " }, "c", () => 0.5, s)).toBeNull();
+  });
+});

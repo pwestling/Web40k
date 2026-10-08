@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { Mission } from "../sdk";
 import type { GameState, Layout, Table, Unit } from "../core";
 import type { ImportedRoster } from "./wh40k/roster";
 
@@ -42,6 +43,8 @@ export interface SystemModule {
    * a secret kept on its owner's device (core/secrets.ts).
    */
   secretObjectives?: string;
+  /** Missions players can pick at setup (invented samples; published ones come as packages). */
+  missions?: Mission[];
 }
 
 export interface TemplateKind {

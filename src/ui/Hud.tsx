@@ -8,6 +8,7 @@ import { BroadcastControls } from "../broadcast/BroadcastControls";
 import { useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
+import { MissionPicker, SecretMissions } from "./Missions";
 import { SecretObjectives } from "./SecretObjectives";
 import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
@@ -162,6 +163,10 @@ export function Hud() {
       {mine.length > 0 &&
         (round === 0 ? (
           <>
+            {mode !== "hotseat" && selfId && liveGame.players[selfId] && (
+              <NameCard player={liveGame.players[selfId]!} />
+            )}
+            <MissionPicker />
             <ArmyImport players={mine} />
             <DeployTray players={mine} />
           </>
@@ -172,6 +177,7 @@ export function Hud() {
           </details>
         ))}
       <SecretObjectives players={mine} />
+      <SecretMissions players={mine} />
 
       {role !== "spectator" && (
         <div className="row">
@@ -259,6 +265,44 @@ async function downloadReplay(record: GameRecord) {
   URL.revokeObjectURL(a.href);
 }
 
+const NUMBERS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+export const seatsTaken = (n: number) =>
+  n <= 2 ? "Both players are here." : `All ${NUMBERS[n] ?? n} seats are taken.`;
+
+/**
+ * Invite links join straight in, as "Player N": until the player names
+ * themselves, ask, so the sides read "Ana & Cy" rather than "Ana & Player 3".
+ */
+function NameCard({ player }: { player: Player }) {
+  const { dispatch } = useStore();
+  const [stored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
+  const [name, setName] = useState("");
+  if (stored || !/^Player \d+$/.test(player.name)) return null;
+  const save = () => {
+    const n = name.trim();
+    if (!n) return;
+    localStorage.setItem("open-battle:name", n);
+    dispatch({ type: "player/rename", player: player.id, name: n });
+  };
+  return (
+    <form
+      className="claim name-card"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save();
+      }}
+    >
+      <p className="muted">You're {player.name}. What should the others call you?</p>
+      <div className="row">
+        <input value={name} placeholder="Your name" autoFocus onChange={(e) => setName(e.target.value)} />
+        <button className="primary" disabled={!name.trim()}>
+          Use this name
+        </button>
+      </div>
+    </form>
+  );
+}
+
 /**
  * A player back from a closed tab finds both seats taken: offer the seat whose
  * player has gone (never one whose player is still connected), or watching.
@@ -289,7 +333,7 @@ function RejoinCard({ seated }: { seated: Player[] }) {
           ))}
         </>
       ) : (
-        <p className="muted">Both players are here.</p>
+        <p className="muted">{seatsTaken(seated.length)}</p>
       )}
       <button onClick={watch}>Watch</button>
     </div>

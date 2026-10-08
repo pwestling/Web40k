@@ -1,3 +1,4 @@
+import { TOW_MISSIONS } from "./missions";
 import type { GameModule } from "../../sdk";
 import { towActions } from "./combat";
 import type { SystemModule } from "../app";
@@ -21,6 +22,7 @@ export const towModule: GameModule<SystemModule> = {
     layout: (t) => towLayout(t.width, t.depth),
     templateCategory: TOW_CATEGORIES,
     rankRules: towRanks,
+    missions: TOW_MISSIONS,
     templates: TOW_TEMPLATES,
     specialDice: TOW_DICE,
     scatter: { direction: "scatter", distance: "artillery" },

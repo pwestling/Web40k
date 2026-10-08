@@ -1,3 +1,4 @@
+import { WH40K_MISSIONS } from "./missions";
 import { DEFAULT_SYSTEM, getSystem } from "../../core/content";
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
@@ -15,5 +16,6 @@ export const wh40kModule: GameModule<SystemModule> = {
     layout: (t) => standardLayout(t.width, t.depth),
     dedicatedUi: true,
     secretObjectives: "Secret objectives",
+    missions: WH40K_MISSIONS,
   },
 };

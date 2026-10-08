@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameRecord } from "../core";
 import { useStore } from "../store";
 import { buildLog, type LogItem } from "./gameLog";
-import { BranchButton } from "./Branch";
+import { BackToOriginal, BranchButton } from "./Branch";
 import { readGame, type Highlight } from "./highlights";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
@@ -209,7 +209,9 @@ export function ReplayBar() {
           {scrub === null ? "Live" : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? "Setup")}
         </span>
         {/* What if: a new game from the point on the track (UX: roadmap #14). */}
-        {scrub !== null && last > record.initial.seq && <BranchButton seq={pos} />}
+        {/* Live, it branches from now (UX 138). */}
+        {last > record.initial.seq && <BranchButton seq={pos} />}
+        <BackToOriginal />
         {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
         {!session && <button onClick={() => location.reload()}>Close replay</button>}
       </div>

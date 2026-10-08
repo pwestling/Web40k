@@ -315,6 +315,10 @@ export interface GameState {
   secrets?: Secrets;
   /** This game branched from another one's history (core/branch.ts). */
   branch?: BranchInfo;
+  /** The mission chosen at setup (SystemModule.missions; see src/sdk Mission). */
+  mission?: { id: string; name: string };
+  /** Victory points players confirmed, each from a suggestion at a scoring moment. */
+  scores?: ScoreEntry[];
   /** Table options the players agreed on. */
   settings: GameSettings;
 }
@@ -343,6 +347,19 @@ export interface GameSettings {
   visionArc?: number;
   /** Players per side (2 for a 2v2). Missing means one each. */
   teamSize?: number;
+}
+
+/** Victory points a side scored at one scoring moment (or chose not to). */
+export interface ScoreEntry {
+  /** Which moment and rule: `${rule}:${round}:${seat}` (or `card:<secret key>`), so each is scored once. */
+  key: string;
+  seat: number;
+  round: number;
+  vp: number;
+  why: string;
+  /** Who confirmed it. */
+  by: PlayerId;
+  skipped?: boolean;
 }
 
 /** Strike Force sized board: 44" x 60". */

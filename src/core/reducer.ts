@@ -178,6 +178,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
     case "ruler/set":
       return { ...state, ruler: event.ruler };
+    case "player/rename": {
+      const p = state.players[event.player];
+      return p ? { ...state, players: { ...state.players, [p.id]: { ...p, name: event.name } } } : state;
+    }
     case "player/ready": {
       const p = state.players[event.player];
       if (!p) return state;
@@ -353,6 +357,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ...u,
         status: { ...u.status, [appliedKey(event.ability)]: true },
       }));
+    case "mission/set":
+      return { ...state, mission: event.mission, zones: event.zones, objectives: event.objectives };
+    case "score/confirm": {
+      if (state.scores?.some((s) => s.key === event.key)) return state;
+      const { type: _t, ...entry } = event;
+      const scores = [...(state.scores ?? []), entry];
+      // The side's VP (shared by teammates, core/teams.ts): the first player at the seat holds it.
+      const holder = sidePlayers(state, event.seat)[0];
+      if (!holder || !event.vp) return { ...state, scores };
+      const own = state.resources[holder.id] ?? {};
+      return {
+        ...state,
+        scores,
+        resources: { ...state.resources, [holder.id]: { ...own, VP: (own.VP ?? 0) + event.vp } },
+      };
+    }
     case "secret/commit": {
       const mine = { ...state.secrets?.[event.player] };
       for (const { key, commitment } of event.secrets) if (!mine[key]) mine[key] = { commitment };

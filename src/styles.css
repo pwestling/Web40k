@@ -2017,3 +2017,30 @@ body.broadcast .caption {
     max-width: calc(100vw - 16px);
   }
 }
+
+/* Missions: the picker at setup, and scores waiting on a player (src/ui/Missions.tsx). */
+.mission-picker p {
+  margin: 2px 0 6px;
+}
+/* Top right, clear of the round card that opens top centre at the same moment. */
+.panel.score-panel {
+  top: 70px;
+  right: 16px;
+  max-width: min(400px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 4;
+}
+.score-panel .score-item input {
+  width: 4em;
+}
+.result-table td,
+.result-table th {
+  padding: 2px 8px;
+  text-align: right;
+}
+.result-table td:first-child,
+.result-table th:first-child {
+  text-align: left;
+}
