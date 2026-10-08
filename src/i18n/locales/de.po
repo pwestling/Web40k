@@ -1753,7 +1753,7 @@ msgstr "{unit}: kämpfen"
 
 #: src/companion/TableAttack.tsx:48
 #: src/ui/AttackPanel.tsx:85
-#: src/ui/SystemPanels.tsx:295
+#: src/ui/SystemPanels.tsx:298
 #, fuzzy
 msgid "Weapon"
 msgstr "Waffe"
@@ -2350,7 +2350,7 @@ msgid "Figure"
 msgstr "Figur"
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:337
+#: src/ui/SystemPanels.tsx:343
 #, fuzzy
 msgid "{height}\" tall"
 msgstr "{height}\" hoch"
@@ -3120,7 +3120,7 @@ msgstr[0] "{n} Markierung"
 msgstr[1] "{n} Markierungen"
 
 #: src/replay/NotesPanel.tsx:146
-#: src/ui/SystemPanels.tsx:485
+#: src/ui/SystemPanels.tsx:491
 #, fuzzy
 msgid "{n} action"
 msgid_plural "{n} actions"
@@ -3699,7 +3699,7 @@ msgstr "{name} aus deiner Sammlung entfernen?"
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:553
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:359
+#: src/ui/SystemPanels.tsx:365
 #: src/ui/TemplateTools.tsx:114
 #, fuzzy
 msgid "Remove"
@@ -4240,7 +4240,7 @@ msgid "({points} pts; units {units})"
 msgstr "({points} Pkt.; Einheiten {units})"
 
 #: src/ui/AttackPanel.tsx:103
-#: src/ui/SystemPanels.tsx:817
+#: src/ui/SystemPanels.tsx:823
 #, fuzzy
 msgid "Target…"
 msgstr "Ziel…"
@@ -4251,13 +4251,13 @@ msgid "{unit} ({distance}\", out of range)"
 msgstr "{unit} ({distance}\", außer Reichweite)"
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:830
+#: src/ui/SystemPanels.tsx:836
 #, fuzzy
 msgid "Click a target on the table…"
 msgstr "Klicke auf ein Ziel auf dem Tisch…"
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:830
+#: src/ui/SystemPanels.tsx:836
 #, fuzzy
 msgid "Pick on table"
 msgstr "Auf dem Tisch wählen"
@@ -4532,7 +4532,7 @@ msgid "{n} unsaved"
 msgstr "{n} nicht verhindert"
 
 #: src/ui/AttackPanel.tsx:395
-#: src/ui/SystemPanels.tsx:1033
+#: src/ui/SystemPanels.tsx:1039
 #, fuzzy
 msgid "The computer is rolling…"
 msgstr "Der Computer würfelt…"
@@ -4559,7 +4559,7 @@ msgstr "Alles würfeln"
 
 #: src/ui/AttackPanel.tsx:430
 #: src/ui/Coach.tsx:87
-#: src/ui/SystemPanels.tsx:1044
+#: src/ui/SystemPanels.tsx:1050
 #: src/ui/TerrainPanel.tsx:186
 #, fuzzy
 msgid "Done"
@@ -4623,7 +4623,7 @@ msgid "Defender: click a model to put it first."
 msgstr "Verteidiger: Klicke auf ein Modell, um es nach vorn zu setzen."
 
 #: src/ui/AttackPanel.tsx:96
-#: src/ui/SystemPanels.tsx:812
+#: src/ui/SystemPanels.tsx:818
 #, fuzzy
 msgid "at"
 msgstr "auf"
@@ -5483,7 +5483,7 @@ msgid "+1 to save"
 msgstr "+1 auf Schutzwurf"
 
 #: src/ui/GameSettings.tsx:37
-#: src/ui/SystemPanels.tsx:240
+#: src/ui/SystemPanels.tsx:243
 #: src/ui/UnitCard.tsx:350
 #, fuzzy
 msgid "Line of sight"
@@ -6172,7 +6172,7 @@ msgstr "{vp} VP"
 #: src/ui/Missions.tsx:121
 #: src/ui/Missions.tsx:136
 #: src/ui/Missions.tsx:261
-#: src/ui/SystemPanels.tsx:1012
+#: src/ui/SystemPanels.tsx:1018
 #: src/ui/TopBar.tsx:281
 #, fuzzy
 msgid "Pass"
@@ -7651,7 +7651,7 @@ msgid "{side}'s army"
 msgstr "Armee von {side}"
 
 #: src/ui/Showcase.tsx:53
-#: src/ui/SystemPanels.tsx:161
+#: src/ui/SystemPanels.tsx:164
 #: src/ui/UnitCard.tsx:225
 #, fuzzy
 msgid "{points} pts"
@@ -7790,238 +7790,238 @@ msgstr "Würfel gegen die Wahrscheinlichkeit"
 msgid "Moments"
 msgstr "Momente"
 
-#: src/ui/SystemPanels.tsx:1020
+#: src/ui/SystemPanels.tsx:1026
 #, fuzzy
 msgid "Unit destroyed"
 msgstr "Einheit vernichtet"
 
-#: src/ui/SystemPanels.tsx:1039
+#: src/ui/SystemPanels.tsx:1045
 #, fuzzy
 msgid "Roll {step}"
 msgstr "{step} würfeln"
 
-#: src/ui/SystemPanels.tsx:1064
+#: src/ui/SystemPanels.tsx:106
+#, fuzzy
+msgid "(spent)"
+msgstr "(verbraucht)"
+
+#: src/ui/SystemPanels.tsx:1070
 #, fuzzy
 msgid "rolled {dice}"
 msgstr "würfelte {dice}"
 
-#: src/ui/SystemPanels.tsx:1078
+#: src/ui/SystemPanels.tsx:1084
 #, fuzzy
 msgid "{successes} of {count} saved"
 msgstr "{successes} von {count} abgewehrt"
 
-#: src/ui/SystemPanels.tsx:1079
+#: src/ui/SystemPanels.tsx:1085
 #, fuzzy
 msgid "{successes} of {count} succeed"
 msgstr "{successes} von {count} gelingen"
 
-#: src/ui/SystemPanels.tsx:1108
+#: src/ui/SystemPanels.tsx:1114
 #: src/ui/gameLog.ts:259
 #: src/ui/gameLog.ts:1062
 #, fuzzy
 msgid "A unit"
 msgstr "Eine Einheit"
 
-#: src/ui/SystemPanels.tsx:1110
+#: src/ui/SystemPanels.tsx:1116
 #, fuzzy
 msgid "{unit}: {action} at {target}"
 msgstr "{unit}: {action} auf {target}"
 
-#: src/ui/SystemPanels.tsx:1117
+#: src/ui/SystemPanels.tsx:1123
 #, fuzzy
 msgid "is reacting to {what}."
 msgstr "reagiert auf {what}."
 
-#: src/ui/SystemPanels.tsx:1118
+#: src/ui/SystemPanels.tsx:1124
 #, fuzzy
 msgid "Take its action, then finish the reaction."
 msgstr "Führ ihre Aktion aus und beende dann die Reaktion."
 
-#: src/ui/SystemPanels.tsx:1118
+#: src/ui/SystemPanels.tsx:1124
 #, fuzzy
 msgid "Waiting on {name}."
 msgstr "Warte auf {name}."
 
-#: src/ui/SystemPanels.tsx:1123
+#: src/ui/SystemPanels.tsx:1129
 #, fuzzy
 msgid "react to {what}?"
 msgstr "auf {what} reagieren?"
 
-#: src/ui/SystemPanels.tsx:1140
+#: src/ui/SystemPanels.tsx:1146
 #, fuzzy
 msgid "Don't react"
 msgstr "Nicht reagieren"
 
-#: src/ui/SystemPanels.tsx:1146
+#: src/ui/SystemPanels.tsx:1152
 #, fuzzy
 msgid "Waiting on {name} to decide whether to react."
 msgstr "Warte darauf, ob {name} reagieren will."
 
-#: src/ui/SystemPanels.tsx:146
+#: src/ui/SystemPanels.tsx:149
 #, fuzzy
 msgid "Charged {distance}"
 msgstr "Angriffsbewegung {distance}"
 
-#: src/ui/SystemPanels.tsx:149
+#: src/ui/SystemPanels.tsx:152
 #: src/ui/UnitCard.tsx:194
 #, fuzzy
 msgid "Selected unit"
 msgstr "Gewählte Einheit"
 
-#: src/ui/SystemPanels.tsx:160
+#: src/ui/SystemPanels.tsx:163
 #, fuzzy
 msgid "{alive}/{n} model"
 msgid_plural "{alive}/{n} bases"
 msgstr[0] "{alive}/{n} Modell"
 msgstr[1] "{alive}/{n} Bases"
 
-#: src/ui/SystemPanels.tsx:179
+#: src/ui/SystemPanels.tsx:182
 #, fuzzy
 msgid "Click to clear"
 msgstr "Klicken zum Entfernen"
 
-#: src/ui/SystemPanels.tsx:197
+#: src/ui/SystemPanels.tsx:200
 #, fuzzy
 msgid "Click to end this spell"
 msgstr "Klicken, um diesen Zauber zu beenden"
 
-#: src/ui/SystemPanels.tsx:198
+#: src/ui/SystemPanels.tsx:201
 #, fuzzy
 msgid "Click when the token is used or lost"
 msgstr "Klicken, wenn der Marker verbraucht oder verloren ist"
 
-#: src/ui/SystemPanels.tsx:206
+#: src/ui/SystemPanels.tsx:209
 #, fuzzy
 msgid "{weapon} prepared"
 msgstr "{weapon} vorbereitet"
 
-#: src/ui/SystemPanels.tsx:211
+#: src/ui/SystemPanels.tsx:214
 #, fuzzy
 msgid "In reserve"
 msgstr "In Reserve"
 
-#: src/ui/SystemPanels.tsx:213
+#: src/ui/SystemPanels.tsx:216
 #, fuzzy
 msgid "Interacting"
 msgstr "Interagiert"
 
-#: src/ui/SystemPanels.tsx:227
+#: src/ui/SystemPanels.tsx:230
 #, fuzzy
 msgid "Moved {distance} of {allowance} this round."
 msgstr "{distance} von {allowance} in dieser Runde bewegt."
 
-#: src/ui/SystemPanels.tsx:242
+#: src/ui/SystemPanels.tsx:245
 #: src/ui/UnitCard.tsx:352
 #, fuzzy
 msgid "Model's eye view"
 msgstr "Modellperspektive"
 
-#: src/ui/SystemPanels.tsx:245
+#: src/ui/SystemPanels.tsx:248
 #: src/ui/UnitCard.tsx:269
 #, fuzzy
 msgid "Rotate left (Q)"
 msgstr "Nach links drehen (Q)"
 
-#: src/ui/SystemPanels.tsx:248
+#: src/ui/SystemPanels.tsx:251
 #: src/ui/UnitCard.tsx:272
 #, fuzzy
 msgid "Rotate right (E)"
 msgstr "Nach rechts drehen (E)"
 
-#: src/ui/SystemPanels.tsx:274
+#: src/ui/SystemPanels.tsx:277
 #, fuzzy
 msgid "{value} on the card"
 msgstr "{value} auf der Karte"
 
-#: src/ui/SystemPanels.tsx:329
+#: src/ui/SystemPanels.tsx:335
 #, fuzzy
 msgid "Bases"
 msgstr "Bases"
 
-#: src/ui/SystemPanels.tsx:336
+#: src/ui/SystemPanels.tsx:342
 #, fuzzy
 msgid "removed"
 msgstr "entfernt"
 
-#: src/ui/SystemPanels.tsx:359
+#: src/ui/SystemPanels.tsx:365
 #, fuzzy
 msgid "Return"
 msgstr "Zurückholen"
 
-#: src/ui/SystemPanels.tsx:426
+#: src/ui/SystemPanels.tsx:432
 #, fuzzy
 msgid "Waiting for {name} to react"
 msgstr "Wartet, ob {name} reagiert"
 
-#: src/ui/SystemPanels.tsx:440
+#: src/ui/SystemPanels.tsx:446
 #, fuzzy
 msgid "Reacting: {used} of {budget} actions used."
 msgstr "Reaktion: {used} von {budget} Aktionen genutzt."
 
-#: src/ui/SystemPanels.tsx:444
+#: src/ui/SystemPanels.tsx:450
 #, fuzzy
 msgid "Activated: {used} of {budget} actions used."
 msgstr "Aktiviert: {used} von {budget} Aktionen genutzt."
 
-#: src/ui/SystemPanels.tsx:458
+#: src/ui/SystemPanels.tsx:464
 #: src/ui/TopBar.tsx:263
 #, fuzzy
 msgid "End this activation; the other player goes next"
 msgstr "Diese Aktivierung beenden; der andere Spieler ist dran"
 
-#: src/ui/SystemPanels.tsx:464
+#: src/ui/SystemPanels.tsx:470
 #: src/ui/TopBar.tsx:269
 #, fuzzy
 msgid "End activation"
 msgstr "Aktivierung beenden"
 
-#: src/ui/SystemPanels.tsx:477
+#: src/ui/SystemPanels.tsx:483
 #, fuzzy
 msgid "Costs {cost}"
 msgstr "Kostet {cost}"
 
-#: src/ui/SystemPanels.tsx:498
+#: src/ui/SystemPanels.tsx:504
 #, fuzzy
 msgid "Hover a greyed-out action for its reason."
 msgstr "Fahr über eine ausgegraute Aktion, um den Grund zu sehen."
 
-#: src/ui/SystemPanels.tsx:504
+#: src/ui/SystemPanels.tsx:510
 #, fuzzy
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] "Aktiviere zusätzlich bis zu {n} Einheit:"
 msgstr[1] "Aktiviere zusätzlich bis zu {n} Einheiten:"
 
-#: src/ui/SystemPanels.tsx:539
+#: src/ui/SystemPanels.tsx:545
 #, fuzzy
 msgid "with {n}"
 msgstr "mit {n}"
 
-#: src/ui/SystemPanels.tsx:547
-#: src/ui/SystemPanels.tsx:1151
+#: src/ui/SystemPanels.tsx:553
+#: src/ui/SystemPanels.tsx:1157
 #, fuzzy
 msgid "Finish reaction"
 msgstr "Reaktion beenden"
 
-#: src/ui/SystemPanels.tsx:566
+#: src/ui/SystemPanels.tsx:572
 #, fuzzy
 msgid "Put a token on it: its effects last while the token stays"
 msgstr "Lege einen Marker darauf: die Wirkung hält, solange der Marker liegt"
 
-#: src/ui/SystemPanels.tsx:607
+#: src/ui/SystemPanels.tsx:613
 #, fuzzy
 msgid "Placed on its AD slots: spent when it's used"
 msgstr "Auf die AD-Felder gelegt: wird beim Einsatz verbraucht"
 
-#: src/ui/SystemPanels.tsx:608
+#: src/ui/SystemPanels.tsx:614
 #, fuzzy
 msgid "On card:"
 msgstr "Auf der Karte:"
-
-#: src/ui/SystemPanels.tsx:619
-#, fuzzy
-msgid "Place:"
-msgstr "Legen:"
 
 #: src/ui/SystemPanels.tsx:62
 #, fuzzy
@@ -8033,154 +8033,159 @@ msgstr "nutzt {faces}"
 msgid "a {face}"
 msgstr "eine {face}"
 
-#: src/ui/SystemPanels.tsx:624
+#: src/ui/SystemPanels.tsx:625
+#, fuzzy
+msgid "Place:"
+msgstr "Legen:"
+
+#: src/ui/SystemPanels.tsx:630
 #, fuzzy
 msgid "Put a {face} from your Ready dice on this card"
 msgstr "Lege eine {face} aus deinen bereiten Würfeln auf diese Karte"
 
-#: src/ui/SystemPanels.tsx:639
+#: src/ui/SystemPanels.tsx:645
 #, fuzzy
 msgid "Discard"
 msgstr "Abwerfen"
 
-#: src/ui/SystemPanels.tsx:671
+#: src/ui/SystemPanels.tsx:677
 #, fuzzy
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr "Bezahlt mit diesem Würfel; erneut klicken für den niedrigsten passenden"
 
-#: src/ui/SystemPanels.tsx:672
+#: src/ui/SystemPanels.tsx:678
 #, fuzzy
 msgid "Pay with this die"
 msgstr "Mit diesem Würfel bezahlen"
 
-#: src/ui/SystemPanels.tsx:693
+#: src/ui/SystemPanels.tsx:699
 #, fuzzy
 msgid "inside minimum range"
 msgstr "innerhalb der Mindestreichweite"
 
-#: src/ui/SystemPanels.tsx:694
+#: src/ui/SystemPanels.tsx:700
 #, fuzzy
 msgid "out of range"
 msgstr "außer Reichweite"
 
-#: src/ui/SystemPanels.tsx:694
+#: src/ui/SystemPanels.tsx:700
 #, fuzzy
 msgid "long range"
 msgstr "lange Reichweite"
 
-#: src/ui/SystemPanels.tsx:695
-#: src/ui/SystemPanels.tsx:855
+#: src/ui/SystemPanels.tsx:701
+#: src/ui/SystemPanels.tsx:861
 #, fuzzy
 msgid "can't hit"
 msgstr "kann nicht treffen"
 
-#: src/ui/SystemPanels.tsx:725
+#: src/ui/SystemPanels.tsx:731
 #, fuzzy
 msgid "Rear charge: every {step} test fails"
 msgstr "Angriffsbewegung in den Rücken: jeder {step}-Test scheitert"
 
-#: src/ui/SystemPanels.tsx:726
+#: src/ui/SystemPanels.tsx:732
 #, fuzzy
 msgid "Every {step} test fails"
 msgstr "Jeder {step}-Test scheitert"
 
-#: src/ui/SystemPanels.tsx:821
+#: src/ui/SystemPanels.tsx:827
 #, fuzzy
 msgid "not visible"
 msgstr "nicht sichtbar"
 
-#: src/ui/SystemPanels.tsx:850
+#: src/ui/SystemPanels.tsx:856
 #, fuzzy
 msgid "Pick a target first: from the list, or on the table."
 msgstr "Wähle zuerst ein Ziel: aus der Liste oder auf dem Tisch."
 
-#: src/ui/SystemPanels.tsx:854
+#: src/ui/SystemPanels.tsx:860
 #, fuzzy
 msgid "{reason}: no roll can succeed."
 msgstr "{reason}: kein Wurf kann gelingen."
 
-#: src/ui/SystemPanels.tsx:866
+#: src/ui/SystemPanels.tsx:872
 #, fuzzy
 msgid "Pick a target first"
 msgstr "Wähle zuerst ein Ziel"
 
-#: src/ui/SystemPanels.tsx:883
+#: src/ui/SystemPanels.tsx:889
 #, fuzzy
 msgid "anyway"
 msgstr "trotzdem"
 
-#: src/ui/SystemPanels.tsx:887
+#: src/ui/SystemPanels.tsx:893
 #, fuzzy
 msgid "Distances in {units} ({scale}\" each)."
 msgstr "Entfernungen in {units} (je {scale}\")."
 
-#: src/ui/SystemPanels.tsx:888
+#: src/ui/SystemPanels.tsx:894
 #, fuzzy
 msgid "inches"
 msgstr "Zoll"
 
-#: src/ui/SystemPanels.tsx:915
-#: src/ui/SystemPanels.tsx:1059
+#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:1065
 #, fuzzy
 msgid "{count} dice"
 msgstr "{count} Würfel"
 
-#: src/ui/SystemPanels.tsx:916
+#: src/ui/SystemPanels.tsx:922
 #, fuzzy
 msgid "{amount} each"
 msgstr "je {amount}"
 
-#: src/ui/SystemPanels.tsx:918
+#: src/ui/SystemPanels.tsx:924
 #, fuzzy
 msgid "skipped"
 msgstr "übersprungen"
 
-#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:927
 #, fuzzy
 msgid "keep highest"
 msgstr "höchsten behalten"
 
-#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:927
 #, fuzzy
 msgid "keep lowest"
 msgstr "niedrigsten behalten"
-
-#: src/ui/SystemPanels.tsx:926
-#, fuzzy
-msgid "no save"
-msgstr "kein Schutzwurf"
-
-#: src/ui/SystemPanels.tsx:928
-#, fuzzy
-msgid "{dice}: every test fails"
-msgstr "{dice}: jeder Test scheitert"
-
-#: src/ui/SystemPanels.tsx:929
-#, fuzzy
-msgid "{dice}: can't succeed"
-msgstr "{dice}: kann nicht gelingen"
 
 #: src/ui/SystemPanels.tsx:93
 #, fuzzy
 msgid "Abilities"
 msgstr "Fähigkeiten"
 
-#: src/ui/SystemPanels.tsx:933
+#: src/ui/SystemPanels.tsx:932
+#, fuzzy
+msgid "no save"
+msgstr "kein Schutzwurf"
+
+#: src/ui/SystemPanels.tsx:934
+#, fuzzy
+msgid "{dice}: every test fails"
+msgstr "{dice}: jeder Test scheitert"
+
+#: src/ui/SystemPanels.tsx:935
+#, fuzzy
+msgid "{dice}: can't succeed"
+msgstr "{dice}: kann nicht gelingen"
+
+#: src/ui/SystemPanels.tsx:939
 #, fuzzy
 msgid "vs each hit roll"
 msgstr "gegen jeden Trefferwurf"
 
-#: src/ui/SystemPanels.tsx:936
+#: src/ui/SystemPanels.tsx:942
 #, fuzzy
 msgid "{target} or less"
 msgstr "{target} oder weniger"
 
-#: src/ui/SystemPanels.tsx:969
+#: src/ui/SystemPanels.tsx:975
 #, fuzzy
 msgid "no save possible"
 msgstr "kein Schutzwurf möglich"
 
-#: src/ui/SystemPanels.tsx:974
+#: src/ui/SystemPanels.tsx:980
 #, fuzzy
 msgid "can't succeed"
 msgstr "kann nicht gelingen"

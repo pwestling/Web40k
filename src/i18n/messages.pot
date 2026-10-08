@@ -1436,7 +1436,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:48
 #: src/ui/AttackPanel.tsx:85
-#: src/ui/SystemPanels.tsx:295
+#: src/ui/SystemPanels.tsx:298
 msgid "Weapon"
 msgstr ""
 
@@ -1934,7 +1934,7 @@ msgid "Figure"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:337
+#: src/ui/SystemPanels.tsx:343
 msgid "{height}\" tall"
 msgstr ""
 
@@ -2556,7 +2556,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:146
-#: src/ui/SystemPanels.tsx:485
+#: src/ui/SystemPanels.tsx:491
 msgid "{n} action"
 msgid_plural "{n} actions"
 msgstr[0] ""
@@ -3027,7 +3027,7 @@ msgstr ""
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:553
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:359
+#: src/ui/SystemPanels.tsx:365
 #: src/ui/TemplateTools.tsx:114
 msgid "Remove"
 msgstr ""
@@ -3467,7 +3467,7 @@ msgid "({points} pts; units {units})"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:103
-#: src/ui/SystemPanels.tsx:817
+#: src/ui/SystemPanels.tsx:823
 msgid "Target…"
 msgstr ""
 
@@ -3476,12 +3476,12 @@ msgid "{unit} ({distance}\", out of range)"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:830
+#: src/ui/SystemPanels.tsx:836
 msgid "Click a target on the table…"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:116
-#: src/ui/SystemPanels.tsx:830
+#: src/ui/SystemPanels.tsx:836
 msgid "Pick on table"
 msgstr ""
 
@@ -3706,7 +3706,7 @@ msgid "{n} unsaved"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:395
-#: src/ui/SystemPanels.tsx:1033
+#: src/ui/SystemPanels.tsx:1039
 msgid "The computer is rolling…"
 msgstr ""
 
@@ -3728,7 +3728,7 @@ msgstr ""
 
 #: src/ui/AttackPanel.tsx:430
 #: src/ui/Coach.tsx:87
-#: src/ui/SystemPanels.tsx:1044
+#: src/ui/SystemPanels.tsx:1050
 #: src/ui/TerrainPanel.tsx:186
 msgid "Done"
 msgstr ""
@@ -3780,7 +3780,7 @@ msgid "Defender: click a model to put it first."
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:96
-#: src/ui/SystemPanels.tsx:812
+#: src/ui/SystemPanels.tsx:818
 msgid "at"
 msgstr ""
 
@@ -4474,7 +4474,7 @@ msgid "+1 to save"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:37
-#: src/ui/SystemPanels.tsx:240
+#: src/ui/SystemPanels.tsx:243
 #: src/ui/UnitCard.tsx:350
 msgid "Line of sight"
 msgstr ""
@@ -5028,7 +5028,7 @@ msgstr ""
 #: src/ui/Missions.tsx:121
 #: src/ui/Missions.tsx:136
 #: src/ui/Missions.tsx:261
-#: src/ui/SystemPanels.tsx:1012
+#: src/ui/SystemPanels.tsx:1018
 #: src/ui/TopBar.tsx:281
 msgid "Pass"
 msgstr ""
@@ -6221,7 +6221,7 @@ msgid "{side}'s army"
 msgstr ""
 
 #: src/ui/Showcase.tsx:53
-#: src/ui/SystemPanels.tsx:161
+#: src/ui/SystemPanels.tsx:164
 #: src/ui/UnitCard.tsx:225
 msgid "{points} pts"
 msgstr ""
@@ -6333,193 +6333,193 @@ msgstr ""
 msgid "Moments"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1020
+#: src/ui/SystemPanels.tsx:1026
 msgid "Unit destroyed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1039
+#: src/ui/SystemPanels.tsx:1045
 msgid "Roll {step}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1064
+#: src/ui/SystemPanels.tsx:106
+msgid "(spent)"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:1070
 msgid "rolled {dice}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1078
+#: src/ui/SystemPanels.tsx:1084
 msgid "{successes} of {count} saved"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1079
+#: src/ui/SystemPanels.tsx:1085
 msgid "{successes} of {count} succeed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1108
+#: src/ui/SystemPanels.tsx:1114
 #: src/ui/gameLog.ts:259
 #: src/ui/gameLog.ts:1062
 msgid "A unit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1110
+#: src/ui/SystemPanels.tsx:1116
 msgid "{unit}: {action} at {target}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1117
+#: src/ui/SystemPanels.tsx:1123
 msgid "is reacting to {what}."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1118
+#: src/ui/SystemPanels.tsx:1124
 msgid "Take its action, then finish the reaction."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1118
+#: src/ui/SystemPanels.tsx:1124
 msgid "Waiting on {name}."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1123
+#: src/ui/SystemPanels.tsx:1129
 msgid "react to {what}?"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1140
+#: src/ui/SystemPanels.tsx:1146
 msgid "Don't react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:1146
+#: src/ui/SystemPanels.tsx:1152
 msgid "Waiting on {name} to decide whether to react."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:146
+#: src/ui/SystemPanels.tsx:149
 msgid "Charged {distance}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:149
+#: src/ui/SystemPanels.tsx:152
 #: src/ui/UnitCard.tsx:194
 msgid "Selected unit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:160
+#: src/ui/SystemPanels.tsx:163
 msgid "{alive}/{n} model"
 msgid_plural "{alive}/{n} bases"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:179
+#: src/ui/SystemPanels.tsx:182
 msgid "Click to clear"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:197
+#: src/ui/SystemPanels.tsx:200
 msgid "Click to end this spell"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:198
+#: src/ui/SystemPanels.tsx:201
 msgid "Click when the token is used or lost"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:206
+#: src/ui/SystemPanels.tsx:209
 msgid "{weapon} prepared"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:211
+#: src/ui/SystemPanels.tsx:214
 msgid "In reserve"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:213
+#: src/ui/SystemPanels.tsx:216
 msgid "Interacting"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:227
+#: src/ui/SystemPanels.tsx:230
 msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:242
+#: src/ui/SystemPanels.tsx:245
 #: src/ui/UnitCard.tsx:352
 msgid "Model's eye view"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:245
+#: src/ui/SystemPanels.tsx:248
 #: src/ui/UnitCard.tsx:269
 msgid "Rotate left (Q)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:248
+#: src/ui/SystemPanels.tsx:251
 #: src/ui/UnitCard.tsx:272
 msgid "Rotate right (E)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:274
+#: src/ui/SystemPanels.tsx:277
 msgid "{value} on the card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:329
+#: src/ui/SystemPanels.tsx:335
 msgid "Bases"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:336
+#: src/ui/SystemPanels.tsx:342
 msgid "removed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:359
+#: src/ui/SystemPanels.tsx:365
 msgid "Return"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:426
+#: src/ui/SystemPanels.tsx:432
 msgid "Waiting for {name} to react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:440
+#: src/ui/SystemPanels.tsx:446
 msgid "Reacting: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:444
+#: src/ui/SystemPanels.tsx:450
 msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:458
+#: src/ui/SystemPanels.tsx:464
 #: src/ui/TopBar.tsx:263
 msgid "End this activation; the other player goes next"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:464
+#: src/ui/SystemPanels.tsx:470
 #: src/ui/TopBar.tsx:269
 msgid "End activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:477
+#: src/ui/SystemPanels.tsx:483
 msgid "Costs {cost}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:498
+#: src/ui/SystemPanels.tsx:504
 msgid "Hover a greyed-out action for its reason."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:504
+#: src/ui/SystemPanels.tsx:510
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:539
+#: src/ui/SystemPanels.tsx:545
 msgid "with {n}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:547
-#: src/ui/SystemPanels.tsx:1151
+#: src/ui/SystemPanels.tsx:553
+#: src/ui/SystemPanels.tsx:1157
 msgid "Finish reaction"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:566
+#: src/ui/SystemPanels.tsx:572
 msgid "Put a token on it: its effects last while the token stays"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:607
+#: src/ui/SystemPanels.tsx:613
 msgid "Placed on its AD slots: spent when it's used"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:608
+#: src/ui/SystemPanels.tsx:614
 msgid "On card:"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:619
-msgid "Place:"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:62
@@ -6530,125 +6530,129 @@ msgstr ""
 msgid "a {face}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:624
+#: src/ui/SystemPanels.tsx:625
+msgid "Place:"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:630
 msgid "Put a {face} from your Ready dice on this card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:639
+#: src/ui/SystemPanels.tsx:645
 msgid "Discard"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:671
+#: src/ui/SystemPanels.tsx:677
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:672
+#: src/ui/SystemPanels.tsx:678
 msgid "Pay with this die"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:693
+#: src/ui/SystemPanels.tsx:699
 msgid "inside minimum range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:694
+#: src/ui/SystemPanels.tsx:700
 msgid "out of range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:694
+#: src/ui/SystemPanels.tsx:700
 msgid "long range"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:695
-#: src/ui/SystemPanels.tsx:855
+#: src/ui/SystemPanels.tsx:701
+#: src/ui/SystemPanels.tsx:861
 msgid "can't hit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:725
+#: src/ui/SystemPanels.tsx:731
 msgid "Rear charge: every {step} test fails"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:726
+#: src/ui/SystemPanels.tsx:732
 msgid "Every {step} test fails"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:821
+#: src/ui/SystemPanels.tsx:827
 msgid "not visible"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:850
+#: src/ui/SystemPanels.tsx:856
 msgid "Pick a target first: from the list, or on the table."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:854
+#: src/ui/SystemPanels.tsx:860
 msgid "{reason}: no roll can succeed."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:866
+#: src/ui/SystemPanels.tsx:872
 msgid "Pick a target first"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:883
+#: src/ui/SystemPanels.tsx:889
 msgid "anyway"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:887
+#: src/ui/SystemPanels.tsx:893
 msgid "Distances in {units} ({scale}\" each)."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:888
+#: src/ui/SystemPanels.tsx:894
 msgid "inches"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:915
-#: src/ui/SystemPanels.tsx:1059
+#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:1065
 msgid "{count} dice"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:916
+#: src/ui/SystemPanels.tsx:922
 msgid "{amount} each"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:918
+#: src/ui/SystemPanels.tsx:924
 msgid "skipped"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:927
 msgid "keep highest"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:921
+#: src/ui/SystemPanels.tsx:927
 msgid "keep lowest"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:926
-msgid "no save"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:928
-msgid "{dice}: every test fails"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:929
-msgid "{dice}: can't succeed"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:93
 msgid "Abilities"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:933
+#: src/ui/SystemPanels.tsx:932
+msgid "no save"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:934
+msgid "{dice}: every test fails"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:935
+msgid "{dice}: can't succeed"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:939
 msgid "vs each hit roll"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:936
+#: src/ui/SystemPanels.tsx:942
 msgid "{target} or less"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:969
+#: src/ui/SystemPanels.tsx:975
 msgid "no save possible"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:974
+#: src/ui/SystemPanels.tsx:980
 msgid "can't succeed"
 msgstr ""
 

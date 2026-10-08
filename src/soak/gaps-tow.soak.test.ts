@@ -6,7 +6,7 @@ import { scenarioSuite } from "./suite";
 /**
  * #40: The Old World combat result extras and Stubborn (the sample Tusk Brutes are Stubborn);
  * challenges, fights with more than two units, automatic Panic tests (from combat, shooting and
- * magic), march tests, and characters joining and leaving regiments.
+ * magic), march tests, characters joining and leaving regiments, and magic items.
  */
 const watch = (_: unknown, events: GameEvent[]): string[] => {
   const steps = events.flatMap((e) =>
@@ -26,6 +26,7 @@ const watch = (_: unknown, events: GameEvent[]): string[] => {
     if (/ joined /.test(n)) tags.push("character joined");
     if (/ left /.test(n)) tags.push("character left");
     if (/ models: a Panic test$/.test(n)) tags.push("Panic from losses");
+    if (/ uses .+ \(one use: now spent\)$/.test(n)) tags.push("magic item spent");
   }
   return tags;
 };
@@ -65,5 +66,6 @@ describe("rules gaps: Old World challenges", () =>
       "march test",
       "character joined",
       "character left",
+      "magic item spent",
     ],
   ));
