@@ -1,3 +1,4 @@
+import { LABEL_Z } from "./boardLabels";
 import { Html } from "@react-three/drei";
 import { useMemo } from "react";
 import { DoubleSide } from "three";
@@ -20,7 +21,6 @@ import { useGame } from "../ui/hooks";
 import { t } from "../i18n";
 
 /** Labels sit under the side panels (see Board's LABEL_Z). */
-const LABEL_Z: [number, number] = [9, 0];
 const REACH = 24;
 
 /**

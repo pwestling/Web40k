@@ -4,30 +4,17 @@ import { FocusCamera } from "./FocusCamera";
 import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
-import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  CanvasTexture,
-  Color,
-  Plane,
-  Raycaster,
-  RepeatWrapping,
-  Vector2,
-  Vector3,
-  type Object3D,
-} from "three";
+import { Plane, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import {
   baseSizeInches,
-  maxWounds,
   modelHeight,
   settleZ,
   modelAt,
-  rulerLength,
   standInHeight,
   footprintVisibility,
-  type GameState,
   type Model,
-  type Ruler,
   type TerrainPiece,
   type Vec2,
   isBlock,
@@ -35,7 +22,6 @@ import {
 } from "../core";
 import {
   aliveModels,
-  blockedMoves,
   carriers,
   ENGAGEMENT_RANGE,
   incoherentModels,
@@ -45,7 +31,6 @@ import {
   OBJECTIVE_MARKER_MM,
   OBJECTIVE_RANGE,
   objectiveControl,
-  unitMoved,
   unitSight,
   type UnitSight,
 } from "../systems/wh40k/rules";
@@ -56,14 +41,12 @@ import { ModelInstances, type ModelDraw } from "./ModelInstances";
 import { Trails, useTween, WatchEffects } from "./Watch";
 import { CasterCamera } from "./CasterCamera";
 import { Templates } from "./Templates";
-import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
 import { setTableCanvas } from "../share/capture";
 import { displayName } from "../i18n/names";
 import { Lanterns, type LanternItem } from "./Lanterns";
 import { TalkLayer } from "./TalkLayer";
 import { carry, pickUp, setDown } from "./feel";
-import { tick } from "../ui/sound";
 import { FeelLayer } from "./FeelLayer";
 import { useTalk, type Said } from "../talk/talk";
 import { talkOrNote } from "../replay/notes";
@@ -73,6 +56,17 @@ import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
 import { opposed, sidePlayers, zoneSlice } from "../core/teams";
 import { t } from "../i18n";
+import {
+  RangeOutline,
+  RulerLine,
+  LABEL_Z,
+  SightLine,
+  seatColor,
+  MoveLabel,
+  SimpleLabel,
+} from "./boardLabels";
+import { InchGrid, ZoneShape, Terrain, ObjectiveMarker } from "./TablePieces";
+import { Ring, Ghost, ModelOverlay, faded } from "./ModelOverlay";
 
 /**
  * World axes: x = table width, z = table depth, y = up. One unit is one inch.
@@ -1176,562 +1170,6 @@ function Scene() {
   );
 }
 
-/**
- * The outline of everywhere within `range` of any of the models' bases: the
- * outer edge of the union of their circles, with one label.
- */
-function RangeOutline({
-  models,
-  range,
-  color,
-  label,
-}: {
-  models: Model[];
-  range: number;
-  color: string;
-  label: string;
-}) {
-  const { segments, at } = useMemo(() => {
-    const circles = models.map((m) => {
-      const { width, depth } = baseSizeInches(m.base);
-      return { x: m.position.x, y: m.position.y, z: m.z ?? 0, r: Math.max(width, depth) / 2 + range };
-    });
-    const inside = (x: number, y: number, skip: number) =>
-      circles.some((c, i) => i !== skip && Math.hypot(x - c.x, y - c.y) < c.r - 1e-3);
-    const pts: number[] = [];
-    let at = { x: 0, y: -Infinity, z: 0 };
-    const N = 96;
-    circles.forEach((c, i) => {
-      for (let k = 0; k < N; k++) {
-        const a0 = (k / N) * Math.PI * 2;
-        const a1 = ((k + 1) / N) * Math.PI * 2;
-        const p0 = { x: c.x + Math.cos(a0) * c.r, y: c.y + Math.sin(a0) * c.r };
-        const p1 = { x: c.x + Math.cos(a1) * c.r, y: c.y + Math.sin(a1) * c.r };
-        if (inside(p0.x, p0.y, i) || inside(p1.x, p1.y, i)) continue;
-        pts.push(p0.x, c.z + 0.06, p0.y, p1.x, c.z + 0.06, p1.y);
-        if (p0.y > at.y) at = { x: p0.x, y: p0.y, z: c.z };
-      }
-    });
-    return { segments: new Float32Array(pts), at };
-  }, [models, range]);
-  if (!segments.length) return null;
-  return (
-    <>
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[segments, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color={color} />
-      </lineSegments>
-      <Html
-        zIndexRange={LABEL_Z}
-        position={[at.x, at.z + 0.4, at.y]}
-        center
-        className="ruler"
-        style={{ color }}
-      >
-        {label}
-      </Html>
-    </>
-  );
-}
-
-/** A measuring line with its length, in the colour of whoever measured. */
-function RulerLine({ game, ruler, range }: { game: GameState; ruler: Ruler; range?: number | null }) {
-  const a = ruler.fromModel ? game.models[ruler.fromModel] : undefined;
-  const b = ruler.toModel ? game.models[ruler.toModel] : undefined;
-  const from = a?.position ?? ruler.from;
-  const to = b?.position ?? ruler.to;
-  const za = (a?.z ?? 0) + 0.3;
-  const zb = (b?.z ?? 0) + 0.3;
-  const line = useMemo(
-    () => new Float32Array([from.x, za, from.y, to.x, zb, to.y]),
-    [from.x, from.y, to.x, to.y, za, zb],
-  );
-  const color = game.players[ruler.by]?.color ?? "#e5e7eb";
-  const length = rulerLength(game, ruler);
-  // Against a weapon's range shown for the measuring unit: how far in or out (a measurement, not odds).
-  const short = range ? Number((range - length).toFixed(1)) : null;
-  return (
-    <>
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[line, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color={color} />
-      </lineSegments>
-      <Html
-        zIndexRange={LABEL_Z}
-        position={[(from.x + to.x) / 2, Math.max(za, zb) + 0.6, (from.y + to.y) / 2]}
-        center
-        className={short !== null && Math.abs(short) <= 0.5 ? "ruler near" : "ruler"}
-        style={{ borderBottom: `2px solid ${color}` }}
-      >
-        {`${length.toFixed(1)}"`}
-        {a || b ? t(" base to base") : ""}
-        {short !== null &&
-          (short >= 0
-            ? t(' · in by {inches}"', { inches: short.toFixed(1) })
-            : t(' · out by {inches}"', { inches: (-short).toFixed(1) }))}
-      </Html>
-    </>
-  );
-}
-
-/** Labels over the table stay under the UI panels (z-index 20 and up). */
-const LABEL_Z: [number, number] = [9, 0];
-
-const SIGHT_COLORS = { full: "#22c55e", partial: "#facc15", none: "#ef4444" };
-
-/** A sight line from the shooter's eye to the target, or a red ring on an unseen target. */
-function SightLine({
-  shooter,
-  target,
-  state,
-}: {
-  shooter?: Model;
-  target: Model;
-  state: "full" | "partial" | "none";
-}) {
-  const color = SIGHT_COLORS[state];
-  const line = useMemo(() => {
-    if (!shooter) return null;
-    const a = [shooter.position.x, (shooter.z ?? 0) + modelHeight(shooter) * 0.9, shooter.position.y];
-    const b = [target.position.x, (target.z ?? 0) + modelHeight(target) * 0.5, target.position.y];
-    return new Float32Array([...a, ...b]);
-  }, [shooter, target]);
-  return (
-    <>
-      <Ring model={target} radius={0.15} color={color} opacity={0.9} />
-      {line && (
-        <lineSegments raycast={() => null}>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" args={[line, 3]} />
-          </bufferGeometry>
-          <lineBasicMaterial color={color} transparent opacity={0.7} />
-        </lineSegments>
-      )}
-    </>
-  );
-}
-
-function seatColor(game: GameState, seat: number): string {
-  return (
-    Object.values(game.players).find((p) => p.seat === seat)?.color ?? (seat === 0 ? "#3b82f6" : "#f97316")
-  );
-}
-
-function MoveLabel({
-  game,
-  unitId,
-  positions,
-  heights,
-  at,
-}: {
-  game: GameState;
-  unitId: string;
-  positions: Record<string, Vec2>;
-  heights: Record<string, number>;
-  at: Vec2;
-}) {
-  const unit = game.units[unitId]!;
-  const moved = unitMoved(aliveModels(game, unit), positions, heights);
-  const blocked = blockedMoves(game, unit, positions);
-  const allowed = moveAllowance(game, unit);
-  const deploying = game.turn.round === 0;
-  const over = !deploying && allowed !== null && moved > allowed + 0.05;
-  // Within half an inch of the limit, the label gets tense (PX-3e).
-  const near = !deploying && !over && allowed !== null && moved >= allowed - 0.5;
-  useTapeTicks(near ? moved : null);
-  const base = deploying ? `${moved.toFixed(1)}"` : `${moved.toFixed(1)}" / ${allowed ?? "?"}"`;
-  const text = blocked.length
-    ? t("{distance} · through {terrain}", {
-        distance: base,
-        terrain: blocked.map((p) => p.name.toLowerCase()).join(", "),
-      })
-    : base;
-  return (
-    <SimpleLabel
-      at={at}
-      text={text}
-      className={over || blocked.length ? "ruler over" : near ? "ruler near" : "ruler"}
-    />
-  );
-}
-
-function SimpleLabel({ at, text, className = "ruler" }: { at: Vec2; text: string; className?: string }) {
-  return (
-    <Html zIndexRange={LABEL_Z} position={[at.x, 2.5, at.y]} center className={className}>
-      {text}
-    </Html>
-  );
-}
-
-/** One line per inch, a brighter line every 6". */
-function InchGrid({ width, depth }: { width: number; depth: number }) {
-  const [minor, major] = useMemo(() => {
-    const lines: [number[], number[]] = [[], []];
-    for (let x = 0; x <= width; x++) {
-      lines[x % 6 === 0 ? 1 : 0].push(x - width / 2, 0, -depth / 2, x - width / 2, 0, depth / 2);
-    }
-    for (let z = 0; z <= depth; z++) {
-      lines[z % 6 === 0 ? 1 : 0].push(-width / 2, 0, z - depth / 2, width / 2, 0, z - depth / 2);
-    }
-    return lines.map((l) => new Float32Array(l));
-  }, [width, depth]);
-
-  return (
-    <group position-y={0.01}>
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[minor!, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color="#56653f" />
-      </lineSegments>
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[major!, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color="#77895c" />
-      </lineSegments>
-    </group>
-  );
-}
-
-function ZoneShape({ points, color }: { points: Vec2[]; color: string }) {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  return (
-    <mesh rotation-x={-Math.PI / 2} position={[(x0 + x1) / 2, 0.015, (y0 + y1) / 2]} raycast={() => null}>
-      <planeGeometry args={[x1 - x0, y1 - y0]} />
-      <meshBasicMaterial color={color} transparent opacity={0.12} depthWrite={false} />
-    </mesh>
-  );
-}
-
-/** Diagonal stripes, for obscuring footprints. */
-let hatch: CanvasTexture | null = null;
-function hatchTexture(): CanvasTexture {
-  if (hatch) return hatch;
-  const c = document.createElement("canvas");
-  c.width = c.height = 32;
-  const g = c.getContext("2d")!;
-  g.strokeStyle = "#fff";
-  g.lineWidth = 6;
-  for (const o of [-32, 0, 32]) {
-    g.beginPath();
-    g.moveTo(o, 32);
-    g.lineTo(o + 32, 0);
-    g.stroke();
-  }
-  hatch = new CanvasTexture(c);
-  hatch.wrapS = hatch.wrapT = RepeatWrapping;
-  return hatch;
-}
-
-export const FOOTPRINT_COLORS = { open: "#e5e7eb", obscuring: "#facc15", blocking: "#ef4444" };
-
-/** Footprint line of sight: clear outline for open, stripes for obscuring, solid for blocking. */
-function FootprintTint({
-  width,
-  depth,
-  kind,
-  strong,
-}: {
-  width: number;
-  depth: number;
-  kind: "open" | "obscuring" | "blocking";
-  strong: boolean;
-}) {
-  const map = useMemo(() => {
-    if (kind !== "obscuring") return null;
-    const t = hatchTexture().clone();
-    t.repeat.set(width / 1.5, depth / 1.5);
-    t.needsUpdate = true;
-    return t;
-  }, [kind, width, depth]);
-  const outline = useMemo(() => {
-    const [w, d] = [width / 2, depth / 2];
-    return new Float32Array([-w, 0, -d, w, 0, -d, w, 0, -d, w, 0, d, w, 0, d, -w, 0, d, -w, 0, d, -w, 0, -d]);
-  }, [width, depth]);
-  const color = FOOTPRINT_COLORS[kind];
-  return (
-    <group position-y={0.05}>
-      {kind !== "open" && (
-        <mesh rotation-x={-Math.PI / 2} raycast={() => null}>
-          <planeGeometry args={[width, depth]} />
-          <meshBasicMaterial
-            color={color}
-            {...(map ? { map } : {})}
-            transparent
-            opacity={(kind === "blocking" ? 0.35 : 0.5) * (strong ? 1.6 : 1)}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[outline, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color={color} />
-      </lineSegments>
-    </group>
-  );
-}
-
-const CATEGORY_COLORS: Record<TerrainPiece["category"], string> = {
-  exposed: "#6f6450",
-  light: "#6b6257",
-  dense: "#3d5a32",
-  solid: "#4b4b52",
-  // Other games' categories.
-  open: "#6f6450",
-  broken: "#6f6450",
-  traversable: "#6b6257",
-  obscuring: "#3d5a32",
-  blocking: "#4b4b52",
-};
-
-function Terrain({
-  piece,
-  xray,
-  editable,
-  selected,
-  standIn,
-  footprint,
-  grouped,
-  onDown,
-}: {
-  piece: TerrainPiece;
-  xray: boolean;
-  editable: boolean;
-  selected: boolean;
-  /** Stand-in height to draw as a see-through block, in "heights" line of sight. */
-  standIn: number | null;
-  /** Sight class to tint the footprint with, in "footprint" line of sight. */
-  footprint: "open" | "obscuring" | "blocking" | null;
-  grouped?: boolean;
-  onDown: (shift: boolean) => void;
-}) {
-  const handlers = editable
-    ? {
-        onPointerDown: (e: ThreeEvent<PointerEvent>) => {
-          if (e.button !== 0) return;
-          e.stopPropagation();
-          onDown(e.shiftKey);
-        },
-        onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
-      }
-    : { raycast: () => null };
-  const opacity = xray ? 0.2 : 0.95;
-  // An uploaded model replaces the solids' boxes once its meshes are here; until then the boxes stand in.
-  const model = useAssets((a) => (piece.mesh ? a.assets[piece.mesh.asset] : undefined));
-  return (
-    <group position={[piece.position.x, 0, piece.position.y]} rotation-y={piece.facing}>
-      {model && (
-        <TerrainModel
-          asset={model}
-          scale={piece.mesh!.scale}
-          xray={xray}
-          selected={selected}
-          handlers={handlers}
-        />
-      )}
-      {standIn !== null && standIn > 0 && (
-        <mesh position-y={standIn / 2} raycast={() => null}>
-          <boxGeometry args={[piece.width, standIn, piece.depth]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.15} depthWrite={false} />
-        </mesh>
-      )}
-      {footprint && <FootprintTint width={piece.width} depth={piece.depth} kind={footprint} strong={xray} />}
-      <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
-        <planeGeometry args={[piece.width, piece.depth]} />
-        <meshStandardMaterial
-          color={selected ? "#a16207" : grouped ? "#7c3aed" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-      {!model &&
-        piece.solids.map((s, i) =>
-          s.kind === "foliage" ? (
-            <group key={i} position={[s.x, s.z, s.y]}>
-              <mesh position-y={0.6} raycast={() => null}>
-                <cylinderGeometry args={[0.15, 0.2, 1.2, 8]} />
-                <meshStandardMaterial color="#5b4630" />
-              </mesh>
-              <mesh position-y={1.2 + (s.h - 1.2) / 2} castShadow raycast={() => null}>
-                <coneGeometry args={[s.w / 2, s.h - 1.2, 10]} />
-                <meshStandardMaterial color="#2f5d2a" transparent opacity={xray ? 0.25 : 1} />
-              </mesh>
-            </group>
-          ) : (
-            <mesh key={i} position={[s.x, s.z + s.h / 2, s.y]} castShadow={!xray} receiveShadow {...handlers}>
-              <boxGeometry args={[s.w, s.h, s.d]} />
-              <meshStandardMaterial
-                color={
-                  s.kind === "floor"
-                    ? "#9a8f80"
-                    : s.kind === "block"
-                      ? piece.name === "Hill"
-                        ? "#5f6e45"
-                        : "#7a5c3c"
-                      : "#8a8178"
-                }
-                transparent
-                opacity={opacity}
-                depthWrite={!xray}
-              />
-            </mesh>
-          ),
-        )}
-      {selected && (
-        <Html zIndexRange={LABEL_Z} position={[0, 0.5, 0]} center className="ruler terrain-label">
-          {piece.name} · {piece.category}
-        </Html>
-      )}
-    </group>
-  );
-}
-
-function ObjectiveMarker({
-  position,
-  color,
-  onDown,
-}: {
-  position: Vec2;
-  color: string;
-  onDown?: () => void;
-}) {
-  const r = OBJECTIVE_MARKER_MM / 25.4 / 2;
-  return (
-    <group position={[position.x, 0, position.y]}>
-      <mesh
-        position-y={0.05}
-        {...(onDown
-          ? {
-              onPointerDown: (e: ThreeEvent<PointerEvent>) => {
-                e.stopPropagation();
-                onDown();
-              },
-              onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
-            }
-          : { raycast: () => null })}
-      >
-        <cylinderGeometry args={[r, r, 0.1, 32]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.03} raycast={() => null}>
-        <ringGeometry args={[r + OBJECTIVE_RANGE - 0.08, r + OBJECTIVE_RANGE, 64]} />
-        <meshBasicMaterial color={color} transparent opacity={0.6} />
-      </mesh>
-    </group>
-  );
-}
-
-/** A flat ring `radius` inches out from a model's base edge. */
-function Ring({
-  model,
-  radius,
-  color,
-  opacity,
-}: {
-  model: Model;
-  radius: number;
-  color: string;
-  opacity: number;
-}) {
-  const { width, depth } = baseSizeInches(model.base);
-  const r = Math.max(width, depth) / 2 + radius;
-  return (
-    <mesh
-      rotation-x={-Math.PI / 2}
-      position={[model.position.x, (model.z ?? 0) + 0.04, model.position.y]}
-      raycast={() => null}
-    >
-      <ringGeometry args={[r - 0.08, r, 64]} />
-      <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
-    </mesh>
-  );
-}
-
-function Ghost({
-  from,
-  fromZ,
-  to,
-  toZ,
-  model,
-}: {
-  from: Vec2;
-  fromZ: number;
-  to: Vec2;
-  toZ: number;
-  model: Model;
-}) {
-  const { width, depth } = baseSizeInches(model.base);
-  const r = Math.max(width, depth) / 2;
-  const line = useMemo(
-    () => new Float32Array([from.x, fromZ + 0.06, from.y, to.x, toZ + 0.06, to.y]),
-    [from, fromZ, to, toZ],
-  );
-  return (
-    <>
-      <mesh rotation-x={-Math.PI / 2} position={[from.x, fromZ + 0.05, from.y]} raycast={() => null}>
-        <ringGeometry args={[r - 0.1, r, 32]} />
-        <meshBasicMaterial color="#e5e7eb" transparent opacity={0.5} />
-      </mesh>
-      <lineSegments raycast={() => null}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[line, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color="#e5e7eb" transparent opacity={0.6} />
-      </lineSegments>
-    </>
-  );
-}
-
-/** Rings and labels for one model, drawn only while something needs showing. */
-function ModelOverlay({
-  draw,
-  selected,
-  incoherent,
-  hover,
-  unitName,
-}: {
-  draw: ModelDraw;
-  selected: boolean;
-  incoherent: boolean;
-  hover: boolean;
-  unitName?: string;
-}) {
-  const { model, position, z, height } = draw;
-  const { width, depth } = baseSizeInches(model.base);
-  const wounds = maxWounds(model);
-  const left = wounds - (model.woundsLost ?? 0);
-  return (
-    <group position={[position.x, z, position.y]} rotation-y={model.facing}>
-      {(selected || incoherent) && (
-        <mesh rotation-x={-Math.PI / 2} position-y={0.03} raycast={() => null}>
-          <ringGeometry args={[Math.max(width, depth) / 2 + 0.05, Math.max(width, depth) / 2 + 0.25, 40]} />
-          <meshBasicMaterial color={incoherent ? "#ef4444" : "#fde047"} />
-        </mesh>
-      )}
-      {hover && (
-        <Html zIndexRange={LABEL_Z} position={[0, height + 1.8, 0]} center className="ruler">
-          {unitName && unitName !== model.label ? `${unitName}: ${model.label}` : model.label}
-          {wounds > 1 ? ` (${left}/${wounds} W)` : ""}
-        </Html>
-      )}
-      {wounds > 1 && left < wounds && (
-        <Html zIndexRange={LABEL_Z} position={[0, height + 0.9, 0]} center className="wounds">
-          {`${left}/${wounds}`}
-        </Html>
-      )}
-    </group>
-  );
-}
-
 /** The arrow or area being drawn, in this player's colour. */
 function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said | null {
   if (drag?.kind !== "talk" || !drag.moved) return null;
@@ -1746,30 +1184,4 @@ function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said 
         at: drag.grab,
         radius: Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y),
       };
-}
-
-const fadedCache = new Map<string, string>();
-/** A colour washed towards the table's dark grey. */
-function faded(color: string, on: boolean): string {
-  if (!on) return color;
-  let out = fadedCache.get(color);
-  if (!out) {
-    out = `#${new Color(color).lerp(new Color("#3f3f46"), 0.65).getHexString()}`;
-    fadedCache.set(color, out);
-  }
-  return out;
-}
-
-/** A soft tape-measure tick for each tenth of an inch crossed near the limit (quiet; off when muted). */
-function useTapeTicks(moved: number | null) {
-  const last = useRef<number | null>(null);
-  useEffect(() => {
-    if (moved === null) {
-      last.current = null;
-      return;
-    }
-    const tenth = Math.floor(moved * 10);
-    if (last.current !== null && tenth !== last.current) tick();
-    last.current = tenth;
-  }, [moved]);
 }

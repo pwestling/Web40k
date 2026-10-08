@@ -1,10 +1,10 @@
+import { LABEL_Z } from "./boardLabels";
 import { Html } from "@react-three/drei";
 import { useStore } from "../store";
 import { useNotes, type NoteMark } from "../replay/notes";
 import { useAnnotating } from "../replay/NotesPanel";
 import { Arrow, Area } from "./TalkLayer";
 
-const LABEL_Z: [number, number] = [9, 0];
 const Y = 0.08;
 
 /** The marks of the notes at the replay's current moment, and of the note being written. */

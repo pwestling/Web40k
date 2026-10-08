@@ -1,3 +1,4 @@
+import { LABEL_Z } from "./boardLabels";
 import { Html, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
@@ -5,7 +6,6 @@ import type { Mesh, MeshBasicMaterial } from "three";
 import type { GameState } from "../core";
 import { LIFETIME, useTalk, type Said } from "../talk/talk";
 
-const LABEL_Z: [number, number] = [9, 0];
 /** Drawn just above the table and over terrain, so a mark is never hidden. */
 const Y = 0.08;
 const FADE_MS = 8000;

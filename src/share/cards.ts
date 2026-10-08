@@ -287,6 +287,9 @@ function headline(rows: Side[], scored: boolean, lost: (s: Side) => number): str
   if (score(first) === score(second))
     return scored ? t("Draw, {score}", { score: vps }) : t("Draw on losses: {score}", { score: losses });
   const side = displayName(first.name);
+  // Against the computer the player's side is "You" (solo): "You win", not "You wins" (PX solo 5).
+  if (side === t("You"))
+    return scored ? t("You win {score}", { score: vps }) : t("You win on losses: {score}", { score: losses });
   return scored
     ? t("{side} wins {score}", { side, score: vps })
     : t("{side} wins on losses: {score}", { side, score: losses });

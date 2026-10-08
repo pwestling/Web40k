@@ -23,7 +23,7 @@ import { Coach } from "./ui/Coach";
 import { MailBar } from "./mail/MailBar";
 import { PlayPanel } from "./ui/PlayPanel";
 import { ScriptPanel } from "./ui/ScriptPanel";
-import { ReactionPrompt } from "./ui/SystemPanels";
+import { ReactionPrompt } from "./ui/ProcedurePanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { ReplayTitle, RoundCard } from "./ui/RoundCard";
 import { StatsScreen } from "./ui/StatsScreen";

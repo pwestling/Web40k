@@ -1,3 +1,4 @@
+import { LABEL_Z } from "./boardLabels";
 import { Html, Line } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,8 +14,6 @@ import {
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
 import { t } from "../i18n";
-
-const LABEL_Z: [number, number] = [9, 0];
 
 type Grab = { id: string; part: "body" | "end"; grab: Vec2; start: Template };
 

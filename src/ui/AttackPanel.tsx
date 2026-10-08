@@ -19,7 +19,7 @@ import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
 import { useGame } from "./hooks";
-import { ActionSetup, ProcedurePanel } from "./SystemPanels";
+import { ActionSetup, ProcedurePanel } from "./ProcedurePanels";
 import { opposed } from "../core/teams";
 import { t, tn } from "../i18n";
 import { RollButton, useOwnDice } from "../companion/RealDice";

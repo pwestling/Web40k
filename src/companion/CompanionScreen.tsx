@@ -18,7 +18,7 @@ import { ReportButton } from "../ui/SavedNote";
 import { SecretObjectives } from "../ui/SecretObjectives";
 import { playerShape } from "../ui/sides";
 import { battleOver } from "../ui/StatsScreen";
-import { ReactionPrompt } from "../ui/SystemPanels";
+import { ReactionPrompt } from "../ui/ProcedurePanels";
 import { TopBar } from "../ui/TopBar";
 import { flags, UnitCard } from "../ui/UnitCard";
 import { OwnDiceSwitch, RollButton } from "./RealDice";

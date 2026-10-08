@@ -4504,3 +4504,10 @@ body.clip-narrow .caption {
 .rules-sheet .map.hero {
   margin: 12px 0 4px;
 }
+/* The model under the pointer: a name, so it reads like the name plates, not a ruler readout (PX solo 4). */
+.ruler.model-hover {
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+}
