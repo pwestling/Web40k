@@ -195,7 +195,9 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                     : undefined;
                 const card = deck.find((c) => c.id === id);
                 if (!e.revealed && !mine) return null;
-                const due = e.revealed && mine ? pendingCard(`card:${p.id}:${key}`) : undefined;
+                // Revealed during play and not yet confirmed: still to score, even after the battle (the result lists it too).
+                const open = e.revealed ? pendingCard(`card:${p.id}:${key}`) : undefined;
+                const due = mine ? open : undefined;
                 const scored = game.scores?.find((x) => x.key === `card:${p.id}:${key}`);
                 return (
                   <li key={key}>
@@ -221,9 +223,9 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                             ? scored.skipped
                               ? " · passed"
                               : ` · scored ${scored.vp} VP`
-                            : over
-                              ? " · not scored"
-                              : " · revealed, waiting to be scored"}
+                            : open || !over
+                              ? ` · revealed, waiting for ${p.name} to score it`
+                              : " · not scored"}
                         </span>
                       )
                     )}
