@@ -13,6 +13,22 @@ function download(file: MailFile): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** On a phone, hand the file to the share sheet (mail, chat); elsewhere, or if that fails, save it. */
+async function passOn(file: MailFile, to: string): Promise<"shared" | "saved"> {
+  const touch = matchMedia?.("(pointer: coarse)").matches;
+  const f = new File([JSON.stringify(file)], fileName(file), { type: "application/json" });
+  if (touch && navigator.canShare?.({ files: [f] })) {
+    try {
+      await navigator.share({ files: [f], title: `Open Battle: your move, ${to}` });
+      return "shared";
+    } catch {
+      // Cancelled or refused: save it instead.
+    }
+  }
+  download(file);
+  return "saved";
+}
+
 /**
  * A play-by-mail game's strip at the bottom of the table: whose move it is,
  * Send (makes the file to pass on), and Open their file. A file that doesn't
@@ -27,6 +43,10 @@ export function MailBar() {
   const seated = useStore((s) => s.mail !== null);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
+  // What happened to the file we just made, said on the strip until their file comes.
+  const [passed, setPassed] = useState<{ file: string; how: "shared" | "saved"; invite: boolean } | null>(
+    null,
+  );
   const yours = !!game?.segment;
 
   // The tab says when it's your move, for a game left open in the background.
@@ -47,8 +67,11 @@ export function MailBar() {
   const send = () =>
     run(async () => {
       const file = await sendTurn();
-      if (file) download(file);
+      if (file) setPassed({ file: fileName(file), how: await passOn(file, them), invite: file.index === 1 });
     });
+  // Before the battle: each side sets up, and the one who made the game starts it.
+  const setup = state.turn.round === 0;
+  const creator = game.me === "p1";
   // Mid-turn hand-offs: their turn, or a question or roll that's theirs to answer.
   const handOff = yours && !invitation && waitsOn(state, 1 - game.seat);
 
@@ -75,6 +98,10 @@ export function MailBar() {
       {doubt ? (
         <>
           <strong>{them}'s file doesn't check out</strong>
+          <span className="small muted">
+            Open it anyway plays it into your game as it is, as if it had checked out. Don't open it leaves
+            your game as it was; ask {them} to send it again.
+          </span>
           <ul className="small">
             {doubt.problems.map((p) => (
               <li key={p}>{p}</li>
@@ -88,17 +115,25 @@ export function MailBar() {
       ) : yours ? (
         <div className="row spread wrap">
           <span>
-            <strong>{invitation ? "Set up your side" : "Your move"}</strong>
+            <strong>{invitation || (setup && !creator) ? "Set up your side" : "Your move"}</strong>
             <span className="muted small">
               {" "}
               {invitation
                 ? "· then send the invitation"
-                : handOff
-                  ? `· over to ${them} now: send your file`
-                  : `· send your file to ${them} when you're done`}
+                : setup && !creator
+                  ? `· then send it back to ${them}, who starts the battle when they have your file`
+                  : setup
+                    ? `· start the battle (▶ at the top) when you're ready, then send your file to ${them}`
+                    : handOff
+                      ? `· over to ${them} now: send your file`
+                      : `· send your file to ${them} when you're done`}
             </span>
           </span>
-          <button className={handOff || invitation ? "primary" : ""} disabled={busy} onClick={send}>
+          <button
+            className={handOff || invitation || (setup && !creator) ? "primary" : ""}
+            disabled={busy}
+            onClick={send}
+          >
             {invitation ? "Send invitation" : `Send to ${them}`}
           </button>
         </div>
@@ -107,6 +142,16 @@ export function MailBar() {
           <span>
             <strong>Waiting for {them}</strong>
             <span className="muted small"> · open their file when it comes</span>
+            {passed && (
+              <span className="small mail-passed">
+                {passed.how === "shared"
+                  ? `Sent ${passed.file}. `
+                  : `Saved ${passed.file} to your downloads: send it to ${them} by email, chat or anything. `}
+                {passed.invite
+                  ? "They open it from the lobby, under Play by mail."
+                  : "They open it with Open their file."}
+              </span>
+            )}
           </span>
           <span className="row">
             <label className="file">

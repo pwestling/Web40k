@@ -214,11 +214,14 @@ export async function sendTurn(): Promise<MailFile | null> {
 }
 
 /** Open a file from the opponent: a new game from an invitation, or their next stretch of ours. */
-export async function receiveFile(text: string, opts: { anyway?: boolean } = {}): Promise<void> {
+export async function receiveFile(
+  text: string,
+  opts: { anyway?: boolean; name?: string } = {},
+): Promise<void> {
   const file = parseFile(text);
   if (typeof file === "string") return void useMail.setState({ error: file });
   useMail.setState({ error: null });
-  if (file.index === 1) return joinFromInvitation(file);
+  if (file.index === 1) return joinFromInvitation(file, opts.name);
 
   const g = useMail.getState().game?.id === file.game ? useMail.getState().game : loadGame(file.game);
   if (!g) return void useMail.setState({ error: "That file is for a mail game this device doesn't have." });
@@ -235,19 +238,26 @@ export async function receiveFile(text: string, opts: { anyway?: boolean } = {})
     });
 
   const problems: string[] = [];
-  if (!(await signatureOk(file))) problems.push("Its signature doesn't match its contents.");
+  if (!(await signatureOk(file)))
+    problems.push(`This file was changed after ${file.name || "they"} made it.`);
   if (g.theirKey && keyId(g.theirKey) !== keyId(file.key))
-    problems.push("It was signed on a different device from their earlier files.");
+    problems.push(
+      `It was made on a different device from ${file.name || "their"} earlier files: someone else may have sent it.`,
+    );
   // Play can't be stitched onto a different game: that's not a doubt, it's the wrong file.
   if (file.base.seq !== lastSeq(g.record) || file.base.hash !== baseOf(g.record).hash)
     return void useMail.setState({
       error: "That file doesn't start where your last file ended: it belongs to another copy of this game.",
     });
   if (g.theirCommit && file.reveal !== null && (await commitTo(file.reveal)) !== g.theirCommit)
-    problems.push("Its dice seed isn't the one they promised last time.");
-  if (g.theirCommit && file.reveal === null) problems.push("It doesn't reveal the dice seed they promised.");
+    problems.push(
+      "Its dice aren't the ones promised in their last file, so the rolls could have been picked.",
+    );
+  if (g.theirCommit && file.reveal === null)
+    problems.push("It leaves out the dice promised in their last file, so the rolls could have been picked.");
   const mine = g.sent?.commit ?? null;
-  if (file.theirs !== mine) problems.push("Its dice weren't mixed with your seed.");
+  if (file.theirs !== mine)
+    problems.push("Its dice weren't mixed with yours, so the rolls could have been picked.");
   if (!problems.length) {
     const verdict = await replaySegment(g.record, file, await segmentRng(diceKey(g.id, file)));
     if (!verdict.ok) problems.push(verdict.why);
@@ -270,7 +280,7 @@ export async function receiveFile(text: string, opts: { anyway?: boolean } = {})
   });
 }
 
-async function joinFromInvitation(file: MailFile): Promise<void> {
+async function joinFromInvitation(file: MailFile, typed?: string): Promise<void> {
   if (!file.record)
     return void useMail.setState({ error: "That invitation is damaged (it has no game in it)." });
   const existing = loadGame(file.game);
@@ -298,11 +308,12 @@ async function joinFromInvitation(file: MailFile): Promise<void> {
     theirCommit: file.commit,
     at: Date.now(),
   });
-  let name = "";
+  // The name typed in the lobby, else the last one used; with neither, they type it on the strip.
+  let name = typed?.trim() ?? "";
   try {
-    name = localStorage.getItem("open-battle:name") ?? "";
+    name ||= localStorage.getItem("open-battle:name") ?? "";
   } catch {
-    // No storage: they type it on the strip.
+    // No storage.
   }
   if (name) setMailName(name);
 }

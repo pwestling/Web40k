@@ -25,7 +25,7 @@ const same = (a: LoggedEvent, b: LoggedEvent) =>
  */
 export async function replaySegment(record: GameRecord, file: MailFile, rng: Rng): Promise<Verdict> {
   if (stateHash(stateAt(record)) !== file.base.hash)
-    return { ok: false, why: "It starts from a different game state than yours." };
+    return { ok: false, why: "It starts from a different game from yours." };
   const ats = file.events.map((e) => e.at);
   let clock = 0;
   const session = new Session({
@@ -52,10 +52,10 @@ export async function replaySegment(record: GameRecord, file: MailFile, rng: Rng
         return {
           ok: false,
           why: !b
-            ? "Replaying its moves gives more than it carries."
+            ? "Its moves, played again here, come out differently: it leaves something out."
             : !a
-              ? "It carries moves its own actions don't produce."
-              : "A result in it doesn't match its dice or the rules.",
+              ? "It has results its moves don't produce: something was added or changed."
+              : "A roll or result in it doesn't match what its moves and dice give here: it was changed.",
           seq: (b ?? a)!.seq,
         };
     }

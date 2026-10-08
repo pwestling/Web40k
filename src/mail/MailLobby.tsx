@@ -48,7 +48,7 @@ export function MailLobby({
             accept=".json,application/json"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) run(async () => receiveFile(await f.text()));
+              if (f) run(async () => receiveFile(await f.text(), { name }));
             }}
           />
         </label>

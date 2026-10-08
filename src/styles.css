@@ -223,13 +223,22 @@ label.file.button.small {
 /* Play by mail: whose move it is, Send and Open their file (src/mail/MailBar.tsx). */
 .panel.mailbar {
   z-index: 18;
-  /* Just above the replay bar, which shares the bottom middle. */
+  /* Just above the replay bar, between the talk dock (left) and the play panels (right). */
   bottom: 58px;
-  left: max(50%, 540px);
-  transform: translateX(-50%);
-  width: min(560px, calc(100vw - 32px));
+  left: 324px;
+  width: clamp(300px, calc(100vw - 324px - 440px), 560px);
   gap: 6px;
   border-color: #a78bfa;
+}
+.panel.mailbar .mail-passed {
+  display: block;
+  margin-top: 2px;
+}
+@media (max-width: 900px) {
+  .panel.mailbar {
+    left: 8px;
+    width: calc(100vw - 16px);
+  }
 }
 .panel.mailbar ul {
   margin: 0;
@@ -2466,6 +2475,7 @@ body.broadcast:has(.stats-screen) .caption {
 body.showcase
   :is(
     .hud,
+    .mailbar,
     .unitcard,
     .attack,
     .play,
