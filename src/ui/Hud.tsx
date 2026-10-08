@@ -1,5 +1,6 @@
 import { ReportButton } from "./SavedNote";
 import { CampaignFold } from "../campaign/CampaignUI";
+import { TablePicker } from "../tables/TableLibrary";
 import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
@@ -168,6 +169,7 @@ export function Hud() {
             {mode !== "hotseat" && selfId && liveGame.players[selfId] && (
               <NameCard player={liveGame.players[selfId]!} />
             )}
+            <TablePicker />
             <MissionPicker />
             <ArmyImport players={mine} />
             <DeployTray players={mine} />

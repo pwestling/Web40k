@@ -18,7 +18,10 @@ import {
   recordGame,
   type CampaignBook,
   type CampaignUnit,
+  type Territory,
 } from "./book";
+import { useTables } from "../tables/library";
+import { applyLayout } from "../tables/actions";
 import { requestCampaign, useCampaignSharing, useCampaignTransfers } from "./share";
 import { loadReplay, replayIds, saveReplay, useCampaigns } from "./store";
 import { create } from "zustand";
@@ -243,6 +246,7 @@ export function CampaignFold() {
               )}
             </div>
           )}
+          <TerritoryTable territory={book?.map.find((t) => t.name === ref.territory)} />
           <Linked game={game} />
           {role !== "spectator" && (
             <button className="small" onClick={() => dispatch({ type: "campaign/set", ref: null }, seat?.id)}>
@@ -310,6 +314,25 @@ export function CampaignFold() {
         </>
       )}
     </details>
+  );
+}
+
+/** Before the battle: set up the table the place being fought over is played on, if it's in this device's library. */
+function TerritoryTable({ territory }: { territory: Territory | undefined }) {
+  const round = useStore((s) => s.game.turn.round);
+  const role = useStore((s) => s.role);
+  const table = useTables((s) => (territory?.table ? s.tables[territory.table.id] : undefined));
+  if (!territory?.table || round > 0 || role === "spectator") return null;
+  if (!table)
+    return (
+      <p className="muted small">
+        {territory.name} is fought on {territory.table.name}, which isn't in this device's table library.
+      </p>
+    );
+  return (
+    <button className="small" onClick={() => void applyLayout(table.layout)}>
+      Set up {table.name} for {territory.name}
+    </button>
   );
 }
 
@@ -582,6 +605,10 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
 function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => void }) {
   const [name, setName] = useState("");
   const players = leagueTable(book).map((r) => r.name);
+  const libraryTables = useTables((s) => s.tables);
+  useEffect(() => {
+    void useTables.getState().load();
+  }, []);
   const add = () => {
     const n = name.trim();
     if (!n || book.map.some((t) => t.name === n)) return;
@@ -613,6 +640,29 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
               {players.map((p) => (
                 <option key={p} value={p}>
                   {p}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={`Table for ${t.name}`}
+              value={t.table?.id ?? ""}
+              onChange={(e) => {
+                const picked = libraryTables[e.target.value];
+                save({
+                  ...book,
+                  map: book.map.map((x, j) => {
+                    if (j !== i) return x;
+                    const { table: _t, ...rest } = x;
+                    return picked ? { ...rest, table: { id: picked.id, name: picked.name } } : rest;
+                  }),
+                });
+              }}
+            >
+              <option value="">Any table</option>
+              {t.table && !libraryTables[t.table.id] && <option value={t.table.id}>{t.table.name}</option>}
+              {Object.values(libraryTables).map((lt) => (
+                <option key={lt.id} value={lt.id}>
+                  {lt.name}
                 </option>
               ))}
             </select>

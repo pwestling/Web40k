@@ -2923,3 +2923,74 @@ body.showcase
 .shelf-select {
   max-width: 100%;
 }
+
+/* Table library (#28). */
+.table-picker {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.table-picker .col,
+.table-shelf .col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.table-picker select {
+  max-width: 100%;
+}
+.table-thumb {
+  flex: none;
+  border: 1px solid #2d3340;
+  border-radius: 3px;
+}
+.table-shelf ul.tables {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-shelf li {
+  display: flex;
+  gap: 8px;
+}
+.table-shelf li.other {
+  opacity: 0.6;
+}
+.edit-aids {
+  align-items: center;
+}
+.sight-legend {
+  position: static;
+  transform: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.8rem;
+  padding: 0;
+  background: none;
+}
+.sight-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border-radius: 2px;
+}
+.sight-legend .seen-by::before {
+  background: var(--c);
+}
+.sight-legend .seen-both::before {
+  background: #4b5a3a;
+  border: 1px solid #777;
+}
+.sight-legend .seen-none::before {
+  background: #0a0a0e;
+  border: 1px solid #555;
+}

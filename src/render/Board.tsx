@@ -1,3 +1,5 @@
+import { toggleGroup, updatePieces, useTableEdit } from "../tables/edit";
+import { Sightlines } from "../tables/Sightlines";
 import { FocusCamera } from "./FocusCamera";
 import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
@@ -431,12 +433,17 @@ function Scene() {
           }),
         });
       } else if (d.kind === "terrain") {
-        const piece = terrain.find((t) => t.id === d.id);
-        if (piece)
-          dispatch({
-            type: "terrain/update",
-            piece: { ...piece, position: { x: d.start.x + dx, y: d.start.y + dy } },
-          });
+        // The piece's group moves with it; with symmetry on, each twin moves the other way (#28).
+        const { group } = useTableEdit.getState();
+        const ids = group.includes(d.id) ? group : [d.id];
+        updatePieces(
+          terrain
+            .filter((t) => ids.includes(t.id))
+            .map((t) => ({
+              before: t,
+              after: { ...t, position: { x: t.position.x + dx, y: t.position.y + dy } },
+            })),
+        );
       } else dispatch({ type: "objective/move", id: d.id, to: { x: d.start.x + dx, y: d.start.y + dy } });
     };
     window.addEventListener("pointermove", move);
@@ -567,8 +574,14 @@ function Scene() {
   };
 
   const canEdit = editing && live && useStore.getState().role !== "spectator";
-  const onTerrainDown = (piece: TerrainPiece) => {
+  const group = useTableEdit((s) => s.group);
+  const onTerrainDown = (piece: TerrainPiece, shift: boolean) => {
     if (!canEdit) return;
+    // Shift-click: in or out of the group, no drag.
+    if (shift) {
+      toggleGroup(piece.id);
+      return;
+    }
     setUi({ selectedTerrain: piece.id });
     setDrag({
       kind: "terrain",
@@ -823,6 +836,7 @@ function Scene() {
         <meshStandardMaterial color="#4b5a3a" />
       </mesh>
       <InchGrid width={width} depth={depth} />
+      {(editing || game.turn.round === 0) && <Sightlines game={game} />}
       {/* In a team game each teammate's share of the side's zone shows in their own colour. */}
       {game.zones.flatMap((z) => {
         const team = sidePlayers(game, z.seat);
@@ -847,7 +861,8 @@ function Scene() {
           standIn={
             (t.sight ?? game.settings.los) === "heights" && (xray || editing) ? standInHeight(t) : null
           }
-          onDown={() => onTerrainDown(t)}
+          grouped={editing && group.includes(t.id)}
+          onDown={(shift) => onTerrainDown(t, shift)}
         />
       ))}
       {game.objectives.map((o) => {
@@ -1381,6 +1396,7 @@ function Terrain({
   selected,
   standIn,
   footprint,
+  grouped,
   onDown,
 }: {
   piece: TerrainPiece;
@@ -1391,14 +1407,15 @@ function Terrain({
   standIn: number | null;
   /** Sight class to tint the footprint with, in "footprint" line of sight. */
   footprint: "open" | "obscuring" | "blocking" | null;
-  onDown: () => void;
+  grouped?: boolean;
+  onDown: (shift: boolean) => void;
 }) {
   const handlers = editable
     ? {
         onPointerDown: (e: ThreeEvent<PointerEvent>) => {
           if (e.button !== 0) return;
           e.stopPropagation();
-          onDown();
+          onDown(e.shiftKey);
         },
         onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
       }
@@ -1427,7 +1444,7 @@ function Terrain({
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} receiveShadow {...handlers}>
         <planeGeometry args={[piece.width, piece.depth]} />
         <meshStandardMaterial
-          color={selected ? "#a16207" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
+          color={selected ? "#a16207" : grouped ? "#7c3aed" : (CATEGORY_COLORS[piece.category] ?? "#6b6257")}
           transparent
           opacity={0.8}
         />

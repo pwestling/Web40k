@@ -6,26 +6,43 @@ import {
   type TerrainCategory,
   type TerrainPiece,
 } from "../core";
-import { standardLayout, TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
+import { TEMPLATES, zones, makePiece, type ZonePreset } from "../systems/wh40k/layout";
 import { systemModule } from "../systems";
 import { CATEGORY_RULES } from "../systems/wh40k/rules";
 import { useStore } from "../store";
 import { useAssets } from "../assets/store";
 import type { ModelAsset } from "../assets/types";
 import { useGame } from "./hooks";
+import {
+  addPiece,
+  duplicatePieces,
+  mirrorPiece,
+  removePieces,
+  twinOf,
+  unpaired,
+  updatePiece,
+  updatePieces,
+  useTableEdit,
+} from "../tables/edit";
+import { TableShelf } from "../tables/TableLibrary";
+import { SightlinesToggle } from "../tables/Sightlines";
 
-/** Rotate a terrain piece by `deg` degrees (Q / E while editing). */
+/** Rotate a terrain piece (and its group) by `deg` degrees (Q / E while editing). */
 export function rotateTerrain(id: string, deg: number) {
-  const { game, dispatch } = useStore.getState();
-  const piece = game.terrain.find((t) => t.id === id);
-  if (piece)
-    dispatch({ type: "terrain/update", piece: { ...piece, facing: piece.facing + (deg * Math.PI) / 180 } });
+  const terrain = useStore.getState().game.terrain;
+  const { group } = useTableEdit.getState();
+  const ids = group.includes(id) ? group : [id];
+  updatePieces(
+    terrain
+      .filter((t) => ids.includes(t.id))
+      .map((t) => ({ before: t, after: { ...t, facing: t.facing + (deg * Math.PI) / 180 } })),
+  );
 }
 
+/** Delete a piece (or the group it's in). */
 export function removeTerrain(id: string) {
-  const { dispatch, set } = useStore.getState();
-  dispatch({ type: "terrain/remove", id });
-  set({ selectedTerrain: null });
+  const { group } = useTableEdit.getState();
+  removePieces(group.includes(id) ? group : [id]);
 }
 
 const newId = () => `t-${crypto.randomUUID().slice(0, 8)}`;
@@ -72,15 +89,10 @@ export function TerrainPanel() {
   const templateCategory = systemModule(game.system).templateCategory;
 
   const add = (name: string) => {
-    const id = newId();
-    dispatch({
-      type: "terrain/add",
-      piece: makePiece(name, id, { x: 0, y: 0 }, 0, templateCategory?.[name]),
-    });
+    const id = addPiece(makePiece(name, newId(), { x: 0, y: 0 }, 0, templateCategory?.[name]));
     set({ selectedTerrain: id });
   };
-  const update = (patch: Partial<TerrainPiece>) =>
-    piece && dispatch({ type: "terrain/update", piece: { ...piece, ...patch } });
+  const update = (patch: Partial<TerrainPiece>) => piece && updatePiece(piece, patch);
   const uploadStatus = useAssets((a) => a.status[UPLOAD]);
   const meshAsset = useAssets((a) => (piece?.mesh ? a.assets[piece.mesh.asset] : undefined));
   /** Process a model file; on the selected piece it replaces the shape, otherwise it adds a piece. */
@@ -88,15 +100,11 @@ export function TerrainPanel() {
     const asset = await useAssets.getState().importFile(file, UPLOAD, "terrain");
     if (!asset) return;
     if (onto) {
-      dispatch({ type: "terrain/update", piece: { ...onto, ...meshShape(asset, 1) } });
+      updatePiece(onto, meshShape(asset, 1));
       return;
     }
-    const id = newId();
-    const base = makePiece("Ruin", id, { x: 0, y: 0 }, 0, templateCategory?.["Ruin"]);
-    dispatch({
-      type: "terrain/add",
-      piece: { ...base, name: asset.name.replace(/\.[^.]+$/, ""), ...meshShape(asset, 1) },
-    });
+    const base = makePiece("Ruin", newId(), { x: 0, y: 0 }, 0, templateCategory?.["Ruin"]);
+    const id = addPiece({ ...base, name: asset.name.replace(/\.[^.]+$/, ""), ...meshShape(asset, 1) });
     set({ selectedTerrain: id });
   };
   const rescale = (scale: number) => {
@@ -104,32 +112,9 @@ export function TerrainPanel() {
     update(meshShape(meshAsset, scale));
   };
   const layout = (): Layout => ({ terrain: game.terrain, objectives: game.objectives, zones: game.zones });
-  const save = () => {
-    const blob = new Blob([JSON.stringify({ format: "open-battle/layout@1", ...layout() })], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "open-battle-layout.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-  const load = async (file: File) => {
-    try {
-      const data = JSON.parse(await file.text()) as Partial<Layout> & { format?: string };
-      if (!Array.isArray(data.terrain)) throw new Error("no terrain");
-      dispatch({
-        type: "layout/set",
-        layout: {
-          terrain: data.terrain,
-          objectives: data.objectives ?? game.objectives,
-          zones: data.zones ?? game.zones,
-        },
-      });
-    } catch {
-      alert("That file is not an Open Battle layout.");
-    }
-  };
+  const { symmetry, snap, group } = useTableEdit();
+  const inGroup = !!piece && group.includes(piece.id);
+  const lone = symmetry ? unpaired(game.terrain) : [];
   const zonePreset: ZonePreset = !game.zones.length
     ? "none"
     : Math.abs(game.zones[0]!.points[0]!.y - game.zones[0]!.points[2]!.y) >= game.table.depth - 0.1
@@ -144,7 +129,40 @@ export function TerrainPanel() {
       </div>
       <p className="muted small">
         Drag terrain and objectives on the table. Q / E rotate the selected piece, Delete removes it.
+        Shift-click pieces to group them.
       </p>
+      <div className="row wrap edit-aids">
+        <label
+          className="check"
+          title="Every change is made to the piece's twin across the table centre too, so both halves stay the same"
+        >
+          <input
+            type="checkbox"
+            checked={symmetry}
+            onChange={(e) => useTableEdit.setState({ symmetry: e.target.checked })}
+          />{" "}
+          Symmetry
+        </label>
+        <label className="check" title="Pieces land on the half inch and turn in 15° steps">
+          <input
+            type="checkbox"
+            checked={snap}
+            onChange={(e) => useTableEdit.setState({ snap: e.target.checked })}
+          />{" "}
+          Snap
+        </label>
+        <SightlinesToggle />
+        {symmetry && lone.length > 0 && (
+          <span className="muted small">
+            {lone.length} piece{lone.length === 1 ? " has" : "s have"} no twin
+          </span>
+        )}
+        {group.length > 0 && (
+          <button className="small quiet" onClick={() => useTableEdit.setState({ group: [] })}>
+            Ungroup ({group.length})
+          </button>
+        )}
+      </div>
       <div className="row wrap">
         {TEMPLATES.map((t) => (
           <button key={t.name} className="small" onClick={() => add(t.name)}>
@@ -266,22 +284,21 @@ export function TerrainPanel() {
               </span>
             )}
           </div>
-          <div className="row">
-            <button
-              className="small"
-              onClick={() => {
-                const id = newId();
-                dispatch({
-                  type: "terrain/add",
-                  piece: { ...piece, id, position: { x: piece.position.x + 2, y: piece.position.y + 2 } },
-                });
-                set({ selectedTerrain: id });
-              }}
-            >
-              Duplicate
+          <div className="row wrap">
+            <button className="small" onClick={() => duplicatePieces(inGroup ? group : [piece.id])}>
+              {inGroup ? `Duplicate the group (${group.length})` : "Duplicate"}
             </button>
+            {symmetry && !twinOf(game.terrain, piece) && (
+              <button
+                className="small"
+                title="Add the same piece across the table centre"
+                onClick={() => mirrorPiece(piece)}
+              >
+                Give it a twin
+              </button>
+            )}
             <button className="small danger" onClick={() => removeTerrain(piece.id)}>
-              Delete
+              {inGroup ? `Delete the group (${group.length})` : "Delete"}
             </button>
           </div>
         </div>
@@ -298,7 +315,10 @@ export function TerrainPanel() {
             onChange={(e) =>
               dispatch({
                 type: "layout/set",
-                layout: { ...layout(), zones: zones(e.target.value as ZonePreset) },
+                layout: {
+                  ...layout(),
+                  zones: zones(e.target.value as ZonePreset, game.table.width, game.table.depth),
+                },
               })
             }
           >
@@ -309,7 +329,12 @@ export function TerrainPanel() {
         </label>
       </div>
       <div className="row wrap">
-        <button className="small" onClick={() => dispatch({ type: "layout/set", layout: standardLayout() })}>
+        <button
+          className="small"
+          onClick={() =>
+            dispatch({ type: "layout/set", layout: systemModule(game.system).layout(game.table) as Layout })
+          }
+        >
           Standard table
         </button>
         <button
@@ -318,18 +343,8 @@ export function TerrainPanel() {
         >
           Clear terrain
         </button>
-        <button className="small" onClick={save}>
-          Save layout
-        </button>
-        <label className="file button small">
-          Load layout
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
-          />
-        </label>
       </div>
+      <TableShelf />
     </div>
   );
 }

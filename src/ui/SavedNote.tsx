@@ -9,11 +9,13 @@ export const ISSUE_URL = "https://github.com/pwestling/Web40k/issues/new?templat
  * After a file downloads, say where it went and where to send it (UX 171):
  * downloads land silently otherwise.
  */
-export function SavedNote({ file, kind }: { file: string; kind: "report" | "feedback" | "army" }) {
+export function SavedNote({ file, kind }: { file: string; kind: "report" | "feedback" | "army" | "table" }) {
   return (
     <p className="saved-note small" role="status">
       Saved <code>{file}</code> to your downloads.{" "}
-      {kind === "army" ? (
+      {kind === "table" ? (
+        <>Send it to a friend: they add it with Open a table file, in the terrain editor's Table library.</>
+      ) : kind === "army" ? (
         <>Send it to a friend: they add it with Open an army file, under Your army shelf.</>
       ) : kind === "report" ? (
         <>

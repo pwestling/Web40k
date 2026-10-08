@@ -67,6 +67,8 @@ export interface Territory {
   name: string;
   /** The player holding it. */
   holder?: string;
+  /** The table it's fought on, from the table library (#28), by id and name. */
+  table?: { id: string; name: string };
 }
 
 export interface CampaignBook {
