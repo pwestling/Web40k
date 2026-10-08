@@ -22,6 +22,9 @@ export function SecretObjectives({ players }: { players: Player[] }) {
     .sort((a, b) => (a.seat ?? 0) - (b.seat ?? 0));
   if (!name || !seated.length) return null;
   const count = seated.reduce((n, p) => n + secretsWithPrefix(game, p.id, PREFIX).length, 0);
+  // A mission with its own card deck has Secret missions instead (Missions.tsx), unless some are written already.
+  const deck = systemModule(game.system).missions?.find((m) => m.id === game.mission?.id)?.deck?.length;
+  if (deck && !count) return null;
   return (
     <details className="fold secret-objectives">
       <summary>

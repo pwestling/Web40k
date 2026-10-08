@@ -1,0 +1,31 @@
+name: Soak (nightly)
+
+# The long soak set: many more seeded games per system than CI runs, from a
+# fresh starting seed each night. Any failing game prints its seed; replay it
+# with `SOAK_FROM=<seed> SOAK_SEEDS=1 pnpm soak`.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: Games per system
+        default: "200"
+
+jobs:
+  soak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Soak
+        run: |
+          FROM=$(( $(date +%s) / 86400 * 1000 ))
+          echo "Seeds from $FROM"
+          SOAK_FROM=$FROM SOAK_SEEDS=${{ github.event.inputs.seeds || '200' }} pnpm soak

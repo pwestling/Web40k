@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "soak": "SOAK=1 vitest run",
     "relay": "node server/relay.mjs",
     "perf": "node scripts/perf.mjs"
   },
