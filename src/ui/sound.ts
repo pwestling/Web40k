@@ -9,6 +9,7 @@ import { create } from "zustand";
 const KEY = "open-battle:sound";
 const FAST = "open-battle:fast-dice";
 const AMBIENCE = "open-battle:ambience";
+const VOLUME = "open-battle:volume";
 
 function stored(key: string, fallback: string): string {
   try {
@@ -29,6 +30,9 @@ function keep(key: string, value: string) {
 /** Sound on or off, fast dice (half-length rolls) and the room's ambience (PX-5c), per device. */
 export const useSound = create<{
   on: boolean;
+  /** Game sounds' loudness, 0–1 (UX 158). */
+  volume: number;
+  setVolume(volume: number): void;
   fast: boolean;
   ambience: boolean;
   toggle(): void;
@@ -36,6 +40,12 @@ export const useSound = create<{
   toggleAmbience(): void;
 }>((set, get) => ({
   on: stored(KEY, "on") !== "off",
+  volume: Math.max(0, Math.min(1, Number(stored(VOLUME, "0.8")) || 0)),
+  setVolume(volume) {
+    keep(VOLUME, String(volume));
+    set({ volume });
+    if (master) master.gain.value = MASTER * volume;
+  },
   fast: stored(FAST, "off") === "on",
   ambience: stored(AMBIENCE, "on") !== "off",
   toggleAmbience() {
@@ -67,6 +77,8 @@ export function duckVoices(ms: number): void {
   if (until > useDuck.getState().until) useDuck.setState({ until });
 }
 
+/** The master bus at full volume. */
+const MASTER = 1.1;
 let ac: AudioContext | null = null;
 let master: GainNode | null = null;
 let noise: AudioBuffer | null = null;
@@ -76,7 +88,7 @@ function audio(): AudioContext | null {
   if (!ac) {
     ac = new AudioContext();
     master = ac.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = MASTER * useSound.getState().volume;
     const comp = ac.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.ratio.value = 6;

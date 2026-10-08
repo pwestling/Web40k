@@ -15,6 +15,8 @@ const COLOUR = "colour";
 export function DicePicker({ player }: { player: PlayerId }) {
   const p = useStore((s) => s.game.players[player]);
   const dispatch = useStore((s) => s.dispatch);
+  // On one screen, say whose dice these are (UX 159).
+  const hotseat = useStore((s) => s.mode === "hotseat");
   const [custom, setCustom] = useState(false);
   const tray = useRef<HTMLDivElement>(null);
   // Dragging a colour picker sends a stream of colours: settle on one before it goes in the log.
@@ -50,7 +52,7 @@ export function DicePicker({ player }: { player: PlayerId }) {
   return (
     <div className="dice-picker">
       <label>
-        Dice{" "}
+        {hotseat ? `${p.name}'s dice` : "Your dice"}{" "}
         <select
           aria-label="Dice"
           value={value}

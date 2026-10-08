@@ -88,6 +88,11 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         )
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+    // On one screen, the next army is for whoever has none yet (UX 155).
+    const next = players.find(
+      (p) => p.id !== owner && !Object.values(game.units).some((u) => u.owner === p.id),
+    );
+    if (next) setOwner(next.id);
     setRoster(null);
     setFiles({});
     setLoose({});
@@ -143,7 +148,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
           </button>
         </div>
       )}
-      {owner && <DicePicker player={owner} />}
+      {owner && <DicePicker key={owner} player={owner} />}
       {roster && (
         <div className="modal-backdrop">
           <div className="panel modal">

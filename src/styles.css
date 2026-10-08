@@ -12,6 +12,13 @@ body,
   color: #e5e7eb;
   overflow: hidden;
 }
+/* Nothing past the screen's edge (name plates beyond the table) may widen a phone's page (UX 152). */
+#root {
+  position: fixed;
+  inset: 0;
+  overflow: clip;
+  contain: paint;
+}
 button,
 select,
 input {
@@ -2098,7 +2105,7 @@ body.broadcast .caption {
     top: auto;
     left: 8px;
     right: 8px;
-    bottom: 52px;
+    bottom: 68px;
     width: auto;
     max-height: 45vh;
     overflow-y: auto;
@@ -2107,7 +2114,7 @@ body.broadcast .caption {
   .play.collapsed {
     position: fixed;
     top: auto;
-    bottom: 52px;
+    bottom: 68px;
   }
   .hud.collapsed {
     left: 8px;
@@ -2119,7 +2126,7 @@ body.broadcast .caption {
   .talk-dock {
     left: 8px;
     right: 8px;
-    bottom: 96px;
+    bottom: 120px;
     width: auto;
   }
   body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play, .talk-dock),
@@ -2136,6 +2143,15 @@ body.broadcast .caption {
   }
   .caption {
     max-width: calc(100vw - 16px);
+  }
+  /* Below the phase bar, which wraps to two rows here (UX 153). */
+  .panel.whatnow,
+  .whatnow-toggle {
+    top: 126px;
+  }
+  .panel.whatnow {
+    max-height: 30vh;
+    overflow-y: auto;
   }
 }
 
@@ -2519,4 +2535,20 @@ body.showcase
   margin-top: 4px;
   font-size: 0.7rem;
   color: #9ca3af;
+}
+.sound-menu {
+  min-width: 250px;
+}
+.sound-menu .volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sound-menu .volume input {
+  flex: 1;
+}
+.sound-menu .dice-picker {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #2d3340;
 }

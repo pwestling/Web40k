@@ -1,4 +1,5 @@
-import { sideName, type GameState } from "../core";
+import { opposed, sideName, type GameState, type Unit } from "../core";
+import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
 import { unitActions } from "../core/content/play";
 import { currentSlot, phaseName, turnView } from "../core/content/turn";
 import { gameView } from "../core/script";
@@ -57,7 +58,17 @@ export function whatNow(
   // Each action someone on this side can take now, and how many units can.
   const can = new Map<string, number>();
   const add = (name: string) => can.set(name, (can.get(name) ?? 0) + 1);
-  for (const u of units) for (const o of unitActions(game, u.id)) if (o.ok) add(o.def.name);
+  let outOfRange = false;
+  for (const u of units)
+    for (const o of unitActions(game, u.id)) {
+      if (!o.ok) continue;
+      // Shooting with nothing in reach is no option for a newcomer (UX 156).
+      if (/shoot/i.test(o.def.name) && !inReach(game, u)) {
+        outOfRange = true;
+        continue;
+      }
+      add(o.def.name);
+    }
   const mod = gameModule(game.system);
   const slot = currentSlot(game)?.id;
   if (mod?.actions?.length) {
@@ -74,6 +85,7 @@ export function whatNow(
     lines.push("Drag a unit to move it. The ruler shows how far it has gone against its limit.");
   if (/charge/i.test(phase) && !can.size)
     lines.push("No unit is close enough to charge: press ▶ to move on.");
+  if (outOfRange && !can.size) lines.push("Nothing is in range to shoot yet. Get closer next turn.");
   if (can.size)
     lines.push(
       `You can: ${[...can]
@@ -81,13 +93,27 @@ export function whatNow(
         .join(", ")}.`,
       "Click one of your units to see its buttons.",
     );
-  else if (!/move/i.test(phase) && !/charge/i.test(phase)) lines.push("Nothing to do this phase.");
+  else if (!/move/i.test(phase) && !/charge/i.test(phase) && !outOfRange)
+    lines.push("Nothing to do this phase.");
   lines.push(
     turnView(game).alternating
       ? "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
       : "When you're done, press ▶ at the top for the next phase.",
   );
   return { head: `${who}'s turn · ${phase}`, lines };
+}
+
+/** Some enemy is within reach of one of the unit's ranged weapons (true when its weapons can't be read). */
+function inReach(game: GameState, unit: Unit): boolean {
+  const ranged = Object.values(unit.sheet?.weapons ?? {}).filter((w) => w.kind === "ranged");
+  if (!ranged.length) return true;
+  const reaches = ranged.map(weaponReach);
+  if (reaches.some((r) => r === null)) return true;
+  const reach = Math.max(...(reaches as number[]));
+  const mine = aliveModels(game, unit);
+  return Object.values(game.units).some(
+    (e) => opposed(game, e.owner, unit.owner) && unitDistance(mine, aliveModels(game, e)) <= reach,
+  );
 }
 
 export function WhatNow() {
