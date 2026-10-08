@@ -149,6 +149,19 @@ const checks = {
     await page.getByText("Saved and reloaded onto the test table.").waitFor();
     await page.getByText("Your rules are running.").waitFor({ timeout: 20000 });
     if (await page.locator(".package-card").count()) throw new Error("the table lost the saved package");
+    // Types (#43): a wrong ctx call is underlined as it's typed, and Check gives one verdict.
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.insertText("function* oops(ctx) { yield ctx.rolll('d6'); }\n");
+    await page.locator(".cm-lintRange-error").first().waitFor({ timeout: 60000 });
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+    await page.locator(".workshop-check.bad").getByText(/rolll/).first().waitFor({ timeout: 120000 });
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Delete");
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+    await page.locator(".workshop-check.ok").waitFor({ timeout: 120000 });
     await page.getByRole("tab", { name: "Soak bot" }).click();
     await page.getByRole("button", { name: "Play 3 bot games" }).click();
     await page.locator(".workshop-soak li").nth(2).waitFor({ timeout: 240000 });

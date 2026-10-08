@@ -38,7 +38,12 @@ function serve(port: MessagePort) {
       const read = readManifest(m.source);
       if ("error" in read) throw new Error(read.error);
       const system = read.manifest.systems[0] ?? "";
-      const report = await soak({ system, seed: m.seed, systemPkg: { source: m.source, importSource } });
+      const report = await soak({
+        system,
+        seed: m.seed,
+        systemPkg: { source: m.source, importSource },
+        ...(m.untilRound !== undefined ? { untilRound: m.untilRound } : {}),
+      });
       reply({ id: m.id, t: "ok", value: report });
     } catch (err) {
       reply({ id: m.id, t: "error", error: err instanceof Error ? err.message : String(err) });

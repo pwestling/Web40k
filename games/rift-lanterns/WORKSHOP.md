@@ -32,6 +32,5 @@ These overlap with UX review 51 (items 307-316), which was done in the same pass
 
 ## What's left
 
-- The editor's completions are a table, not a type checker: a wrong key in a unit's stats or a misspelt event type is only found when it misbehaves on the table.
-- Mission setup is worked out once for the default table and scaled, so a mission that places things by table size in a non-proportional way will be off on other table sizes.
+- Done since (#43): the editor type-checks drafts against the SDK as they're typed, mission setup runs in the sandbox at the table played on, and **Check** gives one verdict. Stat values are still free-form (`chars` is any key to any value), so a misspelt stat name in a unit's profile isn't caught by the types.
 - The stand-in shapes are simple primitives. Uploaded figures still replace them per unit, as in any game.

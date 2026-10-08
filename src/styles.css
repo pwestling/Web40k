@@ -4029,3 +4029,46 @@ body.showcase
   align-items: center;
   gap: 10px;
 }
+
+/* The workshop's type checker (#43): a type and the SDK's comment, on hover and beside completions. */
+.cm-type-hover {
+  max-width: 34rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+.cm-type-hover code {
+  display: block;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.cm-type-hover p {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+  color: var(--muted, #aab);
+}
+
+/* The workshop's Check (#43): one verdict, a line per part. */
+.workshop-check {
+  margin: 0.25rem 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border, #445);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.workshop-check.ok {
+  border-color: #3c8f5a;
+}
+.workshop-check.bad {
+  border-color: #c0504d;
+}
+.workshop-check ul {
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.workshop-check li.bad {
+  color: #f0a0a0;
+}
+.workshop-check li.skip {
+  opacity: 0.7;
+}

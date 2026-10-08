@@ -441,7 +441,7 @@ msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 
 #: src/GameScreen.tsx:307
 #: src/mail/MailLobby.tsx:165
-#: src/workshop/Workshop.tsx:352
+#: src/workshop/Workshop.tsx:379
 #, fuzzy
 msgid "Open"
 msgstr "Offen"
@@ -784,7 +784,7 @@ msgstr "Kampagnenbuch: {book}"
 #: src/campaign/CampaignUI.tsx:553
 #: src/tables/TableLibrary.tsx:220
 #: src/ui/ArmyImport.tsx:547
-#: src/workshop/Workshop.tsx:294
+#: src/workshop/Workshop.tsx:321
 #, fuzzy
 msgid "Export"
 msgstr "Exportieren"
@@ -2572,7 +2572,7 @@ msgstr "Dein Name, für deinen Gegner"
 
 #: src/mail/MailBar.tsx:157
 #: src/ui/AttackPanel.tsx:259
-#: src/workshop/Workshop.tsx:265
+#: src/workshop/Workshop.tsx:277
 #, fuzzy
 msgid "Save"
 msgstr "Speichern"
@@ -3157,7 +3157,7 @@ msgstr "Ein Zuschauer"
 #: src/replay/NotesPanel.tsx:184
 #: src/ui/Keys.tsx:26
 #: src/ui/TerrainPanel.tsx:365
-#: src/workshop/Workshop.tsx:270
+#: src/workshop/Workshop.tsx:289
 #, fuzzy
 msgid "Delete"
 msgstr "Löschen"
@@ -3727,7 +3727,7 @@ msgid "This game's table from above"
 msgstr "Der Tisch dieses Spiels von oben"
 
 #: src/tables/TableLibrary.tsx:99
-#: src/workshop/Workshop.tsx:251
+#: src/workshop/Workshop.tsx:263
 #, fuzzy
 msgid "Table"
 msgstr "Tisch"
@@ -10844,338 +10844,430 @@ msgstr "Erlaube das Mikrofon für diese Seite (das Symbol in der Adressleiste) u
 msgid "No microphone was found."
 msgstr "Kein Mikrofon gefunden."
 
-#: src/workshop/Workshop.tsx:106
+#: src/workshop/Workshop.tsx:118
 #, fuzzy
 msgid "Delete this draft? This can't be undone."
 msgstr "Diesen Entwurf löschen? Das lässt sich nicht rückgängig machen."
 
-#: src/workshop/Workshop.tsx:119
+#: src/workshop/Workshop.tsx:131
 #, fuzzy
 msgid "Opened from {url}. Read it before you test it: saving runs its code in the sandbox."
 msgstr "Von {url} geöffnet. Lies es, bevor du es testest: Beim Speichern läuft sein Code in der Sandbox."
 
-#: src/workshop/Workshop.tsx:153
+#: src/workshop/Workshop.tsx:165
 #, fuzzy
 msgid "Not saved: the code doesn't parse at line {line}, column {column}."
 msgstr "Nicht gespeichert: Der Code lässt sich in Zeile {line}, Spalte {column} nicht lesen."
 
-#: src/workshop/Workshop.tsx:160
-#: src/workshop/Workshop.tsx:165
+#: src/workshop/Workshop.tsx:172
+#: src/workshop/Workshop.tsx:177
 #, fuzzy
 msgid "Not saved: your rules didn't load: {why}"
 msgstr "Nicht gespeichert: Deine Regeln ließen sich nicht laden: {why}"
 
-#: src/workshop/Workshop.tsx:189
+#: src/workshop/Workshop.tsx:201
 #, fuzzy
 msgid "Saved. Nothing changed for the test table."
 msgstr "Gespeichert. Für den Testtisch hat sich nichts geändert."
 
-#: src/workshop/Workshop.tsx:196
+#: src/workshop/Workshop.tsx:208
 #, fuzzy
 msgid "Saved, but your rules didn't load on the test table: {why}"
 msgstr "Gespeichert, aber deine Regeln ließen sich auf dem Testtisch nicht laden: {why}"
 
-#: src/workshop/Workshop.tsx:203
+#: src/workshop/Workshop.tsx:215
 #, fuzzy
 msgid "Saved and reloaded. The sample armies, missions or table changed: restart the test table to play with them."
 msgstr "Gespeichert und neu geladen. Beispielarmeen, Missionen oder Tisch haben sich geändert: Starte den Testtisch neu, um damit zu spielen."
 
-#: src/workshop/Workshop.tsx:206
+#: src/workshop/Workshop.tsx:218
 #, fuzzy
 msgid "Saved and reloaded onto the test table."
 msgstr "Gespeichert und auf den Testtisch neu geladen."
 
-#: src/workshop/Workshop.tsx:209
+#: src/workshop/Workshop.tsx:221
 #, fuzzy
 msgid "Saved."
 msgstr "Gespeichert."
 
-#: src/workshop/Workshop.tsx:216
+#: src/workshop/Workshop.tsx:228
 #, fuzzy
 msgid "Workshop"
 msgstr "Werkstatt"
 
-#: src/workshop/Workshop.tsx:225
-#: src/workshop/Workshop.tsx:228
+#: src/workshop/Workshop.tsx:237
+#: src/workshop/Workshop.tsx:240
 #, fuzzy
 msgid "Module workshop"
 msgstr "Modulwerkstatt"
 
-#: src/workshop/Workshop.tsx:231
+#: src/workshop/Workshop.tsx:243
 #, fuzzy
 msgid "Draft"
 msgstr "Entwurf"
 
-#: src/workshop/Workshop.tsx:239
+#: src/workshop/Workshop.tsx:251
 #, fuzzy
 msgid "Untitled draft"
 msgstr "Entwurf ohne Titel"
 
-#: src/workshop/Workshop.tsx:249
+#: src/workshop/Workshop.tsx:261
 #, fuzzy
 msgid "Fold the workshop to the side"
 msgstr "Werkstatt zur Seite einklappen"
 
-#: src/workshop/Workshop.tsx:254
+#: src/workshop/Workshop.tsx:266
 #, fuzzy
 msgid "Close the workshop"
 msgstr "Werkstatt schließen"
 
-#: src/workshop/Workshop.tsx:264
+#: src/workshop/Workshop.tsx:276
 #, fuzzy
 msgid "Save (Ctrl+S)"
 msgstr "Speichern (Strg+S)"
 
-#: src/workshop/Workshop.tsx:269
+#: src/workshop/Workshop.tsx:283
+#, fuzzy
+msgid "Check the types, load it, and let a bot play two rounds"
+msgstr "Typen prüfen, laden und einen Bot zwei Runden spielen lassen"
+
+#: src/workshop/Workshop.tsx:285
+#, fuzzy
+msgid "Checking…"
+msgstr "Wird geprüft …"
+
+#: src/workshop/Workshop.tsx:285
+#, fuzzy
+msgid "Check"
+msgstr "Prüfen"
+
+#: src/workshop/Workshop.tsx:288
 #, fuzzy
 msgid "New draft"
 msgstr "Neuer Entwurf"
 
-#: src/workshop/Workshop.tsx:278
+#: src/workshop/Workshop.tsx:305
 #, fuzzy
 msgid "Loading the editor…"
 msgstr "Editor wird geladen …"
 
-#: src/workshop/Workshop.tsx:283
+#: src/workshop/Workshop.tsx:310
 #, fuzzy
 msgid "The package's code"
 msgstr "Der Code des Pakets"
 
-#: src/workshop/Workshop.tsx:292
-#: src/workshop/Workshop.tsx:510
+#: src/workshop/Workshop.tsx:319
+#: src/workshop/Workshop.tsx:577
 #, fuzzy
 msgid "Test table"
 msgstr "Testtisch"
 
-#: src/workshop/Workshop.tsx:293
+#: src/workshop/Workshop.tsx:320
 #, fuzzy
 msgid "Soak bot"
 msgstr "Dauertest-Bot"
 
-#: src/workshop/Workshop.tsx:295
+#: src/workshop/Workshop.tsx:322
 #, fuzzy
 msgid "SDK"
 msgstr "SDK"
 
-#: src/workshop/Workshop.tsx:322
+#: src/workshop/Workshop.tsx:349
 #, fuzzy
 msgid "Write a whole game as one JavaScript file: its rules as data, with code where data won't do. Start from a template; the test table plays it as you go."
 msgstr "Schreib ein ganzes Spiel als eine JavaScript-Datei: die Regeln als Daten, mit Code, wo Daten nicht reichen. Beginne mit einer Vorlage; der Testtisch spielt es, während du schreibst."
 
-#: src/workshop/Workshop.tsx:343
+#: src/workshop/Workshop.tsx:370
 #, fuzzy
 msgid "Open from a link"
 msgstr "Über einen Link öffnen"
 
-#: src/workshop/Workshop.tsx:357
+#: src/workshop/Workshop.tsx:384
 #, fuzzy
 msgid "Community modules"
 msgstr "Community-Module"
 
-#: src/workshop/Workshop.tsx:361
-#: src/workshop/Workshop.tsx:713
+#: src/workshop/Workshop.tsx:388
+#: src/workshop/Workshop.tsx:780
 #, fuzzy
 msgid "How packages work"
 msgstr "So funktionieren Pakete"
 
-#: src/workshop/Workshop.tsx:379
+#: src/workshop/Workshop.tsx:406
 #, fuzzy
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr "Der Link ließ sich nicht abrufen (vielleicht erlaubt er anderen Seiten nicht, ihn zu lesen)."
 
-#: src/workshop/Workshop.tsx:381
+#: src/workshop/Workshop.tsx:408
 #, fuzzy
 msgid "That link answered {status}."
 msgstr "Der Link antwortete mit {status}."
 
-#: src/workshop/Workshop.tsx:383
+#: src/workshop/Workshop.tsx:410
 #, fuzzy
 msgid "That's too big for a module."
 msgstr "Das ist zu groß für ein Modul."
 
-#: src/workshop/Workshop.tsx:385
+#: src/workshop/Workshop.tsx:412
 #, fuzzy
 msgid "That isn't a rules package: {why}"
 msgstr "Das ist kein Regelpaket: {why}"
 
-#: src/workshop/Workshop.tsx:397
+#: src/workshop/Workshop.tsx:429
 #, fuzzy
-msgid "Problems"
-msgstr "Probleme"
+msgid "Checking: types, loading, then a short bot game…"
+msgstr "Prüfung: Typen, Laden, dann ein kurzes Bot-Spiel …"
+
+#: src/workshop/Workshop.tsx:431
+#, fuzzy
+msgid "Ready to share: nothing wrong found."
+msgstr "Bereit zum Teilen: nichts Falsches gefunden."
+
+#: src/workshop/Workshop.tsx:432
+#, fuzzy
+msgid "Not ready yet: {first}"
+msgstr "Noch nicht bereit: {first}"
 
 #: src/workshop/Workshop.tsx:450
 #, fuzzy
-msgid "the rules stopped"
-msgstr "die Regeln wurden angehalten"
+msgid "The draft has changed since: check again."
+msgstr "Der Entwurf hat sich seitdem geändert: erneut prüfen."
+
+#: src/workshop/Workshop.tsx:470
+#, fuzzy
+msgid "Problems"
+msgstr "Probleme"
 
 #: src/workshop/Workshop.tsx:50
 #, fuzzy
 msgid "Model by model: move, then fight."
 msgstr "Modell für Modell: bewegen, dann kämpfen."
 
-#: src/workshop/Workshop.tsx:510
+#: src/workshop/Workshop.tsx:517
 #, fuzzy
-msgid "Setting up…"
-msgstr "Wird aufgebaut …"
-
-#: src/workshop/Workshop.tsx:510
-#, fuzzy
-msgid "Restart the test table"
-msgstr "Testtisch neu starten"
-
-#: src/workshop/Workshop.tsx:535
-#, fuzzy
-msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
-msgstr "Testtisch startet auf diesem Bildschirm eine Partie deines Entwurfs mit der Beispielarmee jeder Seite. Jedes Speichern lädt ihn dort neu."
-
-#: src/workshop/Workshop.tsx:544
-#, fuzzy
-msgid "Your rules are running."
-msgstr "Deine Regeln laufen."
-
-#: src/workshop/Workshop.tsx:546
-#, fuzzy
-msgid "Starting your rules…"
-msgstr "Deine Regeln starten …"
-
-#: src/workshop/Workshop.tsx:547
-#, fuzzy
-msgid "Your rules aren't running."
-msgstr "Deine Regeln laufen nicht."
+msgid "the rules stopped"
+msgstr "die Regeln wurden angehalten"
 
 #: src/workshop/Workshop.tsx:55
 #, fuzzy
 msgid "Ranked"
 msgstr "In Gliedern"
 
-#: src/workshop/Workshop.tsx:552
-#, fuzzy
-msgid "{n} table warning"
-msgid_plural "{n} table warnings"
-msgstr[0] "{n} Tischwarnung"
-msgstr[1] "{n} Tischwarnungen"
-
-#: src/workshop/Workshop.tsx:555
-#, fuzzy
-msgid "Dice and log"
-msgstr "Würfel und Protokoll"
-
 #: src/workshop/Workshop.tsx:56
 #, fuzzy
 msgid "Regiment blocks that wheel and clash."
 msgstr "Regimentsblöcke, die schwenken und aufeinanderprallen."
 
-#: src/workshop/Workshop.tsx:578
+#: src/workshop/Workshop.tsx:577
 #, fuzzy
-msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
-msgstr "Der Dauertest-Bot spielt ganze Partien deines Entwurfs mit zufälligen erlaubten Zügen über simulierte Mitspieler und prüft, dass alle Tische gleich bleiben und nichts abstürzt."
+msgid "Setting up…"
+msgstr "Wird aufgebaut …"
 
-#: src/workshop/Workshop.tsx:583
+#: src/workshop/Workshop.tsx:577
 #, fuzzy
-msgid "Playing…"
-msgstr "Spielt …"
+msgid "Restart the test table"
+msgstr "Testtisch neu starten"
 
-#: src/workshop/Workshop.tsx:583
+#: src/workshop/Workshop.tsx:602
 #, fuzzy
-msgid "Play 3 bot games"
-msgstr "3 Bot-Partien spielen"
-
-#: src/workshop/Workshop.tsx:590
-#, fuzzy
-msgid "Game {seed}: fine, played to the end in {steps} moves."
-msgstr "Partie {seed}: in Ordnung, in {steps} Zügen zu Ende gespielt."
-
-#: src/workshop/Workshop.tsx:594
-#, fuzzy
-msgid "Game {seed}: fine for {steps} moves, stopped in round {round}."
-msgstr "Partie {seed}: {steps} Züge in Ordnung, in Runde {round} angehalten."
-
-#: src/workshop/Workshop.tsx:599
-#, fuzzy
-msgid "Game {seed} went wrong: {why}"
-msgstr "Partie {seed} ging schief: {why}"
+msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
+msgstr "Testtisch startet auf diesem Bildschirm eine Partie deines Entwurfs mit der Beispielarmee jeder Seite. Jedes Speichern lädt ihn dort neu."
 
 #: src/workshop/Workshop.tsx:61
 #, fuzzy
 msgid "Alternating activations"
 msgstr "Abwechselnde Aktivierungen"
 
+#: src/workshop/Workshop.tsx:611
+#, fuzzy
+msgid "Your rules are running."
+msgstr "Deine Regeln laufen."
+
+#: src/workshop/Workshop.tsx:613
+#, fuzzy
+msgid "Starting your rules…"
+msgstr "Deine Regeln starten …"
+
+#: src/workshop/Workshop.tsx:614
+#, fuzzy
+msgid "Your rules aren't running."
+msgstr "Deine Regeln laufen nicht."
+
+#: src/workshop/Workshop.tsx:619
+#, fuzzy
+msgid "{n} table warning"
+msgid_plural "{n} table warnings"
+msgstr[0] "{n} Tischwarnung"
+msgstr[1] "{n} Tischwarnungen"
+
 #: src/workshop/Workshop.tsx:62
 #, fuzzy
 msgid "Players take turns activating one unit each."
 msgstr "Die Spieler aktivieren abwechselnd je eine Einheit."
 
-#: src/workshop/Workshop.tsx:638
+#: src/workshop/Workshop.tsx:622
 #, fuzzy
-msgid "{name} {version}"
-msgstr "{name} {version}"
+msgid "Dice and log"
+msgstr "Würfel und Protokoll"
 
-#: src/workshop/Workshop.tsx:647
+#: src/workshop/Workshop.tsx:645
 #, fuzzy
-msgid "Download the package"
-msgstr "Paket herunterladen"
+msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
+msgstr "Der Dauertest-Bot spielt ganze Partien deines Entwurfs mit zufälligen erlaubten Zügen über simulierte Mitspieler und prüft, dass alle Tische gleich bleiben und nichts abstürzt."
 
 #: src/workshop/Workshop.tsx:650
 #, fuzzy
-msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
-msgstr "Spieler laden die Datei unter Regelpakete; Mitspieler prüfen über diesen Fingerabdruck, dass sie dieselben Bytes haben."
+msgid "Playing…"
+msgstr "Spielt …"
 
-#: src/workshop/Workshop.tsx:654
+#: src/workshop/Workshop.tsx:650
 #, fuzzy
-msgid "Share it in the gallery"
-msgstr "In der Galerie teilen"
+msgid "Play 3 bot games"
+msgstr "3 Bot-Partien spielen"
 
-#: src/workshop/Workshop.tsx:656
+#: src/workshop/Workshop.tsx:657
 #, fuzzy
-msgid "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button)."
-msgstr "Zum Bereitstellen: Leg auf gist.github.com einen Gist an, füge die Datei ein, speichere und kopiere den Raw-Link. Eine Datei in einem GitHub-Repository geht auch (über ihren Raw-Knopf)."
+msgid "Game {seed}: fine, played to the end in {steps} moves."
+msgstr "Partie {seed}: in Ordnung, in {steps} Zügen zu Ende gespielt."
 
 #: src/workshop/Workshop.tsx:661
 #, fuzzy
-msgid "Where the file is hosted (a raw link)"
-msgstr "Wo die Datei liegt (ein Rohdaten-Link)"
+msgid "Game {seed}: fine for {steps} moves, stopped in round {round}."
+msgstr "Partie {seed}: {steps} Züge in Ordnung, in Runde {round} angehalten."
 
-#: src/workshop/Workshop.tsx:673
+#: src/workshop/Workshop.tsx:666
 #, fuzzy
-msgid "Copied"
-msgstr "Kopiert"
-
-#: src/workshop/Workshop.tsx:673
-#, fuzzy
-msgid "Copy the pull request text"
-msgstr "Pull-Request-Text kopieren"
-
-#: src/workshop/Workshop.tsx:676
-#, fuzzy
-msgid "Edit the gallery on GitHub"
-msgstr "Galerie auf GitHub bearbeiten"
+msgid "Game {seed} went wrong: {why}"
+msgstr "Partie {seed} ging schief: {why}"
 
 #: src/workshop/Workshop.tsx:68
 #, fuzzy
 msgid "A finished game of ours to take apart: four warbands, three missions."
 msgstr "Ein fertiges Spiel von uns zum Auseinandernehmen: vier Kriegerbanden, drei Missionen."
 
-#: src/workshop/Workshop.tsx:707
+#: src/workshop/Workshop.tsx:705
+#, fuzzy
+msgid "{name} {version}"
+msgstr "{name} {version}"
+
+#: src/workshop/Workshop.tsx:714
+#, fuzzy
+msgid "Download the package"
+msgstr "Paket herunterladen"
+
+#: src/workshop/Workshop.tsx:717
+#, fuzzy
+msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
+msgstr "Spieler laden die Datei unter Regelpakete; Mitspieler prüfen über diesen Fingerabdruck, dass sie dieselben Bytes haben."
+
+#: src/workshop/Workshop.tsx:721
+#, fuzzy
+msgid "Share it in the gallery"
+msgstr "In der Galerie teilen"
+
+#: src/workshop/Workshop.tsx:723
+#, fuzzy
+msgid "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button)."
+msgstr "Zum Bereitstellen: Leg auf gist.github.com einen Gist an, füge die Datei ein, speichere und kopiere den Raw-Link. Eine Datei in einem GitHub-Repository geht auch (über ihren Raw-Knopf)."
+
+#: src/workshop/Workshop.tsx:728
+#, fuzzy
+msgid "Where the file is hosted (a raw link)"
+msgstr "Wo die Datei liegt (ein Rohdaten-Link)"
+
+#: src/workshop/Workshop.tsx:740
+#, fuzzy
+msgid "Copied"
+msgstr "Kopiert"
+
+#: src/workshop/Workshop.tsx:740
+#, fuzzy
+msgid "Copy the pull request text"
+msgstr "Pull-Request-Text kopieren"
+
+#: src/workshop/Workshop.tsx:743
+#, fuzzy
+msgid "Edit the gallery on GitHub"
+msgstr "Galerie auf GitHub bearbeiten"
+
+#: src/workshop/Workshop.tsx:774
 #, fuzzy
 msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
 msgstr "Alles, was ein Paket nutzen kann. Tippe im Editor ctx. oder view. für Vorschläge."
 
-#: src/workshop/Workshop.tsx:708
+#: src/workshop/Workshop.tsx:775
 #, fuzzy
 msgid "Commands a rule yields (ctx.)"
 msgstr "Befehle, die eine Regel liefert (ctx.)"
 
-#: src/workshop/Workshop.tsx:709
+#: src/workshop/Workshop.tsx:776
 #, fuzzy
 msgid "The game as it stands (view.)"
 msgstr "Das Spiel, wie es steht (view.)"
 
-#: src/workshop/Workshop.tsx:710
+#: src/workshop/Workshop.tsx:777
 #, fuzzy
 msgid "Keys and snippets"
 msgstr "Schlüssel und Bausteine"
 
-#: src/workshop/Workshop.tsx:717
+#: src/workshop/Workshop.tsx:784
 #, fuzzy
 msgid "The full types"
 msgstr "Die vollständigen Typen"
+
+#: src/workshop/check.ts:100
+#, fuzzy
+msgid "Bot game: not played, since it doesn't load."
+msgstr "Bot-Spiel: nicht gespielt, da es nicht lädt."
+
+#: src/workshop/check.ts:109
+#, fuzzy
+msgid "Bot game: it didn't report back."
+msgstr "Bot-Spiel: keine Rückmeldung."
+
+#: src/workshop/check.ts:115
+#, fuzzy
+msgid "Bot game: played to the end in {steps} moves."
+msgstr "Bot-Spiel: bis zum Ende gespielt, in {steps} Zügen."
+
+#: src/workshop/check.ts:116
+#, fuzzy
+msgid "Bot game: {rounds} rounds in {steps} moves, with nothing wrong."
+msgstr "Bot-Spiel: {rounds} Runden in {steps} Zügen, ohne Fehler."
+
+#: src/workshop/check.ts:125
+#, fuzzy
+msgid "Bot game: {why}"
+msgstr "Bot-Spiel: {why}"
+
+#: src/workshop/check.ts:52
+#, fuzzy
+msgid "The code doesn't parse at line {line}, column {column}."
+msgstr "Der Code lässt sich in Zeile {line}, Spalte {column} nicht lesen."
+
+#: src/workshop/check.ts:68
+#, fuzzy
+msgid "Types: the type checker isn't available here."
+msgstr "Typen: Die Typprüfung ist hier nicht verfügbar."
+
+#: src/workshop/check.ts:73
+#, fuzzy
+msgid "Types: {n} problem. Line {line}: {message}"
+msgid_plural "Types: {n} problems. The first, line {line}: {message}"
+msgstr[0] "Typen: {n} Problem. Zeile {line}: {message}"
+msgstr[1] "Typen: {n} Probleme. Das erste, Zeile {line}: {message}"
+
+#: src/workshop/check.ts:81
+#, fuzzy
+msgid "Types: everything matches the SDK."
+msgstr "Typen: Alles passt zum SDK."
+
+#: src/workshop/check.ts:88
+#, fuzzy
+msgid "Loading: {why}"
+msgstr "Laden: {why}"
+
+#: src/workshop/check.ts:94
+#, fuzzy
+msgid "Loading: it loads, and its system has the right shape."
+msgstr "Laden: Es lädt, und sein System hat die richtige Form."

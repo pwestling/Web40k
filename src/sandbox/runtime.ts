@@ -137,9 +137,10 @@ function provide(p: Provided): void {
 }
 
 /**
- * A package mission as the app uses it: its setup scaled from the table the
- * sandbox worked it out for to the one played on, and its suggestions read
- * from what the sandbox last worked out (nothing until it has).
+ * A package mission as the app uses it: its setup as the sandbox worked it
+ * out for the table played on (#43), or, before it has, scaled from the
+ * default table's; and its suggestions read from what the sandbox last
+ * worked out (nothing until it has).
  */
 function packageMission(m: ProvidedMission): Mission {
   const scores = () => useSandbox.getState().app?.scores ?? {};
@@ -149,6 +150,9 @@ function packageMission(m: ProvidedMission): Mission {
     summary: m.summary,
     ...(m.hand !== undefined ? { hand: m.hand } : {}),
     setup: (table) => {
+      const app = useSandbox.getState().app;
+      const exact = app?.table?.width === table.width && app.table.depth === table.depth && app.setups[m.id];
+      if (exact) return structuredClone(exact);
       const sx = table.width / m.table.width;
       const sy = table.depth / m.table.depth;
       const at = (p: Vec2) => ({ x: p.x * sx, y: p.y * sy });

@@ -195,6 +195,9 @@ export class SandboxEngine {
     return resolveLogged(this.record, intent, from, seededRng(seed), 0, this.state)?.event ?? null;
   }
 
+  private setupKey = "";
+  private setups: AppState["setups"] = {};
+
   /** A package game's rank rules, unfinished business and panel for the game as it stands. */
   appState(): AppState {
     const system = systemOf(this.state).id;
@@ -217,6 +220,21 @@ export class SandboxEngine {
       for (const card of mission.deck ?? [])
         for (const seat of sides(this.state)) cards[`${card.id}:${seat}`] = card.suggest(this.state, seat);
     }
+    // Every mission's setup at the table played on, not scaled from the default one (#43).
+    const { width, depth } = this.state.table;
+    const key = `${system}:${width}x${depth}`;
+    if (this.setupKey !== key) {
+      this.setupKey = key;
+      this.setups = {};
+      for (const m of app?.missions ?? [])
+        try {
+          this.setups[m.id] = JSON.parse(
+            JSON.stringify(m.setup(this.state.table)),
+          ) as AppState["setups"][string];
+        } catch {
+          // The app falls back to the default table's setup, scaled.
+        }
+    }
     const ready: AppState["ready"] = {};
     if (this.actions.get(system)?.length)
       for (const u of Object.values(this.state.units)) {
@@ -228,6 +246,8 @@ export class SandboxEngine {
     return {
       seq: this.state.seq,
       ready,
+      setups: this.setups,
+      table: app?.missions?.length ? { width, depth } : null,
       scores: JSON.parse(JSON.stringify(scores)) as AppState["scores"],
       cards: JSON.parse(JSON.stringify(cards)) as AppState["cards"],
       ranks,

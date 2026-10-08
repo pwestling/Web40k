@@ -23,7 +23,7 @@ export type ToSandbox =
   | { id: number; t: "appState" }
   | { id: number; t: "importRoster"; fileName: string; data: Uint8Array }
   /** The module workshop's soak worker only (src/workshop/soakWorker.ts): a bot game of a draft package. */
-  | { id: number; t: "soak"; source: string; seed: number }
+  | { id: number; t: "soak"; source: string; seed: number; untilRound?: number }
   /** The workshop's soak worker only: load a draft and say what went wrong (Loaded). */
   | { id: number; t: "check"; source: string };
 
@@ -99,6 +99,9 @@ export interface AppState {
   cards: Record<string, { vp: number; why: string }>;
   /** The code actions each unit can take now, by name ("What can I do now?"). */
   ready: Record<string, string[]>;
+  /** Each package mission's setup worked out for the table being played on (#43), and that table's size. */
+  setups: Record<string, { zones: Zone[]; objectives: Objective[] }>;
+  table: { width: number; depth: number } | null;
   /** Rank width and bonus cap per unit, for games with rankRules. */
   ranks: Record<string, { width: number; maxBonus: number }>;
   leaving: string[];

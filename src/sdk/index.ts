@@ -1,5 +1,6 @@
 import type { GameSystem, Id } from "../core/content/schema";
 import type { GameState, Objective, Zone } from "../core/types";
+import type { GameEvent } from "../core/actions";
 import type { Outcome, RoleRef } from "../core/content/runner";
 
 /**
@@ -158,7 +159,7 @@ export type Command =
   | { cmd: "note"; text: string }
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id | RoleRef> }
-  | { cmd: "emit"; event: { type: string } & Record<string, unknown> }
+  | { cmd: "emit"; event: GameEvent }
   | { cmd: "set"; key: string; value: unknown }
   | { cmd: "secret"; player: Id; key: string; question: string; options: { id: Id; label: string }[] }
   | { cmd: "reveal"; player: Id; key: string };
@@ -181,7 +182,12 @@ export interface Ctx {
    * step rolled.
    */
   run(procedure: Id, roles: Record<string, Id | RoleRef>): Command;
-  emit(event: { type: string } & Record<string, unknown>): Command;
+  /**
+   * Change the table with one of the game's events, e.g.
+   * `{ type: "model/wounds", id, woundsLost, destroyed }`: the type names
+   * which, and each takes its own fields.
+   */
+  emit(event: GameEvent): Command;
   set(key: string, value: unknown): Command;
   /**
    * Ask a player to choose an option in secret (a hidden order, a secret

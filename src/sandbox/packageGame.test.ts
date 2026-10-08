@@ -111,6 +111,23 @@ describe("a whole game from a package (Rift Lanterns)", () => {
   });
 });
 
+describe("package mission setup (#43)", () => {
+  it("is worked out in the sandbox at the table played on, not scaled from the default", async () => {
+    const { engine, play } = await riftTable();
+    play({ type: "player/join", player: { id: "p1", name: "A", color: "#00f", seat: 0 } }, "p1");
+    play({ type: "game/system", system: "rift-lanterns" }, "p1");
+    expect(engine.appState().table).toEqual({ width: 36, depth: 24 });
+    const table = { width: 60, depth: 44 };
+    play({ type: "layout/set", layout: { terrain: [], objectives: [], zones: [], table } as never }, "p1");
+    const app = engine.appState();
+    expect(app.table).toEqual(table);
+    const pkg = (await importSource(riftLanterns)).default as {
+      module: { app: { missions: { id: string; setup: (t: typeof table) => unknown }[] } };
+    };
+    for (const m of pkg.module.app.missions) expect(app.setups[m.id]).toEqual(m.setup(table));
+  });
+});
+
 describe("the community gallery", () => {
   it("lists Rift Lanterns with the fingerprint of the file in the repo", async () => {
     const hash = await sha256(new TextEncoder().encode(riftLanterns));

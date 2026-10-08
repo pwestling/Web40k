@@ -330,13 +330,7 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
   if (!from || inches <= 0) return;
   const away = awayFrom(state, u, unitCentre(state, from));
   const move = fleeMove(state, u, away, inches);
-  if (move)
-    yield ctx.emit(
-      (turn ? move : { ...move, turn: 0, how: "drag" }) as unknown as { type: string } & Record<
-        string,
-        unknown
-      >,
-    );
+  if (move) yield ctx.emit(turn ? move : { ...move, turn: 0, how: "drag" });
 }
 
 /** The unit flees 2D6" from `from` and is marked fleeing. */
@@ -966,14 +960,14 @@ function* pursue(
   const gap = unitGap(state, won, lost);
   if (!fled) {
     const move = gap > 0.05 ? towards(gap) : null;
-    if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+    if (move) yield ctx.emit(move);
     yield ctx.note(`${won.name} follows up ${gap.toFixed(1)}" and stays in contact`);
     return;
   }
   const r = (yield ctx.roll(PURSUE_DICE, "pursuit roll", won.id)) as Roll;
   const caught = r.total >= gap;
   const move = towards(Math.min(r.total, gap));
-  if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+  if (move) yield ctx.emit(move);
   if (!caught) {
     yield ctx.note(
       `${won.name} pursues ${r.total}" and falls ${(gap - r.total).toFixed(1)}" short of ${lost.name}`,

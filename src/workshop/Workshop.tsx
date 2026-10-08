@@ -31,9 +31,9 @@ import {
 } from "./drafts";
 import { closeWorkshop, useWorkshopOpen } from "./open";
 import { checkDraft, soakDraft, type SoakResult } from "./soak";
+import { checkAll, problemLine, type CheckStep, type Verdict } from "./check";
 import { CTX, KEYS, VIEW } from "./completions";
 import type { Completion } from "@codemirror/autocomplete";
-import { lineOf } from "../core/content/shape";
 import type { Loaded } from "../sandbox/protocol";
 
 /** A link field's hint: a URL scheme, the same in every language. */
@@ -86,6 +86,18 @@ export function Workshop() {
 
   /** Where the last problem is in the draft, marked in the editor. */
   const [mark, setMark] = useState<number | null>(null);
+  /** The Check's verdict (#43), or its steps so far while it runs. */
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [checking, setChecking] = useState<CheckStep[] | null>(null);
+  const check = async () => {
+    if (!draft || checking) return;
+    setVerdict(null);
+    setChecking([]);
+    const v = await checkAll(draft.source, setChecking);
+    setChecking(null);
+    setVerdict(v);
+    setMark(v.steps.find((s) => s.ok === false)?.line ?? null);
+  };
   const update = (next: Draft[], cur: string | null) => {
     storeDrafts(next, cur);
     setAll({ drafts: next, current: cur });
@@ -265,6 +277,13 @@ export function Workshop() {
                 {t("Save")}
               </button>
               <TestTableButton save={save} />
+              <button
+                onClick={() => void check()}
+                disabled={!!checking}
+                title={t("Check the types, load it, and let a bot play two rounds")}
+              >
+                {checking ? t("Checking…") : t("Check")}
+              </button>
               <span className="spacer" />
               <button onClick={() => update(drafts, null)}>{t("New draft")}</button>
               <button onClick={remove}>{t("Delete")}</button>
@@ -273,6 +292,14 @@ export function Workshop() {
               <p className={`workshop-note${note.bad ? " bad" : ""}`} role={note.bad ? "alert" : "status"}>
                 {note.text}
               </p>
+            )}
+            {(checking || verdict) && (
+              <CheckVerdict
+                steps={checking ?? verdict!.steps}
+                verdict={checking ? null : verdict}
+                stale={!!verdict && verdict.source !== draft.source}
+                onClose={() => setVerdict(null)}
+              />
             )}
             <Problems draft={draft} />
             <Suspense fallback={<div className="workshop-editor">{t("Loading the editor…")}</div>}>
@@ -386,6 +413,52 @@ async function fromLink(url: string): Promise<string> {
   return text;
 }
 
+/** The Check's one verdict, and a line for each part of it. */
+function CheckVerdict({
+  steps,
+  verdict,
+  stale,
+  onClose,
+}: {
+  steps: CheckStep[];
+  verdict: Verdict | null;
+  stale: boolean;
+  onClose: () => void;
+}) {
+  const head = !verdict
+    ? t("Checking: types, loading, then a short bot game…")
+    : verdict.ok
+      ? t("Ready to share: nothing wrong found.")
+      : t("Not ready yet: {first}", { first: verdict.steps.find((s) => s.ok === false)?.text ?? "" });
+  return (
+    <div
+      className={`workshop-check${verdict ? (verdict.ok ? " ok" : " bad") : ""}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="row spread">
+        <strong>
+          {verdict ? (verdict.ok ? "✓ " : "✗ ") : ""}
+          {head}
+        </strong>
+        {verdict && (
+          <button className="quiet" onClick={onClose} title={t("Hide")}>
+            ✕
+          </button>
+        )}
+      </div>
+      {stale && <p className="muted small">{t("The draft has changed since: check again.")}</p>}
+      <ul>
+        {steps.map((s) => (
+          <li key={s.id} className={s.ok === null ? "skip" : s.ok ? "ok" : "bad"}>
+            {s.ok === null ? "–" : s.ok ? "✓" : "✗"} {s.text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** What's wrong with the draft now, and what the sandbox said when it last loaded it. */
 function Problems({ draft }: { draft: Draft }) {
   const issues = useMemo(() => problems(draft.source), [draft.source]);
@@ -429,12 +502,6 @@ function setupOf(loaded: Loaded): string {
 const setups = { table: null as string | null, last: null as string | null };
 const rememberSetup = (setup: string) => void (setups.last = setup);
 const tableStarted = () => void (setups.table = setups.last);
-
-/** The line a load error points at: one the stack named, or where a bad key of the system is written. */
-function problemLine(source: string, error: string): number | null {
-  const at = /line (\d+)/.exec(error);
-  return at ? Number(at[1]) : lineOf(source, error);
-}
 
 /** Once the test table's sandbox has restarted with a new save: why its rules aren't running, or null. */
 function settled(): Promise<string | null> {

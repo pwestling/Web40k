@@ -532,14 +532,14 @@ const MISSIONS = [
 /** The starter table: ruins, thickets, a wreck and barricades, the same from both sides. */
 function layout(table) {
   const half = [
-    ["a", "Ruin", -10, 5, 0],
-    ["b", "Woods", 2, 6, 0.3],
-    ["c", "Small ruin", 12, 3, Math.PI / 2],
-    ["d", "Barricade", -4, 2, 0],
-    ["e", "Container", -15, -2, 0.5],
+    { id: "a", template: "Ruin", x: -10, y: 5, facing: 0 },
+    { id: "b", template: "Woods", x: 2, y: 6, facing: 0.3 },
+    { id: "c", template: "Small ruin", x: 12, y: 3, facing: Math.PI / 2 },
+    { id: "d", template: "Barricade", x: -4, y: 2, facing: 0 },
+    { id: "e", template: "Container", x: -15, y: -2, facing: 0.5 },
   ];
   const terrain = [];
-  for (const [id, template, x, y, facing] of half) {
+  for (const { id, template, x, y, facing } of half) {
     terrain.push({ template, id: `${id}1`, position: { x, y }, facing });
     terrain.push({ template, id: `${id}2`, position: { x: -x, y: -y }, facing: facing + Math.PI });
   }

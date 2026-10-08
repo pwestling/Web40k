@@ -59,6 +59,8 @@ export interface SoakOptions {
    */
   systemPkg?: { source: string; importSource?: ImportSource };
   maxSteps?: number;
+  /** A short game (the workshop's Check, #43): stop, satisfied, once this round is over. */
+  untilRound?: number;
   /** Test the checks themselves: from this move on, a guest's table keeps drifting from the host's (a reducer bug). */
   drift?: number;
   /** Confirm every ability the system can play for you (40k #38) once the armies are down. */
@@ -357,6 +359,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       }
       const state = host.current;
       if (state.turn.round > 0 && battleOver(state)) break;
+      if (opts.untilRound !== undefined && state.turn.round > opts.untilRound) break;
 
       // Make trouble on cue.
       if (state.turn.round !== lastRoundSeen) [lastRoundSeen, roundSteps] = [state.turn.round, 0];
@@ -438,7 +441,9 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
     await settle();
     check("the end");
     const last = room.host()!.current;
-    if (!battleOver(last)) fail(`didn't finish in ${maxSteps} moves (round ${last.turn.round})`);
+    const shortDone = opts.untilRound !== undefined && last.turn.round > opts.untilRound;
+    if (!battleOver(last) && !shortDone)
+      fail(`didn't finish in ${maxSteps} moves (round ${last.turn.round})`);
     if (last.script?.waiting) fail(`left waiting on "${last.script.waiting.question}"`);
 
     async function makeTrouble(what: string) {

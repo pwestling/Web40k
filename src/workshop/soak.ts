@@ -16,6 +16,8 @@ export async function soakDraft(
   source: string,
   seeds: number[],
   each: (r: SoakResult) => void,
+  /** Stop each game, satisfied, once this round is over (the Check button's short soak). */
+  untilRound?: number,
 ): Promise<void> {
   let stopped: string | null = null;
   let box: Sandbox;
@@ -30,7 +32,12 @@ export async function soakDraft(
   try {
     for (const seed of seeds) {
       try {
-        each(await box.call<SoakReport>({ t: "soak", source, seed }, GAME_MS));
+        each(
+          await box.call<SoakReport>(
+            { t: "soak", source, seed, ...(untilRound !== undefined ? { untilRound } : {}) },
+            GAME_MS,
+          ),
+        );
       } catch (e) {
         const why = stopped ?? (e instanceof Error ? e.message : String(e));
         each({ seed, ok: false, failures: [why], steps: 0, round: 0, finished: false });

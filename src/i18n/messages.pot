@@ -367,7 +367,7 @@ msgstr ""
 
 #: src/GameScreen.tsx:307
 #: src/mail/MailLobby.tsx:165
-#: src/workshop/Workshop.tsx:352
+#: src/workshop/Workshop.tsx:379
 msgid "Open"
 msgstr ""
 
@@ -645,7 +645,7 @@ msgstr ""
 #: src/campaign/CampaignUI.tsx:553
 #: src/tables/TableLibrary.tsx:220
 #: src/ui/ArmyImport.tsx:547
-#: src/workshop/Workshop.tsx:294
+#: src/workshop/Workshop.tsx:321
 msgid "Export"
 msgstr ""
 
@@ -2115,7 +2115,7 @@ msgstr ""
 
 #: src/mail/MailBar.tsx:157
 #: src/ui/AttackPanel.tsx:259
-#: src/workshop/Workshop.tsx:265
+#: src/workshop/Workshop.tsx:277
 msgid "Save"
 msgstr ""
 
@@ -2587,7 +2587,7 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:184
 #: src/ui/Keys.tsx:26
 #: src/ui/TerrainPanel.tsx:365
-#: src/workshop/Workshop.tsx:270
+#: src/workshop/Workshop.tsx:289
 msgid "Delete"
 msgstr ""
 
@@ -3050,7 +3050,7 @@ msgid "This game's table from above"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:99
-#: src/workshop/Workshop.tsx:251
+#: src/workshop/Workshop.tsx:263
 msgid "Table"
 msgstr ""
 
@@ -8794,272 +8794,346 @@ msgstr ""
 msgid "No microphone was found."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:106
+#: src/workshop/Workshop.tsx:118
 msgid "Delete this draft? This can't be undone."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:119
+#: src/workshop/Workshop.tsx:131
 msgid "Opened from {url}. Read it before you test it: saving runs its code in the sandbox."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:153
+#: src/workshop/Workshop.tsx:165
 msgid "Not saved: the code doesn't parse at line {line}, column {column}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:160
-#: src/workshop/Workshop.tsx:165
+#: src/workshop/Workshop.tsx:172
+#: src/workshop/Workshop.tsx:177
 msgid "Not saved: your rules didn't load: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:189
+#: src/workshop/Workshop.tsx:201
 msgid "Saved. Nothing changed for the test table."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:196
+#: src/workshop/Workshop.tsx:208
 msgid "Saved, but your rules didn't load on the test table: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:203
+#: src/workshop/Workshop.tsx:215
 msgid "Saved and reloaded. The sample armies, missions or table changed: restart the test table to play with them."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:206
+#: src/workshop/Workshop.tsx:218
 msgid "Saved and reloaded onto the test table."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:209
+#: src/workshop/Workshop.tsx:221
 msgid "Saved."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:216
+#: src/workshop/Workshop.tsx:228
 msgid "Workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:225
-#: src/workshop/Workshop.tsx:228
+#: src/workshop/Workshop.tsx:237
+#: src/workshop/Workshop.tsx:240
 msgid "Module workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:231
+#: src/workshop/Workshop.tsx:243
 msgid "Draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:239
+#: src/workshop/Workshop.tsx:251
 msgid "Untitled draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:249
+#: src/workshop/Workshop.tsx:261
 msgid "Fold the workshop to the side"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:254
+#: src/workshop/Workshop.tsx:266
 msgid "Close the workshop"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:264
+#: src/workshop/Workshop.tsx:276
 msgid "Save (Ctrl+S)"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:269
+#: src/workshop/Workshop.tsx:283
+msgid "Check the types, load it, and let a bot play two rounds"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:285
+msgid "Checking…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:285
+msgid "Check"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:288
 msgid "New draft"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:278
+#: src/workshop/Workshop.tsx:305
 msgid "Loading the editor…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:283
+#: src/workshop/Workshop.tsx:310
 msgid "The package's code"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:292
-#: src/workshop/Workshop.tsx:510
+#: src/workshop/Workshop.tsx:319
+#: src/workshop/Workshop.tsx:577
 msgid "Test table"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:293
+#: src/workshop/Workshop.tsx:320
 msgid "Soak bot"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:295
+#: src/workshop/Workshop.tsx:322
 msgid "SDK"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:322
+#: src/workshop/Workshop.tsx:349
 msgid "Write a whole game as one JavaScript file: its rules as data, with code where data won't do. Start from a template; the test table plays it as you go."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:343
+#: src/workshop/Workshop.tsx:370
 msgid "Open from a link"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:357
+#: src/workshop/Workshop.tsx:384
 msgid "Community modules"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:361
-#: src/workshop/Workshop.tsx:713
+#: src/workshop/Workshop.tsx:388
+#: src/workshop/Workshop.tsx:780
 msgid "How packages work"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:379
+#: src/workshop/Workshop.tsx:406
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:381
+#: src/workshop/Workshop.tsx:408
 msgid "That link answered {status}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:383
+#: src/workshop/Workshop.tsx:410
 msgid "That's too big for a module."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:385
+#: src/workshop/Workshop.tsx:412
 msgid "That isn't a rules package: {why}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:397
-msgid "Problems"
+#: src/workshop/Workshop.tsx:429
+msgid "Checking: types, loading, then a short bot game…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:431
+msgid "Ready to share: nothing wrong found."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:432
+msgid "Not ready yet: {first}"
 msgstr ""
 
 #: src/workshop/Workshop.tsx:450
-msgid "the rules stopped"
+msgid "The draft has changed since: check again."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:470
+msgid "Problems"
 msgstr ""
 
 #: src/workshop/Workshop.tsx:50
 msgid "Model by model: move, then fight."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:510
-msgid "Setting up…"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:510
-msgid "Restart the test table"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:535
-msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
-msgstr ""
-
-#: src/workshop/Workshop.tsx:544
-msgid "Your rules are running."
-msgstr ""
-
-#: src/workshop/Workshop.tsx:546
-msgid "Starting your rules…"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:547
-msgid "Your rules aren't running."
+#: src/workshop/Workshop.tsx:517
+msgid "the rules stopped"
 msgstr ""
 
 #: src/workshop/Workshop.tsx:55
 msgid "Ranked"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:552
-msgid "{n} table warning"
-msgid_plural "{n} table warnings"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/workshop/Workshop.tsx:555
-msgid "Dice and log"
-msgstr ""
-
 #: src/workshop/Workshop.tsx:56
 msgid "Regiment blocks that wheel and clash."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:578
-msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
+#: src/workshop/Workshop.tsx:577
+msgid "Setting up…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:583
-msgid "Playing…"
+#: src/workshop/Workshop.tsx:577
+msgid "Restart the test table"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:583
-msgid "Play 3 bot games"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:590
-msgid "Game {seed}: fine, played to the end in {steps} moves."
-msgstr ""
-
-#: src/workshop/Workshop.tsx:594
-msgid "Game {seed}: fine for {steps} moves, stopped in round {round}."
-msgstr ""
-
-#: src/workshop/Workshop.tsx:599
-msgid "Game {seed} went wrong: {why}"
+#: src/workshop/Workshop.tsx:602
+msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
 msgstr ""
 
 #: src/workshop/Workshop.tsx:61
 msgid "Alternating activations"
 msgstr ""
 
+#: src/workshop/Workshop.tsx:611
+msgid "Your rules are running."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:613
+msgid "Starting your rules…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:614
+msgid "Your rules aren't running."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:619
+msgid "{n} table warning"
+msgid_plural "{n} table warnings"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/workshop/Workshop.tsx:62
 msgid "Players take turns activating one unit each."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:638
-msgid "{name} {version}"
+#: src/workshop/Workshop.tsx:622
+msgid "Dice and log"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:647
-msgid "Download the package"
+#: src/workshop/Workshop.tsx:645
+msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
 msgstr ""
 
 #: src/workshop/Workshop.tsx:650
-msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
+msgid "Playing…"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:654
-msgid "Share it in the gallery"
+#: src/workshop/Workshop.tsx:650
+msgid "Play 3 bot games"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:656
-msgid "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button)."
+#: src/workshop/Workshop.tsx:657
+msgid "Game {seed}: fine, played to the end in {steps} moves."
 msgstr ""
 
 #: src/workshop/Workshop.tsx:661
-msgid "Where the file is hosted (a raw link)"
+msgid "Game {seed}: fine for {steps} moves, stopped in round {round}."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:673
-msgid "Copied"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:673
-msgid "Copy the pull request text"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:676
-msgid "Edit the gallery on GitHub"
+#: src/workshop/Workshop.tsx:666
+msgid "Game {seed} went wrong: {why}"
 msgstr ""
 
 #: src/workshop/Workshop.tsx:68
 msgid "A finished game of ours to take apart: four warbands, three missions."
 msgstr ""
 
-#: src/workshop/Workshop.tsx:707
-msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
+#: src/workshop/Workshop.tsx:705
+msgid "{name} {version}"
 msgstr ""
 
-#: src/workshop/Workshop.tsx:708
-msgid "Commands a rule yields (ctx.)"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:709
-msgid "The game as it stands (view.)"
-msgstr ""
-
-#: src/workshop/Workshop.tsx:710
-msgid "Keys and snippets"
+#: src/workshop/Workshop.tsx:714
+msgid "Download the package"
 msgstr ""
 
 #: src/workshop/Workshop.tsx:717
+msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:721
+msgid "Share it in the gallery"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:723
+msgid "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button)."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:728
+msgid "Where the file is hosted (a raw link)"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:740
+msgid "Copied"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:740
+msgid "Copy the pull request text"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:743
+msgid "Edit the gallery on GitHub"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:774
+msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:775
+msgid "Commands a rule yields (ctx.)"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:776
+msgid "The game as it stands (view.)"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:777
+msgid "Keys and snippets"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:784
 msgid "The full types"
+msgstr ""
+
+#: src/workshop/check.ts:100
+msgid "Bot game: not played, since it doesn't load."
+msgstr ""
+
+#: src/workshop/check.ts:109
+msgid "Bot game: it didn't report back."
+msgstr ""
+
+#: src/workshop/check.ts:115
+msgid "Bot game: played to the end in {steps} moves."
+msgstr ""
+
+#: src/workshop/check.ts:116
+msgid "Bot game: {rounds} rounds in {steps} moves, with nothing wrong."
+msgstr ""
+
+#: src/workshop/check.ts:125
+msgid "Bot game: {why}"
+msgstr ""
+
+#: src/workshop/check.ts:52
+msgid "The code doesn't parse at line {line}, column {column}."
+msgstr ""
+
+#: src/workshop/check.ts:68
+msgid "Types: the type checker isn't available here."
+msgstr ""
+
+#: src/workshop/check.ts:73
+msgid "Types: {n} problem. Line {line}: {message}"
+msgid_plural "Types: {n} problems. The first, line {line}: {message}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/workshop/check.ts:81
+msgid "Types: everything matches the SDK."
+msgstr ""
+
+#: src/workshop/check.ts:88
+msgid "Loading: {why}"
+msgstr ""
+
+#: src/workshop/check.ts:94
+msgid "Loading: it loads, and its system has the right shape."
 msgstr ""

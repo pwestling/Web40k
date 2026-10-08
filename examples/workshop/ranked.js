@@ -94,7 +94,7 @@ function* fight(ctx, args) {
   const me = state.units[args.unit];
   const target = state.units[args.target];
   const left = alive(state, me);
-  const files = me.formation?.files ?? 5;
+  const files = me.formation?.kind === "ranked" ? me.formation.files : 5;
   const front = left.slice(0, files);
   const ranks = Math.min(2, Math.floor(left.length / files) - 1);
   const need = Math.max(...front.map((m) => stat(m, "Hit")));

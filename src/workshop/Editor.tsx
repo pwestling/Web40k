@@ -6,6 +6,11 @@ import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView, keymap, type DecorationSet } from "@codemirror/view";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { sdkCompletions } from "./completions";
+import { typeCompletions, typeHover, typeProblems } from "./types/editor";
+
+/** Members from the types after a dot; the SDK table's keys and snippets everywhere else, or when types aren't running. */
+const completions = async (context: Parameters<typeof sdkCompletions>[0]) =>
+  (await typeCompletions(context)) ?? sdkCompletions(context);
 
 /** The line a problem points at, marked until the text changes or another is set. */
 const setMark = StateEffect.define<number | null>();
@@ -24,8 +29,9 @@ const marked = StateField.define<DecorationSet>({
 });
 
 /**
- * The workshop's code editor: CodeMirror with JavaScript, the SDK's
- * completions (completions.ts) and Ctrl/Cmd+S to save. `doc` replaces the
+ * The workshop's code editor: CodeMirror with JavaScript, checked against
+ * the SDK's types as it's typed (types/), the SDK's completions
+ * (completions.ts) and Ctrl/Cmd+S to save. `doc` replaces the
  * text only when it changes from outside (a template, a link, another draft).
  */
 export function Editor({
@@ -69,7 +75,9 @@ export function Editor({
           basicSetup,
           marked,
           javascript(),
-          javascriptLanguage.data.of({ autocomplete: sdkCompletions }),
+          javascriptLanguage.data.of({ autocomplete: completions }),
+          typeProblems,
+          typeHover,
           autocompletion({ activateOnTyping: true }),
           EditorView.contentAttributes.of({ "aria-label": label }),
           EditorView.updateListener.of((u) => {
