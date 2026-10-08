@@ -1,5 +1,6 @@
 import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
+import { WarningsButton } from "./TableWarnings";
 import { DicePicker } from "./DicePicker";
 import { systemModule } from "../systems";
 import { useSound } from "./sound";
@@ -295,6 +296,7 @@ export function TopBar() {
           </span>
         )}
       </div>
+      <WarningsButton />
       <SoundToggle />
       <button
         className="quiet help-key"

@@ -1,3 +1,4 @@
+import { UnitWarnings } from "./TableWarnings";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   actionTargets,
@@ -112,7 +113,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.)/.test(f),
+      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.|ok\.)/.test(f),
   );
   const chars = system.characteristics.filter((c) => c.of === "model" && c.type !== "text");
   const texts = system.characteristics.filter((c) => c.of === "model" && c.type === "text");
@@ -166,6 +167,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           Moved {fmt(moved / scale, system)} of {fmt(allowance / scale, system)} this round.
         </p>
       )}
+      <UnitWarnings unitId={unit.id} />
 
       <div className="row wrap">
         <button

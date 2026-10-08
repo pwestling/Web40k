@@ -1,3 +1,4 @@
+import { TableWarningsPanel } from "./ui/TableWarnings";
 import { useEffect } from "react";
 import { Board } from "./render/Board";
 import { useStore } from "./store";
@@ -149,6 +150,7 @@ export function GameScreen({ started }: { started: boolean }) {
           </div>
           <ReplayBar />
           <ReportBanner />
+          <TableWarningsPanel />
           <RoundCard />
           <ReplayTitle />
           <DiceTray />

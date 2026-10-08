@@ -1,3 +1,4 @@
+import { UnitWarnings } from "./TableWarnings";
 import { CodeActions } from "./CodeActions";
 import { useCharged } from "../render/charges";
 import {
@@ -16,7 +17,6 @@ import {
   blockedMoves,
   carriers,
   engagedWith,
-  incoherentModels,
   clampFraction,
   mainWeapon,
   moveAllowance,
@@ -156,7 +156,6 @@ export function UnitCard() {
   const as = unit.owner;
   const allowed = moveAllowance(game, unit);
   const moved = unitMoved(alive);
-  const incoherent = incoherentModels(alive).size;
   const engaged = engagedWith(game, unit);
   const phase = phaseName(game);
   // Floor buttons only show when the unit stands where there is a floor to climb to.
@@ -225,7 +224,6 @@ export function UnitCard() {
             Snap back to {allowed}"
           </button>
         )}
-        {incoherent > 0 && <span className="warn">{incoherent} model(s) out of coherency. </span>}
         {blocked.length > 0 && (
           <span className="warn">Moved through {blocked.map((p) => p.name.toLowerCase()).join(", ")}. </span>
         )}
@@ -233,6 +231,8 @@ export function UnitCard() {
           <span className="warn">Engaged with {engaged.map((id) => game.units[id]?.name).join(", ")}.</span>
         )}
       </p>
+      {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
+      <UnitWarnings unitId={unit.id} />
 
       {mine && (
         <div className="row wrap">

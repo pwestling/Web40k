@@ -1,3 +1,4 @@
+import { checkName } from "./warnings";
 import { systemLabel } from "./systemLabels";
 import {
   applyEvent,
@@ -512,6 +513,11 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (event.key === "fleeing")
         return event.value ? `${unitName(event.id)} is fleeing` : `${unitName(event.id)} rallied`;
       if (event.key === "lastFiles") return "";
+      // An override from the Table warnings panel (src/ui/warnings.ts).
+      if (event.key.startsWith("ok."))
+        return event.value === null
+          ? ""
+          : `${who} marked ${unitName(event.id)} as fine: ${checkName(game, event.key.slice(3)).toLowerCase()}`;
       return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
     case "model/wounds":
       return `${who} set wounds on ${game.models[event.id]?.label ?? "a model"}${event.destroyed ? " (destroyed)" : ""}`;

@@ -1,3 +1,4 @@
+import { FocusCamera } from "./FocusCamera";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -974,6 +975,7 @@ function Scene() {
       <FeelLayer />
       <CasterCamera />
       <ShowcaseCamera />
+      <FocusCamera />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (

@@ -1,4 +1,5 @@
 import { WH40K_MISSIONS } from "./missions";
+import { wh40kChecks } from "./checks";
 import { DEFAULT_SYSTEM, getSystem } from "../../core/content";
 import type { GameModule } from "../../sdk";
 import type { GameState } from "../../core";
@@ -48,6 +49,9 @@ export const wh40kModule: GameModule<SystemModule> = {
     enemyGap: (view, unitId) => enemyGap(view, unitId),
     belowHalf: (view, unitId) => belowHalf(view, unitId),
   },
+  checks: wh40kChecks,
+  // Coherency here counts floors, and a move counts climbing and the phase's allowance.
+  replacesChecks: ["coherency", "moveDistance"],
   app: {
     sample: sampleRoster,
     layout: (t) => standardLayout(t.width, t.depth),
