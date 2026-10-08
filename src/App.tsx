@@ -30,6 +30,7 @@ import { Moments } from "./broadcast/Moments";
 import { Ambience } from "./ui/Ambience";
 import { Showcase } from "./ui/Showcase";
 import { TopBar } from "./ui/TopBar";
+import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
 /**
@@ -97,6 +98,8 @@ function BroadcastView() {
       <Ambience />
       <Showcase />
       <StatsScreen />
+      <VoiceRoom />
+      <OnAir />
     </>
   );
 }
@@ -148,6 +151,7 @@ export function App() {
           <ReplayTitle />
           <DiceTray />
           {!editing && <TalkPanel />}
+          <VoiceRoom />
           <Moments />
           <Ambience />
           <Showcase />

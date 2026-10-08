@@ -47,5 +47,17 @@ export function trysteroTransport(
     leave() {
       void room.leave();
     },
+    media: {
+      addStream(stream, to) {
+        // A peer that drops mid-negotiation rejects its promise: nothing to do but let it go.
+        for (const p of room.addStream(stream, to ? { target: to } : undefined)) p.catch(() => {});
+      },
+      removeStream(stream, to) {
+        room.removeStream(stream, to ? { target: to } : undefined);
+      },
+      onStream(handler) {
+        room.onPeerStream = (stream, peerId) => handler(stream, peerId);
+      },
+    },
   };
 }

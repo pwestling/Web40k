@@ -56,6 +56,17 @@ export const useSound = create<{
   },
 }));
 
+/**
+ * Voices at the table dip under the tray's decisive moments (src/voice): the
+ * time until which they stay down. Set whatever the sound switch says, since
+ * voices aren't game sounds.
+ */
+export const useDuck = create<{ until: number }>(() => ({ until: 0 }));
+export function duckVoices(ms: number): void {
+  const until = performance.now() + ms;
+  if (until > useDuck.getState().until) useDuck.setState({ until });
+}
+
 let ac: AudioContext | null = null;
 let master: GainNode | null = null;
 let noise: AudioBuffer | null = null;

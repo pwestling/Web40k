@@ -53,7 +53,9 @@ export type SideMessage =
       name?: string;
     }
   /** A commentator brings up a moment-of-the-game card (after the game), by its seq and kind. */
-  | { t: "talk/moment"; seq: number; kind: string };
+  | { t: "talk/moment"; seq: number; kind: string }
+  /** Voice at the table (src/voice): this peer's mic is on or off. The audio itself is a media stream. */
+  | { t: "talk/voice"; on: boolean; name?: string };
 
 /** A short-lived message over the table, from whoever sent it. */
 export type TalkItem = { id: string } & (
@@ -63,6 +65,14 @@ export type TalkItem = { id: string } & (
   | { kind: "chat"; text: string }
   | { kind: "react"; emoji: string }
 );
+
+/** Audio between peers (voice at the table). Only WebRTC transports have it. */
+export interface MediaChannel {
+  /** Send a stream to one peer, or everyone connected now. */
+  addStream(stream: MediaStream, to?: string): void;
+  removeStream(stream: MediaStream, to?: string): void;
+  onStream(handler: (stream: MediaStream, peerId: string) => void): void;
+}
 
 /** Minimal peer-to-peer channel the session needs. Implemented over WebRTC by
  * `trysteroTransport` and in memory by `createLoopbackNetwork` for tests. */
@@ -74,4 +84,6 @@ export interface Transport {
   onPeerJoin(handler: (peerId: string) => void): void;
   onPeerLeave(handler: (peerId: string) => void): void;
   leave(): void;
+  /** Media streams, where the transport can carry them. */
+  readonly media?: MediaChannel;
 }
