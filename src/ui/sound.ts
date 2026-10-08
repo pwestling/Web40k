@@ -251,3 +251,12 @@ export function tick() {
   if (!a) return;
   burst(a, a.currentTime, { freq: 4200, q: 6, dur: 0.008, gain: 0.03 });
 }
+
+/** A soft whoosh between moment cards. */
+export function whoosh() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  burst(a, t, { freq: 500, q: 0.6, dur: 0.35, gain: 0.08 });
+  burst(a, t + 0.08, { freq: 1400, q: 0.8, dur: 0.25, gain: 0.05 });
+}

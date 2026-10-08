@@ -1,4 +1,6 @@
 import { rareMoments } from "../core";
+import { momentsOf } from "../core/moments";
+import { playMoment, useMomentsAllowed } from "../broadcast/Moments";
 import { useHold } from "./hold";
 import { replayRoll } from "./hooks";
 import { useEffect, useMemo, useState } from "react";
@@ -53,6 +55,15 @@ export function ReplayBar() {
   const { highlights } = useMemo(() => readGame(record), [record]);
   // Against all odds: rare outcomes, starred on the track.
   const moments = useMemo(() => rareMoments(record), [record]);
+  // Moments of the game (PX-4), once it's over or in a replay; rare dice already have their ★.
+  const allowed = useMomentsAllowed();
+  const stories = useMemo(
+    () =>
+      allowed
+        ? momentsOf(record).filter((m) => m.kind !== "rare" && m.kind !== "mvp" && m.kind !== "turning")
+        : [],
+    [allowed, record],
+  );
   // Rules changes both players agreed to, marked ◆ on the track.
   const rulesChanges = useMemo(
     () => log.flatMap((l) => (l.kind === "header" && l.rules ? [{ seq: Number(l.key), text: l.text }] : [])),
@@ -165,6 +176,19 @@ export function ReplayBar() {
                 onClick={() => replayRoll(m.seq)}
               >
                 ★
+              </button>
+            ))}
+          {last > 0 &&
+            stories.map((m) => (
+              <button
+                key={`moment-${m.kind}-${m.seq}`}
+                className="highlight moment"
+                style={{ left: at(m.seq) }}
+                title={`${m.title}: ${m.line}`}
+                aria-label={`Replay: ${m.title}`}
+                onClick={() => playMoment(m)}
+              >
+                ❖
               </button>
             ))}
           {last > 0 &&

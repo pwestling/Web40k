@@ -13,6 +13,7 @@ import {
   type Model,
 } from "../core";
 import { buildLog, undoGroup } from "./gameLog";
+import { momentsOf } from "../core/moments";
 
 const model = (id: string, owner: string): Model => ({
   id,
@@ -85,6 +86,11 @@ describe("undo (UX 130)", () => {
       initial,
       events: events.map((event, i) => ({ seq: i + 1, by: "p1", at: 0, event })),
     };
+    // The same attack is a moment of the game: a unit wiped out in one go, and the MVP.
+    expect(momentsOf(record).map((m) => `${m.kind}: ${m.line}`)).toEqual([
+      "wipe: Line Troopers wiped out Ashen Thralls",
+      "mvp: Line Troopers destroyed 1 unit",
+    ]);
     const slain = () => Object.values(stateAt(record).models).filter((m) => m.destroyed).length;
     expect(slain()).toBe(4);
 

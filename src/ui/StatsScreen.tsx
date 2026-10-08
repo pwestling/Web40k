@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { branchGame } from "./Branch";
-import { rareMoments, systemOf, type GameState } from "../core";
+import { systemOf, type GameState } from "../core";
+import { momentsOf } from "../core/moments";
+import { playMoment, useReel } from "../broadcast/Moments";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -39,8 +41,10 @@ export function StatsScreen() {
     return () => removeEventListener("keydown", onKey);
   }, [open]);
   const data = useMemo(() => (open ? gameStats(record) : null), [open, record]);
-  const moments = useMemo(() => (open ? rareMoments(record) : []), [open, record]);
-  if (!open || !data) return null;
+  const moments = useMemo(() => (open ? momentsOf(record) : []), [open, record]);
+  // The end-of-game reel plays first.
+  const reeling = useReel((s) => s.index !== null);
+  if (!open || !data || reeling) return null;
   const close = () => set({ stats: false });
   const owners = new Map(data.players.map((p) => [p.id, p]));
   const units = [...data.units].sort((a, b) => b.dealt - a.dealt || b.taken - a.taken);
@@ -76,16 +80,28 @@ export function StatsScreen() {
           <h4>Moments</h4>
           <ul className="moments">
             {moments.map((m) => (
-              <li key={m.seq}>
-                <span className="rare-star">★</span> Round {m.round} · <strong>{m.title}</strong>
-                {m.unitName && <> · {m.unitName}</>}: {m.line}{" "}
+              <li key={`${m.kind}-${m.seq}-${m.player ?? ""}`}>
+                {m.kind === "rare" && <span className="rare-star">★</span>} {m.when} ·{" "}
                 <button
-                  className="quiet small"
-                  title="A new game on this screen, just before this moment"
-                  onClick={() => branchGame(m.seq - 1, "hotseat")}
+                  className="link"
+                  title="Watch it again on the table"
+                  onClick={() => {
+                    close();
+                    playMoment(m);
+                  }}
                 >
-                  Practice from here
+                  <strong>{m.title}</strong>
                 </button>
+                : {m.line}{" "}
+                {m.kind !== "mvp" && (
+                  <button
+                    className="quiet small"
+                    title="A new game on this screen, just before this moment"
+                    onClick={() => branchGame(m.seq - 1, "hotseat")}
+                  >
+                    Practice from here
+                  </button>
+                )}
               </li>
             ))}
           </ul>
