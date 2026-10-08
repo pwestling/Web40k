@@ -1,5 +1,5 @@
 import { shot } from "../render/focus";
-import { sideName, sidePlayers, sides } from "../core";
+import { sideName, sidePlayers, sides, stateAt, type GameState } from "../core";
 import { t } from "../i18n";
 import { displayName } from "../i18n/names";
 import { useStore } from "../store";
@@ -185,12 +185,22 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
   };
 }
 
+let shown: { scrub: number; game: GameState } | null = null;
+
+/** The table the clip is showing: at the scrubber while the reel plays, not the game's end. */
+function shownGame(): GameState {
+  const { game, record, scrub } = useStore.getState();
+  if (scrub === null) return game;
+  if (shown?.scrub !== scrub) shown = { scrub, game: stateAt(record, scrub) };
+  return shown.game;
+}
+
 /**
  * A tall clip's top band (UX 367): each side's name, colour and VP, and the
  * round, so a phone-sized story says the score without the top bar.
  */
 function drawScore(ctx: CanvasRenderingContext2D, width: number, band: number) {
-  const game = useStore.getState().game;
+  const game = shownGame();
   const rows = sides(game).map((seat) => ({
     name: displayName(sideName(game, seat)),
     color: sidePlayers(game, seat)[0]?.color ?? "#999",

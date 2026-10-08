@@ -10,7 +10,8 @@
 /** What to paint, bottom to top. */
 const LAYERS = [
   ".plate",
-  ".ruler",
+  // Casualty piles sit out pictures (UX 369).
+  ".ruler:not(.casualty-pile)",
   ".wounds",
   ".talk-label",
   ".burst",
@@ -45,10 +46,25 @@ export function paintOverlays(
       if (banded && BANDED.includes(sel)) stacked.push(el);
       else paintBox(ctx, el, frame, 1);
     }
-  if (stacked.length) bandFrames(stacked, trayIn!).forEach((f, i) => paintBox(ctx, stacked[i]!, f, 1));
   const tray = root.querySelector<HTMLElement>(".dice-tray.on");
-  if (tray) paintTray(ctx, tray, trayIn ? (trayFrame(tray, trayIn) ?? frame) : frame);
+  // Dice and caption both in the band under the table: the dice take its top, the words go under them (UX 367).
+  const share = !!tray && stacked.length > 0 && !!trayIn && (trayIn.above ?? 0) <= trayIn.height * 0.12;
+  if (stacked.length) {
+    const below = trayIn!.below ?? trayIn!.height;
+    const under = share ? { ...trayIn!, below: below + (trayIn!.height - below) * TRAY_SHARE } : trayIn!;
+    bandFrames(stacked, under).forEach((f, i) => paintBox(ctx, stacked[i]!, f, 1));
+  }
+  // Over the table, the dice stay above the caption at its foot (UX 367).
+  const words = banded
+    ? []
+    : [...root.querySelectorAll<HTMLElement>(BANDED.join(","))].filter((el) => showsText(el));
+  const tops = words.map((el) => (el.getBoundingClientRect().top - frame.top) * frame.scale);
+  const ceiling = trayIn ? Math.min(trayIn.height, ...tops.filter((y) => y > trayIn.height * 0.5)) : 0;
+  if (tray) paintTray(ctx, tray, trayIn ? (trayFrame(tray, trayIn, share, ceiling) ?? frame) : frame);
 }
+
+/** How much of the band under the table the dice take when the caption is there too. */
+const TRAY_SHARE = 0.5;
 
 /**
  * The frame that puts the tray's felt bottom centre of a `size` picture: in the band under the table
@@ -57,6 +73,10 @@ export function paintOverlays(
 function trayFrame(
   tray: HTMLElement,
   size: { width: number; height: number; below?: number; above?: number },
+  /** The caption is in the band too: the dice keep to its top part. */
+  share = false,
+  /** Over the table: the top of the caption at its foot, which the dice stay above. */
+  ceiling = size.height,
 ): Frame | null {
   const r = (tray.querySelector<HTMLElement>(".felt") ?? tray).getBoundingClientRect();
   if (!r.width || !r.height) return null;
@@ -72,12 +92,21 @@ function trayFrame(
   }
   const band = size.height - (size.below ?? size.height);
   const inBand = band > size.height * 0.12;
+  if (inBand && share) {
+    const room = band * TRAY_SHARE;
+    const scale = Math.min((size.width * 0.8) / r.width, (room * 0.85) / r.height);
+    const x = (size.width - r.width * scale) / 2;
+    const y = size.height - band + (room - r.height * scale) / 2;
+    return { scale, left: r.left - x / scale, top: r.top - y / scale };
+  }
   const scale = inBand
     ? Math.min((size.width * 0.8) / r.width, (band * 0.85) / r.height)
     : Math.min((size.width * 0.7) / r.width, (size.height * 0.3) / r.height);
   const x = (size.width - r.width * scale) / 2;
   // Above the caption, which keeps its place at the table's foot.
-  const y = inBand ? size.height - band / 2 - (r.height * scale) / 2 : size.height * 0.85 - r.height * scale;
+  const y = inBand
+    ? size.height - band / 2 - (r.height * scale) / 2
+    : Math.min(size.height * 0.85, ceiling - size.height * 0.02) - r.height * scale;
   return { scale, left: r.left - x / scale, top: r.top - y / scale };
 }
 

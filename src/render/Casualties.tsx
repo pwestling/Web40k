@@ -13,6 +13,7 @@ import {
   type Vec2,
 } from "../core";
 import { t, tn } from "../i18n";
+import { shot } from "./focus";
 
 /**
  * PX-3d: slain models tip over where they stood, lie still a moment and fade
@@ -160,6 +161,11 @@ function Pile({
   arriving: ReadonlySet<string>;
 }) {
   const [open, setOpen] = useState(false);
+  const pile = useRef<Group>(null);
+  // Off the table's edge, the pile reads as stray posts in a picture or clip (UX 369): it sits those out.
+  useFrame(() => {
+    if (pile.current) pile.current.visible = shot.capturing === 0;
+  });
   const dead = useMemo(() => fallen(game, owner), [game, owner]);
   const tint = useMemo(() => faded(color), [color]);
   const summary = useMemo(() => {
@@ -196,7 +202,7 @@ function Pile({
   const rows = Math.ceil(Math.min(dead.length, MAX_SHOWN) / PER_ROW);
   const labelX = first.x;
   return (
-    <group>
+    <group ref={pile}>
       {dead
         .slice(0, MAX_SHOWN)
         .map((m, i) =>
