@@ -1,3 +1,4 @@
+import { ClockBar, SideClock } from "./Clocks";
 import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
 import { seatShape } from "./sides";
@@ -140,6 +141,7 @@ export function TopBar() {
                 )}
               </span>
             ))}
+            <SideClock seat={seat} />
             {team.flatMap((p) =>
               pools.map((pool) => (
                 <DicePool
@@ -311,6 +313,7 @@ export function TopBar() {
       </button>
       {/* Below the phase tracker, however the bar wraps. */}
       <NetBanner />
+      <ClockBar />
     </div>
   );
 }

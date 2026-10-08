@@ -408,6 +408,20 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
     case "player/color":
       return `${game.players[event.player]?.name ?? who} changed their colour`;
+    case "clock/pause":
+      if (!event.paused) return `${who} restarted the clocks`;
+      return event.reason === "disconnect"
+        ? "The clocks stopped: a player is disconnected"
+        : `${who} stopped the clocks`;
+    case "clock/adjust": {
+      const mins = Math.round(Math.abs(event.ms) / 60_000);
+      const amount = mins
+        ? `${mins} minute${mins === 1 ? "" : "s"}`
+        : `${Math.round(Math.abs(event.ms) / 1000)} seconds`;
+      return event.ms >= 0
+        ? `${who} gave ${sideName(game, event.seat)} ${amount} on the clock`
+        : `${who} took ${amount} off ${sideName(game, event.seat)}'s clock`;
+    }
     case "campaign/set":
       if (!event.ref) return `${who} stopped playing for a campaign`;
       if (before.campaign?.id !== event.ref.id) return `${who} brought the campaign book ${event.ref.name}`;

@@ -2,6 +2,7 @@ import { cameraForward, focusOn } from "./render/focus";
 import { aliveModels } from "./systems/wh40k/rules";
 import { TableWarningsPanel } from "./ui/TableWarnings";
 import { Announcer } from "./ui/Announcer";
+import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
 import { useEffect } from "react";
 import { Board } from "./render/Board";
@@ -250,6 +251,7 @@ export function GameScreen({ started }: { started: boolean }) {
           {!editing && <Coach />}
           <KeysSheet />
           <CampaignKeeper />
+          <ClockKeeper />
           <CampaignBookDialog />
           <Announcer />
           {reacting && <ReactionPrompt />}

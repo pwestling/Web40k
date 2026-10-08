@@ -14,6 +14,7 @@ import type { Secrets } from "./secrets";
 import type { AttackState } from "./attack";
 import type { ProcedureRun } from "./content/runner";
 import type { ScriptState } from "./script";
+import type { ClockSettings } from "./clock";
 
 export type PlayerId = string;
 export type ModelId = string;
@@ -380,6 +381,8 @@ export interface GameSettings {
   visionArc?: number;
   /** Players per side (2 for a 2v2). Missing means one each. */
   teamSize?: number;
+  /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
+  clock?: ClockSettings | null;
 }
 
 /** Victory points a side scored at one scoring moment (or chose not to). */

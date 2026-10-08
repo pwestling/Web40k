@@ -176,6 +176,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
     case "terrain/remove":
       return { ...state, terrain: state.terrain.filter((t) => t.id !== event.id) };
+    case "clock/pause":
+    case "clock/adjust":
+      // Read from the log by core/clock.ts; the table itself doesn't change.
+      return state;
     case "ruler/set":
       return { ...state, ruler: event.ruler };
     case "player/rename": {

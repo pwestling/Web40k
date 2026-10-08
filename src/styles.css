@@ -2994,3 +2994,38 @@ body.showcase
   background: #0a0a0e;
   border: 1px solid #555;
 }
+
+/* Chess clocks (#29). */
+.side-clock {
+  font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+.side-clock.running {
+  opacity: 1;
+  background: rgb(255 255 255 / 12%);
+  font-weight: 600;
+}
+.side-clock.out {
+  color: #fca5a5;
+  opacity: 1;
+}
+.side-clock button {
+  font-size: 0.75rem;
+  padding: 0 4px;
+  margin-left: 2px;
+}
+.topbar .clock-bar {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+.clock-bar .time-call {
+  color: #fde047;
+}

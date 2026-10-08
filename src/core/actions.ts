@@ -132,6 +132,10 @@ export type Intent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Stop or restart the chess clocks (#29): by hand, or by the host while a player is disconnected. */
+  | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
+  /** Give a side's clock time (or take it away), in milliseconds. */
+  | { type: "clock/adjust"; seat: number; ms: number }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -277,6 +281,10 @@ export type GameEvent =
    */
   | { type: "unit/figure"; id: UnitId; keys: string[]; figure: ModelFigure | null; bands?: SightBand[] }
   | { type: "settings/set"; settings: Partial<GameSettings> }
+  /** Stop or restart the chess clocks (#29): by hand, or by the host while a player is disconnected. */
+  | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
+  /** Give a side's clock time (or take it away), in milliseconds. */
+  | { type: "clock/adjust"; seat: number; ms: number }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -440,6 +448,21 @@ export function resolveIntent(
     case "player/color":
       return state?.players[intent.player] && intent.player === from && /^#[0-9a-f]{6}$/i.test(intent.color)
         ? { type: "player/color", player: intent.player, color: intent.color.toLowerCase() }
+        : null;
+    case "clock/pause":
+      return state?.players[from] && typeof intent.paused === "boolean"
+        ? {
+            type: "clock/pause",
+            paused: intent.paused,
+            ...(intent.paused ? { reason: intent.reason === "disconnect" ? "disconnect" : "hand" } : {}),
+          }
+        : null;
+    case "clock/adjust":
+      return state?.players[from] &&
+        Number.isInteger(intent.seat) &&
+        Number.isFinite(intent.ms) &&
+        Math.abs(intent.ms) <= 24 * 3_600_000
+        ? { type: "clock/adjust", seat: intent.seat, ms: Math.round(intent.ms) }
         : null;
     case "campaign/set": {
       if (!state?.players[from]) return null;
