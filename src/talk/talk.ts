@@ -35,6 +35,8 @@ interface TalkState {
   tool: "ping" | "arrow" | "area" | null;
   /** Commentators' cameras (Broadcast mode), by peer, with when each last moved. */
   casters: Record<string, Caster>;
+  /** The moment card a commentator last brought up (src/broadcast/Moments.tsx shows it). */
+  cue: { seq: number; kind: string; by: string; at: number } | null;
 }
 
 export interface Caster {
@@ -52,6 +54,7 @@ export const useTalk = create<TalkState>(() => ({
   open: false,
   tool: null,
   casters: {},
+  cue: null,
 }));
 
 const vec3 = (v: unknown): v is [number, number, number] =>
@@ -63,6 +66,11 @@ export function sendCamera(
 ) {
   const name = myName();
   useStore.getState().session?.sendSide({ t: "talk/cam", cam, ...(name ? { name } : {}) });
+}
+
+/** Bring up a moment card for everyone following this commentator. */
+export function sendMoment(seq: number, kind: string): void {
+  useStore.getState().session?.sendSide({ t: "talk/moment", seq, kind });
 }
 
 /** The commentator to follow: the one whose camera moved most recently, if any is still on. */
@@ -202,6 +210,9 @@ function receive(message: SideMessage, from: string): void {
         },
       };
     });
+  } else if (message.t === "talk/moment") {
+    if (Number.isInteger(message.seq) && typeof message.kind === "string")
+      useTalk.setState({ cue: { seq: message.seq, kind: message.kind, by: from, at: Date.now() } });
   } else if (message.t === "talk/clear") clearDrawings(from);
   else if (message.t === "talk") {
     const item = cleanItem(message.item);

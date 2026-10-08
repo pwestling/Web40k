@@ -1,4 +1,8 @@
+import { useMemo } from "react";
+import { momentsOf } from "../core/moments";
 import { useStore } from "../store";
+import { battleOver } from "../ui/StatsScreen";
+import { castMoment } from "./Moments";
 import { currentCaster, useTalk } from "../talk/talk";
 import { CASTER_FRESH_MS, DELAYS, useBroadcast, useNow } from "./broadcast";
 
@@ -18,6 +22,10 @@ export function BroadcastControls() {
   const caster = currentCaster(casters);
   const now = useNow();
   const live = caster && now - caster.at < CASTER_FRESH_MS ? caster : null;
+  // Once the game is over the commentator can bring up any moment for the audience.
+  const over = useStore((s) => battleOver(s.game));
+  const record = useStore((s) => s.record);
+  const moments = useMemo(() => (casting && over ? momentsOf(record) : []), [casting, over, record]);
   const streamLink = () => {
     const q = new URLSearchParams(location.search);
     q.set("view", "broadcast");
@@ -45,6 +53,25 @@ export function BroadcastControls() {
           >
             Follow {live.name.replace(/ \(watching\)$/, "")}
           </button>
+        )}
+        {moments.length > 0 && (
+          <select
+            aria-label="Bring up a moment"
+            title="Show a moment's card to everyone following you, and replay it on the table"
+            value=""
+            onChange={(e) => {
+              const m = moments[Number(e.target.value)];
+              if (m) castMoment(m);
+            }}
+          >
+            <option value="">Bring up a moment…</option>
+            {moments.map((m, i) => (
+              <option key={`${m.kind}-${m.seq}-${m.player ?? ""}`} value={i}>
+                {m.kind === "rare" ? "★ " : ""}
+                {m.title}
+              </option>
+            ))}
+          </select>
         )}
         <label title="Watch the game this far behind, so a stream gives nothing away">
           <select

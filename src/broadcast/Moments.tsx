@@ -4,6 +4,8 @@ import { momentsOf, type Moment } from "../core/moments";
 import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
 import { legendSting, whoosh } from "../ui/sound";
+import { sendMoment, useTalk } from "../talk/talk";
+import { useBroadcast } from "./broadcast";
 
 /**
  * Moments of the game (PX-4): at the end of a game a reel replays each one on
@@ -40,6 +42,32 @@ export function playMoment(m: Moment): void {
   const s = useStore.getState();
   s.setScrub(Math.max(0, m.seq - 1));
   setTimeout(() => useStore.getState().setScrub(m.seq), LEAD_MS);
+}
+
+/** Show a moment's card for a while, replaying it on the table where there is something to see. */
+function showCard(m: Moment, ms: number, play: boolean): void {
+  useReel.setState({ replay: m });
+  if (play) {
+    if (m.kind === "rare") legendSting();
+    else whoosh();
+    if (m.kind !== "mvp" && m.kind !== "turning") playMoment(m);
+  }
+  setTimeout(() => {
+    if (useReel.getState().replay === m) useReel.setState({ replay: null });
+  }, ms);
+}
+
+/** The commentator brings up a card, here and for everyone following them. */
+export function castMoment(m: Moment): void {
+  cueMoment(m);
+  sendMoment(m.seq, m.kind);
+}
+
+/** Out of the reel and the stats, onto the table, with the card up. */
+function cueMoment(m: Moment): void {
+  useReel.setState({ index: null, done: true });
+  useStore.getState().set({ stats: false });
+  showCard(m, CARD_MS, true);
 }
 
 /** The reel at the end of a game, and moment cards while a replay plays. */
@@ -86,12 +114,17 @@ export function Moments() {
   useEffect(() => {
     if (index !== null || scrub === null || !allowed) return;
     const m = moments.find((x) => x.seq === scrub && x.kind !== "mvp" && x.kind !== "turning");
-    if (!m) return;
-    useReel.setState({ replay: m });
-    setTimeout(() => {
-      if (useReel.getState().replay === m) useReel.setState({ replay: null });
-    }, REPLAY_CARD_MS);
+    if (!m || useReel.getState().replay === m) return;
+    showCard(m, REPLAY_CARD_MS, false);
   }, [scrub, index, allowed, moments]);
+
+  // A commentator brought up a card: everyone following them sees it too.
+  const cue = useTalk((s) => s.cue);
+  useEffect(() => {
+    if (!cue || !allowed || !useBroadcast.getState().follow) return;
+    const m = moments.find((x) => x.seq === cue.seq && x.kind === cue.kind);
+    if (m) cueMoment(m);
+  }, [cue, allowed, moments]);
 
   if (index !== null && moments[index]) {
     const m = moments[index];

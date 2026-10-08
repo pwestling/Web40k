@@ -51,7 +51,9 @@ export type SideMessage =
       t: "talk/cam";
       cam: { target: [number, number, number]; position: [number, number, number] } | null;
       name?: string;
-    };
+    }
+  /** A commentator brings up a moment-of-the-game card (after the game), by its seq and kind. */
+  | { t: "talk/moment"; seq: number; kind: string };
 
 /** A short-lived message over the table, from whoever sent it. */
 export type TalkItem = { id: string } & (
