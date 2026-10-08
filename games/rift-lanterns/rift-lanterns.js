@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.1.0",
+  version: "1.1.1",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,7 +34,7 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.1.0",
+  version: "1.1.1",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
@@ -587,7 +587,7 @@ function layout(table) {
   const half = [
     // Spaced so each deployment strip has open lanes to shoot down (Rift Lanterns playtest).
     { id: "a", template: "Ruin", x: -12.5, y: 4.5, facing: 0 },
-    { id: "b", template: "Woods", x: 3, y: 4, facing: 0 },
+    { id: "b", template: "Woods", x: 4.5, y: 5.5, facing: 0 },
     { id: "c", template: "Small ruin", x: 14.5, y: 4, facing: Math.PI / 2 },
     { id: "d", template: "Barricade", x: -4.5, y: 5.5, facing: 0 },
     { id: "e", template: "Container", x: 10, y: 3.5, facing: Math.PI / 2 },
@@ -608,7 +608,7 @@ function layout(table) {
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.1.0",
+    version: "1.1.1",
     api: 1,
     system,
     app: {

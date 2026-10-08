@@ -58,6 +58,7 @@ import { CasterCamera } from "./CasterCamera";
 import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
+import { setTableCanvas } from "../share/capture";
 import { displayName } from "../i18n/names";
 import { Lanterns, type LanternItem } from "./Lanterns";
 import { TalkLayer } from "./TalkLayer";
@@ -79,12 +80,17 @@ import { t } from "../i18n";
  */
 export function Board() {
   useAssetSharing();
+  useEffect(() => () => setTableCanvas(null), []);
   return (
     <Canvas
       shadows
       // Checking every shader's compile log waits on the GPU, a third of a second on a phone at
       // start (perf/results.md); development keeps the check, where a broken shader shows.
-      onCreated={({ gl }) => void (gl.debug.checkShaderErrors = import.meta.env.DEV)}
+      onCreated={({ gl }) => {
+        gl.debug.checkShaderErrors = import.meta.env.DEV;
+        // Shared as pictures and clips (src/share, #46).
+        setTableCanvas(gl.domElement);
+      }}
     >
       <color attach="background" args={["#111318"]} />
       <ambientLight intensity={0.7} />

@@ -16,6 +16,9 @@ const NEWS = (): { version: string; items: string[] }[] => [
       t("Table companion: play on your real table with real models, and roll your own dice."),
       t("Play by mail, chess clocks, event nights and a shared campaign book."),
       t("Replays with notes, What if branches and review rooms for going over a game together."),
+      t(
+        "Share the battle: a replay page that opens anywhere, clips with the dice in frame, and cards to post.",
+      ),
       t("Your own armies, figures, terrain and rules packages, and a workshop to write a whole game in."),
       t("German and French, keyboard play, colour-blind sides and a screen-reader announcer."),
       t("Install it and play offline."),

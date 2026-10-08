@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { VIEWER } from "../viewer/flag";
 import { gameId } from "../campaign/book";
 import { useStore } from "../store";
 import { myName, setMyName, useTalk, who } from "../talk/talk";
@@ -79,7 +80,7 @@ export function NotesPanel() {
           ✕
         </button>
       </div>
-      {review ? <ReviewBar /> : <WatchTogether />}
+      {review ? <ReviewBar /> : VIEWER ? null : <WatchTogether />}
       {tab === "chapters" ? (
         <ol className="chapters">
           {list.map((c) => (

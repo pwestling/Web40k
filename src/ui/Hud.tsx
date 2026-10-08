@@ -1,4 +1,5 @@
 import { displayName } from "../i18n/names";
+import { VIEWER } from "../viewer/flag";
 import { ReportButton } from "./SavedNote";
 import { CampaignFold } from "../campaign/CampaignUI";
 import { TablePicker } from "../tables/TableLibrary";
@@ -93,7 +94,7 @@ export function Hud() {
       )}
       {role === "spectator" && !review && <p className="muted">{t("Spectating.")}</p>}
       {/* Commentary and the stream view are for live games, not a replay watched together (UX 258). */}
-      {role === "spectator" && !review && <BroadcastControls />}
+      {role === "spectator" && !review && !VIEWER && <BroadcastControls />}
       <div className="row wrap">
         <button onClick={() => setView(view === "top" ? "3d" : "top")}>
           {view === "top" ? t("3D view") : t("Top-down view")}

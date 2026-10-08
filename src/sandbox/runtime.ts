@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
-import type { GameRecord, GameState, Unit, Vec2 } from "../core";
+import { stateAt, type GameRecord, type GameState, type Unit, type Vec2 } from "../core";
 import { systemOf } from "../core/content/turn";
 import { extendSystem, restoreSystems } from "../core/content/systems";
 import { registerHooks, unregisterHooks } from "../core/script";
@@ -127,7 +127,9 @@ function provide(p: Provided): void {
   });
   provided.push(p.system.id);
   const store = useStore.getState();
-  store.session?.refold();
+  if (store.session) store.session.refold();
+  // A replay (no session): fold it again with the real system; a new game also refreshes scrubbed views.
+  else useStore.setState({ game: stateAt(store.record) });
   // A game just set up on the stand-in takes the real system's table, counters and layout.
   const game = useStore.getState().game;
   if (store.role === "host" && game.system === p.system.id && game.turn.round === 0) {

@@ -2398,7 +2398,8 @@ body.reeling
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 4;
+  /* Over the unit card: a score waiting on a player is what to do now (UX 333). */
+  z-index: 21;
 }
 .score-panel .score-item input {
   width: 4em;
@@ -4086,6 +4087,11 @@ body.showcase
     min-height: 44px;
     min-width: 44px;
   }
+  /* Big enough to hit, small enough that both sides' chips still fit one row on a phone. */
+  .topbar .counter button {
+    min-width: 34px;
+    min-height: 34px;
+  }
   .topbar button:not(.counter button) {
     display: inline-flex;
     align-items: center;
@@ -4101,4 +4107,62 @@ body.showcase
   border: 1px solid currentColor;
   opacity: 0.8;
   margin-right: 2px;
+}
+
+/* Share the battle (#46): the panel over the replay bar, and the pill while a clip records. */
+.panel.share-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 76px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--below-bar, 64px) - 96px);
+  overflow-y: auto;
+  z-index: 25;
+  display: grid;
+  gap: 10px;
+}
+.share-panel section {
+  display: grid;
+  gap: 6px;
+}
+.share-panel h4 {
+  margin: 0;
+}
+.share-panel p {
+  margin: 0;
+}
+.share-options {
+  display: grid;
+  gap: 2px;
+}
+.recording-pill {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 92%);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+}
+.recording-pill .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: rec-blink 1s steps(2) infinite;
+}
+@keyframes rec-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recording-pill .dot {
+    animation: none;
+  }
 }

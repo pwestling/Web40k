@@ -31,6 +31,7 @@ The first release: a complete tabletop for miniatures wargames in the browser, p
 - **Replays and "What if".** Scrub back through any game, download it as a replay file, or branch a new game from any moment.
 - **Annotated replays.** Notes and marks on moments, chapters, and review rooms where a coach leads and others follow.
 - **Battle stats.** Dice luck, the biggest swing of each round, and calls for the rolls of a lifetime.
+- **Share the battle.** Download a replay as one web page that opens in any browser, even offline; record a clip of the highlights reel or any stretch with the dice in frame; save end-of-game and round cards sized for posting.
 
 ### Your stuff
 

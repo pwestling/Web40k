@@ -84,6 +84,7 @@ function glowMaterial() {
     uniforms: shared,
     transparent: true,
     depthWrite: false,
+    depthTest: false,
     blending: AdditiveBlending,
     vertexShader: /* glsl */ `${FLICKER}
       void main() {
@@ -105,7 +106,7 @@ function glowMaterial() {
         // A bright core and a soft, wide falloff (no bloom on phones, so the halo does the work).
         float core = 1.0 - smoothstep(0.0, 0.16, d);
         float halo = pow(max(0.0, 1.0 - d), 2.6);
-        vec3 c = mix(vColor, vec3(1.0, 0.97, 0.9), core * 0.75);
+        vec3 c = mix(vColor, vec3(1.0, 0.97, 0.9), core * 0.35);
         gl_FragColor = vec4(c * (halo * 0.95 + core) * vLight, 1.0);
       }`,
   });
@@ -116,7 +117,7 @@ function poolMaterial(ring: number) {
     uniforms: { ...shared, uRing: { value: ring } },
     transparent: true,
     depthWrite: false,
-    blending: AdditiveBlending,
+    // Blended, not added: the ring is the holder's own colour, readable across the table (PX).
     vertexShader: /* glsl */ `${FLICKER}
       void main() {
         vUv = uv;
@@ -133,9 +134,10 @@ function poolMaterial(ring: number) {
         float d = length(vUv - 0.5) * 2.0;
         if (d > 1.0) discard;
         // The pool fades out across the 3"; the ring at its edge stays steady to measure by.
-        float pool = pow(1.0 - d, 1.6) * 0.32 * vLight;
+        float pool = pow(1.0 - d, 1.6) * 0.3 * vLight;
         float edge = smoothstep(1.0 - uRing * 2.0, 1.0 - uRing, d) * (1.0 - smoothstep(1.0 - uRing * 0.3, 1.0, d));
-        gl_FragColor = vec4(vColor * (pool + edge * 0.55), 1.0);
+        // The pool tints the table; the ring at its edge is solid, to measure by and to see who holds it.
+        gl_FragColor = vec4(vColor, min(1.0, pool + edge * 0.9));
       }`,
   });
 }
@@ -250,10 +252,17 @@ export function Lanterns({
           onDown(items[e.instanceId]!.id);
         }}
       />
-      <instancedMesh ref={glow} args={[geo.glow, p.glow, MAX]} raycast={() => null} frustumCulled={false} />
+      {/* Drawn over the terrain, so a lantern behind a ruin still shows where it is (PX). */}
+      <instancedMesh
+        ref={glow}
+        args={[geo.glow, p.glow, MAX]}
+        raycast={() => null}
+        frustumCulled={false}
+        renderOrder={10}
+      />
       <instancedMesh
         ref={pool}
-        args={[geo.pool, p.pool(Math.round((0.08 / reach) * 1000) / 1000), MAX]}
+        args={[geo.pool, p.pool(Math.round((0.15 / reach) * 1000) / 1000), MAX]}
         raycast={() => null}
         renderOrder={-1}
       />

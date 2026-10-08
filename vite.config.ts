@@ -1,8 +1,9 @@
 /// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
-import { execSync } from "node:child_process";
+import { execFile, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { dirname, join, relative } from "node:path";
 import ts from "typescript";
 import { build as viteBuild, defineConfig, type Plugin, type Rollup } from "vite";
@@ -179,6 +180,99 @@ function serviceWorker(): Plugin {
   };
 }
 
+/**
+ * `viewer.html`, the replay page (#46): the replay viewer (src/viewer/main.tsx)
+ * built into one self-contained HTML file. All of its code is one gzipped,
+ * base64'd script that a few lines unpack and run, and its styles and images
+ * are inline, so the page opens from a disk with no server. Share the battle
+ * fetches it and puts the replay where `<!--REPLAY-->` is (src/share/page.ts).
+ * Built after the app; in development, built on first request.
+ */
+function replayViewer(): Plugin {
+  let building: Promise<string> | null = null;
+  const make = async (): Promise<string> => {
+    const out = (await viteBuild({
+      configFile: false,
+      logLevel: "warn",
+      base: "./",
+      mode: "production",
+      define: {
+        __APP_BUILD__: JSON.stringify(build()),
+        "process.env.NODE_ENV": JSON.stringify("production"),
+      },
+      plugins: [react(), bundledWorker("virtual:sandbox-worker", "src/sandbox/worker.ts")],
+      build: {
+        write: false,
+        minify: true,
+        cssCodeSplit: false,
+        modulePreload: false,
+        // Everything inline: there is no server to fetch from.
+        assetsInlineLimit: () => true,
+        chunkSizeWarningLimit: 100_000,
+        rollupOptions: { input: "viewer.html", output: { codeSplitting: false } as Rollup.OutputOptions },
+      },
+    })) as Rollup.RollupOutput | Rollup.RollupOutput[];
+    const output = (Array.isArray(out) ? out[0]! : out).output;
+    const js = output.find((o): o is Rollup.OutputChunk => o.type === "chunk" && o.isEntry)!.code;
+    const css = output
+      .filter((o): o is Rollup.OutputAsset => o.type === "asset" && o.fileName.endsWith(".css"))
+      .map((o) => String(o.source))
+      .join("\n");
+    const app = gzipSync(Buffer.from(js), { level: 9 }).toString("base64");
+    const loader = `(async()=>{const b=atob(document.getElementById("open-battle-app").textContent.trim());const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const code=await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).text();const s=document.createElement("script");s.type="module";s.textContent=code;document.body.append(s)})().catch(e=>{document.getElementById("root").textContent="This browser can't open the replay: "+e})`;
+    return [
+      "<!doctype html>",
+      '<html lang="en"><head><meta charset="UTF-8" />',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+      '<meta name="theme-color" content="#111827" />',
+      "<title>Open Battle replay</title>",
+      `<style>${css.replaceAll("</style", "<\\/style")}</style></head><body>`,
+      '<div id="root"><p style="font:16px system-ui;color:#ccc;padding:2em">Loading the replay…</p></div>',
+      '<script id="open-battle-replay" type="application/octet-stream"><!--REPLAY--></script>',
+      `<script id="open-battle-app" type="application/octet-stream">${app}</script>`,
+      `<script>${loader}</script>`,
+      "</body></html>",
+    ].join("\n");
+  };
+  let outDir = "dist";
+  return {
+    name: "replay-viewer",
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split("?")[0] !== "/viewer.html") return next();
+        // A production build of its own, in another process: React's plugin picks its JSX from
+        // NODE_ENV, which is "development" in this one.
+        building ??= new Promise<string>((resolve, reject) => {
+          const dir = "node_modules/.viewer";
+          execFile(
+            "npx",
+            ["vite", "build", "--logLevel", "error", "--outDir", dir],
+            { env: { ...process.env, NODE_ENV: "production" } },
+            (e) => (e ? reject(e) : resolve(readFileSync(join(dir, "viewer.html"), "utf8"))),
+          );
+        });
+        building.then(
+          (html) => {
+            res.setHeader("content-type", "text/html");
+            res.end(html);
+          },
+          (e: unknown) => {
+            building = null;
+            next(e);
+          },
+        );
+      });
+    },
+    async closeBundle() {
+      if (process.env.VITEST) return;
+      writeFileSync(join(outDir, "viewer.html"), await make());
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -186,6 +280,7 @@ export default defineConfig({
     bundledWorker("virtual:soak-worker", "src/workshop/soakWorker.ts"),
     sdkTypes(),
     serviceWorker(),
+    replayViewer(),
   ],
   define: { __APP_BUILD__: JSON.stringify(build()) },
   // The workshop's type checker (#43) is a module worker with TypeScript and the SDK's declarations in it.

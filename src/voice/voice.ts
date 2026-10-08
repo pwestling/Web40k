@@ -158,6 +158,11 @@ function setLive(live: boolean): void {
 }
 
 /** Turn my mic on: ask for it, then send it to everyone in the room. */
+/** Everyone's voice now (this device's mic, if on, and each peer's), for recording a clip with table talk (#46). */
+export function voiceStreams(): MediaStream[] {
+  return [...(local ? [local] : []), ...[...remotes.values()].map((r) => r.stream)];
+}
+
 export async function micOn(): Promise<void> {
   const session = useStore.getState().session;
   if (!session?.media || local) return;

@@ -30,7 +30,8 @@ import { modelHeight, type Ability, type GameState, type Unit } from "../core";
 import { inArc } from "../core/regiment";
 import { lossText } from "./gameLog";
 import { useCanControl, useStore, type AttackDraft } from "../store";
-import { aliveModels, unitMoved } from "../systems/wh40k/rules";
+import { aliveModels, moveAllowance, unitMoved } from "../systems/wh40k/rules";
+import { plainActivations } from "../core/content/turn";
 import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
@@ -126,7 +127,13 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const all = unit.modelIds.flatMap((id) => game.models[id] ?? []);
   const alive = aliveModels(game, unit);
   const scale = inchesPerUnit(system);
-  const allowance = typeof unit.status?.allowance === "number" ? unit.status.allowance : null;
+  // A game of plain activations (Rift Lanterns) moves on the unit's Move, with no move action to set it (UX 334).
+  const allowance =
+    typeof unit.status?.allowance === "number"
+      ? unit.status.allowance
+      : plainActivations(game)
+        ? moveAllowance(game, unit)
+        : null;
   const moved = unitMoved(alive);
   const statuses = (system.statuses ?? []).filter((s) => view.statuses.includes(s.id));
   const flags = view.flags.filter(

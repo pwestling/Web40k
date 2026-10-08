@@ -90,6 +90,17 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
     [record, game, mission, answers],
   );
   const [edits, setEdits] = useState<Record<string, number>>({});
+  // One screen for both sides (hotseat, Play now): the mission's suggestion counts straight away, and
+  // the top bar's − and + correct it (UX 333). At a real table the players say what they hold.
+  const auto = useStore((s) => s.mode === "hotseat" && s.session !== null) && !game.settings.companion;
+  useEffect(() => {
+    // The floating panel does it; the result screen's copy of it doesn't, so nothing goes twice.
+    if (!auto || inline || scrub !== null) return;
+    for (const p of pending) {
+      const by = p.guessed && !p.ask ? sidePlayers(game, p.seat)[0]?.id : undefined;
+      if (by) confirmScore(dispatch, p, by, p.vp);
+    }
+  }, [auto, inline, scrub, pending, game, dispatch]);
   if (!pending.length || scrub !== null) return null;
   // Once the battle is over the result screen lists them (inline), not the floating panel.
   if (!inline && (stats ?? battleOver(game))) return null;

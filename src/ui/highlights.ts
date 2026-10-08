@@ -1,6 +1,6 @@
 import { applyEvent, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
-import { opposed } from "../core/teams";
+import { opposed, sidePlayers } from "../core/teams";
 import { t } from "../i18n";
 
 /** A moment worth jumping to in a replay. */
@@ -48,6 +48,8 @@ export function readGame(
   let roundStart: GameState | null = null;
   let phaseKey = "";
   let phaseVp: Record<string, number> = {};
+  /** VP confirmed this round for an earlier one (UX 333), by player. */
+  let carry: Record<string, number> = {};
   const name = (s: GameState, id: string) => s.players[id]?.name ?? t("Someone");
 
   const summarise = (end: GameState, seq: number, round: number) => {
@@ -77,7 +79,8 @@ export function readGame(
             name: p.name,
             color: p.color,
             vp,
-            vpGained: vp - vpOf(start, p.id),
+            // Less the last round's scores, confirmed in this one.
+            vpGained: vp - vpOf(start, p.id) - (carry[p.id] ?? 0),
             modelsLost: lost,
             unitsLost,
           };
@@ -94,10 +97,24 @@ export function readGame(
     const { event, seq } = logged;
 
     // Rounds: a summary when the round number goes up (or the battle ends).
-    if (before.turn.round > 0 && state.turn.round > before.turn.round)
+    if (before.turn.round > 0 && state.turn.round > before.turn.round) {
       summarise(state, seq, before.turn.round);
+      carry = {};
+    }
     if (before.turn.round === 0 && state.turn.round > 0) roundStart = state;
     else if (state.turn.round > before.turn.round) roundStart = state;
+
+    // A round's mission scores are confirmed after it ends (UX 333): they count on its card.
+    if (event.type === "score/confirm" && event.vp) {
+      const holder = sidePlayers(state, event.seat)[0]?.id;
+      for (const r of rounds)
+        for (const p of r.players)
+          if (p.id === holder && r.round >= event.round) {
+            p.vp += event.vp;
+            if (r.round === event.round) p.vpGained += event.vp;
+          }
+      if (holder && event.round < state.turn.round) carry[holder] = (carry[holder] ?? 0) + event.vp;
+    }
 
     // Units wiped out by this event.
     for (const u of Object.values(state.units)) {

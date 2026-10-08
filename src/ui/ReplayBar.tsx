@@ -1,4 +1,5 @@
 import { rareMoments } from "../core";
+import { VIEWER } from "../viewer/flag";
 import { momentsOf } from "../core/moments";
 import { playMoment, useMomentsAllowed } from "../broadcast/Moments";
 import { delaying } from "../broadcast/broadcast";
@@ -14,6 +15,7 @@ import { readGame, type Highlight } from "./highlights";
 import { useNotes } from "../replay/notes";
 import { reviewThisGame } from "../replay/review";
 import { battleOver } from "./StatsScreen";
+import { RecordingPill, SharePanel, useShare } from "../share/SharePanel";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
@@ -127,6 +129,8 @@ export function ReplayBar() {
           {now && <span>{now}</span>}
         </div>
       )}
+      <SharePanel />
+      <RecordingPill />
       <div className="replaybar">
         <button title={t("Replay: back a phase")} onClick={() => jump(-1)}>
           ⏮
@@ -229,6 +233,15 @@ export function ReplayBar() {
         {/* What if: a new game from the point on the track (UX: roadmap #14). */}
         {/* Live, it branches from now (UX 138); not for a viewer held back by the delay (UX 146). */}
         {last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
+        {/* Share the battle (#46): a page, a clip, pictures. In a replay, or once the game is over. */}
+        {(!session || over) && last > record.initial.seq && (
+          <button
+            title={t("Share the battle")}
+            onClick={() => useShare.setState({ open: !useShare.getState().open })}
+          >
+            {t("Share…")}
+          </button>
+        )}
         <BackToOriginal />
         {scrub !== null && session && <button onClick={() => setScrub(null)}>{t("Back to live")}</button>}
         {scrub !== null && session && over && (
@@ -236,7 +249,7 @@ export function ReplayBar() {
             {t("Review with notes")}
           </button>
         )}
-        {!session && (
+        {!session && !VIEWER && (
           <button
             onClick={() => {
               // Leaving a review room drops its link, so a reload doesn't join it again.

@@ -4,6 +4,7 @@ import {
   createInitialState,
   createRecord,
   DEFAULT_SYSTEM,
+  stateAt,
   type GameRecord,
   type GameState,
   type Intent,
@@ -454,6 +455,8 @@ export const useStore = create<Store>((set, get) => ({
       role: "spectator",
       review: false,
       record,
+      // The game as it ended, so what it needs (its rules packages) is loaded to watch it.
+      game: stateAt(record),
       scrub,
       selected: null,
       draft: null,

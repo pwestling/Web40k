@@ -559,6 +559,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         name: event.name,
       });
     case "player/color":
+      // Before the battle it's setting up (an army brings its colour, UX 335), not news.
+      if (game.turn.round === 0) return "";
       return t("{name} changed their colour", { name: playerName(game.players[event.player]) ?? who });
     case "clock/pause":
       if (!event.paused) return t("{name} restarted the clocks", { name: who });
