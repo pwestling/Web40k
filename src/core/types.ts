@@ -431,6 +431,12 @@ export interface GameSettings {
   teamSize?: number;
   /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
   clock?: ClockSettings | null;
+  /**
+   * Table companion (#37): the players have real models on a real table. No
+   * 3D board; range, sight and moves are theirs to judge, and positions here
+   * mean nothing.
+   */
+  companion?: boolean;
 }
 
 /** Victory points a side scored at one scoring moment (or chose not to). */

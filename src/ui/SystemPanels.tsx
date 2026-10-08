@@ -1,3 +1,4 @@
+import { RollButton } from "../companion/RealDice";
 import { UnitWarnings } from "./TableWarnings";
 import { playerShape } from "./sides";
 import { useMemo, useState, type ReactNode } from "react";
@@ -1004,9 +1005,9 @@ export function ProcedurePanel() {
       {live && !(botActs && (botRolls || run.done)) && (
         <div className="row">
           {next && !run.pending && !botRolls && (
-            <button className="primary" onClick={() => dispatch({ type: "procedure/roll" }, roller)}>
+            <RollButton className="primary" intent={{ type: "procedure/roll" }} as={roller}>
               {t("Roll {step}", { step: label(next.id).toLowerCase() })}
-            </button>
+            </RollButton>
           )}
           {!botActs && (
             <button onClick={() => dispatch({ type: "procedure/clear" }, proc.by)}>

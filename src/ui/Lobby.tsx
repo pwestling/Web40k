@@ -79,13 +79,21 @@ export function Lobby() {
       packages: [refOf(pkg)],
     });
   };
-  const host = () => {
+  const host = (companion = false) => {
     remember();
     const roomId = room || crypto.randomUUID().slice(0, 8);
     linkTo(roomId);
     start({ role: "host", mode, roomId, name, system });
     namePackage();
     if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
+    if (companion) useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
+  };
+  /** Real models on a real table (#37): this screen keeps the cards, dice and score. */
+  const companionHere = () => {
+    remember();
+    start({ role: "host", mode: "hotseat", name, system });
+    namePackage();
+    useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
   };
   const join = (role: "client" | "spectator") => {
     remember();
@@ -207,7 +215,7 @@ export function Lobby() {
           ))}
         </select>
       </label>
-      <button className="primary" onClick={host}>
+      <button className="primary" onClick={() => host()}>
         {t("Host a game")}
       </button>
       <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
@@ -228,6 +236,21 @@ export function Lobby() {
         </button>
       </div>
       <NetCheck />
+      <h2>{t("At a real table")}</h2>
+      <p className="muted small">
+        {t(
+          "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in.",
+        )}
+      </p>
+      <div className="row wrap">
+        <button onClick={companionHere}>{t("One phone for both of us")}</button>
+        <button
+          onClick={() => host(true)}
+          title={t("You get a link to send; the other player opens it on their phone")}
+        >
+          {t("A phone each")}
+        </button>
+      </div>
       <details className="fold">
         <summary>{t("More ways to play")}</summary>
         <label>

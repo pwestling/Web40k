@@ -1,6 +1,6 @@
 import { useCoach, computerPlays } from "../teach/store";
 import { focusSoon } from "./focusSoon";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
 import {
   aliveModels,
@@ -19,6 +19,8 @@ import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./SystemPanels";
 import { opposed } from "../core/teams";
 import { t, tn } from "../i18n";
+import { RollButton, useOwnDice } from "../companion/RealDice";
+import { TableAttackSetup } from "../companion/TableAttack";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -36,6 +38,12 @@ export function AttackPanel() {
 }
 
 function AttackSetup({ draft }: { draft: AttackDraft }) {
+  const game = useGame();
+  if (game.settings.companion) return <TableAttackSetup draft={draft} />;
+  return <BoardAttackSetup draft={draft} />;
+}
+
+function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
   const game = useGame();
   const { setDraft, dispatch } = useStore();
   const attacker = game.units[draft.attackerId];
@@ -120,12 +128,15 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
   );
 }
 
-function SpecEditor({
+export function SpecEditor({
   suggestion,
   onDeclare,
+  declare,
 }: {
   suggestion: AttackSuggestion;
   onDeclare: (spec: AttackSpec) => void;
+  /** The declare button, when it isn't the board's (the table companion's rolls the attacks itself). */
+  declare?: (spec: AttackSpec) => ReactNode;
 }) {
   const [spec, setSpec] = useState(suggestion.spec);
   const game = useGame();
@@ -182,7 +193,9 @@ function SpecEditor({
             : t("Out of range")}
         </p>
       )}
-      {s.inRange === 0 && spec.kind === "ranged" ? (
+      {declare ? (
+        declare(spec)
+      ) : s.inRange === 0 && spec.kind === "ranged" ? (
         <button disabled title={t("No model has the target in range, so there are no attacks to roll")}>
           {t("Declare attack")}
         </button>
@@ -196,7 +209,7 @@ function SpecEditor({
         </button>
       )}
       {/* In a lesson the numbers fold away: the form is just weapon, target and Declare (PX review). */}
-      <details className="more-options" open={!coaching}>
+      <details className="more-options" open={!coaching && !game.settings.companion}>
         <summary>{t("More options")}</summary>
         <div className="grid">
           <label>
@@ -285,7 +298,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
   const botAttacks = computerPlays(game, attacker?.owner);
-  const roll = () => dispatch({ type: "attack/roll" }, roller);
+  // Rolling real dice (#37) goes a stage at a time, so each batch is asked for.
+  const ownDice = useOwnDice((o) => o.own) && !!game.settings.companion;
   const rollAll = () => {
     for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
   };
@@ -361,21 +375,22 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
           {attack.stage !== "done" && !botRolls && theirs && (
             <>
               <span className="muted">{t("{name} rolls the saves", { name: rollerName })}</span>
-              <button
+              <RollButton
                 className="quiet small"
                 title={t("Dice hold no choices, so either player may roll them")}
-                onClick={roll}
+                intent={{ type: "attack/roll" }}
+                as={roller}
               >
                 {t("Roll for them")}
-              </button>
+              </RollButton>
             </>
           )}
           {attack.stage !== "done" && !botRolls && !theirs && (
             <>
-              <button className="primary attack-roll" onClick={roll}>
+              <RollButton className="primary attack-roll" intent={{ type: "attack/roll" }} as={roller}>
                 {stageLabel(attack.stage)}
-              </button>
-              {!botAttacks && <button onClick={rollAll}>{t("Roll everything")}</button>}
+              </RollButton>
+              {!botAttacks && !ownDice && <button onClick={rollAll}>{t("Roll everything")}</button>}
             </>
           )}
           {!botAttacks && (

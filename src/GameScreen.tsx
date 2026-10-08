@@ -6,6 +6,7 @@ import { Announcer } from "./ui/Announcer";
 import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
 import { useEffect } from "react";
+import { CompanionScreen } from "./companion/CompanionScreen";
 import { Board } from "./render/Board";
 import { t } from "./i18n";
 import { useStore } from "./store";
@@ -220,6 +221,25 @@ export function GameScreen({ started }: { started: boolean }) {
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, []);
+  const companion = useStore((s) => !!s.game.settings.companion);
+  // Real models on a real table (#37): no board, the phone screen instead.
+  if (started && companion && !BROADCAST)
+    return (
+      <>
+        <CompanionScreen />
+        <ReportBanner />
+        <TableWarningsPanel />
+        <DiceTray />
+        <VoiceRoom />
+        <StatsScreen />
+        <PackageCards />
+        <SandboxNotice />
+        <CampaignKeeper />
+        <ClockKeeper />
+        <CampaignBookDialog />
+        <Announcer />
+      </>
+    );
   // The table is the front door's backdrop too; the panels come with a game.
   return (
     <>

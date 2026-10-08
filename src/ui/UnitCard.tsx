@@ -14,6 +14,7 @@ import {
   type Model,
   type Unit,
   type WeaponProfile,
+  type Intent,
 } from "../core";
 import {
   aliveModels,
@@ -35,10 +36,11 @@ import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { replayRoll, useGame, useRareStars } from "./hooks";
 import { opposed } from "../core/teams";
+import { RollButton } from "../companion/RealDice";
 import { t } from "../i18n";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
-const flags = (): [string, string][] => [
+export const flags = (): [string, string][] => [
   ["moved", t("Moved")],
   ["fellBack", t("Fell back")],
   ["shot", t("Shot")],
@@ -175,8 +177,15 @@ export function UnitCard() {
   const profiles = new Map<string, Model>();
   for (const m of all) if (m.profile && !profiles.has(m.profile.name)) profiles.set(m.profile.name, m);
   const weapons = Object.values(unit.sheet?.weapons ?? {});
-  const roll = (label: string, count: number) =>
-    dispatch({ type: "dice/roll", count, sides: 6, label, unitId: unit.id }, as);
+  // At a real table (#37), the board's measuring and moving tools go: the players have the table.
+  const companion = !!game.settings.companion;
+  const roll = (label: string, count: number): Intent => ({
+    type: "dice/roll",
+    count,
+    sides: 6,
+    label,
+    unitId: unit.id,
+  });
   const flag = (key: string, value: boolean) =>
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
@@ -235,14 +244,16 @@ export function UnitCard() {
               )
             );
           })}
-          <button className={phase === "Movement" ? "primary" : ""} onClick={() => roll("advance", 1)}>
+          <RollButton className={phase === "Movement" ? "primary" : ""} intent={roll("advance", 1)} as={as}>
             {t("Advance (D6)")}
-          </button>
-          <button className={phase === "Charge" ? "primary" : ""} onClick={() => roll("charge", 2)}>
+          </RollButton>
+          <RollButton className={phase === "Charge" ? "primary" : ""} intent={roll("charge", 2)} as={as}>
             {t("Charge (2D6)")}
-          </button>
-          <button onClick={() => roll("battleshock", 2)}>{t("Battle-shock test")}</button>
-          {onFloors && (
+          </RollButton>
+          <RollButton intent={roll("battleshock", 2)} as={as}>
+            {t("Battle-shock test")}
+          </RollButton>
+          {onFloors && !companion && (
             <>
               <button title={t("Up a floor (R)")} onClick={() => climbUnit(unit.id, 1)}>
                 ▲ {t("Floor")}
@@ -252,12 +263,16 @@ export function UnitCard() {
               </button>
             </>
           )}
-          <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
-            ⟲
-          </button>
-          <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
-            ⟳
-          </button>
+          {!companion && (
+            <>
+              <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
+                ⟲
+              </button>
+              <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
+                ⟳
+              </button>
+            </>
+          )}
           {status.advance !== undefined && (
             <button
               onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "advance", value: null }, as)}
@@ -292,64 +307,71 @@ export function UnitCard() {
       </div>
       <CoreAbilities unit={unit} />
       <CodeActions unit={unit} />
-      <p className="muted">
-        {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
-          <span className={moved > allowed + 0.05 ? "warn" : ""}>
-            {t('Moved {moved}" of {allowed}" this phase.', { moved: moved.toFixed(1), allowed })}{" "}
-          </span>
-        )}
-        {mine && (game.turn.round > 0 || !!status.scouting) && allowed !== null && moved > allowed + 0.05 && (
-          <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
-            {t('Snap back to {allowed}"', { allowed })}
-          </button>
-        )}
-        {blocked.length > 0 && (
-          <span className="warn">
-            {t("Moved through {terrain}.", {
-              terrain: blocked.map((p) => p.name.toLowerCase()).join(", "),
-            })}{" "}
-          </span>
-        )}
-        {engaged.length > 0 && (
-          <span className="warn">
-            {t("Engaged with {units}.", { units: engaged.map((id) => game.units[id]?.name).join(", ") })}
-          </span>
-        )}
-      </p>
+      {!companion && (
+        <p className="muted">
+          {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
+            <span className={moved > allowed + 0.05 ? "warn" : ""}>
+              {t('Moved {moved}" of {allowed}" this phase.', { moved: moved.toFixed(1), allowed })}{" "}
+            </span>
+          )}
+          {mine &&
+            (game.turn.round > 0 || !!status.scouting) &&
+            allowed !== null &&
+            moved > allowed + 0.05 && (
+              <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
+                {t('Snap back to {allowed}"', { allowed })}
+              </button>
+            )}
+          {blocked.length > 0 && (
+            <span className="warn">
+              {t("Moved through {terrain}.", {
+                terrain: blocked.map((p) => p.name.toLowerCase()).join(", "),
+              })}{" "}
+            </span>
+          )}
+          {engaged.length > 0 && (
+            <span className="warn">
+              {t("Engaged with {units}.", { units: engaged.map((id) => game.units[id]?.name).join(", ") })}
+            </span>
+          )}
+        </p>
+      )}
       {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
       <UnitWarnings unitId={unit.id} skip={["moveDistance"]} />
 
-      <div className="row wrap">
-        <button
-          className={losFrom === unit.id ? "on" : ""}
-          onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
-        >
-          {t("Line of sight")}
-        </button>
-        <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
-        <button
-          className={ranges === unit.id ? "on" : ""}
-          title={t("Move (blue) and longest weapon range (yellow) around each model")}
-          onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
-        >
-          {t("Ranges")}
-        </button>
-        {ranges === unit.id && (
-          <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
-            <option value="">{t("Longest range")}</option>
-            {weapons
-              .filter((w) => w.kind === "ranged")
-              .map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} {w.chars.RANGE}
-                </option>
-              ))}
-          </select>
-        )}
-        {elevation > 0 && (
-          <span className="muted">{t('On a floor {height}" up', { height: elevation.toFixed(1) })}</span>
-        )}
-      </div>
+      {!companion && (
+        <div className="row wrap">
+          <button
+            className={losFrom === unit.id ? "on" : ""}
+            onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
+          >
+            {t("Line of sight")}
+          </button>
+          <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
+          <button
+            className={ranges === unit.id ? "on" : ""}
+            title={t("Move (blue) and longest weapon range (yellow) around each model")}
+            onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
+          >
+            {t("Ranges")}
+          </button>
+          {ranges === unit.id && (
+            <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
+              <option value="">{t("Longest range")}</option>
+              {weapons
+                .filter((w) => w.kind === "ranged")
+                .map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} {w.chars.RANGE}
+                  </option>
+                ))}
+            </select>
+          )}
+          {elevation > 0 && (
+            <span className="muted">{t('On a floor {height}" up', { height: elevation.toFixed(1) })}</span>
+          )}
+        </div>
+      )}
 
       {profiles.size > 0 && (
         <table className="stats">
@@ -425,16 +447,16 @@ export function UnitCard() {
         <p className="muted small">{unit.sheet.keywords.join(", ")}</p>
       )}
 
-      <FigurePicker unit={unit} models={all} editable={mine} />
+      {!companion && <FigurePicker unit={unit} models={all} editable={mine} />}
 
-      <details>
+      <details open={companion}>
         <summary>{t("Models and wounds")}</summary>
         <ul className="models">
           {all.map((m) => (
             <ModelRow key={m.id} model={m} unit={unit} editable={canControl(unit.owner) && scrub === null} />
           ))}
         </ul>
-        {mine && (
+        {mine && !companion && (
           <label className="row small">
             {t("Model height for line of sight")}{" "}
             <input

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { applyEvent, sides, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { currentSlot, systemOf } from "../core/content/turn";
 import type { Mission, ScoringMoment } from "../sdk";
@@ -89,7 +90,10 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
       for (const seat of m.kind === "phaseEnd" ? [m.seat!] : sides(m.state)) {
         const key = `${rule.id}:${m.round}:${seat}`;
         if (done.has(key)) continue;
-        const s = rule.suggest(m.state, seat);
+        // At a real table (#37) the positions here mean nothing: each moment is the players' to count.
+        const s = game.settings.companion
+          ? { vp: 0, why: t("count it on your table") }
+          : rule.suggest(m.state, seat);
         if (!s) continue;
         out.push({ key, seat, round: m.round, rule: rule.name, ...s });
       }
@@ -104,7 +108,8 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
       if (done.has(key)) continue;
       const card = mission.deck?.find((c) => c.id === e.revealed!.value);
       if (!card || late.has(`${secretKey}:${card.id}`)) continue;
-      out.push({ key, seat, round: game.turn.round, rule: card.name, ...card.suggest(game, seat) });
+      const s = game.settings.companion ? { vp: 0, why: card.text } : card.suggest(game, seat);
+      out.push({ key, seat, round: game.turn.round, rule: card.name, ...s });
     }
   }
   return out;

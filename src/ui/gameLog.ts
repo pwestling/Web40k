@@ -50,6 +50,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   const items: LogItem[] = [];
   let state = record.initial;
   let attackLine: Extract<LogItem, { kind: "line" }> | null = null;
+  // Lines whose dice were rolled at the table and typed in (#37).
+  const told = new Set<LogItem>();
+  const toldSeqs = new Set<number>();
   // A system procedure (any game's attack) is one line, updated as it is rolled.
   let procLine: Extract<LogItem, { kind: "line" }> | null = null;
   // A code procedure (an Old World combat, say): its first note heads one item, every later step a detail line.
@@ -162,6 +165,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       if (!scriptStep.script) scriptItem = null;
       continue;
     }
+    if (logged.told) toldSeqs.add(logged.seq);
     if (event.type === "attack/declare" || event.type === "attack/roll") {
       const text = attackSummary(state.attack ?? event.attack, state);
       if (attackLine && event.type === "attack/roll") attackLine.text = text;
@@ -169,6 +173,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         attackLine = { kind: "line", key, seq: logged.seq, text, undone: skipped };
         items.push(attackLine);
       }
+      if (logged.told) told.add(attackLine);
       continue;
     }
     if (event.type === "procedure/set" || (event.type === "procedure/clear" && procLine)) {
@@ -179,6 +184,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       const text = procedureSummary(state);
       if (procLine) procLine.text = text;
       else items.push((procLine = { kind: "line", key, seq: logged.seq, text, undone: skipped }));
+      if (logged.told) told.add(procLine);
       continue;
     }
     if ((event.type === "action/take" || event.type === "reaction/end") && !skipped && state.procedure) {
@@ -323,7 +329,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     // Bookkeeping events (an empty description) stay out of the log.
     if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });
   }
-  return items;
+  return items.map((i) =>
+    i.kind === "line" && (told.has(i) || toldSeqs.has(i.seq))
+      ? { ...i, text: t("{line} · own dice", { line: i.text }) }
+      : i,
+  );
 }
 
 function turnHeader(state: GameState): { text: string; round?: number; turn?: string } {
@@ -666,6 +676,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
           (st.visionArc >= 360 ? t("vision all around") : t("vision {deg}° arc", { deg: st.visionArc })),
         st.modelsBlock !== undefined &&
           (st.modelsBlock ? t("models block sight") : t("models don't block sight")),
+        st.companion && t("playing with real models (table companion)"),
       ].filter(Boolean);
       return t("{name} set {settings}", { name: who, settings: parts.join(", ") || t("game settings") });
     }
