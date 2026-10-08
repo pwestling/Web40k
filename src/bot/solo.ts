@@ -31,6 +31,9 @@ export const useSolo = create<Solo>(() => ({
   paused: false,
 }));
 
+/** The computer's moves glide, slow enough to follow (PX solo review 2). */
+export const GLIDE_MS = 900;
+
 export const LEVEL_KEY = "open-battle:bot-level";
 
 /** The level picked last time on this device (Easy if none). */

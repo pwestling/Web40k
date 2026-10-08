@@ -10,7 +10,7 @@ import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
-import { levelName, useSolo } from "./solo";
+import { GLIDE_MS, levelName, useSolo } from "./solo";
 import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
@@ -42,7 +42,7 @@ export function SoloBot() {
         timer.current = null;
         void play();
       },
-      rolling ? ROLL_PACE : BOT_PACE,
+      rolling ? ROLL_PACE : glided(game) ? GLIDE_MS + BOT_PACE : BOT_PACE,
     );
   }, [on, game, scrub]);
 
@@ -55,6 +55,13 @@ export function SoloBot() {
   );
 
   return null;
+}
+
+/** Whether the newest event is the computer's own move, still gliding into place. */
+function glided(game: GameState): boolean {
+  const last = useStore.getState().record.events.at(-1);
+  const seat = useSolo.getState().seat;
+  return !!last && last.event.type === "models/move" && game.players[last.by ?? ""]?.seat === seat;
 }
 
 /** The computer's next move, if it has one, sent as its player. */

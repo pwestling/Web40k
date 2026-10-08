@@ -22,6 +22,7 @@ import { useReel } from "../broadcast/reel";
 import { showcasing } from "./showcase";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
+import { GLIDE_MS, soloPlays } from "../bot/solo";
 import { useGame } from "../ui/hooks";
 import { opposed } from "../core/teams";
 
@@ -77,7 +78,13 @@ export function useTween(
   }, [positions, heights, dragging]);
   const seen = useRef<Input>(initial);
   const drawn = useRef<Frame>({ p: positions, z: heights });
-  const anim = useRef<{ from: Frame; start: number; moved: string[]; charge: boolean } | null>(null);
+  const anim = useRef<{
+    from: Frame;
+    start: number;
+    moved: string[];
+    charge: boolean;
+    glide: boolean;
+  } | null>(null);
   const settleUntil = useRef(0);
   const [frame, setFrame] = useState<Frame>({ p: positions, z: heights });
   const [trails, setTrails] = useState<Trail[]>([]);
@@ -124,7 +131,7 @@ export function useTween(
           show(cur);
           setTrails([]);
         } else {
-          anim.current = { from, start: now, moved, charge: shownChargeHits() };
+          anim.current = { from, start: now, moved, charge: shownChargeHits(), glide: computerMoved() };
           // A move always reads as picked up, carried and set down (feel.ts).
           pickUp(moved, now, false);
           // The last move's trail stays until the next one, then fades.
@@ -148,7 +155,10 @@ export function useTween(
     }
     const a = anim.current;
     if (!a) return;
-    const t = Math.min(1, (now - a.start) / (a.charge ? CHARGE_TWEEN_MS : TWEEN_MS));
+    const t = Math.min(
+      1,
+      (now - a.start) / (a.charge ? CHARGE_TWEEN_MS : a.glide && !reducedMotion() ? GLIDE_MS : TWEEN_MS),
+    );
     // A charge accelerates into contact; any other move eases in and out.
     const e = a.charge ? t * t : t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
     const p: Record<string, Vec2> = {};
@@ -638,6 +648,14 @@ function shownChargeHits(): boolean {
   if (!logged || (logged.event.type !== "unit/move" && logged.event.type !== "models/move")) return false;
   const state = upto === Infinity ? game : stateAt(record, upto);
   return !!chargeFor(logged.event, state, state)?.target;
+}
+
+/** Whether the newest event is a move the computer made in a solo game, so it glides. */
+function computerMoved(): boolean {
+  const { record, scrub, game } = useStore.getState();
+  if (scrub !== null) return false;
+  const logged = record.events.at(-1);
+  return !!logged && logged.event.type === "models/move" && soloPlays(game, logged.by);
 }
 
 /** A move this player made by dragging: it is already where it was dropped, with no tween. */
