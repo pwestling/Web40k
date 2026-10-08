@@ -135,7 +135,7 @@ export function WhatNow() {
     );
   const { head, lines } = whatNow(game, me, hotseat);
   return (
-    <div className="panel whatnow" role="status">
+    <div className="panel whatnow">
       <div className="row spread">
         <strong>{head}</strong>
         <button className="quiet" title="Hide" onClick={() => useHelp.setState({ hint: false })}>

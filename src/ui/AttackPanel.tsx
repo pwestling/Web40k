@@ -1,3 +1,4 @@
+import { focusSoon } from "./focusSoon";
 import { useMemo, useState } from "react";
 import type { AttackSpec, AttackState, Die, GameState, Reroll } from "../core";
 import {
@@ -66,6 +67,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
       </div>
       <div className="row wrap">
         <select
+          aria-label="Weapon"
           value={weaponId ?? ""}
           onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
         >
@@ -78,6 +80,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
         </select>
         <span>at</span>
         <select
+          aria-label="Target"
           value={draft.targetId ?? ""}
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
@@ -102,6 +105,7 @@ function AttackSetup({ draft }: { draft: AttackDraft }) {
           onDeclare={(spec) => {
             dispatch({ type: "attack/declare", spec }, attacker.owner);
             setDraft(null);
+            focusSoon(".panel.attack .attack-roll");
           }}
         />
       )}
@@ -158,6 +162,22 @@ function SpecEditor({
           ))}
         </ul>
       )}
+      {s.inRange === 0 && spec.kind === "ranged" && (
+        <p className="warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
+      )}
+      {s.inRange === 0 && spec.kind === "ranged" ? (
+        <button disabled title="No model has the target in range, so there are no attacks to roll">
+          Declare attack
+        </button>
+      ) : s.inRange === 0 || s.visible === 0 ? (
+        <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
+          Declare anyway
+        </button>
+      ) : (
+        <button className="primary" onClick={() => onDeclare(spec)}>
+          Declare attack
+        </button>
+      )}
       <div className="grid">
         <label>
           Attacks <input value={spec.attacks} onChange={(e) => set("attacks", e.target.value)} size={7} />
@@ -200,22 +220,6 @@ function SpecEditor({
         </label>
         <label>Feel no pain {target(spec.fnp, (v) => set("fnp", v), "none")}</label>
       </div>
-      {s.inRange === 0 && spec.kind === "ranged" && (
-        <p className="warn">Out of range{rangeOf(game, spec) ? ` (${rangeOf(game, spec)})` : ""}</p>
-      )}
-      {s.inRange === 0 && spec.kind === "ranged" ? (
-        <button disabled title="No model has the target in range, so there are no attacks to roll">
-          Declare attack
-        </button>
-      ) : s.inRange === 0 || s.visible === 0 ? (
-        <button onClick={() => onDeclare(spec)} title="No models in range, or no target visible">
-          Declare anyway
-        </button>
-      ) : (
-        <button className="primary" onClick={() => onDeclare(spec)}>
-          Declare attack
-        </button>
-      )}
     </div>
   );
 }
@@ -297,13 +301,19 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         <div className="row">
           {attack.stage !== "done" && (
             <>
-              <button className="primary" onClick={roll}>
+              <button className="primary attack-roll" onClick={roll}>
                 {STAGE_LABEL[attack.stage]}
               </button>
               <button onClick={rollAll}>Roll everything</button>
             </>
           )}
-          <button onClick={() => dispatch({ type: "attack/clear" }, attacker?.owner)}>
+          <button
+            className="attack-done"
+            onClick={() => {
+              dispatch({ type: "attack/clear" }, attacker?.owner);
+              focusSoon(".panel.unitcard");
+            }}
+          >
             {attack.stage === "done" ? "Done" : "Cancel"}
           </button>
         </div>

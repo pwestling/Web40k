@@ -53,7 +53,7 @@ export const lessons = [
         until: { phase: "charge" },
       },
       {
-        say: "A unit can charge an enemy within 12\". Select one and press Charge (2D6): you roll two dice and must reach the enemy with that many inches. If none is close enough, press ▶.",
+        say: 'A unit can charge an enemy within 12". Select one and press Charge (2D6): you roll two dice and must reach the enemy with that many inches. If none is close enough, press ▶.',
         until: { any: [{ did: ["charge", "roll:charge"] }, { phase: "fight" }] },
       },
       {

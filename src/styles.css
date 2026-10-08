@@ -324,6 +324,8 @@ body.reeling .whatnow-toggle {
   font-size: 0.85rem;
   line-height: 1.35;
   max-height: 260px;
+  /* A few lines of it at least, however big the text: the menu scrolls instead (UX 183). */
+  min-height: min(7rem, 25vh);
   overflow-y: auto;
 }
 .log li {
@@ -415,7 +417,8 @@ body.reeling .whatnow-toggle {
   top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
-  max-height: calc(100vh - 140px);
+  /* Clear of the stratagems button below it, at any text size (UX 183). */
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
   overflow-y: auto;
 }
 .chips {
@@ -492,7 +495,7 @@ details p {
   top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
   overflow-y: auto;
 }
 .attack .grid {

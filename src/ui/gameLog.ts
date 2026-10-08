@@ -20,7 +20,16 @@ import { systemModule } from "../systems";
 export type LogItem =
   /** A phase change, or (`rules`) a rules change both players agreed to mid-game. */
   | { kind: "header"; key: string; text: string; rules?: true }
-  | { kind: "line"; key: string; seq: number; text: string; undone: boolean; detail?: string[] };
+  | {
+      kind: "line";
+      key: string;
+      seq: number;
+      text: string;
+      undone: boolean;
+      detail?: string[];
+      /** A line that grows while a player keeps nudging a unit: read out once they stop (UX 180). */
+      settle?: { unitId: string };
+    };
 
 /**
  * The event log in words: phase changes become headers, each attack is one
@@ -47,6 +56,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
+  // Back-to-back drags of one unit by one player (arrow-key nudges, say) add up on one line (UX 180).
+  let dragLine: (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; inches: number }) | null =
+    null;
   // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
   const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
@@ -184,6 +196,21 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       continue;
     }
     if (event.type !== "undo") moveLine = null;
+    if (
+      event.type === "unit/move" &&
+      !skipped &&
+      event.how === "drag" &&
+      event.turn === 0 &&
+      event.distance !== undefined &&
+      dragLine?.by === logged.by &&
+      dragLine.unitId === event.id &&
+      items.at(-1) === dragLine
+    ) {
+      dragLine.inches += Math.abs(event.distance);
+      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} moved ${state.units[event.id]?.name ?? "a unit"} ${distanceText(state, dragLine.inches)}`;
+      continue;
+    }
+    if (event.type !== "undo") dragLine = null;
     if (event.type === "undo") {
       // Say what was taken back (UX 130): an attack by name, else the line it made.
       const who = state.players[logged.by]?.name ?? "Someone";
@@ -245,6 +272,28 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         items.push(moveLine);
         continue;
       }
+    }
+    if (
+      event.type === "unit/move" &&
+      !skipped &&
+      event.how === "drag" &&
+      event.turn === 0 &&
+      event.distance !== undefined &&
+      text
+    ) {
+      dragLine = {
+        kind: "line",
+        key,
+        seq: logged.seq,
+        text,
+        undone: false,
+        settle: { unitId: event.id },
+        by: logged.by,
+        unitId: event.id,
+        inches: Math.abs(event.distance),
+      };
+      items.push(dragLine);
+      continue;
     }
     // Bookkeeping events (an empty description) stay out of the log.
     if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });

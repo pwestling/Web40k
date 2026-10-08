@@ -36,7 +36,10 @@ export function readManifest(source: string): ManifestResult {
 }
 
 /** Another `export const <name> = <literal>` in a package, read as data the same way (undefined if absent). */
-export function readLiteral(source: string, name: string): { value: unknown } | { error: string } | undefined {
+export function readLiteral(
+  source: string,
+  name: string,
+): { value: unknown } | { error: string } | undefined {
   const m = new RegExp(`export\\s+const\\s+${name}\\s*(?::[^=]+)?=\\s*`).exec(source);
   if (!m) return undefined;
   try {
