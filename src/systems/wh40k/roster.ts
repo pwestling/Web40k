@@ -741,7 +741,7 @@ const isDetachmentNode = (n: RNode) =>
  * detachment's rules, and any stratagems the export carries (as profiles or
  * as rules written "WHEN: … EFFECT: …"). Undefined when there are none.
  */
-export function extractArmy(roster: RRoster): Army | undefined {
+function extractArmy(roster: RRoster): Army | undefined {
   const forces: RForce[] = [];
   const allForces = (f: RForce) => {
     forces.push(f);

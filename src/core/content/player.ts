@@ -73,7 +73,7 @@ function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
 }
 
 /** The player actions a player has: the system's, then their army's own stratagems. */
-export function playerActionDefs(state: GameState, player: PlayerId): ActionDef[] {
+function playerActionDefs(state: GameState, player: PlayerId): ActionDef[] {
   const own = (state.armies?.[player]?.stratagems ?? []).map((s) => armyAction(player, s));
   return [...systemOf(state).actions.filter((a) => a.by === "player"), ...own];
 }
