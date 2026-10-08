@@ -1299,7 +1299,7 @@ msgid "Roll on screen instead"
 msgstr ""
 
 #: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:270
+#: src/ui/RegimentPanel.tsx:271
 msgid "Back"
 msgstr ""
 
@@ -2444,7 +2444,7 @@ msgid "{used}\" of {allowed}\""
 msgstr ""
 
 #: src/render/Regiment.tsx:206
-#: src/ui/RegimentPanel.tsx:433
+#: src/ui/RegimentPanel.tsx:439
 msgid "off the table"
 msgstr ""
 
@@ -3241,7 +3241,7 @@ msgstr ""
 
 #: src/ui/ArmyImport.tsx:286
 #: src/ui/RegimentPanel.tsx:96
-#: src/ui/RegimentPanel.tsx:332
+#: src/ui/RegimentPanel.tsx:333
 msgid "Frontage"
 msgstr ""
 
@@ -5648,39 +5648,39 @@ msgstr ""
 msgid "Open order"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:249
+#: src/ui/RegimentPanel.tsx:250
 msgid "Move up to {distance} now:"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:251
+#: src/ui/RegimentPanel.tsx:252
 msgid "Forward {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:253
+#: src/ui/RegimentPanel.tsx:254
 msgid "or drag, wheel or turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:261
+#: src/ui/RegimentPanel.tsx:262
 msgid "Inches to move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:268
+#: src/ui/RegimentPanel.tsx:269
 msgid "Forward"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:273
+#: src/ui/RegimentPanel.tsx:274
 msgid "Sideways left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:276
+#: src/ui/RegimentPanel.tsx:277
 msgid "Sideways right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:279
+#: src/ui/RegimentPanel.tsx:280
 msgid "A march is double Movement, straight ahead"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:285
+#: src/ui/RegimentPanel.tsx:286
 msgid "March"
 msgstr ""
 
@@ -5688,7 +5688,7 @@ msgstr ""
 msgid "same way"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:292
+#: src/ui/RegimentPanel.tsx:293
 msgid "Degrees to wheel"
 msgstr ""
 
@@ -5697,11 +5697,11 @@ msgstr ""
 msgid "left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:302
+#: src/ui/RegimentPanel.tsx:303
 msgid "Wheel left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:305
+#: src/ui/RegimentPanel.tsx:306
 msgid "Wheel right"
 msgstr ""
 
@@ -5710,13 +5710,13 @@ msgstr ""
 msgid "right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:311
-#: src/ui/RegimentPanel.tsx:317
-#: src/ui/RegimentPanel.tsx:323
+#: src/ui/RegimentPanel.tsx:312
+#: src/ui/RegimentPanel.tsx:318
+#: src/ui/RegimentPanel.tsx:324
 msgid "Costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:314
+#: src/ui/RegimentPanel.tsx:315
 msgid "Turn left"
 msgstr ""
 
@@ -5724,97 +5724,101 @@ msgstr ""
 msgid "about"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:320
+#: src/ui/RegimentPanel.tsx:321
 msgid "Turn right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:326
+#: src/ui/RegimentPanel.tsx:327
 msgid "About face"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:343
+#: src/ui/RegimentPanel.tsx:344
 msgid "facing"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:345
+#: src/ui/RegimentPanel.tsx:346
 msgid "Facing after reforming"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:360
+#: src/ui/RegimentPanel.tsx:361
 msgid "Add or remove up to {max} models from the front rank; free before moving (Drilled)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:366
+#: src/ui/RegimentPanel.tsx:367
 msgid "Add or remove up to {max} models from the front rank; costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:376
+#: src/ui/RegimentPanel.tsx:377
 msgid "Redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:380
+#: src/ui/RegimentPanel.tsx:381
 msgid "Rebuild the block around its centre; costs all its move ({distance})"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:389
+#: src/ui/RegimentPanel.tsx:390
 msgid "Reform"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:394
+#: src/ui/RegimentPanel.tsx:395
 msgid "Marching blocks may only move straight ahead and wheel."
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:419
+#: src/ui/RegimentPanel.tsx:423
 msgid "Off the table"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:428
+#: src/ui/RegimentPanel.tsx:434
 msgid "Moved {used}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:430
+#: src/ui/RegimentPanel.tsx:436
 msgid "Moved {used} of {allowed} (marching)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:431
+#: src/ui/RegimentPanel.tsx:437
 msgid "Moved {used} of {allowed}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:432
+#: src/ui/RegimentPanel.tsx:438
 msgid "over its move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:438
+#: src/ui/RegimentPanel.tsx:444
 msgid "{n} manoeuvre this move ({list}): only one is allowed"
 msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:448
+#: src/ui/RegimentPanel.tsx:454
 msgid "a marching block may only move ahead and wheel"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:453
+#: src/ui/RegimentPanel.tsx:456
+msgid "failed its march test: normal move, counts as marched"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:464
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:468
+#: src/ui/RegimentPanel.tsx:479
 msgid "back"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:470
+#: src/ui/RegimentPanel.tsx:481
 msgid "sideways"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:472
+#: src/ui/RegimentPanel.tsx:483
 msgid "turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:474
+#: src/ui/RegimentPanel.tsx:485
 msgid "redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:476
+#: src/ui/RegimentPanel.tsx:487
 msgid "reform"
 msgstr ""
 

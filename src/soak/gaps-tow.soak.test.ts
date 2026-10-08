@@ -21,6 +21,7 @@ const watch = (_: unknown, events: GameEvent[]): string[] => {
     if (/refuses the challenge/.test(n)) tags.push("challenge refused");
     if (/ fight .+ and /.test(n) || / and .+ fight /.test(n)) tags.push("multi-unit combat");
     if (/: a Panic test$/.test(n)) tags.push("automatic Panic");
+    if (/may march|fails its march test/.test(n)) tags.push("march test");
     if (/ models: a Panic test$/.test(n)) tags.push("Panic from losses");
   }
   return tags;
@@ -49,6 +50,6 @@ describe("rules gaps: Old World challenges", () =>
   scenarioSuite(
     "Old World challenges, crowded fights and Panic",
     "tow-hand",
-    { watch, closeIn: 14, lineUp: true, armies: crowded },
+    { watch, closeIn: 14, lineUp: true, armies: crowded, minSeeds: 6 },
     ["challenge", "multi-unit combat", "automatic Panic"],
   ));

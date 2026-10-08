@@ -9,6 +9,7 @@ import {
   causesTerror,
   frenzied,
   hasBattleStandard,
+  hasRule,
   hates,
   immune,
   isGeneral,
@@ -1155,6 +1156,27 @@ function fightTargets(view: GameView, unitId: string) {
 
 const NO_UNIT = { modelIds: [] } as unknown as Unit;
 
+/** How near an enemy (not fleeing) must be for a march to need a Leadership test. */
+const MARCH_BLOCK = 8;
+
+/**
+ * The march test: with an enemy that isn't fleeing within 8", a unit must
+ * pass a Leadership test to march. A fail and it moves normally but still
+ * counts as having marched. Drilled units don't test. The result is the
+ * unit's `marchTest` status ("passed" 1, "failed" 0) until its next turn.
+ */
+export const marchTest: CodeProcedure = function* (ctx, args) {
+  const u = unitOf(ctx.view, args.unit);
+  const t = yield* leadershipTest(ctx, u, "march test");
+  yield ctx.emit({ type: "unit/status", id: u.id, key: "marchTest", value: t.passed ? 1 : 0 });
+  yield ctx.emit({ type: "unit/status", id: u.id, key: "marching", value: true });
+  yield ctx.note(
+    t.passed
+      ? `${u.name} may march (${t.roll.total} against Ld ${t.ld})`
+      : `${u.name} fails its march test (rolled ${t.roll.total}, over Ld ${t.ld}): it moves normally but counts as having marched`,
+  );
+};
+
 /** Enemies in contact that could answer a challenge (with a character or champion, and not in one already). */
 function challengeTargets(view: GameView, unitId: string) {
   return fightTargets(view, unitId).filter((x) => duellists(view.state, x.u).length && !duelOf(view, x.u));
@@ -1226,6 +1248,23 @@ export const towActions: CodeAction[] = [
     targets: (view, actor) =>
       challengeTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
     run: challenge,
+  },
+  {
+    id: "marchTest",
+    name: "March test",
+    by: "unit",
+    phases: ["movement"],
+    available: (view, actor) => {
+      const u = view.state.units[actor.unitId ?? ""];
+      if (!u) return "No unit";
+      if (u.status?.fleeing) return "Fleeing units don't march";
+      if (hasRule(u, /\bdrilled\b/i)) return "Drilled: it marches without a test";
+      if (typeof u.status?.marchTest === "number") return "Already tested this turn";
+      return enemies(view, u.id, MARCH_BLOCK, false).length
+        ? true
+        : `No enemy within ${MARCH_BLOCK}": it may simply march`;
+    },
+    run: marchTest,
   },
   {
     id: "panic",

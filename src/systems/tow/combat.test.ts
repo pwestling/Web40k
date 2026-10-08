@@ -426,3 +426,40 @@ describe("Panic from shooting (#40)", () => {
     expect(seen).toBe(1);
   });
 });
+
+describe("March test (#40)", () => {
+  it("needs an enemy within 8\", sets the result until the unit's next turn; Drilled units don't test", () => {
+    const { t, spears } = setup();
+    const act = towActions.find((a) => a.id === "marchTest")!;
+    const offered = (id: string) => act.available(gameView(t.s, "tow-hand"), { player: "p1", unitId: id });
+    toPhase(t, "movement");
+    expect(offered(spears)).toBe(true);
+    t.play({ type: "script/start", procedure: "marchTest", args: { unit: spears } }, "p1", 4);
+    const status = t.s.units[spears]!.status!;
+    expect(status.marching).toBe(true);
+    expect([0, 1]).toContain(status.marchTest);
+    expect(t.notes().at(-1)).toMatch(status.marchTest === 1 ? /may march/ : /fails its march test/);
+    expect(offered(spears)).toBe("Already tested this turn");
+    // Far from the enemy there's nothing to test; Drilled units never test.
+    for (const u of Object.values(t.s.units)) if (u.owner === "p2") block(t, u.id, 30, 6, Math.PI);
+    const bows = unitNamed(t.s, "Fen Bowmen").id;
+    block(t, bows, -20, 5, 0);
+    expect(offered(bows)).toMatch(/No enemy within 8"/);
+    const u = t.s.units[bows]!;
+    t.s = {
+      ...t.s,
+      units: {
+        ...t.s.units,
+        [bows]: { ...u, sheet: { ...u.sheet!, abilities: [{ name: "Drilled", text: "" }] } },
+      },
+    };
+    t.states.set(t.s.seq, t.s);
+    expect(offered(bows)).toMatch(/^Drilled/);
+    // A charge, a march and its test last the unit's own turn.
+    t.play({ type: "unit/status", id: spears, key: "charged", value: true }, "p1");
+    for (let i = 0; i < 20 && t.s.turn.activeSeat === 0; i++) t.play({ type: "turn/next" }, "p1");
+    for (let i = 0; i < 20 && t.s.turn.activeSeat !== 0; i++) t.play({ type: "turn/next" }, "p1");
+    expect(t.s.units[spears]!.status?.charged).toBeUndefined();
+    expect(t.s.units[spears]!.status?.marchTest).toBeUndefined();
+  });
+});

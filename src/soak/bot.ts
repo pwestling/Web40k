@@ -358,7 +358,11 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     kind: "endActivation",
   }));
   // Units in contact fight before the phase moves on (code actions such as The Old World's).
-  if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) yield* codeMoves(state, ctx, units);
+  if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) {
+    // Now and then a challenge first (The Old World), so it comes up as often as people make them.
+    if (ctx.rng() < 0.5) yield* codeMoves(state, ctx, units, /challenge/i);
+    yield* codeMoves(state, ctx, units);
+  }
   if (ctx.wholeGame && ctx.idle < 6) {
     yield* codeMoves(state, ctx, units);
     const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
@@ -366,7 +370,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
   }
   // ...and charges are declared more often than not, so fights (and crowded ones) come up.
   if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
-    yield* codeMoves(state, ctx, units, /charge/i);
+    yield* codeMoves(state, ctx, units, /charge|march/i);
   const r = ctx.rng();
   if (r < 0.6) yield* actions();
   else if (r < 0.75) yield* codeMoves(state, ctx, units);

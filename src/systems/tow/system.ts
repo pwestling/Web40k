@@ -207,6 +207,8 @@ export const oldWorld: GameSystem = {
     { id: "rear", name: "Rear", from: 135, to: 225, origin: "baseCorners" },
     { id: "leftFlank", name: "Left flank", from: 225, to: 315, origin: "baseCorners" },
   ],
+  // A charge, a march and its test last the unit's own turn.
+  resets: [{ at: "playerTurn", flags: ["charged", "marching", "marchTest"] }],
   // Psychology marks on a regiment (combat.ts, psychology.ts); spells show as their own names.
   statuses: [
     { id: "fleeing", name: "Fleeing", on: "unit" },

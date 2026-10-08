@@ -1587,7 +1587,7 @@ msgid "Roll on screen instead"
 msgstr "Doch am Bildschirm würfeln"
 
 #: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:270
+#: src/ui/RegimentPanel.tsx:271
 #, fuzzy
 msgid "Back"
 msgstr "Zurück"
@@ -2984,7 +2984,7 @@ msgid "{used}\" of {allowed}\""
 msgstr "{used}\" von {allowed}\""
 
 #: src/render/Regiment.tsx:206
-#: src/ui/RegimentPanel.tsx:433
+#: src/ui/RegimentPanel.tsx:439
 #, fuzzy
 msgid "off the table"
 msgstr "außerhalb des Tisches"
@@ -3963,7 +3963,7 @@ msgstr "Modelle im ersten Glied"
 
 #: src/ui/ArmyImport.tsx:286
 #: src/ui/RegimentPanel.tsx:96
-#: src/ui/RegimentPanel.tsx:332
+#: src/ui/RegimentPanel.tsx:333
 #, fuzzy
 msgid "Frontage"
 msgstr "Frontbreite"
@@ -6945,47 +6945,47 @@ msgstr "Bereiche"
 msgid "Open order"
 msgstr "Offene Formation"
 
-#: src/ui/RegimentPanel.tsx:249
+#: src/ui/RegimentPanel.tsx:250
 #, fuzzy
 msgid "Move up to {distance} now:"
 msgstr "Jetzt bis zu {distance} bewegen:"
 
-#: src/ui/RegimentPanel.tsx:251
+#: src/ui/RegimentPanel.tsx:252
 #, fuzzy
 msgid "Forward {distance}"
 msgstr "Vorwärts {distance}"
 
-#: src/ui/RegimentPanel.tsx:253
+#: src/ui/RegimentPanel.tsx:254
 #, fuzzy
 msgid "or drag, wheel or turn"
 msgstr "oder ziehen, schwenken oder drehen"
 
-#: src/ui/RegimentPanel.tsx:261
+#: src/ui/RegimentPanel.tsx:262
 #, fuzzy
 msgid "Inches to move"
 msgstr "Zoll zu bewegen"
 
-#: src/ui/RegimentPanel.tsx:268
+#: src/ui/RegimentPanel.tsx:269
 #, fuzzy
 msgid "Forward"
 msgstr "Vorwärts"
 
-#: src/ui/RegimentPanel.tsx:273
+#: src/ui/RegimentPanel.tsx:274
 #, fuzzy
 msgid "Sideways left"
 msgstr "Seitlich links"
 
-#: src/ui/RegimentPanel.tsx:276
+#: src/ui/RegimentPanel.tsx:277
 #, fuzzy
 msgid "Sideways right"
 msgstr "Seitlich rechts"
 
-#: src/ui/RegimentPanel.tsx:279
+#: src/ui/RegimentPanel.tsx:280
 #, fuzzy
 msgid "A march is double Movement, straight ahead"
 msgstr "Ein Marsch ist doppelte Bewegung, geradeaus"
 
-#: src/ui/RegimentPanel.tsx:285
+#: src/ui/RegimentPanel.tsx:286
 #, fuzzy
 msgid "March"
 msgstr "Marsch"
@@ -6995,7 +6995,7 @@ msgstr "Marsch"
 msgid "same way"
 msgstr "gleiche Richtung"
 
-#: src/ui/RegimentPanel.tsx:292
+#: src/ui/RegimentPanel.tsx:293
 #, fuzzy
 msgid "Degrees to wheel"
 msgstr "Grad zum Schwenken"
@@ -7006,12 +7006,12 @@ msgstr "Grad zum Schwenken"
 msgid "left"
 msgstr "links"
 
-#: src/ui/RegimentPanel.tsx:302
+#: src/ui/RegimentPanel.tsx:303
 #, fuzzy
 msgid "Wheel left"
 msgstr "Links schwenken"
 
-#: src/ui/RegimentPanel.tsx:305
+#: src/ui/RegimentPanel.tsx:306
 #, fuzzy
 msgid "Wheel right"
 msgstr "Rechts schwenken"
@@ -7022,14 +7022,14 @@ msgstr "Rechts schwenken"
 msgid "right"
 msgstr "rechts"
 
-#: src/ui/RegimentPanel.tsx:311
-#: src/ui/RegimentPanel.tsx:317
-#: src/ui/RegimentPanel.tsx:323
+#: src/ui/RegimentPanel.tsx:312
+#: src/ui/RegimentPanel.tsx:318
+#: src/ui/RegimentPanel.tsx:324
 #, fuzzy
 msgid "Costs {distance}"
 msgstr "Kostet {distance}"
 
-#: src/ui/RegimentPanel.tsx:314
+#: src/ui/RegimentPanel.tsx:315
 #, fuzzy
 msgid "Turn left"
 msgstr "Links drehen"
@@ -7039,119 +7039,124 @@ msgstr "Links drehen"
 msgid "about"
 msgstr "kehrt"
 
-#: src/ui/RegimentPanel.tsx:320
+#: src/ui/RegimentPanel.tsx:321
 #, fuzzy
 msgid "Turn right"
 msgstr "Rechts drehen"
 
-#: src/ui/RegimentPanel.tsx:326
+#: src/ui/RegimentPanel.tsx:327
 #, fuzzy
 msgid "About face"
 msgstr "Kehrtwende"
 
-#: src/ui/RegimentPanel.tsx:343
+#: src/ui/RegimentPanel.tsx:344
 #, fuzzy
 msgid "facing"
 msgstr "Ausrichtung"
 
-#: src/ui/RegimentPanel.tsx:345
+#: src/ui/RegimentPanel.tsx:346
 #, fuzzy
 msgid "Facing after reforming"
 msgstr "Ausrichtung nach dem Umformieren"
 
-#: src/ui/RegimentPanel.tsx:360
+#: src/ui/RegimentPanel.tsx:361
 #, fuzzy
 msgid "Add or remove up to {max} models from the front rank; free before moving (Drilled)"
 msgstr "Bis zu {max} Modelle zum ersten Glied hinzufügen oder entfernen; vor der Bewegung kostenlos (Drilled)"
 
-#: src/ui/RegimentPanel.tsx:366
+#: src/ui/RegimentPanel.tsx:367
 #, fuzzy
 msgid "Add or remove up to {max} models from the front rank; costs {distance}"
 msgstr "Bis zu {max} Modelle im vordersten Glied hinzufügen oder entfernen; kostet {distance}"
 
-#: src/ui/RegimentPanel.tsx:376
+#: src/ui/RegimentPanel.tsx:377
 #, fuzzy
 msgid "Redress"
 msgstr "Ausrichten"
 
-#: src/ui/RegimentPanel.tsx:380
+#: src/ui/RegimentPanel.tsx:381
 #, fuzzy
 msgid "Rebuild the block around its centre; costs all its move ({distance})"
 msgstr "Block um seine Mitte neu bilden; kostet die ganze Bewegung ({distance})"
 
-#: src/ui/RegimentPanel.tsx:389
+#: src/ui/RegimentPanel.tsx:390
 #, fuzzy
 msgid "Reform"
 msgstr "Umformieren"
 
-#: src/ui/RegimentPanel.tsx:394
+#: src/ui/RegimentPanel.tsx:395
 #, fuzzy
 msgid "Marching blocks may only move straight ahead and wheel."
 msgstr "Marschierende Blöcke dürfen sich nur geradeaus bewegen und schwenken."
 
-#: src/ui/RegimentPanel.tsx:419
+#: src/ui/RegimentPanel.tsx:423
 #, fuzzy
 msgid "Off the table"
 msgstr "Außerhalb des Tisches"
 
-#: src/ui/RegimentPanel.tsx:428
+#: src/ui/RegimentPanel.tsx:434
 #, fuzzy
 msgid "Moved {used}"
 msgstr "{used} bewegt"
 
-#: src/ui/RegimentPanel.tsx:430
+#: src/ui/RegimentPanel.tsx:436
 #, fuzzy
 msgid "Moved {used} of {allowed} (marching)"
 msgstr "{used} von {allowed} bewegt (Marsch)"
 
-#: src/ui/RegimentPanel.tsx:431
+#: src/ui/RegimentPanel.tsx:437
 #, fuzzy
 msgid "Moved {used} of {allowed}"
 msgstr "{used} von {allowed} bewegt"
 
-#: src/ui/RegimentPanel.tsx:432
+#: src/ui/RegimentPanel.tsx:438
 #, fuzzy
 msgid "over its move"
 msgstr "über ihrer Bewegung"
 
-#: src/ui/RegimentPanel.tsx:438
+#: src/ui/RegimentPanel.tsx:444
 #, fuzzy
 msgid "{n} manoeuvre this move ({list}): only one is allowed"
 msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] "{n} Manöver in dieser Bewegung ({list}): nur eines ist erlaubt"
 msgstr[1] "{n} Manöver in dieser Bewegung ({list}): nur eines ist erlaubt"
 
-#: src/ui/RegimentPanel.tsx:448
+#: src/ui/RegimentPanel.tsx:454
 #, fuzzy
 msgid "a marching block may only move ahead and wheel"
 msgstr "ein marschierender Block darf nur geradeaus gehen und schwenken"
 
-#: src/ui/RegimentPanel.tsx:453
+#: src/ui/RegimentPanel.tsx:456
+#, fuzzy
+msgid "failed its march test: normal move, counts as marched"
+msgstr "Marschtest nicht bestanden: normale Bewegung, zählt als marschiert"
+
+#: src/ui/RegimentPanel.tsx:464
 #, fuzzy
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr "ein Feind ist innerhalb von {distance}\": Marschieren erfordert einen Moralwerttest (bei Misserfolg bewegt sie sich normal, zählt aber als marschiert)"
 
-#: src/ui/RegimentPanel.tsx:468
+#: src/ui/RegimentPanel.tsx:479
 #, fuzzy
 msgid "back"
 msgstr "zurück"
 
-#: src/ui/RegimentPanel.tsx:470
+#: src/ui/RegimentPanel.tsx:481
 #, fuzzy
 msgid "sideways"
 msgstr "seitlich"
 
-#: src/ui/RegimentPanel.tsx:472
+#: src/ui/RegimentPanel.tsx:483
 #, fuzzy
 msgid "turn"
 msgstr "drehen"
 
-#: src/ui/RegimentPanel.tsx:474
+#: src/ui/RegimentPanel.tsx:485
 #, fuzzy
 msgid "redress"
 msgstr "Glieder ordnen"
 
-#: src/ui/RegimentPanel.tsx:476
+#: src/ui/RegimentPanel.tsx:487
 #, fuzzy
 msgid "reform"
 msgstr "neu formieren"

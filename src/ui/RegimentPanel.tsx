@@ -240,6 +240,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           used={used}
           manoeuvres={manoeuvres}
           marching={marching}
+          marchTest={typeof unit.status?.marchTest === "number" ? unit.status.marchTest === 1 : null}
           off={offTable(game, unit)}
           round={game.turn.round}
         />
@@ -406,6 +407,7 @@ function MovedLine({
   used,
   manoeuvres,
   marching,
+  marchTest = null,
   off,
   round,
 }: {
@@ -413,13 +415,17 @@ function MovedLine({
   used: number;
   manoeuvres: Manoeuvre[];
   marching: boolean;
+  /** The march test this turn: passed, failed, or not taken. */
+  marchTest?: boolean | null;
   off: boolean;
   round: number;
 }) {
   if (round <= 0) return off ? <p className="warn">{t("Off the table")}</p> : null;
-  const allowed = marching ? budget.march : budget.move;
+  // A failed march test: it moves normally, but counts as having marched.
+  const allowed = marching && marchTest !== false ? budget.march : budget.move;
   const over = allowed !== null && used > allowed + 0.05;
-  const marchNear = marching && !budget.drilled && budget.nearestEnemy < budget.marchBlock;
+  const marchNear =
+    marching && marchTest === null && !budget.drilled && budget.nearestEnemy < budget.marchBlock;
   const tooMany = budget.manoeuvreLimit > 0 && manoeuvres.length > budget.manoeuvreLimit;
   const marchManoeuvre = marching && manoeuvres.length > 0;
   return (
@@ -446,6 +452,11 @@ function MovedLine({
         ""
       )}
       {marchManoeuvre ? <> · {t("a marching block may only move ahead and wheel")}</> : ""}
+      {marching && marchTest === false ? (
+        <> · {t("failed its march test: normal move, counts as marched")}</>
+      ) : (
+        ""
+      )}
       {marchNear ? (
         <>
           {" "}
