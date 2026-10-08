@@ -282,7 +282,10 @@ export class SandboxEngine {
       bot = botPolicy(level, this.state, seat, { seed });
       this.bots.by.set(key, bot);
     }
-    return bot.move(this.record, this.state, { seat, player });
+    const move = bot.move(this.record, this.state, { seat, player });
+    // It learns of its own moves here, as it would watching the table, so it knows when to move on (UX 351).
+    if (move) bot.saw?.(this.state, move);
+    return move;
   }
 
   /** The packages' code actions for a unit in this phase, as the unit card lists them. */

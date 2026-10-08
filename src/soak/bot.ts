@@ -302,7 +302,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
 
   // Before the battle: a few moves around the deployment zone, then start.
   if (round === 0) {
-    if (units[0] && ctx.rng() < 0.3) yield moveUnit(state, units[0], ctx, 4);
+    if (units[0] && ctx.rng() < 0.3) yield* shifted(state, moveUnit(state, units[0], ctx, 4));
     yield* next;
     for (const p of Object.values(state.players))
       yield { intent: { type: "turn/next" }, as: p.id, kind: "next" };
@@ -342,7 +342,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     // Units with a move action (40k's Normal move) move through it instead.
     if (u && !unitActions(state, u.id).some((o) => o.ok && o.move !== undefined)) {
       ctx.moved.units.add(u.id);
-      yield moveUnit(state, u, ctx, 6);
+      yield* shifted(state, moveUnit(state, u, ctx, 6));
     }
   }
 
@@ -372,7 +372,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
   if (ctx.wholeGame && ctx.idle < 6) {
     yield* codeMoves(state, ctx, units);
     const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
-    if (u) yield moveUnit(state, u, { ...ctx, tidy: true }, 6);
+    if (u) yield* shifted(state, moveUnit(state, u, { ...ctx, tidy: true }, 6));
   }
   // ...and charges are declared more often than not, so fights (and crowded ones) come up.
   if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
@@ -391,7 +391,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     );
   // A loose move: the fuzzer's. A tidy bot moves each unit once, through its move action or the
   // movement step above, so a unit that stayed put stays put (UX 305).
-  else if (r < 0.95 && units[0] && !ctx.tidy) yield moveUnit(state, units[0], ctx, 6);
+  else if (r < 0.95 && units[0] && !ctx.tidy) yield* shifted(state, moveUnit(state, units[0], ctx, 6));
   // Move the game on: end an activation, or the phase, more surely the longer it sits.
   if (ctx.rng() < onward) yield* end;
   if (ctx.idle > patience && ctx.rng() < onward) yield* next;
@@ -536,6 +536,16 @@ function* stratagems(state: GameState, ctx: BotContext, players: PlayerId[]): Ge
 }
 
 /** Move a unit as a block by up to `inches` in a random direction, staying on the table. */
+/** A move that goes somewhere: one that leaves every model where it was is no move at all (UX 351). */
+function* shifted(state: GameState, m: BotMove): Generator<BotMove> {
+  if (m.intent.type !== "models/move") return void (yield m);
+  const there = m.intent.moves.some((x) => {
+    const at = state.models[x.id]?.position;
+    return !at || Math.hypot(at.x - x.to.x, at.y - x.to.y) > 0.1;
+  });
+  if (there) yield m;
+}
+
 function moveUnit(state: GameState, u: Unit, ctx: BotContext, inches: number): BotMove {
   const ms = u.modelIds.map((id) => state.models[id]!).filter((m) => m && !m.destroyed);
   const cx = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;

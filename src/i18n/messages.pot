@@ -408,6 +408,18 @@ msgstr ""
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
+#: src/bot/BestMoment.tsx:29
+msgid "{name} ({level})"
+msgstr ""
+
+#: src/bot/BestMoment.tsx:33
+msgid "{name}'s best moment, {when}: {line}"
+msgstr ""
+
+#: src/bot/BestMoment.tsx:34
+msgid "You played {name}."
+msgstr ""
+
 #: src/bot/SoloBot.tsx:78
 msgid "Computer ({level})"
 msgstr ""
@@ -453,15 +465,27 @@ msgstr ""
 msgid "{action} at {target}"
 msgstr ""
 
-#: src/bot/solo.ts:82
+#: src/bot/solo.ts:87
+msgid "Rook the Novice"
+msgstr ""
+
+#: src/bot/solo.ts:89
+msgid "The Iron Tactician"
+msgstr ""
+
+#: src/bot/solo.ts:90
+msgid "The Warden of Ash"
+msgstr ""
+
+#: src/bot/solo.ts:95
 msgid "Easy"
 msgstr ""
 
-#: src/bot/solo.ts:82
+#: src/bot/solo.ts:95
 msgid "Sharp"
 msgstr ""
 
-#: src/bot/solo.ts:82
+#: src/bot/solo.ts:95
 msgid "Steady"
 msgstr ""
 
@@ -759,7 +783,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:578
 #: src/companion/CompanionScreen.tsx:81
-#: src/ui/StatsScreen.tsx:140
+#: src/ui/StatsScreen.tsx:142
 msgid "Units"
 msgstr ""
 
@@ -817,7 +841,7 @@ msgid "D"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:619
-#: src/ui/StatsScreen.tsx:149
+#: src/ui/StatsScreen.tsx:151
 msgid "Lost"
 msgstr ""
 
@@ -882,7 +906,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:679
 #: src/ui/RoundCard.tsx:113
-#: src/ui/StatsScreen.tsx:65
+#: src/ui/StatsScreen.tsx:66
 msgid "{n} round"
 msgid_plural "{n} rounds"
 msgstr[0] ""
@@ -909,7 +933,7 @@ msgid "Kills, games and wounds fill in after each game. Honours, scars and XP ar
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:733
-#: src/ui/Hud.tsx:163
+#: src/ui/Hud.tsx:164
 msgid "Done editing"
 msgstr ""
 
@@ -920,7 +944,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:742
 #: src/ui/ArmyImport.tsx:304
-#: src/ui/StatsScreen.tsx:145
+#: src/ui/StatsScreen.tsx:147
 msgid "Unit"
 msgstr ""
 
@@ -1153,7 +1177,7 @@ msgstr ""
 #: src/share/SharePanel.tsx:358
 #: src/share/cards.ts:305
 #: src/ui/Missions.tsx:118
-#: src/ui/StatsScreen.tsx:294
+#: src/ui/StatsScreen.tsx:296
 msgid "Round {n}"
 msgstr ""
 
@@ -1296,7 +1320,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:130
 #: src/ui/ReplayBar.tsx:284
-#: src/ui/StatsScreen.tsx:74
+#: src/ui/StatsScreen.tsx:75
 msgid "Share…"
 msgstr ""
 
@@ -1305,7 +1329,7 @@ msgid "No army yet."
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:172
-#: src/ui/Hud.tsx:189
+#: src/ui/Hud.tsx:190
 msgid "Add an army"
 msgstr ""
 
@@ -1336,7 +1360,7 @@ msgid "Number of dice"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:269
-#: src/ui/Hud.tsx:214
+#: src/ui/Hud.tsx:215
 msgid "D"
 msgstr ""
 
@@ -1345,18 +1369,18 @@ msgid "Sides"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:275
-#: src/ui/Hud.tsx:220
-#: src/ui/StatsScreen.tsx:201
+#: src/ui/Hud.tsx:221
+#: src/ui/StatsScreen.tsx:203
 msgid "Roll"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:282
-#: src/ui/Hud.tsx:229
+#: src/ui/Hud.tsx:230
 msgid "Stats"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:284
-#: src/ui/Hud.tsx:232
+#: src/ui/Hud.tsx:233
 msgid "Download replay"
 msgstr ""
 
@@ -2385,7 +2409,7 @@ msgstr ""
 
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:252
-#: src/ui/Hud.tsx:372
+#: src/ui/Hud.tsx:373
 #: src/ui/Lobby.tsx:294
 msgid "Your name"
 msgstr ""
@@ -2395,7 +2419,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:99
-#: src/ui/Lobby.tsx:475
+#: src/ui/Lobby.tsx:476
 msgid "Not now"
 msgstr ""
 
@@ -2835,7 +2859,7 @@ msgstr ""
 #: src/ui/Hud.tsx:86
 #: src/ui/PlayPanel.tsx:71
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:257
+#: src/ui/WhatNow.tsx:261
 msgid "Hide"
 msgstr ""
 
@@ -4630,8 +4654,8 @@ msgid "{name}'s dice"
 msgstr ""
 
 #: src/ui/DicePicker.tsx:59
-#: src/ui/Hud.tsx:201
-#: src/ui/StatsScreen.tsx:202
+#: src/ui/Hud.tsx:202
+#: src/ui/StatsScreen.tsx:204
 msgid "Dice"
 msgstr ""
 
@@ -4661,7 +4685,7 @@ msgid "{title}: {n} of {total} pass"
 msgstr ""
 
 #: src/ui/DiceTray.tsx:350
-#: src/ui/StatsScreen.tsx:147
+#: src/ui/StatsScreen.tsx:149
 #: src/ui/stakes.ts:93
 msgid "Slain"
 msgstr ""
@@ -4859,151 +4883,155 @@ msgstr ""
 msgid "Other units' models don't block line of sight."
 msgstr ""
 
-#: src/ui/Hud.tsx:102
+#: src/ui/Hud.tsx:100
+msgid "Hotseat: you control both sides."
+msgstr ""
+
+#: src/ui/Hud.tsx:103
 msgid "Spectating."
 msgstr ""
 
-#: src/ui/Hud.tsx:107
+#: src/ui/Hud.tsx:108
 msgid "3D view"
 msgstr ""
 
-#: src/ui/Hud.tsx:107
+#: src/ui/Hud.tsx:108
 msgid "Top-down view"
 msgstr ""
 
-#: src/ui/Hud.tsx:109
+#: src/ui/Hud.tsx:110
 #: src/ui/Keys.tsx:24
 msgid "Home"
 msgstr ""
 
-#: src/ui/Hud.tsx:110
+#: src/ui/Hud.tsx:111
 msgid "Reset view"
 msgstr ""
 
-#: src/ui/Hud.tsx:115
+#: src/ui/Hud.tsx:116
 msgid "Drag between models or points to measure; both players see it (M)"
 msgstr ""
 
-#: src/ui/Hud.tsx:118
+#: src/ui/Hud.tsx:119
 msgid "Ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:123
+#: src/ui/Hud.tsx:124
 msgid "Clear the ruler (Esc)"
 msgstr ""
 
-#: src/ui/Hud.tsx:126
+#: src/ui/Hud.tsx:127
 msgid "Clear ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:130
+#: src/ui/Hud.tsx:131
 msgid "Unit names"
 msgstr ""
 
-#: src/ui/Hud.tsx:133
+#: src/ui/Hud.tsx:134
 msgid "X-ray terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:137
+#: src/ui/Hud.tsx:138
 msgid "Shorter dice rolls in the tray"
 msgstr ""
 
-#: src/ui/Hud.tsx:140
+#: src/ui/Hud.tsx:141
 #: src/ui/TopBar.tsx:522
 msgid "Fast dice"
 msgstr ""
 
-#: src/ui/Hud.tsx:144
+#: src/ui/Hud.tsx:145
 msgid "Camera follows the action: moves, shots and charges"
 msgstr ""
 
-#: src/ui/Hud.tsx:147
+#: src/ui/Hud.tsx:148
 msgid "Follow action"
 msgstr ""
 
-#: src/ui/Hud.tsx:157
+#: src/ui/Hud.tsx:158
 msgid "The battle has started. Unlock the terrain? Every change shows in the log."
 msgstr ""
 
-#: src/ui/Hud.tsx:163
+#: src/ui/Hud.tsx:164
 msgid "Unlock terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:163
+#: src/ui/Hud.tsx:164
 #: src/ui/TerrainPanel.tsx:185
 msgid "Edit terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:235
+#: src/ui/Hud.tsx:236
 #: src/ui/ReplayBar.tsx:290
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
-#: src/ui/Hud.tsx:236
+#: src/ui/Hud.tsx:237
 msgid "Review this game"
 msgstr ""
 
-#: src/ui/Hud.tsx:267
+#: src/ui/Hud.tsx:268
 msgid "Take back {what}"
 msgstr ""
 
-#: src/ui/Hud.tsx:268
+#: src/ui/Hud.tsx:269
 msgid "Take back your last action"
 msgstr ""
 
-#: src/ui/Hud.tsx:280
+#: src/ui/Hud.tsx:281
 msgid "Undo"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "three"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "four"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "five"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "six"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "seven"
 msgstr ""
 
-#: src/ui/Hud.tsx:337
+#: src/ui/Hud.tsx:338
 msgid "eight"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:341
 msgid "Both players are here."
 msgstr ""
 
-#: src/ui/Hud.tsx:341
+#: src/ui/Hud.tsx:342
 msgid "All {count} seats are taken."
 msgstr ""
 
-#: src/ui/Hud.tsx:367
+#: src/ui/Hud.tsx:368
 msgid "You're {name}. What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:377
+#: src/ui/Hud.tsx:378
 msgid "Use this name"
 msgstr ""
 
-#: src/ui/Hud.tsx:404
+#: src/ui/Hud.tsx:405
 msgid "This game is already under way. Rejoining?"
 msgstr ""
 
-#: src/ui/Hud.tsx:411
+#: src/ui/Hud.tsx:412
 msgid "Rejoin as {name}"
 msgstr ""
 
-#: src/ui/Hud.tsx:418
+#: src/ui/Hud.tsx:419
 #: src/ui/Lobby.tsx:329
 msgid "Watch"
 msgstr ""
@@ -5017,15 +5045,11 @@ msgid "Lesson: the computer plays the other side."
 msgstr ""
 
 #: src/ui/Hud.tsx:94
-msgid "You play the near side; the computer plays the far side ({level})."
-msgstr ""
-
-#: src/ui/Hud.tsx:98
-msgid "Play by mail: you play your side; send your file when you're done."
+msgid "You play the near side; {name} plays the far side ({level})."
 msgstr ""
 
 #: src/ui/Hud.tsx:99
-msgid "Hotseat: you control both sides."
+msgid "Play by mail: you play your side; send your file when you're done."
 msgstr ""
 
 #: src/ui/Keys.tsx:10
@@ -6567,110 +6591,110 @@ msgstr ""
 msgid "{points} pts"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:103
+#: src/ui/StatsScreen.tsx:105
 msgid "Moments"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:114
+#: src/ui/StatsScreen.tsx:116
 msgid "Watch it again on the table"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:127
+#: src/ui/StatsScreen.tsx:129
 msgid "A new game on this screen, just before this moment"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:130
+#: src/ui/StatsScreen.tsx:132
 msgid "Practice from here"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:146
+#: src/ui/StatsScreen.tsx:148
 msgid "Wounds this unit's attacks took off enemy models"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:146
+#: src/ui/StatsScreen.tsx:148
 msgid "Dealt"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:147
+#: src/ui/StatsScreen.tsx:149
 msgid "Enemy models this unit's attacks destroyed"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:148
+#: src/ui/StatsScreen.tsx:150
 msgid "Wounds this unit lost, from any cause"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:148
+#: src/ui/StatsScreen.tsx:150
 msgid "Taken"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:149
+#: src/ui/StatsScreen.tsx:151
 msgid "Models this unit lost, from any cause"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:168
+#: src/ui/StatsScreen.tsx:170
 msgid "No damage dealt yet."
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:189
+#: src/ui/StatsScreen.tsx:191
 msgid "even overall (luck in one roll, not another)"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:190
+#: src/ui/StatsScreen.tsx:192
 msgid "right on the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:192
+#: src/ui/StatsScreen.tsx:194
 msgid "{dice} dice luckier than the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:193
+#: src/ui/StatsScreen.tsx:195
 msgid "{dice} dice unluckier than the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:202
+#: src/ui/StatsScreen.tsx:204
 msgid "Dice rolled"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:203
+#: src/ui/StatsScreen.tsx:205
 msgid "Dice that passed (hits, wounds, saves made)"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:203
+#: src/ui/StatsScreen.tsx:205
 #: src/ui/stakes.ts:72
 msgid "Passed"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:204
+#: src/ui/StatsScreen.tsx:206
 msgid "Expected"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:205
+#: src/ui/StatsScreen.tsx:207
 msgid "Dice that passed minus dice expected to"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:223
+#: src/ui/StatsScreen.tsx:225
 msgid "No rolls yet."
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:251
+#: src/ui/StatsScreen.tsx:253
 msgid "{n} pts"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:274
+#: src/ui/StatsScreen.tsx:276
 msgid "{player}, round {round}: {n} pts"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:62
-#: src/ui/StatsScreen.tsx:64
+#: src/ui/StatsScreen.tsx:63
+#: src/ui/StatsScreen.tsx:65
 msgid "Battle stats"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:88
-#: src/ui/StatsScreen.tsx:259
+#: src/ui/StatsScreen.tsx:90
+#: src/ui/StatsScreen.tsx:261
 msgid "Points destroyed per round"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:93
+#: src/ui/StatsScreen.tsx:95
 msgid "Dice against the odds"
 msgstr ""
 
@@ -7764,19 +7788,19 @@ msgstr ""
 msgid "The computer is taking its turn…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:224
+#: src/ui/WhatNow.tsx:226
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:247
+#: src/ui/WhatNow.tsx:251
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:276
+#: src/ui/WhatNow.tsx:280
 msgid "Press"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:276
+#: src/ui/WhatNow.tsx:280
 msgid "for all the controls."
 msgstr ""
 

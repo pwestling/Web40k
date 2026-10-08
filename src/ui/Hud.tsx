@@ -1,4 +1,4 @@
-import { levelName, useSolo } from "../bot/solo";
+import { characterName, levelName, useSolo } from "../bot/solo";
 import { displayName } from "../i18n/names";
 import { VIEWER } from "../viewer/flag";
 import { ReportButton } from "./SavedNote";
@@ -91,7 +91,8 @@ export function Hud() {
           {lesson
             ? t("Lesson: the computer plays the other side.")
             : solo
-              ? t("You play the near side; the computer plays the far side ({level}).", {
+              ? t("You play the near side; {name} plays the far side ({level}).", {
+                  name: characterName(solo),
                   level: levelName(solo),
                 })
               : mail

@@ -150,7 +150,8 @@ function tell(game: GameState, move: BotMove, player: string): void {
     if (at) hear({ id: id("p"), kind: "ping", at, unitId: unit.id }, player, now);
   }
   if (why.from && why.to) hear({ id: id("a"), kind: "arrow", from: why.from, to: why.to }, player, now);
-  hear({ id: id("c"), kind: "chat", text: `${unit.name}: ${why.text}` }, player, now);
+  // Its reason goes in the hint, in place, not in the chat (UX 352).
+  useSolo.setState({ why: `${unit.name}: ${why.text}` });
 }
 
 function centreOf(game: GameState, unit: Unit): { x: number; y: number } | null {

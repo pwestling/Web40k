@@ -42,7 +42,7 @@ export const STEADY: Weights = {
   approach: 0.04,
   contest: 1,
   engage: 0.3,
-  threat: 0,
+  threat: 0.3,
   finish: 0,
 };
 export const SHARP: Weights = {
@@ -51,7 +51,7 @@ export const SHARP: Weights = {
   approach: 0.05,
   contest: 1,
   engage: 0.3,
-  threat: 0,
+  threat: 0.3,
   finish: 0.35,
 };
 
@@ -62,6 +62,28 @@ const standing = (state: GameState, u: Unit): Model[] =>
   });
 
 const seatOf = (state: GameState, u: Unit) => state.players[u.owner]?.seat;
+
+const inches = (s: string | undefined) => {
+  const n = Number.parseFloat(s ?? "");
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/**
+ * How far a unit shoots, in inches (0 if it only fights): its longest ranged
+ * weapon, or a Range on its models' profile (games whose models carry one
+ * shooting stat, like Rift Lanterns).
+ */
+export function rangeOf(state: GameState, u: Unit): number {
+  let r = 0;
+  for (const w of Object.values(u.sheet?.weapons ?? {})) {
+    if (w.kind === "melee") continue;
+    r = Math.max(r, inches(w.chars.RANGE ?? w.chars.Range ?? w.chars.R) ?? 0);
+  }
+  const m = standing(state, u)[0];
+  const c = m?.profile?.chars;
+  if (c) r = Math.max(r, inches(c.Range ?? c.RANGE ?? c.Rng) ?? 0);
+  return r;
+}
 
 /** A unit's full worth: its points, or its models' wounds (a module can say otherwise). */
 export function unitWorth(state: GameState, u: Unit, tuning?: BotTuning): number {
@@ -212,7 +234,7 @@ function position(state: GameState, j: Judge): number {
   if (j.weights.engage) {
     const total = j.armies[j.seat] || 1;
     for (const e of mine) {
-      if (Object.values(e.u.sheet?.weapons ?? {}).some((w) => w.kind === "ranged")) continue;
+      if (rangeOf(state, e.u) > 0) continue;
       let d = Infinity;
       for (const t of theirs) d = Math.min(d, Math.hypot(t.c.x - e.c.x, t.c.y - e.c.y));
       if (!Number.isFinite(d)) continue;

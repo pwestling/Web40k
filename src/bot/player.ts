@@ -33,7 +33,16 @@ import {
   type Kept,
 } from "../soak/bot";
 import { noteProgress, opponentMove } from "../teach/opponent";
-import { evaluate, judge, SHARP, STEADY, type BotTuning, type Judge, type Weights } from "./evaluate";
+import {
+  evaluate,
+  judge,
+  rangeOf,
+  SHARP,
+  STEADY,
+  type BotTuning,
+  type Judge,
+  type Weights,
+} from "./evaluate";
 import { missionOf, type Policy, type Seat } from "./policy";
 import { Sim } from "./sim";
 
@@ -84,17 +93,59 @@ export function botPolicy(level: Level, start: GameState, seat: number, opts: Bo
     ...(systemOf(start).actions.length ? {} : { wholeGame: true }),
     ...(opts.packageActions ? { packageActions: opts.packageActions } : {}),
   };
-  if (level === "random")
-    return {
-      name: "random",
-      move: (record, state, me) =>
-        state.turn.round === 0
-          ? setupMove(record, state, ctx, me)
-          : opponentMove(record, state, ctx, me.seat),
-      saw: (state, move) =>
-        noteProgress(ctx, state, sidePlayers(state, seat).some((p) => p.id === move.as) ? move : undefined),
-    };
-  return new Thinker(level, start, seat, ctx, rng, opts);
+  return guarded(
+    level === "random" ? randomPolicy(ctx, seat) : new Thinker(level, start, seat, ctx, rng, opts),
+    seat,
+  );
+}
+
+/** The teaching opponent: the tidy soak bot. */
+function randomPolicy(ctx: BotContext & { mark?: string }, seat: number): Policy {
+  return {
+    name: "random",
+    move: (record, state, me) =>
+      state.turn.round === 0 ? setupMove(record, state, ctx, me) : opponentMove(record, state, ctx, me.seat),
+    saw: (state, move) =>
+      noteProgress(ctx, state, sidePlayers(state, seat).some((p) => p.id === move.as) ? move : undefined),
+  };
+}
+
+/** Moves a policy may make in one activation, and in one phase with no unit acting, before it must move on. */
+export const ACTIVATION_CAP = 40;
+export const PHASE_CAP = 250;
+
+/**
+ * Whatever a policy thinks, a unit's go ends and the game moves on: past
+ * the cap it ends the activation, passes, or goes to the next phase (UX 351).
+ */
+function guarded(p: Policy, seat: number): Policy {
+  let mark = "";
+  let n = 0;
+  return {
+    name: p.name,
+    move(record, state, me) {
+      const mine = new Set(sidePlayers(state, seat).map((x) => x.id));
+      const acting = actingUnits(state).filter((u) => mine.has(u.owner));
+      const m = `${state.turn.round}:${state.turn.activeSeat}:${state.turn.phase}:${acting.map((u) => u.id).join()}`;
+      n = m === mark ? n + 1 : 0;
+      mark = m;
+      if (n >= (acting.length ? ACTIVATION_CAP : PHASE_CAP) && !state.script?.waiting) {
+        const on: BotMove[] = [
+          ...acting.map((u) => ({
+            intent: { type: "turn/endActivation" } as Intent,
+            as: u.owner,
+            kind: "endActivation",
+          })),
+          { intent: { type: "turn/pass" } as Intent, as: me.player, kind: "pass" },
+          { intent: { type: "turn/next" } as Intent, as: me.player, kind: "next" },
+        ];
+        const go = on.find((x) => legal(record, state, x));
+        if (go) return go;
+      }
+      return p.move(record, state, me);
+    },
+    saw: (state, move) => p.saw?.(state, move),
+  };
 }
 
 /** Before the battle: ready up (the armies are already in their zones). */
@@ -116,6 +167,7 @@ interface Candidate {
   activates?: boolean;
 }
 
+const DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.BOT_DBG;
 class Thinker implements Policy {
   readonly name: string;
   private readonly sim: Sim;
@@ -145,7 +197,7 @@ class Thinker implements Policy {
       missionOf(start),
       tuning,
     );
-    if (sharp) this.judge.reach = (state, u) => reachOf(state, u, tuning);
+    this.judge.reach = (state, u) => reachOf(state, u, tuning);
     this.judge.move = (state, u) => moveInches(state, u, tuning);
     this.tries = opts.tries ?? (sharp ? 4 : 2);
     this.beam = opts.beam ?? (sharp ? 4 : 0);
@@ -242,6 +294,19 @@ class Thinker implements Policy {
       if (score > topScore) [top, topScore] = [c, score];
     }
     if (!top) return fallback;
+    // Sharp, taking turns at activating units: the few best activations, each played out and
+    // judged after the enemy's best answer with one of theirs.
+    const acts = scored.filter(({ c }) => c.activates);
+    if (DBG) console.log("acts", acts.length, scored.length, plainActivations(state), this.beam);
+    if (this.beam && mine && acts.length > 1 && plainActivations(state)) {
+      let pick: Candidate | null = null;
+      let best = -Infinity;
+      for (const { c } of acts.sort((a, b) => b.score - a.score).slice(0, this.beam)) {
+        const v = this.replied(state, c, mine);
+        if (v !== null && v > best) [pick, best] = [c, v];
+      }
+      if (pick) return pick.move;
+    }
     // Sharp, moving: the few best moves (and staying put), each judged after the enemy's guns
     // answer it, so it doesn't walk into the open for a step nearer an objective.
     const moves = scored.filter(({ c }) => isMove(c.move) && !c.activates);
@@ -306,6 +371,55 @@ class Thinker implements Policy {
     for (const { c } of [...byUnit.values()].sort((a, b) => a.v - b.v)) t = this.play(t, c.move) ?? t;
     void mine;
     return evaluate(t, this.judge);
+  }
+
+  /**
+   * An activation played out (its best follow-up, then the end of it), then
+   * the enemy's activation that leaves us worst off: two plies, for taking
+   * turns at activating units.
+   */
+  private replied(state: GameState, c: Candidate, mine: Set<PlayerId>): number | null {
+    const s1 = this.play(state, c.move);
+    if (!s1) return null;
+    const s2 = this.ended(this.followed(s1, mine, 1), mine);
+    const enemy = s2.turn.activeSeat;
+    if (enemy === this.seat) return evaluate(s2, this.judge);
+    const theirs = new Set(sidePlayers(s2, enemy).map((p) => p.id));
+    let worst = evaluate(s2, this.judge);
+    for (const e of this.candidates(s2, theirs)) {
+      if (!e.activates) continue;
+      const s3 = this.play(s2, e.move);
+      if (!s3) continue;
+      worst = Math.min(worst, evaluate(this.followed(s3, theirs, -1), this.judge));
+    }
+    return worst;
+  }
+
+  /** The table after a side's acting unit does its best (sign 1: best for us; -1: worst). */
+  private followed(s: GameState, side: Set<PlayerId>, sign: 1 | -1): GameState {
+    let best = s;
+    let top = sign * evaluate(s, this.judge);
+    for (const f of this.candidates(s, side)) {
+      if (f.activates) continue;
+      const t = this.play(s, f.move);
+      if (!t) continue;
+      const v = sign * evaluate(t, this.judge);
+      if (v > top) [best, top] = [t, v];
+    }
+    return best;
+  }
+
+  /** Ending whatever activation the side still has going. */
+  private ended(s: GameState, side: Set<PlayerId>): GameState {
+    const u = actingUnits(s).find((x) => side.has(x.owner));
+    if (!u) return s;
+    return (
+      this.play(s, {
+        intent: { type: "turn/endActivation" } as Intent,
+        as: u.owner,
+        kind: "endActivation",
+      }) ?? s
+    );
   }
 
   /** The table after a candidate, judged: the average over `tries` goes (null if the host would refuse it). */
@@ -586,15 +700,9 @@ function moveInches(state: GameState, u: Unit, tuning?: BotTuning): number {
   return num(m?.profile?.chars.M) ?? 6;
 }
 
-/** The furthest a unit can hurt from (its longest ranged weapon, else 1"), plus a move. */
+/** The furthest a unit can hurt from (its longest shot, else 1"), plus a move. */
 function reachOf(state: GameState, u: Unit, tuning?: BotTuning): number {
-  let r = 1;
-  for (const w of Object.values(u.sheet?.weapons ?? {})) {
-    if (w.kind === "melee") continue;
-    const n = num(w.chars.RANGE ?? w.chars.Range ?? w.chars.R);
-    if (n !== undefined) r = Math.max(r, n);
-  }
-  return r + moveInches(state, u, tuning);
+  return Math.max(1, rangeOf(state, u)) + moveInches(state, u, tuning);
 }
 
 /**

@@ -1,5 +1,6 @@
 import { openShare } from "../share/store";
 import { displayName } from "../i18n/names";
+import { BestMoment } from "../bot/BestMoment";
 import { useEffect, useMemo } from "react";
 import { branchGame } from "./Branch";
 import { systemOf, type GameState } from "../core";
@@ -82,6 +83,7 @@ export function StatsScreen() {
       </div>
 
       <Result />
+      <BestMoment />
       {!BROADCAST && <FeedbackCard />}
 
       <section>

@@ -219,9 +219,12 @@ function computerGo(
       ? t("The computer is playing {unit}…", { unit: acting.name })
       : t("The computer is taking its turn…"),
     // One line on a phone, so the table stays in view (UX 348).
-    lines: matchMedia("(max-width: 640px)").matches
-      ? []
-      : [t("A ring marks its unit and a line shows where it went.")],
+    lines: [
+      ...(solo.why ? [solo.why] : []),
+      ...(matchMedia("(max-width: 640px)").matches
+        ? []
+        : [t("A ring marks its unit and a line shows where it went.")]),
+    ],
   };
 }
 
@@ -229,6 +232,7 @@ export function WhatNow() {
   // Re-read on the computer's turns (UX 347).
   useSolo((s) => s.level);
   useSolo((s) => s.paused);
+  useSolo((s) => s.why);
   const game = useGame();
   const open = useHelp((s) => s.hint);
   const me = useStore((s) => s.session?.selfId ?? null);

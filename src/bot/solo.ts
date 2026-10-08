@@ -20,6 +20,8 @@ export interface Solo {
   seed: number;
   /** Paused from the ⋯ menu (UX 347): the computer waits and its side is yours to move. */
   paused: boolean;
+  /** Why the computer made its last move, shown in the hint (UX 352). */
+  why: string | null;
 }
 
 export const useSolo = create<Solo>(() => ({
@@ -29,6 +31,7 @@ export const useSolo = create<Solo>(() => ({
   policy: null,
   seed: 1,
   paused: false,
+  why: null,
 }));
 
 /** The computer's moves glide, slow enough to follow (PX solo review 2). */
@@ -61,13 +64,14 @@ export function armSolo(level: Level, seat = 1): void {
     policy: null,
     seed: Date.now() % 2 ** 31,
     paused: false,
+    why: null,
   });
   // The camera follows the action, the computer's included (UX 348).
   useStore.setState({ director: true });
 }
 
 export function endSolo(): void {
-  useSolo.setState({ level: null, session: null, policy: null, paused: false });
+  useSolo.setState({ level: null, session: null, policy: null, paused: false, why: null });
 }
 
 /** Whether the computer plays this player in the game on screen. */
@@ -75,6 +79,15 @@ export function soloPlays(game: GameState, player: string | undefined): boolean 
   const { level, seat, session } = useSolo.getState();
   if (!level || useSolo.getState().paused || !player || session !== useStore.getState().session) return false;
   return game.players[player]?.seat === seat;
+}
+
+/** Who the computer is at each level (PX solo review 4): someone to lose to, not something. */
+export function characterName(level: Level): string {
+  return level === "random"
+    ? t("Rook the Novice")
+    : level === "sharp"
+      ? t("The Iron Tactician")
+      : t("The Warden of Ash");
 }
 
 /** A level's name, as the lobby offers it. */

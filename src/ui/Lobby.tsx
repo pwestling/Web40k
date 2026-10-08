@@ -12,7 +12,7 @@ import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { installRiftLanterns, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
 import { startSolo } from "../bot/startSolo";
-import { levelName, savedLevel } from "../bot/solo";
+import { characterName, levelName, savedLevel } from "../bot/solo";
 import type { Level } from "../bot/player";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
@@ -469,7 +469,8 @@ function HowHard({ system, onCancel }: { system: string; onCancel: () => void })
           autoFocus={l.level === last}
           onClick={() => startSolo(system, l.level)}
         >
-          {levelName(l.level)} <span className="muted small">{l.line}</span>
+          {levelName(l.level)} <span className="muted small">{characterName(l.level)}</span>{" "}
+          <span className="muted small">{l.line}</span>
         </button>
       ))}
       <button className="quiet small" title={t("Not now")} onClick={onCancel}>

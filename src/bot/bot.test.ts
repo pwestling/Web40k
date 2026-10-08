@@ -39,6 +39,34 @@ describe("a computer opponent (#45)", () => {
     expect(r.vp[0] + r.vp[1]).toBeGreaterThan(0);
   }, 120_000);
 
+  // UX 351: Easy turned one Rift Lanterns unit on the spot forever when nobody told it of its own moves.
+  for (const level of ["random", "steady", "sharp"] as const)
+    it(`never loops on one unit's go, even unwatched (${level}, Rift Lanterns)`, async () => {
+      for (const seed of [1, 2]) {
+        const r = await playMatch(
+          {
+            system: "rift-lanterns",
+            systemPkg: { source: riftLanterns },
+            seed,
+            blind: true,
+          },
+          (start) => [botPolicy(level, start, 0, { seed }), botPolicy(level, start, 1, { seed: seed + 1 })],
+        );
+        expect(r.error).toBeUndefined();
+        expect(r.finished).toBe(true);
+      }
+    }, 120_000);
+
+  it("never loops on one unit's go in the built-in systems either (Easy, unwatched)", async () => {
+    for (const system of ["forty-k-11", "tow-hand", "conquest-hand", "fsd-1"]) {
+      const r = await playMatch({ system, seed: 5, blind: true, maxSteps: 500 }, (start) => [
+        botPolicy("random", start, 0, { seed: 5 }),
+        botPolicy("random", start, 1, { seed: 6 }),
+      ]);
+      expect(r.error, system).toBeUndefined();
+    }
+  }, 240_000);
+
   it("tries a move out on a copy of the table, leaving the game as it was", async () => {
     let start = createInitialState();
     const r = await playMatch({ system: "forty-k-11", seed: 2, maxSteps: 60 }, (s) => {

@@ -11,6 +11,7 @@ import { pendingScores } from "../missions/scoring";
 import { battleOver, legal, type BotMove } from "../soak/bot";
 import { armyValue } from "./evaluate";
 import { missionOf, type Policy, type Seat } from "./policy";
+import { actingUnits } from "../core/content/play";
 
 export type { Policy, Seat } from "./policy";
 
@@ -32,6 +33,8 @@ export interface MatchOptions {
   mirror?: 0 | 1;
   /** The side that takes the first turn. */
   first?: number;
+  /** Policies aren't told of the moves made (as in the app's package sandbox): they must keep track themselves. */
+  blind?: boolean;
 }
 
 export interface MatchResult {
@@ -171,9 +174,33 @@ export async function playMatch(
     const missionNow = missionOf(start);
     let scoresDue = true;
     let stuck = 0;
+    let shownRound = -1;
+    // One unit's go that never ends is a bot stuck in a loop (UX 351): moves in a row with the same unit acting.
+    let loopMark = "";
+    let loopRun = 0;
     for (; result.steps < maxSteps; result.steps++) {
       clock++;
       const state = host.current;
+      if (TRACE && state.turn.round !== shownRound) {
+        shownRound = state.turn.round;
+        const side = (seat: number) => {
+          const ids = Object.values(state.players)
+            .filter((p) => p.seat === seat)
+            .map((p) => p.id);
+          const vp = ids.reduce((a, id) => a + (state.resources[id]?.VP ?? 0), 0);
+          const units = Object.values(state.units)
+            .filter((u) => ids.includes(u.owner))
+            .map((u) => {
+              const ms = u.modelIds.map((id) => state.models[id]!).filter((m) => m && !m.destroyed);
+              if (!ms.length) return `${u.name}✝`;
+              const x = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;
+              const y = ms.reduce((a, m) => a + m.position.y, 0) / ms.length;
+              return `${u.name}×${ms.length}@${x.toFixed(0)},${y.toFixed(0)}`;
+            });
+          return `vp${vp} ${units.join(" ")}`;
+        };
+        console.log(`== round ${shownRound} | s0 ${side(0)} | s1 ${side(1)}`);
+      }
       if (state.turn.round > 0 && battleOver(state)) break;
       const record = host.log;
       // Every score the mission suggests, confirmed in full by the side it's for.
@@ -233,7 +260,13 @@ export async function playMatch(
         if (++stuck > 3) throw new Error(`the host dropped ${move.intent.type}`);
         continue;
       }
-      for (const p of policies) p.saw?.(host.current, move);
+      if (!opts.blind) for (const p of policies) p.saw?.(host.current, move);
+      const acting = actingUnits(host.current).map((u) => u.id);
+      const mark = `${host.current.turn.round}:${host.current.turn.phase}:${acting.join()}`;
+      loopRun = acting.length && mark === loopMark ? loopRun + 1 : 0;
+      loopMark = mark;
+      if (loopRun > 60)
+        throw new Error(`looping: ${loopRun} moves in a row in one activation (${acting.join()})`);
       const now = host.current;
       if (
         now.turn.round !== state.turn.round ||
