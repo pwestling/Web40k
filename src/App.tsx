@@ -3,6 +3,7 @@ import { loadTrystero, useStore } from "./store";
 import { CrashGuard } from "./ui/Crash";
 import { SavedToast } from "./ui/SavedNote";
 import { Lobby } from "./ui/Lobby";
+import { useLibraryOpen } from "./figures/open";
 
 /**
  * The 3D table, three.js and every in-game panel load as their own chunk,
@@ -12,9 +13,14 @@ import { Lobby } from "./ui/Lobby";
  */
 const loadGame = () => import("./GameScreen");
 const GameScreen = lazy(() => loadGame().then((m) => ({ default: m.GameScreen })));
+/** The figure library (#33) loads when it's first opened. */
+const FigureLibrary = lazy(() =>
+  import("./figures/FigureLibrary").then((m) => ({ default: m.FigureLibrary })),
+);
 
 export function App() {
   const started = useStore((s) => s.session !== null || s.role === "spectator");
+  const library = useLibraryOpen((s) => s.tab !== null);
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
@@ -31,6 +37,11 @@ export function App() {
       </CrashGuard>
       {!started && <Lobby />}
       <SavedToast />
+      {library && (
+        <Suspense fallback={null}>
+          <FigureLibrary />
+        </Suspense>
+      )}
     </>
   );
 }

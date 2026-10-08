@@ -41,3 +41,53 @@ export async function putCached(asset: ModelAsset): Promise<void> {
     // Private mode or storage full: the asset still works for this session.
   }
 }
+
+async function keys(): Promise<string[]> {
+  try {
+    const db = await open();
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction(STORE).objectStore(STORE).getAllKeys();
+      req.onsuccess = () => resolve(req.result.map(String));
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function remove(names: string[]): Promise<void> {
+  if (!names.length) return;
+  try {
+    const db = await open();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      for (const n of names) tx.objectStore(STORE).delete(n);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    // Nothing to remove.
+  }
+}
+
+/** The ids of every processed asset kept on this device (for the figure library, #33). */
+export async function listCached(): Promise<string[]> {
+  const suffix = `:v${PIPELINE_VERSION}`;
+  return (await keys()).filter((k) => k.endsWith(suffix)).map((k) => k.slice(0, -suffix.length));
+}
+
+/** Forget assets, at every pipeline version. */
+export async function deleteCached(ids: string[]): Promise<void> {
+  const gone = new Set(ids);
+  await remove((await keys()).filter((k) => gone.has(k.split(":")[0]!)));
+}
+
+/** Assets processed by an older pipeline (rebuilt from their files if uploaded again): how many, and remove them. */
+export async function staleCached(): Promise<string[]> {
+  const suffix = `:v${PIPELINE_VERSION}`;
+  return (await keys()).filter((k) => !k.endsWith(suffix));
+}
+
+export async function deleteStale(): Promise<void> {
+  await remove(await staleCached());
+}

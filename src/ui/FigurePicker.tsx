@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Model, Unit } from "../core";
 import { bindingKey, restyleUnit, unitKeys, useAssets } from "../assets/store";
 import { MODEL_EXTENSIONS } from "../assets/parse";
+import { dressFromLibrary } from "../figures/actions";
+import { useFigures } from "../figures/library";
+import { suggestions } from "../figures/match";
+import { openLibrary } from "../figures/open";
 
 const k = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n));
 
@@ -90,6 +94,7 @@ function FigureRow({
           />
         </label>
       )}
+      {editable && <FromLibrary unit={unit} label={label} keys={keys} current={figure?.asset} />}
       {editable && figure && (
         <>
           <button
@@ -113,5 +118,58 @@ function FigureRow({
       {!editable && figure && <span className="muted small">{figure.name}</span>}
       {message && <span className="muted small">{message}</span>}
     </div>
+  );
+}
+
+/** Dress the models from the figure library (#33): figures that fit the unit's name first. */
+function FromLibrary({
+  unit,
+  label,
+  keys,
+  current,
+}: {
+  unit: Unit;
+  label: string;
+  keys: string[];
+  current: string | undefined;
+}) {
+  const entries = useFigures((s) => s.entries);
+  useEffect(() => void useFigures.getState().load(), []);
+  const figures = Object.values(entries)
+    .filter((e) => e.kind === "miniature")
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (!figures.length) return null;
+  const fits = suggestions(figures, label === unit.name ? unit.name : label);
+  const rest = figures.filter((e) => !fits.includes(e));
+  return (
+    <select
+      className="small"
+      aria-label={`Figure from the library for ${label}`}
+      value=""
+      onChange={(e) => {
+        const id = e.target.value;
+        if (id === "open") openLibrary();
+        else if (id) void dressFromLibrary(unit.id, id, keys);
+      }}
+    >
+      <option value="">From the library…</option>
+      {fits.length > 0 && (
+        <optgroup label="Fits this unit">
+          {fits.map((f) => (
+            <option key={f.id} value={f.id} disabled={f.id === current}>
+              {f.name}
+            </option>
+          ))}
+        </optgroup>
+      )}
+      <optgroup label={fits.length ? "Everything else" : "Your figures"}>
+        {rest.map((f) => (
+          <option key={f.id} value={f.id} disabled={f.id === current}>
+            {f.name}
+          </option>
+        ))}
+      </optgroup>
+      <option value="open">Open the figure library…</option>
+    </select>
   );
 }

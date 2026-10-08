@@ -41,7 +41,8 @@ export function figureProxy(mesh: MeshData): FigureProxy {
   for (let i = 1; i < p.length; i += 3) height = Math.max(height, p[i]!);
   const radii: number[][] = Array.from({ length: BANDS }, () => []);
   for (let i = 0; i < p.length; i += 3) {
-    const band = Math.min(BANDS - 1, Math.floor((p[i + 1]! / height) * BANDS));
+    // Rounding can leave a vertex a hair below the feet (y = 0): it belongs to the lowest band.
+    const band = Math.max(0, Math.min(BANDS - 1, Math.floor((p[i + 1]! / height) * BANDS)));
     radii[band]!.push(Math.hypot(p[i]!, p[i + 2]!));
   }
   const bands: FigureProxy["bands"] = [];

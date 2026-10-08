@@ -61,3 +61,11 @@ describe("box proxy", () => {
     expect(proxy.length).toBeGreaterThan(0);
   });
 });
+
+describe("figure bands", () => {
+  it("keeps a vertex rounded a hair below the feet in the lowest band", () => {
+    const positions = new Float32Array([1, -1e-7, 0, -1, 0, 0, 0, 1, 1, 0, 2, 0]);
+    const proxy = figureProxy({ positions, indices: new Uint32Array([0, 1, 2, 1, 3, 2]) });
+    expect(proxy.bands.length).toBeGreaterThan(0);
+  });
+});

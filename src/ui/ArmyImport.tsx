@@ -1,7 +1,10 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
 import { SavedNote } from "./SavedNote";
 import { dressFromShelf, exportArmy, importArmyFile, saveToShelf, useDeployed } from "./shelfActions";
+import { dressFromLibrary } from "../figures/actions";
+import { useFigures } from "../figures/library";
+import { suggestions } from "../figures/match";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
@@ -73,6 +76,26 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   // Skirmishers deploy as a loose spread, not a block; the player can change it per unit.
   const [loose, setLoose] = useState<Record<number, boolean>>({});
   const skirmish = (i: number, u: ImportedRoster["units"][number]) => loose[i] ?? isSkirmisher(u);
+  // Figures from the library (#33), by unit index: suggested by name, assigned on deploy.
+  const [figs, setFigs] = useState<Record<number, string>>({});
+  const entries = useFigures((s) => s.entries);
+  useEffect(() => {
+    if (roster) void useFigures.getState().load();
+  }, [roster]);
+  const library = useMemo(
+    () =>
+      Object.values(entries)
+        .filter((e) => e.kind === "miniature")
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [entries],
+  );
+  const suggested = useMemo(
+    () => (roster ? roster.units.map((u) => suggestions(library, u.name)) : []),
+    [roster, library],
+  );
+  // A shelf army already wears its own figures; suggestions are for the units that don't.
+  const dressed = (i: number) => !!fromShelf && Object.keys(fromShelf.figures[i] ?? {}).length > 0;
+  const open = suggested.flatMap((s, i) => (s[0] && !dressed(i) && figs[i] !== s[0].id ? [i] : []));
 
   const load = async (file: File) => {
     setBusy(true);
@@ -95,8 +118,14 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
     useDeployed.setState({ [owner]: { roster: { ...roster, units }, prefix, shelfId: fromShelf?.id } });
-    if (fromShelf) void dressFromShelf(fromShelf, owner, prefix);
+    const shelf = fromShelf;
+    const picks = Object.entries(figs).filter(([, id]) => id);
+    void (async () => {
+      if (shelf) await dressFromShelf(shelf, owner, prefix);
+      for (const [i, id] of picks) await dressFromLibrary(`${prefix}-${i}`, id);
+    })();
     setFromShelf(null);
+    setFigs({});
     // On one screen, the next army is for whoever has none yet (UX 155).
     const next = players.find(
       (p) => p.id !== owner && !Object.values(game.units).some((u) => u.owner === p.id),
@@ -109,6 +138,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const cancel = () => {
     setRoster(null);
     setFromShelf(null);
+    setFigs({});
   };
 
   /** Fill a characteristic the list left out, for every model of the unit that lacks it. */
@@ -191,6 +221,32 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 {w}
               </p>
             ))}
+            {open.length > 0 && (
+              <p className="row wrap">
+                <span className="small">
+                  Your figure library has figures that fit {open.length}{" "}
+                  {open.length === 1 ? "unit" : "units"}.
+                </span>
+                <button
+                  className="small"
+                  onClick={() => {
+                    const next = { ...figs };
+                    for (const i of open) next[i] = suggested[i]![0]!.id;
+                    setFigs(next);
+                  }}
+                >
+                  Use them
+                </button>
+              </p>
+            )}
+            {Object.values(figs).some(Boolean) && open.length === 0 && (
+              <p className="row wrap small">
+                <span className="muted">Picked figures go on when the army is deployed.</span>
+                <button className="quiet small" onClick={() => setFigs({})}>
+                  Clear the figures
+                </button>
+              </p>
+            )}
             <table className="import-units">
               <thead>
                 <tr>
@@ -200,6 +256,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                   <th>Models</th>
                   <th>Base</th>
                   {ranked && <th title="Models in the front rank">Frontage</th>}
+                  {library.length > 0 && <th>Figure</th>}
                 </tr>
               </thead>
               <tbody>
@@ -265,10 +322,43 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                           )}
                         </td>
                       )}
+                      {library.length > 0 && (
+                        <td className="figure-pick">
+                          {dressed(i) && !figs[i] ? (
+                            <span className="muted small">From your shelf</span>
+                          ) : (
+                            <select
+                              aria-label={`${u.name} figure`}
+                              value={figs[i] ?? ""}
+                              onChange={(e) => setFigs({ ...figs, [i]: e.target.value })}
+                            >
+                              <option value="">
+                                {suggested[i]?.length ? `Suggested: ${suggested[i]![0]!.name}` : "Stand-ins"}
+                              </option>
+                              {suggested[i]?.length ? (
+                                <optgroup label="Fits this unit">
+                                  {suggested[i]!.map((f) => (
+                                    <option key={f.id} value={f.id}>
+                                      {f.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              ) : null}
+                              <optgroup label="Your figures">
+                                {library.map((f) => (
+                                  <option key={f.id} value={f.id}>
+                                    {f.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            </select>
+                          )}
+                        </td>
+                      )}
                     </tr>
                     {u.missing && u.missing.length > 0 && (
                       <tr className="missing-stats">
-                        <td colSpan={ranked ? 6 : 4}>
+                        <td colSpan={(ranked ? 6 : 4) + (library.length > 0 ? 1 : 0)}>
                           <span className="warn small">Not in the list, fill in: </span>
                           {u.missing.map((k) => (
                             <label key={k} className="stat-input">

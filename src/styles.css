@@ -3229,3 +3229,96 @@ body.showcase
   font-size: 1.05rem;
   white-space: pre-wrap;
 }
+
+/* Figure library (#33) */
+.modal.figure-library {
+  width: min(760px, calc(100vw - 32px));
+  background: #111827;
+}
+.figure-library .tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.figure-library .tabs .on,
+.tag-filter .chip.on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.tag-filter .chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+.figure-grid {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+.figure-card {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px;
+  border: 1px solid #374151;
+  border-radius: 6px;
+}
+.figure-card.picked {
+  border-color: #f59e0b;
+}
+.figure-card .thumb {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  background: #111827;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.figure-card .thumb input {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  margin: 0;
+}
+.figure-card .no-thumb {
+  font-size: 2rem;
+  color: #6b7280;
+}
+.figure-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.figure-info input {
+  width: 100%;
+}
+.figure-info .figure-name {
+  font-weight: 600;
+}
+.storage-meter {
+  width: 100%;
+}
+.storage-list {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+.storage-list td {
+  padding: 2px 4px;
+  border-top: 1px solid #1f2937;
+}
+.storage-list .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.import-units .figure-pick select {
+  max-width: 180px;
+}

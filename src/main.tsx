@@ -6,6 +6,7 @@ import * as core from "./core";
 import { useStore } from "./store";
 import "./styles.css";
 import { loadSiteConfig } from "./net/config";
+import { watchFigures } from "./figures/library";
 import { watchErrors } from "./ui/report";
 import { applyTextSize } from "./ui/textSize";
 
@@ -13,6 +14,8 @@ import { applyTextSize } from "./ui/textSize";
 watchErrors();
 // The player's text size (#25).
 applyTextSize();
+// Models joining this browser go into the figure library (#33).
+watchFigures();
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
 void loadSiteConfig().then(() =>
