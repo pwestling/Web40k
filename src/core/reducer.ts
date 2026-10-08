@@ -203,7 +203,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
               ...state.campaign,
               armies: {
                 ...state.campaign.armies,
-                [event.player]: { armyId: event.armyId, prefix: event.prefix },
+                [event.player]: {
+                  armyId: event.armyId,
+                  prefix: event.prefix,
+                  ...(event.name ? { name: event.name } : {}),
+                  ...(event.system ? { system: event.system } : {}),
+                },
               },
             },
           }

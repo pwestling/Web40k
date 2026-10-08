@@ -86,10 +86,20 @@ export type Intent =
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
   | { type: "player/color"; player: PlayerId; color: string }
-  /** Play this game for a campaign book (null: for none). Its armies carry over when only the hash changes. */
-  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null }
-  /** Which shelf army a player brought, for the campaign book. */
-  | { type: "campaign/army"; player: PlayerId; armyId: string; prefix: string }
+  /**
+   * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
+   * changes; `recorded` says the change is the book taking in this game's result.
+   */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean }
+  /** Which shelf army a player brought, for the campaign book, with its name. */
+  | {
+      type: "campaign/army";
+      player: PlayerId;
+      armyId: string;
+      prefix: string;
+      name?: string;
+      system?: string;
+    }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -222,10 +232,20 @@ export type GameEvent =
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
   | { type: "player/color"; player: PlayerId; color: string }
-  /** Play this game for a campaign book (null: for none). Its armies carry over when only the hash changes. */
-  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null }
-  /** Which shelf army a player brought, for the campaign book. */
-  | { type: "campaign/army"; player: PlayerId; armyId: string; prefix: string }
+  /**
+   * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
+   * changes; `recorded` says the change is the book taking in this game's result.
+   */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean }
+  /** Which shelf army a player brought, for the campaign book, with its name. */
+  | {
+      type: "campaign/army";
+      player: PlayerId;
+      armyId: string;
+      prefix: string;
+      name?: string;
+      system?: string;
+    }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -431,6 +451,7 @@ export function resolveIntent(
       return {
         type: "campaign/set",
         ref: { id: r.id, name: r.name, hash: r.hash, ...(r.territory ? { territory: r.territory } : {}) },
+        ...(intent.recorded ? { recorded: true } : {}),
       };
     }
     case "campaign/army":
@@ -441,7 +462,16 @@ export function resolveIntent(
         intent.armyId.length <= 64 &&
         typeof intent.prefix === "string" &&
         intent.prefix.length <= 64
-        ? { type: "campaign/army", player: intent.player, armyId: intent.armyId, prefix: intent.prefix }
+        ? {
+            type: "campaign/army",
+            player: intent.player,
+            armyId: intent.armyId,
+            prefix: intent.prefix,
+            ...(typeof intent.name === "string" && intent.name ? { name: intent.name.slice(0, 120) } : {}),
+            ...(typeof intent.system === "string" && intent.system
+              ? { system: intent.system.slice(0, 64) }
+              : {}),
+          }
         : null;
     case "player/claim":
       return state?.players[intent.player] && intent.player !== from

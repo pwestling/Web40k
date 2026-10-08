@@ -48,7 +48,17 @@ describe("campaign book", () => {
       },
       "p1",
     );
-    g.play({ type: "campaign/army", player: "p1", armyId: "army-1", prefix: "p1-a" }, "p1");
+    g.play(
+      {
+        type: "campaign/army",
+        player: "p1",
+        armyId: "army-1",
+        prefix: "p1-a",
+        name: "Vanguard",
+        system: "wh40k",
+      },
+      "p1",
+    );
     expect(() => g.play({ type: "campaign/army", player: "p1", armyId: "x", prefix: "y" }, "p2")).toThrow();
     const victim = g.state.units["p2-b-0"]!.modelIds[0]!;
     g.play({ type: "model/wounds", id: victim, woundsLost: 1, destroyed: true }, "p1");
@@ -59,8 +69,7 @@ describe("campaign book", () => {
     expect(campaignUnitKey(g.state, "p1-a-2")).toBe("army-1:2");
     expect(campaignUnitKey(g.state, "p2-b-0")).toBeNull();
 
-    const shelf = { "army-1": { name: "Vanguard", system: "wh40k" } };
-    const after = recordGame(book, g.record, g.state, { seats: [0, 1], vp: [10, 5] }, shelf);
+    const after = recordGame(book, g.record, g.state, { seats: [0, 1], vp: [10, 5] });
     expect(after.games).toHaveLength(1);
     expect(after.games[0]).toMatchObject({ winner: 0, territory: "Hive Tertius" });
     expect(after.games[0]!.sides[0]).toMatchObject({ players: ["Ana"], armies: ["Vanguard"], vp: 10 });
@@ -73,7 +82,7 @@ describe("campaign book", () => {
     expect(league[1]).toMatchObject({ name: "Bo", lost: 1, points: 0 });
 
     // The same game twice is one game; the same book hashes the same, whatever the key order.
-    expect(recordGame(after, g.record, g.state, { seats: [0, 1], vp: [10, 5] }, shelf)).toBe(after);
+    expect(recordGame(after, g.record, g.state, { seats: [0, 1], vp: [10, 5] })).toBe(after);
     const reordered = Object.fromEntries(Object.entries(after).reverse());
     expect(campaignHash(readCampaign(reordered)!)).toBe(campaignHash(after));
     expect(readCampaign({ format: "nope" })).toBeNull();

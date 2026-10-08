@@ -345,7 +345,15 @@ export interface CampaignRef {
   /** A place on the campaign map this game is fought over; the winner takes it. */
   territory?: string;
   /** Each player's army as it sits on their shelf: units are `${prefix}-${index in its roster}`. */
-  armies: Record<PlayerId, { armyId: string; prefix: string }>;
+  armies: Record<PlayerId, CampaignArmyLink>;
+}
+
+/** A player's shelf army in a campaign game, named here so every peer writes the same book. */
+export interface CampaignArmyLink {
+  armyId: string;
+  prefix: string;
+  name?: string;
+  system?: string;
 }
 
 export interface GameSettings {

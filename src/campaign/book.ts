@@ -137,15 +137,15 @@ export function recordGame(
   record: GameRecord,
   game: GameState,
   result: { vp: number[]; seats: number[] },
-  shelfArmies: Record<string, { name: string; system: string }> = {},
 ): CampaignBook {
   const id = gameId(record);
   const ref = game.campaign;
   if (!id || !ref || ref.id !== book.id || book.games.some((g) => g.id === id)) return book;
   const stats = gameStats(record);
   const players = Object.values(game.players);
+  // Only what the game itself says, so every peer writes the same bytes (UX 201).
   const armyName = (armyId: string) =>
-    shelfArmies[armyId]?.name ??
+    Object.values(ref.armies).find((a) => a.armyId === armyId && a.name)?.name ??
     book.players.flatMap((p) => p.armies).find((a) => a.id === armyId)?.name ??
     "an army";
   const sides: CampaignSide[] = result.seats.map((seat, i) => {
@@ -188,7 +188,7 @@ export function recordGame(
       entryFor.armies.push({
         id: link.armyId,
         name: armyName(link.armyId),
-        system: shelfArmies[link.armyId]?.system ?? game.system ?? DEFAULT_SYSTEM,
+        system: link.system ?? game.system ?? DEFAULT_SYSTEM,
       });
   }
 

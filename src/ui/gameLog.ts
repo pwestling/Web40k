@@ -415,7 +415,9 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         return event.ref.territory
           ? `${who} set the stakes: ${event.ref.territory}`
           : `${who} took the territory off the table`;
-      return `${who} shared their copy of ${event.ref.name}`;
+      return event.recorded
+        ? `${event.ref.name} recorded this game`
+        : `${who} shared their copy of ${event.ref.name}`;
     case "campaign/army":
       return "";
     case "dice/roll": {

@@ -76,19 +76,35 @@ export function CampaignKeeper() {
   }, []);
   // The game's copy, fetched from the room when this device has none.
   const copy = useCopy();
+  const edited = useCampaigns((s) => (ref ? !!s.edited[ref.id] : false));
+  // A copy that differs and hasn't been changed by hand here is just behind: take the table's (UX 202).
   useEffect(() => {
-    if (live && ref && copy === "missing") requestCampaign(ref.hash);
-  }, [live, ref, copy]);
+    if (live && ref && (copy === "missing" || (copy === "different" && !edited))) requestCampaign(ref.hash);
+  }, [live, ref, copy, edited]);
+  const shelf = useShelf((s) => s.armies);
   // Link each of this device's players to the shelf army they brought.
   useEffect(() => {
     if (!live || !ref) return;
     for (const [player, d] of Object.entries(deployed)) {
       if (!d.shelfId || !game.players[player] || !canControl(player)) continue;
       const link = ref.armies[player];
-      if (link?.armyId === d.shelfId && link.prefix === d.prefix) continue;
-      dispatch({ type: "campaign/army", player, armyId: d.shelfId, prefix: d.prefix }, player);
+      const army = shelf[d.shelfId];
+      const name = army?.name ?? d.roster.name;
+      if (link?.armyId === d.shelfId && link.prefix === d.prefix && link.name === name) continue;
+      // Named in the game, so every peer's book calls it the same (UX 201, 204).
+      dispatch(
+        {
+          type: "campaign/army",
+          player,
+          armyId: d.shelfId,
+          prefix: d.prefix,
+          name,
+          ...(army?.system ? { system: army.system } : {}),
+        },
+        player,
+      );
     }
-  }, [live, ref, deployed, game.players, canControl, dispatch]);
+  }, [live, ref, deployed, shelf, game.players, canControl, dispatch]);
   // When the battle is over and scored, the game goes in the book.
   const over = useMemo(
     () => !!ref && battleOver(game) && pendingScores(record, game, missionOf(game)).length === 0,
@@ -99,18 +115,22 @@ export function CampaignKeeper() {
     const book = books[ref.id];
     const id = gameId(record);
     if (!book || !id || book.games.some((g) => g.id === id)) return;
-    const matched = useCampaigns.getState().hashes[book.id] === ref.hash;
-    const next = recordGame(book, record, game, result(game), shelfSummary());
-    useCampaigns.getState().put(next);
     void saveReplay(id, record);
-    // One peer moves the game on to the new copy: whoever plays the first side's first player.
+    // One peer leads: whoever plays the first side's first player. It writes the game into its copy
+    // and points the game at it. The others write the same entry when their copy matched the
+    // game's (the same bytes, from game state alone), or take the leader's copy when it didn't.
     const first = sidePlayers(game, sides(game)[0] ?? 0)[0];
-    if (matched && first && canControl(first.id)) {
+    const leads = !!first && canControl(first.id);
+    const matched = useCampaigns.getState().hashes[book.id] === ref.hash;
+    if (!matched && !leads) return;
+    useCampaigns.getState().put(recordGame(book, record, game, result(game)));
+    if (leads) {
       const hash = useCampaigns.getState().hashes[book.id]!;
       dispatch(
         {
           type: "campaign/set",
           ref: { id: ref.id, name: ref.name, hash, ...(ref.territory ? { territory: ref.territory } : {}) },
+          recorded: true,
         },
         first.id,
       );
@@ -122,12 +142,6 @@ export function CampaignKeeper() {
 function result(game: GameState) {
   const seats = sides(game);
   return { seats, vp: seats.map((seat) => game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0) };
-}
-
-function shelfSummary() {
-  return Object.fromEntries(
-    Object.values(useShelf.getState().armies).map((a) => [a.id, { name: a.name, system: a.system }]),
-  );
 }
 
 /** The menu's campaign fold: pick a book to play for, see whether copies match, set the stakes. */
@@ -145,12 +159,14 @@ export function CampaignFold() {
   // A copy that differs opens the fold to say so; closing it is the player's call.
   const fold = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (copy === "different" && fold.current) fold.current.open = true;
-  }, [copy]);
+    if (copy === "different" && edited && fold.current) fold.current.open = true;
+  }, [copy, edited]);
   if (role === "spectator" && !ref) return null;
   const book = ref ? books[ref.id] : undefined;
   const seat = Object.values(game.players).find((p) => p.seat !== undefined);
-  const play = (b: CampaignBook, territory?: string) =>
+  /** Point the game at this device's copy of a book (sharing it); it's then in step, not edited. */
+  const play = (b: CampaignBook, territory?: string) => {
+    useCampaigns.setState((s) => ({ edited: { ...s.edited, [b.id]: false } }));
     dispatch(
       {
         type: "campaign/set",
@@ -160,6 +176,17 @@ export function CampaignFold() {
           hash: useCampaigns.getState().hashes[b.id]!,
           ...(territory ? { territory } : {}),
         },
+      },
+      seat?.id,
+    );
+  };
+  /** The place fought over: the game's copy of the book stays as it is. */
+  const stake = (territory?: string) =>
+    ref &&
+    dispatch(
+      {
+        type: "campaign/set",
+        ref: { id: ref.id, name: ref.name, hash: ref.hash, ...(territory ? { territory } : {}) },
       },
       seat?.id,
     );
@@ -214,17 +241,15 @@ export function CampaignFold() {
                 </div>
               </div>
             ) : (
-              <div className="warn-box" role="alert">
-                <p>Your copy of {ref.name} isn't the same as the one this game uses.</p>
-                <div className="row wrap">
-                  <button className="primary" onClick={() => requestCampaign(ref.hash)}>
-                    Use the game's copy
-                  </button>
-                  {role !== "spectator" && book && (
-                    <button onClick={() => play(book, ref.territory)}>Share my copy</button>
-                  )}
-                </div>
-              </div>
+              // Unchanged here, so it's only behind: the game's copy is on its way (UX 202).
+              <p className="muted">
+                {transfers[ref.hash]?.state === "failed"
+                  ? `The copy of ${ref.name} that came didn't match. `
+                  : `Getting the latest ${ref.name} from the table… `}
+                <button className="small" onClick={() => requestCampaign(ref.hash)}>
+                  Ask again
+                </button>
+              </p>
             ))}
           {book && (
             <div className="row wrap">
@@ -233,7 +258,7 @@ export function CampaignFold() {
                 <select
                   aria-label="Fighting over"
                   value={ref.territory ?? ""}
-                  onChange={(e) => play(book, e.target.value || undefined)}
+                  onChange={(e) => stake(e.target.value || undefined)}
                 >
                   <option value="">Fighting over nowhere</option>
                   {book.map.map((t) => (
@@ -350,7 +375,7 @@ function Linked({ game }: { game: GameState }) {
           <li key={p.id}>
             {p.name}:{" "}
             {link ? (
-              (shelf[link.armyId]?.name ?? "their shelf army")
+              (link.name ?? shelf[link.armyId]?.name ?? "a shelf army")
             ) : (
               <span className="muted">no shelf army yet (save it to your shelf to track its units)</span>
             )}
@@ -533,6 +558,7 @@ function Games({ book, replays }: { book: CampaignBook; replays: Set<string> }) 
 }
 
 function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => void }) {
+  const [editing, setEditing] = useState(false);
   const entries = Object.entries(book.units);
   if (!entries.length)
     return (
@@ -548,6 +574,14 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
   for (const e of entries) byArmy.set(e[1].army, [...(byArmy.get(e[1].army) ?? []), e]);
   return (
     <>
+      <div className="row spread">
+        <p className="muted small">
+          Kills, games and wounds fill in after each game. Honours and scars are yours to write.
+        </p>
+        <button className={editing ? "small on" : "small"} onClick={() => setEditing(!editing)}>
+          {editing ? "Done editing" : "Edit"}
+        </button>
+      </div>
       {[...byArmy].map(([army, units]) => (
         <section key={army}>
           <h4>{army}</h4>
@@ -569,28 +603,41 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
                   <td>{u.name}</td>
                   {(["kills", "games", "survived", "wounds"] as const).map((f) => (
                     <td key={f}>
-                      <input
-                        type="number"
-                        min={0}
-                        aria-label={`${u.name}: ${f === "wounds" ? "wounds carried" : f}`}
-                        value={u[f]}
-                        onChange={(e) => edit(key, { [f]: num(e.target.value) })}
-                      />
+                      {/* Read as a record; numbers change only in Edit (UX 206). */}
+                      {!editing ? (
+                        u[f]
+                      ) : (
+                        <input
+                          type="number"
+                          min={0}
+                          aria-label={`${u.name}: ${f === "wounds" ? "wounds carried" : f}`}
+                          value={u[f]}
+                          onChange={(e) => edit(key, { [f]: num(e.target.value) })}
+                        />
+                      )}
                     </td>
                   ))}
                   <td>
-                    <input
-                      aria-label={`${u.name}: honours`}
-                      value={u.honours}
-                      onChange={(e) => edit(key, { honours: e.target.value })}
-                    />
+                    {editing ? (
+                      <input
+                        aria-label={`${u.name}: honours`}
+                        value={u.honours}
+                        onChange={(e) => edit(key, { honours: e.target.value })}
+                      />
+                    ) : (
+                      u.honours || <span className="muted">–</span>
+                    )}
                   </td>
                   <td>
-                    <input
-                      aria-label={`${u.name}: scars`}
-                      value={u.scars}
-                      onChange={(e) => edit(key, { scars: e.target.value })}
-                    />
+                    {editing ? (
+                      <input
+                        aria-label={`${u.name}: scars`}
+                        value={u.scars}
+                        onChange={(e) => edit(key, { scars: e.target.value })}
+                      />
+                    ) : (
+                      u.scars || <span className="muted">–</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -624,48 +671,54 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
         {book.map.map((t, i) => (
           <li key={t.name} className={t.holder ? "held" : ""}>
             <span>{t.name}</span>
-            <select
-              aria-label={`Who holds ${t.name}`}
-              value={t.holder ?? ""}
-              onChange={(e) =>
-                save({
-                  ...book,
-                  map: book.map.map((x, j) =>
-                    j === i ? { name: x.name, ...(e.target.value ? { holder: e.target.value } : {}) } : x,
-                  ),
-                })
-              }
-            >
-              <option value="">Nobody holds it</option>
-              {players.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={`Table for ${t.name}`}
-              value={t.table?.id ?? ""}
-              onChange={(e) => {
-                const picked = libraryTables[e.target.value];
-                save({
-                  ...book,
-                  map: book.map.map((x, j) => {
-                    if (j !== i) return x;
-                    const { table: _t, ...rest } = x;
-                    return picked ? { ...rest, table: { id: picked.id, name: picked.name } } : rest;
-                  }),
-                });
-              }}
-            >
-              <option value="">Any table</option>
-              {t.table && !libraryTables[t.table.id] && <option value={t.table.id}>{t.table.name}</option>}
-              {Object.values(libraryTables).map((lt) => (
-                <option key={lt.id} value={lt.id}>
-                  {lt.name}
-                </option>
-              ))}
-            </select>
+            <label className="small">
+              Held by{" "}
+              <select
+                aria-label={`Who holds ${t.name}`}
+                value={t.holder ?? ""}
+                onChange={(e) =>
+                  save({
+                    ...book,
+                    map: book.map.map((x, j) =>
+                      j === i ? { name: x.name, ...(e.target.value ? { holder: e.target.value } : {}) } : x,
+                    ),
+                  })
+                }
+              >
+                <option value="">nobody</option>
+                {players.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="small">
+              Played on{" "}
+              <select
+                aria-label={`Table for ${t.name}`}
+                value={t.table?.id ?? ""}
+                onChange={(e) => {
+                  const picked = libraryTables[e.target.value];
+                  save({
+                    ...book,
+                    map: book.map.map((x, j) => {
+                      if (j !== i) return x;
+                      const { table: _t, ...rest } = x;
+                      return picked ? { ...rest, table: { id: picked.id, name: picked.name } } : rest;
+                    }),
+                  });
+                }}
+              >
+                <option value="">any table</option>
+                {t.table && !libraryTables[t.table.id] && <option value={t.table.id}>{t.table.name}</option>}
+                {Object.values(libraryTables).map((lt) => (
+                  <option key={lt.id} value={lt.id}>
+                    {lt.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               className="small"
               aria-label={`Remove ${t.name}`}
