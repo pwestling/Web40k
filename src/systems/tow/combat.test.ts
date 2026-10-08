@@ -158,8 +158,13 @@ describe("The Old World combat as code", () => {
     for (let seed = 1; seed < 40; seed++) {
       const { t: fresh } = setup();
       fresh.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1", seed);
-      const step = fresh.events.at(-1)!;
-      const roll = step.type === "script/step" && step.events.find((e) => e.type === "dice/roll");
+      // The Battle Standard Bearer in the unit re-rolls a failed test once: the last roll decides.
+      const rolls = fresh.events.flatMap((ev) =>
+        ev.type === "script/step"
+          ? ev.events.filter((e) => e.type === "dice/roll" && /panic/i.test(JSON.stringify(e)))
+          : [],
+      );
+      const roll = rolls.at(-1);
       const total = roll && roll.type === "dice/roll" ? roll.roll.results.reduce((a, b) => a + b, 0) : 0;
       // Best Leadership in the unit: the Warden Captain's 9. All 25 models stand, so a fail falls back.
       const text = fresh.notes().join(" ");

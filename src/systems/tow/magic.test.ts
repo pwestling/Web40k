@@ -32,7 +32,7 @@ describe("Old World magic", () => {
     const targets = () => cast.targets!(view(t.s), { player: "p1", unitId: spears }).map((x) => x.label);
     toPhase(t, "strategy");
     expect(offered()).toBe(true);
-    expect(targets()[0]).toMatch(/^itself .*Ward of Thorns/);
+    expect(targets()[0]).toBe("Ward of Thorns on itself");
     toPhase(t, "movement");
     expect(targets()[0]).toMatch(/Mire Step/);
     toPhase(t, "shooting");

@@ -362,18 +362,22 @@ export const magicActions: CodeAction[] = [
     targets: (view, actor) => {
       const u = view.state.units[actor.unitId ?? ""];
       if (!u) return [];
-      const seen = new Map<string, { unitId: string; label: string; d: number }>();
+      // "Ward of Thorns on itself", "Spark Lance at Reaver Warband (9.2")" (UX 248).
+      const seen = new Map<string, { unitId: string; spells: string[]; where: string; d: number }>();
       for (const s of castable(view, u))
         for (const x of spellTargets(view, u, s)) {
           const t = seen.get(x.u.id) ?? {
             unitId: x.u.id,
-            label: `${x.u.id === u.id ? "itself" : x.u.name} (${x.d.toFixed(1)}"):`,
+            spells: [],
+            where: x.u.id === u.id ? "on itself" : `at ${x.u.name} (${x.d.toFixed(1)}")`,
             d: x.d,
           };
-          t.label += `${t.label.endsWith(":") ? " " : ", "}${s.name}`;
+          t.spells.push(s.name);
           seen.set(x.u.id, t);
         }
-      return [...seen.values()].sort((a, b) => a.d - b.d).map(({ unitId, label }) => ({ unitId, label }));
+      return [...seen.values()]
+        .sort((a, b) => a.d - b.d)
+        .map(({ unitId, spells, where }) => ({ unitId, label: `${spells.join(" or ")} ${where}` }));
     },
     run: castSpell,
   },

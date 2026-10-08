@@ -111,14 +111,26 @@ function marchwardens(): ImportedRoster {
       [
         { name: "Warden Captain", stats: captain, base: BIG_FOOT },
         { name: "Spear Sergeant", stats: { ...spear, A: 2 } },
-        { name: "Standard Bearer", stats: spear },
+        // Carries the army's Battle Standard: units near it re-roll failed Leadership tests.
+        { name: "Battle Standard Bearer", stats: spear },
         { name: "Hedge Seer", stats: seer },
       ],
       undefined,
       { keywords: ["General"], wizard: 2, spells: HEDGE_LORE },
     ),
     regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
-    regiment("Riders of the Downs", 6, HORSE, rider, 130, [{ name: "Banner Rider", stats: rider }]),
+    regiment(
+      "Riders of the Downs",
+      6,
+      HORSE,
+      rider,
+      130,
+      [{ name: "Banner Rider", stats: rider }],
+      undefined,
+      {
+        rules: ["Hatred"],
+      },
+    ),
     regiment(
       "Siege Engine",
       1,
@@ -172,7 +184,18 @@ function reavers(): ImportedRoster {
       { keywords: ["General"], wizard: 1, spells: BONE_LORE },
     ),
     regiment("Tusk Brutes", 6, BRUTE, brute, 210, [], undefined, { rules: ["Fear"] }),
-    regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90),
+    regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90, [], undefined, { rules: ["Frenzy"] }),
+    // A lone, dim-witted monster: it causes Terror and tests for Stupidity each turn.
+    regiment(
+      "Bog Hulk",
+      1,
+      BRUTE,
+      { M: 6, WS: 3, BS: 0, S: 5, T: 5, W: 5, I: 1, A: 4, Ld: 4, US: 5, Troop: "Monster" },
+      120,
+      [],
+      undefined,
+      { rules: ["Terror", "Stupidity"] },
+    ),
     regiment("Reaver Slingers", 10, FOOT, raider, 60, [], { name: "Sling", range: 18, S: 3 }),
   ];
   return { name: "Reaver Horde", points: total(units), units, warnings: [] };

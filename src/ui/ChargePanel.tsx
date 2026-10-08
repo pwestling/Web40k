@@ -13,7 +13,7 @@ import {
   type Unit,
 } from "../core";
 import { useCanControl, useStore } from "../store";
-import { systemModule } from "../systems";
+import { gameModule, systemModule } from "../systems";
 import { useGame } from "./hooks";
 import { moveBudget } from "./regiment";
 import { opposed } from "../core/teams";
@@ -67,6 +67,8 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const declared = game.modules?.[game.system ?? ""]?.[`charge:${unit.id}`] as
     { target?: string; round?: number } | undefined;
   const declaredTarget = declared?.round === game.turn.round ? declared.target : undefined;
+  // Systems whose Declare charge runs the tests and the target's reaction (UX 247).
+  const declares = !!gameModule(game.system)?.actions?.some((x) => x.id === "chargeReaction");
   const [typed, setTyped] = useState<number | null>(null);
   const upto = scrub ?? Infinity;
   const flee = lastRoll(record, unit.id, upto, "flee roll");
@@ -79,6 +81,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const far = enemies.filter((e) => e.d > reach);
   const door = closeDoor(game, unit, enemy);
   const touching = unitGap(game, unit, enemy) <= CONTACT;
+  const declaredHere = declaredTarget === enemy.id;
   const flush = !door || door.distance < 0.05;
   const inches = typed ?? flee?.total ?? pursuit?.total ?? 0;
   const chase = inches > 0 ? pursue(game, unit, enemy, inches) : null;
@@ -151,7 +154,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
                   })
             }
             // The next step only once a roll says it reaches (UX 192).
-            className={chargeRange !== null && !short ? "primary" : ""}
+            className={chargeRange !== null && !short && !(declares && !declaredHere) ? "primary" : ""}
             disabled={short}
             onClick={() => dispatch({ ...door.move, how: "charge" }, as)}
           >
@@ -160,6 +163,11 @@ export function ChargePanel({ unit }: { unit: Unit }) {
               distance: fmt(door.distance),
             })}
           </button>
+          {declares && !declaredHere && (
+            <span className="warn small">
+              {t("Moves only: no Fear test or reaction. Declare charge on the unit card runs them.")}
+            </span>
+          )}
           {chargeRange !== null && (
             <span className={`${short ? "warn" : "muted small"}${tense ? " tense" : ""}`}>
               {t("needs {distance} of {range} ({roll} + M {move})", {
