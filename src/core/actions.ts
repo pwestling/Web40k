@@ -69,6 +69,8 @@ export type Intent =
   | { type: "player/join"; player: Player }
   /** Join a leader (or any unit) to another unit, which then moves, fights and takes damage as one. */
   | { type: "unit/attach"; id: UnitId; to: UnitId }
+  /** An attached unit (`unit`) leaves the unit it joined (`id`) and is a unit of its own again. */
+  | { type: "unit/detach"; id: UnitId; unit: UnitId }
   | { type: "player/claim"; player: PlayerId }
   | { type: "model/add"; model: Model }
   | { type: "model/move"; id: ModelId; to: Vec2; facing?: number }
@@ -246,6 +248,8 @@ export type GameEvent =
   | { type: "player/join"; player: Player }
   /** Join a leader (or any unit) to another unit, which then moves, fights and takes damage as one. */
   | { type: "unit/attach"; id: UnitId; to: UnitId }
+  /** An attached unit (`unit`) leaves the unit it joined (`id`) and is a unit of its own again. */
+  | { type: "unit/detach"; id: UnitId; unit: UnitId }
   /** A reconnecting peer takes over an earlier player's seat, units and counters. */
   | { type: "player/claim"; player: PlayerId; by: PlayerId }
   | { type: "model/add"; model: Model }

@@ -775,6 +775,8 @@ export const combat: CodeProcedure = function* (ctx, args) {
   const [winners, losers, diff] =
     sa.s > sb.s ? [sides[0], sides[1], sa.s - sb.s] : [sides[1], sides[0], sb.s - sa.s];
   // Each losing unit tests, then the winners touching it follow up or pursue (one each).
+  // Panic is measured from where the fight ended, before anyone fled.
+  const ended = ctx.view.state;
   const outcomes: [Unit, "" | "flees" | "falls back"][] = [];
   for (const l of losers) {
     const lost = unitOf(ctx.view, l.id);
@@ -786,17 +788,17 @@ export const combat: CodeProcedure = function* (ctx, args) {
     const from = unitOf(ctx.view, foes.get(l.id)!.id);
     outcomes.push([l, yield* breakTest(ctx, lost, from, diff)]);
   }
-  for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all);
+  for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all, ended);
   const pursued = new Set<string>();
   for (const [l, fled] of outcomes) {
-    if (fled === "flees") yield* panicNear(ctx, unitOf(ctx.view, l.id), "broke and fled", all);
+    if (fled === "flees") yield* panicNear(ctx, unitOf(ctx.view, l.id), "broke and fled", all, ended);
     const touching = winners.filter((w) => !pursued.has(w.id) && foes.get(w.id)?.id === l.id);
     const winner = touching[0] ?? winners.find((w) => !pursued.has(w.id) && foes.get(l.id)?.id === w.id);
     if (!winner || !alive(ctx.view.state, unitOf(ctx.view, winner.id)).length) continue;
     pursued.add(winner.id);
     yield* afterBreak(ctx, winner, l, fled);
     if (fled === "flees" && !alive(ctx.view.state, unitOf(ctx.view, l.id)).length)
-      yield* panicNear(ctx, unitOf(ctx.view, l.id), "was run down", all);
+      yield* panicNear(ctx, unitOf(ctx.view, l.id), "was run down", all, ended);
   }
 };
 
@@ -882,11 +884,15 @@ export function* panicNear(
   u: Unit,
   why: string,
   busy: Unit[] = [],
+  /** Where to measure from: before the unit fled (the table as the fight ended), or now. */
+  where?: GameState,
 ): Generator<Command, void, unknown> {
   const state = ctx.view.state;
-  const fallen = u.modelIds.map((id) => state.models[id]).filter((m): m is Model => !!m);
+  const at = where ?? state;
+  const was = at.units[u.id] ?? u;
+  const fallen = u.modelIds.map((id) => at.models[id]).filter((m): m is Model => !!m);
   const near = (f: Unit) => {
-    if (alive(state, u).length) return unitGap(state, u, f) <= PANIC_RANGE;
+    if (alive(at, was).length) return unitGap(at, was, at.units[f.id] ?? f) <= PANIC_RANGE;
     // A destroyed unit is measured from where its models fell.
     return alive(state, f).some((x) =>
       fallen.some(

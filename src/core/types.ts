@@ -271,6 +271,10 @@ export interface Unit {
   sheet?: UnitSheet;
   /** Per-turn and lasting flags such as moved, advanced, shot, battleShocked. */
   status?: Record<string, number | boolean>;
+  /** Units attached to this one, as they were, so each can leave again (unit/detach). */
+  joined?: Unit[];
+  /** This unit's own name and sheet from before anything joined it. */
+  base?: { name: string; sheet?: UnitSheet };
 }
 
 export interface DiceRoll {

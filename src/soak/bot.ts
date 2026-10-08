@@ -370,7 +370,10 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
   }
   // ...and charges are declared more often than not, so fights (and crowded ones) come up.
   if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
-    yield* codeMoves(state, ctx, units, /charge|march/i);
+    yield* codeMoves(state, ctx, units, /charge|march|join|leave/i);
+  // Characters come and go now and then (The Old World's join and leave).
+  if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.3)
+    yield* codeMoves(state, ctx, units, /leave/i);
   const r = ctx.rng();
   if (r < 0.6) yield* actions();
   else if (r < 0.75) yield* codeMoves(state, ctx, units);

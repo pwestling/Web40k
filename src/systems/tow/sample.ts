@@ -141,6 +141,10 @@ function marchwardens(): ImportedRoster {
       { M: 0, WS: 0, BS: 3, S: 7, T: 7, W: 3, I: 1, A: 0, Ld: 7, US: 3, Troop: "War Machine" },
       90,
     ),
+    // A character on its own: it can join a regiment (characters.ts).
+    regiment("Fen Marshal", 1, BIG_FOOT, { ...captain, Ld: 8 }, 70, [], undefined, {
+      keywords: ["Character"],
+    }),
   ];
   return { name: "Marchwarden Host", points: total(units), units, warnings: [] };
 }

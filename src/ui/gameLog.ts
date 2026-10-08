@@ -760,6 +760,11 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         unit: unitName(event.id),
         other: unitName(event.to),
       });
+    case "unit/detach":
+      return t("{unit} left {other}", {
+        unit: game.units[event.unit]?.name ?? t("a unit"),
+        other: unitName(event.id),
+      });
     case "unit/remove":
       return t("{name} removed {unit}", { name: who, unit: unitName(event.id) });
     case "unit/move": {

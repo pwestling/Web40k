@@ -61,15 +61,17 @@ export const lessons = [
     system: "tow",
     summary: "Charge a small unit, break it, and watch its friends test for Panic.",
     you: 0,
-    // Your spears face red's slingers a couple of inches away, with the warband beside them.
+    // Your spears face red's slingers a couple of inches away.
     place: [
-      { seat: 0, unit: 0, at: { x: 0, y: -6 } },
-      { seat: 1, unit: 4, at: { x: 0, y: -1 } },
-      { seat: 1, unit: 0, at: { x: 7.5, y: 1 } },
+      { seat: 0, unit: 0, at: { x: 0, y: 6.5 } },
+      { seat: 1, unit: 4, at: { x: 0, y: 1 } },
+      // The warband (and its General's Leadership) well away; a dim Bog Hulk beside the slingers.
+      { seat: 1, unit: 0, at: { x: -22, y: -10 } },
+      { seat: 1, unit: 3, at: { x: 6, y: 0 } },
     ],
     steps: [
       {
-        say: "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with the warband beside them.",
+        say: "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with a Bog Hulk beside them.",
       },
       {
         say: "Your spears are Drilled: they march near the enemy without a test, and may redress their ranks for free before moving. Press ▶ for Movement.",
@@ -89,14 +91,15 @@ export const lessons = [
         say: "Press Fight. Both sides strike, then the loser takes a break test.",
         show: { seat: 0, unit: 0 },
         point: "Fight",
-        until: { did: "combat" },
+        // If the charge fell short there's nothing to fight: the step ends with the turn.
+        until: { any: [{ did: "combat" }, { theirTurn: true }] },
         after: [
           {
             if: "slain >= 4",
-            say: "The slingers took a beating. If they broke, the warband next to them tested for Panic by itself: the log shows how it went.",
+            say: "The slingers took a beating. If they broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
           },
           {
-            say: "The fight goes on. If the slingers broke, the warband next to them tested for Panic by itself: the log shows how it went.",
+            say: "The fight goes on. If the slingers broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
           },
         ],
       },
