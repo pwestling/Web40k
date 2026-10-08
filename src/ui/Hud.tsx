@@ -1,4 +1,5 @@
 import { ReportButton } from "./SavedNote";
+import { CampaignFold } from "../campaign/CampaignUI";
 import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
@@ -179,6 +180,7 @@ export function Hud() {
         ))}
       <SecretObjectives players={mine} />
       <SecretMissions players={mine} />
+      <CampaignFold />
 
       {role !== "spectator" && (
         <div className="row">

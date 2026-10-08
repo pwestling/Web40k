@@ -186,6 +186,28 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = state.players[event.player];
       return p ? { ...state, players: { ...state.players, [p.id]: { ...p, color: event.color } } } : state;
     }
+    case "campaign/set": {
+      if (!event.ref) {
+        const { campaign: _c, ...rest } = state;
+        return rest;
+      }
+      // The same book (a newer copy, or a new territory) keeps the armies already linked.
+      const armies = state.campaign?.id === event.ref.id ? state.campaign.armies : {};
+      return { ...state, campaign: { ...event.ref, armies } };
+    }
+    case "campaign/army":
+      return state.campaign
+        ? {
+            ...state,
+            campaign: {
+              ...state.campaign,
+              armies: {
+                ...state.campaign.armies,
+                [event.player]: { armyId: event.armyId, prefix: event.prefix },
+              },
+            },
+          }
+        : state;
     case "player/dice": {
       const p = state.players[event.player];
       if (!p) return state;

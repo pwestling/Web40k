@@ -328,8 +328,24 @@ export interface GameState {
   mission?: { id: string; name: string };
   /** Victory points players confirmed, each from a suggestion at a scoring moment. */
   scores?: ScoreEntry[];
+  /** The campaign book this game is played for (src/campaign), and which shelf army each player brought. */
+  campaign?: CampaignRef;
   /** Table options the players agreed on. */
   settings: GameSettings;
+}
+
+/**
+ * A campaign book, by the hash of its contents: each peer keeps its own copy
+ * and is warned when it differs from this one.
+ */
+export interface CampaignRef {
+  id: string;
+  name: string;
+  hash: string;
+  /** A place on the campaign map this game is fought over; the winner takes it. */
+  territory?: string;
+  /** Each player's army as it sits on their shelf: units are `${prefix}-${index in its roster}`. */
+  armies: Record<PlayerId, { armyId: string; prefix: string }>;
 }
 
 export interface GameSettings {

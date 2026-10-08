@@ -2821,3 +2821,93 @@ body.showcase
   align-items: center;
   gap: 8px;
 }
+
+/* Campaign book (24a). */
+.campaign .warn-box {
+  border: 1px solid #b45309;
+  background: rgb(120 53 15 / 35%);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.campaign .warn-box p {
+  margin: 0 0 6px;
+}
+.campaign-armies {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+.campaign-unit {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d6c48a;
+}
+.campaign-book {
+  position: fixed;
+  z-index: 60;
+  inset: max(var(--below-bar, 64px), 5vh) max(16px, calc(50vw - 420px)) 5vh;
+  background: rgb(17 19 24 / 97%);
+  border: 1px solid #2d3340;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-book .title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  min-width: 0;
+  flex: 1;
+}
+.campaign-book .title:hover,
+.campaign-book .title:focus {
+  border-color: #39404f;
+}
+.campaign-book .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.campaign-book .body {
+  overflow: auto;
+  flex: 1;
+}
+.campaign-book table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.campaign-book th,
+.campaign-book td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid #262b36;
+}
+.campaign-units input {
+  width: 100%;
+  min-width: 3.5rem;
+  box-sizing: border-box;
+}
+.campaign-games,
+.campaign-map {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-map li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.campaign-map li span {
+  flex: 1;
+}
+.campaign-book textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

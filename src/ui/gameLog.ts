@@ -408,6 +408,16 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
     case "player/color":
       return `${game.players[event.player]?.name ?? who} changed their colour`;
+    case "campaign/set":
+      if (!event.ref) return `${who} stopped playing for a campaign`;
+      if (before.campaign?.id !== event.ref.id) return `${who} brought the campaign book ${event.ref.name}`;
+      if (before.campaign.territory !== event.ref.territory)
+        return event.ref.territory
+          ? `${who} set the stakes: ${event.ref.territory}`
+          : `${who} took the territory off the table`;
+      return `${who} shared their copy of ${event.ref.name}`;
+    case "campaign/army":
+      return "";
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
       // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.

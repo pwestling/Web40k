@@ -39,6 +39,7 @@ import type {
   Zone,
   Formation,
   DiceSet,
+  CampaignRef,
 } from "./types";
 
 /** The table layout: terrain, objectives and deployment zones. */
@@ -85,6 +86,10 @@ export type Intent =
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
   | { type: "player/color"; player: PlayerId; color: string }
+  /** Play this game for a campaign book (null: for none). Its armies carry over when only the hash changes. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null }
+  /** Which shelf army a player brought, for the campaign book. */
+  | { type: "campaign/army"; player: PlayerId; armyId: string; prefix: string }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -217,6 +222,10 @@ export type GameEvent =
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
   | { type: "player/color"; player: PlayerId; color: string }
+  /** Play this game for a campaign book (null: for none). Its armies carry over when only the hash changes. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null }
+  /** Which shelf army a player brought, for the campaign book. */
+  | { type: "campaign/army"; player: PlayerId; armyId: string; prefix: string }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -411,6 +420,28 @@ export function resolveIntent(
     case "player/color":
       return state?.players[intent.player] && intent.player === from && /^#[0-9a-f]{6}$/i.test(intent.color)
         ? { type: "player/color", player: intent.player, color: intent.color.toLowerCase() }
+        : null;
+    case "campaign/set": {
+      if (!state?.players[from]) return null;
+      const r = intent.ref;
+      if (r === null) return { type: "campaign/set", ref: null };
+      const text = (v: unknown, max: number) => typeof v === "string" && v.length > 0 && v.length <= max;
+      if (!text(r.id, 64) || !text(r.name, 120) || !/^[0-9a-f]{64}$/.test(r.hash)) return null;
+      if (r.territory !== undefined && !text(r.territory, 120)) return null;
+      return {
+        type: "campaign/set",
+        ref: { id: r.id, name: r.name, hash: r.hash, ...(r.territory ? { territory: r.territory } : {}) },
+      };
+    }
+    case "campaign/army":
+      return state?.campaign &&
+        state.players[intent.player] &&
+        intent.player === from &&
+        typeof intent.armyId === "string" &&
+        intent.armyId.length <= 64 &&
+        typeof intent.prefix === "string" &&
+        intent.prefix.length <= 64
+        ? { type: "campaign/army", player: intent.player, armyId: intent.armyId, prefix: intent.prefix }
         : null;
     case "player/claim":
       return state?.players[intent.player] && intent.player !== from

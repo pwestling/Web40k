@@ -1,3 +1,4 @@
+import { CampaignUnitLine } from "../campaign/CampaignUI";
 import { focusSoon } from "./focusSoon";
 import { UnitWarnings } from "./TableWarnings";
 import { playerShape } from "./sides";
@@ -146,6 +147,7 @@ export function UnitCard() {
   if (!systemModule(game.system).dedicatedUi)
     return (
       <SystemUnitCard unit={unit}>
+        <CampaignUnitLine unitId={unit.id} />
         <CodeActions unit={unit} />
         <RegimentPanel unit={unit} />
       </SystemUnitCard>
@@ -201,6 +203,7 @@ export function UnitCard() {
         {owner?.name} · {alive.length}/{all.length} models
         {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
       </p>
+      <CampaignUnitLine unitId={unit.id} />
       {/* The unit's actions come first, so they're the first Tab stops in the card (UX 182). */}
       {mine && (
         <div className="row wrap">

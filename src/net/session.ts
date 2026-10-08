@@ -296,7 +296,12 @@ export class Session {
   }
 
   private receive(message: NetMessage, from: string): void {
-    if (message.t.startsWith("asset/") || message.t.startsWith("package/") || message.t.startsWith("talk")) {
+    if (
+      message.t.startsWith("asset/") ||
+      message.t.startsWith("package/") ||
+      message.t.startsWith("campaign/") ||
+      message.t.startsWith("talk")
+    ) {
       for (const l of this.side.values()) l.onSide(message as SideMessage, from);
       return;
     }
