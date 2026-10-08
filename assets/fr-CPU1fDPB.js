@@ -354,7 +354,7 @@ msgctxt "game"
 msgid "They held. Combat can drag on into the next turn."
 msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 
-#: src/App.tsx:37
+#: src/App.tsx:41
 #, fuzzy
 msgid "Setting up the table…"
 msgstr "Installation de la table…"
@@ -381,6 +381,7 @@ msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 
 #: src/GameScreen.tsx:307
 #: src/mail/MailLobby.tsx:165
+#: src/workshop/Workshop.tsx:284
 #, fuzzy
 msgid "Open"
 msgstr "Dégagé"
@@ -723,6 +724,7 @@ msgstr "Livre de campagne : {book}"
 #: src/campaign/CampaignUI.tsx:553
 #: src/tables/TableLibrary.tsx:220
 #: src/ui/ArmyImport.tsx:526
+#: src/workshop/Workshop.tsx:226
 #, fuzzy
 msgid "Export"
 msgstr "Exporter"
@@ -1509,7 +1511,7 @@ msgid "Log"
 msgstr "Journal"
 
 #: src/companion/CompanionScreen.tsx:84
-#: src/ui/Lobby.tsx:257
+#: src/ui/Lobby.tsx:258
 #, fuzzy
 msgid "Game"
 msgstr "Partie"
@@ -2510,6 +2512,7 @@ msgstr "Ton nom, pour ton adversaire"
 
 #: src/mail/MailBar.tsx:157
 #: src/ui/AttackPanel.tsx:259
+#: src/workshop/Workshop.tsx:198
 #, fuzzy
 msgid "Save"
 msgstr "Enregistrer"
@@ -2733,7 +2736,7 @@ msgstr "Tu es invité à une partie par correspondance"
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:250
 #: src/ui/Hud.tsx:364
-#: src/ui/Lobby.tsx:249
+#: src/ui/Lobby.tsx:250
 #, fuzzy
 msgid "Your name"
 msgstr "Ton nom"
@@ -3094,6 +3097,7 @@ msgstr "Un spectateur"
 #: src/replay/NotesPanel.tsx:184
 #: src/ui/Keys.tsx:26
 #: src/ui/TerrainPanel.tsx:365
+#: src/workshop/Workshop.tsx:203
 #, fuzzy
 msgid "Delete"
 msgstr "Supprimer"
@@ -3264,7 +3268,7 @@ msgstr "Chapitres"
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:82
 #: src/ui/PlayPanel.tsx:71
-#: src/ui/TableWarnings.tsx:95
+#: src/ui/TableWarnings.tsx:98
 #: src/ui/WhatNow.tsx:194
 #, fuzzy
 msgid "Hide"
@@ -3997,6 +4001,7 @@ msgstr "Déployer en ordre dispersé plutôt qu'en bloc"
 
 #: src/ui/ArmyImport.tsx:358
 #: src/ui/RegimentPanel.tsx:25
+#: src/workshop/Workshop.tsx:43
 #, fuzzy
 msgid "Skirmish"
 msgstr "Tirailleurs"
@@ -5662,7 +5667,7 @@ msgid "Rejoin as {name}"
 msgstr "Rejoindre en tant que {name}"
 
 #: src/ui/Hud.tsx:410
-#: src/ui/Lobby.tsx:284
+#: src/ui/Lobby.tsx:285
 #, fuzzy
 msgid "Watch"
 msgstr "Regarder"
@@ -5883,190 +5888,195 @@ msgstr "La sélectionner : sa carte à droite montre ce qu'elle peut faire"
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr "Sélectionner ton unité précédente ou suivante (Maj : celles de l'adversaire)"
 
-#: src/ui/Lobby.tsx:140
+#: src/ui/Lobby.tsx:141
 #, fuzzy
 msgid "That is not an Open Battle replay file."
 msgstr "Ce n'est pas un fichier de replay Open Battle."
 
-#: src/ui/Lobby.tsx:194
+#: src/ui/Lobby.tsx:195
 #, fuzzy
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr "Des batailles de figurines sur une table 3D dans ton navigateur. Apporte ton armée ; les règles tiennent les comptes."
 
-#: src/ui/Lobby.tsx:203
+#: src/ui/Lobby.tsx:204
 #, fuzzy
 msgid "Play your own army: import a list"
 msgstr "Joue ta propre armée : importe une liste"
 
-#: src/ui/Lobby.tsx:205
+#: src/ui/Lobby.tsx:206
 #, fuzzy
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr "Depuis New Recruit ou BattleScribe, avec tes propres figurines si tu en as."
 
-#: src/ui/Lobby.tsx:208
+#: src/ui/Lobby.tsx:209
 #, fuzzy
 msgid "Pick a game"
 msgstr "Choisis un jeu"
 
-#: src/ui/Lobby.tsx:210
+#: src/ui/Lobby.tsx:211
 #, fuzzy
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr "Apprendre : une première partie guidée contre l'ordinateur, avec un coach. Essayer : deux armées d'exemple en place, et tu joues les deux camps."
 
-#: src/ui/Lobby.tsx:215
+#: src/ui/Lobby.tsx:216
 #, fuzzy
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr "Ce sont des règles d'exemple intégrées. Pour ton propre système de jeu, charge son paquet de règles dans Autres façons de jouer."
 
-#: src/ui/Lobby.tsx:232
+#: src/ui/Lobby.tsx:233
 #, fuzzy
 msgid "Learn (guided)"
 msgstr "Apprendre (guidé)"
 
-#: src/ui/Lobby.tsx:237
+#: src/ui/Lobby.tsx:238
 #, fuzzy
 msgid "Try (both sides)"
 msgstr "Essayer (les deux camps)"
 
-#: src/ui/Lobby.tsx:246
+#: src/ui/Lobby.tsx:247
 #, fuzzy
 msgid "Play with friends"
 msgstr "Jouer avec des amis"
 
-#: src/ui/Lobby.tsx:252
+#: src/ui/Lobby.tsx:253
 #, fuzzy
 msgid "Player 1 or 2, by seat"
 msgstr "Joueur 1 ou 2, selon la place"
 
-#: src/ui/Lobby.tsx:267
+#: src/ui/Lobby.tsx:268
 #, fuzzy
 msgid "Host a game"
 msgstr "Héberger une partie"
 
-#: src/ui/Lobby.tsx:269
+#: src/ui/Lobby.tsx:270
 #, fuzzy
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr "Tu obtiens un lien à envoyer ; quiconque l'ouvre rejoint ta table."
 
-#: src/ui/Lobby.tsx:271
+#: src/ui/Lobby.tsx:272
 #: src/ui/Room.tsx:77
 #, fuzzy
 msgid "Room"
 msgstr "Salon"
 
-#: src/ui/Lobby.tsx:274
+#: src/ui/Lobby.tsx:275
 #, fuzzy
 msgid "a room code or invite link"
 msgstr "un code de salle ou un lien d'invitation"
 
-#: src/ui/Lobby.tsx:278
+#: src/ui/Lobby.tsx:279
 #, fuzzy
 msgid "Paste a room code or invite link to join."
 msgstr "Colle un code de salle ou un lien d'invitation pour rejoindre."
 
-#: src/ui/Lobby.tsx:281
+#: src/ui/Lobby.tsx:282
 #, fuzzy
 msgid "Join"
 msgstr "Rejoindre"
 
-#: src/ui/Lobby.tsx:288
+#: src/ui/Lobby.tsx:289
 #, fuzzy
 msgid "At a real table"
 msgstr "Sur une vraie table"
 
-#: src/ui/Lobby.tsx:290
+#: src/ui/Lobby.tsx:291
 #, fuzzy
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr "Tu joues avec tes propres figurines ? Open Battle garde les fiches d'unité, les blessures, les CP, les VP et la mission, et calcule chaque attaque. Lance les dés à l'écran ou lance tes propres dés et saisis les résultats."
 
-#: src/ui/Lobby.tsx:295
+#: src/ui/Lobby.tsx:296
 #, fuzzy
 msgid "One phone for both of us"
 msgstr "Un téléphone pour nous deux"
 
-#: src/ui/Lobby.tsx:298
+#: src/ui/Lobby.tsx:299
 #, fuzzy
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr "Tu reçois un lien à envoyer ; l'autre joueur l'ouvre sur son téléphone"
 
-#: src/ui/Lobby.tsx:300
+#: src/ui/Lobby.tsx:301
 #, fuzzy
 msgid "A phone each"
 msgstr "Un téléphone chacun"
 
-#: src/ui/Lobby.tsx:304
+#: src/ui/Lobby.tsx:305
 #, fuzzy
 msgid "More ways to play"
 msgstr "Autres façons de jouer"
 
-#: src/ui/Lobby.tsx:306
+#: src/ui/Lobby.tsx:307
 #, fuzzy
 msgid "Players"
 msgstr "Joueurs"
 
-#: src/ui/Lobby.tsx:308
+#: src/ui/Lobby.tsx:309
 #, fuzzy
 msgid "1 vs 1"
 msgstr "1 contre 1"
 
-#: src/ui/Lobby.tsx:309
+#: src/ui/Lobby.tsx:310
 #, fuzzy
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr "2 contre 2 (les équipes partagent CP et VP)"
 
-#: src/ui/Lobby.tsx:318
+#: src/ui/Lobby.tsx:319
 #, fuzzy
 msgid "Same browser (play between two tabs, no network)"
 msgstr "Même navigateur (jouer entre deux onglets, sans réseau)"
 
-#: src/ui/Lobby.tsx:327
+#: src/ui/Lobby.tsx:328
 #, fuzzy
 msgid "Set up a game on this screen (hotseat)"
 msgstr "Préparer une partie sur cet écran (hotseat)"
 
-#: src/ui/Lobby.tsx:344
+#: src/ui/Lobby.tsx:345
 #, fuzzy
 msgid "Figure library: your models, packs and storage"
 msgstr "Bibliothèque de figurines : tes modèles, packs et stockage"
 
 #: src/ui/Lobby.tsx:348
 #, fuzzy
+msgid "Module workshop: write your own game system"
+msgstr "Atelier de modules : écris ton propre système de jeu"
+
+#: src/ui/Lobby.tsx:352
+#, fuzzy
 msgid "Resume last game ({mode}, {n} event, {date})"
 msgid_plural "Resume last game ({mode}, {n} events, {date})"
 msgstr[0] "Reprendre la dernière partie ({mode}, {n} événement, {date})"
 msgstr[1] "Reprendre la dernière partie ({mode}, {n} événements, {date})"
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 #, fuzzy
 msgid "online"
 msgstr "en ligne"
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 #, fuzzy
 msgid "local"
 msgstr "local"
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 #, fuzzy
 msgid "hotseat"
 msgstr "hotseat"
 
-#: src/ui/Lobby.tsx:369
+#: src/ui/Lobby.tsx:373
 #, fuzzy
 msgid "Open a replay file"
 msgstr "Ouvrir un fichier de replay"
 
-#: src/ui/Lobby.tsx:379
+#: src/ui/Lobby.tsx:383
 #, fuzzy
 msgid "No account: games run between your browsers."
 msgstr "Pas de compte : les parties passent directement entre vos navigateurs."
 
-#: src/ui/Lobby.tsx:384
+#: src/ui/Lobby.tsx:388
 #, fuzzy
 msgid "Source code"
 msgstr "Code source"
 
-#: src/ui/Lobby.tsx:51
+#: src/ui/Lobby.tsx:52
 #, fuzzy
 msgid "{name} {version} (package)"
 msgstr "{name} {version} (paquet)"
@@ -8087,48 +8097,48 @@ msgstr "aucune sauvegarde possible"
 msgid "can't succeed"
 msgstr "ne peut pas réussir"
 
-#: src/ui/TableWarnings.tsx:107
+#: src/ui/TableWarnings.tsx:110
 #, fuzzy
 msgid "Warnings for this unit"
 msgstr "Avertissements pour cette unité"
 
-#: src/ui/TableWarnings.tsx:151
 #: src/ui/TableWarnings.tsx:154
+#: src/ui/TableWarnings.tsx:157
 #, fuzzy
 msgid "Table warnings"
 msgstr "Avertissements de table"
 
-#: src/ui/TableWarnings.tsx:160
+#: src/ui/TableWarnings.tsx:163
 #, fuzzy
 msgid "Nothing to flag on the table right now."
 msgstr "Rien à signaler sur la table pour l'instant."
 
-#: src/ui/TableWarnings.tsx:168
+#: src/ui/TableWarnings.tsx:171
 #, fuzzy
 msgid "Advisory: the rules never block a move. Players decide."
 msgstr "À titre indicatif : les règles ne bloquent jamais un mouvement. Les joueurs décident."
 
-#: src/ui/TableWarnings.tsx:34
+#: src/ui/TableWarnings.tsx:37
 #, fuzzy
 msgid "Table warnings: rules the table may be breaking"
 msgstr "Avertissements de table : règles que la table enfreint peut-être"
 
-#: src/ui/TableWarnings.tsx:63
+#: src/ui/TableWarnings.tsx:66
 #, fuzzy
 msgid "Show this unit"
 msgstr "Montrer cette unité"
 
-#: src/ui/TableWarnings.tsx:74
+#: src/ui/TableWarnings.tsx:77
 #, fuzzy
 msgid "Clear this for everyone until the unit moves again (the log notes it)"
 msgstr "Effacer pour tout le monde jusqu'à ce que l'unité bouge à nouveau (noté dans le journal)"
 
-#: src/ui/TableWarnings.tsx:87
+#: src/ui/TableWarnings.tsx:90
 #, fuzzy
 msgid "It's fine (tell everyone)"
 msgstr "C'est bon (prévenir tout le monde)"
 
-#: src/ui/TableWarnings.tsx:92
+#: src/ui/TableWarnings.tsx:95
 #, fuzzy
 msgid "Hide it on this screen"
 msgstr "Masquer sur cet écran"
@@ -10703,4 +10713,273 @@ msgstr "Autorise le micro pour ce site (l’icône dans la barre d’adresse), p
 #, fuzzy
 msgid "No microphone was found."
 msgstr "Aucun micro n’a été trouvé."
+
+#: src/workshop/Workshop.tsx:104
+#, fuzzy
+msgid "Opened from {url}. Read it before you test it: saving runs its code in the sandbox."
+msgstr "Ouvert depuis {url}. Lis-le avant de le tester : l'enregistrer exécute son code dans le bac à sable."
+
+#: src/workshop/Workshop.tsx:141
+#, fuzzy
+msgid "Saved and reloaded onto the test table."
+msgstr "Enregistré et rechargé sur la table de test."
+
+#: src/workshop/Workshop.tsx:142
+#, fuzzy
+msgid "Saved."
+msgstr "Enregistré."
+
+#: src/workshop/Workshop.tsx:149
+#, fuzzy
+msgid "Workshop"
+msgstr "Atelier"
+
+#: src/workshop/Workshop.tsx:158
+#: src/workshop/Workshop.tsx:161
+#, fuzzy
+msgid "Module workshop"
+msgstr "Atelier de modules"
+
+#: src/workshop/Workshop.tsx:164
+#, fuzzy
+msgid "Draft"
+msgstr "Brouillon"
+
+#: src/workshop/Workshop.tsx:172
+#, fuzzy
+msgid "Untitled draft"
+msgstr "Brouillon sans titre"
+
+#: src/workshop/Workshop.tsx:182
+#, fuzzy
+msgid "Fold the workshop to the side"
+msgstr "Replier l'atelier sur le côté"
+
+#: src/workshop/Workshop.tsx:187
+#, fuzzy
+msgid "Close the workshop"
+msgstr "Fermer l'atelier"
+
+#: src/workshop/Workshop.tsx:197
+#, fuzzy
+msgid "Save (Ctrl+S)"
+msgstr "Enregistrer (Ctrl+S)"
+
+#: src/workshop/Workshop.tsx:202
+#, fuzzy
+msgid "New draft"
+msgstr "Nouveau brouillon"
+
+#: src/workshop/Workshop.tsx:211
+#, fuzzy
+msgid "Loading the editor…"
+msgstr "Chargement de l'éditeur…"
+
+#: src/workshop/Workshop.tsx:216
+#, fuzzy
+msgid "The package's code"
+msgstr "Le code du paquet"
+
+#: src/workshop/Workshop.tsx:224
+#: src/workshop/Workshop.tsx:404
+#, fuzzy
+msgid "Test table"
+msgstr "Table de test"
+
+#: src/workshop/Workshop.tsx:225
+#, fuzzy
+msgid "Soak bot"
+msgstr "Bot d'endurance"
+
+#: src/workshop/Workshop.tsx:227
+#, fuzzy
+msgid "SDK"
+msgstr "SDK"
+
+#: src/workshop/Workshop.tsx:254
+#, fuzzy
+msgid "Write a whole game as one JavaScript file: its rules as data, with code where data won't do. Start from a template; the test table plays it as you go."
+msgstr "Écris un jeu entier dans un seul fichier JavaScript : ses règles en données, avec du code là où les données ne suffisent pas. Pars d'un modèle ; la table de test le fait jouer au fur et à mesure."
+
+#: src/workshop/Workshop.tsx:275
+#, fuzzy
+msgid "Open from a link"
+msgstr "Ouvrir depuis un lien"
+
+#: src/workshop/Workshop.tsx:289
+#, fuzzy
+msgid "Community modules"
+msgstr "Modules de la communauté"
+
+#: src/workshop/Workshop.tsx:293
+#, fuzzy
+msgid "How packages work"
+msgstr "Comment fonctionnent les paquets"
+
+#: src/workshop/Workshop.tsx:311
+#, fuzzy
+msgid "Couldn't fetch that link (it may not allow other sites to read it)."
+msgstr "Impossible de récupérer ce lien (il n'autorise peut-être pas d'autres sites à le lire)."
+
+#: src/workshop/Workshop.tsx:313
+#, fuzzy
+msgid "That link answered {status}."
+msgstr "Ce lien a répondu {status}."
+
+#: src/workshop/Workshop.tsx:315
+#, fuzzy
+msgid "That's too big for a module."
+msgstr "C'est trop gros pour un module."
+
+#: src/workshop/Workshop.tsx:317
+#, fuzzy
+msgid "That isn't a rules package: {why}"
+msgstr "Ce n'est pas un paquet de règles : {why}"
+
+#: src/workshop/Workshop.tsx:329
+#, fuzzy
+msgid "Problems"
+msgstr "Problèmes"
+
+#: src/workshop/Workshop.tsx:404
+#, fuzzy
+msgid "Setting up…"
+msgstr "Mise en place…"
+
+#: src/workshop/Workshop.tsx:404
+#, fuzzy
+msgid "Restart the test table"
+msgstr "Relancer la table de test"
+
+#: src/workshop/Workshop.tsx:428
+#, fuzzy
+msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
+msgstr "Table de test lance une partie de ton brouillon sur cet écran avec l'armée d'exemple de chaque camp. Chaque enregistrement l'y recharge."
+
+#: src/workshop/Workshop.tsx:437
+#, fuzzy
+msgid "Your rules are running."
+msgstr "Tes règles tournent."
+
+#: src/workshop/Workshop.tsx:439
+#, fuzzy
+msgid "Starting your rules…"
+msgstr "Démarrage de tes règles…"
+
+#: src/workshop/Workshop.tsx:44
+#, fuzzy
+msgid "Model by model: move, then fight."
+msgstr "Figurine par figurine : bouger, puis combattre."
+
+#: src/workshop/Workshop.tsx:440
+#, fuzzy
+msgid "Your rules aren't running."
+msgstr "Tes règles ne tournent pas."
+
+#: src/workshop/Workshop.tsx:444
+#, fuzzy
+msgid "{n} table warning"
+msgid_plural "{n} table warnings"
+msgstr[0] "{n} avertissement de table"
+msgstr[1] "{n} avertissements de table"
+
+#: src/workshop/Workshop.tsx:447
+#, fuzzy
+msgid "Dice and log"
+msgstr "Dés et journal"
+
+#: src/workshop/Workshop.tsx:470
+#, fuzzy
+msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
+msgstr "Le bot d'endurance joue des parties entières de ton brouillon avec des coups légaux au hasard, entre des pairs simulés, et vérifie que toutes les tables restent identiques et que rien ne plante."
+
+#: src/workshop/Workshop.tsx:475
+#, fuzzy
+msgid "Playing…"
+msgstr "Partie en cours…"
+
+#: src/workshop/Workshop.tsx:475
+#, fuzzy
+msgid "Play 3 bot games"
+msgstr "Jouer 3 parties de bot"
+
+#: src/workshop/Workshop.tsx:481
+#, fuzzy
+msgid "Game {seed}: fine, {steps} moves to round {round}."
+msgstr "Partie {seed} : tout va bien, {steps} coups jusqu'au tour {round}."
+
+#: src/workshop/Workshop.tsx:486
+#, fuzzy
+msgid "Game {seed} went wrong: {why}"
+msgstr "La partie {seed} a mal tourné : {why}"
+
+#: src/workshop/Workshop.tsx:49
+#, fuzzy
+msgid "Ranked"
+msgstr "En rangs"
+
+#: src/workshop/Workshop.tsx:50
+#, fuzzy
+msgid "Regiment blocks that wheel and clash."
+msgstr "Des blocs de régiments qui pivotent et s'affrontent."
+
+#: src/workshop/Workshop.tsx:525
+#, fuzzy
+msgid "{name} {version}"
+msgstr "{name} {version}"
+
+#: src/workshop/Workshop.tsx:534
+#, fuzzy
+msgid "Download the package"
+msgstr "Télécharger le paquet"
+
+#: src/workshop/Workshop.tsx:537
+#, fuzzy
+msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
+msgstr "Les joueurs chargent le fichier dans Paquets de règles ; les pairs vérifient qu'ils ont les mêmes octets grâce à cette empreinte."
+
+#: src/workshop/Workshop.tsx:541
+#, fuzzy
+msgid "Share it in the gallery"
+msgstr "Le partager dans la galerie"
+
+#: src/workshop/Workshop.tsx:543
+#, fuzzy
+msgid "Where the file is hosted (a raw link)"
+msgstr "Où le fichier est hébergé (un lien brut)"
+
+#: src/workshop/Workshop.tsx:55
+#, fuzzy
+msgid "Alternating activations"
+msgstr "Activations alternées"
+
+#: src/workshop/Workshop.tsx:555
+#, fuzzy
+msgid "Copied"
+msgstr "Copié"
+
+#: src/workshop/Workshop.tsx:555
+#, fuzzy
+msgid "Copy the pull request text"
+msgstr "Copier le texte de la pull request"
+
+#: src/workshop/Workshop.tsx:558
+#, fuzzy
+msgid "Edit the gallery on GitHub"
+msgstr "Modifier la galerie sur GitHub"
+
+#: src/workshop/Workshop.tsx:56
+#, fuzzy
+msgid "Players take turns activating one unit each."
+msgstr "Les joueurs activent chacun une unité à tour de rôle."
+
+#: src/workshop/Workshop.tsx:568
+#, fuzzy
+msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
+msgstr "Tout ce qu'un paquet peut utiliser. Dans l'éditeur, tape ctx. ou view. pour des suggestions."
+
+#: src/workshop/Workshop.tsx:91
+#, fuzzy
+msgid "Delete this draft? This can't be undone."
+msgstr "Supprimer ce brouillon ? C'est irréversible."
 `;export{e as default};
