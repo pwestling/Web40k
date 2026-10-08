@@ -27,7 +27,7 @@ const watch = (s: GameState): string[] => {
 };
 
 describe("faction rules: 40k", () =>
-  scenarioSuite("40k faction stratagems", "forty-k-11", { automate: true, watch }, [
+  scenarioSuite("40k faction stratagems", "forty-k-11", { automate: true, watch, minSeeds: 8 }, [
     "faction stratagem, seat 0",
     "faction stratagem, seat 1",
     "stratagem fired",

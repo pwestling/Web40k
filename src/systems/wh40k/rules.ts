@@ -9,6 +9,7 @@ import { aliveModels } from "../../core/units";
  * (see suggestAttack); the table checks here are still hand-written.
  */
 import {
+  baseSizeInches,
   baseToBaseDistance,
   inFootprint,
   modelDistance,
@@ -50,8 +51,20 @@ export function num(text: string | undefined): number | null {
 /** Closest base-to-base distance from one model to any model of a unit. */
 export function distanceToUnit(model: Model, targets: Model[]): number {
   let best = Infinity;
-  for (const t of targets) best = Math.min(best, modelDistance(model, t));
+  const r = reach(model);
+  for (const t of targets) {
+    // No nearer than centre to centre less both bases' reach: skip the outline maths when that can't win.
+    if (Math.hypot(t.position.x - model.position.x, t.position.y - model.position.y) - r - reach(t) >= best)
+      continue;
+    best = Math.min(best, modelDistance(model, t));
+  }
   return best;
+}
+
+/** The furthest a base's edge is from its centre, in inches. */
+function reach(m: Model): number {
+  const s = baseSizeInches(m.base);
+  return m.base.shape === "round" ? s.width / 2 : Math.hypot(s.width, s.depth) / 2;
 }
 
 export function unitDistance(a: Model[], b: Model[]): number {

@@ -123,7 +123,7 @@ describe("bot matches", () => {
         if (r.winner === null) wins[2]!++;
         else wins[r.winner === aSeat ? 0 : 1]!++;
         console.log(
-          `${system} seed ${seed} ${flip ? `${b} v ${a}` : `${a} v ${b}`}: winner ${r.winner} vp ${r.vp} kept ${r.kept.map((k) => k.toFixed(2))} r${r.rounds} steps ${r.steps} think ${r.thinking.map((t) => Math.round(t))}ms/${r.decisions} ${r.error ?? ""}`,
+          `${system} seed ${seed} ${flip ? `${b} v ${a}` : `${a} v ${b}`}: winner ${r.winner} vp ${r.vp} kept ${r.kept.map((k) => k.toFixed(2))} r${r.rounds} steps ${r.steps} think ${r.thinking.map((t) => Math.round(t))}ms/${r.decisions} max ${r.slowest.map((t) => Math.round(t))}ms ${r.error ?? ""}`,
         );
         expect(r.error).toBeUndefined();
       }

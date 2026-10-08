@@ -16,6 +16,12 @@ function enemyGap(view: { state: GameState }, unitId: unknown): number {
   const state = view.state;
   const unit = state.units[String(unitId)];
   if (!unit) return Infinity;
+  // Asked by every eligibility check: kept while the models and units stay the same (the bot asks it a lot, #51).
+  let memo = gapMemo.get(state.models);
+  if (!memo || memo.units !== state.units)
+    gapMemo.set(state.models, (memo = { units: state.units, gaps: new Map() }));
+  const known = memo.gaps.get(unit.id);
+  if (known !== undefined) return known;
   let gap = Infinity;
   for (const u of Object.values(state.units))
     if (
@@ -23,8 +29,10 @@ function enemyGap(view: { state: GameState }, unitId: unknown): number {
       u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed)
     )
       gap = Math.min(gap, unitGap(state, unit, u));
+  memo.gaps.set(unit.id, gap);
   return gap;
 }
+const gapMemo = new WeakMap<object, { units: unknown; gaps: Map<string, number> }>();
 
 /**
  * Below half-strength: fewer than half its starting models left standing, or,

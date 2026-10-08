@@ -841,6 +841,18 @@ export const fortyK: GameSystem = {
       by: "unit",
       side: "active",
       if: { not: { any: [{ hasFlag: "self", flag: "fellBack" }] } },
+      // A unit that advanced shoots only its Assault weapons.
+      notWhen: [
+        {
+          if: {
+            all: [
+              { hasFlag: "self", flag: "advanced" },
+              { not: { hasKeyword: "weapon", keyword: "Assault" } },
+            ],
+          },
+          why: "Advanced: only Assault weapons",
+        },
+      ],
       target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
       procedure: "attack",
     },

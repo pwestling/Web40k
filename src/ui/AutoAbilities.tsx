@@ -106,6 +106,9 @@ function AddStratagem({
   const game = useStore((s) => s.game);
   const [text, setText] = useState("");
   const [why, setWhy] = useState("");
+  const [added, setAdded] = useState("");
+  // Open when the list brought none (UX 371), and kept open after a paste for the next one (UX 376).
+  const [open, setOpen] = useState(!roster.army?.stratagems.length);
   if (!roster.army && !roster.units.length) return null;
   const add = () => {
     const army = roster.army ?? { rules: [], stratagems: [] };
@@ -118,10 +121,14 @@ function AddStratagem({
     setRoster({ ...roster, army: { ...army, stratagems: [...army.stratagems, auto ? { ...s, auto } : s] } });
     setText("");
     setWhy("");
+    setAdded(t("Added {name} ({cp} CP)", { name: s.name, cp: s.cp }));
   };
   return (
-    // Open when the list brought none: the usual case for a real export (UX 371).
-    <details className="auto-abilities" open={!roster.army?.stratagems.length}>
+    <details
+      className="auto-abilities add-stratagem"
+      open={open}
+      onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
+    >
       <summary>{t("Add a stratagem")}</summary>
       <p className="muted small">
         {t(
@@ -136,7 +143,12 @@ function AddStratagem({
         onChange={(e) => setText(e.target.value)}
       />
       {why && <p className="small warn">{why}</p>}
-      <button className="small" disabled={!text.trim()} onClick={add}>
+      {added && !why && (
+        <p className="small" role="status">
+          {added}
+        </p>
+      )}
+      <button className="small primary" disabled={!text.trim()} onClick={add}>
         {t("Add")}
       </button>
     </details>

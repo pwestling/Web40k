@@ -1,7 +1,7 @@
 import type { UnitMove } from "./actions";
-import { baseOutline, baseSizeInches, polygonDistance, rotate } from "./geometry";
+import { baseOutline, baseSizeInches, distance, polygonDistance, rotate } from "./geometry";
 import { arcOf, blockCentre, blockCorners, blockFrame, blockModels, type Arc } from "./regiment";
-import type { GameState, Unit, Vec2 } from "./types";
+import type { GameState, Model, Unit, Vec2 } from "./types";
 
 /**
  * Charges, flight and pursuit for regiment games: geometry helpers that turn
@@ -211,10 +211,21 @@ export function pursue(state: GameState, pursuer: Unit, quarry: Unit, inches: nu
 /** Closest base-to-base gap between two units' standing models (0 when touching). */
 export function unitGap(state: GameState, a: Unit, b: Unit): number {
   let best = Infinity;
-  const bs = blockModels(state, b).map((m) => baseOutline(m));
+  const bs = blockModels(state, b);
+  const outlines = new Map<Model, Vec2[]>();
+  const outline = (m: Model) => outlines.get(m) ?? outlines.set(m, baseOutline(m)).get(m)!;
+  // Round bases are measured exactly; others only when their corners could be nearer than the best so far.
+  const reach = (m: Model) => {
+    const s = baseSizeInches(m.base);
+    return m.base.shape === "round" ? s.width / 2 : Math.hypot(s.width, s.depth) / 2;
+  };
   for (const m of blockModels(state, a)) {
-    const outline = baseOutline(m);
-    for (const o of bs) best = Math.min(best, polygonDistance(outline, o));
+    const rm = reach(m);
+    for (const n of bs) {
+      const d = distance(m.position, n.position) - rm - reach(n);
+      if (m.base.shape === "round" && n.base.shape === "round") best = Math.min(best, Math.max(0, d));
+      else if (d < best) best = Math.min(best, polygonDistance(outline(m), outline(n)));
+    }
   }
   return best;
 }

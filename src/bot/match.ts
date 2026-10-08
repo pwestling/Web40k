@@ -58,6 +58,8 @@ interface MatchResult {
   thinking: [number, number];
   /** Decisions each side made. */
   decisions: [number, number];
+  /** Each side's longest decision, in milliseconds. */
+  slowest: [number, number];
   error?: string;
   /** The game as logged, for checks that read it afterwards (stats, moments). */
   record?: GameRecord;
@@ -116,6 +118,7 @@ export async function playMatch(
     finished: false,
     thinking: [0, 0],
     decisions: [0, 0],
+    slowest: [0, 0],
   };
   try {
     if (opts.systemPkg) {
@@ -237,7 +240,9 @@ export async function playMatch(
       for (const p of players) {
         const t0 = performance.now();
         const m = policies[p.seat]!.move(record, state, p);
-        result.thinking[p.seat as 0 | 1] += performance.now() - t0;
+        const took = performance.now() - t0;
+        result.thinking[p.seat as 0 | 1] += took;
+        result.slowest[p.seat as 0 | 1] = Math.max(result.slowest[p.seat as 0 | 1], took);
         if (m && legal(record, state, m)) {
           move = m;
           mover = p.seat;

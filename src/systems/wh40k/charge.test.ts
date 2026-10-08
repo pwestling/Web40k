@@ -105,3 +105,49 @@ describe("40k Battle-shock test", () => {
     expect(shock(squad.id)).toBe(true);
   });
 });
+
+describe("40k shooting after an Advance", () => {
+  it("is only with Assault weapons", () => {
+    let r: GameRecord = createRecord(createInitialState());
+    const host = (i: Intent, by: string) => {
+      const l = resolveLogged(r, i, by, () => 0.5, 0);
+      if (!l) throw new Error(`Rejected ${i.type}`);
+      r = appendEvent(r, l);
+    };
+    host({ type: "player/join", player: { id: "a", name: "A", color: "#00f", seat: 0 } }, "a");
+    host({ type: "player/join", player: { id: "b", name: "B", color: "#f00", seat: 1 } }, "b");
+    host({ type: "game/system", system: wh40kModule.system.id }, "a");
+    for (const [p, seat] of [
+      ["a", 0],
+      ["b", 1],
+    ] as const)
+      for (const i of spawnIntents(stateAt(r), p, wh40kModule.app!.sample(seat).units, p, "x")) host(i, p);
+    while (currentSlot(stateAt(r))?.id !== "movement" || stateAt(r).turn.activeSeat !== 0)
+      host({ type: "turn/next" }, "a");
+    const mine = Object.values(stateAt(r).units).find(
+      (u) => u.owner === "a" && Object.values(u.sheet?.weapons ?? {}).some((w) => w.kind === "ranged"),
+    )!;
+    host({ type: "action/take", unitId: mine.id, action: "advance" } as Intent, "a");
+    host({ type: "turn/next" }, "a");
+    const s = stateAt(r);
+    const enemy = Object.values(s.units).find((u) => u.owner === "b")!;
+    const [id, weapon] = Object.entries(mine.sheet!.weapons).find(([, w]) => w.kind === "ranged")!;
+    const shoot = (state: typeof s) =>
+      unitActions(state, mine.id, { weapon: id, targetId: enemy.id }).find((o) => o.def.id === "shoot")!;
+    expect(shoot(s).why).toBe("Advanced: only Assault weapons");
+    const assault = {
+      ...s,
+      units: {
+        ...s.units,
+        [mine.id]: {
+          ...s.units[mine.id]!,
+          sheet: {
+            ...s.units[mine.id]!.sheet!,
+            weapons: { ...s.units[mine.id]!.sheet!.weapons, [id]: { ...weapon, keywords: ["Assault"] } },
+          },
+        },
+      },
+    };
+    expect(shoot(assault).why).not.toBe("Advanced: only Assault weapons");
+  });
+});

@@ -73,6 +73,12 @@ interface BotOptions {
   tries?: number;
   /** How many of the best moves to judge with what could follow them, other than the level's. */
   beam?: number;
+  /** Sharp, taking whole turns (#51): ms to plan each decision; 0 turns planning off. */
+  plan?: number;
+  /** How many of the best moves the planner plays out. */
+  planWidth?: number;
+  /** The planner's last step: the enemy's whole turn played greedily, not only their guns. */
+  replyTurn?: boolean;
 }
 
 /** The module's tuning for the bot, if it has any. */
@@ -168,6 +174,14 @@ interface Candidate {
   boost?: { unit: string; cp: number };
 }
 
+/** Sharp's time to plan each decision of a whole turn (#51), and the goes and steps it plays out. */
+const PLAN_MS = 900;
+const PLAN_TRIES = 6;
+/** A pass running past the plan's time by more than this is dropped, keeping a decision under 2 s. */
+const PLAN_GRACE_MS = 300;
+const ROLLOUT_STEPS = 120;
+const now = () => (globalThis.performance ?? Date).now();
+
 /** What a command point is worth, as a share of a whole army's worth in VP. */
 const CP_WORTH = 0.01;
 
@@ -180,6 +194,11 @@ class Thinker implements Policy {
   /** Sharp: how many of the best moves are judged with what could follow them. */
   private readonly beam: number;
   private done = { phase: "", keys: new Set<string>(), decisions: 0 };
+  /** Sharp, in games where a side takes its whole turn (#51): ms per decision to play out the rest of the turn. */
+  private readonly planMs: number;
+  private readonly planWidth: number;
+  /** The planner's last step: the enemy's whole turn (true) or only their guns. */
+  private readonly replyTurn: boolean;
   private readonly weigh: BotContext;
 
   constructor(
@@ -187,7 +206,7 @@ class Thinker implements Policy {
     start: GameState,
     private readonly seat: number,
     private readonly ctx: BotContext & { mark?: string },
-    private readonly rng: Rng,
+    private rng: Rng,
     opts: BotOptions,
   ) {
     this.name = level;
@@ -209,6 +228,9 @@ class Thinker implements Policy {
     this.judge.move = (state, u) => moveInches(state, u, tuning);
     this.tries = opts.tries ?? (sharp ? 4 : 2);
     this.beam = opts.beam ?? (sharp ? 4 : 0);
+    this.planMs = opts.plan ?? (sharp ? PLAN_MS : 0);
+    this.planWidth = opts.planWidth ?? 5;
+    this.replyTurn = opts.replyTurn ?? tuning?.planReply !== "shots";
     this.weigh = { ...ctx, weighing: true };
   }
 
@@ -306,6 +328,17 @@ class Thinker implements Policy {
       if (score > topScore) [top, topScore] = [c, score];
     }
     if (!top) return fallback;
+    // Sharp, taking whole turns: the best few, each with the rest of the turn played out (#51).
+    // Moves and charges pay off later in the turn; shots and fights are judged as they land.
+    if (
+      this.planMs &&
+      mine &&
+      !plainActivations(state) &&
+      /move|charge/i.test(currentSlot(state)?.id ?? "")
+    ) {
+      const planned = this.planned(state, scored, must.length ? null : fallback, mine);
+      if (planned !== undefined) return planned;
+    }
     // Sharp, taking turns at activating units: the few best activations, each played out and
     // judged after the enemy's best answer with one of theirs.
     const acts = scored.filter(({ c }) => c.activates);
@@ -337,6 +370,136 @@ class Thinker implements Policy {
     }
     if (fallback && !must.length && topScore <= base + 0.01) return fallback;
     return top.move;
+  }
+
+  /**
+   * The whole turn (#51): each of the few best moves now (and moving on),
+   * played on with the rest of the turn, greedily and with the dice rolled,
+   * then the enemy's guns answering; over as many goes as time allows, the
+   * best on average. Undefined when there is nothing to choose between.
+   */
+  private planned(
+    state: GameState,
+    scored: { c: Candidate; score: number }[],
+    fallback: BotMove | null,
+    mine: Set<PlayerId>,
+  ): BotMove | null | undefined {
+    const deadline = now() + this.planMs;
+    const options: { move: BotMove; c?: Candidate; sum: number; n: number }[] = [
+      ...scored
+        .filter(({ c }) => !c.boost)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, this.planWidth)
+        .map(({ c }) => ({ move: c.move, c, sum: 0, n: 0 })),
+      ...(fallback ? [{ move: fallback, sum: 0, n: 0 }] : []),
+    ];
+    if (options.length < 2) return undefined;
+    const round = state.turn.round;
+    const own = this.rng;
+    for (let pass = 0; pass < PLAN_TRIES; pass++) {
+      // Every option meets the same dice on a pass, so they differ by the move, not by luck;
+      // a pass cut short by the hard limit counts for none of them.
+      const seed = Math.floor(own() * 2 ** 31);
+      const got: number[] = [];
+      for (const o of options) {
+        if (now() > deadline + PLAN_GRACE_MS) break;
+        this.rng = seededRng(seed);
+        const s = this.play(state, o.move);
+        const keys = new Set(this.done.keys);
+        if (o.c?.key) keys.add(o.c.key);
+        got.push(s ? this.rollout(s, mine, keys, round) : NaN);
+      }
+      this.rng = own;
+      if (got.length < options.length) break;
+      got.forEach((v, i) => {
+        if (Number.isNaN(v)) return;
+        options[i]!.sum += v;
+        options[i]!.n++;
+      });
+      if (now() > deadline) break;
+    }
+    let best: (typeof options)[number] | null = null;
+    for (const o of options) if (o.n && (!best || o.sum / o.n > best.sum / best.n)) best = o;
+    if (DBG)
+      console.log(
+        "plan",
+        options.map((o) => `${o.move.kind}:${o.n}:${(o.sum / (o.n || 1)).toFixed(2)}`).join(" "),
+      );
+    return best?.move;
+  }
+
+  /**
+   * The rest of this side's turn played on quickly, then the enemy's answer:
+   * their whole turn, each step the worst for us, or only their guns.
+   */
+  private rollout(start: GameState, mine: Set<PlayerId>, keys: Set<string>, round: number): number {
+    const s = this.played(start, this.seat, mine, 1, keys, round);
+    const enemy = s.turn.activeSeat;
+    if (!this.replyTurn || enemy === this.seat || s.turn.round > this.judge.rounds) return this.shotBack(s);
+    const theirs = new Set(sidePlayers(s, enemy).map((p) => p.id));
+    return evaluate(this.played(s, enemy, theirs, -1, new Set(), s.turn.round), this.judge);
+  }
+
+  /**
+   * A side's turn played on quickly from here: unit by unit, each takes its
+   * best next step (for us, sign 1; worst for us, -1) by one go with the dice
+   * rolled, keeping that go, or stands down; then the next phase.
+   */
+  private played(
+    start: GameState,
+    seat: number,
+    side: Set<PlayerId>,
+    sign: 1 | -1,
+    keys: Set<string>,
+    round: number,
+  ): GameState {
+    let s = start;
+    let phase = phaseKey(s);
+    let resting = new Set<string>();
+    for (let i = 0; i < ROLLOUT_STEPS; i++) {
+      if (s.turn.activeSeat !== seat || s.turn.round !== round) break;
+      if (phaseKey(s) !== phase) {
+        phase = phaseKey(s);
+        keys = new Set();
+        resting = new Set();
+      }
+      // The next of this side's units still to act this phase, and only its options (the quick part).
+      const units = Object.values(s.units).filter(
+        (u) => side.has(u.owner) && !resting.has(u.id) && standing(s, u) && !u.status?.reserves,
+      );
+      let all: Candidate[] = [];
+      let unit: string | undefined;
+      for (const u of units) {
+        all = this.candidates(s, side, u.id).filter((c) => !c.boost && c.key && !keys.has(c.key));
+        if (all.length) {
+          unit = u.id;
+          break;
+        }
+        resting.add(u.id);
+      }
+      const musts = all.filter((c) => c.must);
+      let next: GameState | null = null;
+      if (unit) {
+        const pool = musts.length ? musts : all;
+        let top = musts.length ? -Infinity : sign * evaluate(s, this.judge) + 0.01;
+        let pick: Candidate | null = null;
+        for (const c of pool) {
+          const t = this.play(s, c.move);
+          if (!t) continue;
+          const v = sign * evaluate(t, this.judge);
+          if (v > top) [pick, next, top] = [c, t, v];
+        }
+        if (pick?.key) keys.add(pick.key);
+        else resting.add(unit);
+        if (!next) continue;
+      } else {
+        const p = [...side][0]!;
+        next = this.play(s, { intent: { type: "turn/next" } as Intent, as: p, kind: "next" });
+        if (!next) break;
+      }
+      s = next;
+    }
+    return s;
   }
 
   /** The enemy's attack phase in their turn (the first slot of a player's turn with targeted attacks), or null. */
@@ -382,6 +545,47 @@ class Thinker implements Policy {
     // Their worst for us, each weapon once.
     for (const { c } of [...byUnit.values()].sort((a, b) => a.v - b.v)) t = this.play(t, c.move) ?? t;
     void mine;
+    return evaluate(t, this.judge);
+  }
+
+  /**
+   * The enemy's guns answering, quickly (the planner's last step): unit by
+   * unit, each weapon at whatever hurts us most on one go of the dice,
+   * keeping the go it took.
+   */
+  private shotBack(s: GameState): number {
+    const slot = this.shootSlot(s);
+    const enemy = Object.values(s.players).find((p) => p.seat !== undefined && p.seat !== this.seat)?.seat;
+    if (slot === null || enemy === undefined) return evaluate(s, this.judge);
+    let t: GameState = {
+      ...s,
+      procedure: null,
+      attack: null,
+      pending: null,
+      turn: { ...s.turn, activeSeat: enemy, phase: slot },
+    };
+    const theirs = new Set(sidePlayers(t, enemy).map((p) => p.id));
+    const used = new Set<string>();
+    for (const u of Object.values(t.units)) {
+      if (!theirs.has(u.owner) || !standing(t, u) || u.status?.reserves) continue;
+      for (let shots = 0; shots < 8; shots++) {
+        let worst: GameState | null = null;
+        let low = Infinity;
+        let key = "";
+        for (const c of this.candidates(t, theirs, u.id)) {
+          const i = c.move.intent;
+          if (i.type !== "action/take" || !("targetId" in i) || !i.targetId || !c.key || used.has(c.key))
+            continue;
+          const after = this.play(t, c.move);
+          if (!after) continue;
+          const v = evaluate(after, this.judge);
+          if (v < low) [worst, low, key] = [after, v, c.key];
+        }
+        if (!worst) break;
+        used.add(key);
+        t = worst;
+      }
+    }
     return evaluate(t, this.judge);
   }
 
@@ -493,12 +697,13 @@ class Thinker implements Policy {
   }
 
   /** Everything the side's units could do now, as a player would. */
-  private candidates(state: GameState, mine: Set<PlayerId>): Candidate[] {
+  private candidates(state: GameState, mine: Set<PlayerId>, only?: string): Candidate[] {
     const acting = actingUnits(state).filter((u) => mine.has(u.owner));
     const plain = plainActivations(state);
     const units = (acting.length ? acting : Object.values(state.units)).filter(
       (u) =>
         mine.has(u.owner) &&
+        (!only || u.id === only) &&
         standing(state, u) &&
         !u.status?.reserves &&
         // Plain activations: each unit has one go a round.
@@ -594,16 +799,18 @@ class Thinker implements Policy {
           });
     }
     out.push(...this.codeCandidates(state, units, fighting));
+    if (only) return out;
     // Stratagems and other player actions, re-rolls aside (kept for a roll worth re-rolling).
     for (const p of mine)
       for (const o of playerActions(state, p)) {
         if (!o.ok || o.def.custom || /re.?roll/i.test(o.def.id)) continue;
         // A faction stratagem that does something it can weigh: only on a unit that can still act.
-        const army =
-          o.def.id.startsWith("army:") &&
-          !!state.armies?.[p]?.stratagems.find((s) => o.def.id === `army:${p}:${s.id}`)?.auto;
+        const strat = state.armies?.[p]?.stratagems.find((s) => o.def.id === `army:${p}:${s.id}`);
+        const army = o.def.id.startsWith("army:") && !!strat?.auto;
         if (o.def.id.startsWith("army:") && !army) continue;
-        const cp = o.payment.reduce((n, x) => n + (x.resource === "CP" ? (x.amount ?? 0) : 0), 0);
+        // One a turn or a battle (#53) is kept for a bigger moment: it costs more than its CP.
+        const scarce = strat?.once === "battle" ? 3 : strat?.once === "turn" ? 1.5 : 1;
+        const cp = scarce * o.payment.reduce((n, x) => n + (x.resource === "CP" ? (x.amount ?? 0) : 0), 0);
         for (const target of o.targets ?? [undefined])
           out.push({
             move: {

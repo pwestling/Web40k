@@ -26,6 +26,9 @@ export const towModule: GameModule<SystemModule> = {
   functions: { shooters, shootsOnHill, shootsVolley, shootsRanked },
   checks: terrainWarnings,
   hooks: towHooks,
+  // Sharp's whole-turn plan judged against the enemy's guns: their whole turn played greedily
+  // won fewer games here (58% against 69% of 64 with guns only, 2026-10-08).
+  bot: { planReply: "shots" },
   app: {
     sample: towSample,
     importRoster: importTowRoster,

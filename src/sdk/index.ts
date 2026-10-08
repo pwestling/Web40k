@@ -58,6 +58,11 @@ export interface BotTuning {
   moveInches?(state: GameState, unit: Unit): number;
   /** How much it fears enemies in reach of its units (default 0.3; 0 turns it off). */
   threat?: number;
+  /**
+   * What the whole-turn planner (#51) plays after its own turn: the enemy's
+   * whole turn, greedily ("turn", the default), or only their guns ("shots").
+   */
+  planReply?: "turn" | "shots";
 }
 
 /** What a package's default export holds: additions to one or more systems. */

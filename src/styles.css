@@ -3755,6 +3755,22 @@ body.showcase
   color: #111;
 }
 
+/* Phones: a dialog's Deploy/Cancel row would run under the replay bar, so the bar steps aside (UX 378). */
+body:has(.modal-backdrop) .replaybar {
+  display: none;
+}
+/* Phones: the stratagem paste box spans the sheet, with a finger-sized Add (UX 377). */
+@media (max-width: 700px) {
+  .add-stratagem textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .add-stratagem button.primary {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
 /* A dialog's own buttons stay in view while its body scrolls. */
 .modal-actions {
   position: sticky;

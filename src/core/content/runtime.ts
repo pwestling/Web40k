@@ -346,7 +346,24 @@ function autoRules(state: GameState, unit: Unit): RuleRef[] {
   return out;
 }
 
+/**
+ * Views asked for again and again of one table (each eligibility check, each
+ * expression): kept per state and unit, since neither changes once made (#51).
+ */
+const viewMemo = new WeakMap<GameState, WeakMap<Unit, { system: GameSystem; view: UnitView }>>();
+
 export function unitView(state: GameState, system: GameSystem, unit: Unit, opts: ViewOptions = {}): UnitView {
+  if (opts.rules) return makeUnitView(state, system, unit, opts);
+  let byUnit = viewMemo.get(state);
+  if (!byUnit) viewMemo.set(state, (byUnit = new WeakMap()));
+  const known = byUnit.get(unit);
+  if (known && known.system === system) return known.view;
+  const view = makeUnitView(state, system, unit, opts);
+  byUnit.set(unit, { system, view });
+  return view;
+}
+
+function makeUnitView(state: GameState, system: GameSystem, unit: Unit, opts: ViewOptions = {}): UnitView {
   const models = unit.modelIds.flatMap((id) => {
     const m = state.models[id];
     return m && !m.destroyed ? [modelView(state, system, m, opts)] : [];

@@ -434,6 +434,8 @@ function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMo
     if (o.def.reactTo) continue;
     // A tidy bot plays like a person would: each action once a phase, and no pointless ones.
     if (ctx.tidy && (taken?.has(takenKey(state, u.id, o.def.id)) || pointless(state, u, o.def.id))) continue;
+    // Nor runs (40k's Advance) with guns it then can't fire; the fuzzer mostly doesn't either, so shots still happen.
+    if (o.def.sets?.includes("advanced") && givesUpShots(u) && (ctx.tidy || ctx.rng() < 0.75)) continue;
     if (o.def.procedure) {
       const weapons = Object.keys(u.sheet?.weapons ?? {});
       const targets = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
@@ -658,6 +660,13 @@ export function wrongKind(u: Unit, weapon: string, action: string): boolean {
 }
 
 /** Falling back with no enemy near, the kind of move that teaches a learner the wrong thing. */
+/** The unit has a ranged weapon that can't fire after an Advance (no Assault). */
+function givesUpShots(u: Unit): boolean {
+  return Object.values(u.sheet?.weapons ?? {}).some(
+    (w) => w.kind === "ranged" && !w.keywords.some((k) => /^assault$/i.test(k)),
+  );
+}
+
 export function pointless(state: GameState, u: Unit, action: string): boolean {
   // Piling in and consolidating are for units in a fight (UX 305); falling back is for units near one.
   const reach = /pile.?in|consolidat/i.test(action)

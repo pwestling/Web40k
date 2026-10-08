@@ -1571,7 +1571,7 @@ msgstr "Ajouter un joueur"
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:140
+#: src/ui/AutoAbilities.tsx:152
 #, fuzzy
 msgid "Add"
 msgstr "Ajouter"
@@ -2163,48 +2163,48 @@ msgctxt "game"
 msgid "Shoot"
 msgstr "Tirer"
 
-#: src/core/content/examples/forty-k.ts:849
-#: src/core/content/examples/forty-k.ts:921
+#: src/core/content/examples/forty-k.ts:861
+#: src/core/content/examples/forty-k.ts:933
 #: src/core/content/examples/rank-and-flank.ts:287
 #, fuzzy
 msgctxt "game"
 msgid "Charge"
 msgstr "Charge"
 
-#: src/core/content/examples/forty-k.ts:869
+#: src/core/content/examples/forty-k.ts:881
 #, fuzzy
 msgctxt "game"
 msgid "Pile in"
 msgstr "Engagement"
 
-#: src/core/content/examples/forty-k.ts:872
-#: src/core/content/examples/forty-k.ts:922
+#: src/core/content/examples/forty-k.ts:884
+#: src/core/content/examples/forty-k.ts:934
 #: src/core/content/examples/rank-and-flank.ts:183
 #, fuzzy
 msgctxt "game"
 msgid "Fight"
 msgstr "Combat"
 
-#: src/core/content/examples/forty-k.ts:885
+#: src/core/content/examples/forty-k.ts:897
 #, fuzzy
 msgctxt "game"
 msgid "Consolidate"
 msgstr "Consolidation"
 
-#: src/core/content/examples/forty-k.ts:901
+#: src/core/content/examples/forty-k.ts:913
 #, fuzzy
 msgctxt "game"
 msgid "Command"
 msgstr "Commandement"
 
-#: src/core/content/examples/forty-k.ts:917
+#: src/core/content/examples/forty-k.ts:929
 #: src/core/content/examples/rank-and-flank.ts:194
 #, fuzzy
 msgctxt "game"
 msgid "Movement"
 msgstr "Mouvement"
 
-#: src/core/content/examples/forty-k.ts:920
+#: src/core/content/examples/forty-k.ts:932
 #: src/core/content/examples/rank-and-flank.ts:195
 #, fuzzy
 msgctxt "game"
@@ -4563,7 +4563,7 @@ msgstr "{n} face cachée"
 msgid "all played"
 msgstr "toutes jouées"
 
-#: src/systems/wh40k/module.ts:60
+#: src/systems/wh40k/module.ts:68
 #, fuzzy
 msgctxt "game"
 msgid "Secret objectives"
@@ -5640,133 +5640,138 @@ msgstr "Défenseur : clique sur une figurine pour la placer en premier."
 msgid "at"
 msgstr "sur"
 
-#: src/ui/AutoAbilities.tsx:116
+#: src/ui/AutoAbilities.tsx:119
 #, fuzzy
 msgid "Paste its name, then its When, Target and Effect."
 msgstr "Colle son nom, puis Quand, Cible et Effet."
 
-#: src/ui/AutoAbilities.tsx:125
+#: src/ui/AutoAbilities.tsx:124
+#, fuzzy
+msgid "Added {name} ({cp} CP)"
+msgstr "{name} ajouté ({cp} CP)"
+
+#: src/ui/AutoAbilities.tsx:132
 #, fuzzy
 msgid "Add a stratagem"
 msgstr "Ajouter un stratagème"
 
-#: src/ui/AutoAbilities.tsx:127
+#: src/ui/AutoAbilities.tsx:134
 #, fuzzy
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr "Les listes ne contiennent pas de stratagèmes. Colles-en un depuis ton livre : son nom sur la première ligne, puis Quand, Cible et Effet. Il reste sur ton appareil et à la table."
 
-#: src/ui/AutoAbilities.tsx:134
+#: src/ui/AutoAbilities.tsx:141
 #, fuzzy
 msgid "Stratagem text"
 msgstr "Texte du stratagème"
 
-#: src/ui/AutoAbilities.tsx:135
+#: src/ui/AutoAbilities.tsx:142
 #, fuzzy
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr "Nom (1CP)\nQUAND : …\nCIBLE : …\nEFFET : …"
 
-#: src/ui/AutoAbilities.tsx:242
+#: src/ui/AutoAbilities.tsx:254
 #, fuzzy
 msgid "{name} ({cp} CP)"
 msgstr "{name} ({cp} CP)"
 
-#: src/ui/AutoAbilities.tsx:309
+#: src/ui/AutoAbilities.tsx:321
 #, fuzzy
 msgid "Your army"
 msgstr "Ton armée"
 
-#: src/ui/AutoAbilities.tsx:315
+#: src/ui/AutoAbilities.tsx:327
 #, fuzzy
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] "Détachement {name} : {done} règle sur {n} automatisée"
 msgstr[1] "Détachement {name} : {done} règles sur {n} automatisées"
 
-#: src/ui/AutoAbilities.tsx:326
+#: src/ui/AutoAbilities.tsx:338
 #, fuzzy
 msgid "No stratagems in this list: add your detachment's below."
 msgstr "Aucun stratagème dans cette liste : ajoute ceux de ton détachement ci-dessous."
 
-#: src/ui/AutoAbilities.tsx:332
+#: src/ui/AutoAbilities.tsx:344
 #, fuzzy
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] "{n} stratagème dans ton panneau de jeu"
 msgstr[1] "{n} stratagèmes dans ton panneau de jeu"
 
-#: src/ui/AutoAbilities.tsx:350
-#: src/ui/AutoAbilities.tsx:486
-#: src/ui/AutoAbilities.tsx:574
+#: src/ui/AutoAbilities.tsx:362
+#: src/ui/AutoAbilities.tsx:498
+#: src/ui/AutoAbilities.tsx:586
 #, fuzzy
 msgid "Automate this?"
 msgstr "Automatiser ?"
 
-#: src/ui/AutoAbilities.tsx:362
-#: src/ui/AutoAbilities.tsx:494
+#: src/ui/AutoAbilities.tsx:374
+#: src/ui/AutoAbilities.tsx:506
 #, fuzzy
 msgid "Automate all suggested"
 msgstr "Automatiser toutes les suggestions"
 
-#: src/ui/AutoAbilities.tsx:397
+#: src/ui/AutoAbilities.tsx:409
 #, fuzzy
 msgid "The app reminds you of this one; play it yourself, or teach it:"
 msgid_plural "The app reminds you of these; play them yourself, or teach them:"
 msgstr[0] "L'app vous la rappelle ; jouez-la vous-même ou apprenez-la-lui :"
 msgstr[1] "L'app vous les rappelle ; jouez-les vous-même ou apprenez-les-lui :"
 
-#: src/ui/AutoAbilities.tsx:452
+#: src/ui/AutoAbilities.tsx:464
 #, fuzzy
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] "{done} aptitude sur {n} automatisée"
 msgstr[1] "{done} aptitudes sur {n} automatisées"
 
-#: src/ui/AutoAbilities.tsx:460
+#: src/ui/AutoAbilities.tsx:472
 #, fuzzy
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] "{n} de plus possible si tu la confirmes"
 msgstr[1] "{n} de plus possibles si tu les confirmes"
 
-#: src/ui/AutoAbilities.tsx:466
+#: src/ui/AutoAbilities.tsx:478
 #, fuzzy
 msgid "Abilities the app can play for you"
 msgstr "Aptitudes que l'appli peut jouer pour toi"
 
-#: src/ui/AutoAbilities.tsx:468
+#: src/ui/AutoAbilities.tsx:480
 #, fuzzy
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr "Lu dans le texte de ta liste. Vérifie chaque règle avant de la cocher ; le reste reste en rappel."
 
-#: src/ui/AutoAbilities.tsx:556
+#: src/ui/AutoAbilities.tsx:568
 #, fuzzy
 msgid "Taught:"
 msgstr "Appris :"
 
-#: src/ui/AutoAbilities.tsx:556
+#: src/ui/AutoAbilities.tsx:568
 #, fuzzy
 msgid "Automated:"
 msgstr "Automatisé :"
 
-#: src/ui/AutoAbilities.tsx:561
+#: src/ui/AutoAbilities.tsx:573
 #: src/ui/PlayPanel.tsx:413
 #: src/ui/PlayPanel.tsx:462
 #, fuzzy
 msgid "Change"
 msgstr "Modifier"
 
-#: src/ui/AutoAbilities.tsx:564
+#: src/ui/AutoAbilities.tsx:576
 #: src/ui/TeachRule.tsx:386
 #, fuzzy
 msgid "Stop automating"
 msgstr "Ne plus automatiser"
 
-#: src/ui/AutoAbilities.tsx:580
+#: src/ui/AutoAbilities.tsx:592
 #, fuzzy
 msgid "Not quite?"
 msgstr "Pas tout à fait ?"
 
-#: src/ui/AutoAbilities.tsx:583
+#: src/ui/AutoAbilities.tsx:595
 #: src/ui/PlayPanel.tsx:373
 #: src/ui/PlayPanel.tsx:459
 #: src/ui/TeachRule.tsx:94
@@ -5774,7 +5779,7 @@ msgstr "Pas tout à fait ?"
 msgid "Teach it this rule"
 msgstr "Apprenez-lui cette règle"
 
-#: src/ui/AutoAbilities.tsx:586
+#: src/ui/AutoAbilities.tsx:598
 #: src/ui/PlayPanel.tsx:376
 #: src/ui/PlayPanel.tsx:413
 #: src/ui/PlayPanel.tsx:462
@@ -5782,22 +5787,22 @@ msgstr "Apprenez-lui cette règle"
 msgid "Teach it"
 msgstr "Apprendre"
 
-#: src/ui/AutoAbilities.tsx:623
+#: src/ui/AutoAbilities.tsx:635
 #, fuzzy
 msgid "{ability}: on until the end of the phase"
 msgstr "{ability} : active jusqu'à la fin de la phase"
 
-#: src/ui/AutoAbilities.tsx:629
+#: src/ui/AutoAbilities.tsx:641
 #, fuzzy
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr "Une fois par bataille ; dure jusqu'à la fin de la phase"
 
-#: src/ui/AutoAbilities.tsx:632
+#: src/ui/AutoAbilities.tsx:644
 #, fuzzy
 msgid "Use {ability}"
 msgstr "Utiliser {ability}"
 
-#: src/ui/AutoAbilities.tsx:637
+#: src/ui/AutoAbilities.tsx:649
 #, fuzzy
 msgid "{ability} used"
 msgstr "{ability} utilisée"

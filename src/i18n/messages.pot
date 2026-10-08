@@ -1288,7 +1288,7 @@ msgstr ""
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:140
+#: src/ui/AutoAbilities.tsx:152
 msgid "Add"
 msgstr ""
 
@@ -1778,42 +1778,42 @@ msgctxt "game"
 msgid "Shoot"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:849
-#: src/core/content/examples/forty-k.ts:921
+#: src/core/content/examples/forty-k.ts:861
+#: src/core/content/examples/forty-k.ts:933
 #: src/core/content/examples/rank-and-flank.ts:287
 msgctxt "game"
 msgid "Charge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:869
+#: src/core/content/examples/forty-k.ts:881
 msgctxt "game"
 msgid "Pile in"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:872
-#: src/core/content/examples/forty-k.ts:922
+#: src/core/content/examples/forty-k.ts:884
+#: src/core/content/examples/forty-k.ts:934
 #: src/core/content/examples/rank-and-flank.ts:183
 msgctxt "game"
 msgid "Fight"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:885
+#: src/core/content/examples/forty-k.ts:897
 msgctxt "game"
 msgid "Consolidate"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:901
+#: src/core/content/examples/forty-k.ts:913
 msgctxt "game"
 msgid "Command"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:917
+#: src/core/content/examples/forty-k.ts:929
 #: src/core/content/examples/rank-and-flank.ts:194
 msgctxt "game"
 msgid "Movement"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:920
+#: src/core/content/examples/forty-k.ts:932
 #: src/core/content/examples/rank-and-flank.ts:195
 msgctxt "game"
 msgid "Shooting"
@@ -3733,7 +3733,7 @@ msgstr ""
 msgid "all played"
 msgstr ""
 
-#: src/systems/wh40k/module.ts:60
+#: src/systems/wh40k/module.ts:68
 msgctxt "game"
 msgid "Secret objectives"
 msgstr ""
@@ -4611,137 +4611,141 @@ msgstr ""
 msgid "at"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:116
+#: src/ui/AutoAbilities.tsx:119
 msgid "Paste its name, then its When, Target and Effect."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:125
+#: src/ui/AutoAbilities.tsx:124
+msgid "Added {name} ({cp} CP)"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:132
 msgid "Add a stratagem"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:127
+#: src/ui/AutoAbilities.tsx:134
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:134
+#: src/ui/AutoAbilities.tsx:141
 msgid "Stratagem text"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:135
+#: src/ui/AutoAbilities.tsx:142
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:242
+#: src/ui/AutoAbilities.tsx:254
 msgid "{name} ({cp} CP)"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:309
+#: src/ui/AutoAbilities.tsx:321
 msgid "Your army"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:315
+#: src/ui/AutoAbilities.tsx:327
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:326
+#: src/ui/AutoAbilities.tsx:338
 msgid "No stratagems in this list: add your detachment's below."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:332
+#: src/ui/AutoAbilities.tsx:344
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:350
-#: src/ui/AutoAbilities.tsx:486
-#: src/ui/AutoAbilities.tsx:574
+#: src/ui/AutoAbilities.tsx:362
+#: src/ui/AutoAbilities.tsx:498
+#: src/ui/AutoAbilities.tsx:586
 msgid "Automate this?"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:362
-#: src/ui/AutoAbilities.tsx:494
+#: src/ui/AutoAbilities.tsx:374
+#: src/ui/AutoAbilities.tsx:506
 msgid "Automate all suggested"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:397
+#: src/ui/AutoAbilities.tsx:409
 msgid "The app reminds you of this one; play it yourself, or teach it:"
 msgid_plural "The app reminds you of these; play them yourself, or teach them:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:452
+#: src/ui/AutoAbilities.tsx:464
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:460
+#: src/ui/AutoAbilities.tsx:472
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:466
+#: src/ui/AutoAbilities.tsx:478
 msgid "Abilities the app can play for you"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:468
+#: src/ui/AutoAbilities.tsx:480
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:556
+#: src/ui/AutoAbilities.tsx:568
 msgid "Taught:"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:556
+#: src/ui/AutoAbilities.tsx:568
 msgid "Automated:"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:561
+#: src/ui/AutoAbilities.tsx:573
 #: src/ui/PlayPanel.tsx:413
 #: src/ui/PlayPanel.tsx:462
 msgid "Change"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:564
+#: src/ui/AutoAbilities.tsx:576
 #: src/ui/TeachRule.tsx:386
 msgid "Stop automating"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:580
+#: src/ui/AutoAbilities.tsx:592
 msgid "Not quite?"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:583
+#: src/ui/AutoAbilities.tsx:595
 #: src/ui/PlayPanel.tsx:373
 #: src/ui/PlayPanel.tsx:459
 #: src/ui/TeachRule.tsx:94
 msgid "Teach it this rule"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:586
+#: src/ui/AutoAbilities.tsx:598
 #: src/ui/PlayPanel.tsx:376
 #: src/ui/PlayPanel.tsx:413
 #: src/ui/PlayPanel.tsx:462
 msgid "Teach it"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:623
+#: src/ui/AutoAbilities.tsx:635
 msgid "{ability}: on until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:629
+#: src/ui/AutoAbilities.tsx:641
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:632
+#: src/ui/AutoAbilities.tsx:644
 msgid "Use {ability}"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:637
+#: src/ui/AutoAbilities.tsx:649
 msgid "{ability} used"
 msgstr ""
 
