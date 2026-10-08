@@ -8,6 +8,7 @@ import {
   previewRun,
   startRun,
   type DamagePlan,
+  type FiredChange,
   type PoolPlan,
   type ProcedureRun,
   type RoleRef,
@@ -30,7 +31,16 @@ import { createInitialState, type GameState, type Model, type ModelId, type Unit
  * outcome, so every peer folds in exactly the same result and each stage can
  * be undone on its own.
  */
+/** A rule that changed a step's roll, kept on the spec so the panel and the log can name it (UX 290). */
+export interface AttackBecause {
+  name: string;
+  step: string;
+  change: FiredChange;
+}
+
 export interface AttackSpec {
+  /** What the rules changed, as the preview worked it out (not updated by the player's edits). */
+  because?: AttackBecause[];
   attackerUnitId: UnitId;
   targetUnitId: UnitId;
   weaponId: string;
@@ -254,6 +264,8 @@ export interface AttackPreview {
   members: string[];
   /** Rule names that changed each step, e.g. { hit: ["Heavy"] }. */
   fired: Record<string, string[]>;
+  /** What each of them changed, by step then rule name. */
+  changes: Record<string, Record<string, FiredChange>>;
   /** Rules the weapon or target has that a player resolves by hand. */
   reminders: string[];
   /** The weapon's rules as bound from its keywords. */
@@ -321,7 +333,32 @@ export function previewAttack(
     damage: damage.amount,
     fnp: damage.ignoreDamage,
   };
-  return { spec, members: pool.members ?? [], fired: p.fired, reminders: p.reminders, weaponRules };
+  const because = Object.entries(p.changes).flatMap(([step, byName]) =>
+    Object.entries(byName).map(([name, change]) => ({ name, step, change })),
+  );
+  if (because.length) spec.because = because;
+  return {
+    spec,
+    members: pool.members ?? [],
+    fired: p.fired,
+    changes: p.changes,
+    reminders: p.reminders,
+    weaponRules,
+  };
+}
+
+const signed = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
+
+/** "−1 to hit", "re-roll 1s to wound", in English for the attack notes. */
+export function changeLabel(step: string, c: FiredChange): string {
+  const parts: string[] = [];
+  if (c.mod) parts.push(`${signed(c.mod)} to ${step}`);
+  if (c.target) parts.push(`${step} target ${signed(c.target)}`);
+  if (c.reroll === "ones") parts.push(`re-roll 1s to ${step}`);
+  else if (c.reroll === "failed") parts.push(`re-roll failed ${step} rolls`);
+  else if (c.reroll === "any") parts.push(`re-roll ${step} rolls`);
+  if (c.crit) parts.push(`critical ${step}s on ${c.crit}+`);
+  return parts.join(", ");
 }
 
 export function maxWounds(model: Model): number {

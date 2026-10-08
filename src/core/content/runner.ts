@@ -303,6 +303,8 @@ export function nextStep(system: GameSystem, run: ProcedureRun): Step | null {
 export interface Preview {
   plans: Record<Id, StepPlan>;
   fired: Record<Id, string[]>;
+  /** By step, then rule name: what each rule changed. */
+  changes: Record<Id, Record<string, FiredChange>>;
   reminders: string[];
   /** Rules bound to each role from its keywords and abilities. */
   rules: Record<string, RuleRef[]>;
@@ -329,18 +331,19 @@ export function previewRun(
     outcomes: [],
     done: false,
   };
-  const out: Preview = { plans: {}, fired: {}, reminders: [], rules: {} };
+  const out: Preview = { plans: {}, fired: {}, changes: {}, reminders: [], rules: {} };
   const scope = buildScope(env, run);
   for (const role of Object.keys(roles)) out.rules[role] = rulesFor(run, role, scope[role]);
   const members: Record<Id, unknown[]> = {};
   for (const step of proc.steps) {
     const s = buildScope(env, { ...run, next: proc.steps.indexOf(step) }, members);
-    const { plan, fired, reminders, members: m } = planStep(env, run, step, s);
+    const { plan, fired, changes, reminders, members: m } = planStep(env, run, step, s);
     if (m) members[step.id] = m;
     // A step whose condition fails won't run: nothing to show for it.
     const passedOver = step.if !== undefined && !safe(() => bool(step.if!, ctxFor(env, s)));
     out.plans[step.id] = passedOver ? { kind: "other" } : plan;
     out.fired[step.id] = fired;
+    if (changes && Object.keys(changes).length) out.changes[step.id] = changes;
     for (const r of reminders) if (!out.reminders.includes(r)) out.reminders.push(r);
   }
   for (const r of collectReminders(env, run, buildScope(env, run, members)))
@@ -498,9 +501,20 @@ function collectReminders(env: RunEnv, run: ProcedureRun, scope: Record<string, 
 // Planning a step
 // ---------------------------------------------------------------------------
 
+/** What one rule did to a step's roll, for the attack panel's chips and the log (UX 290). */
+export interface FiredChange {
+  /** To the roll, e.g. +1 to hit. */
+  mod?: number;
+  /** To the target number. */
+  target?: number;
+  reroll?: Reroll;
+  crit?: number;
+}
+
 interface Planned {
   plan: StepPlan;
   fired: string[];
+  changes?: Record<string, FiredChange>;
   reminders: string[];
   /** Scope after characteristic changes made before this step. */
   scope: Record<string, unknown>;
@@ -541,22 +555,33 @@ function applyBefore(
     ignoreDamage: null as number | null,
     fired: [] as string[],
     reminders: [] as string[],
+    changes: {} as Record<string, FiredChange>,
   };
+  const change = (l: Live) => (acc.changes[l.name] ??= {});
   const fire = (l: Live, action: EffectAction, ctx: EvalContext) => {
     switch (action.do) {
-      case "modifyRoll":
-        acc.modifier += num(action.by, ctx);
+      case "modifyRoll": {
+        const by = num(action.by, ctx);
+        acc.modifier += by;
+        change(l).mod = (change(l).mod ?? 0) + by;
         return true;
-      case "modifyTarget":
-        acc.targetModifier += num(action.by, ctx);
+      }
+      case "modifyTarget": {
+        const by = num(action.by, ctx);
+        acc.targetModifier += by;
+        change(l).target = (change(l).target ?? 0) + by;
         return true;
+      }
       case "reroll":
-        if (typeof action.which === "string" && REROLL_STRENGTH[action.which] > REROLL_STRENGTH[acc.reroll])
-          acc.reroll = action.which;
+        if (typeof action.which === "string") {
+          if (REROLL_STRENGTH[action.which] > REROLL_STRENGTH[acc.reroll]) acc.reroll = action.which;
+          change(l).reroll = action.which;
+        }
         return true;
       case "criticalOn": {
         const v = num(action.value, ctx);
         acc.criticalOn = acc.criticalOn === null ? v : Math.min(acc.criticalOn, v);
+        change(l).crit = v;
         return true;
       }
       case "skipStep":
@@ -674,7 +699,7 @@ function planStep(env: RunEnv, run: ProcedureRun, step: Step, scope: Record<stri
       };
       const merged = { ...plan, ...pick(override, Object.keys(plan)) } as TestPlan;
       if (cap !== undefined) merged.modifier = Math.max(-cap, Math.min(cap, merged.modifier));
-      return { plan: merged, fired: b.fired, reminders: b.reminders, scope: b.scope };
+      return { plan: merged, fired: b.fired, changes: b.changes, reminders: b.reminders, scope: b.scope };
     }
     case "damage": {
       const b = applyBefore(env, live, step, run, scope);

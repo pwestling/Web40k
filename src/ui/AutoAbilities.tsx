@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Ability, AbilityAuto, Unit } from "../core";
 import { describesWeaponKeyword, isAutomated } from "../core/content/player";
 import type { GameSystem } from "../core/content/schema";
@@ -30,6 +30,8 @@ function readRoster(
   let automated = 0;
   let total = 0;
   const proposals: Proposal[] = [];
+  /** Abilities the players play themselves: neither run by the app nor read from their text. */
+  const reminders: string[] = [];
   roster.units.forEach((u, unit) => {
     const seen = new Set<string>();
     const asUnit = { sheet: u.sheet } as Unit;
@@ -44,9 +46,10 @@ function readRoster(
       }
       const auto = recognize(a, system);
       if (auto) proposals.push({ unit, ability: a, auto });
+      else if (!reminders.includes(a.name)) reminders.push(a.name);
     }
   });
-  return { automated, total, proposals };
+  return { automated, total, proposals, reminders };
 }
 
 /** On the army import: "23 of 41 abilities automated", and what else the app could run. */
@@ -65,6 +68,22 @@ export function ImportAutomation({
     [roster, system, recognize],
   );
   if (!read || !read.total) return null;
+  return <Coverage read={read} roster={roster} setRoster={setRoster} system={system} />;
+}
+
+function Coverage({
+  read,
+  roster,
+  setRoster,
+  system,
+}: {
+  read: ReturnType<typeof readRoster>;
+  roster: ImportedRoster;
+  setRoster: (r: ImportedRoster) => void;
+  system: GameSystem;
+}) {
+  // Open while proposals wait for an answer (UX 291).
+  const [fold, setFold] = useState(() => read.proposals.some((p) => !p.ability.auto));
   const set = (picks: Proposal[], on: boolean) => {
     const units = roster.units.map((u, i) => {
       const mine = picks.filter((p) => p.unit === i);
@@ -104,7 +123,7 @@ export function ImportAutomation({
         )}
       </p>
       {open.length > 0 && (
-        <details>
+        <details open={fold} onToggle={(e) => setFold(e.currentTarget.open)}>
           <summary>{t("Abilities the app can play for you")}</summary>
           <p className="muted small">
             {t(
@@ -137,6 +156,16 @@ export function ImportAutomation({
             </button>
           )}
         </details>
+      )}
+      {read.reminders.length > 0 && (
+        <p className="muted small">
+          {tn(
+            read.reminders.length,
+            "{names}: the app reminds you of it; play it yourself.",
+            "{names}: the app reminds you of these; play them yourself.",
+            { names: read.reminders.join(", ") },
+          )}
+        </p>
       )}
     </div>
   );

@@ -97,6 +97,6 @@ describe("table companion attacks (#37)", () => {
     const far = tableAttack(st, "a", "melta", "t", firstAnswers(st, "a", "melta"))!;
     expect(far.spec.damage).toBe("D6");
     const covered = tableAttack(st, "a", "rifle", "t", { ...firstAnswers(st, "a", "rifle"), cover: true })!;
-    expect(covered.notes).toContain("Cover");
+    expect(covered.notes).toContain("Cover: −1 to hit");
   });
 });

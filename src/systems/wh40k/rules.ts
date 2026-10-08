@@ -15,6 +15,7 @@ import {
   moveCrossesWall,
   phaseName,
   previewAttack,
+  changeLabel,
   verticalGap,
   whollyWithin,
   type TerrainCategory,
@@ -158,7 +159,12 @@ export function suggestAttack(
       if (name === "Cover") notes.push("Target in cover: −1 to hit");
       else if (name === "Higher ground")
         notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
-      else notes.push(`${name}: ${STEP_NOUN[step] ?? step}`);
+      else {
+        // What it did, not just where (UX 290): "Smouldering Ward: −1 to hit".
+        const change = preview.changes[step]?.[name];
+        const label = change ? changeLabel(step, change) : "";
+        notes.push(`${name}: ${label || (STEP_NOUN[step] ?? step)}`);
+      }
   const ignoresCover = preview.weaponRules.some((r) => r.rule === "ignoresCover");
   const cover =
     weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;

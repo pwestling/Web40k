@@ -1,5 +1,5 @@
 import { playerName } from "../i18n/names";
-import { triggeredLines } from "./autoText";
+import { becauseText, triggeredLines } from "./autoText";
 import { checkName } from "./warnings";
 import { distanceText } from "./distance";
 import { systemLabel } from "./systemLabels";
@@ -366,11 +366,13 @@ function attackSummary(a: AttackState, state: GameState): string {
     const lost = a.damage.reduce((n, d) => n + d.lost, 0);
     parts.push(slain ? tn(slain, "{n} slain", "{n} slain") : tn(lost, "{n} wound lost", "{n} wounds lost"));
   }
+  // The rules that changed the rolls, by name (UX 290).
+  const because = becauseText(s);
   const params = {
     attacker: name(s.attackerUnitId),
     target: name(s.targetUnitId),
     weapon: s.weaponName,
-    results: parts.join(", "),
+    results: parts.join(", ") + (because ? ` · ${because}` : ""),
   };
   return s.kind === "melee"
     ? t("{attacker} fought {target} ({weapon}): {results}", params)

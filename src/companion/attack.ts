@@ -1,4 +1,12 @@
-import { previewAttack, type Ability, type GameState, type Model, type Unit, type UnitId } from "../core";
+import {
+  changeLabel,
+  previewAttack,
+  type Ability,
+  type GameState,
+  type Model,
+  type Unit,
+  type UnitId,
+} from "../core";
 import { autoActive, hasKeywordPhrase } from "../core/content/runtime";
 import { opposed } from "../core/teams";
 import { baseSizeInches } from "../core/geometry";
@@ -135,7 +143,12 @@ export function tableAttack(
   const preview = previewAttack(stand, attackerId, weaponId, targetId, { cover, higherGround: false });
   if (!preview) return null;
   const notes: string[] = [];
-  for (const names of Object.values(preview.fired)) for (const name of names) notes.push(name);
+  for (const [step, names] of Object.entries(preview.fired))
+    for (const name of names) {
+      const change = preview.changes[step]?.[name];
+      const label = change ? changeLabel(step, change) : "";
+      notes.push(label ? `${name}: ${label}` : name);
+    }
   if (preview.spec.fnp) notes.push(t("Feel no pain {value}+", { value: preview.spec.fnp }));
   if (preview.reminders.length)
     notes.push(t("Check by hand: {rules}", { rules: preview.reminders.join(", ") }));

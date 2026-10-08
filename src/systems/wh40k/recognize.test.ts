@@ -216,6 +216,13 @@ describe("automated abilities at the table", () => {
     expect(p.spec.rerollHits).toBe("ones");
     expect(p.spec.hitMod).toBe(-1);
     expect(p.fired.hit).toEqual(expect.arrayContaining(["Volley", "Shroud"]));
+    // What each did, kept on the spec for the panel and the log (UX 290).
+    expect(p.spec.because).toEqual(
+      expect.arrayContaining([
+        { name: "Volley", step: "hit", change: { reroll: "ones" } },
+        { name: "Shroud", step: "hit", change: { mod: -1 } },
+      ]),
+    );
     expect(manualAbilities(system, s.units.shooters!)).toHaveLength(0);
     // Only the owner can switch it.
     expect(

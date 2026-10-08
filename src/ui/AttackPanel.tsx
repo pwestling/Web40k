@@ -1,3 +1,4 @@
+import { becauseText, stepMods } from "./autoText";
 import { touch } from "./touch";
 import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
@@ -338,13 +339,16 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
             (attack.attackRolls.length
               ? ` ${t("(rolled {dice})", { dice: attack.attackRolls.join(" ") })}`
               : ""),
-          t("hit {value}", { value: spec.hit === null ? t("auto") : `${spec.hit}+${fmtMod(spec.hitMod)}` }),
-          t("wound {value}", { value: `${spec.wound}+${fmtMod(spec.woundMod)}` }),
+          t("hit {value}", {
+            value: spec.hit === null ? t("auto") : `${spec.hit}+${stepMods(spec, "hit", spec.hitMod)}`,
+          }),
+          t("wound {value}", { value: `${spec.wound}+${stepMods(spec, "wound", spec.woundMod)}` }),
           t("save {value}", { value: spec.save ? `${spec.save}+` : t("none") }),
           t("D {value}", { value: spec.damage }),
           ...(spec.fnp ? [t("FNP {value}", { value: `${spec.fnp}+` })] : []),
         ].join(" · ")}
       </p>
+      {becauseText(spec) && <p className="muted small">{becauseText(spec)}</p>}
       {attack.hitDice && (
         <Stage label={t("Hits")} dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
           {[
@@ -433,8 +437,6 @@ function stagesLeft(a: AttackState): number {
     ["hit", "wound", "save", "damage", "done"].indexOf(a.stage)
   );
 }
-
-const fmtMod = (m: number) => (m > 0 ? ` (+${m})` : m < 0 ? ` (${m})` : "");
 
 function hitJudge(spec: AttackSpec, v: number): "crit" | "ok" | "fail" {
   if (v >= spec.critHit) return "crit";

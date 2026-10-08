@@ -1,4 +1,4 @@
-import type { AbilityAuto, AutoPart, GameState } from "../core";
+import type { AbilityAuto, AttackBecause, AttackSpec, AutoPart, GameState } from "../core";
 import type { GameSystem } from "../core/content/schema";
 import { schedule } from "../core/content/turn";
 import { t, tn } from "../i18n";
@@ -109,4 +109,39 @@ export function triggeredLines(state: GameState): string[] {
           ability: tr.ability,
         });
   });
+}
+
+const signed = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
+
+/** What one rule did to the roll, in the reader's language: "−1 to hit", "re-roll 1s". */
+export function changeText(b: AttackBecause): string {
+  const c = b.change;
+  const step = b.step === "hit" ? t("hit") : b.step === "wound" ? t("wound") : b.step;
+  const parts: string[] = [];
+  if (c.mod) parts.push(t("{by} to {roll}", { by: signed(c.mod), roll: step }));
+  if (c.target) parts.push(t("{roll} target {by}", { by: signed(c.target), roll: step }));
+  if (c.reroll === "ones") parts.push(t("re-roll 1s"));
+  else if (c.reroll) parts.push(t("re-roll fails"));
+  if (c.crit) parts.push(t("criticals on {n}+", { n: c.crit }));
+  return parts.join(", ");
+}
+
+/** The modifiers on one step, each shown: " (+1 −1)" rather than the net 0 (UX 290). */
+export function stepMods(spec: AttackSpec, step: "hit" | "wound", net: number): string {
+  const mods = (spec.because ?? [])
+    .filter((b) => b.step === step && b.change.mod)
+    .map((b) => signed(b.change.mod!));
+  if (mods.length > 1) return ` (${mods.join(" ")})`;
+  return net ? ` (${signed(net)})` : "";
+}
+
+/** "Smouldering Ward −1 to hit, Braced Firing re-roll 1s", for the log line. */
+export function becauseText(spec: AttackSpec): string {
+  return (spec.because ?? [])
+    .map((b) => {
+      const what = changeText(b);
+      return what ? `${b.name} ${what}` : "";
+    })
+    .filter(Boolean)
+    .join(", ");
 }
