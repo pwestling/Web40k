@@ -205,7 +205,15 @@ export type Intent =
   | { type: "procedure/respond"; answer: string }
   | { type: "procedure/clear" }
   /** Use a player action (a stratagem). Custom ones carry a name and cost. */
-  | { type: "player/action"; action: string; targetId?: UnitId; label?: string; cost?: number }
+  | {
+      type: "player/action";
+      action: string;
+      targetId?: UnitId;
+      label?: string;
+      cost?: number;
+      /** For a custom action paid from a dice pool: which dice (else the lowest). */
+      dice?: number[];
+    }
   /** Mark an ability the players resolved by hand as used this phase. */
   | { type: "ability/apply"; unitId: UnitId; ability: string }
   /**
@@ -690,8 +698,23 @@ export function resolveIntent(
         const cost = Math.max(0, Math.floor(intent.cost ?? 0));
         const resource = option.def.cost?.[0]?.resource;
         if (!intent.label?.trim() || !resource) return null;
-        if ((state.resources[from]?.[resource] ?? 0) < cost) return null;
-        payment = cost ? [{ resource, amount: cost }] : [];
+        const def = systemOf(state).resources?.find((r) => r.id === resource);
+        if (def?.kind === "dicePool") {
+          // FSD support cards: that many dice from the pool, the ones picked or the lowest.
+          const faces = state.pools?.[from]?.[resource] ?? [];
+          const picked = [...new Set(intent.dice ?? [])].filter((i) => i >= 0 && i < faces.length);
+          const rest = faces
+            .map((f, i) => ({ f, i }))
+            .filter((d) => !picked.includes(d.i))
+            .sort((a, b) => a.f - b.f)
+            .map((d) => d.i);
+          const indices = [...picked, ...rest].slice(0, cost);
+          if (indices.length < cost) return null;
+          payment = cost ? [{ resource, indices }] : [];
+        } else {
+          if ((state.resources[from]?.[resource] ?? 0) < cost) return null;
+          payment = cost ? [{ resource, amount: cost }] : [];
+        }
       }
       if (intent.targetId && !option.targets?.includes(intent.targetId)) return null;
       if (option.targets && !intent.targetId) return null;

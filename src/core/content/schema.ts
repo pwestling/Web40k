@@ -476,6 +476,16 @@ export interface ActionDef {
   do?: EffectAction[];
   /** Flags set on the acting unit afterwards, e.g. "advanced". */
   sets?: Id[];
+  /**
+   * Prepares the weapon's action (FSD prepared actions): the unit gets the
+   * flag "prepared.<weapon>", a token that stays until it is used or cleared.
+   */
+  prepares?: boolean;
+  /**
+   * For actions taken with a weapon: which weapons it is for (FSD: Fire for
+   * ordinary special actions, Prepare for those marked prepared). All if omitted.
+   */
+  forWeapons?: Expr;
 }
 
 // ---------------------------------------------------------------------------
@@ -609,6 +619,11 @@ export interface GameSystem {
   id: Id;
   name: string;
   version: string;
+  /**
+   * Any unit may start in reserves (not only those with a deep strike rule),
+   * arriving at least `distance` (in the system's unit) from enemies.
+   */
+  reserves?: { distance: number };
   /** Distance unit. FSD uses a configurable "DU" worth some number of inches. */
   units: "inch" | "cm" | { name: string; inches: number };
   defaultTable?: Table;

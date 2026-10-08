@@ -88,6 +88,7 @@ describe("reconnect and host migration", () => {
     });
     as1(row(tank.id, 0, 4));
     as2(row(gang.id, -1.5, -2));
+    as1({ type: "turn/next" }); // rolls the dice, to pre-assigning
     as1({ type: "turn/next" });
     as1({ type: "action/take", unitId: tank.id, action: "activate" });
     as1({ type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: gang.id });

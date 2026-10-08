@@ -1,5 +1,6 @@
 import { lookupRules, unitView } from "../core/content/runtime";
 import { systemOf } from "../core/content/turn";
+import { inchesPerUnit } from "../core/content/runtime";
 import type { GameState, Unit } from "../core";
 import { useCanControl, useStore } from "../store";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
@@ -28,6 +29,12 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
   const has = (id: string) => rules.find((r) => r.def.id === id);
   const status = unit.status ?? {};
   const deploying = game.turn.round === 0;
+  // Systems where any unit may wait in reserve (FSD) arrive as an activation, this far from enemies.
+  const system = systemOf(game);
+  const anyReserve = system.reserves;
+  const away = anyReserve ? anyReserve.distance * inchesPerUnit(system) : 9;
+  const unitName = typeof system.units === "object" ? system.units.name : '"';
+  const awayText = anyReserve ? `${anyReserve.distance} ${unitName}` : '9"';
   const scouts = has("scouts");
   const scoutInches = Number(scouts?.param.x ?? 6);
   const enemies = Object.values(game.units).filter((u) => opposed(game, u.owner, unit.owner));
@@ -44,24 +51,29 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
         .map((r) => r.def.name),
     ),
   ];
-  if (!has("deepStrike") && !scouts && !automatic.length) return null;
+  if (!has("deepStrike") && !anyReserve && !scouts && !automatic.length) return null;
   return (
     <div className="core-abilities small">
-      {has("deepStrike") && mine && deploying && !status.reserves && (
+      {(has("deepStrike") || anyReserve) && mine && deploying && !status.reserves && (
         <button
           className="small"
           onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: true }, unit.owner)}
         >
-          {t("Deep Strike: set up in reserves")}
+          {anyReserve ? t("Set up in reserve") : t("Deep Strike: set up in reserves")}
         </button>
       )}
       {status.reserves && (
         <span>
           {t("In reserves.")}{" "}
-          {mine && !deploying && (
+          {mine && !deploying && anyReserve && !status.acting && (
+            <span className="muted">{t("Deploy it as an activation to bring it on.")}</span>
+          )}
+          {mine && !deploying && (!anyReserve || status.acting) && (
             <button
               className="small"
-              title={t('Then drag the unit onto the table, more than 9" from every enemy model')}
+              title={t("Then drag the unit onto the table, more than {distance} from every enemy model", {
+                distance: awayText,
+              })}
               onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: false }, unit.owner)}
             >
               {t("Arrive")}
@@ -70,12 +82,15 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
         </span>
       )}
       {status.arrived && (
-        <span className={nearest <= 9 ? "warn" : "muted"}>
-          {nearest <= 9
-            ? t('Arrived from reserves: within 9" of an enemy ({distance}").', {
-                distance: formatNumber(nearest, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+        <span className={nearest <= away ? "warn" : "muted"}>
+          {nearest <= away
+            ? t("Arrived from reserves: within {distance} of an enemy ({actual}).", {
+                distance: awayText,
+                actual: anyReserve
+                  ? `${formatNumber(nearest / inchesPerUnit(system), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unitName}`
+                  : `${formatNumber(nearest, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}"`,
               })
-            : t('Arrived from reserves: set up more than 9" from enemies.')}
+            : t("Arrived from reserves: set up more than {distance} from enemies.", { distance: awayText })}
         </span>
       )}
       {scouts && mine && deploying && !status.scouting && (

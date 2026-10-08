@@ -897,7 +897,10 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const name =
         event.label ?? systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
       const spent = event.payment
-        .map((p) => `${p.amount ?? p.indices?.length ?? 0} ${p.resource}`)
+        .map((p) => {
+          const r = systemOf(game).resources?.find((x) => x.id === p.resource);
+          return `${p.amount ?? p.indices?.length ?? 0} ${r?.short ?? r?.name ?? p.resource}`;
+        })
         .join(", ");
       const p = {
         name: nameOf(event.player),

@@ -127,12 +127,16 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.|ok\.)/.test(f),
+      !/^(acting|actionsTaken|actionBudget|allowance|reacting|moves|arrived|box\d+|used\.|ok\.)/.test(f),
   );
   const chars = system.characteristics.filter((c) => c.of === "model" && c.type !== "text");
   const texts = system.characteristics.filter((c) => c.of === "model" && c.type === "text");
-  const weaponChars = system.characteristics.filter((c) => c.of === "weapon");
   const weapons = Object.values(unit.sheet?.weapons ?? {});
+  // An optional column no weapon fills (FSD's system line, which defaults to the card order) stays out.
+  const weaponChars = system.characteristics.filter(
+    (c) =>
+      c.of === "weapon" && (c.id !== "line" || weapons.some((w) => rosterText(c, w.chars) !== undefined)),
+  );
   const first = alive[0] ?? all[0];
   const raw = readCharacteristics(system, "model", first?.profile?.chars);
   // A charge that struck home this round stays on the card with its distance (PX-3c).
@@ -173,22 +177,35 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
             </button>
           ))}
           {flags.map((f) =>
-            // A spell on the unit (rank-and-flank magic): by its name, and a player can end it by hand.
-            f.startsWith("spell:") ? (
+            // A spell on the unit (rank-and-flank magic) or a prepared action's token (FSD):
+            // by name, and a player ends it by hand when it's used or lost.
+            f.startsWith("spell:") || f.startsWith("prepared.") ? (
               <button
                 key={f}
                 className="chip on"
                 disabled={!mine}
-                title={t("Click to end this spell")}
+                title={
+                  f.startsWith("spell:")
+                    ? t("Click to end this spell")
+                    : t("Click when the token is used or lost")
+                }
                 onClick={() =>
                   dispatch({ type: "unit/status", id: unit.id, key: f, value: null }, unit.owner)
                 }
               >
-                {f.slice(6)}
+                {f.startsWith("spell:")
+                  ? f.slice(6)
+                  : t("{weapon} prepared", { weapon: unit.sheet?.weapons[f.slice(9)]?.name ?? f.slice(9) })}
               </button>
             ) : (
               <span key={f} className="chip on">
-                {f === "reserves" ? t("In reserve") : f === "charged" && chargedText ? chargedText : f}
+                {f === "reserves"
+                  ? t("In reserve")
+                  : f === "interacting"
+                    ? t("Interacting")
+                    : f === "charged" && chargedText
+                      ? chargedText
+                      : f}
               </span>
             ),
           )}
@@ -284,6 +301,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                     {w.name}
                     {w.keywords.length > 0 && <div className="muted small">{w.keywords.join(", ")}</div>}
                     <SlotDice unit={unit} weaponId={w.id} mine={mine} />
+                    {mine && <PrepareButton unit={unit} weaponId={w.id} />}
                   </td>
                   {weaponChars.map((c) => (
                     <td key={c.id}>{shown(c, v[c.id], w.chars)}</td>
@@ -360,9 +378,15 @@ function SystemActions({ unit }: { unit: Unit }) {
   // Reactions only show while one can be made. In activation games, Activate stands alone
   // until the unit is activated, then only the actions it can take with it.
   const activations = options.some((o) => o.def.activates !== undefined);
+  const starters = options.filter((o) => o.def.activates !== undefined && !o.def.reactTo);
+  const starter = starters.find((o) => o.why !== "Not allowed now") ?? starters[0];
+  // Preparing is per weapon: its button sits on the weapon's row.
   const shown = options.filter(
     (o) =>
+      !o.def.prepares &&
       (!o.def.reactTo || o.ok) &&
+      // Of the ways to start an activation, only those this unit could use (Deploy for reserves).
+      !(activations && !acting && o.def.activates !== undefined && !o.def.reactTo && o !== starter) &&
       (!activations || (acting ? o.def.activates === undefined : o.def.activates !== undefined)),
   );
   const take = (o: ActionOption, extra: { with?: string[] } = {}) => {
@@ -501,6 +525,30 @@ function SystemActions({ unit }: { unit: Unit }) {
   );
 }
 
+/** Prepare a weapon's prepared action (FSD), while the unit is acting. */
+function PrepareButton({ unit, weaponId }: { unit: Unit; weaponId: string }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  if (!unit.status?.acting) return null;
+  const o = unitActions(game, unit.id, { weapon: weaponId }).find((x) => x.def.prepares);
+  if (!o || o.why === "Not for this weapon") return null;
+  return (
+    <div className="actions">
+      <button
+        className={`small ${o.ok ? "primary" : ""}`}
+        disabled={!o.ok}
+        title={o.why ?? t("Put a token on it: its effects last while the token stays")}
+        onClick={() =>
+          dispatch({ type: "action/take", unitId: unit.id, action: o.def.id, weapon: weaponId }, unit.owner)
+        }
+      >
+        {o.def.name}
+        {o.faces?.length ? <span className="cost"> · {usesFaces(o.faces)}</span> : null}
+      </button>
+    </div>
+  );
+}
+
 /**
  * Dice placed ahead of time on a weapon's AD slots (FSD), and while placing
  * is open, the owner's Ready dice that would fit: click one to place it.
@@ -530,8 +578,8 @@ function SlotDice({ unit, weaponId, mine }: { unit: Unit; weaponId: string; mine
     <div className="slot-dice small">
       {at.off && <span className="muted">{at.off}. </span>}
       {placed.length > 0 && (
-        <span title="Placed on its AD slots: spent when it fires">
-          On card:{" "}
+        <span title={t("Placed on its AD slots: spent when it's used")}>
+          {t("On card:")}{" "}
           {placed.map((f, k) => (
             <span key={k} className="die placed">
               {f}
@@ -542,12 +590,12 @@ function SlotDice({ unit, weaponId, mine }: { unit: Unit; weaponId: string; mine
       {fits.length > 0 && (
         <span className="actions">
           {" "}
-          Place:{" "}
+          {t("Place:")}{" "}
           {fits.map(({ f, i }) => (
             <button
               key={f}
               className="die"
-              title={`Put a ${f} from your Ready dice on this card`}
+              title={t("Put a {face} from your Ready dice on this card", { face: String(f) })}
               onClick={() =>
                 dispatch({ type: "dice/place", unitId: unit.id, weapon: weaponId, index: i }, unit.owner)
               }
@@ -562,7 +610,7 @@ function SlotDice({ unit, weaponId, mine }: { unit: Unit; weaponId: string; mine
           className="small link"
           onClick={() => dispatch({ type: "dice/discard", unitId: unit.id, weapon: weaponId }, unit.owner)}
         >
-          Discard
+          {t("Discard")}
         </button>
       )}
     </div>

@@ -13,7 +13,14 @@ import {
 import { opposed } from "../core/teams";
 import { nextRoller } from "../core/rolls";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
-import { actingUnits, actionTargets, unitActions } from "../core/content/play";
+import {
+  actingUnits,
+  actionTargets,
+  cantPlace,
+  placeablePool,
+  placeWindow,
+  unitActions,
+} from "../core/content/play";
 import { playerActions } from "../core/content/player";
 import { currentSlot, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
@@ -283,6 +290,23 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     ctx,
     side.map((p) => p.id),
   );
+
+  // Dice placed on cards ahead of time (FSD), now and then, while placing is open.
+  const pool = placeablePool(systemOf(state));
+  if (pool && ctx.rng() < 0.5)
+    for (const p of side) {
+      if (!placeWindow(state, p.id)) continue;
+      const faces = state.pools?.[p.id]?.[pool] ?? [];
+      const u = units.find((x) => x.owner === p.id);
+      for (const w of Object.keys(u?.sheet?.weapons ?? {}))
+        for (let i = 0; i < faces.length; i++)
+          if (u && !cantPlace(state, p.id, u.id, w, i))
+            yield {
+              intent: { type: "dice/place", unitId: u.id, weapon: w, index: i },
+              as: p.id,
+              kind: "place",
+            };
+    }
 
   // A tidy bot's movement phase: each unit (the acting one, mid-activation) heads for the enemy once.
   const slotId = currentSlot(state)?.id ?? "";

@@ -30,6 +30,7 @@ import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
+import { systemOf } from "../core/content/turn";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { replayRoll, useGame, useRareStars } from "./hooks";
@@ -149,6 +150,7 @@ export function UnitCard() {
     return (
       <SystemUnitCard unit={unit}>
         <CampaignUnitLine unitId={unit.id} />
+        {systemOf(game).reserves && <CoreAbilities unit={unit} />}
         <CodeActions unit={unit} />
         <RegimentPanel unit={unit} />
       </SystemUnitCard>

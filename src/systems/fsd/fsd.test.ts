@@ -14,6 +14,7 @@ import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
 import { fsdSample } from "./sample";
 import { fsdChecks } from "./checks";
+import { gameView } from "../../core/script";
 
 /** A seeded rng, so every run of the test rolls the same dice. */
 function rng(seed: number) {
@@ -58,6 +59,8 @@ function toActivations(s: GameState): GameState {
   return s;
 }
 
+const checks = (s: GameState) => fsdChecks(gameView(s, "fsd-1.7"));
+
 /** Put every model of a unit in a row around (x, y). */
 function place(s: GameState, unitId: string, x: number, y: number): GameState {
   const unit = s.units[unitId]!;
@@ -69,14 +72,11 @@ describe("Full Spectrum Dominance in play", () => {
   it("warns about a unit moved without activating", () => {
     let s = toActivations(setup());
     const squad = unitNamed(s, "Rifle Squad", "p1");
-    const view = { state: s } as Parameters<typeof fsdChecks>[0];
-    expect(fsdChecks(view)).toEqual([]);
+    expect(checks(s)).toEqual([]);
     s = place(s, squad.id, 0, 4);
-    expect(fsdChecks({ ...view, state: s }).map((w) => [w.id, w.unitId])).toEqual([
-      ["activateFirst", squad.id],
-    ]);
+    expect(checks(s).map((w) => [w.id, w.unitId])).toEqual([["activateFirst", squad.id]]);
     s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
-    expect(fsdChecks({ ...view, state: s })).toEqual([]);
+    expect(checks(s)).toEqual([]);
   });
 
   it("sets the table and rolls activation dice at the start of each round", () => {
@@ -365,5 +365,95 @@ describe("Full Spectrum Dominance in play", () => {
     s = play(s, { type: "turn/next" }, "p1");
     expect(s.turn.round).toBe(3);
     expect(s.pools?.p1?.readyDice).toHaveLength(7);
+  });
+  it("warns when a single move breaks an enemy's area of control", () => {
+    let s = setup();
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, gang.id, 0, 0);
+    s = place(s, squad.id, -12, 0);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: squad.id, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    // Straight past the gang, within 1 DU of it, and out the other side.
+    const past = place(s, squad.id, 1, -4.5);
+    expect(checks(past).map((w) => w.id)).toContain("areaOfControl");
+    expect(checks(past).find((w) => w.id === "areaOfControl")?.message).toMatch(/enter and leave/);
+    // Pinned enemies control nothing.
+    const pinned = applyEvent(past, { type: "unit/status", id: gang.id, key: "pinned", value: true });
+    expect(checks(pinned).map((w) => w.id)).not.toContain("areaOfControl");
+    // A second move may leave it.
+    s = play(s, { type: "action/take", unitId: squad.id, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    expect(checks(place(s, squad.id, 1, -4.5)).map((w) => w.id)).not.toContain("areaOfControl");
+  });
+
+  it("prepares a prepared action instead of firing it, and other actions end interacting", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const cannon = s.units[tank.id]!.sheet!.weapons["light-cannon"]!;
+    s = {
+      ...s,
+      units: {
+        ...s.units,
+        [tank.id]: {
+          ...s.units[tank.id]!,
+          sheet: {
+            ...s.units[tank.id]!.sheet!,
+            weapons: {
+              ...s.units[tank.id]!.sheet!.weapons,
+              "light-cannon": { ...cannon, keywords: ["Prepared"] },
+            },
+          },
+        },
+      },
+    };
+    s = toActivations(s);
+    s = { ...s, pools: { ...s.pools, p1: { readyDice: [5, 1, 1] } } };
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank.id, action: "interact" }, "p1");
+    expect(s.units[tank.id]?.status?.interacting).toBe(true);
+    const fire = unitActions(s, tank.id, { weapon: "light-cannon" }).find((o) => o.def.id === "fire")!;
+    expect(fire.why).toBe("Not for this weapon");
+    s = play(s, { type: "action/take", unitId: tank.id, action: "prepare", weapon: "light-cannon" }, "p1");
+    expect(s.units[tank.id]?.status).toMatchObject({ "prepared.light-cannon": true });
+    expect(s.units[tank.id]?.status?.interacting).toBeUndefined();
+    expect(s.pools?.p1?.readyDice).toEqual([1]);
+  });
+
+  it("deploys a unit from reserve as an activation with one action and no die", () => {
+    let s = setup();
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    s = play(s, { type: "unit/reserve", id: squad.id, reserve: true }, "p1");
+    s = toActivations(s);
+    const opts = unitActions(s, squad.id);
+    expect(opts.find((o) => o.def.id === "activate")?.ok).toBe(false);
+    const deploy = opts.find((o) => o.def.id === "deploy")!;
+    expect(deploy.ok).toBe(true);
+    expect(deploy.cost).toBe("");
+    const before = s.pools?.p1?.readyDice?.length;
+    s = play(s, { type: "action/take", unitId: squad.id, action: "deploy" }, "p1");
+    expect(s.pools?.p1?.readyDice?.length).toBe(before);
+    expect(s.units[squad.id]?.status).toMatchObject({ acting: true, actionBudget: 1 });
+    s = play(s, { type: "unit/reserve", id: squad.id, reserve: false }, "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, gang.id, 0, 0);
+    expect(checks(place(s, squad.id, 0, 4)).map((w) => w.id)).toContain("deployDistance");
+    expect(checks(place(s, squad.id, 0, 9)).map((w) => w.id)).not.toContain("deployDistance");
+  });
+
+  it("uses a support card by spending ADs instead of activating", () => {
+    let s = toActivations(setup());
+    s = { ...s, pools: { ...s.pools, p1: { readyDice: [6, 2, 4] } } };
+    s = play(
+      s,
+      { type: "player/action", action: "support", label: "Artillery strike", cost: 2, dice: [0] },
+      "p1",
+    );
+    expect(s.pools?.p1?.readyDice).toEqual([4]);
+    expect(
+      resolveIntent({ type: "player/action", action: "support", label: "Recon", cost: 2 }, "p1", rng(1), s),
+    ).toBeNull();
   });
 });

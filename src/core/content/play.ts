@@ -38,7 +38,7 @@ import { opposed } from "../teams";
  * slot began), and "used.<action>" for once-per-round limits.
  */
 
-export const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting"];
+export const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
 
 /** Dice taken from a pool, or an amount from a counter, to pay for an action. */
 export interface Payment {
@@ -124,7 +124,7 @@ function triggerPayload(state: GameState, system: GameSystem, t: ActionTrigger) 
 }
 
 function limitKey(def: ActionDef, req: ActionRequest): string {
-  return def.procedure && req.weapon ? `used.${def.id}.${req.weapon}` : `used.${def.id}`;
+  return (def.procedure || def.prepares) && req.weapon ? `used.${def.id}.${req.weapon}` : `used.${def.id}`;
 }
 
 /** Parse "4-6" or "1-2 1-2" into slots. */
@@ -264,12 +264,16 @@ export function weaponSlots(
   const weapon = unit?.sheet?.weapons[weaponId];
   if (!unit || !weapon) return null;
   const pool = placeablePool(system);
-  const def = system.actions.find((a) => a.cost?.some((c) => c.resource === pool && c.slotsFrom));
-  if (!def) return null;
   const ctx = evalCtx(state, system, {
     self: unitView(state, system, unit),
     weapon: weaponView(state, system, unit, weapon),
   });
+  const def = system.actions.find(
+    (a) =>
+      a.cost?.some((c) => c.resource === pool && c.slotsFrom) &&
+      (a.forWeapons === undefined || safeBool(a.forWeapons, ctx)),
+  );
+  if (!def) return null;
   const slots = (def.cost ?? []).flatMap((c) =>
     c.resource === pool
       ? [...(c.slots ?? []), ...(c.slotsFrom ? parseSlots(resolve(c.slotsFrom, ctx)) : [])]
@@ -398,6 +402,8 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       ...(target ? { target: unitView(state, system, target) } : {}),
     });
     const why = ((): string | undefined => {
+      if (wView && def.forWeapons !== undefined && !safeBool(def.forWeapons, ctx))
+        return "Not for this weapon";
       if (state.procedure) return "Finish the current roll first";
       if (view.models.length === 0) return "Destroyed";
       if (def.reactTo) {
@@ -418,7 +424,9 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
         if (def.side === "inactive" && active) return "Only on the other player's turn";
       }
       if (def.limit && Number(unit.status?.[limitKey(def, req)] ?? 0) >= def.limit.count)
-        return def.procedure && req.weapon ? "Weapon already used this round" : "Already used this round";
+        return (def.procedure || def.prepares) && req.weapon
+          ? "Weapon already used this round"
+          : "Already used this round";
       for (const n of def.notWhen ?? []) if (safeBool(n.if, ctx)) return n.why;
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
       return undefined;
@@ -612,8 +620,11 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
     if (def.move) {
       const inches = safeNum(def.move.distance, ctx) * inchesPerUnit(system);
       patch.allowance = Number(unit.status?.allowance ?? 0) + inches;
+      // Move actions this activation, for rules about a single move (FSD areas of control).
+      patch.moves = Number(unit.status?.moves ?? 0) + 1;
     }
     for (const f of def.sets ?? []) patch[f] = true;
+    if (def.prepares && ev.weapon) patch[`prepared.${ev.weapon}`] = true;
     next = setStatus(next, unit.id, patch);
   }
   for (const a of def.do ?? []) {

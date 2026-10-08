@@ -33,6 +33,8 @@ const NAMES: Record<string, () => string> = {
   terrain: () => t("Moving through terrain"),
   deepStrike: () => "Deep Strike",
   activateFirst: () => t("Activate before moving"),
+  areaOfControl: () => t("Area of control"),
+  deployDistance: () => t("Deploying from reserve"),
 };
 
 export function checkName(state: GameState, id: string): string {

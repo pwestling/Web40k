@@ -282,7 +282,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
 }
 
 /** Flags the engine keeps on a unit during its activation (see play.ts). */
-const ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting"];
+const ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
 
 /** Clear unit flags; a trailing "*" clears every flag with that prefix. */
 function clearFlags(state: GameState, flags: string[], seat?: number): GameState {

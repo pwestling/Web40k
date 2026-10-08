@@ -18,11 +18,19 @@ import type { Expr, GameSystem } from "../schema";
  *  - weapon profile: Range, Attack ("3d6"), AP, AD (slots such as "4-6" or
  *    "1-2 1-2"), Min (minimum range); keywords IC (ignore cover), Per Base.
  *
- * Simplifications, all advisory: ADs are paid when the action is taken rather
- * than pre-assigned to slots; reactions resolve before the action they
- * answer instead of at the same time; a damaged system (S1-S4) is shown on
- * the unit but its action is not switched off; areas of control, prepared
- * actions, reserves, behemoths and support cards are left to the players.
+ * Also covered: ADs placed on cards' slots ahead of time (in pre-assigning,
+ * at the start of a player's alternating turn, and at cleanup) and kept over
+ * the round, the AD Pool of 12 counting dice still on cards; reactions that
+ * resolve at the same time as the action they answer; damaged systems S1-S4
+ * switching off the action on that card line (a weapon's Line, or its place
+ * on the card) and dropping the dice on it; prepared actions (weapons with
+ * the Prepared keyword) and Interact; reserves deployed as an activation;
+ * support cards (named by the player, paid in ADs); and areas of control as
+ * table warnings (src/systems/fsd/checks.ts).
+ *
+ * Left to the players: what a prepared action or support card does while it
+ * applies, triggered abilities, and behemoths (multi-card units whose core,
+ * systems and attachments activate and take damage separately).
  */
 
 const ref = (r: string): Expr => ({ ref: r });
@@ -45,14 +53,21 @@ const systemDamaged = (n: number): Expr => ({
     },
   ],
 });
+const damagedSystems = [1, 2, 3, 4].map((n) => ({ if: systemDamaged(n), why: `System ${n} is damaged` }));
+/** A special action marked prepared on the card (a square slot on its right). */
+const prepared: Expr = { hasKeyword: "weapon", keyword: "Prepared" };
+/** Taking another action ends interacting with an objective. */
+const dropInteract = { do: "setFlag", target: "self", flag: "interacting", value: false } as const;
 const notPinned: Expr = { not: { hasStatus: "self", status: "pinned" } };
 
 export const fsd: GameSystem = {
   id: "fsd-1.7",
   name: "Full Spectrum Dominance",
-  version: "0.2.0",
+  version: "0.3.0",
   // 1 DU is 3" on the standard 2' x 3' table (8 x 12 DU).
   units: { name: "DU", inches: 3 },
+  // Any unit may wait in reserve, and arrives at least 2 DU from enemies.
+  reserves: { distance: 2 },
   defaultTable: { width: 36, depth: 24 },
   settings: { los: "footprint", modelsBlock: true, visionArc: 0 },
   dice: [
@@ -198,6 +213,7 @@ export const fsd: GameSystem = {
       on: "player",
       initial: 0,
       kind: "dicePool",
+      short: "AD",
       sides: 6,
       reset: "round",
       rerollOnce: true,
@@ -333,7 +349,12 @@ export const fsd: GameSystem = {
       by: "unit",
       side: "active",
       activates: 2,
-      if: { not: { hasStatus: "self", status: "activated" } },
+      if: {
+        all: [
+          { not: { hasStatus: "self", status: "activated" } },
+          { not: { hasFlag: "self", flag: "reserves" } },
+        ],
+      },
       cost: [{ resource: "readyDice", amount: 1 }],
       // Commanded units: within 2 DU and in line of sight. Pinned units can't command.
       do: [
@@ -374,6 +395,7 @@ export const fsd: GameSystem = {
       if: {
         all: [
           { not: { hasStatus: "self", status: "activated" } },
+          { not: { hasFlag: "self", flag: "reserves" } },
           notPinned,
           {
             any: [
@@ -395,7 +417,7 @@ export const fsd: GameSystem = {
       name: "Unpin",
       by: "unit",
       if: { hasStatus: "self", status: "pinned" },
-      do: [{ do: "removeStatus", target: "self", status: "pinned" }],
+      do: [{ do: "removeStatus", target: "self", status: "pinned" }, dropInteract],
     },
     {
       // Moves after the first are 1 DU shorter, but at least 1 DU.
@@ -417,6 +439,7 @@ export const fsd: GameSystem = {
         },
       },
       sets: ["moved"],
+      do: [dropInteract],
     },
     {
       // Each weapon is a special action: once per round, paying its AD slots.
@@ -424,13 +447,53 @@ export const fsd: GameSystem = {
       name: "Fire",
       by: "unit",
       if: notPinned,
+      forWeapons: { not: prepared },
       target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
       limit: { count: 1, per: "round", perUnit: true },
-      notWhen: [1, 2, 3, 4].map((n) => ({ if: systemDamaged(n), why: `System ${n} is damaged` })),
+      notWhen: damagedSystems,
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
       procedure: "attack",
+      do: [dropInteract],
     },
+    {
+      // A special action marked prepared puts a token on the card: its effects
+      // last while the token stays (played by hand), and it's cleared when used.
+      id: "prepare",
+      name: "Prepare",
+      by: "unit",
+      if: notPinned,
+      forWeapons: prepared,
+      prepares: true,
+      limit: { count: 1, per: "round", perUnit: true },
+      notWhen: damagedSystems,
+      cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
+      do: [dropInteract],
+    },
+    // Interacting counts as prepared: lost on taking any other action, or at a new round.
     { id: "interact", name: "Interact", by: "unit", if: notPinned, sets: ["interacting"] },
+    {
+      // Instead of activating a unit, a player may use a support card from
+      // their own cards: they name it and spend its ADs (the effect is played
+      // by hand), then end the turn.
+      id: "support",
+      name: "Support card",
+      by: "player",
+      side: "active",
+      custom: true,
+      phases: ["activations"],
+      cost: [{ resource: "readyDice", amount: 0 }],
+    },
+    {
+      // A unit in reserve comes on as its activation: one action fewer, no
+      // command, and no die spent. Bring it on with Arrive, at least 2 DU
+      // from every enemy.
+      id: "deploy",
+      name: "Deploy",
+      by: "unit",
+      side: "active",
+      activates: 1,
+      if: { hasFlag: "self", flag: "reserves" },
+    },
   ],
   turn: {
     rounds: 6,
@@ -455,7 +518,7 @@ export const fsd: GameSystem = {
             kind: "phase",
             id: "activation",
             name: "Activations",
-            actions: ["activate", "react", "unpin", "move", "fire", "interact"],
+            actions: ["activate", "deploy", "react", "unpin", "move", "fire", "prepare", "interact"],
           },
         ],
       },
