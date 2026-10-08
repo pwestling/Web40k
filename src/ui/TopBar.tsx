@@ -282,7 +282,13 @@ export function TopBar() {
           (actingUnits(game).length ? (
             <button
               className="primary"
-              title={t("End this activation; the other player goes next")}
+              // Not mid-roll: a question still open (the saves) holds the go (UX 365, PX).
+              disabled={!!asked}
+              title={
+                asked
+                  ? t("Answer the open question first")
+                  : t("End this activation; the other player goes next")
+              }
               onClick={() => {
                 setDraft(null);
                 dispatch({ type: "turn/endActivation" });

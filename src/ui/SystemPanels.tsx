@@ -64,7 +64,9 @@ function shown(c: CharacteristicDef, value: unknown, chars: Record<string, strin
   if (text === undefined && (c.type === "target" || c.of === "weapon" || value === 0) && value === c.default)
     return "–";
   // The system's own way to write it: 4+, 5" (PX print and play).
-  if (c.format && text === undefined) return value === 0 ? "–" : c.format.replace("{v}", String(value));
+  // A bare number from the army list gets it too ("4" → "4+"); "4+" as written stays as it is.
+  if (c.format && (text === undefined || /^\d+(\.\d+)?$/.test(text)))
+    return value === 0 ? "–" : c.format.replace("{v}", String(value));
   return String(value);
 }
 
@@ -437,7 +439,8 @@ function SystemActions({ unit }: { unit: Unit }) {
 
   return (
     <div className="actions">
-      {acting && (
+      {/* A system that doesn't count actions (Rift Lanterns) has nothing to say here (UX 365). */}
+      {acting && Number(status.actionBudget ?? 0) > 0 && (
         <p className="muted small">
           {reacting
             ? t("Reacting: {used} of {budget} actions used.", {
@@ -454,7 +457,8 @@ function SystemActions({ unit }: { unit: Unit }) {
       {acting &&
         !reacting &&
         Number(status.actionsTaken ?? 0) >= Number(status.actionBudget ?? 0) &&
-        !game.pending && (
+        !game.pending &&
+        !game.script?.waiting && (
           <div className="row">
             <button
               className="primary"

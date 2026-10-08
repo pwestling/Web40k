@@ -32,13 +32,20 @@ export function paintOverlays(
   frame: Frame,
   root: ParentNode = document,
   /** A clip not the screen's shape: the tray goes bottom centre, at a size of its own, not in a cropped corner. */
-  trayIn?: { width: number; height: number; below?: number },
+  trayIn?: { width: number; height: number; below?: number; above?: number },
 ): void {
+  // A tall clip (UX 367): the caption goes in the band under the table, clear of the dice on top.
+  const banded = !!trayIn?.above && trayIn.height - (trayIn.below ?? trayIn.height) > trayIn.height * 0.12;
+  const stacked: HTMLElement[] = [];
   for (const sel of LAYERS)
-    for (const el of root.querySelectorAll<HTMLElement>(sel))
+    for (const el of root.querySelectorAll<HTMLElement>(sel)) {
       // A box with no words showing (a title between moments, a label whose text is hidden) would
       // show as a stray frame (UX 337); wound pips have no text.
-      if (sel === ".wounds" || showsText(el)) paintBox(ctx, el, frame, 1);
+      if (sel !== ".wounds" && !showsText(el)) continue;
+      if (banded && BANDED.includes(sel)) stacked.push(el);
+      else paintBox(ctx, el, frame, 1);
+    }
+  if (stacked.length) bandFrames(stacked, trayIn!).forEach((f, i) => paintBox(ctx, stacked[i]!, f, 1));
   const tray = root.querySelector<HTMLElement>(".dice-tray.on");
   if (tray) paintTray(ctx, tray, trayIn ? (trayFrame(tray, trayIn) ?? frame) : frame);
 }
@@ -47,9 +54,22 @@ export function paintOverlays(
  * The frame that puts the tray's felt bottom centre of a `size` picture: in the band under the table
  * when there is room (a tall clip), else over the table's foot, as big as fits.
  */
-function trayFrame(tray: HTMLElement, size: { width: number; height: number; below?: number }): Frame | null {
+function trayFrame(
+  tray: HTMLElement,
+  size: { width: number; height: number; below?: number; above?: number },
+): Frame | null {
   const r = (tray.querySelector<HTMLElement>(".felt") ?? tray).getBoundingClientRect();
   if (!r.width || !r.height) return null;
+  // A tall clip: in the top band, under the score (UX 367).
+  const top = size.above ?? 0;
+  if (top > size.height * 0.12) {
+    const score = Math.min(top * 0.3, (150 * size.width) / 1080);
+    const room = top - score;
+    const scale = Math.min((size.width * 0.8) / r.width, (room * 0.85) / r.height);
+    const x = (size.width - r.width * scale) / 2;
+    const y = score + (room - r.height * scale) / 2;
+    return { scale, left: r.left - x / scale, top: r.top - y / scale };
+  }
   const band = size.height - (size.below ?? size.height);
   const inBand = band > size.height * 0.12;
   const scale = inBand
@@ -59,6 +79,30 @@ function trayFrame(tray: HTMLElement, size: { width: number; height: number; bel
   // Above the caption, which keeps its place at the table's foot.
   const y = inBand ? size.height - band / 2 - (r.height * scale) / 2 : size.height * 0.85 - r.height * scale;
   return { scale, left: r.left - x / scale, top: r.top - y / scale };
+}
+
+/** What a tall clip moves off the table into the band under it, top to bottom (UX 367). */
+const BANDED = [".round-card:not(.package-card)", ".moment-card", ".caption"];
+
+/** Frames that stack `els` in the band under the table, each as wide as reads well, centred. */
+function bandFrames(els: HTMLElement[], size: { width: number; height: number; below?: number }): Frame[] {
+  const below = size.below ?? size.height;
+  const band = size.height - below;
+  const gap = size.height * 0.015;
+  const rects = els.map((el) => el.getBoundingClientRect());
+  const scales = rects.map((r) =>
+    r.width ? Math.min((size.width * 0.9) / r.width, (2.2 * size.width) / 1080) : 1,
+  );
+  const total = rects.reduce((n, r, i) => n + r.height * scales[i]!, 0) + gap * (els.length - 1);
+  const shrink = Math.min(1, (band * 0.9) / Math.max(1, total));
+  let y = below + (band - total * shrink) / 2;
+  return rects.map((r, i) => {
+    const scale = scales[i]! * shrink;
+    const x = (size.width - r.width * scale) / 2;
+    const f = { scale, left: r.left - x / scale, top: r.top - y / scale };
+    y += r.height * scale + gap * shrink;
+    return f;
+  });
 }
 
 const visible = (style: CSSStyleDeclaration) =>

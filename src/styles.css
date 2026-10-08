@@ -4274,6 +4274,10 @@ body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
 .rules-sheet .play-row button {
   min-height: 40px;
 }
+/* The sheet's dark ink would carry into the blue buttons: white on blue, as everywhere else (UX 364). */
+.rules-sheet button.primary {
+  color: #fff;
+}
 .rules-sheet .play-row {
   display: flex;
   flex-wrap: wrap;

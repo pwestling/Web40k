@@ -1,3 +1,8 @@
+import { shot } from "../render/focus";
+import { sideName, sidePlayers, sides } from "../core";
+import { t } from "../i18n";
+import { displayName } from "../i18n/names";
+import { useStore } from "../store";
 import { audioOut } from "../ui/sound";
 import { voiceStreams } from "../voice/voice";
 import { everyFrame, tableCanvas } from "./capture";
@@ -85,18 +90,22 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
     const cover = Math.max(width / r.width, height / r.height);
     const fit = Math.min(width / r.width, height / r.height);
     const narrow = Math.abs(width / height - r.width / r.height) > 0.2;
-    const k = narrow ? fit + (cover - fit) * 0.45 : cover;
+    // A tall clip of a wide screen fits the whole table across (UX 367: edge units were cut) and
+    // uses the bands above and below: the score and dice on top, the caption underneath.
+    const tall = narrow && height / width > 1.3 && r.width >= r.height;
+    const k = tall ? fit : narrow ? fit + (cover - fit) * 0.45 : cover;
     const dx = (width - r.width * k) / 2;
     const dy = (height - r.height * k) / 2;
     ctx.fillStyle = "#111318";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(src, dx, dy, r.width * k, r.height * k);
+    if (tall) drawScore(ctx, width, dy);
     paintOverlays(
       ctx,
       { left: r.left - dx / k, top: r.top - dy / k, scale: k },
       document,
       // Cropped from a screen of another shape, the tray would sit squeezed in a corner (UX 55).
-      narrow ? { width, height, below: dy + r.height * k } : undefined,
+      narrow ? { width, height, below: dy + r.height * k, ...(tall ? { above: dy } : {}) } : undefined,
     );
   });
 
@@ -130,7 +139,9 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
   // A tall clip stacks the caption (UX 356): its two columns would wrap word by word.
   const narrowShape = width / height < 1.2;
   if (narrowShape) document.body.classList.add("clip-narrow");
+  shot.capturing++;
   const finish = () => {
+    shot.capturing = Math.max(0, shot.capturing - 1);
     document.body.classList.remove("clip-narrow");
     stopFrames();
     for (const t of tracks) t.stop();
@@ -172,6 +183,45 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
       recorder.stop();
     },
   };
+}
+
+/**
+ * A tall clip's top band (UX 367): each side's name, colour and VP, and the
+ * round, so a phone-sized story says the score without the top bar.
+ */
+function drawScore(ctx: CanvasRenderingContext2D, width: number, band: number) {
+  const game = useStore.getState().game;
+  const rows = sides(game).map((seat) => ({
+    name: displayName(sideName(game, seat)),
+    color: sidePlayers(game, seat)[0]?.color ?? "#999",
+    vp: game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0,
+  }));
+  if (rows.length < 2 || band < 160) return;
+  const unit = width / 1080;
+  const h = Math.min(band * 0.3, 150 * unit);
+  const y = h * 0.62;
+  const font = (size: number, weight: number) =>
+    (ctx.font = `${weight} ${size * unit}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`);
+  ctx.textBaseline = "alphabetic";
+  rows.slice(0, 2).forEach((row, i) => {
+    const left = i === 0;
+    const x = left ? 48 * unit : width - 48 * unit;
+    ctx.fillStyle = row.color;
+    ctx.fillRect(left ? x : x - 10 * unit, y - 44 * unit, 10 * unit, 60 * unit);
+    ctx.textAlign = left ? "left" : "right";
+    font(28, 700);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.fillText(row.name, left ? x + 24 * unit : x - 24 * unit, y - 20 * unit, width * 0.3);
+    font(40, 800);
+    ctx.fillText(`${row.vp} VP`, left ? x + 24 * unit : x - 24 * unit, y + 20 * unit);
+  });
+  if (game.turn.round > 0) {
+    ctx.textAlign = "center";
+    font(26, 600);
+    ctx.fillStyle = "#b9b4a8";
+    ctx.fillText(t("Round {n}", { n: game.turn.round }), width / 2, y);
+  }
+  ctx.textAlign = "left";
 }
 
 /** The clip's last frame: its last picture dimmed, the result, and where to play. */

@@ -18,4 +18,6 @@ export const cameraForward = { x: 0, y: -1 };
 export const shot: {
   request: { x: number; y: number; span: number } | null;
   restore: boolean;
-} = { request: null, restore: false };
+  /** A picture or clip is being taken: nothing right in front of the lens (UX 369). */
+  capturing: number;
+} = { request: null, restore: false, capturing: 0 };

@@ -77,7 +77,8 @@ function backdrop(table: HTMLCanvasElement | null): [HTMLCanvasElement, CanvasRe
   ctx.fillRect(0, 0, CARD.width, CARD.height);
   if (table && table.width && table.height) {
     // Cover the picture's area, keeping the middle (where the shot was framed).
-    const area = { x: COLUMN - 40, w: CARD.width - COLUMN + 40, h: CARD.height };
+    // It starts at the column's edge, so the scores keep a gutter (UX 369).
+    const area = { x: COLUMN, w: CARD.width - COLUMN, h: CARD.height };
     const k = Math.max(area.w / table.width, area.h / table.height);
     const w = table.width * k;
     const h = table.height * k;

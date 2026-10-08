@@ -39,7 +39,7 @@ type Picture = HTMLImageElement | HTMLCanvasElement;
 /** Ink saver (UX 362): figures, bases and headers as outlines, no solid colour. Set for one run. */
 let inkSaver = false;
 
-/** A figure as an outline: white inside, a dark edge, a ghost of its shading. */
+/** A figure as an outline: white inside and a dark edge, nothing filled (UX 368). */
 function outlined(img: HTMLImageElement): HTMLCanvasElement {
   const pad = 6;
   const c = document.createElement("canvas");
@@ -66,8 +66,6 @@ function outlined(img: HTMLImageElement): HTMLCanvasElement {
       Math.round(Math.sin((a * Math.PI) / 8) * d),
     );
   ctx.drawImage(mask("#ffffff"), 0, 0);
-  ctx.globalAlpha = 0.22;
-  ctx.drawImage(img, pad, pad);
   return c;
 }
 
@@ -484,11 +482,13 @@ function ruler(page: Page, x: number, y: number, inches: number, label: string, 
     ctx.moveTo(tx, y);
     ctx.lineTo(tx, y + len);
     ctx.stroke();
-    if (i % 4 === 0 && i > 0 && i < inches * 4) {
+    if (i % 4 === 0 && i > 0) {
+      // The end's number too (6, 12), tucked inside the strip (PX).
+      const end = i === inches * 4;
       page.font(6, 700);
       ctx.fillStyle = INK;
-      ctx.textAlign = "center";
-      ctx.fillText(String(from + i / 4), tx, y + 7.2);
+      ctx.textAlign = end ? "right" : "center";
+      ctx.fillText(String(from + i / 4), end ? tx - 0.8 : tx, y + 7.2);
       ctx.textAlign = "left";
     }
   }
@@ -514,11 +514,12 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   const circle = (cx: number, cy: number, r: number, fill: string, text: string, sub = "") => {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = fill;
+    // Saving ink: white tokens, told apart by their words (UX 368).
+    ctx.fillStyle = inkSaver ? "#ffffff" : fill;
     ctx.fill();
-    ctx.setLineDash([1, 1]);
-    ctx.strokeStyle = "#9a9a9a";
-    ctx.lineWidth = 0.2;
+    ctx.setLineDash(inkSaver ? [] : [1, 1]);
+    ctx.strokeStyle = inkSaver ? INK : "#9a9a9a";
+    ctx.lineWidth = inkSaver ? 0.3 : 0.2;
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = INK;
@@ -633,29 +634,7 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   const H = 38;
   names.forEach((n, i) => {
     const x = MARGIN + i * (2 * W + 6);
-    for (const side of [0, 1]) {
-      const sx = x + side * W;
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(sx + W / 2, y + H - 2);
-      ctx.lineTo(sx + W / 2, y + 14);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(sx + W / 2, y + 10, 5, 0, Math.PI * 2);
-      if (inkSaver) {
-        ctx.strokeStyle = "#e09a20";
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = "#ffb938";
-        ctx.fill();
-      }
-      page.font(5, 700);
-      ctx.fillStyle = INK;
-      ctx.textAlign = "center";
-      ctx.fillText(n, sx + W / 2, y + H - 4, W - 2);
-      ctx.textAlign = "left";
-    }
+    for (const side of [0, 1]) lanternStandee(page, x + side * W, y, W, H, n);
     ctx.setLineDash([1, 1]);
     ctx.strokeStyle = "#8a8a8a";
     ctx.lineWidth = 0.2;
@@ -669,6 +648,69 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
     ctx.setLineDash([]);
   });
   return page;
+}
+
+/**
+ * One face of a lantern standee (PX, UX 368): a pole on a foot, a lantern
+ * hanging from it (handle, cap, cage, flame), and its name under the foot,
+ * clear of the pole.
+ */
+function lanternStandee(page: Page, x: number, y: number, w: number, h: number, name: string) {
+  const { ctx } = page;
+  const cx = x + w / 2;
+  const glow = inkSaver ? "#ffffff" : "#ffb938";
+  const edge = inkSaver ? INK : "#7a4a10";
+  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = INK;
+  // The pole and its foot.
+  const foot = y + h - 9;
+  ctx.beginPath();
+  ctx.moveTo(cx, foot);
+  ctx.lineTo(cx, y + 5);
+  ctx.lineTo(cx + 4, y + 5);
+  ctx.moveTo(cx - 4, foot);
+  ctx.lineTo(cx + 4, foot);
+  ctx.stroke();
+  // The lantern, hanging from the arm.
+  const lx = cx + 4;
+  const top = y + 8;
+  ctx.lineWidth = 0.35;
+  ctx.strokeStyle = edge;
+  ctx.beginPath();
+  ctx.arc(lx, top - 0.3, 1.4, Math.PI, 0);
+  ctx.stroke();
+  // Cap.
+  ctx.beginPath();
+  ctx.moveTo(lx - 2.6, top + 2);
+  ctx.lineTo(lx - 1.2, top + 0.6);
+  ctx.lineTo(lx + 1.2, top + 0.6);
+  ctx.lineTo(lx + 2.6, top + 2);
+  ctx.closePath();
+  ctx.fillStyle = inkSaver ? "#ffffff" : "#5a3a12";
+  ctx.fill();
+  ctx.stroke();
+  // Cage with its flame.
+  ctx.fillStyle = glow;
+  ctx.fillRect(lx - 2.2, top + 2, 4.4, 6);
+  ctx.strokeRect(lx - 2.2, top + 2, 4.4, 6);
+  ctx.beginPath();
+  ctx.moveTo(lx, top + 2);
+  ctx.lineTo(lx, top + 8);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(lx, top + 5.4, 0.9, 1.6, 0, 0, Math.PI * 2);
+  ctx.fillStyle = inkSaver ? "#ffffff" : "#fff3c4";
+  ctx.fill();
+  if (inkSaver) ctx.stroke();
+  // Base of the cage.
+  ctx.fillStyle = inkSaver ? "#ffffff" : "#5a3a12";
+  ctx.fillRect(lx - 2.8, top + 8, 5.6, 1);
+  ctx.strokeRect(lx - 2.8, top + 8, 5.6, 1);
+  page.font(5, 700);
+  ctx.fillStyle = INK;
+  ctx.textAlign = "center";
+  ctx.fillText(name, cx, y + h - 3.5, w - 2);
+  ctx.textAlign = "left";
 }
 
 /** Cut-out stand-ins: each model as a fold-over standee at true height, and a base to slot it in. */

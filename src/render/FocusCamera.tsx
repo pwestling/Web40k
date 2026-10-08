@@ -8,12 +8,13 @@ const EASE_S = 0.2;
 /** Eases the camera to look at a requested point, keeping its angle and distance (src/render/focus.ts). */
 export function FocusCamera() {
   const saved = useRef<{ target: Vector3; position: Vector3 } | null>(null);
+  const near = useRef<number | null>(null);
   const controls = useThree((s) => s.controls) as unknown as {
     target: Vector3;
     object: { position: Vector3 };
     update: () => void;
   } | null;
-  useFrame((_, dt) => {
+  useFrame(({ camera }, dt) => {
     if (controls && shot.request) {
       // A picture's still: jump there, remembering where the camera was.
       const { x, y, span } = shot.request;
@@ -32,6 +33,20 @@ export function FocusCamera() {
         controls.update();
         saved.current = null;
       }
+    }
+    // Taking a picture or clip: whatever sits right in front of the lens (a pole, a ruin's
+    // corner) would fill the frame, so the near plane moves out to a third of the way in.
+    if (controls && shot.capturing > 0) {
+      near.current ??= camera.near;
+      const want = Math.max(near.current, controls.object.position.distanceTo(controls.target) * 0.33);
+      if (Math.abs(camera.near - want) > 0.01) {
+        camera.near = want;
+        camera.updateProjectionMatrix();
+      }
+    } else if (near.current !== null) {
+      camera.near = near.current;
+      camera.updateProjectionMatrix();
+      near.current = null;
     }
     if (controls) {
       const dx = controls.target.x - controls.object.position.x;

@@ -1,5 +1,5 @@
 import { ScriptPanel } from "../ui/ScriptPanel";
-import { useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { sideName, sidePlayers, sides, type GameState, type Unit } from "../core";
 import { t, tn } from "../i18n";
 import { useCanControl, useStore } from "../store";
@@ -44,6 +44,14 @@ export function CompanionScreen() {
   const unit = selected ? game.units[selected] : undefined;
   const mode = useStore((s) => s.mode);
   const selfId = useStore((s) => s.session?.selfId);
+  // When the go passes (Done on the last ask), back to all units, the next side's on top (PX).
+  const seat = game.turn.activeSeat;
+  const wasSeat = useRef(seat);
+  useEffect(() => {
+    if (seat === wasSeat.current) return;
+    wasSeat.current = seat;
+    if (useStore.getState().selected) select(null);
+  }, [seat, select]);
 
   return (
     <div className="companion">
@@ -144,10 +152,13 @@ function Units({ game, before }: { game: GameState; before: boolean }) {
   const select = useStore((s) => s.select);
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   const mine = seated.filter((p) => canControl(p.id));
+  const mode = useStore((s) => s.mode);
   const going = (seat: number) => game.turn.round > 0 && game.turn.activeSeat === seat && !battleOver(game);
+  // The side whose go it is comes first, ready to hand the phone across (PX).
+  const order = [...sides(game)].sort((a, b) => Number(going(b)) - Number(going(a)));
   return (
     <div className="companion-units">
-      {sides(game).map((seat) => {
+      {order.map((seat) => {
         const players = sidePlayers(game, seat);
         const units = Object.values(game.units).filter((u) => players.some((p) => p.id === u.owner));
         const color = players[0]?.color;
@@ -159,7 +170,14 @@ function Units({ game, before }: { game: GameState; before: boolean }) {
               </span>{" "}
               {sideName(game, seat)}
               {/* Whose go it is, on the list itself (UX 363). */}
-              {going(seat) && <span className="go-now">{t("Their go")}</span>}
+              {going(seat) && (
+                <span className="go-now">
+                  {/* One phone between two: name the side; your own phone: "Your go" (UX 366, PX). */}
+                  {mode !== "hotseat" && players.some((p) => canControl(p.id))
+                    ? t("Your go")
+                    : t("{side}'s go", { side: sideName(game, seat) })}
+                </span>
+              )}
             </h2>
             {!units.length && <p className="muted small">{t("No army yet.")}</p>}
             <div className="tiles">

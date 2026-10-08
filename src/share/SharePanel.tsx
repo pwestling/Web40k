@@ -48,8 +48,10 @@ async function tableAt(
       span: Math.max(width, depth) * 0.25,
     };
   shot.request = frame;
+  shot.capturing++;
   await settle();
   const picture = await grabTable();
+  shot.capturing--;
   shot.restore = true;
   useStore.getState().setScrub(was.scrub);
   useStore.getState().set({ director: was.director });

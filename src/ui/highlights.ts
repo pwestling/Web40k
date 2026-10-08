@@ -235,16 +235,17 @@ export function lossesBetween(
   const before = stateAt(record, from);
   const after = stateAt(record, to);
   const out = [];
-  for (const u of Object.values(before.units)) {
-    const now = after.units[u.id];
-    const was = aliveModels(before, u);
-    const lost = was.length - (now ? aliveModels(after, now).length : 0);
+  // Every unit at the end, including armies added after `from` (a game's start has none yet: PX share).
+  for (const u of Object.values(after.units)) {
+    const gone = u.modelIds.filter((id) => after.models[id]?.destroyed && !before.models[id]?.destroyed);
+    const lost = gone.length;
     if (lost <= 0) continue;
-    const at = was.map((m) => m.position);
+    // Where they fell: a destroyed model keeps its last place (the casualty pile is only drawn).
+    const at = gone.map((id) => after.models[id]!.position);
     const x = at.reduce((n, p) => n + p.x, 0) / at.length;
     const y = at.reduce((n, p) => n + p.y, 0) / at.length;
     const span = Math.max(6, ...at.map((p) => 2 * Math.hypot(p.x - x, p.y - y)));
-    const wiped = !!now && aliveModels(after, now).length === 0;
+    const wiped = aliveModels(after, u).length === 0;
     out.push({
       unit: u.id,
       lost,
