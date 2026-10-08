@@ -234,15 +234,23 @@ const checks = {
     await page.locator(".table-attack .targets button").first().click();
     await page.getByRole("button", { name: /Declare attack/ }).click();
     await page.locator(".attack-roll").click();
-    const ask = await page.locator(".dice-entry strong").first().textContent();
-    const n = Number(/(\d+)/.exec(ask ?? "")?.[1]);
-    if (!n) throw new Error(`no dice asked for: ${ask}`);
-    for (let i = 0; i < n; i++)
-      await page
-        .locator(".dice-entry .face")
-        .nth(i % 6)
-        .click();
-    await page.getByRole("button", { name: "Use these dice" }).click();
+    // The roll, then any re-rolls the army's rules ask for (Drilled Volleys re-roll 1s).
+    for (let round = 0; round < 3; round++) {
+      const ask = await page.locator(".dice-entry strong").first().textContent();
+      const n = Number(/(\d+)/.exec(ask ?? "")?.[1]);
+      if (!n) throw new Error(`no dice asked for: ${ask}`);
+      for (let i = 0; i < n; i++)
+        await page
+          .locator(".dice-entry .face")
+          .nth(i % 6)
+          .click();
+      await page.waitForTimeout(300);
+      // A full roll may go straight on to the re-rolls; otherwise it waits for Use these dice.
+      const use = page.getByRole("button", { name: "Use these dice" });
+      if ((await use.count()) && (await use.isEnabled())) await use.click();
+      await page.waitForTimeout(300);
+      if (!(await page.locator(".dice-entry").count())) break;
+    }
     await page
       .getByText(/^\d+ hits?/)
       .first()
