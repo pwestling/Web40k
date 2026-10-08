@@ -83,6 +83,18 @@ const shooting: Procedure = {
       roller: "defender",
       passOn: "failures",
     },
+    // Heavy losses (a quarter of the unit) call for a Panic test: code (combat.ts heavyLosses), once the shooting is closed.
+    {
+      kind: "do",
+      id: "panic",
+      do: [
+        {
+          do: "script",
+          procedure: "heavyLosses",
+          args: { unit: ref("target"), before: { count: "target.models" } },
+        },
+      ],
+    },
     { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
     { kind: "damage", id: "damage", amount: 1, spillover: false },
   ],

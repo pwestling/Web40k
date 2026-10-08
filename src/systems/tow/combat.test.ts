@@ -398,3 +398,31 @@ describe("The Old World combat as code", () => {
     expect(seen).toBe(1);
   });
 });
+
+describe("Panic from shooting (#40)", () => {
+  it("a unit that loses a quarter of its models to shooting tests once the shooting is closed", () => {
+    let seen = 0;
+    for (let seed = 1; seed < 40 && !seen; seed++) {
+      const { t } = setup();
+      const bows = unitNamed(t.s, "Fen Bowmen").id;
+      const slingers = unitNamed(t.s, "Reaver Slingers").id;
+      block(t, bows, -20, 5, 0);
+      block(t, slingers, -12, 5, Math.PI);
+      toPhase(t, "shooting");
+      t.play(
+        { type: "action/take", unitId: bows, action: "shoot", weapon: "missile", targetId: slingers },
+        "p1",
+        seed,
+      );
+      for (let i = 0; i < 12 && t.s.procedure && !t.s.procedure.run.done; i++)
+        t.play({ type: "procedure/roll" }, "p1", seed * 100 + i);
+      const lost = 10 - standing(t.s, slingers);
+      t.play({ type: "procedure/clear" }, "p1", seed);
+      const notes = t.notes();
+      const tested = notes.some((n) => n === `Reaver Slingers lost ${lost} of 10 models: a Panic test`);
+      expect(tested).toBe(lost >= 3 && lost < 10);
+      if (tested) seen++;
+    }
+    expect(seen).toBe(1);
+  });
+});

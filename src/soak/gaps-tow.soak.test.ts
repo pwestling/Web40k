@@ -8,9 +8,10 @@ import { scenarioSuite } from "./suite";
  * challenges, fights with more than two units and automatic Panic tests.
  */
 const watch = (_: unknown, events: GameEvent[]): string[] => {
-  const notes = events.flatMap((e) =>
-    e.type === "script/step" ? e.events.flatMap((x) => (x.type === "log/note" ? [x.text] : [])) : [],
+  const steps = events.flatMap((e) =>
+    e.type === "script/step" ? [e] : e.type === "procedure/clear" && e.script ? [e.script] : [],
   );
+  const notes = steps.flatMap((e) => e.events.flatMap((x) => (x.type === "log/note" ? [x.text] : [])));
   const tags: string[] = [];
   for (const n of notes) {
     if (n.startsWith("Combat result:")) tags.push("combat result");

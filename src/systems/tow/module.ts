@@ -1,6 +1,6 @@
 import { TOW_MISSIONS } from "./missions";
 import type { GameModule } from "../../sdk";
-import { towActions } from "./combat";
+import { heavyLossesProcedure, towActions } from "./combat";
 import { magicActions } from "./magic";
 import { towHooks } from "./psychology";
 import type { SystemModule } from "../app";
@@ -18,6 +18,7 @@ export const towModule: GameModule<SystemModule> = {
   api: 1,
   system: oldWorld,
   actions: [...towActions, ...magicActions],
+  procedures: { heavyLosses: heavyLossesProcedure },
   hooks: towHooks,
   app: {
     sample: towSample,

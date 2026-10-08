@@ -863,6 +863,11 @@ export function* heavyLosses(ctx: Ctx, unitId: string, before: number): Generato
   yield* panicTest(ctx, u);
 }
 
+/** Started by the shooting procedure once it is closed: `{ unit, before }`. */
+export const heavyLossesProcedure: CodeProcedure = function* (ctx, args) {
+  yield* heavyLosses(ctx, String(args.unit), Number(args.before) || 0);
+};
+
 /** How near a friend must be to cause a Panic test when it breaks or is destroyed. */
 const PANIC_RANGE = 6;
 
