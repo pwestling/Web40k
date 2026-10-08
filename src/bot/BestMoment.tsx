@@ -25,14 +25,16 @@ export function BestMoment() {
       .sort((a, b) => b.score - a.score)[0];
     if (moment) return { when: moment.when, line: moment.line };
     // Nothing stood out: its biggest kill, else the most it scored in a round.
-    const kill = gameStats(record)
-      .units.filter((u) => ids.has(u.owner) && u.slain > 0)
-      .sort((a, b) => b.slain - a.slain)[0];
+    const stats = gameStats(record);
+    const kill = stats.kills
+      .filter((k) => ids.has(game.units[k.by]?.owner ?? ""))
+      .sort((x, y) => y.n - x.n)[0];
     if (kill)
       return {
         when: null,
-        line: tn(kill.slain, "{unit} took down {n} enemy model", "{unit} took down {n} enemy models", {
-          unit: kill.name,
+        line: tn(kill.n, "{unit} took down {n} of your {victim}", "{unit} took down {n} of your {victim}", {
+          unit: game.units[kill.by]?.name ?? "",
+          victim: game.units[kill.victim]?.name ?? "",
         }),
       };
     const score = (game.scores ?? [])

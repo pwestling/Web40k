@@ -358,7 +358,13 @@ export function Result() {
           ) : (
             <strong>{t("A draw")}</strong>
           )}{" "}
-          {t("{scores} VP", { scores: seats.map((s) => vp(s)).join(" – ") })}
+          {/* The winner's score first (PX): "wins 4–2". */}
+          {t("{scores} VP", {
+            scores: [...seats]
+              .sort((a, b) => vp(b) - vp(a))
+              .map((s) => vp(s))
+              .join("–"),
+          })}
         </p>
       )}
       {rounds.length > 0 && (

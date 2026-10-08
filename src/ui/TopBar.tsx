@@ -205,7 +205,11 @@ export function TopBar() {
         );
       })}
       <div className="turn">
-        {computerGo && <span className="muted computer-go">{t("The computer is playing…")}</span>}
+        {computerGo && (
+          <span className="muted computer-go">
+            {t("{name} is playing…", { name: characterName(solo.level!) })}
+          </span>
+        )}
         {live && solo?.paused && (
           <button className="quiet" onClick={() => useSolo.setState({ paused: false })}>
             {t("Let the computer play")}

@@ -9,7 +9,7 @@ import { gameModule, systemModule } from "../systems";
 import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { waitsOn } from "../teach/coach";
-import { useSolo } from "../bot/solo";
+import { characterName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
@@ -216,9 +216,10 @@ function computerGo(
   if (battleOver(game) || (game.turn.activeSeat !== solo.seat && !waitsOn(game, solo.seat))) return null;
   const acting = actingUnits(game).find((u) => game.players[u.owner]?.seat === solo.seat);
   return {
+    // By name (PX 4): "The Warden of Ash is playing Thorn Slingers…".
     head: acting
-      ? t("The computer is playing {unit}…", { unit: acting.name })
-      : t("The computer is taking its turn…"),
+      ? t("{name} is playing {unit}…", { name: characterName(solo.level), unit: acting.name })
+      : t("{name} is taking its turn…", { name: characterName(solo.level) }),
     // One line on a phone, so the table stays in view (UX 348).
     lines: [
       ...(solo.why ? [solo.why] : []),

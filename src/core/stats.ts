@@ -67,6 +67,8 @@ export interface RunSwing {
 
 interface GameStats {
   units: UnitStats[];
+  /** Enemy models each unit destroyed, by the unit they were in. */
+  kills: { by: UnitId; victim: UnitId; n: number }[];
   players: PlayerStats[];
   runs: RunSwing[];
   rounds: number;
@@ -182,6 +184,7 @@ export function gameStats(record: GameRecord): GameStats {
   const undone = undoneSeqs(record);
   let state = record.initial;
   const units: Record<UnitId, UnitStats> = {};
+  const kills: Record<string, { by: UnitId; victim: UnitId; n: number }> = {};
   const tracked: Tracked[] = [];
   const points: Record<PlayerId, number[]> = {};
   const live: { attack?: Tracked; procedure?: Tracked } = {};
@@ -282,6 +285,10 @@ export function gameStats(record: GameRecord): GameStats {
       if (by && opposed(state, by.owner, m.owner)) {
         by.dealt += Math.max(0, gained);
         if (died) by.slain++;
+        if (died && unitId) {
+          const k = (kills[`${by.id}>${unitId}`] ??= { by: by.id, victim: unitId, n: 0 });
+          k.n++;
+        }
       }
       if (died && unitId) {
         const unit = state.units[unitId]!;
@@ -344,7 +351,7 @@ export function gameStats(record: GameRecord): GameStats {
       pointsByRound: Array.from({ length: rounds }, (_, i) => points[p.id]?.[i] ?? 0),
       luck: Object.values(luck[p.id] ?? {}).sort((a, b) => order.indexOf(a.step) - order.indexOf(b.step)),
     }));
-  return { units: Object.values(units), players, runs, rounds };
+  return { units: Object.values(units), kills: Object.values(kills), players, runs, rounds };
 }
 
 /** The run in each round that beat (or missed) its odds by the most. */
