@@ -258,6 +258,20 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     } else phase -= 1;
   }
 
+  // Units moved by hand this phase get "moved" as it ends (system.marksMoved).
+  if (system.marksMoved && dir === 1 && state.turn.round > 0) {
+    const units = { ...state.units };
+    for (const u of Object.values(state.units)) {
+      const went = u.modelIds.some((id) => {
+        const m = state.models[id];
+        return (
+          !!m?.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) > 0.05
+        );
+      });
+      if (went && !u.status?.moved) units[u.id] = { ...u, status: { ...u.status, moved: true } };
+    }
+    state = { ...state, units };
+  }
   const models: Record<string, Model> = {};
   for (const [id, m] of Object.entries(state.models))
     models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };

@@ -692,6 +692,12 @@ export interface GameSystem {
    */
   resets?: { at: "phase" | "playerTurn" | "round" | "activation"; flags: Id[] }[];
   /**
+   * Units whose models moved during a phase get the "moved" flag as it ends,
+   * for games moved by hand rather than by actions that set it (The Old
+   * World's regiments). Clear it with `resets`.
+   */
+  marksMoved?: boolean;
+  /**
    * When imported abilities the engine doesn't automate matter, read from
    * their text, so the right ones are put in front of players at the right
    * moment with a manual-apply button. Per phase, the first matching entry wins.

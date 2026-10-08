@@ -4,6 +4,8 @@ import { heavyLossesProcedure, towActions } from "./combat";
 import { magicActions } from "./magic";
 import { characterActions } from "./characters";
 import { itemActions } from "./items";
+import { shooters } from "./ranks";
+import { terrainActions, terrainWarnings } from "./terrainTests";
 import { towHooks } from "./psychology";
 import type { SystemModule } from "../app";
 import { towLayout, TOW_CATEGORIES } from "./layout";
@@ -19,8 +21,10 @@ export const towModule: GameModule<SystemModule> = {
   version: oldWorld.version,
   api: 1,
   system: oldWorld,
-  actions: [...towActions, ...magicActions, ...characterActions, ...itemActions],
+  actions: [...towActions, ...magicActions, ...characterActions, ...itemActions, ...terrainActions],
   procedures: { heavyLosses: heavyLossesProcedure },
+  functions: { shooters },
+  checks: terrainWarnings,
   hooks: towHooks,
   app: {
     sample: towSample,

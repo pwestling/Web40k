@@ -3,6 +3,7 @@ import { blockModels, inArc, rankCount } from "../../core/regiment";
 import type { GameState, Model, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { towRanks } from "./troops";
+import { shooterCount } from "./ranks";
 import { opposed } from "../../core/teams";
 import {
   causesFear,
@@ -288,8 +289,8 @@ function* shoot(
   const weapon = Object.values(shooter.sheet?.weapons ?? {}).find((w) => w.kind === "ranged");
   if (!weapon) return 0;
   const carriers = alive(state, shooter).filter((m) => (m.weapons ?? []).includes(weapon.id)).length;
-  const files = shooter.formation.kind === "ranked" ? shooter.formation.files : carriers;
-  const dice = Math.min(carriers, files);
+  // The front rank, or two on a hill; no Volley Fire when standing and shooting.
+  const dice = Math.min(carriers, shooterCount(state, shooter, { standAndShoot: true }));
   if (!dice) return 0;
   const range = Number.parseFloat(weapon.chars.Range ?? "") || 0;
   const mods = [...penalties];
