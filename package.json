@@ -25,6 +25,7 @@
     "perf": "node scripts/perf.mjs",
     "perf:load": "node scripts/load.mjs",
     "soak:browser": "node scripts/soak-browser.mjs",
+    "smoke": "node scripts/smoke.mjs",
     "i18n": "node scripts/i18n.mjs",
     "i18n:check": "node scripts/i18n.mjs --check"
   },
