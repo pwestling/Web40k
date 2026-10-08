@@ -16,6 +16,8 @@ import { wh40kModule } from "../systems/wh40k/module";
 import { towModule } from "../systems/tow/module";
 import type { Mission } from "../sdk";
 import { pendingScores, vpByRound } from "./scoring";
+import { commitmentOf } from "../core/secrets";
+import { buildLog } from "../ui/gameLog";
 
 const rng = () => 0.5;
 
@@ -118,5 +120,43 @@ describe("missions and scoring", () => {
     expect(pending.map((p) => p.key)).toEqual([`victory:${rounds}:0`, `victory:${rounds}:1`]);
     expect(pending[0]!.vp).toBeGreaterThan(0);
     expect(pending[1]!.vp).toBe(0);
+  });
+
+  it("scores a card revealed in play, not one turned up after the battle, and logs both by name", () => {
+    const mission = wh40kModule.app!.missions![0]!;
+    let r = game(wh40kModule, mission);
+    r = host(r, { type: "turn/next" }, "p1");
+    const commit = (key: string, card: string) =>
+      host(
+        r,
+        { type: "secret/commit", player: "p1", secrets: [{ key, commitment: commitmentOf(card, key) }] },
+        "p1",
+      );
+    const reveal = (key: string, card: string, label?: string) =>
+      host(
+        r,
+        { type: "secret/reveal", player: "p1", key, value: card, salt: key, ...(label ? { label } : {}) },
+        "p1",
+      );
+    r = commit("mission:000", "seize-centre");
+    r = commit("mission:001", "cull");
+    r = reveal("mission:000", "seize-centre", "a secret mission card");
+    expect(pendingScores(r, stateAt(r), mission).map((p) => p.key)).toContain("card:p1:mission:000");
+    const rounds = systemOf(stateAt(r)).turn.rounds as number;
+    while (stateAt(r).turn.round <= rounds) r = host(r, { type: "turn/next" }, "p1");
+    r = reveal("mission:001", "cull", "an unplayed secret mission card");
+    const keys = pendingScores(r, stateAt(r), mission).map((p) => p.key);
+    expect(keys).toContain("card:p1:mission:000");
+    expect(keys).not.toContain("card:p1:mission:001");
+    const s = pendingScores(r, stateAt(r), mission).find((p) => p.key === "card:p1:mission:000")!;
+    r = host(
+      r,
+      { type: "score/confirm", key: s.key, seat: 0, round: s.round, vp: 5, why: `${s.rule}: ${s.why}` },
+      "p1",
+    );
+    const lines = buildLog(r).flatMap((i) => (i.kind === "line" ? [i.text] : []));
+    expect(lines).toContain("Ana chose the mission Crossfire (sample)");
+    expect(lines.some((l) => /^Ana revealed a secret mission card: Seize the centre$/.test(l))).toBe(true);
+    expect(lines.some((l) => /^Ana scored 5 VP · Seize the centre \(/.test(l))).toBe(true);
   });
 });

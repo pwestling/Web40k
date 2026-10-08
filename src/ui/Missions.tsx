@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { sideName, sidePlayers, sides, type GameState } from "../core";
 import { secretsWithPrefix } from "../core/secrets";
 import { pendingScores, vpByRound } from "../missions/scoring";
@@ -121,6 +121,32 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   const { dispatch } = useStore();
   useLocalSecrets((s) => s.kept);
   const mission = missionOf(game);
+  const live = useStore((s) => s.scrub === null);
+  const over = battleOver(game);
+  // Once the battle is over, cards still face down are turned up, unscored (missions/scoring.ts).
+  const unplayed = over
+    ? players.flatMap((p) =>
+        secretsWithPrefix(game, p.id, "mission:")
+          .filter(([, e]) => !e.revealed && localSecret(e.commitment))
+          .map(([key, e]) => ({ player: p.id, key, kept: localSecret(e.commitment)! })),
+      )
+    : [];
+  const turnUp = unplayed.map((u) => u.key).join();
+  useEffect(() => {
+    if (!live || !turnUp) return;
+    for (const u of unplayed)
+      dispatch(
+        {
+          type: "secret/reveal",
+          player: u.player,
+          key: u.key,
+          value: u.kept.value,
+          salt: u.kept.salt,
+          label: "an unplayed secret mission card",
+        },
+        u.player,
+      );
+  }, [turnUp, live]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!mission?.deck?.length || game.turn.round === 0) return null;
   const deck = mission.deck;
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
@@ -171,8 +197,14 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                     ) : (
                       <span className="muted">(drawn on another device)</span>
                     )}
-                    {e.revealed && <span className="muted small"> · revealed</span>}
-                    {mine && !e.revealed && card && (
+                    {e.revealed && (
+                      <span className="muted small">
+                        {over && !game.scores?.some((x) => x.key === `card:${p.id}:${key}`)
+                          ? " · not scored"
+                          : " · revealed"}
+                      </span>
+                    )}
+                    {mine && !e.revealed && card && !over && (
                       <button
                         onClick={() => {
                           const k = localSecret(e.commitment)!;
@@ -196,7 +228,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                 );
               })}
             </ul>
-            {mine && held.length < (mission.hand ?? 1) && cards.length < deck.length && (
+            {mine && !over && held.length < (mission.hand ?? 1) && cards.length < deck.length && (
               <button onClick={draw}>Draw a card</button>
             )}
           </div>
