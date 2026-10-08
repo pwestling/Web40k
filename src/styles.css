@@ -3347,3 +3347,9 @@ body.showcase
   border-left: 3px solid #f59e0b;
   padding-left: 8px;
 }
+
+/* Language (#35) */
+.language-picker {
+  gap: 8px;
+  align-items: center;
+}

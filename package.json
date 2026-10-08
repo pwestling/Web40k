@@ -24,7 +24,9 @@
     "mailbox": "node server/mailbox.mjs",
     "perf": "node scripts/perf.mjs",
     "perf:load": "node scripts/load.mjs",
-    "soak:browser": "node scripts/soak-browser.mjs"
+    "soak:browser": "node scripts/soak-browser.mjs",
+    "i18n": "node scripts/i18n.mjs",
+    "i18n:check": "node scripts/i18n.mjs --check"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -11,6 +11,7 @@ import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { TextSizePicker } from "./TextSizePicker";
+import { LanguagePicker } from "../i18n/LanguagePicker";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { startLesson } from "../teach/store";
 import { MailLobby } from "../mail/MailLobby";
@@ -157,6 +158,7 @@ export function Lobby() {
       <OfflineNote />
 
       <TextSizePicker />
+      <LanguagePicker />
 
       <h2>Learn to play</h2>
       <p className="muted small">

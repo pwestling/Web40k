@@ -6,6 +6,7 @@ import * as core from "./core";
 import { useStore } from "./store";
 import "./styles.css";
 import { loadSiteConfig } from "./net/config";
+import { loadLanguage } from "./i18n";
 import { watchFigures } from "./figures/library";
 import { registerServiceWorker } from "./sw/register";
 import { watchErrors } from "./ui/report";
@@ -22,7 +23,8 @@ watchFigures();
 if (import.meta.env.PROD) void registerServiceWorker()?.catch(() => {});
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
-void loadSiteConfig().then(() =>
+// …and the player's language (#35), so the first render is already in it.
+void Promise.all([loadSiteConfig(), loadLanguage()]).then(() =>
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />
