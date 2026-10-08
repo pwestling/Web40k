@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
 import { readGame, replayIntro } from "./highlights";
@@ -41,7 +42,7 @@ export function RoundCard() {
       </div>
       {current.players.map((p) => (
         <div key={p.id} className="row" style={{ borderColor: p.color }}>
-          <strong style={{ color: p.color }}>{p.name}</strong>
+          <strong style={{ color: p.color }}>{displayName(p.name)}</strong>
           <span className="vp">
             {t("{n} VP", { n: p.vp })}
             {p.vpGained ? (
@@ -93,7 +94,7 @@ export function ReplayTitle() {
           {intro.players.map((p, i) => (
             <span key={p.name}>
               {i > 0 && " " + t("vs") + " "}
-              <span style={{ color: p.color }}>{p.name}</span>
+              <span style={{ color: p.color }}>{displayName(p.name)}</span>
             </span>
           ))}
         </strong>

@@ -136,6 +136,54 @@ for (const path of files(SRC)) {
   visit(src);
 }
 
+/**
+ * The built-in games' own words (UX 256), shown through gameText() with the "game" context: phase and
+ * action names in src/core/content/examples, and lesson titles and summaries in examples/lessons.
+ * Rule and keyword names stay as they are, since army lists use them.
+ */
+const DATA = [
+  ...readdirSync(join(SRC, "core/content/examples")).map((f) => join(SRC, "core/content/examples", f)),
+  ...readdirSync(join(ROOT, "examples/lessons")).map((f) => join(ROOT, "examples/lessons", f)),
+].filter((f) => /\.(ts|js)$/.test(f) && !/\.test\./.test(f));
+for (const path of DATA) {
+  const file = relative(ROOT, path);
+  const text = readFileSync(path, "utf8");
+  const src = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
+  const lesson = file.startsWith("examples/lessons");
+  const prop = (o, name) =>
+    o.properties.find((p) => ts.isPropertyAssignment(p) && p.name.getText() === name)?.initializer;
+  const take = (n) => {
+    const id = literal(n);
+    if (!id) return;
+    const k = key(id, "game");
+    const e = found.get(k) ?? { context: "game", id, refs: [] };
+    e.refs.push(`${file}:${src.getLineAndCharacterOfPosition(n.getStart()).line + 1}`);
+    found.set(k, e);
+  };
+  const visit = (n) => {
+    if (ts.isObjectLiteralExpression(n)) {
+      if (lesson) {
+        for (const name of ["title", "summary"]) {
+          const v = prop(n, name);
+          if (v) take(v);
+        }
+      } else {
+        const kind = prop(n, "kind");
+        const inActions =
+          ts.isArrayLiteralExpression(n.parent) &&
+          ts.isPropertyAssignment(n.parent.parent) &&
+          n.parent.parent.name.getText() === "actions";
+        if ((kind && literal(kind) === "phase") || inActions) {
+          const v = prop(n, "name");
+          if (v) take(v);
+        }
+      }
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(src);
+}
+
 // The template, sorted by where each string first appears.
 const entries = [...found.values()].sort((a, b) =>
   a.refs[0] < b.refs[0] ? -1 : a.refs[0] > b.refs[0] ? 1 : 0,

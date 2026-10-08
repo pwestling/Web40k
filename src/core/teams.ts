@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import type { GameState, Player, PlayerId, Vec2 } from "./types";
 
 /**
@@ -22,8 +23,8 @@ export function sides(state: GameState): number[] {
 
 /** "Ana & Cy": a side's players by name. */
 export function sideName(state: GameState, seat: number): string {
-  const names = sidePlayers(state, seat).map((p) => p.name);
-  return names.length ? names.join(" & ") : `Player ${seat + 1}`;
+  const names = sidePlayers(state, seat).map((p) => displayName(p.name));
+  return names.length ? names.join(" & ") : displayName(`Player ${seat + 1}`);
 }
 
 export function teammates(state: GameState, player: PlayerId): Player[] {

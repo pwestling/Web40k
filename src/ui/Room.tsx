@@ -1,7 +1,8 @@
+import { displayName, playerName } from "../i18n/names";
 import { useEffect, useMemo, useState } from "react";
 import { untakenSeat } from "./Branch";
 import type { Player } from "../core";
-import { t, tn } from "../i18n";
+import { formatList, t, tn } from "../i18n";
 import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
@@ -36,7 +37,7 @@ function StillLooking() {
  * you, or reconnecting), who is host, and how many are watching.
  */
 export function RoomCard() {
-  const { roomId, mode, net, session, game, record } = useStore();
+  const { roomId, mode, net, session, game, record, review } = useStore();
   const [copied, setCopied] = useState(false);
   const joining = useJoining();
   const peerMissing = useTransfers((s) => s.peerMissing);
@@ -87,66 +88,75 @@ export function RoomCard() {
         </button>
       </div>
       <RulesLine />
-      <ul className="people">
-        {seated.map((p) => (
-          <li key={p.id}>
-            <span className="dot" style={{ background: p.color }} />
-            <strong>{p.name}</strong>{" "}
-            <span className={reconnecting(p) ? "warn" : "muted"}>
-              {state(p)}
-              {net?.hostId === p.id ? ` · ${t("host")}` : ""}
-              {game.turn.round === 0 && p.ready ? ` · ${t("ready")}` : ""}
-              {fetching(p.id) ? ` · ${t("getting rules…")}` : ""}
-            </span>
-            {p.rulesMismatch && (
-              <span
-                className="warn"
-                title={t("Playing without {rules}: their table may disagree", {
-                  rules:
-                    (game.packages?.packages ?? [])
-                      .filter((r) => p.rulesMismatch!.includes(r.hash))
-                      .map((r) => `${r.name} ${r.version}`)
-                      .join(", ") || t("some of the game's rules"),
-                })}
-              >
-                {" "}
-                {t("⚠ different rules")}
+      {/* A review room replays a finished game: its players are the record's, not people here (UX 258). */}
+      {review ? (
+        <p className="muted small">
+          {t("A replay, watched together. {names} played it.", {
+            names: formatList(seated.map((p) => displayName(p.name))),
+          })}
+        </p>
+      ) : (
+        <ul className="people">
+          {seated.map((p) => (
+            <li key={p.id}>
+              <span className="dot" style={{ background: p.color }} />
+              <strong>{displayName(p.name)}</strong>{" "}
+              <span className={reconnecting(p) ? "warn" : "muted"}>
+                {state(p)}
+                {net?.hostId === p.id ? ` · ${t("host")}` : ""}
+                {game.turn.round === 0 && p.ready ? ` · ${t("ready")}` : ""}
+                {fetching(p.id) ? ` · ${t("getting rules…")}` : ""}
               </span>
-            )}
-          </li>
-        ))}
-        {joining ? (
-          <li className="muted">
-            {net?.hostId
-              ? game.players[net.hostId]?.name
-                ? t("Joining {name}'s game…", { name: game.players[net.hostId]!.name })
-                : t("Joining the host's game…")
-              : t("Looking for the game's host…")}{" "}
-            <button className="link" onClick={() => (location.href = location.pathname)}>
-              {t("Back to the lobby")}
-            </button>
-            {!net?.hostId && <StillLooking />}
-          </li>
-        ) : (
-          waiting && <li className="muted">{t("Waiting for an opponent to join…")}</li>
-        )}
-        {joiners > 0 && (
-          <li className="muted">
-            {tn(
-              joiners,
-              "Someone joining is getting the rules…",
-              "{n} people joining are getting the rules…",
-            )}
-          </li>
-        )}
-        {watching > 0 && (
-          <li className="muted">
-            {net?.role === "spectator"
-              ? tn(watching, "{n} watching (you included)", "{n} watching (you included)")
-              : tn(watching, "{n} watching", "{n} watching")}
-          </li>
-        )}
-      </ul>
+              {p.rulesMismatch && (
+                <span
+                  className="warn"
+                  title={t("Playing without {rules}: their table may disagree", {
+                    rules:
+                      (game.packages?.packages ?? [])
+                        .filter((r) => p.rulesMismatch!.includes(r.hash))
+                        .map((r) => `${r.name} ${r.version}`)
+                        .join(", ") || t("some of the game's rules"),
+                  })}
+                >
+                  {" "}
+                  {t("⚠ different rules")}
+                </span>
+              )}
+            </li>
+          ))}
+          {joining ? (
+            <li className="muted">
+              {net?.hostId
+                ? playerName(game.players[net.hostId])
+                  ? t("Joining {name}'s game…", { name: game.players[net.hostId]!.name })
+                  : t("Joining the host's game…")
+                : t("Looking for the game's host…")}{" "}
+              <button className="link" onClick={() => (location.href = location.pathname)}>
+                {t("Back to the lobby")}
+              </button>
+              {!net?.hostId && <StillLooking />}
+            </li>
+          ) : (
+            waiting && <li className="muted">{t("Waiting for an opponent to join…")}</li>
+          )}
+          {joiners > 0 && (
+            <li className="muted">
+              {tn(
+                joiners,
+                "Someone joining is getting the rules…",
+                "{n} people joining are getting the rules…",
+              )}
+            </li>
+          )}
+          {watching > 0 && (
+            <li className="muted">
+              {net?.role === "spectator"
+                ? tn(watching, "{n} watching (you included)", "{n} watching (you included)")
+                : tn(watching, "{n} watching", "{n} watching")}
+            </li>
+          )}
+        </ul>
+      )}
     </div>
   );
 }

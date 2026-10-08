@@ -1,3 +1,4 @@
+import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
 import { focusSoon } from "./focusSoon";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -294,7 +295,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
   const canControl = useCanControl();
   const theirs = !!roller && attack.stage === "save" && !canControl(roller);
-  const rollerName = roller ? game.players[roller]?.name || t("Your opponent") : "";
+  const rollerName = roller ? playerName(game.players[roller]) || t("Your opponent") : "";
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
   const botAttacks = computerPlays(game, attacker?.owner);

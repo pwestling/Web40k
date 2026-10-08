@@ -5,7 +5,7 @@ import { useStore } from "../store";
 import { didIds, waitsOn } from "../teach/coach";
 import { fill } from "../teach/lesson";
 import { opponentMove, noteProgress } from "../teach/opponent";
-import { t, translated } from "../i18n";
+import { t, translated, gameText } from "../i18n";
 import { backToLobby, coachTick, computerPlays, leaveLesson, redoStep, useCoach } from "../teach/store";
 
 /** How long the opponent waits before each move, and on each roll so the learner can follow it. */
@@ -121,7 +121,9 @@ export function Coach() {
     return (
       <div className="panel coach done" role="status">
         {said && <p className="coach-said">{said}</p>}
-        <strong className="coach-title">{lesson.done?.title ?? t("Lesson done")}</strong>
+        <strong className="coach-title">
+          {lesson.done?.title ? gameText(lesson.done.title) : t("Lesson done")}
+        </strong>
         {ticks.length > 0 && (
           <ul className="coach-ticks">
             {ticks.map((x) => (
@@ -146,7 +148,7 @@ export function Coach() {
       <div className="row spread">
         <span className="muted small">
           {t("Lesson · {title} · step {step} of {count}", {
-            title: lesson.title,
+            title: gameText(lesson.title),
             step: progress.step + 1,
             count: n,
           })}
@@ -202,7 +204,10 @@ function usePulse(label: string | undefined) {
         const hit =
           !b.closest(".replaybar, .coach") &&
           !b.disabled &&
-          (text === label || text === translated(label) || (label === "▶" && b.title === t("Next phase")));
+          (text === label ||
+            text === translated(label) ||
+            text === gameText(label) ||
+            (label === "▶" && b.title === t("Next phase")));
         b.classList.toggle("coach-pulse", hit);
       }
     };

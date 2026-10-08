@@ -39,6 +39,11 @@ language picker says "(draft translation)" until a language is checked.
   German and French use one and other, so `msgstr[0]` is singular and `msgstr[1]` is plural.
 - **Context.** `msgctxt` tells apart one English word that's translated differently in two places, such as
   "Charge" the verb and "Charge" the phase.
+- **Addressing the player.** Speak to the player informally, as friends at a game table do: _du_ in
+  German, _tu_ in French. A line that speaks to the whole table (a clock's time call) uses an impersonal
+  form instead, such as an infinitive: "Laufenden Spielzug beenden", "Finir le tour en cours".
+- **Game words.** Entries with `msgctxt "game"` are the built-in games' own words: phase and action names
+  and lesson titles. Rule and keyword names aren't in the catalog, since army lists use them in English.
 - **References.** The `#:` lines say where in the code a string is shown, if you need to see it in place.
 
 Numbers and dates are formatted by the browser for the chosen language, so they need no translation.

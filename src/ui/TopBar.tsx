@@ -1,3 +1,4 @@
+import { displayName, playerName } from "../i18n/names";
 import { ClockBar, SideClock } from "./Clocks";
 import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
@@ -10,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
-import { formatList, t } from "../i18n";
+import { formatList, t, gameText } from "../i18n";
 import { useCanControl, useJoining, useStore } from "../store";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
@@ -59,7 +60,7 @@ export function TopBar() {
   const asked = !deploying && game.script?.waiting;
   const askedText = asked
     ? t("Waiting for {name} to answer: {question}", {
-        name: game.players[asked.player]?.name ?? t("a player"),
+        name: playerName(game.players[asked.player]) ?? t("a player"),
         question: asked.question,
       })
     : null;
@@ -134,7 +135,7 @@ export function TopBar() {
                 style={{ color: p.color }}
               >
                 {i > 0 && <span className="muted"> & </span>}
-                {p.name}
+                {displayName(p.name)}
               </strong>
             ))}
             {counters.map(({ id: r }) => (
@@ -168,7 +169,7 @@ export function TopBar() {
               pools.map((pool) => (
                 <DicePool
                   key={`${p.id}-${pool.id}`}
-                  label={team.length > 1 ? `${p.name} ${pool.name}` : pool.name}
+                  label={team.length > 1 ? `${displayName(p.name)} ${pool.name}` : pool.name}
                   faces={game.pools?.[p.id]?.[pool.id] ?? []}
                   editable={live && canControl(p.id)}
                   rerollOnce={pool.rerollOnce ? (poolUsed(game, p.id, pool.id) ?? "open") : undefined}
@@ -238,7 +239,7 @@ export function TopBar() {
               <span className="phases">
                 {view.phases.map((ph, i) => (
                   <span key={`${ph}${i}`} className={i === view.current ? "current" : ""}>
-                    {ph}
+                    {gameText(ph)}
                   </span>
                 ))}
               </span>

@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useState } from "react";
 import { narrow } from "./narrow";
 import type { Player } from "../core";
@@ -10,7 +11,7 @@ import {
 import { phaseName, systemOf } from "../core/content/turn";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
-import { t, tn } from "../i18n";
+import { t, tn, gameText } from "../i18n";
 
 /**
  * Stratagems and ability reminders for the current phase, from the game
@@ -38,7 +39,7 @@ export function PlayPanel() {
   const players = Object.values(game.players)
     .filter((p) => p.seat !== undefined && canControl(p.id))
     .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
-  const phase = game.turn.round === 0 ? t("Deployment") : (phaseName(game) ?? "");
+  const phase = game.turn.round === 0 ? t("Deployment") : gameText(phaseName(game) ?? "");
   // Systems with only a custom player action (FSD's support cards) are named for it.
   const core = system.actions.some((a) => a.by === "player" && !a.custom);
   const customName = system.actions.find((a) => a.by === "player" && a.custom)?.name;
@@ -137,7 +138,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
     return (
       <details className="stratagems">
         <summary>
-          <span style={{ color: player.color }}>{player.name}</span>
+          <span style={{ color: player.color }}>{displayName(player.name)}</span>
           {usable.length
             ? " " + t("can react: {stratagems}", { stratagems: usable.map((o) => o.def.name).join(", ") })
             : `: ${t("nothing to react with")}`}
@@ -149,7 +150,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
   return (
     <div className="stratagems">
       <p className="row spread">
-        <span style={{ color: player.color }}>{player.name}</span>
+        <span style={{ color: player.color }}>{displayName(player.name)}</span>
         {cp !== undefined && <span className="muted">{t("{cp} CP", { cp })}</span>}
       </p>
       {list}

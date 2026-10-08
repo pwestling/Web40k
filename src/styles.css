@@ -3537,3 +3537,28 @@ body.showcase
   min-width: 4em;
   text-align: center;
 }
+
+/* UX 253-254: long translations on a phone */
+.language-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.language-picker label {
+  gap: 8px;
+  align-items: center;
+}
+.lobby select {
+  max-width: 100%;
+  min-width: 0;
+}
+.lobby label {
+  max-width: 100%;
+}
+.text-size {
+  flex-wrap: wrap;
+}
+.text-size button {
+  white-space: nowrap;
+}

@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useEffect, useMemo, useState } from "react";
 import { sideName, sidePlayers, sides, type GameState, type Intent } from "../core";
 import { secretsWithPrefix } from "../core/secrets";
@@ -188,7 +189,7 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
         };
         return (
           <div key={p.id} className="stack-player">
-            <span style={{ color: p.color }}>{p.name}</span>{" "}
+            <span style={{ color: p.color }}>{displayName(p.name)}</span>{" "}
             {!mine && (
               <span className="muted small">{tn(held.length, "{n} face down", "{n} face down")}</span>
             )}

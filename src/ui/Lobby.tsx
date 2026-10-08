@@ -12,7 +12,7 @@ import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
-import { formatDate, t, tn } from "../i18n";
+import { formatDate, t, tn, gameText } from "../i18n";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { startLesson } from "../teach/store";
 import { MailLobby } from "../mail/MailLobby";
@@ -177,9 +177,9 @@ export function Lobby() {
         {lessons.map((l) => (
           <button key={`${l.system}/${l.id}`} className="demo" onClick={() => startLesson(l)}>
             <strong>
-              {systemLabel(lessonSystem(l), "")}: {l.title}
+              {systemLabel(lessonSystem(l), "")}: {gameText(l.title)}
             </strong>
-            <span className="muted small">{l.summary}</span>
+            <span className="muted small">{gameText(l.summary)}</span>
           </button>
         ))}
       </div>

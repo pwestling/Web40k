@@ -35,7 +35,7 @@ import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
 import { computerPlays } from "../teach/store";
-import { formatList, formatNumber, t, tn } from "../i18n";
+import { formatList, formatNumber, t, tn, gameText } from "../i18n";
 
 /**
  * Panels for any game system, built from its data: a unit card with the
@@ -454,7 +454,7 @@ function SystemActions({ unit }: { unit: Unit }) {
             onMouseLeave={() => setHover([])}
             onClick={() => click(o)}
           >
-            {o.def.name}
+            {gameText(o.def.name)}
             {o.move !== undefined ? ` ${o.move}` : ""}
             {o.def.activates !== undefined && typeof o.def.activates === "number" && !o.def.reactTo
               ? " (" + tn(o.def.activates, "{n} action", "{n} actions") + ")"
@@ -510,7 +510,7 @@ function SystemActions({ unit }: { unit: Unit }) {
                 setCommanding(null);
               }}
             >
-              {commandOption.def.name}
+              {gameText(commandOption.def.name)}
               {commanding.picked.length ? " " + t("with {n}", { n: commanding.picked.length }) : ""}
             </button>
             <button onClick={() => setCommanding(null)}>{t("Cancel")}</button>
@@ -543,7 +543,7 @@ function PrepareButton({ unit, weaponId }: { unit: Unit; weaponId: string }) {
           dispatch({ type: "action/take", unitId: unit.id, action: o.def.id, weapon: weaponId }, unit.owner)
         }
       >
-        {o.def.name}
+        {gameText(o.def.name)}
         {o.faces?.length ? <span className="cost"> · {usesFaces(o.faces)}</span> : null}
       </button>
     </div>
@@ -765,7 +765,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
     <div className="panel attack">
       <div className="row spread">
         <strong>
-          {unit.name}: {def.name}
+          {unit.name}: {gameText(def.name)}
         </strong>
         <button onClick={() => setDraft(null)}>{t("Cancel")}</button>
       </div>
@@ -849,7 +849,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           setDraft(null);
         }}
       >
-        {def.name}
+        {gameText(def.name)}
         {hopeless ? ` ${t("anyway")}` : ""}
         {option?.faces?.length ? ` (${usesFaces(option.faces)})` : option?.cost ? ` (${option.cost})` : ""}
       </button>

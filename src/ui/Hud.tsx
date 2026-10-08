@@ -40,6 +40,7 @@ export function Hud() {
     measuring,
     director,
     set,
+    review,
   } = useStore();
   const canControl = useCanControl();
   // The table on screen (a replay's scrub point), which decides whether stats are showing.
@@ -89,8 +90,9 @@ export function Hud() {
               : t("Hotseat: you control both sides.")}
         </p>
       )}
-      {role === "spectator" && <p className="muted">{t("Spectating.")}</p>}
-      {role === "spectator" && <BroadcastControls />}
+      {role === "spectator" && !review && <p className="muted">{t("Spectating.")}</p>}
+      {/* Commentary and the stream view are for live games, not a replay watched together (UX 258). */}
+      {role === "spectator" && !review && <BroadcastControls />}
       <div className="row wrap">
         <button onClick={() => setView(view === "top" ? "3d" : "top")}>
           {view === "top" ? t("3D view") : t("Top-down view")}

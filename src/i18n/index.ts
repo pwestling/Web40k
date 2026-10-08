@@ -103,6 +103,14 @@ export function translated(text: string): string {
   return t(text);
 }
 
+/**
+ * A built-in game's own words (UX 256): a phase or action name, a lesson's title. The extractor reads
+ * them from the game data (context "game"); a package's own words come back as they are.
+ */
+export function gameText(text: string): string {
+  return tc("game", text);
+}
+
 /** A UI string in the chosen language. `{name}` placeholders are filled from `params`. */
 export function t(text: string, params?: Params): string {
   return fill(messages.get(text)?.[0] || text, params);

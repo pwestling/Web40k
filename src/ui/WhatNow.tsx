@@ -9,7 +9,7 @@ import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
-import { t, tn } from "../i18n";
+import { t, tn, gameText } from "../i18n";
 
 /**
  * "What can I do now?" (front door): the current phase in plain words, built
@@ -70,7 +70,7 @@ export function whatNow(
         outOfRange = true;
         continue;
       }
-      add(o.def.name);
+      add(gameText(o.def.name));
     }
   const mod = gameModule(game.system);
   const slot = currentSlot(game)?.id;

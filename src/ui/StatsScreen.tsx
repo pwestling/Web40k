@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useEffect, useMemo } from "react";
 import { branchGame } from "./Branch";
 import { systemOf, type GameState } from "../core";
@@ -167,7 +168,7 @@ function LuckTable({ player }: { player: PlayerStats }) {
     <div>
       <div className="who">
         <span className="swatch" style={{ background: player.color }} />
-        <strong>{player.name}</strong>
+        <strong>{displayName(player.name)}</strong>
         {player.luck.length > 0 && (
           <span className="muted">
             {" "}
@@ -234,7 +235,8 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
         {players.map((p) => (
           <span key={p.id}>
             <span className="swatch" style={{ background: p.color }} />
-            {p.name} · {t("{n} pts", { n: Math.round(p.pointsByRound.reduce((a, b) => a + b, 0)) })}
+            {displayName(p.name)} ·{" "}
+            {t("{n} pts", { n: Math.round(p.pointsByRound.reduce((a, b) => a + b, 0)) })}
           </span>
         ))}
       </div>

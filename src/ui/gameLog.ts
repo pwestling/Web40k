@@ -1,3 +1,4 @@
+import { playerName } from "../i18n/names";
 import { checkName } from "./warnings";
 import { distanceText } from "./distance";
 import { systemLabel } from "./systemLabels";
@@ -15,7 +16,7 @@ import {
 } from "../core";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
-import { t, tn } from "../i18n";
+import { t, tn, gameText } from "../i18n";
 
 /** A line of the game log as players read it. */
 export type LogItem =
@@ -118,7 +119,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         };
         items.push(deployLine);
       }
-      const who = state.players[logged.by]?.name ?? t("Someone");
+      const who = playerName(state.players[logged.by]) ?? t("Someone");
       const { units, pts: total } = deployLine;
       const params = { name: who, army: army ?? t("an army"), pts: String(total) };
       deployLine.text =
@@ -154,7 +155,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         (scriptItem.detail ??= []).push(...lines);
       } else {
         scriptHeadless = !lines.length;
-        const who = state.players[logged.by]?.name ?? t("Someone");
+        const who = playerName(state.players[logged.by]) ?? t("Someone");
         const rule = scriptStep.script?.procedure;
         const [head, ...rest] = lines.length
           ? lines
@@ -232,7 +233,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       items.at(-1) === dragLine
     ) {
       dragLine.text = moveText(
-        state.players[logged.by]?.name ?? t("Someone"),
+        playerName(state.players[logged.by]) ?? t("Someone"),
         dragLine.from,
         state,
         state.units[event.id]?.modelIds ?? [],
@@ -242,7 +243,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     if (event.type !== "undo") dragLine = null;
     if (event.type === "undo") {
       // Say what was taken back (UX 130): an attack by name, else the line it made.
-      const who = state.players[logged.by]?.name ?? t("Someone");
+      const who = playerName(state.players[logged.by]) ?? t("Someone");
       const line = items.find((i) => i.kind === "line" && i.seq === event.seq);
       const declared = record.events.find((e) => e.seq === event.seq)?.event;
       const what =
@@ -341,7 +342,7 @@ function turnHeader(state: GameState): { text: string; round?: number; turn?: st
   if (round === 0) return { text: t("Deployment") };
   const player = sideName(state, activeSeat);
   return {
-    text: t("Round {round} · {player} · {phase}", { round, player, phase: phaseName(state) ?? "" }),
+    text: t("Round {round} · {player} · {phase}", { round, player, phase: gameText(phaseName(state) ?? "") }),
     round,
     turn: t("Round {round} · {player}", { round, player }),
   };
@@ -443,12 +444,12 @@ function moveText(who: string, before: GameState, after: GameState, ids: string[
 }
 
 export function describe({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
-  const nameOf = (id: string) => game.players[id]?.name ?? t("Someone");
+  const nameOf = (id: string) => playerName(game.players[id]) ?? t("Someone");
   const who = nameOf(by);
   const unitName = (id: string) => game.units[id]?.name ?? t("a unit");
   switch (event.type) {
     case "player/join":
-      return t("{name} joined", { name: game.players[event.player.id]?.name ?? event.player.name });
+      return t("{name} joined", { name: playerName(game.players[event.player.id]) ?? event.player.name });
     case "player/claim":
       // Seats in a What if game are taken afresh, not reconnected to.
       return before.branch
@@ -472,18 +473,18 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         : t("{side} scored {vp} VP · {why}", { side, vp: String(event.vp), why });
     }
     case "player/dice": {
-      const name = game.players[event.player]?.name ?? who;
+      const name = playerName(game.players[event.player]) ?? who;
       return event.dice
         ? t("{name} picked new dice", { name })
         : t("{name} picked their colour's dice", { name });
     }
     case "player/rename":
       return t("{old} is now {name}", {
-        old: before.players[event.player]?.name ?? t("A player"),
+        old: playerName(before.players[event.player]) ?? t("A player"),
         name: event.name,
       });
     case "player/color":
-      return t("{name} changed their colour", { name: game.players[event.player]?.name ?? who });
+      return t("{name} changed their colour", { name: playerName(game.players[event.player]) ?? who });
     case "clock/pause":
       if (!event.paused) return t("{name} restarted the clocks", { name: who });
       return event.reason === "disconnect"
@@ -563,7 +564,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
     case "terrain/remove":
       return t("{name} removed terrain", { name: who });
     case "player/ready": {
-      const name = game.players[event.player]?.name ?? who;
+      const name = playerName(game.players[event.player]) ?? who;
       return event.ready ? t("{name} is ready", { name }) : t("{name} is not ready yet", { name });
     }
     case "game/packages": {
@@ -588,16 +589,16 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         changes: describePackageChange(game.packages?.packages ?? [], event.packages) || t("no change"),
       });
     case "packages/accept":
-      return t("{name} accepted the rules change", { name: game.players[event.player]?.name ?? who });
+      return t("{name} accepted the rules change", { name: playerName(game.players[event.player]) ?? who });
     case "packages/decline":
-      return t("{name} declined the rules change", { name: game.players[event.player]?.name ?? who });
+      return t("{name} declined the rules change", { name: playerName(game.players[event.player]) ?? who });
     case "packages/withdraw":
       return t("{name} withdrew the rules change", { name: who });
     case "player/resync":
-      return t("{name} resynced from the host", { name: game.players[event.player]?.name ?? who });
+      return t("{name} resynced from the host", { name: playerName(game.players[event.player]) ?? who });
     case "player/rules": {
       const names = (game.packages?.packages ?? []).filter((p) => event.missing.includes(p.hash));
-      const name = game.players[event.player]?.name ?? who;
+      const name = playerName(game.players[event.player]) ?? who;
       return event.missing.length
         ? t("{name} is playing without {packages}: their table may disagree", {
             name,
