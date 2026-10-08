@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { clocks, clockText, sidePlayers, timeCall, timeLeft, type ClockSettings, type Clocks } from "../core";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  clocks,
+  clockText,
+  sidePlayers,
+  timeCall,
+  timeCallOf,
+  timeLeft,
+  type ClockSettings,
+  type Clocks,
+} from "../core";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 
@@ -62,6 +71,7 @@ export function ClockBar() {
   const clock = useClocks();
   const dispatch = useStore((s) => s.dispatch);
   const live = useStore((s) => s.scrub === null && s.role !== "spectator");
+  const host = useStore((s) => s.mode === "hotseat" || s.mode === "local" || s.net?.role === "host");
   if (!clock) return null;
   const { c, settings, now } = clock;
   const call = timeCall(c, settings, now);
@@ -84,6 +94,26 @@ export function ClockBar() {
         >
           {c.paused ? "Restart the clocks" : "Stop the clocks"}
         </button>
+      )}
+      {live && host && !c.over && c.paused === "disconnect" && (
+        <button
+          className="small"
+          title="Start the clocks again without waiting for them"
+          onClick={() => dispatch({ type: "clock/pause", paused: false })}
+        >
+          Restart anyway
+        </button>
+      )}
+      {live && host && c.paused && !c.over && (
+        <span className="muted small">Use −1′ and +1′ on a side's clock to adjust it.</span>
+      )}
+      {live && host && !c.paused && !c.over && c.battleStart !== null && (
+        <span
+          className="muted small"
+          title="The −1′ and +1′ buttons show on each side's clock while the clocks are stopped"
+        >
+          Stop the clocks to adjust them.
+        </span>
       )}
     </div>
   );
@@ -116,16 +146,60 @@ export function ClockKeeper() {
   const mode = useStore((s) => s.mode);
   const dispatch = useStore((s) => s.dispatch);
   const paused = useMemo(() => (settings ? clocks(record).paused : false), [settings, record]);
+  // Who was away last time: the clocks stop when someone goes, not again after a "Restart anyway" (UX 216).
+  const wasAway = useRef("");
   useEffect(() => {
     // Online only: hotseat and local players share this device, so nobody is ever away.
     if (!settings || mode !== "online" || net?.role !== "host") return;
-    const away = Object.values(players).some(
-      (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id),
-    );
+    const away = Object.values(players)
+      .filter((p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id))
+      .map((p) => p.id)
+      .sort()
+      .join(",");
+    const before = wasAway.current;
+    wasAway.current = away;
     // The host's own dispatch updates the log at once, so this runs once per change.
-    if (away && !paused) dispatch({ type: "clock/pause", paused: true, reason: "disconnect" });
+    if (away && away !== before && !paused)
+      dispatch({ type: "clock/pause", paused: true, reason: "disconnect" });
     else if (!away && paused === "disconnect") dispatch({ type: "clock/pause", paused: false });
   }, [settings, mode, net, players, selfId, paused, dispatch]);
+  return <ClockCaller />;
+}
+
+/**
+ * On the host: write each time call into the log the first time it's made ("Last turn", a round over
+ * its time, a side out of time), so a replay shows when it came (UX 218).
+ */
+function ClockCaller() {
+  const clock = useClocks();
+  const host = useStore((s) => s.mode === "hotseat" || s.mode === "local" || s.net?.role === "host");
+  const live = useStore((s) => s.scrub === null && !s.review);
+  const dispatch = useStore((s) => s.dispatch);
+  const sent = useRef(new Set<string>());
+  useEffect(() => {
+    if (!clock || !host || !live) return;
+    const { c, settings, now } = clock;
+    const game = useStore.getState().game;
+    const due: { kind: string; text: string }[] = [];
+    const call = timeCallOf(c, settings, now);
+    if (call) due.push(call);
+    if (!c.over && c.battleStart !== null)
+      for (const seat of new Set(
+        Object.values(game.players).flatMap((p) => (p.seat !== undefined ? [p.seat] : [])),
+      ))
+        if (timeLeft(c, settings, seat, now) <= 0)
+          due.push({
+            kind: `out-${seat}`,
+            text: `${sidePlayers(game, seat)
+              .map((p) => p.name)
+              .join(" & ")} is out of time.`,
+          });
+    for (const d of due) {
+      if (c.called.includes(d.kind) || sent.current.has(d.kind)) continue;
+      sent.current.add(d.kind);
+      dispatch({ type: "clock/call", kind: d.kind, text: d.text });
+    }
+  }, [clock, host, live, dispatch]);
   return null;
 }
 

@@ -29,6 +29,7 @@ export function idbStore<T>(db: string, store: string, keyPath = "id") {
     }
   };
   return {
+    get: async (key: string) => (await run("readonly", (s) => s.get(key))) as T | undefined,
     all: async () => ((await run("readonly", (s) => s.getAll())) ?? []) as T[],
     put: (value: T) => run("readwrite", (s) => s.put(value)).then(() => undefined),
     remove: (key: string) => run("readwrite", (s) => s.delete(key)).then(() => undefined),

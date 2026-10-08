@@ -51,6 +51,8 @@ export interface StartOptions {
   rng?: Rng;
   /** Told of every intent the host resolves, in order (play by mail records them). */
   onIntent?: (intent: Intent, by: PlayerId) => void;
+  /** Watch `record` (or the host's) together as a replay: nobody plays, nothing is added to it. */
+  review?: boolean;
 }
 
 /**
@@ -90,6 +92,8 @@ interface Store {
   draft: AttackDraft | null;
   /** Replay viewer: show the table as it stood after this seq (null = live). */
   scrub: number | null;
+  /** A review room: a replay watched (and annotated) together, online (src/replay/review.ts). */
+  review: boolean;
   /** Terrain editor open: terrain and objectives can be dragged and changed. */
   editing: boolean;
   selectedTerrain: string | null;
@@ -201,8 +205,24 @@ export function loadRoom(roomId: string): SavedRoom | null {
   }
 }
 
+/**
+ * The seat this browser last had in a room, kept beyond the tab (sessionStorage is per tab), so
+ * reopening the invite link in a new tab finds its player again (UX 216).
+ */
+const seatKey = (roomId: string) => `open-battle:seat:${roomId}`;
+
+export function deviceSeat(roomId: string): string | undefined {
+  try {
+    return localStorage.getItem(seatKey(roomId)) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function saveRoom(roomId: string, record: GameRecord, seatedAs: string | undefined, role: Role) {
   try {
+    if (seatedAs && localStorage.getItem(seatKey(roomId)) !== seatedAs)
+      localStorage.setItem(seatKey(roomId), seatedAs);
     // Remember the player we are once we have a seat; until then keep the old one.
     const playerId = seatedAs ?? loadRoom(roomId)?.playerId;
     sessionStorage.setItem(
@@ -245,6 +265,7 @@ export const useStore = create<Store>((set, get) => ({
   selected: null,
   draft: null,
   scrub: null,
+  review: false,
   editing: false,
   selectedTerrain: null,
   xray: false,
@@ -276,7 +297,10 @@ export const useStore = create<Store>((set, get) => ({
   setScrub: (scrub) => set({ scrub }),
 
   start(options) {
-    const { role, mode, roomId, name, record, system, rng, onIntent } = options;
+    const { role: asked, mode, roomId, name, record, system, rng, onIntent } = options;
+    const review = !!options.review;
+    // In a review room only the host's session is a host (it shows the record); everyone watches.
+    const role: Role = review && asked !== "host" ? "spectator" : asked;
     // WebRTC (Trystero) loads on demand, and usually already has: the front door prefetches it.
     if (mode !== "hotseat" && mode !== "local" && !trystero) {
       void loadTrystero().then(() => get().start(options));
@@ -292,7 +316,7 @@ export const useStore = create<Store>((set, get) => ({
     // A client coming back to a room picks up the log it saved there, and asks only for what it missed.
     const room = mode === "hotseat" || !roomId ? null : loadRoom(roomId);
     const resumed = role === "host" && !!record && mode !== "hotseat";
-    let seated = role === "spectator";
+    let seated = role === "spectator" || review;
     const session: Session = new Session({
       transport,
       role,
@@ -301,6 +325,7 @@ export const useStore = create<Store>((set, get) => ({
       ...(rng ? { rng } : {}),
       ...(onIntent ? { onIntent } : {}),
       // A peer missing one of the game's rules packages can't host it.
+      frozen: review,
       ready: (state) =>
         (state.packages?.packages ?? []).every((p) => !!useLibrary.getState().packages[p.hash]),
       onChange: (game, rec) => {
@@ -308,6 +333,8 @@ export const useStore = create<Store>((set, get) => ({
         if (get().session !== session) return;
         set({ game, record: rec });
         const current = session?.status.role ?? role;
+        // A review shows an old record: it is never this device's game to resume.
+        if (review) return;
         if (current === "host") saveGame({ mode, roomId: roomId ?? null, record: rec, savedAt: Date.now() });
         if (roomId && mode !== "hotseat")
           saveRoom(
@@ -320,13 +347,12 @@ export const useStore = create<Store>((set, get) => ({
       },
       onNet: (status) => {
         if (get().session !== session) return;
-        set({ net: status, role: status.role });
+        set({ net: status, role: review ? "spectator" : status.role });
         takeSeat();
       },
     });
     set({
       session,
-      role,
       mode,
       roomId: roomId ?? null,
       game: session.current,
@@ -334,9 +360,12 @@ export const useStore = create<Store>((set, get) => ({
       net: session.status,
       selected: null,
       draft: null,
-      scrub: null,
+      review,
+      role: review ? "spectator" : role,
+      // A review opens where the battle starts, as a replay does.
+      scrub: review && record ? replayIntro(record).startSeq : null,
       // Spectators start with the camera following the action.
-      director: role === "spectator",
+      director: role === "spectator" || review,
       stats: null,
       moment: null,
       packagesWaived: {},
@@ -366,9 +395,16 @@ export const useStore = create<Store>((set, get) => ({
         seated = true;
         return;
       }
-      const mine = room?.playerId ?? (resumed ? players.find((p) => p.seat === 0)?.id : undefined);
+      // This tab's seat, else this browser's (a new tab on the same invite), else a resumed host's own.
+      const mine =
+        room?.playerId ??
+        (roomId ? deviceSeat(roomId) : undefined) ??
+        (resumed ? players.find((p) => p.seat === 0)?.id : undefined);
       seated = true;
-      if (mine && game.players[mine] && !status.peers.includes(mine)) {
+      // This tab's own seat comes back to it even if its old connection still looks present: a reloaded
+      // tab can linger in the peer list for a while, and the host already shows that player as away (UX 216).
+      // Another tab's seat is taken only once that player has gone, so two tabs can still play each other.
+      if (mine && game.players[mine] && (room?.playerId === mine || !status.peers.includes(mine))) {
         session.dispatch({ type: "player/claim", player: mine });
         return;
       }
@@ -416,6 +452,7 @@ export const useStore = create<Store>((set, get) => ({
     set({
       session: null,
       role: "spectator",
+      review: false,
       record,
       scrub,
       selected: null,

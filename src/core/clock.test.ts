@@ -7,7 +7,7 @@ import {
   type Intent,
   type PlayerId,
 } from "./index";
-import { clocks, clockText, timeCall, timeLeft } from "./clock";
+import { clocks, clockText, timeCall, timeCallOf, timeLeft } from "./clock";
 
 function game() {
   const record = createRecord(createInitialState());
@@ -93,5 +93,11 @@ describe("chess clocks", () => {
     // 50 minutes left: not enough for another round after this one.
     expect(timeCall(c, settings, c.at + 90 * MIN)).toMatch(/Last turn/);
     expect(timeCall(c, settings, c.at + 141 * MIN)).toMatch(/Time's up/);
+    // Written into the log once: the clocks then know it was called (UX 218).
+    const call = timeCallOf(c, settings, c.at + 90 * MIN)!;
+    expect(call.kind).toBe("last-turn");
+    g.play({ type: "clock/call", kind: call.kind, text: call.text }, "a", 90 * MIN);
+    expect(clocks(g.record).called).toEqual(["last-turn"]);
+    expect(() => g.play({ type: "clock/call", kind: "Bad Kind!", text: "x" }, "a", 0)).toThrow();
   });
 });

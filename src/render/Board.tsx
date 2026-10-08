@@ -62,7 +62,9 @@ import { TalkLayer } from "./TalkLayer";
 import { carry, pickUp, setDown } from "./feel";
 import { tick } from "../ui/sound";
 import { FeelLayer } from "./FeelLayer";
-import { say, useTalk, type Said } from "../talk/talk";
+import { useTalk, type Said } from "../talk/talk";
+import { talkOrNote } from "../replay/notes";
+import { NotesLayer } from "./NotesLayer";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
 import { useAssetSharing } from "../assets/share";
 import { unitKeys, useAssets } from "../assets/store";
@@ -395,7 +397,7 @@ function Scene() {
         );
       }
       if (d.kind === "talk") {
-        say(
+        talkOrNote(
           d.tool === "arrow"
             ? { kind: "arrow", from: d.grab, to: d.to }
             : { kind: "area", at: d.grab, radius: Math.hypot(dx, dy) },
@@ -521,7 +523,7 @@ function Scene() {
   // Table talk on a spot or a unit: a ping now, or the start of an arrow or area.
   const talkAt = (at: Vec2, unitId?: string) => {
     if (tool === "ping" || !tool) {
-      say({ kind: "ping", at, ...(unitId ? { unitId } : {}) });
+      talkOrNote({ kind: "ping", at, ...(unitId ? { unitId } : {}) });
       // One ping per press of the button, so the next click selects as usual (UX 120).
       if (tool) useTalk.setState({ tool: null });
     } else setDrag({ kind: "talk", tool, grab: at, to: at, moved: false, planeZ: 0 });
@@ -997,6 +999,7 @@ function Scene() {
           ))}
 
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
+      <NotesLayer />
       <FeelLayer />
       <CasterCamera />
       <ShowcaseCamera />

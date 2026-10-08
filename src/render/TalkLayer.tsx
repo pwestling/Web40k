@@ -90,7 +90,17 @@ function Ping({ item, at }: { item: Said; at: Vec2 }) {
   );
 }
 
-function Arrow({ from, to, color, opacity }: { from: Vec2; to: Vec2; color: string; opacity: number }) {
+export function Arrow({
+  from,
+  to,
+  color,
+  opacity,
+}: {
+  from: Vec2;
+  to: Vec2;
+  color: string;
+  opacity: number;
+}) {
   const len = Math.hypot(to.x - from.x, to.y - from.y);
   if (len < 0.2) return null;
   const ux = (to.x - from.x) / len;
@@ -116,7 +126,17 @@ function Arrow({ from, to, color, opacity }: { from: Vec2; to: Vec2; color: stri
   );
 }
 
-function Area({ at, radius, color, opacity }: { at: Vec2; radius: number; color: string; opacity: number }) {
+export function Area({
+  at,
+  radius,
+  color,
+  opacity,
+}: {
+  at: Vec2;
+  radius: number;
+  color: string;
+  opacity: number;
+}) {
   if (radius < 0.2) return null;
   const points = Array.from({ length: 65 }, (_, k): [number, number, number] => {
     const a = (k / 64) * Math.PI * 2;

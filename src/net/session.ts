@@ -79,6 +79,8 @@ export interface SessionOptions {
   ready?: (state: GameState) => boolean;
   /** Told of every intent this host is asked to resolve, in order (play by mail records them: src/mail). */
   onIntent?: (intent: Intent, by: string) => void;
+  /** A host showing a finished record (a review room, replay/review.ts): it takes no intents at all. */
+  frozen?: boolean;
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
@@ -121,6 +123,7 @@ export class Session {
   private migrating = false;
   private readonly peers = new Map<string, { role?: Role; seq?: number; ready?: boolean }>();
   private readonly isReady: (state: GameState) => boolean;
+  private readonly frozen: boolean;
   private queue: Intent[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
   private left = false;
@@ -157,8 +160,10 @@ export class Session {
     onNet,
     ready,
     onIntent,
+    frozen,
   }: SessionOptions) {
     this.onIntent = onIntent;
+    this.frozen = !!frozen;
     this.isReady = ready ?? (() => true);
     this.transport = transport;
     this.role = role;
@@ -308,7 +313,8 @@ export class Session {
       message.t.startsWith("asset/") ||
       message.t.startsWith("package/") ||
       message.t.startsWith("campaign/") ||
-      message.t.startsWith("talk")
+      message.t.startsWith("talk") ||
+      message.t.startsWith("review/")
     ) {
       for (const l of this.side.values()) l.onSide(message as SideMessage, from);
       return;
@@ -487,6 +493,7 @@ export class Session {
   private resolving = false;
 
   private hostApply(intent: Intent, from: string): void {
+    if (this.frozen) return;
     if (this.resolving) {
       this.waiting.push([intent, from]);
       return;

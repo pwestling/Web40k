@@ -188,6 +188,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
     case "clock/pause":
     case "clock/adjust":
+    case "clock/call":
       // Read from the log by core/clock.ts; the table itself doesn't change.
       return state;
     case "ruler/set":

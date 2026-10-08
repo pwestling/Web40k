@@ -413,6 +413,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return event.reason === "disconnect"
         ? "The clocks stopped: a player is disconnected"
         : `${who} stopped the clocks`;
+    case "clock/call":
+      return `⏱ ${event.text}`;
     case "clock/adjust": {
       const mins = Math.round(Math.abs(event.ms) / 60_000);
       const amount = mins

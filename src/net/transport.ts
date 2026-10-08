@@ -58,7 +58,17 @@ export type SideMessage =
   /** A commentator brings up a moment-of-the-game card (after the game), by its seq and kind. */
   | { t: "talk/moment"; seq: number; kind: string }
   /** Voice at the table (src/voice): this peer's mic is on or off. The audio itself is a media stream. */
-  | { t: "talk/voice"; on: boolean; name?: string };
+  | { t: "talk/voice"; on: boolean; name?: string }
+  /**
+   * A review room (src/replay/review.ts): the leader's place in the replay (whoever sends it leads),
+   * and notes pinned to its moments, one at a time or all at once for someone joining.
+   */
+  | { t: "review/lead"; seq: number; name?: string }
+  /** Someone has the record and is ready for the room's notes and the leader's place. */
+  | { t: "review/hello" }
+  | { t: "review/note"; note: unknown }
+  | { t: "review/unnote"; id: string }
+  | { t: "review/notes"; notes: unknown[] };
 
 /** A short-lived message over the table, from whoever sent it. */
 export type TalkItem = { id: string } & (

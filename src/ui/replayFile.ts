@@ -3,6 +3,8 @@ import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import { useLibrary } from "../packages/library";
+import { gameId } from "../campaign/book";
+import { carryNotes, cleanNotes, useNotes, type ReplayNote } from "../replay/notes";
 
 /**
  * A replay file: the game record plus what it needs to look and play the
@@ -17,6 +19,8 @@ export interface ReplayFile extends GameRecord {
     /** Package source text by SHA-256. */
     packages?: Record<string, string>;
   };
+  /** Notes pinned to moments of the replay (src/replay/notes.ts). */
+  annotations?: ReplayNote[];
 }
 
 const HASH = /^[0-9a-f]{64}$/;
@@ -55,7 +59,10 @@ export async function bundleReplay(record: GameRecord): Promise<ReplayFile> {
     const pkg = useLibrary.getState().packages[hash];
     if (pkg) packages[hash] = pkg.source;
   }
-  return { ...record, attachments: { assets, packages } };
+  // The notes on this game, when it's the one whose notes are open.
+  const { game, notes } = useNotes.getState();
+  const annotations = game && game === gameId(record) && notes.length ? { annotations: notes } : {};
+  return { ...record, attachments: { assets, packages }, ...annotations };
 }
 
 /**
@@ -64,7 +71,8 @@ export async function bundleReplay(record: GameRecord): Promise<ReplayFile> {
  * until the viewer says yes, as with packages from a player.
  */
 export async function unbundleReplay(file: ReplayFile): Promise<GameRecord> {
-  const { attachments, ...record } = file;
+  const { attachments, annotations, ...record } = file;
+  carryNotes(record, cleanNotes(annotations));
   const { decodeAsset } = await import("../assets/codec");
   for (const [id, data] of Object.entries(attachments?.assets ?? {})) {
     if (!HASH.test(id) || useAssets.getState().assets[id]) continue;

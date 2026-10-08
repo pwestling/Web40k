@@ -1,3 +1,4 @@
+import { NoteCaption, NotesPanel } from "./replay/NotesPanel";
 import { cameraForward, focusOn } from "./render/focus";
 import { aliveModels } from "./systems/wh40k/rules";
 import { TableWarningsPanel } from "./ui/TableWarnings";
@@ -239,6 +240,8 @@ export function GameScreen({ started }: { started: boolean }) {
           <TableWarningsPanel />
           <RoundCard />
           <ReplayTitle />
+          {!editing && <NotesPanel />}
+          <NoteCaption />
           <DiceTray />
           {!editing && <TalkPanel />}
           <VoiceRoom />

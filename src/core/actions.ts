@@ -139,6 +139,8 @@ export type Intent =
   | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
   /** Give a side's clock time (or take it away), in milliseconds. */
   | { type: "clock/adjust"; seat: number; ms: number }
+  /** A time call written into the log when it's first made (UX 218): "last-turn", "time-up", "round-3", "out-1". */
+  | { type: "clock/call"; kind: string; text: string }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -290,6 +292,7 @@ export type GameEvent =
   | { type: "clock/pause"; paused: boolean; reason?: "hand" | "disconnect" }
   /** Give a side's clock time (or take it away), in milliseconds. */
   | { type: "clock/adjust"; seat: number; ms: number }
+  | { type: "clock/call"; kind: string; text: string }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
   | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
@@ -470,6 +473,15 @@ export function resolveIntent(
         Number.isFinite(intent.ms) &&
         Math.abs(intent.ms) <= 24 * 3_600_000
         ? { type: "clock/adjust", seat: intent.seat, ms: Math.round(intent.ms) }
+        : null;
+    case "clock/call":
+      return state?.players[from] &&
+        typeof intent.kind === "string" &&
+        /^[a-z0-9-]{1,24}$/.test(intent.kind) &&
+        typeof intent.text === "string" &&
+        intent.text.length > 0 &&
+        intent.text.length <= 200
+        ? { type: "clock/call", kind: intent.kind, text: intent.text }
         : null;
     case "campaign/set": {
       if (!state?.players[from]) return null;

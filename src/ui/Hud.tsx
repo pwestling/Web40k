@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
 import { BroadcastControls } from "../broadcast/BroadcastControls";
-import { useCanControl, useStore } from "../store";
+import { loadRoom, useCanControl, useStore } from "../store";
 import { ArmyImport } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
 import { MissionPicker, SecretMissions } from "./Missions";
@@ -330,7 +330,9 @@ function NameCard({ player }: { player: Player }) {
  */
 function RejoinCard({ seated }: { seated: Player[] }) {
   const { net, dispatch, start, mode, roomId } = useStore();
-  const free = seated.filter((p) => !net?.peers.includes(p.id) && p.id !== net?.hostId);
+  // This device's own seat is offered even while its old, closed tab still looks connected (UX 216).
+  const own = roomId ? loadRoom(roomId)?.playerId : undefined;
+  const free = seated.filter((p) => p.id === own || (!net?.peers.includes(p.id) && p.id !== net?.hostId));
   const watch = () =>
     start({
       role: "spectator",

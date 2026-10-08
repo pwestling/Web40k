@@ -102,6 +102,11 @@ export function Lobby() {
     if (!roomId) return;
     const m: Mode = params.get("local") === "1" ? "local" : "online";
     const who = localStorage.getItem("open-battle:name") ?? "";
+    // A review room's link: watch the replay together (src/replay/review.ts).
+    if (params.get("review") === "1") {
+      start({ role: "spectator", mode: m, roomId, name: who, review: true });
+      return;
+    }
     // The streaming view always just watches.
     if (BROADCAST) {
       start({ role: "spectator", mode: m, roomId, name: who || "Stream" });

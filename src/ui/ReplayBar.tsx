@@ -10,6 +10,7 @@ import { buildLog, type LogItem } from "./gameLog";
 import { pace } from "./pace";
 import { BackToOriginal, BranchButton } from "./Branch";
 import { readGame, type Highlight } from "./highlights";
+import { useNotes } from "../replay/notes";
 
 const ICONS: Record<Highlight["kind"], string> = { wiped: "☠", charge: "✗", swing: "★" };
 
@@ -32,7 +33,11 @@ function phaseMarks(log: LogItem[]): { seq: number; text: string; round?: string
  * happening at the current point, for spectators and anyone scrubbing.
  */
 export function ReplayBar() {
-  const { record, scrub, setScrub, session, role } = useStore();
+  const { record, scrub, setScrub, session: live, role, review } = useStore();
+  // A review room is a replay watched together: there's no "live" in it.
+  const session = review ? null : live;
+  const notes = useNotes((s) => s.notes);
+  const noted = useMemo(() => [...new Set(notes.map((n) => n.seq))], [notes]);
   const [playing, setPlaying] = useState(false);
   const last = record.events.at(-1)?.seq ?? 0;
   // A branched game's log starts mid-battle: the track runs from its first event.
@@ -82,13 +87,17 @@ export function ReplayBar() {
         const s = useStore.getState();
         if (next >= last) {
           setPlaying(false);
-          s.setScrub(s.session ? null : last);
-        } else s.setScrub(next);
+          s.setScrub(session ? null : last);
+        } else {
+          s.setScrub(next);
+          // Playback stops at a note, to read it; play goes on from there.
+          if (useNotes.getState().notes.some((n) => n.seq === next)) setPlaying(false);
+        }
       },
       pace(record, next),
     );
     return () => clearTimeout(t);
-  }, [playing, last, pos, record]);
+  }, [playing, last, pos, record, session]);
 
   const play = () => {
     // Playing from the end starts again from the beginning.
@@ -184,6 +193,19 @@ export function ReplayBar() {
               </button>
             ))}
           {last > 0 &&
+            noted.map((seq) => (
+              <button
+                key={`note-${seq}`}
+                className="highlight note"
+                style={{ left: at(seq) }}
+                title={notes.find((n) => n.seq === seq)?.text || "A note"}
+                aria-label={`Replay: note, ${notes.find((n) => n.seq === seq)?.text ?? ""}`}
+                onClick={() => setScrub(seq)}
+              >
+                ✎
+              </button>
+            ))}
+          {last > 0 &&
             rulesChanges.map((r) => (
               <button
                 key={`rules-${r.seq}`}
@@ -205,7 +227,17 @@ export function ReplayBar() {
         {last > record.initial.seq && !delaying() && <BranchButton seq={pos} />}
         <BackToOriginal />
         {scrub !== null && session && <button onClick={() => setScrub(null)}>Back to live</button>}
-        {!session && <button onClick={() => location.reload()}>Close replay</button>}
+        {!session && (
+          <button
+            onClick={() => {
+              // Leaving a review room drops its link, so a reload doesn't join it again.
+              if (review) history.replaceState(null, "", location.pathname);
+              location.reload();
+            }}
+          >
+            {review ? "Leave" : "Close replay"}
+          </button>
+        )}
       </div>
     </>
   );

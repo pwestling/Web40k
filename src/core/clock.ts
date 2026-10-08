@@ -1,4 +1,5 @@
-import { findProcedure } from "./content/runner";
+import { findProcedure, nextStep } from "./content/runner";
+import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
 import { undoneSeqs, type GameRecord } from "./log";
 import { applyEvent } from "./reducer";
@@ -39,22 +40,48 @@ export interface Clocks {
   over: boolean;
   /** The time of the last event counted. */
   at: number;
+  /** Time calls already written into the log, by kind. */
+  called: string[];
 }
 
-/** The seat that has to act: a reaction's or a save's roller, else the side whose turn it is. */
+/** Who a step waits on, from the step's roller or chooser. */
+function stepSide(step: unknown): "attacker" | "defender" | null {
+  const st = step as { roller?: string; chooser?: string } | undefined;
+  const who = st?.roller ?? st?.chooser;
+  if (who === "defender" || who === "opponent") return "defender";
+  if (who === "attacker" || who === "active") return "attacker";
+  return null;
+}
+
+/**
+ * The seat that has to act: a reaction's, the target's owner while it allocates or rolls saves,
+ * else the side whose turn it is.
+ */
 export function actingSeat(state: GameState): number | null {
   if (state.pending) return state.pending.seat;
   const seatOf = (unitId: string | undefined) => {
     const owner = unitId ? state.units[unitId]?.owner : undefined;
     return owner ? (state.players[owner]?.seat ?? null) : null;
   };
-  if (state.attack?.stage === "save") return seatOf(state.attack.spec.targetUnitId) ?? state.turn.activeSeat;
+  const attack = state.attack;
+  if (attack && attack.stage !== "done") {
+    // The attack's own run says who its next step waits on (UX 217: allocating comes before saves).
+    let side: "attacker" | "defender" | null;
+    try {
+      side =
+        attack.run && !attack.run.done ? stepSide(nextStep(getSystem(attack.run.system), attack.run)) : null;
+    } catch {
+      side = null;
+    }
+    // Past the wound roll, the target's side rolls saves group by group, each group's damage with it.
+    if (side === "defender" || attack.stage === "save" || attack.stage === "damage")
+      return seatOf(attack.spec.targetUnitId) ?? state.turn.activeSeat;
+  }
   const proc = state.procedure;
   if (proc && !proc.run.done) {
     try {
       const step = findProcedure(systemOf(state), proc.run.procedure).steps[proc.run.next];
-      if (step?.kind === "test" && step.roller === "defender")
-        return seatOf(proc.targetId) ?? state.turn.activeSeat;
+      if (stepSide(step) === "defender") return seatOf(proc.targetId) ?? state.turn.activeSeat;
     } catch {
       // A procedure this table can't find: the turn's side.
     }
@@ -84,6 +111,7 @@ export function clocks(record: GameRecord): Clocks {
     roundsDone: 0,
     over: false,
     at: 0,
+    called: [],
   };
   for (const logged of record.events) {
     // The interval just gone goes to whoever was running.
@@ -93,6 +121,7 @@ export function clocks(record: GameRecord): Clocks {
     const { event } = logged;
     if (event.type === "clock/pause") c.paused = event.paused ? (event.reason ?? "hand") : false;
     if (event.type === "clock/adjust") c.adjusted[event.seat] = (c.adjusted[event.seat] ?? 0) + event.ms;
+    if (event.type === "clock/call" && !c.called.includes(event.kind)) c.called.push(event.kind);
     if (undone.has(logged.seq)) continue;
     const round = state.turn.round;
     state = applyEvent(state, event);
@@ -113,22 +142,31 @@ export function timeLeft(c: Clocks, settings: ClockSettings, seat: number, now: 
   return settings.minutes * 60_000 + (c.adjusted[seat] ?? 0) - (c.used[seat] ?? 0) - live;
 }
 
-/** What the time limits say now, in plain words, or null when there's nothing to call. */
-export function timeCall(c: Clocks, settings: ClockSettings, now: number): string | null {
+/** What the time limits say now, with a kind to log it by, or null when there's nothing to call. */
+export function timeCallOf(
+  c: Clocks,
+  settings: ClockSettings,
+  now: number,
+): { kind: string; text: string } | null {
   if (c.over || c.battleStart === null) return null;
   if (settings.gameMinutes) {
     const elapsed = now - c.battleStart;
     const left = settings.gameMinutes * 60_000 - elapsed;
-    if (left <= 0) return "Time's up for the battle: finish the turn you're in, then stop.";
+    if (left <= 0)
+      return { kind: "time-up", text: "Time's up for the battle: finish the turn you're in, then stop." };
     // After this round (at the pace so far), not enough time for another like it: this is the last.
     const average = c.roundsDone ? (c.roundStart! - c.battleStart) / c.roundsDone : null;
     const roundLeft = average !== null ? average - (now - c.roundStart!) : null;
     if (average !== null && left - Math.max(0, roundLeft ?? 0) < average)
-      return "Last turn: there's time to finish this battle round, not another.";
+      return { kind: "last-turn", text: "Last turn: there's time to finish this battle round, not another." };
   }
   if (settings.roundMinutes && c.roundStart !== null && now - c.roundStart > settings.roundMinutes * 60_000)
-    return "This battle round is over its time: finish it off.";
+    return { kind: `round-${c.roundsDone + 1}`, text: "This battle round is over its time: finish it off." };
   return null;
+}
+
+export function timeCall(c: Clocks, settings: ClockSettings, now: number): string | null {
+  return timeCallOf(c, settings, now)?.text ?? null;
 }
 
 /** "1:23:45", "4:05", or "−0:12" for a clock past zero. */
