@@ -1956,3 +1956,64 @@ body.broadcast .caption {
 .replaybar .highlight.moment {
   color: #fbbf24;
 }
+
+/* Phones (UX 17): the menu, unit card, attack and stratagems become one bottom sheet at a time. */
+@media (max-width: 700px) {
+  .topbar {
+    top: 4px;
+    gap: 4px;
+    font-size: 0.8rem;
+  }
+  .topbar > * {
+    padding: 2px 6px;
+    gap: 4px;
+  }
+  .hud:not(.collapsed),
+  .unitcard,
+  .attack,
+  .terrainpanel,
+  .play:not(.collapsed) {
+    position: fixed;
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 52px;
+    width: auto;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+  .hud.collapsed,
+  .play.collapsed {
+    position: fixed;
+    top: auto;
+    bottom: 52px;
+  }
+  .hud.collapsed {
+    left: 8px;
+  }
+  .play.collapsed {
+    left: auto;
+    right: 8px;
+  }
+  .talk-dock {
+    left: 8px;
+    right: 8px;
+    bottom: 96px;
+    width: auto;
+  }
+  body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play, .talk-dock),
+  body:has(.hud:not(.collapsed), .play:not(.collapsed)) .talk-dock,
+  body:has(.hud:not(.collapsed)) .play {
+    display: none;
+  }
+  .replaybar {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    transform: none;
+    width: auto;
+  }
+  .caption {
+    max-width: calc(100vw - 16px);
+  }
+}

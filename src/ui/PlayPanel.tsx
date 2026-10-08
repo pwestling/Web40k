@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { narrow } from "./narrow";
 import type { Player } from "../core";
 import {
   abilityReminders,
@@ -23,7 +24,8 @@ export function PlayPanel() {
   const busy = !!selected || !!draft || !!game.attack || !!game.procedure;
   const context = `${selected ?? ""}|${busy}`;
   const [choice, setChoice] = useState<{ context: string; open: boolean } | null>(null);
-  const open = choice?.context === context ? choice.open : !busy;
+  // On a phone it opens only when asked (UX 17).
+  const open = choice?.context === context ? choice.open : !busy && !narrow();
   const setOpen = (o: boolean) => setChoice({ context, open: o });
   const system = systemOf(game);
   const reminders = abilityReminders(game);

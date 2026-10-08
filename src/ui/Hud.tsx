@@ -13,6 +13,7 @@ import { DeployTray, RoomCard } from "./Room";
 import { TemplateTools } from "./TemplateTools";
 import { battleOver } from "./StatsScreen";
 import { useGame } from "./hooks";
+import { narrow } from "./narrow";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -40,7 +41,11 @@ export function Hud() {
   const fastDice = useSound((s) => s.fast);
   const [count, setCount] = useState(2);
   const [sides, setSides] = useState(6);
-  const [collapsed, setCollapsed] = useState(false);
+  // On a phone the menu folds away once the battle starts, so the table shows (UX 17).
+  const started = liveGame.turn.round > 0;
+  const [fold, setFold] = useState<{ started: boolean; collapsed: boolean } | null>(null);
+  const collapsed = fold?.started === started ? fold.collapsed : started && narrow();
+  const setCollapsed = (c: boolean) => setFold({ started, collapsed: c });
   const [dice, setDice] = useState(false);
   const undone = undoneSeqs(record);
   // Starting the battle (or any later phase change) locks the terrain again.
