@@ -164,7 +164,12 @@ interface Candidate {
   must?: boolean;
   /** Activates the unit (alternating activations): judged by the best thing it could then do. */
   activates?: boolean;
+  /** A faction stratagem on one of ours (#49): judged by that unit's best action after it, less its cost. */
+  boost?: { unit: string; cp: number };
 }
+
+/** What a command point is worth, as a share of a whole army's worth in VP. */
+const CP_WORTH = 0.01;
 
 const DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.BOT_DBG;
 class Thinker implements Policy {
@@ -291,7 +296,11 @@ class Thinker implements Policy {
     const scored: { c: Candidate; score: number }[] = [];
     for (const c of pool) {
       const score =
-        c.activates && mine ? this.activation(state, c, mine, base) : this.scoreOf(state, c, c.tries);
+        c.activates && mine
+          ? this.activation(state, c, mine, base)
+          : c.boost && mine
+            ? this.boosted(state, c, mine)
+            : this.scoreOf(state, c, c.tries);
       if (score === null) continue;
       scored.push({ c, score });
       if (score > topScore) [top, topScore] = [c, score];
@@ -423,6 +432,20 @@ class Thinker implements Policy {
         kind: "endActivation",
       }) ?? s
     );
+  }
+
+  /** A stratagem on one of ours: its unit's best action afterwards, less what the CP are worth. */
+  private boosted(state: GameState, c: Candidate, mine: Set<PlayerId>): number | null {
+    const s = this.play(state, c.move);
+    if (!s || !c.boost) return null;
+    let best: number | null = null;
+    for (const f of this.candidates(s, mine)) {
+      const i = f.move.intent;
+      if (f.activates || i.type !== "action/take" || i.unitId !== c.boost.unit) continue;
+      const v = this.scoreOf(s, f, f.tries);
+      if (v !== null && (best === null || v > best)) best = v;
+    }
+    return best === null ? null : best - c.boost.cp * CP_WORTH * this.judge.armyVp;
   }
 
   /** The table after a candidate, judged: the average over `tries` goes (null if the host would refuse it). */
@@ -575,6 +598,10 @@ class Thinker implements Policy {
     for (const p of mine)
       for (const o of playerActions(state, p)) {
         if (!o.ok || o.def.custom || /re.?roll/i.test(o.def.id)) continue;
+        // A faction stratagem that does something it can weigh: only on a unit that can still act.
+        const army = o.def.id.startsWith("army:") && o.def.do?.length;
+        if (o.def.id.startsWith("army:") && !army) continue;
+        const cp = o.payment.reduce((n, x) => n + (x.resource === "CP" ? (x.amount ?? 0) : 0), 0);
         for (const target of o.targets ?? [undefined])
           out.push({
             move: {
@@ -584,6 +611,7 @@ class Thinker implements Policy {
             },
             key: `player:${o.def.id}`,
             tries: this.tries,
+            ...(army && target ? { boost: { unit: target, cp } } : {}),
           });
       }
     // Dice placed on cards ahead of time (FSD): as the soak bot places them.

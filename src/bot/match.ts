@@ -161,15 +161,15 @@ export async function playMatch(
     await settle();
     const ranked = (gameModule(system)?.system.unitShape.kind ?? "") === "ranked";
     for (const p of players) {
-      const units = mod
-        .sample(opts.mirror ?? (p.seat === 1 ? 1 : 0))
-        .units.map((u) =>
-          ranked && !u.files
-            ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
-            : u,
-        );
+      const roster = mod.sample(opts.mirror ?? (p.seat === 1 ? 1 : 0));
+      const units = roster.units.map((u) =>
+        ranked && !u.files
+          ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
+          : u,
+      );
       for (const i of spawnIntents(host.current, p.player, units, `${p.player}-${seed}`, "sample"))
         send(i, p.player);
+      if (roster.army) send({ type: "player/army", army: roster.army }, p.player);
       await settle();
     }
     for (const u of Object.values(host.current.units))

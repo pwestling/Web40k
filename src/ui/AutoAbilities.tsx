@@ -7,7 +7,8 @@ import { describeAuto } from "./autoText";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { systemModule } from "../systems";
-import type { ImportedRoster } from "../systems/wh40k/roster";
+import { ENHANCEMENTS, type ImportedRoster } from "../systems/wh40k/roster";
+import { recognizeArmyRule, recognizeStratagem } from "../systems/wh40k/recognize";
 
 /**
  * Abilities that play themselves (#38): the rule read from an ability's text,
@@ -36,7 +37,8 @@ function readRoster(
     const seen = new Set<string>();
     const asUnit = { sheet: u.sheet } as Unit;
     for (const a of u.sheet.abilities) {
-      if (seen.has(a.name) || describesWeaponKeyword(system, asUnit, a)) continue;
+      // Enhancements count with the detachment (ArmyAutomation).
+      if (seen.has(a.name) || a.group === ENHANCEMENTS || describesWeaponKeyword(system, asUnit, a)) continue;
       seen.add(a.name);
       total++;
       if (a.auto) proposals.push({ unit, ability: a, auto: a.auto });
@@ -67,8 +69,168 @@ export function ImportAutomation({
     () => (recognize ? readRoster(roster, system, recognize) : null),
     [roster, system, recognize],
   );
-  if (!read || !read.total) return null;
-  return <Coverage read={read} roster={roster} setRoster={setRoster} system={system} />;
+  if (!read) return null;
+  return (
+    <>
+      {roster.army && <ArmyAutomation roster={roster} setRoster={setRoster} system={system} />}
+      {read.total > 0 && <Coverage read={read} roster={roster} setRoster={setRoster} system={system} />}
+    </>
+  );
+}
+
+/** One of the detachment's rules: an army rule, a unit's enhancement or a stratagem. */
+interface ArmyItem {
+  key: string;
+  label: string;
+  /** Already run by the app (confirmed, or a core rule it knows). */
+  done: boolean;
+  /** The player confirmed what the recognizer read. */
+  on: boolean;
+  /** What the recognizer read, to confirm; none when it stays a reminder. */
+  auto: AbilityAuto | null;
+  set: (r: ImportedRoster, on: boolean) => ImportedRoster;
+}
+
+function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
+  const army = roster.army!;
+  const items: ArmyItem[] = [];
+  army.rules.forEach((rule, i) => {
+    items.push({
+      key: `rule/${i}`,
+      label: rule.name,
+      done: isAutomated(system, rule),
+      on: !!rule.auto,
+      auto: rule.auto ?? recognizeArmyRule(rule, system),
+      set: (r, on) => {
+        const rules = r.army!.rules.map((a, j) => {
+          if (j !== i) return a;
+          const { auto: _, ...rest } = a;
+          const auto = a.auto ?? recognizeArmyRule(a, system);
+          return on && auto ? { ...rest, auto } : rest;
+        });
+        return { ...r, army: { ...r.army!, rules } };
+      },
+    });
+  });
+  roster.units.forEach((u, ui) => {
+    u.sheet.abilities.forEach((a, ai) => {
+      if (a.group !== ENHANCEMENTS) return;
+      items.push({
+        key: `enh/${ui}/${ai}`,
+        label: `${u.name}: ${a.name}`,
+        done: isAutomated(system, a),
+        on: !!a.auto,
+        auto: a.auto ?? recognizeArmyRule(a, system),
+        set: (r, on) => {
+          const units = r.units.map((x, j) => {
+            if (j !== ui) return x;
+            const abilities = x.sheet.abilities.map((b, k) => {
+              if (k !== ai) return b;
+              const { auto: _, ...rest } = b;
+              const auto = b.auto ?? recognizeArmyRule(b, system);
+              return on && auto ? { ...rest, auto } : rest;
+            });
+            return { ...x, sheet: { ...x.sheet, abilities } };
+          });
+          return { ...r, units };
+        },
+      });
+    });
+  });
+  army.stratagems.forEach((st, i) => {
+    const read = st.targetsUnit ? recognizeStratagem(st.effect ?? st.text, system) : null;
+    items.push({
+      key: `strat/${i}`,
+      label: t("{name} ({cp} CP)", { name: st.name, cp: st.cp }),
+      done: !!st.auto,
+      on: !!st.auto,
+      auto: st.auto ?? read,
+      set: (r, on) => {
+        const stratagems = r.army!.stratagems.map((x, j) => {
+          if (j !== i) return x;
+          const { auto: _, ...rest } = x;
+          const auto = x.auto ?? read;
+          return on && auto ? { ...rest, auto } : rest;
+        });
+        return { ...r, army: { ...r.army!, stratagems } };
+      },
+    });
+  });
+  return items;
+}
+
+/** On the army import: "Detachment Ember Vigil: 3 of 7 rules automated", with what else the app could run (#49). */
+function ArmyAutomation({
+  roster,
+  setRoster,
+  system,
+}: {
+  roster: ImportedRoster;
+  setRoster: (r: ImportedRoster) => void;
+  system: GameSystem;
+}) {
+  const items = armyItems(roster, system);
+  const done = items.filter((i) => i.done).length;
+  const proposals = items.filter((i) => i.auto);
+  const reminders = items.filter((i) => !i.done && !i.auto).map((i) => i.label);
+  const army = roster.army!;
+  const name = army.detachment ?? army.faction ?? t("Your army");
+  if (!items.length) return null;
+  return (
+    <div className="auto-abilities">
+      <p className="small">
+        <strong>
+          {tn(
+            items.length,
+            "Detachment {name}: {done} of {n} rule automated",
+            "Detachment {name}: {done} of {n} rules automated",
+            {
+              name,
+              done,
+            },
+          )}
+        </strong>
+        {army.stratagems.length > 0 && (
+          <span className="muted">
+            {" "}
+            ·{" "}
+            {tn(
+              army.stratagems.length,
+              "{n} stratagem in your play panel",
+              "{n} stratagems in your play panel",
+            )}
+          </span>
+        )}
+      </p>
+      {proposals.length > 0 && (
+        <ul className="auto-list">
+          {proposals.map((p) => (
+            <li key={p.key}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={p.on}
+                  onChange={(e) => setRoster(p.set(roster, e.target.checked))}
+                />{" "}
+                <strong>{p.label}</strong> <span className="muted">{t("Automate this?")}</span>
+              </label>
+              <div className="small">{describeAuto(p.auto!, system)}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {reminders.length > 0 && (
+        <p className="muted small">
+          {tn(
+            reminders.length,
+            "{names}: the app reminds you of it; play it yourself.",
+            "{names}: the app reminds you of these; play them yourself.",
+            { names: reminders.join(", ") },
+          )}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function Coverage({

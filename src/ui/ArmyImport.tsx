@@ -121,6 +121,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         )
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+    // The detachment's rules and stratagems (#49): the text is the player's, shared with the table like their units.
+    if (roster.army) dispatch({ type: "player/army", army: roster.army }, owner);
     const color = fromShelf ? null : armyColor(game, owner, roster.color);
     if (color) dispatch(color, owner);
     useDeployed.setState({ [owner]: { roster: { ...roster, units }, prefix, shelfId: fromShelf?.id } });

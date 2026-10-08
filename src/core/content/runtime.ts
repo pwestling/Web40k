@@ -327,6 +327,12 @@ function autoRules(state: GameState, unit: Unit): RuleRef[] {
   const out: RuleRef[] = [];
   for (const a of unit.sheet?.abilities ?? [])
     if (a.auto && !a.auto.aura && !a.auto.trigger && autoActive(unit, a)) out.push(autoRef(a));
+  // The owner's army (#49): confirmed detachment rules run for every unit, a stratagem for the phase it was used.
+  const army = state.armies?.[unit.owner];
+  for (const r of army?.rules ?? [])
+    if (r.auto && !r.auto.aura && !r.auto.trigger && autoActive(unit, r)) out.push(autoRef(r));
+  for (const s of army?.stratagems ?? [])
+    if (s.auto && unit.status?.[`strat.${s.id}`]) out.push(autoRef({ name: s.name, text: "", auto: s.auto }));
   for (const other of Object.values(state.units)) {
     for (const a of other.sheet?.abilities ?? []) {
       const aura = a.auto?.aura;

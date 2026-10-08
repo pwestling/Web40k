@@ -1,5 +1,5 @@
 import { isAlive } from "../units";
-import type { Ability, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
+import type { Ability, ArmyStratagem, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
 import { bindRules, lookupRules, pattern, unitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
@@ -54,13 +54,47 @@ function playerScope(state: GameState, player: PlayerId) {
   return { id: player, seat, active: seat === state.turn.activeSeat };
 }
 
+const ARMY = /^army:(.+):([^:]+)$/;
+
+/** A faction stratagem from the player's roster (#49), as a player action. */
+function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
+  return {
+    id: `army:${player}:${s.id}`,
+    name: s.name,
+    by: "player",
+    side: s.side,
+    ...(s.phases?.length ? { phases: s.phases } : {}),
+    cost: [{ resource: "CP", amount: s.cp }],
+    limit: { count: 1, per: "phase" },
+    ...(s.targetsUnit ? { target: { filter: { same: ["it.owner", "player.id"] } } } : {}),
+    ...(s.auto && s.targetsUnit ? { do: [{ do: "applyStatus", status: `strat.${s.id}` }] } : {}),
+    ...(s.effect || s.text ? { hint: s.effect ?? s.text } : {}),
+  };
+}
+
+/** The player actions a player has: the system's, then their army's own stratagems. */
+export function playerActionDefs(state: GameState, player: PlayerId): ActionDef[] {
+  const own = (state.armies?.[player]?.stratagems ?? []).map((s) => armyAction(player, s));
+  return [...systemOf(state).actions.filter((a) => a.by === "player"), ...own];
+}
+
+/** Any action by id, a faction stratagem's included. */
+export function findAction(state: GameState, id: string): ActionDef | undefined {
+  const army = ARMY.exec(id);
+  if (army) {
+    const s = state.armies?.[army[1]!]?.stratagems.find((x) => x.id === army[2]);
+    return s && armyAction(army[1]!, s);
+  }
+  return systemOf(state).actions.find((a) => a.id === id);
+}
+
 /** The player actions (stratagems) a player could use now, with why not. */
 export function playerActions(state: GameState, player: PlayerId): PlayerActionOption[] {
   const system = systemOf(state);
   const slot = currentSlot(state);
   const me = playerScope(state, player);
   const out: PlayerActionOption[] = [];
-  for (const def of system.actions) {
+  for (const def of playerActionDefs(state, player)) {
     if (def.by !== "player") continue;
     const ctx = evalCtx(state, system, { player: me, turn: { round: state.turn.round } });
     const why = ((): string | undefined => {
@@ -126,8 +160,7 @@ export function poolUsed(state: GameState, player: PlayerId, resource: string): 
 
 /** Fold a used player action into the state: pay, count it, apply its statuses. */
 export function applyPlayerAction(state: GameState, ev: PlayerActionTaken): GameState {
-  const system = systemOf(state);
-  const def = system.actions.find((a) => a.id === ev.action);
+  const def = findAction(state, ev.action);
   const seat = seatOf(state, ev.player);
   if (!def || seat === undefined) return state;
   let next = pay(state, ev.player, ev.payment);

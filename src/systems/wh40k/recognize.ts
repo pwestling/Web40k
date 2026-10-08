@@ -10,7 +10,7 @@
 import { bindRules, lookupRules } from "../../core/content/runtime";
 import type { Effect, EffectAction, Expr, GameSystem, Value } from "../../core/content/schema";
 import { isAutomated } from "../../core/content/player";
-import type { Ability, AbilityAuto, AutoPart } from "../../core/types";
+import type { Ability, AbilityAuto, Army, AutoPart } from "../../core/types";
 
 type AttackPart = Extract<AutoPart, { kind: "attack" }>;
 
@@ -301,6 +301,52 @@ export function recognize(ability: Pick<Ability, "name" | "text">, system: GameS
     };
   }
   return auto;
+}
+
+/**
+ * Army-wide wording read as a single unit's: "a model in a unit from your
+ * army" or "your unit" becomes "this unit", so the same patterns apply. Only
+ * plain "from your army" scoping; a keyword-limited rule stays a reminder.
+ */
+function asUnit(text: string): string {
+  return text
+    .replace(
+      /\b(?:a|each|one) model in (?:a|an|that|the|your) unit(?: from your army)?\b/gi,
+      "a model in this unit",
+    )
+    .replace(/\b(?:a|each) unit from your army\b/gi, "this unit")
+    .replace(/\b(?:your|the target|that|the selected) unit\b/gi, "this unit")
+    .replace(/\bmodels in (?:your|that|the target) unit\b/gi, "models in this unit");
+}
+
+/** A detachment rule that applies to every unit of the army (#49). */
+export function recognizeArmyRule(
+  rule: Pick<Ability, "name" | "text">,
+  system: GameSystem,
+): AbilityAuto | null {
+  const auto = recognize({ name: rule.name, text: asUnit(rule.text) }, system);
+  return auto && !auto.aura && !auto.trigger && !auto.oncePerBattle && !auto.whileLeading ? auto : null;
+}
+
+/** A stratagem's effect on its target until the end of the phase (#49). */
+export function recognizeStratagem(effect: string, system: GameSystem): AbilityAuto | null {
+  const text = asUnit(effect).replace(/^\s*until the end of the (?:phase|turn),?\s*/i, "");
+  return recognizeArmyRule({ name: "", text }, system);
+}
+
+/** The army with everything the recognizer reads switched on (sample armies, the bot's test games). */
+export function automateArmy(army: Army, system: GameSystem): Army {
+  return {
+    ...army,
+    rules: army.rules.map((r) => {
+      const auto = r.auto ?? recognizeArmyRule(r, system);
+      return auto ? { ...r, auto } : r;
+    }),
+    stratagems: army.stratagems.map((st) => {
+      const auto = st.auto ?? (st.targetsUnit ? recognizeStratagem(st.effect ?? st.text, system) : null);
+      return auto ? { ...st, auto } : st;
+    }),
+  };
 }
 
 interface AbilityProposal {

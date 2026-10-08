@@ -260,12 +260,14 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       });
     const ranked = (gameModule(system)?.system.unitShape.kind ?? "") === "ranked";
     for (const [id, seat] of seats) {
-      const units = (opts.armies ?? mod.sample)(seat === 1 ? 1 : 0).units.map((u) =>
+      const roster = (opts.armies ?? mod.sample)(seat === 1 ? 1 : 0);
+      const units = roster.units.map((u) =>
         ranked && !u.files
           ? { ...u, files: Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length) }
           : u,
       );
       for (const i of spawnIntents(room.host()!.current, id, units, `${id}-${seed}`, "sample")) as(id, i);
+      if (roster.army) as(id, { type: "player/army", army: roster.army });
     }
     if (opts.closeIn) {
       // Each side steps towards the middle line, stopping 3" short of it.

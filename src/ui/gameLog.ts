@@ -17,6 +17,7 @@ import {
   type LoggedEvent,
 } from "../core";
 import { isPlaceholder } from "../core/content/systems";
+import { findAction } from "../core/content/player";
 import { systemModule } from "../systems";
 import { t, tn, gameText } from "../i18n";
 import { describePackageChange } from "./packageChange";
@@ -1039,8 +1040,7 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     case "game/system":
       return t("Game: {system}", { system: systemLabel(game.system, systemOf(game).name) });
     case "player/action": {
-      const name =
-        event.label ?? systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
+      const name = event.label ?? findAction(game, event.action)?.name ?? event.action;
       const spent = event.payment
         .map((p) => {
           const r = systemOf(game).resources?.find((x) => x.id === p.resource);

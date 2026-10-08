@@ -28,6 +28,7 @@ import {
 } from "./script";
 import type {
   AbilityAuto,
+  Army,
   DiceRoll,
   GameSettings,
   GameState,
@@ -121,6 +122,8 @@ export type Intent =
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
   | { type: "player/rules"; missing: string[] }
+  /** The army-wide rules from the player's roster: detachment, its rules and stratagems (#49). */
+  | { type: "player/army"; army: Army | null }
   /** Name the code this game runs (the host, before the battle; or after everyone agreed). */
   | ({ type: "game/packages" } & GamePackages)
   /** Ask the seated players to change the game's packages mid-game. */
@@ -290,6 +293,7 @@ export type GameEvent =
     }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
+  | { type: "player/army"; player: PlayerId; army: Army | null }
   | ({ type: "game/packages" } & GamePackages)
   | { type: "packages/propose"; by: PlayerId; packages: PackageRef[] }
   | { type: "packages/accept"; player: PlayerId }
@@ -642,6 +646,8 @@ export function resolveIntent(
       return { type: "player/resync", player: from };
     case "player/rules":
       return state?.players[from] ? { type: "player/rules", player: from, missing: intent.missing } : null;
+    case "player/army":
+      return state?.players[from] ? { type: "player/army", player: from, army: intent.army } : null;
     case "packages/propose":
       return { type: "packages/propose", by: from, packages: intent.packages };
     case "packages/accept":

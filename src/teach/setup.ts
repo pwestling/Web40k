@@ -43,6 +43,7 @@ export function deploySamples(
       send(intent, owner);
     const color = armyColor(get(), owner, roster.color);
     if (color) send(color, owner);
+    if (roster.army) send({ type: "player/army", army: roster.army }, owner);
   }
 }
 

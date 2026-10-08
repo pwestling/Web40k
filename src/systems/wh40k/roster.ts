@@ -9,7 +9,16 @@
  *
  * Nothing here throws on bad input: problems are reported in `warnings`.
  */
-import type { Ability, BaseShape, Characteristics, StandInLook, UnitSheet, WeaponProfile } from "../../core";
+import type {
+  Ability,
+  Army,
+  ArmyStratagem,
+  BaseShape,
+  Characteristics,
+  StandInLook,
+  UnitSheet,
+  WeaponProfile,
+} from "../../core";
 
 export type { Ability, Characteristics, UnitSheet, WeaponProfile };
 
@@ -46,6 +55,8 @@ export interface ImportedRoster {
   /** The army's own colour (a package's faction): its player takes it on deploying, unless someone has it. */
   color?: string;
   units: ImportedUnit[];
+  /** The detachment, its rules and stratagems (#49); none when the roster names none. */
+  army?: Army;
   warnings: string[];
 }
 
@@ -66,11 +77,16 @@ export interface RNode {
   profiles: RProfile[];
   rules: Ability[];
   categories: string[];
+  /** The option group it was picked from, when the export names it ("Enhancements"). */
+  group: string;
   pts: number;
   selections: RNode[];
 }
 
 export interface RForce {
+  /** The faction's catalogue. */
+  catalogueName: string;
+  rules: Ability[];
   selections: RNode[];
   forces: RForce[];
 }
@@ -147,6 +163,13 @@ function toProfile(o: Obj): RProfile {
   };
 }
 
+function toRules(o: Obj): Ability[] {
+  return list(o, "rules", "rule").map((r) => ({
+    name: attr(r, "name").trim(),
+    text: text(r.description).trim(),
+  }));
+}
+
 function toNode(o: Obj): RNode {
   const num = parseInt(attr(o, "number"), 10);
   return {
@@ -154,11 +177,9 @@ function toNode(o: Obj): RNode {
     type: attr(o, "type").trim().toLowerCase(),
     number: Number.isFinite(num) && num > 0 ? num : 1,
     profiles: list(o, "profiles", "profile").map(toProfile),
-    rules: list(o, "rules", "rule").map((r) => ({
-      name: attr(r, "name").trim(),
-      text: text(r.description).trim(),
-    })),
+    rules: toRules(o),
     categories: list(o, "categories", "category").map((c) => attr(c, "name").trim()),
+    group: (attr(o, "group") || attr(o, "entryGroupName")).trim(),
     pts: ptsOf(o),
     selections: list(o, "selections", "selection").map(toNode),
   };
@@ -166,6 +187,8 @@ function toNode(o: Obj): RNode {
 
 function toForce(o: Obj): RForce {
   return {
+    catalogueName: attr(o, "catalogueName").trim(),
+    rules: toRules(o),
     selections: list(o, "selections", "selection").map(toNode),
     forces: list(o, "forces", "force").map(toForce),
   };
@@ -260,7 +283,8 @@ export function parseRosterText(input: string, extract: RosterExtractor = extrac
   if (!roster) return { name: "", units: [], warnings };
   const units = extract(roster, warnings);
   if (units.length === 0) warnings.push("No units found in roster.");
-  return { name: roster.name, points: roster.pts, units, warnings };
+  const army = extract === extractUnits ? extractArmy(roster) : undefined;
+  return { name: roster.name, points: roster.pts, units, ...(army ? { army } : {}), warnings };
 }
 
 /** Parse an uploaded roster file (`.ros`, `.rosz`, `.json`, or anything sniffable). */
@@ -535,10 +559,13 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   const keywords: string[] = [];
   let points = 0;
   let inv: string | undefined;
+  const enhancements = enhancementNodes(sel);
   walk(sel, (n) => {
     points += n.pts;
+    const enhancement = enhancements.has(n);
+    const before = abilities.length;
     for (const p of n.profiles) {
-      if (isUnitProfile(p) || weaponKind(p)) continue;
+      if (isUnitProfile(p) || weaponKind(p) || isStratagemProfile(p)) continue;
       const desc = p.chars.find((c) => /^description$/i.test(c.name));
       const textValue = desc
         ? desc.value
@@ -546,9 +573,13 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
             .filter((c) => c.value !== "")
             .map((c) => `${c.name}: ${c.value}`)
             .join("; ");
-      addAbility({ name: p.name, text: textValue });
+      addAbility({ name: p.name, text: textValue, ...(enhancement ? { group: ENHANCEMENTS } : {}) });
     }
-    for (const r of n.rules) addAbility(r);
+    for (const r of n.rules)
+      if (!isStratagemRule(r)) addAbility(enhancement ? { ...r, group: ENHANCEMENTS } : r);
+    // An enhancement listed by name only still shows (and counts) as one.
+    if (enhancement && abilities.length === before)
+      addAbility({ name: n.name, text: "", group: ENHANCEMENTS });
     for (const c of n.categories) {
       const kw = c.replace(/^faction:\s*/i, "").trim();
       if (kw && !keywords.includes(kw)) keywords.push(kw);
@@ -573,6 +604,206 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
   if (points > 0) sheet.points = points;
   const unit = { name: sel.name, sheet, models };
   return { ...unit, base: suggestBase(unit) };
+}
+
+// ---------------------------------------------------------------------------
+// The army: detachment, its rules, enhancements and stratagems (#49)
+// ---------------------------------------------------------------------------
+
+/** The heading enhancements are listed under on a unit card. */
+export const ENHANCEMENTS = "Enhancements";
+const ENHANCEMENT_RE = /enhancement/i;
+const STRATAGEM_RE = /stratagem/i;
+const PHASE_RE = /\b(command|movement|shooting|charge|fight)\s+phase/gi;
+
+const isStratagemProfile = (p: RProfile) => STRATAGEM_RE.test(p.typeName);
+/** A rule written out as a stratagem: "WHEN: … EFFECT: …". */
+const isStratagemRule = (r: Ability) => /\bwhen\s*:/i.test(r.text) && /\beffect\s*:/i.test(r.text);
+
+function isEnhancementNode(n: RNode): boolean {
+  return (
+    ENHANCEMENT_RE.test(n.group) ||
+    n.categories.some((c) => ENHANCEMENT_RE.test(c)) ||
+    n.profiles.some((p) => ENHANCEMENT_RE.test(p.typeName))
+  );
+}
+
+/** Enhancements in a unit: marked as such, or picked under a selection named for them. */
+function enhancementNodes(root: RNode): Set<RNode> {
+  const out = new Set<RNode>();
+  const visit = (n: RNode, under: boolean) => {
+    if (under || isEnhancementNode(n)) out.add(n);
+    for (const c of n.selections) visit(c, under || ENHANCEMENT_RE.test(n.name));
+  };
+  for (const c of root.selections) visit(c, ENHANCEMENT_RE.test(root.name));
+  return out;
+}
+
+function stratagemId(name: string, taken: Set<string>): string {
+  const base = slug(name);
+  let id = base;
+  for (let i = 2; taken.has(id); i++) id = `${base}-${i}`;
+  taken.add(id);
+  return id;
+}
+
+/** "Name (1CP)" or "Name - 1 CP": the name without its cost, and the cost. */
+function nameAndCost(name: string): { name: string; cp?: number } {
+  const m = /\s*(?:[-–(]\s*)?(\d+)\s*cp\s*\)?\s*$/i.exec(name);
+  return m ? { name: name.slice(0, m.index).trim(), cp: Number(m[1]) } : { name: name.trim() };
+}
+
+/** Whose turn it is used in, read from its When text. */
+export function stratagemSide(when: string): ArmyStratagem["side"] {
+  const theirs = /opponent'?s/i.test(when);
+  const mine = /\byour\s+(?!opponent)/i.test(when);
+  // "the Fight phase", "any phase": either player's.
+  if (/\b(?:the|any|each|either player's)\s+(?:[a-z]+\s+)?phase/i.test(when)) return "either";
+  if (theirs && !mine) return "inactive";
+  if (mine && !theirs) return "active";
+  return "either";
+}
+
+/** The phases named in its When text (system phase ids); none for any phase. */
+export function stratagemPhases(when: string): string[] {
+  const out: string[] = [];
+  for (const m of when.matchAll(PHASE_RE)) {
+    const id = m[1]!.toLowerCase();
+    if (!out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+/** "WHEN: … TARGET: … EFFECT: … RESTRICTIONS: …" split into its parts. */
+function stratagemParts(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const re = /\b(when|target|effect|restrictions?)\s*:\s*/gi;
+  const marks = [...text.matchAll(re)];
+  marks.forEach((m, i) => {
+    const end = marks[i + 1]?.index ?? text.length;
+    out[m[1]!.toLowerCase().replace(/s$/, "")] = text.slice(m.index! + m[0].length, end).trim();
+  });
+  return out;
+}
+
+function makeStratagem(
+  rawName: string,
+  fields: { cp?: string; when?: string; target?: string; effect?: string },
+  text: string,
+  taken: Set<string>,
+): ArmyStratagem {
+  const named = nameAndCost(rawName);
+  const cpText = /(\d+)/.exec(fields.cp ?? "")?.[1] ?? /\b(\d+)\s*cp\b/i.exec(text)?.[1];
+  const cp = named.cp ?? (cpText !== undefined ? Number(cpText) : 1);
+  const when = fields.when ?? "";
+  const phases = stratagemPhases(when);
+  const target = fields.target ?? "";
+  return {
+    id: stratagemId(named.name, taken),
+    name: named.name,
+    cp,
+    side: stratagemSide(when),
+    ...(phases.length ? { phases } : {}),
+    ...(/\bunits?\b/i.test(target) && /your army|friendly/i.test(target) ? { targetsUnit: true } : {}),
+    ...(when ? { when } : {}),
+    ...(target ? { target } : {}),
+    ...(fields.effect ? { effect: fields.effect } : {}),
+    text,
+  };
+}
+
+function profileStratagem(p: RProfile, taken: Set<string>): ArmyStratagem {
+  const fields: Record<string, string> = {};
+  for (const c of p.chars) {
+    const k = c.name.toLowerCase().replace(/[^a-z]/g, "");
+    if (k === "cp" || k === "cost" || k === "commandpoints") fields.cp = c.value;
+    else if (k === "when") fields.when = c.value;
+    else if (k === "target" || k === "targets") fields.target = c.value;
+    else if (k === "effect" || k === "effects") fields.effect = c.value;
+    else if (k === "description" && !fields.effect) Object.assign(fields, stratagemParts(c.value));
+  }
+  const text = p.chars
+    .filter((c) => c.value !== "" && !/^(cp|cost)$/i.test(c.name))
+    .map((c) => `${c.name}: ${c.value}`)
+    .join("\n");
+  return makeStratagem(p.name, fields, text, taken);
+}
+
+function ruleStratagem(r: Ability, taken: Set<string>): ArmyStratagem {
+  return makeStratagem(r.name, stratagemParts(r.text), r.text, taken);
+}
+
+const isDetachmentNode = (n: RNode) =>
+  /\bdetachment\b/i.test(n.name) && n.type !== "unit" && n.type !== "model";
+
+/**
+ * The army-wide part of a roster: its faction, its detachment and the
+ * detachment's rules, and any stratagems the export carries (as profiles or
+ * as rules written "WHEN: … EFFECT: …"). Undefined when there are none.
+ */
+export function extractArmy(roster: RRoster): Army | undefined {
+  const forces: RForce[] = [];
+  const allForces = (f: RForce) => {
+    forces.push(f);
+    f.forces.forEach(allForces);
+  };
+  roster.forces.forEach(allForces);
+  const faction = forces.map((f) => f.catalogueName).find(Boolean);
+  let detachment: string | undefined;
+  const rules: Ability[] = [];
+  const stratagems: ArmyStratagem[] = [];
+  const taken = new Set<string>();
+  const seenRule = new Set<string>();
+  const seenStrat = new Set<string>();
+  const addStrat = (s: ArmyStratagem) => {
+    if (seenStrat.has(s.name.toLowerCase())) return taken.delete(s.id);
+    seenStrat.add(s.name.toLowerCase());
+    stratagems.push(s);
+  };
+  const addRule = (a: Ability) => {
+    if (!a.name || seenRule.has(a.name.toLowerCase())) return;
+    seenRule.add(a.name.toLowerCase());
+    rules.push({ ...a, group: "Detachment rule" });
+  };
+  const scan = (n: RNode, inDetachment: boolean) => {
+    const here = inDetachment || isDetachmentNode(n);
+    for (const p of n.profiles) {
+      if (isStratagemProfile(p)) addStrat(profileStratagem(p, taken));
+      else if (here && !isUnitProfile(p) && !weaponKind(p)) {
+        const desc = p.chars.find((c) => /^description$/i.test(c.name));
+        addRule({ name: p.name, text: desc ? desc.value : p.chars.map((c) => c.value).join(" ") });
+      }
+    }
+    for (const r of n.rules) {
+      if (isStratagemRule(r)) addStrat(ruleStratagem(r, taken));
+      else if (here) addRule(r);
+    }
+    for (const c of n.selections) scan(c, here);
+  };
+  for (const f of forces) {
+    for (const r of f.rules) if (isStratagemRule(r)) addStrat(ruleStratagem(r, taken));
+    for (const sel of f.selections) {
+      if (isDetachmentNode(sel) && !detachment) {
+        // "Detachment" with the choice as its child, or the choice named in it ("Detachment: X").
+        const child = sel.selections[0]?.name;
+        const own = sel.name.replace(/^\s*detachment( choice)?\s*[:\-–]?\s*/i, "").trim();
+        detachment = child || own || rulesName(sel);
+      }
+      scan(sel, false);
+    }
+  }
+  if (!detachment && !stratagems.length && !rules.length) return undefined;
+  return {
+    ...(roster.name ? { name: roster.name } : {}),
+    ...(faction ? { faction } : {}),
+    ...(detachment ? { detachment } : {}),
+    rules,
+    stratagems,
+  };
+}
+
+function rulesName(n: RNode): string | undefined {
+  return n.rules[0]?.name || n.profiles[0]?.name || undefined;
 }
 
 function profileOf(p: RProfile | undefined, fallbackName: string): ImportedModel["profile"] {

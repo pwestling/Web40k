@@ -313,6 +313,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
     }
     case "player/resync":
       return state;
+    case "player/army": {
+      const { [event.player]: _old, ...others } = state.armies ?? {};
+      return { ...state, armies: event.army ? { ...others, [event.player]: event.army } : others };
+    }
     case "player/rules": {
       const p = state.players[event.player];
       if (!p) return state;

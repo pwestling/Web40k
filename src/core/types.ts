@@ -129,6 +129,40 @@ export interface AbilityAuto {
 }
 
 /**
+ * A faction or detachment stratagem from the player's roster (#49). Its
+ * text is the player's; the cost, phase and side are read from it.
+ */
+export interface ArmyStratagem {
+  /** Unique in the army: a slug of the name. */
+  id: string;
+  name: string;
+  cp: number;
+  /** Whose turn: the player's own, the opponent's, or either. */
+  side: "active" | "inactive" | "either";
+  /** Phases it can be used in (system phase ids); none for any phase. */
+  phases?: string[];
+  /** It picks one of the player's units. */
+  targetsUnit?: boolean;
+  /** The When, Target and Effect text, for the panel. */
+  when?: string;
+  target?: string;
+  effect?: string;
+  text: string;
+  /** What it does to the target until the end of the phase, once the player confirms it (#38's recognizer). */
+  auto?: AbilityAuto;
+}
+
+/** Army-wide rules from the player's roster (#49), shared with the table when they deploy. */
+export interface Army {
+  name?: string;
+  faction?: string;
+  detachment?: string;
+  /** The detachment's rules and the army rules; confirmed ones apply to every unit of the army. */
+  rules: Ability[];
+  stratagems: ArmyStratagem[];
+}
+
+/**
  * What a unit is, as imported from the player's roster: weapon profiles,
  * abilities and keywords. Model characteristics live on each model because
  * units can mix profiles (a sergeant, a leader).
@@ -448,6 +482,8 @@ export interface GameState {
   rolledOff?: { rolls: number[][]; seat: number } | null;
   /** Player actions taken (stratagems), for their once-per-phase limits. */
   used?: Record<PlayerId, PlayerActionUse[]>;
+  /** Each player's army-wide rules from their roster (#49): detachment, its rules and stratagems. */
+  armies?: Record<PlayerId, Army>;
   /** The last measurement a player shared, shown to everyone until cleared. */
   ruler?: Ruler | null;
   /** Blast, flame and line templates on the table, by id. */

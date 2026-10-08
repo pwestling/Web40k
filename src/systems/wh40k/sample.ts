@@ -2,7 +2,12 @@
  * Two small invented armies for trying the table without importing a list.
  * Every name, number and ability text here is made up for Open Battle.
  */
+import { fortyK } from "../../core/content/examples/forty-k";
+import type { Army, ArmyStratagem } from "../../core/types";
+import { automateArmy } from "./recognize";
 import {
+  stratagemPhases,
+  stratagemSide,
   suggestBase,
   type Ability,
   type Characteristics,
@@ -355,11 +360,106 @@ function ashenHost(): ImportedRoster {
   return { name: "Ashen Host", points: sum(units), units, warnings: [] };
 }
 
+/** An invented stratagem in the shape a roster export gives one. */
+function strat(name: string, cp: number, when: string, target: string, effect: string): ArmyStratagem {
+  const phases = stratagemPhases(when);
+  return {
+    id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    name,
+    cp,
+    side: stratagemSide(when),
+    ...(phases.length ? { phases } : {}),
+    targetsUnit: true,
+    when,
+    target,
+    effect,
+    text: `When: ${when}\nTarget: ${target}\nEffect: ${effect}`,
+  };
+}
+
+/** Each sample army's detachment (#49), its rules and stratagems confirmed. */
+function sampleArmy(variant: 0 | 1, name: string): Army {
+  const army: Army =
+    variant === 0
+      ? {
+          name,
+          faction: "Vanguard Legion",
+          detachment: "Spearhead Muster",
+          rules: [
+            {
+              name: "Drilled Volleys",
+              text: "Each time a model in a unit from your army makes a ranged attack, if that unit remained stationary this turn, re-roll a Hit roll of 1.",
+              group: "Detachment rule",
+            },
+          ],
+          stratagems: [
+            strat(
+              "Focused Fire",
+              1,
+              "Your Shooting phase.",
+              "One unit from your army that has not shot this phase.",
+              "Until the end of the phase, each time a model in your unit makes a ranged attack, add 1 to the Wound roll.",
+            ),
+            strat(
+              "Brace Lines",
+              1,
+              "Your opponent's Shooting phase, just after an enemy unit picks its targets.",
+              "One unit from your army that was picked as a target.",
+              "Until the end of the phase, each time an attack targets your unit, subtract 1 from the Hit roll.",
+            ),
+            strat(
+              "Hold the Gate",
+              1,
+              "The Fight phase.",
+              "One unit from your army that has not fought this phase.",
+              "Until the end of the phase, each time a model in your unit makes a melee attack, re-roll a Wound roll of 1.",
+            ),
+          ],
+        }
+      : {
+          name,
+          faction: "Ashen Host",
+          detachment: "Pyre Covenant",
+          rules: [
+            {
+              name: "Burning Zeal",
+              text: "Each time a model in a unit from your army makes a melee attack, if that unit made a charge move this turn, add 1 to the Hit roll.",
+              group: "Detachment rule",
+            },
+          ],
+          stratagems: [
+            strat(
+              "Fan the Flames",
+              1,
+              "Your Shooting phase.",
+              "One unit from your army that has not shot this phase.",
+              "Until the end of the phase, each time a model in your unit makes a ranged attack, that attack has the [Lethal Hits] ability.",
+            ),
+            strat(
+              "Ash Cloak",
+              2,
+              "Your opponent's Shooting phase, just after an enemy unit picks its targets.",
+              "One unit from your army that was picked as a target.",
+              "Until the end of the phase, each time an attack targets your unit, subtract 1 from the Hit roll.",
+            ),
+            strat(
+              "Cinder Charge",
+              1,
+              "The Fight phase.",
+              "One unit from your army that has not fought this phase.",
+              "Until the end of the phase, each time a model in your unit makes a melee attack, add 1 to the Wound roll.",
+            ),
+          ],
+        };
+  return automateArmy(army, fortyK);
+}
+
 function sum(units: ImportedUnit[]): number {
   return units.reduce((t, u) => t + (u.sheet.points ?? 0), 0);
 }
 
 /** A ready-made invented army: 0 = Vanguard Legion, 1 = Ashen Host. */
 export function sampleRoster(variant: 0 | 1): ImportedRoster {
-  return variant === 0 ? vanguardLegion() : ashenHost();
+  const roster = variant === 0 ? vanguardLegion() : ashenHost();
+  return { ...roster, army: sampleArmy(variant, roster.name) };
 }
