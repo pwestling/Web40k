@@ -9,6 +9,7 @@ import { useHelp } from "./ui/help";
 import { Hud } from "./ui/Hud";
 import { KeysSheet } from "./ui/Keys";
 import { WhatNow } from "./ui/WhatNow";
+import { Coach } from "./ui/Coach";
 import { PlayPanel } from "./ui/PlayPanel";
 import { ScriptPanel } from "./ui/ScriptPanel";
 import { ReactionPrompt } from "./ui/SystemPanels";
@@ -161,6 +162,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <PackageCards />
           <SandboxNotice />
           {!editing && <WhatNow />}
+          {!editing && <Coach />}
           <KeysSheet />
           {reacting && <ReactionPrompt />}
           {showSight && (

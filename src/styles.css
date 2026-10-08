@@ -226,6 +226,27 @@ label.file.button.small {
   margin: 0;
   font-size: 0.9rem;
 }
+/* Teaching mode's coach card (ui/Coach.tsx) */
+.panel.coach {
+  z-index: 19;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 32px));
+  gap: 6px;
+  border-color: #22c55e;
+}
+.panel.coach p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.panel.coach.done {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .keys-sheet table {
   border-collapse: collapse;
   font-size: 0.9rem;
@@ -264,6 +285,7 @@ kbd {
   border-color: #f59e0b;
   color: #fbbf24;
 }
+body.showcase .coach,
 body.showcase .whatnow,
 body.showcase .whatnow-toggle,
 body.reeling .whatnow,

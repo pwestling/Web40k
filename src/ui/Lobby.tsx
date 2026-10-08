@@ -10,6 +10,8 @@ import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
+import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
+import { startLesson } from "../teach/store";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
@@ -125,6 +127,17 @@ export function Lobby() {
   };
 
   const demos = listSystems().filter((s) => FRONT[s.id]);
+  // The built-in lessons, then any lesson packages loaded on this device (data only: nothing to trust).
+  const lessons = lessonPackages([
+    ...BUILT_IN_LESSONS,
+    ...Object.values(library)
+      .filter((p) => p.manifest.kind === "lesson")
+      .map((p) => p.source),
+  ])
+    .flatMap((p) => p.lessons)
+    .filter(
+      (l, i, all) => lessonSystem(l) && all.findIndex((x) => x.id === l.id && x.system === l.system) === i,
+    );
 
   return (
     <div className="panel lobby">
@@ -140,6 +153,21 @@ export function Lobby() {
           <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
             <strong>{FRONT[g.id]!.title}</strong>
             <span className="muted small">{FRONT[g.id]!.blurb}</span>
+          </button>
+        ))}
+      </div>
+
+      <h2>Learn to play</h2>
+      <p className="muted small">
+        A guided first game: you play blue, the computer plays red, and a coach says what to do next.
+      </p>
+      <div className="demos">
+        {lessons.map((l) => (
+          <button key={`${l.system}/${l.id}`} className="demo" onClick={() => startLesson(l)}>
+            <strong>
+              {systemLabel(lessonSystem(l), "")}: {l.title}
+            </strong>
+            <span className="muted small">{l.summary}</span>
           </button>
         ))}
       </div>
