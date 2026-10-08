@@ -54,12 +54,15 @@ export async function playRiftLanterns(): Promise<void> {
     system: { id: RIFT_LANTERNS, builtIn: false },
     packages: [refOf(pkg)],
   });
-  let tries = 0;
+  // Wait for the rules however long they take (a slow device, a retry): never give up silently, as
+  // long as this is still the game Play now started (PX playtest item 7). The notice offers a Retry.
+  const session = useStore.getState().session;
   const go = () => {
     const { game } = useStore.getState();
+    if (useStore.getState().session !== session || game.turn.round !== 0) return;
     const mod = gameModule(RIFT_LANTERNS)?.app;
     if (!mod || game.system !== RIFT_LANTERNS || sides(game).length < 2 || !game.terrain.length) {
-      if (tries++ < 200) setTimeout(go, 50);
+      setTimeout(go, 100);
       return;
     }
     const { dispatch } = useStore.getState();

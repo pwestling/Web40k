@@ -6132,7 +6132,15 @@ msgstr ""
 msgid "vs"
 msgstr ""
 
-#: src/ui/SandboxNotice.tsx:12
+#: src/ui/SandboxNotice.tsx:25
+msgid "Retry"
+msgstr ""
+
+#: src/ui/SandboxNotice.tsx:31
+msgid "The game's rules are still loading."
+msgstr ""
+
+#: src/ui/SandboxNotice.tsx:38
 msgid "Dismiss"
 msgstr ""
 
