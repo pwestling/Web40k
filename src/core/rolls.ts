@@ -71,7 +71,10 @@ export function rollsIn(before: GameState, after: GameState, events: GameEvent[]
     const { roll } = e;
     out.push({
       id: `${seq}:dice:${i}`,
-      title: roll.label ? cap(roll.label) : `${roll.results.length}D${roll.sides}`,
+      // The score needed is in the title, unless the game's label already says it (PX: "Hits on 5+ (cover)").
+      title:
+        (roll.label ? cap(roll.label) : `${roll.results.length}D${roll.sides}`) +
+        (roll.need && !roll.label?.includes(`${roll.need}+`) ? ` ${roll.need}+` : ""),
       sides: roll.sides,
       dice: roll.results.map((v) =>
         roll.need ? { value: v, ok: v >= roll.need, crit: v === roll.sides } : { value: v },

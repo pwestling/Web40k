@@ -31,6 +31,19 @@ export interface SpawnableUnit {
   files?: number;
 }
 
+/**
+ * An army's own colour for the player deploying it (a faction's, Rift Lanterns
+ * playtest): figures in the faction's colour stand on bases in the same one.
+ * Not when another player already has that colour.
+ */
+export function armyColor(state: GameState, owner: PlayerId, color: string | undefined): Intent | null {
+  if (!color || !/^#[0-9a-f]{6}$/i.test(color) || !state.players[owner]) return null;
+  const want = color.toLowerCase();
+  if (state.players[owner]!.color.toLowerCase() === want) return null;
+  if (Object.values(state.players).some((p) => p.id !== owner && p.color.toLowerCase() === want)) return null;
+  return { type: "player/color", player: owner, color: want };
+}
+
 const GAP = 0.6;
 /** How far ranked blocks deploy in from the table edge, and the space kept between them. */
 const BLOCK_INSET = 3;

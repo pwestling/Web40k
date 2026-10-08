@@ -11,14 +11,16 @@ Rift Lanterns is Open Battle's own game. Everything in it (names, rules, stats, 
 The game lasts **5 rounds**. In each round, players take turns activating one unit at a time, starting with the player who goes first, until every unit has gone. An activated unit:
 
 1. **Moves** up to its Move in inches (drag it). Wrecks can't be walked through.
-2. Then takes **one action**: **Shoot** or **Fight**.
-3. Then press **End activation**.
+2. Then takes **one action**: **Shoot** or **Fight**. That ends its activation.
+3. A unit that only moves ends its activation when you press **End activation**.
+
+When one player has no units left to activate, the other activates theirs in turn. The round ends when every unit has gone.
 
 ## Shooting
 
 Pick an enemy unit that a shooter can see and that is within the shooter's Range. A unit locked in a fight (an enemy within 1") can't shoot.
 
-- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover (in or touching a ruin or thicket, or seen past one).
+- Each model rolls its **Shoot** dice. Each die that rolls the unit's **Hits on** or more hits; **one more** is needed if the target is in cover: when most of the target models the shooters can see are in or touching a ruin or thicket, or seen past one.
 - The target rolls a die for each hit. Each die that rolls its **Saves on** or more is saved.
 - Each hit not saved takes 1 wound. Models lose wounds in turn; a model with none left is out.
 

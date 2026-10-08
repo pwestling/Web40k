@@ -1,11 +1,11 @@
 import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
-import { placedKey, unitActions, weaponSlots } from "../core/content/play";
-import { currentSlot, phaseName, turnView } from "../core/content/turn";
+import { actingUnits, placedKey, unitActions, weaponSlots } from "../core/content/play";
+import { currentSlot, phaseName, plainActivations, turnView } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { useStore } from "../store";
-import { gameModule } from "../systems";
+import { gameModule, systemModule } from "../systems";
 import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { useGame } from "./hooks";
@@ -76,10 +76,14 @@ export function whatNow(
       lines: [t("Waiting for {side}. You can look around, measure (M) and talk in the chat.", { side: who })],
     };
 
+  const plain = plainActivations(game);
+  const acting = plain ? actingUnits(game)[0] : undefined;
   const units = Object.values(game.units).filter(
     (u) =>
       game.players[u.owner]?.seat === side &&
-      u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed),
+      u.modelIds.some((id) => game.models[id] && !game.models[id]!.destroyed) &&
+      // A unit that has had its go this round is done; one taking its go is the only one that can act (UX 329).
+      (!plain || (acting ? u.id === acting.id : !u.status?.activated)),
   );
   // Each action someone on this side can take now, and how many units can.
   const can = new Map<string, number>();
@@ -108,13 +112,18 @@ export function whatNow(
   }
   for (const u of units) for (const name of ready[u.id] ?? []) add(name);
   const lines: string[] = [];
+  if (acting)
+    lines.push(
+      t("{unit} is taking its go: shoot or fight with it, or press End activation.", { unit: acting.name }),
+    );
+  else if (plain && !units.length) lines.push(t("All your units have had their go this round: press Pass."));
   // In an activation (Rift Lanterns, #42) a unit moves as part of acting, whatever the segment is called.
   const activation = turnView(game).alternating;
-  if (/move/i.test(raw) || activation || Object.keys(ready).length)
+  if (!acting && units.length && (/move/i.test(raw) || activation || Object.keys(ready).length))
     lines.push(t("Drag a unit to move it. The ruler shows how far it has gone against its limit."));
   if (/charge/i.test(raw) && !can.size)
     lines.push(t("No unit is close enough to charge: press ▶ to move on."));
-  if (activation && !can.size && !outOfRange)
+  if (activation && !can.size && !outOfRange && units.length && !acting)
     lines.push(t("Nothing is in reach to attack yet: move closer first."));
   if (outOfRange && !can.size) lines.push(t("Nothing is in range to shoot yet. Get closer next turn."));
   if (can.size)
@@ -136,9 +145,19 @@ export function whatNow(
     lines.push(t("Nothing to do this phase."));
   lines.push(
     activation
-      ? t("When a unit has acted, press End activation at the top; when you have nothing left, Pass.")
+      ? plain
+        ? t(
+            "A unit's go ends when it shoots or fights, or press End activation after a move. Pass when you have nothing left.",
+          )
+        : t("When a unit has acted, press End activation at the top; when you have nothing left, Pass.")
       : t("When you're done, press ▶ at the top for the next phase."),
   );
+  // The mission's rule, where a player looks for what to do (UX 325).
+  const mission = systemModule(game.system).missions?.find((m) => m.id === game.mission?.id);
+  if (mission?.summary)
+    lines.push(
+      t("Mission · {name}: {summary}", { name: gameText(mission.name), summary: gameText(mission.summary) }),
+    );
   return { head: t("{side}'s turn · {phase}", { side: who, phase }), lines };
 }
 
@@ -188,7 +207,9 @@ export function WhatNow() {
   // A lesson's coach card says what to do instead.
   const coaching = useCoach((s) => s.lesson !== null && !s.free);
   const ready = useSandbox((s) => s.app?.ready);
-  if (spectator || scrub !== null || coaching) return null;
+  // A rule's question (Overcharge?) sits where this card does, and is what to do now (PX item 4).
+  const asking = !!game.script?.waiting;
+  if (spectator || scrub !== null || coaching || asking) return null;
   if (!open)
     return (
       <button className="whatnow-toggle" onClick={() => useHelp.setState({ hint: true })}>

@@ -152,6 +152,74 @@ function prepare(source: string) {
   return { text, toChecked, toDraft };
 }
 
+/** Letters to change to turn one name into another. */
+function distance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = row[0]!;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const here = row[j]!;
+      row[j] = Math.min(row[j]! + 1, row[j - 1]! + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = here;
+    }
+  }
+  return row[b.length]!;
+}
+
+/**
+ * The compiler's commonest messages in the workshop's words (UX 330). A
+ * mistyped key's suggestion is one the object doesn't have yet: `roundz` next
+ * to `round` means `rounds`, not the `round` already written.
+ */
+function plain(d: ts.Diagnostic, message: string, program: ts.Program | undefined): string {
+  const unknownKey =
+    /^Object literal may only specify known properties, (?:and|but) '([^']+)' does not exist in type '([^']+)'\.(?: Did you mean to write '([^']+)'\?)?$/.exec(
+      message,
+    );
+  if (unknownKey) {
+    const [, key, , suggested] = unknownKey;
+    const better = program && d.start !== undefined ? otherKey(program, d.start, key!, suggested) : suggested;
+    return better ? `${key} isn't a setting here. Did you mean ${better}?` : `${key} isn't a setting here.`;
+  }
+  const missing =
+    /^Property '([^']+)' does not exist on type '([^']+)'\.(?: Did you mean '([^']+)'\?)?$/.exec(message);
+  if (missing) {
+    const [, key, type, suggested] = missing;
+    return suggested ? `${type} has no ${key}. Did you mean ${suggested}?` : `${type} has no ${key}.`;
+  }
+  return message;
+}
+
+/** A key the object literal at `pos` could mean instead of `key`, not one it already has. */
+function otherKey(program: ts.Program, pos: number, key: string, suggested: string | undefined) {
+  const file = program.getSourceFile(DRAFT);
+  if (!file) return suggested;
+  let node: ts.Node | undefined = findNode(file, pos);
+  while (node && !ts.isObjectLiteralExpression(node)) node = node.parent;
+  if (!node) return suggested;
+  const has = new Set(
+    node.properties.map((p) =>
+      p.name && (ts.isIdentifier(p.name) || ts.isStringLiteral(p.name)) ? p.name.text : "",
+    ),
+  );
+  if (suggested && !has.has(suggested)) return suggested;
+  const type = program.getTypeChecker().getContextualType(node);
+  const names = type?.getProperties().map((p) => p.name) ?? [];
+  const near = names
+    .filter((n) => !has.has(n))
+    .map((n) => ({ n, d: distance(key.toLowerCase(), n.toLowerCase()) }))
+    .filter((x) => x.d <= Math.max(2, Math.floor(key.length / 3)))
+    .sort((a, b) => a.d - b.d);
+  return near[0]?.n;
+}
+
+function findNode(node: ts.Node, pos: number): ts.Node | undefined {
+  for (const child of node.getChildren())
+    if (child.getStart() <= pos && pos < child.getEnd()) return findNode(child, pos) ?? child;
+  return undefined;
+}
+
 export function createChecker(files: Record<string, string>) {
   const lib: Record<string, string | undefined> = { ...files, "/workshop.d.ts": WORKSHOP };
   const dirs = new Set<string>(["/"]);
@@ -208,6 +276,7 @@ export function createChecker(files: Record<string, string>) {
     problems(source: string): TypeProblem[] {
       load(source);
       const all = [...service.getSyntacticDiagnostics(DRAFT), ...service.getSemanticDiagnostics(DRAFT)];
+      const program = service.getProgram();
       return all.map((d) => {
         const start = d.start ?? 0;
         const from = Math.min(draft.toDraft(start), source.length);
@@ -215,7 +284,7 @@ export function createChecker(files: Record<string, string>) {
         return {
           from,
           to,
-          message: flat(d.messageText),
+          message: plain(d, flat(d.messageText), program),
           severity: d.category === ts.DiagnosticCategory.Error ? "error" : "warning",
         };
       });
@@ -226,11 +295,19 @@ export function createChecker(files: Record<string, string>) {
       load(source);
       const info = service.getQuickInfoAtPosition(DRAFT, draft.toChecked(pos));
       if (!info) return null;
+      // The type without the compiler's "(property)" and "(parameter)" tags (UX 330).
+      const text = flat(ts.displayPartsToString(info.displayParts)).replace(
+        /^\((?:property|parameter|method|local var|const|let|var|function|alias)\) /,
+        "",
+      );
+      const doc = ts.displayPartsToString(info.documentation);
+      // Nothing worth saying: no comment, and a type the checker doesn't know ("any").
+      if (!doc && /(^|: )any$/.test(text)) return null;
       return {
         from: draft.toDraft(info.textSpan.start),
         to: draft.toDraft(info.textSpan.start + info.textSpan.length),
-        text: flat(ts.displayPartsToString(info.displayParts)),
-        doc: ts.displayPartsToString(info.documentation),
+        text,
+        doc,
       };
     },
 

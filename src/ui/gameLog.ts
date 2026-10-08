@@ -190,13 +190,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         }
         (scriptItem.detail ??= []).push(...lines);
       } else {
+        // A rule that hasn't said anything yet (it is waiting on a question) gets its line when it does:
+        // no engine wording like "ran shoot" (UX 328). One left empty is dropped below.
         scriptHeadless = !lines.length;
-        const who = playerName(state.players[logged.by]) ?? t("Someone");
-        const rule = scriptStep.script?.procedure;
-        const [head, ...rest] = lines.length
-          ? lines
-          : [rule ? t("{name} ran {rule}", { name: who, rule }) : t("{name} ran a rule", { name: who })];
-        scriptItem = { kind: "line", key, seq: logged.seq, text: head!, undone: skipped, detail: rest };
+        const [head = "", ...rest] = lines;
+        scriptItem = { kind: "line", key, seq: logged.seq, text: head, undone: skipped, detail: rest };
         items.push(scriptItem);
       }
       if (!scriptStep.script) scriptItem = null;
@@ -370,11 +368,13 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     // Bookkeeping events (an empty description) stay out of the log.
     if (text) items.push({ kind: "line", key, seq: logged.seq, text, undone: skipped });
   }
-  return items.map((i) =>
-    i.kind === "line" && (told.has(i) || toldSeqs.has(i.seq))
-      ? { ...i, text: t("{line} · own dice", { line: i.text }) }
-      : i,
-  );
+  return items
+    .filter((i) => i.kind !== "line" || i.text)
+    .map((i) =>
+      i.kind === "line" && (told.has(i) || toldSeqs.has(i.seq))
+        ? { ...i, text: t("{line} · own dice", { line: i.text }) }
+        : i,
+    );
 }
 
 function turnHeader(state: GameState): { text: string; round?: number; turn?: string } {
@@ -607,12 +607,19 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
           total: results.length,
           dice,
         };
-        return unitId
+        // A game's label may carry the score itself ("saves on 4+ (Shieldwall)") and the unit's name.
+        if (p.unit && p.label.startsWith(p.unit)) p.unit = "";
+        if (p.label.includes(`${p.need}+`))
+          return p.unit
+            ? t("{unit} {label}: {n} of {total} ({dice})", p)
+            : t("{label}: {n} of {total} ({dice})", p);
+        return p.unit
           ? t("{unit} {label} {need}+: {n} of {total} ({dice})", p)
           : t("{label} {need}+: {n} of {total} ({dice})", p);
       }
       // The game's own label for the roll (a unit's name before it), else dice like "2D6".
-      const what = label ? `${unitId ? `${unitName(unitId)} ` : ""}${label}` : `${results.length}D${sides}`;
+      const prefix = unitId && !label?.startsWith(unitName(unitId)) ? `${unitName(unitId)} ` : "";
+      const what = label ? `${prefix}${label}` : `${results.length}D${sides}`;
       if (faces)
         return t("{name} rolled {what}: {results}", {
           name: roller,
@@ -654,6 +661,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
             ? t("Rules changed: {changes} (all players agreed)", { changes })
             : t("Rules changed: {changes} (agreed)", { changes });
       }
+      // The same packages at the same versions (a workshop save reloading its draft) needn't be said again (UX 310).
+      if (was && names(was.packages) === names(event.packages)) return "";
       return event.packages.length
         ? t("Rules packages: {packages}", { packages: names(event.packages) })
         : t("Rules packages: none (built-in rules only)");

@@ -58,6 +58,8 @@ import { CasterCamera } from "./CasterCamera";
 import { Templates } from "./Templates";
 import { TerrainModel } from "./TerrainModel";
 import { Moment } from "./Moment";
+import { displayName } from "../i18n/names";
+import { Lanterns, type LanternItem } from "./Lanterns";
 import { TalkLayer } from "./TalkLayer";
 import { carry, pickUp, setDown } from "./feel";
 import { tick } from "../ui/sound";
@@ -165,6 +167,16 @@ function Cameras() {
   const seat = useSelfSeat();
   const side = seat === 1 ? -1 : 1;
   const eyeModel = eye ? game.models[eye.modelId] : undefined;
+  // Rebuilt (reset) only when the screen turns between tall and wide, not on every resize.
+  const narrow = size.width < size.height;
+  // Tuned for a 60" x 44" table; smaller tables (FSD's 36" x 24") bring the camera in. A tall,
+  // narrow screen (a phone) sees less across: back off until the width fits, so both deployment
+  // strips are in the opening view (UX 327). 28.2 is the half-width seen at k = 1.
+  const k = useMemo(() => {
+    const k0 = Math.max(game.table.width / 60, game.table.depth / 44);
+    const across = 28.2 * k0 * (size.width / Math.max(1, size.height));
+    return k0 * Math.max(1, (game.table.width * 0.52) / across);
+  }, [narrow, reset, game.table.width, game.table.depth]); // eslint-disable-line react-hooks/exhaustive-deps
   if (view === "eye" && eyeModel) {
     const z = (eyeModel.z ?? 0) + modelHeight(eyeModel) * 0.95 + 0.2;
     return (
@@ -178,11 +190,9 @@ function Cameras() {
     );
   }
   if (view !== "top") {
-    // Tuned for a 60" x 44" table; smaller tables (FSD's 36" x 24") bring the camera in.
-    const k = Math.max(game.table.width / 60, game.table.depth / 44);
     return (
       <PerspectiveCamera
-        key={`${reset}-${game.table.width}x${game.table.depth}`}
+        key={`${reset}-${game.table.width}x${game.table.depth}-${narrow ? "n" : "w"}`}
         makeDefault
         position={[0, 52 * k, 44 * k * side]}
         fov={45}
@@ -197,6 +207,8 @@ function Cameras() {
 
 /** Width the right-hand panel (unit card, attack, terrain editor) takes when open. */
 const RIGHT_PANEL = 412;
+/** Below this width the panels are sheets (styles.css). */
+const PHONE_WIDTH = 700;
 
 /**
  * Fit the table into the space between the side panels, by shifting and
@@ -224,6 +236,8 @@ function CameraFit() {
   }, [reset]);
   const target = useMemo(() => {
     if (view === "eye" || !started) return { zoom: 1, centre: size.width / 2 };
+    // On a phone the card is a sheet over the table, so there is no side panel to fit around.
+    if (size.width < PHONE_WIDTH) return { zoom: 1, centre: size.width / 2 };
     const gap = Math.max(300, size.width - left - RIGHT_PANEL);
     return { zoom: Math.min(1.6, Math.max(1, (size.width * 0.82) / gap)), centre: left + gap / 2 };
   }, [view, started, size.width, left, reset]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -612,6 +626,33 @@ function Scene() {
   const selectedUnit = selected ? game.units[selected] : undefined;
   const dragUnit = drag?.kind === "models" && drag.unitId ? game.units[drag.unitId] : undefined;
   const control = useMemo(() => objectiveControl(game), [game]);
+  // Lantern objectives (Rift Lanterns) draw together, in the holder's colour, pale when contested.
+  const draggedObjective = drag?.kind === "objective" ? drag : null;
+  const lanterns = useMemo<LanternItem[]>(
+    () =>
+      game.objectives
+        .filter((o) => o.look === "lantern")
+        .map((o) => {
+          const c = control.find((x) => x.id === o.id);
+          const d = draggedObjective?.id === o.id ? draggedObjective : null;
+          const holder = c?.controller ? game.players[c.controller] : undefined;
+          const contested = !c?.controller && Object.values(c?.oc ?? {}).filter((v) => v > 0).length > 1;
+          return {
+            id: o.id,
+            position: d ? { x: d.start.x + d.to.x - d.grab.x, y: d.start.y + d.to.y - d.grab.y } : o.position,
+            color: holder?.color ?? null,
+            contested,
+            label: o.label
+              ? holder
+                ? t("{label}: held by {player}", { label: o.label, player: displayName(holder.name) })
+                : contested
+                  ? t("{label}: contested", { label: o.label })
+                  : t("{label}: nobody holds it", { label: o.label })
+              : null,
+          };
+        }),
+    [game.objectives, game.players, control, draggedObjective],
+  );
   const rangeWeapon = draft?.weaponId
     ? game.units[draft.attackerId]?.sheet?.weapons[draft.weaponId]
     : undefined;
@@ -893,6 +934,7 @@ function Scene() {
           drag?.kind === "objective" && drag.id === o.id
             ? { x: drag.start.x + drag.to.x - drag.grab.x, y: drag.start.y + drag.to.y - drag.grab.y }
             : o.position;
+        if (o.look === "lantern") return null;
         return (
           <ObjectiveMarker
             key={o.id}
@@ -915,6 +957,28 @@ function Scene() {
           />
         );
       })}
+
+      <Lanterns
+        items={lanterns}
+        reach={OBJECTIVE_MARKER_MM / 25.4 / 2 + OBJECTIVE_RANGE}
+        onDown={
+          canEdit
+            ? (id) => {
+                const o = game.objectives.find((x) => x.id === id);
+                if (o)
+                  setDrag({
+                    kind: "objective",
+                    id,
+                    start: o.position,
+                    grab: o.position,
+                    to: o.position,
+                    moved: false,
+                    planeZ: 0,
+                  });
+              }
+            : undefined
+        }
+      />
 
       <ModelInstances
         draws={modelDraws}

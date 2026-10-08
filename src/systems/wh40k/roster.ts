@@ -43,6 +43,8 @@ export interface ImportedUnit {
 export interface ImportedRoster {
   name: string;
   points?: number;
+  /** The army's own colour (a package's faction): its player takes it on deploying, unless someone has it. */
+  color?: string;
   units: ImportedUnit[];
   warnings: string[];
 }

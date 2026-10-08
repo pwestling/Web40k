@@ -429,7 +429,7 @@ function CheckVerdict({
     ? t("Checking: types, loading, then a short bot game…")
     : verdict.ok
       ? t("Ready to share: nothing wrong found.")
-      : t("Not ready yet: {first}", { first: verdict.steps.find((s) => s.ok === false)?.text ?? "" });
+      : t("Not ready yet: {summary}", { summary: verdict.summary });
   return (
     <div
       className={`workshop-check${verdict ? (verdict.ok ? " ok" : " bad") : ""}`}

@@ -10,7 +10,7 @@ Game systems and rules packages other players have written, listed by link. Open
 
 | Module                                                                                                        | Version | Author                   | Systems       | What it adds                                                                                                                                             | Fingerprint |
 | ------------------------------------------------------------------------------------------------------------- | ------- | ------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| [Rift Lanterns](https://raw.githubusercontent.com/pwestling/Web40k/main/games/rift-lanterns/rift-lanterns.js) | 1.0.0   | Open Battle contributors | rift-lanterns | Our own skirmish game: four warbands, three missions, a starter table. CC BY 4.0; [rules](../games/rift-lanterns/README.md). It also ships with the app. | `d59f 1eb4` |
+| [Rift Lanterns](https://raw.githubusercontent.com/pwestling/Web40k/main/games/rift-lanterns/rift-lanterns.js) | 1.1.0   | Open Battle contributors | rift-lanterns | Our own skirmish game: four warbands, three missions, a starter table. CC BY 4.0; [rules](../games/rift-lanterns/README.md). It also ships with the app. | `c5b7 56ce` |
 
 To open a module in the workshop, paste its link into **Open from a link**, or add `?workshop=<its raw link>` to Open Battle's address.
 

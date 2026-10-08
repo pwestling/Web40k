@@ -221,9 +221,17 @@ export interface Model {
  * colour it's painted (the base keeps the player's colour).
  */
 export interface StandInLook {
-  shape: "trooper" | "brute" | "robed" | "beast" | "walker" | "drone" | "vehicle";
+  shape: "trooper" | "brute" | "robed" | "beast" | "walker" | "drone" | "vehicle" | "mound";
   color?: string;
+  /**
+   * Add-ons that give a unit its own silhouette (Rift Lanterns playtest):
+   * a shield, a lantern pole, a lamp held high, a cog backpack, thorns,
+   * blades instead of a gun, empty hands, or a hunched stance.
+   */
+  gear?: StandInGear[];
 }
+
+export type StandInGear = "shield" | "pole" | "lamp" | "cog" | "thorns" | "blades" | "unarmed" | "hunched";
 
 /**
  * Which uploaded figure a model wears. `asset` is the SHA-256 of the file;
@@ -356,6 +364,10 @@ export interface TerrainPiece {
 export interface Objective {
   id: string;
   position: Vec2;
+  /** What players call it, e.g. "West lantern". */
+  label?: string;
+  /** How it's drawn: a flat marker (the default), or a lantern that glows in its holder's colour. */
+  look?: "marker" | "lantern";
 }
 
 /** A deployment zone as a convex polygon owned by a seat. */

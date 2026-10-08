@@ -7,7 +7,8 @@ import type { CheckDef } from "../core/content/schema";
 import { gameView } from "../core/script";
 import { t } from "../i18n";
 import { gameModule } from "../systems";
-import { aliveModels, unitMoved } from "../systems/wh40k/rules";
+import { aliveModels, moveAllowance, unitMoved } from "../systems/wh40k/rules";
+import { plainActivations } from "../core/content/turn";
 
 /**
  * The Table warnings panel's checks (roadmap #26): every data check in the
@@ -73,7 +74,13 @@ function dataWarnings(state: GameState, unit: Unit, checks: CheckDef[]): Omit<Ta
   const system = systemOf(state);
   const alive = aliveModels(state, unit);
   // A move check needs a move to look at: how far the unit went this phase, and how far it may.
-  const allowed = typeof unit.status?.allowance === "number" ? unit.status.allowance : null;
+  // In a game of plain activations (Rift Lanterns) a unit moves on its Move, with no move action to set it (UX 326).
+  const allowed =
+    typeof unit.status?.allowance === "number"
+      ? unit.status.allowance
+      : plainActivations(state)
+        ? moveAllowance(state, unit)
+        : null;
   const moved = unitMoved(alive);
   const out: Omit<TableWarning, "key">[] = [];
   for (const check of checks) {

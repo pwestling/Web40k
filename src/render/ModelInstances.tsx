@@ -96,7 +96,10 @@ const shadowMaterial = new MeshBasicMaterial({
 function standInKey(d: ModelDraw): string {
   const { width, depth } = baseSizeInches(d.model.base);
   const rect = d.model.base.shape === "rect";
-  const look = d.model.look && !d.dressed ? `:${d.model.look.shape}:${d.model.look.color ?? ""}` : "";
+  const look =
+    d.model.look && !d.dressed
+      ? `:${d.model.look.shape}:${d.model.look.color ?? ""}:${(d.model.look.gear ?? []).join("+")}`
+      : "";
   return `${rect ? "rect" : "round"}:${width.toFixed(2)}:${depth.toFixed(2)}:${d.height.toFixed(2)}:${d.dressed ? 1 : 0}${look}`;
 }
 

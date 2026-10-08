@@ -135,3 +135,57 @@ describe("the community gallery", () => {
     expect(row).toContain(`\`${fingerprint(hash)}\``);
   });
 });
+
+describe("plain activations (UX 324)", () => {
+  it("activate by moving or acting, hand over when the action is done, and end the round when all have gone", async () => {
+    const { engine, loaded, play, state } = await riftTable();
+    const app = loaded.packages[0]!.provides!.app;
+    play({ type: "player/join", player: { id: "p1", name: "A", color: "#00f", seat: 0 } }, "p1");
+    play({ type: "player/join", player: { id: "p2", name: "B", color: "#f00", seat: 1 } }, "p2");
+    play({ type: "game/system", system: "rift-lanterns" }, "p1");
+    const m = app.missions[0]!;
+    play(
+      { type: "mission/set", mission: { id: m.id, name: m.name }, zones: [], objectives: m.setup.objectives },
+      "p1",
+    );
+    for (const i of spawnIntents(state(), "p1", app.armies[0]!.units.slice(0, 1), "p1", "a")) play(i, "p1");
+    for (const i of spawnIntents(state(), "p2", app.armies[1]!.units.slice(1, 2), "p2", "b")) play(i, "p2");
+    const [guard, slingers] = Object.values(state().units);
+    // Face to face, 6" apart across the middle.
+    const place = (u: typeof guard, y: number) =>
+      play(
+        {
+          type: "models/move",
+          setup: true,
+          moves: u!.modelIds.map((id, i) => ({ id, to: { x: i * 1.2 - 2, y } })),
+        },
+        u!.owner,
+      );
+    place(guard, 3);
+    place(slingers, -3);
+    play({ type: "turn/next" }, "p1");
+    const first = state().turn.activeSeat;
+    const [mine, theirs] = first === 0 ? [guard!, slingers!] : [slingers!, guard!];
+    expect(engine.unitActions(mine.id, mine.owner).find((a) => a.id === "shoot")?.available).toBe(true);
+    play(
+      { type: "script/start", procedure: "shoot", args: { unit: mine.id, target: theirs.id } },
+      mine.owner,
+    );
+    // The shot is done: the other side's go, with the shooter marked as gone.
+    expect(state().script ?? null).toBeNull();
+    expect(state().turn.activeSeat).toBe(1 - first);
+    expect(state().units[mine.id]!.status?.activated).toBe(true);
+    // The other side moves its unit, which starts its activation, and ends it: every unit has gone.
+    const step = state().units[theirs.id]!.modelIds.map((id) => ({
+      id,
+      to: { x: state().models[id]!.position.x, y: state().models[id]!.position.y * 0.9 },
+    }));
+    play({ type: "models/move", moves: step }, theirs.owner);
+    expect(state().units[theirs.id]!.status?.acting).toBe(true);
+    play({ type: "turn/endActivation" }, theirs.owner);
+    expect(state().turn.round).toBe(2);
+    expect(state().units[mine.id]!.status?.activated).toBeFalsy();
+    // Round 1 is scored though it ended without a ▶.
+    expect(Object.keys(engine.appState().scores)).toContain("hold:1:0");
+  });
+});

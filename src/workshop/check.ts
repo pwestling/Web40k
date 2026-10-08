@@ -10,6 +10,8 @@ export interface CheckStep {
   ok: boolean | null;
   text: string;
   line: number | null;
+  /** How many problems the step found (types). */
+  count?: number;
 }
 
 export interface Verdict {
@@ -17,6 +19,21 @@ export interface Verdict {
   /** The draft as checked: a later edit makes the verdict stale. */
   source: string;
   steps: CheckStep[];
+  /** What's wrong, in a few words for the headline (UX 330: "3 type problems, it doesn't load"). */
+  summary: string;
+}
+
+/** The failed parts in a few words; each step's own line says the rest. */
+function summarize(steps: CheckStep[]): string {
+  const parts: string[] = [];
+  for (const s of steps) {
+    if (s.ok !== false) continue;
+    if (s.id === "code") parts.push(s.text);
+    else if (s.id === "types") parts.push(tn(s.count ?? 1, "{n} type problem", "{n} type problems"));
+    else if (s.id === "load") parts.push(t("it doesn't load"));
+    else parts.push(t("the bot game went wrong"));
+  }
+  return parts.join(", ");
 }
 
 /** The short soak: one bot game to the end of round 2. */
@@ -40,7 +57,12 @@ export function problemLine(source: string, error: string): number | null {
 export async function checkAll(source: string, progress: (steps: CheckStep[]) => void): Promise<Verdict> {
   const steps: CheckStep[] = [];
   const show = () => progress([...steps]);
-  const finish = (): Verdict => ({ ok: steps.every((s) => s.ok !== false), source, steps });
+  const finish = (): Verdict => ({
+    ok: steps.every((s) => s.ok !== false),
+    source,
+    steps,
+    summary: summarize(steps),
+  });
 
   const issues = problems(source);
   const { syntaxError } = await import("./syntax");
@@ -77,6 +99,7 @@ export async function checkAll(source: string, progress: (steps: CheckStep[]) =>
               { line: lineAt(source, errors[0]!.from), message: errors[0]!.message },
             ),
             line: lineAt(source, errors[0]!.from),
+            count: errors.length,
           }
         : { id: "types", ok: true, text: t("Types: everything matches the SDK."), line: null },
   );

@@ -35,14 +35,15 @@ export const typeHover = hoverTooltip(async (view, pos) => {
     create() {
       const dom = document.createElement("div");
       dom.className = "cm-type-hover";
-      const code = document.createElement("code");
-      code.textContent = h.text;
-      dom.append(code);
+      // The SDK's comment first, in words; the type under it, for those who want it (UX 330).
       if (h.doc) {
         const doc = document.createElement("p");
         doc.textContent = h.doc;
         dom.append(doc);
       }
+      const code = document.createElement("code");
+      code.textContent = h.text;
+      dom.append(code);
       return { dom };
     },
   };

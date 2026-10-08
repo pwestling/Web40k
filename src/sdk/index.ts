@@ -144,8 +144,11 @@ export interface GameView {
   activePlayer: Id | null;
   unit(id: Id): unknown;
   units(player?: Id): unknown[];
+  /** Between two units or models (ids of either), in the system's distance units. */
   distance(a: Id, b: Id): number;
+  /** Whether any model of `from` sees any model of `to` (unit or model ids). */
   visible(from: Id, to: Id): boolean;
+  /** Whether `to` is in cover from `from` (unit or model ids): a model in cover terrain, or seen through it. */
   inCover(from: Id, to: Id): boolean;
   arc(of: Id, other: Id): Id | null;
   engaged(unitId: Id): Id[];

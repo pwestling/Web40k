@@ -8,7 +8,7 @@ The first release: a complete tabletop for miniatures wargames in the browser, p
 
 ### Play
 
-- **Rift Lanterns, our own game.** An original skirmish game that ships with the app (CC BY 4.0): four warbands with their own stand-in figures, three missions and a starter table. Play now from the start page, nothing to import.
+- **Rift Lanterns, our own game.** An original skirmish game that ships with the app (CC BY 4.0): four warbands with their own stand-in figures, silhouettes and colours, three missions scored in the top bar, glowing lanterns that take the holder's colour and ring when they change hands, and a starter table with open firing lanes. Play now from the start page, nothing to import.
 - **Four game systems built in.** A squad-based sci-fi battle game in phases, a rank-and-flank fantasy game with regiment blocks, magic and psychology, Conquest-style regiments with a secret command stack, and Full Spectrum Dominance with activation dice, areas of control, reactions and support cards. Each has a made-up sample army and a one-click demo.
 - **A 3D table with a top-down view.** Drag units with live distance, coherency and engagement range; ranked blocks wheel, reform, turn and march.
 - **True and abstract line of sight.** Traced from each model's eyes against terrain and models, or with stand-in heights for games that use them. Cover, hidden units and higher ground come from the same check.

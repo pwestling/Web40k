@@ -296,6 +296,8 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
   if (dir === -1 || round === 0) return next;
 
   if (newRound) next = resetFor(next, system, "round", undefined);
+  // Plain activations keep "activated" for the round: a new slot of them starts everyone fresh.
+  if (slots[phase]?.kind === "alternate" && plainActivations(next)) next = clearFlags(next, ["activated"]);
   if (newPlayerTurn && slots[phase]?.playerTurn) next = resetFor(next, system, "playerTurn", activeSeat);
   const owner = playerAt(next, activeSeat);
   const opponent = playerAt(next, (activeSeat + 1) % SEATS);
@@ -422,15 +424,48 @@ function clearFlags(state: GameState, flags: string[], seat?: number): GameState
 }
 
 /** End the active player's activation: the other player goes next. */
-export function endActivation(state: GameState): GameState {
+export function endActivation(state: GameState, seed = 0): GameState {
   const system = systemOf(state);
   const flags = (system.resets ?? []).filter((r) => r.at === "activation").flatMap((r) => r.flags);
   const cleared = clearFlags(state, [...ACTIVATION_FLAGS, ...flags]);
-  return {
-    ...cleared,
-    pending: null,
-    turn: { ...state.turn, activeSeat: (state.turn.activeSeat + 1) % SEATS, passes: 0 },
-  };
+  const next = (state.turn.activeSeat + 1) % SEATS;
+  const ended = { ...cleared, pending: null, turn: { ...state.turn, activeSeat: next, passes: 0 } };
+  if (!plainActivations(state)) return ended;
+  // Every unit has gone: the round is over. A side with none left waits while the other finishes (UX 324).
+  const left = (seat: number) =>
+    Object.values(ended.units).some(
+      (u) =>
+        ended.players[u.owner]?.seat === seat &&
+        !u.status?.activated &&
+        u.modelIds.some((id) => ended.models[id] && !ended.models[id]!.destroyed),
+    );
+  if (!left(0) && !left(1)) return advanceTurn(ended, 1, seed);
+  if (!left(next)) return { ...ended, turn: { ...ended.turn, activeSeat: state.turn.activeSeat } };
+  return ended;
+}
+
+/**
+ * Alternating activations of units where nothing in the rules data starts
+ * one (a package game such as Rift Lanterns): a unit activates by moving or
+ * by taking a code action, and its activation ends when that action is done
+ * or its player says so. Games whose data actions activate units (Conquest,
+ * Full Spectrum Dominance) keep their own bookkeeping.
+ */
+export function plainActivations(state: GameState): boolean {
+  const slot = currentSlot(state);
+  if (!slot || slot.kind !== "alternate") return false;
+  return !systemOf(state).actions.some((a) => a.activates !== undefined);
+}
+
+/** A unit of the side whose go it is starts its activation (moving, or a code action). */
+export function startActivation(state: GameState, unitId: string): GameState {
+  const unit = state.units[unitId];
+  if (!unit || unit.status?.acting || !plainActivations(state)) return state;
+  if (state.players[unit.owner]?.seat !== state.turn.activeSeat) return state;
+  // Someone else already acting: their activation goes on (the app warns).
+  if (Object.values(state.units).some((u) => u.status?.acting)) return state;
+  const status = { ...unit.status, acting: true, activated: true };
+  return { ...state, units: { ...state.units, [unitId]: { ...unit, status } } };
 }
 
 /** The active player passes; when every player has passed in a row, the round moves on. */

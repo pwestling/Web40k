@@ -50,11 +50,17 @@ describe("a draft with mistakes", () => {
   });
 
   it("underlines an unknown key and suggests the right one", () => {
-    expect(at("rnds")?.message).toMatch(/'rnds' does not exist/);
+    expect(at("rnds")?.message).toMatch(/^rnds isn't a setting here/);
+  });
+
+  it("suggests a key the object doesn't have yet (UX 330: roundz next to round means rounds)", () => {
+    const draft = BROKEN.replace("rounds: 4, rnds: 5,", "roundz: 4,");
+    const p = checker.problems(draft).find((x) => draft.slice(x.from, x.to) === "roundz");
+    expect(p?.message).toBe("roundz isn't a setting here. Did you mean rounds?");
   });
 
   it("underlines a ctx call the SDK doesn't have", () => {
-    expect(at("rolll")?.message).toMatch(/Did you mean 'roll'/);
+    expect(at("rolll")?.message).toBe("Ctx has no rolll. Did you mean roll?");
   });
 
   it("explains ctx on hover and offers its members after a dot", () => {

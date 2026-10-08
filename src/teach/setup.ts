@@ -9,7 +9,7 @@ import {
 } from "../core";
 import { systemModule } from "../systems";
 import { currentSlot } from "../core/content/turn";
-import { spawnIntents } from "../systems/wh40k/deploy";
+import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import type { Lesson } from "./lesson";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 
@@ -41,6 +41,8 @@ export function deploySamples(
       : roster.units;
     for (const intent of spawnIntents(get(), owner, units, `${owner}-${tag}`, roster.name))
       send(intent, owner);
+    const color = armyColor(get(), owner, roster.color);
+    if (color) send(color, owner);
   }
 }
 

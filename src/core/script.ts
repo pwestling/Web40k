@@ -1,10 +1,10 @@
 import type { Command, CodeProcedure, Ctx, GameView, RunResult, TurnHooks } from "../sdk";
 import { viewRef } from "./content/calls";
-import { procedureEnv } from "./content/play";
+import { actingUnits, procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
 import type { GameEvent, Intent, Rng } from "./actions";
 import { BadFace, NeedDice, parseDice, rollDice } from "./dice";
-import { tableGeometry, unitView, type UnitView } from "./content/runtime";
+import { modelView, tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
 import { currentSlot, systemOf } from "./content/turn";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
@@ -67,6 +67,8 @@ export interface ScriptStep {
   error?: string;
   /** On the step that starts a procedure: its id (the script is gone already if it ended at once). */
   started?: Id;
+  /** On that step: the unit a unit's code action is for (it activates, UX 324). */
+  unit?: Id;
 }
 
 /** A module's own state, `state.modules[module][key]`. */
@@ -131,7 +133,8 @@ export function startScript(
     startSeq: state.seq,
     results: [],
   };
-  return { ...stepScript(script, state, rng), started: procedure };
+  const unit = typeof args.unit === "string" && state.units[args.unit] ? args.unit : undefined;
+  return { ...stepScript(script, state, rng), started: procedure, ...(unit ? { unit } : {}) };
 }
 
 /**
@@ -380,8 +383,12 @@ export function gameView(state: GameState, module: Id): GameView {
     return views.get(id);
   };
   const geo = tableGeometry(state, system);
-  const ask = (query: GeoQuery, a: Id, b: Id) =>
-    geo(query, { scope: { a: unit(a) ?? null, b: unit(b) ?? null } });
+  // A unit or a single model (Rift Lanterns counts cover model by model, #42 playtest).
+  const subject = (id: Id) => {
+    const model = unit(id) ? undefined : state.models[id];
+    return unit(id) ?? (model && !model.destroyed ? modelView(state, system, model) : null);
+  };
+  const ask = (query: GeoQuery, a: Id, b: Id) => geo(query, { scope: { a: subject(a), b: subject(b) } });
   const active = Object.values(state.players).find((p) => p.seat === state.turn.activeSeat);
   const view: GameView = {
     round: state.turn.round,
@@ -484,7 +491,9 @@ export function campaignHooks(system: Id): { beforeGame: Id[]; afterGame: Id[] }
  */
 export function hookIntents(before: GameState, after: GameState, event: GameEvent): Intent[] {
   const bySystem = hooks.get(systemOf(after).id);
-  if (!bySystem?.size || !event.type.startsWith("turn/") || event.type === "turn/prev") return [];
+  // Turns move on turn events, and when a code action ends a unit's activation (UX 324).
+  const turnEvent = event.type.startsWith("turn/") || event.type === "script/step";
+  if (!bySystem?.size || !turnEvent || event.type === "turn/prev") return [];
   const tables = [...bySystem.values()];
   const active = (s: GameState) =>
     Object.values(s.players).find((p) => p.seat === s.turn.activeSeat)?.id ?? "";
@@ -497,8 +506,10 @@ export function hookIntents(before: GameState, after: GameState, event: GameEven
         args: { ...(phase ? { phase } : {}), round: s.turn.round, player: active(s) },
       });
   };
-  if (event.type === "turn/endActivation")
-    for (const t of tables) start(t.activationEnd, before, currentSlot(before)?.id);
+  const ended =
+    event.type === "turn/endActivation" ||
+    (event.type === "script/step" && actingUnits(before).some((u) => !after.units[u.id]?.status?.acting));
+  if (ended) for (const t of tables) start(t.activationEnd, before, currentSlot(before)?.id);
   const was = currentSlot(before)?.id;
   const now = currentSlot(after)?.id;
   const moved =

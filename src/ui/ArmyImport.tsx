@@ -7,7 +7,7 @@ import { dressFromLibrary } from "../figures/actions";
 import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
-import { spawnIntents } from "../systems/wh40k/deploy";
+import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
@@ -121,6 +121,8 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         )
       : roster.units;
     for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+    const color = fromShelf ? null : armyColor(game, owner, roster.color);
+    if (color) dispatch(color, owner);
     useDeployed.setState({ [owner]: { roster: { ...roster, units }, prefix, shelfId: fromShelf?.id } });
     const shelf = fromShelf;
     const picks = Object.entries(figs).filter(([, id]) => id);

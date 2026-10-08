@@ -1455,7 +1455,7 @@ label.file.button input {
 }
 /* A rule written as code waiting on a player's choice (ScriptPanel). */
 .panel.script {
-  top: 96px;
+  top: var(--below-bar, 96px);
   left: 50%;
   transform: translateX(-50%);
   max-width: min(520px, calc(100vw - 32px));
@@ -2372,7 +2372,7 @@ body.broadcast .caption {
   /* Below the phase bar, which wraps to two rows here (UX 153). */
   .panel.whatnow,
   .whatnow-toggle {
-    top: 126px;
+    top: var(--below-bar, 126px);
   }
   .panel.whatnow {
     max-height: 30vh;
@@ -4040,11 +4040,12 @@ body.showcase
   display: block;
   white-space: pre-wrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8em;
+  color: var(--muted, #aab);
 }
 .cm-type-hover p {
-  margin: 0.35rem 0 0;
+  margin: 0 0 0.35rem;
   white-space: pre-wrap;
-  color: var(--muted, #aab);
 }
 
 /* The workshop's Check (#43): one verdict, a line per part. */
@@ -4071,4 +4072,19 @@ body.showcase
 }
 .workshop-check li.skip {
   opacity: 0.7;
+}
+
+/* Fingers at the table (UX 327): the top bar's controls at least 44px, as in the companion and the workshop.
+   The score counters' − and + stay small: they are corrections, and full size would wrap the bar to three rows. */
+@media (pointer: coarse) {
+  .topbar button:not(.counter button),
+  .topbar select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .topbar button:not(.counter button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

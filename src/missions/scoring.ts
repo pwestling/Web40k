@@ -45,7 +45,9 @@ export function moments(record: GameRecord): Moment[] {
     if (undone.has(logged.seq)) continue;
     const before = state;
     state = { ...applyEvent(state, logged.event), seq: logged.seq };
-    if (logged.event.type !== "turn/next" || before.turn.round === 0) continue;
+    // The turn moves on with ▶, and also when both sides pass or the last activation ends (UX 324-325).
+    if (logged.event.type === "turn/prev" || before.turn.round === 0) continue;
+    if (state.turn.round <= before.turn.round && state.turn.phase === before.turn.phase) continue;
     const slot = currentSlot(before);
     if (slot?.id)
       out.push({

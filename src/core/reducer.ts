@@ -13,7 +13,15 @@ import {
   setRun,
 } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
-import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
+import {
+  advanceTurn,
+  endActivation,
+  initialResources,
+  passTurn,
+  plainActivations,
+  startActivation,
+  systemOf,
+} from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
 import { applyEventRef } from "./script";
@@ -66,7 +74,9 @@ function reduce(state: GameState, event: GameEvent): GameState {
         const m = models[id];
         if (m) models[id] = { ...m, position: to, ...(z === undefined ? {} : { z }) };
       }
-      return { ...state, models };
+      // Moving a unit is how its activation starts in a game of plain activations (UX 324).
+      const unit = event.setup ? undefined : state.models[event.moves[0]?.id ?? ""]?.unitId;
+      return unit ? startActivation({ ...state, models }, unit) : { ...state, models };
     }
     case "model/remove": {
       const { [event.id]: removed, ...models } = state.models;
@@ -539,8 +549,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case "procedure/set":
       return setRun(state, event.run);
     case "script/step": {
-      const after = event.events.reduce(applyEvent, state);
-      return { ...after, script: event.script };
+      // A unit's code action starts its activation, and the activation ends with it (UX 324).
+      const unit = event.unit ?? (state.script?.args.unit as string | undefined);
+      const begun = event.unit ? startActivation(state, event.unit) : state;
+      const after = { ...event.events.reduce(applyEvent, begun), script: event.script };
+      const acting = unit ? after.units[unit]?.status?.acting : false;
+      return !event.script && acting && plainActivations(after) ? endActivation(after) : after;
     }
     case "log/note":
     case "campaign/award":

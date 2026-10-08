@@ -191,6 +191,15 @@ export function chime(i: number) {
   tone(a, t, { freq: 2349, dur: 0.45, gain: 0.03 });
 }
 
+/** A lantern changing hands: a soft, small bell (Rift Lanterns). */
+export function lanternBell() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  tone(a, t, { freq: 988, dur: 1.1, gain: 0.035 });
+  tone(a, t + 0.03, { freq: 1482, dur: 0.8, gain: 0.018 });
+}
+
 /** Failures swept off the tray. */
 export function scoop(n: number) {
   const a = audio();

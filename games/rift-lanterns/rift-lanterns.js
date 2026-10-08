@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.0.0",
+  version: "1.1.0",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,7 +34,7 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.0.0",
+  version: "1.1.0",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
@@ -49,6 +49,8 @@ const system = {
     { id: "W", name: "Wounds", of: "model", type: "number" },
   ],
   weaponKinds: [],
+  // Scored from the mission, shown in the top bar (UX 325).
+  resources: [{ id: "VP", name: "Victory points", short: "VP", on: "player", initial: 0 }],
   terrain: [
     { id: "ruin", name: "Ruin", cover: true },
     { id: "thicket", name: "Thicket", cover: true, visibility: "obscuring" },
@@ -60,6 +62,20 @@ const system = {
   procedures: [],
   actions: [],
   constants: { engagementRange: 1 },
+  // Advisory, in the Table warnings panel and on the card (UX 326).
+  checks: [
+    {
+      id: "moveDistance",
+      name: "Move distance",
+      when: { event: "move.end" },
+      require: {
+        cmp: "<=",
+        a: { ref: "event.inchesMoved" },
+        b: { op: "+", args: [{ ref: "event.allowed" }, 0.05] },
+      },
+      message: "Moved further than its Move this round.",
+    },
+  ],
   turn: {
     rounds: 5,
     round: [
@@ -86,20 +102,30 @@ const FACTIONS = {
 };
 
 const RULES = {
-  WARDENS: { name: "Shieldwall", text: "Saves against shooting succeed on one less." },
-  THORNKIN: { name: "Regrow", text: "At the start of each round, every wounded model heals 1 wound." },
+  WARDENS: { name: "Shieldwall", mark: "🛡", text: "Saves against shooting succeed on one less." },
+  THORNKIN: {
+    name: "Regrow",
+    mark: "🌿",
+    text: "At the start of each round, every wounded model heals 1 wound.",
+  },
   COGWRIGHTS: {
     name: "Overcharge",
+    mark: "⚙",
     text: "When this unit shoots it may overcharge: 2 more dice, but each 1 rolled is a wound on the shooters.",
   },
-  GLOAM: { name: "Veiled", text: "Can't be shot from more than 12\" away." },
+  GLOAM: { name: "Veiled", mark: "🌒", text: "Can't be shot from more than 12\" away." },
 };
+
+/** A faction rule as the tray and the log name it when it acts: "🛡 Shieldwall". */
+const named = (faction) => `${RULES[faction].mark} ${RULES[faction].name}`;
 
 /**
  * A unit of `count` models with the same stats. `look` is the stand-in
- * figure's shape; the faction gives its colour.
+ * figure's shape, or `[shape, ...gear]` for one with add-ons; the faction
+ * gives its colour.
  */
 function unit(faction, name, count, mm, look, points, stats, height) {
+  const [shape, ...gear] = Array.isArray(look) ? look : [look];
   const chars = Object.fromEntries(Object.entries(stats).map(([k, v]) => [k, String(v)]));
   return {
     name,
@@ -113,7 +139,7 @@ function unit(faction, name, count, mm, look, points, stats, height) {
     models: Array.from({ length: count }, () => ({
       profile: { name, chars },
       weapons: [],
-      look: { shape: look, color: FACTIONS[faction].color },
+      look: { shape, color: FACTIONS[faction].color, ...(gear.length ? { gear } : {}) },
       ...(height ? { height } : {}),
     })),
   };
@@ -121,6 +147,8 @@ function unit(faction, name, count, mm, look, points, stats, height) {
 
 const army = (faction, units) => ({
   name: FACTIONS[faction].name,
+  // Its player takes the faction's colour, so figures and bases match.
+  color: FACTIONS[faction].color,
   points: units.reduce((n, u) => n + u.sheet.points, 0),
   units,
   warnings: [],
@@ -129,7 +157,7 @@ const army = (faction, units) => ({
 /** One warband per faction, about 100 points each. */
 const ARMIES = [
   army("WARDENS", [
-    unit("WARDENS", "Wick Guard", 5, 28, "trooper", 50, {
+    unit("WARDENS", "Wick Guard", 5, 28, ["trooper", "shield", "pole"], 50, {
       M: 5,
       Shoot: 1,
       Range: 18,
@@ -138,7 +166,7 @@ const ARMIES = [
       Save: 4,
       W: 1,
     }),
-    unit("WARDENS", "Lamplighters", 2, 28, "trooper", 25, {
+    unit("WARDENS", "Lamplighters", 2, 28, ["trooper", "lamp"], 25, {
       M: 6,
       Shoot: 2,
       Range: 24,
@@ -147,7 +175,7 @@ const ARMIES = [
       Save: 5,
       W: 1,
     }),
-    unit("WARDENS", "Warden-Captain", 1, 40, "brute", 25, {
+    unit("WARDENS", "Warden-Captain", 1, 40, ["brute", "shield"], 25, {
       M: 5,
       Shoot: 1,
       Range: 12,
@@ -168,7 +196,7 @@ const ARMIES = [
       { M: 8, Shoot: 0, Range: 0, Fight: 2, Hit: 4, Save: 6, W: 2 },
       1.6,
     ),
-    unit("THORNKIN", "Thorn Slingers", 4, 28, "trooper", 35, {
+    unit("THORNKIN", "Thorn Slingers", 4, 28, ["trooper", "thorns", "unarmed"], 35, {
       M: 6,
       Shoot: 1,
       Range: 12,
@@ -182,14 +210,14 @@ const ARMIES = [
       "Old Bramble",
       1,
       50,
-      "brute",
+      "mound",
       25,
       { M: 5, Shoot: 0, Range: 0, Fight: 4, Hit: 3, Save: 4, W: 4 },
       3.2,
     ),
   ]),
   army("COGWRIGHTS", [
-    unit("COGWRIGHTS", "Gearmen", 4, 28, "trooper", 40, {
+    unit("COGWRIGHTS", "Gearmen", 4, 28, ["trooper", "cog"], 40, {
       M: 5,
       Shoot: 1,
       Range: 24,
@@ -229,7 +257,7 @@ const ARMIES = [
       Save: 5,
       W: 1,
     }),
-    unit("GLOAM", "Dusk Stalkers", 3, 28, "trooper", 35, {
+    unit("GLOAM", "Dusk Stalkers", 3, 28, ["trooper", "hunched", "blades"], 35, {
       M: 7,
       Shoot: 0,
       Range: 0,
@@ -265,8 +293,8 @@ const opponents = (state, a, b) => {
   return sa !== undefined && sb !== undefined && sa !== sb;
 };
 
-/** Enemy units this one can shoot: seen, in range of a shooter, and not veiled beyond 12". */
-function shootable(view, unitId) {
+/** Enemy units this one can shoot: seen, in range of a shooter, and (`veil`) not Veiled beyond 12". */
+function shootable(view, unitId, veil = true) {
   const state = view.state;
   const me = state.units[unitId];
   const range = Math.max(
@@ -279,9 +307,19 @@ function shootable(view, unitId) {
   return Object.values(state.units).filter((u) => {
     if (!opponents(state, me.owner, u.owner) || !alive(state, u).length) return false;
     const d = view.distance(unitId, u.id);
-    if (d > range || (has(u, "GLOAM") && d > 12)) return false;
+    if (d > range || (veil && has(u, "GLOAM") && d > 12)) return false;
     return view.visible(unitId, u.id);
   });
+}
+
+/**
+ * In cover: most of the target's models the shooters can see are in cover
+ * terrain or seen through it. One model in a ruin doesn't hide the rest.
+ */
+function inCover(view, unitId, target) {
+  const seen = alive(view.state, target).filter((m) => view.visible(unitId, m.id));
+  const covered = seen.filter((m) => view.inCover(unitId, m.id)).length;
+  return covered * 2 > seen.length;
 }
 
 /** Enemy units within 1". */
@@ -293,16 +331,20 @@ function inContact(view, unitId) {
   );
 }
 
-/** `hits` wounds on a unit, model by model, after its saves (`saveMod` lowers the score needed). */
-function* wound(ctx, target, hits, saveMod, label) {
+/**
+ * `hits` wounds on a unit, model by model, after its saves (`saveMod` lowers
+ * the score needed; `why` names the rule that lowered it). `saves: false`
+ * takes them straight (Overcharge burns).
+ */
+function* wound(ctx, target, hits, { saveMod = 0, why = "", saves = true } = {}) {
   if (!hits) return 0;
   const state = ctx.view.state;
   const models = alive(state, target);
   if (!models.length) return 0;
   const save = Math.max(2, stat(models[0], "Save") - saveMod);
   let unsaved = hits;
-  if (save <= 6) {
-    const roll = yield ctx.roll(`${hits}d6`, `${label} saves`, target.id, save);
+  if (saves && save <= 6) {
+    const roll = yield ctx.roll(`${hits}d6`, `saves on ${save}+${why ? ` (${why})` : ""}`, target.id, save);
     unsaved = roll.rolls.filter((r) => r < save).length;
   }
   let dealt = 0;
@@ -324,27 +366,38 @@ function* shoot(ctx, args) {
   const me = state.units[args.unit];
   const target = state.units[args.target];
   const shooters = alive(state, me).filter((m) => stat(m, "Shoot") > 0);
-  const cover = ctx.view.inCover(me.id, target.id);
+  const cover = inCover(ctx.view, me.id, target);
   const need = Math.min(6, Math.max(...shooters.map((m) => stat(m, "Hit"))) + (cover ? 1 : 0));
   let dice = shooters.reduce((n, m) => n + stat(m, "Shoot"), 0);
   let overcharged = false;
   if (has(me, "COGWRIGHTS")) {
-    const answer = yield ctx.ask(me.owner, `Overcharge ${me.name}? 2 more dice, but each 1 wounds them.`, [
-      { id: "yes", label: "Overcharge" },
-      { id: "no", label: "Hold steady" },
-    ]);
+    const answer = yield ctx.ask(
+      me.owner,
+      `${named("COGWRIGHTS")}: ${me.name} take 2 more dice, but each 1 rolled burns one of them.`,
+      [
+        { id: "yes", label: "Overcharge" },
+        { id: "no", label: "Hold steady" },
+      ],
+    );
     overcharged = answer === "yes";
-    if (overcharged) dice += 2;
+    if (overcharged) {
+      dice += 2;
+      yield ctx.note(`${named("COGWRIGHTS")}: ${me.name} push their engines past safe`);
+    }
   }
   yield ctx.note(`${me.name} shoot at ${target.name}${cover ? " (in cover)" : ""}`);
-  const roll = yield ctx.roll(`${dice}d6`, "hits", me.id, need);
+  const roll = yield ctx.roll(`${dice}d6`, `hits on ${need}+${cover ? " (cover)" : ""}`, me.id, need);
   const hits = roll.rolls.filter((r) => r >= need).length;
-  yield* wound(ctx, target, hits, has(target, "WARDENS") ? 1 : 0, target.name);
+  const wall = has(target, "WARDENS");
+  if (wall && hits) yield ctx.note(`${named("WARDENS")}: ${target.name} lock shields`);
+  yield* wound(ctx, target, hits, wall ? { saveMod: 1, why: named("WARDENS") } : {});
   if (overcharged) {
     const burns = roll.rolls.filter((r) => r === 1).length;
     if (burns) {
-      yield ctx.note(`${me.name} burn themselves: ${burns}`);
-      yield* wound(ctx, me, burns, 0, me.name);
+      const lost = yield* wound(ctx, me, burns, { saves: false });
+      yield ctx.note(
+        `${named("COGWRIGHTS")} burns: ${lost} ${lost === 1 ? "wound" : "wounds"} on the ${me.name}`,
+      );
     }
   }
   yield ctx.set(`acted:${me.id}`, state.turn.round);
@@ -361,8 +414,8 @@ function* fight(ctx, args) {
     if (!fighters.length) return;
     const need = Math.max(...fighters.map((m) => stat(m, "Hit")));
     const dice = fighters.reduce((n, m) => n + stat(m, "Fight"), 0);
-    const roll = yield ctx.roll(`${dice}d6`, `${from.name} strike`, from.id, need);
-    yield* wound(ctx, to, roll.rolls.filter((r) => r >= need).length, 0, to.name);
+    const roll = yield ctx.roll(`${dice}d6`, `hits on ${need}+ in the fight`, from.id, need);
+    yield* wound(ctx, to, roll.rolls.filter((r) => r >= need).length);
   };
   yield* strike(me, target);
   yield* strike(target, me);
@@ -435,9 +488,9 @@ const MISSIONS = [
     setup: (table) => ({
       zones: edgeZones(table, 6),
       objectives: [
-        { id: "west", position: { x: -table.width / 3, y: 0 } },
-        { id: "middle", position: { x: 0, y: 0 } },
-        { id: "east", position: { x: table.width / 3, y: 0 } },
+        { id: "west", position: { x: -table.width / 3, y: 0 }, label: "West lantern", look: "lantern" },
+        { id: "middle", position: { x: 0, y: 0 }, label: "Middle lantern", look: "lantern" },
+        { id: "east", position: { x: table.width / 3, y: 0 }, label: "East lantern", look: "lantern" },
       ],
     }),
     scoring: [
@@ -467,7 +520,7 @@ const MISSIONS = [
       "Break the enemy warband. Each enemy unit wiped out is worth 2; holding the middle lantern, 1 a round.",
     setup: (table) => ({
       zones: edgeZones(table, 6),
-      objectives: [{ id: "middle", position: { x: 0, y: 0 } }],
+      objectives: [{ id: "middle", position: { x: 0, y: 0 }, label: "Middle lantern", look: "lantern" }],
     }),
     scoring: [
       {
@@ -502,7 +555,7 @@ const MISSIONS = [
       "One lantern burns in the middle: 2 a round for holding it from round 2. At the end, 2 for each unit in the enemy's deployment zone.",
     setup: (table) => ({
       zones: edgeZones(table, 6),
-      objectives: [{ id: "last", position: { x: 0, y: 0 } }],
+      objectives: [{ id: "last", position: { x: 0, y: 0 }, label: "The last lantern", look: "lantern" }],
     }),
     scoring: [
       {
@@ -532,11 +585,12 @@ const MISSIONS = [
 /** The starter table: ruins, thickets, a wreck and barricades, the same from both sides. */
 function layout(table) {
   const half = [
-    { id: "a", template: "Ruin", x: -10, y: 5, facing: 0 },
-    { id: "b", template: "Woods", x: 2, y: 6, facing: 0.3 },
-    { id: "c", template: "Small ruin", x: 12, y: 3, facing: Math.PI / 2 },
-    { id: "d", template: "Barricade", x: -4, y: 2, facing: 0 },
-    { id: "e", template: "Container", x: -15, y: -2, facing: 0.5 },
+    // Spaced so each deployment strip has open lanes to shoot down (Rift Lanterns playtest).
+    { id: "a", template: "Ruin", x: -12.5, y: 4.5, facing: 0 },
+    { id: "b", template: "Woods", x: 3, y: 4, facing: 0 },
+    { id: "c", template: "Small ruin", x: 14.5, y: 4, facing: Math.PI / 2 },
+    { id: "d", template: "Barricade", x: -4.5, y: 5.5, facing: 0 },
+    { id: "e", template: "Container", x: 10, y: 3.5, facing: Math.PI / 2 },
   ];
   const terrain = [];
   for (const { id, template, x, y, facing } of half) {
@@ -554,7 +608,7 @@ function layout(table) {
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.0.0",
+    version: "1.1.0",
     api: 1,
     system,
     app: {
@@ -573,7 +627,11 @@ export default {
         available: (view, actor) => {
           if (acted(view, actor.unitId)) return "Already acted this round";
           if (inContact(view, actor.unitId).length) return "Locked in a fight";
-          return shootable(view, actor.unitId).length ? true : "No enemy in sight and range";
+          if (shootable(view, actor.unitId).length) return true;
+          // Something would be in reach but for the dusk: say which rule hides it.
+          if (shootable(view, actor.unitId, false).length)
+            return `${named("GLOAM")}: the Gloam can't be shot from more than 12" away`;
+          return "No enemy in sight and range";
         },
         targets: (view, actor) => shootable(view, actor.unitId).map((u) => ({ unitId: u.id, label: u.name })),
         run: shoot,
@@ -598,14 +656,16 @@ export default {
         const state = ctx.view.state;
         for (const u of Object.values(state.units)) {
           if (!has(u, "THORNKIN")) continue;
-          for (const m of alive(state, u))
-            if ((m.woundsLost ?? 0) > 0)
-              yield ctx.emit({
-                type: "model/wounds",
-                id: m.id,
-                woundsLost: m.woundsLost - 1,
-                destroyed: false,
-              });
+          const hurt = alive(state, u).filter((m) => (m.woundsLost ?? 0) > 0);
+          if (!hurt.length) continue;
+          yield ctx.note(`${named("THORNKIN")}: ${u.name} knit back together (${hurt.length} healed)`);
+          for (const m of hurt)
+            yield ctx.emit({
+              type: "model/wounds",
+              id: m.id,
+              woundsLost: m.woundsLost - 1,
+              destroyed: false,
+            });
         }
       },
     },
