@@ -1,5 +1,5 @@
 import type { GameSystem, Id } from "../core/content/schema";
-import type { GameState, Objective, Zone } from "../core/types";
+import type { GameState, Objective, Unit, Zone } from "../core/types";
 import type { GameEvent } from "../core/actions";
 import type { Outcome, RoleRef } from "../core/content/runner";
 
@@ -38,6 +38,24 @@ export interface GameModule<App = unknown> {
   checks?: (view: GameView) => Warning[];
   /** Data check ids that `checks` replaces, so they don't run twice. */
   replacesChecks?: Id[];
+  /** How the computer opponent (src/bot) should weigh this game, where its defaults don't fit. */
+  bot?: BotTuning;
+}
+
+/**
+ * Tuning for the computer opponent. It judges a table by victory points,
+ * what the mission would score now, the army each side has left and how near
+ * its units are to the objectives; a module can say more.
+ */
+export interface BotTuning {
+  /** VP that a whole army is worth, for weighing models lost against points scored. */
+  armyVp?: number;
+  /** A unit's worth, when the sheet has no points. */
+  unitValue?(state: GameState, unit: Unit): number;
+  /** Extra to add to the judgement, from `seat`'s side (a module's own sense of what matters). */
+  evaluate?(state: GameState, seat: number): number;
+  /** Inches a unit moves in a straight move it makes by hand, when there's no move action. */
+  moveInches?(state: GameState, unit: Unit): number;
 }
 
 /** What a package's default export holds: additions to one or more systems. */

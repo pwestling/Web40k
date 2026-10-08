@@ -1,3 +1,4 @@
+import { SoloBot } from "./bot/SoloBot";
 import { NoteCaption, NotesPanel } from "./replay/NotesPanel";
 import { cameraForward, focusOn } from "./render/focus";
 import { aliveModels } from "./systems/wh40k/rules";
@@ -287,6 +288,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <SandboxNotice />
           {!editing && <WhatNow />}
           {!editing && <Coach />}
+          {!editing && <SoloBot />}
           {!editing && <MailBar />}
           <KeysSheet />
           <CampaignKeeper />

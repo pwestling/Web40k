@@ -1,3 +1,4 @@
+import { levelName, useSolo } from "../bot/solo";
 import { displayName } from "../i18n/names";
 import { VIEWER } from "../viewer/flag";
 import { ReportButton } from "./SavedNote";
@@ -62,6 +63,8 @@ export function Hud() {
     if (round > 0) useStore.getState().set({ editing: false, selectedTerrain: null });
   }, [round, liveGame.turn.phase]);
   const lesson = useCoach((s) => s.lesson);
+  // Solo against the computer (#45), in this game.
+  const solo = useSolo((s) => (s.session && s.session === session ? s.level : null));
   const mail = useStore((s) => s.mail !== null);
   const selfId = session?.selfId;
   const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);
@@ -87,9 +90,13 @@ export function Hud() {
         <p className="muted">
           {lesson
             ? t("Lesson: the computer plays the other side.")
-            : mail
-              ? t("Play by mail: you play your side; send your file when you're done.")
-              : t("Hotseat: you control both sides.")}
+            : solo
+              ? t("You play the near side; the computer plays the far side ({level}).", {
+                  level: levelName(solo),
+                })
+              : mail
+                ? t("Play by mail: you play your side; send your file when you're done.")
+                : t("Hotseat: you control both sides.")}
         </p>
       )}
       {role === "spectator" && !review && <p className="muted">{t("Spectating.")}</p>}

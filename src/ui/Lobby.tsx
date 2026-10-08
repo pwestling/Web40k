@@ -10,7 +10,10 @@ import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
-import { installRiftLanterns, playRiftLanterns } from "../games/riftLanterns";
+import { installRiftLanterns, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import { startSolo } from "../bot/startSolo";
+import { savedLevel } from "../bot/solo";
+import type { Level } from "../bot/player";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
 import { WhatsNew } from "./WhatsNew";
@@ -38,6 +41,8 @@ export function Lobby() {
   // Players per side when hosting: 1 (1v1) or 2 (a 2v2 team game, core/teams.ts).
   const [teamSize, setTeamSize] = useState(1);
   const [guide, setGuide] = useState(false);
+  // The computer's level for Play the computer (#45), as picked last time.
+  const [level, setLevel] = useState<Level>(savedLevel);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
   useEffect(() => {
@@ -225,6 +230,9 @@ export function Lobby() {
               <button className="primary small play-now" onClick={() => void playRiftLanterns()}>
                 {t("Play now (both sides)")}
               </button>
+              <button className="small solo" onClick={() => startSolo(RIFT_LANTERNS, level)}>
+                {t("Play the computer")}
+              </button>
               <a
                 className="small"
                 href="https://github.com/pwestling/Web40k/blob/main/games/rift-lanterns/README.md"
@@ -241,6 +249,14 @@ export function Lobby() {
               "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides.",
             )}
           </p>
+          <label className="solo-level small">
+            {t("Play the computer at")}{" "}
+            <select value={level} onChange={(e) => setLevel(e.target.value as Level)}>
+              <option value="random">{t("Easy: it plays loosely")}</option>
+              <option value="steady">{t("Steady: it plays to win")}</option>
+              <option value="sharp">{t("Sharp: it thinks harder")}</option>
+            </select>
+          </label>
           <p className="muted small">
             {t(
               "These are built-in sample rules. For your own game system, load its rules package under More ways to play.",
@@ -265,6 +281,11 @@ export function Lobby() {
                   {g.demo && (
                     <button className="small try" onClick={() => startDemo(g.id)}>
                       {t("Try (both sides)")}
+                    </button>
+                  )}
+                  {g.demo && (
+                    <button className="small solo" onClick={() => startSolo(g.id, level)}>
+                      {t("Play the computer")}
                     </button>
                   )}
                 </div>

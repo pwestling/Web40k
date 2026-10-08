@@ -769,6 +769,15 @@ function coverShare(state: GameState, system: GameSystem | undefined, from: unkn
   return seen ? covered / seen : 0;
 }
 
+/**
+ * Cover asked about again and again while one attack resolves (every step's
+ * effects check it), so it is kept until the models or the terrain change.
+ */
+const coverMemo = new WeakMap<
+  object,
+  { terrain: unknown; settings: unknown; seen: Map<string, { seen: number; covered: number }> }
+>();
+
 /** How many of the target's models the shooters see, and how many of those are in cover (`all`: count every one). */
 function coverOf(
   state: GameState,
@@ -779,6 +788,27 @@ function coverOf(
 ): { seen: number; covered: number } {
   const shooters = modelsOf(from, state);
   const targets = modelsOf(to, state);
+  let memo = coverMemo.get(state.models);
+  if (!memo || memo.terrain !== state.terrain || memo.settings !== state.settings) {
+    memo = { terrain: state.terrain, settings: state.settings, seen: new Map() };
+    coverMemo.set(state.models, memo);
+  }
+  const key = `${system?.id}|${all}|${shooters.map((m) => m.id).join()}|${targets.map((m) => m.id).join()}|${((to as { keywords?: string[] })?.keywords ?? []).join()}`;
+  const known = memo.seen.get(key);
+  if (known) return known;
+  const found = coverFrom(state, system, shooters, targets, to, all);
+  memo.seen.set(key, found);
+  return found;
+}
+
+function coverFrom(
+  state: GameState,
+  system: GameSystem | undefined,
+  shooters: Model[],
+  targets: Model[],
+  to: unknown,
+  all: boolean,
+): { seen: number; covered: number } {
   const ignore = ownUnits(state, [...shooters, ...targets]);
   const keywords = ((to as { keywords?: string[] })?.keywords ?? []).map((k) => k.toUpperCase());
   const categories = new Map((system?.terrain ?? []).map((c) => [c.id, c]));

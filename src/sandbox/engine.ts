@@ -1,3 +1,6 @@
+import { botPolicy, type Level } from "../bot/player";
+import type { Policy } from "../bot/policy";
+import type { BotMove } from "../soak/bot";
 import {
   appendEvent,
   applyEvent,
@@ -261,6 +264,25 @@ export class SandboxEngine {
     const app = this.apps.get(systemOf(this.state).id);
     if (!app?.importRoster) throw new Error("This game has no army list reader");
     return JSON.parse(JSON.stringify(await app.importRoster(fileName, data)));
+  }
+
+  /** Computer opponents playing this game (src/bot), by seat and level, for the game they started in. */
+  private bots: { initial: GameState | null; by: Map<string, Policy> } = { initial: null, by: new Map() };
+
+  /**
+   * A computer opponent's next move in a package game (#45): it runs here,
+   * where the package's code is, so it can try its moves out.
+   */
+  botMove(level: Level, seat: number, player: string, seed: number): BotMove | null {
+    if (this.bots.initial !== this.record.initial)
+      this.bots = { initial: this.record.initial, by: new Map() };
+    const key = `${seat}:${level}`;
+    let bot = this.bots.by.get(key);
+    if (!bot) {
+      bot = botPolicy(level, this.state, seat, { seed });
+      this.bots.by.set(key, bot);
+    }
+    return bot.move(this.record, this.state, { seat, player });
   }
 
   /** The packages' code actions for a unit in this phase, as the unit card lists them. */

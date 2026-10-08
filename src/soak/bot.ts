@@ -81,6 +81,11 @@ export interface BotContext {
   moved?: { phase: string; units: Set<string> };
   /** Tidy mode: the unit actions taken this phase ("unit:action"), each taken once. */
   taken?: { phase: string; keys: Set<string> };
+  /**
+   * A computer opponent weighing its options (src/bot): every reaction it
+   * could make is listed, and scores are left to whoever confirms them.
+   */
+  weighing?: boolean;
 }
 
 /** Tidy mode: note a move taken, so the bot doesn't repeat the same unit's action in one phase. */
@@ -96,7 +101,7 @@ export function noteTaken(ctx: BotContext, state: GameState, move: BotMove): voi
  * are one choice (a unit Advances or makes a Normal move or Remains
  * stationary, UX 305), so they share a key.
  */
-function takenKey(state: GameState, unitId: string, action: string): string {
+export function takenKey(state: GameState, unitId: string, action: string): string {
   const def = systemOf(state).actions.find((a) => a.id === action);
   const moves =
     !!def &&
@@ -104,7 +109,7 @@ function takenKey(state: GameState, unitId: string, action: string): string {
   return `${unitId}:${moves ? "move" : action}`;
 }
 
-function phaseKey(state: GameState): string {
+export function phaseKey(state: GameState): string {
   return `${state.turn.round}:${state.turn.activeSeat}:${state.turn.phase}`;
 }
 
@@ -233,7 +238,7 @@ export function waitingOn(
   if (pending) {
     const seat = sidePlayers(state, pending.seat);
     const react: BotMove[] = [];
-    if (ctx.rng() < 0.4)
+    if (ctx.weighing || ctx.rng() < 0.4)
       for (const u of shuffle(ctx.rng, Object.values(state.units)))
         if (seat.some((p) => p.id === u.owner) && alive(state, u) && !u.status?.reserves)
           for (const o of unitActions(state, u.id))
@@ -253,6 +258,7 @@ export function waitingOn(
   const mission = gameModule(state.system)?.app?.missions?.find((m) => m.id === state.mission?.id);
   // Working out the scores folds the whole log, so only after something that can change them.
   const last = record.events.at(-1)?.event.type;
+  if (ctx.weighing) return null;
   if (
     mission &&
     (ctx.scores === undefined || last === "turn/next" || last === "score/confirm" || last === "secret/reveal")
@@ -556,7 +562,13 @@ function moveUnit(state: GameState, u: Unit, ctx: BotContext, inches: number): B
 }
 
 /** Straight at the nearest enemy unit, stopping in base contact or after `inches`. */
-function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number, targetId?: string): BotMove {
+export function chargeMove(
+  state: GameState,
+  u: Unit,
+  ctx: BotContext,
+  inches: number,
+  targetId?: string,
+): BotMove {
   const ms = aliveModels(state, u);
   const cx = ms.reduce((a, m) => a + m.position.x, 0) / ms.length;
   const cy = ms.reduce((a, m) => a + m.position.y, 0) / ms.length;
@@ -595,7 +607,7 @@ function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number, 
 }
 
 /** Whether a weapon reaches the target unit, where its range can be read (true when it can't). */
-function reaches(state: GameState, u: Unit, weapon: string, targetId: string): boolean {
+export function reaches(state: GameState, u: Unit, weapon: string, targetId: string): boolean {
   const w = u.sheet?.weapons?.[weapon];
   const target = state.units[targetId];
   if (!w || !target) return true;
@@ -605,7 +617,7 @@ function reaches(state: GameState, u: Unit, weapon: string, targetId: string): b
 }
 
 /** A melee weapon in a shooting action, or a ranged one in a fight. */
-function wrongKind(u: Unit, weapon: string, action: string): boolean {
+export function wrongKind(u: Unit, weapon: string, action: string): boolean {
   const kind = u.sheet?.weapons?.[weapon]?.kind;
   return (
     (kind === "melee" && /shoot|fire/i.test(action)) ||
@@ -614,7 +626,7 @@ function wrongKind(u: Unit, weapon: string, action: string): boolean {
 }
 
 /** Falling back with no enemy near, the kind of move that teaches a learner the wrong thing. */
-function pointless(state: GameState, u: Unit, action: string): boolean {
+export function pointless(state: GameState, u: Unit, action: string): boolean {
   // Piling in and consolidating are for units in a fight (UX 305); falling back is for units near one.
   const reach = /pile.?in|consolidat/i.test(action)
     ? 2
@@ -651,7 +663,7 @@ export function offTurnMoves(state: GameState, ctx: BotContext, players: PlayerI
 }
 
 /** Conquest's command stack (systems/conquest/command.ts): commit one this round, then draw the top card. */
-function commandStack(state: GameState, ctx: BotContext, players: PlayerId[]): BotMove[] {
+export function commandStack(state: GameState, ctx: BotContext, players: PlayerId[]): BotMove[] {
   if (state.system !== "conquest-hand") return [];
   const out: BotMove[] = [];
   for (const p of players) {

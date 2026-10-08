@@ -312,3 +312,28 @@ export function usePackageActions(unit: Unit): ActionRow[] {
 function keep(rows: SandboxState["rows"], seq: number): SandboxState["rows"] {
   return Object.fromEntries(Object.entries(rows).filter(([k]) => k.startsWith(`${seq}:`)));
 }
+
+/**
+ * A computer opponent's next move in a package game (#45), worked out in the
+ * sandbox, where the package's code is. Null when no package runs this game.
+ */
+export function sandboxBotMove(
+  level: "random" | "steady" | "sharp",
+  seat: number,
+  player: string,
+  seed: number,
+): Promise<BotMoveData | null> | null {
+  const box = sandbox;
+  const game = useStore.getState().game;
+  if (!box || !useSandbox.getState().code[systemOf(game).id]) return null;
+  sync();
+  return box.call<BotMoveData | null>({ t: "bot", level, seat, player, seed });
+}
+
+/** A bot's move as the sandbox sends it (soak/bot.ts BotMove). */
+export interface BotMoveData {
+  intent: import("../core").Intent;
+  as: string;
+  kind: string;
+  then?: BotMoveData;
+}

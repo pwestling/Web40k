@@ -10,6 +10,7 @@ import { lessonSystem } from "./builtin";
 import { advance, type Progress } from "./coach";
 import type { Lesson } from "./lesson";
 import { setUpLesson } from "./setup";
+import { soloPlays } from "../bot/solo";
 
 /**
  * The lesson under way on this screen: which step the learner is on, and the
@@ -35,6 +36,8 @@ export const useCoach = create<Coach>(() => ({
 
 /** In a lesson, whether the computer plays this player: its rolls and answers aren't the learner's to make. */
 export function computerPlays(game: GameState, player: string | undefined): boolean {
+  // Solo against the computer (#45): its side's rolls and answers are its own.
+  if (soloPlays(game, player)) return true;
   const { lesson } = useCoach.getState();
   if (!lesson || !player || !game.players[player]) return false;
   return !sidePlayers(game, lesson.you ?? 0).some((p) => p.id === player);

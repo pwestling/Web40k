@@ -22,6 +22,8 @@ export type ToSandbox =
   /** A package game's app glue that depends on the game: rank rules, what's left undone, its panel. */
   | { id: number; t: "appState" }
   | { id: number; t: "importRoster"; fileName: string; data: Uint8Array }
+  /** A computer opponent's next move in a package game (src/bot): a BotMove, or null. */
+  | { id: number; t: "bot"; level: "random" | "steady" | "sharp"; seat: number; player: string; seed: number }
   /** The module workshop's soak worker only (src/workshop/soakWorker.ts): a bot game of a draft package. */
   | { id: number; t: "soak"; source: string; seed: number; untilRound?: number }
   /** The workshop's soak worker only: load a draft and say what went wrong (Loaded). */
