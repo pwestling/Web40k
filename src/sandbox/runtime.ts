@@ -140,12 +140,21 @@ function stop(why: string) {
   useSandbox.setState({ status: "stopped", error: why, code: {}, rows: {} });
 }
 
+/** Bumped when a start is cancelled (the packages changed, or the game screen went), so a start still loading stops itself. */
+let generation = 0;
+
 async function start(packages: { hash: string; source: string }[]): Promise<void> {
+  const gen = ++generation;
   useSandbox.setState({ status: "starting", error: null, code: {}, rows: {} });
   try {
     const source = (await import("virtual:sandbox-worker")).default;
+    if (gen !== generation) return;
     const box = await Sandbox.start(source, stop);
-    const loaded = await box.call<Loaded>({ t: "load", packages }, STARTUP_MS);
+    const loaded = await box.call<Loaded>({ t: "load", packages }, STARTUP_MS).finally(() => {
+      // Cancelled while starting: nothing else holds this one, so end its iframe and worker here.
+      if (gen !== generation) box.stop();
+    });
+    if (gen !== generation) return;
     sandbox = box;
     sent = null;
     sync();
@@ -178,7 +187,7 @@ async function start(packages: { hash: string; source: string }[]): Promise<void
       };
     });
   } catch (e) {
-    stop(e instanceof Error ? e.message : String(e));
+    if (gen === generation) stop(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -194,6 +203,7 @@ export function usePackageSandbox(): void {
     const lib = useLibrary.getState().packages;
     void start(key.split(",").map((hash) => ({ hash, source: lib[hash]!.source })));
     return () => {
+      generation++;
       sandbox?.stop();
       unload();
       sandbox = null;
