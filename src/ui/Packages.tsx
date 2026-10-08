@@ -10,7 +10,7 @@ import { MAX_PEER_BYTES, packagesFor, useLibrary, type StoredPackage } from "../
 import { requestPackage, transferPercent, usePackageSharing, useTransfers } from "../packages/share";
 import { useCanControl, useStore } from "../store";
 import { APP_BUILD } from "../version";
-import { describePackageChange } from "./gameLog";
+import { describePackageChange } from "./packageChange";
 import { useGame } from "./hooks";
 import { formatList, t } from "../i18n";
 

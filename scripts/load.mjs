@@ -8,7 +8,8 @@
 // when the lobby can be clicked, main-thread blocking, and when the 3D table
 // has loaded behind it. Budgets: /mnt/project-files/perf/budget.md.
 import { spawn, execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { chromium } from "playwright-core";
 
 const PORT = 5197;
@@ -108,6 +109,9 @@ try {
         when: new Date().toISOString(),
         cpu,
         runs,
+        // What the lobby can't start without: index.html's entry script and its modulepreloads,
+        // gzipped. firstScreenJsKB also counts the game screen's idle prefetch when it starts early.
+        frontDoorKB: frontDoorKB(),
         median: Object.fromEntries(Object.keys(results[0]).map((k) => [k, med(k)])),
         results,
       },
@@ -118,4 +122,10 @@ try {
 } finally {
   await browser.close();
   process.kill(-server.pid);
+}
+
+function frontDoorKB() {
+  const html = readFileSync("dist/index.html", "utf8");
+  const files = [...html.matchAll(/(?:src|href)="\.\/(assets\/[^"]+\.js)"/g)].map((m) => m[1]);
+  return Math.round(files.reduce((n, f) => n + gzipSync(readFileSync(`dist/${f}`)).length, 0) / 1024);
 }
