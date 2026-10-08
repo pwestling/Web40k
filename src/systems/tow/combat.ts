@@ -9,6 +9,7 @@ import {
   causesTerror,
   frenzied,
   hasBattleStandard,
+  hasRule,
   hates,
   immune,
   isGeneral,
@@ -225,6 +226,7 @@ function* strike(
   atk: Unit,
   def: Unit,
   how: { afraid?: boolean; hatred?: boolean } = {},
+  duelling = 0,
 ): Generator<Command, number, unknown> {
   const view = ctx.view;
   const state = view.state;
@@ -233,7 +235,9 @@ function* strike(
   const files = atk.formation.kind === "ranked" ? Math.min(atk.formation.files, models) : models;
   const support = atk.formation.kind === "ranked" ? Math.min(files, models - files) : 0;
   const frenzy = frenzied(atk) ? 1 : 0;
-  const attacks = files * (Math.max(1, stat(view, atk, "A", 1)) + frenzy) + support;
+  // A model fighting a challenge strikes there, not at the unit.
+  const attacks = Math.max(0, files - duelling) * (Math.max(1, stat(view, atk, "A", 1)) + frenzy) + support;
+  if (!attacks) return 0;
   const hitOn = how.afraid ? 6 : combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
   const label = `to hit${frenzy ? " (Frenzy +1 Attack)" : ""}${how.afraid ? " (afraid: 6s only)" : ""}`;
   const hit = (yield ctx.roll(`${attacks}d6`, label, atk.id, hitOn)) as Roll;
@@ -326,13 +330,7 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
   if (!from || inches <= 0) return;
   const away = awayFrom(state, u, unitCentre(state, from));
   const move = fleeMove(state, u, away, inches);
-  if (move)
-    yield ctx.emit(
-      (turn ? move : { ...move, turn: 0, how: "drag" }) as unknown as { type: string } & Record<
-        string,
-        unknown
-      >,
-    );
+  if (move) yield ctx.emit(turn ? move : { ...move, turn: 0, how: "drag" });
 }
 
 /** The unit flees 2D6" from `from` and is marked fleeing. */
@@ -425,23 +423,248 @@ function foughtNow(view: GameView, unitId: string): Fought | undefined {
   return f && f.round === now.round && f.seat === now.activeSeat && f.phase === view.phase ? f : undefined;
 }
 
-/** A round of close combat between two units, then the combat result and break test. */
+/**
+ * Everyone in a fight: the two named units, then every unit (not fleeing) in
+ * base contact with an enemy already in it, spreading outwards. Each side
+ * starts with its named unit.
+ */
+export function combatSides(state: GameState, a: Unit, b: Unit): [Unit[], Unit[]] {
+  const sides: [Unit[], Unit[]] = [[a], [b]];
+  const side = new Map<string, 0 | 1>([
+    [a.id, 0],
+    [b.id, 1],
+  ]);
+  const queue = [a, b];
+  while (queue.length) {
+    const u = queue.shift()!;
+    const other = side.get(u.id) === 0 ? 1 : 0;
+    for (const e of Object.values(state.units)) {
+      if (side.has(e.id) || !opposed(state, e.owner, u.owner) || e.status?.fleeing) continue;
+      if (!alive(state, e).length || unitGap(state, u, e) > CONTACT) continue;
+      side.set(e.id, other);
+      sides[other].push(e);
+      queue.push(e);
+    }
+  }
+  return sides;
+}
+
+/** Who a unit fights: the named foe, else the nearest enemy in the fight it touches. */
+function foeOf(state: GameState, u: Unit, enemies: Unit[], named: Unit): Unit {
+  if (named && unitGap(state, u, named) <= CONTACT) return named;
+  return enemies.map((e) => ({ e, d: unitGap(state, u, e) })).sort((x, y) => x.d - y.d)[0]!.e;
+}
+
+/** A challenge between two models, kept until one falls or the fight ends. */
+interface Duel {
+  model: string;
+  foe: string;
+  foeUnit: string;
+}
+
+/** Models that may fight a challenge: characters and champions, not the rank and file or musicians and standard bearers. */
+export function duellists(state: GameState, u: Unit): Model[] {
+  const ms = alive(state, u);
+  if (ms.length < 2) return [];
+  const names = new Map<string, number>();
+  for (const m of ms) names.set(m.profile?.name ?? "", (names.get(m.profile?.name ?? "") ?? 0) + 1);
+  const common = [...names.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
+  return ms.filter((m) => {
+    const name = m.profile?.name ?? "";
+    if (name === common) return false;
+    return !/drummer|musician|horn|^standard bearer|banner rider/i.test(name);
+  });
+}
+
+/** The duel this unit is in, if both models still stand. */
+function duelOf(view: GameView, u: Unit): Duel | null {
+  const d = view.own[`duel:${u.id}`] as Duel | null | undefined;
+  if (!d) return null;
+  const m = view.state.models[d.model];
+  const f = view.state.models[d.foe];
+  return m && !m.destroyed && f && !f.destroyed ? d : null;
+}
+
+/** A character's blows in a challenge: Attacks, to hit, to wound and its saves. Returns wounds caused. */
+function* duelStrike(
+  ctx: Ctx,
+  atkUnit: Unit,
+  atk: Model,
+  defUnit: Unit,
+  def: Model,
+): Generator<Command, number, unknown> {
+  const name = atk.profile?.name ?? atkUnit.name;
+  const hitOn = combatHit(charNum(atk, "WS", 3), charNum(def, "WS", 3));
+  const hit = (yield ctx.roll(
+    `${Math.max(1, charNum(atk, "A", 1))}d6`,
+    `${name}: to hit`,
+    atkUnit.id,
+    hitOn,
+  )) as Roll;
+  const hits = hitsOf(hit, hitOn);
+  if (!hits) return 0;
+  const woundOn = toWound(charNum(atk, "S", 3), charNum(def, "T", 3));
+  if (woundOn === null) return 0;
+  const wound = (yield ctx.roll(`${hits}d6`, `${name}: to wound`, atkUnit.id, woundOn)) as Roll;
+  let left = count(wound, woundOn);
+  const armour = charNum(def, "armour", stat(ctx.view, defUnit, "armour", 7));
+  for (const [on, label] of [
+    [armour, "armour save"],
+    [charNum(def, "ward", stat(ctx.view, defUnit, "ward", 0)), "ward save"],
+  ] as const) {
+    if (!left || on < 2 || on > 6) continue;
+    const r = (yield ctx.roll(
+      `${left}d6`,
+      `${def.profile?.name ?? defUnit.name}: ${label}`,
+      defUnit.id,
+      on,
+    )) as Roll;
+    left -= count(r, on);
+  }
+  return left;
+}
+
+/**
+ * The challenge's round: the two models strike in Initiative order (together
+ * when equal). Wounds count towards the combat result, and so does overkill:
+ * wounds beyond what the loser had left, up to +5.
+ */
+function* fightDuel(ctx: Ctx, duel: Duel, unit: Unit): Generator<Command, Map<string, number>, unknown> {
+  const caused = new Map<string, number>();
+  const state = ctx.view.state;
+  const pair = [
+    { u: unit, m: state.models[duel.model]! },
+    { u: unitOf(ctx.view, duel.foeUnit), m: state.models[duel.foe]! },
+  ];
+  yield ctx.note(
+    `Challenge: ${pair[0]!.m.profile?.name} (${pair[0]!.u.name}) fights ${pair[1]!.m.profile?.name} (${pair[1]!.u.name})`,
+  );
+  const ini = (x: (typeof pair)[number]) => charNum(x.m, "I", 1);
+  const order =
+    ini(pair[0]!) === ini(pair[1]!)
+      ? [pair]
+      : ini(pair[0]!) > ini(pair[1]!)
+        ? [[pair[0]!], [pair[1]!]]
+        : [[pair[1]!], [pair[0]!]];
+  const lost = new Map<string, number>();
+  for (const step of order) {
+    const blows: [(typeof pair)[number], number][] = [];
+    for (const x of step) {
+      const other = x === pair[0] ? pair[1]! : pair[0]!;
+      const me = ctx.view.state.models[x.m.id];
+      if (!me || me.destroyed) continue;
+      blows.push([other, yield* duelStrike(ctx, x.u, x.m, other.u, ctx.view.state.models[other.m.id]!)]);
+    }
+    for (const [target, n] of blows) {
+      if (!n) continue;
+      const m = ctx.view.state.models[target.m.id]!;
+      const w = Math.max(1, charNum(m, "W", 1));
+      const had = w - (m.woundsLost ?? 0);
+      const taken = Math.min(had, n);
+      const by = target === pair[0] ? pair[1]!.u.id : pair[0]!.u.id;
+      const overkill = Math.min(5, Math.max(0, n - had));
+      caused.set(by, (caused.get(by) ?? 0) + taken + overkill);
+      lost.set(target.m.id, n);
+      yield ctx.emit({
+        type: "model/wounds",
+        id: m.id,
+        woundsLost: (m.woundsLost ?? 0) + taken,
+        destroyed: taken >= had,
+      });
+      if (taken >= had)
+        yield ctx.note(
+          `${m.profile?.name} falls in the challenge${overkill ? ` (overkill +${overkill})` : ""}`,
+        );
+    }
+  }
+  // The challenge ends when either falls.
+  if ([...pair].some((x) => ctx.view.state.models[x.m.id]?.destroyed)) {
+    yield ctx.set(`duel:${pair[0]!.u.id}`, null);
+    yield ctx.set(`duel:${pair[1]!.u.id}`, null);
+  }
+  return caused;
+}
+
+/** This phase's marker, for "once this phase" keys. */
+function phaseMark(view: GameView) {
+  const now = view.state.turn;
+  return { round: now.round, seat: now.activeSeat, phase: view.phase };
+}
+const samePhase = (view: GameView, v: unknown) => {
+  const m = v as ReturnType<typeof phaseMark> | null | undefined;
+  const now = phaseMark(view);
+  return !!m && m.round === now.round && m.seat === now.seat && m.phase === now.phase;
+};
+
+/**
+ * A challenge: a character or champion in the unit calls out the enemy unit
+ * it fights. The enemy accepts with one of its own, who then fight each other
+ * until one falls, or refuses, and one of its characters stands aside this
+ * round (it strikes no blows).
+ */
+export const challenge: CodeProcedure = function* (ctx, args) {
+  const u = unitOf(ctx.view, args.unit);
+  const foe = unitOf(ctx.view, args.target);
+  const state = ctx.view.state;
+  const mine = duellists(state, u);
+  const theirs = duellists(state, foe);
+  const label = (m: Model) => `${m.profile?.name ?? "Model"}`;
+  const pickId =
+    mine.length === 1
+      ? mine[0]!.id
+      : ((yield ctx.ask(
+          owner(u),
+          `Who in ${u.name} issues the challenge?`,
+          mine.map((m) => ({ id: m.id, label: label(m) })),
+        )) as string);
+  const champion = state.models[pickId] ?? mine[0]!;
+  yield ctx.note(`${label(champion)} of ${u.name} issues a challenge to ${foe.name}`);
+  const answer = (yield ctx.ask(
+    owner(foe),
+    `${label(champion)} of ${u.name} challenges ${foe.name}. Accept?`,
+    [
+      ...theirs.map((m) => ({ id: m.id, label: `Accept with ${label(m)}` })),
+      { id: "refuse", label: "Refuse" },
+    ],
+  )) as string;
+  if (answer === "refuse" || !state.models[answer]) {
+    const aside = theirs[0];
+    if (aside) yield ctx.set(`aside:${foe.id}`, { ...phaseMark(ctx.view), model: aside.id });
+    yield ctx.note(
+      `${foe.name} refuses the challenge${aside ? `: ${label(aside)} stands aside and strikes no blows this round` : ""}`,
+    );
+    return;
+  }
+  const accepted = state.models[answer]!;
+  yield ctx.set(`duel:${u.id}`, { model: champion.id, foe: accepted.id, foeUnit: foe.id } satisfies Duel);
+  yield ctx.set(`duel:${foe.id}`, { model: accepted.id, foe: champion.id, foeUnit: u.id } satisfies Duel);
+  yield ctx.note(`${label(accepted)} of ${foe.name} accepts: they fight each other until one falls`);
+};
+
+/** A round of close combat: everyone in contact on both sides, then the combat result and break tests. */
 export const combat: CodeProcedure = function* (ctx, args) {
   const a = unitOf(ctx.view, args.unit);
   const b = unitOf(ctx.view, args.target);
-  yield ctx.note(`${a.name} fight ${b.name}`);
+  const sides = combatSides(ctx.view.state, a, b);
+  const sideOf = new Map<string, 0 | 1>();
+  sides.forEach((side, i) => side.forEach((u) => sideOf.set(u.id, i as 0 | 1)));
+  const names = (side: Unit[]) => side.map((u) => u.name).join(" and ");
+  yield ctx.note(`${names(sides[0])} fight ${names(sides[1])}`);
+  // Who each unit fights: the named pair each other, the rest whoever they touch.
+  const foes = new Map<string, Unit>();
+  for (const [i, side] of sides.entries())
+    for (const u of side) foes.set(u.id, foeOf(ctx.view.state, u, sides[1 - i]!, i === 0 ? b : a));
+  const all = [...sides[0], ...sides[1]];
   // Highest Initiative strikes first; models with the same Initiative strike together.
   const init = (u: Unit) => stat(ctx.view, u, "I") + chargeBonus(ctx.view, u);
-  for (const u of [a, b]) {
+  for (const u of all) {
     const bonus = chargeBonus(ctx.view, u);
     if (bonus) yield ctx.note(`${u.name} charged: Initiative +${bonus}`);
   }
   // Psychology before the blows: Fear tests, and Hatred the first time these two fight.
   const how = new Map<string, { afraid?: boolean; hatred?: boolean }>();
-  for (const [u, foe] of [
-    [a, b],
-    [b, a],
-  ] as const) {
+  for (const u of all) {
+    const foe = foes.get(u.id)!;
     const h: { afraid?: boolean; hatred?: boolean } = {};
     if (causesFear(foe) && !causesFear(u) && !immune(u)) {
       const t = yield* leadershipTest(ctx, u, "Fear test", 0, "");
@@ -460,100 +683,140 @@ export const combat: CodeProcedure = function* (ctx, args) {
     }
     how.set(u.id, h);
   }
-  const steps = init(a) === init(b) ? [[a, b]] : init(a) > init(b) ? [[a], [b]] : [[b], [a]];
-  const caused = new Map<string, number>([
-    [a.id, 0],
-    [b.id, 0],
-  ]);
-  for (const step of steps) {
+  const caused = new Map<string, number>(all.map((u) => [u.id, 0]));
+  // A challenge first: its two models fight each other and not the units.
+  const inDuel = new Set<string>();
+  for (const u of all) {
+    const duel = duelOf(ctx.view, u);
+    if (
+      !duel ||
+      inDuel.has(u.id) ||
+      sideOf.get(duel.foeUnit) === sideOf.get(u.id) ||
+      !sideOf.has(duel.foeUnit)
+    )
+      continue;
+    inDuel.add(u.id).add(duel.foeUnit);
+    const won = yield* fightDuel(ctx, duel, unitOf(ctx.view, u.id));
+    for (const [id, n] of won) caused.set(id, (caused.get(id) ?? 0) + n);
+  }
+  const inits = [...new Set(all.map(init))].sort((x, y) => y - x);
+  for (const step of inits.map((i) => all.filter((u) => init(u) === i))) {
     // Everyone in a step strikes before anyone in it is removed.
-    const hits: [Unit, number][] = [];
+    const hits: [Unit, Unit, number][] = [];
     for (const u of step) {
       const atk = unitOf(ctx.view, u.id);
-      const def = unitOf(ctx.view, (u.id === a.id ? b : a).id);
-      hits.push([def, yield* strike(ctx, atk, def, how.get(u.id))]);
+      const def = unitOf(ctx.view, foes.get(u.id)!.id);
+      const away = (inDuel.has(u.id) ? 1 : 0) + (samePhase(ctx.view, ctx.view.own[`aside:${u.id}`]) ? 1 : 0);
+      hits.push([u, def, yield* strike(ctx, atk, def, how.get(u.id), away)]);
     }
-    for (const [def, n] of hits) {
-      const by = def.id === a.id ? b.id : a.id;
-      caused.set(by, (caused.get(by) ?? 0) + n);
+    for (const [by, def, n] of hits) {
+      caused.set(by.id, (caused.get(by.id) ?? 0) + n);
       if (n) yield* casualties(ctx, unitOf(ctx.view, def.id), n);
     }
   }
 
-  // Combat result.
+  // Combat result, side against side.
   const state = ctx.view.state;
   const strength = (u: Unit) => alive(state, u).reduce((t, m) => t + Math.max(1, charNum(m, "US", 1)), 0);
   const massed = (u: Unit) => (u.sheet?.abilities ?? []).some((x) => /massed infantry/i.test(x.name));
-  const score = (u: Unit, other: Unit) => {
+  const score = (side: Unit[]) => {
+    const now = side.map((u) => unitOf(ctx.view, u.id));
     const parts: string[] = [];
-    let s = caused.get(u.id) ?? 0;
+    let s = now.reduce((t, u) => t + (caused.get(u.id) ?? 0), 0);
     const add = (n: number, why: string) => {
       s += n;
       parts.push(why);
     };
     if (s) parts.push(`${s} wounds`);
-    if (u.formation.kind !== "ranked" || u.formation.order !== "disrupted") {
-      const rb = rankBonus(state, u);
-      if (rb) add(rb, `ranks +${rb}`);
-    }
-    if (hasStandard(state, u)) add(1, "standard +1");
-    if (alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? "")))
+    // The best rank bonus on the side; the other bonuses once each.
+    const rb = Math.max(0, ...now.map((u) => rankBonus(state, u)));
+    if (rb) add(rb, `ranks +${rb}`);
+    if (now.some((u) => hasStandard(state, u))) add(1, "standard +1");
+    if (now.some((u) => alive(state, u).some((m) => /battle standard/i.test(m.profile?.name ?? ""))))
       add(1, "battle standard +1");
-    if (combatOrder(state, u) && strength(u) >= 10) add(1, "combat order +1");
-    if (frontHeight(state, u) > frontHeight(state, other) + HIGH_GROUND) add(1, "high ground +1");
-    const arc = inArc(state, other, u);
-    if (arc === "rear") add(2, "rear +2");
-    else if (arc === "left" || arc === "right") add(1, "flank +1");
-    if (massed(u) && strength(u) > strength(other)) add(1, "massed infantry +1");
+    if (now.some((u) => combatOrder(state, u) && strength(u) >= 10)) add(1, "combat order +1");
+    const foe = (u: Unit) => unitOf(ctx.view, foes.get(u.id)!.id);
+    if (now.some((u) => frontHeight(state, u) > frontHeight(state, foe(u)) + HIGH_GROUND))
+      add(1, "high ground +1");
+    const arcs = now.map((u) => inArc(state, foe(u), u));
+    if (arcs.includes("rear")) add(2, "rear +2");
+    else if (arcs.includes("left") || arcs.includes("right")) add(1, "flank +1");
+    if (now.some((u) => massed(u) && strength(u) > strength(foe(u)))) add(1, "massed infantry +1");
     return { s, parts };
   };
-  const sa = score(unitOf(ctx.view, a.id), unitOf(ctx.view, b.id));
-  const sb = score(unitOf(ctx.view, b.id), unitOf(ctx.view, a.id));
-  const result = `${a.name} ${sa.s} (${sa.parts.join(", ") || "nothing"}) against ${b.name} ${sb.s} (${sb.parts.join(", ") || "nothing"})`;
+  const sa = score(sides[0]);
+  const sb = score(sides[1]);
+  const result = `${names(sides[0])} ${sa.s} (${sa.parts.join(", ") || "nothing"}) against ${names(sides[1])} ${sb.s} (${sb.parts.join(", ") || "nothing"})`;
   yield ctx.note(`Combat result: ${result}`);
   const now = ctx.view.state.turn;
-  for (const [u, other] of [
-    [a, b],
-    [b, a],
-  ] as const) {
+  for (const u of all) {
     const fought: Fought = {
       round: now.round,
       seat: now.activeSeat,
       phase: ctx.view.phase,
-      against: other.id,
+      against: foes.get(u.id)!.id,
       result,
     };
     yield ctx.set(`fought:${u.id}`, fought);
   }
+  // Units wiped out in the fight shake their friends nearby.
+  const wiped = all.filter((u) => !alive(ctx.view.state, unitOf(ctx.view, u.id)).length);
   if (sa.s === sb.s) {
     yield ctx.note("The combat is a draw");
+    for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all);
     return;
   }
-  const [winner, loser, diff] = sa.s > sb.s ? [a, b, sa.s - sb.s] : [b, a, sb.s - sa.s];
-  const lost = unitOf(ctx.view, loser.id);
-  if (frenzied(lost)) {
-    yield ctx.emit({ type: "unit/status", id: lost.id, key: "frenzyLost", value: true });
-    yield ctx.note(`${lost.name} lost the combat and its Frenzy with it`);
-  }
-  if (!alive(ctx.view.state, lost).length) return;
-
-  // Unbreakable: no break test, it gives ground. Stubborn: its first break test is a fall back in good order.
-  const won0 = unitOf(ctx.view, winner.id);
-  const stubbornFirst = stubborn(lost) && !lost.status?.stubbornUsed;
-  if (unbreakable(lost) || stubbornFirst) {
-    let fled: "" | "falls back" = "";
-    if (unbreakable(lost)) {
-      yield* moveAway(ctx, lost, won0, GIVE_GROUND, false);
-      yield ctx.note(`${lost.name} is Unbreakable: no break test, it gives ground ${GIVE_GROUND}"`);
-    } else {
-      yield ctx.emit({ type: "unit/status", id: lost.id, key: "stubbornUsed", value: true });
-      yield* fallBack(ctx, lost, won0, "is Stubborn: its first break test, it falls back in good order");
-      fled = "falls back";
+  const [winners, losers, diff] =
+    sa.s > sb.s ? [sides[0], sides[1], sa.s - sb.s] : [sides[1], sides[0], sb.s - sa.s];
+  // Each losing unit tests, then the winners touching it follow up or pursue (one each).
+  // Panic is measured from where the fight ended, before anyone fled.
+  const ended = ctx.view.state;
+  const outcomes: [Unit, "" | "flees" | "falls back"][] = [];
+  for (const l of losers) {
+    const lost = unitOf(ctx.view, l.id);
+    if (frenzied(lost)) {
+      yield ctx.emit({ type: "unit/status", id: lost.id, key: "frenzyLost", value: true });
+      yield ctx.note(`${lost.name} lost the combat and its Frenzy with it`);
     }
-    yield* afterBreak(ctx, winner, loser, fled);
-    return;
+    if (!alive(ctx.view.state, lost).length) continue;
+    const from = unitOf(ctx.view, foes.get(l.id)!.id);
+    outcomes.push([l, yield* breakTest(ctx, lost, from, diff)]);
   }
+  for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all, ended);
+  const pursued = new Set<string>();
+  for (const [l, fled] of outcomes) {
+    if (fled === "flees") yield* panicNear(ctx, unitOf(ctx.view, l.id), "broke and fled", all, ended);
+    const touching = winners.filter((w) => !pursued.has(w.id) && foes.get(w.id)?.id === l.id);
+    const winner = touching[0] ?? winners.find((w) => !pursued.has(w.id) && foes.get(l.id)?.id === w.id);
+    if (!winner || !alive(ctx.view.state, unitOf(ctx.view, winner.id)).length) continue;
+    pursued.add(winner.id);
+    yield* afterBreak(ctx, winner, l, fled);
+    if (fled === "flees" && !alive(ctx.view.state, unitOf(ctx.view, l.id)).length)
+      yield* panicNear(ctx, unitOf(ctx.view, l.id), "was run down", all, ended);
+  }
+};
 
+/**
+ * One losing unit's break test, and what it does: flee, fall back in good
+ * order, or give ground. Unbreakable units give ground with no test; a
+ * Stubborn unit's first break test is a fall back in good order.
+ */
+function* breakTest(
+  ctx: Ctx,
+  lost: Unit,
+  won: Unit,
+  diff: number,
+): Generator<Command, "" | "flees" | "falls back", unknown> {
+  if (unbreakable(lost)) {
+    yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
+    yield ctx.note(`${lost.name} is Unbreakable: no break test, it gives ground ${GIVE_GROUND}"`);
+    return "";
+  }
+  if (stubborn(lost) && !lost.status?.stubbornUsed) {
+    yield ctx.emit({ type: "unit/status", id: lost.id, key: "stubbornUsed", value: true });
+    yield* fallBack(ctx, lost, won, "is Stubborn: its first break test, it falls back in good order");
+    return "falls back";
+  }
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
@@ -563,23 +826,82 @@ export const combat: CodeProcedure = function* (ctx, args) {
     score: total,
   } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
   const double1 = r.rolls.every((x) => x === 1);
-  const won = unitOf(ctx.view, winner.id);
-  let fled: "" | "flees" | "falls back" = "";
   if (!double1 && r.total > ld) {
     yield* flee(ctx, lost, won, `breaks (rolled ${r.total}, over Ld ${ld})`);
-    fled = "flees";
-  } else if (!double1 && r.total + diff > ld) {
-    yield* fallBack(ctx, lost, won, `gives way (${total}, over Ld ${ld})`);
-    fled = "falls back";
-  } else {
-    yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
-    yield ctx.note(
-      `${lost.name} gives ground ${GIVE_GROUND}" (${double1 ? "a double 1" : `${total}, within Ld ${ld}`})`,
-    );
+    return "flees";
   }
+  if (!double1 && r.total + diff > ld) {
+    yield* fallBack(ctx, lost, won, `gives way (${total}, over Ld ${ld})`);
+    return "falls back";
+  }
+  yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
+  yield ctx.note(
+    `${lost.name} gives ground ${GIVE_GROUND}" (${double1 ? "a double 1" : `${total}, within Ld ${ld}`})`,
+  );
+  return "";
+}
 
-  yield* afterBreak(ctx, winner, loser, fled);
+/**
+ * Heavy losses from shooting or magic: a unit that lost a quarter of the
+ * models it had (`before`) tests for Panic by itself, unless it is fighting,
+ * fleeing, immune or tested this phase. Wiped out, its friends nearby test.
+ */
+export function* heavyLosses(ctx: Ctx, unitId: string, before: number): Generator<Command, void, unknown> {
+  const u = unitOf(ctx.view, unitId);
+  const state = ctx.view.state;
+  const left = alive(state, u).length;
+  if (!left) {
+    yield* panicNear(ctx, u, "was destroyed");
+    return;
+  }
+  if ((before - left) * 4 < before || u.status?.fleeing || immune(u) || panicTested(ctx.view, u.id)) return;
+  if (fightTargets(ctx.view, u.id).length) return;
+  yield ctx.note(`${u.name} lost ${before - left} of ${before} models: a Panic test`);
+  yield* panicTest(ctx, u);
+}
+
+/** Started by the shooting procedure once it is closed: `{ unit, before }`. */
+export const heavyLossesProcedure: CodeProcedure = function* (ctx, args) {
+  yield* heavyLosses(ctx, String(args.unit), Number(args.before) || 0);
 };
+
+/** How near a friend must be to cause a Panic test when it breaks or is destroyed. */
+const PANIC_RANGE = 6;
+
+/**
+ * Automatic Panic tests: friendly units within 6" of `u` (it broke, or was
+ * destroyed) test straight away, unless they are fighting (`busy`), fleeing,
+ * immune or already tested this phase.
+ */
+export function* panicNear(
+  ctx: Ctx,
+  u: Unit,
+  why: string,
+  busy: Unit[] = [],
+  /** Where to measure from: before the unit fled (the table as the fight ended), or now. */
+  where?: GameState,
+): Generator<Command, void, unknown> {
+  const state = ctx.view.state;
+  const at = where ?? state;
+  const was = at.units[u.id] ?? u;
+  const fallen = u.modelIds.map((id) => at.models[id]).filter((m): m is Model => !!m);
+  const near = (f: Unit) => {
+    if (alive(at, was).length) return unitGap(at, was, at.units[f.id] ?? f) <= PANIC_RANGE;
+    // A destroyed unit is measured from where its models fell.
+    return alive(state, f).some((x) =>
+      fallen.some(
+        (m) => Math.hypot(x.position.x - m.position.x, x.position.y - m.position.y) <= PANIC_RANGE + 1,
+      ),
+    );
+  };
+  for (const f of Object.values(state.units)) {
+    if (f.id === u.id || opposed(state, f.owner, u.owner) || busy.some((b) => b.id === f.id)) continue;
+    if (!alive(state, f).length || f.status?.fleeing || immune(f) || panicTested(ctx.view, f.id)) continue;
+    if (!near(f)) continue;
+    yield ctx.note(`${f.name} sees ${u.name}, ${PANIC_RANGE}" away or less, that ${why}: a Panic test`);
+    yield* panicTest(ctx, unitOf(ctx.view, f.id));
+  }
+}
 
 /** The winner follows up or pursues, unless it restrains. */
 function* afterBreak(
@@ -638,14 +960,14 @@ function* pursue(
   const gap = unitGap(state, won, lost);
   if (!fled) {
     const move = gap > 0.05 ? towards(gap) : null;
-    if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+    if (move) yield ctx.emit(move);
     yield ctx.note(`${won.name} follows up ${gap.toFixed(1)}" and stays in contact`);
     return;
   }
   const r = (yield ctx.roll(PURSUE_DICE, "pursuit roll", won.id)) as Roll;
   const caught = r.total >= gap;
   const move = towards(Math.min(r.total, gap));
-  if (move) yield ctx.emit(move as unknown as { type: string } & Record<string, unknown>);
+  if (move) yield ctx.emit(move);
   if (!caught) {
     yield ctx.note(
       `${won.name} pursues ${r.total}" and falls ${(gap - r.total).toFixed(1)}" short of ${lost.name}`,
@@ -748,7 +1070,10 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
  * order if more than half its models remain, else it flees.
  */
 export const panic: CodeProcedure = function* (ctx, args) {
-  const u = unitOf(ctx.view, args.unit);
+  yield* panicTest(ctx, unitOf(ctx.view, args.unit));
+};
+
+export function* panicTest(ctx: Ctx, u: Unit): Generator<Command, void, unknown> {
   const now = ctx.view.state.turn;
   yield ctx.set(`panic:${u.id}`, { round: now.round, seat: now.activeSeat, phase: ctx.view.phase });
   const { roll, ld, passed } = yield* leadershipTest(ctx, u, "Panic test");
@@ -761,12 +1086,20 @@ export const panic: CodeProcedure = function* (ctx, args) {
   if (left * 2 > u.modelIds.length)
     yield* fallBack(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
   else yield* flee(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
-};
+}
+
+/** Whether the unit has taken a Panic test this phase. */
+export function panicTested(view: GameView, unitId: string): boolean {
+  const t = view.own[`panic:${unitId}`] as { round: number; seat: number; phase: string | null } | undefined;
+  const now = view.state.turn;
+  return !!t && t.round === now.round && t.seat === now.activeSeat && t.phase === view.phase;
+}
 
 /**
- * When a Panic test is called for (advisory: the players can still roll one by hand): in the
- * Shooting or Combat phase, once a turn, for a unit that has lost models or has a friendly unit
- * within 6" destroyed or fleeing.
+ * When a Panic test may be rolled by hand (advisory): in the Shooting or Combat phase, once a
+ * phase, for a unit that has lost a quarter of its models or has a friendly unit within 6"
+ * destroyed or fleeing. Friends breaking or destroyed in combat call for one by themselves
+ * (panicNear).
  */
 function panicAvailable(view: GameView, actor: { unitId?: string }): true | string {
   const state = view.state;
@@ -775,11 +1108,10 @@ function panicAvailable(view: GameView, actor: { unitId?: string }): true | stri
   if (u.status?.fleeing) return "Already fleeing";
   if (immune(u)) return frenzied(u) ? "Frenzied: immune to Panic" : "Immune to Psychology";
   if (view.phase !== "shooting" && view.phase !== "combat") return "Only after shooting or combat";
-  const t = view.own[`panic:${u.id}`] as { round: number; seat: number; phase: string | null } | undefined;
-  const now = state.turn;
-  if (t && t.round === now.round && t.seat === now.activeSeat && t.phase === view.phase)
-    return "Already tested this phase";
-  if (u.modelIds.some((id) => state.models[id]?.destroyed)) return true;
+  if (panicTested(view, u.id)) return "Already tested this phase";
+  // Heavy losses: a quarter of the unit or more (the rules count those from one phase's shooting).
+  const lost = u.modelIds.filter((id) => state.models[id]?.destroyed).length;
+  if (lost && lost * 4 >= u.modelIds.length) return true;
   const mine = alive(state, u);
   // A destroyed unit is measured from where its models fell (centre to centre, a little generous).
   const fellNear = (f: Unit) =>
@@ -793,7 +1125,9 @@ function panicAvailable(view: GameView, actor: { unitId?: string }): true | stri
       !opposed(state, f.owner, u.owner) &&
       (alive(state, f).length ? f.status?.fleeing && unitGap(state, u, f) <= 6 : fellNear(f)),
   );
-  return shaken ? true : "Nothing to panic about: no losses, and no friend nearby destroyed or fleeing";
+  return shaken
+    ? true
+    : "Nothing to panic about: under a quarter lost, and no friend nearby destroyed or fleeing";
 }
 
 /** Enemy units within this gap of this one, nearest first. */
@@ -818,6 +1152,34 @@ const CONTACT = 0.5;
 /** Close combat targets: in contact, not fleeing, and not already fought this phase. */
 function fightTargets(view: GameView, unitId: string) {
   return enemies(view, unitId, CONTACT, false).filter((x) => !foughtNow(view, x.u.id));
+}
+
+const NO_UNIT = { modelIds: [] } as unknown as Unit;
+
+/** How near an enemy (not fleeing) must be for a march to need a Leadership test. */
+const MARCH_BLOCK = 8;
+
+/**
+ * The march test: with an enemy that isn't fleeing within 8", a unit must
+ * pass a Leadership test to march. A fail and it moves normally but still
+ * counts as having marched. Drilled units don't test. The result is the
+ * unit's `marchTest` status ("passed" 1, "failed" 0) until its next turn.
+ */
+export const marchTest: CodeProcedure = function* (ctx, args) {
+  const u = unitOf(ctx.view, args.unit);
+  const t = yield* leadershipTest(ctx, u, "march test");
+  yield ctx.emit({ type: "unit/status", id: u.id, key: "marchTest", value: t.passed ? 1 : 0 });
+  yield ctx.emit({ type: "unit/status", id: u.id, key: "marching", value: true });
+  yield ctx.note(
+    t.passed
+      ? `${u.name} may march (${t.roll.total} against Ld ${t.ld})`
+      : `${u.name} fails its march test (rolled ${t.roll.total}, over Ld ${t.ld}): it moves normally but counts as having marched`,
+  );
+};
+
+/** Enemies in contact that could answer a challenge (with a character or champion, and not in one already). */
+function challengeTargets(view: GameView, unitId: string) {
+  return fightTargets(view, unitId).filter((x) => duellists(view.state, x.u).length && !duelOf(view, x.u));
 }
 
 export const towActions: CodeAction[] = [
@@ -864,6 +1226,45 @@ export const towActions: CodeAction[] = [
     targets: (view, actor) =>
       fightTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
     run: combat,
+  },
+  {
+    id: "challenge",
+    name: "Issue a challenge",
+    by: "unit",
+    phases: ["combat"],
+    applies: (view, actor) =>
+      duellists(view.state, view.state.units[actor.unitId ?? ""] ?? NO_UNIT).length > 0,
+    available: (view, actor) => {
+      const id = actor.unitId ?? "";
+      const u = view.state.units[id];
+      if (!u) return "No unit";
+      if (u.status?.fleeing) return "Fleeing units don't fight";
+      if (foughtNow(view, id)) return "Fought this phase";
+      if (!duellists(view.state, u).length) return "No character or champion to issue it";
+      if (duelOf(view, u)) return "Already fighting a challenge";
+      if (!fightTargets(view, id).length) return "Not in base contact with an enemy";
+      return challengeTargets(view, id).length ? true : "No enemy in contact can answer a challenge";
+    },
+    targets: (view, actor) =>
+      challengeTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
+    run: challenge,
+  },
+  {
+    id: "marchTest",
+    name: "March test",
+    by: "unit",
+    phases: ["movement"],
+    available: (view, actor) => {
+      const u = view.state.units[actor.unitId ?? ""];
+      if (!u) return "No unit";
+      if (u.status?.fleeing) return "Fleeing units don't march";
+      if (hasRule(u, /\bdrilled\b/i)) return "Drilled: it marches without a test";
+      if (typeof u.status?.marchTest === "number") return "Already tested this turn";
+      return enemies(view, u.id, MARCH_BLOCK, false).length
+        ? true
+        : `No enemy within ${MARCH_BLOCK}": it may simply march`;
+    },
+    run: marchTest,
   },
   {
     id: "panic",

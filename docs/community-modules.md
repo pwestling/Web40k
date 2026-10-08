@@ -8,21 +8,24 @@ Game systems and rules packages other players have written, listed by link. Open
 
 ## Modules
 
-| Module | Version | Author | Systems | What it adds | Fingerprint |
-| ------ | ------- | ------ | ------- | ------------ | ----------- |
+| Module                                                                                                        | Version | Author                   | Systems       | What it adds                                                                                                                                             | Fingerprint |
+| ------------------------------------------------------------------------------------------------------------- | ------- | ------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| [Rift Lanterns](https://raw.githubusercontent.com/pwestling/Web40k/main/games/rift-lanterns/rift-lanterns.js) | 1.0.0   | Open Battle contributors | rift-lanterns | Our own skirmish game: four warbands, three missions, a starter table. CC BY 4.0; [rules](../games/rift-lanterns/README.md). It also ships with the app. | `d59f 1eb4` |
 
-No modules are listed yet. Be the first: see below.
+To open a module in the workshop, paste its link into **Open from a link**, or add `?workshop=<its raw link>` to Open Battle's address.
 
 ## Starter templates
 
 The workshop starts new drafts from these. They're in this repository, so they're a good place to read how a whole game fits in one file.
 
-| Template                                                       | What it shows                                                      |
-| -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Skirmish](../examples/workshop/skirmish.js)                   | Model-by-model movement, a code action within 1", wounds           |
-| [Ranked](../examples/workshop/ranked.js)                       | Regiment blocks, arcs, a clash using the front rank and rank bonus |
-| [Alternating activations](../examples/workshop/activations.js) | A round of alternating unit activations, range and shooting        |
-| [Arena](../examples/packages/arena.js)                         | A complete small game with hooks and a side panel                  |
+| Template                                                       | What it shows                                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [Skirmish](../examples/workshop/skirmish.js)                   | Model-by-model movement, a code action within 1", wounds               |
+| [Ranked](../examples/workshop/ranked.js)                       | Regiment blocks, arcs, a clash using the front rank and rank bonus     |
+| [Alternating activations](../examples/workshop/activations.js) | A round of alternating unit activations, range and shooting            |
+| [Rift Lanterns](../games/rift-lanterns/rift-lanterns.js)       | A finished game: factions, missions, stand-in figures, a starter table |
+
+[Arena](../examples/packages/arena.js), a small game with hooks and a side panel, isn't a template, but it opens in the workshop from its link like any module.
 
 ## Adding yours
 

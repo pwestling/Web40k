@@ -39,17 +39,21 @@ export function soakSuite(system: string, teamSize: 1 | 2 = 1): void {
 export function scenarioSuite(
   name: string,
   system: string,
-  options: Pick<SoakOptions, "automate" | "watch" | "armies" | "closeIn">,
+  options: Pick<SoakOptions, "automate" | "watch" | "armies" | "closeIn" | "lineUp"> & {
+    /** At least this many games, whatever SOAK_SEEDS says (rules that come up less often). */
+    minSeeds?: number;
+  },
   tags: string[],
   /** Tags that must never come up (a rule broken again). */
   never: string[] = [],
 ): void {
-  const count = Number(env.SOAK_SEEDS ?? 3);
+  const count = Math.max(Number(env.SOAK_SEEDS ?? 3), options.minSeeds ?? 0);
   const from = Number(env.SOAK_FROM ?? 1);
   const seen: Record<string, number> = {};
   for (let seed = from; seed < from + count; seed++)
     it(`${name} seed ${seed}`, async () => {
-      const r = await soak({ system, seed, ...options });
+      const { minSeeds: _, ...opts } = options;
+      const r = await soak({ system, seed, ...opts });
       if (!r.ok)
         console.error(
           `SOAK FAIL ${name} seed ${seed} (replay: SOAK_FROM=${seed} SOAK_SEEDS=1): ${r.failures.join("; ")}`,

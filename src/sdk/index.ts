@@ -1,5 +1,6 @@
 import type { GameSystem, Id } from "../core/content/schema";
 import type { GameState, Objective, Zone } from "../core/types";
+import type { GameEvent } from "../core/actions";
 import type { Outcome, RoleRef } from "../core/content/runner";
 
 /**
@@ -158,7 +159,7 @@ export type Command =
   | { cmd: "note"; text: string }
   | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id | RoleRef> }
-  | { cmd: "emit"; event: { type: string } & Record<string, unknown> }
+  | { cmd: "emit"; event: GameEvent }
   | { cmd: "set"; key: string; value: unknown }
   | { cmd: "secret"; player: Id; key: string; question: string; options: { id: Id; label: string }[] }
   | { cmd: "reveal"; player: Id; key: string };
@@ -181,7 +182,12 @@ export interface Ctx {
    * step rolled.
    */
   run(procedure: Id, roles: Record<string, Id | RoleRef>): Command;
-  emit(event: { type: string } & Record<string, unknown>): Command;
+  /**
+   * Change the table with one of the game's events, e.g.
+   * `{ type: "model/wounds", id, woundsLost, destroyed }`: the type names
+   * which, and each takes its own fields.
+   */
+  emit(event: GameEvent): Command;
   set(key: string, value: unknown): Command;
   /**
    * Ask a player to choose an option in secret (a hidden order, a secret
@@ -230,8 +236,26 @@ export interface PanelSpec {
  * picks a file.
  */
 export interface PackageApp {
+  /** The test table's (and a demo's) army for a seat. */
   sample(seat: 0 | 1): unknown;
+  /**
+   * Every sample army a player can pick (one per faction), shaped like
+   * `sample`'s. Without it, players pick from the two `sample` gives.
+   */
+  armies?: unknown[];
+  /**
+   * The starting table. A terrain entry can name one of the app's terrain
+   * templates instead of listing its solids: `{ template: "Ruin", id,
+   * position, facing?, category? }` (templates: "Ruin", "Small ruin", "Tall
+   * ruin", "Container", "Woods", "Barricade", "Crater", "Hill").
+   */
   layout(table: GameState["table"]): unknown;
+  /**
+   * Missions players pick from at setup. They run in the sandbox: `setup`
+   * once for the system's default table (scaled to the table played on), and
+   * `suggest` as the game goes, its answers handed to the app.
+   */
+  missions?: Mission[];
   importRoster?(fileName: string, data: Uint8Array): unknown;
   rankRules?(game: GameState, unit: GameState["units"][string]): { width: number; maxBonus: number };
   leaving?(game: GameState): string[];

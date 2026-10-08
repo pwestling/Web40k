@@ -55,4 +55,57 @@ export const lessons = [
       },
     ],
   },
+  {
+    id: "break-and-panic",
+    title: "Break and panic",
+    system: "tow",
+    summary: "Charge a small unit, break it, and watch its friends test for Panic.",
+    you: 0,
+    // Your spears face red's slingers a couple of inches away.
+    place: [
+      { seat: 0, unit: 0, at: { x: 0, y: 6.5 } },
+      { seat: 1, unit: 4, at: { x: 0, y: 1 } },
+      // The warband (and its General's Leadership) well away; a dim Bog Hulk beside the slingers.
+      { seat: 1, unit: 0, at: { x: -22, y: -10 } },
+      { seat: 1, unit: 3, at: { x: 6, y: 0 } },
+    ],
+    steps: [
+      {
+        say: "A regiment that breaks shakes its friends: any unit within 6\" of a friend that flees from combat or is destroyed takes a Panic test, and may run too. Red's slingers stand just ahead of your spears, with a Bog Hulk beside them.",
+      },
+      {
+        say: "Your spears are Drilled: they march near the enemy without a test, and may redress their ranks for free before moving. Press ▶ for Movement.",
+        until: { phase: "movement" },
+      },
+      {
+        say: "Your spears are selected. Press Declare charge and pick the slingers, then move into contact with the Charge panel or by dragging.",
+        show: { seat: 0, unit: 0 },
+        point: "Declare charge",
+        until: { engaged: true },
+      },
+      {
+        say: "Press ▶ until the Combat phase.",
+        until: { phase: "combat" },
+      },
+      {
+        say: "Press Fight. Both sides strike, then the loser takes a break test.",
+        show: { seat: 0, unit: 0 },
+        point: "Fight",
+        // If the charge fell short there's nothing to fight: the step ends with the turn.
+        until: { any: [{ did: "combat" }, { theirTurn: true }] },
+        after: [
+          {
+            if: "slain >= 4",
+            say: "The slingers took a beating. If they broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
+          },
+          {
+            say: "The fight goes on. If the slingers broke and fled, the Bog Hulk next to them tested for Panic by itself: the log shows how it went.",
+          },
+        ],
+      },
+      {
+        say: "Panic tests also come when a unit loses a quarter of its models to shooting or magic. You can roll one by hand from a unit's card when the rules call for it.",
+      },
+    ],
+  },
 ];

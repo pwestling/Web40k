@@ -18,6 +18,7 @@ import {
 } from "three";
 import { baseSizeInches, type Model, type Vec2 } from "../core";
 import { feelActive, poseOf, type Pose } from "./feel";
+import { lookGeometry } from "./standIns";
 
 /** One model as drawn: where it stands and how it looks. */
 export interface ModelDraw {
@@ -95,7 +96,16 @@ const shadowMaterial = new MeshBasicMaterial({
 function standInKey(d: ModelDraw): string {
   const { width, depth } = baseSizeInches(d.model.base);
   const rect = d.model.base.shape === "rect";
-  return `${rect ? "rect" : "round"}:${width.toFixed(2)}:${depth.toFixed(2)}:${d.height.toFixed(2)}:${d.dressed ? 1 : 0}`;
+  const look = d.model.look && !d.dressed ? `:${d.model.look.shape}:${d.model.look.color ?? ""}` : "";
+  return `${rect ? "rect" : "round"}:${width.toFixed(2)}:${depth.toFixed(2)}:${d.height.toFixed(2)}:${d.dressed ? 1 : 0}${look}`;
+}
+
+/** A painted stand-in's material, one per colour. */
+const lookMaterials = new Map<string, MeshStandardMaterial>();
+function lookMaterial(color: string): MeshStandardMaterial {
+  let m = lookMaterials.get(color);
+  if (!m) lookMaterials.set(color, (m = new MeshStandardMaterial({ color, roughness: 0.7 })));
+  return m;
 }
 
 const standIns = new Map<string, BufferGeometry>();
@@ -106,6 +116,12 @@ function standInGeometry(d: ModelDraw): BufferGeometry {
     const { width, depth } = baseSizeInches(d.model.base);
     const r = Math.min(width, depth) / 2;
     const h = d.height;
+    // A game's own figure (#42) stands on the base; the plain stand-ins are centred on it.
+    if (d.model.look && !d.dressed) {
+      g = lookGeometry(d.model.look, width, depth, h).translate(0, BASE_HEIGHT, 0);
+      standIns.set(key, g);
+      return g;
+    }
     g =
       d.model.base.shape === "rect"
         ? new BoxGeometry(width * 0.8, h, depth * 0.85)
@@ -227,7 +243,9 @@ export function ModelInstances({ draws, hovered, onDown, onHover }: Props) {
           material={
             list[0]!.dressed
               ? pickMaterial
-              : standInMaterial[list[0]!.model.base.shape === "rect" ? "rect" : "round"]
+              : list[0]!.model.look?.color
+                ? lookMaterial(list[0]!.model.look.color)
+                : standInMaterial[list[0]!.model.base.shape === "rect" ? "rect" : "round"]
           }
           list={list}
           castShadow={!list[0]!.dressed}

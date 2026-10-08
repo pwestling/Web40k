@@ -98,6 +98,9 @@ export const KEYS: Completion[] = [
   fn("sample", "(seat)", "The test table's army for a seat."),
   fn("layout", "(table)", "Terrain, objectives and deployment zones."),
   fn("sidePanel", "(view)", "A panel of lines and buttons, or null."),
+  prop("armies", "app", "Every sample army players pick from, one per faction."),
+  prop("missions", "app", "Missions picked at setup: zones, objectives and scoring."),
+  prop("templateCategory", "app", 'What each terrain template counts as, e.g. { Woods: "cover" }.'),
   // Hooks.
   prop("phaseStart", "hooks", "{ [phaseId]: function* (ctx) }"),
   prop("phaseEnd", "hooks", "{ [phaseId]: function* (ctx) }"),
@@ -126,6 +129,22 @@ export const KEYS: Completion[] = [
     label: "characteristic",
     detail: "snippet",
     info: "A stat on each model's profile.",
+    type: "keyword",
+  }),
+  snippetCompletion(
+    '{\n  id: "${id}",\n  name: "${Name}",\n  summary: "${What to do}",\n  setup: (table) => ({ zones: [], objectives: [{ id: "middle", position: { x: 0, y: 0 } }] }),\n  scoring: [\n    {\n      id: "${hold}",\n      name: "${Held}",\n      at: { roundEnd: true },\n      suggest: (game, seat) => ({ vp: 1, why: "${why}" }),\n    },\n  ],\n}',
+    { label: "mission", detail: "snippet", info: "A mission: setup and scoring.", type: "keyword" },
+  ),
+  snippetCompletion('{ template: "${Ruin}", id: "${id}", position: { x: ${0}, y: ${0} }, facing: 0 }', {
+    label: "terrain",
+    detail: "snippet",
+    info: "A terrain piece from a template (Ruin, Small ruin, Tall ruin, Container, Woods, Barricade, Crater, Hill).",
+    type: "keyword",
+  }),
+  snippetCompletion('look: { shape: "${trooper}", color: "${#8a6bb8}" }', {
+    label: "look",
+    detail: "snippet",
+    info: "A model's stand-in figure: trooper, brute, robed, beast, walker, drone or vehicle.",
     type: "keyword",
   }),
   snippetCompletion('(view) => [{ unitId: ${id}, message: "${what is wrong}", severity: "warning" }]', {

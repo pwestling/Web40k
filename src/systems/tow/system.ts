@@ -83,6 +83,18 @@ const shooting: Procedure = {
       roller: "defender",
       passOn: "failures",
     },
+    // Heavy losses (a quarter of the unit) call for a Panic test: code (combat.ts heavyLosses), once the shooting is closed.
+    {
+      kind: "do",
+      id: "panic",
+      do: [
+        {
+          do: "script",
+          procedure: "heavyLosses",
+          args: { unit: ref("target"), before: { count: "target.models" } },
+        },
+      ],
+    },
     { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
     { kind: "damage", id: "damage", amount: 1, spillover: false },
   ],
@@ -195,6 +207,8 @@ export const oldWorld: GameSystem = {
     { id: "rear", name: "Rear", from: 135, to: 225, origin: "baseCorners" },
     { id: "leftFlank", name: "Left flank", from: 225, to: 315, origin: "baseCorners" },
   ],
+  // A charge, a march and its test last the unit's own turn.
+  resets: [{ at: "playerTurn", flags: ["charged", "marching", "marchTest"] }],
   // Psychology marks on a regiment (combat.ts, psychology.ts); spells show as their own names.
   statuses: [
     { id: "fleeing", name: "Fleeing", on: "unit" },

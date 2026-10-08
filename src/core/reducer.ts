@@ -109,8 +109,37 @@ function reduce(state: GameState, event: GameEvent): GameState {
         modelIds: [...body.modelIds, ...leader.modelIds],
         status: { ...body.status, attached: true },
         ...(sheet ? { sheet } : {}),
+        // Kept as it was, so it can leave again.
+        joined: [...(body.joined ?? []), leader],
+        base: body.base ?? { name: body.name, ...(body.sheet ? { sheet: body.sheet } : {}) },
       };
       return { ...state, units: { ...units, [body.id]: merged }, models };
+    }
+    case "unit/detach": {
+      const body = state.units[event.id];
+      const leaving = body?.joined?.find((u) => u.id === event.unit);
+      if (!body || !leaving || state.units[leaving.id]) return state;
+      const ids = new Set(leaving.modelIds);
+      const models = { ...state.models };
+      for (const id of leaving.modelIds) if (models[id]) models[id] = { ...models[id]!, unitId: leaving.id };
+      const rest = body.joined!.filter((u) => u.id !== leaving.id);
+      const base = body.base ?? { name: body.name, sheet: body.sheet };
+      // Name and sheet as if only the ones still with it had joined.
+      let sheet = base.sheet;
+      for (const u of rest) sheet = sheet || u.sheet ? mergeSheets(sheet, u.sheet) : undefined;
+      const { joined: _j, base: _b, sheet: _s, ...plain } = body;
+      const status = { ...body.status };
+      if (!rest.length) delete status.attached;
+      const remaining: Unit = {
+        ...plain,
+        name: [base.name, ...rest.map((u) => u.name)].join(" + "),
+        modelIds: body.modelIds.filter((id) => !ids.has(id)),
+        status,
+        ...(sheet ? { sheet } : {}),
+        ...(rest.length ? { joined: rest, base } : {}),
+      };
+      const own: Unit = { ...leaving, modelIds: leaving.modelIds.filter((id) => models[id]) };
+      return { ...state, units: { ...state.units, [body.id]: remaining, [own.id]: own }, models };
     }
     case "unit/remove": {
       const { [event.id]: unit, ...units } = state.units;

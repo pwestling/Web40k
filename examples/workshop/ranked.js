@@ -3,7 +3,8 @@
 // moves, then the blocks in contact clash. Change anything: the workshop
 // reloads it onto the test table every time you save (Ctrl+S).
 //
-// How packages work: docs/packages.md. The types: src/sdk/index.ts.
+// Everything a package can use is in the SDK tab, on the right; in the editor,
+// type ctx. or view. for suggestions.
 
 export const manifest = {
   id: "me.my-ranked", // change "me" to your name: it must stay the same across versions
@@ -17,7 +18,7 @@ export const manifest = {
   adds: "A whole small game: regiments in blocks; the front rank strikes, rear ranks add a bonus.",
 };
 
-/** The rules as data: characteristics, dice and the turn (src/core/content/schema.ts). */
+/** The rules as data: characteristics, dice and the turn (the SDK tab lists the keys). */
 const system = {
   id: "my-ranked",
   name: "My rank-and-flank game",
@@ -93,7 +94,7 @@ function* fight(ctx, args) {
   const me = state.units[args.unit];
   const target = state.units[args.target];
   const left = alive(state, me);
-  const files = me.formation?.files ?? 5;
+  const files = me.formation?.kind === "ranked" ? me.formation.files : 5;
   const front = left.slice(0, files);
   const ranks = Math.min(2, Math.floor(left.length / files) - 1);
   const need = Math.max(...front.map((m) => stat(m, "Hit")));

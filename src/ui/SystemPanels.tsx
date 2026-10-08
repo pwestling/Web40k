@@ -86,7 +86,7 @@ function shown(c: CharacteristicDef, value: unknown, chars: Record<string, strin
 }
 
 /** Imported abilities, under the headings the importer gave them (or one list). */
-function AbilityList({ abilities }: { abilities: Ability[] }) {
+function AbilityList({ abilities, spent }: { abilities: Ability[]; spent?: (name: string) => boolean }) {
   if (!abilities.length) return null;
   const groups = new Map<string, Ability[]>();
   for (const a of abilities) {
@@ -103,6 +103,7 @@ function AbilityList({ abilities }: { abilities: Ability[] }) {
           {list.map((a) => (
             <p key={a.name} className="small">
               <strong>{a.name}.</strong> {a.text}
+              {spent?.(a.name) ? <em> {t("(spent)")}</em> : null}
             </p>
           ))}
         </details>
@@ -128,7 +129,9 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|moves|arrived|box\d+|used\.|ok\.)/.test(f),
+      !/^(acting|actionsTaken|actionBudget|allowance|reacting|moves|arrived|box\d+|used\.|spent\.|ok\.)/.test(
+        f,
+      ),
   );
   const chars = system.characteristics.filter((c) => c.of === "model" && c.type !== "text");
   const texts = system.characteristics.filter((c) => c.of === "model" && c.type === "text");
@@ -320,7 +323,10 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           </tbody>
         </table>
       )}
-      <AbilityList abilities={unit.sheet?.abilities ?? []} />
+      <AbilityList
+        abilities={unit.sheet?.abilities ?? []}
+        spent={(name) => !!unit.status?.[`spent.${name}`]}
+      />
       {unit.sheet && unit.sheet.keywords.length > 0 && (
         <p className="muted small">{unit.sheet.keywords.join(", ")}</p>
       )}

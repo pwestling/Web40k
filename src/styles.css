@@ -3969,15 +3969,106 @@ body.showcase
   padding: 10px 4px;
   border-radius: 6px 0 0 6px;
 }
-/* A narrow screen stacks the code over the side panes. */
+/* A narrow screen stacks the code over the side panes; over a table it takes the whole screen below the
+   bar, and "Table" folds it away to play (UX 316): a switch, not a five-line editor. */
 @media (max-width: 800px) {
   .workshop-body {
     flex-direction: column;
   }
   .workshop.over-table {
     width: 100vw;
-    top: 40vh;
     border-left: 0;
-    border-top: 1px solid #39404f;
   }
+  .workshop-tab {
+    top: auto;
+    bottom: 12px;
+    writing-mode: horizontal-tb;
+    padding: 10px 16px;
+    border-radius: 6px;
+    right: 12px;
+  }
+}
+@media (pointer: coarse) {
+  .workshop button,
+  .workshop select,
+  .workshop input,
+  .workshop-tab {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+.workshop-note.bad,
+.workshop-table .bad {
+  color: #fca5a5;
+}
+.workshop .cm-problem-line {
+  background: rgb(220 38 38 / 25%);
+}
+.workshop-ref {
+  margin: 0;
+}
+.workshop-ref > div {
+  padding: 3px 0;
+  border-bottom: 1px solid #1f2430;
+}
+.workshop-ref dt code {
+  color: #fbbf24;
+}
+.workshop-ref dd {
+  margin: 0 0 0 12px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+/* Our own game (#42): the one card on the front door that needs nothing brought. */
+.lobby .demo.ours {
+  margin: 8px 0 4px;
+  border-color: #8a6bb8;
+  background: linear-gradient(135deg, rgb(138 107 184 / 18%), rgb(201 164 76 / 10%));
+}
+.lobby .demo.ours .row {
+  align-items: center;
+  gap: 10px;
+}
+
+/* The workshop's type checker (#43): a type and the SDK's comment, on hover and beside completions. */
+.cm-type-hover {
+  max-width: 34rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+.cm-type-hover code {
+  display: block;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.cm-type-hover p {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+  color: var(--muted, #aab);
+}
+
+/* The workshop's Check (#43): one verdict, a line per part. */
+.workshop-check {
+  margin: 0.25rem 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border, #445);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.workshop-check.ok {
+  border-color: #3c8f5a;
+}
+.workshop-check.bad {
+  border-color: #c0504d;
+}
+.workshop-check ul {
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.workshop-check li.bad {
+  color: #f0a0a0;
+}
+.workshop-check li.skip {
+  opacity: 0.7;
 }

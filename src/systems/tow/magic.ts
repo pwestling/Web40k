@@ -2,7 +2,7 @@ import { unitGap } from "../../core/manoeuvre";
 import { opposed } from "../../core/teams";
 import type { GameState, Spell, SpellKind, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
-import { alive, casualties, charNum, unitOf, woundAndSave } from "./combat";
+import { alive, casualties, charNum, heavyLosses, unitOf, woundAndSave } from "./combat";
 import { wizardLevel } from "./specialRules";
 
 /**
@@ -208,8 +208,12 @@ function* effect(ctx: Ctx, caster: Unit, target: Unit, spell: Spell, total: numb
       ? ((yield ctx.roll(hits, `${spell.name} hits`, caster.id)) as Roll).total
       : Number(spell.hits);
     yield ctx.note(`${spell.name}: ${n} Strength ${spell.strength} hits on ${target.name}`);
+    const before = alive(view.state, target).length;
     const unsaved = yield* woundAndSave(ctx, caster, target, n, spell.strength, Math.abs(spell.ap ?? 0));
-    if (unsaved) yield* casualties(ctx, unitOf(view, target.id), unsaved);
+    if (unsaved) {
+      yield* casualties(ctx, unitOf(view, target.id), unsaved);
+      yield* heavyLosses(ctx, target.id, before);
+    }
     return;
   }
   if (spell.kind === "conveyance") {

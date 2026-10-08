@@ -211,14 +211,35 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
               onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
             />
           </label>
-          <button
-            onClick={() => {
-              setFromShelf(null);
-              setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0));
-            }}
-          >
-            {t("Sample army")}
-          </button>
+          {/* A game with factions offers each one's sample army; others, the side's own. */}
+          {systemModule(game.system).armies?.length ? (
+            <select
+              aria-label={t("Sample army")}
+              value=""
+              onChange={(e) => {
+                const army = systemModule(game.system).armies?.[Number(e.target.value)];
+                if (!army) return;
+                setFromShelf(null);
+                setRoster(army);
+              }}
+            >
+              <option value="">{t("Sample army…")}</option>
+              {systemModule(game.system).armies!.map((a, i) => (
+                <option key={i} value={i}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <button
+              onClick={() => {
+                setFromShelf(null);
+                setRoster(systemModule(game.system).sample(ownerSeat === 1 ? 1 : 0));
+              }}
+            >
+              {t("Sample army")}
+            </button>
+          )}
         </div>
       )}
       {!(game.system && isPlaceholder(game.system)) && (

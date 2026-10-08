@@ -14,6 +14,8 @@ export interface SystemModule {
   importRoster?(fileName: string, data: Uint8Array): Promise<ImportedRoster>;
   /** Sample army for a seat. */
   sample(seat: 0 | 1): ImportedRoster;
+  /** Every sample army players can pick from (one per faction); the two `sample` gives when missing. */
+  armies?: ImportedRoster[];
   layout(table: Table): Layout;
   /** Category for each terrain template name, when the system has its own categories. */
   templateCategory?: Record<string, string>;

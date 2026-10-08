@@ -4,12 +4,13 @@ import arena from "../../examples/packages/arena.js?raw";
 import skirmish from "../../examples/workshop/skirmish.js?raw";
 import ranked from "../../examples/workshop/ranked.js?raw";
 import activations from "../../examples/workshop/activations.js?raw";
+import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
 import { readManifest } from "../packages/manifest";
 import { soak } from "./run";
 
-/** The workshop's starter games (#41), and the example game, each play whole soak games. */
+/** The workshop's starter games (#41), the example game and Rift Lanterns (#42) each play whole soak games. */
 describe("whole games from packages play through the soak bot", () => {
-  for (const [name, source] of Object.entries({ arena, skirmish, ranked, activations }))
+  for (const [name, source] of Object.entries({ arena, skirmish, ranked, activations, riftLanterns }))
     for (const seed of [1, 2])
       it(`${name} seed ${seed}`, async () => {
         const read = readManifest(source);

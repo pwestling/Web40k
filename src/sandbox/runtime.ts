@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
-import type { GameRecord, GameState, Unit } from "../core";
+import type { GameRecord, GameState, Unit, Vec2 } from "../core";
 import { systemOf } from "../core/content/turn";
 import { extendSystem, restoreSystems } from "../core/content/systems";
 import { registerHooks, unregisterHooks } from "../core/script";
@@ -9,7 +9,8 @@ import { registerPackageSystem, unregisterPackageSystem } from "../systems";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { Sandbox, STARTUP_MS } from "./host";
-import type { ActionRow, AppState, Loaded, Provided } from "./protocol";
+import type { ActionRow, AppState, Loaded, Provided, ProvidedMission } from "./protocol";
+import type { Mission } from "../sdk";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 
 /**
@@ -93,14 +94,17 @@ const provided: string[] = [];
 
 /** Register a whole-game package's system here, and refold the game, which was folded with a stand-in. */
 function provide(p: Provided): void {
-  const { samples, layout, has, ...rest } = p.app;
+  const { samples, layout, has, armies, missions, ...rest } = p.app;
   const empty = { name: "Empty", units: [], warnings: [] };
   const constant = (key: string, fallback: number) => p.system.constants?.[key] ?? fallback;
-  wantsAppState ||= has.rankRules || has.leaving || has.sidePanel;
+  // Package games with code actions say what's ready for "What can I do now?" too.
+  wantsAppState = true;
   registerPackageSystem(p.system, {
     ...rest,
     sample: (seat) => samples[seat] ?? empty,
     layout: () => layout,
+    ...(armies.length ? { armies } : {}),
+    ...(missions.length ? { missions: missions.map(packageMission) } : {}),
     // Code hooks run in the sandbox; the app reads what it last worked out.
     ...(has.importRoster
       ? {
@@ -130,6 +134,47 @@ function provide(p: Provided): void {
     store.dispatch({ type: "game/system", system: p.system.id });
     if (!game.terrain.length) store.dispatch({ type: "layout/set", layout });
   }
+}
+
+/**
+ * A package mission as the app uses it: its setup as the sandbox worked it
+ * out for the table played on (#43), or, before it has, scaled from the
+ * default table's; and its suggestions read from what the sandbox last
+ * worked out (nothing until it has).
+ */
+function packageMission(m: ProvidedMission): Mission {
+  const scores = () => useSandbox.getState().app?.scores ?? {};
+  return {
+    id: m.id,
+    name: m.name,
+    summary: m.summary,
+    ...(m.hand !== undefined ? { hand: m.hand } : {}),
+    setup: (table) => {
+      const app = useSandbox.getState().app;
+      const exact = app?.table?.width === table.width && app.table.depth === table.depth && app.setups[m.id];
+      if (exact) return structuredClone(exact);
+      const sx = table.width / m.table.width;
+      const sy = table.depth / m.table.depth;
+      const at = (p: Vec2) => ({ x: p.x * sx, y: p.y * sy });
+      return {
+        zones: m.setup.zones.map((z) => ({ ...z, points: z.points.map(at) })),
+        objectives: m.setup.objectives.map((o) => ({ ...o, position: at(o.position) })),
+      };
+    },
+    scoring: m.scoring.map((rule) => ({
+      ...rule,
+      suggest: (state, seat) => scores()[`${rule.id}:${state.turn.round}:${seat}`] ?? null,
+    })),
+    ...(m.deck
+      ? {
+          deck: m.deck.map((card) => ({
+            ...card,
+            suggest: (_game, seat) =>
+              useSandbox.getState().app?.cards[`${card.id}:${seat}`] ?? { vp: 0, why: card.text },
+          })),
+        }
+      : {}),
+  };
 }
 
 function stop(why: string) {

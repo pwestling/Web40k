@@ -532,6 +532,7 @@ export const conquest: GameSystem = {
     rounds: 10,
     // Supremacy: a roll-off each round, the higher goes first (secondary sources; modifiers aren't modelled).
     initiative: "rollOffEachRound",
+    rollOffName: "Supremacy",
     round: [
       // Each player orders their command stack (command.ts).
       { kind: "phase", id: "command", name: "Command" },

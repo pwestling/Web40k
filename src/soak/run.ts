@@ -59,12 +59,16 @@ export interface SoakOptions {
    */
   systemPkg?: { source: string; importSource?: ImportSource };
   maxSteps?: number;
+  /** A short game (the workshop's Check, #43): stop, satisfied, once this round is over. */
+  untilRound?: number;
   /** Test the checks themselves: from this move on, a guest's table keeps drifting from the host's (a reducer bug). */
   drift?: number;
   /** Confirm every ability the system can play for you (40k #38) once the armies are down. */
   automate?: boolean;
   /** Start the armies this many inches nearer the middle (a scenario that wants fighting early). */
   closeIn?: number;
+  /** Stand each side's units side by side, 1" apart across the middle (crowded fights and Panic). */
+  lineUp?: boolean;
   /** Other armies than the system's samples (a scenario's), by seat. */
   armies?: (seat: 0 | 1) => ReturnType<ReturnType<typeof systemModule>["sample"]>;
   /**
@@ -276,6 +280,28 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
           moves: moves.filter((mv) => st.units[st.models[mv.id]!.unitId ?? ""]?.owner === p),
         });
     }
+    if (opts.lineUp) {
+      const st = room.host()!.current;
+      for (const p of new Set(Object.values(st.units).map((u) => u.owner))) {
+        const units = Object.values(st.units)
+          .filter((u) => u.owner === p)
+          .map((u) => {
+            const xs = u.modelIds.map((id) => st.models[id]!.position.x);
+            return { u, min: Math.min(...xs), width: Math.max(...xs) - Math.min(...xs) + 1 };
+          })
+          .sort((x, y) => x.min - y.min);
+        let x = -units.reduce((t, e) => t + e.width + 1, -1) / 2;
+        const moves = units.flatMap((e) => {
+          const dx = x - e.min + 0.5;
+          x += e.width + 1;
+          return e.u.modelIds.map((id) => {
+            const m = st.models[id]!;
+            return { id, to: { x: m.position.x + dx, y: m.position.y } };
+          });
+        });
+        as(p, { type: "models/move", moves });
+      }
+    }
     if (opts.automate && mod.recognizeAbility) {
       const rules = gameModule(system)!.system;
       for (const u of Object.values(room.host()!.current.units))
@@ -333,6 +359,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       }
       const state = host.current;
       if (state.turn.round > 0 && battleOver(state)) break;
+      if (opts.untilRound !== undefined && state.turn.round > opts.untilRound) break;
 
       // Make trouble on cue.
       if (state.turn.round !== lastRoundSeen) [lastRoundSeen, roundSteps] = [state.turn.round, 0];
@@ -414,7 +441,9 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
     await settle();
     check("the end");
     const last = room.host()!.current;
-    if (!battleOver(last)) fail(`didn't finish in ${maxSteps} moves (round ${last.turn.round})`);
+    const shortDone = opts.untilRound !== undefined && last.turn.round > opts.untilRound;
+    if (!battleOver(last) && !shortDone)
+      fail(`didn't finish in ${maxSteps} moves (round ${last.turn.round})`);
     if (last.script?.waiting) fail(`left waiting on "${last.script.waiting.question}"`);
 
     async function makeTrouble(what: string) {

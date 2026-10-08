@@ -102,6 +102,34 @@ const checks = {
     await context.close();
   },
 
+  /** Our own game (#42): Play now, with nothing imported: two warbands of stand-ins, a mission, and actions to take. */
+  async "play-now"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.getByRole("button", { name: /Play now/ }).click();
+    await page.locator(".topbar").waitFor();
+    await page.locator("canvas").first().waitFor();
+    // The battle starts by itself, Lantern Grab set, and "What can I do now?" open on round 1.
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".hud")?.textContent?.includes("Lantern Grab") &&
+        document.querySelector(".topbar")?.textContent?.includes("Round 1"),
+      null,
+      { timeout: 20000 },
+    );
+    // The army showcase hides the panels while it plays.
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    const toggle = page.locator(".whatnow-toggle");
+    if (await toggle.count()) await toggle.click();
+    await page
+      .locator(".whatnow")
+      .getByText(/You can: (Shoot|Fight)|Drag a unit/)
+      .first()
+      .waitFor({ timeout: 10000 });
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
   /** The module workshop (#41): a template, its test table, a hot reload on save, the soak bot. */
   async workshop() {
     const { page, context } = await device();
@@ -121,6 +149,19 @@ const checks = {
     await page.getByText("Saved and reloaded onto the test table.").waitFor();
     await page.getByText("Your rules are running.").waitFor({ timeout: 20000 });
     if (await page.locator(".package-card").count()) throw new Error("the table lost the saved package");
+    // Types (#43): a wrong ctx call is underlined as it's typed, and Check gives one verdict.
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.insertText("function* oops(ctx) { yield ctx.rolll('d6'); }\n");
+    await page.locator(".cm-lintRange-error").first().waitFor({ timeout: 60000 });
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+    await page.locator(".workshop-check.bad").getByText(/rolll/).first().waitFor({ timeout: 120000 });
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.press("Shift+ArrowDown");
+    await page.keyboard.press("Delete");
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+    await page.locator(".workshop-check.ok").waitFor({ timeout: 120000 });
     await page.getByRole("tab", { name: "Soak bot" }).click();
     await page.getByRole("button", { name: "Play 3 bot games" }).click();
     await page.locator(".workshop-soak li").nth(2).waitFor({ timeout: 240000 });

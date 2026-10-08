@@ -1,5 +1,6 @@
 import type { Ability, BaseShape, Spell, WeaponProfile } from "../../core";
 import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
+import { ITEM_GROUP } from "./roster";
 
 /**
  * Two invented rank-and-flank armies for trying the regiment tools. Names and
@@ -32,7 +33,13 @@ function regiment(
   points: number,
   extra: { name: string; stats: Stats; base?: BaseShape }[] = [],
   weapon?: { name: string; range: number; S?: number; AP?: number },
-  more: { rules?: string[]; keywords?: string[]; wizard?: number; spells?: Spell[] } = {},
+  more: {
+    rules?: string[];
+    keywords?: string[];
+    wizard?: number;
+    spells?: Spell[];
+    items?: Ability[];
+  } = {},
 ): ImportedUnit {
   const weapons: Record<string, WeaponProfile> = weapon
     ? {
@@ -60,7 +67,10 @@ function regiment(
     base,
     sheet: {
       weapons,
-      abilities: (more.rules ?? []).map((name): Ability => ({ name, text: "", group: "Special rules" })),
+      abilities: [
+        ...(more.rules ?? []).map((name): Ability => ({ name, text: "", group: "Special rules" })),
+        ...(more.items ?? []),
+      ],
       keywords: more.keywords ?? [],
       points,
       ...(more.wizard ? { wizard: more.wizard, spells: more.spells ?? [] } : {}),
@@ -116,7 +126,19 @@ function marchwardens(): ImportedRoster {
         { name: "Hedge Seer", stats: seer },
       ],
       undefined,
-      { keywords: ["General"], wizard: 2, spells: HEDGE_LORE },
+      {
+        keywords: ["General"],
+        rules: ["Drilled"],
+        wizard: 2,
+        spells: HEDGE_LORE,
+        items: [
+          {
+            name: "Marsh Lantern",
+            text: "One use only. Our own sample item: the players agree what it does.",
+            group: ITEM_GROUP,
+          },
+        ],
+      },
     ),
     regiment("Fen Bowmen", 15, FOOT, bow, 120, [], { name: "Longbow", range: 30, S: 3 }),
     regiment(
@@ -125,7 +147,10 @@ function marchwardens(): ImportedRoster {
       HORSE,
       rider,
       130,
-      [{ name: "Banner Rider", stats: rider }],
+      [
+        { name: "Downs Champion", stats: { ...rider, A: 2 } },
+        { name: "Banner Rider", stats: rider },
+      ],
       undefined,
       {
         rules: ["Hatred"],
@@ -138,6 +163,10 @@ function marchwardens(): ImportedRoster {
       { M: 0, WS: 0, BS: 3, S: 7, T: 7, W: 3, I: 1, A: 0, Ld: 7, US: 3, Troop: "War Machine" },
       90,
     ),
+    // A character on its own: it can join a regiment (characters.ts).
+    regiment("Fen Marshal", 1, BIG_FOOT, { ...captain, Ld: 8 }, 70, [], undefined, {
+      keywords: ["Character"],
+    }),
   ];
   return { name: "Marchwarden Host", points: total(units), units, warnings: [] };
 }
@@ -181,10 +210,41 @@ function reavers(): ImportedRoster {
         { name: "Bone Shaman", stats: { ...seer, Ld: 7 } },
       ],
       undefined,
-      { keywords: ["General"], wizard: 1, spells: BONE_LORE },
+      {
+        keywords: ["General"],
+        wizard: 1,
+        spells: BONE_LORE,
+        items: [
+          {
+            name: "Bone Charm",
+            text: "Our own sample item, used as often as the players agree.",
+            group: ITEM_GROUP,
+          },
+        ],
+      },
     ),
-    regiment("Tusk Brutes", 6, BRUTE, brute, 210, [], undefined, { rules: ["Fear", "Stubborn"] }),
-    regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90, [], undefined, { rules: ["Frenzy"] }),
+    regiment(
+      "Tusk Brutes",
+      6,
+      BRUTE,
+      brute,
+      210,
+      [{ name: "Brute Boss", stats: { ...brute, A: 4 } }],
+      undefined,
+      {
+        rules: ["Fear", "Stubborn"],
+      },
+    ),
+    regiment(
+      "Wolf Runners",
+      5,
+      HORSE,
+      { ...rider, M: 9, Ld: 6 },
+      90,
+      [{ name: "Pack Leader", stats: { ...rider, M: 9, Ld: 6, A: 2 } }],
+      undefined,
+      { rules: ["Frenzy"] },
+    ),
     // A lone, dim-witted monster: it causes Terror and tests for Stupidity each turn.
     regiment(
       "Bog Hulk",

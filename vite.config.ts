@@ -3,7 +3,8 @@ import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
+import ts from "typescript";
 import { build as viteBuild, defineConfig, type Plugin, type Rollup } from "vite";
 import pkg from "./package.json" with { type: "json" };
 
@@ -16,6 +17,52 @@ function build(): string {
   } catch {
     return `${pkg.version}+dev`;
   }
+}
+
+/**
+ * `virtual:sdk-types`: what the module workshop's type checker (#43) reads,
+ * keyed by path: the declarations of the SDK and everything it names,
+ * emitted from src/sdk/index.ts and the package manifest, and the ES lib
+ * files (a package runs in a worker: no DOM).
+ */
+function sdkTypes(): Plugin {
+  const id = "virtual:sdk-types";
+  return {
+    name: "sdk-types",
+    resolveId: (s) => (s === id ? `\0${id}` : null),
+    load(s) {
+      if (s !== `\0${id}`) return null;
+      const files: Record<string, string> = {};
+      const root = process.cwd();
+      const program = ts.createProgram(
+        [join(root, "src/sdk/index.ts"), join(root, "src/packages/manifest.ts")],
+        {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+          moduleResolution: ts.ModuleResolutionKind.Bundler,
+          jsx: ts.JsxEmit.ReactJSX,
+          declaration: true,
+          emitDeclarationOnly: true,
+          skipLibCheck: true,
+          strict: true,
+          types: ["vite/client"],
+          lib: ["lib.es2023.d.ts", "lib.dom.d.ts"],
+        },
+      );
+      program.emit(undefined, (name, text) => {
+        const rel = relative(root, name).replaceAll("\\", "/");
+        if (rel.startsWith("..")) return;
+        files[`/${rel}`] = text;
+        // A change to the SDK, or anything it names, makes new declarations.
+        this.addWatchFile(join(root, rel.replace(/\.d\.ts$/, ".ts")));
+      });
+      const lib = dirname(ts.getDefaultLibFilePath({}));
+      for (const f of readdirSync(lib))
+        if (/^lib\.(es5|es20\d\d|decorators)[\w.]*\.d\.ts$/.test(f) && !f.includes(".full."))
+          files[`/lib/${f}`] = readFileSync(join(lib, f), "utf8");
+      return `export default ${JSON.stringify(files)};`;
+    },
+  };
 }
 
 /**
@@ -115,6 +162,8 @@ function serviceWorker(): Plugin {
       // file names it points at.
       const files = [...new Set([...Object.keys(bundle), ...filesIn("public"), "index.html"])]
         .filter((f) => !f.endsWith(".map"))
+        // The workshop's type checker is TypeScript itself: fetched when the workshop opens, not kept for play.
+        .filter((f) => !/typesWorker-[\w-]+\.js$/.test(f))
         .sort();
       // The version follows the files' contents, so any change to the build makes a new one.
       const hash = createHash("sha256");
@@ -135,9 +184,12 @@ export default defineConfig({
     react(),
     bundledWorker("virtual:sandbox-worker", "src/sandbox/worker.ts"),
     bundledWorker("virtual:soak-worker", "src/workshop/soakWorker.ts"),
+    sdkTypes(),
     serviceWorker(),
   ],
   define: { __APP_BUILD__: JSON.stringify(build()) },
+  // The workshop's type checker (#43) is a module worker with TypeScript and the SDK's declarations in it.
+  worker: { format: "es", plugins: () => [sdkTypes()] },
   // Relative asset paths so the build can be hosted under any sub-path
   // (e.g. GitHub Pages at /open-battle/).
   base: "./",

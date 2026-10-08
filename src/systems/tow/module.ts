@@ -1,7 +1,9 @@
 import { TOW_MISSIONS } from "./missions";
 import type { GameModule } from "../../sdk";
-import { towActions } from "./combat";
+import { heavyLossesProcedure, towActions } from "./combat";
 import { magicActions } from "./magic";
+import { characterActions } from "./characters";
+import { itemActions } from "./items";
 import { towHooks } from "./psychology";
 import type { SystemModule } from "../app";
 import { towLayout, TOW_CATEGORIES } from "./layout";
@@ -17,7 +19,8 @@ export const towModule: GameModule<SystemModule> = {
   version: oldWorld.version,
   api: 1,
   system: oldWorld,
-  actions: [...towActions, ...magicActions],
+  actions: [...towActions, ...magicActions, ...characterActions, ...itemActions],
+  procedures: { heavyLosses: heavyLossesProcedure },
   hooks: towHooks,
   app: {
     sample: towSample,

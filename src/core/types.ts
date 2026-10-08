@@ -212,6 +212,17 @@ export interface Model {
   bands?: SightBand[];
   /** An uploaded 3D figure standing on the base (see src/assets). Display only; `bands` carries its shape for rules. */
   figure?: ModelFigure;
+  /** The stand-in's shape when no figure is worn (a game's own figures, #42). Display only. */
+  look?: StandInLook;
+}
+
+/**
+ * A procedural stand-in figure (src/render/standIns.ts): a shape, and the
+ * colour it's painted (the base keeps the player's colour).
+ */
+export interface StandInLook {
+  shape: "trooper" | "brute" | "robed" | "beast" | "walker" | "drone" | "vehicle";
+  color?: string;
 }
 
 /**
@@ -260,6 +271,10 @@ export interface Unit {
   sheet?: UnitSheet;
   /** Per-turn and lasting flags such as moved, advanced, shot, battleShocked. */
   status?: Record<string, number | boolean>;
+  /** Units attached to this one, as they were, so each can leave again (unit/detach). */
+  joined?: Unit[];
+  /** This unit's own name and sheet from before anything joined it. */
+  base?: { name: string; sheet?: UnitSheet };
 }
 
 export interface DiceRoll {

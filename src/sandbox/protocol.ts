@@ -1,6 +1,6 @@
-import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent } from "../core";
+import type { GameEvent, GameRecord, Intent, Layout, LoggedEvent, Objective, Zone } from "../core";
 import type { GameSystem } from "../core/content/schema";
-import type { PanelSpec } from "../sdk";
+import type { MissionCard, PanelSpec, ScoringRule } from "../sdk";
 import type { SystemModule } from "../systems/app";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Rng } from "../core/actions";
@@ -23,7 +23,9 @@ export type ToSandbox =
   | { id: number; t: "appState" }
   | { id: number; t: "importRoster"; fileName: string; data: Uint8Array }
   /** The module workshop's soak worker only (src/workshop/soakWorker.ts): a bot game of a draft package. */
-  | { id: number; t: "soak"; source: string; seed: number };
+  | { id: number; t: "soak"; source: string; seed: number; untilRound?: number }
+  /** The workshop's soak worker only: load a draft and say what went wrong (Loaded). */
+  | { id: number; t: "check"; source: string };
 
 export type FromSandbox =
   | { id: number; t: "ok"; value?: unknown }
@@ -54,17 +56,52 @@ export interface Provided {
   app: {
     samples: ImportedRoster[];
     layout: Layout;
+    /** Every sample army players can pick (PackageApp.armies), or none. */
+    armies: ImportedRoster[];
+    /** Missions as data: their setup for `table`, and their rules and cards less the code. */
+    missions: ProvidedMission[];
     /** Which of the game-dependent hooks the package has (they run in the sandbox). */
-    has: { importRoster: boolean; rankRules: boolean; leaving: boolean; sidePanel: boolean };
+    has: {
+      importRoster: boolean;
+      rankRules: boolean;
+      leaving: boolean;
+      sidePanel: boolean;
+      missions: boolean;
+    };
   } & Pick<
     SystemModule,
     "templateCategory" | "templates" | "specialDice" | "scatter" | "fleeDice" | "chargeRoll"
   >;
 }
 
+/** A package mission without its code: `suggest`s are answered in the sandbox (AppState.scores). */
+export interface ProvidedMission {
+  id: string;
+  name: string;
+  summary: string;
+  hand?: number;
+  /** The table `setup` was worked out for, and what it gave. */
+  table: { width: number; depth: number };
+  setup: { zones: Zone[]; objectives: Objective[] };
+  scoring: Omit<ScoringRule, "suggest">[];
+  deck?: Omit<MissionCard, "suggest">[];
+}
+
 /** A package game's app glue for the current state (PackageApp in src/sdk), worked out in the sandbox. */
 export interface AppState {
   seq: number;
+  /**
+   * The chosen package mission's suggestions: by `${rule}:${round}:${seat}` for
+   * each scoring moment so far (null: nothing to score), and by `${card}:${seat}`
+   * for its cards as the table stands.
+   */
+  scores: Record<string, { vp: number; why: string } | null>;
+  cards: Record<string, { vp: number; why: string }>;
+  /** The code actions each unit can take now, by name ("What can I do now?"). */
+  ready: Record<string, string[]>;
+  /** Each package mission's setup worked out for the table being played on (#43), and that table's size. */
+  setups: Record<string, { zones: Zone[]; objectives: Objective[] }>;
+  table: { width: number; depth: number } | null;
   /** Rank width and bonus cap per unit, for games with rankRules. */
   ranks: Record<string, { width: number; maxBonus: number }>;
   leaving: string[];

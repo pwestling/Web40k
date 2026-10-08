@@ -9,7 +9,7 @@
  *
  * Nothing here throws on bad input: problems are reported in `warnings`.
  */
-import type { Ability, BaseShape, Characteristics, UnitSheet, WeaponProfile } from "../../core";
+import type { Ability, BaseShape, Characteristics, StandInLook, UnitSheet, WeaponProfile } from "../../core";
 
 export type { Ability, Characteristics, UnitSheet, WeaponProfile };
 
@@ -23,6 +23,10 @@ export interface ImportedModel {
   weapons: string[];
   /** Its own base, when it differs from the unit's (a character on a bigger base). */
   base?: BaseShape;
+  /** Its stand-in figure's shape and colour (a game's own sample armies). */
+  look?: StandInLook;
+  /** Its height in inches, for line of sight; from the base when missing. */
+  height?: number;
 }
 
 export interface ImportedUnit {

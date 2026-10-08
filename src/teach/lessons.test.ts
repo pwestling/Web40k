@@ -64,7 +64,10 @@ function studentMove(
 }
 
 /** Play a lesson through: the learner as a student bot, the other side as the lesson's opponent. */
-function walk(lesson: Lesson, seed: number): { progress: Progress; moves: number; state: GameState } {
+function walk(
+  lesson: Lesson,
+  seed: number,
+): { progress: Progress; moves: number; state: GameState; log: GameRecord } {
   const net = createLoopbackNetwork();
   let clock = 1;
   const host = new Session({
@@ -110,7 +113,7 @@ function walk(lesson: Lesson, seed: number): { progress: Progress; moves: number
     noteProgress(theirs ? bot : student, host.current, move);
   }
   host.leave();
-  return { progress, moves, state: host.current };
+  return { progress, moves, state: host.current, log: host.log };
 }
 
 describe("lessons", () => {
@@ -194,4 +197,18 @@ describe("lessons", () => {
         ).toBe(lesson.steps.length);
       }
     }, 120_000);
+
+  it("Break and panic: the slingers break and a friend takes a Panic test, in some games", () => {
+    const lesson = packages.flatMap((p) => p.lessons).find((l) => l.id === "break-and-panic")!;
+    let panicked = 0;
+    for (let seed = 1; seed <= 8; seed++) {
+      const notes = walk(lesson, seed).log.events.flatMap(({ event: e }) =>
+        (e.type === "script/step" ? [e] : e.type === "procedure/clear" && e.script ? [e.script] : []).flatMap(
+          (x) => x.events.flatMap((n) => (n.type === "log/note" ? [n.text] : [])),
+        ),
+      );
+      if (notes.some((n) => /: a Panic test$/.test(n))) panicked++;
+    }
+    expect(panicked).toBeGreaterThan(1);
+  }, 120_000);
 });

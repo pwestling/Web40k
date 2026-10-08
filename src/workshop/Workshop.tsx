@@ -7,6 +7,7 @@ import { useSandbox } from "../sandbox/runtime";
 import { useStore } from "../store";
 import { gameModule } from "../systems";
 import { deploySamples } from "../teach/setup";
+import { quiet } from "../render/showcase";
 import { refOf } from "../ui/Packages";
 import { buildLog } from "../ui/gameLog";
 import { openWarnings, useWarnings } from "../ui/TableWarnings";
@@ -15,6 +16,7 @@ import sdk from "../sdk/index.ts?raw";
 import skirmish from "../../examples/workshop/skirmish.js?raw";
 import ranked from "../../examples/workshop/ranked.js?raw";
 import activations from "../../examples/workshop/activations.js?raw";
+import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
 import {
   fileName,
   GALLERY,
@@ -28,7 +30,11 @@ import {
   type Draft,
 } from "./drafts";
 import { closeWorkshop, useWorkshopOpen } from "./open";
-import { soakDraft, type SoakResult } from "./soak";
+import { checkDraft, soakDraft, type SoakResult } from "./soak";
+import { checkAll, problemLine, type CheckStep, type Verdict } from "./check";
+import { CTX, KEYS, VIEW } from "./completions";
+import type { Completion } from "@codemirror/autocomplete";
+import type { Loaded } from "../sandbox/protocol";
 
 /** A link field's hint: a URL scheme, the same in every language. */
 const URL_HINT = "https://"; // i18n-ignore
@@ -55,6 +61,12 @@ const TEMPLATES = [
     name: () => t("Alternating activations"),
     what: () => t("Players take turns activating one unit each."),
   },
+  {
+    id: "rift-lanterns",
+    source: riftLanterns,
+    name: () => "Rift Lanterns",
+    what: () => t("A finished game of ours to take apart: four warbands, three missions."),
+  },
 ];
 
 /**
@@ -70,8 +82,22 @@ export function Workshop() {
   const link = useWorkshopOpen((s) => s.link);
   const playing = useStore((s) => s.session !== null);
   const [pane, setPane] = useState<"table" | "soak" | "export" | "sdk">("table");
-  const [note, setNote] = useState<string | null>(null);
+  const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
 
+  /** Where the last problem is in the draft, marked in the editor. */
+  const [mark, setMark] = useState<number | null>(null);
+  /** The Check's verdict (#43), or its steps so far while it runs. */
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [checking, setChecking] = useState<CheckStep[] | null>(null);
+  const check = async () => {
+    if (!draft || checking) return;
+    setVerdict(null);
+    setChecking([]);
+    const v = await checkAll(draft.source, setChecking);
+    setChecking(null);
+    setVerdict(v);
+    setMark(v.steps.find((s) => s.ok === false)?.line ?? null);
+  };
   const update = (next: Draft[], cur: string | null) => {
     storeDrafts(next, cur);
     setAll({ drafts: next, current: cur });
@@ -82,6 +108,7 @@ export function Workshop() {
   };
   const edit = (source: string) => {
     if (!draft) return;
+    if (mark !== null) setMark(null);
     update(
       drafts.map((d) => (d.id === draft.id ? { ...d, source, updated: Date.now() } : d)),
       draft.id,
@@ -100,30 +127,61 @@ export function Workshop() {
     void fromLink(link).then(
       (source) => {
         add(source);
-        setNote(
-          t("Opened from {url}. Read it before you test it: saving runs its code in the sandbox.", {
+        setNote({
+          text: t("Opened from {url}. Read it before you test it: saving runs its code in the sandbox.", {
             url: link,
           }),
-        );
+          bad: false,
+        });
       },
-      (e: Error) => setNote(e.message),
+      (e: Error) => setNote({ text: e.message, bad: true }),
     );
     // Once per link.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [link]);
 
-  /** Save the draft to the package library; the hash, or null if it couldn't be. */
+  const bad = (text: string, line: number | null = null) => {
+    setNote({ text, bad: true });
+    setMark(line);
+  };
+
+  /**
+   * Save the draft to the package library; the hash, or null if it couldn't
+   * be. It's checked first (UX 307-308): parsed for syntax errors, then loaded
+   * in a sandbox the way the test table would, so a broken draft never
+   * reaches the table and says where it broke.
+   */
   const save = async (): Promise<string | null> => {
     if (!draft) return null;
-    const issues = problems(draft.source);
+    const source = draft.source;
+    const issues = problems(source);
     if (issues.length) {
-      setNote(issues[0]!);
+      bad(issues[0]!);
       return null;
     }
+    const { syntaxError } = await import("./syntax");
+    const syntax = syntaxError(source);
+    if (syntax) {
+      bad(t("Not saved: the code doesn't parse at line {line}, column {column}.", syntax), syntax.line);
+      return null;
+    }
+    let loaded: Loaded;
+    try {
+      loaded = await checkDraft(source);
+    } catch (e) {
+      bad(t("Not saved: your rules didn't load: {why}", { why: e instanceof Error ? e.message : String(e) }));
+      return null;
+    }
+    const failed = loaded.errors[0]?.error;
+    if (failed) {
+      bad(t("Not saved: your rules didn't load: {why}", { why: failed }), problemLine(source, failed));
+      return null;
+    }
+    setMark(null);
     const lib = useLibrary.getState();
-    const r = await lib.add(new TextEncoder().encode(draft.source), { own: true });
+    const r = await lib.add(new TextEncoder().encode(source), { own: true });
     if (!r.ok) {
-      setNote(r.error);
+      bad(r.error);
       return null;
     }
     lib.trust(r.pkg.hash, true);
@@ -134,12 +192,33 @@ export function Workshop() {
       drafts.map((d) => (d.id === draft.id ? { ...d, saved: r.pkg.hash } : d)),
       draft.id,
     );
+    const setup = setupOf(loaded);
+    rememberSetup(setup);
     const system = r.pkg.manifest.systems[0]!;
     const game = useStore.getState().game;
     if (useStore.getState().session && game.packages?.system?.id === system) {
+      if (game.packages.packages.some((p) => p.hash === r.pkg.hash)) {
+        setNote({ text: t("Saved. Nothing changed for the test table."), bad: false });
+        return r.pkg.hash;
+      }
       reload(r.pkg.hash);
-      setNote(t("Saved and reloaded onto the test table."));
-    } else setNote(t("Saved."));
+      const why = await settled();
+      if (why)
+        bad(
+          t("Saved, but your rules didn't load on the test table: {why}", { why }),
+          problemLine(source, why),
+        );
+      else
+        setNote({
+          text:
+            setups.table !== null && setup !== setups.table
+              ? t(
+                  "Saved and reloaded. The sample armies, missions or table changed: restart the test table to play with them.",
+                )
+              : t("Saved and reloaded onto the test table."),
+          bad: false,
+        });
+    } else setNote({ text: t("Saved."), bad: false });
     return r.pkg.hash;
   };
 
@@ -181,7 +260,7 @@ export function Workshop() {
             onClick={() => useWorkshopOpen.setState({ folded: true })}
             title={t("Fold the workshop to the side")}
           >
-            ⇥
+            ⇥ {t("Table")}
           </button>
         )}
         <button onClick={closeWorkshop} aria-label={t("Close the workshop")}>
@@ -198,14 +277,29 @@ export function Workshop() {
                 {t("Save")}
               </button>
               <TestTableButton save={save} />
+              <button
+                onClick={() => void check()}
+                disabled={!!checking}
+                title={t("Check the types, load it, and let a bot play two rounds")}
+              >
+                {checking ? t("Checking…") : t("Check")}
+              </button>
               <span className="spacer" />
               <button onClick={() => update(drafts, null)}>{t("New draft")}</button>
               <button onClick={remove}>{t("Delete")}</button>
             </div>
             {note && (
-              <p className="workshop-note" role="status">
-                {note}
+              <p className={`workshop-note${note.bad ? " bad" : ""}`} role={note.bad ? "alert" : "status"}>
+                {note.text}
               </p>
+            )}
+            {(checking || verdict) && (
+              <CheckVerdict
+                steps={checking ?? verdict!.steps}
+                verdict={checking ? null : verdict}
+                stale={!!verdict && verdict.source !== draft.source}
+                onClose={() => setVerdict(null)}
+              />
             )}
             <Problems draft={draft} />
             <Suspense fallback={<div className="workshop-editor">{t("Loading the editor…")}</div>}>
@@ -214,6 +308,7 @@ export function Workshop() {
                 onChange={edit}
                 onSave={() => void save()}
                 label={t("The package's code")}
+                mark={mark}
               />
             </Suspense>
           </div>
@@ -318,6 +413,52 @@ async function fromLink(url: string): Promise<string> {
   return text;
 }
 
+/** The Check's one verdict, and a line for each part of it. */
+function CheckVerdict({
+  steps,
+  verdict,
+  stale,
+  onClose,
+}: {
+  steps: CheckStep[];
+  verdict: Verdict | null;
+  stale: boolean;
+  onClose: () => void;
+}) {
+  const head = !verdict
+    ? t("Checking: types, loading, then a short bot game…")
+    : verdict.ok
+      ? t("Ready to share: nothing wrong found.")
+      : t("Not ready yet: {first}", { first: verdict.steps.find((s) => s.ok === false)?.text ?? "" });
+  return (
+    <div
+      className={`workshop-check${verdict ? (verdict.ok ? " ok" : " bad") : ""}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="row spread">
+        <strong>
+          {verdict ? (verdict.ok ? "✓ " : "✗ ") : ""}
+          {head}
+        </strong>
+        {verdict && (
+          <button className="quiet" onClick={onClose} title={t("Hide")}>
+            ✕
+          </button>
+        )}
+      </div>
+      {stale && <p className="muted small">{t("The draft has changed since: check again.")}</p>}
+      <ul>
+        {steps.map((s) => (
+          <li key={s.id} className={s.ok === null ? "skip" : s.ok ? "ok" : "bad"}>
+            {s.ok === null ? "–" : s.ok ? "✓" : "✗"} {s.text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** What's wrong with the draft now, and what the sandbox said when it last loaded it. */
 function Problems({ draft }: { draft: Draft }) {
   const issues = useMemo(() => problems(draft.source), [draft.source]);
@@ -349,6 +490,36 @@ function removeWhenUnused(hash: string) {
   });
 }
 
+/**
+ * What a draft's game sets up (sample armies, missions, the table), to tell
+ * when a save changes it: a running test table keeps what it started with.
+ */
+function setupOf(loaded: Loaded): string {
+  const app = loaded.packages[0]?.provides?.app;
+  return JSON.stringify(app ? [app.samples, app.armies, app.missions, app.layout] : null);
+}
+/** The setup the test table was started with, and the last save's. */
+const setups = { table: null as string | null, last: null as string | null };
+const rememberSetup = (setup: string) => void (setups.last = setup);
+const tableStarted = () => void (setups.table = setups.last);
+
+/** Once the test table's sandbox has restarted with a new save: why its rules aren't running, or null. */
+function settled(): Promise<string | null> {
+  return new Promise((resolve) => {
+    let started = useSandbox.getState().status === "starting";
+    const done = (why: string | null) => {
+      off();
+      clearTimeout(timer);
+      resolve(why);
+    };
+    const off = useSandbox.subscribe((s) => {
+      if (s.status === "starting") started = true;
+      else if (started) done(s.status === "on" ? s.error : (s.error ?? t("the rules stopped")));
+    });
+    const timer = setTimeout(() => done(null), 10_000);
+  });
+}
+
 /** Dispatch the saved package onto the running test table: the sandbox restarts with it. */
 function reload(hash: string) {
   const pkg = useLibrary.getState().packages[hash];
@@ -367,6 +538,7 @@ function TestTableButton({ save }: { save: () => Promise<string | null> }) {
   const [busy, setBusy] = useState(false);
   const start = async () => {
     const hash = await save();
+    tableStarted();
     const pkg = hash ? useLibrary.getState().packages[hash] : undefined;
     if (!pkg) return;
     setBusy(true);
@@ -393,6 +565,7 @@ function TestTableButton({ save }: { save: () => Promise<string | null> }) {
         else setBusy(false);
         return;
       }
+      quiet.initial = useStore.getState().record.initial;
       deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
       useStore.getState().dispatch({ type: "turn/next" });
       setBusy(false);
@@ -410,6 +583,7 @@ function TestTableButton({ save }: { save: () => Promise<string | null> }) {
 function TablePane() {
   const playing = useStore((s) => s.session !== null);
   const status = useSandbox((s) => s.status);
+  const error = useSandbox((s) => s.error);
   const record = useStore((s) => s.record);
   const warnings = useWarnings();
   const log = useMemo(
@@ -432,12 +606,13 @@ function TablePane() {
     );
   return (
     <div className="workshop-table">
-      <p>
-        {status === "on"
+      <p className={error && status !== "starting" ? "bad" : undefined}>
+        {status === "on" && !error
           ? t("Your rules are running.")
           : status === "starting"
             ? t("Starting your rules…")
             : t("Your rules aren't running.")}
+        {error && status !== "starting" && <> {error}</>}
       </p>
       <p>
         <button onClick={openWarnings}>
@@ -478,11 +653,16 @@ function SoakPane({ draft }: { draft: Draft }) {
         {results.map((r) => (
           <li key={r.seed} className={r.ok ? "ok" : "bad"}>
             {r.ok
-              ? t("Game {seed}: fine, {steps} moves to round {round}.", {
-                  seed: r.seed,
-                  steps: r.steps,
-                  round: r.round,
-                })
+              ? r.finished
+                ? t("Game {seed}: fine, played to the end in {steps} moves.", {
+                    seed: r.seed,
+                    steps: r.steps,
+                  })
+                : t("Game {seed}: fine for {steps} moves, stopped in round {round}.", {
+                    seed: r.seed,
+                    steps: r.steps,
+                    round: r.round,
+                  })
               : t("Game {seed} went wrong: {why}", { seed: r.seed, why: r.failures[0] ?? "" })}
           </li>
         ))}
@@ -539,6 +719,11 @@ function ExportPane({ draft }: { draft: Draft }) {
         )}
       </p>
       <h3>{t("Share it in the gallery")}</h3>
+      <p className="hint">
+        {t(
+          "To host it: make a gist at gist.github.com, paste the file in, save, and copy its Raw link. A file in a GitHub repository works too (its Raw button).",
+        )}
+      </p>
       <label>
         {t("Where the file is hosted (a raw link)")}
         <input type="url" value={url} placeholder={URL_HINT} onChange={(e) => setUrl(e.target.value)} />
@@ -561,12 +746,44 @@ function ExportPane({ draft }: { draft: Draft }) {
   );
 }
 
-/** The SDK's types, as the source a package is checked against. */
+/**
+ * What a package can use (UX 313): the commands, the game view and the keys
+ * of a module, readably, with the SDK's full types folded below.
+ */
 function SdkPane() {
+  const section = (title: string, items: Completion[]) => (
+    <>
+      <h3>{title}</h3>
+      <dl className="workshop-ref">
+        {items.map((c) => (
+          <div key={c.label}>
+            <dt>
+              <code>
+                {c.label}
+                {c.detail && c.detail !== "snippet" ? ` ${c.detail}` : ""}
+              </code>
+            </dt>
+            <dd>{typeof c.info === "string" ? c.info : ""}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
+  );
   return (
     <div className="workshop-sdk">
       <p>{t("Everything a package can use. In the editor, type ctx. or view. for suggestions.")}</p>
-      <pre>{sdk}</pre>
+      {section(t("Commands a rule yields (ctx.)"), CTX)}
+      {section(t("The game as it stands (view.)"), VIEW)}
+      {section(t("Keys and snippets"), KEYS)}
+      <p>
+        <a href={`${GALLERY.replace("community-modules", "packages")}`} target="_blank" rel="noreferrer">
+          {t("How packages work")}
+        </a>
+      </p>
+      <details>
+        <summary>{t("The full types")}</summary>
+        <pre>{sdk}</pre>
+      </details>
     </div>
   );
 }

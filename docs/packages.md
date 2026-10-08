@@ -165,11 +165,15 @@ Once a player trusts the package, its game appears in the lobby's **Game** list,
 The rest of `app` (`PackageApp` in `src/sdk`) is optional, and all of it runs in the sandbox:
 
 - `sample(seat)` and `layout(table)` run once when the package loads, and the results are handed to the app as data.
+- `armies` lists every sample army players can pick from (one per faction). Without it, **Add an army** offers the two `sample` gives.
+- A sample army's model can say how it looks: `look: { shape, color }` draws a stand-in figure (`trooper`, `brute`, `robed`, `beast`, `walker`, `drone` or `vehicle`) in that colour, and `height` sets its line-of-sight height in inches.
+- In `layout`, a terrain entry can name one of the app's terrain templates instead of listing solids: `{ template: "Ruin", id: "r1", position: { x, y }, facing }` (Ruin, Small ruin, Tall ruin, Container, Woods, Barricade, Crater, Hill). `templateCategory` maps each template to one of the game's terrain categories.
+- `missions` are picked at setup, like a built-in game's (`Mission` in `src/sdk`). They run in the sandbox: `setup` once for the system's `defaultTable` (scaled to the table played on), and each `suggest` as the game goes, with the answers handed to the app.
 - `importRoster(fileName, data)` reads an army list file (`data` is its bytes) and returns a roster shaped like `sample`'s. The lobby's **Add an army** uses it for the package's game.
 - `rankRules(game, unit)` returns `{ width, maxBonus }` for rank-and-file games, and `leaving(game)` lists the units that must leave the table. Both run after every event, and the app reads their latest answers.
 - `sidePanel(view)` describes a panel of the game's own, as data: a `title`, text `lines`, and `buttons` that each start one of the package's procedures (`{ label, procedure, args?, player?, disabled? }`). It is redrawn after every event; return `null` to hide it.
 
-[`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game.
+[`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game, and [`games/rift-lanterns`](../games/rift-lanterns/README.md) is a whole one, with factions, missions and stand-in figures.
 
 ## The sandbox
 
@@ -185,7 +189,7 @@ If any call into the package (`available`, `targets`, a step of a rule) takes lo
 
 ## Trying it
 
-The quickest way is the **Module workshop** on the start page: an editor with the SDK's completions, starter templates, a test table that reloads your package every time you save (Ctrl+S), the soak bot, and export as a file or as a pull request for the [community modules](community-modules.md) gallery.
+The quickest way is the **Module workshop** on the start page: an editor that checks your code against the SDK's types as you type (a wrong key, event type or `ctx` call is underlined with the reason, and hovering shows a type and its comment), starter templates, a test table that reloads your package every time you save (Ctrl+S), the soak bot, a **Check** button that gives one verdict (types, loading with the shape check, and a two-round bot game), and export as a file or as a pull request for the [community modules](community-modules.md) gallery.
 
 By hand:
 

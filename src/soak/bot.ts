@@ -88,7 +88,20 @@ export function noteTaken(ctx: BotContext, state: GameState, move: BotMove): voi
   if (!ctx.tidy || move.intent.type !== "action/take") return;
   const phase = phaseKey(state);
   if (ctx.taken?.phase !== phase) ctx.taken = { phase, keys: new Set() };
-  ctx.taken.keys.add(`${move.intent.unitId}:${move.intent.action}`);
+  ctx.taken.keys.add(takenKey(state, move.intent.unitId, move.intent.action));
+}
+
+/**
+ * A tidy bot's record of what a unit did this phase. Moving and staying put
+ * are one choice (a unit Advances or makes a Normal move or Remains
+ * stationary, UX 305), so they share a key.
+ */
+function takenKey(state: GameState, unitId: string, action: string): string {
+  const def = systemOf(state).actions.find((a) => a.id === action);
+  const moves =
+    !!def &&
+    ((def.move && !/pile|consolidat|charge/i.test(def.move.kind)) || (def.sets ?? []).includes("stationary"));
+  return `${unitId}:${moves ? "move" : action}`;
 }
 
 function phaseKey(state: GameState): string {
@@ -345,12 +358,22 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     kind: "endActivation",
   }));
   // Units in contact fight before the phase moves on (code actions such as The Old World's).
-  if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) yield* codeMoves(state, ctx, units);
+  if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) {
+    // Now and then a challenge first (The Old World), so it comes up as often as people make them.
+    if (ctx.rng() < 0.5) yield* codeMoves(state, ctx, units, /challenge/i);
+    yield* codeMoves(state, ctx, units);
+  }
   if (ctx.wholeGame && ctx.idle < 6) {
     yield* codeMoves(state, ctx, units);
     const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
     if (u) yield moveUnit(state, u, { ...ctx, tidy: true }, 6);
   }
+  // ...and charges are declared more often than not, so fights (and crowded ones) come up.
+  if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
+    yield* codeMoves(state, ctx, units, /charge|march|join|leave/i);
+  // Characters come and go now and then (The Old World's join and leave).
+  if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.3)
+    yield* codeMoves(state, ctx, units, /leave/i);
   const r = ctx.rng();
   if (r < 0.6) yield* actions();
   else if (r < 0.75) yield* codeMoves(state, ctx, units);
@@ -360,8 +383,9 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
       ctx,
       side.map((p) => p.id),
     );
-  else if (r < 0.95 && units[0] && (!ctx.tidy || /move/i.test(currentSlot(state)?.id ?? "")))
-    yield moveUnit(state, units[0], ctx, 6);
+  // A loose move: the fuzzer's. A tidy bot moves each unit once, through its move action or the
+  // movement step above, so a unit that stayed put stays put (UX 305).
+  else if (r < 0.95 && units[0] && !ctx.tidy) yield moveUnit(state, units[0], ctx, 6);
   // Move the game on: end an activation, or the phase, more surely the longer it sits.
   if (ctx.rng() < onward) yield* end;
   if (ctx.idle > patience && ctx.rng() < onward) yield* next;
@@ -381,7 +405,7 @@ function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMo
   for (const o of shuffle(ctx.rng, unitActions(state, u.id))) {
     if (o.def.reactTo) continue;
     // A tidy bot plays like a person would: each action once a phase, and no pointless ones.
-    if (ctx.tidy && (taken?.has(`${u.id}:${o.def.id}`) || pointless(state, u, o.def.id))) continue;
+    if (ctx.tidy && (taken?.has(takenKey(state, u.id, o.def.id)) || pointless(state, u, o.def.id))) continue;
     if (o.def.procedure) {
       const weapons = Object.keys(u.sheet?.weapons ?? {});
       const targets = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
@@ -431,7 +455,7 @@ function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMo
 }
 
 /** The game module's own code actions (sdk CodeAction), and any a rules package adds. */
-function* codeMoves(state: GameState, ctx: BotContext, units: Unit[]): Generator<BotMove> {
+function* codeMoves(state: GameState, ctx: BotContext, units: Unit[], only?: RegExp): Generator<BotMove> {
   if (state.script) return;
   const mod = gameModule(state.system);
   const phase = currentSlot(state)?.id;
@@ -451,9 +475,14 @@ function* codeMoves(state: GameState, ctx: BotContext, units: Unit[]): Generator
         : []),
       ...(ctx.packageActions?.(u.id, u.owner) ?? []).map((r) => ({ ...r, targeted: r.targets.length > 0 })),
     ];
-    for (const r of shuffle(ctx.rng, rows)) {
-      if (r.available !== true) continue;
-      const target = pick(ctx.rng, r.targets)?.unitId;
+    // Actions at an enemy (fight, challenge) before the rest, so units in contact get to fight.
+    const ordered = shuffle(ctx.rng, rows).sort((x, y) => Number(y.targeted) - Number(x.targeted));
+    for (const r of ordered) {
+      if (r.available !== true || (only && !only.test(r.id))) continue;
+      // Half the time a charge joins a fight a friend is already in (crowded fights, #40).
+      const busy =
+        /charge/i.test(r.id) && ctx.rng() < 0.5 ? r.targets.filter((t) => inFight(state, t.unitId)) : [];
+      const target = pick(ctx.rng, busy.length ? busy : r.targets)?.unitId;
       if (r.targeted && !target) continue;
       const move: BotMove = {
         intent: {
@@ -470,11 +499,26 @@ function* codeMoves(state: GameState, ctx: BotContext, units: Unit[]): Generator
   }
 }
 
+/** Whether an enemy unit is already touching another unit (in a fight). */
+function inFight(state: GameState, unitId: string | undefined): boolean {
+  const u = unitId ? state.units[unitId] : undefined;
+  if (!u) return false;
+  const mine = aliveModels(state, u);
+  return Object.values(state.units).some(
+    (o) =>
+      opposed(state, o.owner, u.owner) &&
+      aliveModels(state, o).length &&
+      unitDistance(mine, aliveModels(state, o)) < 0.6,
+  );
+}
+
 /** Stratagems the side can use now. */
 function* stratagems(state: GameState, ctx: BotContext, players: PlayerId[]): Generator<BotMove> {
   for (const p of players)
     for (const o of shuffle(ctx.rng, playerActions(state, p))) {
       if (!o.ok || o.def.custom) continue;
+      // A tidy bot keeps its re-rolls for a roll worth re-rolling (UX 305).
+      if (ctx.tidy && /re.?roll/i.test(o.def.id)) continue;
       const target = o.targets ? pick(ctx.rng, o.targets) : undefined;
       if (o.targets && !target) continue;
       yield {
@@ -529,8 +573,17 @@ function chargeMove(state: GameState, u: Unit, ctx: BotContext, inches: number, 
   const fx = fs.reduce((a, m) => a + m.position.x, 0) / fs.length;
   const fy = fs.reduce((a, m) => a + m.position.y, 0) / fs.length;
   const len = Math.hypot(fx - cx, fy - cy) || 1;
-  const d = Math.max(0, Math.min(inches, gap - 0.02));
-  const [dx, dy] = [((fx - cx) / len) * d, ((fy - cy) / len) * d];
+  // Step along the line between centres until the nearest models touch: the nearest pair is
+  // rarely on that line, so each step closes only part of the gap.
+  let [dx, dy] = [0, 0];
+  let left = inches;
+  for (let i = 0; i < 8 && left > 0.01 && gap > 0.05; i++) {
+    const d = Math.max(0, Math.min(left, gap - 0.02));
+    [dx, dy] = [dx + ((fx - cx) / len) * d, dy + ((fy - cy) / len) * d];
+    left -= d;
+    const moved = ms.map((m) => ({ ...m, position: { x: m.position.x + dx, y: m.position.y + dy } }));
+    gap = unitDistance(moved, fs);
+  }
   return {
     intent: {
       type: "models/move",
@@ -562,11 +615,19 @@ function wrongKind(u: Unit, weapon: string, action: string): boolean {
 
 /** Falling back with no enemy near, the kind of move that teaches a learner the wrong thing. */
 function pointless(state: GameState, u: Unit, action: string): boolean {
-  if (!/withdraw|fall.?back|retreat|disengage/i.test(action)) return false;
+  // Piling in and consolidating are for units in a fight (UX 305); falling back is for units near one.
+  const reach = /pile.?in|consolidat/i.test(action)
+    ? 2
+    : /withdraw|fall.?back|retreat|disengage/i.test(action)
+      ? 6
+      : 0;
+  if (!reach) return false;
   const mine = aliveModels(state, u);
   return !Object.values(state.units).some(
     (e) =>
-      opposed(state, e.owner, u.owner) && alive(state, e) && unitDistance(mine, aliveModels(state, e)) <= 6,
+      opposed(state, e.owner, u.owner) &&
+      alive(state, e) &&
+      unitDistance(mine, aliveModels(state, e)) <= reach,
   );
 }
 

@@ -6,6 +6,7 @@ import { pendingScores, vpByRound, type Pending } from "../missions/scoring";
 import type { Mission } from "../sdk";
 import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { systemModule } from "../systems";
+import { useSandbox } from "../sandbox/runtime";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
@@ -81,7 +82,13 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
   const { dispatch, scrub, role, stats } = useStore();
   const canControl = useCanControl();
   const mission = missionOf(game);
-  const pending = useMemo(() => pendingScores(record, game, mission), [record, game, mission]);
+  // A package mission's suggestions arrive from its sandbox after the event that asked for them.
+  const answers = useSandbox((s) => s.app);
+  const pending = useMemo(
+    () => pendingScores(record, game, mission),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [record, game, mission, answers],
+  );
   const [edits, setEdits] = useState<Record<string, number>>({});
   if (!pending.length || scrub !== null) return null;
   // Once the battle is over the result screen lists them (inline), not the floating panel.
@@ -157,7 +164,13 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   const live = useStore((s) => s.scrub === null);
   const over = battleOver(game);
   const record = useStore((s) => s.record);
-  const pending = useMemo(() => pendingScores(record, game, mission), [record, game, mission]);
+  // A package mission's suggestions arrive from its sandbox after the event that asked for them.
+  const answers = useSandbox((s) => s.app);
+  const pending = useMemo(
+    () => pendingScores(record, game, mission),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [record, game, mission, answers],
+  );
   // Once the battle is over, cards still face down are turned up, unscored (missions/scoring.ts).
   const unplayed = over
     ? players.flatMap((p) =>
@@ -306,7 +319,13 @@ export function Result() {
   const game = useGame();
   const record = useStore((s) => s.record);
   const mission = missionOf(game);
-  const pending = useMemo(() => pendingScores(record, game, mission), [record, game, mission]);
+  // A package mission's suggestions arrive from its sandbox after the event that asked for them.
+  const answers = useSandbox((s) => s.app);
+  const pending = useMemo(
+    () => pendingScores(record, game, mission),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [record, game, mission, answers],
+  );
   if (!battleOver(game)) return null;
   const seats = sides(game);
   const vp = (seat: number) => game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0;

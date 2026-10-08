@@ -41,9 +41,11 @@ export class Table {
     return event;
   }
   notes(): string[] {
-    return this.events.flatMap((e) =>
-      e.type === "script/step" ? e.events.flatMap((x) => (x.type === "log/note" ? [x.text] : [])) : [],
+    // A closed procedure can start a script too (`{ do: "script" }`): its step rides on the clear.
+    const steps = this.events.flatMap((e) =>
+      e.type === "script/step" ? [e] : e.type === "procedure/clear" && e.script ? [e.script] : [],
     );
+    return steps.flatMap((e) => e.events.flatMap((x) => (x.type === "log/note" ? [x.text] : [])));
   }
 }
 
