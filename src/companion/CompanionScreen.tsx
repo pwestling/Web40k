@@ -5,6 +5,7 @@ import { useCanControl, useStore } from "../store";
 import { aliveModels } from "../systems/wh40k/rules";
 import { systemModule } from "../systems";
 import { ArmyImport } from "../ui/ArmyImport";
+import { CampaignFold } from "../campaign/CampaignUI";
 import { AttackPanel } from "../ui/AttackPanel";
 import { GameSettings } from "../ui/GameSettings";
 import { GameLog, NameCard, UndoButton, downloadReplay } from "../ui/Hud";
@@ -238,6 +239,7 @@ function GameTab() {
           <RollButton intent={{ type: "dice/roll", count, sides }}>{t("Roll")}</RollButton>
         </div>
       )}
+      <CampaignFold />
       <GameSettings />
       <div className="row wrap">
         {battleOver(game) && (

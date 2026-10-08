@@ -9,6 +9,8 @@ import { GamePackagesSettings } from "./Packages";
 export function GameSettings() {
   const game = useGame();
   const { dispatch, role, scrub } = useStore();
+  // Play by mail stretches over days: a chess clock would count the days between turns.
+  const mail = useStore((s) => s.mail !== null);
   const { cover, modelsBlock } = game.settings;
   const los = game.settings.los ?? "true";
   const editable = role !== "spectator" && scrub === null;
@@ -68,7 +70,7 @@ export function GameSettings() {
               <option value={90}>{t("In a {degrees}° front arc", { degrees: 90 })}</option>
             </select>
           </label>
-          <ClockSettingsRow value={game.settings.clock} change={(clock) => change({ clock })} />
+          {!mail && <ClockSettingsRow value={game.settings.clock} change={(clock) => change({ clock })} />}
           <label className="check">
             <input
               type="checkbox"

@@ -159,6 +159,7 @@ export function ClockKeeper() {
   const selfId = useStore((s) => s.session?.selfId);
   const mode = useStore((s) => s.mode);
   const dispatch = useStore((s) => s.dispatch);
+  const mail = useStore((s) => s.mail !== null);
   const paused = useMemo(() => (settings ? clocks(record).paused : false), [settings, record]);
   // Who was away last time: the clocks stop when someone goes, not again after a "Restart anyway" (UX 216).
   const wasAway = useRef("");
@@ -177,7 +178,8 @@ export function ClockKeeper() {
       dispatch({ type: "clock/pause", paused: true, reason: "disconnect" });
     else if (!away && paused === "disconnect") dispatch({ type: "clock/pause", paused: false });
   }, [settings, mode, net, players, selfId, paused, dispatch]);
-  return <ClockCaller />;
+  // A mail game's turns are days apart: no time calls (its clocks can't be set; an old game's are ignored).
+  return mail ? null : <ClockCaller />;
 }
 
 /**
