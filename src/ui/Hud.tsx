@@ -61,6 +61,8 @@ export function Hud() {
   // While the dice tray rolls, the log waits for the dice to land.
   const held = useHold((s) => s.held);
   const lesson = useCoach((s) => s.lesson);
+  // A lesson's table is set up for the learner: those placements aren't play, so the log starts after them (UX 187).
+  const setupEnd = useCoach((s) => (s.lesson && !s.free ? (s.progress.began[0] ?? null) : null));
   const mail = useStore((s) => s.mail !== null);
   const log = useMemo(
     () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
@@ -238,7 +240,7 @@ export function Hud() {
       )}
       <TemplateTools />
       <ol className="log">
-        {collapseEmpty(log)
+        {collapseEmpty(setupEnd === null ? log : log.filter((i) => i.kind === "header" || i.seq > setupEnd))
           .slice(-60)
           .reverse()
           .map((item) =>
