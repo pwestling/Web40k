@@ -1,0 +1,1 @@
+function e(e,t){let n=document.createElement(`a`);n.href=URL.createObjectURL(e),n.download=t,n.click(),setTimeout(()=>URL.revokeObjectURL(n.href),1e4)}function t(t,n){return e(new Blob([JSON.stringify(n)],{type:`application/json`}),t),t}function n(e,t,n){return`${e.replace(/[^\w\- ]+/g,``).trim().replace(/\s+/g,`-`)||t}${n}`}export{e as n,t as r,n as t};
