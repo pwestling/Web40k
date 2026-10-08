@@ -1,4 +1,5 @@
 import { displayName } from "../i18n/names";
+import { RulesText } from "./RulesText";
 import { useState } from "react";
 import { narrow } from "./narrow";
 import type { Player } from "../core";
@@ -333,6 +334,7 @@ export function Reminders({
       {teaching && (
         <TeachRule
           name={teaching.ability.name}
+          text={teaching.ability.text}
           system={systemOf(game)}
           onSave={(auto) => {
             teachAbility(teaching.owner, teaching.ability.name, auto);
@@ -350,7 +352,9 @@ export function Reminders({
                 <span style={{ color: game.players[r.owner]?.color }}>{unit?.name}</span>: {r.ability.name}
                 {r.applied && " ✓"}
               </summary>
-              <p className="small">{r.ability.text}</p>
+              <div className="small rules-text">
+                <RulesText text={r.ability.text} />
+              </div>
             </details>
             {live && canControl(r.owner) && !r.applied && (
               <button
@@ -364,8 +368,12 @@ export function Reminders({
               </button>
             )}
             {live && canControl(r.owner) && teachable && (
-              <button className="quiet small" onClick={() => setTeaching(r)}>
-                {t("Teach it")}
+              <button
+                className="teach-button small"
+                title={t("Teach it this rule")}
+                onClick={() => setTeaching(r)}
+              >
+                ⚙ {t("Teach it")}
               </button>
             )}
           </li>
@@ -391,21 +399,22 @@ function TeachStratagem({ player, id }: { player: string; id: string | null }) {
         side: s.side,
         ...(s.phases ? { phases: s.phases } : {}),
         ...(s.once ? { once: s.once } : {}),
+        ...(s.targetKeywords ? { targetKeywords: s.targetKeywords } : {}),
       }
     : { name: "", cp: 1, side: "either" };
   return (
     <>
       {s?.auto && <span className="muted small">⚙ {describeAuto(s.auto, system)} </span>}
       <button
-        className="quiet small"
+        className={s?.auto ? "quiet small" : "teach-button small"}
         title={s ? t("Teach the app what this stratagem does") : t("A stratagem your list didn't bring")}
         onClick={() => setOpen(true)}
       >
-        {s ? (s.auto ? t("Change") : t("Teach it")) : t("Teach a stratagem")}
+        {s ? (s.auto ? t("Change") : `⚙ ${t("Teach it")}`) : `⚙ ${t("Teach a stratagem")}`}
       </button>
       {open && (
         <TeachRule
-          {...(s ? { name: s.name } : {})}
+          {...(s ? { name: s.name, text: s.effect ?? s.text } : {})}
           {...(s?.auto ? { auto: s.auto } : {})}
           system={system}
           stratagem={settings}
@@ -445,8 +454,12 @@ function ArmyRules({ player }: { player: string }) {
               <span className="muted">{t("A reminder; you play it")}</span>
             )}{" "}
             {mine && !(isAutomated(system, r) && !r.auto) && (
-              <button className="quiet small" onClick={() => setTeaching(r.name)}>
-                {r.auto ? t("Change") : t("Teach it this rule")}
+              <button
+                className={r.auto ? "quiet small" : "teach-button small"}
+                title={t("Teach it this rule")}
+                onClick={() => setTeaching(r.name)}
+              >
+                {r.auto ? t("Change") : `⚙ ${t("Teach it")}`}
               </button>
             )}
           </li>
@@ -455,6 +468,7 @@ function ArmyRules({ player }: { player: string }) {
       {rule && (
         <TeachRule
           name={rule.name}
+          text={rule.text}
           {...(rule.auto ? { auto: rule.auto } : {})}
           system={system}
           onSave={(auto) => {

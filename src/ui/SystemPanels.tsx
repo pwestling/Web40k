@@ -1,4 +1,5 @@
 import { UnitWarnings } from "./TableWarnings";
+import { RulesText } from "./RulesText";
 import { playerShape } from "./sides";
 import { useState, type ReactNode } from "react";
 import {
@@ -90,7 +91,7 @@ function AbilityList({ abilities, spent }: { abilities: Ability[]; spent?: (name
           </summary>
           {list.map((a) => (
             <p key={a.name} className="small">
-              <strong>{a.name}.</strong> {a.text}
+              <strong>{a.name}.</strong> <RulesText text={a.text} />
               {spent?.(a.name) ? <em> {t("(spent)")}</em> : null}
             </p>
           ))}

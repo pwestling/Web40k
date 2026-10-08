@@ -7,6 +7,7 @@ import { t } from "../i18n";
 import { gameText } from "../i18n";
 import { teach, teachingOf, type TeachWhat, type Teaching } from "../systems/wh40k/teach";
 import { describeAuto } from "./autoText";
+import { RulesText } from "./RulesText";
 
 /**
  * "Teach it this rule" (#53): the player builds a rule the app only reminds
@@ -15,7 +16,10 @@ import { describeAuto } from "./autoText";
  */
 
 /** A stratagem's own settings, beside the rule it runs on the unit it targets. */
-export type StratagemSettings = Pick<ArmyStratagem, "name" | "cp" | "side" | "phases" | "once">;
+export type StratagemSettings = Pick<
+  ArmyStratagem,
+  "name" | "cp" | "side" | "phases" | "once" | "targetKeywords"
+>;
 
 const FRESH: Teaching = { when: { kind: "attacks" }, who: { kind: "self" }, what: [] };
 
@@ -41,6 +45,7 @@ const rollLabel = (r: string) =>
 
 export function TeachRule({
   name,
+  text,
   auto,
   system,
   stratagem,
@@ -49,6 +54,8 @@ export function TeachRule({
 }: {
   /** The rule's name, as the heading; a new stratagem names itself in the form. */
   name?: string;
+  /** Its words, quoted at the top, so the player builds it with the rule in front of them (UX 388). */
+  text?: string;
   /** The rule as it is now, to change it. */
   auto?: AbilityAuto;
   system: GameSystem;
@@ -88,11 +95,19 @@ export function TeachRule({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="row spread">
-          <h2>{name ? t("Teach it {rule}", { rule: gameText(name) }) : t("Teach a stratagem")}</h2>
+          <h2>{name ? t("Teach it: {rule}", { rule: gameText(name) }) : t("Teach a stratagem")}</h2>
           <button className="quiet" title={t("Close (Esc)")} onClick={onClose}>
             ✕
           </button>
         </div>
+        {text?.trim() && (
+          <details className="teach-quote" open>
+            <summary className="small muted">{t("The rule")}</summary>
+            <div className="small">
+              <RulesText text={text} />
+            </div>
+          </details>
+        )}
         <p className="muted small">
           {t("Pick when it works, who it works on and what it does. The app plays it from then on.")}
         </p>
@@ -138,6 +153,18 @@ export function TeachRule({
                 <option value="inactive">{t("your opponent's turn")}</option>
                 <option value="either">{t("either player's turn")}</option>
               </select>
+            </label>
+            <label className="small">
+              {t("On which units")}{" "}
+              <input
+                value={strat.targetKeywords ?? ""}
+                placeholder={t("any of yours, or a keyword")}
+                size={16}
+                onChange={(e) => {
+                  const { targetKeywords: _, ...rest } = strat;
+                  setStrat(e.target.value ? { ...rest, targetKeywords: e.target.value } : rest);
+                }}
+              />
             </label>
             <div className="row wrap small" role="group" aria-label={t("Phases")}>
               {phases.map((p) => (

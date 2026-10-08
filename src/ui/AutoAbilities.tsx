@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
+import { RulesText } from "./RulesText";
 import type { Ability, AbilityAuto, Unit } from "../core";
 import { describesWeaponKeyword, isAutomated, isWeaponRule } from "../core/content/player";
 import type { GameSystem } from "../core/content/schema";
 import { systemOf } from "../core/content/turn";
 import { describeAuto } from "./autoText";
-import { TeachRule } from "./TeachRule";
+import { TeachRule, type StratagemSettings } from "./TeachRule";
 import { teachAbility } from "./teachActions";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
@@ -153,7 +154,18 @@ interface ArmyItem {
   /** What the recognizer read, to confirm; none when it stays a reminder. */
   auto: AbilityAuto | null;
   set: (r: ImportedRoster, on: boolean) => ImportedRoster;
+  /** Its words, and putting a taught rule on it (#53). */
+  text: string;
+  put: (r: ImportedRoster, auto: AbilityAuto | null, settings?: StratagemSettings) => ImportedRoster;
+  /** A stratagem's own settings, for the teach window. */
+  stratagem?: StratagemSettings;
 }
+
+/** One ability with its rule set (or taken off). */
+const withAuto = <A extends { auto?: AbilityAuto }>(a: A, auto: AbilityAuto | null): A => {
+  const { auto: _, ...rest } = a;
+  return (auto ? { ...rest, auto } : rest) as A;
+};
 
 function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
   const army = roster.army!;
@@ -176,6 +188,11 @@ function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
         });
         return { ...r, army: { ...r.army!, rules } };
       },
+      text: rule.text,
+      put: (r, auto) => ({
+        ...r,
+        army: { ...r.army!, rules: r.army!.rules.map((a, j) => (j === i ? withAuto(a, auto) : a)) },
+      }),
     });
   });
   roster.units.forEach((u, ui) => {
@@ -200,6 +217,21 @@ function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
           });
           return { ...r, units };
         },
+        text: a.text,
+        put: (r, auto) => ({
+          ...r,
+          units: r.units.map((x, j) =>
+            j !== ui
+              ? x
+              : {
+                  ...x,
+                  sheet: {
+                    ...x.sheet,
+                    abilities: x.sheet.abilities.map((b, k) => (k === ai ? withAuto(b, auto) : b)),
+                  },
+                },
+          ),
+        }),
       });
     });
   });
@@ -220,6 +252,38 @@ function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
         });
         return { ...r, army: { ...r.army!, stratagems } };
       },
+      text: st.effect ?? st.text,
+      stratagem: {
+        name: st.name,
+        cp: st.cp,
+        side: st.side,
+        ...(st.phases ? { phases: st.phases } : {}),
+        ...(st.once ? { once: st.once } : {}),
+        ...(st.targetKeywords ? { targetKeywords: st.targetKeywords } : {}),
+      },
+      put: (r, auto, settings) => ({
+        ...r,
+        army: {
+          ...r.army!,
+          stratagems: r.army!.stratagems.map((x, j) => {
+            if (j !== i) return x;
+            const { phases: _p, once: _o, targetKeywords: _k, ...rest } = withAuto(x, auto);
+            const next = settings
+              ? {
+                  ...rest,
+                  cp: settings.cp,
+                  side: settings.side,
+                  ...(settings.phases?.length ? { phases: settings.phases } : {}),
+                  ...(settings.once && settings.once !== "phase" ? { once: settings.once } : {}),
+                  ...(settings.targetKeywords?.trim()
+                    ? { targetKeywords: settings.targetKeywords.trim() }
+                    : {}),
+                }
+              : withAuto(x, auto);
+            return auto ? { ...next, targetsUnit: true } : next;
+          }),
+        },
+      }),
     });
   });
   return items;
@@ -238,7 +302,9 @@ function ArmyAutomation({
   const items = armyItems(roster, system);
   const done = items.filter((i) => i.done).length;
   const proposals = items.filter((i) => i.auto);
-  const reminders = items.filter((i) => !i.done && !i.auto).map((i) => i.label);
+  const reminders = items.filter((i) => !i.done && !i.auto);
+  const [teaching, setTeaching] = useState<string | null>(null);
+  const taught = items.find((i) => i.key === teaching);
   const army = roster.army!;
   const name = army.detachment ?? army.faction ?? t("Your army");
   if (!items.length) return null;
@@ -297,15 +363,48 @@ function ArmyAutomation({
         </button>
       )}
       {reminders.length > 0 && (
-        <p className="muted small">
-          {tn(
-            reminders.length,
-            "{names}: the app reminds you of it; play it yourself.",
-            "{names}: the app reminds you of these; play them yourself.",
-            { names: reminders.join(", ") },
-          )}
-        </p>
+        <TeachChips names={reminders.map((i) => ({ key: i.key, label: i.label }))} onTeach={setTeaching} />
       )}
+      {taught && (
+        <TeachRule
+          name={taught.label}
+          text={taught.text}
+          {...(taught.auto ? { auto: taught.auto } : {})}
+          {...(taught.stratagem ? { stratagem: taught.stratagem } : {})}
+          system={system}
+          onSave={(auto, settings) => {
+            setRoster(taught.put(roster, auto, settings));
+            setTeaching(null);
+          }}
+          onClose={() => setTeaching(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Reminders at import, each a chip to teach (UX 391): the army goes to the shelf taught. */
+function TeachChips({
+  names,
+  onTeach,
+}: {
+  names: { key: string; label: string }[];
+  onTeach: (key: string) => void;
+}) {
+  return (
+    <div className="small teach-chips">
+      <span className="muted">
+        {tn(
+          names.length,
+          "The app reminds you of this one; play it yourself, or teach it:",
+          "The app reminds you of these; play them yourself, or teach them:",
+        )}
+      </span>{" "}
+      {names.map((n) => (
+        <button key={n.key} className="teach-button small" onClick={() => onTeach(n.key)}>
+          ⚙ {n.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -321,6 +420,7 @@ function Coverage({
   setRoster: (r: ImportedRoster) => void;
   system: GameSystem;
 }) {
+  const [teaching, setTeaching] = useState<string | null>(null);
   // Open while proposals wait for an answer (UX 291).
   const [fold, setFold] = useState(() => read.proposals.some((p) => !p.ability.auto));
   const set = (picks: Proposal[], on: boolean) => {
@@ -397,14 +497,29 @@ function Coverage({
         </details>
       )}
       {read.reminders.length > 0 && (
-        <p className="muted small">
-          {tn(
-            read.reminders.length,
-            "{names}: the app reminds you of it; play it yourself.",
-            "{names}: the app reminds you of these; play them yourself.",
-            { names: read.reminders.join(", ") },
-          )}
-        </p>
+        <TeachChips names={read.reminders.map((n) => ({ key: n, label: n }))} onTeach={setTeaching} />
+      )}
+      {teaching && (
+        <TeachRule
+          name={teaching}
+          text={roster.units.flatMap((u) => u.sheet.abilities).find((a) => a.name === teaching)?.text ?? ""}
+          system={system}
+          onSave={(auto) => {
+            // The same rule on every unit that has it.
+            setRoster({
+              ...roster,
+              units: roster.units.map((u) => ({
+                ...u,
+                sheet: {
+                  ...u.sheet,
+                  abilities: u.sheet.abilities.map((a) => (a.name === teaching ? withAuto(a, auto) : a)),
+                },
+              })),
+            });
+            setTeaching(null);
+          }}
+          onClose={() => setTeaching(null)}
+        />
       )}
     </div>
   );
@@ -434,7 +549,7 @@ export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Abil
   return (
     <div className="ability-line">
       <p>
-        <strong>{ability.name}.</strong> {ability.text}
+        <strong>{ability.name}.</strong> <RulesText text={ability.text} />
       </p>
       {ability.auto && (
         <p className="small auto-on">
@@ -462,14 +577,20 @@ export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Abil
       )}
       {teachable && !ability.auto && (
         <p className="small">
-          <button className="quiet small" onClick={() => setTeaching(true)}>
-            {proposal ? t("Not quite? Teach it this rule") : t("Teach it this rule")}
+          {proposal && <span className="muted">{t("Not quite?")} </span>}
+          <button
+            className="teach-button small"
+            title={t("Teach it this rule")}
+            onClick={() => setTeaching(true)}
+          >
+            ⚙ {t("Teach it")}
           </button>
         </p>
       )}
       {teaching && (
         <TeachRule
           name={ability.name}
+          text={ability.text}
           {...(ability.auto || proposal ? { auto: (ability.auto ?? proposal)! } : {})}
           system={system}
           onSave={(auto) => {

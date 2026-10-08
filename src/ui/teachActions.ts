@@ -69,12 +69,13 @@ export function teachStratagem(
       side: "either",
       text: "",
     };
-    const { auto: _a, phases: _p, once: _o, ...rest } = base;
+    const { auto: _a, phases: _p, once: _o, targetKeywords: _k, ...rest } = base;
     const next: ArmyStratagem = {
       ...rest,
       cp: settings.cp,
       side: settings.side,
       ...(settings.phases?.length ? { phases: settings.phases } : {}),
+      ...(settings.targetKeywords?.trim() ? { targetKeywords: settings.targetKeywords.trim() } : {}),
       ...(settings.once && settings.once !== "phase" ? { once: settings.once } : {}),
       ...(auto ? { auto, targetsUnit: true } : {}),
     };
