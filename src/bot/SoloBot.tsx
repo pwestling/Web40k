@@ -8,6 +8,7 @@ import { waitsOn } from "../teach/coach";
 import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
 import { useSolo } from "./solo";
+import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
 const BOT_PACE = 500;
@@ -69,16 +70,25 @@ async function play(): Promise<void> {
     return;
   }
   let move: BotMove | null;
+  // Each decision shows as "bot:think" in the browser's performance timeline (scripts/bot.mjs reads them).
+  const thinking = performance.now();
+  // A package game thinks in its sandbox, where the game's code is; a built-in one in its own worker,
+  // so the table keeps drawing (a Sharp decision takes up to a second on a phone).
   const remote = sandboxBotMove(solo.level, solo.seat, player, solo.seed);
-  if (remote) {
-    move = (await remote.catch(() => null)) as BotMove | null;
-    // The game moved on while the sandbox thought: the next change asks again.
+  const worker = remote ? null : thinkOffThread(solo.level, solo.seat, player, solo.seed);
+  if (remote || worker) {
+    let failed = false;
+    move = (await (remote ?? worker)!.catch(() => ((failed = true), null))) as BotMove | null;
+    // The game moved on while it thought: the next change asks again.
     if (useStore.getState().record !== record) return;
+    // Its worker didn't start: think on the page from now on.
+    if (failed && worker && !canThinkOffThread()) return void window.setTimeout(() => void play(), BOT_PACE);
   } else {
     const policy = solo.policy ?? botPolicy(solo.level, game, solo.seat, { seed: solo.seed });
     if (!solo.policy) useSolo.setState({ policy });
     move = policy.move(record, game, { seat: solo.seat, player });
   }
+  performance.measure("bot:think", { start: thinking, detail: { remote: !!remote, worker: !!worker } });
   // A package game's moves were checked in its sandbox, which has the game's code; this side hasn't.
   if (!move || (!remote && !legal(record, game, move))) {
     // Nothing the rules allow just yet (a roll settling): look again shortly.
@@ -90,5 +100,6 @@ async function play(): Promise<void> {
     const after = useStore.getState();
     if (remote || legal(after.record, after.game, move.then)) dispatch(move.then.intent, move.then.as);
   }
+  if (worker) sawOffThread(move);
   useSolo.getState().policy?.saw?.(useStore.getState().game, move);
 }

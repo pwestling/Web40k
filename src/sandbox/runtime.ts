@@ -327,7 +327,9 @@ export function sandboxBotMove(
   const game = useStore.getState().game;
   if (!box || !useSandbox.getState().code[systemOf(game).id]) return null;
   sync();
-  return box.call<BotMoveData | null>({ t: "bot", level, seat, player, seed });
+  // The watchdog's 250 ms is for the package's own calls: a Sharp decision tries dozens of moves
+  // through the package's code and takes 300 ms or more on a phone (perf/results.md, #45).
+  return box.call<BotMoveData | null>({ t: "bot", level, seat, player, seed }, STARTUP_MS);
 }
 
 /** A bot's move as the sandbox sends it (soak/bot.ts BotMove). */
