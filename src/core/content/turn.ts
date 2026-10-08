@@ -1,3 +1,4 @@
+import { die } from "../dice";
 import type { GameState, Model, PlayerId, Unit } from "../types";
 import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
 import { getSystem } from "./systems";
@@ -33,6 +34,8 @@ export interface TurnSlot {
   onEnter: EffectAction[];
   /** For alternating activations: actions each activation allows. */
   actionsPerActivation?: Expr;
+  /** Players may place pool dice on card slots here. */
+  placeDice?: boolean;
 }
 
 const cache = new WeakMap<GameSystem, TurnSlot[]>();
@@ -60,6 +63,7 @@ function flatten(segments: Segment[], playerTurn: boolean): TurnSlot[] {
           playerTurn,
           actions: seg.actions ?? [],
           onEnter,
+          ...(seg.placeDice ? { placeDice: true } : {}),
         });
         out.push(
           ...flatten(
@@ -278,7 +282,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
 }
 
 /** Flags the engine keeps on a unit during its activation (see play.ts). */
-const ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting"];
+const ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
 
 /** Clear unit flags; a trailing "*" clears every flag with that prefix. */
 function clearFlags(state: GameState, flags: string[], seat?: number): GameState {
@@ -369,7 +373,10 @@ function turnAction(
   if (def?.kind === "dicePool") {
     const sides = def.sides ?? 6;
     const have = state.pools?.[player]?.[def.id] ?? [];
-    const rolled = Array.from({ length: Math.max(0, amount) }, () => 1 + Math.floor(rng() * sides));
+    // Dice placed on cards are out of the pool until spent (FSD: fewer to roll).
+    const placed = Object.values(state.placed?.[player] ?? {}).reduce((n, f) => n + f.length, 0);
+    const room = def.total !== undefined ? def.total - placed - have.length : Infinity;
+    const rolled = Array.from({ length: Math.max(0, Math.min(amount, room)) }, () => die(rng, sides));
     return {
       ...state,
       pools: { ...state.pools, [player]: { ...state.pools?.[player], [def.id]: [...have, ...rolled] } },

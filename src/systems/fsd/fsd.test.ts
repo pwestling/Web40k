@@ -8,12 +8,13 @@ import {
   type Intent,
   type PlayerId,
 } from "../../core";
-import { actionTargets, unitActions } from "../../core/content/play";
+import { actionTargets, cantPlace, unitActions } from "../../core/content/play";
 import { poolUsed } from "../../core/content/player";
 import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
 import { fsdSample } from "./sample";
 import { fsdChecks } from "./checks";
+import { gameView } from "../../core/script";
 
 /** A seeded rng, so every run of the test rolls the same dice. */
 function rng(seed: number) {
@@ -51,6 +52,15 @@ function setup(): GameState {
 const unitNamed = (s: GameState, name: string, owner: string) =>
   Object.values(s.units).find((u) => u.name === name && u.owner === owner)!;
 
+/** Start the round and go past pre-assigning ADs to the activations. */
+function toActivations(s: GameState): GameState {
+  for (let i = 0; i < 4 && currentSlot(s)?.kind !== "alternate"; i++)
+    s = play(s, { type: "turn/next" }, "p1");
+  return s;
+}
+
+const checks = (s: GameState) => fsdChecks(gameView(s, "fsd-1.7"));
+
 /** Put every model of a unit in a row around (x, y). */
 function place(s: GameState, unitId: string, x: number, y: number): GameState {
   const unit = s.units[unitId]!;
@@ -60,16 +70,13 @@ function place(s: GameState, unitId: string, x: number, y: number): GameState {
 
 describe("Full Spectrum Dominance in play", () => {
   it("warns about a unit moved without activating", () => {
-    let s = play(setup(), { type: "turn/next" }, "p1");
+    let s = toActivations(setup());
     const squad = unitNamed(s, "Rifle Squad", "p1");
-    const view = { state: s } as Parameters<typeof fsdChecks>[0];
-    expect(fsdChecks(view)).toEqual([]);
+    expect(checks(s)).toEqual([]);
     s = place(s, squad.id, 0, 4);
-    expect(fsdChecks({ ...view, state: s }).map((w) => [w.id, w.unitId])).toEqual([
-      ["activateFirst", squad.id],
-    ]);
+    expect(checks(s).map((w) => [w.id, w.unitId])).toEqual([["activateFirst", squad.id]]);
     s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
-    expect(fsdChecks({ ...view, state: s })).toEqual([]);
+    expect(checks(s)).toEqual([]);
   });
 
   it("sets the table and rolls activation dice at the start of each round", () => {
@@ -78,8 +85,8 @@ describe("Full Spectrum Dominance in play", () => {
     expect(s.settings.los).toBe("footprint");
     expect(s.resources.p1).toEqual({ VP: 0 });
     s = play(s, { type: "turn/next" }, "p1");
-    // The dice roll is a step: the marker goes straight on to activations.
-    expect(currentSlot(s)?.kind).toBe("alternate");
+    // The dice roll is a step: the marker goes straight on to pre-assigning ADs.
+    expect(currentSlot(s)?.name).toBe("Pre-assign ADs");
     expect(s.pools?.p1?.readyDice).toHaveLength(8);
     expect(s.pools?.p2?.readyDice).toHaveLength(8);
   });
@@ -90,7 +97,7 @@ describe("Full Spectrum Dominance in play", () => {
     const gang = unitNamed(s, "Raider Gang", "p2");
     s = place(s, tank.id, 0, 4);
     s = place(s, gang.id, -1.5, -2);
-    s = play(s, { type: "turn/next" }, "p1");
+    s = toActivations(s);
 
     // Before activating, only Activate is open; the enemy can't act on our turn.
     const before = unitActions(s, tank.id);
@@ -154,7 +161,7 @@ describe("Full Spectrum Dominance in play", () => {
     const squad = unitNamed(s, "Rifle Squad", "p1");
     s = place(s, boss.id, -6, 8);
     s = place(s, squad.id, -6, 10);
-    s = play(s, { type: "turn/next" }, "p1");
+    s = toActivations(s);
     const activate = unitActions(s, boss.id).find((o) => o.def.id === "activate")!;
     expect(activate.commands?.count).toBe(2);
     expect(activate.commands?.candidates).toContain(squad.id);
@@ -165,6 +172,8 @@ describe("Full Spectrum Dominance in play", () => {
     s = play(s, { type: "turn/pass" }, "p2");
     s = play(s, { type: "turn/pass" }, "p1");
     expect(currentSlot(s)?.name).toBe("Scoring");
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.name).toBe("Cleanup");
     s = play(s, { type: "turn/next" }, "p1");
     expect(s.turn.round).toBe(2);
     expect(s.units[boss.id]?.status?.activated).toBeUndefined();
@@ -186,6 +195,7 @@ describe("Full Spectrum Dominance in play", () => {
     expect(again).toBeNull();
     s = play(s, { type: "pool/ready", player: "p1", resource: "readyDice" }, "p1");
     expect(poolUsed(s, "p1", "readyDice")).toBe("ready");
+    s = toActivations(s);
     const faces = s.pools!.p1!.readyDice!;
     const highest = faces.indexOf(Math.max(...faces));
     const option = unitActions(s, tank.id, { dice: [highest] }).find((o) => o.def.id === "activate")!;
@@ -202,7 +212,7 @@ describe("Full Spectrum Dominance in play", () => {
     const tank = unitNamed(s, "Lancer Tank", "p1");
     s = place(s, tank.id, 0, 2);
     s = place(s, walker.id, 0, -1);
-    s = play(s, { type: "turn/next" }, "p1");
+    s = toActivations(s);
     s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
     let pinned = false;
     let notes = 0;
@@ -229,5 +239,221 @@ describe("Full Spectrum Dominance in play", () => {
     }
     expect(notes).toBeGreaterThan(0);
     expect(pinned).toBe(true);
+  });
+  it("pre-assigns dice to card slots, and a reacting unit fires with them", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, tank.id, 0, 3);
+    s = place(s, gang.id, -1.5, 0.5);
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.name).toBe("Pre-assign ADs");
+    s = { ...s, pools: { ...s.pools, p2: { readyDice: [5, 2, 6] } } };
+    // A 5 doesn't fit the charges' 1-3 slot; a 2 does.
+    expect(cantPlace(s, "p2", gang.id, "breaching-charges", 0)).toBe("A 5 doesn't fit its slots");
+    expect(cantPlace(s, "p2", gang.id, "carbines", 1)).toBe("No AD slots");
+    s = play(s, { type: "dice/place", unitId: gang.id, weapon: "breaching-charges", index: 1 }, "p2");
+    expect(s.placed?.p2).toEqual({ [`${gang.id}/breaching-charges`]: [2] });
+    expect(s.pools?.p2?.readyDice).toEqual([5, 6]);
+    expect(cantPlace(s, "p2", gang.id, "breaching-charges", 0)).toBe("Its slots are full");
+
+    // In the activations, placing is for the active player before an activation.
+    s = toActivations(s);
+    expect(cantPlace(s, "p2", gang.id, "breaching-charges", 0)).toBe(
+      "Dice go on cards at the start of your turn",
+    );
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    s = play(
+      s,
+      { type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: gang.id },
+      "p1",
+    );
+    s = play(s, { type: "action/take", unitId: gang.id, action: "react" }, "p2");
+    const fire = (w: string) =>
+      unitActions(s, gang.id, { weapon: w, targetId: tank.id }).find((o) => o.def.id === "fire")!;
+    expect(fire("breaching-charges").ok).toBe(true);
+    expect(fire("breaching-charges").faces).toEqual([2]);
+    s = play(
+      s,
+      {
+        type: "action/take",
+        unitId: gang.id,
+        action: "fire",
+        weapon: "breaching-charges",
+        targetId: tank.id,
+      },
+      "p2",
+    );
+    // The die on the card is spent; the Ready dice are untouched by the shot.
+    expect(s.placed?.p2).toEqual({});
+    expect(s.pools?.p2?.readyDice).toHaveLength(1);
+
+    // The reaction's results wait for the tank's shot and land with it.
+    let r = rng(3);
+    while (!s.procedure!.run.done) s = play(s, { type: "procedure/roll" }, "p2", r);
+    const reaction = s.procedure!.run.outcomes.filter((o) => o.kind !== "note");
+    const before = JSON.stringify(s.models);
+    s = play(s, { type: "procedure/clear" }, "p2");
+    expect(s.pending).toBeNull();
+    // (With these dice the charges pin the tank, but it still gets its shot off.)
+    expect(reaction).toContainEqual(expect.objectContaining({ unitId: tank.id, status: "pinned" }));
+    expect(s.deferred).toEqual(expect.arrayContaining(reaction));
+    expect(s.units[tank.id]?.status?.pinned).toBeUndefined();
+    expect(JSON.stringify(s.models)).toBe(before);
+    expect(s.procedure?.unitId).toBe(tank.id);
+    r = rng(4);
+    while (!s.procedure!.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+    expect(s.deferred ?? null).toBeNull();
+    expect(s.units[tank.id]?.status?.pinned).toBe(true);
+  });
+
+  it("a reacting unit without placed dice can't use a slotted weapon", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, tank.id, 0, 3);
+    s = place(s, gang.id, -1.5, 0.5);
+    s = toActivations(s);
+    s = { ...s, pools: { ...s.pools, p2: { readyDice: [5, 2, 6] } } };
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    s = play(
+      s,
+      { type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: gang.id },
+      "p1",
+    );
+    s = play(s, { type: "action/take", unitId: gang.id, action: "react" }, "p2");
+    const charges = unitActions(s, gang.id, { weapon: "breaching-charges", targetId: tank.id }).find(
+      (o) => o.def.id === "fire",
+    )!;
+    expect(charges.why).toBe("Needs a die showing 1-3 placed on its slots");
+  });
+
+  it("switches off a damaged system's action and drops the dice on it", () => {
+    let s = toActivations(setup());
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    s = { ...s, pools: { ...s.pools, p1: { readyDice: [5, 1] } } };
+    s = play(s, { type: "dice/place", unitId: tank.id, weapon: "light-cannon", index: 0 }, "p1");
+    expect(s.placed?.p1?.[`${tank.id}/light-cannon`]).toEqual([5]);
+    // The light cannon is the first line on the card: System 1.
+    s = applyEvent(s, { type: "unit/status", id: tank.id, key: "damageS1", value: true });
+    expect(s.placed?.p1).toEqual({});
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    const fire = (w: string) => unitActions(s, tank.id, { weapon: w }).find((o) => o.def.id === "fire")!;
+    expect(fire("light-cannon").why).toBe("System 1 is damaged");
+    expect(fire("coax-mg").why).not.toBe("System 2 is damaged");
+  });
+
+  it("keeps placed dice over the round, rolling fewer, and discards them at cleanup", () => {
+    let s = toActivations(setup());
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    s = { ...s, placed: { p1: { [`${tank.id}/light-cannon`]: [6], "x/y": [1, 2, 3, 4] } } };
+    s = play(s, { type: "turn/pass" }, "p1");
+    s = play(s, { type: "turn/pass" }, "p2");
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.name).toBe("Cleanup");
+    s = play(s, { type: "dice/discard", unitId: "x", weapon: "y" }, "p1");
+    expect(Object.keys(s.placed?.p1 ?? {})).toEqual([`${tank.id}/light-cannon`]);
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(s.turn.round).toBe(2);
+    // 12 dice in the AD Pool, one still on a card: the roll is the full 8.
+    expect(s.pools?.p1?.readyDice).toHaveLength(8);
+    s = { ...s, placed: { p1: { a: [1, 2, 3, 4, 5] } } };
+    s = play(s, { type: "turn/next" }, "p1");
+    s = play(s, { type: "turn/pass" }, "p1");
+    s = play(s, { type: "turn/pass" }, "p2");
+    s = play(s, { type: "turn/next" }, "p1");
+    s = play(s, { type: "turn/next" }, "p1");
+    expect(s.turn.round).toBe(3);
+    expect(s.pools?.p1?.readyDice).toHaveLength(7);
+  });
+  it("warns when a single move breaks an enemy's area of control", () => {
+    let s = setup();
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, gang.id, 0, 0);
+    s = place(s, squad.id, -12, 0);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: squad.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: squad.id, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    // Straight past the gang, within 1 DU of it, and out the other side.
+    const past = place(s, squad.id, 1, -4.5);
+    expect(checks(past).map((w) => w.id)).toContain("areaOfControl");
+    expect(checks(past).find((w) => w.id === "areaOfControl")?.message).toMatch(/enter and leave/);
+    // Pinned enemies control nothing.
+    const pinned = applyEvent(past, { type: "unit/status", id: gang.id, key: "pinned", value: true });
+    expect(checks(pinned).map((w) => w.id)).not.toContain("areaOfControl");
+    // A second move may leave it.
+    s = play(s, { type: "action/take", unitId: squad.id, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    expect(checks(place(s, squad.id, 1, -4.5)).map((w) => w.id)).not.toContain("areaOfControl");
+  });
+
+  it("prepares a prepared action instead of firing it, and other actions end interacting", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const cannon = s.units[tank.id]!.sheet!.weapons["light-cannon"]!;
+    s = {
+      ...s,
+      units: {
+        ...s.units,
+        [tank.id]: {
+          ...s.units[tank.id]!,
+          sheet: {
+            ...s.units[tank.id]!.sheet!,
+            weapons: {
+              ...s.units[tank.id]!.sheet!.weapons,
+              "light-cannon": { ...cannon, keywords: ["Prepared"] },
+            },
+          },
+        },
+      },
+    };
+    s = toActivations(s);
+    s = { ...s, pools: { ...s.pools, p1: { readyDice: [5, 1, 1] } } };
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank.id, action: "interact" }, "p1");
+    expect(s.units[tank.id]?.status?.interacting).toBe(true);
+    const fire = unitActions(s, tank.id, { weapon: "light-cannon" }).find((o) => o.def.id === "fire")!;
+    expect(fire.why).toBe("Not for this weapon");
+    s = play(s, { type: "action/take", unitId: tank.id, action: "prepare", weapon: "light-cannon" }, "p1");
+    expect(s.units[tank.id]?.status).toMatchObject({ "prepared.light-cannon": true });
+    expect(s.units[tank.id]?.status?.interacting).toBeUndefined();
+    expect(s.pools?.p1?.readyDice).toEqual([1]);
+  });
+
+  it("deploys a unit from reserve as an activation with one action and no die", () => {
+    let s = setup();
+    const squad = unitNamed(s, "Rifle Squad", "p1");
+    s = play(s, { type: "unit/reserve", id: squad.id, reserve: true }, "p1");
+    s = toActivations(s);
+    const opts = unitActions(s, squad.id);
+    expect(opts.find((o) => o.def.id === "activate")?.ok).toBe(false);
+    const deploy = opts.find((o) => o.def.id === "deploy")!;
+    expect(deploy.ok).toBe(true);
+    expect(deploy.cost).toBe("");
+    const before = s.pools?.p1?.readyDice?.length;
+    s = play(s, { type: "action/take", unitId: squad.id, action: "deploy" }, "p1");
+    expect(s.pools?.p1?.readyDice?.length).toBe(before);
+    expect(s.units[squad.id]?.status).toMatchObject({ acting: true, actionBudget: 1 });
+    s = play(s, { type: "unit/reserve", id: squad.id, reserve: false }, "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, gang.id, 0, 0);
+    expect(checks(place(s, squad.id, 0, 4)).map((w) => w.id)).toContain("deployDistance");
+    expect(checks(place(s, squad.id, 0, 9)).map((w) => w.id)).not.toContain("deployDistance");
+  });
+
+  it("uses a support card by spending ADs instead of activating", () => {
+    let s = toActivations(setup());
+    s = { ...s, pools: { ...s.pools, p1: { readyDice: [6, 2, 4] } } };
+    s = play(
+      s,
+      { type: "player/action", action: "support", label: "Artillery strike", cost: 2, dice: [0] },
+      "p1",
+    );
+    expect(s.pools?.p1?.readyDice).toEqual([4]);
+    expect(
+      resolveIntent({ type: "player/action", action: "support", label: "Recon", cost: 2 }, "p1", rng(1), s),
+    ).toBeNull();
   });
 });

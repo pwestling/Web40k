@@ -1,7 +1,14 @@
-import { baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
+import { die } from "../dice";
+import { baseOutline, baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
 import { modelSight } from "../los";
 import { inArc as blockArc } from "../regiment";
-import { footprintVisibility, inFootprint, modelDistance } from "../terrain";
+import {
+  footprintVisibility,
+  inFootprint,
+  modelDistance,
+  segmentCrossesFootprint2D,
+  whollyWithin,
+} from "../terrain";
 import type { GameState, Model, TerrainPiece, Unit, WeaponProfile } from "../types";
 import { bool, evaluate, num, resolve, type EvalContext } from "./expr";
 import type {
@@ -81,6 +88,8 @@ export interface WeaponView {
   rules: RuleRef[];
   /** Models of the unit carrying it, once per copy carried. */
   bearers: ModelView[];
+  /** Its place on the unit's card, from 1 (FSD's system lines). */
+  order: number;
   [characteristic: string]: unknown;
 }
 
@@ -330,6 +339,7 @@ export function weaponView(
     flags: [],
     rules: bindRules(rules, weapon.keywords, "weapon"),
     bearers,
+    order: Object.keys(unit.sheet?.weapons ?? {}).indexOf(weapon.id) + 1,
   };
   return applyContinuous(system, view, opts.rules);
 }
@@ -464,7 +474,7 @@ export function rollSum(sum: DiceSum, rng: () => number): { rolls: number[]; tot
       continue;
     }
     for (let i = 0; i < Math.abs(t.count); i++) {
-      const r = 1 + Math.floor(rng() * t.sides);
+      const r = die(rng, t.sides);
       rolls.push(r);
       total += Math.sign(t.count) * r;
     }
@@ -598,8 +608,77 @@ export function tableGeometry(state: GameState, system?: GameSystem): NonNullabl
     }
     if (query.kind === "cover")
       return inCover(state, system, resolve(query.from, ctx), resolve(query.to, ctx));
-    throw new Error(`Geometry query "${query.kind}" is not supported yet`);
+    if (query.kind === "inArea") {
+      // Some model (every model, `wholly`) of the subject is in the area.
+      const models = modelsOf(resolve(query.subject, ctx), state);
+      const test = areaTest(state, query.area, models[0]);
+      if (!models.length || !test) return false;
+      return query.wholly ? models.every((m) => test(m, true)) : models.some((m) => test(m, false));
+    }
+    if (query.kind === "crosses") {
+      // The line between the closest pair of centres passes over terrain of the category.
+      const a = modelsOf(resolve(query.from, ctx), state);
+      const b = modelsOf(resolve(query.to, ctx), state);
+      let pair: [Model, Model] | null = null;
+      for (const x of a)
+        for (const y of b)
+          if (
+            !pair ||
+            centreDistance(x.position, y.position) < centreDistance(pair[0].position, pair[1].position)
+          )
+            pair = [x, y];
+      if (!pair) return false;
+      const [x, y] = pair;
+      return state.terrain.some(
+        (p) => p.category === query.terrainCategory && segmentCrossesFootprint2D(p, x.position, y.position),
+      );
+    }
+    if (query.kind === "elevation") {
+      // How far the highest model of `from` stands above the lowest of `to`.
+      const a = modelsOf(resolve(query.from, ctx), state);
+      const b = modelsOf(resolve(query.to, ctx), state);
+      if (!a.length || !b.length) return 0;
+      return (Math.max(...a.map((m) => m.z ?? 0)) - Math.min(...b.map((m) => m.z ?? 0))) / scale;
+    }
+    throw new Error(`Geometry query "${(query as { kind: string }).kind}" is not supported`);
   };
+}
+
+/**
+ * An area named by a ref: "terrain.<category>" (any piece of it),
+ * "zone.own", "zone.enemy" or "zone.<seat>" (deployment zones, by the
+ * subject's owner). A model is in it if its centre is (or, wholly, its base).
+ */
+function areaTest(
+  state: GameState,
+  area: string,
+  subject: Model | undefined,
+): ((m: Model, wholly: boolean) => boolean) | null {
+  const [kind, which] = area.split(".");
+  if (kind === "terrain" && which) {
+    const pieces = state.terrain.filter((p) => p.category === which);
+    return (m, wholly) => pieces.some((p) => (wholly ? whollyWithin(p, m) : inFootprint(p, m.position)));
+  }
+  if (kind === "zone" && which) {
+    const seat = subject ? state.players[subject.owner]?.seat : undefined;
+    const zones = state.zones.filter((z) =>
+      which === "own" ? z.seat === seat : which === "enemy" ? z.seat !== seat : z.seat === Number(which),
+    );
+    const inside = (p: { x: number; y: number }) => zones.some((z) => inPolygon(z.points, p));
+    return (m, wholly) => (wholly ? baseOutline(m).every(inside) && inside(m.position) : inside(m.position));
+  }
+  return null;
+}
+
+/** Point in polygon, by ray casting. */
+function inPolygon(points: { x: number; y: number }[], p: { x: number; y: number }): boolean {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const a = points[i]!;
+    const b = points[j]!;
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
 }
 
 /** Models of the units these models belong to, which never block each other's sight. */

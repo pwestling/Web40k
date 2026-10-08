@@ -7,6 +7,7 @@ import { usePackageActions } from "../sandbox/runtime";
 import type { ActionRow } from "../sandbox/protocol";
 import { gameModule } from "../systems";
 import { useGame } from "./hooks";
+import { t } from "../i18n";
 
 /**
  * A game module's code actions for this unit (sdk CodeAction): those for the
@@ -72,10 +73,14 @@ export function CodeActions({ unit }: { unit: Unit }) {
               {a.name}
             </button>
             {targets.length > 1 && (
-              <select value={target} onChange={(e) => setPicked({ ...picked, [a.id]: e.target.value })}>
-                {targets.map((t) => (
-                  <option key={t.unitId} value={t.unitId}>
-                    {t.label}
+              <select
+                aria-label={t("Target for {action}", { action: a.name })}
+                value={target}
+                onChange={(e) => setPicked({ ...picked, [a.id]: e.target.value })}
+              >
+                {targets.map((x) => (
+                  <option key={x.unitId} value={x.unitId}>
+                    {x.label}
                   </option>
                 ))}
               </select>

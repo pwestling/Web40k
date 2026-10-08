@@ -64,7 +64,7 @@ It has these parts:
 - `constants`: named numbers rules can read as `const.<id>`.
 - `settings`: table settings the system plays with by default, such as its line of sight mode.
 
-The turn structure is a list of segments. A phase is a window where listed actions are offered. `playerTurns` gives each player a full turn of the nested segments (I go, you go). `alternate` has players take turns activating one thing from a pool. Here is Full Spectrum Dominance's round: roll a pool of activation dice, then alternate spending them.
+The turn structure is a list of segments. A phase is a window where listed actions are offered. `playerTurns` gives each player a full turn of the nested segments (I go, you go). `alternate` has players take turns activating one thing from a pool. Here is Full Spectrum Dominance's round: roll a pool of activation dice, place some on cards' slots ahead of time, alternate spending them, then score and tidy up. A phase with `placeDice` opens a window for placing pool dice on cards; a dice pool with a `total` counts dice still on cards against the next roll.
 
 ```ts
 // src/core/content/examples/fsd.ts
@@ -77,6 +77,7 @@ round: [
       { do: "gainResource", resource: "readyDice", amount: ref("const.adCapacity"), player: "opponent" },
     ],
   },
+  { kind: "phase", id: "preassign", name: "Pre-assign ADs", placeDice: true },
   {
     kind: "alternate",
     id: "activations",
@@ -87,11 +88,12 @@ round: [
         kind: "phase",
         id: "activation",
         name: "Activations",
-        actions: ["activate", "react", "unpin", "move", "fire", "interact"],
+        actions: ["activate", "deploy", "react", "unpin", "move", "fire", "prepare", "interact"],
       },
     ],
   },
   { kind: "phase", id: "scoring", name: "Scoring" },
+  { kind: "phase", id: "cleanup", name: "Cleanup", placeDice: true },
 ],
 ```
 
@@ -152,16 +154,16 @@ A `Mission` (`src/sdk/index.ts`) says where the armies deploy, where the objecti
 
 ## The four built-in modules
 
-|               | Sci-fi battle (`wh40k`)                                    | Rank and flank (`tow`)                                                                                        | Conquest (`conquest`)                                                                                     | Full Spectrum Dominance (`fsd`)                                                  |
-| ------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Turn          | I go, you go: five phases per player turn, 5 rounds        | I go, you go: four phases per player turn, 6 rounds                                                           | Command phase, then alternating activations (two actions each), then Victory; 10 rounds                   | Roll activation dice, then alternate spending them (reactions allowed); 6 rounds |
-| Units         | Free models (`skirmish`) with coherency                    | Ranked blocks, rank width by troop type                                                                       | Ranked blocks of stands, two wide                                                                         | Free bases (`skirmish`)                                                          |
-| Distance      | Inches, 60" x 44" table                                    | Inches, 72" x 48"                                                                                             | Inches, 72" x 48"                                                                                         | DU (3"), 36" x 24"                                                               |
-| Line of sight | `true` (default)                                           | `true`, 90° vision arc                                                                                        | `true`, 90° vision arc                                                                                    | `footprint`                                                                      |
-| Attacks       | Data procedure, plus its own attack editor (`dedicatedUi`) | Shooting as data; close combat as code                                                                        | Data procedures (clash and volley)                                                                        | Data procedure, saves opposed to the hit roll                                    |
-| Code          | `functions`: `enemyGap`, `belowHalf`                       | `actions`: charge, fight, panic                                                                               | `procedures` (morale, reinforcements), `functions` (`nextCard`), `actions` (characters joining regiments) | None: all data                                                                   |
-| App extras    | Secret objectives, missions                                | Army import, `rankRules`, templates, scatter and artillery dice, flee dice, 2D6-keep-highest charge, missions | Command stack `panel`, `leaving`, `rankRules`, 1D6 charge, sample mission                                 | Sample mission                                                                   |
-| Secrets       | Secret objectives                                          | None                                                                                                          | Each command card is a secret until drawn                                                                 | None                                                                             |
+|               | Sci-fi battle (`wh40k`)                                    | Rank and flank (`tow`)                                                                                        | Conquest (`conquest`)                                                                                     | Full Spectrum Dominance (`fsd`)                                                                                 |
+| ------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Turn          | I go, you go: five phases per player turn, 5 rounds        | I go, you go: four phases per player turn, 6 rounds                                                           | Command phase, then alternating activations (two actions each), then Victory; 10 rounds                   | Roll activation dice, pre-assign them to cards, then alternate spending them (simultaneous reactions); 6 rounds |
+| Units         | Free models (`skirmish`) with coherency                    | Ranked blocks, rank width by troop type                                                                       | Ranked blocks of stands, two wide                                                                         | Free bases (`skirmish`)                                                                                         |
+| Distance      | Inches, 60" x 44" table                                    | Inches, 72" x 48"                                                                                             | Inches, 72" x 48"                                                                                         | DU (3"), 36" x 24"                                                                                              |
+| Line of sight | `true` (default)                                           | `true`, 90° vision arc                                                                                        | `true`, 90° vision arc                                                                                    | `footprint`                                                                                                     |
+| Attacks       | Data procedure, plus its own attack editor (`dedicatedUi`) | Shooting as data; close combat as code                                                                        | Data procedures (clash and volley)                                                                        | Data procedure, saves opposed to the hit roll                                                                   |
+| Code          | `functions`: `enemyGap`, `belowHalf`                       | `actions`: charge, fight, panic                                                                               | `procedures` (morale, reinforcements), `functions` (`nextCard`), `actions` (characters joining regiments) | Areas of control as table `checks`; the rest is data                                                            |
+| App extras    | Secret objectives, missions                                | Army import, `rankRules`, templates, scatter and artillery dice, flee dice, 2D6-keep-highest charge, missions | Command stack `panel`, `leaving`, `rankRules`, 1D6 charge, sample mission                                 | Sample mission, dice on card slots, prepared tokens, support cards, reserves                                    |
+| Secrets       | Secret objectives                                          | None                                                                                                          | Each command card is a secret until drawn                                                                 | None                                                                                                            |
 
 Full Spectrum Dominance shows how far data alone can go. Rank and flank is the model for a game with complex code rules and its own army import. Conquest is the model for a game with its own panel and hidden information.
 

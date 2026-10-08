@@ -33,6 +33,8 @@ const NAMES: Record<string, () => string> = {
   terrain: () => t("Moving through terrain"),
   deepStrike: () => "Deep Strike",
   activateFirst: () => t("Activate before moving"),
+  areaOfControl: () => t("Area of control"),
+  deployDistance: () => t("Deploying from reserve"),
 };
 
 export function checkName(state: GameState, id: string): string {
@@ -91,6 +93,9 @@ function dataWarnings(state: GameState, unit: Unit, checks: CheckDef[]): Omit<Ta
 }
 
 /** Every warning on the table now, overridden ones left out. */
+/** Code checks that measure the table. */
+const MEASURED = new Set(["coherency", "moveDistance", "terrain", "deepStrike"]);
+
 export function tableWarnings(state: GameState): TableWarning[] {
   const system = systemOf(state);
   const module = gameModule(state.system);
@@ -115,7 +120,12 @@ export function tableWarnings(state: GameState): TableWarning[] {
       if (unit.status?.reserves || !aliveModels(state, unit).length) continue;
       found.push(...dataWarnings(state, unit, data));
     }
+  // At a real table (#37) positions here mean nothing: checks that measure the board stay quiet.
+  const measured = (w: { checkId: string }) =>
+    MEASURED.has(w.checkId) ||
+    (system.checks ?? []).some((c) => c.id === w.checkId && JSON.stringify(c).includes('"query"'));
   return found.flatMap((w) => {
+    if (state.settings.companion && measured(w)) return [];
     const unit = w.unitId ? state.units[w.unitId] : undefined;
     const where = unit ? placement(state, unit) : 0;
     if (unit && unit.status?.[overrideKey(w.checkId)] === where) return [];

@@ -8,6 +8,7 @@ import {
   type PlayerId,
 } from "../core";
 import { systemModule } from "../systems";
+import { currentSlot } from "../core/content/turn";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import type { Lesson } from "./lesson";
 
@@ -73,5 +74,7 @@ export function setUpLesson(lesson: Lesson, get: () => GameState, send: Send, ta
   const you = lesson.you ?? 0;
   const first = sidePlayers(get(), you)[0]!.id;
   send({ type: "turn/next" }, first);
+  // Straight on past a window for placing dice on cards (FSD's pre-assigning) to the first actions.
+  if (currentSlot(get())?.placeDice) send({ type: "turn/next" }, first);
   if (get().turn.activeSeat !== you) send({ type: "turn/first", seat: you }, first);
 }

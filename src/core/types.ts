@@ -12,7 +12,7 @@ import type { Secrets } from "./secrets";
  */
 
 import type { AttackState } from "./attack";
-import type { ProcedureRun } from "./content/runner";
+import type { Outcome, ProcedureRun } from "./content/runner";
 import type { ScriptState } from "./script";
 import type { ClockSettings } from "./clock";
 
@@ -345,6 +345,16 @@ export interface GameState {
   procedure?: ProcedureState | null;
   /** An action held while the other player decides whether to react. */
   pending?: PendingReaction | null;
+  /**
+   * A reaction's results, waiting for the action it answered: both land
+   * together (FSD resolves the two at the same time).
+   */
+  deferred?: Outcome[] | null;
+  /**
+   * Pool dice placed on cards ahead of time (FSD pre-assigned ADs): by
+   * player, then by "unitId/weaponId", the faces on that action's slots.
+   */
+  placed?: Record<PlayerId, Record<string, number[]>>;
   /** Player actions taken (stratagems), for their once-per-phase limits. */
   used?: Record<PlayerId, PlayerActionUse[]>;
   /** The last measurement a player shared, shown to everyone until cleared. */
@@ -421,6 +431,12 @@ export interface GameSettings {
   teamSize?: number;
   /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
   clock?: ClockSettings | null;
+  /**
+   * Table companion (#37): the players have real models on a real table. No
+   * 3D board; range, sight and moves are theirs to judge, and positions here
+   * mean nothing.
+   */
+  companion?: boolean;
 }
 
 /** Victory points a side scored at one scoring moment (or chose not to). */

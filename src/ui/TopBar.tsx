@@ -55,7 +55,17 @@ export function TopBar() {
       ? players.filter((p) => !p.ready && !canControl(p.id)).map((p) => p.name)
       : [];
   // The system's own reasons to think twice before moving on (Conquest: reinforcements not in).
-  const leaving = deploying ? [] : (systemModule(game.system).leaving?.(game) ?? []);
+  // A rule waiting on a player's answer (UX 246: a dispel question) holds the phase until it's answered.
+  const asked = !deploying && game.script?.waiting;
+  const askedText = asked
+    ? t("Waiting for {name} to answer: {question}", {
+        name: game.players[asked.player]?.name ?? t("a player"),
+        question: asked.question,
+      })
+    : null;
+  const leaving = deploying
+    ? []
+    : [...(askedText ? [askedText] : []), ...(systemModule(game.system).leaving?.(game) ?? [])];
   // A side with no army yet is worth a second thought before the battle starts (UX 155).
   const armyless = deploying
     ? seats
@@ -266,11 +276,11 @@ export function TopBar() {
           ))}
         {myTurn && !over && !(view.alternating && !deploying) && (
           <button
-            className={view.alternating && !deploying ? "" : notReady.length ? "" : "primary"}
+            className={view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}
             title={
               notReady.length
                 ? t("Waiting for {names} to be ready", { names: formatList(notReady) })
-                : t("Next phase")
+                : (askedText ?? t("Next phase"))
             }
             onClick={() => {
               // Advisory: a player who isn't ready yet, or a step left undone, gets a say, but can be overruled.

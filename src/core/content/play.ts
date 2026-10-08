@@ -38,7 +38,7 @@ import { opposed } from "../teams";
  * slot began), and "used.<action>" for once-per-round limits.
  */
 
-export const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting"];
+export const ENGINE_ACTIVATION_FLAGS = ["acting", "actionsTaken", "actionBudget", "reacting", "moves"];
 
 /** Dice taken from a pool, or an amount from a counter, to pay for an action. */
 export interface Payment {
@@ -47,6 +47,8 @@ export interface Payment {
   indices?: number[];
   /** Amount taken (counters). */
   amount?: number;
+  /** Dice placed ahead of time on this action's slots (FSD pre-assigned ADs), spent now. */
+  placed?: { key: string; faces: number[] };
 }
 
 export interface ActionOption {
@@ -122,7 +124,7 @@ function triggerPayload(state: GameState, system: GameSystem, t: ActionTrigger) 
 }
 
 function limitKey(def: ActionDef, req: ActionRequest): string {
-  return def.procedure && req.weapon ? `used.${def.id}.${req.weapon}` : `used.${def.id}`;
+  return (def.procedure || def.prepares) && req.weapon ? `used.${def.id}.${req.weapon}` : `used.${def.id}`;
 }
 
 /** Parse "4-6" or "1-2 1-2" into slots. */
@@ -146,6 +148,12 @@ export function payFor(
   def: ActionDef,
   ctx: EvalContext,
   prefer: number[] = [],
+  /**
+   * Dice placed on this action's slots, by key, used first; `fromPool` lets
+   * the rest come from the pool (placed at the start of the turn). A
+   * reacting unit has only what was placed before.
+   */
+  slotsOf?: { key: string; fromPool: boolean },
 ): { payment: Payment[]; label: string; faces: number[] } | { why: string } {
   const paidFaces: number[] = [];
   const payment: Payment[] = [];
@@ -162,10 +170,25 @@ export function payFor(
         .map((f, i) => ({ f, i }))
         .sort((a, b) => Number(prefer.includes(b.i)) - Number(prefer.includes(a.i)) || a.f - b.f);
       const used = new Set<number>();
-      for (const s of slots) {
+      // Slots filled ahead of time take their placed dice.
+      const placed = slotsOf ? (state.placed?.[player]?.[slotsOf.key] ?? []) : [];
+      const fill = matchSlots(slots, placed);
+      const fromPlaced: number[] = [];
+      for (const [k, s] of slots.entries()) {
+        const f = fill[k];
+        if (f !== undefined) {
+          fromPlaced.push(placed[f]!);
+          continue;
+        }
+        const want = s.min === s.max ? `${s.min}` : `${s.min}-${s.max}`;
+        if (slotsOf && !slotsOf.fromPool) return { why: `Needs a die showing ${want} placed on its slots` };
         const die = order.find((d) => !used.has(d.i) && d.f >= s.min && d.f <= s.max);
-        if (!die) return { why: `Needs a die showing ${s.min === s.max ? s.min : `${s.min}-${s.max}`}` };
+        if (!die) return { why: `Needs a die showing ${want}` };
         used.add(die.i);
+      }
+      if (fromPlaced.length && slotsOf) {
+        payment.push({ resource: c.resource, placed: { key: slotsOf.key, faces: fromPlaced } });
+        paidFaces.push(...fromPlaced);
       }
       for (let n = 0; n < amount; n++) {
         const die = order.find((d) => !used.has(d.i));
@@ -187,6 +210,157 @@ export function payFor(
     }
   }
   return { payment, label: labels.join(", "), faces: paidFaces };
+}
+
+/**
+ * Which placed dice fill which slots: each slot, narrowest first, takes the
+ * lowest placed die that fits it. Slot index to index into `placed`.
+ */
+export function matchSlots(slots: { min: number; max: number }[], placed: number[]): Record<number, number> {
+  const fill: Record<number, number> = {};
+  const used = new Set<number>();
+  const order = slots.map((s, k) => ({ s, k })).sort((a, b) => a.s.max - a.s.min - (b.s.max - b.s.min));
+  for (const { s, k } of order) {
+    const i = placed
+      .map((f, i) => ({ f, i }))
+      .filter((d) => !used.has(d.i) && d.f >= s.min && d.f <= s.max)
+      .sort((a, b) => a.f - b.f)[0]?.i;
+    if (i === undefined) continue;
+    used.add(i);
+    fill[k] = i;
+  }
+  return fill;
+}
+
+/** The key dice placed on a weapon's slots are kept under. */
+export function placedKey(unitId: UnitId, weaponId: string): string {
+  return `${unitId}/${weaponId}`;
+}
+
+/** The dice placed under a key, an empty list dropping the key. */
+export function setPlaced(state: GameState, player: PlayerId, key: string, faces: number[]): GameState {
+  const own = { ...state.placed?.[player] };
+  if (faces.length) own[key] = faces;
+  else delete own[key];
+  return { ...state, placed: { ...state.placed, [player]: own } };
+}
+
+/** The pool whose dice can be placed on cards: a dice pool with a `total` (FSD's AD Pool). */
+export function placeablePool(system: GameSystem): Id | undefined {
+  return system.resources?.find((r) => r.kind === "dicePool" && r.total !== undefined)?.id;
+}
+
+/**
+ * The action a weapon's slots pay for (FSD: its special action), with the
+ * slots and whether that action is switched off now (a damaged system).
+ */
+export function weaponSlots(
+  state: GameState,
+  unitId: UnitId,
+  weaponId: string,
+): { def: ActionDef; slots: { min: number; max: number }[]; off?: string } | null {
+  const system = systemOf(state);
+  const unit = state.units[unitId];
+  const weapon = unit?.sheet?.weapons[weaponId];
+  if (!unit || !weapon) return null;
+  const pool = placeablePool(system);
+  const ctx = evalCtx(state, system, {
+    self: unitView(state, system, unit),
+    weapon: weaponView(state, system, unit, weapon),
+  });
+  const def = system.actions.find(
+    (a) =>
+      a.cost?.some((c) => c.resource === pool && c.slotsFrom) &&
+      (a.forWeapons === undefined || safeBool(a.forWeapons, ctx)),
+  );
+  if (!def) return null;
+  const slots = (def.cost ?? []).flatMap((c) =>
+    c.resource === pool
+      ? [...(c.slots ?? []), ...(c.slotsFrom ? parseSlots(resolve(c.slotsFrom, ctx)) : [])]
+      : [],
+  );
+  const off = (def.notWhen ?? []).find((n) => safeBool(n.if, ctx))?.why;
+  return { def, slots, ...(off ? { off } : {}) };
+}
+
+/**
+ * Whether a player may place dice on cards now: in a pre-assigning or
+ * cleanup window, or at the start of their own alternating turn (before
+ * anything is acting).
+ */
+export function placeWindow(state: GameState, player: PlayerId): boolean {
+  const system = systemOf(state);
+  if (!placeablePool(system)) return false;
+  const slot = currentSlot(state);
+  if (!slot || state.procedure || state.pending) return false;
+  if (slot.placeDice) return true;
+  return (
+    usesActivations(system, slot) &&
+    seatOf(state, player) === state.turn.activeSeat &&
+    !actingUnits(state).length
+  );
+}
+
+/** Why a pool die can't go on a weapon's slots now, or undefined if it can. */
+export function cantPlace(
+  state: GameState,
+  player: PlayerId,
+  unitId: UnitId,
+  weaponId: string,
+  index: number,
+): string | undefined {
+  const system = systemOf(state);
+  const pool = placeablePool(system);
+  const unit = state.units[unitId];
+  if (!pool || !unit || unit.owner !== player) return "Not your unit";
+  if (!placeWindow(state, player)) return "Dice go on cards at the start of your turn";
+  if (!unitView(state, system, unit).models.length) return "Destroyed";
+  const face = state.pools?.[player]?.[pool]?.[index];
+  if (face === undefined) return "No such die";
+  const at = weaponSlots(state, unitId, weaponId);
+  if (!at?.slots.length) return "No AD slots";
+  if (at.off) return at.off;
+  const placed = state.placed?.[player]?.[placedKey(unitId, weaponId)] ?? [];
+  const before = Object.keys(matchSlots(at.slots, placed)).length;
+  if (Object.keys(matchSlots(at.slots, [...placed, face])).length <= before)
+    return placed.length >= at.slots.length ? "Its slots are full" : `A ${face} doesn't fit its slots`;
+  return undefined;
+}
+
+/** Move a pool die onto a weapon's slots. */
+export function placeDie(
+  state: GameState,
+  player: PlayerId,
+  unitId: UnitId,
+  weaponId: string,
+  index: number,
+): GameState {
+  const pool = placeablePool(systemOf(state));
+  const face = pool ? state.pools?.[player]?.[pool]?.[index] : undefined;
+  if (!pool || face === undefined) return state;
+  const key = placedKey(unitId, weaponId);
+  const next = pay(state, player, [{ resource: pool, indices: [index] }]);
+  return setPlaced(next, player, key, [...(state.placed?.[player]?.[key] ?? []), face]);
+}
+
+/**
+ * Drop dice placed on actions that can't be taken any more (the unit or
+ * weapon is gone, or a damaged system switched the action off): they go to
+ * the spent dice.
+ */
+export function dropDisabledPlacements(state: GameState): GameState {
+  if (!state.placed) return state;
+  const system = systemOf(state);
+  let next = state;
+  for (const [player, keys] of Object.entries(state.placed))
+    for (const key of Object.keys(keys)) {
+      const [unitId, weaponId] = [key.slice(0, key.indexOf("/")), key.slice(key.indexOf("/") + 1)];
+      const unit = next.units[unitId];
+      const gone = !unit || !unitView(next, system, unit).models.length;
+      if (gone || !weaponSlots(next, unitId, weaponId) || weaponSlots(next, unitId, weaponId)?.off)
+        next = setPlaced(next, player, key, []);
+    }
+  return next;
 }
 
 /** Units whose activation is under way (or a reacting unit). */
@@ -228,6 +402,8 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       ...(target ? { target: unitView(state, system, target) } : {}),
     });
     const why = ((): string | undefined => {
+      if (wView && def.forWeapons !== undefined && !safeBool(def.forWeapons, ctx))
+        return "Not for this weapon";
       if (state.procedure) return "Finish the current roll first";
       if (view.models.length === 0) return "Destroyed";
       if (def.reactTo) {
@@ -248,12 +424,24 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
         if (def.side === "inactive" && active) return "Only on the other player's turn";
       }
       if (def.limit && Number(unit.status?.[limitKey(def, req)] ?? 0) >= def.limit.count)
-        return def.procedure && req.weapon ? "Weapon already used this round" : "Already used this round";
+        return (def.procedure || def.prepares) && req.weapon
+          ? "Weapon already used this round"
+          : "Already used this round";
       for (const n of def.notWhen ?? []) if (safeBool(n.if, ctx)) return n.why;
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
       return undefined;
     })();
-    const paid = payFor(state, system, unit.owner, def, ctx, req.dice);
+    const paid = payFor(
+      state,
+      system,
+      unit.owner,
+      def,
+      ctx,
+      req.dice,
+      req.weapon && placeablePool(system)
+        ? { key: placedKey(unit.id, req.weapon), fromPool: acting && !unit.status?.reacting && active }
+        : undefined,
+    );
     const option: ActionOption = {
       def,
       ok: !why && !("why" in paid),
@@ -432,8 +620,11 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
     if (def.move) {
       const inches = safeNum(def.move.distance, ctx) * inchesPerUnit(system);
       patch.allowance = Number(unit.status?.allowance ?? 0) + inches;
+      // Move actions this activation, for rules about a single move (FSD areas of control).
+      patch.moves = Number(unit.status?.moves ?? 0) + 1;
     }
     for (const f of def.sets ?? []) patch[f] = true;
+    if (def.prepares && ev.weapon) patch[`prepared.${ev.weapon}`] = true;
     next = setStatus(next, unit.id, patch);
   }
   for (const a of def.do ?? []) {
@@ -466,6 +657,14 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
 export function pay(state: GameState, player: PlayerId, payment: Payment[]): GameState {
   let next = state;
   for (const p of payment) {
+    if (p.placed) {
+      const left = [...(next.placed?.[player]?.[p.placed.key] ?? [])];
+      for (const f of p.placed.faces) {
+        const i = left.indexOf(f);
+        if (i >= 0) left.splice(i, 1);
+      }
+      next = setPlaced(next, player, p.placed.key, left);
+    }
     if (p.indices) {
       const drop = new Set(p.indices);
       const faces = (next.pools?.[player]?.[p.resource] ?? []).filter((_, i) => !drop.has(i));
@@ -522,8 +721,22 @@ export function setRun(state: GameState, run: ProcedureRun): GameState {
 function finishRun(state: GameState): GameState {
   const proc = state.procedure;
   if (!proc || proc.applied) return state;
-  const applied = applyRunOutcomes(state, proc.run.outcomes);
+  // A reaction's results wait for the action it answers, and land with them.
+  if (state.pending?.reactor && state.pending.reactor === proc.unitId)
+    return {
+      ...state,
+      deferred: [...(state.deferred ?? []), ...proc.run.outcomes],
+      procedure: { ...proc, applied: true },
+    };
+  const applied = applyDeferred(applyRunOutcomes(state, proc.run.outcomes));
   return { ...applied, procedure: { ...proc, applied: true } };
+}
+
+/** Apply a reaction's results held back for the action it answered, then drop dice on switched-off actions. */
+export function applyDeferred(state: GameState): GameState {
+  const held = state.deferred;
+  const next = held?.length ? { ...applyRunOutcomes(state, held), deferred: null } : state;
+  return dropDisabledPlacements(next);
 }
 
 /** Apply a run's table changes, with each model's wounds from its profile. */
@@ -559,6 +772,8 @@ export function endReaction(state: GameState, run: ProcedureRun | null): GameSta
     next = setStatus(next, pending.reactor, clear);
   }
   if (run) next = withRun(next, pending.trigger, run);
+  // The answered action had nothing to resolve (a move): the reaction's results land now.
+  else next = applyDeferred(next);
   return next;
 }
 

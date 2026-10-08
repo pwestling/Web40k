@@ -82,4 +82,6 @@ Special rules are read by name from the unit's rules and keywords, so "Causes Fe
 - **Stupidity:** a test at the start of the unit's turn. On a fail, it's marked stupid for the turn and played by hand.
 - **Immune to Psychology:** no Panic, Fear or Terror tests, and it can't flee from a charge.
 
+The sample armies show each rule: the Spears carry the Battle Standard, the Riders hate, the Wolf Runners are frenzied, and the Bog Hulk causes Terror and is stupid.
+
 Not covered yet: Fear auto-breaking, Frenzy's compulsory charge, the movement of stupid units, magic items, and magical vortex templates.

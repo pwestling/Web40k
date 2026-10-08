@@ -3,7 +3,9 @@ import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import {
   applyAction,
+  cantPlace,
   endReaction,
+  placedKey,
   procedureEnv,
   reactionOver,
   reactionSeat,
@@ -14,8 +16,8 @@ import {
 import { advance, respond, type Outcome, type ProcedureRun } from "./content/runner";
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
-import { systemOf } from "./content/turn";
-import { parseDice, rollDice } from "./dice";
+import { currentSlot, systemOf } from "./content/turn";
+import { die, parseDice, rollDice } from "./dice";
 import {
   startScript,
   stepScript,
@@ -191,6 +193,10 @@ export type Intent =
     }
   /** A player is done re-rolling their pool for this round. */
   | { type: "pool/ready"; player: PlayerId; resource: string }
+  /** Place a pool die on a weapon's AD slots ahead of time (FSD). */
+  | { type: "dice/place"; unitId: UnitId; weapon: string; index: number }
+  /** Discard the dice placed on a weapon's slots (FSD cleanup). */
+  | { type: "dice/discard"; unitId: UnitId; weapon: string }
   /** Don't react, or finish reacting: the held action goes on. */
   | { type: "reaction/pass" }
   /** Roll the next step of the procedure in progress. */
@@ -199,7 +205,15 @@ export type Intent =
   | { type: "procedure/respond"; answer: string }
   | { type: "procedure/clear" }
   /** Use a player action (a stratagem). Custom ones carry a name and cost. */
-  | { type: "player/action"; action: string; targetId?: UnitId; label?: string; cost?: number }
+  | {
+      type: "player/action";
+      action: string;
+      targetId?: UnitId;
+      label?: string;
+      cost?: number;
+      /** For a custom action paid from a dice pool: which dice (else the lowest). */
+      dice?: number[];
+    }
   /** Mark an ability the players resolved by hand as used this phase. */
   | { type: "ability/apply"; unitId: UnitId; ability: string }
   /**
@@ -328,6 +342,8 @@ export type GameEvent =
   /** A player's dice pool after a re-roll or spending dice. */
   /** `use` records a once-per-round re-roll or "ready" (state.used). */
   | { type: "pool/set"; player: PlayerId; resource: string; faces: number[]; use?: string }
+  | { type: "dice/place"; player: PlayerId; unitId: UnitId; weapon: string; index: number }
+  | { type: "dice/discard"; player: PlayerId; unitId: UnitId; weapon: string }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
@@ -442,7 +458,7 @@ export function resolveIntent(
       const count = Math.floor(intent.count);
       const sides = Math.floor(intent.sides);
       if (count < 1 || count > MAX_DICE_PER_ROLL || sides < 2) return null;
-      const results = Array.from({ length: count }, () => 1 + Math.floor(rng() * sides));
+      const results = Array.from({ length: count }, () => die(rng, sides));
       const roll: DiceRoll = { by: from, sides, results };
       if (intent.faces?.length === sides) roll.faces = intent.faces;
       if (intent.label) roll.label = intent.label;
@@ -540,7 +556,7 @@ export function resolveIntent(
       const next =
         intent.type === "pool/spend"
           ? faces.filter((_, i) => !picked.has(i))
-          : faces.map((f, i) => (picked.has(i) ? 1 + Math.floor(rng() * sides) : f));
+          : faces.map((f, i) => (picked.has(i) ? die(rng, sides) : f));
       return {
         type: "pool/set",
         player: intent.player,
@@ -559,6 +575,14 @@ export function resolveIntent(
         faces,
         use: `ready:${intent.resource}`,
       };
+    }
+    case "dice/place":
+      if (!state || cantPlace(state, from, intent.unitId, intent.weapon, intent.index)) return null;
+      return { ...intent, player: from };
+    case "dice/discard": {
+      const key = placedKey(intent.unitId, intent.weapon);
+      if (!state?.placed?.[from]?.[key]?.length || !currentSlot(state)?.placeDice) return null;
+      return { ...intent, player: from };
     }
     case "turn/next":
     case "turn/pass":
@@ -674,8 +698,23 @@ export function resolveIntent(
         const cost = Math.max(0, Math.floor(intent.cost ?? 0));
         const resource = option.def.cost?.[0]?.resource;
         if (!intent.label?.trim() || !resource) return null;
-        if ((state.resources[from]?.[resource] ?? 0) < cost) return null;
-        payment = cost ? [{ resource, amount: cost }] : [];
+        const def = systemOf(state).resources?.find((r) => r.id === resource);
+        if (def?.kind === "dicePool") {
+          // FSD support cards: that many dice from the pool, the ones picked or the lowest.
+          const faces = state.pools?.[from]?.[resource] ?? [];
+          const picked = [...new Set(intent.dice ?? [])].filter((i) => i >= 0 && i < faces.length);
+          const rest = faces
+            .map((f, i) => ({ f, i }))
+            .filter((d) => !picked.includes(d.i))
+            .sort((a, b) => a.f - b.f)
+            .map((d) => d.i);
+          const indices = [...picked, ...rest].slice(0, cost);
+          if (indices.length < cost) return null;
+          payment = cost ? [{ resource, indices }] : [];
+        } else {
+          if ((state.resources[from]?.[resource] ?? 0) < cost) return null;
+          payment = cost ? [{ resource, amount: cost }] : [];
+        }
       }
       if (intent.targetId && !option.targets?.includes(intent.targetId)) return null;
       if (option.targets && !intent.targetId) return null;
@@ -758,7 +797,7 @@ export function resolveIntent(
     case "reaction/pass": {
       const pending = state?.pending;
       if (!state || !pending || state.procedure) return null;
-      const run = startActionRun(endReaction(state, null), pending.trigger, rng);
+      const run = startActionRun(endReaction({ ...state, deferred: null }, null), pending.trigger, rng);
       return { type: "reaction/end", ...(run ? { run } : {}) };
     }
     case "procedure/roll": {
@@ -785,7 +824,7 @@ export function resolveIntent(
       const cleared: GameState = { ...state, procedure: null };
       if (!reactionOver(cleared)) return { type: "procedure/clear", ...script };
       const run = state.pending
-        ? startActionRun(endReaction(cleared, null), state.pending.trigger, rng)
+        ? startActionRun(endReaction({ ...cleared, deferred: null }, null), state.pending.trigger, rng)
         : null;
       return { type: "procedure/clear", end: run ? { run } : {}, ...script };
     }

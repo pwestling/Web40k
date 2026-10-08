@@ -34,7 +34,6 @@ export function Hud() {
     mode,
     role,
     game: liveGame,
-    scrub,
     editing,
     xray,
     plates,
@@ -54,37 +53,16 @@ export function Hud() {
   const collapsed = fold?.started === started ? fold.collapsed : started && narrow();
   const setCollapsed = (c: boolean) => setFold({ started, collapsed: c });
   const [dice, setDice] = useState(false);
-  const undone = undoneSeqs(record);
   // Starting the battle (or any later phase change) locks the terrain again.
   const round = liveGame.turn.round;
   useEffect(() => {
     if (round > 0) useStore.getState().set({ editing: false, selectedTerrain: null });
   }, [round, liveGame.turn.phase]);
-  // While the dice tray rolls, the log waits for the dice to land.
-  const held = useHold((s) => s.held);
   const lesson = useCoach((s) => s.lesson);
-  // A lesson's table is set up for the learner: those placements aren't play, so the log starts after them (UX 187).
-  const setupEnd = useCoach((s) => (s.lesson && !s.free ? (s.progress.began[0] ?? null) : null));
   const mail = useStore((s) => s.mail !== null);
-  const log = useMemo(
-    () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
-    // liveGame too: a package's rules loading refolds the same record, and the log names its game again.
-    [record, scrub, held, liveGame], // eslint-disable-line react-hooks/exhaustive-deps
-  );
   const selfId = session?.selfId;
   const seated = Object.values(liveGame.players).filter((p) => p.seat !== undefined);
   const mine = seated.filter((p) => canControl(p.id));
-  const lastOwn = [...record.events]
-    .reverse()
-    .find(
-      (e) =>
-        (mode === "hotseat" || e.by === selfId) &&
-        e.event.type !== "undo" &&
-        e.event.type !== "player/join" &&
-        e.event.type !== "layout/set" &&
-        !undone.has(e.seq),
-    );
-  const takeBack = lastOwn ? undoGroup(record, lastOwn.seq, undone, liveGame) : null;
   const amSeated = mode === "hotseat" || seated.some((p) => p.id === selfId);
 
   if (collapsed)
@@ -207,26 +185,7 @@ export function Hud() {
 
       {role !== "spectator" && (
         <div className="row undo-row">
-          <button
-            disabled={!takeBack}
-            title={
-              takeBack
-                ? takeBack.what
-                  ? t("Take back {what}", { what: takeBack.what })
-                  : t("Take back your last action")
-                : ""
-            }
-            onClick={() =>
-              takeBack &&
-              dispatch({
-                type: "undo",
-                seq: takeBack.seq,
-                ...(takeBack.also.length ? { also: takeBack.also } : {}),
-              })
-            }
-          >
-            {t("Undo")}
-          </button>
+          <UndoButton />
           <button className={dice ? "on" : ""} onClick={() => setDice(!dice)}>
             {t("Dice")}
           </button>
@@ -251,29 +210,7 @@ export function Hud() {
         </div>
       )}
       <TemplateTools />
-      <ol className="log">
-        {collapseEmpty(setupEnd === null ? log : log.filter((i) => i.kind === "header" || i.seq > setupEnd))
-          .slice(-60)
-          .reverse()
-          .map((item) =>
-            item.kind === "header" ? (
-              <li key={`h${item.key}`} className={item.rules ? "phase rules" : "phase"}>
-                {item.text}
-              </li>
-            ) : (
-              <li key={item.key} className={item.undone ? "undone" : undefined}>
-                {item.text}
-                {item.detail?.length ? (
-                  <ul className="detail">
-                    {item.detail.map((d, i) => (
-                      <li key={i}>{d}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ),
-          )}
-      </ol>
+      <GameLog />
       <div className="row">
         {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
         {(battleOver(shown) || !session) && (
@@ -294,8 +231,89 @@ export function Hud() {
   );
 }
 
+/** Take back this player's last action (or, hotseat, the last one), with what goes with it. */
+export function UndoButton() {
+  const { record, session, mode, dispatch, game } = useStore();
+  const undone = undoneSeqs(record);
+  const selfId = session?.selfId;
+  const lastOwn = [...record.events].reverse().find(
+    (e) =>
+      (mode === "hotseat" || e.by === selfId) &&
+      e.event.type !== "undo" &&
+      e.event.type !== "player/join" &&
+      e.event.type !== "layout/set" &&
+      // Choosing the table companion isn't a move to take back.
+      !(e.event.type === "settings/set" && e.event.settings.companion !== undefined) &&
+      !undone.has(e.seq),
+  );
+  const takeBack = lastOwn ? undoGroup(record, lastOwn.seq, undone, game) : null;
+  return (
+    <button
+      disabled={!takeBack}
+      title={
+        takeBack
+          ? takeBack.what
+            ? t("Take back {what}", { what: takeBack.what })
+            : t("Take back your last action")
+          : ""
+      }
+      onClick={() =>
+        takeBack &&
+        dispatch({
+          type: "undo",
+          seq: takeBack.seq,
+          ...(takeBack.also.length ? { also: takeBack.also } : {}),
+        })
+      }
+    >
+      {t("Undo")}
+    </button>
+  );
+}
+
+/** The game log, newest first: what happened, in words. */
+export function GameLog() {
+  const record = useStore((s) => s.record);
+  const scrub = useStore((s) => s.scrub);
+  const liveGame = useStore((s) => s.game);
+  // While the dice tray rolls, the log waits for the dice to land.
+  const held = useHold((s) => s.held);
+  // A lesson's table is set up for the learner: those placements aren't play, so the log starts after them (UX 187).
+  const setupEnd = useCoach((s) => (s.lesson && !s.free ? (s.progress.began[0] ?? null) : null));
+  const log = useMemo(
+    () => buildLog(record, scrub ?? (held !== null ? held - 1 : Infinity)),
+    // liveGame too: a package's rules loading refolds the same record, and the log names its game again.
+    [record, scrub, held, liveGame], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  return (
+    <ol className="log">
+      {collapseEmpty(setupEnd === null ? log : log.filter((i) => i.kind === "header" || i.seq > setupEnd))
+        .slice(-60)
+        .reverse()
+        .map((item) =>
+          item.kind === "header" ? (
+            <li key={`h${item.key}`} className={item.rules ? "phase rules" : "phase"}>
+              {item.text}
+            </li>
+          ) : (
+            <li key={item.key} className={item.undone ? "undone" : undefined}>
+              {item.text}
+              {item.detail?.length ? (
+                <ul className="detail">
+                  {item.detail.map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+          ),
+        )}
+    </ol>
+  );
+}
+
 /** The record, with the figures, terrain models and rules packages it uses, as a file. */
-async function downloadReplay(record: GameRecord) {
+export async function downloadReplay(record: GameRecord) {
   const blob = new Blob([JSON.stringify(await bundleReplay(record))], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -315,7 +333,7 @@ export const seatsTaken = (n: number) =>
  * Invite links join straight in, as "Player N": until the player names
  * themselves, ask, so the sides read "Ana & Cy" rather than "Ana & Player 3".
  */
-function NameCard({ player }: { player: Player }) {
+export function NameCard({ player }: { player: Player }) {
   const { dispatch } = useStore();
   const [stored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [name, setName] = useState("");

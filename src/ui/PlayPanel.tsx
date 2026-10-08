@@ -39,6 +39,10 @@ export function PlayPanel() {
     .filter((p) => p.seat !== undefined && canControl(p.id))
     .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
   const phase = game.turn.round === 0 ? t("Deployment") : (phaseName(game) ?? "");
+  // Systems with only a custom player action (FSD's support cards) are named for it.
+  const core = system.actions.some((a) => a.by === "player" && !a.custom);
+  const customName = system.actions.find((a) => a.by === "player" && a.custom)?.name;
+  const cards = !core && customName ? `${customName.toLowerCase()}s` : null;
   const usable = players.reduce(
     (n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length,
     0,
@@ -48,7 +52,9 @@ export function PlayPanel() {
     return (
       <div className="panel play collapsed">
         <button onClick={() => setOpen(true)}>
-          {tn(usable, "{phase}: {n} stratagem", "{phase}: {n} stratagems", { phase })}
+          {cards
+            ? t("{phase}: {cards}", { phase, cards })
+            : tn(usable, "{phase}: {n} stratagem", "{phase}: {n} stratagems", { phase })}
           {reminders.length ? " · " + tn(reminders.length, "{n} ability", "{n} abilities") : ""}
         </button>
       </div>
@@ -56,7 +62,11 @@ export function PlayPanel() {
   return (
     <div className="panel play">
       <div className="row spread">
-        <strong>{t("{phase}: stratagems and abilities", { phase })}</strong>
+        <strong>
+          {cards
+            ? t("{phase}: {cards} and abilities", { phase, cards })
+            : t("{phase}: stratagems and abilities", { phase })}
+        </strong>
         <button onClick={() => setOpen(false)}>{t("Hide")}</button>
       </div>
       {stratagems &&
@@ -76,9 +86,17 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
   const custom = options.find((o) => o.def.custom);
   const others = options.filter((o) => !o.ok && !o.def.custom);
   const cp = game.resources[player.id]?.CP;
+  const system = systemOf(game);
+  const core = system.actions.some((a) => a.by === "player" && !a.custom);
+  // What the custom action is paid with: CP, or dice from a pool (FSD support cards).
+  const payWith = system.resources?.find((r) => r.id === custom?.def.cost?.[0]?.resource);
+  const have =
+    payWith?.kind === "dicePool"
+      ? (game.pools?.[player.id]?.[payWith.id]?.length ?? 0)
+      : (game.resources[player.id]?.[payWith?.id ?? "CP"] ?? 0);
   const list = (
     <>
-      {usable.length === 0 && <p className="muted">{t("No core stratagems fit this moment.")}</p>}
+      {core && usable.length === 0 && <p className="muted">{t("No core stratagems fit this moment.")}</p>}
       {usable.map((o) => (
         <Stratagem
           key={o.def.id}
@@ -93,7 +111,9 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
       ))}
       {custom?.ok && (
         <CustomStratagem
-          cp={cp ?? 0}
+          cp={have}
+          unit={payWith?.short ?? payWith?.name ?? t("CP")}
+          placeholder={core ? t("Other stratagem…") : `${custom.def.name}…`}
           onUse={(label, cost) =>
             dispatch({ type: "player/action", action: custom.def.id, label, cost }, player.id)
           }
@@ -121,7 +141,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           {usable.length
             ? " " + t("can react: {stratagems}", { stratagems: usable.map((o) => o.def.name).join(", ") })
             : `: ${t("nothing to react with")}`}
-          <span className="muted"> {t("({cp} CP)", { cp: cp ?? 0 })}</span>
+          {cp !== undefined && <span className="muted"> {t("({cp} CP)", { cp })}</span>}
         </summary>
         {list}
       </details>
@@ -174,23 +194,34 @@ function Stratagem({ option, onUse }: { option: PlayerActionOption; onUse: (targ
   );
 }
 
-function CustomStratagem({ cp, onUse }: { cp: number; onUse: (label: string, cost: number) => void }) {
+function CustomStratagem({
+  cp,
+  unit,
+  placeholder,
+  onUse,
+}: {
+  cp: number;
+  unit: string;
+  placeholder: string;
+  onUse: (label: string, cost: number) => void;
+}) {
   const [label, setLabel] = useState("");
   const [cost, setCost] = useState(1);
   return (
     <div className="row stratagem">
-      <input
-        placeholder={t("Other stratagem…")}
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        size={14}
-      />
+      <input placeholder={placeholder} value={label} onChange={(e) => setLabel(e.target.value)} size={14} />
       <input type="number" min={0} max={3} value={cost} onChange={(e) => setCost(Number(e.target.value))} />
-      {t("CP")}
+      {unit}
       <button
         className="small"
         disabled={!label.trim() || cost > cp}
-        title={cost > cp ? t("Not enough CP") : !label.trim() ? t("Name the stratagem") : undefined}
+        title={
+          cost > cp
+            ? t("Not enough {resource}", { resource: unit })
+            : !label.trim()
+              ? t("Name it first")
+              : undefined
+        }
         onClick={() => {
           onUse(label.trim(), cost);
           setLabel("");

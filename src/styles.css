@@ -1131,6 +1131,24 @@ input.frontage {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+/* Dice placed on a weapon's AD slots (FSD). */
+.slot-dice {
+  margin-top: 2px;
+}
+.slot-dice .die.placed {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4em;
+  margin-right: 2px;
+  font-size: 0.85em;
+  background: #fde68a;
+  color: #111;
+  border: 1px solid #b45309;
+}
+.slot-dice .actions {
+  display: inline;
+}
 /* Paying with a picked die (generic unit card and fire setup). */
 .actions button.die,
 .panel.attack button.die {
@@ -3356,4 +3374,166 @@ body.showcase
 .language-picker {
   gap: 8px;
   align-items: center;
+}
+
+/* Table companion (#37): real models on a real table, the phone as the game's book-keeper */
+.companion {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #111318;
+  padding: 8px 12px calc(64px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.companion > *,
+.companion-main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.companion-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.companion .topbar,
+.companion .panel {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0;
+}
+.companion .topbar {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.companion button {
+  min-height: 36px;
+}
+.companion .back {
+  align-self: flex-start;
+}
+.companion-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: rgb(17 19 24 / 96%);
+  border-top: 1px solid #2d3340;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+.companion-tabs button {
+  flex: 1;
+  max-width: 160px;
+  min-height: 44px;
+}
+.companion-tabs button.on {
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+.companion-units section {
+  margin-bottom: 12px;
+}
+.companion-units h2 {
+  font-size: 1rem;
+  margin: 8px 0;
+}
+.companion .tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.companion .tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  padding: 10px;
+}
+.companion .tile.dead {
+  opacity: 0.5;
+}
+.companion .tile .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.own-dice {
+  justify-content: center;
+}
+.own-dice button.on {
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+.row:has(> .dice-entry) {
+  flex-wrap: wrap;
+}
+.dice-entry {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+}
+.dice-entry p {
+  margin: 0;
+}
+.dice-entry .faces {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.dice-entry .face {
+  min-height: 48px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.told-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: #e5e7eb;
+  color: #111;
+  font-weight: 700;
+}
+.table-attack .targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.table-attack .targets button.on,
+.table-attack .toggle button.on {
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+.table-attack .answers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.table-attack .toggle span,
+.table-attack .stepper span {
+  flex: 1;
+}
+.table-attack .stepper strong {
+  min-width: 4em;
+  text-align: center;
 }
