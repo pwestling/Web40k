@@ -6,7 +6,7 @@
  *   await openBattlePerf.dress(500_000)        // a 500k-triangle sculpt per profile
  *   await openBattlePerf.measure()             // frame times and what the GPU drew
  */
-import type { WebGLRenderer } from "three";
+import type { BufferGeometry, Mesh, Object3D, WebGLRenderer } from "three";
 import { unitKeys, useAssets } from "../assets/store";
 import { processMesh, processModel, ready, weld } from "../assets/pipeline";
 import { bakePaint } from "../assets/paint";
@@ -23,8 +23,10 @@ import type { ActionRow } from "../sandbox/protocol";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 
 let renderer: WebGLRenderer | null = null;
-export function setPerfRenderer(gl: WebGLRenderer) {
+let scene: Object3D | null = null;
+export function setPerfRenderer(gl: WebGLRenderer, root?: Object3D) {
   renderer = gl;
+  scene = root ?? null;
 }
 
 const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
@@ -271,6 +273,20 @@ export const perf = {
       textures: info?.memory.textures,
       programs: info?.programs?.length,
     };
+  },
+
+  /** The scene's geometries by kind and the object holding them, most first: who is behind gpu().geometries. */
+  geometries(top = 15) {
+    const seen = new Set<BufferGeometry>();
+    const by = new Map<string, number>();
+    scene?.traverse((o) => {
+      const g = (o as Mesh).geometry;
+      if (!g || seen.has(g)) return;
+      seen.add(g);
+      const k = `${g.type} in ${o.type}${o.name ? ` ${o.name}` : ""} < ${o.parent?.type ?? ""}${o.parent?.name ? ` ${o.parent.name}` : ""}`;
+      by.set(k, (by.get(k) ?? 0) + 1);
+    });
+    return { inScene: seen.size, top: [...by].sort((a, b) => b[1] - a[1]).slice(0, top) };
   },
 
   async measure(frames = 120, warmup = 10) {

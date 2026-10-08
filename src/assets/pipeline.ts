@@ -1,4 +1,5 @@
 import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
+import { shareLevels } from "./levels";
 import { encodeTexture } from "./paint";
 import type { RawModel } from "./parse";
 import { boxProxy, figureProxy, hullTris } from "./proxy";
@@ -92,7 +93,8 @@ export function processMesh(raw: MeshData, options: ProcessOptions): ModelAsset 
     asset.hull = hullTris(proxy);
   }
   stats.ms = Math.round(performance.now() - start);
-  return asset;
+  // A small model's proxy can come out the same as its coarsest level: keep one copy, as a peer's decode does.
+  return shareLevels(asset);
 }
 
 /**

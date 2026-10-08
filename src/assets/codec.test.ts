@@ -61,7 +61,16 @@ describe("asset codec", () => {
     expect(new Set(asset.lods).size).toBe(1);
     const back = await decodeAsset(await encodeAsset(asset));
     expect(new Set(back.lods).size).toBe(1);
-    expect(new Set(assetBuffers(back)).size).toBe(new Set(assetBuffers(asset)).size);
+    // The same buffers here as where it was made, so both devices show the same size (UX 44).
+    expect(assetBuffers(back).length).toBe(assetBuffers(asset).length);
+  });
+
+  it("a small terrain piece's proxy is its one level, on the device that made it and after decoding", async () => {
+    const asset = processMesh(synthMiniature(300), { id: "t", name: "wall.stl", kind: "terrain" });
+    expect(asset.proxy).toBe(asset.lods[0]);
+    const back = await decodeAsset(await encodeAsset(asset));
+    expect(back.proxy).toBe(back.lods[0]);
+    expect(assetBuffers(back).length).toBe(assetBuffers(asset).length);
   });
 
   it("is small enough to send: about a third of the raw meshes", async () => {

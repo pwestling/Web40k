@@ -138,9 +138,10 @@ function FigureDrop() {
 /** Hands the renderer to the dev perf harness (src/dev/perf.ts). */
 function PerfProbe() {
   const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
   useEffect(() => {
-    void import("../dev/perf").then(({ setPerfRenderer }) => setPerfRenderer(gl));
-  }, [gl]);
+    void import("../dev/perf").then(({ setPerfRenderer }) => setPerfRenderer(gl, scene));
+  }, [gl, scene]);
   return null;
 }
 
