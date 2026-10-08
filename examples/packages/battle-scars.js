@@ -43,10 +43,14 @@ function* afterGame(ctx, args) {
 
 /** Before the battle: say who is carrying scars and honours into it. */
 function* beforeGame(ctx, args) {
+  let told = false;
   for (const u of args.units) {
     if (u.scars) yield ctx.note(`${u.name} carries scars: ${u.scars}`);
     if (u.honours) yield ctx.note(`${u.name} fights with honours: ${u.honours}`);
+    told = told || !!u.scars || !!u.honours;
   }
+  // Say so when there's nothing, so the table can see the rules ran.
+  if (!told) yield ctx.note("Battle Scars: no scars or honours to carry in");
 }
 
 export default { hooks: { afterGame, beforeGame } };

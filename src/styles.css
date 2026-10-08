@@ -3322,3 +3322,11 @@ body.showcase
 .import-units .figure-pick select {
   max-width: 180px;
 }
+
+/* Mail invite link: the joiner's name first (UX 236). */
+.invite-name {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+}

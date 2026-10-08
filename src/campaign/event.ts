@@ -1,4 +1,5 @@
 import type { CampaignBook, CampaignGame, Territory } from "./book";
+import { withRules } from "./rules";
 
 /**
  * Event night (roadmap #29): a tournament in the campaign book. Swiss
@@ -358,7 +359,9 @@ export function mergeBooks(mine: CampaignBook, theirs: CampaignBook): CampaignBo
       ),
     };
   }
-  return { ...mine, games, players, units, map, ...(event ? { event } : {}) };
+  // Campaign rules: either copy's, one version of each package.
+  const rules = theirs.rules?.length ? withRules(mine.rules, theirs.rules) : mine.rules;
+  return { ...mine, games, players, units, map, ...(event ? { event } : {}), ...(rules ? { rules } : {}) };
 }
 
 /** Whether a copy has games another lacks: then taking it whole would lose them. */

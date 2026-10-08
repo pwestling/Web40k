@@ -28,6 +28,8 @@ import { EventLine, EventTab } from "./EventTab";
 import { requestCampaign, useCampaignSharing, useCampaignTransfers } from "./share";
 import { loadReplay, replayIds, saveReplay, useCampaigns } from "./store";
 import { create } from "zustand";
+import { useLibrary } from "../packages/library";
+import { CampaignRulesLine, rulesOff, turnOnRules } from "./RulesLine";
 
 /** Which book is open on screen. */
 const useBookOpen = create<{ id: string | null }>(() => ({ id: null }));
@@ -249,6 +251,12 @@ export function CampaignFold() {
       },
       seat?.id,
     );
+    // The book's campaign rules come on with it, before the battle (UX 237).
+    if (game.turn.round === 0)
+      turnOnRules(
+        game,
+        rulesOff(b, game, useLibrary.getState().packages).flatMap((o) => (o.stored ? [o.stored] : [])),
+      );
   };
   /** The place fought over: the game's copy of the book stays as it is. */
   const stake = (territory?: string) =>
@@ -352,6 +360,7 @@ export function CampaignFold() {
               )}
             </div>
           )}
+          {book && <CampaignRulesLine book={book} game={game} />}
           <TerritoryTable territory={book?.map.find((t) => t.name === ref.territory)} />
           <Linked game={game} />
           {book && <EventLine book={book} game={game} />}
@@ -669,7 +678,7 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
     return (
       <p className="muted">
         Units show here after a game, when their army was brought from a shelf. Their kills, games and wounds
-        fill in on their own; honours and scars are yours to write.
+        fill in on their own; honours, scars and XP are yours to write, or your campaign rules add them.
       </p>
     );
   const edit = (key: string, patch: Partial<CampaignUnit>) =>
@@ -681,7 +690,8 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
     <>
       <div className="row spread">
         <p className="muted small">
-          Kills, games and wounds fill in after each game. Honours and scars are yours to write.
+          Kills, games and wounds fill in after each game. Honours, scars and XP are yours to write, or your
+          campaign rules add them.
         </p>
         <button className={editing ? "small on" : "small"} onClick={() => setEditing(!editing)}>
           {editing ? "Done editing" : "Edit"}
@@ -698,6 +708,7 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
                 <th>Games</th>
                 <th>Survived</th>
                 <th>Wounds carried</th>
+                <th title="Experience, from campaign rules or written in">XP</th>
                 <th>Honours</th>
                 <th>Scars</th>
               </tr>
@@ -706,17 +717,17 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
               {units.map(([key, u]) => (
                 <tr key={key}>
                   <td>{u.name}</td>
-                  {(["kills", "games", "survived", "wounds"] as const).map((f) => (
+                  {(["kills", "games", "survived", "wounds", "xp"] as const).map((f) => (
                     <td key={f}>
                       {/* Read as a record; numbers change only in Edit (UX 206). */}
                       {!editing ? (
-                        u[f]
+                        (u[f] ?? 0)
                       ) : (
                         <input
                           type="number"
                           min={0}
                           aria-label={`${u.name}: ${f === "wounds" ? "wounds carried" : f}`}
-                          value={u[f]}
+                          value={u[f] ?? 0}
                           onChange={(e) => edit(key, { [f]: num(e.target.value) })}
                         />
                       )}

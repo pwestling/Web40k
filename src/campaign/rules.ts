@@ -1,4 +1,4 @@
-import { undoneSeqs, type GameRecord, type GameState, type Intent } from "../core";
+import { undoneSeqs, type GameRecord, type GameState, type Intent, type PackageRef } from "../core";
 import { campaignHooks, type CampaignAward } from "../core/script";
 import { gameStats } from "../core/stats";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
@@ -117,6 +117,28 @@ export function applyAwards(
       ...(a.honour ? { honours: add(u.honours, a.honour) } : {}),
       ...(a.scar ? { scars: add(u.scars, a.scar) } : {}),
     };
+  }
+  return out;
+}
+
+/**
+ * The game's rules packages that ran campaign hooks in it: the book's campaign
+ * rules (UX 237). A package's hooks are named by its hash (sandbox/engine.ts).
+ */
+export function campaignRulesIn(record: GameRecord, game: GameState): PackageRef[] {
+  const done = started(record);
+  return (game.packages?.packages ?? []).filter((p) =>
+    ["beforeGame", "afterGame"].some((k) => done.has(`hook:${p.hash.slice(0, 8)}:${k}`)),
+  );
+}
+
+/** The book's campaign rules with these added: one version of each package, the newest seen. */
+export function withRules(had: PackageRef[] | undefined, more: PackageRef[]): PackageRef[] {
+  const out = [...(had ?? [])];
+  for (const p of more) {
+    const i = out.findIndex((r) => r.id === p.id);
+    if (i < 0) out.push(p);
+    else out[i] = p;
   }
   return out;
 }

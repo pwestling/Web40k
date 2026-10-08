@@ -33,6 +33,23 @@ describe("campaign rules (24b)", () => {
       for (const i of spawnIntents(host.current, "p1", sampleRoster(0).units, "p1-a", "Vanguard"))
         send(i, "p1");
       for (const i of spawnIntents(host.current, "p2", sampleRoster(1).units, "p2-b", "Them")) send(i, "p2");
+      // The package as the game names it; its hooks go by its hash (here "scars").
+      const pkg = {
+        id: "example.battle-scars",
+        name: "Battle Scars",
+        version: "1.0.0",
+        hash: "scars",
+        bytes: 1,
+      };
+      send(
+        {
+          type: "game/packages",
+          app: "test",
+          system: { id: DEFAULT_SYSTEM, builtIn: true },
+          packages: [pkg],
+        },
+        "p1",
+      );
       send({ type: "campaign/set", ref: { id: "c1", name: "Crusade", hash: campaignHash(book) } }, "p1");
       send({ type: "campaign/army", player: "p1", armyId: "army-1", prefix: "p1-a", name: "Vanguard" }, "p1");
 
@@ -41,6 +58,15 @@ describe("campaign rules (24b)", () => {
       const before = nextCampaignHook("beforeGame", book, host.log, host.current);
       expect(before).toMatchObject({ type: "script/start" });
       send(before!, "p1");
+      expect(
+        host.log.events.some(
+          (e) =>
+            e.event.type === "script/step" &&
+            e.event.events.some(
+              (x) => x.type === "log/note" && /no scars or honours to carry in/.test(x.text),
+            ),
+        ),
+      ).toBe(true);
       expect(nextCampaignHook("beforeGame", book, host.log, host.current)).toBeNull();
 
       // One of Ana's units is wiped out; the battle ends.
@@ -65,6 +91,8 @@ describe("campaign rules (24b)", () => {
       const lost = recorded.units["army-1:0"]!;
       expect(lost.xp ?? 0).toBe(0);
       // Its scar (if the die gave one) is in the book as awarded.
+      // The book remembers its campaign rules (UX 237).
+      expect(recorded.rules).toEqual([pkg]);
       expect(lost.scars).toBe(awards.find((a) => a.key === "army-1:0" && a.scar)?.scar ?? "");
       host.leave();
     } finally {

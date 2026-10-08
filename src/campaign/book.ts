@@ -1,9 +1,9 @@
 import { sha256Hex, stableJson } from "../core/secrets";
-import type { GameRecord, GameState } from "../core";
+import type { GameRecord, GameState, PackageRef } from "../core";
 import { gameStats } from "../core/stats";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
 import { settlePairing, type CampaignEvent } from "./event";
-import { applyAwards, awardsIn } from "./rules";
+import { applyAwards, awardsIn, campaignRulesIn, withRules } from "./rules";
 
 /**
  * The campaign book (roadmap 24a): a small file a group of players share,
@@ -89,6 +89,8 @@ export interface CampaignBook {
   notes: string;
   /** An event night: Swiss rounds, pairings and tables (event.ts). */
   event?: CampaignEvent;
+  /** The campaign rules packages its games play with (24b, UX 237), turned on when a game plays for it. */
+  rules?: PackageRef[];
 }
 
 export function newCampaign(name: string, id: string = crypto.randomUUID()): CampaignBook {
@@ -125,6 +127,10 @@ export function readCampaign(data: unknown): CampaignBook | null {
     map: Array.isArray(b.map) ? b.map : [],
     units: b.units && typeof b.units === "object" ? b.units : {},
     notes: typeof b.notes === "string" ? b.notes : "",
+    ...(Array.isArray(b.rules) &&
+    b.rules.every((r) => r && typeof r.id === "string" && typeof r.hash === "string")
+      ? { rules: b.rules }
+      : {}),
     ...(b.event && Array.isArray(b.event.pairings) && Array.isArray(b.event.entrants)
       ? {
           event: {
@@ -240,8 +246,11 @@ export function recordGame(
   // At an event, the game settles its pairing.
   // What the campaign rules awarded after the battle (24b), from the log like everything else.
   const awarded = applyAwards(units, awardsIn(record));
+  // The campaign rules that ran are the book's from now on.
+  const ran = campaignRulesIn(record, game);
+  const rules = ran.length ? { rules: withRules(book.rules, ran) } : {};
   return settlePairing(
-    { ...book, players: roster, games: [...book.games, entry], units: awarded, map },
+    { ...book, players: roster, games: [...book.games, entry], units: awarded, map, ...rules },
     entry,
   );
 }
