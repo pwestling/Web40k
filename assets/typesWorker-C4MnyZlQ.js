@@ -3271,6 +3271,15 @@ export type GeoQuery =
     kind: "cover";
     from: Ref;
     to: Ref;
+}
+/**
+ * Of \`to\`'s models that \`from\` can see, the share (0 to 1) in cover as the
+ * "cover" query has it, for graded cover (The Old World's partial and full).
+ */
+ | {
+    kind: "coverShare";
+    from: Ref;
+    to: Ref;
 };
 /**
  * Events the engine emits. \`event\` is one of the engine's event names, and
@@ -4161,6 +4170,8 @@ export interface CodeAction {
     phases?: Id[];
     /** Whether the unit could ever take it (a character's action); hidden otherwise. */
     applies?(view: GameView, actor: Actor): boolean;
+    /** The button's text for this unit, when it says more than \`name\` ("Use Marsh Lantern (one use)"). */
+    label?(view: GameView, actor: Actor): string;
     /** True, or why not. */
     available(view: GameView, actor: Actor): true | string;
     targets?(view: GameView, actor: Actor): Target[];
