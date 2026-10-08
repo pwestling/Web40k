@@ -7,9 +7,12 @@ import { useStore } from "./store";
 import "./styles.css";
 import { loadSiteConfig } from "./net/config";
 import { watchErrors } from "./ui/report";
+import { applyTextSize } from "./ui/textSize";
 
 // Recent errors go into a problem report (src/ui/report.ts).
 watchErrors();
+// The player's text size (#25).
+applyTextSize();
 
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
 void loadSiteConfig().then(() =>

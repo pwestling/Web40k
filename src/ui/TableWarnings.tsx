@@ -4,6 +4,7 @@ import { focusOn } from "../render/focus";
 import { useCanControl, useStore } from "../store";
 import { aliveModels } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
+import { playerShape } from "./sides";
 import { checkName, overrideKey, placement, tableWarnings, type TableWarning } from "./warnings";
 
 /** This screen's view of the panel: open or not, and what was dismissed here. */
@@ -47,7 +48,11 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
   const yours = !!unit && canControl(unit.owner) && scrub === null && role !== "spectator";
   const text = (
     <>
-      {onShow && unit && <span style={{ color: game.players[unit.owner]?.color }}>{unit.name}: </span>}
+      {onShow && unit && (
+        <span style={{ color: game.players[unit.owner]?.color }}>
+          {playerShape(game, unit.owner)} {unit.name}:{" "}
+        </span>
+      )}
       {w.message}
     </>
   );
@@ -65,7 +70,7 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
         {yours && unit && (
           <button
             className="small"
-            title="It's fine: clear this for everyone until the unit moves again (the log notes it)"
+            title="Clear this for everyone until the unit moves again (the log notes it)"
             onClick={() =>
               dispatch(
                 {
@@ -78,7 +83,7 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
               )
             }
           >
-            It's fine
+            It's fine (tell everyone)
           </button>
         )}
         <button
@@ -86,16 +91,16 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
           title="Hide it on this screen"
           onClick={() => usePanel.setState((s) => ({ dismissed: { ...s.dismissed, [w.key]: true } }))}
         >
-          Dismiss
+          Hide
         </button>
       </span>
     </li>
   );
 }
 
-/** The selected unit's own warnings, on its card. */
-export function UnitWarnings({ unitId }: { unitId: string }) {
-  const warnings = useWarnings().filter((w) => w.unitId === unitId);
+/** The selected unit's own warnings, on its card; `skip` what the card already says (its move line, UX 176). */
+export function UnitWarnings({ unitId, skip = [] }: { unitId: string; skip?: string[] }) {
+  const warnings = useWarnings().filter((w) => w.unitId === unitId && !skip.includes(w.checkId));
   if (!warnings.length) return null;
   return (
     <ul className="table-warnings unit-warnings" aria-label="Warnings for this unit">
@@ -117,6 +122,7 @@ export function TableWarningsPanel() {
   const warnings = useWarnings();
   const open = usePanel((s) => s.open);
   const select = useStore((s) => s.select);
+  const selected = useStore((s) => s.selected !== null);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -129,8 +135,7 @@ export function TableWarningsPanel() {
   const show = (w: TableWarning) => {
     const unit = w.unitId ? game.units[w.unitId] : undefined;
     if (!unit) return;
-    // The unit's card takes the panel's place, with this unit's warnings on it.
-    usePanel.setState({ open: false });
+    // The panel stays open beside the unit's card (UX 177).
     select(unit.id);
     const models = aliveModels(game, unit);
     if (models.length)
@@ -140,7 +145,7 @@ export function TableWarningsPanel() {
       );
   };
   return (
-    <section className="panel table-warnings" aria-label="Table warnings">
+    <section className={`panel table-warnings${selected ? " beside-card" : ""}`} aria-label="Table warnings">
       <div className="row spread">
         <h3>Table warnings</h3>
         <button className="quiet" aria-label="Close" onClick={() => usePanel.setState({ open: false })}>

@@ -1,4 +1,5 @@
 import { FocusCamera } from "./FocusCamera";
+import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -677,6 +678,7 @@ function Scene() {
       y: number;
       z: number;
       name?: string;
+      shape?: string;
       color: string;
       sight?: (typeof sightLabels)[number];
     }[] = [];
@@ -718,6 +720,7 @@ function Scene() {
         z,
         ...(plate ? { name: u.name } : {}),
         color: game.players[u.owner]?.color ?? "#999",
+        shape: playerShape(game, u.owner),
         ...(sight ? { sight } : {}),
       });
     }
@@ -918,7 +921,14 @@ function Scene() {
           className="plate"
           style={{ borderColor: l.color }}
         >
-          {l.name && <div>{l.name}</div>}
+          {l.name && (
+            <div>
+              <span className="side-shape" style={{ color: l.color }} aria-hidden="true">
+                {l.shape}
+              </span>{" "}
+              {l.name}
+            </div>
+          )}
           {l.sight && <div className={`sightlabel ${l.sight.state}`}>{l.sight.text}</div>}
         </Html>
       ))}
@@ -1191,7 +1201,7 @@ function SightLine({
 
 function seatColor(game: GameState, seat: number): string {
   return (
-    Object.values(game.players).find((p) => p.seat === seat)?.color ?? (seat === 0 ? "#3b82f6" : "#ef4444")
+    Object.values(game.players).find((p) => p.seat === seat)?.color ?? (seat === 0 ? "#3b82f6" : "#f97316")
   );
 }
 

@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import { useHelp } from "./help";
+import { TextSizePicker } from "./TextSizePicker";
 
 const KEYS: [string, string][] = [
   ["Click a unit", "Select it: its card on the right shows what it can do"],
+  ["[ / ]", "Select your previous or next unit (Shift: the other side's)"],
+  ["Arrow keys", 'Move the selected unit 1" (Shift: ¼"), up being away from the camera'],
+  ["Enter", "Go from the table into the selected unit's card"],
+  ["Tab", "Move between buttons; Enter or Space presses one"],
   ["Drag a unit", "Move it; the ruler shows how far against its limit"],
   ["Alt + drag", "Move a unit, stopping at its limit"],
   ["Shift + drag", "Move a regiment block freely, not just straight ahead"],
@@ -56,6 +61,7 @@ export function KeysSheet() {
             ))}
           </tbody>
         </table>
+        <TextSizePicker />
         <p className="muted small">
           The ▶ at the top moves the game on. Everything can be undone from the left panel.
         </p>

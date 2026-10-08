@@ -1,4 +1,5 @@
 import { UnitWarnings } from "./TableWarnings";
+import { playerShape } from "./sides";
 import { CodeActions } from "./CodeActions";
 import { useCharged } from "../render/charges";
 import {
@@ -174,9 +175,12 @@ export function UnitCard() {
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
   return (
-    <div className="panel unitcard">
+    <div className="panel unitcard" tabIndex={-1} aria-label="Selected unit">
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
+          <span className="side-shape" aria-hidden="true">
+            {playerShape(game, unit.owner)}
+          </span>{" "}
           {unit.name}
           {stars.map((m) => (
             <button
@@ -232,7 +236,7 @@ export function UnitCard() {
         )}
       </p>
       {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
-      <UnitWarnings unitId={unit.id} />
+      <UnitWarnings unitId={unit.id} skip={["moveDistance"]} />
 
       {mine && (
         <div className="row wrap">

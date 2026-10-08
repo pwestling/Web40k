@@ -6,3 +6,6 @@ export const useFocus = create<{ x: number; y: number; at: number } | null>(() =
 export function focusOn(x: number, y: number): void {
   useFocus.setState({ x, y, at: performance.now() }, true);
 }
+
+/** Which way the camera looks across the table (x, y), kept up to date by FocusCamera: arrow-key moves go "up the screen". */
+export const cameraForward = { x: 0, y: -1 };

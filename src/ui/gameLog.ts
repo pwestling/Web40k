@@ -1,4 +1,5 @@
 import { checkName } from "./warnings";
+import { distanceText } from "./distance";
 import { systemLabel } from "./systemLabels";
 import {
   applyEvent,
@@ -179,7 +180,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       !(event.type === "unit/move" && event.how && !["forward", "wheel"].includes(event.how))
     ) {
       moveLine.inches += Math.abs(event.distance);
-      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${moveLine.inches.toFixed(1)}"`;
+      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${distanceText(state, moveLine.inches)}`;
       continue;
     }
     if (event.type !== "undo") moveLine = null;
@@ -329,7 +330,7 @@ function moveText(before: GameState, after: GameState, ids: string[]): string {
       ? unit.name
       : `${ids.length === 1 ? "a model of" : `${ids.length} models of`} ${unit.name}`
     : "models";
-  return far < 0.05 ? `turned ${what}` : `moved ${what} ${far.toFixed(1)}"`;
+  return far < 0.05 ? `turned ${what}` : `moved ${what} ${distanceText(after, far)}`;
 }
 
 export function describe({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
@@ -433,7 +434,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (!r) return `${who} cleared the ruler`;
       const name = (id?: string) => (id ? (game.models[id]?.label ?? "a model") : "a point");
       const ends = r.fromModel || r.toModel ? ` (${name(r.fromModel)} to ${name(r.toModel)})` : "";
-      return `${who} measured ${rulerLength(game, r).toFixed(1)}"${ends}`;
+      return `${who} measured ${distanceText(game, rulerLength(game, r))}${ends}`;
     }
     case "objective/move":
       return `${who} moved an objective`;
@@ -462,14 +463,14 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       const name = unitName(event.id);
       const deg = Math.round((Math.abs(event.turn) * 180) / Math.PI);
       if (event.how === "wheel")
-        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${(event.distance ?? 0).toFixed(1)}")`;
-      const inches = `${(event.distance ?? 0).toFixed(1)}"`;
+        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${distanceText(game, event.distance ?? 0)})`;
+      const inches = distanceText(game, event.distance ?? 0);
       if (event.how === "door") return `${who} closed the door: ${name} lined up with its target (${inches})`;
       if (event.how === "charge") return `${name} charged ${inches}`;
       if (event.how === "flee") return `${name} fled ${inches}`;
       if (event.how === "pursue") return `${name} pursued ${inches}`;
       if (event.how === "forward")
-        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${Math.abs(event.distance ?? 0).toFixed(1)}"`;
+        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${distanceText(game, Math.abs(event.distance ?? 0))}`;
       return `${who} ${moveText(before, game, game.units[event.id]?.modelIds ?? [])}`;
     }
     case "unit/form": {

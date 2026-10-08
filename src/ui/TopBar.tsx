@@ -1,5 +1,6 @@
 import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
+import { seatShape } from "./sides";
 import { WarningsButton } from "./TableWarnings";
 import { DicePicker } from "./DicePicker";
 import { systemModule } from "../systems";
@@ -100,6 +101,9 @@ export function TopBar() {
             className={`player ${seat === game.turn.activeSeat && !deploying ? "active" : ""}`}
             style={{ borderColor: lead.color }}
           >
+            <span className="side-shape" style={{ color: lead.color }} aria-hidden="true">
+              {seatShape(seat)}
+            </span>
             {team.map((p, i) => (
               <strong
                 key={p.id}

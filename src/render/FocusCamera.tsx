@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
-import { useFocus } from "./focus";
+import { cameraForward, useFocus } from "./focus";
 
 const EASE_S = 0.2;
 
@@ -12,6 +12,15 @@ export function FocusCamera() {
     update: () => void;
   } | null;
   useFrame((_, dt) => {
+    if (controls) {
+      const dx = controls.target.x - controls.object.position.x;
+      const dy = controls.target.z - controls.object.position.z;
+      const len = Math.hypot(dx, dy);
+      if (len > 1e-6) {
+        cameraForward.x = dx / len;
+        cameraForward.y = dy / len;
+      }
+    }
     const f = useFocus.getState();
     if (!f || !controls) return;
     const goal = new Vector3(f.x, controls.target.y, f.y);

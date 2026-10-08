@@ -1,4 +1,7 @@
+import { cameraForward, focusOn } from "./render/focus";
+import { aliveModels } from "./systems/wh40k/rules";
 import { TableWarningsPanel } from "./ui/TableWarnings";
+import { Announcer } from "./ui/Announcer";
 import { useEffect } from "react";
 import { Board } from "./render/Board";
 import { useStore } from "./store";
@@ -35,7 +38,7 @@ import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
 /**
- * Keyboard: ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
+ * Keyboard: [ ] pick a unit, arrows move it, Enter opens its card; ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
  * Delete removes the selected terrain piece while editing; Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
@@ -65,6 +68,19 @@ function onKey(e: KeyboardEvent) {
     s.set({ selectedTerrain: null, losFrom: null });
     return;
   }
+  // Keyboard play (#25): [ and ] step through your units (with Shift, the other side's).
+  if (e.code === "BracketLeft" || e.code === "BracketRight") {
+    stepUnit(e.code === "BracketRight" ? 1 : -1, e.shiftKey);
+    e.preventDefault();
+    return;
+  }
+  // Enter goes from the table into the selected unit's card.
+  if (key === "enter" && s.selected && (t === document.body || t instanceof HTMLCanvasElement)) {
+    // The card itself: Tab then walks through its buttons, and a screen reader reads its name.
+    document.querySelector<HTMLElement>(".panel.unitcard")?.focus();
+    e.preventDefault();
+    return;
+  }
   if (s.role === "spectator" || s.scrub !== null) return;
   if (key === "m") {
     s.set({ measuring: !s.measuring });
@@ -78,10 +94,76 @@ function onKey(e: KeyboardEvent) {
   }
   const unit = s.selected ? s.game.units[s.selected] : undefined;
   if (!unit || (s.mode !== "hotseat" && unit.owner !== s.session?.selfId)) return;
+  if (key.startsWith("arrow") && !(t instanceof HTMLButtonElement && e.altKey)) {
+    nudgeUnit(unit.id, key, e.shiftKey ? 0.25 : 1);
+    e.preventDefault();
+    return;
+  }
   if (key === "q") rotateUnit(unit.id, -1);
   if (key === "e") rotateUnit(unit.id, 1);
   if (key === "r") climbUnit(unit.id, 1);
   if (key === "f") climbUnit(unit.id, -1);
+}
+
+/** Select the next or previous unit on the table: yours, or (`others`) everyone else's; the camera follows. */
+function stepUnit(dir: 1 | -1, others: boolean) {
+  const s = useStore.getState();
+  const game = s.game;
+  const self = s.session?.selfId;
+  // Hotseat: yours are the side whose turn it is.
+  const yours = (owner: string) =>
+    s.mode === "hotseat" ? game.players[owner]?.seat === game.turn.activeSeat : owner === self;
+  const units = Object.values(game.units)
+    .filter((u) => !u.status?.reserves && aliveModels(game, u).length > 0)
+    .filter((u) => s.role === "spectator" || yours(u.owner) !== others)
+    .sort(
+      (a, b) => a.owner.localeCompare(b.owner) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+    );
+  if (!units.length) return;
+  const at = units.findIndex((u) => u.id === s.selected);
+  const next = units[(at + dir + units.length) % units.length] ?? units[0]!;
+  s.select(next.id);
+  // So Enter goes into this unit's card, not to whatever button was last pressed.
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  const models = aliveModels(game, next);
+  focusOn(
+    models.reduce((a, m) => a + m.position.x, 0) / models.length,
+    models.reduce((a, m) => a + m.position.y, 0) / models.length,
+  );
+}
+
+/** Arrow keys: slide the selected unit a step across the table, up the screen being away from the camera. */
+function nudgeUnit(unitId: string, key: string, step: number) {
+  const { game, dispatch } = useStore.getState();
+  const unit = game.units[unitId];
+  const alive = aliveModels(game, unit);
+  if (!unit || !alive.length) return;
+  const f = cameraForward;
+  const right = { x: -f.y, y: f.x };
+  const [ax, ay] =
+    key === "arrowup"
+      ? [f.x, f.y]
+      : key === "arrowdown"
+        ? [-f.x, -f.y]
+        : key === "arrowright"
+          ? [right.x, right.y]
+          : [-right.x, -right.y];
+  const pivot = {
+    x: alive.reduce((a, m) => a + m.position.x, 0) / alive.length,
+    y: alive.reduce((a, m) => a + m.position.y, 0) / alive.length,
+  };
+  dispatch(
+    {
+      type: "unit/move",
+      id: unitId,
+      pivot,
+      turn: 0,
+      delta: { x: ax * step, y: ay * step },
+      how: "drag",
+      distance: step,
+    },
+    unit.owner,
+  );
 }
 
 /** The clean streaming view (`?view=broadcast`): the board, score bar, caption, dice and reactions. */
@@ -164,6 +246,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <SandboxNotice />
           {!editing && <WhatNow />}
           <KeysSheet />
+          <Announcer />
           {reacting && <ReactionPrompt />}
           {showSight && (
             <div className="legend">
