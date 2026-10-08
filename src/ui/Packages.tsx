@@ -1,3 +1,4 @@
+import { displayName, playerName } from "../i18n/names";
 import { readLessonPackage } from "../teach/lesson";
 import { systemLabel } from "./systemLabels";
 import { useEffect, useMemo, useState } from "react";
@@ -494,7 +495,7 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   const [trustSender, setTrustSender] = useState(false);
   const [consent, setConsent] = useState<StoredPackage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const hostName = net?.hostId ? (state.players[net.hostId]?.name ?? t("the host")) : t("the host");
+  const hostName = net?.hostId ? (playerName(state.players[net.hostId]) ?? t("the host")) : t("the host");
   const missing = game.packages.filter((p) => !library[p.hash] && !without[p.hash]);
   const fresh = game.packages.filter((p) => library[p.hash] && !library[p.hash]!.trusted && !without[p.hash]);
   const canGet = !replay && !!net?.hostId && net.hostId !== session?.selfId;
@@ -670,7 +671,7 @@ function ProposalCard() {
   const canControl = useCanControl();
   const library = useLibrary((s) => s.packages);
   const proposal = game.packageProposal!;
-  const by = game.players[proposal.by]?.name ?? t("A player");
+  const by = playerName(game.players[proposal.by]) ?? t("A player");
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   const mineToAnswer = seated.filter(
     (p) =>
@@ -733,11 +734,13 @@ function ProposalCard() {
       <strong>{t("Rules change: {change}", { change: change || t("same packages") })}</strong>
       {declined.length > 0 ? (
         <span className="warn">
-          {t("{names} declined.", { names: formatList(declined.map((p) => p.name)) })}
+          {t("{names} declined.", { names: formatList(declined.map((p) => displayName(p.name))) })}
         </span>
       ) : (
         <span className="muted">
-          {t("Waiting for {names}", { names: formatList(waiting.map((p) => p.name)) || t("the host") })}
+          {t("Waiting for {names}", {
+            names: formatList(waiting.map((p) => displayName(p.name))) || t("the host"),
+          })}
         </span>
       )}
       <div className="row">

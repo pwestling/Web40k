@@ -30,18 +30,18 @@ export function useCompanion(): boolean {
   return useStore((s) => !!s.game.settings.companion);
 }
 
-/** On screen or my own dice: the companion's switch for every roll. */
+/** On screen or my own dice: the companion's switch for every roll, one small toggle (UX 274). */
 export function OwnDiceSwitch() {
   const { own, set } = useOwnDice();
   return (
-    <div className="own-dice row" role="group" aria-label={t("Dice")}>
-      <button className={own ? "" : "on"} aria-pressed={!own} onClick={() => set(false)}>
-        {t("🎲 Roll on screen")}
-      </button>
-      <button className={own ? "on" : ""} aria-pressed={own} onClick={() => set(true)}>
-        {t("✋ My own dice")}
-      </button>
-    </div>
+    <button
+      className={`own-dice${own ? " on" : ""}`}
+      aria-pressed={own}
+      title={own ? t("You roll your own dice and tap in the faces") : t("Dice roll on screen")}
+      onClick={() => set(!own)}
+    >
+      {own ? t("✋ My dice") : t("🎲 Screen dice")}
+    </button>
   );
 }
 
@@ -106,7 +106,12 @@ export function RollButton({
   );
 }
 
-/** The faces of real dice, typed in one tap per die. */
+/**
+ * The faces of real dice, a batch at a time (re-rolls come as a later batch).
+ * Each face has a count (UX 272): tap a face once per die, or set "nine 4s"
+ * with its − and + or by typing the number. A batch goes in once its counts
+ * add up to the dice rolled.
+ */
 function DiceEntry({
   intent,
   as,
@@ -123,21 +128,38 @@ function DiceEntry({
   const record = useStore((s) => s.record);
   const game = useStore((s) => s.game);
   const by = as ?? useStore.getState().session?.selfId ?? "local";
-  const [faces, setFaces] = useState<number[]>([]);
-  const wanted = diceWanted(record, intent, by, faces, game);
+  /** Faces of the batches already in, in order. */
+  const [done, setDone] = useState<number[]>([]);
+  /** This batch: how many dice show each face. */
+  const [counts, setCounts] = useState<Record<number, number>>({});
+  const wanted = diceWanted(record, intent, by, done, game);
+  const batch = wanted && wanted !== "bad" ? wanted : null;
+  const sides = batch?.sides ?? null;
+  const have = Object.values(counts).reduce((a, b) => a + b, 0);
+  const setCount = (face: number, n: number) => {
+    if (!batch) return;
+    const next = { ...counts, [face]: Math.max(0, Math.min(n, batch.count - have + (counts[face] ?? 0))) };
+    const total = Object.values(next).reduce((a, b) => a + b, 0);
+    if (total < batch.count) return setCounts(next);
+    // The batch is complete: its faces go in (highest first) and the next batch, if any, is asked for.
+    const faces = Object.entries(next)
+      .flatMap(([f, k]) => Array.from({ length: k }, () => Number(f)))
+      .sort((a, b) => b - a);
+    setDone([...done, ...faces]);
+    setCounts({});
+  };
   const send = () => {
-    useStore.getState().dispatch({ ...intent, told: faces } as unknown as Intent, as);
+    useStore.getState().dispatch({ ...intent, told: done } as unknown as Intent, as);
     onDone();
   };
-  const sides = wanted && wanted !== "bad" ? wanted.sides : null;
   return (
     <div className="dice-entry" role="group" aria-label={t("Your dice")}>
       <p>
         {wanted === "bad" ? (
-          <span className="warn">{t("Those don't fit: take the last one off and check it.")}</span>
+          <span className="warn">{t("Those don't fit: start this roll again.")}</span>
         ) : wanted === null ? (
           <strong>{t("That's every die.")}</strong>
-        ) : faces.length === 0 ? (
+        ) : done.length === 0 ? (
           <strong>
             {tn(wanted.count, "Roll {n} D{sides}", "Roll {n} D{sides}", { sides: wanted.sides })}
           </strong>
@@ -146,35 +168,71 @@ function DiceEntry({
             {tn(wanted.count, "Roll {n} more D{sides}", "Roll {n} more D{sides}", { sides: wanted.sides })}
           </strong>
         )}{" "}
-        {sides !== null && <span className="muted small">{t("Tap each die's face.")}</span>}
+        {batch && (
+          <span className="muted small">
+            {t("{have} of {all}: how many show each face?", { have, all: batch.count })}
+          </span>
+        )}
       </p>
-      {faces.length > 0 && (
+      {done.length > 0 && (
         <div className="row wrap told">
-          {faces.map((f, i) => (
+          {done.map((f, i) => (
             <span key={i} className="die told-die">
               {f}
             </span>
           ))}
-          <button className="small quiet" onClick={() => setFaces(faces.slice(0, -1))}>
-            {t("⌫ Undo")}
-          </button>
         </div>
       )}
       {sides !== null && sides <= 12 && (
         <div className="faces">
           {Array.from({ length: sides }, (_, i) => i + 1).map((f) => (
-            <button key={f} className="face" onClick={() => setFaces([...faces, f])}>
-              {f}
-            </button>
+            <div key={f} className="face-count">
+              <button
+                className="face"
+                aria-label={t("One more {face}", { face: f })}
+                onClick={() => setCount(f, (counts[f] ?? 0) + 1)}
+              >
+                {f}
+              </button>
+              <div className="row">
+                <button
+                  className="small"
+                  aria-label={t("One fewer {face}", { face: f })}
+                  disabled={!counts[f]}
+                  onClick={() => setCount(f, (counts[f] ?? 0) - 1)}
+                >
+                  −
+                </button>
+                <input
+                  inputMode="numeric"
+                  aria-label={t("Dice showing {face}", { face: f })}
+                  value={counts[f] ?? 0}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setCount(f, Number(e.target.value.replace(/\D/g, "")) || 0)}
+                />
+              </div>
+            </div>
           ))}
         </div>
       )}
-      {sides !== null && sides > 12 && <BigDie sides={sides} add={(f) => setFaces([...faces, f])} />}
-      <div className="row">
+      {sides !== null && sides > 12 && (
+        <BigDie sides={sides} add={(f) => setCount(f, (counts[f] ?? 0) + 1)} />
+      )}
+      <div className="row wrap">
         <button className="primary" disabled={wanted !== null} onClick={send}>
           {t("Use these dice")}
         </button>
-        {faces.length === 0 && <button onClick={onScreen}>{t("Roll on screen instead")}</button>}
+        {(done.length > 0 || have > 0) && (
+          <button
+            onClick={() => {
+              setDone([]);
+              setCounts({});
+            }}
+          >
+            {t("Start again")}
+          </button>
+        )}
+        {done.length === 0 && have === 0 && <button onClick={onScreen}>{t("Roll on screen instead")}</button>}
         <button className="quiet" onClick={onCancel}>
           {t("Back")}
         </button>

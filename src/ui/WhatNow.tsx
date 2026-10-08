@@ -1,3 +1,4 @@
+import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
 import { unitActions } from "../core/content/play";
@@ -22,7 +23,9 @@ export function whatNow(
   me: string | null,
   hotseat: boolean,
 ): { head: string; lines: string[] } {
-  const phase = phaseName(game) ?? "";
+  const raw = phaseName(game) ?? "";
+  // Shown in this device's language (UX 277); the checks below read the English name.
+  const phase = gameText(raw);
   const side = game.turn.activeSeat;
   const who = sideName(game, side);
   const mine = hotseat || game.players[me ?? ""]?.seat === side;
@@ -84,9 +87,9 @@ export function whatNow(
         }
   }
   const lines: string[] = [];
-  if (/move/i.test(phase))
+  if (/move/i.test(raw))
     lines.push(t("Drag a unit to move it. The ruler shows how far it has gone against its limit."));
-  if (/charge/i.test(phase) && !can.size)
+  if (/charge/i.test(raw) && !can.size)
     lines.push(t("No unit is close enough to charge: press ▶ to move on."));
   if (outOfRange && !can.size) lines.push(t("Nothing is in range to shoot yet. Get closer next turn."));
   if (can.size)
@@ -94,13 +97,17 @@ export function whatNow(
       t("You can: {actions}.", {
         actions: [...can]
           .map(([name, n]) =>
-            tn(n, "{action} ({n} unit)", "{action} ({n} units)", { action: name.replace(/\s*\(.*\)$/, "") }),
+            tn(n, "{action} ({n} unit)", "{action} ({n} units)", {
+              action: gameText(name).replace(/\s*\(.*\)$/, ""),
+            }),
           )
           .join(", "),
       }),
-      t("Click one of your units to see its buttons."),
+      touch()
+        ? t("Tap one of your units to see its buttons.")
+        : t("Click one of your units to see its buttons."),
     );
-  else if (!/move/i.test(phase) && !/charge/i.test(phase) && !outOfRange)
+  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange)
     lines.push(t("Nothing to do this phase."));
   lines.push(
     turnView(game).alternating

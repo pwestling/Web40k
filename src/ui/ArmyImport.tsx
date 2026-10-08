@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
 import { SavedNote } from "./SavedNote";
@@ -191,7 +192,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
           <select value={owner} onChange={(e) => setOwner(e.target.value)}>
             {players.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
+                {displayName(p.name)}
               </option>
             ))}
           </select>

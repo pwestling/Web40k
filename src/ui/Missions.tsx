@@ -232,7 +232,9 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
                               ? t("passed")
                               : t("scored {n} VP", { n: scored.vp })
                             : open || !over
-                              ? t("revealed, waiting for {player} to score it", { player: p.name })
+                              ? t("revealed, waiting for {player} to score it", {
+                                  player: displayName(p.name),
+                                })
                               : t("not scored")}
                         </span>
                       )

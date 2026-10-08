@@ -155,7 +155,7 @@ const checks = {
     await page.locator(".companion").waitFor();
     await sampleArmies(page);
     await page.getByRole("button", { name: /Start battle/ }).click();
-    await page.getByRole("button", { name: "✋ My own dice" }).click();
+    await page.getByRole("button", { name: "🎲 Screen dice" }).click();
     await page.locator(".tile").first().click();
     await page.getByRole("button", { name: "Shoot", exact: true }).first().click();
     await page.locator(".table-attack .targets button").first().click();
@@ -176,6 +176,26 @@ const checks = {
       .waitFor();
     await context.close();
     return page.errors;
+  },
+
+  // "A phone each": the host's phone shows the invite link until the other phone opens it (UX 270).
+  async "companion-invite"() {
+    const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+    const host = await device(phone);
+    const guest = await device(phone);
+    await lobby(host.page, `?${SIGNAL}`);
+    await host.page.getByRole("button", { name: "A phone each" }).click();
+    await host.page.locator(".companion").waitFor();
+    const link = await host.page.locator(".invite-link").textContent();
+    if (!link?.includes("room=")) throw new Error(`no invite link: ${link}`);
+    await guest.page.goto(link);
+    await guest.page.locator(".companion").waitFor();
+    await host.page.locator(".invite").waitFor({ state: "detached", timeout: 30_000 });
+    // The guest is asked for a name (UX 271).
+    await guest.page.getByPlaceholder("Your name").first().waitFor();
+    await host.context.close();
+    await guest.context.close();
+    return [...host.page.errors, ...guest.page.errors];
   },
 
   async replay() {

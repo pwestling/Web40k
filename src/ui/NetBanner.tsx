@@ -1,3 +1,4 @@
+import { displayName, playerName } from "../i18n/names";
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
 import { formatList, t } from "../i18n";
@@ -30,7 +31,7 @@ export function NetBanner() {
   if (net.migrating)
     return <div className="net-banner">{t("Host disconnected: waiting for it, or for a new host…")}</div>;
   if (net.desync) {
-    const host = net.hostId ? (players[net.hostId]?.name ?? null) : null;
+    const host = net.hostId ? (playerName(players[net.hostId]) ?? null) : null;
     return (
       <div className="net-banner desync" role="alert">
         {host === null
@@ -59,7 +60,9 @@ export function NetBanner() {
   if (open.length)
     return (
       <div className="net-banner">
-        {t("Waiting for someone to take {names} ·", { names: formatList(open.map((p) => p.name)) })}{" "}
+        {t("Waiting for someone to take {names} ·", {
+          names: formatList(open.map((p) => displayName(p.name))),
+        })}{" "}
         <button onClick={() => void navigator.clipboard?.writeText(location.href)}>
           {t("Copy invite link")}
         </button>
@@ -67,7 +70,7 @@ export function NetBanner() {
     );
   return (
     <div className="net-banner">
-      {t("{names} reconnecting…", { names: formatList(gone.map((p) => p.name)) })}
+      {t("{names} reconnecting…", { names: formatList(gone.map((p) => displayName(p.name))) })}
     </div>
   );
 }

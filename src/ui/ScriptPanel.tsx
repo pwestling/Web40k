@@ -1,3 +1,4 @@
+import { playerName } from "../i18n/names";
 import { useEffect } from "react";
 import { t } from "../i18n";
 import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
@@ -32,7 +33,7 @@ export function ScriptPanel() {
     );
   }, [reveal, step]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!waiting || scrub !== null) return null;
-  const who = game.players[waiting.player]?.name ?? t("A player");
+  const who = playerName(game.players[waiting.player]) ?? t("A player");
   if (waiting.reveal !== undefined)
     return (
       <div className="panel script">
