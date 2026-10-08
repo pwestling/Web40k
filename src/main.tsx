@@ -16,4 +16,5 @@ createRoot(document.getElementById("root")!).render(
 if (import.meta.env.DEV) {
   Object.assign(window, { openBattle: useStore, openBattleCore: core, openBattleAssets: useAssets });
   void import("./dev/perf").then(({ perf }) => Object.assign(window, { openBattlePerf: perf }));
+  void import("./dev/soak").then(({ soakBrowser }) => Object.assign(window, { openBattleSoak: soakBrowser }));
 }

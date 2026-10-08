@@ -261,6 +261,16 @@ export const perf = {
     };
   },
 
+  /** What the renderer holds on the GPU side: geometries, textures, shader programs. */
+  gpu() {
+    const info = renderer?.info;
+    return {
+      geometries: info?.memory.geometries,
+      textures: info?.memory.textures,
+      programs: info?.programs?.length,
+    };
+  },
+
   async measure(frames = 120, warmup = 10) {
     for (let i = 0; i < warmup; i++) await frame();
     const times: number[] = [];
