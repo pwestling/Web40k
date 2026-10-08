@@ -4157,6 +4157,8 @@ export interface BotTuning {
     evaluate?(state: GameState, seat: number): number;
     /** Inches a unit moves in a straight move it makes by hand, when there's no move action. */
     moveInches?(state: GameState, unit: Unit): number;
+    /** How much it fears enemies in reach of its units (default 0.3; 0 turns it off). */
+    threat?: number;
 }
 /** What a package's default export holds: additions to one or more systems. */
 export interface PackageContents {
