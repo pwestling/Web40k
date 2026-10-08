@@ -14,7 +14,8 @@ import { restoreSystems } from "../core/content/systems";
 import { currentSlot } from "../core/content/turn";
 import { createLoopbackNetwork } from "../net/loopback";
 import { Session, setIntentRouter, type Role } from "../net/session";
-import { SandboxEngine } from "../sandbox/engine";
+import { SandboxEngine, type ImportSource } from "../sandbox/engine";
+import { registerHooks, unregisterHooks } from "../core/script";
 import { seededRng } from "../sandbox/protocol";
 import { gameModule, systemModule } from "../systems";
 import { spawnIntents } from "../systems/wh40k/deploy";
@@ -51,6 +52,12 @@ export interface SoakOptions {
   trouble?: boolean;
   /** A rules package to load mid-game, for systems it applies to. */
   pkg?: { source: string; systems: string[] };
+  /**
+   * A whole game from a package (the module workshop's draft, #41): loaded
+   * before the game is set up, its code resolving every intent from the start.
+   * `importSource` turns its text into a module (a blob import in a worker).
+   */
+  systemPkg?: { source: string; importSource?: ImportSource };
   maxSteps?: number;
   /** Test the checks themselves: from this move on, a guest's table keeps drifting from the host's (a reducer bug). */
   drift?: number;
@@ -152,6 +159,12 @@ class Room {
 
 const hashOf = (s: GameState) => stateHash(s);
 
+/** Node (and a test) imports a package's source from a data: URL. */
+const dataImport: ImportSource = (src) =>
+  import(/* @vite-ignore */ `data:text/javascript,${encodeURIComponent(src)}`) as Promise<{
+    default?: unknown;
+  }>;
+
 export async function soak(opts: SoakOptions): Promise<SoakReport> {
   const { system, seed } = opts;
   const teamSize = opts.teamSize ?? 1;
@@ -169,7 +182,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
   const kept: Kept = new Map();
   let engine: SandboxEngine | null = null;
   let fed = 0;
-  const ctx: BotContext = { rng, kept, idle: 0 };
+  const ctx: BotContext = { rng, kept, idle: 0, wholeGame: !!opts.systemPkg };
   let steps = 0;
   const pick = <T>(xs: T[]): T => xs[Math.floor(rng() * xs.length)]!;
 
@@ -177,7 +190,37 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
     throw new Failure(why);
   };
 
+  const hookOwners: string[] = [];
   try {
+    /** The host resolves every intent through the package engine from here on. */
+    const routeThrough = (box: SandboxEngine) => {
+      setIntentRouter((intent, from) => (seed) => {
+        feedEngine();
+        try {
+          return Promise.resolve(box.resolve(intent, from, seed));
+        } catch (e) {
+          errors.push(`package threw on ${intent.type}: ${e instanceof Error ? e.message : String(e)}`);
+          return Promise.resolve(null);
+        }
+      });
+      ctx.packageActions = (unitId, player) => {
+        feedEngine();
+        return box.unitActions(unitId, player);
+      };
+    };
+
+    if (opts.systemPkg) {
+      const { source } = opts.systemPkg;
+      engine = new SandboxEngine(opts.systemPkg.importSource ?? dataImport);
+      const loaded = await engine.load([{ hash: sha256Hex(source), source }]);
+      if (loaded.errors.length) fail(`the package didn't load: ${loaded.errors[0]!.error}`);
+      if (!loaded.packages[0]?.provides) fail("the package doesn't bring a game (export default { module })");
+      for (const p of loaded.packages) {
+        for (const s of p.systems) registerHooks(s, p.hash, p.hooks);
+        hookOwners.push(p.hash);
+      }
+      routeThrough(engine);
+    }
     // Set up: the host's seat, the game, its table and mission, then the others join.
     const host0 = room.join("h", "host");
     const mod = systemModule(system);
@@ -452,29 +495,11 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
           as: players[0]!.id,
           kind: "package",
         });
-        engine = new SandboxEngine(
-          (src) =>
-            import(/* @vite-ignore */ `data:text/javascript,${encodeURIComponent(src)}`) as Promise<{
-              default?: unknown;
-            }>,
-        );
+        engine = new SandboxEngine(dataImport);
         const loaded = await engine.load([{ hash, source }]);
         if (loaded.errors.length) fail(`the example package didn't load: ${loaded.errors[0]!.error}`);
         feedEngine(true);
-        const box = engine;
-        setIntentRouter((intent, from) => (seed) => {
-          feedEngine();
-          try {
-            return Promise.resolve(box.resolve(intent, from, seed));
-          } catch (e) {
-            errors.push(`package threw on ${intent.type}: ${e instanceof Error ? e.message : String(e)}`);
-            return Promise.resolve(null);
-          }
-        });
-        ctx.packageActions = (unitId, player) => {
-          feedEngine();
-          return box.unitActions(unitId, player);
-        };
+        routeThrough(engine);
         await settle();
         done.push(`loaded the example package at round ${host.current.turn.round}`);
         check("package");
@@ -502,6 +527,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
       setIntentRouter(null);
       restoreSystems();
     }
+    for (const owner of hookOwners) unregisterHooks(owner);
   }
   const host = room.host();
   const last = host?.current;

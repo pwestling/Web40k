@@ -48,6 +48,7 @@ The first release: a complete tabletop for miniatures wargames in the browser, p
 
 ### For hosts and contributors
 
+- **Module workshop.** Write a game system in the browser from a template, play it on a test table that reloads on every save, soak it with the bot, and export it as a package or for the community modules gallery.
 - **Self-host kit.** Docker Compose with the app, a signalling relay and a TURN server.
 - **Playtest kit.** Report a problem bundles a replay with the errors; a crash screen and a connection check.
 - **Tests.** Unit tests, a soak bot playing seeded games every night, and browser smoke tests through each way into the app.

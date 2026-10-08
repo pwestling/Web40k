@@ -71,6 +71,12 @@ export interface BotContext {
    * nearest enemy.
    */
   tidy?: boolean;
+  /**
+   * A whole game from a package (the module workshop's soak): it has no data
+   * actions, so units head for the enemy and try their code actions a few
+   * times before the phase moves on.
+   */
+  wholeGame?: boolean;
   /** A tidy bot's units already moved this phase (keyed by round, side and phase). */
   moved?: { phase: string; units: Set<string> };
   /** Tidy mode: the unit actions taken this phase ("unit:action"), each taken once. */
@@ -340,6 +346,11 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
   }));
   // Units in contact fight before the phase moves on (code actions such as The Old World's).
   if (/combat|fight/i.test(currentSlot(state)?.id ?? "")) yield* codeMoves(state, ctx, units);
+  if (ctx.wholeGame && ctx.idle < 6) {
+    yield* codeMoves(state, ctx, units);
+    const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
+    if (u) yield moveUnit(state, u, { ...ctx, tidy: true }, 6);
+  }
   const r = ctx.rng();
   if (r < 0.6) yield* actions();
   else if (r < 0.75) yield* codeMoves(state, ctx, units);

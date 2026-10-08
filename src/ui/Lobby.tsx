@@ -16,6 +16,7 @@ import { WhatsNew } from "./WhatsNew";
 import { formatDate, t, tn, gameText } from "../i18n";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { openLibrary } from "../figures/open";
+import { openWorkshop } from "../workshop/open";
 import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/UpdateToast";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
@@ -342,6 +343,9 @@ export function Lobby() {
           <hr />
           <button className="link" onClick={() => openLibrary()}>
             {t("Figure library: your models, packs and storage")}
+          </button>
+          <button className="link" onClick={openWorkshop}>
+            {t("Module workshop: write your own game system")}
           </button>
           {saved && (
             <button onClick={resume}>

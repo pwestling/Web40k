@@ -102,6 +102,34 @@ const checks = {
     await context.close();
   },
 
+  /** The module workshop (#41): a template, its test table, a hot reload on save, the soak bot. */
+  async workshop() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.getByRole("button", { name: /Module workshop/ }).click();
+    await page.getByRole("button", { name: /Skirmish/ }).click();
+    await page.locator(".cm-editor").waitFor();
+    await page.getByRole("button", { name: "Test table" }).first().click();
+    await page.getByText("Your rules are running.").waitFor({ timeout: 20000 });
+    await page.locator(".workshop-log li").first().waitFor();
+    await page.keyboard.press("Escape");
+    // Save an edit: the table takes the new package and the rules come back up.
+    await page.locator(".cm-content").click();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.type("// edited\n");
+    await page.keyboard.press("Control+s");
+    await page.getByText("Saved and reloaded onto the test table.").waitFor();
+    await page.getByText("Your rules are running.").waitFor({ timeout: 20000 });
+    if (await page.locator(".package-card").count()) throw new Error("the table lost the saved package");
+    await page.getByRole("tab", { name: "Soak bot" }).click();
+    await page.getByRole("button", { name: "Play 3 bot games" }).click();
+    await page.locator(".workshop-soak li").nth(2).waitFor({ timeout: 240000 });
+    const bad = await page.locator(".workshop-soak li.bad").allTextContents();
+    if (bad.length) throw new Error(`soak: ${bad[0]}`);
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
   async lesson() {
     const { page, context } = await device();
     await lobby(page);

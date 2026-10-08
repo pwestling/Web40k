@@ -20,16 +20,16 @@ function build(): string {
 
 /**
  * `virtual:sandbox-worker`: the rules-package sandbox's worker (the engine and
- * the built-in systems, src/sandbox/worker.ts) bundled into one ES module and
+ * the built-in systems, src/sandbox/worker.ts) bundled into one script and
  * handed to the app as text. The app starts it from a blob inside a sandboxed
  * iframe, which can't load scripts from the app's origin. UI files (.tsx) are
- * stubbed: the worker never renders.
+ * stubbed: the worker never renders. `virtual:soak-worker` is the module
+ * workshop's soak bot (src/workshop/soakWorker.ts), started the same way.
  */
-function sandboxWorker(): Plugin {
-  const id = "virtual:sandbox-worker";
+function bundledWorker(id: string, entry: string): Plugin {
   let cached: { code: string; files: string[] } | null = null;
   return {
-    name: "sandbox-worker",
+    name: id.replace("virtual:", ""),
     resolveId: (s) => (s === id ? `\0${id}` : null),
     async load(s) {
       if (s !== `\0${id}`) return null;
@@ -57,7 +57,7 @@ function sandboxWorker(): Plugin {
             write: false,
             minify: process.env.NODE_ENV === "production",
             // A classic worker: a module worker can't start from a blob in an opaque origin.
-            lib: { entry: "src/sandbox/worker.ts", formats: ["iife"], name: "sandbox", fileName: "worker" },
+            lib: { entry, formats: ["iife"], name: "sandbox", fileName: "worker" },
           },
         })) as Rollup.RollupOutput | Rollup.RollupOutput[];
         const output = (Array.isArray(out) ? out[0]! : out).output;
@@ -131,7 +131,12 @@ function serviceWorker(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), sandboxWorker(), serviceWorker()],
+  plugins: [
+    react(),
+    bundledWorker("virtual:sandbox-worker", "src/sandbox/worker.ts"),
+    bundledWorker("virtual:soak-worker", "src/workshop/soakWorker.ts"),
+    serviceWorker(),
+  ],
   define: { __APP_BUILD__: JSON.stringify(build()) },
   // Relative asset paths so the build can be hosted under any sub-path
   // (e.g. GitHub Pages at /open-battle/).

@@ -3783,3 +3783,201 @@ body.showcase
     min-width: 44px;
   }
 }
+
+/* Module workshop (#41): the whole screen at the front door; over a test table, a drawer at the side
+   that folds to a tab, so the table stays playable beside the code. */
+.workshop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: #111318;
+  padding: 8px 12px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+.workshop.over-table {
+  left: auto;
+  top: var(--below-bar, 56px);
+  width: min(640px, 48vw);
+  border-left: 1px solid #39404f;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 40%);
+}
+/* Over a table the drawer is narrow: the panes go under the code. */
+.workshop.over-table .workshop-body {
+  flex-direction: column;
+}
+.workshop.over-table .workshop-side {
+  flex: 0 0 auto;
+  max-height: 38%;
+}
+.workshop-head,
+.workshop-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workshop-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.workshop .spacer {
+  flex: 1;
+}
+.workshop button.primary {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.workshop-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+}
+.workshop-code {
+  flex: 3;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workshop-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #39404f;
+  border-radius: 6px;
+}
+.workshop-editor .cm-editor {
+  height: 100%;
+  font-size: 0.95rem;
+}
+.workshop-side {
+  flex: 2;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workshop-side .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.workshop-side .tabs [aria-selected="true"] {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.workshop-side p,
+.workshop-side h3 {
+  margin: 4px 0;
+}
+.workshop-side h3 {
+  font-size: 1rem;
+}
+.workshop-side label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+}
+.workshop .hint {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+.workshop-note {
+  margin: 0;
+  color: #fde68a;
+}
+.workshop-problems {
+  margin: 0;
+  padding: 6px 10px;
+  list-style: none;
+  background: rgb(127 29 29 / 35%);
+  border-radius: 6px;
+}
+.workshop-log {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+.workshop-log li {
+  padding: 2px 0;
+  border-bottom: 1px solid #1f2430;
+}
+.workshop-soak li.ok::before {
+  content: "✓ ";
+  color: #4ade80;
+}
+.workshop-soak li.bad::before {
+  content: "✗ ";
+  color: #f87171;
+}
+.workshop-soak ul {
+  padding-left: 0;
+  list-style: none;
+}
+.workshop-sdk pre {
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  background: #0b0d12;
+  padding: 8px;
+  border-radius: 6px;
+}
+.workshop-start {
+  max-width: 760px;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+.workshop-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.workshop-template {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+}
+.workshop-link {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workshop-link label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+.workshop-tab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  z-index: 45;
+  writing-mode: vertical-rl;
+  padding: 10px 4px;
+  border-radius: 6px 0 0 6px;
+}
+/* A narrow screen stacks the code over the side panes. */
+@media (max-width: 800px) {
+  .workshop-body {
+    flex-direction: column;
+  }
+  .workshop.over-table {
+    width: 100vw;
+    top: 40vh;
+    border-left: 0;
+    border-top: 1px solid #39404f;
+  }
+}

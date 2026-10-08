@@ -14,8 +14,11 @@ const usePanel = create<{ open: boolean; dismissed: Record<string, true> }>(() =
   dismissed: {},
 }));
 
+/** Open the panel (the module workshop's test table). */
+export const openWarnings = () => usePanel.setState({ open: true });
+
 /** The table's warnings, less the ones dismissed on this screen. */
-function useWarnings(): TableWarning[] {
+export function useWarnings(): TableWarning[] {
   const game = useGame();
   const dismissed = usePanel((s) => s.dismissed);
   const all = useMemo(() => tableWarnings(game), [game]);

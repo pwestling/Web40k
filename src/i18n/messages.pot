@@ -295,7 +295,7 @@ msgctxt "game"
 msgid "They held. Combat can drag on into the next turn."
 msgstr ""
 
-#: src/App.tsx:37
+#: src/App.tsx:41
 msgid "Setting up the table…"
 msgstr ""
 
@@ -317,6 +317,7 @@ msgstr ""
 
 #: src/GameScreen.tsx:307
 #: src/mail/MailLobby.tsx:165
+#: src/workshop/Workshop.tsx:284
 msgid "Open"
 msgstr ""
 
@@ -594,6 +595,7 @@ msgstr ""
 #: src/campaign/CampaignUI.tsx:553
 #: src/tables/TableLibrary.tsx:220
 #: src/ui/ArmyImport.tsx:526
+#: src/workshop/Workshop.tsx:226
 msgid "Export"
 msgstr ""
 
@@ -1235,7 +1237,7 @@ msgid "Log"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:84
-#: src/ui/Lobby.tsx:257
+#: src/ui/Lobby.tsx:258
 msgid "Game"
 msgstr ""
 
@@ -2063,6 +2065,7 @@ msgstr ""
 
 #: src/mail/MailBar.tsx:157
 #: src/ui/AttackPanel.tsx:259
+#: src/workshop/Workshop.tsx:198
 msgid "Save"
 msgstr ""
 
@@ -2242,7 +2245,7 @@ msgstr ""
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:250
 #: src/ui/Hud.tsx:364
-#: src/ui/Lobby.tsx:249
+#: src/ui/Lobby.tsx:250
 msgid "Your name"
 msgstr ""
 
@@ -2534,6 +2537,7 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:184
 #: src/ui/Keys.tsx:26
 #: src/ui/TerrainPanel.tsx:365
+#: src/workshop/Workshop.tsx:203
 msgid "Delete"
 msgstr ""
 
@@ -2672,7 +2676,7 @@ msgstr ""
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:82
 #: src/ui/PlayPanel.tsx:71
-#: src/ui/TableWarnings.tsx:95
+#: src/ui/TableWarnings.tsx:98
 #: src/ui/WhatNow.tsx:194
 msgid "Hide"
 msgstr ""
@@ -3268,6 +3272,7 @@ msgstr ""
 
 #: src/ui/ArmyImport.tsx:358
 #: src/ui/RegimentPanel.tsx:25
+#: src/workshop/Workshop.tsx:43
 msgid "Skirmish"
 msgstr ""
 
@@ -4614,7 +4619,7 @@ msgid "Rejoin as {name}"
 msgstr ""
 
 #: src/ui/Hud.tsx:410
-#: src/ui/Lobby.tsx:284
+#: src/ui/Lobby.tsx:285
 msgid "Watch"
 msgstr ""
 
@@ -4791,154 +4796,158 @@ msgstr ""
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:140
+#: src/ui/Lobby.tsx:141
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:194
+#: src/ui/Lobby.tsx:195
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:203
+#: src/ui/Lobby.tsx:204
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:205
+#: src/ui/Lobby.tsx:206
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:208
+#: src/ui/Lobby.tsx:209
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:210
+#: src/ui/Lobby.tsx:211
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:215
+#: src/ui/Lobby.tsx:216
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:232
+#: src/ui/Lobby.tsx:233
 msgid "Learn (guided)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:237
+#: src/ui/Lobby.tsx:238
 msgid "Try (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:246
+#: src/ui/Lobby.tsx:247
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:252
+#: src/ui/Lobby.tsx:253
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:267
+#: src/ui/Lobby.tsx:268
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:269
+#: src/ui/Lobby.tsx:270
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:271
+#: src/ui/Lobby.tsx:272
 #: src/ui/Room.tsx:77
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:274
+#: src/ui/Lobby.tsx:275
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:278
+#: src/ui/Lobby.tsx:279
 msgid "Paste a room code or invite link to join."
 msgstr ""
 
-#: src/ui/Lobby.tsx:281
+#: src/ui/Lobby.tsx:282
 msgid "Join"
 msgstr ""
 
-#: src/ui/Lobby.tsx:288
+#: src/ui/Lobby.tsx:289
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:290
+#: src/ui/Lobby.tsx:291
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:295
+#: src/ui/Lobby.tsx:296
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:298
+#: src/ui/Lobby.tsx:299
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:300
+#: src/ui/Lobby.tsx:301
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:304
+#: src/ui/Lobby.tsx:305
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:306
+#: src/ui/Lobby.tsx:307
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:308
+#: src/ui/Lobby.tsx:309
 msgid "1 vs 1"
 msgstr ""
 
-#: src/ui/Lobby.tsx:309
+#: src/ui/Lobby.tsx:310
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:318
+#: src/ui/Lobby.tsx:319
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:327
+#: src/ui/Lobby.tsx:328
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:344
+#: src/ui/Lobby.tsx:345
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
 #: src/ui/Lobby.tsx:348
+msgid "Module workshop: write your own game system"
+msgstr ""
+
+#: src/ui/Lobby.tsx:352
 msgid "Resume last game ({mode}, {n} event, {date})"
 msgid_plural "Resume last game ({mode}, {n} events, {date})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:358
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:369
+#: src/ui/Lobby.tsx:373
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:379
+#: src/ui/Lobby.tsx:383
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:384
+#: src/ui/Lobby.tsx:388
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:51
+#: src/ui/Lobby.tsx:52
 msgid "{name} {version} (package)"
 msgstr ""
 
@@ -6569,40 +6578,40 @@ msgstr ""
 msgid "can't succeed"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:107
+#: src/ui/TableWarnings.tsx:110
 msgid "Warnings for this unit"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:151
 #: src/ui/TableWarnings.tsx:154
+#: src/ui/TableWarnings.tsx:157
 msgid "Table warnings"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:160
+#: src/ui/TableWarnings.tsx:163
 msgid "Nothing to flag on the table right now."
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:168
+#: src/ui/TableWarnings.tsx:171
 msgid "Advisory: the rules never block a move. Players decide."
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:34
+#: src/ui/TableWarnings.tsx:37
 msgid "Table warnings: rules the table may be breaking"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:63
+#: src/ui/TableWarnings.tsx:66
 msgid "Show this unit"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:74
+#: src/ui/TableWarnings.tsx:77
 msgid "Clear this for everyone until the unit moves again (the log notes it)"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:87
+#: src/ui/TableWarnings.tsx:90
 msgid "It's fine (tell everyone)"
 msgstr ""
 
-#: src/ui/TableWarnings.tsx:92
+#: src/ui/TableWarnings.tsx:95
 msgid "Hide it on this screen"
 msgstr ""
 
@@ -8674,4 +8683,220 @@ msgstr ""
 
 #: src/voice/voice.ts:173
 msgid "No microphone was found."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:104
+msgid "Opened from {url}. Read it before you test it: saving runs its code in the sandbox."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:141
+msgid "Saved and reloaded onto the test table."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:142
+msgid "Saved."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:149
+msgid "Workshop"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:158
+#: src/workshop/Workshop.tsx:161
+msgid "Module workshop"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:164
+msgid "Draft"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:172
+msgid "Untitled draft"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:182
+msgid "Fold the workshop to the side"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:187
+msgid "Close the workshop"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:197
+msgid "Save (Ctrl+S)"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:202
+msgid "New draft"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:211
+msgid "Loading the editor…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:216
+msgid "The package's code"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:224
+#: src/workshop/Workshop.tsx:404
+msgid "Test table"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:225
+msgid "Soak bot"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:227
+msgid "SDK"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:254
+msgid "Write a whole game as one JavaScript file: its rules as data, with code where data won't do. Start from a template; the test table plays it as you go."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:275
+msgid "Open from a link"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:289
+msgid "Community modules"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:293
+msgid "How packages work"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:311
+msgid "Couldn't fetch that link (it may not allow other sites to read it)."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:313
+msgid "That link answered {status}."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:315
+msgid "That's too big for a module."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:317
+msgid "That isn't a rules package: {why}"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:329
+msgid "Problems"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:404
+msgid "Setting up…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:404
+msgid "Restart the test table"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:428
+msgid "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:437
+msgid "Your rules are running."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:439
+msgid "Starting your rules…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:44
+msgid "Model by model: move, then fight."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:440
+msgid "Your rules aren't running."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:444
+msgid "{n} table warning"
+msgid_plural "{n} table warnings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/workshop/Workshop.tsx:447
+msgid "Dice and log"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:470
+msgid "The soak bot plays whole games of your draft with random legal moves, over pretend peers, and checks every table stays the same and nothing throws."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:475
+msgid "Playing…"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:475
+msgid "Play 3 bot games"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:481
+msgid "Game {seed}: fine, {steps} moves to round {round}."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:486
+msgid "Game {seed} went wrong: {why}"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:49
+msgid "Ranked"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:50
+msgid "Regiment blocks that wheel and clash."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:525
+msgid "{name} {version}"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:534
+msgid "Download the package"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:537
+msgid "Players load the file in Rules packages; peers check they have the same bytes by this fingerprint."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:541
+msgid "Share it in the gallery"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:543
+msgid "Where the file is hosted (a raw link)"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:55
+msgid "Alternating activations"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:555
+msgid "Copied"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:555
+msgid "Copy the pull request text"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:558
+msgid "Edit the gallery on GitHub"
+msgstr ""
+
+#: src/workshop/Workshop.tsx:56
+msgid "Players take turns activating one unit each."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:568
+msgid "Everything a package can use. In the editor, type ctx. or view. for suggestions."
+msgstr ""
+
+#: src/workshop/Workshop.tsx:91
+msgid "Delete this draft? This can't be undone."
 msgstr ""

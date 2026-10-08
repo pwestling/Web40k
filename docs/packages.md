@@ -185,6 +185,10 @@ If any call into the package (`available`, `targets`, a step of a rule) takes lo
 
 ## Trying it
 
+The quickest way is the **Module workshop** on the start page: an editor with the SDK's completions, starter templates, a test table that reloads your package every time you save (Ctrl+S), the soak bot, and export as a file or as a pull request for the [community modules](community-modules.md) gallery.
+
+By hand:
+
 1. Run `pnpm dev`, choose the game system in the lobby and click **Load package…**. Read the consent sheet, then click **Load it**.
 2. Start a game, open **Game settings** and tick the package.
 3. When you host online, the other players are asked to accept the package. Their copy comes from you over the peer connection and is checked against its SHA-256 hash.
