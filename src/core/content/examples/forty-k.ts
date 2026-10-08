@@ -449,11 +449,23 @@ const abilityTimings: AbilityTiming[] = [
   },
 ];
 
-/** Each core stratagem once per phase. Costs and timings follow 10th edition; check them against 11th. */
+/**
+ * The 11th edition core stratagems, each once per phase. Costs and timings
+ * from the 11th edition core rules (June 2026): Grenade is now Explosives,
+ * Tank Shock is Crushing Impact, Go to Ground is gone (it's part of being
+ * hidden now), Fire Overwatch is only at the end of the opponent's Movement
+ * phase, and Heroic Intervention costs 1 CP (2 CP to go after any enemy unit
+ * within 6"; name that one with Other stratagem). Ids stay as they were so
+ * saved games and replays still read.
+ */
 const once = { count: 1, per: "phase" as const };
 const cp = (amount: number) => [{ resource: "CP", amount }];
 const own: Expr = { same: ["it.owner", "player.id"] };
 const ownWith = (keyword: string): Expr => ({ all: [own, kw("it", keyword)] });
+const ownWithAny = (...keywords: string[]): Expr => ({
+  all: [own, { any: keywords.map((k) => kw("it", k)) }],
+});
+const unengaged: Expr = { not: { hasStatus: "it", status: "engaged" } };
 const stratagems: ActionDef[] = [
   {
     id: "commandReroll",
@@ -477,25 +489,25 @@ const stratagems: ActionDef[] = [
   },
   {
     id: "grenade",
-    name: "Grenade",
+    name: "Explosives",
     by: "player",
     side: "active",
     phases: ["shooting"],
     cost: cp(1),
     limit: once,
-    target: { filter: ownWith("GRENADES") },
-    hint: 'Roll 6D6 at a unit within 8": each 4+ is a mortal wound',
+    target: { filter: { all: [ownWithAny("EXPLOSIVES", "GRENADES"), unengaged] } },
+    hint: 'Roll 6D6 at a visible unengaged unit within 8": each 4+ is a mortal wound',
   },
   {
     id: "tankShock",
-    name: "Tank Shock",
+    name: "Crushing Impact",
     by: "player",
     side: "active",
     phases: ["charge"],
     cost: cp(1),
     limit: once,
-    target: { filter: ownWith("VEHICLE") },
-    hint: "After a charge move: roll D6 equal to Toughness, each 5+ is a mortal wound",
+    target: { filter: ownWithAny("MONSTER", "VEHICLE") },
+    hint: "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)",
   },
   {
     id: "rapidIngress",
@@ -505,7 +517,8 @@ const stratagems: ActionDef[] = [
     phases: ["movement"],
     cost: cp(1),
     limit: once,
-    target: { filter: { all: [own, { hasFlag: "it", flag: "reserves" }] } },
+    target: { filter: { all: [own, { hasFlag: "it", flag: "reserves" }, { not: kw("it", "AIRCRAFT") }] } },
+    notWhen: [{ if: { cmp: "<=", a: ref("turn.round"), b: 1 }, why: "Not in the first battle round" }],
     hint: "End of the opponent's Movement phase: arrive from reserves",
   },
   {
@@ -513,23 +526,11 @@ const stratagems: ActionDef[] = [
     name: "Fire Overwatch",
     by: "player",
     side: "inactive",
-    phases: ["movement", "charge"],
+    phases: ["movement"],
     cost: cp(1),
     limit: once,
-    target: { filter: own },
-    hint: "Shoot at a unit that moved or charged; hits only on unmodified 6s",
-  },
-  {
-    id: "goToGround",
-    name: "Go to Ground",
-    by: "player",
-    side: "inactive",
-    phases: ["shooting"],
-    cost: cp(1),
-    limit: once,
-    target: { filter: ownWith("INFANTRY") },
-    do: [{ do: "applyStatus", status: "goneToGround" }],
-    hint: "6+ invulnerable save and cover this phase",
+    target: { filter: { all: [own, unengaged, { not: kw("it", "TITANIC") }] } },
+    hint: "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s",
   },
   {
     id: "smokescreen",
@@ -541,7 +542,7 @@ const stratagems: ActionDef[] = [
     limit: once,
     target: { filter: ownWith("SMOKE") },
     do: [{ do: "applyStatus", status: "smokescreen" }],
-    hint: "Cover and -1 to be hit by ranged attacks this phase",
+    hint: "Cover against ranged attacks this phase",
   },
   {
     id: "heroicIntervention",
@@ -549,16 +550,16 @@ const stratagems: ActionDef[] = [
     by: "player",
     side: "inactive",
     phases: ["charge"],
-    cost: cp(2),
+    cost: cp(1),
     limit: once,
-    target: { filter: own },
-    hint: 'Charge an enemy unit that just charged within 6"',
+    target: { filter: { all: [own, unengaged] } },
+    hint: "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged",
   },
   {
     id: "counterOffensive",
     name: "Counter-offensive",
     by: "player",
-    side: "either",
+    side: "inactive",
     phases: ["fight"],
     cost: cp(2),
     limit: once,
@@ -661,14 +662,11 @@ export const fortyK: GameSystem = {
       ],
     },
     {
-      // From the Smokescreen stratagem until the end of the phase. Cover is a reminder.
+      // From the Smokescreen stratagem until the end of the phase: cover (11th edition), a reminder.
       id: "smokescreen",
       name: "Smokescreen",
       on: "unit",
-      effects: [
-        { when: beforeStep("hit"), if: rangedAgainstOwner, do: [{ do: "modifyRoll", by: -1 }] },
-        { when: { event: "action.declared" }, do: [{ do: "manual", reminder: "smokescreen" }] },
-      ],
+      effects: [{ when: { event: "action.declared" }, do: [{ do: "manual", reminder: "smokescreen" }] }],
     },
     {
       id: "engaged",

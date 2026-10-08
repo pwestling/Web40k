@@ -123,34 +123,42 @@ function goTo(s: GameState, phase: string, seat: number): GameState {
 
 describe("40k game night", () => {
   it("offers stratagems by phase and side, spends CP and limits them to once a phase", () => {
-    let s = goTo(setup(), "shooting", 0);
+    let s = goTo(setup(), "movement", 0);
     expect(s.resources.p2?.CP).toBe(1);
-    const gtg = playerActions(s, "p2").find((o) => o.def.id === "goToGround")!;
-    expect(gtg.ok).toBe(true);
-    expect(gtg.cost).toBe("1 CP");
-    expect(gtg.targets).toEqual(["troops"]);
-    // The active player can't: it's for the opponent's Shooting phase.
-    expect(playerActions(s, "p1").find((o) => o.def.id === "goToGround")?.why).toBe(
+    const overwatch = playerActions(s, "p2").find((o) => o.def.id === "fireOverwatch")!;
+    expect(overwatch.ok).toBe(true);
+    expect(overwatch.cost).toBe("1 CP");
+    expect(overwatch.targets).toEqual(["troops"]);
+    // The active player can't: it's for the opponent's Movement phase.
+    expect(playerActions(s, "p1").find((o) => o.def.id === "fireOverwatch")?.why).toBe(
       "Only in your opponent's turn",
     );
     expect(playerActions(s, "p1").find((o) => o.def.id === "tankShock")?.why).toBe("Not in this phase");
+    // 11th edition: no Rapid Ingress in the first battle round.
+    expect(playerActions(s, "p2").find((o) => o.def.id === "rapidIngress")?.why).toBe(
+      "Not in the first battle round",
+    );
 
     // Insane Bravery only offers battle-shocked units.
     expect(
       playerActions(goTo(setup(), "command", 0), "p1").find((o) => o.def.id === "insaneBravery")?.why,
     ).toBe("No eligible unit");
-    s = play(s, { type: "player/action", action: "goToGround", targetId: "troops" }, "p2");
+    s = play(s, { type: "player/action", action: "fireOverwatch", targetId: "troops" }, "p2");
     expect(s.resources.p2?.CP).toBe(0);
-    expect(s.units.troops?.status?.goneToGround).toBe(true);
-    expect(playerActions(s, "p2").find((o) => o.def.id === "goToGround")?.why).toBe(
+    expect(playerActions(s, "p2").find((o) => o.def.id === "fireOverwatch")?.why).toBe(
       "Already used this phase",
     );
-    // Gone to ground gives a 6+ invulnerable save against the attack.
-    const p = previewAttack(s, "sneaks", "gun", "troops")!;
-    expect(p.spec.save).toBe(3);
-    // The status lasts until the end of the phase.
-    s = play(s, { type: "turn/next" }, "p1");
-    expect(s.units.troops?.status?.goneToGround).toBeUndefined();
+  });
+
+  it("follows the 11th edition core stratagems", () => {
+    const s = goTo(setup(), "movement", 0);
+    const ids = playerActions(s, "p1").map((o) => o.def.id);
+    expect(ids).not.toContain("goToGround");
+    const names = playerActions(s, "p1").map((o) => o.def.name);
+    expect(names).toEqual(expect.arrayContaining(["Explosives", "Crushing Impact", "Counter-offensive"]));
+    const cost = (id: string) => playerActions(s, "p1").find((o) => o.def.id === id)?.def.cost;
+    expect(cost("heroicIntervention")).toEqual([{ resource: "CP", amount: 1 }]);
+    expect(cost("counterOffensive")).toEqual([{ resource: "CP", amount: 2 }]);
   });
 
   it("lets a player name a faction stratagem and its cost", () => {

@@ -41,6 +41,8 @@ export function scenarioSuite(
   system: string,
   options: Pick<SoakOptions, "automate" | "watch">,
   tags: string[],
+  /** Tags that must never come up (a rule broken again). */
+  never: string[] = [],
 ): void {
   const count = Number(env.SOAK_SEEDS ?? 3);
   const from = Number(env.SOAK_FROM ?? 1);
@@ -59,5 +61,6 @@ export function scenarioSuite(
   it(`${name}: came up in play`, () => {
     if (env.SOAK_SEEN) console.log(JSON.stringify(seen));
     expect(tags.filter((t) => !seen[t])).toEqual([]);
+    expect(never.filter((t) => seen[t])).toEqual([]);
   });
 }

@@ -61,7 +61,7 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
   const out: PlayerActionOption[] = [];
   for (const def of system.actions) {
     if (def.by !== "player") continue;
-    const ctx = evalCtx(state, system, { player: me });
+    const ctx = evalCtx(state, system, { player: me, turn: { round: state.turn.round } });
     const why = ((): string | undefined => {
       if (!slot || state.turn.round === 0) return "Once the battle starts";
       if (def.phases && !def.phases.includes(slot.id)) return "Not in this phase";
@@ -71,6 +71,8 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
         return "Finish the current activation first";
       if (def.limit && usesInWindow(state, player, def).length >= def.limit.count)
         return `Already used this ${def.limit.per}`;
+      const ruled = def.notWhen?.find((n) => safeBool(n.if, ctx));
+      if (ruled) return ruled.why;
       if (def.if !== undefined && !safeBool(def.if, ctx)) return "Not allowed now";
       return undefined;
     })();
