@@ -1,4 +1,5 @@
 import type { BranchInfo } from "./branch";
+import type { Effect } from "./content/schema";
 import type { Secrets } from "./secrets";
 
 /**
@@ -64,8 +65,66 @@ export interface WeaponProfile {
 export interface Ability {
   name: string;
   text: string;
+  /** Set once the player confirms the rule proposed from the text. */
+  auto?: AbilityAuto;
   /** Heading the unit card lists it under, e.g. "Mount and crew", "Magic items", "Special rules". */
   group?: string;
+}
+
+/**
+ * An ability the player chose to automate: effects proposed from its text on
+ * their own device (src/systems/wh40k/recognize.ts) and confirmed by them.
+ * The rule runs as the unit's own while the conditions here hold.
+ */
+/** One thing an automated ability does, as the recognizer read it. */
+export type AutoPart =
+  | {
+      kind: "attack";
+      /** Its own attacks, or attacks that target it. */
+      side: "making" | "targeted";
+      weapon?: "ranged" | "melee";
+      /** Only against targets with these keywords (any of them). */
+      against?: string[];
+      when?: "charged" | "stationary";
+      roll?: "hit" | "wound";
+      reroll?: "ones" | "failed";
+      by?: number;
+      /** A weapon ability its attacks gain, e.g. "Lethal Hits". */
+      grant?: string;
+    }
+  | { kind: "fnp"; x: number }
+  | { kind: "gain"; resource: string; amount: number }
+  | { kind: "heal"; amount: string };
+
+/** An automated ability that ran at the start or end of a phase. */
+export interface Triggered {
+  unitId: string;
+  ability: string;
+  gained?: { resource: string; amount: number };
+  /** Wounds regained, and the roll when it was a dice amount. */
+  healed?: { wounds: number; roll?: number };
+}
+
+export interface AbilityAuto {
+  /** What the rule does, as read from the text; the app words it in the reader's language. */
+  parts: AutoPart[];
+  /** The rule the parts compile to. */
+  effects: Effect[];
+  /** Only while this unit has a leader attached (the leader's "while leading" abilities). */
+  whileLeading?: boolean;
+  /** Given to other units within range instead of this one. */
+  aura?: { range: number; side: "friendly" | "enemy"; keyword?: string };
+  /** Used by the player from the unit card; then runs until the end of the phase. */
+  oncePerBattle?: boolean;
+  /** At the start of a phase of its owner's turn (or each turn with `anyTurn`). */
+  trigger?: {
+    phase: string;
+    at: "start" | "end";
+    anyTurn?: boolean;
+    gain?: { resource: string; amount: number };
+    /** Wounds one model regains: a number or dice text such as "D3". */
+    heal?: string;
+  };
 }
 
 /**
@@ -355,6 +414,8 @@ export interface GameState {
    * player, then by "unitId/weaponId", the faces on that action's slots.
    */
   placed?: Record<PlayerId, Record<string, number[]>>;
+  /** Automated abilities that went off as the turn marker last moved (for the log). */
+  triggered?: Triggered[] | null;
   /** Player actions taken (stratagems), for their once-per-phase limits. */
   used?: Record<PlayerId, PlayerActionUse[]>;
   /** The last measurement a player shared, shown to everyone until cleared. */

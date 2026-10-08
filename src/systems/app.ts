@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { Mission } from "../sdk";
-import type { GameState, Layout, Table, Unit } from "../core";
+import type { AbilityAuto, GameState, Layout, Table, Unit } from "../core";
+import type { GameSystem } from "../core/content/schema";
 import type { ImportedRoster } from "./wh40k/roster";
 
 /**
@@ -45,6 +46,11 @@ export interface SystemModule {
   secretObjectives?: string;
   /** Missions players can pick at setup (invented samples; published ones come as packages). */
   missions?: Mission[];
+  /**
+   * Read an ability's text and propose the rule it describes (#38), for the
+   * player to confirm; null when it isn't understood in full.
+   */
+  recognizeAbility?(ability: { name: string; text: string }, system: GameSystem): AbilityAuto | null;
 }
 
 export interface TemplateKind {

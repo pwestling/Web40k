@@ -13,6 +13,7 @@ import { systemModule } from "../systems";
 import { formatDate, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { DicePicker } from "./DicePicker";
+import { ImportAutomation } from "./AutoAbilities";
 import { addSpells, importedWizard, parseSpellList } from "../systems/tow/spells";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
@@ -424,6 +425,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 ? t("Bases are a guess from each unit's troop type; check them against your models.")
                 : t("Bases are a guess from keywords and wounds; check them against your models.")}
             </p>
+            <ImportAutomation roster={roster} setRoster={setRoster} />
             {ranked && wizards > 0 && (
               <div className="row wrap">
                 <label

@@ -9,7 +9,8 @@ import {
   segmentCrossesFootprint2D,
   whollyWithin,
 } from "../terrain";
-import type { GameState, Model, TerrainPiece, Unit, WeaponProfile } from "../types";
+import { opposed } from "../teams";
+import type { Ability, GameState, Model, TerrainPiece, Unit, WeaponProfile } from "../types";
 import { bool, evaluate, num, resolve, type EvalContext } from "./expr";
 import type {
   CharacteristicDef,
@@ -198,7 +199,8 @@ export interface BoundRule {
 export function lookupRules(system: GameSystem, refs: RuleRef[], extra: RuleDef[] = []): BoundRule[] {
   const out: BoundRule[] = [];
   for (const ref of refs) {
-    const def = extra.find((r) => r.id === ref.rule) ?? system.rules.find((r) => r.id === ref.rule);
+    const def =
+      ref.def ?? extra.find((r) => r.id === ref.rule) ?? system.rules.find((r) => r.id === ref.rule);
     if (!def) continue;
     const param: Record<string, unknown> = {};
     for (const p of def.params ?? []) param[p.id] = ref.params?.[p.id] ?? p.default ?? null;
@@ -217,7 +219,8 @@ export interface ViewOptions {
 }
 
 function abilityTexts(unit: Unit | undefined): string[] {
-  return (unit?.sheet?.abilities ?? []).map((a) => `${a.name} ${a.text}`.trim());
+  // An automated ability runs as its own rule (autoRules), scoped as the player confirmed.
+  return (unit?.sheet?.abilities ?? []).filter((a) => !a.auto).map((a) => `${a.name} ${a.text}`.trim());
 }
 
 function unitFlags(unit: Unit | undefined): string[] {
@@ -279,6 +282,64 @@ function majority(state: GameState, models: ModelView[]): ModelView | undefined 
   return best;
 }
 
+/** An automated ability's effects as an inline rule named after the ability. */
+function autoRef(a: Ability): RuleRef {
+  const id = `auto:${a.name}`;
+  return { rule: id, def: { id, name: a.name, effects: a.auto?.effects ?? [] } };
+}
+
+/** Whether an automated ability is switched on for its unit right now. */
+export function autoActive(unit: Unit, a: Ability): boolean {
+  if (!a.auto) return false;
+  if (a.auto.whileLeading && !unit.status?.attached) return false;
+  if (a.auto.oncePerBattle && !unit.status?.[`auto.${a.name}`]) return false;
+  return true;
+}
+
+/** A unit has every keyword in a phrase such as "Adeptus Astartes Infantry". */
+export function hasKeywordPhrase(unit: Unit, phrase: string): boolean {
+  let rest = ` ${phrase.toLowerCase().replace(/\s+/g, " ")} `;
+  const kws = [...(unit.sheet?.keywords ?? [])]
+    .map((k) => k.toLowerCase())
+    .sort((a, b) => b.length - a.length);
+  for (const k of kws) rest = rest.replace(` ${k} `, " ");
+  return rest.trim() === "";
+}
+
+function unitsGap(state: GameState, a: Unit, b: Unit): number {
+  let best = Infinity;
+  for (const i of a.modelIds) {
+    const m = state.models[i];
+    if (!m || m.destroyed) continue;
+    for (const j of b.modelIds) {
+      const n = state.models[j];
+      if (n && !n.destroyed) best = Math.min(best, baseToBaseDistance(m, n));
+    }
+  }
+  return best;
+}
+
+/**
+ * Rules from abilities the player automated (#38): the unit's own that are
+ * on, and auras of units in range of it (its own aura included).
+ */
+export function autoRules(state: GameState, unit: Unit): RuleRef[] {
+  const out: RuleRef[] = [];
+  for (const a of unit.sheet?.abilities ?? [])
+    if (a.auto && !a.auto.aura && !a.auto.trigger && autoActive(unit, a)) out.push(autoRef(a));
+  for (const other of Object.values(state.units)) {
+    for (const a of other.sheet?.abilities ?? []) {
+      const aura = a.auto?.aura;
+      if (!aura || !autoActive(other, a)) continue;
+      if ((aura.side === "enemy") !== opposed(state, other.owner, unit.owner)) continue;
+      if (aura.keyword && !hasKeywordPhrase(unit, aura.keyword)) continue;
+      if (other.id !== unit.id && !(unitsGap(state, other, unit) <= aura.range)) continue;
+      out.push(autoRef(a));
+    }
+  }
+  return out;
+}
+
 export function unitView(state: GameState, system: GameSystem, unit: Unit, opts: ViewOptions = {}): UnitView {
   const models = unit.modelIds.flatMap((id) => {
     const m = state.models[id];
@@ -305,7 +366,7 @@ export function unitView(state: GameState, system: GameSystem, unit: Unit, opts:
     keywords: [...(unit.sheet?.keywords ?? [])],
     statuses: statusesOf(system, flags),
     flags,
-    rules: bindRules(rules, abilityTexts(unit), "unit"),
+    rules: [...bindRules(rules, abilityTexts(unit), "unit"), ...autoRules(state, unit)],
     models,
     files: unit.formation.kind === "ranked" ? Math.min(unit.formation.files, models.length) : models.length,
     startingStrength: unit.modelIds.length,

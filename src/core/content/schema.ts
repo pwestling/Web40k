@@ -245,6 +245,8 @@ export interface RuleDef {
 export interface RuleRef {
   rule: Id;
   params?: Record<string, Value | Keyword>;
+  /** The rule itself, for one made on the player's device (an automated ability). */
+  def?: RuleDef;
 }
 
 // ---------------------------------------------------------------------------

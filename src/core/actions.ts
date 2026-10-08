@@ -27,6 +27,7 @@ import {
   type ScriptStep,
 } from "./script";
 import type {
+  AbilityAuto,
   DiceRoll,
   GameSettings,
   GameState,
@@ -76,6 +77,8 @@ export type Intent =
   | { type: "unit/add"; unit: Unit; models: Model[] }
   | { type: "unit/remove"; id: UnitId }
   | { type: "unit/status"; id: UnitId; key: string; value: number | boolean | null }
+  /** Run an ability as the rule read from its text (#38), or stop (null). Owner only. */
+  | { type: "unit/automate"; id: UnitId; ability: string; auto: AbilityAuto | null }
   | UnitMove
   | UnitForm
   | ModelsMove
@@ -252,6 +255,8 @@ export type GameEvent =
   | { type: "unit/add"; unit: Unit; models: Model[] }
   | { type: "unit/remove"; id: UnitId }
   | { type: "unit/status"; id: UnitId; key: string; value: number | boolean | null }
+  /** Run an ability as the rule read from its text (#38), or stop (null). Owner only. */
+  | { type: "unit/automate"; id: UnitId; ability: string; auto: AbilityAuto | null }
   | UnitMove
   | UnitForm
   | ModelsMove
@@ -467,6 +472,11 @@ export function resolveIntent(
     }
     case "player/join":
       return intent.player.id === from ? intent : null;
+    case "unit/automate": {
+      const unit = state?.units[intent.id];
+      if (!unit || unit.owner !== from) return null;
+      return unit.sheet?.abilities.some((a) => a.name === intent.ability) ? intent : null;
+    }
     case "player/rename": {
       const name = intent.name.trim().slice(0, 32);
       return state?.players[intent.player] && intent.player === from && name

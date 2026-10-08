@@ -34,6 +34,7 @@ import { SystemUnitCard } from "./SystemPanels";
 import { systemOf } from "../core/content/turn";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
+import { AbilityLine, OncePerBattle } from "./AutoAbilities";
 import { replayRoll, useGame, useRareStars } from "./hooks";
 import { opposed } from "../core/teams";
 import { RollButton } from "../companion/RealDice";
@@ -306,6 +307,7 @@ export function UnitCard() {
         )}
       </div>
       <CoreAbilities unit={unit} />
+      <OncePerBattle unit={unit} mine={mine} />
       <CodeActions unit={unit} />
       {!companion && (
         <p className="muted">
@@ -437,9 +439,7 @@ export function UnitCard() {
         <details>
           <summary>{t("Abilities ({n})", { n: unit.sheet.abilities.length })}</summary>
           {unit.sheet.abilities.map((a) => (
-            <p key={a.name}>
-              <strong>{a.name}.</strong> {a.text}
-            </p>
+            <AbilityLine key={a.name} unit={unit} ability={a} mine={mine} />
           ))}
         </details>
       )}

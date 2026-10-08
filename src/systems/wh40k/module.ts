@@ -6,6 +6,7 @@ import type { GameState } from "../../core";
 import type { SystemModule } from "../app";
 import { standardLayout } from "./layout";
 import { sampleRoster } from "./sample";
+import { recognize } from "./recognize";
 import { unitGap } from "../../core/manoeuvre";
 import { opposed } from "../../core/teams";
 import { maxWounds, woundsRemaining } from "../../core/attack";
@@ -58,5 +59,6 @@ export const wh40kModule: GameModule<SystemModule> = {
     dedicatedUi: true,
     secretObjectives: "Secret objectives",
     missions: WH40K_MISSIONS,
+    recognizeAbility: recognize,
   },
 };
