@@ -2,7 +2,16 @@ import type { GameEvent } from "./actions";
 import { revealMatches } from "./secrets";
 import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
-import { applyAction, applyRunOutcomes, endReaction, setRun } from "./content/play";
+import {
+  applyAction,
+  applyRunOutcomes,
+  dropDisabledPlacements,
+  endReaction,
+  placeDie,
+  placedKey,
+  setPlaced,
+  setRun,
+} from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import { advanceTurn, endActivation, initialResources, passTurn, systemOf } from "./content/turn";
 import { transformPositions } from "./formation";
@@ -110,13 +119,16 @@ function reduce(state: GameState, event: GameEvent): GameState {
       for (const id of unit.modelIds) delete models[id];
       return { ...state, units, models };
     }
-    case "unit/status":
-      return updateUnit(state, event.id, (u) => {
+    case "unit/status": {
+      const next = updateUnit(state, event.id, (u) => {
         const status = { ...u.status };
         if (event.value === null) delete status[event.key];
         else status[event.key] = event.value;
         return { ...u, status };
       });
+      // A system damaged by hand loses the dice placed on its action too.
+      return next.placed ? dropDisabledPlacements(next) : next;
+    }
     case "unit/move": {
       const unit = state.units[event.id];
       if (!unit) return state;
@@ -348,6 +360,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
       return event.use ? recordUse(next, event.player, event.use) : next;
     }
+    case "dice/place":
+      return placeDie(state, event.player, event.unitId, event.weapon, event.index);
+    case "dice/discard":
+      return setPlaced(state, event.player, placedKey(event.unitId, event.weapon), []);
     case "game/branch":
       return { ...state, branch: event.branch };
     case "game/system": {

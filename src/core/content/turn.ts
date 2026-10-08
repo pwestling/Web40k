@@ -34,6 +34,8 @@ export interface TurnSlot {
   onEnter: EffectAction[];
   /** For alternating activations: actions each activation allows. */
   actionsPerActivation?: Expr;
+  /** Players may place pool dice on card slots here. */
+  placeDice?: boolean;
 }
 
 const cache = new WeakMap<GameSystem, TurnSlot[]>();
@@ -61,6 +63,7 @@ function flatten(segments: Segment[], playerTurn: boolean): TurnSlot[] {
           playerTurn,
           actions: seg.actions ?? [],
           onEnter,
+          ...(seg.placeDice ? { placeDice: true } : {}),
         });
         out.push(
           ...flatten(
@@ -370,7 +373,10 @@ function turnAction(
   if (def?.kind === "dicePool") {
     const sides = def.sides ?? 6;
     const have = state.pools?.[player]?.[def.id] ?? [];
-    const rolled = Array.from({ length: Math.max(0, amount) }, () => die(rng, sides));
+    // Dice placed on cards are out of the pool until spent (FSD: fewer to roll).
+    const placed = Object.values(state.placed?.[player] ?? {}).reduce((n, f) => n + f.length, 0);
+    const room = def.total !== undefined ? def.total - placed - have.length : Infinity;
+    const rolled = Array.from({ length: Math.max(0, Math.min(amount, room)) }, () => die(rng, sides));
     return {
       ...state,
       pools: { ...state.pools, [player]: { ...state.pools?.[player], [def.id]: [...have, ...rolled] } },

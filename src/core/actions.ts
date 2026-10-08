@@ -3,7 +3,9 @@ import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import {
   applyAction,
+  cantPlace,
   endReaction,
+  placedKey,
   procedureEnv,
   reactionOver,
   reactionSeat,
@@ -14,7 +16,7 @@ import {
 import { advance, respond, type Outcome, type ProcedureRun } from "./content/runner";
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { getSystem } from "./content/systems";
-import { systemOf } from "./content/turn";
+import { currentSlot, systemOf } from "./content/turn";
 import { die, parseDice, rollDice } from "./dice";
 import {
   startScript,
@@ -191,6 +193,10 @@ export type Intent =
     }
   /** A player is done re-rolling their pool for this round. */
   | { type: "pool/ready"; player: PlayerId; resource: string }
+  /** Place a pool die on a weapon's AD slots ahead of time (FSD). */
+  | { type: "dice/place"; unitId: UnitId; weapon: string; index: number }
+  /** Discard the dice placed on a weapon's slots (FSD cleanup). */
+  | { type: "dice/discard"; unitId: UnitId; weapon: string }
   /** Don't react, or finish reacting: the held action goes on. */
   | { type: "reaction/pass" }
   /** Roll the next step of the procedure in progress. */
@@ -328,6 +334,8 @@ export type GameEvent =
   /** A player's dice pool after a re-roll or spending dice. */
   /** `use` records a once-per-round re-roll or "ready" (state.used). */
   | { type: "pool/set"; player: PlayerId; resource: string; faces: number[]; use?: string }
+  | { type: "dice/place"; player: PlayerId; unitId: UnitId; weapon: string; index: number }
+  | { type: "dice/discard"; player: PlayerId; unitId: UnitId; weapon: string }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
   | { type: "attack/roll"; attack: AttackState }
@@ -560,6 +568,14 @@ export function resolveIntent(
         use: `ready:${intent.resource}`,
       };
     }
+    case "dice/place":
+      if (!state || cantPlace(state, from, intent.unitId, intent.weapon, intent.index)) return null;
+      return { ...intent, player: from };
+    case "dice/discard": {
+      const key = placedKey(intent.unitId, intent.weapon);
+      if (!state?.placed?.[from]?.[key]?.length || !currentSlot(state)?.placeDice) return null;
+      return { ...intent, player: from };
+    }
     case "turn/next":
     case "turn/pass":
       return { ...intent, seed: Math.floor(rng() * 2 ** 31) };
@@ -758,7 +774,7 @@ export function resolveIntent(
     case "reaction/pass": {
       const pending = state?.pending;
       if (!state || !pending || state.procedure) return null;
-      const run = startActionRun(endReaction(state, null), pending.trigger, rng);
+      const run = startActionRun(endReaction({ ...state, deferred: null }, null), pending.trigger, rng);
       return { type: "reaction/end", ...(run ? { run } : {}) };
     }
     case "procedure/roll": {
@@ -785,7 +801,7 @@ export function resolveIntent(
       const cleared: GameState = { ...state, procedure: null };
       if (!reactionOver(cleared)) return { type: "procedure/clear", ...script };
       const run = state.pending
-        ? startActionRun(endReaction(cleared, null), state.pending.trigger, rng)
+        ? startActionRun(endReaction({ ...cleared, deferred: null }, null), state.pending.trigger, rng)
         : null;
       return { type: "procedure/clear", end: run ? { run } : {}, ...script };
     }

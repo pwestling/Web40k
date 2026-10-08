@@ -30,6 +30,21 @@ const ref = (r: string): Expr => ({ ref: r });
 const distance: Expr = { query: { kind: "distance", from: "attacker", to: "target", measure: "centre" } };
 /** Close combat: within 1 DU. */
 const close: Expr = { cmp: "<=", a: distance, b: 1 };
+/** The weapon sits on system line n and that system is damaged. */
+const systemDamaged = (n: number): Expr => ({
+  all: [
+    { hasStatus: "self", status: `damageS${n}` },
+    {
+      cmp: "==",
+      a: {
+        if: { cmp: ">", a: ref("weapon.line"), b: 0 },
+        then: ref("weapon.line"),
+        else: ref("weapon.order"),
+      },
+      b: n,
+    },
+  ],
+});
 const notPinned: Expr = { not: { hasStatus: "self", status: "pinned" } };
 
 export const fsd: GameSystem = {
@@ -104,6 +119,16 @@ export const fsd: GameSystem = {
     },
     { id: "AP", name: "Armour piercing", of: "weapon", type: "number", default: 0 },
     { id: "slots", name: "AD slots", short: "AD", of: "weapon", type: "text", aliases: ["AD", "Slots"] },
+    {
+      // Which system line (S1-S4) the action sits on; by default its place on the card.
+      id: "line",
+      name: "System line",
+      short: "Sys",
+      of: "weapon",
+      type: "number",
+      aliases: ["Line", "System", "Sys"],
+      default: 0,
+    },
   ],
   weaponKinds: ["ranged", "melee"],
   unitShape: { kind: "skirmish" },
@@ -176,10 +201,12 @@ export const fsd: GameSystem = {
       sides: 6,
       reset: "round",
       rerollOnce: true,
+      // The AD Pool: dice still on cards are rolled again only once spent.
+      total: 12,
     },
     { id: "VP", name: "VP", on: "player", initial: 0 },
   ],
-  constants: { adCapacity: 8, closeCombat: 1, commandRange: 2 },
+  constants: { adPool: 12, adCapacity: 8, closeCombat: 1, commandRange: 2 },
   resets: [{ at: "round", flags: ["activated", "moved", "interacting", "commanded", "used.*"] }],
   rules: [],
   procedures: [
@@ -399,6 +426,7 @@ export const fsd: GameSystem = {
       if: notPinned,
       target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
       limit: { count: 1, per: "round", perUnit: true },
+      notWhen: [1, 2, 3, 4].map((n) => ({ if: systemDamaged(n), why: `System ${n} is damaged` })),
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
       procedure: "attack",
     },
@@ -415,6 +443,8 @@ export const fsd: GameSystem = {
           { do: "gainResource", resource: "readyDice", amount: ref("const.adCapacity"), player: "opponent" },
         ],
       },
+      // Before the activations, both players may place Ready dice on cards.
+      { kind: "phase", id: "preassign", name: "Pre-assign ADs", placeDice: true },
       {
         kind: "alternate",
         id: "activations",
@@ -430,6 +460,8 @@ export const fsd: GameSystem = {
         ],
       },
       { kind: "phase", id: "scoring", name: "Scoring" },
+      // Discard dice from cards, and place Ready dice for next round.
+      { kind: "phase", id: "cleanup", name: "Cleanup", placeDice: true },
     ],
   },
   checks: [

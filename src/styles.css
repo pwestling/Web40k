@@ -1131,6 +1131,24 @@ input.frontage {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+/* Dice placed on a weapon's AD slots (FSD). */
+.slot-dice {
+  margin-top: 2px;
+}
+.slot-dice .die.placed {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4em;
+  margin-right: 2px;
+  font-size: 0.85em;
+  background: #fde68a;
+  color: #111;
+  border: 1px solid #b45309;
+}
+.slot-dice .actions {
+  display: inline;
+}
 /* Paying with a picked die (generic unit card and fire setup). */
 .actions button.die,
 .panel.attack button.die {

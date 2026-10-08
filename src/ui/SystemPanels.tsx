@@ -3,8 +3,13 @@ import { playerShape } from "./sides";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   actionTargets,
+  cantPlace,
+  currentSlot,
   findProcedure,
   inchesPerUnit,
+  placeablePool,
+  placedKey,
+  placeWindow,
   previewRun,
   procedureEnv,
   procedureRoles,
@@ -13,6 +18,7 @@ import {
   systemOf,
   unitActions,
   unitView,
+  weaponSlots,
   type ActionOption,
   type CharacteristicDef,
   type GameSystem,
@@ -277,6 +283,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                   <td>
                     {w.name}
                     {w.keywords.length > 0 && <div className="muted small">{w.keywords.join(", ")}</div>}
+                    <SlotDice unit={unit} weaponId={w.id} mine={mine} />
                   </td>
                   {weaponChars.map((c) => (
                     <td key={c.id}>{shown(c, v[c.id], w.chars)}</td>
@@ -488,6 +495,74 @@ function SystemActions({ unit }: { unit: Unit }) {
       {reacting && (
         <button onClick={() => dispatch({ type: "reaction/pass" }, unit.owner)}>
           {t("Finish reaction")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Dice placed ahead of time on a weapon's AD slots (FSD), and while placing
+ * is open, the owner's Ready dice that would fit: click one to place it.
+ */
+function SlotDice({ unit, weaponId, mine }: { unit: Unit; weaponId: string; mine: boolean }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const system = systemOf(game);
+  const pool = placeablePool(system);
+  if (!pool) return null;
+  const at = weaponSlots(game, unit.id, weaponId);
+  if (!at?.slots.length) return null;
+  const placed = game.placed?.[unit.owner]?.[placedKey(unit.id, weaponId)] ?? [];
+  const open = mine && placeWindow(game, unit.owner);
+  const faces = game.pools?.[unit.owner]?.[pool] ?? [];
+  // One button per face that fits, not per die.
+  const fits = open
+    ? [...new Set(faces)]
+        .sort((a, b) => a - b)
+        .flatMap((f) => {
+          const i = faces.indexOf(f);
+          return cantPlace(game, unit.owner, unit.id, weaponId, i) ? [] : [{ f, i }];
+        })
+    : [];
+  if (!placed.length && !fits.length && !at.off) return null;
+  return (
+    <div className="slot-dice small">
+      {at.off && <span className="muted">{at.off}. </span>}
+      {placed.length > 0 && (
+        <span title="Placed on its AD slots: spent when it fires">
+          On card:{" "}
+          {placed.map((f, k) => (
+            <span key={k} className="die placed">
+              {f}
+            </span>
+          ))}
+        </span>
+      )}
+      {fits.length > 0 && (
+        <span className="actions">
+          {" "}
+          Place:{" "}
+          {fits.map(({ f, i }) => (
+            <button
+              key={f}
+              className="die"
+              title={`Put a ${f} from your Ready dice on this card`}
+              onClick={() =>
+                dispatch({ type: "dice/place", unitId: unit.id, weapon: weaponId, index: i }, unit.owner)
+              }
+            >
+              {f}
+            </button>
+          ))}
+        </span>
+      )}
+      {mine && placed.length > 0 && currentSlot(game)?.placeDice && (
+        <button
+          className="small link"
+          onClick={() => dispatch({ type: "dice/discard", unitId: unit.id, weapon: weaponId }, unit.owner)}
+        >
+          Discard
         </button>
       )}
     </div>

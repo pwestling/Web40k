@@ -821,6 +821,31 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return t("{name} ended the activation", { name: who });
     case "pool/set":
       return t("{name} re-rolled or spent dice", { name: nameOf(event.player) });
+    case "dice/place": {
+      const face =
+        before.pools?.[event.player] && Object.values(before.pools[event.player]!)[0]?.[event.index];
+      const weapon = game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name ?? t("a card");
+      return face
+        ? t("{name} placed a {face} on {unit}'s {weapon}", {
+            name: nameOf(event.player),
+            face: String(face),
+            unit: unitName(event.unitId),
+            weapon,
+          })
+        : t("{name} placed a die on {unit}'s {weapon}", {
+            name: nameOf(event.player),
+            unit: unitName(event.unitId),
+            weapon,
+          });
+    }
+    case "dice/discard": {
+      const weapon = game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name ?? t("a card");
+      return t("{name} discarded the dice on {unit}'s {weapon}", {
+        name: nameOf(event.player),
+        unit: unitName(event.unitId),
+        weapon,
+      });
+    }
     case "game/branch": {
       const b = event.branch;
       const again = b.droppedSecrets

@@ -89,11 +89,14 @@ export type GeoQuery =
   | { kind: "visible"; from: Ref; to: Ref; fully?: boolean }
   /** Whether `to` lies in one of `from`'s arcs (front, flank, rear...). */
   | { kind: "inArc"; from: Ref; to: Ref; arc: Id }
-  /** Whether `subject` is within (or wholly within) a terrain piece or zone. */
+  /**
+   * Whether `subject` is within (or wholly within) an area: "terrain.<category>",
+   * "zone.own", "zone.enemy" or "zone.<seat>".
+   */
   | { kind: "inArea"; subject: Ref; area: Ref; wholly?: boolean }
   /** Terrain categories crossed by the line between two things, e.g. "dense". */
   | { kind: "crosses"; from: Ref; to: Ref; terrainCategory: Id }
-  /** Height of `from` above `to`, in inches. */
+  /** Height of `from` above `to`, in the system's distance unit (like distance). */
   | { kind: "elevation"; from: Ref; to: Ref }
   /**
    * Whether `to` is in cover from `from`: some model of `to` that `from` can
@@ -377,7 +380,15 @@ export interface TurnStructure {
 
 export type Segment =
   /** A named window in which listed actions are available. */
-  | { kind: "phase"; id: Id; name: string; actions?: Id[]; segments?: Segment[] }
+  | {
+      kind: "phase";
+      id: Id;
+      name: string;
+      actions?: Id[];
+      segments?: Segment[];
+      /** Players may place pool dice on their cards' slots here (FSD pre-assigning and cleanup). */
+      placeDice?: boolean;
+    }
   /** Each player takes a full turn of the nested segments (IGOUGO). */
   | { kind: "playerTurns"; segments: Segment[] }
   /**
@@ -553,6 +564,11 @@ export interface ResourceDef {
   rerollOnce?: boolean;
   /** Back to `initial` (a pool emptied) at the start of each player turn or round. */
   reset?: "playerTurn" | "round";
+  /**
+   * Dice in the whole pool (FSD's AD Pool): dice still placed on cards count
+   * against it, so a roll takes fewer when many are placed.
+   */
+  total?: number;
 }
 
 /** An advisory rule check. Breaking it warns; it never blocks. */
