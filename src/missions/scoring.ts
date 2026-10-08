@@ -66,7 +66,8 @@ export function moments(record: GameRecord): Moment[] {
   return out;
 }
 
-const matches = (at: ScoringMoment, m: Moment) =>
+/** Whether a scoring rule's moment is this one. */
+export const momentMatches = (at: ScoringMoment, m: Moment) =>
   "phaseEnd" in at
     ? m.kind === "phaseEnd" && m.phase === at.phaseEnd && m.round >= (at.fromRound ?? 1)
     : "roundEnd" in at
@@ -90,7 +91,7 @@ export function pendingScores(record: GameRecord, game: GameState, mission: Miss
   );
   for (const m of all)
     for (const rule of mission.scoring) {
-      if (!matches(rule.at, m)) continue;
+      if (!momentMatches(rule.at, m)) continue;
       for (const seat of m.kind === "phaseEnd" ? [m.seat!] : sides(m.state)) {
         const key = `${rule.id}:${m.round}:${seat}`;
         if (done.has(key)) continue;

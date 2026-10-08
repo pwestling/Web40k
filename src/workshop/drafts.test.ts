@@ -6,6 +6,7 @@ import ranked from "../../examples/workshop/ranked.js?raw";
 import activations from "../../examples/workshop/activations.js?raw";
 import { fileName, manifestOf, prText, problems } from "./drafts";
 import { CTX, sdkCompletions, VIEW } from "./completions";
+import { syntaxError } from "./syntax";
 
 describe("module workshop drafts", () => {
   it("the starter templates are whole games with nothing to fix", () => {
@@ -49,5 +50,17 @@ describe("module workshop completions", () => {
   it("offers keys and snippets elsewhere, but not after some other object's dot", () => {
     expect(at("  avail")?.options.some((o) => o.label === "available")).toBe(true);
     expect(at("Math.ma")).toBeNull();
+  });
+});
+
+describe("module workshop syntax check", () => {
+  it("passes the templates and points at a stray token", () => {
+    for (const source of [skirmish, ranked, activations]) expect(syntaxError(source)).toBeNull();
+    expect(syntaxError("const a = 1;\nconst b = ;\n")).toMatchObject({ line: 2 });
+  });
+
+  it("names the bracket left open rather than the end of the file", () => {
+    const source = "function f() {\n  if (x) {\n    go(`${a}`);\n\n}\nconst y = /[(]/;\n";
+    expect(syntaxError(source)).toEqual({ line: 1, column: 14 });
   });
 });

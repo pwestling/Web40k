@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { delaying } from "../broadcast/broadcast";
 import { useReel } from "../broadcast/reel";
 import { modelHeight, sideName, sidePlayers, sides, type GameState } from "../core";
-import { owed, useShowcase, type Shot } from "../render/showcase";
+import { owed, quiet, useShowcase, type Shot } from "../render/showcase";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -101,6 +101,8 @@ export function Showcase() {
     if (was !== 0 || turn.round < 1 || played.has(initial) || useReel.getState().index !== null) return;
     // Not for a review room: it goes over a game, it isn't one starting (UX 233).
     if (useStore.getState().review) return;
+    // Nor for a workshop test table, restarted over and over (UX 311).
+    if (quiet.initial === initial) return;
     if (scrub !== null && !delaying() && !useStore.getState().record.events.length) return;
     played.add(initial);
     const s = useStore.getState();

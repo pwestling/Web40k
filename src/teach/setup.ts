@@ -11,6 +11,7 @@ import { systemModule } from "../systems";
 import { currentSlot } from "../core/content/turn";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import type { Lesson } from "./lesson";
+import type { ImportedRoster } from "../systems/wh40k/roster";
 
 type Send = (intent: Intent, as: PlayerId) => void;
 
@@ -19,13 +20,19 @@ type Send = (intent: Intent, as: PlayerId) => void;
  * (the front door's demos and the lessons). Ranked systems deploy their
  * blocks at the list's frontage (or five wide).
  */
-export function deploySamples(get: () => GameState, send: Send, tag: string): void {
+export function deploySamples(
+  get: () => GameState,
+  send: Send,
+  tag: string,
+  /** Other armies than the sides' samples, by seat (a pick of factions). */
+  armies?: [ImportedRoster, ImportedRoster],
+): void {
   const game = get();
   const system = game.system ?? DEFAULT_SYSTEM;
   const ranked = systemOf(game).unitShape.kind === "ranked";
   for (const seat of sides(game)) {
     const owner = sidePlayers(game, seat)[0]!.id;
-    const roster = systemModule(system).sample(seat === 1 ? 1 : 0);
+    const roster = armies?.[seat === 1 ? 1 : 0] ?? systemModule(system).sample(seat === 1 ? 1 : 0);
     const units = ranked
       ? roster.units.map((u) => ({
           ...u,

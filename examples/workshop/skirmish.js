@@ -2,7 +2,8 @@
 // Each player in turn moves, then fights. Change anything: the workshop
 // reloads it onto the test table every time you save (Ctrl+S).
 //
-// How packages work: docs/packages.md. The types: src/sdk/index.ts.
+// Everything a package can use is in the SDK tab, on the right; in the editor,
+// type ctx. or view. for suggestions.
 
 export const manifest = {
   id: "me.my-skirmish", // change "me" to your name: it must stay the same across versions
@@ -16,7 +17,7 @@ export const manifest = {
   adds: "A whole small game: move, then fight; each hit takes a wound.",
 };
 
-/** The rules as data: characteristics, dice and the turn (src/core/content/schema.ts). */
+/** The rules as data: characteristics, dice and the turn (the SDK tab lists the keys). */
 const system = {
   id: "my-skirmish",
   name: "My skirmish game",

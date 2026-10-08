@@ -9,6 +9,7 @@ import { gameModule } from "../systems";
 import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { useGame } from "./hooks";
+import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
 import { t, tn, gameText } from "../i18n";
 
@@ -22,6 +23,8 @@ export function whatNow(
   game: GameState,
   me: string | null,
   hotseat: boolean,
+  /** A package game's code actions ready now, by unit (worked out in its sandbox). */
+  ready: Record<string, string[]> = {},
 ): { head: string; lines: string[]; units?: { id: string; text: string }[] } {
   const raw = phaseName(game) ?? "";
   // Shown in this device's language (UX 277); the checks below read the English name.
@@ -103,11 +106,16 @@ export function whatNow(
           if ((!a.applies || a.applies(view, actor)) && a.available(view, actor) === true) add(a.name);
         }
   }
+  for (const u of units) for (const name of ready[u.id] ?? []) add(name);
   const lines: string[] = [];
-  if (/move/i.test(raw))
+  // In an activation (Rift Lanterns, #42) a unit moves as part of acting, whatever the segment is called.
+  const activation = turnView(game).alternating;
+  if (/move/i.test(raw) || activation || Object.keys(ready).length)
     lines.push(t("Drag a unit to move it. The ruler shows how far it has gone against its limit."));
   if (/charge/i.test(raw) && !can.size)
     lines.push(t("No unit is close enough to charge: press ▶ to move on."));
+  if (activation && !can.size && !outOfRange)
+    lines.push(t("Nothing is in reach to attack yet: move closer first."));
   if (outOfRange && !can.size) lines.push(t("Nothing is in range to shoot yet. Get closer next turn."));
   if (can.size)
     lines.push(
@@ -124,10 +132,10 @@ export function whatNow(
         ? t("Tap one of your units to see its buttons.")
         : t("Click one of your units to see its buttons."),
     );
-  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange)
+  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation)
     lines.push(t("Nothing to do this phase."));
   lines.push(
-    turnView(game).alternating
+    activation
       ? t("When a unit has acted, press End activation at the top; when you have nothing left, Pass.")
       : t("When you're done, press ▶ at the top for the next phase."),
   );
@@ -179,6 +187,7 @@ export function WhatNow() {
   const scrub = useStore((s) => s.scrub);
   // A lesson's coach card says what to do instead.
   const coaching = useCoach((s) => s.lesson !== null && !s.free);
+  const ready = useSandbox((s) => s.app?.ready);
   if (spectator || scrub !== null || coaching) return null;
   if (!open)
     return (
@@ -186,7 +195,7 @@ export function WhatNow() {
         {t("What can I do now?")}
       </button>
     );
-  const { head, lines, units } = whatNow(game, me, hotseat);
+  const { head, lines, units } = whatNow(game, me, hotseat, ready);
   return (
     <div className="panel whatnow">
       <div className="row spread">

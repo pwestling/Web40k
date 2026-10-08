@@ -9,6 +9,7 @@ import {
   type Intent,
   type Model,
   type PlayerId,
+  type StandInLook,
   type Unit,
   type UnitSheet,
   type Vec2,
@@ -18,7 +19,13 @@ import {
 export interface SpawnableUnit {
   name: string;
   sheet: UnitSheet;
-  models: { profile: { name: string; chars: Characteristics }; weapons: string[]; base?: BaseShape }[];
+  models: {
+    profile: { name: string; chars: Characteristics };
+    weapons: string[];
+    base?: BaseShape;
+    look?: StandInLook;
+    height?: number;
+  }[];
   base: BaseShape;
   /** Deploy as a ranked block this many models wide (rank-and-flank games). */
   files?: number;
@@ -78,9 +85,11 @@ export function spawnIntents(
         label: m.profile.name,
         position: { x, y },
         facing: seat === 0 ? Math.PI : 0,
-        base: u.base,
+        base: m.base ?? u.base,
         profile: m.profile,
         weapons: m.weapons,
+        ...(m.look ? { look: m.look } : {}),
+        ...(m.height ? { height: m.height } : {}),
       };
     });
     const unit: Unit = {
@@ -136,6 +145,8 @@ function blockIntent(
       base: bases[i]!,
       profile: m.profile,
       weapons: m.weapons,
+      ...(m.look ? { look: m.look } : {}),
+      ...(m.height ? { height: m.height } : {}),
     };
   });
   const unit: Unit = {

@@ -1,5 +1,6 @@
 import { Sandbox } from "../sandbox/host";
 import type { SoakReport } from "../soak/run";
+import type { Loaded } from "../sandbox/protocol";
 
 export type SoakResult = Pick<SoakReport, "seed" | "ok" | "failures" | "steps" | "round" | "finished">;
 
@@ -40,3 +41,28 @@ export async function soakDraft(
     box.stop();
   }
 }
+
+/** The checker: one sandbox kept for the workshop's saves, started again if it stops. */
+let checker: Promise<Sandbox> | null = null;
+
+/**
+ * Load a draft in the sandbox the way the test table will (#42, UX 307-308):
+ * its load errors, and what its game gives the app (to see whether the
+ * sample armies or the table changed).
+ */
+export async function checkDraft(source: string): Promise<Loaded> {
+  const start = async () => {
+    const code = (await import("virtual:soak-worker")).default;
+    return Sandbox.start(code, () => (checker = null));
+  };
+  checker ??= start();
+  try {
+    return await (await checker).call<Loaded>({ t: "check", source }, CHECK_MS);
+  } catch (e) {
+    checker = null;
+    throw e;
+  }
+}
+
+/** Loading a draft runs its top level and its sample and layout code: this long, or it's stuck. */
+const CHECK_MS = 5000;

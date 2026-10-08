@@ -10,6 +10,7 @@ import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
+import { installRiftLanterns, playRiftLanterns } from "../games/riftLanterns";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
 import { WhatsNew } from "./WhatsNew";
@@ -39,7 +40,12 @@ export function Lobby() {
   const [guide, setGuide] = useState(false);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
-  useEffect(() => void useLibrary.getState().load(), []);
+  useEffect(() => {
+    void useLibrary.getState().load();
+    // Our own game goes in the library after the front door is up, so it's in the game list (#42).
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 500));
+    idle(() => void installRiftLanterns());
+  }, []);
   const fromPackages = Object.values(library).filter(
     (p) => p.trusted && p.manifest.kind === "system" && p.manifest.systems[0],
   );
@@ -206,6 +212,29 @@ export function Lobby() {
               {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
             </span>
           </button>
+          {/* Our own game (#42): original, free to share, and nothing to import. */}
+          <div className="demo ours">
+            {/* i18n-ignore */}
+            <strong>Rift Lanterns</strong>
+            <span className="muted small">
+              {t(
+                "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import.",
+              )}
+            </span>
+            <div className="row wrap">
+              <button className="primary small play-now" onClick={() => void playRiftLanterns()}>
+                {t("Play now (both sides)")}
+              </button>
+              <a
+                className="small"
+                href="https://github.com/pwestling/Web40k/blob/main/games/rift-lanterns/README.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("Rules")}
+              </a>
+            </div>
+          </div>
           <h2>{t("Pick a game")}</h2>
           <p className="muted small">
             {t(

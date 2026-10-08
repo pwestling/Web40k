@@ -4,6 +4,7 @@ import {
   createInitialState,
   createRecord,
   resolveLogged,
+  sides,
   stateAt,
   type GameRecord,
   type GameState,
@@ -18,6 +19,9 @@ import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
 import type { CodeAction, GameModule, PackageApp, PackageContents, PanelSpec } from "../sdk";
 import { registerModule, type SystemModule } from "../systems";
+import { expandLayout } from "../systems/packageLayout";
+import { shapeProblems } from "../core/content/shape";
+import { momentMatches, moments } from "../missions/scoring";
 import {
   seededRng,
   type ActionRow,
@@ -26,6 +30,19 @@ import {
   type Provided,
   type Resolved,
 } from "./protocol";
+
+/**
+ * An error from a package's code, with where in its file it was thrown when
+ * the stack says (a blob module's line and column), for the workshop to mark.
+ */
+function errorText(e: unknown): string {
+  if (!(e instanceof Error)) return String(e);
+  // The package's own frames: blob (or data) modules other than this worker's own script.
+  const own = (globalThis as { location?: { href?: string } }).location?.href;
+  for (const m of (e.stack ?? "").matchAll(/((?:blob:|data:)[^\s)]*?):(\d+):(\d+)/g))
+    if (m[1] !== own) return `${e.message} (line ${m[2]}, column ${m[3]})`;
+  return e.message;
+}
 
 /** How the engine turns a package's source into its module (a blob import in the worker). */
 export type ImportSource = (source: string) => Promise<{ default?: unknown }>;
@@ -59,16 +76,38 @@ export class SandboxEngine {
         if (contents.module) {
           // A whole game: its module registers here as a built-in one would, and the app gets
           // its rules data plus what its app glue gives for a fresh game.
-          const m = contents.module as GameModule<SystemModule>;
+          const given = contents.module as GameModule<SystemModule>;
+          // A hand-written system's shape is checked first, so a typo is named rather than breaking play.
+          const shape = shapeProblems(given.system);
+          if (shape.length) throw new Error(shape.join("; "));
+          const raw = given.app as (SystemModule & PackageApp) | undefined;
+          // Terrain named by template is made into pieces here, so every caller of layout gets them.
+          const app = raw && {
+            ...raw,
+            layout: (t: Parameters<PackageApp["layout"]>[0]) =>
+              expandLayout(raw.layout(t), raw.templateCategory),
+          };
+          const m = { ...given, ...(app ? { app } : {}) };
           registerModule(m);
-          const app = m.app as (SystemModule & PackageApp) | undefined;
           if (app) this.apps.set(m.system.id, app);
           const table = m.system.defaultTable ?? createInitialState().table;
+          const missions = (app?.missions ?? []).map((mission) => ({
+            id: mission.id,
+            name: mission.name,
+            summary: mission.summary,
+            ...(mission.hand !== undefined ? { hand: mission.hand } : {}),
+            table: { width: table.width, depth: table.depth },
+            setup: mission.setup(table),
+            scoring: mission.scoring.map(({ suggest: _s, ...rule }) => rule),
+            ...(mission.deck ? { deck: mission.deck.map(({ suggest: _s, ...card }) => card) } : {}),
+          }));
           provides = JSON.parse(
             JSON.stringify({
               system: m.system,
               app: {
                 samples: app ? [app.sample(0), app.sample(1)] : [],
+                armies: app?.armies ?? [],
+                missions,
                 layout: app ? app.layout(table) : { terrain: [], objectives: [], zones: [] },
                 templateCategory: app?.templateCategory,
                 templates: app?.templates,
@@ -81,6 +120,7 @@ export class SandboxEngine {
                   rankRules: !!app?.rankRules,
                   leaving: !!app?.leaving,
                   sidePanel: !!app?.sidePanel,
+                  missions: missions.length > 0,
                 },
               },
             }),
@@ -127,7 +167,7 @@ export class SandboxEngine {
           ...(provides ? { provides } : {}),
         });
       } catch (e) {
-        out.errors.push({ hash, error: e instanceof Error ? e.message : String(e) });
+        out.errors.push({ hash, error: errorText(e) });
       }
     }
     return out;
@@ -163,8 +203,33 @@ export class SandboxEngine {
     if (app?.rankRules)
       for (const u of Object.values(this.state.units)) ranks[u.id] = app.rankRules(this.state, u);
     const panel = app?.sidePanel ? app.sidePanel(gameView(this.state, system)) : null;
+    // The chosen mission's suggestions, for every scoring moment so far and every card.
+    const scores: AppState["scores"] = {};
+    const cards: AppState["cards"] = {};
+    const mission = app?.missions?.find((m) => m.id === this.state.mission?.id);
+    if (mission) {
+      for (const moment of moments(this.record))
+        for (const rule of mission.scoring) {
+          if (!momentMatches(rule.at, moment)) continue;
+          for (const seat of moment.kind === "phaseEnd" ? [moment.seat!] : sides(moment.state))
+            scores[`${rule.id}:${moment.round}:${seat}`] = rule.suggest(moment.state, seat);
+        }
+      for (const card of mission.deck ?? [])
+        for (const seat of sides(this.state)) cards[`${card.id}:${seat}`] = card.suggest(this.state, seat);
+    }
+    const ready: AppState["ready"] = {};
+    if (this.actions.get(system)?.length)
+      for (const u of Object.values(this.state.units)) {
+        const names = this.unitActions(u.id, u.owner)
+          .filter((r) => r.available === true)
+          .map((r) => r.name);
+        if (names.length) ready[u.id] = names;
+      }
     return {
       seq: this.state.seq,
+      ready,
+      scores: JSON.parse(JSON.stringify(scores)) as AppState["scores"],
+      cards: JSON.parse(JSON.stringify(cards)) as AppState["cards"],
       ranks,
       leaving: app?.leaving ? app.leaving(this.state) : [],
       panel: panel ? (JSON.parse(JSON.stringify(panel)) as PanelSpec) : null,

@@ -102,6 +102,34 @@ const checks = {
     await context.close();
   },
 
+  /** Our own game (#42): Play now, with nothing imported: two warbands of stand-ins, a mission, and actions to take. */
+  async "play-now"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.getByRole("button", { name: /Play now/ }).click();
+    await page.locator(".topbar").waitFor();
+    await page.locator("canvas").first().waitFor();
+    // The battle starts by itself, Lantern Grab set, and "What can I do now?" open on round 1.
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".hud")?.textContent?.includes("Lantern Grab") &&
+        document.querySelector(".topbar")?.textContent?.includes("Round 1"),
+      null,
+      { timeout: 20000 },
+    );
+    // The army showcase hides the panels while it plays.
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    const toggle = page.locator(".whatnow-toggle");
+    if (await toggle.count()) await toggle.click();
+    await page
+      .locator(".whatnow")
+      .getByText(/You can: (Shoot|Fight)|Drag a unit/)
+      .first()
+      .waitFor({ timeout: 10000 });
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
   /** The module workshop (#41): a template, its test table, a hot reload on save, the soak bot. */
   async workshop() {
     const { page, context } = await device();

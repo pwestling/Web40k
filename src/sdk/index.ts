@@ -230,8 +230,26 @@ export interface PanelSpec {
  * picks a file.
  */
 export interface PackageApp {
+  /** The test table's (and a demo's) army for a seat. */
   sample(seat: 0 | 1): unknown;
+  /**
+   * Every sample army a player can pick (one per faction), shaped like
+   * `sample`'s. Without it, players pick from the two `sample` gives.
+   */
+  armies?: unknown[];
+  /**
+   * The starting table. A terrain entry can name one of the app's terrain
+   * templates instead of listing its solids: `{ template: "Ruin", id,
+   * position, facing?, category? }` (templates: "Ruin", "Small ruin", "Tall
+   * ruin", "Container", "Woods", "Barricade", "Crater", "Hill").
+   */
   layout(table: GameState["table"]): unknown;
+  /**
+   * Missions players pick from at setup. They run in the sandbox: `setup`
+   * once for the system's default table (scaled to the table played on), and
+   * `suggest` as the game goes, its answers handed to the app.
+   */
+  missions?: Mission[];
   importRoster?(fileName: string, data: Uint8Array): unknown;
   rankRules?(game: GameState, unit: GameState["units"][string]): { width: number; maxBonus: number };
   leaving?(game: GameState): string[];
