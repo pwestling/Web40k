@@ -86,4 +86,6 @@ export interface Transport {
   leave(): void;
   /** Media streams, where the transport can carry them. */
   readonly media?: MediaChannel;
+  /** The WebRTC connection to each peer, for connection stats in a problem report. */
+  connections?(): Record<string, RTCPeerConnection>;
 }

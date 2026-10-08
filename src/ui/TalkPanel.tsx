@@ -1,4 +1,4 @@
-import { VoiceBar } from "../voice/VoiceBar";
+import { VoiceButton } from "../voice/VoiceBar";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
 import { clearMine, MAX_CHAT, REACTIONS, say, useTableTalk, useTalk, type Said } from "../talk/talk";
@@ -32,7 +32,6 @@ export function TalkPanel() {
   return (
     <div className="talk-dock">
       <ChatToasts chatOpen={open} />
-      <VoiceBar />
       <div className={`panel talk${open ? "" : " collapsed"}`}>
         <div className="row wrap">
           {TOOLS.map((t) => (
@@ -45,9 +44,10 @@ export function TalkPanel() {
               {t.label}
             </button>
           ))}
-          <button className="quiet" title="Wipe your arrows and areas" onClick={clearMine}>
-            Clear
+          <button className="quiet" title="Clear: wipe your arrows and areas" onClick={clearMine}>
+            🧹
           </button>
+          <VoiceButton />
           <button className="quiet talk-toggle" onClick={() => setOpen(!open)} title="Chat">
             💬{unread > 0 ? ` ${unread}` : ""}
           </button>

@@ -170,11 +170,25 @@ export function Showcase() {
   useEffect(() => {
     if (!on) return;
     const key = (e: KeyboardEvent) => e.key === "Escape" && stop();
+    // The tap that skips does nothing else: it never reaches the table to select a unit (UX 164).
+    const swallow = (e: Event) => {
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    const tap = (e: PointerEvent) => {
+      swallow(e);
+      for (const t of ["pointerup", "click"]) addEventListener(t, swallow, { capture: true, once: true });
+      // A tap with no click after it leaves nothing armed.
+      setTimeout(() => {
+        for (const t of ["pointerup", "click"]) removeEventListener(t, swallow, { capture: true });
+      }, 600);
+      stop();
+    };
     addEventListener("keydown", key);
-    addEventListener("pointerdown", stop, { capture: true });
+    addEventListener("pointerdown", tap, { capture: true });
     return () => {
       removeEventListener("keydown", key);
-      removeEventListener("pointerdown", stop, { capture: true });
+      removeEventListener("pointerdown", tap, { capture: true });
     };
   }, [on]);
 
