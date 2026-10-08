@@ -107,14 +107,19 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       // A roll-off for who goes first this round (Conquest's Supremacy, #40).
       if (state.rolledOff) {
         const r = state.rolledOff;
+        const p = {
+          rolls: r.rolls.map((rolls, seat) => `${sideName(state, seat)} ${rolls.join(", ")}`).join(" · "),
+          side: sideName(state, r.seat),
+          rule: gameText(systemOf(state).turn.rollOffName ?? ""),
+        };
         items.push({
           kind: "line",
           key: `${key}/r`,
           seq: logged.seq,
-          text: t("Roll-off: {rolls}. {side} goes first.", {
-            rolls: r.rolls.map((rolls, seat) => `${sideName(state, seat)} ${rolls.join(", ")}`).join(" · "),
-            side: sideName(state, r.seat),
-          }),
+          // Named for the rule where the game has one (Conquest's Supremacy, UX 304).
+          text: p.rule
+            ? t("{rule} roll-off: {rolls}. {side} goes first.", p)
+            : t("Roll-off: {rolls}. {side} goes first.", p),
           undone: false,
         });
       }
@@ -415,6 +420,8 @@ function attackSummary(a: AttackState, state: GameState): string {
 export function lossText(
   state: GameState,
   outcomes: { kind: string; modelId?: string; lost?: number }[],
+  /** Rank-and-flank games count bases (stands); the others count models. */
+  bases = true,
 ): string {
   if (outcomes.some((o) => o.kind === "destroy")) return t("destroyed");
   const hits = outcomes.filter((o) => o.kind === "wounds");
@@ -423,6 +430,10 @@ export function lossText(
     hits.filter((o) => o.modelId && state.models[o.modelId]?.destroyed).map((o) => o.modelId),
   ).size;
   if (!wounds) return t("no losses");
+  if (!bases)
+    return wounds === removed
+      ? tn(removed, "{n} model slain", "{n} models slain")
+      : `${tn(wounds, "{n} wound", "{n} wounds")} · ${tn(removed, "{n} model slain", "{n} models slain")}`;
   if (wounds === removed) return tn(removed, "{n} base lost", "{n} bases lost");
   return `${tn(wounds, "{n} wound", "{n} wounds")} · ${tn(removed, "{n} base removed", "{n} bases removed")}`;
 }
@@ -431,10 +442,37 @@ export function lossText(
 function procedureSummary(state: GameState): string {
   const proc = state.procedure;
   if (!proc) return "";
+  const bases = systemOf(state).unitShape.kind === "ranked";
+  // An attack (the computer's, or one run from data) reads like the player's own (UX 306):
+  // "Cinder Brutes fought Lance Team (Ash Claws): 6 attacks, 3 hits, 2 wounds, 2 unsaved, 1 model slain".
+  const rec = (id: string) => proc.run.records.find((r) => r.id === id);
+  const weapon = proc.weapon ? state.units[proc.unitId]?.sheet?.weapons[proc.weapon] : undefined;
+  if (weapon && proc.targetId && rec("hit") && rec("wound")) {
+    const parts: string[] = [];
+    const pool = proc.run.records.find((r) => r.kind === "pool");
+    const attacks = pool?.out ?? rec("hit")!.in;
+    parts.push(tn(attacks, "{n} attack", "{n} attacks"));
+    const hit = rec("hit");
+    const wound = rec("wound");
+    const save = rec("save");
+    if (hit) parts.push(tn(hit.out, "{n} hit", "{n} hits"));
+    if (wound) parts.push(tn(wound.out, "{n} wound", "{n} wounds"));
+    if (save) parts.push(tn(save.out, "{n} unsaved", "{n} unsaved"));
+    if (proc.run.done) parts.push(lossText(state, proc.run.outcomes, bases));
+    const params = {
+      attacker: state.units[proc.unitId]?.name ?? t("a unit"),
+      target: state.units[proc.targetId]?.name ?? t("a unit"),
+      weapon: gameText(weapon.name),
+      results: parts.join(", "),
+    };
+    return weapon.kind === "melee"
+      ? t("{attacker} fought {target} ({weapon}): {results}", params)
+      : t("{attacker} shot {target} ({weapon}): {results}", params);
+  }
   const parts = proc.run.records
     .filter((r) => r.dice?.length)
     .map((r) => `${r.id} ${r.successes ?? 0}/${r.in}`);
-  if (proc.run.done) parts.push(lossText(state, proc.run.outcomes));
+  if (proc.run.done) parts.push(lossText(state, proc.run.outcomes, bases));
   return `${proc.title}${parts.length ? `: ${parts.join(", ")}` : ""}`;
 }
 

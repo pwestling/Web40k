@@ -399,6 +399,8 @@ export interface TurnStructure {
    * rolls a D6 a side at the start of every round, ties again (Conquest).
    */
   initiative?: "fixed" | "rollOff" | "rollOffEachRound" | { expr: Expr };
+  /** The rule's name for that roll-off, for the log ("Supremacy"). */
+  rollOffName?: string;
   round: Segment[];
 }
 

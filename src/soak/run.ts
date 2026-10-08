@@ -65,6 +65,8 @@ export interface SoakOptions {
   automate?: boolean;
   /** Start the armies this many inches nearer the middle (a scenario that wants fighting early). */
   closeIn?: number;
+  /** Stand each side's units side by side, 1" apart across the middle (crowded fights and Panic). */
+  lineUp?: boolean;
   /** Other armies than the system's samples (a scenario's), by seat. */
   armies?: (seat: 0 | 1) => ReturnType<ReturnType<typeof systemModule>["sample"]>;
   /**
@@ -275,6 +277,28 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
           type: "models/move",
           moves: moves.filter((mv) => st.units[st.models[mv.id]!.unitId ?? ""]?.owner === p),
         });
+    }
+    if (opts.lineUp) {
+      const st = room.host()!.current;
+      for (const p of new Set(Object.values(st.units).map((u) => u.owner))) {
+        const units = Object.values(st.units)
+          .filter((u) => u.owner === p)
+          .map((u) => {
+            const xs = u.modelIds.map((id) => st.models[id]!.position.x);
+            return { u, min: Math.min(...xs), width: Math.max(...xs) - Math.min(...xs) + 1 };
+          })
+          .sort((x, y) => x.min - y.min);
+        let x = -units.reduce((t, e) => t + e.width + 1, -1) / 2;
+        const moves = units.flatMap((e) => {
+          const dx = x - e.min + 0.5;
+          x += e.width + 1;
+          return e.u.modelIds.map((id) => {
+            const m = st.models[id]!;
+            return { id, to: { x: m.position.x + dx, y: m.position.y } };
+          });
+        });
+        as(p, { type: "models/move", moves });
+      }
     }
     if (opts.automate && mod.recognizeAbility) {
       const rules = gameModule(system)!.system;

@@ -141,6 +141,26 @@ export function parseSlots(text: unknown): { min: number; max: number }[] {
  * pools: each slot takes the lowest die that fits it, other dice the lowest
  * left. Returns a reason when it can't be paid.
  */
+/** An action's cost as the player reads it ("2 CP", "1 die + 5-6"), whether or not they can pay. */
+export function costLabel(system: GameSystem, def: ActionDef, ctx: EvalContext): string {
+  return (def.cost ?? [])
+    .flatMap((c) => {
+      const res = system.resources?.find((r) => r.id === c.resource);
+      const name = res?.short ?? res?.name ?? c.resource;
+      const amount = safeNum(c.amount, ctx);
+      if (res?.kind === "dicePool") {
+        const slots = [...(c.slots ?? []), ...(c.slotsFrom ? parseSlots(resolve(c.slotsFrom, ctx)) : [])];
+        const parts = [
+          ...(amount ? [`${amount} die`] : []),
+          ...slots.map((s) => (s.min === s.max ? `${s.min}` : `${s.min}-${s.max}`)),
+        ];
+        return parts.length ? [parts.join(" + ")] : [];
+      }
+      return amount ? [`${amount} ${name}`] : [];
+    })
+    .join(", ");
+}
+
 export function payFor(
   state: GameState,
   system: GameSystem,

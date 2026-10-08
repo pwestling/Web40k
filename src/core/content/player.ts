@@ -1,5 +1,5 @@
 import type { Ability, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
-import { actingUnits, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
+import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
 import { bindRules, lookupRules, pattern, unitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
 import { currentSlot, endActivation, systemOf } from "./turn";
@@ -80,7 +80,8 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
     const option: PlayerActionOption = {
       def,
       ok: !why && !("why" in paid),
-      cost: "label" in paid ? paid.label : "",
+      // The price shows even when it can't be paid (UX 303).
+      cost: "label" in paid ? paid.label : costLabel(system, def, ctx),
       payment: "payment" in paid ? paid.payment : [],
       ...(why || "why" in paid ? { why: why ?? (paid as { why: string }).why } : {}),
     };

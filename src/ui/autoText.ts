@@ -138,13 +138,54 @@ export function changeText(b: AttackBecause): string {
   return parts.join(", ");
 }
 
-/** The modifiers on one step, each shown: " (+1 −1)" rather than the net 0 (UX 290). */
-export function stepMods(spec: AttackSpec, step: "hit" | "wound" | "save", net: number): string {
-  const mods = (spec.because ?? [])
+/**
+ * What to roll on one step, first, then why it isn't the printed number:
+ * "5+ (6+, +1 Fused Plates)" (UX 296, 302). Modifiers count up to ±1; a hit or
+ * wound always needs at least a 2 and at most a 6.
+ */
+export function stepValue(
+  spec: AttackSpec,
+  step: "hit" | "wound" | "save",
+  base: number,
+  net: number,
+): string {
+  const capped = Math.max(-1, Math.min(1, net));
+  const need = step === "save" ? Math.max(2, base - capped) : Math.max(2, Math.min(6, base - capped));
+  const named = (spec.because ?? [])
     .filter((b) => b.step === step && b.change.mod)
-    .map((b) => signed(b.change.mod!));
-  if (mods.length > 1) return ` (${mods.join(" ")})`;
-  return net ? ` (${signed(net)})` : "";
+    .map((b) => `${signed(b.change.mod!)} ${b.name}`);
+  if (!net && !named.length) return `${base}+`;
+  return `${need}+ (${base}+, ${named.length ? named.join(", ") : signed(net)})`;
+}
+
+/** A damage roll with a flat change: "D6" with +1 is "D6+1". */
+export function shiftDamage(amount: string, by: number): string {
+  const m = /^(.*?)([+-]\d+)?$/.exec(amount.trim());
+  const dice = m?.[1] ?? amount;
+  const flat = Number(m?.[2] ?? 0) + by;
+  if (/^\d*$/.test(dice)) return String(Math.max(0, Number(dice || 0) + flat));
+  return flat ? `${dice}${flat > 0 ? "+" : "−"}${Math.abs(flat)}` : dice;
+}
+
+/** Damage to roll first, then the profile's own and the changes: "D6 (D6+1, −1 Armoured Hull; re-roll 1s)". */
+export function damageValue(spec: AttackSpec): string {
+  const changes = (spec.because ?? []).filter((b) => b.step === "damage" && b.change.mod);
+  const net = changes.reduce((t, b) => t + b.change.mod!, 0);
+  const why = [
+    ...(net
+      ? [
+          [shiftDamage(spec.damage, -net), ...changes.map((b) => `${signed(b.change.mod!)} ${b.name}`)].join(
+            ", ",
+          ),
+        ]
+      : []),
+    ...(spec.rerollDamage === "ones"
+      ? [t("re-roll 1s")]
+      : spec.rerollDamage && spec.rerollDamage !== "none"
+        ? [t("re-roll")]
+        : []),
+  ];
+  return why.length ? `${spec.damage} (${why.join("; ")})` : spec.damage;
 }
 
 /** "Smouldering Ward −1 to hit, Braced Firing re-roll 1s", for the log line. */

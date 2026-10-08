@@ -125,7 +125,10 @@ function marchwardens(): ImportedRoster {
       HORSE,
       rider,
       130,
-      [{ name: "Banner Rider", stats: rider }],
+      [
+        { name: "Downs Champion", stats: { ...rider, A: 2 } },
+        { name: "Banner Rider", stats: rider },
+      ],
       undefined,
       {
         rules: ["Hatred"],
@@ -183,8 +186,28 @@ function reavers(): ImportedRoster {
       undefined,
       { keywords: ["General"], wizard: 1, spells: BONE_LORE },
     ),
-    regiment("Tusk Brutes", 6, BRUTE, brute, 210, [], undefined, { rules: ["Fear", "Stubborn"] }),
-    regiment("Wolf Runners", 5, HORSE, { ...rider, M: 9, Ld: 6 }, 90, [], undefined, { rules: ["Frenzy"] }),
+    regiment(
+      "Tusk Brutes",
+      6,
+      BRUTE,
+      brute,
+      210,
+      [{ name: "Brute Boss", stats: { ...brute, A: 4 } }],
+      undefined,
+      {
+        rules: ["Fear", "Stubborn"],
+      },
+    ),
+    regiment(
+      "Wolf Runners",
+      5,
+      HORSE,
+      { ...rider, M: 9, Ld: 6 },
+      90,
+      [{ name: "Pack Leader", stats: { ...rider, M: 9, Ld: 6, A: 2 } }],
+      undefined,
+      { rules: ["Frenzy"] },
+    ),
     // A lone, dim-witted monster: it causes Terror and tests for Stupidity each turn.
     regiment(
       "Bog Hulk",

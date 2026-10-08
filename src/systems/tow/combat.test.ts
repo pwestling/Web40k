@@ -234,8 +234,12 @@ describe("The Old World combat as code", () => {
     expect(offered()).toBe("Only after shooting or combat");
     toPhase(t, "combat");
     expect(offered()).toMatch(/Nothing to panic about/);
-    const lost = t.s.units[spears]!.modelIds.at(-1)!;
-    t.play({ type: "model/wounds", id: lost, woundsLost: 1, destroyed: true }, "p1");
+    // A quarter of the unit lost (7 of 25).
+    const ids = t.s.units[spears]!.modelIds;
+    for (const id of ids.slice(-6))
+      t.play({ type: "model/wounds", id, woundsLost: 1, destroyed: true }, "p1");
+    expect(offered()).toMatch(/Nothing to panic about/);
+    t.play({ type: "model/wounds", id: ids.at(-7)!, woundsLost: 1, destroyed: true }, "p1");
     expect(offered()).toBe(true);
     t.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1");
     if (!t.s.units[spears]!.status?.fleeing) expect(offered()).toBe("Already tested this phase");
@@ -262,5 +266,135 @@ describe("The Old World combat as code", () => {
       expect(standing(t.s, loser) === 0).toBe(caught);
     }
     expect(seen).toBeGreaterThan(0);
+  });
+
+  /** Move a whole unit by (dx, dy). */
+  const shift = (t: ReturnType<typeof setup>["t"], id: string, dx: number, dy: number) => {
+    const moves = t.s.units[id]!.modelIds.map((m) => {
+      const p = t.s.models[m]!.position;
+      return { id: m, to: { x: p.x + dx, y: p.y + dy } };
+    });
+    t.s = applyEvent(t.s, { type: "models/move", moves });
+    t.states.set(t.s.seq, t.s);
+  };
+  /** Play a script to the end, taking the first option of every question. */
+  const finish = (t: ReturnType<typeof setup>["t"], seed: number) => {
+    for (let i = 0; i < 20 && t.s.script?.waiting; i++) {
+      const q = t.s.script.waiting;
+      t.play({ type: "script/answer", answer: q.options[0]!.id }, q.player, seed + i);
+    }
+  };
+
+  it("brings every unit in contact into one fight, side against side (#40)", () => {
+    const { t, spears, warband } = setup();
+    const brutes = unitNamed(t.s, "Tusk Brutes").id;
+    // The Brutes line up beside the Warband, their front against the Spears' front too.
+    block(t, brutes, 0.8, 3, Math.PI);
+    shift(t, brutes, 4.4, 0);
+    block(t, spears, 0, 8, 0);
+    toPhase(t, "combat");
+    t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 5);
+    finish(t, 5);
+    const notes = t.notes();
+    expect(notes).toContain("Marchwarden Spears fight Reaver Warband and Tusk Brutes");
+    expect(
+      notes.some(
+        (n) =>
+          n.startsWith("Combat result: Marchwarden Spears ") && /Reaver Warband and Tusk Brutes \d+/.test(n),
+      ),
+    ).toBe(true);
+    // Everyone in it has fought this phase.
+    const fight = towActions.find((a) => a.id === "combat")!;
+    expect(fight.available(gameView(t.s, "tow-hand"), { player: "p2", unitId: brutes })).toMatch(
+      /^Fought this phase/,
+    );
+  });
+
+  it("challenges: the two models fight each other, wounds and overkill count (#40)", () => {
+    let fell = 0;
+    for (let seed = 1; seed < 30; seed++) {
+      const { t, spears, warband } = setup();
+      toPhase(t, "combat");
+      const view = () => gameView(t.s, "tow-hand");
+      const act = towActions.find((a) => a.id === "challenge")!;
+      expect(act.available(view(), { player: "p1", unitId: spears })).toBe(true);
+      t.play(
+        { type: "script/start", procedure: "challenge", args: { unit: spears, target: warband } },
+        "p1",
+        seed,
+      );
+      // The Spears pick the Warden Captain; the Warband accepts with its Chief.
+      let q = t.s.script!.waiting!;
+      const captain = q.options.find((o) => o.label === "Warden Captain")!;
+      t.play({ type: "script/answer", answer: captain.id }, q.player, seed);
+      q = t.s.script!.waiting!;
+      expect(q.options.at(-1)!.id).toBe("refuse");
+      const chief = q.options.find((o) => o.label === "Accept with Reaver Chief")!;
+      t.play({ type: "script/answer", answer: chief.id }, q.player, seed);
+      expect(act.available(view(), { player: "p1", unitId: spears })).toBe("Already fighting a challenge");
+      t.play(
+        { type: "script/start", procedure: "combat", args: { unit: spears, target: warband } },
+        "p1",
+        seed,
+      );
+      finish(t, seed);
+      const notes = t.notes().join("\n");
+      expect(notes).toMatch(
+        /Challenge: Warden Captain \(Marchwarden Spears\) fights Reaver Chief \(Reaver Warband\)/,
+      );
+      expect(
+        t.events.some(
+          (e) =>
+            e.type === "script/step" &&
+            e.events.some((x) => x.type === "dice/roll" && x.roll.label === "Warden Captain: to hit"),
+        ),
+      ).toBe(true);
+      const m = /(\w[\w ]+) falls in the challenge(?: \(overkill \+(\d)\))?/.exec(notes);
+      if (m) {
+        fell++;
+        const model = Object.values(t.s.models).find((x) => x.profile?.name === m[1]);
+        expect(model?.destroyed).toBe(true);
+        // The challenge is over.
+        expect(act.available(view(), { player: "p1", unitId: spears })).not.toBe(
+          "Already fighting a challenge",
+        );
+      }
+    }
+    expect(fell).toBeGreaterThan(0);
+  });
+
+  it("a refused challenge sends a character to stand aside (#40)", () => {
+    const { t, spears, warband } = setup();
+    toPhase(t, "combat");
+    t.play({ type: "script/start", procedure: "challenge", args: { unit: spears, target: warband } }, "p1");
+    t.play({ type: "script/answer", answer: t.s.script!.waiting!.options[0]!.id }, "p1");
+    t.play({ type: "script/answer", answer: "refuse" }, "p2");
+    expect(t.notes().at(-1)).toMatch(/^Reaver Warband refuses the challenge: Reaver Chief stands aside/);
+  });
+
+  it("Panic tests come by themselves when a friend nearby breaks (#40)", () => {
+    let seen = 0;
+    for (let seed = 1; seed < 60 && !seen; seed++) {
+      const { t, spears, warband } = setup();
+      const slingers = unitNamed(t.s, "Reaver Slingers").id;
+      // The Slingers wait 3" behind the Warband's flank.
+      block(t, slingers, 8, 5, Math.PI);
+      shift(t, slingers, 8, 0);
+      toPhase(t, "combat");
+      t.play(
+        { type: "script/start", procedure: "combat", args: { unit: spears, target: warband } },
+        "p1",
+        seed,
+      );
+      finish(t, seed);
+      const notes = t.notes();
+      const broke = notes.some((n) => /^Reaver Warband breaks/.test(n));
+      const panicked = notes.some((n) => /^Reaver Slingers sees Reaver Warband.*Panic test$/.test(n));
+      if (broke) {
+        expect(panicked).toBe(true);
+        seen++;
+      } else expect(panicked && !notes.some((n) => /destroyed|run down/.test(n))).toBe(false);
+    }
+    expect(seen).toBe(1);
   });
 });

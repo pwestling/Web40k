@@ -1,4 +1,4 @@
-import { becauseText, stepMods } from "./autoText";
+import { becauseText, damageValue, stepValue } from "./autoText";
 import { touch } from "./touch";
 import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
@@ -344,15 +344,13 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
               ? ` ${t("(rolled {dice})", { dice: attack.attackRolls.join(" ") })}`
               : ""),
           t("hit {value}", {
-            value: spec.hit === null ? t("auto") : `${spec.hit}+${stepMods(spec, "hit", spec.hitMod)}`,
+            value: spec.hit === null ? t("auto") : stepValue(spec, "hit", spec.hit, spec.hitMod),
           }),
-          t("wound {value}", { value: `${spec.wound}+${stepMods(spec, "wound", spec.woundMod)}` }),
+          t("wound {value}", { value: stepValue(spec, "wound", spec.wound, spec.woundMod) }),
           t("save {value}", {
-            value: spec.save ? `${spec.save}+${stepMods(spec, "save", spec.saveMod ?? 0)}` : t("none"),
+            value: spec.save ? stepValue(spec, "save", spec.save, spec.saveMod ?? 0) : t("none"),
           }),
-          t("D {value}", {
-            value: `${spec.damage}${spec.rerollDamage && spec.rerollDamage !== "none" ? ` (${t("re-roll")})` : ""}`,
-          }),
+          t("D {value}", { value: damageValue(spec) }),
           ...(spec.fnp ? [t("FNP {value}", { value: `${spec.fnp}+` })] : []),
         ].join(" · ")}
       </p>
