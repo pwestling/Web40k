@@ -83,6 +83,8 @@ export type Intent =
   | { type: "player/rename"; player: PlayerId; name: string }
   /** Pick your own dice (PX-5b); null goes back to dice in your colour. */
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
+  /** A side colour, e.g. from a saved army (#27). */
+  | { type: "player/color"; player: PlayerId; color: string }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -213,6 +215,8 @@ export type GameEvent =
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
+  /** A side colour, e.g. from a saved army (#27). */
+  | { type: "player/color"; player: PlayerId; color: string }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -404,6 +408,10 @@ export function resolveIntent(
         ? { type: "player/dice", player: intent.player, dice }
         : null;
     }
+    case "player/color":
+      return state?.players[intent.player] && intent.player === from && /^#[0-9a-f]{6}$/i.test(intent.color)
+        ? { type: "player/color", player: intent.player, color: intent.color.toLowerCase() }
+        : null;
     case "player/claim":
       return state?.players[intent.player] && intent.player !== from
         ? { type: "player/claim", player: intent.player, by: from }

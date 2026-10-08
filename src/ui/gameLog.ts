@@ -357,6 +357,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;
     case "player/rename":
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
+    case "player/color":
+      return `${game.players[event.player]?.name ?? who} changed their colour`;
     case "dice/roll": {
       const { results, label, unitId, sides, faces } = event.roll;
       // The roller is the roll's own (a unit's owner in a rule), not whoever logged the step.
