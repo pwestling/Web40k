@@ -22,6 +22,8 @@ import {
 } from "./book";
 import { useTables } from "../tables/library";
 import { applyLayout } from "../tables/actions";
+import { mergeBooks } from "./event";
+import { EventLine, EventTab } from "./EventTab";
 import { requestCampaign, useCampaignSharing, useCampaignTransfers } from "./share";
 import { loadReplay, replayIds, saveReplay, useCampaigns } from "./store";
 import { create } from "zustand";
@@ -81,6 +83,26 @@ export function CampaignKeeper() {
   useEffect(() => {
     if (live && ref && (copy === "missing" || (copy === "different" && !edited))) requestCampaign(ref.hash);
   }, [live, ref, copy, edited]);
+  // The table's copy came while this device had games from other tables: the joined copy goes back to the table.
+  const merged = useCampaigns((s) => (ref ? !!s.merged[ref.id] : false));
+  useEffect(() => {
+    if (!live || !ref || !merged) return;
+    const mine = Object.values(game.players).find((p) => p.seat !== undefined && canControl(p.id));
+    const hash = useCampaigns.getState().hashes[ref.id];
+    if (!mine || !hash) return;
+    useCampaigns.setState((s) => ({
+      merged: { ...s.merged, [ref.id]: false },
+      edited: { ...s.edited, [ref.id]: false },
+    }));
+    dispatch(
+      {
+        type: "campaign/set",
+        ref: { id: ref.id, name: ref.name, hash, ...(ref.territory ? { territory: ref.territory } : {}) },
+        merged: true,
+      },
+      mine.id,
+    );
+  }, [live, ref, merged, game.players, canControl, dispatch]);
   const shelf = useShelf((s) => s.armies);
   // Link each of this device's players to the shelf army they brought.
   useEffect(() => {
@@ -206,6 +228,17 @@ export function CampaignFold() {
       // Not a book.
     }
     if (!b) return setNote("That file isn't an Open Battle campaign book.");
+    const here = useCampaigns.getState().books[b.id];
+    if (here) {
+      // Another player's copy of a book this device has (event night): join them, losing no game.
+      const added = b.games.filter((g) => !here.games.some((x) => x.id === g.id)).length;
+      useCampaigns.getState().put(mergeBooks(here, b), { edited: true });
+      return setNote(
+        added
+          ? `Added ${added} game${added === 1 ? "" : "s"} from that copy to your ${b.name}.`
+          : `Your ${b.name} already had everything in that copy.`,
+      );
+    }
     useCampaigns.getState().put(b);
     setNote(`${b.name} is on this device.`);
   };
@@ -273,6 +306,7 @@ export function CampaignFold() {
           )}
           <TerritoryTable territory={book?.map.find((t) => t.name === ref.territory)} />
           <Linked game={game} />
+          {book && <EventLine book={book} game={game} />}
           {role !== "spectator" && (
             <button className="small" onClick={() => dispatch({ type: "campaign/set", ref: null }, seat?.id)}>
               Stop playing for {ref.name}
@@ -406,7 +440,7 @@ export function CampaignUnitLine({ unitId }: { unitId: string }) {
   );
 }
 
-type Tab = "league" | "games" | "units" | "map" | "notes";
+type Tab = "league" | "event" | "games" | "units" | "map" | "notes";
 
 /** The campaign book itself: league table, games, units, the map and notes, all editable on this device. */
 export function CampaignBookDialog() {
@@ -445,7 +479,7 @@ export function CampaignBookDialog() {
         exported file.
       </p>
       <div className="tabs" role="tablist">
-        {(["league", "games", "units", "map", "notes"] as const).map((t) => (
+        {(["league", "event", "games", "units", "map", "notes"] as const).map((t) => (
           <button
             key={t}
             role="tab"
@@ -453,12 +487,22 @@ export function CampaignBookDialog() {
             className={tab === t ? "on" : ""}
             onClick={() => setTab(t)}
           >
-            {{ league: "League", games: "Games", units: "Units", map: "Map", notes: "Notes" }[t]}
+            {
+              {
+                league: "League",
+                event: "Event",
+                games: "Games",
+                units: "Units",
+                map: "Map",
+                notes: "Notes",
+              }[t]
+            }
           </button>
         ))}
       </div>
       <div className="body">
         {tab === "league" && <League book={book} />}
+        {tab === "event" && <EventTab book={book} save={save} />}
         {tab === "games" && <Games book={book} replays={replays} />}
         {tab === "units" && <Units book={book} save={save} />}
         {tab === "map" && <MapTab book={book} save={save} />}
@@ -538,17 +582,26 @@ function Games({ book, replays }: { book: CampaignBook; replays: Set<string> }) 
             {g.sides.map((s) => `${s.players.join(" & ")} ${s.vp}`).join(" – ")} VP
           </div>
           <div className="muted">
-            {new Date(g.at).toLocaleDateString()} · {systemLabel(g.system, systemName(g.system))}
-            {g.mission ? ` · ${g.mission}` : ""} · {g.rounds} round{g.rounds === 1 ? "" : "s"}
+            {new Date(g.at).toLocaleDateString()} ·{" "}
+            {g.byHand ? (
+              "entered by hand"
+            ) : (
+              <>
+                {systemLabel(g.system, systemName(g.system))}
+                {g.mission ? ` · ${g.mission}` : ""} · {g.rounds} round{g.rounds === 1 ? "" : "s"}
+              </>
+            )}
             {g.territory ? ` · for ${g.territory}` : ""}
           </div>
-          <div className="muted">
-            {g.sides
-              .map(
-                (s) => `${s.armies.join(" & ") || s.players.join(" & ")}: ${s.slain} slain, ${s.lost} lost`,
-              )
-              .join(" · ")}
-          </div>
+          {!g.byHand && (
+            <div className="muted">
+              {g.sides
+                .map(
+                  (s) => `${s.armies.join(" & ") || s.players.join(" & ")}: ${s.slain} slain, ${s.lost} lost`,
+                )
+                .join(" · ")}
+            </div>
+          )}
           {replays.has(g.id) && (
             <button className="small" onClick={() => void watch(g.id)}>
               Watch the replay

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type { SideMessage } from "../net/transport";
 import { useStore } from "../store";
 import { campaignHash, readCampaign } from "./book";
+import { hasGamesMissingFrom, mergeBooks } from "./event";
 import { useCampaigns } from "./store";
 
 /** Characters per message, as for packages. */
@@ -87,7 +88,12 @@ function receive(message: SideMessage, from: string) {
     useCampaignTransfers.setState({ [hash]: { state: "failed" } });
     return;
   }
-  useCampaigns.getState().put(book);
+  // Games this device has from other tables (event night) stay: join the copies and share the result back.
+  const local = useCampaigns.getState().books[book.id];
+  if (local && hasGamesMissingFrom(local, book)) {
+    useCampaigns.getState().put(mergeBooks(book, local), { edited: true });
+    useCampaigns.setState((s) => ({ merged: { ...s.merged, [book.id]: true } }));
+  } else useCampaigns.getState().put(book);
   useCampaignTransfers.setState((s) => {
     const { [hash]: _done, ...rest } = s;
     return rest;

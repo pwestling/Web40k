@@ -3037,3 +3037,43 @@ body.showcase
   background: rgb(17 19 24 / 80%);
   border: 1px solid #2d3340;
 }
+
+/* Event night (#29): setup, standings and rounds in the campaign book. */
+.event-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.event-setup fieldset {
+  border: 1px solid #2d3340;
+  border-radius: 6px;
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.event-setup input[aria-label="Add a player"] {
+  max-width: 14em;
+}
+.event-round h4 {
+  margin: 12px 0 4px;
+}
+.event-round ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.event-round .hand-result {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 6px;
+}
+.event-round .hand-result input {
+  width: 4em;
+}
+.event-line p {
+  margin: 4px 0;
+}

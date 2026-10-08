@@ -54,6 +54,8 @@ interface Campaigns {
   hashes: Record<string, string>;
   /** Books changed by hand on this device since they last matched a game's copy. */
   edited: Record<string, boolean>;
+  /** Books whose table copy arrived while this device had games it lacked: joined, to share back. */
+  merged: Record<string, boolean>;
   load(): Promise<void>;
   put(book: CampaignBook, opts?: { edited?: boolean }): void;
   remove(id: string): void;
@@ -64,6 +66,7 @@ export const useCampaigns = create<Campaigns>((set, get) => ({
   books: {},
   hashes: {},
   edited: {},
+  merged: {},
   async load() {
     if (get().loaded) return;
     const books = (await request(BOOKS, (s) => s.getAll() as IDBRequest<CampaignBook[]>)) ?? [];

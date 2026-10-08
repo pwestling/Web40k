@@ -92,7 +92,8 @@ export type Intent =
    * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
    * changes; `recorded` says the change is the book taking in this game's result.
    */
-  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean }
+  /** `recorded`: the leader wrote this game in; `merged`: games from another table's copy were joined in. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean; merged?: boolean }
   /** Which shelf army a player brought, for the campaign book, with its name. */
   | {
       type: "campaign/army";
@@ -243,7 +244,8 @@ export type GameEvent =
    * Play this game for a campaign book (null: for none). Its armies carry over when only the hash
    * changes; `recorded` says the change is the book taking in this game's result.
    */
-  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean }
+  /** `recorded`: the leader wrote this game in; `merged`: games from another table's copy were joined in. */
+  | { type: "campaign/set"; ref: Omit<CampaignRef, "armies"> | null; recorded?: boolean; merged?: boolean }
   /** Which shelf army a player brought, for the campaign book, with its name. */
   | {
       type: "campaign/army";
@@ -478,6 +480,7 @@ export function resolveIntent(
         type: "campaign/set",
         ref: { id: r.id, name: r.name, hash: r.hash, ...(r.territory ? { territory: r.territory } : {}) },
         ...(intent.recorded ? { recorded: true } : {}),
+        ...(intent.merged ? { merged: true } : {}),
       };
     }
     case "campaign/army":

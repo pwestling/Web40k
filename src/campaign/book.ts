@@ -2,6 +2,7 @@ import { sha256Hex, stableJson } from "../core/secrets";
 import type { GameRecord, GameState } from "../core";
 import { gameStats } from "../core/stats";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
+import { settlePairing, type CampaignEvent } from "./event";
 
 /**
  * The campaign book (roadmap 24a): a small file a group of players share,
@@ -48,6 +49,8 @@ export interface CampaignGame {
   /** The winning side's index, or null for a draw. */
   winner: number | null;
   territory?: string;
+  /** Typed in for a game played off the app (an event result). */
+  byHand?: boolean;
 }
 
 /** A unit's story so far: the numbers are filled in after each game, and everything can be edited. */
@@ -81,6 +84,8 @@ export interface CampaignBook {
   /** By `${shelf army id}:${index in its roster}`. */
   units: Record<string, CampaignUnit>;
   notes: string;
+  /** An event night: Swiss rounds, pairings and tables (event.ts). */
+  event?: CampaignEvent;
 }
 
 export function newCampaign(name: string, id: string = crypto.randomUUID()): CampaignBook {
@@ -117,6 +122,15 @@ export function readCampaign(data: unknown): CampaignBook | null {
     map: Array.isArray(b.map) ? b.map : [],
     units: b.units && typeof b.units === "object" ? b.units : {},
     notes: typeof b.notes === "string" ? b.notes : "",
+    ...(b.event && Array.isArray(b.event.pairings) && Array.isArray(b.event.entrants)
+      ? {
+          event: {
+            ...b.event,
+            dropped: Array.isArray(b.event.dropped) ? b.event.dropped : [],
+            tables: Array.isArray(b.event.tables) ? b.event.tables : [],
+          },
+        }
+      : {}),
   };
 }
 
@@ -219,7 +233,8 @@ export function recordGame(
       : t,
   );
 
-  return { ...book, players: roster, games: [...book.games, entry], units, map };
+  // At an event, the game settles its pairing.
+  return settlePairing({ ...book, players: roster, games: [...book.games, entry], units, map }, entry);
 }
 
 export interface LeagueRow {

@@ -429,6 +429,7 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         return event.ref.territory
           ? `${who} set the stakes: ${event.ref.territory}`
           : `${who} took the territory off the table`;
+      if (event.merged) return `${event.ref.name}: games from ${who}'s copy were added to the table's`;
       return event.recorded
         ? `${event.ref.name} recorded this game`
         : `${who} shared their copy of ${event.ref.name}`;
