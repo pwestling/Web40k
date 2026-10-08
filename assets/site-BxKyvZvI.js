@@ -1,0 +1,1 @@
+function e(){let{protocol:e,hostname:t,host:n,pathname:r}=location;return!e.startsWith(`http`)||/^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(t)?`pwestling.github.io/Web40k`:`${n}${r.replace(/[^/]*$/,``)}`.replace(/\/$/,``)}function t(e){return e.replace(/\s*\(draft\)\s*$/i,``)}export{e as n,t};
