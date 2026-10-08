@@ -542,6 +542,8 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
  */
 export const panic: CodeProcedure = function* (ctx, args) {
   const u = unitOf(ctx.view, args.unit);
+  const now = ctx.view.state.turn;
+  yield ctx.set(`panic:${u.id}`, { round: now.round, seat: now.activeSeat, phase: ctx.view.phase });
   const { roll, ld } = yield* leadershipTest(ctx, u, "Panic test");
   if (roll.total <= ld) {
     yield ctx.note(`${u.name} keeps its nerve (${roll.total} against ${ld})`);
@@ -553,6 +555,38 @@ export const panic: CodeProcedure = function* (ctx, args) {
     yield* fallBack(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
   else yield* flee(ctx, u, from, `panics (rolled ${roll.total}, over Ld ${ld})`);
 };
+
+/**
+ * When a Panic test is called for (advisory: the players can still roll one by hand): in the
+ * Shooting or Combat phase, once a turn, for a unit that has lost models or has a friendly unit
+ * within 6" destroyed or fleeing.
+ */
+function panicAvailable(view: GameView, actor: { unitId?: string }): true | string {
+  const state = view.state;
+  const u = state.units[actor.unitId ?? ""];
+  if (!u) return "No unit";
+  if (u.status?.fleeing) return "Already fleeing";
+  if (view.phase !== "shooting" && view.phase !== "combat") return "Only after shooting or combat";
+  const t = view.own[`panic:${u.id}`] as { round: number; seat: number; phase: string | null } | undefined;
+  const now = state.turn;
+  if (t && t.round === now.round && t.seat === now.activeSeat && t.phase === view.phase)
+    return "Already tested this phase";
+  if (u.modelIds.some((id) => state.models[id]?.destroyed)) return true;
+  const mine = alive(state, u);
+  // A destroyed unit is measured from where its models fell (centre to centre, a little generous).
+  const fellNear = (f: Unit) =>
+    f.modelIds.some((id) => {
+      const m = state.models[id];
+      return m && mine.some((x) => Math.hypot(x.position.x - m.position.x, x.position.y - m.position.y) <= 7);
+    });
+  const shaken = Object.values(state.units).some(
+    (f) =>
+      f.id !== u.id &&
+      !opposed(state, f.owner, u.owner) &&
+      (alive(state, f).length ? f.status?.fleeing && unitGap(state, u, f) <= 6 : fellNear(f)),
+  );
+  return shaken ? true : "Nothing to panic about: no losses, and no friend nearby destroyed or fleeing";
+}
 
 /** Enemy units within this gap of this one, nearest first. */
 function enemies(view: GameView, unitId: string, within: number, fleeing = true) {
@@ -622,8 +656,7 @@ export const towActions: CodeAction[] = [
     id: "panic",
     name: "Panic test",
     by: "unit",
-    available: (view, actor) =>
-      view.state.units[actor.unitId ?? ""]?.status?.fleeing ? "Already fleeing" : true,
+    available: panicAvailable,
     run: panic,
   },
 ];
