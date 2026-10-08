@@ -25,6 +25,7 @@ import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
 import { BroadcastBadge } from "./broadcast/BroadcastControls";
 import { Moments } from "./broadcast/Moments";
 import { Ambience } from "./ui/Ambience";
+import { Showcase } from "./ui/Showcase";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -87,6 +88,7 @@ function BroadcastView() {
       <BroadcastBadge />
       <Moments />
       <Ambience />
+      <Showcase />
       <StatsScreen />
     </>
   );
@@ -141,6 +143,7 @@ export function App() {
           {!editing && <TalkPanel />}
           <Moments />
           <Ambience />
+          <Showcase />
           <StatsScreen />
           <PackageCards />
           <SandboxNotice />

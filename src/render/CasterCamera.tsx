@@ -1,4 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
+import { showcasing } from "./showcase";
 import { useEffect, useRef } from "react";
 import { Vector3 } from "three";
 import { CASTER_FRESH_MS, followed, useBroadcast } from "../broadcast/broadcast";
@@ -64,7 +65,7 @@ export function CasterCamera() {
     }
     const caster = currentCaster(useTalk.getState().casters);
     followed.active = useBroadcast.getState().follow && !!caster && Date.now() - caster.at < CASTER_FRESH_MS;
-    if (!followed.active || !caster || useStore.getState().view !== "3d") return;
+    if (!followed.active || !caster || useStore.getState().view !== "3d" || showcasing()) return;
     // Ease toward the commentator's view: smooth between their few updates a second.
     const k = Math.min(1, dt * 6);
     controls.target.lerp(goal.fromArray(caster.target), k);

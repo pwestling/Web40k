@@ -1,4 +1,5 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
@@ -972,6 +973,7 @@ function Scene() {
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
       <FeelLayer />
       <CasterCamera />
+      <ShowcaseCamera />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (

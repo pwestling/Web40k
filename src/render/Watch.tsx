@@ -19,6 +19,7 @@ import { chargeFor } from "../core/charge";
 import { delaying, followed } from "../broadcast/broadcast";
 import { CasualtyPiles, Topple, TOPPLE_MS } from "./Casualties";
 import { useReel } from "../broadcast/reel";
+import { showcasing } from "./showcase";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
@@ -449,7 +450,7 @@ export function WatchEffects() {
         if (t >= 1) nudge.current = null;
       }
     } else if (n) nudge.current = null;
-    if (!director || !controls || followed.active) return;
+    if (!director || !controls || followed.active || showcasing()) return;
     if (!focus.current && !overview.current && performance.now() - lastAction.current > OVERVIEW_AFTER_MS) {
       overview.current = true;
       focus.current = { x: 0, y: 0, z: 0, span: null };
