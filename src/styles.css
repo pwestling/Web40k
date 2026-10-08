@@ -4105,6 +4105,11 @@ body.showcase
 
 /* Play the computer (#45): "How hard?" in the game's card (UX 350). */
 .lobby .how-hard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 /* Share the battle (#46): the panel over the replay bar, and the pill while a clip records. */
@@ -4190,10 +4195,12 @@ body.showcase
   margin-top: 6px;
 }
 .lobby .how-hard button {
+  width: 100%;
   text-align: left;
   min-height: 36px;
 }
 .lobby .how-hard .quiet {
+  width: auto;
   align-self: flex-end;
   min-height: 0;
 }
