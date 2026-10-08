@@ -9,6 +9,10 @@ import { readInviteHash } from "../mail/mailbox";
 
 export type TableKind = "live" | "mail";
 
+/** The kinds of game a host can say theirs is: badges on the card, and a filter. */
+export const TABLE_TAGS = ["new", "relaxed", "competitive", "narrative"] as const;
+export type TableTag = (typeof TABLE_TAGS)[number];
+
 export interface TablePost {
   /** Random, chosen by the poster; one post per table. */
   id: string;
@@ -28,6 +32,8 @@ export interface TablePost {
   /** Seats still open. */
   seats: number;
   note: string;
+  /** What kind of game it is, from a fixed list, to filter on (PX). */
+  tags?: TableTag[];
   /** A live game's room code, or a mail game's invite code. */
   join: string;
   /** When the post goes away on its own (epoch ms). */
@@ -42,9 +48,13 @@ export interface SeenPost extends TablePost {
   at: number;
 }
 
-/** A live table's host republishes this often; a post not refreshed for ALIVE_MS has gone. */
-export const HEARTBEAT_MS = 8 * 60_000;
-export const ALIVE_MS = 20 * 60_000;
+/**
+ * A live table's host republishes this often; a post not refreshed for
+ * ALIVE_MS has gone. Short, so a closed page's table leaves the board within
+ * minutes even when its last word never arrived (PX: ghost tables).
+ */
+export const HEARTBEAT_MS = 60_000;
+export const ALIVE_MS = 3 * 60_000;
 /** The longest a post stays up. */
 export const LIVE_HOURS = [1, 2, 3, 4] as const;
 export const MAIL_TTL_MS = 2 * 24 * 3600_000;
@@ -95,6 +105,9 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
     voice: r.voice === true,
     seats,
     note: line(r.note, LIMITS.note) ?? "",
+    ...(Array.isArray(r.tags)
+      ? { tags: TABLE_TAGS.filter((tag) => (r.tags as unknown[]).includes(tag)) }
+      : {}),
     join,
     expires,
   };
@@ -103,6 +116,17 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
 /** Whether a post read earlier is still up. */
 export function isUp(p: SeenPost, now = Date.now()): boolean {
   return p.expires > now && (p.kind === "mail" || now - p.at < ALIVE_MS);
+}
+
+/** The badges a post shows: the ones its host ticked, and the same ones said in its note. */
+export function tagsOf(p: TablePost): TableTag[] {
+  const said: Record<TableTag, RegExp> = {
+    new: /\bnew (players?|to the game)\b|\bbeginners?\b|\bnewbies?\b/i,
+    relaxed: /\b(relaxed|casual|chill|friendly)\b/i,
+    competitive: /\b(competitive|tournament|practice|tight)\b/i,
+    narrative: /\b(narrative|story|campaign)\b/i,
+  };
+  return TABLE_TAGS.filter((tag) => p.tags?.includes(tag) || said[tag].test(p.note));
 }
 
 export function newPostId(): string {

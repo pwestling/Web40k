@@ -8,8 +8,10 @@ import { plainSystemName, systemLabel } from "../ui/systemLabels";
 import { useStore } from "../store";
 import { useMail } from "../mail/store";
 import { inviteCode } from "../mail/mailbox";
+import { myName, say, setMyName } from "../talk/talk";
+import { knock } from "../ui/sound";
 import {
-  blockName,
+  blockPoster,
   board,
   boardOn,
   hidePost,
@@ -24,7 +26,18 @@ import {
   useOpenTables,
   type BoardStatus,
 } from "./board";
-import { LIMITS, LIVE_HOURS, MAIL_TTL_MS, newPostId, type SeenPost, type TableKind } from "./post";
+import {
+  HEARTBEAT_MS,
+  LIMITS,
+  LIVE_HOURS,
+  MAIL_TTL_MS,
+  newPostId,
+  TABLE_TAGS,
+  tagsOf,
+  type SeenPost,
+  type TableKind,
+  type TableTag,
+} from "./post";
 
 /** The time a post is made (pressing Post, not drawing the form). */
 const clock = () => Date.now();
@@ -67,6 +80,16 @@ function whenText(start: number | null, now = Date.now()): string {
   return formatDate(start, { weekday: "short", hour: "numeric", minute: "2-digit" });
 }
 
+/** The form's start choice, said on the Post button. */
+function whenLabel(when: string, at: string): string {
+  if (when === "now") return t("now");
+  if (when === "at")
+    return at
+      ? formatDate(new Date(at).getTime(), { weekday: "short", hour: "numeric", minute: "2-digit" })
+      : "";
+  return tn(Number(when), "in {n} minute", "in {n} minutes");
+}
+
 /** Open seats at a live table: the sides' seats not yet taken. */
 export function openSeats(game: GameState, record = useStore.getState().record): number {
   const size = game.settings.teamSize ?? 1;
@@ -86,7 +109,7 @@ export function OpenTablesBoard({
   onHost,
 }: {
   onClose: () => void;
-  onJoin: (room: string) => void;
+  onJoin: (room: string, name: string) => void;
   onHost: () => void;
 }) {
   const [posts, setPosts] = useState<SeenPost[]>([]);
@@ -97,6 +120,7 @@ export function OpenTablesBoard({
   const [kind, setKind] = useState<"" | TableKind>("");
   const [lang, setLang] = useState("");
   const [voice, setVoice] = useState<"" | "on" | "off">("");
+  const [style, setStyle] = useState<"" | TableTag>("");
   const [, tick] = useState(0);
   const close = useRef(onClose);
   useEffect(() => void (close.current = onClose), [onClose]);
@@ -130,13 +154,17 @@ export function OpenTablesBoard({
         (!game || p.system === game) &&
         (!kind || p.kind === kind) &&
         (!lang || p.lang === lang) &&
-        (!voice || p.voice === (voice === "on")),
+        (!voice || p.voice === (voice === "on")) &&
+        (!style || tagsOf(p).includes(style)),
     )
     .sort((a, b) => (a.start ?? 0) - (b.start ?? 0) || b.at - a.at);
-  const blocked = prefs.blockedNames.length + prefs.hidden.length;
-  const join = (p: SeenPost) => {
+  const blocked = prefs.blockedNames.length + prefs.blockedKeys.length + prefs.hidden.length;
+  const styles = TABLE_TAGS.filter((tag) => shown.some((p) => tagsOf(p).includes(tag)));
+  const join = (p: SeenPost, name: string) => {
+    if (name) setMyName(name);
+    useOpenTables.setState({ joined: p, gone: false });
     onClose();
-    if (p.kind === "live") onJoin(p.join);
+    if (p.kind === "live") onJoin(p.join, name);
     else window.location.assign(`#mail=${p.join}`);
   };
 
@@ -195,7 +223,33 @@ export function OpenTablesBoard({
             <option value="on">{t("With voice")}</option>
             <option value="off">{t("Text only")}</option>
           </select>
+          {styles.length > 0 && (
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value as "" | TableTag)}
+              aria-label={t("Kind of game")}
+            >
+              <option value="">{t("Any kind of game")}</option>
+              {styles.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tagLabel(tag)}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
+        {prefs.gone && (
+          <p className="table-gone" role="status">
+            {tn(
+              list.length,
+              "That table has gone: its host has left. {n} other is open.",
+              "That table has gone: its host has left. {n} others are open.",
+            )}{" "}
+            <button className="link small" onClick={() => useOpenTables.setState({ gone: false })}>
+              {t("OK")}
+            </button>
+          </p>
+        )}
         <p className="muted small" role="status">
           {!status.loaded
             ? t("Looking at the board…")
@@ -209,7 +263,12 @@ export function OpenTablesBoard({
         </p>
         <ul className="table-posts">
           {list.map((p) => (
-            <TablePostCard key={`${p.key}:${p.id}`} post={p} mine={p.key === key} onJoin={() => join(p)} />
+            <TablePostCard
+              key={`${p.key}:${p.id}`}
+              post={p}
+              mine={p.key === key}
+              onJoin={(name) => join(p, name)}
+            />
           ))}
         </ul>
         <div className="row spread wrap">
@@ -228,24 +287,69 @@ export function OpenTablesBoard({
   );
 }
 
-function TablePostCard({ post, mine, onJoin }: { post: SeenPost; mine: boolean; onJoin: () => void }) {
+/** How fresh a post is: its host here now, or when it was last seen. */
+function freshness(p: SeenPost, now = Date.now()): string {
+  const minutes = Math.floor((now - p.at) / 60_000);
+  if (p.kind === "live" && now - p.at < 2 * HEARTBEAT_MS) return t("here now");
+  if (minutes < 60) return tn(Math.max(1, minutes), "seen {n} min ago", "seen {n} min ago");
+  return tn(Math.round(minutes / 60), "posted {n} hour ago", "posted {n} hours ago");
+}
+
+const tagLabel = (tag: TableTag) =>
+  tag === "new"
+    ? t("New players welcome")
+    : tag === "relaxed"
+      ? t("Relaxed")
+      : tag === "competitive"
+        ? t("Competitive")
+        : t("Narrative");
+
+function TablePostCard({
+  post,
+  mine,
+  onJoin,
+}: {
+  post: SeenPost;
+  mine: boolean;
+  onJoin: (name: string) => void;
+}) {
   const [reporting, setReporting] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [name, setName] = useState(() => myName() ?? "");
+  const host = displayName(post.name);
+  const soon = post.kind === "live" && post.start !== null && post.start > clock() + 60_000;
+  // The person first, then the game (PX: inviting, not a spec sheet).
+  const lead =
+    post.kind === "mail"
+      ? t("{name} is looking for an opponent by mail", { name: host })
+      : soon
+        ? t("{name} is playing {when}", { name: host, when: whenText(post.start).toLowerCase() })
+        : t("{name} is waiting for an opponent", { name: host });
   const details = [
-    post.name,
+    post.game,
     post.size,
     languageName(post.lang),
-    post.kind === "live" ? t("live") : t("by mail"),
     post.voice ? t("voice on") : t("text only"),
-    tn(post.seats, "{n} seat open", "{n} seats open"),
+    post.seats > 1 ? tn(post.seats, "{n} seat open", "{n} seats open") : "",
   ].filter(Boolean);
+  const tags = tagsOf(post);
   return (
     <li className="table-post">
       <div className="row spread">
-        <strong>{post.game}</strong>
-        <span className="small when">{post.kind === "mail" ? t("Any time") : whenText(post.start)}</span>
+        <strong className="table-lead">{lead}</strong>
+        <span className="small muted when">{freshness(post)}</span>
       </div>
+      {tags.length > 0 && (
+        <div className="row wrap table-tags">
+          {tags.map((tag) => (
+            <span key={tag} className={`table-tag ${tag}`}>
+              {tagLabel(tag)}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="small muted">{details.join(" · ")}</div>
-      {post.note && <p className="small table-note">{post.note}</p>}
+      {post.note && <p className="small table-note">“{post.note}”</p>}
       {reporting ? (
         <div className="row wrap" role="group" aria-label={t("Report this table")}>
           <span className="small">{t("What's wrong with it?")}</span>
@@ -263,27 +367,72 @@ function TablePostCard({ post, mine, onJoin }: { post: SeenPost; mine: boolean; 
             {t("Cancel")}
           </button>
         </div>
+      ) : joining ? (
+        <form
+          className="join-table"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onJoin(name.trim());
+          }}
+        >
+          <p className="small">
+            {post.kind === "live"
+              ? t(
+                  "You'll join {name}'s table as the other player. They'll see your name. You can leave any time.",
+                  {
+                    name: host,
+                  },
+                )
+              : t("You'll take {name}'s game by mail. They'll see your name. You can stop any time.", {
+                  name: host,
+                })}
+          </p>
+          <label className="small">
+            {t("Your name")}{" "}
+            <input
+              value={name}
+              maxLength={LIMITS.name}
+              autoFocus
+              placeholder={t("What should they call you?")}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <div className="row">
+            <button className="primary join" type="submit" disabled={!name.trim()}>
+              {t("Join {name}", { name: host })}
+            </button>
+            <button type="button" className="quiet" onClick={() => setJoining(false)}>
+              {t("Cancel")}
+            </button>
+          </div>
+        </form>
       ) : (
-        <div className="row wrap">
+        <div className="row spread">
           {mine ? (
             <span className="small muted">{t("Your table")}</span>
           ) : (
-            <button className="primary small" onClick={onJoin}>
+            <button className="primary join" onClick={() => setJoining(true)}>
               {t("Join")}
             </button>
           )}
           {!mine && (
-            <>
-              <button className="quiet small" onClick={() => hidePost(post)}>
-                {t("Hide")}
-              </button>
-              <button className="quiet small" onClick={() => blockName(post)}>
-                {t("Block {name}", { name: post.name })}
-              </button>
-              <button className="quiet small" onClick={() => setReporting(true)}>
-                {t("Report")}
-              </button>
-            </>
+            // Safety tools one tap away, not the first thing read (PX, UX 384).
+            <details className="post-more">
+              <summary aria-label={t("More")} title={t("More")}>
+                ⋯
+              </summary>
+              <div className="post-menu">
+                <button className="quiet small" onClick={() => hidePost(post)}>
+                  {t("Hide this table")}
+                </button>
+                <button className="quiet small" onClick={() => blockPoster(post)}>
+                  {t("Block {name}", { name: host })}
+                </button>
+                <button className="quiet small" onClick={() => setReporting(true)}>
+                  {t("Report")}
+                </button>
+              </div>
+            </details>
           )}
         </div>
       )}
@@ -310,27 +459,41 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   const [voice, setVoice] = useState(false);
   const [note, setNote] = useState("");
   const [hours, setHours] = useState(3);
+  const [tags, setTags] = useState<TableTag[]>([]);
   const [busy, setBusy] = useState(false);
+  const self = game.players[session?.selfId ?? ""];
+  // Ask for the name here: a post from "Player 1" can't be told apart (UX 382).
+  const [typed, setTyped] = useState(() => {
+    const own = kind === "mail" ? mailMe : self?.name;
+    return own && !/^Player \d+$/.test(own) ? own : (myName() ?? "");
+  });
   useEffect(() => {
     if (asked) useOpenTables.setState({ asked: false });
   }, [asked]);
   if (!boardOn()) return null;
-  const name =
-    (kind === "mail" ? mailMe : displayName(game.players[session?.selfId ?? ""]?.name ?? "")) ||
-    t("A player");
+  const name = typed.trim().slice(0, LIMITS.name);
   const system = game.system ?? systemOf(game).id;
   const gameName = plainSystemName(systemLabel(system, systemOf(game).name));
   const here = mine && mine.post.join === join;
 
   if (here)
     return (
-      <div className="my-table small" role="status">
-        {mine.state === "posting"
-          ? t("Posting on Open tables…")
-          : mine.state === "failed"
-            ? t("The board didn't take your post. Check your connection and try again.")
-            : tn(mine.post.seats, "On Open tables: {n} seat open.", "On Open tables: {n} seats open.")}{" "}
-        <button className="link" onClick={() => void takeDown()}>
+      <div className={`my-table small ${mine.state === "failed" ? "failed" : ""}`} role="status">
+        {mine.state === "up" && <span className="dot" aria-hidden />}
+        <span>
+          {mine.state === "posting"
+            ? t("Posting on Open tables…")
+            : mine.state === "failed"
+              ? mine.why === "busy"
+                ? t("Too many tables from this network right now; try again in a few minutes.")
+                : t("The board didn't take your post. Check your connection and try again.")
+              : tn(
+                  mine.post.seats,
+                  "Listed on Open tables · {n} seat open",
+                  "Listed on Open tables · {n} seats open",
+                )}
+        </span>
+        <button className="small" onClick={() => void takeDown()}>
           {mine.state === "failed" ? t("Close") : t("Take it down")}
         </button>
       </div>
@@ -347,6 +510,10 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
     );
   const submit = async () => {
     setBusy(true);
+    setMyName(name);
+    // The room shows the same name the board does.
+    if (kind === "live" && self && self.name !== name)
+      useStore.getState().dispatch({ type: "player/rename", player: self.id, name }, self.id);
     const now = clock();
     const start =
       when === "now"
@@ -368,6 +535,7 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
       voice,
       seats: Math.max(1, seats),
       note: note.trim(),
+      ...(tags.length ? { tags } : {}),
       join,
       expires: now + (kind === "live" ? hours * 3600_000 : MAIL_TTL_MS),
     });
@@ -384,14 +552,20 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
     >
       <strong>{t("Post on Open tables")}</strong>
       <p className="muted small">
-        {t(
-          "Anyone looking at Open tables sees your name ({name}), the game ({game}) and what you fill in here.",
-          {
-            name,
-            game: gameName,
-          },
-        )}
+        {t("Anyone looking at Open tables sees your name, the game ({game}) and what you fill in here.", {
+          game: gameName,
+        })}
       </p>
+      <label>
+        {t("Your name")}{" "}
+        <input
+          value={typed}
+          maxLength={LIMITS.name}
+          required
+          placeholder={t("What should they call you?")}
+          onChange={(e) => setTyped(e.target.value)}
+        />
+      </label>
       <label>
         {t("Size")}{" "}
         <input
@@ -442,10 +616,22 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
         <input
           value={note}
           maxLength={LIMITS.note}
-          placeholder={t("e.g. relaxed game, new players welcome")}
+          placeholder={t("e.g. happy to explain the rules")}
           onChange={(e) => setNote(e.target.value)}
         />
       </label>
+      <div className="row wrap post-tags" role="group" aria-label={t("Kind of game")}>
+        {TABLE_TAGS.map((tag) => (
+          <label key={tag} className="check small">
+            <input
+              type="checkbox"
+              checked={tags.includes(tag)}
+              onChange={(e) => setTags(e.target.checked ? [...tags, tag] : tags.filter((x) => x !== tag))}
+            />
+            {tagLabel(tag)}
+          </label>
+        ))}
+      </div>
       {kind === "live" ? (
         <label>
           {t("Stays up for")}{" "}
@@ -464,8 +650,14 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
           : t("It comes down when someone takes the game, or after two days.")}
       </p>
       <div className="row">
-        <button className="primary" type="submit" disabled={busy || (when === "at" && !at)}>
-          {busy ? t("Posting…") : t("Post")}
+        <button className="primary" type="submit" disabled={busy || !name || (when === "at" && !at)}>
+          {busy
+            ? t("Posting…")
+            : t("Post: {summary}", {
+                summary: [gameName, size.trim(), kind === "mail" ? t("by mail") : whenLabel(when, at)]
+                  .filter(Boolean)
+                  .join(", "),
+              })}
         </button>
         <button type="button" className="quiet" onClick={() => setOpen(false)}>
           {t("Cancel")}
@@ -512,4 +704,63 @@ export function MyTableKeeper() {
     return () => window.removeEventListener("pagehide", pageClosing);
   }, []);
   return null;
+}
+
+/**
+ * Someone sat down at a table listed on Open tables: a soft knock, who it
+ * is, and a hello to send in one tap (PX). Mounted with the game screen.
+ */
+export function TableArrivals() {
+  const listed = useOpenTables((s) => s.listed);
+  const roomId = useStore((s) => s.roomId);
+  const selfId = useStore((s) => s.session?.selfId);
+  const [arrived, setArrived] = useState<string | null>(null);
+  const name = useStore((s) => (arrived ? s.game.players[arrived]?.name : undefined));
+
+  useEffect(() => {
+    if (!listed || listed !== roomId) return;
+    const seated = (s: ReturnType<typeof useStore.getState>) =>
+      Object.values(s.game.players)
+        .filter((p) => p.seat !== undefined && p.id !== selfId && !untakenSeat(s.record, p.id))
+        .map((p) => p.id);
+    let before = new Set(seated(useStore.getState()));
+    return useStore.subscribe((s) => {
+      const now = seated(s);
+      const fresh = now.find((id) => !before.has(id));
+      before = new Set(now);
+      if (fresh && s.game.turn.round === 0) {
+        knock();
+        setArrived(fresh);
+      }
+    });
+  }, [listed, roomId, selfId]);
+
+  useEffect(() => {
+    if (!arrived) return;
+    const timer = setTimeout(() => setArrived(null), 30_000);
+    return () => clearTimeout(timer);
+  }, [arrived]);
+
+  if (!arrived || !name) return null;
+  const hello = (text: string) => {
+    say({ kind: "chat", text });
+    setArrived(null);
+  };
+  return (
+    <div className="arrival" role="status">
+      <div className="row spread">
+        <strong>{t("{name} joined from Open tables", { name: displayName(name) })}</strong>
+        <button className="quiet small" title={t("Close")} onClick={() => setArrived(null)}>
+          ✕
+        </button>
+      </div>
+      <div className="row wrap">
+        {[t("👋 Hi!"), t("Welcome to the table"), t("Ready when you are")].map((text) => (
+          <button key={text} className="small" onClick={() => hello(text)}>
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

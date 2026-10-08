@@ -22,7 +22,7 @@ export function FocusCamera() {
       saved.current ??= { target: controls.target.clone(), position: controls.object.position.clone() };
       const offset = controls.object.position.clone().sub(controls.target);
       controls.target.set(x, controls.target.y, y);
-      offset.setLength(Math.max(18, span * 1.6 + 12));
+      offset.setLength(Math.max(18, span * 1.9 + 10));
       controls.object.position.copy(controls.target).add(offset);
       controls.update();
     } else if (controls && shot.restore) {

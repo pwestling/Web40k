@@ -214,6 +214,12 @@ export function thump(delay = 0, gain = 0.5) {
   tone(a, a.currentTime + delay, { freq: 90, to: 40, dur: 0.22, gain });
 }
 
+/** Two soft knocks: someone has sat down at the table. */
+export function knock() {
+  thump(0, 0.35);
+  thump(0.16, 0.28);
+}
+
 /** The end of a decisive roll: a rising fanfare when it went the roller's way, a fall when it didn't. */
 export function sting(good: boolean) {
   const a = audio();

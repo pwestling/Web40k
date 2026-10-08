@@ -4588,8 +4588,146 @@ body.clip-narrow .caption {
 .post-table select {
   max-width: 100%;
 }
-.my-table {
+/* The card leads with the person (PX); Join is a real button, the rest behind ⋯ (UX 384). */
+.table-post .table-lead {
+  color: #f3f4f6;
+  font-size: 1.02rem;
+}
+.table-tags {
+  gap: 4px;
+}
+.table-tag {
+  font-size: 0.78rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid #3b4252;
+  color: #cbd5e1;
+}
+.table-tag.new {
+  border-color: #16a34a;
   color: #86efac;
+}
+.table-tag.competitive {
+  border-color: #b45309;
+  color: #fcd34d;
+}
+.table-post button.join {
+  min-height: 44px;
+  min-width: 96px;
+  font-weight: 600;
+}
+.post-more {
+  position: relative;
+}
+.post-more summary {
+  list-style: none;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 1.2rem;
+}
+.post-more summary::-webkit-details-marker {
+  display: none;
+}
+.post-more[open] summary {
+  background: #232834;
+}
+.post-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 170px;
+  padding: 4px;
+  background: #111318;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  z-index: 2;
+}
+.post-menu button {
+  text-align: left;
+  min-height: 36px;
+}
+.join-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.join-table p {
+  margin: 0;
+}
+.table-gone {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(251 191 36 / 12%);
+  color: #fde68a;
+}
+.post-table .post-tags {
+  gap: 4px 12px;
+}
+.post-table button.primary[type="submit"] {
+  min-height: 44px;
+  flex: 1;
+}
+/* The host's table, listed: a chip with a real button (UX 386). */
+.my-table {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #16a34a;
+  background: rgb(22 163 74 / 12%);
+  color: #86efac;
+}
+.my-table.failed {
+  border-color: #b45309;
+  background: rgb(180 83 9 / 12%);
+  color: #fcd34d;
+  border-radius: 8px;
+}
+.my-table .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+/* Someone sat down from Open tables: a hello to send in one tap (PX). */
+.arrival {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #16a34a;
+  background: rgb(17 19 24 / 96%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
+}
+@media (max-width: 600px) {
+  /* On a phone the board is its own screen (UX 383). */
+  .modal.open-tables {
+    inset: 0;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+  }
 }
 .mailbar .post-table {
   position: absolute;

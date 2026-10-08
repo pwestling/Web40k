@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { nostrBoard, signEvent, verifyEvent, REPORTS_TO_HIDE } from "./nostr";
 import { shownPosts } from "./board";
-import { ALIVE_MS, isUp, readPost, type SeenPost, type TablePost } from "./post";
+import { ALIVE_MS, isUp, readPost, tagsOf, type SeenPost, type TablePost } from "./post";
 
 const hour = 3600_000;
 const post = (over: Partial<TablePost> = {}): TablePost => ({
@@ -180,12 +180,30 @@ describe("Open tables (#50)", () => {
     stop();
   });
 
+  it("reads the kind of game from ticks and the note", () => {
+    expect(tagsOf({ ...post(), note: "Casual game, beginners welcome" })).toEqual(["new", "relaxed"]);
+    expect(tagsOf({ ...post(), note: "", tags: ["competitive"] })).toEqual(["competitive"]);
+    expect(readPost({ ...post(), tags: ["narrative", "<script>"] })?.tags).toEqual(["narrative"]);
+  });
+
   it("keeps hidden, blocked and reported posts off this browser's list", () => {
     const a: SeenPost = { ...post(), key: "k1", at: Date.now() };
     const b: SeenPost = { ...post({ id: "ffffffffffffffff", name: "Spammer" }), key: "k2", at: Date.now() };
-    const s = { mine: null, asked: false, hidden: [], blockedNames: [], blockedKeys: [], reported: [] };
+    const s = {
+      mine: null,
+      asked: false,
+      hidden: [],
+      blockedNames: [],
+      blockedKeys: [],
+      reported: [],
+      listed: null,
+      joined: null,
+      gone: false,
+    };
     expect(shownPosts([a, b], s)).toHaveLength(2);
     expect(shownPosts([a, b], { ...s, blockedNames: ["spammer"] })).toEqual([a]);
+    // Blocking goes by key: names like "Player 1" repeat (UX 382).
+    expect(shownPosts([a, b], { ...s, blockedKeys: ["k2"] })).toEqual([a]);
     expect(shownPosts([a, b], { ...s, hidden: ["k1:a1b2c3d4e5f60718"] })).toEqual([b]);
   });
 });

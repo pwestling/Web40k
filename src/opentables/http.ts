@@ -10,6 +10,13 @@ import type { BoardBackend, BoardStatus } from "./board";
 
 const POLL_MS = 20_000;
 
+/** The board answered no: 429 is too many tables from this network. */
+class BoardRefused extends Error {
+  constructor(readonly status: number) {
+    super(`board said ${status}`);
+  }
+}
+
 export function httpBoard(url: string, key: string, token: (id: string) => string): BoardBackend {
   const post = async (path: string, body: unknown) => {
     const res = await fetch(`${url}${path}`, {
@@ -18,7 +25,7 @@ export function httpBoard(url: string, key: string, token: (id: string) => strin
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) throw new Error(`board said ${res.status}`);
+    if (!res.ok) throw new BoardRefused(res.status);
   };
   return {
     key,

@@ -11,8 +11,9 @@
 // The app checks every post again as it reads it (src/opentables/post.ts).
 
 const MAX_POSTS = 300;
-const PER_ADDRESS = 3;
-const ALIVE_MS = 20 * 60_000;
+// A club or a shop shares one address: room for its tables, not for a flood.
+const PER_ADDRESS = 10;
+const ALIVE_MS = 3 * 60_000;
 const MAX_LIVE_MS = 4 * 3600_000 + 60_000;
 const MAX_MAIL_MS = 2 * 24 * 3600_000 + 60_000;
 const REPORTS_TO_HIDE = 3;

@@ -87,10 +87,11 @@ function momentFrame(record: GameRecord, m: Moment): { x: number; y: number; spa
     return model && !model.destroyed ? [model.position] : [];
   });
   if (!at.length) return null;
-  const x = at.reduce((n, p) => n + p.x, 0) / at.length;
-  const y = at.reduce((n, p) => n + p.y, 0) / at.length;
-  const span = Math.max(4, ...at.map((p) => 2 * Math.hypot(p.x - x, p.y - y)));
-  return { x, y, span };
+  // The middle of everything in it, not of its models: a ten-model squad shouldn't pull its target out of frame (PX).
+  const xs = at.map((p) => p.x);
+  const ys = at.map((p) => p.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, span: Math.max(4, Math.hypot(x1 - x0, y1 - y0) + 3) };
 }
 
 const lastSeq = (record: GameRecord) => record.events.at(-1)?.seq ?? record.initial.seq;

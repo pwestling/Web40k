@@ -49,7 +49,11 @@ export function Lobby() {
   const [teamSize, setTeamSize] = useState(1);
   const [guide, setGuide] = useState(false);
   const [rules, setRules] = useState(params.get("rules") === "rift-lanterns");
-  const [tables, setTables] = useState(params.get("tables") === "1");
+  const [tables, setTables] = useState(() => {
+    // Back from a table whose host had gone: the board says so.
+    if (params.get("tables") === "gone") useOpenTables.setState({ gone: true });
+    return params.get("tables") === "1" || params.get("tables") === "gone";
+  });
   // Play the computer (#45): the game whose card asks "How hard?" (UX 350).
   const [asking, setAsking] = useState<string | null>(null);
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
@@ -79,8 +83,8 @@ export function Lobby() {
   const saved = loadSavedGame();
   const mode: Mode = sameBrowser ? "local" : "online";
 
-  const remember = () => {
-    localStorage.setItem("open-battle:name", name);
+  const remember = (as = name) => {
+    localStorage.setItem("open-battle:name", as);
     localStorage.setItem("open-battle:system", system);
   };
   const linkTo = (roomId: string) => {
@@ -118,10 +122,10 @@ export function Lobby() {
     namePackage();
     useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
   };
-  const join = (role: "client" | "spectator", roomId = room) => {
-    remember();
+  const join = (role: "client" | "spectator", roomId = room, as = name) => {
+    remember(as);
     linkTo(roomId);
-    start({ role, mode, roomId, name });
+    start({ role, mode, roomId, name: as });
   };
   const resume = () => {
     if (!saved) return;
@@ -315,6 +319,33 @@ export function Lobby() {
         <div className="lobby-col">
           <h2>{t("Play with friends")}</h2>
           <OfflineForFriends />
+          {boardOn() && (
+            <>
+              <button className="open-tables-button" onClick={() => setTables(true)}>
+                <strong>{t("Open tables: find an opponent")}</strong>
+                <span className="muted small">
+                  {t("Games other players have put up. Join one, or post your own.")}
+                </span>
+              </button>
+              {tables && (
+                <Suspense fallback={null}>
+                  <OpenTablesBoard
+                    onClose={() => setTables(false)}
+                    onJoin={(code, as) => {
+                      setRoom(code);
+                      if (as) setName(as);
+                      join("client", code, as || name);
+                    }}
+                    onHost={() => {
+                      setTables(false);
+                      useOpenTables.setState({ asked: true });
+                      host();
+                    }}
+                  />
+                </Suspense>
+              )}
+            </>
+          )}
           <label>
             {t("Your name")}{" "}
             <input
@@ -354,32 +385,6 @@ export function Lobby() {
               {t("Watch")}
             </button>
           </div>
-          {boardOn() && (
-            <>
-              <button className="open-tables-button" onClick={() => setTables(true)}>
-                <strong>{t("Open tables: find an opponent")}</strong>
-                <span className="muted small">
-                  {t("Games other players have put up. Join one, or post your own.")}
-                </span>
-              </button>
-              {tables && (
-                <Suspense fallback={null}>
-                  <OpenTablesBoard
-                    onClose={() => setTables(false)}
-                    onJoin={(code) => {
-                      setRoom(code);
-                      join("client", code);
-                    }}
-                    onHost={() => {
-                      setTables(false);
-                      useOpenTables.setState({ asked: true });
-                      host();
-                    }}
-                  />
-                </Suspense>
-              )}
-            </>
-          )}
           <NetCheck />
           <h2>{t("At a real table")}</h2>
           <p className="muted small">

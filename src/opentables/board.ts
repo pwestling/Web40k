@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { netConfig } from "../net/config";
 import { useStore } from "../store";
-import { HEARTBEAT_MS, type SeenPost, type TablePost } from "./post";
+import { HEARTBEAT_MS, isUp, type SeenPost, type TablePost } from "./post";
 
 /**
  * Open tables (#50): which board this site uses, this browser's own post,
@@ -80,10 +80,13 @@ function browserKey(): string {
   return made;
 }
 
+/** Tokens of posts this page put up, kept after `mine` clears so a take-down still proves it (UX 380). */
+const tokens = new Map<string, string>();
+
 /** The token that lets this browser change its post on a self-hosted board. */
 function tokenFor(id: string): string {
   const mine = useOpenTables.getState().mine;
-  return mine?.post.id === id ? mine.token : random(16);
+  return mine?.post.id === id ? mine.token : (tokens.get(id) ?? random(16));
 }
 
 interface MyTable {
@@ -91,6 +94,8 @@ interface MyTable {
   token: string;
   /** Up, being put up, or not taken by the board. */
   state: "posting" | "up" | "failed";
+  /** Why the board didn't take it: too many tables from this network. */
+  why?: "busy";
 }
 
 interface OpenTablesState {
@@ -103,6 +108,12 @@ interface OpenTablesState {
   reported: string[];
   /** The board's "Host a table and post it": the post form opens with the room. */
   asked: boolean;
+  /** The room this browser's table was listed for: whoever sits down there came from Open tables. */
+  listed: string | null;
+  /** The table this browser joined from the board, to come back if its host has gone. */
+  joined: SeenPost | null;
+  /** A table joined from the board had gone: the board says so when it opens again. */
+  gone: boolean;
 }
 
 export const useOpenTables = create<OpenTablesState>(() => ({
@@ -112,6 +123,9 @@ export const useOpenTables = create<OpenTablesState>(() => ({
   blockedKeys: load<string[]>("open-battle:tables-blocked-keys", []),
   reported: load<string[]>("open-battle:tables-reported", []),
   asked: false,
+  listed: null,
+  joined: null,
+  gone: false,
 }));
 
 useOpenTables.subscribe((s, prev) => {
@@ -130,7 +144,8 @@ export function shownPosts(posts: SeenPost[], s = useOpenTables.getState(), now 
   const off = new Set([...s.hidden, ...s.reported]);
   return posts.filter(
     (p) =>
-      p.expires > now &&
+      // A live table its host stopped refreshing has gone, whatever the relay still holds (PX: ghost tables).
+      isUp(p, now) &&
       !off.has(postKey(p)) &&
       !s.blockedKeys.includes(p.key) &&
       !names.has(p.name.toLowerCase()),
@@ -141,11 +156,17 @@ export function hidePost(p: SeenPost): void {
   useOpenTables.setState((s) => ({ hidden: [...s.hidden, postKey(p)] }));
 }
 
-export function blockName(p: SeenPost): void {
-  useOpenTables.setState((s) => ({
-    blockedNames: [...new Set([...s.blockedNames, p.name])],
-    blockedKeys: [...new Set([...s.blockedKeys, p.key])],
-  }));
+/** Block whoever posted this: by their key, as names repeat ("Player 1"; UX 382). */
+export function blockPoster(p: SeenPost): void {
+  useOpenTables.setState((s) => ({ blockedKeys: [...new Set([...s.blockedKeys, p.key])] }));
+}
+
+/** The host of a table joined from the board never answered: hide it, and say so on the board. */
+export function tableGone(): void {
+  const p = useOpenTables.getState().joined;
+  if (!p) return;
+  hidePost(p);
+  useOpenTables.setState({ joined: null, gone: true });
 }
 
 export function unblockAll(): void {
@@ -178,16 +199,18 @@ export async function postTable(post: TablePost): Promise<boolean> {
   const b = await board();
   if (!b) return false;
   const token = random(16);
-  useOpenTables.setState({ mine: { post, token, state: "posting" } });
+  tokens.set(post.id, token);
+  useOpenTables.setState({ mine: { post, token, state: "posting" }, listed: post.join });
   try {
     await b.publish(post);
     if (useOpenTables.getState().mine?.post.id !== post.id) return false;
     useOpenTables.setState({ mine: { post, token, state: "up" } });
     beat(post);
     return true;
-  } catch {
+  } catch (e) {
+    const busy = (e as { status?: number }).status === 429;
     if (useOpenTables.getState().mine?.post.id === post.id)
-      useOpenTables.setState({ mine: { post, token, state: "failed" } });
+      useOpenTables.setState({ mine: { post, token, state: "failed", ...(busy ? { why: "busy" } : {}) } });
     return false;
   }
 }

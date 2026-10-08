@@ -8,19 +8,36 @@ import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
 import { NetCheck } from "./NetCheck";
+import { NET_PARAMS } from "../net/config";
 import { openSeats, PostTable } from "../opentables/OpenTables";
-import { useOpenTables } from "../opentables/board";
+import { tableGone, useOpenTables } from "../opentables/board";
 
 /** How long a guest looks for the host before we offer help (UX 169). */
 const STUCK_MS = 8000;
+/** A table joined from Open tables whose host doesn't answer by then has gone. */
+const GONE_MS = 15_000;
 
 /** A guest still looking for the host after a while: maybe an old link, maybe the network. */
 function StillLooking() {
   const [stuck, setStuck] = useState(false);
+  const roomId = useStore((s) => s.roomId);
+  const fromBoard = useOpenTables((s) => s.joined?.join === roomId);
   useEffect(() => {
     const timer = setTimeout(() => setStuck(true), STUCK_MS);
     return () => clearTimeout(timer);
   }, []);
+  useEffect(() => {
+    if (!fromBoard) return;
+    // Joined from Open tables and nobody's there: back to the board, which says so (PX).
+    const timer = setTimeout(() => {
+      tableGone();
+      const q = new URLSearchParams({ tables: "gone" });
+      const here = new URLSearchParams(location.search);
+      for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
+      window.location.assign(`${location.pathname}?${q}`);
+    }, GONE_MS);
+    return () => clearTimeout(timer);
+  }, [fromBoard]);
   if (!stuck) return null;
   return (
     <div className="still-looking">

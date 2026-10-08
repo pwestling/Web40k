@@ -2,7 +2,7 @@ import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
 import { createBoard } from "./board.mjs";
 
-const ALIVE_MS = 20 * 60_000;
+const ALIVE_MS = 3 * 60_000;
 const hour = 3600_000;
 const post = (over: Record<string, unknown> = {}) => ({
   id: "a1b2c3d4e5f60718",
@@ -53,10 +53,11 @@ describe("the self-hosted Open tables board (#50)", () => {
     // Each address gets a few posts at a time.
     now = Date.now();
     const posted = await Promise.all(
-      ["11111111", "22222222", "33333333", "44444444"].map((id) =>
+      Array.from({ length: 11 }, (_, i) => `${i}`.padStart(8, "a")).map((id) =>
         call("POST", "/board", { post: post({ id }), key, token }, "9.9.9.9"),
       ),
     );
-    expect(posted.map((r) => r.status)).toEqual([200, 200, 200, 429]);
+    // A club's ten tables on one address; the eleventh waits.
+    expect(posted.map((r) => r.status)).toEqual([...Array(10).fill(200), 429]);
   });
 });

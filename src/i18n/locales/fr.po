@@ -448,44 +448,44 @@ msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 msgid "Setting up the table…"
 msgstr "Installation de la table…"
 
-#: src/GameScreen.tsx:305
+#: src/GameScreen.tsx:306
 #, fuzzy
 msgid "Fully visible"
 msgstr "Entièrement visible"
 
-#: src/GameScreen.tsx:306
+#: src/GameScreen.tsx:307
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Partiellement visible ou à couvert"
 
-#: src/GameScreen.tsx:307
+#: src/GameScreen.tsx:308
 #, fuzzy
 msgid "Hidden"
 msgstr "Caché"
 
-#: src/GameScreen.tsx:308
+#: src/GameScreen.tsx:309
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 
-#: src/GameScreen.tsx:313
+#: src/GameScreen.tsx:314
 #: src/mail/MailLobby.tsx:165
 #: src/workshop/Workshop.tsx:380
 #, fuzzy
 msgid "Open"
 msgstr "Dégagé"
 
-#: src/GameScreen.tsx:314
+#: src/GameScreen.tsx:315
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Gênant : couvert"
 
-#: src/GameScreen.tsx:315
+#: src/GameScreen.tsx:316
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Bloquant : pas de vue"
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:321
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Quitter la vue de la figurine (Esc)"
@@ -499,8 +499,8 @@ msgstr[1] "{unit} a abattu {n} de tes {victim}"
 
 #: src/bot/BestMoment.tsx:43
 #: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:319
-#: src/share/SharePanel.tsx:393
+#: src/share/SharePanel.tsx:320
+#: src/share/SharePanel.tsx:394
 #: src/share/cards.ts:310
 #: src/share/clip.ts:222
 #, fuzzy
@@ -616,7 +616,7 @@ msgid "A clean view of the board for streaming (OBS browser source), with this d
 msgstr "Une vue épurée de la table pour le streaming (source navigateur OBS), avec ce délai"
 
 #: src/broadcast/BroadcastControls.tsx:11
-#: src/opentables/OpenTables.tsx:178
+#: src/opentables/OpenTables.tsx:206
 #: src/ui/ReplayBar.tsx:268
 #, fuzzy
 msgid "Live"
@@ -942,9 +942,9 @@ msgstr "Exporter"
 #: src/campaign/CampaignUI.tsx:548
 #: src/figures/FigureLibrary.tsx:81
 #: src/figures/FigureLibrary.tsx:81
-#: src/opentables/OpenTables.tsx:154
-#: src/opentables/OpenTables.tsx:334
-#: src/printplay/RulesPage.tsx:130
+#: src/opentables/OpenTables.tsx:182
+#: src/opentables/OpenTables.tsx:497
+#: src/opentables/OpenTables.tsx:753
 #, fuzzy
 msgid "Close"
 msgstr "Fermer"
@@ -1490,10 +1490,10 @@ msgstr "Enregistrer le résultat"
 
 #: src/campaign/EventTab.tsx:417
 #: src/companion/TableAttack.tsx:52
-#: src/opentables/OpenTables.tsx:263
-#: src/opentables/OpenTables.tsx:471
+#: src/opentables/OpenTables.tsx:367
+#: src/opentables/OpenTables.tsx:405
+#: src/opentables/OpenTables.tsx:663
 #: src/replay/NotesPanel.tsx:268
-#: src/replay/NotesPanel.tsx:300
 #, fuzzy
 msgid "Cancel"
 msgstr "Annuler"
@@ -1607,7 +1607,7 @@ msgid "Send them this link to open on their phone:"
 msgstr "Envoie-leur ce lien à ouvrir sur leur téléphone :"
 
 #: src/companion/CompanionScreen.tsx:137
-#: src/ui/Room.tsx:90
+#: src/ui/Room.tsx:107
 #, fuzzy
 msgid "Copied ✓"
 msgstr "Copié ✓"
@@ -1615,7 +1615,7 @@ msgstr "Copié ✓"
 #: src/companion/CompanionScreen.tsx:137
 #: src/mail/MailBar.tsx:236
 #: src/ui/NetBanner.tsx:68
-#: src/ui/Room.tsx:90
+#: src/ui/Room.tsx:107
 #, fuzzy
 msgid "Copy invite link"
 msgstr "Copier le lien d’invitation"
@@ -1732,8 +1732,8 @@ msgid "Log"
 msgstr "Journal"
 
 #: src/companion/CompanionScreen.tsx:95
-#: src/opentables/OpenTables.tsx:164
-#: src/ui/Lobby.tsx:327
+#: src/opentables/OpenTables.tsx:192
+#: src/ui/Lobby.tsx:358
 #, fuzzy
 msgid "Game"
 msgstr "Partie"
@@ -1973,6 +1973,8 @@ msgid "{n} of {all}"
 msgstr "{n} sur {all}"
 
 #: src/companion/TableAttack.tsx:95
+#: src/opentables/OpenTables.tsx:421
+#: src/opentables/OpenTables.tsx:421
 #, fuzzy
 msgid "More"
 msgstr "Plus"
@@ -2700,8 +2702,8 @@ msgid "Help check this translation"
 msgstr "Aide à vérifier cette traduction"
 
 #: src/i18n/LanguagePicker.tsx:9
-#: src/opentables/OpenTables.tsx:181
-#: src/opentables/OpenTables.tsx:425
+#: src/opentables/OpenTables.tsx:209
+#: src/opentables/OpenTables.tsx:599
 #, fuzzy
 msgid "Language"
 msgstr "Langue"
@@ -2964,9 +2966,11 @@ msgid "You've been invited to a game by mail"
 msgstr "Tu es invité à une partie par correspondance"
 
 #: src/mail/MailLobby.tsx:90
+#: src/opentables/OpenTables.tsx:391
+#: src/opentables/OpenTables.tsx:560
 #: src/replay/NotesPanel.tsx:252
 #: src/ui/Hud.tsx:372
-#: src/ui/Lobby.tsx:319
+#: src/ui/Lobby.tsx:350
 #, fuzzy
 msgid "Your name"
 msgstr "Ton nom"
@@ -2977,7 +2981,7 @@ msgid "Join the game"
 msgstr "Rejoindre la partie"
 
 #: src/mail/MailLobby.tsx:99
-#: src/ui/Lobby.tsx:527
+#: src/ui/Lobby.tsx:532
 #, fuzzy
 msgid "Not now"
 msgstr "Pas maintenant"
@@ -3122,290 +3126,366 @@ msgstr "Un jet ou un résultat ne correspond pas à ce que ses coups et ses dés
 msgid "count it on your table"
 msgstr "à compter sur la table"
 
-#: src/opentables/OpenTables.tsx:149
-#: src/opentables/OpenTables.tsx:153
+#: src/opentables/OpenTables.tsx:177
+#: src/opentables/OpenTables.tsx:181
 #, fuzzy
 msgid "Open tables"
 msgstr "Tables ouvertes"
 
-#: src/opentables/OpenTables.tsx:159
+#: src/opentables/OpenTables.tsx:187
 #, fuzzy
 msgid "Games other players have put up, looking for an opponent. Join takes you to their table. Looking posts nothing: your own table shows here only when you post it."
 msgstr "Des parties que d'autres joueurs ont proposées et pour lesquelles ils cherchent un adversaire. Rejoindre vous amène à leur table. Regarder ne publie rien : votre table n'apparaît ici que si vous la proposez."
 
-#: src/opentables/OpenTables.tsx:165
+#: src/opentables/OpenTables.tsx:193
 #, fuzzy
 msgid "Any game"
 msgstr "Tous les jeux"
 
-#: src/opentables/OpenTables.tsx:175
-#: src/opentables/OpenTables.tsx:177
+#: src/opentables/OpenTables.tsx:203
+#: src/opentables/OpenTables.tsx:205
 #, fuzzy
 msgid "Live or by mail"
 msgstr "En direct ou par courrier"
 
-#: src/opentables/OpenTables.tsx:179
+#: src/opentables/OpenTables.tsx:207
 #, fuzzy
 msgid "By mail"
 msgstr "Par courrier"
 
-#: src/opentables/OpenTables.tsx:182
+#: src/opentables/OpenTables.tsx:210
 #, fuzzy
 msgid "Any language"
 msgstr "Toutes les langues"
 
-#: src/opentables/OpenTables.tsx:192
+#: src/opentables/OpenTables.tsx:220
 #, fuzzy
 msgid "Voice"
 msgstr "Voix"
 
-#: src/opentables/OpenTables.tsx:194
+#: src/opentables/OpenTables.tsx:222
 #, fuzzy
 msgid "Voice or not"
 msgstr "Avec ou sans voix"
 
-#: src/opentables/OpenTables.tsx:195
+#: src/opentables/OpenTables.tsx:223
 #, fuzzy
 msgid "With voice"
 msgstr "Avec la voix"
 
-#: src/opentables/OpenTables.tsx:196
+#: src/opentables/OpenTables.tsx:224
 #, fuzzy
 msgid "Text only"
 msgstr "Texte seulement"
 
-#: src/opentables/OpenTables.tsx:201
+#: src/opentables/OpenTables.tsx:230
+#: src/opentables/OpenTables.tsx:623
+#, fuzzy
+msgid "Kind of game"
+msgstr "Type de partie"
+
+#: src/opentables/OpenTables.tsx:232
+#, fuzzy
+msgid "Any kind of game"
+msgstr "Tout type de partie"
+
+#: src/opentables/OpenTables.tsx:243
+#, fuzzy
+msgid "That table has gone: its host has left. {n} other is open."
+msgid_plural "That table has gone: its host has left. {n} others are open."
+msgstr[0] "Cette table n'existe plus : son hôte est parti. {n} autre est ouverte."
+msgstr[1] "Cette table n'existe plus : son hôte est parti. {n} autres sont ouvertes."
+
+#: src/opentables/OpenTables.tsx:249
+#: src/ui/Packages.tsx:748
+#, fuzzy
+msgid "OK"
+msgstr "OK"
+
+#: src/opentables/OpenTables.tsx:255
 #, fuzzy
 msgid "Looking at the board…"
 msgstr "Lecture du tableau…"
 
-#: src/opentables/OpenTables.tsx:203
+#: src/opentables/OpenTables.tsx:257
 #, fuzzy
 msgid "Couldn't reach the board. Check your connection; it tries again on its own."
 msgstr "Impossible de joindre le tableau. Vérifiez votre connexion ; il réessaie tout seul."
 
-#: src/opentables/OpenTables.tsx:205
+#: src/opentables/OpenTables.tsx:259
 #, fuzzy
 msgid "{n} open table"
 msgid_plural "{n} open tables"
 msgstr[0] "{n} table ouverte"
 msgstr[1] "{n} tables ouvertes"
 
-#: src/opentables/OpenTables.tsx:207
+#: src/opentables/OpenTables.tsx:261
 #, fuzzy
 msgid "No open tables match. Try Any in the filters."
 msgstr "Aucune table ouverte ne correspond. Essayez « Tous » dans les filtres."
 
-#: src/opentables/OpenTables.tsx:208
+#: src/opentables/OpenTables.tsx:262
 #, fuzzy
 msgid "No open tables right now. Put yours up and others will find it."
 msgstr "Aucune table ouverte pour l'instant. Proposez la vôtre et d'autres la trouveront."
 
-#: src/opentables/OpenTables.tsx:217
+#: src/opentables/OpenTables.tsx:276
 #, fuzzy
 msgid "Host a table and post it"
 msgstr "Ouvrir une table et la proposer"
 
-#: src/opentables/OpenTables.tsx:221
+#: src/opentables/OpenTables.tsx:280
 #, fuzzy
 msgid "Show {n} hidden or blocked again"
 msgid_plural "Show {n} hidden or blocked again"
 msgstr[0] "Réafficher {n} masqué ou bloqué"
 msgstr[1] "Réafficher {n} masqués ou bloqués"
 
-#: src/opentables/OpenTables.tsx:237
+#: src/opentables/OpenTables.tsx:293
 #, fuzzy
-msgid "live"
-msgstr "en direct"
+msgid "here now"
+msgstr "là maintenant"
 
-#: src/opentables/OpenTables.tsx:237
+#: src/opentables/OpenTables.tsx:294
 #, fuzzy
-msgid "by mail"
-msgstr "par courrier"
+msgid "seen {n} min ago"
+msgid_plural "seen {n} min ago"
+msgstr[0] "vu il y a {n} min"
+msgstr[1] "vu il y a {n} min"
 
-#: src/opentables/OpenTables.tsx:238
+#: src/opentables/OpenTables.tsx:295
+#, fuzzy
+msgid "posted {n} hour ago"
+msgid_plural "posted {n} hours ago"
+msgstr[0] "publiée il y a {n} heure"
+msgstr[1] "publiée il y a {n} heures"
+
+#: src/opentables/OpenTables.tsx:300
+#, fuzzy
+msgid "New players welcome"
+msgstr "Débutants bienvenus"
+
+#: src/opentables/OpenTables.tsx:302
+#, fuzzy
+msgid "Relaxed"
+msgstr "Détendue"
+
+#: src/opentables/OpenTables.tsx:304
+#, fuzzy
+msgid "Competitive"
+msgstr "Compétitive"
+
+#: src/opentables/OpenTables.tsx:305
+#, fuzzy
+msgid "Narrative"
+msgstr "Narrative"
+
+#: src/opentables/OpenTables.tsx:324
+#, fuzzy
+msgid "{name} is looking for an opponent by mail"
+msgstr "{name} cherche un adversaire par courrier"
+
+#: src/opentables/OpenTables.tsx:326
+#, fuzzy
+msgid "{name} is playing {when}"
+msgstr "{name} joue {when}"
+
+#: src/opentables/OpenTables.tsx:327
+#, fuzzy
+msgid "{name} is waiting for an opponent"
+msgstr "{name} attend un adversaire"
+
+#: src/opentables/OpenTables.tsx:332
 #, fuzzy
 msgid "voice on"
 msgstr "avec voix"
 
-#: src/opentables/OpenTables.tsx:238
+#: src/opentables/OpenTables.tsx:332
 #, fuzzy
 msgid "text only"
 msgstr "texte seulement"
 
-#: src/opentables/OpenTables.tsx:239
+#: src/opentables/OpenTables.tsx:333
 #, fuzzy
 msgid "{n} seat open"
 msgid_plural "{n} seats open"
 msgstr[0] "{n} place libre"
 msgstr[1] "{n} places libres"
 
-#: src/opentables/OpenTables.tsx:245
-#, fuzzy
-msgid "Any time"
-msgstr "Quand vous voulez"
-
-#: src/opentables/OpenTables.tsx:250
+#: src/opentables/OpenTables.tsx:354
 #, fuzzy
 msgid "Report this table"
 msgstr "Signaler cette table"
 
-#: src/opentables/OpenTables.tsx:251
+#: src/opentables/OpenTables.tsx:355
 #, fuzzy
 msgid "What's wrong with it?"
 msgstr "Quel est le problème ?"
 
-#: src/opentables/OpenTables.tsx:253
+#: src/opentables/OpenTables.tsx:357
 #, fuzzy
 msgid "Spam"
 msgstr "Spam"
 
-#: src/opentables/OpenTables.tsx:254
+#: src/opentables/OpenTables.tsx:358
 #, fuzzy
 msgid "Offensive"
 msgstr "Choquant"
 
-#: src/opentables/OpenTables.tsx:255
+#: src/opentables/OpenTables.tsx:359
 #, fuzzy
 msgid "Pretending to be someone"
 msgstr "Se fait passer pour quelqu'un"
 
-#: src/opentables/OpenTables.tsx:256
+#: src/opentables/OpenTables.tsx:360
 #, fuzzy
 msgid "Something else"
 msgstr "Autre chose"
 
-#: src/opentables/OpenTables.tsx:269
+#: src/opentables/OpenTables.tsx:380
+#, fuzzy
+msgid "You'll join {name}'s table as the other player. They'll see your name. You can leave any time."
+msgstr "Vous rejoindrez la table de {name} comme adversaire. Votre nom sera visible. Vous pouvez partir à tout moment."
+
+#: src/opentables/OpenTables.tsx:386
+#, fuzzy
+msgid "You'll take {name}'s game by mail. They'll see your name. You can stop any time."
+msgstr "Vous prendrez la partie par courrier de {name}. Votre nom sera visible. Vous pouvez arrêter à tout moment."
+
+#: src/opentables/OpenTables.tsx:396
+#: src/opentables/OpenTables.tsx:565
+#, fuzzy
+msgid "What should they call you?"
+msgstr "Comment doivent-ils vous appeler ?"
+
+#: src/opentables/OpenTables.tsx:402
+#, fuzzy
+msgid "Join {name}"
+msgstr "Rejoindre {name}"
+
+#: src/opentables/OpenTables.tsx:412
 #, fuzzy
 msgid "Your table"
 msgstr "Votre table"
 
-#: src/opentables/OpenTables.tsx:272
-#: src/ui/Lobby.tsx:351
+#: src/opentables/OpenTables.tsx:415
+#: src/ui/Lobby.tsx:382
 #, fuzzy
 msgid "Join"
 msgstr "Rejoindre"
 
-#: src/opentables/OpenTables.tsx:278
-#: src/replay/NotesPanel.tsx:77
-#: src/systems/conquest/CommandPanel.tsx:59
-#: src/ui/Hud.tsx:87
-#: src/ui/PlayPanel.tsx:77
-#: src/ui/TableWarnings.tsx:99
+#: src/opentables/OpenTables.tsx:426
 #, fuzzy
-msgid "Hide"
-msgstr "Masquer"
+msgid "Hide this table"
+msgstr "Masquer cette table"
 
-#: src/opentables/OpenTables.tsx:281
+#: src/opentables/OpenTables.tsx:429
 #, fuzzy
 msgid "Block {name}"
 msgstr "Bloquer {name}"
 
-#: src/opentables/OpenTables.tsx:284
+#: src/opentables/OpenTables.tsx:432
 #, fuzzy
 msgid "Report"
 msgstr "Signaler"
 
-#: src/opentables/OpenTables.tsx:320
-#: src/ui/Packages.tsx:674
-#: src/ui/ScriptPanel.tsx:39
-#: src/ui/eventText.ts:102
-#, fuzzy
-msgid "A player"
-msgstr "Un joueur"
-
-#: src/opentables/OpenTables.tsx:329
+#: src/opentables/OpenTables.tsx:485
 #, fuzzy
 msgid "Posting on Open tables…"
 msgstr "Publication sur Tables ouvertes…"
 
-#: src/opentables/OpenTables.tsx:331
+#: src/opentables/OpenTables.tsx:488
+#, fuzzy
+msgid "Too many tables from this network right now; try again in a few minutes."
+msgstr "Trop de tables depuis ce réseau en ce moment ; réessayez dans quelques minutes."
+
+#: src/opentables/OpenTables.tsx:489
 #, fuzzy
 msgid "The board didn't take your post. Check your connection and try again."
 msgstr "Le tableau n'a pas pris votre annonce. Vérifiez votre connexion et réessayez."
 
-#: src/opentables/OpenTables.tsx:332
+#: src/opentables/OpenTables.tsx:490
 #, fuzzy
-msgid "On Open tables: {n} seat open."
-msgid_plural "On Open tables: {n} seats open."
-msgstr[0] "Sur Tables ouvertes : {n} place libre."
-msgstr[1] "Sur Tables ouvertes : {n} places libres."
+msgid "Listed on Open tables · {n} seat open"
+msgid_plural "Listed on Open tables · {n} seats open"
+msgstr[0] "Sur Tables ouvertes · {n} place libre"
+msgstr[1] "Sur Tables ouvertes · {n} places libres"
 
-#: src/opentables/OpenTables.tsx:334
+#: src/opentables/OpenTables.tsx:497
 #, fuzzy
 msgid "Take it down"
 msgstr "Retirer"
 
-#: src/opentables/OpenTables.tsx:343
+#: src/opentables/OpenTables.tsx:506
 #, fuzzy
 msgid "Let players you don't know find this game"
 msgstr "Laissez des joueurs que vous ne connaissez pas trouver cette partie"
 
-#: src/opentables/OpenTables.tsx:345
-#: src/opentables/OpenTables.tsx:385
+#: src/opentables/OpenTables.tsx:508
+#: src/opentables/OpenTables.tsx:553
 #, fuzzy
 msgid "Post on Open tables"
 msgstr "Proposer sur Tables ouvertes"
 
-#: src/opentables/OpenTables.tsx:387
+#: src/opentables/OpenTables.tsx:555
 #, fuzzy
-msgid "Anyone looking at Open tables sees your name ({name}), the game ({game}) and what you fill in here."
-msgstr "Quiconque regarde Tables ouvertes voit votre nom ({name}), le jeu ({game}) et ce que vous remplissez ici."
+msgid "Anyone looking at Open tables sees your name, the game ({game}) and what you fill in here."
+msgstr "Quiconque consulte les tables ouvertes voit votre nom, le jeu ({game}) et ce que vous remplissez ici."
 
-#: src/opentables/OpenTables.tsx:396
+#: src/opentables/OpenTables.tsx:570
 #, fuzzy
 msgid "Size"
 msgstr "Taille"
 
-#: src/opentables/OpenTables.tsx:400
+#: src/opentables/OpenTables.tsx:574
 #, fuzzy
 msgid "e.g. 1000 points"
 msgstr "p. ex. 1000 points"
 
-#: src/opentables/OpenTables.tsx:406
+#: src/opentables/OpenTables.tsx:580
 #, fuzzy
 msgid "Starts"
 msgstr "Commence"
 
-#: src/opentables/OpenTables.tsx:411
+#: src/opentables/OpenTables.tsx:585
 #, fuzzy
 msgid "In {n} hour"
 msgid_plural "In {n} hours"
 msgstr[0] "Dans {n} heure"
 msgstr[1] "Dans {n} heures"
 
-#: src/opentables/OpenTables.tsx:412
+#: src/opentables/OpenTables.tsx:586
 #, fuzzy
 msgid "At a time…"
 msgstr "À une heure précise…"
 
-#: src/opentables/OpenTables.tsx:419
+#: src/opentables/OpenTables.tsx:593
 #, fuzzy
 msgid "Start time"
 msgstr "Heure de début"
 
-#: src/opentables/OpenTables.tsx:437
+#: src/opentables/OpenTables.tsx:611
 #, fuzzy
 msgid "We'll talk over voice"
 msgstr "On parlera à la voix"
 
-#: src/opentables/OpenTables.tsx:441
+#: src/opentables/OpenTables.tsx:615
 #: src/replay/NotesPanel.tsx:221
 #, fuzzy
 msgid "Note"
 msgstr "Note"
 
-#: src/opentables/OpenTables.tsx:445
+#: src/opentables/OpenTables.tsx:619
 #, fuzzy
-msgid "e.g. relaxed game, new players welcome"
-msgstr "p. ex. partie détendue, débutants bienvenus"
+msgid "e.g. happy to explain the rules"
+msgstr "p. ex. j'explique volontiers les règles"
 
-#: src/opentables/OpenTables.tsx:451
+#: src/opentables/OpenTables.tsx:637
 #, fuzzy
 msgid "Stays up for"
 msgstr "Reste en ligne"
 
-#: src/opentables/OpenTables.tsx:455
+#: src/opentables/OpenTables.tsx:641
 #: src/ui/Clocks.tsx:266
 #, fuzzy
 msgid "{n} hour"
@@ -3413,40 +3493,77 @@ msgid_plural "{n} hours"
 msgstr[0] "{n} heure"
 msgstr[1] "{n} heures"
 
-#: src/opentables/OpenTables.tsx:463
+#: src/opentables/OpenTables.tsx:649
 #, fuzzy
 msgid "It comes down when your seats fill, when you leave the game, or after that time."
 msgstr "Elle disparaît quand vos places sont prises, quand vous quittez la partie, ou après ce délai."
 
-#: src/opentables/OpenTables.tsx:464
+#: src/opentables/OpenTables.tsx:650
 #, fuzzy
 msgid "It comes down when someone takes the game, or after two days."
 msgstr "Elle disparaît quand quelqu'un prend la partie, ou après deux jours."
 
-#: src/opentables/OpenTables.tsx:468
+#: src/opentables/OpenTables.tsx:655
 #, fuzzy
 msgid "Posting…"
 msgstr "Publication…"
 
-#: src/opentables/OpenTables.tsx:468
+#: src/opentables/OpenTables.tsx:656
 #, fuzzy
-msgid "Post"
-msgstr "Publier"
+msgid "Post: {summary}"
+msgstr "Publier : {summary}"
 
-#: src/opentables/OpenTables.tsx:64
-#: src/opentables/OpenTables.tsx:408
+#: src/opentables/OpenTables.tsx:657
+#, fuzzy
+msgid "by mail"
+msgstr "par courrier"
+
+#: src/opentables/OpenTables.tsx:752
+#, fuzzy
+msgid "{name} joined from Open tables"
+msgstr "{name} est arrivé·e par les tables ouvertes"
+
+#: src/opentables/OpenTables.tsx:758
+#, fuzzy
+msgid "👋 Hi!"
+msgstr "👋 Salut !"
+
+#: src/opentables/OpenTables.tsx:758
+#, fuzzy
+msgid "Welcome to the table"
+msgstr "Bienvenue à la table"
+
+#: src/opentables/OpenTables.tsx:758
+#, fuzzy
+msgid "Ready when you are"
+msgstr "Prêt quand tu l'es"
+
+#: src/opentables/OpenTables.tsx:77
+#: src/opentables/OpenTables.tsx:582
 #, fuzzy
 msgid "Now"
 msgstr "Maintenant"
 
-#: src/opentables/OpenTables.tsx:66
-#: src/opentables/OpenTables.tsx:409
-#: src/opentables/OpenTables.tsx:410
+#: src/opentables/OpenTables.tsx:79
+#: src/opentables/OpenTables.tsx:583
+#: src/opentables/OpenTables.tsx:584
 #, fuzzy
 msgid "In {n} minute"
 msgid_plural "In {n} minutes"
 msgstr[0] "Dans {n} minute"
 msgstr[1] "Dans {n} minutes"
+
+#: src/opentables/OpenTables.tsx:85
+#, fuzzy
+msgid "now"
+msgstr "maintenant"
+
+#: src/opentables/OpenTables.tsx:90
+#, fuzzy
+msgid "in {n} minute"
+msgid_plural "in {n} minutes"
+msgstr[0] "dans {n} minute"
+msgstr[1] "dans {n} minutes"
 
 #: src/printplay/RulesPage.tsx:119
 #, fuzzy
@@ -3936,6 +4053,16 @@ msgstr "Notes ({n})"
 msgid "Chapters"
 msgstr "Chapitres"
 
+#: src/replay/NotesPanel.tsx:77
+#: src/systems/conquest/CommandPanel.tsx:59
+#: src/ui/Hud.tsx:87
+#: src/ui/PlayPanel.tsx:77
+#: src/ui/TableWarnings.tsx:99
+#: src/ui/WhatNow.tsx:263
+#, fuzzy
+msgid "Hide"
+msgstr "Masquer"
+
 #: src/replay/NotesPanel.tsx:78
 #, fuzzy
 msgid "Hide notes and chapters"
@@ -3961,187 +4088,187 @@ msgstr "Après la bataille"
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Revoir la partie quitte son salon. La partie reste enregistrée et peut être reprise depuis la page d'accueil."
 
-#: src/share/SharePanel.tsx:150
-#: src/share/SharePanel.tsx:375
+#: src/share/SharePanel.tsx:151
+#: src/share/SharePanel.tsx:376
 #, fuzzy
 msgid "This browser can't record the table."
 msgstr "Ce navigateur ne peut pas enregistrer la table."
 
-#: src/share/SharePanel.tsx:156
+#: src/share/SharePanel.tsx:157
 #, fuzzy
 msgid "Recording…"
 msgstr "Enregistrement…"
 
-#: src/share/SharePanel.tsx:163
+#: src/share/SharePanel.tsx:164
 #, fuzzy
 msgid "Saving the clip…"
 msgstr "Enregistrement du clip…"
 
-#: src/share/SharePanel.tsx:201
+#: src/share/SharePanel.tsx:202
 #: src/ui/RoundCard.tsx:140
 #, fuzzy
 msgid "about {n} s"
 msgstr "environ {n} s"
 
-#: src/share/SharePanel.tsx:241
+#: src/share/SharePanel.tsx:242
 #, fuzzy
 msgid "The highlights reel"
 msgstr "Le résumé des temps forts"
 
-#: src/share/SharePanel.tsx:242
+#: src/share/SharePanel.tsx:243
 #, fuzzy
 msgid "From here to the end of the round"
 msgstr "D'ici à la fin du round"
 
-#: src/share/SharePanel.tsx:243
+#: src/share/SharePanel.tsx:244
 #, fuzzy
 msgid "From here to the end of the game"
 msgstr "D'ici à la fin de la partie"
 
-#: src/share/SharePanel.tsx:244
+#: src/share/SharePanel.tsx:245
 #, fuzzy
 msgid "The whole battle"
 msgstr "Toute la bataille"
 
-#: src/share/SharePanel.tsx:245
+#: src/share/SharePanel.tsx:246
 #, fuzzy
 msgid "A round"
 msgstr "Un round"
 
-#: src/share/SharePanel.tsx:263
-#: src/share/SharePanel.tsx:265
+#: src/share/SharePanel.tsx:264
+#: src/share/SharePanel.tsx:266
 #: src/ui/ReplayBar.tsx:277
 #, fuzzy
 msgid "Share the battle"
 msgstr "Partager la bataille"
 
-#: src/share/SharePanel.tsx:273
+#: src/share/SharePanel.tsx:274
 #, fuzzy
 msgid "The replay"
 msgstr "La rediffusion"
 
-#: src/share/SharePanel.tsx:279
+#: src/share/SharePanel.tsx:280
 #, fuzzy
 msgid "Making the page…"
 msgstr "Création de la page…"
 
-#: src/share/SharePanel.tsx:285
+#: src/share/SharePanel.tsx:286
 #, fuzzy
 msgid "Web page"
 msgstr "Page web"
 
-#: src/share/SharePanel.tsx:287
+#: src/share/SharePanel.tsx:288
 #, fuzzy
 msgid "Opens in any browser, even offline: send it to anyone."
 msgstr "S'ouvre dans n'importe quel navigateur, même hors ligne : envoyez-la à qui vous voulez."
 
-#: src/share/SharePanel.tsx:291
+#: src/share/SharePanel.tsx:292
 #, fuzzy
 msgid "Replay file"
 msgstr "Fichier de rediffusion"
 
-#: src/share/SharePanel.tsx:293
+#: src/share/SharePanel.tsx:294
 #, fuzzy
 msgid "Opens in Open Battle, with notes and What if…"
 msgstr "S'ouvre dans Open Battle, avec les notes et Et si…"
 
-#: src/share/SharePanel.tsx:299
+#: src/share/SharePanel.tsx:300
 #, fuzzy
 msgid "A clip"
 msgstr "Un clip"
 
-#: src/share/SharePanel.tsx:302
+#: src/share/SharePanel.tsx:303
 #, fuzzy
 msgid "What to record"
 msgstr "Quoi enregistrer"
 
-#: src/share/SharePanel.tsx:310
+#: src/share/SharePanel.tsx:311
 #, fuzzy
 msgid "Round"
 msgstr "Round"
 
-#: src/share/SharePanel.tsx:329
+#: src/share/SharePanel.tsx:330
 #, fuzzy
 msgid "No highlights reel: this game had no standout moments."
 msgstr "Pas de temps forts : cette partie n'a pas eu de moment marquant."
 
-#: src/share/SharePanel.tsx:335
+#: src/share/SharePanel.tsx:336
 #, fuzzy
 msgid "Shape"
 msgstr "Format"
 
-#: src/share/SharePanel.tsx:340
+#: src/share/SharePanel.tsx:341
 #, fuzzy
 msgid "Wide"
 msgstr "Large"
 
-#: src/share/SharePanel.tsx:340
+#: src/share/SharePanel.tsx:341
 #, fuzzy
 msgid "16:9, for screens and video sites"
 msgstr "16:9, pour les écrans et les sites vidéo"
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:342
 #, fuzzy
 msgid "Square"
 msgstr "Carré"
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:342
 #, fuzzy
 msgid "1:1, for feeds"
 msgstr "1:1, pour les fils"
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:343
 #, fuzzy
 msgid "Tall"
 msgstr "Vertical"
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:343
 #, fuzzy
 msgid "9:16, for stories"
 msgstr "9:16, pour les stories"
 
-#: src/share/SharePanel.tsx:361
+#: src/share/SharePanel.tsx:362
 #, fuzzy
 msgid "Dice and table sounds"
 msgstr "Sons des dés et de la table"
 
-#: src/share/SharePanel.tsx:366
+#: src/share/SharePanel.tsx:367
 #, fuzzy
 msgid "Table talk"
 msgstr "Discussions à table"
 
-#: src/share/SharePanel.tsx:371
+#: src/share/SharePanel.tsx:372
 #, fuzzy
 msgid "Record"
 msgstr "Enregistrer"
 
-#: src/share/SharePanel.tsx:380
+#: src/share/SharePanel.tsx:381
 #, fuzzy
 msgid "Pictures"
 msgstr "Images"
 
-#: src/share/SharePanel.tsx:383
-#: src/share/SharePanel.tsx:391
+#: src/share/SharePanel.tsx:384
+#: src/share/SharePanel.tsx:392
 #, fuzzy
 msgid "Drawing the card…"
 msgstr "Dessin de la carte…"
 
-#: src/share/SharePanel.tsx:384
+#: src/share/SharePanel.tsx:385
 #, fuzzy
 msgid "End-of-game card"
 msgstr "Carte de fin de partie"
 
-#: src/share/SharePanel.tsx:397
+#: src/share/SharePanel.tsx:398
 #, fuzzy
 msgid "Cards come once a round has ended."
 msgstr "Les cartes arrivent une fois un round terminé."
 
-#: src/share/SharePanel.tsx:415
+#: src/share/SharePanel.tsx:416
 #, fuzzy
 msgid "Recording"
 msgstr "Enregistrement"
 
-#: src/share/SharePanel.tsx:416
+#: src/share/SharePanel.tsx:417
 #, fuzzy
 msgid "Stop"
 msgstr "Arrêter"
@@ -6740,7 +6867,7 @@ msgid "Rejoin as {name}"
 msgstr "Rejoindre en tant que {name}"
 
 #: src/ui/Hud.tsx:418
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:385
 #, fuzzy
 msgid "Watch"
 msgstr "Regarder"
@@ -6942,251 +7069,251 @@ msgstr "La sélectionner : sa carte à droite montre ce qu'elle peut faire"
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr "Sélectionner ton unité précédente ou suivante (Maj : celles de l'adversaire)"
 
-#: src/ui/Lobby.tsx:161
+#: src/ui/Lobby.tsx:165
 #, fuzzy
 msgid "That is not an Open Battle replay file."
 msgstr "Ce n'est pas un fichier de replay Open Battle."
 
-#: src/ui/Lobby.tsx:215
+#: src/ui/Lobby.tsx:219
 #, fuzzy
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr "Des batailles de figurines sur une table 3D dans ton navigateur. Apporte ton armée ; les règles tiennent les comptes."
 
-#: src/ui/Lobby.tsx:224
+#: src/ui/Lobby.tsx:228
 #, fuzzy
 msgid "Play your own army: import a list"
 msgstr "Joue ta propre armée : importe une liste"
 
-#: src/ui/Lobby.tsx:226
+#: src/ui/Lobby.tsx:230
 #, fuzzy
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr "Depuis New Recruit ou BattleScribe, avec tes propres figurines si tu en as."
 
-#: src/ui/Lobby.tsx:234
+#: src/ui/Lobby.tsx:238
 #, fuzzy
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr "Notre propre jeu d'escarmouche, libre de partage (CC BY). Quatre bandes se disputent des lanternes tombées dans une faille. Rien à importer."
 
-#: src/ui/Lobby.tsx:240
-#: src/ui/Lobby.tsx:263
+#: src/ui/Lobby.tsx:244
+#: src/ui/Lobby.tsx:267
 #, fuzzy
 msgid "Play now (both sides)"
 msgstr "Jouer maintenant (les deux camps)"
 
-#: src/ui/Lobby.tsx:243
-#: src/ui/Lobby.tsx:264
-#: src/ui/Lobby.tsx:306
+#: src/ui/Lobby.tsx:247
+#: src/ui/Lobby.tsx:268
+#: src/ui/Lobby.tsx:310
 #, fuzzy
 msgid "Play the computer"
 msgstr "Contre l'ordinateur"
 
-#: src/ui/Lobby.tsx:247
+#: src/ui/Lobby.tsx:251
 #, fuzzy
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr "Figurines imprimées ou réelles sur votre table : ce téléphone tient les cartes, les jets et les scores"
 
-#: src/ui/Lobby.tsx:252
-#: src/ui/Lobby.tsx:265
-#: src/ui/Lobby.tsx:384
+#: src/ui/Lobby.tsx:256
+#: src/ui/Lobby.tsx:269
+#: src/ui/Lobby.tsx:389
 #, fuzzy
 msgid "At a real table"
 msgstr "Sur une vraie table"
 
-#: src/ui/Lobby.tsx:255
+#: src/ui/Lobby.tsx:259
 #, fuzzy
 msgid "Rules, print and play"
 msgstr "Règles, imprimer et jouer"
 
-#: src/ui/Lobby.tsx:272
+#: src/ui/Lobby.tsx:276
 #, fuzzy
 msgid "Pick a game"
 msgstr "Choisis un jeu"
 
-#: src/ui/Lobby.tsx:274
+#: src/ui/Lobby.tsx:278
 #, fuzzy
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr "Apprendre : une première partie guidée contre l'ordinateur, avec un coach. Essayer : deux armées d'exemple en place, et tu joues les deux camps."
 
-#: src/ui/Lobby.tsx:279
+#: src/ui/Lobby.tsx:283
 #, fuzzy
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr "Ce sont des règles d'exemple intégrées. Pour ton propre système de jeu, charge son paquet de règles dans Autres façons de jouer."
 
-#: src/ui/Lobby.tsx:296
+#: src/ui/Lobby.tsx:300
 #, fuzzy
 msgid "Learn (guided)"
 msgstr "Apprendre (guidé)"
 
-#: src/ui/Lobby.tsx:301
+#: src/ui/Lobby.tsx:305
 #, fuzzy
 msgid "Try (both sides)"
 msgstr "Essayer (les deux camps)"
 
-#: src/ui/Lobby.tsx:316
+#: src/ui/Lobby.tsx:320
 #, fuzzy
 msgid "Play with friends"
 msgstr "Jouer avec des amis"
 
-#: src/ui/Lobby.tsx:322
-#, fuzzy
-msgid "Player 1 or 2, by seat"
-msgstr "Joueur 1 ou 2, selon la place"
-
-#: src/ui/Lobby.tsx:337
-#, fuzzy
-msgid "Host a game"
-msgstr "Héberger une partie"
-
-#: src/ui/Lobby.tsx:339
-#, fuzzy
-msgid "You get a link to send; whoever opens it joins your table."
-msgstr "Tu obtiens un lien à envoyer ; quiconque l'ouvre rejoint ta table."
-
-#: src/ui/Lobby.tsx:341
-#: src/ui/Room.tsx:80
-#, fuzzy
-msgid "Room"
-msgstr "Salon"
-
-#: src/ui/Lobby.tsx:344
-#, fuzzy
-msgid "a room code or invite link"
-msgstr "un code de salle ou un lien d'invitation"
-
-#: src/ui/Lobby.tsx:348
-#, fuzzy
-msgid "Paste a room code or invite link to join."
-msgstr "Colle un code de salle ou un lien d'invitation pour rejoindre."
-
-#: src/ui/Lobby.tsx:360
+#: src/ui/Lobby.tsx:325
 #, fuzzy
 msgid "Open tables: find an opponent"
 msgstr "Tables ouvertes : trouver un adversaire"
 
-#: src/ui/Lobby.tsx:362
+#: src/ui/Lobby.tsx:327
 #, fuzzy
 msgid "Games other players have put up. Join one, or post your own."
 msgstr "Des parties proposées par d'autres joueurs. Rejoignez-en une ou proposez la vôtre."
 
-#: src/ui/Lobby.tsx:386
+#: src/ui/Lobby.tsx:353
+#, fuzzy
+msgid "Player 1 or 2, by seat"
+msgstr "Joueur 1 ou 2, selon la place"
+
+#: src/ui/Lobby.tsx:368
+#, fuzzy
+msgid "Host a game"
+msgstr "Héberger une partie"
+
+#: src/ui/Lobby.tsx:370
+#, fuzzy
+msgid "You get a link to send; whoever opens it joins your table."
+msgstr "Tu obtiens un lien à envoyer ; quiconque l'ouvre rejoint ta table."
+
+#: src/ui/Lobby.tsx:372
+#: src/ui/Room.tsx:97
+#, fuzzy
+msgid "Room"
+msgstr "Salon"
+
+#: src/ui/Lobby.tsx:375
+#, fuzzy
+msgid "a room code or invite link"
+msgstr "un code de salle ou un lien d'invitation"
+
+#: src/ui/Lobby.tsx:379
+#, fuzzy
+msgid "Paste a room code or invite link to join."
+msgstr "Colle un code de salle ou un lien d'invitation pour rejoindre."
+
+#: src/ui/Lobby.tsx:391
 #, fuzzy
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr "Tu joues avec tes propres figurines ? Open Battle garde les fiches d'unité, les blessures, les CP, les VP et la mission, et calcule chaque attaque. Lance les dés à l'écran ou lance tes propres dés et saisis les résultats."
 
-#: src/ui/Lobby.tsx:391
+#: src/ui/Lobby.tsx:396
 #, fuzzy
 msgid "One phone for both of us"
 msgstr "Un téléphone pour nous deux"
 
-#: src/ui/Lobby.tsx:394
+#: src/ui/Lobby.tsx:399
 #, fuzzy
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr "Tu reçois un lien à envoyer ; l'autre joueur l'ouvre sur son téléphone"
 
-#: src/ui/Lobby.tsx:396
+#: src/ui/Lobby.tsx:401
 #, fuzzy
 msgid "A phone each"
 msgstr "Un téléphone chacun"
 
-#: src/ui/Lobby.tsx:400
+#: src/ui/Lobby.tsx:405
 #, fuzzy
 msgid "More ways to play"
 msgstr "Autres façons de jouer"
 
-#: src/ui/Lobby.tsx:402
+#: src/ui/Lobby.tsx:407
 #, fuzzy
 msgid "Players"
 msgstr "Joueurs"
 
-#: src/ui/Lobby.tsx:404
+#: src/ui/Lobby.tsx:409
 #, fuzzy
 msgid "1 vs 1"
 msgstr "1 contre 1"
 
-#: src/ui/Lobby.tsx:405
+#: src/ui/Lobby.tsx:410
 #, fuzzy
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr "2 contre 2 (les équipes partagent CP et VP)"
 
-#: src/ui/Lobby.tsx:414
+#: src/ui/Lobby.tsx:419
 #, fuzzy
 msgid "Same browser (play between two tabs, no network)"
 msgstr "Même navigateur (jouer entre deux onglets, sans réseau)"
 
-#: src/ui/Lobby.tsx:423
+#: src/ui/Lobby.tsx:428
 #, fuzzy
 msgid "Set up a game on this screen (hotseat)"
 msgstr "Préparer une partie sur cet écran (hotseat)"
 
-#: src/ui/Lobby.tsx:440
+#: src/ui/Lobby.tsx:445
 #, fuzzy
 msgid "Figure library: your models, packs and storage"
 msgstr "Bibliothèque de figurines : tes modèles, packs et stockage"
 
-#: src/ui/Lobby.tsx:443
+#: src/ui/Lobby.tsx:448
 #, fuzzy
 msgid "Module workshop: write your own game system"
 msgstr "Atelier de modules : écris ton propre système de jeu"
 
-#: src/ui/Lobby.tsx:447
+#: src/ui/Lobby.tsx:452
 #, fuzzy
 msgid "Resume last game ({mode}, {n} event, {date})"
 msgid_plural "Resume last game ({mode}, {n} events, {date})"
 msgstr[0] "Reprendre la dernière partie ({mode}, {n} événement, {date})"
 msgstr[1] "Reprendre la dernière partie ({mode}, {n} événements, {date})"
 
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:458
 #, fuzzy
 msgid "online"
 msgstr "en ligne"
 
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:458
 #, fuzzy
 msgid "local"
 msgstr "local"
 
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:458
 #, fuzzy
 msgid "hotseat"
 msgstr "hotseat"
 
-#: src/ui/Lobby.tsx:468
+#: src/ui/Lobby.tsx:473
 #, fuzzy
 msgid "Open a replay file"
 msgstr "Ouvrir un fichier de replay"
 
-#: src/ui/Lobby.tsx:478
+#: src/ui/Lobby.tsx:483
 #, fuzzy
 msgid "No account: games run between your browsers."
 msgstr "Pas de compte : les parties passent directement entre vos navigateurs."
 
-#: src/ui/Lobby.tsx:483
+#: src/ui/Lobby.tsx:488
 #, fuzzy
 msgid "Source code"
 msgstr "Code source"
 
-#: src/ui/Lobby.tsx:509
+#: src/ui/Lobby.tsx:514
 #, fuzzy
 msgid "plays loosely; good for a first game"
 msgstr "joue sans trop forcer ; idéal pour une première partie"
 
-#: src/ui/Lobby.tsx:510
+#: src/ui/Lobby.tsx:515
 #, fuzzy
 msgid "plays to win"
 msgstr "joue pour gagner"
 
-#: src/ui/Lobby.tsx:511
+#: src/ui/Lobby.tsx:516
 #, fuzzy
 msgid "thinks harder about every move"
 msgstr "réfléchit davantage à chaque coup"
 
-#: src/ui/Lobby.tsx:514
-#: src/ui/Lobby.tsx:515
+#: src/ui/Lobby.tsx:519
+#: src/ui/Lobby.tsx:520
 #, fuzzy
 msgid "How hard?"
 msgstr "Quelle difficulté ?"
 
-#: src/ui/Lobby.tsx:72
+#: src/ui/Lobby.tsx:76
 #: src/workshop/Workshop.tsx:702
 #, fuzzy
 msgid "{name} {version}"
@@ -7753,6 +7880,13 @@ msgstr "Regarder plutôt"
 msgid "Without it, moves, dice and results still play; rule hints that need the package are off."
 msgstr "Sans lui, les mouvements, les dés et les résultats fonctionnent toujours ; les indications de règles qui nécessitent le paquet sont désactivées."
 
+#: src/ui/Packages.tsx:674
+#: src/ui/ScriptPanel.tsx:39
+#: src/ui/eventText.ts:102
+#, fuzzy
+msgid "A player"
+msgstr "Un joueur"
+
 #: src/ui/Packages.tsx:699
 #, fuzzy
 msgid "Rules change"
@@ -7807,11 +7941,6 @@ msgstr "Charger un paquet…"
 #, fuzzy
 msgid "Waiting for {names}"
 msgstr "En attente de {names}"
-
-#: src/ui/Packages.tsx:748
-#, fuzzy
-msgid "OK"
-msgstr "OK"
 
 #: src/ui/Packages.tsx:748
 #, fuzzy
@@ -8583,165 +8712,165 @@ msgstr "Quitter"
 msgid "Close replay"
 msgstr "Fermer le replay"
 
-#: src/ui/Room.tsx:103
+#: src/ui/Room.tsx:120
 #, fuzzy
 msgid "A replay, watched together. {names} played it."
 msgstr "Une rediffusion, regardée ensemble. Jouée par {names}."
 
-#: src/ui/Room.tsx:115
+#: src/ui/Room.tsx:132
 #, fuzzy
 msgid "host"
 msgstr "hôte"
 
-#: src/ui/Room.tsx:116
+#: src/ui/Room.tsx:133
 #, fuzzy
 msgid "ready"
 msgstr "prêt"
 
-#: src/ui/Room.tsx:117
+#: src/ui/Room.tsx:134
 #, fuzzy
 msgid "getting rules…"
 msgstr "chargement des règles…"
 
-#: src/ui/Room.tsx:122
+#: src/ui/Room.tsx:139
 #, fuzzy
 msgid "Playing without {rules}: their table may disagree"
 msgstr "Partie sans {rules} : leur table peut différer"
 
-#: src/ui/Room.tsx:127
+#: src/ui/Room.tsx:144
 #, fuzzy
 msgid "some of the game's rules"
 msgstr "certaines règles de la partie"
 
-#: src/ui/Room.tsx:131
+#: src/ui/Room.tsx:148
 #, fuzzy
 msgid "⚠ different rules"
 msgstr "⚠ règles différentes"
 
-#: src/ui/Room.tsx:140
+#: src/ui/Room.tsx:157
 #, fuzzy
 msgid "Joining {name}'s game…"
 msgstr "Connexion à la partie de {name}…"
 
-#: src/ui/Room.tsx:141
+#: src/ui/Room.tsx:158
 #, fuzzy
 msgid "Joining the host's game…"
 msgstr "Connexion à la partie de l'hôte…"
 
-#: src/ui/Room.tsx:142
+#: src/ui/Room.tsx:159
 #, fuzzy
 msgid "Looking for the game's host…"
 msgstr "Recherche de l'hôte de la partie…"
 
-#: src/ui/Room.tsx:144
+#: src/ui/Room.tsx:161
 #, fuzzy
 msgid "Back to the lobby"
 msgstr "Retour au salon d'accueil"
 
-#: src/ui/Room.tsx:149
+#: src/ui/Room.tsx:166
 #, fuzzy
 msgid "Waiting for an opponent to join…"
 msgstr "En attente d'un adversaire…"
 
-#: src/ui/Room.tsx:153
+#: src/ui/Room.tsx:170
 #, fuzzy
 msgid "Someone joining is getting the rules…"
 msgid_plural "{n} people joining are getting the rules…"
 msgstr[0] "Quelqu'un qui rejoint reçoit les règles…"
 msgstr[1] "{n} personnes qui rejoignent reçoivent les règles…"
 
-#: src/ui/Room.tsx:163
+#: src/ui/Room.tsx:180
 #, fuzzy
 msgid "{n} watching (you included)"
 msgid_plural "{n} watching (you included)"
 msgstr[0] "{n} spectateur (toi compris)"
 msgstr[1] "{n} spectateurs (toi compris)"
 
-#: src/ui/Room.tsx:164
+#: src/ui/Room.tsx:181
 #, fuzzy
 msgid "{n} watching"
 msgid_plural "{n} watching"
 msgstr[0] "{n} spectateur"
 msgstr[1] "{n} spectateurs"
 
-#: src/ui/Room.tsx:197
+#: src/ui/Room.tsx:214
 #, fuzzy
 msgid "{name}: {n} to place"
 msgid_plural "{name}: {n} to place"
 msgstr[0] "{name} : {n} à placer"
 msgstr[1] "{name} : {n} à placer"
 
-#: src/ui/Room.tsx:200
+#: src/ui/Room.tsx:217
 #, fuzzy
 msgid "{name}: All placed"
 msgstr "{name} : tout placé"
 
-#: src/ui/Room.tsx:202
+#: src/ui/Room.tsx:219
 #, fuzzy
 msgid "{n} to place"
 msgid_plural "{n} to place"
 msgstr[0] "{n} à placer"
 msgstr[1] "{n} à placer"
 
-#: src/ui/Room.tsx:203
+#: src/ui/Room.tsx:220
 #, fuzzy
 msgid "All placed"
 msgstr "Tout placé"
 
-#: src/ui/Room.tsx:205
+#: src/ui/Room.tsx:222
 #, fuzzy
 msgid "Tell the other player you've finished deploying"
 msgstr "Dis à l'autre joueur que tu as fini de te déployer"
 
-#: src/ui/Room.tsx:213
+#: src/ui/Room.tsx:230
 #: src/ui/TopBar.tsx:462
 #, fuzzy
 msgid "Ready"
 msgstr "Prêt"
 
-#: src/ui/Room.tsx:224
+#: src/ui/Room.tsx:241
 #, fuzzy
 msgid "outside your zone"
 msgstr "hors de ta zone"
 
-#: src/ui/Room.tsx:224
+#: src/ui/Room.tsx:241
 #, fuzzy
 msgid "not placed yet"
 msgstr "pas encore placée"
 
-#: src/ui/Room.tsx:231
+#: src/ui/Room.tsx:248
 #, fuzzy
 msgid "{n} unit in reserve"
 msgid_plural "{n} units in reserve"
 msgstr[0] "{n} unité en réserve"
 msgstr[1] "{n} unités en réserve"
 
-#: src/ui/Room.tsx:28
+#: src/ui/Room.tsx:45
 #, fuzzy
 msgid "Still looking. The host may have closed their page, or the link is from an old game. If the host is there, your connection may be the problem:"
 msgstr "Toujours en recherche. L'hôte a peut-être fermé sa page, ou le lien vient d'une ancienne partie. Si l'hôte est là, le problème vient peut-être de ta connexion :"
 
-#: src/ui/Room.tsx:70
+#: src/ui/Room.tsx:87
 #, fuzzy
 msgid "you"
 msgstr "toi"
 
-#: src/ui/Room.tsx:72
+#: src/ui/Room.tsx:89
 #, fuzzy
 msgid "connected"
 msgstr "connecté"
 
-#: src/ui/Room.tsx:74
+#: src/ui/Room.tsx:91
 #, fuzzy
 msgid "waiting for someone to take this seat"
 msgstr "en attente de quelqu'un pour prendre cette place"
 
-#: src/ui/Room.tsx:75
+#: src/ui/Room.tsx:92
 #, fuzzy
 msgid "reconnecting…"
 msgstr "reconnexion…"
 
-#: src/ui/Room.tsx:81
+#: src/ui/Room.tsx:98
 #, fuzzy
 msgid "(this browser)"
 msgstr "(ce navigateur)"
