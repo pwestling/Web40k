@@ -68,6 +68,7 @@ export function StatsScreen() {
       </div>
 
       <Result />
+      {!BROADCAST && <FeedbackCard />}
 
       <section>
         <h4>Points destroyed per round</h4>
@@ -153,7 +154,6 @@ export function StatsScreen() {
           <p className="muted">No damage dealt yet.</p>
         )}
       </section>
-      {!BROADCAST && <FeedbackCard />}
     </div>
   );
 }

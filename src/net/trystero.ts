@@ -16,13 +16,21 @@ export function trysteroTransport(
   config: NetConfig = netConfig(),
 ): Transport {
   const turnConfig = config.turn.length ? config.turn : undefined;
+  // Everything through TURN (?forceTurn=1): for testing a TURN server.
+  const rtcConfig: RTCConfiguration | undefined = config.forceTurn
+    ? { iceTransportPolicy: "relay" }
+    : undefined;
   const room = config.signal.length
-    ? joinWsRelay({ appId: APP_ID, password, turnConfig, relayConfig: { urls: config.signal } }, roomId)
+    ? joinWsRelay(
+        { appId: APP_ID, password, turnConfig, rtcConfig, relayConfig: { urls: config.signal } },
+        roomId,
+      )
     : joinNostr(
         {
           appId: APP_ID,
           password,
           turnConfig,
+          rtcConfig,
           ...(config.nostr.length ? { relayConfig: { urls: config.nostr } } : {}),
         },
         roomId,

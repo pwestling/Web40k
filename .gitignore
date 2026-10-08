@@ -3,3 +3,6 @@ dist
 *.local
 .DS_Store
 .claude/worktrees/
+
+# Self-host settings (docker-compose); see .env.example
+.env

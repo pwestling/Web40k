@@ -87,9 +87,11 @@ export function VoiceButton() {
               </button>
             </div>
           ) : (
-            <p className="muted small">
-              {spectator ? "You're listening. 🎙 to speak too." : "🎙 turns your mic on."}
-            </p>
+            !error && (
+              <p className="muted small">
+                {spectator ? "You're listening. 🎙 to speak too." : "🎙 turns your mic on."}
+              </p>
+            )
           )}
           {others.length > 0 && (
             <ul className="voice-people">

@@ -2656,6 +2656,23 @@ body.showcase
   border-color: #f59e0b;
   color: #fbbf24;
 }
-.feedback-open {
-  margin-top: 8px;
+.feedback h4 .muted {
+  font-weight: normal;
+}
+/* Where a downloaded report or feedback file went (src/ui/SavedNote.tsx). */
+.saved-note {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+.saved-note code {
+  overflow-wrap: anywhere;
+}
+/* A guest still looking for the host (src/ui/Room.tsx). */
+.still-looking {
+  margin-top: 6px;
+  color: #e5e7eb;
+}
+.still-looking p {
+  margin: 0 0 4px;
 }

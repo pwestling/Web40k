@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_SYSTEM } from "../core";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
 import { APP_BUILD } from "../version";
@@ -22,7 +23,7 @@ export interface ProblemReport {
   seq: number;
   role: string | null;
   mode: string | null;
-  system: string | null;
+  system: string;
   packages: { name: string; version: string; hash: string; here: boolean }[];
   checks: { seq: number; host?: number; mine?: number }[];
   net: unknown;
@@ -50,7 +51,10 @@ const text = (v: unknown): string => {
     return String(v);
   }
 };
+/** three.js's deprecation notices: noise in a report (UX 171). */
+const NOISE = /^THREE\.[\w.]+:? .*(deprecat|has been removed)/i;
 function keep(kind: Logged["kind"], parts: unknown[]): void {
+  if (kind === "warn" && typeof parts[0] === "string" && NOISE.test(parts[0])) return;
   logged.push({ at: new Date().toISOString(), kind, text: parts.map(text).join(" ").slice(0, 2000) });
   if (logged.length > KEEP) logged.shift();
 }
@@ -114,7 +118,7 @@ export async function buildReport(error?: ProblemReport["error"]): Promise<Repor
     seq: record.events.at(-1)?.seq ?? record.initial.seq,
     role,
     mode,
-    system: game.system ?? null,
+    system: game.system ?? DEFAULT_SYSTEM,
     packages: (game.packages?.packages ?? []).map((p) => ({
       name: p.name,
       version: p.version,
@@ -137,8 +141,8 @@ export async function buildReport(error?: ProblemReport["error"]): Promise<Repor
   return { ...file, report };
 }
 
-/** Download a report (or any JSON) as a file. */
-export function download(name: string, data: unknown): void {
+/** Download a report (or any JSON) as a file; returns its name. */
+export function download(name: string, data: unknown): string {
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -146,13 +150,15 @@ export function download(name: string, data: unknown): void {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return name;
 }
 
-const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+/** To the second, so two files made in the same minute don't share a name (UX 171). */
+const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
 
-/** Build the report and download it. */
-export async function reportProblem(error?: ProblemReport["error"]): Promise<void> {
-  download(`open-battle-report-${stamp()}.json`, await buildReport(error));
+/** Build the report and download it; returns the file's name. */
+export async function reportProblem(error?: ProblemReport["error"]): Promise<string> {
+  return download(`open-battle-report-${stamp()}.json`, await buildReport(error));
 }
 
 export { stamp };

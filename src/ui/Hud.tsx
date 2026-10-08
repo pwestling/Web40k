@@ -1,4 +1,4 @@
-import { reportProblem } from "./report";
+import { ReportButton } from "./SavedNote";
 import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
@@ -251,13 +251,7 @@ export function Hud() {
           </button>
         )}
         <button onClick={() => void downloadReplay(record)}>Download replay</button>
-        <button
-          className="quiet"
-          title="Download one file with this game, the app's version and recent errors, to send to whoever can fix it"
-          onClick={() => void reportProblem()}
-        >
-          Report a problem
-        </button>
+        <ReportButton />
       </div>
     </div>
   );

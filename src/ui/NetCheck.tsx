@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { netConfig } from "../net/config";
 
 /**
@@ -113,20 +113,22 @@ export async function checkNetwork(): Promise<NetReport> {
   const reached = relays.filter((r) => r.ms !== null).map((r) => r.ms!);
   const rttMs = reached.length ? Math.min(...reached) : null;
 
+  // Plain words and a next step (UX 170); the technical line sits in the fold.
   let verdict: Verdict;
   let line: string;
   if (!reached.length) {
     verdict = "bad";
-    line = "Can't reach the meeting point, so online games won't connect from this network.";
+    line =
+      "Online games can't start from this network: it can't reach the place where players meet. Try another network, such as a phone hotspot.";
   } else if (turn) {
     verdict = "good";
-    line = "Good to play: TURN works too, so even strict networks will connect.";
+    line = "Good to play, even with friends on strict networks.";
   } else if (!srflx.length || nat === "symmetric") {
     verdict = "turn";
     line =
       turn === false
-        ? "Your network may need TURN, and the TURN server didn't answer."
-        : "Your network may need TURN: games with some players may not connect without it.";
+        ? "You may not be able to connect to some friends, and this site's relay server for strict networks isn't answering. If a friend can't join, try a phone hotspot."
+        : "You may not be able to connect to some friends from this network. If a friend can't join, try a phone hotspot, or host on a server with TURN.";
   } else {
     verdict = "good";
     line = "Good to play.";
@@ -141,8 +143,11 @@ const NAT_TEXT: Record<NetReport["nat"], string> = {
   unknown: "unknown",
 };
 
-export function NetCheck() {
-  const [busy, setBusy] = useState(false);
+const GUIDE = "https://github.com/pwestling/Web40k/blob/main/docs/self-host.md";
+
+/** "Check my connection"; `auto` runs it straight away (a guest stuck looking for the host, UX 169). */
+export function NetCheck({ auto = false }: { auto?: boolean }) {
+  const [busy, setBusy] = useState(auto);
   const [result, setResult] = useState<NetReport | null>(null);
   const run = async () => {
     setBusy(true);
@@ -152,6 +157,16 @@ export function NetCheck() {
       setBusy(false);
     }
   };
+  useEffect(() => {
+    if (!auto) return;
+    let live = true;
+    void checkNetwork()
+      .then((r) => live && setResult(r))
+      .finally(() => live && setBusy(false));
+    return () => {
+      live = false;
+    };
+  }, [auto]);
   return (
     <div className="net-check">
       <button className="link" disabled={busy} onClick={() => void run()}>
@@ -160,13 +175,19 @@ export function NetCheck() {
       {result && (
         <div className={`net-verdict ${result.verdict}`} role="status">
           <strong>{result.line}</strong>
-          <span className="muted small">
+          {result.verdict === "turn" && (
+            <a className="small" href={GUIDE} target="_blank" rel="noreferrer">
+              Self-host guide
+            </a>
+          )}
+          <details className="muted small">
+            <summary>Details</summary>
             Meeting point: {result.relays.filter((r) => r.ms !== null).length} of {result.relays.length}{" "}
             reachable
             {result.rttMs !== null ? ` (${result.rttMs} ms)` : ""} · Public address:{" "}
             {result.stun ? "found" : "not found"} · NAT: {NAT_TEXT[result.nat]}
             {result.turn !== null ? ` · TURN: ${result.turn ? "works" : "no answer"}` : ""}
-          </span>
+          </details>
         </div>
       )}
     </div>

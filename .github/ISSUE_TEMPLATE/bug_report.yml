@@ -1,0 +1,79 @@
+name: Bug report
+description: Something went wrong in a game or in the app.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. A problem report file (see below) usually tells us more than anything else, so please attach one if you can.
+
+        Please don't paste or attach publisher rules text, stats or artwork. Your own army list is fine to describe in your own words.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see? Include any error message.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: As much as you remember. "Started the Sci-fi battle demo, shot with the second unit, pressed Undo" is plenty.
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: report
+    attributes:
+      label: Problem report
+      description: |
+        To get one: in the game, open the left-hand menu (☰ Menu if it is hidden) and press **Report a problem**, next to **Download replay**. If the app crashed, use **Download a problem report** on the crash screen. Either way you get an `open-battle-report-….json` file. Drag it into this box to attach it. If GitHub refuses the file, zip it first.
+
+        What's in it: the game's replay (the players' display names, the armies and every event so far, plus any uploaded figures, terrain models and rules packages), the app build, recent console errors and warnings, sync checksums, and connection stats (connection state, round trip time and route type, no IP addresses). Beyond that, the only details about you are your browser's user agent and screen size. Nothing is sent anywhere until you attach it here.
+      placeholder: Drop the .json file here.
+  - type: dropdown
+    id: system
+    attributes:
+      label: Game system
+      options:
+        - Sci-fi battle
+        - Rank and flank
+        - Conquest
+        - Full Spectrum Dominance
+        - A game from a rules package
+        - Not in a game (landing page, lobby, setup)
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: How were you playing?
+      options:
+        - Hotseat (both sides on one screen)
+        - Online, as the host
+        - Online, as a joining player
+        - Same browser (two tabs, no network)
+        - Watching (spectator or stream view)
+        - Replay viewer
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: e.g. Firefox 131 on Windows 11, Safari on iPad
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, a 2v2 game, a rules package you had loaded, a self-hosted relay, and so on.

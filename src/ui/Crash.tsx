@@ -1,6 +1,7 @@
 import { Component, useState, type ReactNode } from "react";
 import { saveNow, useStore } from "../store";
 import { reportProblem, useOpenReport, type ProblemReport } from "./report";
+import { SavedNote } from "./SavedNote";
 
 /**
  * When something in the app breaks, the game is saved and the player gets a
@@ -43,7 +44,7 @@ function CrashScreen({
   error: NonNullable<ProblemReport["error"]>;
   onRetry: () => void;
 }) {
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
   return (
     <div className="panel crash" role="alert">
       <h2>Something went wrong</h2>
@@ -56,8 +57,7 @@ function CrashScreen({
         <button
           className="primary"
           onClick={() => {
-            void reportProblem(error);
-            setSent(true);
+            void reportProblem(error).then(setSent);
           }}
         >
           {sent ? "Downloaded ✓" : "Download a problem report"}
@@ -65,6 +65,7 @@ function CrashScreen({
         <button onClick={onRetry}>Back to the game</button>
         <button onClick={() => location.reload()}>Reload</button>
       </div>
+      {sent && <SavedNote file={sent} kind="report" />}
       <details>
         <summary className="muted small">What broke</summary>
         <pre className="small">{error.message}</pre>
