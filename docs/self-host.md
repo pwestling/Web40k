@@ -40,7 +40,8 @@ Edit `.env`:
 
 - `DOMAIN`: your domain, e.g. `battle.example.com`.
 - `SITE_ADDRESS`: normally the same as `DOMAIN`.
-- `TURN_SECRET`: a long random string. Generate one with `openssl rand -hex 32`.
+- `TURN_SECRET`: a long random string. Generate one with `openssl rand -hex 32`. The relay and TURN
+  refuse to start while it's still the example or shorter than 16 characters.
 - `TURN_EXTERNAL_IP`: this machine's public IP **if it sits behind NAT**. That covers a home router,
   and clouds such as AWS, GCP and Oracle, where the public IP isn't on the network card. Leave it empty on
   a VPS whose public IP is on the machine (`ip addr` shows it).

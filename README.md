@@ -2,7 +2,7 @@
 
 An open source, browser-based, peer-to-peer tabletop for miniatures wargames. Think Tabletop Simulator, but built for wargaming: inch-based measuring, bases with facing, units and regiments, dice and phases.
 
-No install and no game server: one player hosts, shares a link, and the browsers talk to each other directly over WebRTC.
+Players need only a browser. One player hosts, shares a link, and the browsers talk to each other directly over WebRTC; a server just hands out the app and introduces the players.
 
 > Open Battle is an independent project and is not affiliated with or endorsed by any game publisher. Warhammer 40,000, Warhammer: The Old World and related names are trademarks of Games Workshop Ltd. This repository ships no publisher artwork, models, unit data or rules text. Players bring their own armies, and the sample armies in the app are made up.
 
@@ -30,6 +30,15 @@ No install and no game server: one player hosts, shares a link, and the browsers
 ![Regiment blocks in the top-down view](docs/screenshots/top-down.png)
 
 ![Ordering the secret command stack in a Conquest game](docs/screenshots/command-stack.png)
+
+## How to play
+
+<!-- Play now: a public hosted copy will be linked here once there is one. -->
+
+There is no public hosted copy yet. To play, someone in your group runs it, in one of two ways:
+
+- **Host it for your group** on any server or home machine with Docker: `cp .env.example .env`, fill it in, and `docker compose up -d`. Everyone then just opens your address in a browser. See [docs/self-host.md](docs/self-host.md).
+- **Run it on your own computer** with Node, as below. That's enough to try the demos, or to play a friend over the internet through public relays.
 
 ## Getting started
 

@@ -14,6 +14,22 @@ import { NetBanner } from "./NetBanner";
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
   const game = useGame();
+  // Panels below the bar sit under its real bottom edge, however it wraps (--below-bar in styles.css).
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const root = document.documentElement.style;
+    const place = () =>
+      root.setProperty("--below-bar", `${Math.round(el.getBoundingClientRect().bottom + 8)}px`);
+    const watch = new ResizeObserver(place);
+    watch.observe(el);
+    place();
+    return () => {
+      watch.disconnect();
+      root.removeProperty("--below-bar");
+    };
+  }, []);
   const { dispatch, scrub, role, setDraft } = useStore();
   const canControl = useCanControl();
   // Someone still joining watches until seated: no Start battle, no "place your units".
@@ -71,7 +87,7 @@ export function TopBar() {
   };
 
   return (
-    <div className="topbar">
+    <div className="topbar" ref={bar}>
       {seats.map((seat) => {
         // One chip a side: its players' names, and the side's counters (shared in a team game).
         const team = sidePlayers(game, seat);
@@ -339,7 +355,7 @@ function DicePool({
             title={rerollOnce === "rerolled" ? "Already re-rolled this round" : "Pick dice to re-roll first"}
             onClick={() => act(onReroll)}
           >
-            Re-roll selected (once)
+            Re-roll picked (once)
           </button>
           <button className="primary" onClick={onReady}>
             Ready

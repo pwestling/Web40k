@@ -3,6 +3,11 @@
 # logins signed by TURN_SECRET, which the relay hands to browsers.
 set -e
 : "${TURN_SECRET:?Set TURN_SECRET in .env}"
+# Anyone who knows the secret can use this TURN server: refuse the example one.
+if [ "$TURN_SECRET" = "change-me" ] || [ "${#TURN_SECRET}" -lt 16 ]; then
+  echo "TURN_SECRET is still the example or shorter than 16 characters. Set a long random one in .env, e.g. openssl rand -hex 32" >&2
+  exit 1
+fi
 # Don't let TURN be used to reach this machine's own private networks, unless
 # asked (TURN_ALLOW_PRIVATE=1, e.g. to test with two browsers on one machine).
 PRIVATE="--denied-peer-ip=0.0.0.0-0.255.255.255 --denied-peer-ip=10.0.0.0-10.255.255.255 \

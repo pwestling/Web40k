@@ -1,4 +1,5 @@
 :root {
+  /* --below-bar: where the top bar ends, kept up to date by TopBar (it wraps with wide dice pools). */
   color-scheme: dark;
   font-family: system-ui, sans-serif;
   font-size: 14px;
@@ -207,7 +208,7 @@ label.file.button.small {
 .whatnow-toggle {
   z-index: 19;
   position: absolute;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.85rem;
@@ -215,7 +216,7 @@ label.file.button.small {
 }
 .panel.whatnow {
   z-index: 19;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 32px));
@@ -279,7 +280,7 @@ body.reeling .whatnow-toggle {
 
 /* Left panel */
 .hud {
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 12px;
   width: 300px;
   max-height: calc(100vh - 300px);
@@ -383,7 +384,7 @@ body.reeling .whatnow-toggle {
 
 /* Unit card */
 .unitcard {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
   max-height: calc(100vh - 140px);
@@ -460,7 +461,7 @@ details p {
 
 /* Attack panel */
 .attack {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
   max-height: calc(100vh - 140px);
@@ -684,7 +685,7 @@ details p {
 
 /* Terrain editor */
 .terrainpanel {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 360px;
   max-height: calc(100vh - 140px);
@@ -1050,7 +1051,8 @@ input.frontage {
 .net-banner {
   z-index: 30;
   position: absolute;
-  top: 64px;
+  /* Inside the top bar: just under it, however it wraps. */
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   padding: 6px 14px;
@@ -2185,7 +2187,7 @@ body.reeling
 }
 /* Top right, clear of the round card that opens top centre at the same moment. */
 .panel.score-panel {
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   max-width: min(400px, calc(100vw - 32px));
   display: flex;
@@ -2539,7 +2541,7 @@ body.showcase
 .on-air {
   z-index: 25;
   position: absolute;
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   padding: 4px 10px;
   border-radius: 999px;
@@ -2606,7 +2608,7 @@ body.showcase
   overflow: auto;
 }
 .panel.report-banner {
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   left: 50%;
   transform: translateX(-50%);
   width: min(520px, calc(100vw - 32px));
@@ -2667,6 +2669,27 @@ body.showcase
 }
 .saved-note code {
   overflow-wrap: anywhere;
+}
+/* The saved-file toast (UX 173). */
+.panel.saved-toast {
+  z-index: 60;
+  position: fixed;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+  background: #1b1f27;
+  border: 1px solid #3b4252;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 50%);
+}
+.panel.saved-toast .saved-note {
+  margin: 0;
+  flex: 1;
 }
 /* A guest still looking for the host (src/ui/Room.tsx). */
 .still-looking {

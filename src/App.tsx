@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { loadTrystero, useStore } from "./store";
 import { CrashGuard } from "./ui/Crash";
+import { SavedToast } from "./ui/SavedNote";
 import { Lobby } from "./ui/Lobby";
 
 /**
@@ -29,6 +30,7 @@ export function App() {
         </Suspense>
       </CrashGuard>
       {!started && <Lobby />}
+      <SavedToast />
     </>
   );
 }
