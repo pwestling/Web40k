@@ -242,6 +242,19 @@ const checks = {
     return page.errors;
   },
 
+  async "whats-new"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator(".whats-new .dot").waitFor();
+    await page.locator(".whats-new").click();
+    await page.getByRole("dialog", { name: "What's new" }).waitFor();
+    await page.reload();
+    await page.locator(".whats-new").waitFor();
+    if (await page.locator(".whats-new .dot").count()) throw new Error("still marked new after reading");
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

@@ -49,36 +49,36 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:290
+#: src/GameScreen.tsx:294
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:291
+#: src/GameScreen.tsx:295
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:292
+#: src/GameScreen.tsx:296
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:293
+#: src/GameScreen.tsx:297
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:298
+#: src/GameScreen.tsx:302
 #: src/mail/MailLobby.tsx:165
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:299
+#: src/GameScreen.tsx:303
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:300
+#: src/GameScreen.tsx:304
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:305
+#: src/GameScreen.tsx:309
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -374,7 +374,7 @@ msgid "Games"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:578
-#: src/companion/CompanionScreen.tsx:77
+#: src/companion/CompanionScreen.tsx:81
 #: src/ui/StatsScreen.tsx:128
 msgid "Units"
 msgstr ""
@@ -887,86 +887,86 @@ msgstr ""
 msgid "This device doesn't have {rules}: load it in Game settings."
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:114
+#: src/companion/CompanionScreen.tsx:118
 msgid "Waiting for the other player"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:115
+#: src/companion/CompanionScreen.tsx:119
 msgid "Send them this link to open on their phone:"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:122
+#: src/companion/CompanionScreen.tsx:126
 #: src/ui/Room.tsx:87
 msgid "Copied ✓"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:122
+#: src/companion/CompanionScreen.tsx:126
 #: src/mail/MailBar.tsx:241
 #: src/ui/NetBanner.tsx:67
 #: src/ui/Room.tsx:87
 msgid "Copy invite link"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:126
+#: src/companion/CompanionScreen.tsx:130
 msgid "Share…"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:154
+#: src/companion/CompanionScreen.tsx:158
 msgid "No army yet."
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:168
+#: src/companion/CompanionScreen.tsx:172
 #: src/ui/Hud.tsx:181
 msgid "Add an army"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:187
+#: src/companion/CompanionScreen.tsx:191
 msgid "Destroyed"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:187
+#: src/companion/CompanionScreen.tsx:191
 msgid "{alive}/{all} models"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:192
+#: src/companion/CompanionScreen.tsx:196
 msgid "{n} wound on {model}"
 msgid_plural "{n} wounds on {model}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/companion/CompanionScreen.tsx:195
+#: src/companion/CompanionScreen.tsx:199
 msgid "in reserve"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:229
+#: src/companion/CompanionScreen.tsx:233
 msgid "No mission chosen."
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:259
+#: src/companion/CompanionScreen.tsx:263
 msgid "Number of dice"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:265
+#: src/companion/CompanionScreen.tsx:269
 #: src/ui/Hud.tsx:206
 msgid "D"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:266
+#: src/companion/CompanionScreen.tsx:270
 msgid "Sides"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:271
+#: src/companion/CompanionScreen.tsx:275
 #: src/ui/Hud.tsx:212
 #: src/ui/StatsScreen.tsx:189
 msgid "Roll"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:278
+#: src/companion/CompanionScreen.tsx:282
 #: src/ui/Hud.tsx:221
 msgid "Stats"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:280
+#: src/companion/CompanionScreen.tsx:284
 #: src/ui/Hud.tsx:224
 msgid "Download replay"
 msgstr ""
@@ -975,17 +975,17 @@ msgstr ""
 msgid "← All units"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:78
+#: src/companion/CompanionScreen.tsx:82
 #: src/ui/Missions.tsx:51
 msgid "Mission"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:79
+#: src/companion/CompanionScreen.tsx:83
 msgid "Log"
 msgstr ""
 
-#: src/companion/CompanionScreen.tsx:80
-#: src/ui/Lobby.tsx:209
+#: src/companion/CompanionScreen.tsx:84
+#: src/ui/Lobby.tsx:216
 msgid "Game"
 msgstr ""
 
@@ -1867,7 +1867,7 @@ msgstr ""
 #: src/mail/MailLobby.tsx:90
 #: src/replay/NotesPanel.tsx:250
 #: src/ui/Hud.tsx:364
-#: src/ui/Lobby.tsx:201
+#: src/ui/Lobby.tsx:208
 msgid "Your name"
 msgstr ""
 
@@ -4214,7 +4214,7 @@ msgid "Rejoin as {name}"
 msgstr ""
 
 #: src/ui/Hud.tsx:410
-#: src/ui/Lobby.tsx:235
+#: src/ui/Lobby.tsx:242
 msgid "Watch"
 msgstr ""
 
@@ -4391,134 +4391,134 @@ msgstr ""
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:138
+#: src/ui/Lobby.tsx:140
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:166
+#: src/ui/Lobby.tsx:168
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:172
+#: src/ui/Lobby.tsx:175
 msgid "Learn to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:174
+#: src/ui/Lobby.tsx:177
 msgid "A guided first game: you play blue, the computer plays red, and a coach says what to do next."
 msgstr ""
 
-#: src/ui/Lobby.tsx:186
+#: src/ui/Lobby.tsx:193
 msgid "Try it now"
 msgstr ""
 
-#: src/ui/Lobby.tsx:188
+#: src/ui/Lobby.tsx:195
 msgid "Two sample armies, set up and ready. You play both sides on this screen."
 msgstr ""
 
-#: src/ui/Lobby.tsx:198
+#: src/ui/Lobby.tsx:205
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:204
+#: src/ui/Lobby.tsx:211
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:219
+#: src/ui/Lobby.tsx:226
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:221
+#: src/ui/Lobby.tsx:228
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:223
+#: src/ui/Lobby.tsx:230
 #: src/ui/Room.tsx:77
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:226
+#: src/ui/Lobby.tsx:233
 msgid "a room code to join"
 msgstr ""
 
-#: src/ui/Lobby.tsx:232
+#: src/ui/Lobby.tsx:239
 msgid "Join"
 msgstr ""
 
-#: src/ui/Lobby.tsx:239
+#: src/ui/Lobby.tsx:246
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:241
+#: src/ui/Lobby.tsx:248
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:246
+#: src/ui/Lobby.tsx:253
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:249
+#: src/ui/Lobby.tsx:256
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:251
+#: src/ui/Lobby.tsx:258
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:255
+#: src/ui/Lobby.tsx:262
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:257
+#: src/ui/Lobby.tsx:264
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:259
+#: src/ui/Lobby.tsx:266
 msgid "1 vs 1"
 msgstr ""
 
-#: src/ui/Lobby.tsx:260
+#: src/ui/Lobby.tsx:267
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:265
+#: src/ui/Lobby.tsx:272
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:274
+#: src/ui/Lobby.tsx:281
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:289
+#: src/ui/Lobby.tsx:298
 msgid "Bring your army: lists, figures and rules packages"
 msgstr ""
 
-#: src/ui/Lobby.tsx:292
+#: src/ui/Lobby.tsx:301
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:296
+#: src/ui/Lobby.tsx:305
 msgid "Resume last game ({mode}, {n} event, {date})"
 msgid_plural "Resume last game ({mode}, {n} events, {date})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:302
+#: src/ui/Lobby.tsx:311
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:302
+#: src/ui/Lobby.tsx:311
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:302
+#: src/ui/Lobby.tsx:311
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:316
+#: src/ui/Lobby.tsx:325
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:49
+#: src/ui/Lobby.tsx:51
 msgid "{name} {version} (package)"
 msgstr ""
 
@@ -6807,6 +6807,59 @@ msgstr ""
 
 #: src/ui/WhatNow.tsx:97
 msgid "You can: {actions}."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:13
+msgid "Four games built in, each with a demo and a guided first game against the computer."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:14
+msgid "Play online 1v1 or 2v2, with table talk and voice, or watch a game as it streams."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:15
+msgid "Table companion: play on your real table with real models, and roll your own dice."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:16
+msgid "Play by mail, chess clocks, event nights and a shared campaign book."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:17
+msgid "Replays with notes, What if branches and review rooms for going over a game together."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:18
+msgid "Your own armies, figures, terrain and rules packages."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:19
+msgid "German and French, keyboard play, colour-blind sides and a screen-reader announcer."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:20
+msgid "Install it and play offline."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:52
+msgid "What's new in {version}"
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:53
+msgid "not read yet"
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:60
+#: src/ui/WhatsNew.tsx:64
+msgid "What's new"
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:71
+msgid "Version {version}"
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:80
+msgid "The full list of changes"
 msgstr ""
 
 #: src/ui/autoText.ts:107

@@ -12,6 +12,7 @@ import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
+import { WhatsNew } from "./WhatsNew";
 import { formatDate, t, tn, gameText } from "../i18n";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { openLibrary } from "../figures/open";
@@ -166,6 +167,7 @@ export function Lobby() {
       <p className="pitch">
         {t("Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.")}
       </p>
+      <WhatsNew />
       <UpdateToast />
       <OfflineNote />
       <TextSizePicker />

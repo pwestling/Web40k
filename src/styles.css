@@ -3642,3 +3642,23 @@ body.showcase
   min-width: 32px;
   padding: 0;
 }
+
+/* What's new (#39) */
+.whats-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.whats-new .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #60a5fa;
+}
+.whats-new-list ul {
+  padding-left: 1.2em;
+}
+.whats-new-list li {
+  margin: 4px 0;
+}
