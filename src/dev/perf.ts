@@ -57,20 +57,22 @@ export const perf = {
   /**
    * Give every profile on the table its own synthetic sculpt of
    * `sourceTriangles`. With `raw`, skip the pipeline and draw the sculpt at
-   * full detail, to see what the pipeline saves.
+   * full detail, to see what the pipeline saves. With `owner`, only that
+   * player's units (each peer dresses its own army, as players do).
    */
-  async dress(sourceTriangles: number, raw = false, painted = false) {
+  async dress(sourceTriangles: number, raw = false, painted = false, owner?: string) {
     await ready;
     const { game, dispatch } = useStore.getState();
     const { addAsset } = useAssets.getState();
-    const keys = unitKeys(Object.values(game.models));
+    const units = Object.values(game.units).filter((u) => owner === undefined || u.owner === owner);
+    const keys = unitKeys(units.flatMap((u) => u.modelIds.flatMap((id) => game.models[id] ?? [])));
     const assets = new Map<string, ModelAsset>();
     // Painted: a 2048 px source texture per sculpt, like a scan's, baked and compressed as an upload is.
     const image = painted ? await paintScheme(2048) : null;
     for (const [i, key] of keys.entries()) {
       // Slightly different sculpts so every profile is its own asset.
       const mesh = synthMiniature(sourceTriangles * (1 + i * 0.01), 25.4, painted);
-      const id = `synth-${sourceTriangles}-${raw ? "raw" : painted ? "painted" : "lod"}-${i}`;
+      const id = `synth-${owner ? `${owner.slice(0, 8)}-` : ""}${sourceTriangles}-${raw ? "raw" : painted ? "painted" : "lod"}-${i}`;
       let asset: ModelAsset;
       if (image) {
         const vertices = mesh.positions.length / 3;
@@ -92,7 +94,7 @@ export const perf = {
       addAsset(asset);
       assets.set(key, asset);
     }
-    for (const unit of Object.values(game.units)) {
+    for (const unit of units) {
       for (const key of unitKeys(unit.modelIds.flatMap((id) => game.models[id] ?? []))) {
         const asset = assets.get(key)!;
         const figure = { asset: asset.id, name: key, yaw: 0, scale: 1 };

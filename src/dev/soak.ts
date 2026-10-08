@@ -2,9 +2,10 @@
  * Development-only: the soak bot playing in the real app, for long-session
  * memory and leak checks (scripts/soak-browser.mjs). Unlike `pnpm soak`
  * (loopback peers in Node, checking the rules), this drives the app's own
- * hotseat game, so the table renders, the dice tray rolls, sound and
- * ambience play, painted figures are on, and a rules package runs in the
- * sandbox. Game after game, in one tab.
+ * online game: two tabs over a relay, each playing its own side, so WebRTC,
+ * figure sharing, voice, the table, the dice tray, sound and ambience all
+ * run, painted figures are on, and a rules package runs in the sandbox.
+ * The script starts game after game in new rooms.
  */
 import { sha256Hex, type PlayerId } from "../core";
 import { currentSlot } from "../core/content/turn";
@@ -12,78 +13,54 @@ import { seededRng } from "../sandbox/protocol";
 import { battleOver, freeMoves, legal, waitingOn, type BotContext, type Kept } from "../soak/bot";
 import { useLibrary } from "../packages/library";
 import { useStore } from "../store";
+import { systemModule } from "../systems";
+import { spawnIntents } from "../systems/wh40k/deploy";
+import { systemOf } from "../core/content/turn";
+import { micOff, micOn, setMode, useVoice } from "../voice/voice";
 import secondWind from "../../examples/packages/second-wind.js?raw";
 import { perf } from "./perf";
 
-const SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd"];
+export const SOAK_SYSTEMS = ["forty-k-11", "tow-hand", "conquest-hand", "fsd"];
 
 let ctx: BotContext = { rng: seededRng(1), kept: new Map() as Kept, idle: 0 };
 let mark = "";
 let timer: ReturnType<typeof setTimeout> | null = null;
-const stats = { games: 0, finished: 0, moves: 0, stuck: 0, errors: [] as string[], system: "" };
+const stats = { games: 0, moves: 0, errors: [] as string[], system: "", lastMoveAt: 0 };
 
-/** A fresh hotseat game of `system`: both sample armies, everything on the table, painted figures. */
-async function newGame(n: number) {
-  const system = SYSTEMS[n % SYSTEMS.length]!;
-  stats.system = system;
-  stats.games++;
-  ctx = { rng: seededRng(n + 1), kept: new Map() as Kept, idle: 0 };
-  await perf.setup(1, system);
-  const { dispatch } = useStore.getState();
-  for (const u of Object.values(useStore.getState().game.units))
-    if (u.status?.reserves) dispatch({ type: "unit/reserve", id: u.id, reserve: false, moves: [] }, u.owner);
-  // Painted 200k-triangle sculpts with 2K textures, as players would bring.
-  await perf.dress(200_000, false, true);
-  if (system === "tow-hand") await addPackage();
-}
+const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+const me = () => useStore.getState().session?.selfId ?? "";
 
-/** The example rules package, agreed by both seats, so it runs in the sandbox. */
+const PACKAGE = {
+  id: "example.second-wind",
+  name: "Second Wind (example)",
+  version: "1.0.0",
+  hash: sha256Hex(secondWind),
+  bytes: new TextEncoder().encode(secondWind).length,
+};
+
+/** The example rules package in this browser's library, trusted, so a game can run it in the sandbox. */
 async function addPackage() {
   const lib = useLibrary.getState();
   await lib.load();
-  const bytes = new TextEncoder().encode(secondWind);
-  await lib.add(bytes);
-  const hash = sha256Hex(secondWind);
-  useLibrary.getState().trust(hash, true);
-  const ref = {
-    id: "example.second-wind",
-    name: "Second Wind (example)",
-    version: "1.0.0",
-    hash,
-    bytes: bytes.length,
-  };
-  const { game, dispatch } = useStore.getState();
-  const seats = Object.values(game.players).filter((p) => p.seat !== undefined);
-  dispatch({ type: "packages/propose", packages: [ref] }, seats[0]!.id);
-  for (const p of seats.slice(1)) dispatch({ type: "packages/accept" }, p.id);
-  dispatch(
-    {
-      type: "game/packages",
-      app: "soak",
-      system: { id: game.system!, builtIn: true },
-      packages: [ref],
-      agreed: seats.map((p) => p.id),
-    },
-    seats[0]!.id,
-  );
+  if (!useLibrary.getState().packages[PACKAGE.hash]) await lib.add(new TextEncoder().encode(secondWind));
+  useLibrary.getState().trust(PACKAGE.hash, true);
 }
 
-/** One bot move. False when the game is over or nothing legal is left. */
+/** One bot move for this tab's player. False when there is none. */
 function step(): boolean {
   const { game: state, record, dispatch } = useStore.getState();
-  if (state.turn.round > 0 && battleOver(state)) {
-    stats.finished++;
-    return false;
-  }
+  if (state.turn.round > 0 && battleOver(state)) return false;
+  const self = me();
   const waiting = waitingOn(record, state, ctx);
   for (const move of waiting ? waiting.moves : freeMoves(state, ctx)) {
-    if (!legal(record, state, move)) continue;
+    if (move.as !== self || !legal(record, state, move)) continue;
     try {
       dispatch(move.intent, move.as as PlayerId);
     } catch (e) {
       stats.errors.push(`${move.intent.type}: ${e instanceof Error ? e.message : String(e)}`);
     }
     stats.moves++;
+    stats.lastMoveAt = Date.now();
     const s = useStore.getState().game;
     // As in src/soak/run.ts: moves since the phase or activation last changed, so the bot moves the game on.
     const acting = Object.values(s.units)
@@ -95,24 +72,77 @@ function step(): boolean {
     mark = m;
     return true;
   }
-  stats.stuck++;
   return false;
 }
 
 export const soakBrowser = {
-  /** Play game after game, a move every `everyMs`, until stop(). */
-  async start(everyMs = 300) {
-    let n = 0;
-    await newGame(n);
-    const tick = async () => {
-      if (!step()) await newGame(++n);
-      timer = setTimeout(() => void tick(), everyMs);
+  /** Host or join an online game of `system` in `roomId` (the relay comes from ?signal=). */
+  async join(role: "host" | "client", roomId: string, system: string, n: number) {
+    soakBrowser.stop();
+    stats.system = system;
+    stats.games++;
+    ctx = { rng: seededRng(n * 2 + (role === "host" ? 1 : 2)), kept: new Map() as Kept, idle: 0 };
+    mark = "";
+    await addPackage();
+    useStore
+      .getState()
+      .start({ role, mode: "online", roomId, name: role === "host" ? "Soak A" : "Soak B", system });
+    while (!useStore.getState().session) await frame();
+    if (role === "host" && system === "tow-hand")
+      useStore.getState().dispatch({
+        type: "game/packages",
+        app: "soak",
+        system: { id: system, builtIn: true },
+        packages: [PACKAGE],
+      });
+  },
+  /** Seated (the guest once it has found the host and sat down). */
+  seated() {
+    const { game } = useStore.getState();
+    return game.players[me()]?.seat !== undefined;
+  },
+  /** Both sides seated, as the host sees it. */
+  full() {
+    return Object.values(useStore.getState().game.players).filter((p) => p.seat !== undefined).length >= 2;
+  },
+  /** This tab's sample army on the table, painted 200k sculpts with 2K textures, mic open. */
+  async deploy() {
+    const self = me();
+    const { game, dispatch } = useStore.getState();
+    const seat = game.players[self]!.seat!;
+    const ranked = systemOf(game).unitShape.kind === "ranked";
+    const units = systemModule(game.system ?? undefined)
+      .sample(seat === 0 ? 0 : 1)
+      .units.map((u) => (ranked ? { ...u, files: Math.min(u.models.length, 5) } : u));
+    for (const intent of spawnIntents(game, self, units, `${self.slice(0, 6)}-soak${stats.games}`))
+      dispatch(intent, self);
+    await frame();
+    for (const u of Object.values(useStore.getState().game.units))
+      if (u.owner === self && u.status?.reserves)
+        dispatch({ type: "unit/reserve", id: u.id, reserve: false, moves: [] }, self);
+    await perf.dress(200_000, false, true, self);
+    setMode("open");
+    await micOn().catch((e: unknown) => stats.errors.push(`mic: ${String(e)}`));
+  },
+  /** Play this tab's side, a move every `everyMs`, until stop(). */
+  play(everyMs = 300) {
+    soakBrowser.stop();
+    stats.lastMoveAt = Date.now();
+    const tick = () => {
+      step();
+      timer = setTimeout(tick, everyMs);
     };
-    timer = setTimeout(() => void tick(), everyMs);
+    timer = setTimeout(tick, everyMs);
   },
   stop() {
     if (timer) clearTimeout(timer);
     timer = null;
+  },
+  leave() {
+    soakBrowser.stop();
+    micOff();
+    useStore.getState().session?.leave();
+    useStore.setState({ session: null });
   },
   stats() {
     const { record, game } = useStore.getState();
@@ -122,6 +152,11 @@ export const soakBrowser = {
       errorCount: stats.errors.length,
       events: record.events.length,
       round: game.turn.round,
+      over: game.turn.round > 0 && battleOver(game),
+      quietMs: Date.now() - stats.lastMoveAt,
+      voice: (({ mic, live, error, peers }) => ({ mic, live, error, peers: Object.keys(peers).length }))(
+        useVoice.getState(),
+      ),
     };
   },
 };
