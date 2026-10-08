@@ -397,7 +397,7 @@ export interface UnitMove {
   turn: number;
   delta: Vec2;
   /** What kind of block move this was, for the log and the move tally. */
-  how?: "forward" | "drag" | "wheel" | "charge" | "door" | "flee" | "pursue";
+  how?: "forward" | "back" | "sideways" | "drag" | "wheel" | "charge" | "door" | "flee" | "pursue";
   /** Inches of movement it used (a wheel: the outside corner's path). */
   distance?: number;
 }

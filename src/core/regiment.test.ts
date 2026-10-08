@@ -9,6 +9,7 @@ import {
   createInitialState,
   formBlock,
   forwardMove,
+  sidewaysMove,
   rankCount,
   unitStrength,
   wheelMove,
@@ -62,6 +63,25 @@ describe("regiment blocks", () => {
     expect(f.depth).toBeCloseTo(2);
     expect(f.ranks).toBe(2);
     expect(blockSlots(s, s.units.u!)).toHaveLength(10);
+  });
+
+  it("steps back and sideways, keeping its facing", () => {
+    let s = block(10, 5);
+    const f = blockFrame(s, s.units.u!)!;
+    const back = forwardMove(f, "u", -2);
+    expect(back.how).toBe("back");
+    expect(back.distance).toBe(2);
+    s = applyEvent(s, back);
+    expect(blockFrame(s, s.units.u!)!.front.y).toBeCloseTo(-2);
+    const before = blockFrame(s, s.units.u!)!;
+    const right = blockCorners(before).frontRight;
+    s = applyEvent(s, sidewaysMove(before, "u", 1));
+    const after = blockFrame(s, s.units.u!)!;
+    // Towards its right: the front right corner moves away from the centre line.
+    const moved = blockCorners(after).frontRight;
+    expect(Math.hypot(moved.x - right.x, moved.y - right.y)).toBeCloseTo(1);
+    expect(Math.abs(moved.x)).toBeGreaterThan(Math.abs(right.x));
+    expect(after.facing).toBeCloseTo(before.facing);
   });
 
   it("moves forward along its facing and wheels around a front corner", () => {

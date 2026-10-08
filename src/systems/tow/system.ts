@@ -253,5 +253,9 @@ export const oldWorld: GameSystem = {
     /** Share of Movement redressing the ranks costs, changing the frontage by up to `redressMax` models. */
     redressCost: 0.5,
     redressMax: 5,
+    /** Moving backwards or sideways is at half rate: each inch costs two. */
+    slowMoveCost: 2,
+    /** One manoeuvre (turn, back, sideways, redress or reform) per move; wheels don't count. */
+    manoeuvresPerMove: 1,
   },
 };

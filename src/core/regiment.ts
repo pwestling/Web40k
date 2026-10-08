@@ -213,7 +213,30 @@ export function formBlock(
 /** A straight move along the block's facing (negative backs up). */
 export function forwardMove(frame: BlockFrame, unitId: UnitId, distance: number): UnitMove {
   const d = rotate({ x: 0, y: distance }, frame.facing);
-  return { type: "unit/move", id: unitId, pivot: frame.front, turn: 0, delta: d, how: "forward", distance };
+  const how = distance < 0 ? "back" : "forward";
+  return {
+    type: "unit/move",
+    id: unitId,
+    pivot: frame.front,
+    turn: 0,
+    delta: d,
+    how,
+    distance: Math.abs(distance),
+  };
+}
+
+/** A sideways step, keeping the facing (positive is towards the block's right). */
+export function sidewaysMove(frame: BlockFrame, unitId: UnitId, distance: number): UnitMove {
+  const d = rotate({ x: -distance, y: 0 }, frame.facing);
+  return {
+    type: "unit/move",
+    id: unitId,
+    pivot: frame.front,
+    turn: 0,
+    delta: d,
+    how: "sideways",
+    distance: Math.abs(distance),
+  };
 }
 
 /**

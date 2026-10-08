@@ -13,26 +13,60 @@ import {
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { opposed } from "../core/teams";
+import { hasRule } from "../systems/tow/specialRules";
 
 const SPECIAL = new Set(["charge", "door", "flee", "pursue"]);
 
 /**
  * Movement a block has used this phase: the sum of its moves, wheels, turns
  * and reforms since the phase began, read from the log (undone ones skipped).
+ * Backwards and sideways steps cost `slow` times their distance (The Old
+ * World: half rate).
  */
-export function blockMoveUsed(record: GameRecord, unitId: string, uptoSeq = Infinity): number {
+export function blockMoveUsed(record: GameRecord, unitId: string, uptoSeq = Infinity, slow = 1): number {
+  return blockMoves(record, unitId, uptoSeq, slow).used;
+}
+
+export type Manoeuvre = "back" | "sideways" | "turn" | "redress" | "reform";
+
+/**
+ * The movement used this phase and the manoeuvres made, in order. Repeated
+ * steps backwards or sideways in a row are one manoeuvre; wheels and moves
+ * ahead are not manoeuvres, and a free (0") redress doesn't count.
+ */
+export function blockMoves(
+  record: GameRecord,
+  unitId: string,
+  uptoSeq = Infinity,
+  slow = 1,
+): { used: number; manoeuvres: Manoeuvre[] } {
   const undone = undoneSeqs(record, uptoSeq);
   let used = 0;
+  let manoeuvres: Manoeuvre[] = [];
   for (const { seq, event } of record.events) {
     if (seq > uptoSeq) break;
     if (undone.has(seq) || event.type === "undo") continue;
-    if (event.type.startsWith("turn/")) used = 0;
-    else if (event.type === "unit/form" && event.id === unitId) used += Math.abs(event.distance ?? 0);
+    if (event.type.startsWith("turn/")) {
+      used = 0;
+      manoeuvres = [];
+    } else if (event.type === "unit/form" && event.id === unitId) {
+      const d = Math.abs(event.distance ?? 0);
+      used += d;
+      if (d > 0 && (event.how === "turn" || event.how === "redress" || event.how === "reform"))
+        manoeuvres.push(event.how);
+    }
     // Charges, flight and pursuit are their own moves, not part of the Movement used.
-    else if (event.type === "unit/move" && event.id === unitId && !SPECIAL.has(event.how ?? ""))
-      used += Math.abs(event.distance ?? 0);
+    else if (event.type === "unit/move" && event.id === unitId && !SPECIAL.has(event.how ?? "")) {
+      const d = Math.abs(event.distance ?? 0);
+      // Old saves logged a step back as a negative "forward" move.
+      const how = event.how === "forward" && (event.distance ?? 0) < 0 ? "back" : event.how;
+      if (how === "back" || how === "sideways") {
+        used += d * slow;
+        if (manoeuvres.at(-1) !== how) manoeuvres.push(how);
+      } else used += d;
+    }
   }
-  return used;
+  return { used, manoeuvres };
 }
 
 const constant = (game: GameState, id: string, fallback: number) =>
@@ -45,6 +79,12 @@ export interface MoveBudget {
   /** Nearest enemy that isn't fleeing, for the march check. */
   nearestEnemy: number;
   marchBlock: number;
+  /** Drilled (The Old World): marches near the enemy without a test, and redresses for free before moving. */
+  drilled: boolean;
+  /** What a step backwards or sideways costs per inch (2: half rate). */
+  slow: number;
+  /** Manoeuvres a move may include (The Old World: 1); 0 for no limit. */
+  manoeuvreLimit: number;
 }
 
 /** A unit's move and march, and how near the closest enemy (not fleeing) is. */
@@ -65,6 +105,9 @@ export function moveBudget(game: GameState, unit: Unit): MoveBudget {
     march: move === null ? null : move * constant(game, "marchMultiple", 2),
     nearestEnemy,
     marchBlock: constant(game, "marchBlock", 8),
+    drilled: hasRule(unit, /\bdrilled\b/i),
+    slow: constant(game, "slowMoveCost", 1),
+    manoeuvreLimit: constant(game, "manoeuvresPerMove", 0),
   };
 }
 

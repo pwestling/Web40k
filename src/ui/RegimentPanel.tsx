@@ -4,6 +4,7 @@ import {
   blockSlots,
   formBlock,
   forwardMove,
+  sidewaysMove,
   systemOf,
   wheelMove,
   type BlockOrder,
@@ -13,7 +14,7 @@ import { useCanControl, useStore } from "../store";
 import { ChargePanel } from "./ChargePanel";
 import { useGame } from "./hooks";
 import { t, tn } from "../i18n";
-import { blockMoveUsed, blockSummary, moveBudget, offTable, type MoveBudget } from "./regiment";
+import { blockMoves, blockSummary, moveBudget, offTable, type Manoeuvre, type MoveBudget } from "./regiment";
 
 type OrderId = Exclude<BlockOrder, "disrupted"> | "skirmish";
 
@@ -53,7 +54,12 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
   const summary = blockSummary(game, unit);
   const ranked = systemOf(game).unitShape.kind === "ranked";
   const as = unit.owner;
-  const used = blockMoveUsed(record, unit.id, scrub ?? Infinity);
+  const { used, manoeuvres } = blockMoves(
+    record,
+    unit.id,
+    scrub ?? Infinity,
+    systemOf(game).constants?.slowMoveCost ?? 1,
+  );
   const marching = unit.status?.marching === true;
   // Activation games (Conquest): moves come from actions (March gives its distance), and the
   // charge panel opens once the Charge action is taken.
@@ -79,6 +85,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         <MovedLine
           budget={moveBudget(game, unit)}
           used={used}
+          manoeuvres={manoeuvres}
           marching={false}
           off={offTable(game, unit)}
           round={game.turn.round}
@@ -129,6 +136,11 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
   const rearCount = alive - (summary.ranks - 1) * summary.files;
   const cost = (share: number) => (summary.move === null ? 0 : summary.move * share);
   const fighting = game.turn.round > 0;
+  // Drilled: a free redress before the block has moved.
+  const freeRedress = summary.drilled && used < 0.05 && manoeuvres.length === 0;
+  const redressDistance = freeRedress ? 0 : cost(summary.redressCost);
+  const slowTitle =
+    summary.slow > 1 ? t("Half rate: costs {distance}", { distance: fmt(ahead * summary.slow) }) : undefined;
   const redress =
     facing === 0 && frontage !== summary.files && Math.abs(frontage - summary.files) <= summary.redressMax;
 
@@ -226,6 +238,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         <MovedLine
           budget={summary}
           used={used}
+          manoeuvres={manoeuvres}
           marching={marching}
           off={offTable(game, unit)}
           round={game.turn.round}
@@ -253,7 +266,15 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               onChange={(e) => setAhead(Number(e.target.value) || 0)}
             />
             <button onClick={() => dispatch(forwardMove(frame, unit.id, ahead), as)}>{t("Forward")}</button>
-            <button onClick={() => dispatch(forwardMove(frame, unit.id, -ahead), as)}>{t("Back")}</button>
+            <button title={slowTitle} onClick={() => dispatch(forwardMove(frame, unit.id, -ahead), as)}>
+              {t("Back")}
+            </button>
+            <button title={slowTitle} onClick={() => dispatch(sidewaysMove(frame, unit.id, -ahead), as)}>
+              {t("Sideways left")}
+            </button>
+            <button title={slowTitle} onClick={() => dispatch(sidewaysMove(frame, unit.id, ahead), as)}>
+              {t("Sideways right")}
+            </button>
             {!activations && (
               <label title={t("A march is double Movement, straight ahead")}>
                 <input
@@ -334,12 +355,21 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               </label>
               {redress && (
                 <button
-                  title={t("Add or remove up to {max} models from the front rank; costs {distance}", {
-                    max: summary.redressMax,
-                    distance: fmt(cost(summary.redressCost)),
-                  })}
+                  title={
+                    freeRedress
+                      ? t(
+                          "Add or remove up to {max} models from the front rank; free before moving (Drilled)",
+                          {
+                            max: summary.redressMax,
+                          },
+                        )
+                      : t("Add or remove up to {max} models from the front rank; costs {distance}", {
+                          max: summary.redressMax,
+                          distance: fmt(redressDistance),
+                        })
+                  }
                   onClick={() => {
-                    form(frontage, 0, "redress", cost(summary.redressCost));
+                    form(frontage, 0, "redress", redressDistance);
                     setFiles(null);
                   }}
                 >
@@ -374,12 +404,14 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
 function MovedLine({
   budget,
   used,
+  manoeuvres,
   marching,
   off,
   round,
 }: {
   budget: MoveBudget;
   used: number;
+  manoeuvres: Manoeuvre[];
   marching: boolean;
   off: boolean;
   round: number;
@@ -387,9 +419,11 @@ function MovedLine({
   if (round <= 0) return off ? <p className="warn">{t("Off the table")}</p> : null;
   const allowed = marching ? budget.march : budget.move;
   const over = allowed !== null && used > allowed + 0.05;
-  const marchNear = marching && budget.nearestEnemy < budget.marchBlock;
+  const marchNear = marching && !budget.drilled && budget.nearestEnemy < budget.marchBlock;
+  const tooMany = budget.manoeuvreLimit > 0 && manoeuvres.length > budget.manoeuvreLimit;
+  const marchManoeuvre = marching && manoeuvres.length > 0;
   return (
-    <p className={over || marchNear || off ? "warn" : "muted"}>
+    <p className={over || marchNear || off || tooMany || marchManoeuvre ? "warn" : "muted"}>
       {allowed === null
         ? t("Moved {used}", { used: fmt(used) })
         : marching
@@ -397,6 +431,21 @@ function MovedLine({
           : t("Moved {used} of {allowed}", { used: fmt(used), allowed: fmt(allowed) })}
       {over ? <> · {t("over its move")}</> : ""}
       {off ? <> · {t("off the table")}</> : ""}
+      {tooMany ? (
+        <>
+          {" "}
+          ·{" "}
+          {tn(
+            manoeuvres.length,
+            "{n} manoeuvre this move ({list}): only one is allowed",
+            "{n} manoeuvres this move ({list}): only one is allowed",
+            { list: manoeuvres.map(manoeuvreName).join(", ") },
+          )}
+        </>
+      ) : (
+        ""
+      )}
+      {marchManoeuvre ? <> · {t("a marching block may only move ahead and wheel")}</> : ""}
       {marchNear ? (
         <>
           {" "}
@@ -411,6 +460,21 @@ function MovedLine({
       )}
     </p>
   );
+}
+
+function manoeuvreName(m: Manoeuvre): string {
+  switch (m) {
+    case "back":
+      return t("back");
+    case "sideways":
+      return t("sideways");
+    case "turn":
+      return t("turn");
+    case "redress":
+      return t("redress");
+    case "reform":
+      return t("reform");
+  }
 }
 
 function centreOf(game: ReturnType<typeof useGame>, unit: Unit) {

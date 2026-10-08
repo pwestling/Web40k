@@ -117,7 +117,12 @@ function ldLabel(state: GameState, u: Unit): string {
   return who && who !== u.name ? `Ld ${ld}, ${who}` : `Ld ${ld}`;
 }
 
+/** Disrupted (a status now; once a formation order): no rank bonus, no combat order. */
+const disrupted = (u: Unit) =>
+  u.status?.disrupted === true || (u.formation.kind === "ranked" && u.formation.order === "disrupted");
+
 function rankBonus(state: GameState, u: Unit): number {
+  if (disrupted(u)) return 0;
   const ranks = rankCount(state, u, towRanks(state, u).width);
   return Math.min(Math.max(0, ranks - 1), towRanks(state, u).maxBonus);
 }
@@ -127,7 +132,7 @@ function rankBonus(state: GameState, u: Unit): number {
  * Strength 10 or more it adds +1 to the combat result (rules index).
  */
 function combatOrder(state: GameState, u: Unit): boolean {
-  if (u.formation.kind !== "ranked") return false;
+  if (u.formation.kind !== "ranked" || disrupted(u)) return false;
   const order = u.formation.order ?? "close";
   if (order !== "close") return false;
   const files = u.formation.files;

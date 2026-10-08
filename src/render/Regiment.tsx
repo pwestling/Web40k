@@ -184,7 +184,7 @@ export function BlockMoveLabel({
   const d = { x: at.x - grab.x, y: at.y - grab.y };
   const local = rotate(d, -frame.facing);
   const dist = Math.hypot(d.x, d.y);
-  const used = blockMoveUsed(record, unit.id) + dist;
+  const used = blockMoveUsed(record, unit.id, Infinity, summary.slow) + dist;
   const marching = unit.status?.marching === true;
   const allowed = marching ? summary.march : summary.move;
   const sideways = Math.abs(local.x) > 0.25;

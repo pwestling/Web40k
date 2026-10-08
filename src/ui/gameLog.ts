@@ -243,7 +243,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       (event.type === "unit/move" || event.type === "unit/form") &&
       event.id === moveLine.unitId &&
       event.distance !== undefined &&
-      !(event.type === "unit/move" && event.how && !["forward", "wheel"].includes(event.how))
+      !(
+        event.type === "unit/move" &&
+        event.how &&
+        !["forward", "back", "sideways", "wheel"].includes(event.how)
+      )
     ) {
       moveLine.inches += Math.abs(event.distance);
       // The verb is the game's own ("marches"), so the line keeps its order.
@@ -736,6 +740,12 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       if (event.how === "charge") return t("{unit} charged {distance}", p);
       if (event.how === "flee") return t("{unit} fled {distance}", p);
       if (event.how === "pursue") return t("{unit} pursued {distance}", p);
+      if (event.how === "back")
+        return t("{name} moved {unit} back {distance}", {
+          ...p,
+          distance: distanceText(game, Math.abs(event.distance ?? 0)),
+        });
+      if (event.how === "sideways") return t("{name} moved {unit} sideways {distance}", p);
       if (event.how === "forward") {
         const q = { ...p, distance: distanceText(game, Math.abs(event.distance ?? 0)) };
         return (event.distance ?? 0) < 0
