@@ -1,13 +1,13 @@
 // Long-session memory and leak check: the soak bot plays game after game in
-// the real app (dev build, SwiftShader), as two tabs in an online game over a
+// the real app (a development build, SwiftShader), as two tabs in an online game over a
 // local relay: WebRTC, figure sharing and voice (fake mic), painted figures,
 // the dice tray, sound and ambience, and a rules package in the sandbox.
 // Every few minutes it forces a GC in each tab and samples the JS heap, DOM
 // nodes, listeners, frames and what the renderer holds. Results:
 // /mnt/project-files/perf/results.md.
 //
-//   pnpm soak:browser -- --minutes 180 --sample 5 --out soak.jsonl
-import { spawn } from "node:child_process";
+//   pnpm soak:browser -- --minutes 180 --sample 5 --out soak.jsonl [--dev-server]
+import { execFileSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright-core";
 
@@ -32,10 +32,23 @@ const executablePath =
   process.env.CHROMIUM ??
   ["/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "/opt/pw-browsers/chromium"].find(existsSync);
 
-const server = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], {
-  stdio: "pipe",
-  detached: true,
-});
+// A development-mode build (the soak hooks are in, React Refresh and HMR are
+// not): the dev server's React Refresh keeps every unmounted React root (each
+// unit label is one), which reads as a leak the real app doesn't have.
+// --dev-server soaks the dev server instead.
+const BUILD = "node_modules/.soak-build";
+if (!process.argv.includes("--dev-server"))
+  execFileSync("npx", ["vite", "build", "--outDir", BUILD, "--emptyOutDir", "--logLevel", "error"], {
+    stdio: "inherit",
+    env: { ...process.env, NODE_ENV: "development" },
+  });
+const server = spawn(
+  "npx",
+  process.argv.includes("--dev-server")
+    ? ["vite", "--port", String(PORT), "--strictPort"]
+    : ["vite", "preview", "--outDir", BUILD, "--port", String(PORT), "--strictPort"],
+  { stdio: "pipe", detached: true },
+);
 const relay = spawn("node", ["server/relay.mjs"], {
   stdio: "pipe",
   detached: true,
