@@ -1,5 +1,0 @@
-import{n as e}from"./dist-BQvHYO-j.js";function t(t){let r=e.parser.parse(t),i=-1;if(r.iterate({enter:e=>{if(i>=0)return!1;if(e.type.isError)return i=e.from,!1}}),i<0)return null;if(t.slice(i).trim()===``){let e=n(t);e>=0&&(i=e)}let a=t.slice(0,i);return{line:a.split(`
-`).length,column:i-a.lastIndexOf(`
-`)}}function n(e){let t=[],n={")":`(`,"]":`[`,"}":`{`},r=[],i=``;for(let a=0;a<e.length;a++){let o=e[a];if(o===`/`&&e[a+1]===`/`){if(a=e.indexOf(`
-`,a),a<0)break;continue}if(o===`/`&&e[a+1]===`*`){if(a=e.indexOf(`*/`,a+2)+1,a<=0)break;continue}if(o===`"`||o===`'`||o===`/`&&/^$|[(,=:[!&|?{};+\-*%<>~^]$/.test(i)){for(a++;a<e.length&&e[a]!==o&&e[a]!==`
-`;a++)e[a]===`\\`&&a++;i=o;continue}if(o==="`"||o===`}`&&r.length&&r.at(-1)===t.length){for(o===`}`&&(r.pop(),t.pop()),a++;a<e.length&&e[a]!=="`";a++)if(e[a]===`\\`)a++;else if(e[a]===`$`&&e[a+1]===`{`){t.push(a+1),r.push(t.length),a++;break}i="`";continue}if(o===`(`||o===`[`||o===`{`)t.push(a);else if(o in n){let r=t.at(-1);if(r===void 0||e[r]!==n[o])return r??a;t.pop()}/\s/.test(o)||(i=o)}return t.at(-1)??-1}export{t as syntaxError};
