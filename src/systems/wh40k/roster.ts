@@ -284,6 +284,12 @@ export function parseRosterText(input: string, extract: RosterExtractor = extrac
   const units = extract(roster, warnings);
   if (units.length === 0) warnings.push("No units found in roster.");
   const army = extract === extractUnits ? extractArmy(roster) : undefined;
+  // Units list the detachment's rule too (BSData links it to each): it runs once, army-wide.
+  const detachmentRules = new Set(army?.rules.map((a) => a.name.toLowerCase()));
+  for (const u of units)
+    u.sheet.abilities = u.sheet.abilities.map((a) =>
+      detachmentRules.has(a.name.toLowerCase()) && !a.group ? { ...a, group: DETACHMENT_RULE } : a,
+    );
   return { name: roster.name, points: roster.pts, units, ...(army ? { army } : {}), warnings };
 }
 
@@ -612,6 +618,8 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
 
 /** The heading enhancements are listed under on a unit card. */
 export const ENHANCEMENTS = "Enhancements";
+/** The heading a detachment's rules are listed under, on the army and on unit cards. */
+export const DETACHMENT_RULE = "Detachment rule";
 const ENHANCEMENT_RE = /enhancement/i;
 const STRATAGEM_RE = /stratagem/i;
 const PHASE_RE = /\b(command|movement|shooting|charge|fight)\s+phase/gi;
@@ -624,7 +632,13 @@ function isEnhancementNode(n: RNode): boolean {
   return (
     ENHANCEMENT_RE.test(n.group) ||
     n.categories.some((c) => ENHANCEMENT_RE.test(c)) ||
-    n.profiles.some((p) => ENHANCEMENT_RE.test(p.typeName))
+    n.profiles.some((p) => ENHANCEMENT_RE.test(p.typeName)) ||
+    // BattleScribe saves only the group's id: an upgrade bought with points that is all abilities (wargear is free).
+    (n.type === "upgrade" &&
+      n.pts > 0 &&
+      n.profiles.length > 0 &&
+      n.profiles.every((p) => /abilit/i.test(p.typeName)) &&
+      n.selections.length === 0)
   );
 }
 
@@ -733,6 +747,22 @@ function ruleStratagem(r: Ability, taken: Set<string>): ArmyStratagem {
   return makeStratagem(r.name, stratagemParts(r.text), r.text, taken);
 }
 
+/**
+ * A stratagem the player pastes from their own book (rosters rarely carry
+ * them): its name on the first line, then its When, Target and Effect.
+ */
+export function parseStratagemText(input: string, taken: string[] = []): ArmyStratagem | null {
+  const text = input.trim();
+  const parts = stratagemParts(text);
+  if (!parts.effect) return null;
+  const first = text.split(/\n/)[0]!.trim();
+  const name = /^(when|target|effect)\s*:/i.test(first)
+    ? "Stratagem"
+    : first.replace(/^stratagem\s*[:\-–]\s*/i, "");
+  const body = text.slice(/^(when|target|effect)\s*:/i.test(first) ? 0 : first.length).trim();
+  return makeStratagem(name, parts, body, new Set(taken));
+}
+
 const isDetachmentNode = (n: RNode) =>
   /\bdetachment\b/i.test(n.name) && n.type !== "unit" && n.type !== "model";
 
@@ -763,7 +793,7 @@ function extractArmy(roster: RRoster): Army | undefined {
   const addRule = (a: Ability) => {
     if (!a.name || seenRule.has(a.name.toLowerCase())) return;
     seenRule.add(a.name.toLowerCase());
-    rules.push({ ...a, group: "Detachment rule" });
+    rules.push({ ...a, group: DETACHMENT_RULE });
   };
   const scan = (n: RNode, inDetachment: boolean) => {
     const here = inDetachment || isDetachmentNode(n);

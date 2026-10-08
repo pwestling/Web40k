@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { fortyK } from "../../core/content/examples/forty-k";
 import { automateArmy, recognizeArmyRule, recognizeStratagem } from "./recognize";
-import { ENHANCEMENTS, loadRosterParsers, parseRosterText, stratagemPhases, stratagemSide } from "./roster";
+import {
+  ENHANCEMENTS,
+  loadRosterParsers,
+  parseRosterText,
+  parseStratagemText,
+  stratagemPhases,
+  stratagemSide,
+} from "./roster";
 
 // The XML reader loads on demand (front door bundle budget).
 await loadRosterParsers();
@@ -248,5 +255,26 @@ describe("faction rules the recognizer reads (#49)", () => {
     const army = automateArmy(parseRosterText(XML).army!, fortyK);
     expect(army.rules.map((r) => !!r.auto)).toEqual([false, true]);
     expect(army.stratagems.map((s) => !!s.auto)).toEqual([true, true, false]);
+  });
+});
+
+describe("a pasted stratagem (#51)", () => {
+  it("reads its name, cost, side, phases and effect", () => {
+    const s = parseStratagemText(
+      "Glowing Embers (2CP)\nWHEN: Your Shooting phase.\nTARGET: One unit from your army.\nEFFECT: Until the end of the phase, each time a model in your unit makes an attack, add 1 to the Hit roll.",
+      ["glowing-embers"],
+    );
+    expect(s && [s.id, s.name, s.cp, s.side, s.phases, s.targetsUnit]).toEqual([
+      "glowing-embers-2",
+      "Glowing Embers",
+      2,
+      "active",
+      ["shooting"],
+      true,
+    ]);
+    expect(recognizeStratagem(s!.effect!, fortyK)?.parts).toEqual([
+      { kind: "attack", side: "making", roll: "hit", by: 1 },
+    ]);
+    expect(parseStratagemText("Just a name")).toBeNull();
   });
 });

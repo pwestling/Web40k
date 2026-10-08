@@ -7,3 +7,6 @@ dist
 # Self-host settings (docker-compose); see .env.example
 .env
 mailbox-data/
+
+# Real rosters built from public BSData catalogues (scripts/bsdata.mjs); never committed
+.bsdata/

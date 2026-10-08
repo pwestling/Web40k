@@ -196,17 +196,22 @@ export interface AbilityReminder {
 
 export const appliedKey = (ability: string) => `applied.${ability}`;
 
-/** Abilities that only describe a weapon keyword the unit carries (BSData lists those as abilities). */
-export function describesWeaponKeyword(system: GameSystem, unit: Unit, ability: Ability): boolean {
+/** A weapon keyword's glossary entry ("Lethal Hits"), listed as a rule by BSData. */
+export function isWeaponRule(system: GameSystem, ability: Ability): boolean {
   const name = ability.name.trim().toLowerCase();
-  for (const r of system.rules)
-    if (
+  return system.rules.some(
+    (r) =>
       r.match &&
       r.appliesTo?.includes("weapon") &&
       !r.appliesTo.includes("unit") &&
-      pattern(r.match).test(name)
-    )
-      return true;
+      pattern(r.match).test(name),
+  );
+}
+
+/** Abilities that only describe a weapon keyword the unit carries (BSData lists those as abilities). */
+export function describesWeaponKeyword(system: GameSystem, unit: Unit, ability: Ability): boolean {
+  const name = ability.name.trim().toLowerCase();
+  if (isWeaponRule(system, ability)) return true;
   const stem = name.replace(/[-\s]*(x|\d+\+?|d\d+)?$/i, "");
   return Object.values(unit.sheet?.weapons ?? {}).some((w) =>
     w.keywords.some((k) => k.toLowerCase().startsWith(stem)),

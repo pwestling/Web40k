@@ -1,13 +1,18 @@
 import { useMemo, useState } from "react";
 import type { Ability, AbilityAuto, Unit } from "../core";
-import { describesWeaponKeyword, isAutomated } from "../core/content/player";
+import { describesWeaponKeyword, isAutomated, isWeaponRule } from "../core/content/player";
 import type { GameSystem } from "../core/content/schema";
 import { systemOf } from "../core/content/turn";
 import { describeAuto } from "./autoText";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { systemModule } from "../systems";
-import { ENHANCEMENTS, type ImportedRoster } from "../systems/wh40k/roster";
+import {
+  DETACHMENT_RULE,
+  ENHANCEMENTS,
+  parseStratagemText,
+  type ImportedRoster,
+} from "../systems/wh40k/roster";
 import { recognizeArmyRule, recognizeStratagem } from "../systems/wh40k/recognize";
 
 /**
@@ -37,8 +42,9 @@ function readRoster(
     const seen = new Set<string>();
     const asUnit = { sheet: u.sheet } as Unit;
     for (const a of u.sheet.abilities) {
-      // Enhancements count with the detachment (ArmyAutomation).
-      if (seen.has(a.name) || a.group === ENHANCEMENTS || describesWeaponKeyword(system, asUnit, a)) continue;
+      // Enhancements and the detachment's rule count with the detachment (ArmyAutomation).
+      if (seen.has(a.name) || a.group === ENHANCEMENTS || a.group === DETACHMENT_RULE) continue;
+      if (describesWeaponKeyword(system, asUnit, a)) continue;
       seen.add(a.name);
       total++;
       if (a.auto) proposals.push({ unit, ability: a, auto: a.auto });
@@ -73,8 +79,54 @@ export function ImportAutomation({
   return (
     <>
       {roster.army && <ArmyAutomation roster={roster} setRoster={setRoster} system={system} />}
+      <AddStratagem roster={roster} setRoster={setRoster} />
       {read.total > 0 && <Coverage read={read} roster={roster} setRoster={setRoster} system={system} />}
     </>
+  );
+}
+
+/** Rosters rarely list stratagems: the player pastes their detachment's own, one at a time (#51). */
+function AddStratagem({
+  roster,
+  setRoster,
+}: {
+  roster: ImportedRoster;
+  setRoster: (r: ImportedRoster) => void;
+}) {
+  const [text, setText] = useState("");
+  const [why, setWhy] = useState("");
+  if (!roster.army && !roster.units.length) return null;
+  const add = () => {
+    const army = roster.army ?? { rules: [], stratagems: [] };
+    const s = parseStratagemText(
+      text,
+      army.stratagems.map((x) => x.id),
+    );
+    if (!s) return setWhy(t("Paste its name, then its When, Target and Effect."));
+    setRoster({ ...roster, army: { ...army, stratagems: [...army.stratagems, s] } });
+    setText("");
+    setWhy("");
+  };
+  return (
+    <details className="auto-abilities">
+      <summary>{t("Add a stratagem")}</summary>
+      <p className="muted small">
+        {t(
+          "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's.",
+        )}
+      </p>
+      <textarea
+        rows={5}
+        value={text}
+        aria-label={t("Stratagem text")}
+        placeholder={t("Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …")}
+        onChange={(e) => setText(e.target.value)}
+      />
+      {why && <p className="small warn">{why}</p>}
+      <button className="small" disabled={!text.trim()} onClick={add}>
+        {t("Add")}
+      </button>
+    </details>
   );
 }
 
@@ -95,6 +147,8 @@ function armyItems(roster: ImportedRoster, system: GameSystem): ArmyItem[] {
   const army = roster.army!;
   const items: ArmyItem[] = [];
   army.rules.forEach((rule, i) => {
+    // Weapon keywords the detachment's rule mentions come along as rules; they aren't its own.
+    if (isWeaponRule(system, rule)) return;
     items.push({
       key: `rule/${i}`,
       label: rule.name,

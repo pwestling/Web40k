@@ -102,6 +102,24 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
         old: playerName(before.players[event.player]) ?? t("A player"),
         name: event.name,
       });
+    case "player/army": {
+      const army = event.army;
+      if (!army) return t("{name} cleared their army rules", { name: who });
+      const rules = army.rules.length + army.stratagems.length;
+      return army.detachment
+        ? tn(rules, "{name} brings {detachment} ({n} rule)", "{name} brings {detachment} ({n} rules)", {
+            name: who,
+            detachment: army.detachment,
+          })
+        : tn(
+            rules,
+            "{name} brings their army's rules ({n} rule)",
+            "{name} brings their army's rules ({n} rules)",
+            {
+              name: who,
+            },
+          );
+    }
     case "player/color":
       // Before the battle it's setting up (an army brings its colour, UX 335), not news.
       if (game.turn.round === 0) return "";
