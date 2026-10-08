@@ -4,11 +4,13 @@ import {
   lastSeq,
   rareOf,
   rollsIn,
+  type DiceSet,
   type GameState,
   type RareOutcome,
   type TrayRoll,
 } from "../core";
 import { useStore } from "../store";
+import { diceLook } from "./diceSets";
 import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
 import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
@@ -86,11 +88,15 @@ export function DiceTray() {
     if (action && called.current.has(action)) rare = null;
     else if (action) called.current.add(action);
     for (const { roll, seq } of staged) {
-      const color = (roll.by && shown.players[roll.by]?.color) || (roll.defender ? "#d9584e" : "#7fb0df");
+      // Each roller's own dice (PX-5b); saves come in the defender's.
+      const look = diceLook(
+        roll.by ? shown.players[roll.by] : undefined,
+        roll.defender ? "#d9584e" : "#7fb0df",
+      );
       stage.current?.play(
         roll,
         seq,
-        color,
+        look,
         stakesOf(roll, p.state, shown),
         rare?.rollId === roll.id ? rare : null,
         scrub === null,
@@ -99,6 +105,30 @@ export function DiceTray() {
   }, [pos, shown, record, scrub]);
 
   return <div ref={ref} className="dice-tray" aria-hidden="true" />;
+}
+
+/** One die's DOM in a set's colours and finish (PX-5b); a marbled die gets its own swirl. */
+export function makeDie(look: DiceSet, size: number): HTMLDivElement {
+  const el = div(`die finish-${look.finish}`);
+  el.style.setProperty("--c", look.body);
+  el.style.setProperty("--p", look.pip);
+  el.style.setProperty("--s", `${size}px`);
+  if (look.finish === "marbled") el.style.setProperty("--a", `${Math.floor(Math.random() * 360)}deg`);
+  el.innerHTML = `<div class="shadow"></div><div class="body">${'<i class="pip"></i>'.repeat(9)}</div>`;
+  return el;
+}
+
+/** Show a value on a die: pips for a d6, the number for anything else. */
+export function showFace(el: HTMLDivElement, v: number, sides: number): void {
+  const pips = PIPS[v];
+  const body = el.lastElementChild as HTMLDivElement;
+  if (!pips || sides !== 6) {
+    body.dataset.n = String(v);
+    body.classList.add("numeric");
+    return;
+  }
+  body.classList.remove("numeric");
+  el.querySelectorAll(".pip").forEach((p, i) => p.classList.toggle("on", pips.includes(i)));
 }
 
 const PIPS: Record<number, number[]> = {
@@ -171,7 +201,7 @@ class Stage {
   play(
     roll: TrayRoll,
     seq: number,
-    color: string,
+    look: DiceSet,
     stakes: Stakes | null,
     rare: RareOutcome | null,
     live: boolean,
@@ -194,7 +224,7 @@ class Stage {
         else if (next > seq) this.onSettled(next);
       };
       try {
-        await this.roll(roll, color, stakes, fast, settle);
+        await this.roll(roll, look, stakes, fast, settle);
         if (rare) await this.moment(rare, live);
       } catch {
         // A roll that can't be staged is still in the panel and the log.
@@ -228,7 +258,7 @@ class Stage {
 
   private async roll(
     roll: TrayRoll,
-    color: string,
+    look: DiceSet,
     stakes: Stakes | null,
     fast: boolean,
     settle: () => void,
@@ -246,12 +276,12 @@ class Stage {
     this.chain = roll.chain;
 
     if (roll.dice.length > MAX_DICE) {
-      this.counts(roll, color);
+      this.counts(roll, look.body);
       settle();
       this.lingerThenHide();
       return;
     }
-    const ds = await this.throwDice(roll, color, fast, !!stakes);
+    const ds = await this.throwDice(roll, look, fast, !!stakes);
     const judged = roll.dice.some((d) => d.ok !== undefined);
     if (roll.sum || !judged) {
       const total = roll.dice.reduce((a, d) => a + d.value, 0);
@@ -336,30 +366,18 @@ class Stage {
     return Math.max(14, Math.min(44, Math.sqrt((W * H * 0.22) / Math.max(n, 2))));
   }
 
-  private makeDie(color: string, size: number): HTMLDivElement {
-    const el = div("die");
-    el.style.setProperty("--c", color);
-    el.style.setProperty("--s", `${size}px`);
-    el.innerHTML = `<div class="shadow"></div><div class="body">${'<i class="pip"></i>'.repeat(9)}</div>`;
+  private makeDie(look: DiceSet, size: number): HTMLDivElement {
+    const el = makeDie(look, size);
     this.felt.appendChild(el);
     return el;
   }
 
   private face(el: HTMLDivElement, v: number, sides: number) {
-    const pips = PIPS[v];
-    const body = el.lastElementChild as HTMLDivElement;
-    if (!pips || sides !== 6) {
-      // Not a d6 face: the number itself.
-      body.dataset.n = String(v);
-      body.classList.add("numeric");
-      return;
-    }
-    body.classList.remove("numeric");
-    el.querySelectorAll(".pip").forEach((p, i) => p.classList.toggle("on", pips.includes(i)));
+    showFace(el, v, sides);
   }
 
   /** The tumble: eased path, decaying bounces that click, spin, faces flickering then settling. */
-  private throwDice(roll: TrayRoll, color: string, fast: boolean, slowLast: boolean): Promise<Die[]> {
+  private throwDice(roll: TrayRoll, look: DiceSet, fast: boolean, slowLast: boolean): Promise<Die[]> {
     return new Promise((resolve) => {
       const W = this.felt.clientWidth;
       const H = this.felt.clientHeight;
@@ -386,7 +404,7 @@ class Stage {
       spots.sort(() => Math.random() - 0.5);
       const base = fast ? 420 : 900;
       const ds = roll.dice.map((d, i) => {
-        const el = this.makeDie(color, size);
+        const el = this.makeDie(look, size);
         const last = slowLast && i === n - 1;
         return {
           el,

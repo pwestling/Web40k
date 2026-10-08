@@ -5,6 +5,7 @@ import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
 import { useStore } from "../store";
+import { DicePicker } from "./DicePicker";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
 const BASES: { label: string; base: BaseShape }[] = [
@@ -142,6 +143,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
           </button>
         </div>
       )}
+      {owner && <DicePicker player={owner} />}
       {roster && (
         <div className="modal-backdrop">
           <div className="panel modal">

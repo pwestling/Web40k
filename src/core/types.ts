@@ -33,6 +33,15 @@ export interface Player {
   ready?: boolean;
   /** Playing without some of the game's rules packages (hashes), by choice: their table may disagree. */
   rulesMismatch?: string[];
+  /** The player's own dice (PX-5b); without it, dice in the player's colour. */
+  dice?: DiceSet;
+}
+
+/** How a player's dice look in the tray: body and pip colours (CSS), and a finish. */
+export interface DiceSet {
+  body: string;
+  pip: string;
+  finish: "solid" | "translucent" | "marbled" | "metallic";
 }
 
 /**

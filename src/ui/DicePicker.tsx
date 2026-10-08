@@ -1,0 +1,120 @@
+import { useRef, useState } from "react";
+import type { DiceSet, PlayerId } from "../core";
+import { useStore } from "../store";
+import { diceLook, FINISHES, PRESETS } from "./diceSets";
+import { makeDie, showFace } from "./DiceTray";
+import { click, rattle } from "./sound";
+
+const CUSTOM = "custom";
+const COLOUR = "colour";
+
+/**
+ * Pick your dice (PX-5b), beside the army: a preset, or your own body and pip
+ * colours and a finish. Each pick rolls three of them, so you feel the choice.
+ */
+export function DicePicker({ player }: { player: PlayerId }) {
+  const p = useStore((s) => s.game.players[player]);
+  const dispatch = useStore((s) => s.dispatch);
+  const [custom, setCustom] = useState(false);
+  const tray = useRef<HTMLDivElement>(null);
+  // Dragging a colour picker sends a stream of colours: settle on one before it goes in the log.
+  const [draft, setDraft] = useState<DiceSet | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  if (!p) return null;
+  const preset = p.dice ? PRESETS.findIndex((x) => sameSet(x.dice, p.dice!)) : -1;
+  const value = custom || (p.dice && preset < 0) ? CUSTOM : p.dice ? String(preset) : COLOUR;
+
+  const pick = (dice: DiceSet | null) => {
+    dispatch({ type: "player/dice", player, dice }, player);
+    tryOut(diceLook(dice ? { color: p.color, dice } : p, p.color));
+  };
+  const tryOut = (look: DiceSet) => {
+    const box = tray.current;
+    if (!box) return;
+    box.innerHTML = "";
+    rattle();
+    [0, 1, 2].forEach((i) => {
+      const el = makeDie(look, 30);
+      el.style.left = `${14 + i * 44 + Math.random() * 10}px`;
+      el.style.animationDelay = `${i * 60}ms`;
+      el.classList.add("rolling");
+      showFace(el, 1 + Math.floor(Math.random() * 6), 6);
+      box.append(el);
+      setTimeout(() => click(0.6, 1 + i * 0.1, 0), 520 + i * 60);
+    });
+  };
+  const set = draft ?? p.dice ?? { body: p.color, pip: "#10141a", finish: "solid" as const };
+  const pickSoon = (dice: DiceSet) => {
+    setDraft(dice);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setDraft(null);
+      pick(dice);
+    }, 400);
+  };
+
+  return (
+    <div className="dice-picker">
+      <label>
+        Dice{" "}
+        <select
+          aria-label="Dice"
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value;
+            setCustom(v === CUSTOM);
+            if (v === COLOUR) pick(null);
+            else if (v === CUSTOM) pick(set);
+            else pick(PRESETS[Number(v)]!.dice);
+          }}
+        >
+          <option value={COLOUR}>Player colour</option>
+          {PRESETS.map((x, i) => (
+            <option key={x.name} value={i}>
+              {x.name}
+            </option>
+          ))}
+          <option value={CUSTOM}>Custom…</option>
+        </select>
+      </label>
+      {value === CUSTOM && (
+        <div className="custom">
+          <label>
+            Body{" "}
+            <input
+              type="color"
+              value={set.body}
+              onChange={(e) => pickSoon({ ...set, body: e.target.value })}
+            />
+          </label>
+          <label>
+            Pips{" "}
+            <input type="color" value={set.pip} onChange={(e) => pickSoon({ ...set, pip: e.target.value })} />
+          </label>
+          <select
+            aria-label="Finish"
+            value={set.finish}
+            onChange={(e) => pick({ ...set, finish: e.target.value as DiceSet["finish"] })}
+          >
+            {FINISHES.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div
+        ref={tray}
+        className="dice-try"
+        title="Roll them again"
+        onClick={() => tryOut(diceLook(p, p.color))}
+      />
+    </div>
+  );
+}
+
+const sameSet = (a: DiceSet, b: DiceSet) =>
+  a.body.toLowerCase() === b.body.toLowerCase() &&
+  a.pip.toLowerCase() === b.pip.toLowerCase() &&
+  a.finish === b.finish;

@@ -329,6 +329,8 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       return `${game.players[event.player.id]?.name ?? event.player.name} joined`;
     case "player/claim":
       return `${nameOf(event.by)} reconnected`;
+    case "player/dice":
+      return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;
     case "player/rename":
       return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
     case "dice/roll": {

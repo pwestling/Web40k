@@ -38,6 +38,7 @@ import type {
   Vec2,
   Zone,
   Formation,
+  DiceSet,
 } from "./types";
 
 /** The table layout: terrain, objectives and deployment zones. */
@@ -80,6 +81,8 @@ export type Intent =
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   /** A player picks the name others see (invite joiners arrive as "Player N"). */
   | { type: "player/rename"; player: PlayerId; name: string }
+  /** Pick your own dice (PX-5b); null goes back to dice in your colour. */
+  | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -207,6 +210,7 @@ export type GameEvent =
   | { type: "layout/set"; layout: Layout }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "player/rename"; player: PlayerId; name: string }
+  | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   | { type: "player/resync"; player: PlayerId }
   | { type: "player/rules"; player: PlayerId; missing: string[] }
   | ({ type: "game/packages" } & GamePackages)
@@ -388,6 +392,12 @@ export function resolveIntent(
       const name = intent.name.trim().slice(0, 32);
       return state?.players[intent.player] && intent.player === from && name
         ? { type: "player/rename", player: intent.player, name }
+        : null;
+    }
+    case "player/dice": {
+      const dice = intent.dice && cleanDice(intent.dice);
+      return state?.players[intent.player] && intent.player === from && dice !== undefined
+        ? { type: "player/dice", player: intent.player, dice }
         : null;
     }
     case "player/claim":
@@ -663,4 +673,15 @@ export function resolveIntent(
 /** Roll a dice expression such as "2D6"; exported for UI previews and tests. */
 export function rollText(text: string, rng: Rng): number {
   return rollDice(parseDice(text), rng).total;
+}
+
+const COLOR = /^#[0-9a-f]{6}$/i;
+const FINISHES: DiceSet["finish"][] = ["solid", "translucent", "marbled", "metallic"];
+
+/** A dice set from a peer, if it is one: two #rrggbb colours and a known finish (null stays null). */
+function cleanDice(d: DiceSet): DiceSet | null | undefined {
+  if (!d || typeof d !== "object") return undefined;
+  if (!COLOR.test(String(d.body)) || !COLOR.test(String(d.pip)) || !FINISHES.includes(d.finish))
+    return undefined;
+  return { body: d.body, pip: d.pip, finish: d.finish };
 }
