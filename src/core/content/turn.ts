@@ -290,6 +290,8 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
       ...ACTIVATION_FLAGS,
       "allowance",
       "applied.*",
+      // Which weapons a unit has used this phase, so the attack panel can say so (dogfood).
+      "fired.*",
       ...(system.resets ?? []).filter((r) => r.at === "phase").flatMap((r) => r.flags),
     ],
   );

@@ -560,9 +560,10 @@ export function AbilityLine({ unit, ability, mine }: { unit: Unit; ability: Abil
     (!!ability.auto || (!isAutomated(system, ability) && !describesWeaponKeyword(system, unit, ability)));
   return (
     <div className="ability-line">
-      <p>
+      {/* A div: rule bullets are a list, which can't sit in a paragraph (UX 392). */}
+      <div className="rule-text">
         <strong>{ability.name}.</strong> <RulesText text={ability.text} />
-      </p>
+      </div>
       {ability.auto && (
         <p className="small auto-on">
           ⚙ {ability.auto.taught ? t("Taught:") : t("Automated:")} {describeAuto(ability.auto, system)}

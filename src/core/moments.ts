@@ -30,6 +30,8 @@ export interface Moment {
   /** Whose moment it is (the reel gives each player at least one). */
   player?: PlayerId;
   units: UnitId[];
+  /** When its story is settled, if later than `end`: a round card lists it under that round (UX 393). */
+  settled?: number;
   /** How big a moment it is, for picking the reel. */
   score: number;
 }
@@ -175,7 +177,8 @@ function momentCandidates(record: GameRecord): Moment[] {
       if (now > 0 || was === 0) continue;
       // Destroyed in this event.
       const lone = alone.get(unit.id);
-      if (lone && lone.survived > 0) out.push(lastStanding(state, unit.id, lone, round, false));
+      if (lone && lone.survived > 0)
+        out.push({ ...lastStanding(state, unit.id, lone, round, false), settled: seq });
       alone.delete(unit.id);
       if (by && credited) {
         killed[by]!.units.add(unit.id);
@@ -222,7 +225,11 @@ function momentCandidates(record: GameRecord): Moment[] {
 
   // A lone model still standing at the end.
   for (const [unit, lone] of alone)
-    if (aliveIn(state, unit) === 1) out.push(lastStanding(state, unit, lone, stats.rounds, true));
+    if (aliveIn(state, unit) === 1)
+      out.push({
+        ...lastStanding(state, unit, lone, stats.rounds, true),
+        settled: record.events.at(-1)?.seq ?? lone.seq,
+      });
   if (longest) out.push({ ...longest, score: RANK.charge + longest.score });
 
   // Rare dice, from the same rules the tray uses.

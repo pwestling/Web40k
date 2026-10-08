@@ -89,10 +89,14 @@ export function carriers(state: GameState, unit: Unit, weaponId: string): Model[
 export function mainWeapon(state: GameState, unit: Unit, kind: "ranged" | "melee"): string | undefined {
   let best: string | undefined;
   let most = 0;
-  for (const w of Object.values(unit.sheet?.weapons ?? {})) {
-    if (w.kind !== kind) continue;
-    const n = carriers(state, unit, w.id).length;
-    if (n > most) [best, most] = [w.id, n];
+  // A weapon not yet used this phase comes first, so the next shot picks up where the last left off.
+  for (const fresh of [true, false]) {
+    for (const w of Object.values(unit.sheet?.weapons ?? {})) {
+      if (w.kind !== kind || (fresh && unit.status?.[`fired.${w.id}`])) continue;
+      const n = carriers(state, unit, w.id).length;
+      if (n > most) [best, most] = [w.id, n];
+    }
+    if (best) return best;
   }
   return best;
 }

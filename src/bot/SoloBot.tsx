@@ -85,11 +85,9 @@ async function play(): Promise<void> {
   const { record, game, dispatch, scrub, session } = useStore.getState();
   const hold = useHold.getState();
   if (hold.held !== null || hold.busy) return;
-  if (!solo.level || solo.paused || solo.session !== session || scrub !== null || game.turn.round === 0)
-    return;
-  const player = sidePlayers(game, solo.seat)[0]?.id;
-  if (!player) return;
+  if (!solo.level || solo.paused || solo.session !== session || scrub !== null) return;
   // The sides by who plays them (UX 349, PX 4): "You" and "The Warden of Ash (Steady)".
+  // From the start, so the army showcase and deployment say so too, not "Player 2" (dogfood).
   for (const p of Object.values(game.players)) {
     if (p.seat === undefined) continue;
     const name =
@@ -101,6 +99,9 @@ async function play(): Promise<void> {
       return;
     }
   }
+  if (game.turn.round === 0) return;
+  const player = sidePlayers(game, solo.seat)[0]?.id;
+  if (!player) return;
   // Its own side's scores, as the mission suggests them.
   const due = pendingScores(record, game, missionOf(game)).find((p) => p.seat === solo.seat && !p.ask);
   if (due) {

@@ -230,6 +230,13 @@ export function Lobby() {
               {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
             </span>
           </button>
+          {/* On a narrow screen the board is screens down, under Play with friends: a way in up here (UX 383). */}
+          {boardOn() && (
+            <button className="find-opponent" onClick={() => setTables(true)}>
+              <strong>{t("Find an opponent")}</strong>
+              <span className="muted small">{t("Join a game someone has put up on Open tables.")}</span>
+            </button>
+          )}
           {/* Our own game (#42): original, free to share, and nothing to import. */}
           <div className="demo ours">
             {/* i18n-ignore */}

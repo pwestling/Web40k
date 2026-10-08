@@ -1438,7 +1438,8 @@ label.file.button input {
 .auto-list li .small {
   margin-left: 1.6rem;
 }
-.ability-line p {
+.ability-line p,
+.rule-text {
   margin: 0.3rem 0;
 }
 .import-units .missing-stats td {
@@ -2344,10 +2345,23 @@ body.broadcast .caption {
     bottom: 120px;
     width: auto;
   }
-  body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play, .talk-dock),
-  body:has(.hud:not(.collapsed), .play:not(.collapsed)) .talk-dock,
+  body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play),
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed))
+    .talk-dock
+    > :not(.talk-toasts),
   body:has(.hud:not(.collapsed)) .play {
     display: none;
+  }
+  /* With the chat hidden under a panel, what's said still shows, over everything at the top (PX). */
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed)) .talk-dock {
+    z-index: 60;
+  }
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed)) .talk-toasts {
+    position: fixed;
+    top: calc(var(--below-bar, 64px) + 6px);
+    left: 8px;
+    right: 8px;
+    z-index: 60;
   }
   .replaybar {
     left: 8px;
@@ -3505,6 +3519,10 @@ body.showcase
   flex-wrap: wrap;
   justify-content: center;
 }
+/* The Log tab is the whole screen: no desktop scroll box inside it. */
+.companion-main > .log {
+  max-height: none;
+}
 .companion button {
   min-height: 36px;
 }
@@ -4202,17 +4220,37 @@ body:has(.modal-backdrop) .replaybar {
     height: 22px;
   }
 }
+/* While a clip records (dogfood: a merge had left this rule half another one's, a full-width bar over the top bar). */
 .recording-pill {
   position: fixed;
   top: 12px;
   right: 16px;
   z-index: 60;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
-  margin-top: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 92%);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+}
+.recording-pill .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: rec-blink 1s steps(2) infinite;
+}
+@keyframes rec-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recording-pill .dot {
+    animation: none;
+  }
 }
 .lobby .how-hard button {
   width: 100%;
@@ -4537,6 +4575,19 @@ body.clip-narrow .caption {
 }
 
 /* Open tables (#50): the public board of games, and posting one. */
+.lobby .find-opponent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+}
+@media (min-width: 1100px) {
+  .lobby .find-opponent {
+    display: none;
+  }
+}
 .lobby .open-tables-button {
   display: flex;
   flex-direction: column;
@@ -4783,6 +4834,7 @@ body.clip-narrow .caption {
 }
 /* "⚙ Teach it": a small outlined button that reads as tappable (UX 389). */
 button.teach-button {
+  white-space: nowrap;
   border: 1px solid #3b82f6;
   background: transparent;
   color: #93c5fd;
@@ -4823,4 +4875,10 @@ button.teach-button:hover {
   .teach-rule h2 + button {
     min-width: 44px;
   }
+}
+.teach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
 }

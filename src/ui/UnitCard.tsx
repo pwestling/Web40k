@@ -31,7 +31,7 @@ import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
-import { systemOf } from "../core/content/turn";
+import { currentSlot, systemOf } from "../core/content/turn";
 import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { AbilityLine, OncePerBattle } from "./AutoAbilities";
@@ -165,6 +165,9 @@ export function UnitCard() {
   const status = unit.status ?? {};
   const as = unit.owner;
   const allowed = moveAllowance(game, unit);
+  // "Moved 0.0" of 8" this phase" in the Shooting phase reads as "it didn't move" (dogfood): only where moving happens.
+  const slot = currentSlot(game);
+  const movingNow = !slot || slot.kind === "alternate" || /move|charge/i.test(slot.id);
   const moved = unitMoved(alive);
   const engaged = engagedWith(game, unit);
   const phase = phaseName(game);
@@ -311,7 +314,7 @@ export function UnitCard() {
       <CodeActions unit={unit} />
       {!companion && (
         <p className="muted">
-          {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
+          {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (movingNow || moved > 0.05) && (
             <span className={moved > allowed + 0.05 ? "warn" : ""}>
               {t('Moved {moved}" of {allowed}" this phase.', { moved: moved.toFixed(1), allowed })}{" "}
             </span>

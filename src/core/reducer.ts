@@ -198,7 +198,8 @@ function reduce(state: GameState, event: GameEvent): GameState {
       members.forEach(
         (m, i) => (models[m.id] = { ...m, position: moved[i]!, facing: m.facing + event.turn }),
       );
-      return { ...state, models };
+      // A keyboard move starts the unit's go too, as a drag does, so End activation shows (dogfood).
+      return state.turn.round > 0 ? startActivation({ ...state, models }, unit.id) : { ...state, models };
     }
     case "unit/form": {
       const unit = state.units[event.id];
@@ -475,7 +476,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ? cleared
         : updateUnit(cleared, attack.spec.attackerUnitId, (u) => ({
             ...u,
-            status: { ...u.status, [flag]: true },
+            status: { ...u.status, [flag]: true, [`fired.${attack.spec.weaponId}`]: true },
           }));
     }
     case "action/take":

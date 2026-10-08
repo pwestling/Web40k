@@ -426,6 +426,13 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
         return "Not for this weapon";
       if (state.procedure) return "Finish the current roll first";
       if (view.models.length === 0) return "Destroyed";
+      // Spearmen offered Shoot with nothing to shoot (dogfood): a weapon roll needs a weapon.
+      if (
+        def.procedure &&
+        !Object.keys(unit.sheet?.weapons ?? {}).length &&
+        (findProcedure(system, def.procedure).params ?? []).includes("weapon")
+      )
+        return "No weapon for this";
       if (def.reactTo) {
         if (!pending || pending.reactor || pending.seat !== seat) return "Only to answer an enemy action";
         if (acting) return "Already acting";

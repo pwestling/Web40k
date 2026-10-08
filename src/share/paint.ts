@@ -37,16 +37,18 @@ export function paintOverlays(
 ): void {
   // A tall clip (UX 367): the caption goes in the band under the table, clear of the dice on top.
   const banded = !!trayIn?.above && trayIn.height - (trayIn.below ?? trayIn.height) > trayIn.height * 0.12;
+  const tray = root.querySelector<HTMLElement>(".dice-tray.on");
   const stacked: HTMLElement[] = [];
   for (const sel of LAYERS)
     for (const el of root.querySelectorAll<HTMLElement>(sel)) {
+      // With no band of its own, a moment's banner waits for the dice to clear rather than land on them (UX 367).
+      if (tray && trayIn && !banded && sel === ".moment-card") continue;
       // A box with no words showing (a title between moments, a label whose text is hidden) would
       // show as a stray frame (UX 337); wound pips have no text.
       if (sel !== ".wounds" && !showsText(el)) continue;
       if (banded && BANDED.includes(sel)) stacked.push(el);
       else paintBox(ctx, el, frame, 1);
     }
-  const tray = root.querySelector<HTMLElement>(".dice-tray.on");
   // Dice and caption both in the band under the table: the dice take its top, the words go under them (UX 367).
   const share = !!tray && stacked.length > 0 && !!trayIn && (trayIn.above ?? 0) <= trayIn.height * 0.12;
   if (stacked.length) {

@@ -328,6 +328,13 @@ export function Reminders({
   const canControl = useCanControl();
   const [teaching, setTeaching] = useState<AbilityReminder | null>(null);
   const teachable = !!systemModule(game.system).recognizeAbility;
+  // The same rule (same owner, name and words) on several units reads once.
+  const byRule = new Map<string, AbilityReminder[]>();
+  for (const r of items) {
+    const k = `${r.owner}|${r.ability.name}|${r.ability.text}`;
+    byRule.set(k, [...(byRule.get(k) ?? []), r]);
+  }
+  const groups = [...byRule.values()];
   if (!items.length) return empty ? <p className="muted small">{empty}</p> : null;
   return (
     <ul className="reminders">
@@ -343,26 +350,39 @@ export function Reminders({
           onClose={() => setTeaching(null)}
         />
       )}
-      {items.map((r) => {
-        const unit = game.units[r.unitId];
+      {groups.map((g) => {
+        const r = g[0]!;
+        const applied = g.every((x) => x.applied);
+        const names = g.map((x) => game.units[x.unitId]?.name ?? "");
         return (
-          <li key={`${r.unitId}|${r.ability.name}`} className={r.applied ? "applied" : ""}>
+          <li key={`${r.owner}|${r.ability.name}|${r.unitId}`} className={applied ? "applied" : ""}>
             <details>
               <summary>
-                <span style={{ color: game.players[r.owner]?.color }}>{unit?.name}</span>: {r.ability.name}
-                {r.applied && " ✓"}
+                {/* An army-wide rule every unit carries is one line, not one per unit (dogfood). */}
+                <span style={{ color: game.players[r.owner]?.color }}>
+                  {names.length > 2
+                    ? tn(names.length - 1, "{unit} and {n} other unit", "{unit} and {n} other units", {
+                        unit: names[0]!,
+                      })
+                    : names.join(t(" and "))}
+                </span>
+                : {r.ability.name}
+                {applied && " ✓"}
               </summary>
+              {names.length > 2 && <p className="small muted">{names.join(", ")}</p>}
               <div className="small rules-text">
                 <RulesText text={r.ability.text} />
               </div>
             </details>
-            {live && canControl(r.owner) && !r.applied && (
+            {live && canControl(r.owner) && !applied && (
               <button
                 className="small"
                 title={t("Mark it resolved by hand; it shows in the log")}
-                onClick={() =>
-                  dispatch({ type: "ability/apply", unitId: r.unitId, ability: r.ability.name }, r.owner)
-                }
+                onClick={() => {
+                  for (const x of g)
+                    if (!x.applied)
+                      dispatch({ type: "ability/apply", unitId: x.unitId, ability: x.ability.name }, x.owner);
+                }}
               >
                 {t("Apply")}
               </button>

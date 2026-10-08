@@ -463,10 +463,10 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   const [busy, setBusy] = useState(false);
   const self = game.players[session?.selfId ?? ""];
   // Ask for the name here: a post from "Player 1" can't be told apart (UX 382).
-  const [typed, setTyped] = useState(() => {
-    const own = kind === "mail" ? mailMe : self?.name;
-    return own && !/^Player \d+$/.test(own) ? own : (myName() ?? "");
-  });
+  // Until typed in, it follows the room's, so a name given in the side panel fills this too (PX).
+  const [edited, setTyped] = useState<string | null>(null);
+  const own = kind === "mail" ? mailMe : self?.name;
+  const typed = edited ?? (own && !/^Player \d+$/.test(own) ? own : (myName() ?? ""));
   useEffect(() => {
     if (asked) useOpenTables.setState({ asked: false });
   }, [asked]);
@@ -711,6 +711,54 @@ export function MyTableKeeper() {
  * is, and a hello to send in one tap (PX). Mounted with the game screen.
  */
 export function TableArrivals() {
+  return (
+    <>
+      <HostArrival />
+      <GuestArrival />
+    </>
+  );
+}
+
+/** The guest's side of sitting down: whose table this is, their note, and the same hellos (PX). */
+function GuestArrival() {
+  const roomId = useStore((s) => s.roomId);
+  const post = useOpenTables((s) => (s.joined?.join === roomId ? s.joined : null));
+  const hostThere = useStore((s) => {
+    const host = s.net?.hostId;
+    return !!host && host !== s.session?.selfId && !!s.game.players[host] && s.game.turn.round === 0;
+  });
+  const [closed, setClosed] = useState(false);
+  useEffect(() => {
+    if (!hostThere) return;
+    const timer = setTimeout(() => setClosed(true), 45_000);
+    return () => clearTimeout(timer);
+  }, [hostThere]);
+  if (!post || !hostThere || closed) return null;
+  const hello = (text: string) => {
+    say({ kind: "chat", text });
+    setClosed(true);
+  };
+  return (
+    <div className="arrival" role="status">
+      <div className="row spread">
+        <strong>{t("You're at {name}'s table", { name: displayName(post.name) })}</strong>
+        <button className="quiet small" title={t("Close")} onClick={() => setClosed(true)}>
+          ✕
+        </button>
+      </div>
+      {post.note && <p className="small">“{post.note}”</p>}
+      <div className="row wrap">
+        {[t("👋 Hi!"), t("Thanks for having me"), t("Ready when you are")].map((text) => (
+          <button key={text} className="small" onClick={() => hello(text)}>
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HostArrival() {
   const listed = useOpenTables((s) => s.listed);
   const roomId = useStore((s) => s.roomId);
   const selfId = useStore((s) => s.session?.selfId);

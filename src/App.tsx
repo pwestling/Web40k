@@ -34,6 +34,17 @@ export function App() {
       void loadTrystero();
     });
   }, []);
+  // Escape closes the top modal the way a click outside it does, for the ones without their own key (dogfood).
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const top = [...document.querySelectorAll<HTMLElement>(".modal-backdrop")].at(-1);
+      // After the modal's own handler, if it has one: still open means nobody closed it.
+      if (top) setTimeout(() => top.isConnected && top.click(), 0);
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
   return (
     <>
       <CrashGuard>

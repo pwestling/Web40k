@@ -1,3 +1,4 @@
+import { woundsRemaining } from "../attack";
 import { isAlive } from "../units";
 import type { Ability, ArmyStratagem, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
@@ -262,7 +263,9 @@ function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[] {
   for (const t of system.abilityTimings ?? []) {
     const key = t.attack ? `attack:${t.attack}` : `phase:${t.phase}`;
     if (keys.has(key)) continue;
-    if (pattern(t.match).test(ability.text) || pattern(t.match).test(ability.name)) {
+    // Armies imported before no-break spaces were made plain still have them.
+    const text = ability.text.replace(/\u00a0/g, " ");
+    if (pattern(t.match).test(text) || pattern(t.match).test(ability.name)) {
       keys.add(key);
       out.push(t);
     }
@@ -281,6 +284,7 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
     if (!isAlive(state, unit)) continue;
     const active = seatOf(state, unit.owner) === state.turn.activeSeat;
     for (const ability of manualAbilities(system, unit)) {
+      if (!damagedFits(state, unit, ability)) continue;
       const fits = timingsOf(system, ability).some(
         (t) =>
           t.phase === phase &&
@@ -296,6 +300,22 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
     }
   }
   return out;
+}
+
+/**
+ * "Damaged: 1-4 Wounds Remaining" only matters once a model is that hurt; a
+ * fresh Dreadnought shouldn't remind anyone of it on every attack (dogfood).
+ */
+function damagedFits(state: GameState, unit: Unit, ability: Ability): boolean {
+  const m = /^damaged:\s*(\d+)\s*[-–]\s*(\d+)\s*wounds?\b/i.exec(ability.name);
+  if (!m) return true;
+  const [lo, hi] = [Number(m[1]), Number(m[2])];
+  return unit.modelIds.some((id) => {
+    const model = state.models[id];
+    if (!model || model.destroyed) return false;
+    const w = woundsRemaining(model);
+    return w >= lo && w <= hi;
+  });
 }
 
 /** Abilities to remind players of during an attack, for the attacking and the attacked unit. */
@@ -315,6 +335,7 @@ export function attackReminders(
     if (!unit) continue;
     for (const ability of manualAbilities(system, unit))
       if (
+        damagedFits(state, unit, ability) &&
         timingsOf(system, ability).some(
           (t) => t.attack === role && (!t.weaponKind || t.weaponKind === weaponKind),
         )

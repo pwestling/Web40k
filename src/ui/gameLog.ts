@@ -429,6 +429,8 @@ export function lossText(
     hits.filter((o) => o.modelId && state.models[o.modelId]?.destroyed).map((o) => o.modelId),
   ).size;
   if (!wounds) return t("no losses");
+  // "2 wounds · 0 models slain" read as a tally of nothing; say what was lost (dogfood).
+  if (!removed) return tn(wounds, "{n} wound lost", "{n} wounds lost");
   if (!bases)
     return wounds === removed
       ? tn(removed, "{n} model slain", "{n} models slain")

@@ -339,7 +339,8 @@ export async function parseRosterFile(
 }
 
 function decode(bytes: Uint8Array): string {
-  return new TextDecoder("utf-8").decode(bytes);
+  // BSData writes "your\u00a0Command phase": plain spaces, so rule text matches what we look for (dogfood).
+  return new TextDecoder("utf-8").decode(bytes).replace(/\u00a0/g, " ");
 }
 
 // ---------------------------------------------------------------------------

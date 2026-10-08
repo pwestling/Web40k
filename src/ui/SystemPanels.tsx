@@ -90,10 +90,10 @@ function AbilityList({ abilities, spent }: { abilities: Ability[]; spent?: (name
             {group} ({list.length})
           </summary>
           {list.map((a) => (
-            <p key={a.name} className="small">
+            <div key={a.name} className="small rule-text">
               <strong>{a.name}.</strong> <RulesText text={a.text} />
               {spent?.(a.name) ? <em> {t("(spent)")}</em> : null}
-            </p>
+            </div>
           ))}
         </details>
       ))}

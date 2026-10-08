@@ -13,6 +13,8 @@ import { characterName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
+import { nextCard, stackOf } from "../systems/conquest/command";
+import { conquest } from "../systems/conquest/system";
 import { t, tn, gameText } from "../i18n";
 
 /**
@@ -114,6 +116,27 @@ function whatNow(
   }
   for (const u of units) for (const name of ready[u.id] ?? []) add(name);
   const lines: string[] = [];
+  // Conquest's command phase is the stack, in its own panel: "Nothing to do" sent players past it (dogfood).
+  const ordering =
+    game.system === conquest.id &&
+    slot === "command" &&
+    Object.values(game.players).some(
+      (p) => p.seat !== undefined && (hotseat || p.id === me) && !stackOf(game, p.id),
+    );
+  if (ordering)
+    lines.push(t("Put your command cards in the order you'll play them, then press Lock in stack."));
+  // Then each go starts with the top card: drawing it says which regiment acts (dogfood).
+  const toDraw =
+    game.system === conquest.id &&
+    mine &&
+    !acting &&
+    Object.values(game.players).some((p) => {
+      if (p.seat !== side) return false;
+      const next = nextCard(game, stackOf(game, p.id));
+      return !!next && !next.unitId;
+    });
+  if (toDraw)
+    lines.push(t("Draw your top command card (Command stack, bottom right) to see which regiment acts."));
   if (acting)
     lines.push(
       t("{unit} is taking its go: shoot or fight with it, or press End activation.", { unit: acting.name }),
@@ -121,11 +144,11 @@ function whatNow(
   else if (plain && !units.length) lines.push(t("All your units have had their go this round: press Pass."));
   // In an activation (Rift Lanterns, #42) a unit moves as part of acting, whatever the segment is called.
   const activation = turnView(game).alternating;
-  if (!acting && units.length && (/move/i.test(raw) || activation || Object.keys(ready).length))
+  if (!toDraw && !acting && units.length && (/move/i.test(raw) || activation || Object.keys(ready).length))
     lines.push(t("Drag a unit to move it. The ruler shows how far it has gone against its limit."));
   if (/charge/i.test(raw) && !can.size)
     lines.push(t("No unit is close enough to charge: press ▶ to move on."));
-  if (activation && !can.size && !outOfRange && units.length && !acting)
+  if (activation && !can.size && !outOfRange && units.length && !acting && !toDraw)
     lines.push(t("Nothing is in reach to attack yet: move closer first."));
   if (outOfRange && !can.size) lines.push(t("Nothing is in range to shoot yet. Get closer next turn."));
   if (can.size)
@@ -143,7 +166,7 @@ function whatNow(
         ? t("Tap one of your units to see its buttons.")
         : t("Click one of your units to see its buttons."),
     );
-  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation)
+  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation && !ordering)
     lines.push(t("Nothing to do this phase."));
   lines.push(
     activation

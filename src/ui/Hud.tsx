@@ -348,7 +348,12 @@ export function NameCard({ player }: { player: Player }) {
   const { dispatch } = useStore();
   const [stored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
   const [name, setName] = useState("");
-  if (stored || !/^Player \d+$/.test(player.name)) return null;
+  const unnamed = /^Player \d+$/.test(player.name);
+  // A name this device already gave (the lobby, Open tables) is used, not asked again (PX).
+  useEffect(() => {
+    if (stored && unnamed) dispatch({ type: "player/rename", player: player.id, name: stored });
+  }, [stored, unnamed, dispatch, player.id]);
+  if (stored || !unnamed) return null;
   const save = () => {
     const n = name.trim();
     if (!n) return;

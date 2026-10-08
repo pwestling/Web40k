@@ -116,9 +116,9 @@ async function saveRoundCard(round: number) {
   if (!summary) return;
   const from = rounds.find((r) => r.round === round - 1)?.seq ?? record.initial.seq;
   // What happened: the round's moments first (they read best), then its highlights.
-  // Moments that ended this round: a story that runs to the game's end (Last one standing) isn't round 1's (UX 56).
+  // Moments that ended this round: a story that runs to the game's end (Last one standing) isn't round 1's (UX 56, 393).
   const moments = momentsOf(record).filter((m) => {
-    const done = Math.max(m.seq, m.end);
+    const done = Math.max(m.seq, m.end, m.settled ?? 0);
     return m.kind !== "mvp" && done > from && done <= summary.seq;
   });
   const marks = highlights.filter((h) => h.seq > from && h.seq <= summary.seq);

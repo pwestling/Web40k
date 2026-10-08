@@ -137,7 +137,7 @@ describe("lossText", () => {
   it("says wounds and stands apart when stands take several wounds (UX 106)", () => {
     const hits = [1, 1, 1, 1].map(() => ({ kind: "wounds", modelId: "a", lost: 1 }));
     expect(lossText(state(["a"]), hits)).toBe("4 wounds · 1 base removed");
-    expect(lossText(state([]), hits.slice(0, 2))).toBe("2 wounds · 0 bases removed");
+    expect(lossText(state([]), hits.slice(0, 2))).toBe("2 wounds lost");
   });
 
   it("keeps the short form when each wound is a model", () => {

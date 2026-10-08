@@ -1,5 +1,5 @@
 import { shot } from "../render/focus";
-import { sideName, sidePlayers, sides, stateAt, type GameState } from "../core";
+import { sideName, sidePlayers, sides, stateAt, systemOf, type GameState } from "../core";
 import { t } from "../i18n";
 import { displayName } from "../i18n/names";
 import { useStore } from "../store";
@@ -229,7 +229,10 @@ function drawScore(ctx: CanvasRenderingContext2D, width: number, band: number) {
     ctx.textAlign = "center";
     font(26, 600);
     ctx.fillStyle = "#b9b4a8";
-    ctx.fillText(t("Round {n}", { n: game.turn.round }), width / 2, y);
+    // Past the last round is the game's end, not "Round 6" of 5 (dogfood).
+    const rounds = systemOf(game).turn.rounds;
+    const over = typeof rounds === "number" && game.turn.round > rounds;
+    ctx.fillText(over ? t("Battle over") : t("Round {n}", { n: game.turn.round }), width / 2, y);
   }
   ctx.textAlign = "left";
 }

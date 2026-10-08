@@ -89,7 +89,7 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           <option value="">{t("Weapon…")}</option>
           {weapons.map((w) => (
             <option key={w.id} value={w.id}>
-              {w.name} (×{w.count})
+              {w.name} (×{w.count}){attacker.status?.[`fired.${w.id}`] ? ` · ${t("used this phase")}` : ""}
             </option>
           ))}
         </select>
@@ -358,8 +358,9 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       {attack.hitDice && (
         <Stage label={t("Hits")} dice={attack.hitDice} judge={(v) => hitJudge(spec, v)}>
           {[
-            tn(attack.hits ?? 0, "{n} hit", "{n} hits"),
-            ...(attack.critHits ? [t("{n} critical", { n: attack.critHits })] : []),
+            // "1 hit (1 critical)": the criticals are among the hits, not extra (dogfood).
+            tn(attack.hits ?? 0, "{n} hit", "{n} hits") +
+              (attack.critHits ? ` (${t("{n} critical", { n: attack.critHits })})` : ""),
             ...(attack.autoWounds ? [t("{n} auto-wound", { n: attack.autoWounds })] : []),
           ].join(", ")}
         </Stage>
@@ -418,7 +419,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
               {!botAttacks && !ownDice && <button onClick={rollAll}>{t("Roll everything")}</button>}
             </>
           )}
-          {!botAttacks && (
+          {/* Calling off an attack is the attacker's choice; the other player gets Done at the end (dogfood). */}
+          {!botAttacks && (attack.stage === "done" || !attacker || canControl(attacker.owner)) && (
             <button
               ref={done}
               className="attack-done"
