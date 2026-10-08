@@ -115,7 +115,7 @@ export function cleanItem(item: unknown): TalkItem | null {
   }
 }
 
-function who(peer: string, claimed?: string): { name: string; color: string } {
+export function who(peer: string, claimed?: string): { name: string; color: string } {
   const p = useStore.getState().game.players[peer];
   if (p) return { name: p.name, color: p.color };
   // Each spectator keeps a name and colour of their own, from their peer id.

@@ -2199,17 +2199,9 @@ body.broadcast:has(.stats-screen) .caption {
 :is(.dice-tray, .dice-try) .die.finish-marbled .body {
   background:
     radial-gradient(circle at 30% 25%, #fff3, transparent 45%),
-    conic-gradient(
-      from var(--a, 0deg) at 60% 40%,
-      var(--c),
-      color-mix(in srgb, var(--c) 45%, #fff) 12%,
-      var(--c) 24%,
-      color-mix(in srgb, var(--c) 70%, #000) 40%,
-      color-mix(in srgb, var(--c) 55%, #fff) 55%,
-      var(--c) 68%,
-      color-mix(in srgb, var(--c) 40%, #fff) 82%,
-      var(--c)
-    );
+    var(--marble, none) center / 160% 160%,
+    var(--c);
+  background-blend-mode: normal, overlay, normal;
 }
 :is(.dice-tray, .dice-try) .die.finish-metallic .body {
   background: linear-gradient(
@@ -2309,6 +2301,10 @@ body.broadcast:has(.stats-screen) .caption {
 }
 .dice-try .die .pip.on {
   visibility: visible;
+}
+/* At picker size the far side's pips read as a 9-grid: fainter there. */
+.dice-try .die.finish-translucent .pip:not(.on) {
+  opacity: 0.06;
 }
 .dice-try .die.rolling {
   animation: die-try 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
@@ -2426,6 +2422,91 @@ body.showcase
   min-width: 0;
 }
 
+/* Voice at the table */
+.talk-dock .panel.voice {
+  position: static;
+  gap: 4px;
+  padding: 6px 8px;
+}
+.panel.voice .row {
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.panel.voice select {
+  font-size: 0.8rem;
+}
+.panel.voice .ptt {
+  flex: 1;
+  user-select: none;
+  touch-action: none;
+}
+.panel.voice .ptt.live {
+  background: #b45309;
+  border-color: #f59e0b;
+  color: #fff;
+}
+.panel.voice .open-mic {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+.voice-people {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+.voice-people li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.voice-people .name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voice-people input[type="range"] {
+  width: 80px;
+}
+.voice-people .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.speaking,
+.topbar .player strong.speaking {
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px #22c55e,
+    0 0 10px rgb(34 197 94 / 60%);
+  transition: box-shadow 0.12s;
+}
+.voice-people li.speaking {
+  box-shadow: none;
+}
+.voice-people li.speaking .dot {
+  box-shadow: 0 0 0 3px #22c55e;
+}
+.topbar .player strong {
+  padding: 0 3px;
+}
+.on-air {
+  z-index: 25;
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 85%);
+  border: 1px solid #22c55e;
+  font-weight: 600;
+}
 /* While the table's code loads after the front door (App.tsx). */
 .loading-table {
   position: fixed;
@@ -2433,4 +2514,9 @@ body.showcase
   display: grid;
   place-items: center;
   color: var(--muted, #9aa3ad);
+}
+.showcase-card .skip {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #9ca3af;
 }

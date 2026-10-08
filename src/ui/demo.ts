@@ -2,6 +2,7 @@ import { DEFAULT_SYSTEM, sides, sidePlayers, systemOf } from "../core";
 import { useStore } from "../store";
 import { systemModule } from "../systems";
 import { spawnIntents } from "../systems/wh40k/deploy";
+import { owed } from "../render/showcase";
 import { useHelp } from "./help";
 
 /**
@@ -36,6 +37,7 @@ export function startDemo(system: string): void {
       for (const intent of spawnIntents(now, owner, units, prefix, roster.name)) dispatch(intent, owner);
     }
     // Ready, and into the battle: the army showcase opens it.
+    owed.initial = useStore.getState().record.initial;
     useStore.getState().dispatch({ type: "turn/next" });
     useHelp.setState({ hint: true });
   };

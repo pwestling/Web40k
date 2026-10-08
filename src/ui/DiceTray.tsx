@@ -13,7 +13,7 @@ import { useStore } from "../store";
 import { diceLook } from "./diceSets";
 import { useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
-import { chime, click, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
+import { chime, click, duckVoices, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
 
 /**
@@ -115,13 +115,35 @@ export function clearTray(): void {
   current?.reset();
 }
 
+/** Marbled dice: turbulence veins, one of a few seeds each, so no two dice in a roll match. */
+const MARBLES = 16;
+const marbles = new Map<number, string>();
+function marble(seed: number): string {
+  let url = marbles.get(seed);
+  if (!url) {
+    const svg =
+      `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'>` +
+      `<filter id='m'><feTurbulence type='turbulence' baseFrequency='0.022 0.045' numOctaves='3' seed='${seed + 1}'/>` +
+      // Greys from the noise, then light veins along its ridges with a darker edge: overlaid on the body colour.
+      `<feColorMatrix values='0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1'/>` +
+      `<feComponentTransfer><feFuncR type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/>` +
+      `<feFuncG type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/>` +
+      `<feFuncB type='table' tableValues='0.95 0.3 0.45 0.55 0.5'/></feComponentTransfer>` +
+      `</filter><rect width='100%' height='100%' filter='url(#m)' transform='rotate(${(seed * 47) % 360} 48 48)'/></svg>`;
+    url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    marbles.set(seed, url);
+  }
+  return url;
+}
+
 /** One die's DOM in a set's colours and finish (PX-5b); a marbled die gets its own swirl. */
 export function makeDie(look: DiceSet, size: number): HTMLDivElement {
   const el = div(`die finish-${look.finish}`);
   el.style.setProperty("--c", look.body);
   el.style.setProperty("--p", look.pip);
   el.style.setProperty("--s", `${size}px`);
-  if (look.finish === "marbled") el.style.setProperty("--a", `${Math.floor(Math.random() * 360)}deg`);
+  if (look.finish === "marbled")
+    el.style.setProperty("--marble", marble(Math.floor(Math.random() * MARBLES)));
   el.innerHTML = `<div class="shadow"></div><div class="body">${'<i class="pip"></i>'.repeat(9)}</div>`;
   return el;
 }
@@ -319,6 +341,7 @@ class Stage {
       this.banner.className = `tray-banner on ${stakes.good ? "good" : "bad"}`;
       ds.forEach((d) => d.el.classList.add(stakes.good ? "crit" : "fail"));
       sting(stakes.good);
+      duckVoices(1600);
       if (/slain/i.test(stakes.big)) thump(0, 0.6);
       await wait(this.skip ? 400 : 1400);
     }
@@ -333,11 +356,13 @@ class Stage {
   private async moment(rare: RareOutcome, live: boolean) {
     clearTimeout(this.hideTimer);
     this.show();
+    duckVoices(this.skip ? 0 : 450);
     await wait(this.skip ? 0 : 450);
     this.root.classList.add("legendary");
     this.dice.forEach((d) => d.el.classList.add("tray-legend"));
     if (rare.lucky) legendSting();
     else womp();
+    duckVoices(2200);
     this.banner.innerHTML = "";
     const big = div("big");
     big.textContent = rare.title;
@@ -447,7 +472,11 @@ class Stage {
         };
       });
       // A heartbeat under a decisive die.
-      if (slowLast && !this.skip) [0.5, 1.0, 1.5].forEach((t, i) => thump(fast ? t / 2 : t, 0.3 + i * 0.05));
+      if (slowLast && !this.skip) {
+        [0.5, 1.0, 1.5].forEach((t, i) => thump(fast ? t / 2 : t, 0.3 + i * 0.05));
+        // Voices hush for the last die and its verdict.
+        duckVoices(fast ? 1800 : 3400);
+      }
       const t0 = performance.now();
       const frame = (now: number) => {
         let alive = 0;

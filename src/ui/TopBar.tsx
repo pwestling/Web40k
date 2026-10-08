@@ -1,3 +1,4 @@
+import { useVoice } from "../voice/voice";
 import { useHelp } from "./help";
 import { systemModule } from "../systems";
 import { useSound } from "./sound";
@@ -25,6 +26,8 @@ export function TopBar() {
   const seats = sides(game);
   const deploying = game.turn.round === 0;
   const mode = useStore((s) => s.mode);
+  // Voice at the table: a ring on whoever is talking.
+  const speaking = useVoice((s) => s.speaking);
   // Whoever presses Start is ready by doing so; only the others are named.
   const notReady =
     deploying && mode !== "hotseat"
@@ -69,7 +72,11 @@ export function TopBar() {
             style={{ borderColor: lead.color }}
           >
             {team.map((p, i) => (
-              <strong key={p.id} style={{ color: p.color }}>
+              <strong
+                key={p.id}
+                className={speaking[p.id] ? "speaking" : undefined}
+                style={{ color: p.color }}
+              >
                 {i > 0 && <span className="muted"> & </span>}
                 {p.name}
               </strong>

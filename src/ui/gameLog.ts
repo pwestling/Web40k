@@ -45,6 +45,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
+  // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
+  const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
   const packaged = [...record.events]
     .reverse()
@@ -215,6 +217,13 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       if (earlier) items.splice(items.indexOf(earlier), 1);
       const line = { kind: "line" as const, key, seq: logged.seq, text, undone: false };
       setup[event.type] = line;
+      items.push(line);
+      continue;
+    }
+    if (event.type === "player/dice" && !skipped && text) {
+      if (dicePick.player === event.player && items.at(-1) === dicePick.line) items.pop();
+      const line = { kind: "line" as const, key, seq: logged.seq, text, undone: false };
+      Object.assign(dicePick, { player: event.player, line });
       items.push(line);
       continue;
     }
