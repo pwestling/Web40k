@@ -74,7 +74,7 @@ async function receive(message: SideMessage, from: string) {
   if (message.t === "asset/want") {
     const asset = useAssets.getState().assets[message.id] ?? (await getCached(message.id));
     if (!asset) return;
-    const text = toBase64(encodeAsset(asset));
+    const text = toBase64(await encodeAsset(asset));
     const parts = Math.ceil(text.length / PART_CHARS);
     for (let part = 0; part < parts; part++)
       session.sendSide(
@@ -105,7 +105,7 @@ async function receive(message: SideMessage, from: string) {
   if (++entry.got < parts) return;
   incoming.delete(id);
   try {
-    const asset = decodeAsset(fromBase64(entry.parts.join("")));
+    const asset = await decodeAsset(fromBase64(entry.parts.join("")));
     if (asset.id !== id) return;
     useAssets.getState().addAsset(asset);
     void putCached(asset);

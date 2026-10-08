@@ -46,7 +46,7 @@ export async function bundleReplay(record: GameRecord): Promise<ReplayFile> {
   const assets: Record<string, string> = {};
   for (const id of refs.assets) {
     const asset = useAssets.getState().assets[id] ?? (await getCached(id));
-    if (asset) assets[id] = toBase64(encodeAsset(asset));
+    if (asset) assets[id] = toBase64(await encodeAsset(asset));
   }
   const packages: Record<string, string> = {};
   for (const hash of refs.packages) {
@@ -66,7 +66,7 @@ export async function unbundleReplay(file: ReplayFile): Promise<GameRecord> {
   for (const [id, data] of Object.entries(attachments?.assets ?? {})) {
     if (!HASH.test(id) || useAssets.getState().assets[id]) continue;
     try {
-      const asset = { ...decodeAsset(fromBase64(data)), id };
+      const asset = { ...(await decodeAsset(fromBase64(data))), id };
       useAssets.getState().addAsset(asset);
       void putCached(asset);
     } catch {

@@ -56,6 +56,10 @@ try {
   await run("stand-ins, 60 dice rolling", () => window.openBattlePerf.roll(60), 30, 0);
   await run("pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000));
   await run("pipeline, 1M sculpts", () => window.openBattlePerf.dress(1_000_000));
+  // A painted army: 1M-triangle sculpts with a 2048 px texture each, baked and compressed like an upload.
+  await run("painted, 1M sculpts + 2K textures", () => window.openBattlePerf.dress(1_000_000, false, true));
+  if (process.env.PAINT_SCREENSHOT && (!only || "painted, 1M sculpts + 2K textures".includes(only)))
+    await page.screenshot({ path: process.env.PAINT_SCREENSHOT });
   // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
   await run("terrain-heavy: uploaded terrain + 1M figures", () => window.openBattlePerf.terrain(500_000));
   if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });

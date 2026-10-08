@@ -8,9 +8,11 @@
  */
 import type { WebGLRenderer } from "three";
 import { unitKeys, useAssets } from "../assets/store";
-import { processMesh, ready, weld } from "../assets/pipeline";
+import { processMesh, processModel, ready, weld } from "../assets/pipeline";
+import { bakePaint } from "../assets/paint";
+import { encodeAsset } from "../assets/codec";
 import { synthMiniature } from "../assets/synth";
-import type { ModelAsset } from "../assets/types";
+import { BUDGETS, type ModelAsset } from "../assets/types";
 import { useStore } from "../store";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { systemOf } from "../core/content/turn";
@@ -57,17 +59,31 @@ export const perf = {
    * `sourceTriangles`. With `raw`, skip the pipeline and draw the sculpt at
    * full detail, to see what the pipeline saves.
    */
-  async dress(sourceTriangles: number, raw = false) {
+  async dress(sourceTriangles: number, raw = false, painted = false) {
     await ready;
     const { game, dispatch } = useStore.getState();
     const { addAsset } = useAssets.getState();
     const keys = unitKeys(Object.values(game.models));
     const assets = new Map<string, ModelAsset>();
-    keys.forEach((key, i) => {
+    // Painted: a 2048 px source texture per sculpt, like a scan's, baked and compressed as an upload is.
+    const image = painted ? await paintScheme(2048) : null;
+    for (const [i, key] of keys.entries()) {
       // Slightly different sculpts so every profile is its own asset.
-      const mesh = synthMiniature(sourceTriangles * (1 + i * 0.01));
-      const id = `synth-${sourceTriangles}-${raw ? "raw" : "lod"}-${i}`;
-      let asset = processMesh(mesh, { id, name: key, kind: "miniature" });
+      const mesh = synthMiniature(sourceTriangles * (1 + i * 0.01), 25.4, painted);
+      const id = `synth-${sourceTriangles}-${raw ? "raw" : painted ? "painted" : "lod"}-${i}`;
+      let asset: ModelAsset;
+      if (image) {
+        const vertices = mesh.positions.length / 3;
+        const paint = bakePaint(
+          [{ vertices, uvs: mesh.uvs, material: 0 }],
+          [{ factor: [1, 1 - i * 0.05, 1, 1], image }],
+          BUDGETS.miniature.texture.side,
+        );
+        asset = await processModel(
+          { positions: mesh.positions, indices: mesh.indices, ...paint, sourceTexture: [2048, 2048] },
+          { id, name: key, kind: "miniature" },
+        );
+      } else asset = processMesh(mesh, { id, name: key, kind: "miniature" });
       if (raw) {
         const welded = weld(mesh);
         welded.positions.forEach((v, j) => (welded.positions[j] = v * asset.stats.unitScale));
@@ -75,7 +91,7 @@ export const perf = {
       }
       addAsset(asset);
       assets.set(key, asset);
-    });
+    }
     for (const unit of Object.values(game.units)) {
       for (const key of unitKeys(unit.modelIds.flatMap((id) => game.models[id] ?? []))) {
         const asset = assets.get(key)!;
@@ -87,7 +103,17 @@ export const perf = {
       }
     }
     await frame();
-    return { profiles: keys.length, pipelineMs: [...assets.values()].map((a) => a.stats.ms) };
+    const list = [...assets.values()];
+    const sent = await Promise.all(list.map(async (a) => (await encodeAsset(a)).byteLength));
+    return {
+      profiles: keys.length,
+      pipelineMs: list.map((a) => a.stats.ms),
+      // What a peer downloads per figure, and of that the texture.
+      sendKB: Math.round(sent.reduce((x, y) => x + y, 0) / list.length / 1024),
+      textureKB: Math.round(
+        list.reduce((x, a) => x + (a.texture?.bytes.byteLength ?? 0), 0) / list.length / 1024,
+      ),
+    };
   },
 
   /**
@@ -258,3 +284,30 @@ export const perf = {
     };
   },
 };
+
+/** A busy painted surface: base colour, camo blotches, and fine edge highlights a downscale has to keep. */
+async function paintScheme(side: number): Promise<ImageBitmap> {
+  const c = new OffscreenCanvas(side, side);
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#2f4a6b";
+  g.fillRect(0, 0, side, side);
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 400; i++) {
+    g.fillStyle = ["#b8862f", "#7a1f1f", "#d9d2c0", "#1b1b1b"][i % 4]!;
+    g.beginPath();
+    g.ellipse(rand() * side, rand() * side, 10 + rand() * 80, 10 + rand() * 60, rand() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.strokeStyle = "#e8e4d8";
+  for (let i = 0; i < 2000; i++) {
+    g.lineWidth = 1 + rand() * 2;
+    g.beginPath();
+    const x = rand() * side;
+    const y = rand() * side;
+    g.moveTo(x, y);
+    g.lineTo(x + rand() * 30, y + rand() * 30);
+    g.stroke();
+  }
+  return createImageBitmap(c);
+}
