@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
+import { formatList, t } from "../i18n";
 import { useJoining, useStore } from "../store";
 import { untakenSeat } from "./Branch";
 import { buildLog } from "./gameLog";
@@ -27,18 +28,23 @@ export function NetBanner() {
   }, [desyncSeq, record]);
   if (!net || mode === "hotseat" || (joining && !net.desync)) return null;
   if (net.migrating)
-    return <div className="net-banner">Host disconnected: waiting for it, or for a new host…</div>;
+    return <div className="net-banner">{t("Host disconnected: waiting for it, or for a new host…")}</div>;
   if (net.desync) {
-    const host = net.hostId ? (players[net.hostId]?.name ?? "the host") : "the host";
+    const host = net.hostId ? (players[net.hostId]?.name ?? null) : null;
     return (
       <div className="net-banner desync" role="alert">
-        Your table doesn't match {host === "the host" ? "the host's" : `${host}'s`}
-        {since ? ` (since "${since}")` : ""}.{" "}
+        {host === null
+          ? since
+            ? t("Your table doesn't match the host's (since \"{since}\").", { since })
+            : t("Your table doesn't match the host's.")
+          : since
+            ? t("Your table doesn't match {name}'s (since \"{since}\").", { name: host, since })
+            : t("Your table doesn't match {name}'s.", { name: host })}{" "}
         <button className="primary" onClick={() => session?.resync()}>
-          Resync from host
+          {t("Resync from host")}
         </button>
         {net.desync.count >= 2 && (
-          <button onClick={() => downloadReport(record, net.desync!)}>Report a problem</button>
+          <button onClick={() => downloadReport(record, net.desync!)}>{t("Report a problem")}</button>
         )}
       </div>
     );
@@ -53,11 +59,17 @@ export function NetBanner() {
   if (open.length)
     return (
       <div className="net-banner">
-        Waiting for someone to take {open.map((p) => p.name).join(" and ")} ·{" "}
-        <button onClick={() => void navigator.clipboard?.writeText(location.href)}>Copy invite link</button>
+        {t("Waiting for someone to take {names} ·", { names: formatList(open.map((p) => p.name)) })}{" "}
+        <button onClick={() => void navigator.clipboard?.writeText(location.href)}>
+          {t("Copy invite link")}
+        </button>
       </div>
     );
-  return <div className="net-banner">{gone.map((p) => p.name).join(" and ")} reconnecting…</div>;
+  return (
+    <div className="net-banner">
+      {t("{names} reconnecting…", { names: formatList(gone.map((p) => p.name)) })}
+    </div>
+  );
 }
 
 /** The replay and both checksums, for whoever fixes the bug. */

@@ -17,6 +17,7 @@ import {
 import { keyId } from "./keys";
 import { fetchFiles, newBox, postFile, type Box } from "./mailbox";
 import { replaySegment } from "./verify";
+import { t } from "../i18n";
 
 /**
  * A play-by-mail game as this device keeps it: the game, which side is ours,
@@ -79,7 +80,7 @@ export function mailGames(): { id: string; at: number; yours: boolean; vs: strin
         at: g.at,
         yours: !!g.segment,
         box: !!g.box,
-        vs: Object.entries(g.names).find(([p]) => p !== g.me)?.[1] ?? "Waiting for someone to join",
+        vs: Object.entries(g.names).find(([p]) => p !== g.me)?.[1] ?? t("Waiting for someone to join"),
       }))
       .sort((a, b) => b.at - a.at);
   } catch {
@@ -173,7 +174,7 @@ export async function startMailGame(name: string, system?: string): Promise<void
     id: newSeed().slice(0, 24),
     me: "p1",
     seat: 0,
-    names: { p1: name || "Player 1" },
+    names: { p1: name || t("Player 1") },
     record,
     segment: startSegment(record, 1, null, null),
     sent: null,
@@ -267,12 +268,14 @@ export async function arrivals(): Promise<Record<string, MailFile>> {
 export async function joinFromMailbox(box: Box, name?: string): Promise<boolean> {
   const files = await fetchFiles(box, 0);
   if (!files) {
-    useMail.setState({ error: "The game's mailbox can't be reached. Ask for the invitation file instead." });
+    useMail.setState({
+      error: t("The game's mailbox can't be reached. Ask for the invitation file instead."),
+    });
     return false;
   }
   const invitation = files.find((f) => f.index === 1);
   if (!invitation) {
-    useMail.setState({ error: "That game's mailbox is empty: the invitation may have expired." });
+    useMail.setState({ error: t("That game's mailbox is empty: the invitation may have expired.") });
     return false;
   }
   await receiveFile(JSON.stringify(invitation), { name });
@@ -298,40 +301,55 @@ export async function receiveFile(
   if (file.index === 1) return joinFromInvitation(file, opts.name);
 
   const g = useMail.getState().game?.id === file.game ? useMail.getState().game : loadGame(file.game);
-  if (!g) return void useMail.setState({ error: "That file is for a mail game this device doesn't have." });
+  if (!g)
+    return void useMail.setState({ error: t("That file is for a mail game this device doesn't have.") });
   if (file.from === g.me)
-    return void useMail.setState({ error: "That's your own file: send it to your opponent." });
+    return void useMail.setState({ error: t("That's your own file: send it to your opponent.") });
   if (g.segment)
-    return void useMail.setState({ error: "It's your move in this game: you haven't sent your file yet." });
+    return void useMail.setState({
+      error: t("It's your move in this game: you haven't sent your file yet."),
+    });
   if (file.index !== (g.sent?.index ?? 0) + 1)
     return void useMail.setState({
       error:
         file.index <= (g.sent?.index ?? 0)
-          ? "You've already had that file."
-          : "A file is missing in between: ask them to send the one after yours.",
+          ? t("You've already had that file.")
+          : t("A file is missing in between: ask them to send the one after yours."),
     });
 
   const problems: string[] = [];
   if (!(await signatureOk(file)))
-    problems.push(`This file was changed after ${file.name || "they"} made it.`);
+    problems.push(
+      file.name
+        ? t("This file was changed after {name} made it.", { name: file.name })
+        : t("This file was changed after they made it."),
+    );
   if (g.theirKey && keyId(g.theirKey) !== keyId(file.key))
     problems.push(
-      `It was made on a different device from ${file.name || "their"} earlier files: someone else may have sent it.`,
+      file.name
+        ? t("It was made on a different device from {name} earlier files: someone else may have sent it.", {
+            name: file.name,
+          })
+        : t("It was made on a different device from their earlier files: someone else may have sent it."),
     );
   // Play can't be stitched onto a different game: that's not a doubt, it's the wrong file.
   if (file.base.seq !== lastSeq(g.record) || file.base.hash !== baseOf(g.record).hash)
     return void useMail.setState({
-      error: "That file doesn't start where your last file ended: it belongs to another copy of this game.",
+      error: t(
+        "That file doesn't start where your last file ended: it belongs to another copy of this game.",
+      ),
     });
   if (g.theirCommit && file.reveal !== null && (await commitTo(file.reveal)) !== g.theirCommit)
     problems.push(
-      "Its dice aren't the ones promised in their last file, so the rolls could have been picked.",
+      t("Its dice aren't the ones promised in their last file, so the rolls could have been picked."),
     );
   if (g.theirCommit && file.reveal === null)
-    problems.push("It leaves out the dice promised in their last file, so the rolls could have been picked.");
+    problems.push(
+      t("It leaves out the dice promised in their last file, so the rolls could have been picked."),
+    );
   const mine = g.sent?.commit ?? null;
   if (file.theirs !== mine)
-    problems.push("Its dice weren't mixed with yours, so the rolls could have been picked.");
+    problems.push(t("Its dice weren't mixed with yours, so the rolls could have been picked."));
   if (!problems.length) {
     const verdict = await replaySegment(g.record, file, await segmentRng(diceKey(g.id, file)));
     if (!verdict.ok) problems.push(verdict.why);
@@ -356,15 +374,15 @@ export async function receiveFile(
 
 async function joinFromInvitation(file: MailFile, typed?: string): Promise<void> {
   if (!file.record)
-    return void useMail.setState({ error: "That invitation is damaged (it has no game in it)." });
+    return void useMail.setState({ error: t("That invitation is damaged (it has no game in it).") });
   const existing = loadGame(file.game);
   if (existing) {
     if (existing.me === file.from)
-      return void useMail.setState({ error: "That's your own invitation: send it to your opponent." });
+      return void useMail.setState({ error: t("That's your own invitation: send it to your opponent.") });
     return resumeMailGame(file.game);
   }
   if (!(await signatureOk(file)))
-    return void useMail.setState({ error: "That invitation's signature doesn't match its contents." });
+    return void useMail.setState({ error: t("That invitation's signature doesn't match its contents.") });
   const record = await unbundleReplay(file.record);
   // We take the side the invitation left: whoever isn't its sender.
   const me = ["p1", "p2"].find((p) => p !== file.from) ?? "p2";

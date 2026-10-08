@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { untakenSeat } from "./Branch";
 import type { Player } from "../core";
+import { t, tn } from "../i18n";
 import { useJoining, useStore } from "../store";
 import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
@@ -14,15 +15,16 @@ const STUCK_MS = 8000;
 function StillLooking() {
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setStuck(true), STUCK_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setStuck(true), STUCK_MS);
+    return () => clearTimeout(timer);
   }, []);
   if (!stuck) return null;
   return (
     <div className="still-looking">
       <p>
-        Still looking. The host may have closed their page, or the link is from an old game. If the host is
-        there, your connection may be the problem:
+        {t(
+          "Still looking. The host may have closed their page, or the link is from an old game. If the host is there, your connection may be the problem:",
+        )}
       </p>
       <NetCheck auto />
     </div>
@@ -40,8 +42,8 @@ export function RoomCard() {
   const peerMissing = useTransfers((s) => s.peerMissing);
   useEffect(() => {
     if (!copied) return;
-    const t = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
   }, [copied]);
   if (!roomId || mode === "hotseat") return null;
   const selfId = session?.selfId;
@@ -58,20 +60,21 @@ export function RoomCard() {
   const watchers = peers.filter((id) => !seated.some((p) => p.id === id)).length;
   // A spectator's own screen isn't among its peers: count it too (UX 146).
   const watching = watchers - joiners + (net?.role === "spectator" ? 1 : 0);
+  const reconnecting = (p: Player) => p.id !== selfId && !peers.includes(p.id) && !untaken(p);
   const state = (p: Player) =>
     p.id === selfId
-      ? "you"
+      ? t("you")
       : peers.includes(p.id)
-        ? "connected"
+        ? t("connected")
         : untaken(p)
-          ? "waiting for someone to take this seat"
-          : "reconnecting…";
+          ? t("waiting for someone to take this seat")
+          : t("reconnecting…");
   return (
     <div className="room">
       <div className="row spread">
         <span className="muted">
-          Room <code>{roomId}</code>
-          {mode === "local" ? " (this browser)" : ""}
+          {t("Room")} <code>{roomId}</code>
+          {mode === "local" ? ` ${t("(this browser)")}` : ""}
         </span>
         <button
           className={waiting && !joining && !copied ? "primary" : copied ? "on" : ""}
@@ -80,7 +83,7 @@ export function RoomCard() {
             setCopied(true);
           }}
         >
-          {copied ? "Copied ✓" : "Copy invite link"}
+          {copied ? t("Copied ✓") : t("Copy invite link")}
         </button>
       </div>
       <RulesLine />
@@ -89,24 +92,25 @@ export function RoomCard() {
           <li key={p.id}>
             <span className="dot" style={{ background: p.color }} />
             <strong>{p.name}</strong>{" "}
-            <span className={state(p) === "reconnecting…" ? "warn" : "muted"}>
+            <span className={reconnecting(p) ? "warn" : "muted"}>
               {state(p)}
-              {net?.hostId === p.id ? " · host" : ""}
-              {game.turn.round === 0 && p.ready ? " · ready" : ""}
-              {fetching(p.id) ? " · getting rules…" : ""}
+              {net?.hostId === p.id ? ` · ${t("host")}` : ""}
+              {game.turn.round === 0 && p.ready ? ` · ${t("ready")}` : ""}
+              {fetching(p.id) ? ` · ${t("getting rules…")}` : ""}
             </span>
             {p.rulesMismatch && (
               <span
                 className="warn"
-                title={`Playing without ${
-                  (game.packages?.packages ?? [])
-                    .filter((r) => p.rulesMismatch!.includes(r.hash))
-                    .map((r) => `${r.name} ${r.version}`)
-                    .join(", ") || "some of the game's rules"
-                }: their table may disagree`}
+                title={t("Playing without {rules}: their table may disagree", {
+                  rules:
+                    (game.packages?.packages ?? [])
+                      .filter((r) => p.rulesMismatch!.includes(r.hash))
+                      .map((r) => `${r.name} ${r.version}`)
+                      .join(", ") || t("some of the game's rules"),
+                })}
               >
                 {" "}
-                ⚠ different rules
+                {t("⚠ different rules")}
               </span>
             )}
           </li>
@@ -114,24 +118,32 @@ export function RoomCard() {
         {joining ? (
           <li className="muted">
             {net?.hostId
-              ? `Joining ${game.players[net.hostId]?.name || "the host"}'s game…`
-              : "Looking for the game's host…"}{" "}
+              ? game.players[net.hostId]?.name
+                ? t("Joining {name}'s game…", { name: game.players[net.hostId]!.name })
+                : t("Joining the host's game…")
+              : t("Looking for the game's host…")}{" "}
             <button className="link" onClick={() => (location.href = location.pathname)}>
-              Back to the lobby
+              {t("Back to the lobby")}
             </button>
             {!net?.hostId && <StillLooking />}
           </li>
         ) : (
-          waiting && <li className="muted">Waiting for an opponent to join…</li>
+          waiting && <li className="muted">{t("Waiting for an opponent to join…")}</li>
         )}
         {joiners > 0 && (
           <li className="muted">
-            {joiners === 1 ? "Someone joining is" : `${joiners} people joining are`} getting the rules…
+            {tn(
+              joiners,
+              "Someone joining is getting the rules…",
+              "{n} people joining are getting the rules…",
+            )}
           </li>
         )}
         {watching > 0 && (
           <li className="muted">
-            {watching} watching{net?.role === "spectator" ? " (you included)" : ""}
+            {net?.role === "spectator"
+              ? tn(watching, "{n} watching (you included)", "{n} watching (you included)")
+              : tn(watching, "{n} watching", "{n} watching")}
           </li>
         )}
       </ul>
@@ -161,10 +173,15 @@ export function DeployTray({ players }: { players: Player[] }) {
           <div key={player.id} className="deploy-tray">
             <div className="row spread">
               <strong>
-                {mode === "hotseat" ? `${player.name}: ` : ""}
-                {todo.length ? `${todo.length} to place` : "All placed"}
+                {mode === "hotseat"
+                  ? todo.length
+                    ? tn(todo.length, "{name}: {n} to place", "{name}: {n} to place", { name: player.name })
+                    : t("{name}: All placed", { name: player.name })
+                  : todo.length
+                    ? tn(todo.length, "{n} to place", "{n} to place")
+                    : t("All placed")}
               </strong>
-              <label title="Tell the other player you've finished deploying">
+              <label title={t("Tell the other player you've finished deploying")}>
                 <input
                   type="checkbox"
                   checked={!!player.ready}
@@ -172,7 +189,7 @@ export function DeployTray({ players }: { players: Player[] }) {
                     dispatch({ type: "player/ready", player: player.id, ready: e.target.checked }, player.id)
                   }
                 />{" "}
-                Ready
+                {t("Ready")}
               </label>
             </div>
             {todo.length > 0 && (
@@ -183,16 +200,14 @@ export function DeployTray({ players }: { players: Player[] }) {
                       {c.unit.name}
                     </button>{" "}
                     <span className={c.outside ? "warn" : "muted"}>
-                      {c.outside ? "outside your zone" : "not placed yet"}
+                      {c.outside ? t("outside your zone") : t("not placed yet")}
                     </span>
                   </li>
                 ))}
               </ul>
             )}
             {reserves > 0 && (
-              <p className="muted small">
-                {reserves} unit{reserves === 1 ? "" : "s"} in reserve
-              </p>
+              <p className="muted small">{tn(reserves, "{n} unit in reserve", "{n} units in reserve")}</p>
             )}
           </div>
         );

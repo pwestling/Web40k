@@ -5,6 +5,7 @@ import type { SideMessage } from "../net/transport";
 import { useStore } from "../store";
 import { myName } from "../talk/talk";
 import { useDuck } from "../ui/sound";
+import { t } from "../i18n";
 
 /**
  * Voice at the table (roadmap #19): each peer's mic as a WebRTC audio stream
@@ -168,8 +169,8 @@ export async function micOn(): Promise<void> {
     const denied = e instanceof DOMException && e.name === "NotAllowedError";
     useVoice.setState({
       error: denied
-        ? "Allow the microphone for this site (the icon in the address bar), then press 🎙 again."
-        : "No microphone was found.",
+        ? t("Allow the microphone for this site (the icon in the address bar), then press 🎙 again.")
+        : t("No microphone was found."),
     });
     return;
   }

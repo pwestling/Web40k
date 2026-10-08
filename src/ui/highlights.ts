@@ -1,6 +1,7 @@
 import { applyEvent, systemOf, undoneSeqs, type GameRecord, type GameState } from "../core";
 import { aliveModels, ENGAGEMENT_RANGE, unitDistance } from "../systems/wh40k/rules";
 import { opposed } from "../core/teams";
+import { t } from "../i18n";
 
 /** A moment worth jumping to in a replay. */
 export interface Highlight {
@@ -47,7 +48,7 @@ export function readGame(
   let roundStart: GameState | null = null;
   let phaseKey = "";
   let phaseVp: Record<string, number> = {};
-  const name = (s: GameState, id: string) => s.players[id]?.name ?? "Someone";
+  const name = (s: GameState, id: string) => s.players[id]?.name ?? t("Someone");
 
   const summarise = (end: GameState, seq: number, round: number) => {
     const start = roundStart ?? end;
@@ -102,7 +103,7 @@ export function readGame(
     for (const u of Object.values(state.units)) {
       const was = before.units[u.id];
       if (was && aliveModels(before, was).length && !aliveModels(state, u).length && u.modelIds.length)
-        highlights.push({ seq, kind: "wiped", text: `${u.name} wiped out` });
+        highlights.push({ seq, kind: "wiped", text: t("{unit} wiped out", { unit: u.name }) });
     }
 
     // A charge roll short of the nearest enemy.
@@ -120,7 +121,11 @@ export function readGame(
             .map((ms) => unitDistance(mine, ms)),
         );
         if (Number.isFinite(gap) && total < gap - ENGAGEMENT_RANGE)
-          highlights.push({ seq, kind: "charge", text: `${unit.name} failed a charge (${total}")` });
+          highlights.push({
+            seq,
+            kind: "charge",
+            text: t('{unit} failed a charge ({total}")', { unit: unit.name, total }),
+          });
       }
     }
 
@@ -138,7 +143,10 @@ export function readGame(
         highlights.push({
           seq,
           kind: "swing",
-          text: `${name(state, event.player)} ${total > 0 ? "+" : ""}${total} VP`,
+          text: t("{name} {change} VP", {
+            name: name(state, event.player),
+            change: `${total > 0 ? "+" : ""}${total}`,
+          }),
         });
     }
   }

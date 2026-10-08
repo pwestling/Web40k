@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { DiceSet, PlayerId } from "../core";
 import { useStore } from "../store";
-import { diceLook, FINISHES, PRESETS } from "./diceSets";
+import { t } from "../i18n";
+import { diceLook, finishes, PRESETS } from "./diceSets";
 import { makeDie, showFace } from "./DiceTray";
 import { click, rattle } from "./sound";
 
@@ -52,9 +53,9 @@ export function DicePicker({ player }: { player: PlayerId }) {
   return (
     <div className="dice-picker">
       <label>
-        {hotseat ? `${p.name}'s dice` : "Your dice"}{" "}
+        {hotseat ? t("{name}'s dice", { name: p.name }) : t("Your dice")}{" "}
         <select
-          aria-label="Dice"
+          aria-label={t("Dice")}
           value={value}
           onChange={(e) => {
             const v = e.target.value;
@@ -64,19 +65,19 @@ export function DicePicker({ player }: { player: PlayerId }) {
             else pick(PRESETS[Number(v)]!.dice);
           }}
         >
-          <option value={COLOUR}>Player colour</option>
+          <option value={COLOUR}>{t("Player colour")}</option>
           {PRESETS.map((x, i) => (
-            <option key={x.name} value={i}>
-              {x.name}
+            <option key={i} value={i}>
+              {x.name()}
             </option>
           ))}
-          <option value={CUSTOM}>Custom…</option>
+          <option value={CUSTOM}>{t("Custom…")}</option>
         </select>
       </label>
       {value === CUSTOM && (
         <div className="custom">
           <label>
-            Body{" "}
+            {t("Body")}{" "}
             <input
               type="color"
               value={set.body}
@@ -84,15 +85,15 @@ export function DicePicker({ player }: { player: PlayerId }) {
             />
           </label>
           <label>
-            Pips{" "}
+            {t("Pips")}{" "}
             <input type="color" value={set.pip} onChange={(e) => pickSoon({ ...set, pip: e.target.value })} />
           </label>
           <select
-            aria-label="Finish"
+            aria-label={t("Finish")}
             value={set.finish}
             onChange={(e) => pick({ ...set, finish: e.target.value as DiceSet["finish"] })}
           >
-            {FINISHES.map((f) => (
+            {finishes().map((f) => (
               <option key={f.id} value={f.id}>
                 {f.label}
               </option>
@@ -103,7 +104,7 @@ export function DicePicker({ player }: { player: PlayerId }) {
       <div
         ref={tray}
         className="dice-try"
-        title="Roll them again"
+        title={t("Roll them again")}
         onClick={() => tryOut(diceLook(p, p.color))}
       />
     </div>

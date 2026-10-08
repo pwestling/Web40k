@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { GameState, Layout, TerrainPiece, Zone } from "../core";
 import { idbStore } from "../packages/idb";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
+import { t, tn } from "../i18n";
 
 /**
  * The table library (roadmap #28): layouts saved on this device beside the
@@ -83,22 +84,24 @@ export function modelsLine(layout: Layout): string {
     ...new Set(layout.terrain.flatMap((t) => (t.mesh ? [t.mesh.name.replace(/\.[^.]+$/, "")] : []))),
   ];
   if (!names.length) return "";
-  return `${names.length} terrain model${names.length === 1 ? "" : "s"}: ${names.join(", ")}`;
+  return tn(names.length, "{n} terrain model: {names}", "{n} terrain models: {names}", {
+    names: names.join(", "),
+  });
 }
 
 /** How the sides deploy, in a few words: "Long edges", "Short edges", "No zones" or "Custom zones". */
 export function deploymentLine(zones: Zone[], table: { width: number; depth: number }): string {
-  if (!zones.length) return "No zones";
+  if (!zones.length) return t("No zones");
   const spans = zones.map((z) => {
     const xs = z.points.map((p) => p.x);
     const ys = z.points.map((p) => p.y);
     return { w: Math.max(...xs) - Math.min(...xs), d: Math.max(...ys) - Math.min(...ys) };
   });
   if (zones.length === 2 && spans.every((s) => s.w >= table.width - 0.1))
-    return `Long edges (${Math.round(spans[0]!.d)}")`;
+    return t('Long edges ({depth}")', { depth: Math.round(spans[0]!.d) });
   if (zones.length === 2 && spans.every((s) => s.d >= table.depth - 0.1))
-    return `Short edges (${Math.round(spans[0]!.w)}")`;
-  return "Custom zones";
+    return t('Short edges ({width}")', { width: Math.round(spans[0]!.w) });
+  return t("Custom zones");
 }
 
 /** Whether a file's contents look like a table, without its attachments. */

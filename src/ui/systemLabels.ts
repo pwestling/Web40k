@@ -1,28 +1,51 @@
+import { t } from "../i18n";
+
 /**
  * How the built-in games are named and pitched on screen (front door). Plain
  * descriptions of how each one plays, never a publisher's names: the rules
- * engine is generic and every army comes from the player.
+ * engine is generic and every army comes from the player. Getters, so the
+ * text is in the chosen language when it's read.
  */
 export const FRONT: Record<string, { title: string; blurb: string; army: string }> = {
   "forty-k-11": {
-    title: "Sci-fi battle",
-    blurb: "Squads move, shoot, charge and fight, phase by phase. The rules do the dice maths.",
-    army: "squads",
+    get title() {
+      return t("Sci-fi battle");
+    },
+    get blurb() {
+      return t("Squads move, shoot, charge and fight, phase by phase. The rules do the dice maths.");
+    },
+    get army() {
+      return t("squads");
+    },
   },
   "fsd-1.7": {
-    title: "Full Spectrum Dominance",
-    blurb: "Fast sci-fi with alternating activations: one unit each, back and forth.",
-    army: "units",
+    title: "Full Spectrum Dominance", // i18n-ignore
+    get blurb() {
+      return t("Fast sci-fi with alternating activations: one unit each, back and forth.");
+    },
+    get army() {
+      return t("units");
+    },
   },
   "tow-hand": {
-    title: "Rank and flank",
-    blurb: "Fantasy regiments in blocks: wheel, charge and hold the line. You roll, the table measures.",
-    army: "regiments",
+    get title() {
+      return t("Rank and flank");
+    },
+    get blurb() {
+      return t("Fantasy regiments in blocks: wheel, charge and hold the line. You roll, the table measures.");
+    },
+    get army() {
+      return t("regiments");
+    },
   },
   "conquest-hand": {
-    title: "Conquest",
-    blurb: "Regiments by hand, a card stack for activations, clash and volley.",
-    army: "regiments",
+    title: "Conquest", // i18n-ignore
+    get blurb() {
+      return t("Regiments by hand, a card stack for activations, clash and volley.");
+    },
+    get army() {
+      return t("regiments");
+    },
   },
 };
 

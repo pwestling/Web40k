@@ -2,6 +2,7 @@ import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import type { Layout, TableSource } from "../core";
+import { t } from "../i18n";
 import { useStore } from "../store";
 import { download } from "../ui/report";
 import {
@@ -24,7 +25,7 @@ async function asset(id: string) {
 
 /** Put the table as it stands in the library; returns its id. */
 export function saveTable(name: string, id?: string): string {
-  const table = tableFromGame(useStore.getState().game, name.trim() || "My table", id);
+  const table = tableFromGame(useStore.getState().game, name.trim() || t("My table"), id);
   useTables.getState().put(table);
   return table.id;
 }
@@ -69,7 +70,7 @@ export async function importTableFile(file: File): Promise<SavedTable | string> 
   try {
     data = JSON.parse(await file.text());
   } catch {
-    return "That file isn't an Open Battle table.";
+    return t("That file isn't an Open Battle table.");
   }
   const loose = data as Partial<Layout> & { format?: string };
   if (loose?.format === "open-battle/layout@1" && Array.isArray(loose.terrain)) {
@@ -86,7 +87,7 @@ export async function importTableFile(file: File): Promise<SavedTable | string> 
     return table;
   }
   const table = readTable(data);
-  if (!table) return "That file isn't an Open Battle table.";
+  if (!table) return t("That file isn't an Open Battle table.");
   const attached = (data as TableFile).attachments?.assets ?? {};
   if (Object.keys(attached).length) {
     const { decodeAsset } = await import("../assets/codec");

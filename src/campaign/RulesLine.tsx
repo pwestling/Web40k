@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import { refOf } from "../ui/Packages";
 import { APP_BUILD } from "../version";
 import type { CampaignBook } from "./book";
+import { t } from "../i18n";
 
 /**
  * A book's campaign rules (UX 237): the packages its games play with, which
@@ -66,20 +67,23 @@ export function CampaignRulesLine({ book, game }: { book: CampaignBook; game: Ga
   const choose = role === "host" || mode === "hotseat";
   return (
     <p className="muted small">
-      {book.name} plays with {rules.map((r) => r.name).join(", ")}.
+      {t("{book} plays with {rules}.", { book: book.name, rules: rules.map((r) => r.name).join(", ") })}
       {have.length > 0 &&
         (choose ? (
           <>
             {" "}
             <button className="small" onClick={() => turnOnRules(game, have)}>
-              Turn on {have.map((p) => p.manifest.name).join(", ")}
+              {t("Turn on {rules}", { rules: have.map((p) => p.manifest.name).join(", ") })}
             </button>
           </>
         ) : (
-          ` The host can turn on ${have.map((p) => p.manifest.name).join(", ")}.`
+          " " + t("The host can turn on {rules}.", { rules: have.map((p) => p.manifest.name).join(", ") })
         ))}
       {missing.length > 0 &&
-        ` This device doesn't have ${missing.map((o) => o.ref.name).join(", ")}: load it in Game settings.`}
+        " " +
+          t("This device doesn't have {rules}: load it in Game settings.", {
+            rules: missing.map((o) => o.ref.name).join(", "),
+          })}
     </p>
   );
 }

@@ -10,6 +10,7 @@ import { legendSting, whoosh } from "../ui/sound";
 import { sendMoment, useTalk } from "../talk/talk";
 import { useBroadcast } from "./broadcast";
 import { useReel } from "./reel";
+import { t } from "../i18n";
 
 /**
  * Moments of the game (PX-4): at the end of a game a reel plays each one
@@ -128,7 +129,8 @@ export function Moments() {
 
   // The game just ended (on this screen): start the reel, once.
   useEffect(() => {
-    if (!over || done || index !== null || !moments.length) return;
+    // Not in a review room: it goes over a finished game, with its notes and review bar (UX 244).
+    if (!over || done || index !== null || !moments.length || useStore.getState().review) return;
     director.current = useStore.getState().director;
     useStore.getState().set({ director: true });
     useStore.getState().select(null);
@@ -179,13 +181,13 @@ export function Moments() {
   if (index !== null && moments[index]) {
     const m = moments[index];
     return (
-      <MomentCard moment={m} step={`${index + 1} of ${moments.length}`}>
+      <MomentCard moment={m} step={t("{i} of {n}", { i: index + 1, n: moments.length })}>
         {/* Players can hurry their own reel; viewers watch it play (UX 143). */}
         {!watching && (
           <>
-            <button onClick={() => useReel.setState({ index: index + 1 })}>Next</button>
+            <button onClick={() => useReel.setState({ index: index + 1 })}>{t("Next")}</button>
             <button className="quiet" onClick={() => finishReel(director.current)}>
-              Skip to stats
+              {t("Skip to stats")}
             </button>
           </>
         )}

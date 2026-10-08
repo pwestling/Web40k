@@ -1,4 +1,5 @@
 import type { DiceSet, Player } from "../core";
+import { t } from "../i18n";
 
 /**
  * Players' own dice (PX-5b): a few presets, a custom body and pip colour, and
@@ -6,22 +7,22 @@ import type { DiceSet, Player } from "../core";
  * the game log, so everyone (and every replay) sees each player's dice.
  */
 
-export const FINISHES: { id: DiceSet["finish"]; label: string }[] = [
-  { id: "solid", label: "Solid" },
-  { id: "translucent", label: "Translucent" },
-  { id: "marbled", label: "Marbled" },
-  { id: "metallic", label: "Metallic" },
+export const finishes = (): { id: DiceSet["finish"]; label: string }[] => [
+  { id: "solid", label: t("Solid") },
+  { id: "translucent", label: t("Translucent") },
+  { id: "marbled", label: t("Marbled") },
+  { id: "metallic", label: t("Metallic") },
 ];
 
 /** Presets, after "Player colour" (no set: dice in the player's colour, as before). */
-export const PRESETS: { name: string; dice: DiceSet }[] = [
-  { name: "Bone & black", dice: { body: "#e6dcc3", pip: "#1a1a1a", finish: "solid" } },
-  { name: "Blood red & white", dice: { body: "#8f1d1d", pip: "#ffffff", finish: "solid" } },
-  { name: "Gunmetal & gold", dice: { body: "#4b5563", pip: "#e0b354", finish: "metallic" } },
-  { name: "Obsidian & brass", dice: { body: "#16181d", pip: "#c9a24a", finish: "solid" } },
-  { name: "Translucent blue", dice: { body: "#2f6fd6", pip: "#ffffff", finish: "translucent" } },
-  { name: "Marbled green", dice: { body: "#1f6b3a", pip: "#f4f1e8", finish: "marbled" } },
-  { name: "Ivory & red", dice: { body: "#f3eee0", pip: "#b42323", finish: "solid" } },
+export const PRESETS: { name: () => string; dice: DiceSet }[] = [
+  { name: () => t("Bone & black"), dice: { body: "#e6dcc3", pip: "#1a1a1a", finish: "solid" } },
+  { name: () => t("Blood red & white"), dice: { body: "#8f1d1d", pip: "#ffffff", finish: "solid" } },
+  { name: () => t("Gunmetal & gold"), dice: { body: "#4b5563", pip: "#e0b354", finish: "metallic" } },
+  { name: () => t("Obsidian & brass"), dice: { body: "#16181d", pip: "#c9a24a", finish: "solid" } },
+  { name: () => t("Translucent blue"), dice: { body: "#2f6fd6", pip: "#ffffff", finish: "translucent" } },
+  { name: () => t("Marbled green"), dice: { body: "#1f6b3a", pip: "#f4f1e8", finish: "marbled" } },
+  { name: () => t("Ivory & red"), dice: { body: "#f3eee0", pip: "#b42323", finish: "solid" } },
 ];
 
 const DEFAULT_PIP = "#10141a";

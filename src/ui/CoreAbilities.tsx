@@ -5,6 +5,7 @@ import { useCanControl, useStore } from "../store";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
 import { opposed } from "../core/teams";
+import { formatNumber, t } from "../i18n";
 
 /** Rule ids the unit's imported abilities bound to, with their parameters. */
 function boundRules(game: GameState, unit: Unit) {
@@ -51,36 +52,36 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
           className="small"
           onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: true }, unit.owner)}
         >
-          Deep Strike: set up in reserves
+          {t("Deep Strike: set up in reserves")}
         </button>
       )}
       {status.reserves && (
         <span>
-          In reserves.{" "}
+          {t("In reserves.")}{" "}
           {mine && !deploying && (
             <button
               className="small"
-              title='Then drag the unit onto the table, more than 9" from every enemy model'
+              title={t('Then drag the unit onto the table, more than 9" from every enemy model')}
               onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: false }, unit.owner)}
             >
-              Arrive
+              {t("Arrive")}
             </button>
           )}
         </span>
       )}
       {status.arrived && (
         <span className={nearest <= 9 ? "warn" : "muted"}>
-          Arrived from reserves:{" "}
           {nearest <= 9
-            ? `within 9" of an enemy (${nearest.toFixed(1)}")`
-            : 'set up more than 9" from enemies'}
-          .
+            ? t('Arrived from reserves: within 9" of an enemy ({distance}").', {
+                distance: formatNumber(nearest, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+              })
+            : t('Arrived from reserves: set up more than 9" from enemies.')}
         </span>
       )}
       {scouts && mine && deploying && !status.scouting && (
         <button
           className="small"
-          title="Measured from where the unit stands now"
+          title={t("Measured from where the unit stands now")}
           onClick={() =>
             dispatch(
               { type: "unit/specialMove", id: unit.id, inches: scoutInches, flag: "scouting" },
@@ -88,10 +89,12 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
             )
           }
         >
-          Scout move ({scoutInches}")
+          {t('Scout move ({inches}")', { inches: scoutInches })}
         </button>
       )}
-      {automatic.length > 0 && <span className="muted">Automatic: {automatic.join(", ")}</span>}
+      {automatic.length > 0 && (
+        <span className="muted">{t("Automatic: {abilities}", { abilities: automatic.join(", ") })}</span>
+      )}
     </div>
   );
 }
@@ -123,11 +126,11 @@ export function AttachSelect({ unit }: { unit: Unit }) {
         e.target.value && dispatch({ type: "unit/attach", id: unit.id, to: e.target.value }, unit.owner)
       }
     >
-      <option value="">{names.length ? "Lead a unit (Leader)…" : "Attach to unit (leaders)…"}</option>
+      <option value="">{names.length ? t("Lead a unit (Leader)…") : t("Attach to unit (leaders)…")}</option>
       {own.map((u) => (
         <option key={u.id} value={u.id}>
           {u.name}
-          {names.length ? (fits(u) ? " ★ can lead" : "") : ""}
+          {names.length ? (fits(u) ? ` ★ ${t("can lead")}` : "") : ""}
         </option>
       ))}
     </select>

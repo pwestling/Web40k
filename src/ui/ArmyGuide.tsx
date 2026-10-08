@@ -1,31 +1,34 @@
 import { useState } from "react";
 import { listSystems } from "../core/content";
+import { t } from "../i18n";
 import { FRONT, systemLabel } from "./systemLabels";
 
 /** Where a game's army lists come from, in plain steps. */
-const LISTS: Record<string, string[]> = {
-  "forty-k-11": [
-    "Build your list in New Recruit or BattleScribe.",
-    "Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in.",
-    "In a game, before the battle starts, press Import army list in the left panel and pick the file.",
-    "Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy.",
+const LISTS: Record<string, () => string[]> = {
+  "forty-k-11": () => [
+    t("Build your list in New Recruit or BattleScribe."),
+    t("Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in."),
+    t("In a game, before the battle starts, press Import army list in the left panel and pick the file."),
+    t("Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy."),
   ],
-  "fsd-1.7": [
-    "There is no list app for this one yet: start from Sample army, or a rules package that brings units.",
-    "Any BattleScribe-style file (.ros, .rosz or New Recruit JSON) with model profiles also reads in.",
-    "Stats the list leaves out are asked for on the import summary.",
+  "fsd-1.7": () => [
+    t("There is no list app for this one yet: start from Sample army, or a rules package that brings units."),
+    t("Any BattleScribe-style file (.ros, .rosz or New Recruit JSON) with model profiles also reads in."),
+    t("Stats the list leaves out are asked for on the import summary."),
   ],
-  "tow-hand": [
-    "Build your list in New Recruit or BattleScribe.",
-    "Export it as JSON from New Recruit, or as .rosz from BattleScribe.",
-    "In a game, press Import army list in the left panel and pick the file.",
-    "Each regiment comes in as a block. Set its frontage (models in the front rank) on the summary.",
-    "Lists often leave stats out: the summary shows them in yellow for you to fill in. Everyone sees what you typed.",
+  "tow-hand": () => [
+    t("Build your list in New Recruit or BattleScribe."),
+    t("Export it as JSON from New Recruit, or as .rosz from BattleScribe."),
+    t("In a game, press Import army list in the left panel and pick the file."),
+    t("Each regiment comes in as a block. Set its frontage (models in the front rank) on the summary."),
+    t(
+      "Lists often leave stats out: the summary shows them in yellow for you to fill in. Everyone sees what you typed.",
+    ),
   ],
-  "conquest-hand": [
-    "Build your list in New Recruit (or BattleScribe, where its data is available).",
-    "Export it as JSON or .rosz, then press Import army list in the left panel.",
-    "Each regiment comes in as a block of stands. Fill in any stats the summary marks as missing.",
+  "conquest-hand": () => [
+    t("Build your list in New Recruit (or BattleScribe, where its data is available)."),
+    t("Export it as JSON or .rosz, then press Import army list in the left panel."),
+    t("Each regiment comes in as a block of stands. Fill in any stats the summary marks as missing."),
   ],
 };
 
@@ -41,12 +44,12 @@ export function ArmyGuide({ system, onClose }: { system: string; onClose: () => 
       <div
         className="panel modal guide"
         role="dialog"
-        aria-label="Bring your army"
+        aria-label={t("Bring your army")}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="row spread">
-          <h2>Bring your army</h2>
-          <button className="quiet" title="Close" onClick={onClose}>
+          <h2>{t("Bring your army")}</h2>
+          <button className="quiet" title={t("Close")} onClick={onClose}>
             ✕
           </button>
         </div>
@@ -63,29 +66,37 @@ export function ArmyGuide({ system, onClose }: { system: string; onClose: () => 
             </button>
           ))}
         </div>
-        <h3>Your list</h3>
+        <h3>{t("Your list")}</h3>
         <ol>
-          {(LISTS[at] ?? []).map((l) => (
+          {(LISTS[at]?.() ?? []).map((l) => (
             <li key={l}>{l}</li>
           ))}
         </ol>
         <p className="muted small">
-          Your list stays with you: it goes to the people in your game and nowhere else. Open Battle comes
-          with no armies but its made-up samples.
+          {t(
+            "Your list stays with you: it goes to the people in your game and nowhere else. Open Battle comes with no armies but its made-up samples.",
+          )}
         </p>
-        <h3>Your figures</h3>
+        <h3>{t("Your figures")}</h3>
         <ol>
           <li>
-            Any 3D model file works: .glb, .gltf, .stl, .obj or .ply (a scan, or the file you printed from).
+            {t(
+              "Any 3D model file works: .glb, .gltf, .stl, .obj or .ply (a scan, or the file you printed from).",
+            )}
           </li>
-          <li>Drag the file onto a unit on the table, or select the unit and use Figures on its card.</li>
-          <li>One figure for the whole unit, or one per kind of model. Everyone in the game sees them.</li>
+          <li>
+            {t("Drag the file onto a unit on the table, or select the unit and use Figures on its card.")}
+          </li>
+          <li>
+            {t("One figure for the whole unit, or one per kind of model. Everyone in the game sees them.")}
+          </li>
         </ol>
-        <h3>Rules packages</h3>
+        <h3>{t("Rules packages")}</h3>
         <p>
-          A rules package adds a game, or more {FRONT[at]?.army ?? "units"} and rules to one, as a single
-          file. Add it under Rules packages on the start screen. Everyone in a game checks they have the same
-          version, and a package's code only runs once you have said yes to it.
+          {t(
+            "A rules package adds a game, or more {army} and rules to one, as a single file. Add it under Rules packages on the start screen. Everyone in a game checks they have the same version, and a package's code only runs once you have said yes to it.",
+            { army: FRONT[at]?.army ?? t("units") },
+          )}
         </p>
       </div>
     </div>

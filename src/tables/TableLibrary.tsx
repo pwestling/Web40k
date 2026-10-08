@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getSystem } from "../core/content/systems";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
+import { formatDate, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { SavedNote } from "../ui/SavedNote";
 import { useGame } from "../ui/hooks";
@@ -15,12 +16,12 @@ const systemName = (id: string) => {
     // "(draft)" marks a system still being built; it means nothing to a player.
     return getSystem(id).name.replace(/\s*\(draft\)\s*$/i, "");
   } catch {
-    return id || "another game";
+    return id || t("another game");
   }
 };
 
-const saved = (t: SavedTable) =>
-  new Date(t.savedAt).toLocaleString(undefined, {
+const saved = (table: SavedTable) =>
+  formatDate(table.savedAt, {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -50,7 +51,7 @@ export function TablePicker() {
   }, []);
   if (game.turn.round > 0 || role === "spectator") return null;
   const mine = Object.values(tables)
-    .filter((t) => t.system === (game.system ?? DEFAULT_SYSTEM))
+    .filter((tb) => tb.system === (game.system ?? DEFAULT_SYSTEM))
     .sort((a, b) => b.savedAt - a.savedAt);
   const all = starters();
   const pick = (value: string) => {
@@ -59,11 +60,11 @@ export function TablePicker() {
       const s = all.find((x) => x.id === id);
       void applyLayout(starterLayout(game.system, game.table, id, seed[id] ?? 1), {
         key: value,
-        name: s?.name ?? "a starter table",
+        name: s?.name ?? t("a starter table"),
       });
     } else if (value.startsWith("table:")) {
-      const t = tables[value.slice(6)];
-      if (t) void applyLayout(t.layout, { key: value, name: t.name });
+      const tb = tables[value.slice(6)];
+      if (tb) void applyLayout(tb.layout, { key: value, name: tb.name });
     }
   };
   // The table everyone is on, as the game has it: named in the list when this device has it too.
@@ -73,7 +74,7 @@ export function TablePicker() {
     !source.changed &&
     (source.key.startsWith("starter:")
       ? all.some((s) => `starter:${s.id}` === source.key)
-      : mine.some((t) => `table:${t.id}` === source.key));
+      : mine.some((tb) => `table:${tb.id}` === source.key));
   const value = listed ? source.key : "";
   const starter = value.startsWith("starter:") ? value.slice(8) : null;
   const current = starter ? all.find((s) => s.id === starter) : undefined;
@@ -92,14 +93,18 @@ export function TablePicker() {
         table={game.table}
         colors={colors}
         width={84}
-        label="This game's table from above"
+        label={t("This game's table from above")}
       />
       <div className="col">
-        <select aria-label="Table" value={value} onChange={(e) => pick(e.target.value)}>
+        <select aria-label={t("Table")} value={value} onChange={(e) => pick(e.target.value)}>
           <option value="">
-            {source ? `Table: ${source.name}${source.changed ? ", changed" : ""}` : "Table: as it is"}
+            {source
+              ? source.changed
+                ? t("Table: {name}, changed", { name: source.name })
+                : t("Table: {name}", { name: source.name })
+              : t("Table: as it is")}
           </option>
-          <optgroup label="Starter tables">
+          <optgroup label={t("Starter tables")}>
             {all.map((s) => (
               <option key={s.id} value={`starter:${s.id}`}>
                 {s.name}
@@ -107,10 +112,10 @@ export function TablePicker() {
             ))}
           </optgroup>
           {mine.length > 0 && (
-            <optgroup label="Your table library">
-              {mine.map((t) => (
-                <option key={t.id} value={`table:${t.id}`}>
-                  {t.name}
+            <optgroup label={t("Your table library")}>
+              {mine.map((tb) => (
+                <option key={tb.id} value={`table:${tb.id}`}>
+                  {tb.name}
                 </option>
               ))}
             </optgroup>
@@ -126,11 +131,11 @@ export function TablePicker() {
                 setSeed({ ...seed, [starter]: next });
                 void applyLayout(starterLayout(game.system, game.table, starter, next), {
                   key: `starter:${starter}`,
-                  name: current?.name ?? "a starter table",
+                  name: current?.name ?? t("a starter table"),
                 });
               }}
             >
-              Another like it
+              {t("Another like it")}
             </button>
           )}
         </div>
@@ -154,71 +159,73 @@ export function TableShelf() {
   }, []);
   const all = Object.values(tables).sort((a, b) => b.savedAt - a.savedAt);
   const system = game.system ?? DEFAULT_SYSTEM;
-  const same = (t: SavedTable) => t.system === system;
+  const same = (tb: SavedTable) => tb.system === system;
   const last = savedId ? tables[savedId] : undefined;
   return (
     <details className="fold table-shelf">
-      <summary>Table library{loaded ? ` (${all.length})` : ""}</summary>
+      <summary>{loaded ? t("Table library ({count})", { count: all.length }) : t("Table library")}</summary>
       <form
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
           const id = saveTable(
-            name || last?.name || "My table",
+            name || last?.name || t("My table"),
             last && (!name || name === last.name) ? last.id : undefined,
           );
           setSavedId(id);
-          setNote(`Saved to your table library.`);
+          setNote(t("Saved to your table library."));
         }}
       >
         <input
-          aria-label="Table name"
-          placeholder={last?.name ?? "Name this table"}
+          aria-label={t("Table name")}
+          placeholder={last?.name ?? t("Name this table")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <button className="small primary">
-          {last && (!name || name === last.name) ? "Update" : "Save table"}
+          {last && (!name || name === last.name) ? t("Update") : t("Save table")}
         </button>
       </form>
       <ul className="tables">
-        {all.map((t) => (
-          <li key={t.id} className={same(t) ? "" : "other"}>
+        {all.map((tb) => (
+          <li key={tb.id} className={same(tb) ? "" : "other"}>
             <TableThumb
-              layout={t.layout}
-              table={t.table}
+              layout={tb.layout}
+              table={tb.table}
               colors={colors}
               width={72}
-              label={`${t.name} from above`}
+              label={t("{name} from above", { name: tb.name })}
             />
             <div className="col">
-              <strong>{t.name}</strong>
+              <strong>{tb.name}</strong>
               <span className="muted small">
-                {systemName(t.system)} · {deploymentLine(t.layout.zones, t.table)} · {t.layout.terrain.length}{" "}
-                pieces · {saved(t)}
+                {systemName(tb.system)} · {deploymentLine(tb.layout.zones, tb.table)} ·{" "}
+                {tn(tb.layout.terrain.length, "{n} piece", "{n} pieces")} · {saved(tb)}
               </span>
-              {modelsLine(t.layout) && <span className="muted small">{modelsLine(t.layout)}</span>}
+              {modelsLine(tb.layout) && <span className="muted small">{modelsLine(tb.layout)}</span>}
               <span className="row">
                 <button
                   className="small"
-                  disabled={!same(t)}
-                  title={same(t) ? "Set this table up for everyone" : "This table is for another game"}
+                  disabled={!same(tb)}
+                  title={same(tb) ? t("Set this table up for everyone") : t("This table is for another game")}
                   onClick={() => {
-                    void applyLayout(t.layout);
-                    setSavedId(t.id);
+                    void applyLayout(tb.layout);
+                    setSavedId(tb.id);
                     setName("");
                   }}
                 >
-                  Use
+                  {t("Use")}
                 </button>
-                <button className="small" onClick={() => void exportTable(t).then(setExported)}>
-                  Export
+                <button className="small" onClick={() => void exportTable(tb).then(setExported)}>
+                  {t("Export")}
                 </button>
                 <button
                   className="quiet small"
-                  onClick={() => confirm(`Take ${t.name} out of your library?`) && remove(t.id)}
+                  onClick={() =>
+                    confirm(t("Take {name} out of your library?", { name: tb.name })) && remove(tb.id)
+                  }
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </span>
             </div>
@@ -226,7 +233,7 @@ export function TableShelf() {
         ))}
       </ul>
       <label className="file button small">
-        Open a table file
+        {t("Open a table file")}
         <input
           type="file"
           accept=".json,application/json"
@@ -234,12 +241,13 @@ export function TableShelf() {
             const file = e.target.files?.[0];
             if (file)
               void importTableFile(file).then((r) =>
-                setNote(typeof r === "string" ? r : `${r.name} is in your table library.`),
+                setNote(typeof r === "string" ? r : t("{name} is in your table library.", { name: r.name })),
               );
             e.target.value = "";
           }}
         />
       </label>
+      {/* i18n-ignore */}
       {exported && <SavedNote file={exported} kind="table" />}
       {note && <p className="muted small">{note}</p>}
     </details>

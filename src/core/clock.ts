@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { findProcedure, nextStep } from "./content/runner";
 import { getSystem } from "./content/systems";
 import { systemOf } from "./content/turn";
@@ -153,15 +154,21 @@ export function timeCallOf(
     const elapsed = now - c.battleStart;
     const left = settings.gameMinutes * 60_000 - elapsed;
     if (left <= 0)
-      return { kind: "time-up", text: "Time's up for the battle: finish the turn you're in, then stop." };
+      return { kind: "time-up", text: t("Time's up for the battle: finish the turn you're in, then stop.") };
     // After this round (at the pace so far), not enough time for another like it: this is the last.
     const average = c.roundsDone ? (c.roundStart! - c.battleStart) / c.roundsDone : null;
     const roundLeft = average !== null ? average - (now - c.roundStart!) : null;
     if (average !== null && left - Math.max(0, roundLeft ?? 0) < average)
-      return { kind: "last-turn", text: "Last turn: there's time to finish this battle round, not another." };
+      return {
+        kind: "last-turn",
+        text: t("Last turn: there's time to finish this battle round, not another."),
+      };
   }
   if (settings.roundMinutes && c.roundStart !== null && now - c.roundStart > settings.roundMinutes * 60_000)
-    return { kind: `round-${c.roundsDone + 1}`, text: "This battle round is over its time: finish it off." };
+    return {
+      kind: `round-${c.roundsDone + 1}`,
+      text: t("This battle round is over its time: finish it off."),
+    };
   return null;
 }
 

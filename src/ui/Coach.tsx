@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import { didIds, waitsOn } from "../teach/coach";
 import { fill } from "../teach/lesson";
 import { opponentMove, noteProgress } from "../teach/opponent";
+import { t, translated } from "../i18n";
 import { backToLobby, coachTick, computerPlays, leaveLesson, redoStep, useCoach } from "../teach/store";
 
 /** How long the opponent waits before each move, and on each roll so the learner can follow it. */
@@ -82,7 +83,9 @@ export function Coach() {
     (game.attack?.stage === "done" &&
       !computerPlays(game, game.units[game.attack.spec.attackerUnitId]?.owner)) ||
     (!!game.procedure?.run.done && !computerPlays(game, game.procedure.by));
-  usePulse(lesson && scrub === null && (!free || finished) ? (finished ? "Done" : step?.point) : undefined);
+  usePulse(
+    lesson && scrub === null && (!free || finished) ? (finished ? t("Done") : step?.point) : undefined,
+  );
 
   // A step to do something whose phase has gone by (the learner pressed on past it) offers Skip.
   const phaseNow = `${game.turn.round}:${game.turn.activeSeat}:${game.turn.phase}`;
@@ -108,7 +111,7 @@ export function Coach() {
     for (const l of record.events)
       if (l.seq > from && !undone.has(l.seq) && learners.has(l.by))
         for (const id of didIds(l.event)) did.add(id);
-    return lesson.done.ticks.map((t) => ({ label: t.label, ok: [t.did].flat().some((id) => did.has(id)) }));
+    return lesson.done.ticks.map((x) => ({ label: x.label, ok: [x.did].flat().some((id) => did.has(id)) }));
   }, [lesson, step, record, game, progress.began]);
 
   if (!lesson || free || scrub !== null) return null;
@@ -118,21 +121,21 @@ export function Coach() {
     return (
       <div className="panel coach done" role="status">
         {said && <p className="coach-said">{said}</p>}
-        <strong className="coach-title">{lesson.done?.title ?? "Lesson done"}</strong>
+        <strong className="coach-title">{lesson.done?.title ?? t("Lesson done")}</strong>
         {ticks.length > 0 && (
           <ul className="coach-ticks">
-            {ticks.map((t) => (
-              <li key={t.label} className={t.ok ? "ok" : ""}>
-                {t.ok ? "✓" : "○"} {t.label}
+            {ticks.map((x) => (
+              <li key={x.label} className={x.ok ? "ok" : ""}>
+                {x.ok ? "✓" : "○"} {x.label}
               </li>
             ))}
           </ul>
         )}
         <div className="row">
           <button className="primary" onClick={() => useCoach.setState({ free: true })}>
-            Play on against the computer
+            {t("Play on against the computer")}
           </button>
-          <button onClick={backToLobby}>Try another lesson</button>
+          <button onClick={backToLobby}>{t("Try another lesson")}</button>
         </div>
       </div>
     );
@@ -142,32 +145,42 @@ export function Coach() {
     <div className="panel coach" role="status" aria-live="polite">
       <div className="row spread">
         <span className="muted small">
-          Lesson · {lesson.title} · step {progress.step + 1} of {n}
+          {t("Lesson · {title} · step {step} of {count}", {
+            title: lesson.title,
+            step: progress.step + 1,
+            count: n,
+          })}
         </span>
-        <button className="quiet" title="Leave the lesson (the game stays)" onClick={leaveLesson}>
+        <button className="quiet" title={t("Leave the lesson (the game stays)")} onClick={leaveLesson}>
           ✕
         </button>
       </div>
       {said && <p className="coach-said">{said}</p>}
       <p>{fill(step.say, facts)}</p>
-      {finished && <p className="muted small">Press Done on the dice panel to carry on.</p>}
+      {finished && <p className="muted small">{t("Press Done on the dice panel to carry on.")}</p>}
       <div className="row">
         {!step.until && (
           <button className="primary" onClick={() => coachTick(true)}>
-            {progress.step + 1 === n ? "Finish" : "Got it"}
+            {progress.step + 1 === n ? t("Finish") : t("Got it")}
           </button>
         )}
         {step.until && (step.hold || passed) && (
           <button
-            title={step.hold ? "Let the other side carry on" : "The game has moved on: skip to the next step"}
+            title={
+              step.hold ? t("Let the other side carry on") : t("The game has moved on: skip to the next step")
+            }
             onClick={() => coachTick(true)}
           >
-            Skip
+            {t("Skip")}
           </button>
         )}
         {progress.step > 0 && began !== undefined && began < (record.events.at(-1)?.seq ?? 0) && (
-          <button className="quiet" title="Go back to where this step began (What if)" onClick={redoStep}>
-            Redo this step
+          <button
+            className="quiet"
+            title={t("Go back to where this step began (What if)")}
+            onClick={redoStep}
+          >
+            {t("Redo this step")}
           </button>
         )}
       </div>
@@ -184,10 +197,12 @@ function usePulse(label: string | undefined) {
     if (!label) return;
     const mark = () => {
       for (const b of document.querySelectorAll<HTMLButtonElement>("button")) {
+        // Lessons name buttons by their English text; match the button as shown in the chosen language too.
+        const text = b.textContent?.trim();
         const hit =
           !b.closest(".replaybar, .coach") &&
           !b.disabled &&
-          (b.textContent?.trim() === label || (label === "▶" && b.title === "Next phase"));
+          (text === label || text === translated(label) || (label === "▶" && b.title === t("Next phase")));
         b.classList.toggle("coach-pulse", hit);
       }
     };

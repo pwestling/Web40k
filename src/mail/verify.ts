@@ -2,6 +2,7 @@ import { stateAt, stateHash, type GameRecord, type LoggedEvent, type Rng } from 
 import { createLoopbackNetwork } from "../net/loopback";
 import { Session } from "../net/session";
 import type { MailFile } from "./file";
+import { t } from "../i18n";
 
 export type Verdict =
   | { ok: true }
@@ -25,7 +26,7 @@ const same = (a: LoggedEvent, b: LoggedEvent) =>
  */
 export async function replaySegment(record: GameRecord, file: MailFile, rng: Rng): Promise<Verdict> {
   if (stateHash(stateAt(record)) !== file.base.hash)
-    return { ok: false, why: "It starts from a different game from yours." };
+    return { ok: false, why: t("It starts from a different game from yours.") };
   const ats = file.events.map((e) => e.at);
   let clock = 0;
   const session = new Session({
@@ -52,10 +53,10 @@ export async function replaySegment(record: GameRecord, file: MailFile, rng: Rng
         return {
           ok: false,
           why: !b
-            ? "Its moves, played again here, come out differently: it leaves something out."
+            ? t("Its moves, played again here, come out differently: it leaves something out.")
             : !a
-              ? "It has results its moves don't produce: something was added or changed."
-              : "A roll or result in it doesn't match what its moves and dice give here: it was changed.",
+              ? t("It has results its moves don't produce: something was added or changed.")
+              : t("A roll or result in it doesn't match what its moves and dice give here: it was changed."),
           seq: (b ?? a)!.seq,
         };
     }

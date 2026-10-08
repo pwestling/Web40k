@@ -3,10 +3,12 @@ import { momentsOf } from "../core/moments";
 import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
 import { castMoment } from "./Moments";
-import { currentCaster, myName, setMyName, useTalk } from "../talk/talk";
+import { currentCaster, myName, setMyName, useTalk, withoutWatching } from "../talk/talk";
 import { CASTER_FRESH_MS, DELAYS, useBroadcast, useNow } from "./broadcast";
+import { t } from "../i18n";
 
-const delayLabel = (s: number) => (s === 0 ? "Live" : s < 60 ? `${s} s behind` : `${s / 60} min behind`);
+const delayLabel = (s: number) =>
+  s === 0 ? t("Live") : s < 60 ? t("{s} s behind", { s }) : t("{m} min behind", { m: s / 60 });
 
 /**
  * For spectators: commentate (your camera goes out to the audience, your
@@ -47,35 +49,39 @@ export function BroadcastControls() {
       <div className="row wrap">
         <button
           className={casting ? "on" : ""}
-          title="Your camera goes out to everyone watching who follows it; draw with Ping, Arrow and Area"
+          title={t(
+            "Your camera goes out to everyone watching who follows it; draw with Ping, Arrow and Area",
+          )}
           onClick={() => {
             if (!casting && !myName()) setNaming(naming === null ? "" : null);
             else useBroadcast.setState({ casting: !casting, follow: false });
           }}
         >
-          🎙 {casting ? "Commentating" : "Commentate"}
+          🎙 {casting ? t("Commentating") : t("Commentate")}
         </button>
         {!casting && live && (
           <button
             className={follow ? "on" : ""}
-            title="Your camera follows the commentator's; move it yourself to stop"
+            title={t("Your camera follows the commentator's; move it yourself to stop")}
             onClick={() => useBroadcast.setState({ follow: !follow })}
           >
             {/* Says so while on, apart from "Follow action" (UX 146). */}
-            {follow ? "🎥 Following" : "Follow"} {live.name.replace(/ \(watching\)$/, "")}
+            {follow
+              ? t("🎥 Following {name}", { name: withoutWatching(live.name) })
+              : t("Follow {name}", { name: withoutWatching(live.name) })}
           </button>
         )}
         {moments.length > 0 && (
           <select
-            aria-label="Bring up a moment"
-            title="Show a moment's card to everyone following you, and replay it on the table"
+            aria-label={t("Bring up a moment")}
+            title={t("Show a moment's card to everyone following you, and replay it on the table")}
             value=""
             onChange={(e) => {
               const m = moments[Number(e.target.value)];
               if (m) castMoment(m);
             }}
           >
-            <option value="">Bring up a moment…</option>
+            <option value="">{t("Bring up a moment…")}</option>
             {moments.map((m, i) => (
               <option key={`${m.kind}-${m.seq}-${m.player ?? ""}`} value={i}>
                 {m.kind === "rare" ? "★ " : ""}
@@ -84,9 +90,9 @@ export function BroadcastControls() {
             ))}
           </select>
         )}
-        <label title="Watch the game this far behind, so a stream gives nothing away">
+        <label title={t("Watch the game this far behind, so a stream gives nothing away")}>
           <select
-            aria-label="Delay"
+            aria-label={t("Delay")}
             value={delay}
             onChange={(e) => useBroadcast.setState({ delay: Number(e.target.value) })}
           >
@@ -98,10 +104,10 @@ export function BroadcastControls() {
           </select>
         </label>
         <button
-          title="A clean view of the board for streaming (OBS browser source), with this delay"
+          title={t("A clean view of the board for streaming (OBS browser source), with this delay")}
           onClick={() => open(streamLink(), "_blank", "noopener")}
         >
-          Stream view ↗
+          {t("Stream view ↗")}
         </button>
       </div>
       {naming !== null && (
@@ -114,14 +120,14 @@ export function BroadcastControls() {
         >
           <input
             autoFocus
-            aria-label="Your name on air"
-            placeholder="Your name on air"
+            aria-label={t("Your name on air")}
+            placeholder={t("Your name on air")}
             maxLength={24}
             value={naming}
             onChange={(e) => setNaming(e.target.value)}
           />
           <button type="submit" className="primary" disabled={!naming.trim()}>
-            Go on air
+            {t("Go on air")}
           </button>
         </form>
       )}
@@ -139,9 +145,7 @@ export function BroadcastBadge() {
   if (!fresh && !delay) return null;
   return (
     <div className="broadcast-badge">
-      {fresh && (
-        <span style={{ borderColor: caster.color }}>🎙 {caster.name.replace(/ \(watching\)$/, "")}</span>
-      )}
+      {fresh && <span style={{ borderColor: caster.color }}>🎙 {withoutWatching(caster.name)}</span>}
       {delay > 0 && <span className="muted">{delayLabel(delay)}</span>}
     </div>
   );

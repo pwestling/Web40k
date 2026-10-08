@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { create } from "zustand";
+import { t } from "../i18n";
 import { focusOn } from "../render/focus";
 import { useCanControl, useStore } from "../store";
 import { aliveModels } from "../systems/wh40k/rules";
@@ -30,7 +31,7 @@ export function WarningsButton() {
   return (
     <button
       className={`warnings-button${serious ? " has" : ""}${open ? " on" : ""}`}
-      title="Table warnings: rules the table may be breaking"
+      title={t("Table warnings: rules the table may be breaking")}
       aria-expanded={open}
       onClick={() => usePanel.setState({ open: !open })}
     >
@@ -59,7 +60,7 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
   return (
     <li className={w.severity}>
       {onShow ? (
-        <button className="link" title="Show this unit" onClick={() => onShow(w)}>
+        <button className="link" title={t("Show this unit")} onClick={() => onShow(w)}>
           {text}
         </button>
       ) : (
@@ -70,7 +71,7 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
         {yours && unit && (
           <button
             className="small"
-            title="Clear this for everyone until the unit moves again (the log notes it)"
+            title={t("Clear this for everyone until the unit moves again (the log notes it)")}
             onClick={() =>
               dispatch(
                 {
@@ -83,15 +84,15 @@ function WarningRow({ w, onShow }: { w: TableWarning; onShow?: (w: TableWarning)
               )
             }
           >
-            It's fine (tell everyone)
+            {t("It's fine (tell everyone)")}
           </button>
         )}
         <button
           className="quiet small"
-          title="Hide it on this screen"
+          title={t("Hide it on this screen")}
           onClick={() => usePanel.setState((s) => ({ dismissed: { ...s.dismissed, [w.key]: true } }))}
         >
-          Hide
+          {t("Hide")}
         </button>
       </span>
     </li>
@@ -103,7 +104,7 @@ export function UnitWarnings({ unitId, skip = [] }: { unitId: string; skip?: str
   const warnings = useWarnings().filter((w) => w.unitId === unitId && !skip.includes(w.checkId));
   if (!warnings.length) return null;
   return (
-    <ul className="table-warnings unit-warnings" aria-label="Warnings for this unit">
+    <ul className="table-warnings unit-warnings" aria-label={t("Warnings for this unit")}>
       {warnings.map((w) => (
         <WarningRow key={w.key} w={w} />
       ))}
@@ -145,15 +146,18 @@ export function TableWarningsPanel() {
       );
   };
   return (
-    <section className={`panel table-warnings${selected ? " beside-card" : ""}`} aria-label="Table warnings">
+    <section
+      className={`panel table-warnings${selected ? " beside-card" : ""}`}
+      aria-label={t("Table warnings")}
+    >
       <div className="row spread">
-        <h3>Table warnings</h3>
-        <button className="quiet" aria-label="Close" onClick={() => usePanel.setState({ open: false })}>
+        <h3>{t("Table warnings")}</h3>
+        <button className="quiet" aria-label={t("Close")} onClick={() => usePanel.setState({ open: false })}>
           ✕
         </button>
       </div>
       {warnings.length === 0 ? (
-        <p className="muted small">Nothing to flag on the table right now.</p>
+        <p className="muted small">{t("Nothing to flag on the table right now.")}</p>
       ) : (
         <ul>
           {warnings.map((w) => (
@@ -161,7 +165,7 @@ export function TableWarningsPanel() {
           ))}
         </ul>
       )}
-      <p className="muted small">Advisory: the rules never block a move. Players decide.</p>
+      <p className="muted small">{t("Advisory: the rules never block a move. Players decide.")}</p>
     </section>
   );
 }

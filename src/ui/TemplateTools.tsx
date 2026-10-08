@@ -3,6 +3,7 @@ import { useCanControl, useStore } from "../store";
 import { systemModule } from "../systems";
 import { useGame } from "./hooks";
 import { opposed } from "../core/teams";
+import { t } from "../i18n";
 
 /**
  * Templates and special dice, for systems that use them: lay a blast, flame
@@ -54,13 +55,20 @@ export function TemplateTools() {
   const scatterDice = mod.scatter && die(mod.scatter.direction) && die(mod.scatter.distance);
   return (
     <details className="fold templates">
-      <summary>Templates{templates.length ? ` (${templates.length})` : ""}</summary>
+      <summary>
+        {t("Templates")}
+        {templates.length ? ` (${templates.length})` : ""}
+      </summary>
       {live && (
         <div className="row wrap">
           {(mod.templates ?? []).map((k) => (
             <button
               key={k.id}
-              title={target ? `Lay it on ${target.name}` : "Lay it mid-table (select a unit to aim it)"}
+              title={
+                target
+                  ? t("Lay it on {unit}", { unit: target.name })
+                  : t("Lay it mid-table (select a unit to aim it)")
+              }
               onClick={() => place(k)}
             >
               {k.label}
@@ -70,38 +78,40 @@ export function TemplateTools() {
       )}
       {templates.length > 0 && (
         <ul className="template-list">
-          {templates.map((t) => {
-            const hits = templateHits(game, t);
+          {templates.map((tpl) => {
+            const hits = templateHits(game, tpl);
             return (
-              <li key={t.id}>
-                <strong>{t.label ?? "Template"}</strong>
-                {hits.length === 0 && <span className="muted"> · no models under it</span>}
+              <li key={tpl.id}>
+                <strong>{tpl.label ?? t("Template")}</strong>
+                {hits.length === 0 && <span className="muted"> · {t("no models under it")}</span>}
                 {hits.map((h) => (
                   <div key={h.unitId ?? "-"} className="muted small">
-                    {h.unitId ? (game.units[h.unitId]?.name ?? "?") : "Models"}:{" "}
-                    {t.shape === "line" ? `${h.partial} touched` : `${h.full} under, ${h.partial} partly`}
+                    {h.unitId ? (game.units[h.unitId]?.name ?? "?") : t("Models")}:{" "}
+                    {tpl.shape === "line"
+                      ? t("{partial} touched", { partial: h.partial })
+                      : t("{full} under, {partial} partly", { full: h.full, partial: h.partial })}
                   </div>
                 ))}
                 {live && (
                   <span className="row">
-                    {t.shape === "circle" && scatterDice && (
+                    {tpl.shape === "circle" && scatterDice && (
                       <button
-                        title="Roll the scatter and artillery dice and move it"
+                        title={t("Roll the scatter and artillery dice and move it")}
                         onClick={() =>
                           dispatch({
                             type: "template/scatter",
-                            id: t.id,
+                            id: tpl.id,
                             scatter: die(mod.scatter!.direction)!.faces,
                             distance: die(mod.scatter!.distance)!.faces,
-                            label: t.label,
+                            label: tpl.label,
                           })
                         }
                       >
-                        Scatter
+                        {t("Scatter")}
                       </button>
                     )}
-                    <button onClick={() => dispatch({ type: "template/set", id: t.id, template: null })}>
-                      Remove
+                    <button onClick={() => dispatch({ type: "template/set", id: tpl.id, template: null })}>
+                      {t("Remove")}
                     </button>
                   </span>
                 )}
@@ -125,12 +135,12 @@ export function TemplateTools() {
                 })
               }
             >
-              Roll {d.name.toLowerCase()} die
+              {t("Roll {die} die", { die: d.name.toLowerCase() })}
             </button>
           ))}
         </div>
       )}
-      <p className="muted small">Drag a template to move it; drag its round handle to aim it.</p>
+      <p className="muted small">{t("Drag a template to move it; drag its round handle to aim it.")}</p>
     </details>
   );
 }

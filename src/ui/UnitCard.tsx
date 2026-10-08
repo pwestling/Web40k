@@ -34,15 +34,16 @@ import { AttachSelect, CoreAbilities } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { replayRoll, useGame, useRareStars } from "./hooks";
 import { opposed } from "../core/teams";
+import { t } from "../i18n";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
-const FLAGS: [string, string][] = [
-  ["moved", "Moved"],
-  ["fellBack", "Fell back"],
-  ["shot", "Shot"],
-  ["charged", "Charged"],
-  ["fought", "Fought"],
-  ["battleShocked", "Battle-shocked"],
+const flags = (): [string, string][] => [
+  ["moved", t("Moved")],
+  ["fellBack", t("Fell back")],
+  ["shot", t("Shot")],
+  ["charged", t("Charged")],
+  ["fought", t("Fought")],
+  ["battleShocked", t("Battle-shocked")],
 ];
 
 /** Turn a unit 15° around its centre (Q / E with the unit selected). */
@@ -178,7 +179,7 @@ export function UnitCard() {
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
   return (
-    <div className="panel unitcard" tabIndex={-1} aria-label="Selected unit">
+    <div className="panel unitcard" tabIndex={-1} aria-label={t("Selected unit")}>
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
           <span className="side-shape" aria-hidden="true">
@@ -189,8 +190,12 @@ export function UnitCard() {
             <button
               key={m.seq}
               className="rare-star"
-              title={`${m.title}, round ${m.round}: ${m.line.split(" · ")[0]}. Click to replay it.`}
-              aria-label={`Replay: ${m.title}, round ${m.round}`}
+              title={t("{title}, round {round}: {line}. Click to replay it.", {
+                title: m.title,
+                round: m.round,
+                line: m.line.split(" · ")[0],
+              })}
+              aria-label={t("Replay: {title}, round {round}", { title: m.title, round: m.round })}
               onClick={() => replayRoll(m.seq)}
             >
               ★
@@ -200,8 +205,12 @@ export function UnitCard() {
         <button onClick={() => select(null)}>✕</button>
       </div>
       <p className="muted">
-        {owner?.name} · {alive.length}/{all.length} models
-        {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
+        {t("{player} · {alive}/{all} models", {
+          player: owner?.name ?? "",
+          alive: alive.length,
+          all: all.length,
+        })}
+        {unit.sheet?.points ? <> · {t("{points} pts", { points: unit.sheet.points })}</> : ""}
       </p>
       <CampaignUnitLine unitId={unit.id} />
       {/* The unit's actions come first, so they're the first Tab stops in the card (UX 182). */}
@@ -216,48 +225,48 @@ export function UnitCard() {
                   className={phase === (kind === "ranged" ? "Shooting" : "Fight") ? "primary" : ""}
                   onClick={() => {
                     setDraft({ attackerId: unit.id, kind, weaponId, picking: true });
-                    focusSoon('.panel.attack select[aria-label="Target"]');
+                    focusSoon(".panel.attack select.attack-target");
                   }}
                 >
-                  {kind === "ranged" ? "Shoot" : "Fight"}
+                  {kind === "ranged" ? t("Shoot") : t("Fight")}
                 </button>
               )
             );
           })}
           <button className={phase === "Movement" ? "primary" : ""} onClick={() => roll("advance", 1)}>
-            Advance (D6)
+            {t("Advance (D6)")}
           </button>
           <button className={phase === "Charge" ? "primary" : ""} onClick={() => roll("charge", 2)}>
-            Charge (2D6)
+            {t("Charge (2D6)")}
           </button>
-          <button onClick={() => roll("battleshock", 2)}>Battle-shock test</button>
+          <button onClick={() => roll("battleshock", 2)}>{t("Battle-shock test")}</button>
           {onFloors && (
             <>
-              <button title="Up a floor (R)" onClick={() => climbUnit(unit.id, 1)}>
-                ▲ Floor
+              <button title={t("Up a floor (R)")} onClick={() => climbUnit(unit.id, 1)}>
+                ▲ {t("Floor")}
               </button>
-              <button title="Down a floor (F)" onClick={() => climbUnit(unit.id, -1)}>
-                ▼ Floor
+              <button title={t("Down a floor (F)")} onClick={() => climbUnit(unit.id, -1)}>
+                ▼ {t("Floor")}
               </button>
             </>
           )}
-          <button title="Rotate left (Q)" onClick={() => rotateUnit(unit.id, -1)}>
+          <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
             ⟲
           </button>
-          <button title="Rotate right (E)" onClick={() => rotateUnit(unit.id, 1)}>
+          <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
             ⟳
           </button>
           {status.advance !== undefined && (
             <button
               onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "advance", value: null }, as)}
             >
-              Clear advance
+              {t("Clear advance")}
             </button>
           )}
         </div>
       )}
       <div className="chips">
-        {FLAGS.map(([key, label]) => (
+        {flags().map(([key, label]) => (
           <button
             key={key}
             className={`chip ${status[key] ? "on" : ""}`}
@@ -267,28 +276,42 @@ export function UnitCard() {
             {label}
           </button>
         ))}
-        {typeof status.advance === "number" && <span className="chip on">Advanced +{status.advance}"</span>}
-        {typeof status.charge === "number" && <span className="chip on">Charge roll {status.charge}"</span>}
-        {charged !== null && <span className="chip on charged">Charged {charged.toFixed(1)}"</span>}
+        {typeof status.advance === "number" && (
+          <span className="chip on">{t('Advanced +{n}"', { n: status.advance })}</span>
+        )}
+        {typeof status.charge === "number" && (
+          <span className="chip on">{t('Charge roll {n}"', { n: status.charge })}</span>
+        )}
+        {charged !== null && (
+          <span className="chip on charged">
+            {t('Charged {distance}"', { distance: charged.toFixed(1) })}
+          </span>
+        )}
       </div>
       <CoreAbilities unit={unit} />
       <CodeActions unit={unit} />
       <p className="muted">
         {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (
           <span className={moved > allowed + 0.05 ? "warn" : ""}>
-            Moved {moved.toFixed(1)}" of {allowed}" this phase.{" "}
+            {t('Moved {moved}" of {allowed}" this phase.', { moved: moved.toFixed(1), allowed })}{" "}
           </span>
         )}
         {mine && (game.turn.round > 0 || !!status.scouting) && allowed !== null && moved > allowed + 0.05 && (
           <button className="small" onClick={() => snapToLimit(unit.id, allowed)}>
-            Snap back to {allowed}"
+            {t('Snap back to {allowed}"', { allowed })}
           </button>
         )}
         {blocked.length > 0 && (
-          <span className="warn">Moved through {blocked.map((p) => p.name.toLowerCase()).join(", ")}. </span>
+          <span className="warn">
+            {t("Moved through {terrain}.", {
+              terrain: blocked.map((p) => p.name.toLowerCase()).join(", "),
+            })}{" "}
+          </span>
         )}
         {engaged.length > 0 && (
-          <span className="warn">Engaged with {engaged.map((id) => game.units[id]?.name).join(", ")}.</span>
+          <span className="warn">
+            {t("Engaged with {units}.", { units: engaged.map((id) => game.units[id]?.name).join(", ") })}
+          </span>
         )}
       </p>
       {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
@@ -299,19 +322,19 @@ export function UnitCard() {
           className={losFrom === unit.id ? "on" : ""}
           onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
         >
-          Line of sight
+          {t("Line of sight")}
         </button>
-        <button onClick={() => eyeView(unit.id)}>Model's eye view</button>
+        <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
         <button
           className={ranges === unit.id ? "on" : ""}
-          title="Move (blue) and longest weapon range (yellow) around each model"
+          title={t("Move (blue) and longest weapon range (yellow) around each model")}
           onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
         >
-          Ranges
+          {t("Ranges")}
         </button>
         {ranges === unit.id && (
           <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
-            <option value="">Longest range</option>
+            <option value="">{t("Longest range")}</option>
             {weapons
               .filter((w) => w.kind === "ranged")
               .map((w) => (
@@ -321,7 +344,9 @@ export function UnitCard() {
               ))}
           </select>
         )}
-        {elevation > 0 && <span className="muted">On a floor {elevation.toFixed(1)}" up</span>}
+        {elevation > 0 && (
+          <span className="muted">{t('On a floor {height}" up', { height: elevation.toFixed(1) })}</span>
+        )}
       </div>
 
       {profiles.size > 0 && (
@@ -330,6 +355,7 @@ export function UnitCard() {
             <tr>
               <th />
               {STATS.map((s) => (
+                // i18n-ignore: characteristic abbreviations, as on the datasheet
                 <th key={s}>{s === "INV" ? "Inv" : s}</th>
               ))}
             </tr>
@@ -354,12 +380,15 @@ export function UnitCard() {
           <table key={kind} className="weapons">
             <thead>
               <tr>
-                <th>{kind === "ranged" ? "Ranged" : "Melee"}</th>
+                <th>{kind === "ranged" ? t("Ranged") : t("Melee")}</th>
                 <th>#</th>
+                {/* i18n-ignore: characteristic abbreviations, as on the datasheet */}
                 <th>Rng</th>
                 <th>A</th>
+                {/* i18n-ignore */}
                 <th>{kind === "ranged" ? "BS" : "WS"}</th>
                 <th>S</th>
+                {/* i18n-ignore */}
                 <th>AP</th>
                 <th>D</th>
                 <th />
@@ -382,7 +411,7 @@ export function UnitCard() {
 
       {unit.sheet && unit.sheet.abilities.length > 0 && (
         <details>
-          <summary>Abilities ({unit.sheet.abilities.length})</summary>
+          <summary>{t("Abilities ({n})", { n: unit.sheet.abilities.length })}</summary>
           {unit.sheet.abilities.map((a) => (
             <p key={a.name}>
               <strong>{a.name}.</strong> {a.text}
@@ -397,7 +426,7 @@ export function UnitCard() {
       <FigurePicker unit={unit} models={all} editable={mine} />
 
       <details>
-        <summary>Models and wounds</summary>
+        <summary>{t("Models and wounds")}</summary>
         <ul className="models">
           {all.map((m) => (
             <ModelRow key={m.id} model={m} unit={unit} editable={canControl(unit.owner) && scrub === null} />
@@ -405,7 +434,7 @@ export function UnitCard() {
         </ul>
         {mine && (
           <label className="row small">
-            Model height for line of sight{" "}
+            {t("Model height for line of sight")}{" "}
             <input
               type="number"
               min={0.5}
@@ -425,11 +454,11 @@ export function UnitCard() {
           <button
             className="danger"
             onClick={() =>
-              confirm(`Remove ${unit.name} from the game?`) &&
+              confirm(t("Remove {unit} from the game?", { unit: unit.name })) &&
               dispatch({ type: "unit/remove", id: unit.id }, as)
             }
           >
-            Remove unit
+            {t("Remove unit")}
           </button>
         )}
       </details>
@@ -454,7 +483,7 @@ function WeaponRow({
       <tr className={count ? "" : "muted"}>
         <td>{weapon.name}</td>
         <td>{count}</td>
-        <td>{weapon.kind === "melee" ? "Melee" : c.RANGE}</td>
+        <td>{weapon.kind === "melee" ? t("Melee") : c.RANGE}</td>
         <td>{c.A}</td>
         <td>{weapon.kind === "melee" ? c.WS : c.BS}</td>
         <td>{c.S}</td>
@@ -466,10 +495,10 @@ function WeaponRow({
               className="small"
               onClick={() => {
                 onUse();
-                focusSoon('.panel.attack select[aria-label="Target"]');
+                focusSoon(".panel.attack select.attack-target");
               }}
             >
-              {weapon.kind === "ranged" ? "Shoot" : "Fight"}
+              {weapon.kind === "ranged" ? t("Shoot") : t("Fight")}
             </button>
           )}
         </td>
@@ -492,9 +521,7 @@ function ModelRow({ model, unit, editable }: { model: Model; unit: Unit; editabl
   return (
     <li className={model.destroyed ? "dead" : ""}>
       <span>{model.label}</span>
-      <span>
-        {max - lost}/{max} W
-      </span>
+      <span>{t("{left}/{max} W", { left: max - lost, max })}</span>
       {editable && (
         <span className="row">
           <button className="small" disabled={lost >= max} onClick={() => set(lost + 1, lost + 1 >= max)}>
@@ -504,7 +531,7 @@ function ModelRow({ model, unit, editable }: { model: Model; unit: Unit; editabl
             +
           </button>
           <button className="small" onClick={() => set(model.destroyed ? 0 : lost, !model.destroyed)}>
-            {model.destroyed ? "Revive" : "Slay"}
+            {model.destroyed ? t("Revive") : t("Slay")}
           </button>
         </span>
       )}

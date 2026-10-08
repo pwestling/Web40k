@@ -5,6 +5,7 @@ import { keepSecret, localSecret, useLocalSecrets } from "../secrets/local";
 import { systemModule } from "../systems";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
+import { t } from "../i18n";
 
 const PREFIX = "objective:";
 
@@ -62,7 +63,9 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
     <div className="stack-player">
       <span style={{ color: player.color }}>{player.name}</span>{" "}
       {!mine && (
-        <span className="muted small">{hidden ? `${hidden} face down` : all.length ? "" : "none yet"}</span>
+        <span className="muted small">
+          {hidden ? t("{n} face down", { n: hidden }) : all.length ? "" : t("none yet")}
+        </span>
       )}
       <ul className="objective-list">
         {all.map(([key, e]) => {
@@ -71,7 +74,7 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
           if (!mine) return null;
           return (
             <li key={key}>
-              <span className="muted">{kept ? String(kept.value) : "(written on another device)"}</span>{" "}
+              <span className="muted">{kept ? String(kept.value) : t("(written on another device)")}</span>{" "}
               {kept && (
                 <button
                   onClick={() =>
@@ -88,7 +91,7 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
                     )
                   }
                 >
-                  Reveal
+                  {t("Reveal")}
                 </button>
               )}
             </li>
@@ -99,13 +102,13 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
         <div className="row">
           <input
             value={text}
-            placeholder="Write one down"
-            aria-label={`New secret objective for ${player.name}`}
+            placeholder={t("Write one down")}
+            aria-label={t("New secret objective for {name}", { name: player.name })}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && text.trim() && add()}
           />
           <button disabled={!text.trim()} onClick={add}>
-            Keep secret
+            {t("Keep secret")}
           </button>
         </div>
       )}

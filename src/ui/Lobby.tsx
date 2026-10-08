@@ -12,11 +12,12 @@ import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
+import { formatDate, t, tn } from "../i18n";
 import { BUILT_IN_LESSONS, lessonPackages, lessonSystem } from "../teach/builtin";
 import { startLesson } from "../teach/store";
 import { MailLobby } from "../mail/MailLobby";
 import { openLibrary } from "../figures/open";
-import { OfflineNote } from "../sw/UpdateToast";
+import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/UpdateToast";
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, systemLabel } from "./systemLabels";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
@@ -45,7 +46,7 @@ export function Lobby() {
       .filter((p) => !listSystems().some((s) => s.id === p.manifest.systems[0]))
       .map((p) => ({
         id: p.manifest.systems[0]!,
-        name: `${p.manifest.name} ${p.manifest.version} (package)`,
+        name: t("{name} {version} (package)", { name: p.manifest.name, version: p.manifest.version }),
       })),
   ];
   const [system, setSystem] = useState(() => {
@@ -126,7 +127,7 @@ export function Lobby() {
 
   const loadReplay = async (file: File) => {
     const data = JSON.parse(await file.text()) as ReplayFile;
-    if (data.format !== "open-battle/record@1") return alert("That is not an Open Battle replay file.");
+    if (data.format !== "open-battle/record@1") return alert(t("That is not an Open Battle replay file."));
     openReplay(await unbundleReplay(data));
     // A problem report opens at the moment it was made (src/ui/report.ts).
     const report = (data as Partial<ReportFile>).report;
@@ -151,18 +152,18 @@ export function Lobby() {
 
   return (
     <div className="panel lobby">
+      {/* i18n-ignore */}
       <h1>Open Battle</h1>
       <p className="pitch">
-        Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.
+        {t("Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.")}
       </p>
+      <UpdateToast />
       <OfflineNote />
-
       <TextSizePicker />
       <LanguagePicker />
-
-      <h2>Learn to play</h2>
+      <h2>{t("Learn to play")}</h2>
       <p className="muted small">
-        A guided first game: you play blue, the computer plays red, and a coach says what to do next.
+        {t("A guided first game: you play blue, the computer plays red, and a coach says what to do next.")}
       </p>
       <div className="demos">
         {lessons.map((l) => (
@@ -174,9 +175,10 @@ export function Lobby() {
           </button>
         ))}
       </div>
-
-      <h2>Try it now</h2>
-      <p className="muted small">Two sample armies, set up and ready. You play both sides on this screen.</p>
+      <h2>{t("Try it now")}</h2>
+      <p className="muted small">
+        {t("Two sample armies, set up and ready. You play both sides on this screen.")}
+      </p>
       <div className="demos">
         {demos.map((g) => (
           <button key={g.id} className="demo" onClick={() => startDemo(g.id)}>
@@ -185,14 +187,18 @@ export function Lobby() {
           </button>
         ))}
       </div>
-
-      <h2>Play with friends</h2>
+      <h2>{t("Play with friends")}</h2>
+      <OfflineForFriends />
       <label>
-        Your name{" "}
-        <input value={name} placeholder="Player 1 or 2, by seat" onChange={(e) => setName(e.target.value)} />
+        {t("Your name")}{" "}
+        <input
+          value={name}
+          placeholder={t("Player 1 or 2, by seat")}
+          onChange={(e) => setName(e.target.value)}
+        />
       </label>
       <label>
-        Game{" "}
+        {t("Game")}{" "}
         <select value={system} onChange={(e) => setSystem(e.target.value)}>
           {systems.map((s) => (
             <option key={s.id} value={s.id}>
@@ -202,38 +208,38 @@ export function Lobby() {
         </select>
       </label>
       <button className="primary" onClick={host}>
-        Host a game
+        {t("Host a game")}
       </button>
-      <p className="muted small">You get a link to send; whoever opens it joins your table.</p>
+      <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
       <label>
-        Room{" "}
+        {t("Room")}{" "}
         <input
           value={room}
-          placeholder="a room code to join"
+          placeholder={t("a room code to join")}
           onChange={(e) => setRoom(e.target.value.trim())}
         />
       </label>
       <div className="row">
         <button disabled={!room} onClick={() => join("client")}>
-          Join
+          {t("Join")}
         </button>
         <button disabled={!room} onClick={() => join("spectator")}>
-          Watch
+          {t("Watch")}
         </button>
       </div>
       <NetCheck />
       <details className="fold">
-        <summary>More ways to play</summary>
+        <summary>{t("More ways to play")}</summary>
         <label>
-          Players{" "}
+          {t("Players")}{" "}
           <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
-            <option value={1}>1 vs 1</option>
-            <option value={2}>2 vs 2 (teams share CP and VP)</option>
+            <option value={1}>{t("1 vs 1")}</option>
+            <option value={2}>{t("2 vs 2 (teams share CP and VP)")}</option>
           </select>
         </label>
         <label className="check">
           <input type="checkbox" checked={sameBrowser} onChange={(e) => setSameBrowser(e.target.checked)} />
-          Same browser (play between two tabs, no network)
+          {t("Same browser (play between two tabs, no network)")}
         </label>
         <button
           onClick={() => {
@@ -242,7 +248,7 @@ export function Lobby() {
             namePackage();
           }}
         >
-          Set up a game on this screen (hotseat)
+          {t("Set up a game on this screen (hotseat)")}
         </button>
         <PackageLibrary system={system} onPick={setSystem} />
       </details>
@@ -254,22 +260,37 @@ export function Lobby() {
           namePackage();
         }}
       />
-
+      <InstallLink />
       <hr />
       <button className="link" onClick={() => setGuide(true)}>
-        Bring your army: lists, figures and rules packages
+        {t("Bring your army: lists, figures and rules packages")}
       </button>
       <button className="link" onClick={() => openLibrary()}>
-        Figure library: your models, packs and storage
+        {t("Figure library: your models, packs and storage")}
       </button>
       {saved && (
         <button onClick={resume}>
-          Resume last game ({saved.mode}, {saved.record.events.length} events,{" "}
-          {new Date(saved.savedAt).toLocaleString()})
+          {tn(
+            saved.record.events.length,
+            "Resume last game ({mode}, {n} event, {date})",
+            "Resume last game ({mode}, {n} events, {date})",
+            {
+              mode:
+                { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ?? saved.mode,
+              date: formatDate(new Date(saved.savedAt), {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+              }),
+            },
+          )}
         </button>
       )}
       <label className="file">
-        Open a replay file
+        {t("Open a replay file")}
         <input
           type="file"
           accept=".json,application/json"

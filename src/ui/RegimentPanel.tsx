@@ -12,20 +12,23 @@ import {
 import { useCanControl, useStore } from "../store";
 import { ChargePanel } from "./ChargePanel";
 import { useGame } from "./hooks";
+import { t, tn } from "../i18n";
 import { blockMoveUsed, blockSummary, moveBudget, offTable, type MoveBudget } from "./regiment";
 
-const ORDERS: { id: Exclude<BlockOrder, "disrupted"> | "skirmish"; label: string }[] = [
-  { id: "close", label: "Close order" },
-  { id: "column", label: "Column" },
-  { id: "open", label: "Open order" },
-  { id: "skirmish", label: "Skirmish" },
+type OrderId = Exclude<BlockOrder, "disrupted"> | "skirmish";
+
+const orders = (): { id: OrderId; label: string }[] => [
+  { id: "close", label: t("Close order") },
+  { id: "column", label: t("Column") },
+  { id: "open", label: t("Open order") },
+  { id: "skirmish", label: t("Skirmish") },
 ];
 
-const FACINGS: { label: string; turn: number }[] = [
-  { label: "same way", turn: 0 },
-  { label: "left", turn: Math.PI / 2 },
-  { label: "right", turn: -Math.PI / 2 },
-  { label: "about", turn: Math.PI },
+const facings = (): { label: string; turn: number }[] => [
+  { label: t("same way"), turn: 0 },
+  { label: t("left"), turn: Math.PI / 2 },
+  { label: t("right"), turn: -Math.PI / 2 },
+  { label: t("about"), turn: Math.PI },
 ];
 
 const fmt = (n: number) => `${Number(n.toFixed(1))}"`;
@@ -72,7 +75,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     const turnFacing = game.models[unit.modelIds[0] ?? ""]?.facing ?? 0;
     return (
       <div className="regiment">
-        <h3>Skirmishing</h3>
+        <h3>{t("Skirmishing")}</h3>
         <MovedLine
           budget={moveBudget(game, unit)}
           used={used}
@@ -83,7 +86,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
         {mine && (
           <div className="row">
             <label>
-              Frontage{" "}
+              {t("Frontage")}{" "}
               <input
                 type="number"
                 className="frontage"
@@ -111,7 +114,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
                 setFiles(null);
               }}
             >
-              Form a block
+              {t("Form a block")}
             </button>
           </div>
         )}
@@ -138,7 +141,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
     );
   };
   const block = unit.formation;
-  const setOrder = (id: (typeof ORDERS)[number]["id"]) => {
+  const setOrder = (id: OrderId) => {
     if (id === "skirmish") {
       // Remember the frontage for when it forms up again; skirmishers don't march.
       status("lastFiles", block.files);
@@ -152,37 +155,49 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
 
   return (
     <div className="regiment">
-      <h3>{lone ? "Single model" : "Regiment"}</h3>
+      <h3>{lone ? t("Single model") : t("Regiment")}</h3>
       {lone ? (
-        summary.rankBonuses && <p className="muted">Unit strength {summary.strength}</p>
+        summary.rankBonuses && (
+          <p className="muted">{t("Unit strength {strength}", { strength: summary.strength })}</p>
+        )
       ) : !summary.rankBonuses ? (
         <p className="muted small">
-          {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"}. Casualties come off the
-          rear rank.
+          {tn(
+            summary.ranks,
+            "{files} wide · {n} rank. Casualties come off the rear rank.",
+            "{files} wide · {n} ranks. Casualties come off the rear rank.",
+            { files: summary.files },
+          )}
         </p>
       ) : (
         <>
           <p className="muted">
-            {summary.files} wide · {summary.ranks} rank{summary.ranks === 1 ? "" : "s"} · unit strength{" "}
-            {summary.strength}
-            {order === "close" ? ` · rank bonus +${summary.rankBonus}` : ""}
-            {summary.disrupted ? " (disrupted)" : ""}
+            {tn(
+              summary.ranks,
+              "{files} wide · {n} rank · unit strength {strength}",
+              "{files} wide · {n} ranks · unit strength {strength}",
+              { files: summary.files, strength: summary.strength },
+            )}
+            {order === "close" ? <> · {t("rank bonus +{bonus}", { bonus: summary.rankBonus })}</> : ""}
+            {summary.disrupted ? <> ({t("disrupted")})</> : ""}
           </p>
           <p className="muted small">
-            Ranks count from {summary.rankWidth} wide. Front to rear: {alive} models; the rear rank has{" "}
-            {rearCount} of {summary.files}. Casualties come off the rear rank.
+            {t(
+              "Ranks count from {width} wide. Front to rear: {alive} models; the rear rank has {rear} of {files}. Casualties come off the rear rank.",
+              { width: summary.rankWidth, alive, rear: rearCount, files: summary.files },
+            )}
           </p>
         </>
       )}
       <div className="row">
         {!lone && summary.rankBonuses && (
           <select
-            aria-label="Formation"
+            aria-label={t("Formation")}
             value={order}
             disabled={!mine}
-            onChange={(e) => setOrder(e.target.value as (typeof ORDERS)[number]["id"])}
+            onChange={(e) => setOrder(e.target.value as OrderId)}
           >
-            {ORDERS.map((o) => (
+            {orders().map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
               </option>
@@ -193,18 +208,18 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           <button
             className={summary.disrupted ? "on" : ""}
             disabled={!mine}
-            title="Disrupted units lose their rank bonus"
+            title={t("Disrupted units lose their rank bonus")}
             onClick={() => status("disrupted", summary.disrupted ? null : true)}
           >
-            Disrupted
+            {t("Disrupted")}
           </button>
         )}
         <button
           className={arcs ? "on" : ""}
           onClick={() => set({ arcs: !arcs })}
-          title="Show front, flank and rear arcs"
+          title={t("Show front, flank and rear arcs")}
         >
-          Arcs
+          {t("Arcs")}
         </button>
       </div>
       {!activations && (
@@ -218,11 +233,11 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
       )}
       {mine && toGo > 0.05 && (
         <div className="row">
-          <span>Move up to {fmt(toGo)} now:</span>
+          <span>{t("Move up to {distance} now:", { distance: fmt(toGo) })}</span>
           <button className="primary" onClick={() => dispatch(forwardMove(frame, unit.id, toGo), as)}>
-            Forward {fmt(toGo)}
+            {t("Forward {distance}", { distance: fmt(toGo) })}
           </button>
-          <span className="muted small">or drag, wheel or turn</span>
+          <span className="muted small">{t("or drag, wheel or turn")}</span>
         </div>
       )}
       {mine && (
@@ -230,30 +245,30 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           <div className="row">
             <input
               type="number"
-              aria-label="Inches to move"
+              aria-label={t("Inches to move")}
               className="frontage"
               min={0}
               step={0.5}
               value={ahead}
               onChange={(e) => setAhead(Number(e.target.value) || 0)}
             />
-            <button onClick={() => dispatch(forwardMove(frame, unit.id, ahead), as)}>Forward</button>
-            <button onClick={() => dispatch(forwardMove(frame, unit.id, -ahead), as)}>Back</button>
+            <button onClick={() => dispatch(forwardMove(frame, unit.id, ahead), as)}>{t("Forward")}</button>
+            <button onClick={() => dispatch(forwardMove(frame, unit.id, -ahead), as)}>{t("Back")}</button>
             {!activations && (
-              <label title="A march is double Movement, straight ahead">
+              <label title={t("A march is double Movement, straight ahead")}>
                 <input
                   type="checkbox"
                   checked={marching}
                   onChange={(e) => status("marching", e.target.checked || null)}
                 />{" "}
-                March
+                {t("March")}
               </label>
             )}
           </div>
           <div className="row">
             <input
               type="number"
-              aria-label="Degrees to wheel"
+              aria-label={t("Degrees to wheel")}
               className="frontage"
               min={1}
               max={180}
@@ -263,37 +278,37 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
             />
             °
             <button onClick={() => dispatch(wheelMove(frame, unit.id, (-degrees * Math.PI) / 180), as)}>
-              Wheel left
+              {t("Wheel left")}
             </button>
             <button onClick={() => dispatch(wheelMove(frame, unit.id, (degrees * Math.PI) / 180), as)}>
-              Wheel right
+              {t("Wheel right")}
             </button>
             <span className="muted small">{fmt(wheelCost)}</span>
           </div>
           <div className="row">
             <button
-              title={`Costs ${fmt(cost(summary.turnCost))}`}
+              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost)) })}
               onClick={() => form(summary.ranks, Math.PI / 2, "turn", cost(summary.turnCost))}
             >
-              Turn left
+              {t("Turn left")}
             </button>
             <button
-              title={`Costs ${fmt(cost(summary.turnCost))}`}
+              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost)) })}
               onClick={() => form(summary.ranks, -Math.PI / 2, "turn", cost(summary.turnCost))}
             >
-              Turn right
+              {t("Turn right")}
             </button>
             <button
-              title={`Costs ${fmt(cost(summary.turnCost * 2))}`}
+              title={t("Costs {distance}", { distance: fmt(cost(summary.turnCost * 2)) })}
               onClick={() => form(summary.files, Math.PI, "turn", cost(summary.turnCost * 2))}
             >
-              About face
+              {t("About face")}
             </button>
           </div>
           {!lone && (
             <div className="row">
               <label>
-                Frontage{" "}
+                {t("Frontage")}{" "}
                 <input
                   type="number"
                   className="frontage"
@@ -304,14 +319,14 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
                 />
               </label>
               <label>
-                facing{" "}
+                {t("facing")}{" "}
                 <select
-                  aria-label="Facing after reforming"
+                  aria-label={t("Facing after reforming")}
                   value={facing}
                   onChange={(e) => setFacing(Number(e.target.value))}
                 >
-                  {FACINGS.map((f, i) => (
-                    <option key={f.label} value={i}>
+                  {facings().map((f, i) => (
+                    <option key={i} value={i}>
                       {f.label}
                     </option>
                   ))}
@@ -319,29 +334,34 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
               </label>
               {redress && (
                 <button
-                  title={`Add or remove up to ${summary.redressMax} models from the front rank; costs ${fmt(cost(summary.redressCost))}`}
+                  title={t("Add or remove up to {max} models from the front rank; costs {distance}", {
+                    max: summary.redressMax,
+                    distance: fmt(cost(summary.redressCost)),
+                  })}
                   onClick={() => {
                     form(frontage, 0, "redress", cost(summary.redressCost));
                     setFiles(null);
                   }}
                 >
-                  Redress
+                  {t("Redress")}
                 </button>
               )}
               <button
-                title={`Rebuild the block around its centre; costs all its move (${fmt(cost(summary.reformCost))})`}
+                title={t("Rebuild the block around its centre; costs all its move ({distance})", {
+                  distance: fmt(cost(summary.reformCost)),
+                })}
                 onClick={() => {
-                  form(frontage, FACINGS[facing]!.turn, "reform", cost(summary.reformCost));
+                  form(frontage, facings()[facing]!.turn, "reform", cost(summary.reformCost));
                   setFiles(null);
                   setFacing(0);
                 }}
               >
-                Reform
+                {t("Reform")}
               </button>
             </div>
           )}
           {marching && used > 0.05 && (
-            <p className="muted small">Marching blocks may only move straight ahead and wheel.</p>
+            <p className="muted small">{t("Marching blocks may only move straight ahead and wheel.")}</p>
           )}
         </>
       )}
@@ -364,19 +384,31 @@ function MovedLine({
   off: boolean;
   round: number;
 }) {
-  if (round <= 0) return off ? <p className="warn">Off the table</p> : null;
+  if (round <= 0) return off ? <p className="warn">{t("Off the table")}</p> : null;
   const allowed = marching ? budget.march : budget.move;
   const over = allowed !== null && used > allowed + 0.05;
   const marchNear = marching && budget.nearestEnemy < budget.marchBlock;
   return (
     <p className={over || marchNear || off ? "warn" : "muted"}>
-      Moved {fmt(used)}
-      {allowed !== null ? ` of ${fmt(allowed)}${marching ? " (marching)" : ""}` : ""}
-      {over ? " · over its move" : ""}
-      {off ? " · off the table" : ""}
-      {marchNear
-        ? ` · an enemy is within ${budget.marchBlock}": marching needs a Leadership test (if failed, it moves normally but counts as having marched)`
-        : ""}
+      {allowed === null
+        ? t("Moved {used}", { used: fmt(used) })
+        : marching
+          ? t("Moved {used} of {allowed} (marching)", { used: fmt(used), allowed: fmt(allowed) })
+          : t("Moved {used} of {allowed}", { used: fmt(used), allowed: fmt(allowed) })}
+      {over ? <> · {t("over its move")}</> : ""}
+      {off ? <> · {t("off the table")}</> : ""}
+      {marchNear ? (
+        <>
+          {" "}
+          ·{" "}
+          {t(
+            'an enemy is within {distance}": marching needs a Leadership test (if failed, it moves normally but counts as having marched)',
+            { distance: budget.marchBlock },
+          )}
+        </>
+      ) : (
+        ""
+      )}
     </p>
   );
 }

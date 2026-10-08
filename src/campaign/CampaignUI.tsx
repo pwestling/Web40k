@@ -30,6 +30,7 @@ import { loadReplay, replayIds, saveReplay, useCampaigns } from "./store";
 import { create } from "zustand";
 import { useLibrary } from "../packages/library";
 import { CampaignRulesLine, rulesOff, turnOnRules } from "./RulesLine";
+import { formatDate, t, tc, tn } from "../i18n";
 
 /** Which book is open on screen. */
 const useBookOpen = create<{ id: string | null }>(() => ({ id: null }));
@@ -283,7 +284,7 @@ export function CampaignFold() {
     } catch {
       // Not a book.
     }
-    if (!b) return setNote("That file isn't an Open Battle campaign book.");
+    if (!b) return setNote(t("That file isn't an Open Battle campaign book."));
     const here = useCampaigns.getState().books[b.id];
     if (here) {
       // Another player's copy of a book this device has (event night): join them, losing no game.
@@ -291,19 +292,26 @@ export function CampaignFold() {
       useCampaigns.getState().put(mergeBooks(here, b), { edited: true });
       return setNote(
         added
-          ? `Added ${added} game${added === 1 ? "" : "s"} from that copy to your ${b.name}.`
-          : `Your ${b.name} already had everything in that copy.`,
+          ? tn(
+              added,
+              "Added {n} game from that copy to your {book}.",
+              "Added {n} games from that copy to your {book}.",
+              {
+                book: b.name,
+              },
+            )
+          : t("Your {book} already had everything in that copy.", { book: b.name }),
       );
     }
     useCampaigns.getState().put(b);
-    setNote(`${b.name} is on this device.`);
+    setNote(t("{book} is on this device.", { book: b.name }));
   };
   const getting = ref ? transfers[ref.hash] : undefined;
 
   return (
     <details className="fold campaign" ref={fold}>
       <summary>
-        Campaign{ref ? `: ${ref.name}` : ""}
+        {ref ? t("Campaign: {book}", { book: ref.name }) : t("Campaign")}
         {copy === "different" ? " ⚠" : ""}
       </summary>
       {ref ? (
@@ -311,49 +319,54 @@ export function CampaignFold() {
           {copy === "missing" && (
             <p className="muted">
               {getting?.state === "failed"
-                ? "The copy that came didn't match. "
-                : "Getting the campaign book from the table… "}
+                ? t("The copy that came didn't match.")
+                : t("Getting the campaign book from the table…")}{" "}
               <button className="small" onClick={() => requestCampaign(ref.hash)}>
-                Ask again
+                {t("Ask again")}
               </button>
             </p>
           )}
           {copy === "different" &&
             (edited && role !== "spectator" && book ? (
               <div className="warn-box">
-                <p>You've changed your copy of {ref.name}. Share it, so everyone's book says the same?</p>
+                <p>
+                  {t("You've changed your copy of {book}. Share it, so everyone's book says the same?", {
+                    book: ref.name,
+                  })}
+                </p>
                 <div className="row wrap">
                   <button className="primary" onClick={() => play(book, ref.territory)}>
-                    Share my copy
+                    {t("Share my copy")}
                   </button>
-                  <button onClick={() => requestCampaign(ref.hash)}>Undo my changes</button>
+                  <button onClick={() => requestCampaign(ref.hash)}>{t("Undo my changes")}</button>
                 </div>
               </div>
             ) : (
               // Unchanged here, so it's only behind: the game's copy is on its way (UX 202).
               <p className="muted">
                 {transfers[ref.hash]?.state === "failed"
-                  ? `The copy of ${ref.name} that came didn't match. `
-                  : `Getting the latest ${ref.name} from the table… `}
+                  ? t("The copy of {book} that came didn't match.", { book: ref.name })
+                  : t("Getting the latest {book} from the table…", { book: ref.name })}{" "}
                 <button className="small" onClick={() => requestCampaign(ref.hash)}>
-                  Ask again
+                  {t("Ask again")}
                 </button>
               </p>
             ))}
           {book && (
             <div className="row wrap">
-              <button onClick={() => useBookOpen.setState({ id: book.id })}>Open the book</button>
+              <button onClick={() => useBookOpen.setState({ id: book.id })}>{t("Open the book")}</button>
               {role !== "spectator" && book.map.length > 0 && (
                 <select
-                  aria-label="Fighting over"
+                  aria-label={t("Fighting over")}
                   value={ref.territory ?? ""}
                   onChange={(e) => stake(e.target.value || undefined)}
                 >
-                  <option value="">Fighting over nowhere</option>
-                  {book.map.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      Fighting over {t.name}
-                      {t.holder ? ` (${t.holder}'s)` : ""}
+                  <option value="">{t("Fighting over nowhere")}</option>
+                  {book.map.map((place) => (
+                    <option key={place.name} value={place.name}>
+                      {place.holder
+                        ? t("Fighting over {place} ({holder}'s)", { place: place.name, holder: place.holder })
+                        : t("Fighting over {place}", { place: place.name })}
                     </option>
                   ))}
                 </select>
@@ -366,32 +379,34 @@ export function CampaignFold() {
           {book && <EventLine book={book} game={game} />}
           {role !== "spectator" && (
             <button className="small" onClick={() => dispatch({ type: "campaign/set", ref: null }, seat?.id)}>
-              Stop playing for {ref.name}
+              {t("Stop playing for {book}", { book: ref.name })}
             </button>
           )}
         </>
       ) : (
         <>
           <p className="muted">
-            Play this game for a campaign book: the result, kills and honours go in it when the battle ends.
+            {t(
+              "Play this game for a campaign book: the result, kills and honours go in it when the battle ends.",
+            )}
           </p>
           <div className="row wrap">
             {Object.values(books).length > 0 && (
               <select
-                aria-label="Play for a campaign"
+                aria-label={t("Play for a campaign")}
                 value=""
                 onChange={(e) => books[e.target.value] && play(books[e.target.value]!)}
               >
-                <option value="">Play for…</option>
+                <option value="">{t("Play for…")}</option>
                 {Object.values(books).map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} ({b.games.length} game{b.games.length === 1 ? "" : "s"})
+                    {tn(b.games.length, "{book} ({n} game)", "{book} ({n} games)", { book: b.name })}
                   </option>
                 ))}
               </select>
             )}
             {naming === null ? (
-              <button onClick={() => setNaming("")}>New campaign book</button>
+              <button onClick={() => setNaming("")}>{t("New campaign book")}</button>
             ) : (
               <form
                 className="row"
@@ -401,19 +416,19 @@ export function CampaignFold() {
                 }}
               >
                 <input
-                  aria-label="Campaign name"
-                  placeholder="Campaign name"
+                  aria-label={t("Campaign name")}
+                  placeholder={t("Campaign name")}
                   autoFocus
                   value={naming}
                   onChange={(e) => setNaming(e.target.value)}
                 />
                 <button className="primary" disabled={!naming.trim()}>
-                  Start the book
+                  {t("Start the book")}
                 </button>
               </form>
             )}
             <label className="file button">
-              Open a campaign file
+              {t("Open a campaign file")}
               <input
                 type="file"
                 accept=".json,application/json"
@@ -442,7 +457,10 @@ function TerritoryTable({ territory }: { territory: Territory | undefined }) {
   if (!table)
     return (
       <p className="muted small">
-        {territory.name} is fought on {territory.table.name}, which isn't in this device's table library.
+        {t("{place} is fought on {table}, which isn't in this device's table library.", {
+          place: territory.name,
+          table: territory.table.name,
+        })}
       </p>
     );
   return (
@@ -450,7 +468,7 @@ function TerritoryTable({ territory }: { territory: Territory | undefined }) {
       className="small"
       onClick={() => void applyLayout(table.layout, { key: `table:${table.id}`, name: table.name })}
     >
-      Set up {table.name} for {territory.name}
+      {t("Set up {table} for {place}", { table: table.name, place: territory.name })}
     </button>
   );
 }
@@ -469,9 +487,11 @@ function Linked({ game }: { game: GameState }) {
           <li key={p.id}>
             {p.name}:{" "}
             {link ? (
-              (link.name ?? shelf[link.armyId]?.name ?? "a shelf army")
+              (link.name ?? shelf[link.armyId]?.name ?? t("a shelf army"))
             ) : (
-              <span className="muted">no shelf army yet (save it to your shelf to track its units)</span>
+              <span className="muted">
+                {t("no shelf army yet (save it to your shelf to track its units)")}
+              </span>
             )}
           </li>
         );
@@ -488,12 +508,16 @@ export function CampaignUnitLine({ unitId }: { unitId: string }) {
   if (!entry) return null;
   return (
     <p className="campaign-unit">
-      <strong>Campaign:</strong> {entry.kills} kill{entry.kills === 1 ? "" : "s"} · survived {entry.survived}/
-      {entry.games} game{entry.games === 1 ? "" : "s"}
-      {entry.wounds ? ` · carrying ${entry.wounds} wound${entry.wounds === 1 ? "" : "s"}` : ""}
-      {entry.xp ? ` · ${entry.xp} XP` : ""}
-      {entry.honours && <span className="honours"> · Honours: {entry.honours}</span>}
-      {entry.scars && <span className="scars"> · Scars: {entry.scars}</span>}
+      <strong>{t("Campaign:")}</strong> {tn(entry.kills, "{n} kill", "{n} kills")} ·{" "}
+      {tn(entry.games, "survived {survived}/{n} game", "survived {survived}/{n} games", {
+        survived: entry.survived,
+      })}
+      {entry.wounds ? " · " + tn(entry.wounds, "carrying {n} wound", "carrying {n} wounds") : ""}
+      {entry.xp ? " · " + t("{n} XP", { n: entry.xp }) : ""}
+      {entry.honours && (
+        <span className="honours"> · {t("Honours: {honours}", { honours: entry.honours })}</span>
+      )}
+      {entry.scars && <span className="scars"> · {t("Scars: {scars}", { scars: entry.scars })}</span>}
     </p>
   );
 }
@@ -517,43 +541,44 @@ export function CampaignBookDialog() {
   const save = (next: CampaignBook) => useCampaigns.getState().put(next, { edited: true });
   const close = () => useBookOpen.setState({ id: null });
   return (
-    <div className="campaign-book" role="dialog" aria-label={`Campaign book: ${book.name}`}>
+    <div className="campaign-book" role="dialog" aria-label={t("Campaign book: {book}", { book: book.name })}>
       <div className="row spread">
         <input
           className="title"
-          aria-label="Campaign name"
+          aria-label={t("Campaign name")}
           value={book.name}
           onChange={(e) => save({ ...book, name: e.target.value })}
         />
         <div className="row">
-          <button onClick={() => download(fileName(book.name), book)}>Export</button>
-          <button onClick={close} aria-label="Close">
+          <button onClick={() => download(fileName(book.name), book)}>{t("Export")}</button>
+          <button onClick={close} aria-label={t("Close")}>
             ✕
           </button>
         </div>
       </div>
       <p className="muted">
-        Changes stay on this device until you share your copy in a game (Campaign in the menu), or send the
-        exported file.
+        {t(
+          "Changes stay on this device until you share your copy in a game (Campaign in the menu), or send the exported file.",
+        )}
       </p>
       <div className="tabs" role="tablist">
-        {(["league", "event", "games", "units", "map", "notes"] as const).map((t) => (
+        {(["league", "event", "games", "units", "map", "notes"] as const).map((id) => (
           <button
-            key={t}
+            key={id}
             role="tab"
-            aria-selected={tab === t}
-            className={tab === t ? "on" : ""}
-            onClick={() => setTab(t)}
+            aria-selected={tab === id}
+            className={tab === id ? "on" : ""}
+            onClick={() => setTab(id)}
           >
             {
               {
-                league: "League",
-                event: "Event",
-                games: "Games",
-                units: "Units",
-                map: "Map",
-                notes: "Notes",
-              }[t]
+                league: t("League"),
+                event: t("Event"),
+                games: t("Games"),
+                units: t("Units"),
+                map: t("Map"),
+                notes: t("Notes"),
+              }[id]
             }
           </button>
         ))}
@@ -566,10 +591,10 @@ export function CampaignBookDialog() {
         {tab === "map" && <MapTab book={book} save={save} />}
         {tab === "notes" && (
           <textarea
-            aria-label="Campaign notes"
+            aria-label={t("Campaign notes")}
             rows={10}
             value={book.notes}
-            placeholder="The story so far, house rules, who owes who a drink…"
+            placeholder={t("The story so far, house rules, who owes who a drink…")}
             onChange={(e) => save({ ...book, notes: e.target.value })}
           />
         )}
@@ -580,21 +605,21 @@ export function CampaignBookDialog() {
 
 function League({ book }: { book: CampaignBook }) {
   const rows = leagueTable(book);
-  if (!rows.length) return <p className="muted">No one has played for this book yet.</p>;
+  if (!rows.length) return <p className="muted">{t("No one has played for this book yet.")}</p>;
   const armies = new Map(book.players.map((p) => [p.name, p.armies.map((a) => a.name).join(", ")]));
   return (
     <table className="league">
       <thead>
         <tr>
           <th>#</th>
-          <th>Player</th>
-          <th title="Played">P</th>
-          <th title="Won">W</th>
-          <th title="Drawn">D</th>
-          <th title="Lost">L</th>
-          <th title="Victory points scored and conceded">VP</th>
-          {book.map.length > 0 && <th title="Places held on the map">Held</th>}
-          <th title="3 for a win, 1 for a draw">Pts</th>
+          <th>{t("Player")}</th>
+          <th title={t("Played")}>{tc("league table: games played", "P")}</th>
+          <th title={t("Won")}>{tc("league table: games won", "W")}</th>
+          <th title={t("Drawn")}>{tc("league table: games drawn", "D")}</th>
+          <th title={t("Lost")}>{tc("league table: games lost", "L")}</th>
+          <th title={t("Victory points scored and conceded")}>{t("VP")}</th>
+          {book.map.length > 0 && <th title={t("Places held on the map")}>{t("Held")}</th>}
+          <th title={t("3 for a win, 1 for a draw")}>{t("Pts")}</th>
         </tr>
       </thead>
       <tbody>
@@ -624,7 +649,8 @@ function League({ book }: { book: CampaignBook }) {
 }
 
 function Games({ book, replays }: { book: CampaignBook; replays: Set<string> }) {
-  if (!book.games.length) return <p className="muted">Games played for this book show here when they end.</p>;
+  if (!book.games.length)
+    return <p className="muted">{t("Games played for this book show here when they end.")}</p>;
   const watch = async (id: string) => {
     const record = await loadReplay(id);
     if (!record) return;
@@ -636,33 +662,41 @@ function Games({ book, replays }: { book: CampaignBook; replays: Set<string> }) 
       {[...book.games].reverse().map((g) => (
         <li key={g.id}>
           <div>
-            <strong>{g.winner === null ? "Draw" : `${g.sides[g.winner]?.players.join(" & ")} won`}</strong>{" "}
-            {g.sides.map((s) => `${s.players.join(" & ")} ${s.vp}`).join(" – ")} VP
+            <strong>
+              {g.winner === null
+                ? t("Draw")
+                : t("{players} won", { players: g.sides[g.winner]?.players.join(" & ") ?? "" })}
+            </strong>{" "}
+            {t("{scores} VP", { scores: g.sides.map((s) => `${s.players.join(" & ")} ${s.vp}`).join(" – ") })}
           </div>
           <div className="muted">
-            {new Date(g.at).toLocaleDateString()} ·{" "}
+            {formatDate(g.at)} ·{" "}
             {g.byHand ? (
-              "entered by hand"
+              t("entered by hand")
             ) : (
               <>
                 {systemLabel(g.system, systemName(g.system))}
-                {g.mission ? ` · ${g.mission}` : ""} · {g.rounds} round{g.rounds === 1 ? "" : "s"}
+                {g.mission ? ` · ${g.mission}` : ""} · {tn(g.rounds, "{n} round", "{n} rounds")}
               </>
             )}
-            {g.territory ? ` · for ${g.territory}` : ""}
+            {g.territory ? " · " + t("for {place}", { place: g.territory }) : ""}
           </div>
           {!g.byHand && (
             <div className="muted">
               {g.sides
-                .map(
-                  (s) => `${s.armies.join(" & ") || s.players.join(" & ")}: ${s.slain} slain, ${s.lost} lost`,
+                .map((s) =>
+                  t("{side}: {slain} slain, {lost} lost", {
+                    side: s.armies.join(" & ") || s.players.join(" & "),
+                    slain: s.slain,
+                    lost: s.lost,
+                  }),
                 )
                 .join(" · ")}
             </div>
           )}
           {replays.has(g.id) && (
             <button className="small" onClick={() => void watch(g.id)}>
-              Watch the replay
+              {t("Watch the replay")}
             </button>
           )}
         </li>
@@ -677,8 +711,9 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
   if (!entries.length)
     return (
       <p className="muted">
-        Units show here after a game, when their army was brought from a shelf. Their kills, games and wounds
-        fill in on their own; honours, scars and XP are yours to write, or your campaign rules add them.
+        {t(
+          "Units show here after a game, when their army was brought from a shelf. Their kills, games and wounds fill in on their own; honours, scars and XP are yours to write, or your campaign rules add them.",
+        )}
       </p>
     );
   const edit = (key: string, patch: Partial<CampaignUnit>) =>
@@ -690,11 +725,12 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
     <>
       <div className="row spread">
         <p className="muted small">
-          Kills, games and wounds fill in after each game. Honours, scars and XP are yours to write, or your
-          campaign rules add them.
+          {t(
+            "Kills, games and wounds fill in after each game. Honours, scars and XP are yours to write, or your campaign rules add them.",
+          )}
         </p>
         <button className={editing ? "small on" : "small"} onClick={() => setEditing(!editing)}>
-          {editing ? "Done editing" : "Edit"}
+          {editing ? t("Done editing") : t("Edit")}
         </button>
       </div>
       {[...byArmy].map(([army, units]) => (
@@ -703,14 +739,14 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
           <table className="campaign-units">
             <thead>
               <tr>
-                <th>Unit</th>
-                <th>Kills</th>
-                <th>Games</th>
-                <th>Survived</th>
-                <th>Wounds carried</th>
-                <th title="Experience, from campaign rules or written in">XP</th>
-                <th>Honours</th>
-                <th>Scars</th>
+                <th>{t("Unit")}</th>
+                <th>{t("Kills")}</th>
+                <th>{t("Games")}</th>
+                <th>{t("Survived")}</th>
+                <th>{t("Wounds carried")}</th>
+                <th title={t("Experience, from campaign rules or written in")}>{t("XP")}</th>
+                <th>{t("Honours")}</th>
+                <th>{t("Scars")}</th>
               </tr>
             </thead>
             <tbody>
@@ -724,9 +760,9 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
                         (u[f] ?? 0)
                       ) : (
                         <input
-                          type="number"
+                          type="number" // i18n-ignore: an input type
                           min={0}
-                          aria-label={`${u.name}: ${f === "wounds" ? "wounds carried" : f}`}
+                          aria-label={fieldLabel(f, u.name)}
                           value={u[f] ?? 0}
                           onChange={(e) => edit(key, { [f]: num(e.target.value) })}
                         />
@@ -736,7 +772,7 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
                   <td>
                     {editing ? (
                       <input
-                        aria-label={`${u.name}: honours`}
+                        aria-label={t("{unit}: honours", { unit: u.name })}
                         value={u.honours}
                         onChange={(e) => edit(key, { honours: e.target.value })}
                       />
@@ -747,7 +783,7 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
                   <td>
                     {editing ? (
                       <input
-                        aria-label={`${u.name}: scars`}
+                        aria-label={t("{unit}: scars", { unit: u.name })}
                         value={u.scars}
                         onChange={(e) => edit(key, { scars: e.target.value })}
                       />
@@ -763,6 +799,22 @@ function Units({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => 
       ))}
     </>
   );
+}
+
+/** A unit's number field, for its input's label. */
+function fieldLabel(f: "kills" | "games" | "survived" | "wounds" | "xp", unit: string): string {
+  switch (f) {
+    case "kills":
+      return t("{unit}: kills", { unit });
+    case "games":
+      return t("{unit}: games", { unit });
+    case "survived":
+      return t("{unit}: survived", { unit });
+    case "wounds":
+      return t("{unit}: wounds carried", { unit });
+    case "xp":
+      return t("{unit}: xp", { unit });
+  }
 }
 
 function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) => void }) {
@@ -781,17 +833,19 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
   return (
     <>
       <p className="muted">
-        Places to fight over. Pick one under Campaign in the menu before a game, and the winner takes it.
+        {t(
+          "Places to fight over. Pick one under Campaign in the menu before a game, and the winner takes it.",
+        )}
       </p>
       <ul className="campaign-map">
-        {book.map.map((t, i) => (
-          <li key={t.name} className={t.holder ? "held" : ""}>
-            <span>{t.name}</span>
+        {book.map.map((place, i) => (
+          <li key={place.name} className={place.holder ? "held" : ""}>
+            <span>{place.name}</span>
             <label className="small">
-              Held by{" "}
+              {t("Held by")}{" "}
               <select
-                aria-label={`Who holds ${t.name}`}
-                value={t.holder ?? ""}
+                aria-label={t("Who holds {place}", { place: place.name })}
+                value={place.holder ?? ""}
                 onChange={(e) =>
                   save({
                     ...book,
@@ -801,7 +855,7 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
                   })
                 }
               >
-                <option value="">nobody</option>
+                <option value="">{t("nobody")}</option>
                 {players.map((p) => (
                   <option key={p} value={p}>
                     {p}
@@ -810,10 +864,10 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
               </select>
             </label>
             <label className="small">
-              Played on{" "}
+              {t("Played on")}{" "}
               <select
-                aria-label={`Table for ${t.name}`}
-                value={t.table?.id ?? ""}
+                aria-label={t("Table for {place}", { place: place.name })}
+                value={place.table?.id ?? ""}
                 onChange={(e) => {
                   const picked = libraryTables[e.target.value];
                   save({
@@ -826,8 +880,10 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
                   });
                 }}
               >
-                <option value="">any table</option>
-                {t.table && !libraryTables[t.table.id] && <option value={t.table.id}>{t.table.name}</option>}
+                <option value="">{t("any table")}</option>
+                {place.table && !libraryTables[place.table.id] && (
+                  <option value={place.table.id}>{place.table.name}</option>
+                )}
                 {Object.values(libraryTables).map((lt) => (
                   <option key={lt.id} value={lt.id}>
                     {lt.name}
@@ -837,7 +893,7 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
             </label>
             <button
               className="small"
-              aria-label={`Remove ${t.name}`}
+              aria-label={t("Remove {place}", { place: place.name })}
               onClick={() => save({ ...book, map: book.map.filter((_, j) => j !== i) })}
             >
               ✕
@@ -853,12 +909,12 @@ function MapTab({ book, save }: { book: CampaignBook; save: (b: CampaignBook) =>
         }}
       >
         <input
-          aria-label="New place"
-          placeholder="Hive Tertius, the Ash Wastes…"
+          aria-label={t("New place")}
+          placeholder={t("Hive Tertius, the Ash Wastes…")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button disabled={!name.trim()}>Add a place</button>
+        <button disabled={!name.trim()}>{t("Add a place")}</button>
       </form>
     </>
   );

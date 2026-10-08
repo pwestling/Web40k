@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { CanvasTexture, NearestFilter, SRGBColorSpace } from "three";
 import { terrainBlocksLine, type GameState, type Vec2, type Zone } from "../core";
 import { useStore } from "../store";
+import { t } from "../i18n";
 import { useTableEdit } from "./edit";
 
 /** Where a model's eyes are, and the middle of a target, for the table-wide view: infantry-sized. */
@@ -101,10 +102,10 @@ export function Sightlines({ game }: { game: GameState }) {
         ctx.fillStyle = who.length === 0 ? "#0a0a0e" : colors[who[0]!]!;
         ctx.fillRect(c, r, 1, 1);
       }
-    const t = new CanvasTexture(canvas);
-    t.magFilter = NearestFilter;
-    t.colorSpace = SRGBColorSpace;
-    return t;
+    const tex = new CanvasTexture(canvas);
+    tex.magFilter = NearestFilter;
+    tex.colorSpace = SRGBColorSpace;
+    return tex;
   }, [grid, colors]);
   useEffect(() => () => texture?.dispose(), [texture]);
   if (!texture) return null;
@@ -127,23 +128,23 @@ export function SightlinesToggle() {
     .sort((a, b) => a.seat! - b.seat!);
   return (
     <>
-      <label className="check" title="What each deployment zone can see, from the terrain alone">
+      <label className="check" title={t("What each deployment zone can see, from the terrain alone")}>
         <input
           type="checkbox"
           checked={on}
           onChange={(e) => useTableEdit.setState({ sightlines: e.target.checked })}
         />{" "}
-        What each zone sees
+        {t("What each zone sees")}
       </label>
       {on && (
         <div className="legend sight-legend" role="note">
           {seated.map((p) => (
             <span key={p.id} style={{ ["--c" as string]: p.color }} className="seen-by">
-              In {p.name}'s colour: only {p.name}'s zone sees here
+              {t("In {name}'s colour: only {name}'s zone sees here", { name: p.name })}
             </span>
           ))}
-          <span className="seen-both">No tint: both zones see here</span>
-          <span className="seen-none">Dark: neither zone sees here</span>
+          <span className="seen-both">{t("No tint: both zones see here")}</span>
+          <span className="seen-none">{t("Dark: neither zone sees here")}</span>
         </div>
       )}
     </>

@@ -5,6 +5,7 @@ import { myName, setMyName, useTalk, who } from "../talk/talk";
 import { chapters, type Chapter } from "./chapters";
 import { loadNotes, ownNote, removeNote, saveDraft, startDraft, useNotes, type ReplayNote } from "./notes";
 import { followLeader, goTo, startReview, takeLead, useReview, useReviewRoom } from "./review";
+import { t, tn } from "../i18n";
 
 /** Whether notes can be written here: a replay, or a review room. */
 export function useAnnotating(): boolean {
@@ -14,7 +15,7 @@ export function useAnnotating(): boolean {
 /** This viewer's name and colour on the notes they write. */
 function author(): { name: string; color: string } {
   const self = useStore.getState().session?.selfId ?? "local";
-  return { name: myName() || "A viewer", color: who(self, myName()).color };
+  return { name: myName() || t("A viewer"), color: who(self, myName()).color };
 }
 
 /**
@@ -45,11 +46,11 @@ export function NotesPanel() {
   if (!open)
     return (
       <button className="notes-open" onClick={() => setOpen(true)}>
-        ✎ Notes{notes.length ? ` (${notes.length})` : ""} and chapters
+        {notes.length ? t("✎ Notes ({n}) and chapters", { n: notes.length }) : t("✎ Notes and chapters")}
       </button>
     );
   return (
-    <div className="panel replay-notes" aria-label="Notes and chapters">
+    <div className="panel replay-notes" aria-label={t("Notes and chapters")}>
       <div className="row spread">
         <div className="tabs" role="tablist">
           <button
@@ -58,7 +59,7 @@ export function NotesPanel() {
             className={tab === "notes" ? "on" : ""}
             onClick={() => setTab("notes")}
           >
-            Notes{notes.length ? ` (${notes.length})` : ""}
+            {notes.length ? t("Notes ({n})", { n: notes.length }) : t("Notes")}
           </button>
           <button
             role="tab"
@@ -66,13 +67,13 @@ export function NotesPanel() {
             className={tab === "chapters" ? "on" : ""}
             onClick={() => setTab("chapters")}
           >
-            Chapters
+            {t("Chapters")}
           </button>
         </div>
         <button
           className="quiet"
-          title="Hide"
-          aria-label="Hide notes and chapters"
+          title={t("Hide")}
+          aria-label={t("Hide notes and chapters")}
           onClick={() => setOpen(false)}
         >
           ✕
@@ -94,7 +95,7 @@ export function NotesPanel() {
       ) : (
         <>
           {current && <p className="muted small">{current.title}</p>}
-          {review && !notesIn && <p className="muted small">Getting the notes…</p>}
+          {review && !notesIn && <p className="muted small">{t("Getting the notes…")}</p>}
           {here.map((n) => (
             <NoteView key={n.id} note={n} />
           ))}
@@ -102,7 +103,7 @@ export function NotesPanel() {
             <Draft />
           ) : (
             <button className="small" onClick={() => startDraft(pos)}>
-              ✎ Add a note at this moment
+              {t("✎ Add a note at this moment")}
             </button>
           )}
           {notes.length > 0 && (
@@ -110,8 +111,10 @@ export function NotesPanel() {
               {notes.map((n) => (
                 <li key={n.id} className={n.seq === pos ? "on" : undefined}>
                   <button className="link" onClick={() => goTo(n.seq)}>
-                    <span className="muted">{chapterOf(n.seq)?.title ?? "Setup"}:</span>{" "}
-                    {n.text || `${n.marks.length} mark${n.marks.length === 1 ? "" : "s"}`}
+                    <span className="muted">
+                      {t("{chapter}:", { chapter: chapterOf(n.seq)?.title ?? t("Setup") })}
+                    </span>{" "}
+                    {n.text || tn(n.marks.length, "{n} mark", "{n} marks")}
                   </button>
                 </li>
               ))}
@@ -140,15 +143,19 @@ function ChapterRow({
         <strong>{c.title}</strong>
       </button>{" "}
       <span className="muted small">
-        {c.actions} action{c.actions === 1 ? "" : "s"}
+        {tn(c.actions, "{n} action", "{n} actions")}
         {notes ? ` · ✎ ${notes}` : ""}
       </span>
       {c.highlights.length > 0 && <div className="small">{c.highlights.join(" · ")}</div>}
       {c.roundCard && (
         <div className="muted small">
-          End of round {c.roundCard.round}:{" "}
+          {t("End of round {round}:", { round: c.roundCard.round })}{" "}
           {c.roundCard.players
-            .map((p) => `${p.name} ${p.vp} VP${p.modelsLost ? `, lost ${p.modelsLost}` : ""}`)
+            .map((p) =>
+              p.modelsLost
+                ? t("{name} {vp} VP, lost {lost}", { name: p.name, vp: p.vp, lost: p.modelsLost })
+                : t("{name} {vp} VP", { name: p.name, vp: p.vp }),
+            )
             .join(" · ")}
         </div>
       )}
@@ -165,16 +172,16 @@ function NoteView({ note }: { note: ReplayNote }) {
       {note.text && <p>{note.text}</p>}
       {note.marks.length > 0 && (
         <span className="muted small">
-          {note.marks.length} mark{note.marks.length === 1 ? "" : "s"} on the table
+          {tn(note.marks.length, "{n} mark on the table", "{n} marks on the table")}
         </span>
       )}
       {(ownNote(note) || !review) && (
         <div className="row">
           <button className="small link" onClick={() => startDraft(note.seq, note)}>
-            Edit
+            {t("Edit")}
           </button>
           <button className="small link" onClick={() => removeNote(note.id)}>
-            Delete
+            {t("Delete")}
           </button>
         </div>
       )}
@@ -182,11 +189,12 @@ function NoteView({ note }: { note: ReplayNote }) {
   );
 }
 
-const TOOLS = [
-  { id: "arrow", label: "↗ Arrow" },
-  { id: "area", label: "◯ Area" },
-  { id: "ping", label: "📍 Pin" },
-] as const;
+const TOOLS = () =>
+  [
+    { id: "arrow", label: t("↗ Arrow") },
+    { id: "area", label: t("◯ Area") },
+    { id: "ping", label: t("📍 Pin") },
+  ] as const;
 
 function Draft() {
   const draft = useNotes((s) => s.draft)!;
@@ -208,23 +216,23 @@ function Draft() {
       }}
     >
       <textarea
-        aria-label="Note"
+        aria-label={t("Note")}
         rows={3}
         autoFocus
-        placeholder="What happened here, or what should have…"
+        placeholder={t("What happened here, or what should have…")}
         value={draft.text}
         onChange={(e) => set({ text: e.target.value })}
       />
       <div className="row wrap">
-        {TOOLS.map((t) => (
+        {TOOLS().map((x) => (
           <button
-            key={t.id}
+            key={x.id}
             type="button"
-            className={`small${tool === t.id ? " on" : ""}`}
-            title="Draw on the table for this note"
-            onClick={() => useTalk.setState({ tool: tool === t.id ? null : t.id })}
+            className={`small${tool === x.id ? " on" : ""}`}
+            title={t("Draw on the table for this note")}
+            onClick={() => useTalk.setState({ tool: tool === x.id ? null : x.id })}
           >
-            {t.label}
+            {x.label}
           </button>
         ))}
         {draft.marks.length > 0 && (
@@ -233,20 +241,20 @@ function Draft() {
             className="small quiet"
             onClick={() => set({ marks: draft.marks.slice(0, -1) })}
           >
-            Undo mark ({draft.marks.length})
+            {t("Undo mark ({n})", { n: draft.marks.length })}
           </button>
         )}
       </div>
       {!myName() && (
         <input
-          aria-label="Your name"
-          placeholder="Your name, on the note"
+          aria-label={t("Your name")}
+          placeholder={t("Your name, on the note")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       )}
       <div className="row">
-        <button className="small primary">Save the note</button>
+        <button className="small primary">{t("Save the note")}</button>
         <button
           type="button"
           className="small"
@@ -255,7 +263,7 @@ function Draft() {
             useNotes.setState({ draft: null });
           }}
         >
-          Cancel
+          {t("Cancel")}
         </button>
       </div>
     </form>
@@ -270,23 +278,24 @@ function WatchTogether() {
       <button
         className="small"
         onClick={() => setAsking(true)}
-        title="Invite others to watch this replay with you"
+        title={t("Invite others to watch this replay with you")}
       >
-        Watch together…
+        {t("Watch together…")}
       </button>
     );
   return (
     <div className="watch-together">
       <p className="small">
-        Opens this replay online. Anyone with the link watches along with you, and can add notes that everyone
-        sees, like a coach going over the game.
+        {t(
+          "Opens this replay online. Anyone with the link watches along with you, and can add notes that everyone sees, like a coach going over the game.",
+        )}
       </p>
       <div className="row">
         <button className="small primary" onClick={() => startReview()}>
-          Open it and get a link
+          {t("Open it and get a link")}
         </button>
         <button className="small" onClick={() => setAsking(false)}>
-          Cancel
+          {t("Cancel")}
         </button>
       </div>
     </div>
@@ -305,30 +314,30 @@ function ReviewBar() {
   return (
     <div className="review-bar">
       <p className="small">
-        <strong>Watching together</strong> ·{" "}
-        {peers ? `${peers} other${peers === 1 ? "" : "s"} here` : "nobody else yet"}
+        <strong>{t("Watching together")}</strong> ·{" "}
+        {peers ? tn(peers, "{n} other here", "{n} others here") : t("nobody else yet")}
         {" · "}
         {leading
-          ? "you lead: everyone following sees what you scrub to"
+          ? t("you lead: everyone following sees what you scrub to")
           : !leader
-            ? "finding who's leading…"
+            ? t("finding who's leading…")
             : following
-              ? `following ${leaderName || "the leader"}`
-              : "on your own"}
+              ? t("following {name}", { name: leaderName || t("the leader") })
+              : t("on your own")}
       </p>
       <div className="row wrap">
         {!leading && !following && leader && (
           <button className="small primary" onClick={followLeader}>
-            Follow {leaderName || "the leader"} again
+            {t("Follow {name} again", { name: leaderName || t("the leader") })}
           </button>
         )}
         {!leading && (
           <button className="small" onClick={takeLead}>
-            Lead
+            {t("Lead")}
           </button>
         )}
         <button className="small" onClick={copy}>
-          {copied ? "Link copied" : "Copy the invite link"}
+          {copied ? t("Link copied") : t("Copy the invite link")}
         </button>
       </div>
     </div>
@@ -348,7 +357,7 @@ export function NoteCaption() {
     <div className="note-caption" role="status">
       {here.map((n) => (
         <p key={n.id} style={{ borderColor: n.color }}>
-          <strong style={{ color: n.color }}>{n.by}:</strong> {n.text}
+          <strong style={{ color: n.color }}>{t("{name}:", { name: n.by })}</strong> {n.text}
         </p>
       ))}
     </div>

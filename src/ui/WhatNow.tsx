@@ -9,6 +9,7 @@ import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { useGame } from "./hooks";
 import { battleOver } from "./StatsScreen";
+import { t, tn } from "../i18n";
 
 /**
  * "What can I do now?" (front door): the current phase in plain words, built
@@ -25,30 +26,31 @@ export function whatNow(
   const side = game.turn.activeSeat;
   const who = sideName(game, side);
   const mine = hotseat || game.players[me ?? ""]?.seat === side;
-  if (battleOver(game)) return { head: "The battle is over", lines: ["The stats screen shows how it went."] };
+  if (battleOver(game))
+    return { head: t("The battle is over"), lines: [t("The stats screen shows how it went.")] };
   if (game.turn.round === 0)
     return {
-      head: "Deployment",
+      head: t("Deployment"),
       lines: [
-        "Drag your units into your deployment zone, the shaded strip on your side.",
-        "No army yet? In the left panel, press Sample army, or Import army list for your own.",
-        "When both armies are down, press Start battle ▶ at the top.",
+        t("Drag your units into your deployment zone, the shaded strip on your side."),
+        t("No army yet? In the left panel, press Sample army, or Import army list for your own."),
+        t("When both armies are down, press Start battle ▶ at the top."),
       ],
     };
   if (game.procedure || game.attack)
     return {
-      head: `${phase}: a roll is under way`,
-      lines: ["Finish it in the panel on the right: pick the next step or roll."],
+      head: t("{phase}: a roll is under way", { phase }),
+      lines: [t("Finish it in the panel on the right: pick the next step or roll.")],
     };
   if (game.pending)
     return {
-      head: `${phase}: a reaction`,
-      lines: ["A player can react now. The panel at the bottom right shows what."],
+      head: t("{phase}: a reaction", { phase }),
+      lines: [t("A player can react now. The panel at the bottom right shows what.")],
     };
   if (!mine)
     return {
-      head: `${who}'s turn · ${phase}`,
-      lines: [`Waiting for ${who}. You can look around, measure (M) and talk in the chat.`],
+      head: t("{side}'s turn · {phase}", { side: who, phase }),
+      lines: [t("Waiting for {side}. You can look around, measure (M) and talk in the chat.", { side: who })],
     };
 
   const units = Object.values(game.units).filter(
@@ -83,25 +85,29 @@ export function whatNow(
   }
   const lines: string[] = [];
   if (/move/i.test(phase))
-    lines.push("Drag a unit to move it. The ruler shows how far it has gone against its limit.");
+    lines.push(t("Drag a unit to move it. The ruler shows how far it has gone against its limit."));
   if (/charge/i.test(phase) && !can.size)
-    lines.push("No unit is close enough to charge: press ▶ to move on.");
-  if (outOfRange && !can.size) lines.push("Nothing is in range to shoot yet. Get closer next turn.");
+    lines.push(t("No unit is close enough to charge: press ▶ to move on."));
+  if (outOfRange && !can.size) lines.push(t("Nothing is in range to shoot yet. Get closer next turn."));
   if (can.size)
     lines.push(
-      `You can: ${[...can]
-        .map(([name, n]) => `${name.replace(/\s*\(.*\)$/, "")} (${n} unit${n === 1 ? "" : "s"})`)
-        .join(", ")}.`,
-      "Click one of your units to see its buttons.",
+      t("You can: {actions}.", {
+        actions: [...can]
+          .map(([name, n]) =>
+            tn(n, "{action} ({n} unit)", "{action} ({n} units)", { action: name.replace(/\s*\(.*\)$/, "") }),
+          )
+          .join(", "),
+      }),
+      t("Click one of your units to see its buttons."),
     );
   else if (!/move/i.test(phase) && !/charge/i.test(phase) && !outOfRange)
-    lines.push("Nothing to do this phase.");
+    lines.push(t("Nothing to do this phase."));
   lines.push(
     turnView(game).alternating
-      ? "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
-      : "When you're done, press ▶ at the top for the next phase.",
+      ? t("When a unit has acted, press End activation at the top; when you have nothing left, Pass.")
+      : t("When you're done, press ▶ at the top for the next phase."),
   );
-  return { head: `${who}'s turn · ${phase}`, lines };
+  return { head: t("{side}'s turn · {phase}", { side: who, phase }), lines };
 }
 
 /** Some enemy is within reach of one of the unit's ranged weapons (true when its weapons can't be read). */
@@ -130,7 +136,7 @@ export function WhatNow() {
   if (!open)
     return (
       <button className="whatnow-toggle" onClick={() => useHelp.setState({ hint: true })}>
-        What can I do now?
+        {t("What can I do now?")}
       </button>
     );
   const { head, lines } = whatNow(game, me, hotseat);
@@ -138,7 +144,7 @@ export function WhatNow() {
     <div className="panel whatnow">
       <div className="row spread">
         <strong>{head}</strong>
-        <button className="quiet" title="Hide" onClick={() => useHelp.setState({ hint: false })}>
+        <button className="quiet" title={t("Hide")} onClick={() => useHelp.setState({ hint: false })}>
           ✕
         </button>
       </div>
@@ -146,7 +152,7 @@ export function WhatNow() {
         <p key={l}>{l}</p>
       ))}
       <p className="muted small">
-        Press <kbd>?</kbd> for all the controls.
+        {t("Press")} <kbd>?</kbd> {t("for all the controls.")}
       </p>
     </div>
   );

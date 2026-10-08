@@ -3338,7 +3338,11 @@ body.showcase
 
 /* Offline and updates (#34) */
 .update-toast {
-  align-items: center !important;
+  align-items: center;
+  gap: 8px;
+  border-left: 3px solid #38bdf8;
+  padding-left: 8px;
+  margin: 8px 0;
 }
 .update-toast span {
   flex: 1;

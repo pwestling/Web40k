@@ -12,6 +12,7 @@ import {
 } from "../core";
 import { useStore } from "../store";
 import { useGame } from "../ui/hooks";
+import { t } from "../i18n";
 
 const LABEL_Z: [number, number] = [9, 0];
 
@@ -100,31 +101,33 @@ function dragged(g: Grab, p: Vec2): Template {
 
 function TemplateMark({
   game,
-  t,
+  t: tpl,
   onGrab,
 }: {
   game: GameState;
   t: Template;
   onGrab: (part: "body" | "end", p: Vec2) => void;
 }) {
-  const outline = useMemo(() => templateOutline(t), [t]);
-  const hits = useMemo(() => templateHits(game, t), [game, t]);
+  const outline = useMemo(() => templateOutline(tpl), [tpl]);
+  const hits = useMemo(() => templateHits(game, tpl), [game, tpl]);
   const shape = useMemo(() => {
-    if (t.shape === "line") return null;
+    if (tpl.shape === "line") return null;
     const s = new Shape();
     // The table's y runs along three's -z once the shape is laid flat.
     outline.forEach((p, i) => (i ? s.lineTo(p.x, -p.y) : s.moveTo(p.x, -p.y)));
     return s;
-  }, [outline, t.shape]);
-  const color = game.players[t.by]?.color ?? "#f59e0b";
-  const end = t.shape === "circle" ? null : templateEnd(t);
-  const labelAt = t.shape === "circle" ? t.at : t.shape === "flame" ? mid(t.at, end!) : end!;
+  }, [outline, tpl.shape]);
+  const color = game.players[tpl.by]?.color ?? "#f59e0b";
+  const end = tpl.shape === "circle" ? null : templateEnd(tpl);
+  const labelAt = tpl.shape === "circle" ? tpl.at : tpl.shape === "flame" ? mid(tpl.at, end!) : end!;
   const text = hits
     .map((h) => {
-      const name = h.unitId ? (game.units[h.unitId]?.name ?? "?") : "models";
-      return t.shape === "line"
+      const name = h.unitId ? (game.units[h.unitId]?.name ?? "?") : t("models");
+      return tpl.shape === "line"
         ? `${name}: ${h.partial}`
-        : `${name}: ${h.full}${h.partial ? ` + ${h.partial} partly` : ""}`;
+        : h.partial
+          ? t("{name}: {full} + {partial} partly", { name, full: h.full, partial: h.partial })
+          : `${name}: ${h.full}`;
     })
     .join(" · ");
   const down = (e: { stopPropagation(): void; point: Vector3; button?: number }, part: "body" | "end") => {
@@ -134,11 +137,11 @@ function TemplateMark({
   };
   return (
     <group>
-      {t.from && (
+      {tpl.from && (
         <Line
           points={[
-            [t.from.x, 0.1, t.from.y],
-            [t.at.x, 0.1, t.at.y],
+            [tpl.from.x, 0.1, tpl.from.y],
+            [tpl.at.x, 0.1, tpl.at.y],
           ]}
           color={color}
           lineWidth={1.5}
@@ -147,8 +150,8 @@ function TemplateMark({
           gapSize={0.3}
         />
       )}
-      {t.from && (
-        <mesh position={[t.from.x, 0.1, t.from.y]}>
+      {tpl.from && (
+        <mesh position={[tpl.from.x, 0.1, tpl.from.y]}>
           <cylinderGeometry args={[0.25, 0.25, 0.05, 12]} />
           <meshBasicMaterial color={color} />
         </mesh>
@@ -165,16 +168,16 @@ function TemplateMark({
         </mesh>
       ) : (
         <mesh
-          position={[(t.at.x + end!.x) / 2, 0.06, (t.at.y + end!.y) / 2]}
-          rotation-y={Math.atan2(end!.x - t.at.x, end!.y - t.at.y)}
+          position={[(tpl.at.x + end!.x) / 2, 0.06, (tpl.at.y + end!.y) / 2]}
+          rotation-y={Math.atan2(end!.x - tpl.at.x, end!.y - tpl.at.y)}
           onPointerDown={(e) => down(e, "body")}
         >
-          <boxGeometry args={[0.6, 0.02, Math.hypot(end!.x - t.at.x, end!.y - t.at.y)]} />
+          <boxGeometry args={[0.6, 0.02, Math.hypot(end!.x - tpl.at.x, end!.y - tpl.at.y)]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}
       <Line
-        points={[...(t.shape === "line" ? outline : [...outline, outline[0]!])].map(
+        points={[...(tpl.shape === "line" ? outline : [...outline, outline[0]!])].map(
           (p) => [p.x, 0.08, p.y] as [number, number, number],
         )}
         color={color}
@@ -193,8 +196,8 @@ function TemplateMark({
         center
         className="template-label"
       >
-        <strong>{t.label ?? "Template"}</strong>
-        {text ? ` · ${text}` : " · no models under it"}
+        <strong>{tpl.label ?? t("Template")}</strong>
+        {text ? ` · ${text}` : t(" · no models under it")}
       </Html>
     </group>
   );

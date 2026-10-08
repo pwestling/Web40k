@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import type { SideMessage, TalkItem } from "../net/transport";
 import { useStore } from "../store";
+import { t } from "../i18n";
 
 /**
  * Table talk: pings, arrows and areas on the table, a small chat and quick
@@ -122,9 +123,18 @@ export function who(peer: string, claimed?: string): { name: string; color: stri
   const name = claimed?.trim().slice(0, 24);
   const n = hash(peer);
   return {
-    name: name ? `${name} (watching)` : `Spectator ${(n % 90) + 10}`,
+    name: name ? t("{name} (watching)", { name }) : t("Spectator {n}", { n: (n % 90) + 10 }),
     color: WATCHER_COLORS[n % WATCHER_COLORS.length]!,
   };
+}
+
+/** A spectator's name without the "(watching)" `who` adds, in whatever language that was. */
+export function withoutWatching(name: string): string {
+  const [pre = "", post = ""] = t("{name} (watching)").split("{name}");
+  if (!pre && !post) return name;
+  return name.length > pre.length + post.length && name.startsWith(pre) && name.endsWith(post)
+    ? name.slice(pre.length, name.length - post.length)
+    : name;
 }
 
 const WATCHER_COLORS = ["#a78bfa", "#2dd4bf", "#f472b6", "#a3e635", "#fbbf24", "#94a3b8"];

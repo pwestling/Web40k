@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "../i18n";
 import { netConfig } from "../net/config";
 
 /**
@@ -118,30 +119,36 @@ export async function checkNetwork(): Promise<NetReport> {
   let line: string;
   if (!reached.length) {
     verdict = "bad";
-    line =
-      "Online games can't start from this network: it can't reach the place where players meet. Try another network, such as a phone hotspot.";
+    line = t(
+      "Online games can't start from this network: it can't reach the place where players meet. Try another network, such as a phone hotspot.",
+    );
   } else if (turn) {
     verdict = "good";
-    line = "Good to play, even with friends on strict networks.";
+    line = t("Good to play, even with friends on strict networks.");
   } else if (!srflx.length || nat === "symmetric") {
     verdict = "turn";
     line =
       turn === false
-        ? "You may not be able to connect to some friends, and this site's relay server for strict networks isn't answering. If a friend can't join, try a phone hotspot."
-        : "You may not be able to connect to some friends from this network. If a friend can't join, try a phone hotspot, or host on a server with TURN.";
+        ? t(
+            "You may not be able to connect to some friends, and this site's relay server for strict networks isn't answering. If a friend can't join, try a phone hotspot.",
+          )
+        : t(
+            "You may not be able to connect to some friends from this network. If a friend can't join, try a phone hotspot, or host on a server with TURN.",
+          );
   } else {
     verdict = "good";
-    line = "Good to play.";
+    line = t("Good to play.");
   }
   return { relays, stun: srflx.length > 0, nat, turn, rttMs, verdict, line };
 }
 
-const NAT_TEXT: Record<NetReport["nat"], string> = {
-  open: "none (public address)",
-  cone: "easy",
-  symmetric: "strict",
-  unknown: "unknown",
-};
+const natText = (nat: NetReport["nat"]): string =>
+  ({
+    open: t("none (public address)"),
+    cone: t("easy"),
+    symmetric: t("strict"),
+    unknown: t("unknown"),
+  })[nat];
 
 const GUIDE = "https://github.com/pwestling/Web40k/blob/main/docs/self-host.md";
 
@@ -170,23 +177,28 @@ export function NetCheck({ auto = false }: { auto?: boolean }) {
   return (
     <div className="net-check">
       <button className="link" disabled={busy} onClick={() => void run()}>
-        {busy ? "Checking your connection…" : result ? "Check again" : "Check my connection"}
+        {busy ? t("Checking your connection…") : result ? t("Check again") : t("Check my connection")}
       </button>
       {result && (
         <div className={`net-verdict ${result.verdict}`} role="status">
           <strong>{result.line}</strong>
           {result.verdict === "turn" && (
             <a className="small" href={GUIDE} target="_blank" rel="noreferrer">
-              Self-host guide
+              {t("Self-host guide")}
             </a>
           )}
           <details className="muted small">
-            <summary>Details</summary>
-            Meeting point: {result.relays.filter((r) => r.ms !== null).length} of {result.relays.length}{" "}
-            reachable
-            {result.rttMs !== null ? ` (${result.rttMs} ms)` : ""} · Public address:{" "}
-            {result.stun ? "found" : "not found"} · NAT: {NAT_TEXT[result.nat]}
-            {result.turn !== null ? ` · TURN: ${result.turn ? "works" : "no answer"}` : ""}
+            <summary>{t("Details")}</summary>
+            {t("Meeting point: {reached} of {total} reachable", {
+              reached: result.relays.filter((r) => r.ms !== null).length,
+              total: result.relays.length,
+            })}
+            {result.rttMs !== null ? ` (${t("{ms} ms", { ms: result.rttMs })})` : ""} ·{" "}
+            {t("Public address: {state}", { state: result.stun ? t("found") : t("not found") })} ·{" "}
+            {t("NAT: {type}", { type: natText(result.nat) })}
+            {result.turn !== null
+              ? ` · ${t("TURN: {state}", { state: result.turn ? t("works") : t("no answer") })}`
+              : ""}
           </details>
         </div>
       )}

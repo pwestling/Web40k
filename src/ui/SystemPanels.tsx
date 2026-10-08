@@ -28,6 +28,7 @@ import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
 import { computerPlays } from "../teach/store";
+import { formatList, formatNumber, t, tn } from "../i18n";
 
 /**
  * Panels for any game system, built from its data: a unit card with the
@@ -45,8 +46,13 @@ const unitName = (sys: GameSystem) =>
   typeof sys.units === "object" ? sys.units.name : sys.units === "cm" ? "cm" : '"';
 const fmt = (n: number, sys: GameSystem) => {
   const u = unitName(sys);
-  return `${Number(n.toFixed(1))}${u === '"' ? u : ` ${u}`}`;
+  const num = formatNumber(Number(n.toFixed(1)), { maximumFractionDigits: 1 });
+  return `${num}${u === '"' ? u : ` ${u}`}`;
 };
+
+/** "uses a 4 and a 6": the dice-pool faces an action pays with. */
+const usesFaces = (faces: (string | number)[]) =>
+  t("uses {faces}", { faces: formatList(faces.map((f) => t("a {face}", { face: String(f) }))) });
 
 /** The characteristic as the roster wrote it, under the system's id or one of its aliases. */
 function rosterText(c: CharacteristicDef, chars: Record<string, string> | undefined): string | undefined {
@@ -77,7 +83,7 @@ function AbilityList({ abilities }: { abilities: Ability[] }) {
   if (!abilities.length) return null;
   const groups = new Map<string, Ability[]>();
   for (const a of abilities) {
-    const g = a.group ?? "Abilities";
+    const g = a.group ?? t("Abilities");
     groups.set(g, [...(groups.get(g) ?? []), a]);
   }
   return (
@@ -125,10 +131,11 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const raw = readCharacteristics(system, "model", first?.profile?.chars);
   // A charge that struck home this round stays on the card with its distance (PX-3c).
   const charged = useCharged(unit.id);
-  const chargedText = charged !== null ? `Charged ${fmt(charged / scale, system)}` : null;
+  const chargedText =
+    charged !== null ? t("Charged {distance}", { distance: fmt(charged / scale, system) }) : null;
 
   return (
-    <div className="panel unitcard" tabIndex={-1} aria-label="Selected unit">
+    <div className="panel unitcard" tabIndex={-1} aria-label={t("Selected unit")}>
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
           <span className="side-shape" aria-hidden="true">
@@ -139,8 +146,8 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         <button onClick={() => select(null)}>✕</button>
       </div>
       <p className="muted">
-        {owner?.name} · {alive.length}/{all.length} {all.length === 1 ? "model" : "bases"}
-        {unit.sheet?.points ? ` · ${unit.sheet.points} pts` : ""}
+        {owner?.name} · {tn(all.length, "{alive}/{n} model", "{alive}/{n} bases", { alive: alive.length })}
+        {unit.sheet?.points ? " · " + t("{points} pts", { points: unit.sheet.points }) : ""}
       </p>
       {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
       {children}
@@ -151,7 +158,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
               key={s.id}
               className="chip on"
               disabled={!mine}
-              title="Click to clear"
+              title={t("Click to clear")}
               onClick={() =>
                 dispatch({ type: "unit/status", id: unit.id, key: s.id, value: null }, unit.owner)
               }
@@ -166,7 +173,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                 key={f}
                 className="chip on"
                 disabled={!mine}
-                title="Click to end this spell"
+                title={t("Click to end this spell")}
                 onClick={() =>
                   dispatch({ type: "unit/status", id: unit.id, key: f, value: null }, unit.owner)
                 }
@@ -175,7 +182,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
               </button>
             ) : (
               <span key={f} className="chip on">
-                {f === "reserves" ? "In reserve" : f === "charged" && chargedText ? chargedText : f}
+                {f === "reserves" ? t("In reserve") : f === "charged" && chargedText ? chargedText : f}
               </span>
             ),
           )}
@@ -186,7 +193,10 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       )}
       {allowance !== null && (
         <p className={moved > allowance + 0.05 ? "warn" : "muted"}>
-          Moved {fmt(moved / scale, system)} of {fmt(allowance / scale, system)} this round.
+          {t("Moved {distance} of {allowance} this round.", {
+            distance: fmt(moved / scale, system),
+            allowance: fmt(allowance / scale, system),
+          })}
         </p>
       )}
       <UnitWarnings unitId={unit.id} skip={allowance !== null ? ["moveDistance", "wheelDistance"] : []} />
@@ -196,15 +206,15 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           className={losFrom === unit.id ? "on" : ""}
           onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
         >
-          Line of sight
+          {t("Line of sight")}
         </button>
-        <button onClick={() => eyeView(unit.id)}>Model's eye view</button>
+        <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
         {mine && (
           <>
-            <button title="Rotate left (Q)" onClick={() => rotateUnit(unit.id, -1)}>
+            <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
               ⟲
             </button>
-            <button title="Rotate right (E)" onClick={() => rotateUnit(unit.id, 1)}>
+            <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
               ⟳
             </button>
           </>
@@ -230,7 +240,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                 <td
                   key={c.id}
                   className={changed ? "warn" : ""}
-                  title={changed ? `${raw[c.id]} on the card` : undefined}
+                  title={changed ? t("{value} on the card", { value: String(raw[c.id]) }) : undefined}
                 >
                   {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
                 </td>
@@ -251,7 +261,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         <table className="weapons">
           <thead>
             <tr>
-              <th>Weapon</th>
+              <th>{t("Weapon")}</th>
               {weaponChars.map((c) => (
                 <th key={c.id} title={c.name}>
                   {header(c)}
@@ -283,12 +293,21 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
       )}
 
       <details>
-        <summary>Bases</summary>
+        <summary>{t("Bases")}</summary>
         <ul className="models">
           {all.map((m) => (
             <li key={m.id} className={m.destroyed ? "dead" : ""}>
               <span>{m.label}</span>
-              <span>{m.destroyed ? "removed" : `${modelHeight(m).toFixed(1)}" tall`}</span>
+              <span>
+                {m.destroyed
+                  ? t("removed")
+                  : t('{height}" tall', {
+                      height: formatNumber(modelHeight(m), {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      }),
+                    })}
+              </span>
               {mine && (
                 <button
                   className="small"
@@ -304,7 +323,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
                     )
                   }
                 >
-                  {m.destroyed ? "Return" : "Remove"}
+                  {m.destroyed ? t("Return") : t("Remove")}
                 </button>
               )}
             </li>
@@ -365,7 +384,7 @@ function SystemActions({ unit }: { unit: Unit }) {
   const pending = game.pending;
   const why = (o: ActionOption) =>
     o.why === "Waiting on a reaction" && pending
-      ? `Waiting for ${seatName(game, pending.seat)} to react`
+      ? t("Waiting for {name} to react", { name: seatName(game, pending.seat) })
       : o.why;
   // The generic "Not allowed now" (a failed condition) says nothing as a line; it stays in the tooltip.
   const blocked = shown.filter((o) => !o.ok && o.why && o.why !== "Not allowed now");
@@ -378,8 +397,15 @@ function SystemActions({ unit }: { unit: Unit }) {
     <div className="actions">
       {acting && (
         <p className="muted small">
-          {reacting ? "Reacting" : "Activated"}: {Number(status.actionsTaken ?? 0)} of{" "}
-          {Number(status.actionBudget ?? 0)} actions used.
+          {reacting
+            ? t("Reacting: {used} of {budget} actions used.", {
+                used: Number(status.actionsTaken ?? 0),
+                budget: Number(status.actionBudget ?? 0),
+              })
+            : t("Activated: {used} of {budget} actions used.", {
+                used: Number(status.actionsTaken ?? 0),
+                budget: Number(status.actionBudget ?? 0),
+              })}
         </p>
       )}
       {shown.some((o) => o.payment.some((p) => p.indices)) && (
@@ -391,7 +417,7 @@ function SystemActions({ unit }: { unit: Unit }) {
             key={o.def.id}
             className={o.ok ? "primary" : ""}
             disabled={!o.ok}
-            title={why(o) ?? (o.cost ? `Costs ${o.cost}` : undefined)}
+            title={why(o) ?? (o.cost ? t("Costs {cost}", { cost: o.cost }) : undefined)}
             onMouseEnter={() => setHover(paidWith(o))}
             onMouseLeave={() => setHover([])}
             onClick={() => click(o)}
@@ -399,10 +425,10 @@ function SystemActions({ unit }: { unit: Unit }) {
             {o.def.name}
             {o.move !== undefined ? ` ${o.move}` : ""}
             {o.def.activates !== undefined && typeof o.def.activates === "number" && !o.def.reactTo
-              ? ` (${o.def.activates} action${o.def.activates === 1 ? "" : "s"})`
+              ? " (" + tn(o.def.activates, "{n} action", "{n} actions") + ")"
               : ""}
             {o.faces?.length ? (
-              <span className="cost"> · uses a {o.faces.join(" and a ")}</span>
+              <span className="cost"> · {usesFaces(o.faces)}</span>
             ) : o.cost ? (
               <span className="cost"> · {o.cost}</span>
             ) : null}
@@ -412,14 +438,17 @@ function SystemActions({ unit }: { unit: Unit }) {
       {shared && (
         <p className="muted small">
           {shared[0]}
-          {counts.size > 1 ? ". Hover a greyed-out action for its reason." : ""}
+          {counts.size > 1 ? `. ${t("Hover a greyed-out action for its reason.")}` : ""}
         </p>
       )}
       {commandOption?.commands && commanding && (
         <div className="command">
           <p className="small">
-            Also activate up to {commandOption.commands.count} unit
-            {commandOption.commands.count === 1 ? "" : "s"}:
+            {tn(
+              commandOption.commands.count,
+              "Also activate up to {n} unit:",
+              "Also activate up to {n} units:",
+            )}
           </p>
           {commandOption.commands.candidates.map((id) => (
             <label key={id} className="check">
@@ -450,14 +479,16 @@ function SystemActions({ unit }: { unit: Unit }) {
               }}
             >
               {commandOption.def.name}
-              {commanding.picked.length ? ` with ${commanding.picked.length}` : ""}
+              {commanding.picked.length ? " " + t("with {n}", { n: commanding.picked.length }) : ""}
             </button>
-            <button onClick={() => setCommanding(null)}>Cancel</button>
+            <button onClick={() => setCommanding(null)}>{t("Cancel")}</button>
           </div>
         </div>
       )}
       {reacting && (
-        <button onClick={() => dispatch({ type: "reaction/pass" }, unit.owner)}>Finish reaction</button>
+        <button onClick={() => dispatch({ type: "reaction/pass" }, unit.owner)}>
+          {t("Finish reaction")}
+        </button>
       )}
     </div>
   );
@@ -487,7 +518,9 @@ function PoolPicker({
           key={i}
           className={`die ${pick === i ? "on" : ""} ${hover.includes(i) ? "hover" : ""}`}
           title={
-            pick === i ? "Paying with this die; click again for the lowest that fits" : "Pay with this die"
+            pick === i
+              ? t("Paying with this die; click again for the lowest that fits")
+              : t("Pay with this die")
           }
           onClick={() => onPick(pick === i ? null : i)}
         >
@@ -508,9 +541,9 @@ function rangeNote(
   const v = weapon ? readCharacteristics(system, "weapon", weapon.chars) : {};
   const range = typeof v.range === "number" ? v.range : null;
   const min = typeof v.minRange === "number" ? v.minRange : 0;
-  if (min && distance < min) return "inside minimum range";
-  if (range && distance > range) return impossible ? "out of range" : "long range";
-  return impossible ? "can't hit" : null;
+  if (min && distance < min) return t("inside minimum range");
+  if (range && distance > range) return impossible ? t("out of range") : t("long range");
+  return impossible ? t("can't hit") : null;
 }
 
 /**
@@ -537,9 +570,11 @@ function everyTestFails(
   attacker: Unit | undefined,
   game: GameState,
 ) {
-  const what = `every ${label(stepId)} test fails`;
+  const step = label(stepId);
   const behind = target && attacker && inArc(game, target, attacker) === "rear";
-  return behind ? `Rear charge: ${what}` : what.replace(/^./, (c) => c.toUpperCase());
+  return behind
+    ? t("Rear charge: every {step} test fails", { step })
+    : t("Every {step} test fails", { step });
 }
 
 /** Choose the weapon and target for a procedure action such as Fire, with the numbers it will use. */
@@ -588,16 +623,16 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
   const weapon = weaponId ? unit.sheet?.weapons[weaponId] : undefined;
   // Each target's range note, from a preview of the roll against it.
   const notes = Object.fromEntries(
-    targets.map((t) => {
+    targets.map((tg) => {
       const p =
         weaponId || !armed
           ? safePreview(
               game,
               def.procedure!,
-              procedureRoles(system, def.procedure!, unit.id, { weapon: weaponId, targetId: t.unitId }),
+              procedureRoles(system, def.procedure!, unit.id, { weapon: weaponId, targetId: tg.unitId }),
             )
           : null;
-      return [t.unitId, rangeNote(system, weapon, t.distance, cannotSucceed(p))];
+      return [tg.unitId, rangeNote(system, weapon, tg.distance, cannotSucceed(p))];
     }),
   );
   const hopeless = cannotSucceed(preview);
@@ -608,7 +643,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         <strong>
           {unit.name}: {def.name}
         </strong>
-        <button onClick={() => setDraft(null)}>Cancel</button>
+        <button onClick={() => setDraft(null)}>{t("Cancel")}</button>
       </div>
       <div className="row wrap">
         {armed && (
@@ -625,17 +660,17 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
             ))}
           </select>
         )}
-        <span>at</span>
+        <span>{t("at")}</span>
         <select
           value={draft.targetId ?? ""}
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
-          <option value="">Target…</option>
-          {targets.map((t) => (
-            <option key={t.unitId} value={t.unitId}>
-              {game.units[t.unitId]?.name} ({fmt(t.distance, system)}
-              {t.ok ? "" : ", not visible"}
-              {notes[t.unitId] ? `, ${notes[t.unitId]}` : ""})
+          <option value="">{t("Target…")}</option>
+          {targets.map((tg) => (
+            <option key={tg.unitId} value={tg.unitId}>
+              {game.units[tg.unitId]?.name} ({fmt(tg.distance, system)}
+              {tg.ok ? "" : `, ${t("not visible")}`}
+              {notes[tg.unitId] ? `, ${notes[tg.unitId]}` : ""})
             </option>
           ))}
         </select>
@@ -643,7 +678,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           className={draft.picking ? "on" : ""}
           onClick={() => setDraft({ ...draft, picking: !draft.picking })}
         >
-          {draft.picking ? "Click a target on the table…" : "Pick on table"}
+          {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
         </button>
       </div>
       {preview && (
@@ -664,7 +699,9 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
       {option && !option.ok && <p className="warn">{option.why}</p>}
       {option?.ok && hopeless && draft.targetId && (
         <p className="warn">
-          {(notes[draft.targetId] ?? "can't hit").replace(/^./, (c) => c.toUpperCase())}: no roll can succeed.
+          {t("{reason}: no roll can succeed.", {
+            reason: (notes[draft.targetId] ?? t("can't hit")).replace(/^./, (c) => c.toUpperCase()),
+          })}
         </p>
       )}
       {option?.payment.some((p) => p.indices) && (
@@ -689,15 +726,14 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         }}
       >
         {def.name}
-        {hopeless ? " anyway" : ""}
-        {option?.faces?.length
-          ? ` (uses a ${option.faces.join(" and a ")})`
-          : option?.cost
-            ? ` (${option.cost})`
-            : ""}
+        {hopeless ? ` ${t("anyway")}` : ""}
+        {option?.faces?.length ? ` (${usesFaces(option.faces)})` : option?.cost ? ` (${option.cost})` : ""}
       </button>
       <p className="muted small">
-        Distances in {unitName(system) === '"' ? "inches" : unitName(system)} ({scale}" each).
+        {t('Distances in {units} ({scale}" each).', {
+          units: unitName(system) === '"' ? t("inches") : unitName(system),
+          scale,
+        })}
       </p>
     </div>
   );
@@ -722,24 +758,28 @@ function label(id: string): string {
 
 function describePlan(plan: StepPlan | undefined): string | null {
   if (!plan) return null;
-  if (plan.kind === "pool") return `${plan.count} dice`;
-  if (plan.kind === "damage") return `${plan.amount} each`;
+  if (plan.kind === "pool") return t("{count} dice", { count: plan.count });
+  if (plan.kind === "damage") return t("{amount} each", { amount: plan.amount });
   if (plan.kind !== "test") return null;
-  if (plan.skip) return "skipped";
-  const dice = `${plan.dicePerInput > 1 ? `${plan.dicePerInput}×` : ""}${plan.sumOf > 1 ? plan.sumOf : ""}d${plan.sides}${plan.keep && plan.dicePerInput > 1 ? ` keep ${plan.keep}` : ""}`;
+  if (plan.skip) return t("skipped");
+  const keep =
+    plan.keep && plan.dicePerInput > 1
+      ? ` ${plan.keep === "highest" ? t("keep highest") : t("keep lowest")}`
+      : "";
+  const dice = `${plan.dicePerInput > 1 ? `${plan.dicePerInput}×` : ""}${plan.sumOf > 1 ? plan.sumOf : ""}d${plan.sides}${keep}`;
   if (plan.target === null)
     return plan.passOn === "failures"
-      ? "no save"
+      ? t("no save")
       : plan.passOn === "inputPlusFailures"
-        ? `${dice}: every test fails`
-        : `${dice}: can't succeed`;
+        ? t("{dice}: every test fails", { dice })
+        : t("{dice}: can't succeed", { dice });
   // A target of 0 means each die is judged against the roll it answers (opposed saves).
   const vs =
     plan.target === 0
-      ? "vs each hit roll"
+      ? t("vs each hit roll")
       : plan.compare === "atLeast"
         ? `${plan.target}+`
-        : `${plan.target} or less`;
+        : t("{target} or less", { target: plan.target });
   return `${dice} ${vs}${plan.modifier ? ` (${plan.modifier > 0 ? "+" : ""}${plan.modifier})` : ""}`;
 }
 
@@ -772,11 +812,12 @@ export function ProcedurePanel() {
   // A step that couldn't succeed says why, e.g. "out of range", rather than a bare "0 of 3".
   const whyNone = (r: StepRecord) =>
     r.plan.kind === "test" && r.plan.target === null && r.plan.passOn === "failures"
-      ? "no save possible"
+      ? t("no save possible")
       : r.plan.kind === "test" && r.plan.target === null && r.plan.passOn === "inputPlusFailures"
         ? everyTestFails(r.id, target, actor, game)
         : r.plan.kind === "test" && r.plan.target === null
-          ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ?? "can't succeed")
+          ? ((distance !== undefined ? rangeNote(system, weapon, distance, true) : null) ??
+            t("can't succeed"))
           : undefined;
   const loss = lossText(game, run.outcomes);
   const statuses = [
@@ -814,7 +855,7 @@ export function ProcedurePanel() {
               disabled={!live}
               onClick={() => dispatch({ type: "procedure/respond", answer: "pass" }, defender)}
             >
-              Pass
+              {t("Pass")}
             </button>
           </span>
         </div>
@@ -822,7 +863,7 @@ export function ProcedurePanel() {
       {run.done && (
         <p>
           <strong>
-            {loss === "destroyed" ? "Unit destroyed" : loss.replace(/^./, (c) => c.toUpperCase())}
+            {loss === "destroyed" ? t("Unit destroyed") : loss.replace(/^./, (c) => c.toUpperCase())}
             {statuses.length ? ` · ${statuses.join(", ")}` : ""}
           </strong>
         </p>
@@ -835,18 +876,18 @@ export function ProcedurePanel() {
         </ul>
       )}
       {live && next && (botRolls || (run.pending && botAnswers)) && (
-        <p className="muted">The computer is rolling…</p>
+        <p className="muted">{t("The computer is rolling…")}</p>
       )}
       {live && !(botActs && (botRolls || run.done)) && (
         <div className="row">
           {next && !run.pending && !botRolls && (
             <button className="primary" onClick={() => dispatch({ type: "procedure/roll" }, roller)}>
-              Roll {label(next.id).toLowerCase()}
+              {t("Roll {step}", { step: label(next.id).toLowerCase() })}
             </button>
           )}
           {!botActs && (
             <button onClick={() => dispatch({ type: "procedure/clear" }, proc.by)}>
-              {run.done ? "Done" : "Cancel"}
+              {run.done ? t("Done") : t("Cancel")}
             </button>
           )}
         </div>
@@ -861,12 +902,12 @@ function RecordRow({ record: r, why }: { record: StepRecord; why?: string }) {
     <div className="stage">
       <span className="label">{label(r.id)}</span>
       <span className="dice">
-        {r.kind === "pool" && <span className="muted">{r.out} dice</span>}
+        {r.kind === "pool" && <span className="muted">{t("{count} dice", { count: r.out })}</span>}
         {kept.map((d, i) => (
           <span
             key={i}
             className={`die ${d.success ? (d.critical ? "crit" : "ok") : "fail"}`}
-            title={d.dice && d.dice.length > 1 ? `rolled ${d.dice.join(", ")}` : undefined}
+            title={d.dice && d.dice.length > 1 ? t("rolled {dice}", { dice: d.dice.join(", ") }) : undefined}
           >
             {d.value}
           </span>
@@ -879,8 +920,9 @@ function RecordRow({ record: r, why }: { record: StepRecord; why?: string }) {
       </span>
       {r.dice && (
         <span className="result">
-          {r.successes ?? 0} of {r.in}{" "}
-          {r.plan.kind === "test" && r.plan.passOn === "failures" ? "saved" : "succeed"}
+          {r.plan.kind === "test" && r.plan.passOn === "failures"
+            ? t("{successes} of {count} saved", { successes: r.successes ?? 0, count: r.in })
+            : t("{successes} of {count} succeed", { successes: r.successes ?? 0, count: r.in })}
           {why ? <span className="warn">: {why}</span> : null}
         </span>
       )}
@@ -909,19 +951,22 @@ export function ReactionPrompt() {
     const o = unitActions(game, u.id).find((x) => x.def.reactTo && x.ok);
     return o ? [{ unit: u, option: o }] : [];
   });
-  const what = `${actor?.name ?? "A unit"}: ${action}${target ? ` at ${target.name}` : ""}`;
+  const actorName = actor?.name ?? t("A unit");
+  const what = target
+    ? t("{unit}: {action} at {target}", { unit: actorName, action, target: target.name })
+    : `${actorName}: ${action}`;
 
   return (
     <div className="panel reaction">
       {reactor ? (
         <p>
-          <strong>{reactor.name}</strong> is reacting to {what}.{" "}
-          {mine ? "Take its action, then finish the reaction." : `Waiting on ${who}.`}
+          <strong>{reactor.name}</strong> {t("is reacting to {what}.", { what })}{" "}
+          {mine ? t("Take its action, then finish the reaction.") : t("Waiting on {name}.", { name: who })}
         </p>
       ) : mine ? (
         <>
           <p>
-            <strong>{who}</strong>, react to {what}?
+            <strong>{who}</strong>, {t("react to {what}?", { what })}
           </p>
           <div className="row wrap">
             {reactors.map(({ unit, option }) => (
@@ -937,16 +982,20 @@ export function ReactionPrompt() {
                 {option.cost ? ` (${option.cost})` : ""}
               </button>
             ))}
-            <button onClick={() => dispatch({ type: "reaction/pass" }, deciding?.id)}>Don't react</button>
+            <button onClick={() => dispatch({ type: "reaction/pass" }, deciding?.id)}>
+              {t("Don't react")}
+            </button>
           </div>
         </>
       ) : (
         <p>
-          {what}. Waiting on <strong>{who}</strong> to decide whether to react.
+          {what}. {t("Waiting on {name} to decide whether to react.", { name: who })}
         </p>
       )}
       {reactor && mine && (
-        <button onClick={() => dispatch({ type: "reaction/pass" }, deciding?.id)}>Finish reaction</button>
+        <button onClick={() => dispatch({ type: "reaction/pass" }, deciding?.id)}>
+          {t("Finish reaction")}
+        </button>
       )}
     </div>
   );

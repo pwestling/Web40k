@@ -11,9 +11,12 @@ import { useCanControl, useStore } from "../store";
 import { APP_BUILD } from "../version";
 import { describePackageChange } from "./gameLog";
 import { useGame } from "./hooks";
+import { formatList, t } from "../i18n";
 
-const SANDBOX =
-  "Rules packages contain code. It runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page.";
+const sandbox = () =>
+  t(
+    "Rules packages contain code. It runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page.",
+  );
 
 /** The short fingerprint, monospace, with the full hash in a tooltip. */
 function Fp({ hash }: { hash: string }) {
@@ -25,7 +28,8 @@ function Fp({ hash }: { hash: string }) {
 }
 
 function label(p: { name: string; version: string; author?: string }) {
-  return `${p.name} ${p.version}${p.author ? ` · by ${p.author}` : ""}`;
+  const name = `${p.name} ${p.version}`;
+  return p.author ? t("{package} · by {author}", { package: name, author: p.author }) : name;
 }
 
 export function refOf(p: StoredPackage): PackageRef {
@@ -48,7 +52,7 @@ async function loadFile(file: File, expect?: string): Promise<StoredPackage | st
 
 /** "Load package…": a file picker that adds to the library and asks for consent before first use. */
 function LoadButton({
-  text = "Load package…",
+  text,
   expect,
   onError,
   onTrusted,
@@ -66,7 +70,7 @@ function LoadButton({
   return (
     <>
       <label className={`file button ${className ?? ""}`}>
-        {text}
+        {text ?? t("Load package…")}
         <input
           type="file"
           accept=".js,.mjs,.obpkg,text/javascript"
@@ -125,12 +129,12 @@ export function ConsentSheet({
   // On the page itself: the lobby panel is transformed, which would trap a fixed sheet inside it.
   return createPortal(
     <div className="modal-backdrop">
-      <div className="panel modal consent" role="dialog" aria-label="Load a rules package">
+      <div className="panel modal consent" role="dialog" aria-label={t("Load a rules package")}>
         <h3>
           {label(pkg.manifest)} · <Fp hash={pkg.hash} />
         </h3>
-        {pkg.manifest.adds && <p>Adds: {pkg.manifest.adds}</p>}
-        <p className="muted">{SANDBOX}</p>
+        {pkg.manifest.adds && <p>{t("Adds: {what}", { what: pkg.manifest.adds })}</p>}
+        <p className="muted">{sandbox()}</p>
         <div className="row">
           <button
             className="primary"
@@ -140,7 +144,7 @@ export function ConsentSheet({
               onTrusted?.();
             }}
           >
-            Load it
+            {t("Load it")}
           </button>
           <button
             onClick={() => {
@@ -148,7 +152,7 @@ export function ConsentSheet({
               onClose();
             }}
           >
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
       </div>
@@ -167,20 +171,20 @@ export function PackageLibrary({ system, onPick }: { system: string; onPick?: (s
   const hidden = Object.keys(packages).length - shown.length;
   return (
     <details className="packages">
-      <summary>Rules packages</summary>
+      <summary>{t("Rules packages")}</summary>
       <div className="row spread">
         {/* A game loaded from a package is what the player wants to play next: pick it in the Game list. */}
         <LoadButton onTrusted={(p) => p.manifest.kind === "system" && onPick?.(p.manifest.systems[0]!)} />
         {(hidden > 0 || all) && (
           <button className="link" onClick={() => setAll(!all)}>
-            {all ? "Only this game's" : `Show all (${hidden} more)`}
+            {all ? t("Only this game's") : t("Show all ({n} more)", { n: hidden })}
           </button>
         )}
       </div>
       <ul className="package-list">
         {builtIn.map((s) => (
           <li key={s.id}>
-            {s.name} <span className="muted small">built in · app {APP_BUILD}</span>
+            {s.name} <span className="muted small">{t("built in · app {build}", { build: APP_BUILD })}</span>
           </li>
         ))}
         {shown.map((p) => (
@@ -200,30 +204,32 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
       <div className="row spread">
         <span>
           {label(pkg.manifest)}
-          {pkg.own ? " (yours)" : ""} <Fp hash={pkg.hash} />{" "}
+          {pkg.own ? ` ${t("(yours)")}` : ""} <Fp hash={pkg.hash} />{" "}
           {pkg.manifest.kind === "lesson" ? (
-            <span className="muted small">lessons · in Learn to play</span>
+            <span className="muted small">{t("lessons · in Learn to play")}</span>
           ) : pkg.trusted ? (
-            <span className="muted small">trusted</span>
+            <span className="muted small">{t("trusted")}</span>
           ) : (
             <button className="link" onClick={() => setAsking(true)}>
-              Trust…
+              {t("Trust…")}
             </button>
           )}
         </span>
         <details className="menu">
-          <summary aria-label={`More for ${pkg.manifest.name}`}>⋯</summary>
+          <summary aria-label={t("More for {package}", { package: pkg.manifest.name })}>⋯</summary>
           <div className="menu-items">
-            <button onClick={() => setDetails(!details)}>Details</button>
+            <button onClick={() => setDetails(!details)}>{t("Details")}</button>
             {pkg.trusted && pkg.manifest.kind !== "lesson" && (
-              <button onClick={() => lib.trust(pkg.hash, false)}>Stop trusting</button>
+              <button onClick={() => lib.trust(pkg.hash, false)}>{t("Stop trusting")}</button>
             )}
             <button
               onClick={() =>
-                confirm(`Remove ${pkg.manifest.name} ${pkg.manifest.version}?`) && lib.remove(pkg.hash)
+                confirm(
+                  t("Remove {package}?", { package: `${pkg.manifest.name} ${pkg.manifest.version}` }),
+                ) && lib.remove(pkg.hash)
               }
             >
-              Remove
+              {t("Remove")}
             </button>
           </div>
         </details>
@@ -231,22 +237,27 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
       {details && (
         <div className="muted small package-details">
           <div>
+            {/* i18n-ignore */}
             SHA-256 <code>{pkg.hash}</code>{" "}
             <button className="link" onClick={() => void navigator.clipboard?.writeText(pkg.hash)}>
-              Copy
+              {t("Copy")}
             </button>
           </div>
           <div>
-            {pkg.manifest.kind === "system"
-              ? "Game system"
-              : pkg.manifest.kind === "lesson"
-                ? "Lessons"
-                : "Extension"}{" "}
-            for {pkg.manifest.systems.join(", ") || "any game"} · API {pkg.manifest.api} ·{" "}
-            {formatBytes(pkg.bytes)}
+            {t("{kind} for {games} · API {api} · {size}", {
+              kind:
+                pkg.manifest.kind === "system"
+                  ? t("Game system")
+                  : pkg.manifest.kind === "lesson"
+                    ? t("Lessons")
+                    : t("Extension"),
+              games: pkg.manifest.systems.join(", ") || t("any game"),
+              api: String(pkg.manifest.api),
+              size: formatBytes(pkg.bytes),
+            })}
           </div>
-          {pkg.manifest.adds && <div>Adds: {pkg.manifest.adds}</div>}
-          {pkg.manifest.changelog && <div>Changes: {pkg.manifest.changelog}</div>}
+          {pkg.manifest.adds && <div>{t("Adds: {what}", { what: pkg.manifest.adds })}</div>}
+          {pkg.manifest.changelog && <div>{t("Changes: {what}", { what: pkg.manifest.changelog })}</div>}
         </div>
       )}
       {asking && <ConsentSheet pkg={pkg} onClose={() => setAsking(false)} />}
@@ -294,15 +305,19 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   if (!canChoose)
     return (
       <p className="muted small">
-        Rules: {names} (built in)
-        {using.length ? `, ${using.map((p) => `${p.name} ${p.version}`).join(", ")}` : ""}.
+        {using.length
+          ? t("Rules: {game} (built in), {packages}.", {
+              game: names,
+              packages: using.map((p) => `${p.name} ${p.version}`).join(", "),
+            })
+          : t("Rules: {game} (built in).", { game: names })}
       </p>
     );
   return (
     <div className="game-packages">
-      <strong className="small">Rules packages</strong>
+      <strong className="small">{t("Rules packages")}</strong>
       <label className="check muted">
-        <input type="checkbox" checked disabled /> {names} (built in, always on)
+        <input type="checkbox" checked disabled /> {t("{game} (built in, always on)", { game: names })}
       </label>
       {options.map((p) => (
         <label key={p.hash} className="check">
@@ -326,7 +341,7 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
         <LoadButton />
         {!all && Object.keys(packages).length > options.length && (
           <button className="link" onClick={() => setAll(true)}>
-            Show all
+            {t("Show all")}
           </button>
         )}
       </div>
@@ -344,9 +359,9 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
               setDraft(null);
             }}
           >
-            {mode === "hotseat" ? "Change the rules" : "Ask to change the rules"}
+            {mode === "hotseat" ? t("Change the rules") : t("Ask to change the rules")}
           </button>
-          <button onClick={() => setDraft(null)}>Cancel</button>
+          <button onClick={() => setDraft(null)}>{t("Cancel")}</button>
           <span className="muted small">{changed}</span>
         </div>
       )}
@@ -364,14 +379,16 @@ export function RulesLine() {
     listSystems()
       .filter((s) => s.id === system)
       .map((s) => systemLabel(s.id, s.name))[0] ??
-    (game.packages?.system.builtIn === false && using[0] ? `${using[0].name}, not loaded yet` : system);
+    (game.packages?.system.builtIn === false && using[0]
+      ? t("{package}, not loaded yet", { package: using[0].name })
+      : system);
   return (
     <span className="muted small rules-line">
-      Rules: {name}
+      {t("Rules: {game}", { game: name })}
       {using.map((p) => {
         const have = !!packages[p.hash];
         return (
-          <span key={p.hash} title={have ? `${label(p)} · ${fingerprint(p.hash)}` : "Not on this device"}>
+          <span key={p.hash} title={have ? `${label(p)} · ${fingerprint(p.hash)}` : t("Not on this device")}>
             {" · "}
             {p.name} {p.version} {have ? "✓" : <span className="warn">⚠</span>}
           </span>
@@ -477,7 +494,7 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   const [trustSender, setTrustSender] = useState(false);
   const [consent, setConsent] = useState<StoredPackage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const hostName = net?.hostId ? (state.players[net.hostId]?.name ?? "the host") : "the host";
+  const hostName = net?.hostId ? (state.players[net.hostId]?.name ?? t("the host")) : t("the host");
   const missing = game.packages.filter((p) => !library[p.hash] && !without[p.hash]);
   const fresh = game.packages.filter((p) => library[p.hash] && !library[p.hash]!.trusted && !without[p.hash]);
   const canGet = !replay && !!net?.hostId && net.hostId !== session?.selfId;
@@ -491,8 +508,8 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
   const sheet = consent ?? (arrived ? library[arrived.hash]! : null);
   useEffect(() => {
     if (!anyChecked) return;
-    const t = setTimeout(() => setShownDone(true), 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShownDone(true), 1500);
+    return () => clearTimeout(timer);
   }, [anyChecked]);
   if (!missing.length && !fresh.length && (!anyChecked || shownDone)) return null;
   const watch = () => {
@@ -511,33 +528,34 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
     requestPackage(p.hash, { trust: trustSender });
   };
   return (
-    <div className="round-card package-card" role="alertdialog" aria-label="Rules packages">
+    <div className="round-card package-card" role="alertdialog" aria-label={t("Rules packages")}>
       {replay && missing.length ? (
-        <strong>This replay used rules that aren't on this device</strong>
+        <strong>{t("This replay used rules that aren't on this device")}</strong>
       ) : replay ? (
-        <strong>This replay brought its rules with it</strong>
+        <strong>{t("This replay brought its rules with it")}</strong>
       ) : missing.some((p) => !otherVersion(library, p)) ? (
-        <strong>This game uses rules you don't have</strong>
+        <strong>{t("This game uses rules you don't have")}</strong>
       ) : missing.length ? (
-        <strong>You have a different version of a package this game uses</strong>
+        <strong>{t("You have a different version of a package this game uses")}</strong>
       ) : fresh.length ? (
-        <strong>New rules packages arrived</strong>
+        <strong>{t("New rules packages arrived")}</strong>
       ) : (
-        <strong>Rules packages ready</strong>
+        <strong>{t("Rules packages ready")}</strong>
       )}
       {missing.map((p) => {
         const mine = otherVersion(library, p);
-        const t = transfers[p.hash];
+        const tr = transfers[p.hash];
         const tooBig = p.bytes > MAX_PEER_BYTES;
         return (
           <div key={p.hash} className="package-need">
             {mine ? (
               <>
                 <div>
-                  Game: {p.name} {p.version} <Fp hash={p.hash} />
+                  {t("Game: {package}", { package: `${p.name} ${p.version}` })} <Fp hash={p.hash} />
                 </div>
                 <div>
-                  Yours: {mine.manifest.name} {mine.manifest.version} <Fp hash={mine.hash} />
+                  {t("Yours: {package}", { package: `${mine.manifest.name} ${mine.manifest.version}` })}{" "}
+                  <Fp hash={mine.hash} />
                 </div>
               </>
             ) : (
@@ -545,38 +563,40 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
                 {label(p)} · <Fp hash={p.hash} /> · {formatBytes(p.bytes)}
               </div>
             )}
-            {t?.state === "asking" || t?.state === "receiving" ? (
-              <div className="progress" aria-label="Receiving">
+            {tr?.state === "asking" || tr?.state === "receiving" ? (
+              <div className="progress" aria-label={t("Receiving")}>
                 <span>
-                  Receiving from {hostName}… {transferPercent(t)}%
+                  {t("Receiving from {name}… {percent}%", { name: hostName, percent: transferPercent(tr) })}
                 </span>
-                <span className="bar" style={{ width: `${transferPercent(t)}%` }} />
+                <span className="bar" style={{ width: `${transferPercent(tr)}%` }} />
               </div>
             ) : (
               <div className="row wrap">
-                {t?.state === "failed" && (
-                  <span className="warn">That didn't match what the game expects.</span>
+                {tr?.state === "failed" && (
+                  <span className="warn">{t("That didn't match what the game expects.")}</span>
                 )}
                 {canGet && !tooBig && (
                   <button className="primary" onClick={() => get(p)}>
-                    {t?.state === "failed"
-                      ? "Try again"
+                    {tr?.state === "failed"
+                      ? t("Try again")
                       : mine
-                        ? "Use the game's version"
-                        : `Get it from ${hostName}`}
+                        ? t("Use the game's version")
+                        : t("Get it from {name}", { name: hostName })}
                   </button>
                 )}
                 {canGet && tooBig && (
-                  <span className="muted">Too big to send ({formatBytes(p.bytes)}): load it from a file</span>
+                  <span className="muted">
+                    {t("Too big to send ({size}): load it from a file", { size: formatBytes(p.bytes) })}
+                  </span>
                 )}
                 <LoadButton
-                  text="Load from file…"
+                  text={t("Load from file…")}
                   expect={p.hash}
                   className={!canGet || tooBig ? "primary" : ""}
                   onError={setError}
                 />
                 {mine && role !== "spectator" && !replay && (
-                  <button onClick={() => setWithout([p.hash])}>Join with mine anyway</button>
+                  <button onClick={() => setWithout([p.hash])}>{t("Join with mine anyway")}</button>
                 )}
               </div>
             )}
@@ -588,38 +608,40 @@ function MismatchCard({ game, replay }: { game: GamePackages; replay: boolean })
         <>
           <label className="check small">
             <input type="checkbox" checked={trustSender} onChange={(e) => setTrustSender(e.target.checked)} />{" "}
-            Trust packages {hostName} sends for this game
+            {t("Trust packages {name} sends for this game", { name: hostName })}
           </label>
-          <span className="muted small">{SANDBOX}</span>
+          <span className="muted small">{sandbox()}</span>
         </>
       )}
       {fresh.map((p) => (
         <div key={p.hash} className="row wrap">
           <span>
-            {label(p)} <Fp hash={p.hash} /> needs your OK to run.
+            {label(p)} <Fp hash={p.hash} /> {t("needs your OK to run.")}
           </span>
           <button className="primary" onClick={() => setConsent(library[p.hash]!)}>
-            Review…
+            {t("Review…")}
           </button>
         </div>
       ))}
       {checked.map((p) => (
         <span key={p.hash} className="muted small">
-          {p.name} {p.version}: Checked ✓ <Fp hash={p.hash} />
+          {t("{package}: Checked ✓", { package: `${p.name} ${p.version}` })} <Fp hash={p.hash} />
         </span>
       ))}
       {missing.length > 0 && (
         <div className="row">
           {replay ? (
-            <button onClick={watch}>Watch without it</button>
+            <button onClick={watch}>{t("Watch without it")}</button>
           ) : (
-            <button onClick={watch}>{role === "spectator" ? "Watch without it" : "Watch instead"}</button>
+            <button onClick={watch}>
+              {role === "spectator" ? t("Watch without it") : t("Watch instead")}
+            </button>
           )}
         </div>
       )}
       {replay && missing.length > 0 && (
         <span className="muted small">
-          Without it, moves, dice and results still play; rule hints that need the package are off.
+          {t("Without it, moves, dice and results still play; rule hints that need the package are off.")}
         </span>
       )}
       {sheet && (
@@ -648,7 +670,7 @@ function ProposalCard() {
   const canControl = useCanControl();
   const library = useLibrary((s) => s.packages);
   const proposal = game.packageProposal!;
-  const by = game.players[proposal.by]?.name ?? "A player";
+  const by = game.players[proposal.by]?.name ?? t("A player");
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   const mineToAnswer = seated.filter(
     (p) =>
@@ -673,13 +695,16 @@ function ProposalCard() {
   if (scrub !== null) return null;
   if (mineToAnswer.length)
     return (
-      <div className="round-card package-card" role="alertdialog" aria-label="Rules change">
-        <strong>{by} wants to change the rules for this game</strong>
-        <span>{change || "Same packages"}</span>
+      <div className="round-card package-card" role="alertdialog" aria-label={t("Rules change")}>
+        <strong>{t("{name} wants to change the rules for this game", { name: by })}</strong>
+        <span>{change || t("Same packages")}</span>
         {changelog && <span className="muted small">{changelog}</span>}
         {untrusted.length > 0 && (
           <span className="muted small">
-            Accepting lets {untrusted.map((r) => `${r.name} ${r.version}`).join(" and ")} run here. {SANDBOX}
+            {t("Accepting lets {packages} run here.", {
+              packages: formatList(untrusted.map((r) => `${r.name} ${r.version}`)),
+            })}{" "}
+            {sandbox()}
           </span>
         )}
         <div className="row">
@@ -694,10 +719,10 @@ function ProposalCard() {
               for (const p of mineToAnswer) dispatch({ type: "packages/accept" }, p.id);
             }}
           >
-            Accept
+            {t("Accept")}
           </button>
           <button onClick={() => mineToAnswer.forEach((p) => dispatch({ type: "packages/decline" }, p.id))}>
-            Decline
+            {t("Decline")}
           </button>
         </div>
       </div>
@@ -705,15 +730,19 @@ function ProposalCard() {
   if (!canControl(proposal.by)) return null;
   return (
     <div className="round-card package-card" role="status">
-      <strong>Rules change: {change || "same packages"}</strong>
+      <strong>{t("Rules change: {change}", { change: change || t("same packages") })}</strong>
       {declined.length > 0 ? (
-        <span className="warn">{declined.map((p) => p.name).join(" and ")} declined.</span>
+        <span className="warn">
+          {t("{names} declined.", { names: formatList(declined.map((p) => p.name)) })}
+        </span>
       ) : (
-        <span className="muted">Waiting for {waiting.map((p) => p.name).join(" and ") || "the host"}</span>
+        <span className="muted">
+          {t("Waiting for {names}", { names: formatList(waiting.map((p) => p.name)) || t("the host") })}
+        </span>
       )}
       <div className="row">
         <button onClick={() => dispatch({ type: "packages/withdraw" }, proposal.by)}>
-          {declined.length ? "OK" : "Withdraw"}
+          {declined.length ? t("OK") : t("Withdraw")}
         </button>
       </div>
     </div>

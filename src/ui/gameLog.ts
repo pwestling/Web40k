@@ -15,11 +15,20 @@ import {
 } from "../core";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
+import { t, tn } from "../i18n";
 
 /** A line of the game log as players read it. */
 export type LogItem =
   /** A phase change, or (`rules`) a rules change both players agreed to mid-game. */
-  | { kind: "header"; key: string; text: string; rules?: true }
+  | {
+      kind: "header";
+      key: string;
+      text: string;
+      rules?: true;
+      /** A turn's header: its round, and "Round 2 · Ana" in words (for chapters and folding empty turns). */
+      round?: number;
+      turn?: string;
+    }
   | {
       kind: "line";
       key: string;
@@ -79,7 +88,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       !skipped &&
       (event.type === "turn/next" || event.type === "turn/prev" || event.type === "turn/first")
     ) {
-      items.push({ kind: "header", key, text: turnHeader(state) });
+      items.push({ kind: "header", key, ...turnHeader(state) });
       continue;
     }
     if (!skipped && event.type === "game/packages" && event.agreed && before.packages) {
@@ -106,13 +115,20 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         };
         items.push(deployLine);
       }
-      const who = state.players[logged.by]?.name ?? "Someone";
+      const who = state.players[logged.by]?.name ?? t("Someone");
       const { units, pts: total } = deployLine;
-      const size = `${units} unit${units === 1 ? "" : "s"}${total ? `, ${total} pts` : ""}`;
+      const params = { name: who, army: army ?? t("an army"), pts: String(total) };
       deployLine.text =
         units === 1 && !army
-          ? `${who} deployed ${event.unit.name}`
-          : `${who} deployed ${army ?? "an army"} (${size})`;
+          ? t("{name} deployed {unit}", { name: who, unit: event.unit.name })
+          : total
+            ? tn(
+                units,
+                "{name} deployed {army} ({n} unit, {pts} pts)",
+                "{name} deployed {army} ({n} units, {pts} pts)",
+                params,
+              )
+            : tn(units, "{name} deployed {army} ({n} unit)", "{name} deployed {army} ({n} units)", params);
       continue;
     }
     deployLine = null;
@@ -135,10 +151,11 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         (scriptItem.detail ??= []).push(...lines);
       } else {
         scriptHeadless = !lines.length;
-        const who = state.players[logged.by]?.name ?? "Someone";
+        const who = state.players[logged.by]?.name ?? t("Someone");
+        const rule = scriptStep.script?.procedure;
         const [head, ...rest] = lines.length
           ? lines
-          : [`${who} ran ${scriptStep.script?.procedure ?? "a rule"}`];
+          : [rule ? t("{name} ran {rule}", { name: who, rule }) : t("{name} ran a rule", { name: who })];
         scriptItem = { kind: "line", key, seq: logged.seq, text: head!, undone: skipped, detail: rest };
         items.push(scriptItem);
       }
@@ -193,7 +210,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       !(event.type === "unit/move" && event.how && !["forward", "wheel"].includes(event.how))
     ) {
       moveLine.inches += Math.abs(event.distance);
-      moveLine.text = `${state.units[moveLine.unitId]?.name ?? "A unit"} ${moveLine.verb} ${distanceText(state, moveLine.inches)}`;
+      // The verb is the game's own ("marches"), so the line keeps its order.
+      moveLine.text = `${state.units[moveLine.unitId]?.name ?? t("A unit")} ${moveLine.verb} ${distanceText(state, moveLine.inches)}`;
       continue;
     }
     if (event.type !== "undo") moveLine = null;
@@ -207,13 +225,18 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       dragLine.unitId === event.id &&
       items.at(-1) === dragLine
     ) {
-      dragLine.text = `${state.players[logged.by]?.name ?? "Someone"} ${moveText(dragLine.from, state, state.units[event.id]?.modelIds ?? [])}`;
+      dragLine.text = moveText(
+        state.players[logged.by]?.name ?? t("Someone"),
+        dragLine.from,
+        state,
+        state.units[event.id]?.modelIds ?? [],
+      );
       continue;
     }
     if (event.type !== "undo") dragLine = null;
     if (event.type === "undo") {
       // Say what was taken back (UX 130): an attack by name, else the line it made.
-      const who = state.players[logged.by]?.name ?? "Someone";
+      const who = state.players[logged.by]?.name ?? t("Someone");
       const line = items.find((i) => i.kind === "line" && i.seq === event.seq);
       const declared = record.events.find((e) => e.seq === event.seq)?.event;
       const what =
@@ -227,15 +250,17 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         key,
         seq: logged.seq,
         text: what
-          ? `${who} took back ${declared?.type === "attack/declare" ? what : `“${what}”`}`
-          : `${who} took back an action`,
+          ? declared?.type === "attack/declare"
+            ? t("{name} took back {what}", { name: who, what })
+            : t("{name} took back “{what}”", { name: who, what })
+          : t("{name} took back an action", { name: who }),
         undone: false,
       });
       continue;
     }
     let text = describe(logged, before, state);
     if (event.type === "game/system" && isPlaceholder(event.system))
-      text = `Game: ${packageName ?? event.system}, its rules aren't loaded yet`;
+      text = t("Game: {system}, its rules aren't loaded yet", { system: packageName ?? event.system });
     if (
       (event.type === "game/system" || event.type === "layout/set") &&
       !skipped &&
@@ -301,28 +326,39 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
   return items;
 }
 
-function turnHeader(state: GameState): string {
+function turnHeader(state: GameState): { text: string; round?: number; turn?: string } {
   const { round, activeSeat } = state.turn;
-  if (round === 0) return "Deployment";
+  if (round === 0) return { text: t("Deployment") };
   const player = sideName(state, activeSeat);
-  return `Round ${round} · ${player} · ${phaseName(state) ?? ""}`;
+  return {
+    text: t("Round {round} · {player} · {phase}", { round, player, phase: phaseName(state) ?? "" }),
+    round,
+    turn: t("Round {round} · {player}", { round, player }),
+  };
 }
 
 /** "Line Troopers shot Ashen Thralls (Pattern Rifle): 16 attacks, 11 hits, 6 wounds, 2 unsaved, 2 slain". */
 function attackSummary(a: AttackState, state: GameState): string {
   const s = a.spec;
-  const name = (id: string) => state.units[id]?.name ?? "a unit";
-  const parts = [`${a.attackCount} attacks`];
-  if (a.hits !== undefined) parts.push(`${a.hits} hits`);
-  if (a.wounds !== undefined) parts.push(`${a.wounds} wounds`);
-  if (a.unsaved !== undefined) parts.push(`${a.unsaved} unsaved`);
+  const name = (id: string) => state.units[id]?.name ?? t("a unit");
+  const parts = [tn(a.attackCount, "{n} attack", "{n} attacks")];
+  if (a.hits !== undefined) parts.push(tn(a.hits, "{n} hit", "{n} hits"));
+  if (a.wounds !== undefined) parts.push(tn(a.wounds, "{n} wound", "{n} wounds"));
+  if (a.unsaved !== undefined) parts.push(tn(a.unsaved, "{n} unsaved", "{n} unsaved"));
   if (a.damage) {
     const slain = a.damage.filter((d) => d.destroyed).length;
     const lost = a.damage.reduce((n, d) => n + d.lost, 0);
-    parts.push(slain ? `${slain} slain` : `${lost} wounds lost`);
+    parts.push(slain ? tn(slain, "{n} slain", "{n} slain") : tn(lost, "{n} wound lost", "{n} wounds lost"));
   }
-  const verb = s.kind === "melee" ? "fought" : "shot";
-  return `${name(s.attackerUnitId)} ${verb} ${name(s.targetUnitId)} (${s.weaponName}): ${parts.join(", ")}`;
+  const params = {
+    attacker: name(s.attackerUnitId),
+    target: name(s.targetUnitId),
+    weapon: s.weaponName,
+    results: parts.join(", "),
+  };
+  return s.kind === "melee"
+    ? t("{attacker} fought {target} ({weapon}): {results}", params)
+    : t("{attacker} shot {target} ({weapon}): {results}", params);
 }
 
 /**
@@ -334,16 +370,15 @@ export function lossText(
   state: GameState,
   outcomes: { kind: string; modelId?: string; lost?: number }[],
 ): string {
-  if (outcomes.some((o) => o.kind === "destroy")) return "destroyed";
+  if (outcomes.some((o) => o.kind === "destroy")) return t("destroyed");
   const hits = outcomes.filter((o) => o.kind === "wounds");
-  const wounds = hits.reduce((t, o) => t + (o.lost ?? 1), 0);
+  const wounds = hits.reduce((sum, o) => sum + (o.lost ?? 1), 0);
   const removed = new Set(
     hits.filter((o) => o.modelId && state.models[o.modelId]?.destroyed).map((o) => o.modelId),
   ).size;
-  if (!wounds) return "no losses";
-  const bases = `${removed} base${removed === 1 ? "" : "s"}`;
-  if (wounds === removed) return `${bases} lost`;
-  return `${wounds} wound${wounds === 1 ? "" : "s"} · ${bases} removed`;
+  if (!wounds) return t("no losses");
+  if (wounds === removed) return tn(removed, "{n} base lost", "{n} bases lost");
+  return `${tn(wounds, "{n} wound", "{n} wounds")} · ${tn(removed, "{n} base removed", "{n} bases removed")}`;
 }
 
 /** "Raider Gang Carbines at Lancer Tank: hit 1/3, save 1/1, 0 bases lost". */
@@ -357,8 +392,8 @@ function procedureSummary(state: GameState): string {
   return `${proc.title}${parts.length ? `: ${parts.join(", ")}` : ""}`;
 }
 
-/** How far the furthest model moved, counting climbs. */
-function moveText(before: GameState, after: GameState, ids: string[]): string {
+/** "Ann moved Troopers 6.0"": how far the furthest model moved, counting climbs. */
+function moveText(who: string, before: GameState, after: GameState, ids: string[]): string {
   let far = 0;
   let unitId: string | undefined;
   for (const id of ids) {
@@ -374,67 +409,99 @@ function moveText(before: GameState, after: GameState, ids: string[]): string {
   }
   const unit = unitId ? after.units[unitId] : undefined;
   const whole = unit && ids.length >= unit.modelIds.length;
-  const what = unit
-    ? whole
-      ? unit.name
-      : `${ids.length === 1 ? "a model of" : `${ids.length} models of`} ${unit.name}`
-    : "models";
-  return far < 0.05 ? `turned ${what}` : `moved ${what} ${distanceText(after, far)}`;
+  const p = { name: who, unit: unit?.name ?? "", distance: distanceText(after, far) };
+  if (far < 0.05)
+    return !unit
+      ? t("{name} turned models", p)
+      : whole
+        ? t("{name} turned {unit}", p)
+        : ids.length === 1
+          ? t("{name} turned a model of {unit}", p)
+          : tn(ids.length, "{name} turned {n} model of {unit}", "{name} turned {n} models of {unit}", p);
+  return !unit
+    ? t("{name} moved models {distance}", p)
+    : whole
+      ? t("{name} moved {unit} {distance}", p)
+      : ids.length === 1
+        ? t("{name} moved a model of {unit} {distance}", p)
+        : tn(
+            ids.length,
+            "{name} moved {n} model of {unit} {distance}",
+            "{name} moved {n} models of {unit} {distance}",
+            p,
+          );
 }
 
 export function describe({ by, event }: LoggedEvent, before: GameState, game: GameState): string {
-  const nameOf = (id: string) => game.players[id]?.name ?? "Someone";
+  const nameOf = (id: string) => game.players[id]?.name ?? t("Someone");
   const who = nameOf(by);
-  const unitName = (id: string) => game.units[id]?.name ?? "a unit";
+  const unitName = (id: string) => game.units[id]?.name ?? t("a unit");
   switch (event.type) {
     case "player/join":
-      return `${game.players[event.player.id]?.name ?? event.player.name} joined`;
+      return t("{name} joined", { name: game.players[event.player.id]?.name ?? event.player.name });
     case "player/claim":
       // Seats in a What if game are taken afresh, not reconnected to.
-      return `${nameOf(event.by)} ${before.branch ? "took their seat" : "reconnected"}`;
+      return before.branch
+        ? t("{name} took their seat", { name: nameOf(event.by) })
+        : t("{name} reconnected", { name: nameOf(event.by) });
     case "mission/set":
-      return `${who} chose the mission ${event.mission.name}`;
+      return t("{name} chose the mission {mission}", { name: who, mission: event.mission.name });
     case "score/confirm": {
       // "Crossfire: controls 2 objectives" reads as "Crossfire, controls 2 objectives".
       const why = event.why.replace(/^([^:]+): /, "$1, ");
       const side = sideName(game, event.seat);
-      if (event.skipped) return `${side} passed on ${why}`;
+      if (event.skipped) return t("{side} passed on {why}", { side, why });
       const changed = event.suggested !== undefined && event.suggested !== event.vp;
-      return `${side} scored ${event.vp} VP${changed ? ` (suggested ${event.suggested})` : ""} · ${why}`;
+      return changed
+        ? t("{side} scored {vp} VP (suggested {suggested}) · {why}", {
+            side,
+            vp: String(event.vp),
+            suggested: String(event.suggested),
+            why,
+          })
+        : t("{side} scored {vp} VP · {why}", { side, vp: String(event.vp), why });
     }
-    case "player/dice":
-      return `${game.players[event.player]?.name ?? who} picked ${event.dice ? "new" : "their colour's"} dice`;
+    case "player/dice": {
+      const name = game.players[event.player]?.name ?? who;
+      return event.dice
+        ? t("{name} picked new dice", { name })
+        : t("{name} picked their colour's dice", { name });
+    }
     case "player/rename":
-      return `${before.players[event.player]?.name ?? "A player"} is now ${event.name}`;
+      return t("{old} is now {name}", {
+        old: before.players[event.player]?.name ?? t("A player"),
+        name: event.name,
+      });
     case "player/color":
-      return `${game.players[event.player]?.name ?? who} changed their colour`;
+      return t("{name} changed their colour", { name: game.players[event.player]?.name ?? who });
     case "clock/pause":
-      if (!event.paused) return `${who} restarted the clocks`;
+      if (!event.paused) return t("{name} restarted the clocks", { name: who });
       return event.reason === "disconnect"
-        ? "The clocks stopped: a player is disconnected"
-        : `${who} stopped the clocks`;
+        ? t("The clocks stopped: a player is disconnected")
+        : t("{name} stopped the clocks", { name: who });
     case "clock/call":
       return `⏱ ${event.text}`;
     case "clock/adjust": {
       const mins = Math.round(Math.abs(event.ms) / 60_000);
       const amount = mins
-        ? `${mins} minute${mins === 1 ? "" : "s"}`
-        : `${Math.round(Math.abs(event.ms) / 1000)} seconds`;
+        ? tn(mins, "{n} minute", "{n} minutes")
+        : tn(Math.round(Math.abs(event.ms) / 1000), "{n} second", "{n} seconds");
+      const p = { name: who, side: sideName(game, event.seat), amount };
       return event.ms >= 0
-        ? `${who} gave ${sideName(game, event.seat)} ${amount} on the clock`
-        : `${who} took ${amount} off ${sideName(game, event.seat)}'s clock`;
+        ? t("{name} gave {side} {amount} on the clock", p)
+        : t("{name} took {amount} off {side}'s clock", p);
     }
-    case "campaign/set":
-      if (!event.ref) return `${who} stopped playing for a campaign`;
-      if (before.campaign?.id !== event.ref.id) return `${who} brought the campaign book ${event.ref.name}`;
+    case "campaign/set": {
+      if (!event.ref) return t("{name} stopped playing for a campaign", { name: who });
+      const p = { name: who, book: event.ref.name, territory: event.ref.territory ?? "" };
+      if (before.campaign?.id !== event.ref.id) return t("{name} brought the campaign book {book}", p);
       if (before.campaign.territory !== event.ref.territory)
         return event.ref.territory
-          ? `${who} set the stakes: ${event.ref.territory}`
-          : `${who} took the territory off the table`;
-      if (event.merged) return `${event.ref.name}: games from ${who}'s copy were added to the table's`;
-      return event.recorded
-        ? `${event.ref.name} recorded this game`
-        : `${who} shared their copy of ${event.ref.name}`;
+          ? t("{name} set the stakes: {territory}", p)
+          : t("{name} took the territory off the table", p);
+      if (event.merged) return t("{book}: games from {name}'s copy were added to the table's", p);
+      return event.recorded ? t("{book} recorded this game", p) : t("{name} shared their copy of {book}", p);
+    }
     case "campaign/army":
       return "";
     case "dice/roll": {
@@ -446,173 +513,282 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         // "Warriors to hit 4+: 5 of 10 (6 5 5 4 4 3 2 2 1 1)"
         const n = results.filter((r) => r >= event.roll.need!).length;
         const dice = [...results].sort((a, b) => b - a).join(" ");
-        return `${unitId ? `${unitName(unitId)} ` : ""}${label ?? "roll"} ${event.roll.need}+: ${n} of ${results.length} (${dice})`;
+        const p = {
+          unit: unitId ? unitName(unitId) : "",
+          label: label ?? t("roll"),
+          need: event.roll.need,
+          n,
+          total: results.length,
+          dice,
+        };
+        return unitId
+          ? t("{unit} {label} {need}+: {n} of {total} ({dice})", p)
+          : t("{label} {need}+: {n} of {total} ({dice})", p);
       }
+      // The game's own label for the roll (a unit's name before it), else dice like "2D6".
       const what = label ? `${unitId ? `${unitName(unitId)} ` : ""}${label}` : `${results.length}D${sides}`;
-      if (faces) return `${roller} rolled ${what}: ${results.map((r) => faces[r - 1] ?? r).join(" ")}`;
-      return `${roller} rolled ${what}: ${results.join(" ")}${results.length > 1 ? ` (= ${total})` : ""}`;
+      if (faces)
+        return t("{name} rolled {what}: {results}", {
+          name: roller,
+          what,
+          results: results.map((r) => faces[r - 1] ?? r).join(" "),
+        });
+      return results.length > 1
+        ? t("{name} rolled {what}: {results} (= {total})", {
+            name: roller,
+            what,
+            results: results.join(" "),
+            total: String(total),
+          })
+        : t("{name} rolled {what}: {results}", { name: roller, what, results: results.join(" ") });
     }
     case "undo":
-      return `${who} took back an action`;
+      return t("{name} took back an action", { name: who });
     case "unit/add":
-      return `${who} deployed ${event.unit.name} (${event.models.length})`;
+      return t("{name} deployed {unit} ({n})", { name: who, unit: event.unit.name, n: event.models.length });
     case "terrain/add":
-      return `${who} added ${event.piece.name.toLowerCase()}`;
+      return t("{name} added {terrain}", { name: who, terrain: event.piece.name.toLowerCase() });
     case "terrain/update":
-      return `${who} changed ${event.piece.name.toLowerCase()}`;
+      return t("{name} changed {terrain}", { name: who, terrain: event.piece.name.toLowerCase() });
     case "terrain/remove":
-      return `${who} removed terrain`;
-    case "player/ready":
-      return `${game.players[event.player]?.name ?? who} is ${event.ready ? "ready" : "not ready yet"}`;
+      return t("{name} removed terrain", { name: who });
+    case "player/ready": {
+      const name = game.players[event.player]?.name ?? who;
+      return event.ready ? t("{name} is ready", { name }) : t("{name} is not ready yet", { name });
+    }
     case "game/packages": {
       const was = before.packages;
       const names = (ps: { name: string; version: string }[]) =>
         ps.map((p) => `${p.name} ${p.version}`).join(", ");
       if (event.agreed && was) {
-        const changes = describePackageChange(was.packages, event.packages);
-        return `Rules changed: ${changes || "packages updated"} (${event.agreed.length === 2 ? "both players agreed" : event.agreed.length > 2 ? "all players agreed" : "agreed"})`;
+        const changes = describePackageChange(was.packages, event.packages) || t("packages updated");
+        return event.agreed.length === 2
+          ? t("Rules changed: {changes} (both players agreed)", { changes })
+          : event.agreed.length > 2
+            ? t("Rules changed: {changes} (all players agreed)", { changes })
+            : t("Rules changed: {changes} (agreed)", { changes });
       }
       return event.packages.length
-        ? `Rules packages: ${names(event.packages)}`
-        : "Rules packages: none (built-in rules only)";
+        ? t("Rules packages: {packages}", { packages: names(event.packages) })
+        : t("Rules packages: none (built-in rules only)");
     }
     case "packages/propose":
-      return `${who} proposed changing the rules: ${describePackageChange(game.packages?.packages ?? [], event.packages) || "no change"}`;
+      return t("{name} proposed changing the rules: {changes}", {
+        name: who,
+        changes: describePackageChange(game.packages?.packages ?? [], event.packages) || t("no change"),
+      });
     case "packages/accept":
-      return `${game.players[event.player]?.name ?? who} accepted the rules change`;
+      return t("{name} accepted the rules change", { name: game.players[event.player]?.name ?? who });
     case "packages/decline":
-      return `${game.players[event.player]?.name ?? who} declined the rules change`;
+      return t("{name} declined the rules change", { name: game.players[event.player]?.name ?? who });
     case "packages/withdraw":
-      return `${who} withdrew the rules change`;
+      return t("{name} withdrew the rules change", { name: who });
     case "player/resync":
-      return `${game.players[event.player]?.name ?? who} resynced from the host`;
+      return t("{name} resynced from the host", { name: game.players[event.player]?.name ?? who });
     case "player/rules": {
       const names = (game.packages?.packages ?? []).filter((p) => event.missing.includes(p.hash));
       const name = game.players[event.player]?.name ?? who;
       return event.missing.length
-        ? `${name} is playing without ${names.map((p) => `${p.name} ${p.version}`).join(", ") || "some of the rules"}: their table may disagree`
-        : `${name} now has the game's rules`;
+        ? t("{name} is playing without {packages}: their table may disagree", {
+            name,
+            packages: names.map((p) => `${p.name} ${p.version}`).join(", ") || t("some of the rules"),
+          })
+        : t("{name} now has the game's rules", { name });
     }
     case "template/set": {
-      const t = event.template;
+      const tpl = event.template;
       const old = before.templates?.[event.id];
-      const name = (t?.label ?? old?.label ?? "template").toLowerCase();
-      return t ? `${who} ${old ? "moved" : "placed"} the ${name}` : `${who} removed the ${name}`;
+      const p = { name: who, template: (tpl?.label ?? old?.label ?? t("template")).toLowerCase() };
+      return tpl
+        ? old
+          ? t("{name} moved the {template}", p)
+          : t("{name} placed the {template}", p)
+        : t("{name} removed the {template}", p);
     }
     case "template/scatter": {
-      const t = before.templates?.[event.id];
-      const name = (event.label ?? t?.label ?? "template").toLowerCase();
-      if (event.scatter.toLowerCase() === "hit") return `${who} rolled a hit: the ${name} stays put`;
-      const inches = Number(event.distance);
-      if (!inches) return `${who} rolled ${event.distance} for the ${name}: it doesn't move`;
+      const tpl = before.templates?.[event.id];
+      const p = {
+        name: who,
+        template: (event.label ?? tpl?.label ?? t("template")).toLowerCase(),
+        roll: event.distance,
+        inches: Number(event.distance),
+        direction: bearing(event.angle),
+      };
+      if (event.scatter.toLowerCase() === "hit") return t("{name} rolled a hit: the {template} stays put", p);
+      if (!p.inches) return t("{name} rolled {roll} for the {template}: it doesn't move", p);
       const { width, depth } = game.table;
       const off = Math.abs(event.to.x) > width / 2 || Math.abs(event.to.y) > depth / 2;
-      return `${who} scattered the ${name} ${inches}" towards the ${bearing(event.angle)}${off ? ", off the table" : ""}`;
+      return off
+        ? t('{name} scattered the {template} {inches}" towards the {direction}, off the table', p)
+        : t('{name} scattered the {template} {inches}" towards the {direction}', p);
     }
     case "ruler/set": {
       const r = event.ruler;
-      if (!r) return `${who} cleared the ruler`;
-      const name = (id?: string) => (id ? (game.models[id]?.label ?? "a model") : "a point");
-      const ends = r.fromModel || r.toModel ? ` (${name(r.fromModel)} to ${name(r.toModel)})` : "";
-      return `${who} measured ${distanceText(game, rulerLength(game, r))}${ends}`;
+      if (!r) return t("{name} cleared the ruler", { name: who });
+      const end = (id?: string) => (id ? (game.models[id]?.label ?? t("a model")) : t("a point"));
+      const distance = distanceText(game, rulerLength(game, r));
+      return r.fromModel || r.toModel
+        ? t("{name} measured {distance} ({from} to {to})", {
+            name: who,
+            distance,
+            from: end(r.fromModel),
+            to: end(r.toModel),
+          })
+        : t("{name} measured {distance}", { name: who, distance });
     }
     case "objective/move":
-      return `${who} moved an objective`;
+      return t("{name} moved an objective", { name: who });
     case "unit/figure":
       return event.figure
-        ? `${who} gave ${unitName(event.id)} the figure ${event.figure.name}`
-        : `${who} took the figure off ${unitName(event.id)}`;
+        ? t("{name} gave {unit} the figure {figure}", {
+            name: who,
+            unit: unitName(event.id),
+            figure: event.figure.name,
+          })
+        : t("{name} took the figure off {unit}", { name: who, unit: unitName(event.id) });
     case "unit/height":
-      return `${who} set ${unitName(event.id)} height to ${event.height ?? "default"}"`;
+      return t('{name} set {unit} height to {height}"', {
+        name: who,
+        unit: unitName(event.id),
+        height: event.height ?? t("default"),
+      });
     case "settings/set": {
       const st = event.settings;
       const parts = [
-        st.cover && `cover ${st.cover === "hit" ? "−1 to hit" : "+1 to save"}`,
+        st.cover && (st.cover === "hit" ? t("cover −1 to hit") : t("cover +1 to save")),
         st.los &&
-          `line of sight: ${st.los === "heights" ? "stand-in heights" : st.los === "footprint" ? "footprints" : "true"}`,
-        st.visionArc !== undefined && `vision ${st.visionArc >= 360 ? "all around" : `${st.visionArc}° arc`}`,
-        st.modelsBlock !== undefined && `models ${st.modelsBlock ? "block" : "don't block"} sight`,
+          (st.los === "heights"
+            ? t("line of sight: stand-in heights")
+            : st.los === "footprint"
+              ? t("line of sight: footprints")
+              : t("line of sight: true")),
+        st.visionArc !== undefined &&
+          (st.visionArc >= 360 ? t("vision all around") : t("vision {deg}° arc", { deg: st.visionArc })),
+        st.modelsBlock !== undefined &&
+          (st.modelsBlock ? t("models block sight") : t("models don't block sight")),
       ].filter(Boolean);
-      return `${who} set ${parts.join(", ") || "game settings"}`;
+      return t("{name} set {settings}", { name: who, settings: parts.join(", ") || t("game settings") });
     }
     case "unit/attach":
-      return `${who} attached ${unitName(event.id)} to ${unitName(event.to)}`;
+      return t("{name} attached {unit} to {other}", {
+        name: who,
+        unit: unitName(event.id),
+        other: unitName(event.to),
+      });
     case "unit/remove":
-      return `${who} removed ${unitName(event.id)}`;
+      return t("{name} removed {unit}", { name: who, unit: unitName(event.id) });
     case "unit/move": {
-      const name = unitName(event.id);
-      const deg = Math.round((Math.abs(event.turn) * 180) / Math.PI);
+      const p = {
+        name: who,
+        unit: unitName(event.id),
+        deg: Math.round((Math.abs(event.turn) * 180) / Math.PI),
+        distance: distanceText(game, event.distance ?? 0),
+      };
       if (event.how === "wheel")
-        return `${who} wheeled ${name} ${deg}° ${event.turn < 0 ? "right" : "left"} (${distanceText(game, event.distance ?? 0)})`;
-      const inches = distanceText(game, event.distance ?? 0);
-      if (event.how === "door") return `${who} closed the door: ${name} lined up with its target (${inches})`;
-      if (event.how === "charge") return `${name} charged ${inches}`;
-      if (event.how === "flee") return `${name} fled ${inches}`;
-      if (event.how === "pursue") return `${name} pursued ${inches}`;
-      if (event.how === "forward")
-        return `${who} moved ${name} ${(event.distance ?? 0) < 0 ? "back" : "forward"} ${distanceText(game, Math.abs(event.distance ?? 0))}`;
-      return `${who} ${moveText(before, game, game.units[event.id]?.modelIds ?? [])}`;
+        return event.turn < 0
+          ? t("{name} wheeled {unit} {deg}° right ({distance})", p)
+          : t("{name} wheeled {unit} {deg}° left ({distance})", p);
+      if (event.how === "door")
+        return t("{name} closed the door: {unit} lined up with its target ({distance})", p);
+      if (event.how === "charge") return t("{unit} charged {distance}", p);
+      if (event.how === "flee") return t("{unit} fled {distance}", p);
+      if (event.how === "pursue") return t("{unit} pursued {distance}", p);
+      if (event.how === "forward") {
+        const q = { ...p, distance: distanceText(game, Math.abs(event.distance ?? 0)) };
+        return (event.distance ?? 0) < 0
+          ? t("{name} moved {unit} back {distance}", q)
+          : t("{name} moved {unit} forward {distance}", q);
+      }
+      return moveText(who, before, game, game.units[event.id]?.modelIds ?? []);
     }
     case "unit/form": {
-      const name = unitName(event.id);
       const f = event.formation;
-      const cost = event.distance ? ` (${Number(event.distance.toFixed(1))}")` : "";
-      if (event.how === "order")
-        return f.kind === "ranked"
-          ? `${who} put ${name} in ${f.order ?? "close"} order`
-          : `${who} sent ${name} out as skirmishers`;
+      const p = {
+        name: who,
+        unit: unitName(event.id),
+        files: f.kind === "ranked" ? f.files : 0,
+        cost: event.distance ? ` (${Number(event.distance.toFixed(1))}")` : "",
+      };
+      if (event.how === "order") {
+        if (f.kind !== "ranked") return t("{name} sent {unit} out as skirmishers", p);
+        const order = f.order ?? "close";
+        return order === "column"
+          ? t("{name} put {unit} in column order", p)
+          : order === "open"
+            ? t("{name} put {unit} in open order", p)
+            : order === "disrupted"
+              ? t("{name} put {unit} in disrupted order", p)
+              : t("{name} put {unit} in close order", p);
+      }
       if (event.how === "turn") {
         const id = game.units[event.id]?.modelIds[0] ?? "";
         const from = before.models[id]?.facing ?? 0;
         const to = game.models[id]?.facing ?? from;
         const d = Math.atan2(Math.sin(to - from), Math.cos(to - from));
-        const way = Math.abs(Math.abs(d) - Math.PI) < 0.1 ? "about" : d > 0 ? "left" : "right";
-        return `${who} turned ${name} ${way}${cost}`;
+        return Math.abs(Math.abs(d) - Math.PI) < 0.1
+          ? t("{name} turned {unit} about{cost}", p)
+          : d > 0
+            ? t("{name} turned {unit} left{cost}", p)
+            : t("{name} turned {unit} right{cost}", p);
       }
-      const wide = f.kind === "ranked" ? ` ${f.files} wide` : "";
-      return `${who} ${event.how === "redress" ? "redressed" : "reformed"} ${name}${wide}${cost}`;
+      if (event.how === "redress")
+        return f.kind === "ranked"
+          ? t("{name} redressed {unit} {files} wide{cost}", p)
+          : t("{name} redressed {unit}{cost}", p);
+      return f.kind === "ranked"
+        ? t("{name} reformed {unit} {files} wide{cost}", p)
+        : t("{name} reformed {unit}{cost}", p);
     }
     case "model/move":
-      return `${who} ${moveText(before, game, [event.id])}`;
+      return moveText(who, before, game, [event.id]);
     case "models/move":
       if (event.setup) return "";
       if (event.snap !== undefined) {
         const unitId = game.models[event.moves[0]?.id ?? ""]?.unitId;
-        return `${unitName(unitId ?? "")} snapped back to ${event.snap}"`;
+        return t('{unit} snapped back to {inches}"', { unit: unitName(unitId ?? ""), inches: event.snap });
       }
-      return `${who} ${moveText(
+      return moveText(
+        who,
         before,
         game,
         event.moves.map((m) => m.id),
-      )}`;
-    case "unit/status":
+      );
+    case "unit/status": {
+      const p = { name: who, unit: unitName(event.id), spell: event.key.slice(6) };
       if (event.key === "marching")
-        return event.value ? `${unitName(event.id)} is marching` : `${unitName(event.id)} stopped marching`;
+        return event.value ? t("{unit} is marching", p) : t("{unit} stopped marching", p);
       if (event.key === "disrupted")
-        return event.value
-          ? `${unitName(event.id)} is disrupted`
-          : `${unitName(event.id)} is no longer disrupted`;
-      if (event.key === "fleeing")
-        return event.value ? `${unitName(event.id)} is fleeing` : `${unitName(event.id)} rallied`;
+        return event.value ? t("{unit} is disrupted", p) : t("{unit} is no longer disrupted", p);
+      if (event.key === "fleeing") return event.value ? t("{unit} is fleeing", p) : t("{unit} rallied", p);
       if (event.key === "lastFiles") return "";
       if (event.key.startsWith("spell:"))
-        return event.value
-          ? `${unitName(event.id)} is under ${event.key.slice(6)}`
-          : `${event.key.slice(6)} on ${unitName(event.id)} ended`;
+        return event.value ? t("{unit} is under {spell}", p) : t("{spell} on {unit} ended", p);
       // An override from the Table warnings panel (src/ui/warnings.ts).
       if (event.key.startsWith("ok."))
         return event.value === null
           ? ""
-          : `${who} marked ${unitName(event.id)} as fine: ${checkName(game, event.key.slice(3)).toLowerCase()}`;
-      return `${who} set ${unitName(event.id)} ${event.key} = ${event.value ?? "off"}`;
-    case "model/wounds":
-      return `${who} set wounds on ${game.models[event.id]?.label ?? "a model"}${event.destroyed ? " (destroyed)" : ""}`;
+          : t("{name} marked {unit} as fine: {check}", {
+              ...p,
+              check: checkName(game, event.key.slice(3)).toLowerCase(),
+            });
+      return t("{name} set {unit} {key} = {value}", {
+        ...p,
+        key: event.key,
+        value: event.value === null || event.value === undefined ? t("off") : String(event.value),
+      });
+    }
+    case "model/wounds": {
+      const p = { name: who, model: game.models[event.id]?.label ?? t("a model") };
+      return event.destroyed
+        ? t("{name} set wounds on {model} (destroyed)", p)
+        : t("{name} set wounds on {model}", p);
+    }
     case "layout/set":
-      return "Table set up";
+      return t("Table set up");
     case "resource/adjust":
       return `${nameOf(event.player)} ${event.delta > 0 ? "+" : ""}${event.delta} ${event.resource}`;
     case "attack/clear":
-      return "Attack cancelled";
+      return t("Attack cancelled");
     case "action/take": {
       const weapon = event.weapon ? game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name : undefined;
       const def = systemOf(game).actions.find((a) => a.id === event.action);
@@ -620,38 +796,56 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
       // Activation games read as sentences: "Spears activates (2 actions)", "Spears marches" (UX 112).
       if (def?.activates !== undefined) {
         const n = Number(game.units[event.unitId]?.status?.actionBudget ?? 0);
-        return `${unitName(event.unitId)} activates${n ? ` (${n} action${n === 1 ? "" : "s"})` : ""}`;
+        const unit = unitName(event.unitId);
+        return n
+          ? tn(n, "{unit} activates ({n} action)", "{unit} activates ({n} actions)", { unit })
+          : t("{unit} activates", { unit });
       }
-      const also = event.with?.length ? ` with ${event.with.map(unitName).join(", ")}` : "";
-      const target = event.targetId ? ` at ${unitName(event.targetId)}` : "";
+      // The verb or action is the game's own ("Spears marches"), so the line keeps its order.
+      const also = event.with?.length
+        ? t(" with {units}", { units: event.with.map(unitName).join(", ") })
+        : "";
+      const target = event.targetId ? t(" at {unit}", { unit: unitName(event.targetId) }) : "";
+      const hold = event.hold ? t(", waiting on a reaction") : "";
       if (def?.verb)
-        return `${unitName(event.unitId)} ${def.verb}${weapon ? ` (${weapon})` : ""}${target}${also}${event.hold ? ", waiting on a reaction" : ""}`;
-      return `${unitName(event.unitId)}: ${action}${weapon ? ` (${weapon})` : ""}${target}${also}${event.hold ? ", waiting on a reaction" : ""}`;
+        return `${unitName(event.unitId)} ${def.verb}${weapon ? ` (${weapon})` : ""}${target}${also}${hold}`;
+      return `${unitName(event.unitId)}: ${action}${weapon ? ` (${weapon})` : ""}${target}${also}${hold}`;
     }
     case "reaction/end":
-      return "Reaction over";
+      return t("Reaction over");
     case "procedure/clear":
-      return "Roll closed";
+      return t("Roll closed");
     case "turn/pass":
-      return `${who} passed`;
+      return t("{name} passed", { name: who });
     case "turn/endActivation":
-      return `${who} ended the activation`;
+      return t("{name} ended the activation", { name: who });
     case "pool/set":
-      return `${nameOf(event.player)} re-rolled or spent dice`;
+      return t("{name} re-rolled or spent dice", { name: nameOf(event.player) });
     case "game/branch": {
       const b = event.branch;
       const again = b.droppedSecrets
-        ? ` ${b.droppedSecrets} secret${b.droppedSecrets === 1 ? "" : "s"} stayed behind: lock them in again.`
+        ? tn(
+            b.droppedSecrets,
+            " {n} secret stayed behind: lock them in again.",
+            " {n} secrets stayed behind: lock them in again.",
+          )
         : "";
       const rule = b.droppedScript
-        ? ` "${b.droppedScript}" was waiting on a player and didn't carry over.`
+        ? t(' "{rule}" was waiting on a player and didn\'t carry over.', { rule: b.droppedScript })
         : "";
       // The moment in words (UX 137); the parent's hash stays on the replay's title card.
-      return `What if: from ${b.moment ?? b.title}.${again}${rule}`;
+      return t("What if: from {moment}.{secrets}{rule}", {
+        moment: b.moment ?? b.title,
+        secrets: again,
+        rule,
+      });
     }
     case "secret/commit": {
       const n = event.secrets.length;
-      return `${nameOf(event.player)} locked in ${event.label ?? "a secret"}${n > 1 ? `: ${n} cards, face down` : ""}`;
+      const p = { name: nameOf(event.player), secret: event.label ?? t("a secret") };
+      return n > 1
+        ? t("{name} locked in {secret}: {n} cards, face down", { ...p, n })
+        : t("{name} locked in {secret}", p);
     }
     case "secret/reveal": {
       // A unit id reads as its name ("drew Warden Guard"); anything else as written.
@@ -667,41 +861,59 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
           ? game.units[v]!.name
           : JSON.stringify(v);
       const ok = game.secrets?.[event.player]?.[event.key]?.revealed;
-      return `${nameOf(event.player)} revealed ${event.label ?? "a secret"}: ${shown}${ok ? "" : " (didn't match what was locked in)"}`;
+      const p = { name: nameOf(event.player), secret: event.label ?? t("a secret"), shown };
+      return ok
+        ? t("{name} revealed {secret}: {shown}", p)
+        : t("{name} revealed {secret}: {shown} (didn't match what was locked in)", p);
     }
     case "game/system":
-      return `Game: ${systemLabel(game.system, systemOf(game).name)}`;
+      return t("Game: {system}", { system: systemLabel(game.system, systemOf(game).name) });
     case "player/action": {
       const name =
         event.label ?? systemOf(game).actions.find((a) => a.id === event.action)?.name ?? event.action;
       const spent = event.payment
         .map((p) => `${p.amount ?? p.indices?.length ?? 0} ${p.resource}`)
         .join(", ");
-      const on = event.targetId ? ` on ${unitName(event.targetId)}` : "";
-      return `${nameOf(event.player)} used ${name}${on}${spent ? ` (${spent})` : ""}`;
+      const p = {
+        name: nameOf(event.player),
+        action: name,
+        unit: event.targetId ? unitName(event.targetId) : "",
+        spent,
+      };
+      if (event.targetId)
+        return spent
+          ? t("{name} used {action} on {unit} ({spent})", p)
+          : t("{name} used {action} on {unit}", p);
+      return spent ? t("{name} used {action} ({spent})", p) : t("{name} used {action}", p);
     }
     case "ability/apply":
-      return `${unitName(event.unitId)}: ${event.ability} applied`;
-    case "unit/reserve":
+      return t("{unit}: {ability} applied", { unit: unitName(event.unitId), ability: event.ability });
+    case "unit/reserve": {
+      const unit = unitName(event.id);
       return event.reserve
-        ? `${unitName(event.id)} went into reserves`
+        ? t("{unit} went into reserves", { unit })
         : before.turn.round === 0
-          ? `${unitName(event.id)} back on the table`
-          : `${unitName(event.id)} arrives from reserves`;
+          ? t("{unit} back on the table", { unit })
+          : t("{unit} arrives from reserves", { unit });
+    }
     case "unit/specialMove":
-      return `${unitName(event.id)} may move up to ${event.inches}" (${event.flag})`;
+      return t('{unit} may move up to {inches}" ({flag})', {
+        unit: unitName(event.id),
+        inches: event.inches,
+        flag: event.flag,
+      });
     case "attack/allocate":
-      return `${who} chose the order their models take wounds`;
+      return t("{name} chose the order their models take wounds", { name: who });
     case "module/set":
       return "";
     case "log/note":
       return event.text;
     case "campaign/award": {
-      const name = game.units[event.unitId ?? ""]?.name ?? "A unit";
+      const name = game.units[event.unitId ?? ""]?.name ?? t("A unit");
       const bits = [
-        event.xp ? `${event.xp > 0 ? "+" : ""}${event.xp} XP` : "",
-        event.honour ? `honour: ${event.honour}` : "",
-        event.scar ? `scar: ${event.scar}` : "",
+        event.xp ? t("{xp} XP", { xp: `${event.xp > 0 ? "+" : ""}${event.xp}` }) : "",
+        event.honour ? t("honour: {honour}", { honour: event.honour }) : "",
+        event.scar ? t("scar: {scar}", { scar: event.scar }) : "",
       ].filter(Boolean);
       return bits.length ? `${name}: ${bits.join(", ")}` : "";
     }
@@ -711,14 +923,18 @@ export function describe({ by, event }: LoggedEvent, before: GameState, game: Ga
         .reduce((n, o) => n + (o.kind === "wounds" ? o.lost : 0), 0);
       const parts = event.outcomes.flatMap((o) =>
         o.kind === "status"
-          ? [`${unitName(o.unitId)} ${o.value ? "is" : "is no longer"} ${o.status}`]
+          ? [
+              o.value
+                ? t("{unit} is {status}", { unit: unitName(o.unitId), status: o.status })
+                : t("{unit} is no longer {status}", { unit: unitName(o.unitId), status: o.status }),
+            ]
           : o.kind === "destroy"
-            ? [`${unitName(o.unitId)} destroyed`]
+            ? [t("{unit} destroyed", { unit: unitName(o.unitId) })]
             : o.kind === "note" || o.kind === "reminder"
               ? [o.text]
               : [],
       );
-      if (lost) parts.unshift(`${lost} ${lost === 1 ? "wound" : "wounds"} lost`);
+      if (lost) parts.unshift(tn(lost, "{n} wound lost", "{n} wounds lost"));
       return parts.join(", ");
     }
     default:
@@ -736,7 +952,7 @@ function scriptLines(
   before: GameState,
   game: GameState,
 ) {
-  const unitName = (id: string) => game.units[id]?.name ?? "a unit";
+  const unitName = (id: string) => game.units[id]?.name ?? t("a unit");
   const by = event.script?.by ?? "";
   const lines: string[] = [];
   for (let i = 0; i < event.events.length; i++) {
@@ -758,9 +974,9 @@ function scriptLines(
       }
       i--;
       const bits = [
-        lost ? `${lost} ${lost === 1 ? "model" : "models"} lost` : "",
-        hurt ? `${hurt} wounded` : "",
-        back ? `${back} back in the fight` : "",
+        lost ? tn(lost, "{n} model lost", "{n} models lost") : "",
+        hurt ? tn(hurt, "{n} wounded", "{n} wounded") : "",
+        back ? tn(back, "{n} back in the fight", "{n} back in the fight") : "",
       ];
       lines.push(`${unitName(unitId ?? "")}: ${bits.filter(Boolean).join(", ")}`);
       continue;
@@ -770,7 +986,7 @@ function scriptLines(
     const text = describe({ by, event: e, seq: 0, at: 0 }, before, game);
     if (text) lines.push(text);
   }
-  if (event.error) lines.push(`stopped: ${event.error}`);
+  if (event.error) lines.push(t("stopped: {error}", { error: event.error }));
   return lines;
 }
 
@@ -782,21 +998,23 @@ function scriptLines(
  */
 export function collapseEmpty(log: LogItem[]): LogItem[] {
   const out: LogItem[] = [];
-  const turnOf = (text: string) => /^(Round \d+ · [^·]+?) · /.exec(text)?.[1] ?? text;
+  // The turn a header belongs to ("Round 1 · Ann"); headers made elsewhere are read from their text.
+  const turnOf = (h: Extract<LogItem, { kind: "header" }>) =>
+    h.turn ?? /^(Round \d+ · [^·]+?) · /.exec(h.text)?.[1] ?? h.text;
   let run: Extract<LogItem, { kind: "header" }>[] = [];
   // The turn of the last header shown: its later empty phases just drop.
   let shownTurn = "";
   const flush = () => {
     if (!run.length) return;
     const last = run.at(-1)!;
-    const lastTurn = turnOf(last.text);
+    const lastTurn = turnOf(last);
     let i = 0;
     while (i < run.length) {
-      const turn = turnOf(run[i]!.text);
+      const turn = turnOf(run[i]!);
       let j = i;
-      while (j + 1 < run.length && turnOf(run[j + 1]!.text) === turn) j++;
+      while (j + 1 < run.length && turnOf(run[j + 1]!) === turn) j++;
       if (turn !== lastTurn && turn !== shownTurn)
-        out.push({ kind: "header", key: run[i]!.key, text: `${turn}: no actions` });
+        out.push({ kind: "header", key: run[i]!.key, text: t("{turn}: no actions", { turn }) });
       i = j + 1;
     }
     out.push(last);
@@ -821,7 +1039,16 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
 export function bearing(facing: number): string {
   const dx = Math.sin(facing);
   const dy = Math.cos(facing);
-  const names = ["right", "bottom-right", "bottom", "bottom-left", "left", "top-left", "top", "top-right"];
+  const names = [
+    t("right"),
+    t("bottom-right"),
+    t("bottom"),
+    t("bottom-left"),
+    t("left"),
+    t("top-left"),
+    t("top"),
+    t("top-right"),
+  ];
   const a = Math.atan2(dy, dx); // 0 = right, pi/2 = down the screen (+y)
   const i = Math.round(a / (Math.PI / 4));
   return names[((i % 8) + 8) % 8]!;
@@ -865,11 +1092,21 @@ export function undoGroup(
     if (undone.has(s)) continue;
     if (event.type === "attack/declare") {
       const spec = event.attack.spec;
-      const name = (id: string) => game.units[id]?.name ?? "a unit";
+      const name = (id: string) => game.units[id]?.name ?? t("a unit");
+      const p = { unit: name(spec.attackerUnitId), target: name(spec.targetUnitId) };
+      // "Line Troopers'", "Warden's".
+      const plural = /s$/i.test(p.unit);
       return {
         seq: s,
         also,
-        what: `${possessive(name(spec.attackerUnitId))} ${spec.kind === "melee" ? "fight with" : "shooting at"} ${name(spec.targetUnitId)}`,
+        what:
+          spec.kind === "melee"
+            ? plural
+              ? t("{unit}' fight with {target}", p)
+              : t("{unit}'s fight with {target}", p)
+            : plural
+              ? t("{unit}' shooting at {target}", p)
+              : t("{unit}'s shooting at {target}", p),
       };
     }
     if (!ATTACK_STEPS.has(event.type)) break;
@@ -877,6 +1114,3 @@ export function undoGroup(
   }
   return { seq, also: [], what: null };
 }
-
-/** "Line Troopers'", "Warden's". */
-const possessive = (name: string) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
