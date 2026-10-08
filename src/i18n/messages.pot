@@ -768,7 +768,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:546
 #: src/tables/TableLibrary.tsx:220
-#: src/ui/ArmyImport.tsx:554
+#: src/ui/ArmyImport.tsx:557
 #: src/workshop/Workshop.tsx:322
 msgid "Export"
 msgstr ""
@@ -894,7 +894,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:616
 #: src/campaign/EventTab.tsx:272
-#: src/ui/ArmyImport.tsx:307
+#: src/ui/ArmyImport.tsx:310
 msgid "Pts"
 msgstr ""
 
@@ -961,7 +961,7 @@ msgid "Edit"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:736
-#: src/ui/ArmyImport.tsx:306
+#: src/ui/ArmyImport.tsx:309
 #: src/ui/StatsScreen.tsx:150
 msgid "Unit"
 msgstr ""
@@ -1288,7 +1288,7 @@ msgstr ""
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:127
+#: src/ui/AutoAbilities.tsx:137
 msgid "Add"
 msgstr ""
 
@@ -2058,12 +2058,12 @@ msgid "Pick for a pack"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:364
-#: src/ui/PlayPanel.tsx:231
+#: src/ui/PlayPanel.tsx:233
 msgid "Name"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:371
-#: src/ui/ArmyImport.tsx:312
+#: src/ui/ArmyImport.tsx:315
 msgid "Figure"
 msgstr ""
 
@@ -3707,7 +3707,7 @@ msgid "Save table"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:19
-#: src/ui/ArmyImport.tsx:549
+#: src/ui/ArmyImport.tsx:552
 msgid "another game"
 msgstr ""
 
@@ -3730,8 +3730,8 @@ msgid "This table is for another game"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:190
-#: src/ui/PlayPanel.tsx:268
+#: src/ui/PlayPanel.tsx:192
+#: src/ui/PlayPanel.tsx:270
 msgid "Use"
 msgstr ""
 
@@ -3740,7 +3740,7 @@ msgid "Take {name} out of your library?"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:228
-#: src/ui/ArmyImport.tsx:560
+#: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:362
 #: src/ui/TemplateTools.tsx:114
@@ -3901,7 +3901,7 @@ msgid "Your list stays with you: it goes to the people in your game and nowhere 
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:80
-#: src/ui/ArmyImport.tsx:413
+#: src/ui/ArmyImport.tsx:416
 #: src/ui/FigurePicker.tsx:180
 msgid "Your figures"
 msgstr ""
@@ -3939,245 +3939,245 @@ msgstr ""
 msgid "units"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:179
+#: src/ui/ArmyImport.tsx:182
 msgid "{count} spells read for {n} wizard."
 msgid_plural "{count} spells read for {n} wizards."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:195
+#: src/ui/ArmyImport.tsx:198
 msgid "Army for"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:207
+#: src/ui/ArmyImport.tsx:210
 msgid "Armies can be added once this game's rules package is running."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:211
+#: src/ui/ArmyImport.tsx:214
 msgid "Reading…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:211
+#: src/ui/ArmyImport.tsx:214
 msgid "Import a list"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:221
-#: src/ui/ArmyImport.tsx:244
+#: src/ui/ArmyImport.tsx:224
+#: src/ui/ArmyImport.tsx:247
 msgid "Sample army"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:23
-#: src/ui/ArmyImport.tsx:669
-msgid "{d}mm round"
-msgstr ""
-
-#: src/ui/ArmyImport.tsx:230
+#: src/ui/ArmyImport.tsx:233
 msgid "Sample army…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:277
+#: src/ui/ArmyImport.tsx:24
+#: src/ui/ArmyImport.tsx:672
+msgid "{d}mm round"
+msgstr ""
+
+#: src/ui/ArmyImport.tsx:280
 msgid "Your figure library has figures that fit {n} unit."
 msgid_plural "Your figure library has figures that fit {n} units."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:291
+#: src/ui/ArmyImport.tsx:294
 msgid "Use them"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:297
+#: src/ui/ArmyImport.tsx:300
 msgid "Picked figures go on when the army is deployed."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:299
+#: src/ui/ArmyImport.tsx:302
 msgid "Clear the figures"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:308
+#: src/ui/ArmyImport.tsx:311
 msgid "Troop type"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:309
+#: src/ui/ArmyImport.tsx:312
 #: src/ui/TemplateTools.tsx:89
 msgid "Models"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:310
+#: src/ui/ArmyImport.tsx:313
 msgid "Base"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:311
+#: src/ui/ArmyImport.tsx:314
 msgid "Models in the front rank"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:311
+#: src/ui/ArmyImport.tsx:314
 #: src/ui/RegimentPanel.tsx:95
 #: src/ui/RegimentPanel.tsx:334
 msgid "Frontage"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:324
+#: src/ui/ArmyImport.tsx:327
 msgid "Level {level} wizard:"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:327
+#: src/ui/ArmyImport.tsx:330
 msgid "no spells yet"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:34
-#: src/ui/ArmyImport.tsx:671
+#: src/ui/ArmyImport.tsx:35
+#: src/ui/ArmyImport.tsx:674
 msgid "{w}×{d}mm oval"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:356
+#: src/ui/ArmyImport.tsx:359
 msgid "single"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:362
+#: src/ui/ArmyImport.tsx:365
 msgid "{unit} frontage"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:376
+#: src/ui/ArmyImport.tsx:379
 msgid "Deploy as a loose spread instead of a block"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:383
+#: src/ui/ArmyImport.tsx:386
 #: src/ui/RegimentPanel.tsx:26
 #: src/workshop/Workshop.tsx:50
 msgid "Skirmish"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:392
-#: src/ui/ArmyImport.tsx:504
+#: src/ui/ArmyImport.tsx:395
+#: src/ui/ArmyImport.tsx:507
 msgid "From your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:395
+#: src/ui/ArmyImport.tsx:398
 msgid "{unit} figure"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:401
+#: src/ui/ArmyImport.tsx:404
 msgid "Suggested: {name}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:402
+#: src/ui/ArmyImport.tsx:405
 msgid "Stand-ins"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:405
+#: src/ui/ArmyImport.tsx:408
 #: src/ui/FigurePicker.tsx:172
 msgid "Fits this unit"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:428
+#: src/ui/ArmyImport.tsx:431
 msgid "Not in the list, fill in:"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:453
+#: src/ui/ArmyImport.tsx:456
 msgid "Bases are a guess from each unit's troop type; check them against your models."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:454
+#: src/ui/ArmyImport.tsx:457
 msgid "Bases are a guess from keywords and wounds; check them against your models."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:462
+#: src/ui/ArmyImport.tsx:465
 msgid "A spell list file: names, casting values, ranges and kinds"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:464
+#: src/ui/ArmyImport.tsx:467
 msgid "Add spells from a list"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:480
+#: src/ui/ArmyImport.tsx:483
 msgid "Deploy for {name}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:49
+#: src/ui/ArmyImport.tsx:50
 msgid "{w}mm square"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:49
-#: src/ui/ArmyImport.tsx:672
+#: src/ui/ArmyImport.tsx:50
+#: src/ui/ArmyImport.tsx:675
 msgid "{w}×{d}mm"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:512
+#: src/ui/ArmyImport.tsx:515
 msgid "From your shelf…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:534
+#: src/ui/ArmyImport.tsx:537
 msgid "Your army shelf ({count})"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:534
+#: src/ui/ArmyImport.tsx:537
 msgid "Your army shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:537
+#: src/ui/ArmyImport.tsx:540
 msgid "Armies saved on this device. Save one after deploying it; pass one on as a file, figures included."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:558
+#: src/ui/ArmyImport.tsx:561
 msgid "Take {name} off your shelf?"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:567
+#: src/ui/ArmyImport.tsx:570
 msgid "Open an army file"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:57
-msgid "{w}×{d}mm hull"
-msgstr ""
-
-#: src/ui/ArmyImport.tsx:575
+#: src/ui/ArmyImport.tsx:578
 msgid "{name} is on your shelf."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:597
+#: src/ui/ArmyImport.tsx:58
+msgid "{w}×{d}mm hull"
+msgstr ""
+
+#: src/ui/ArmyImport.tsx:600
 msgid "{n} unit · saved {when}"
 msgid_plural "{n} units · saved {when}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:612
+#: src/ui/ArmyImport.tsx:615
 msgid "{name}'s army is on your shelf as it is now."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:613
+#: src/ui/ArmyImport.tsx:616
 msgid "This army is on your shelf as it is now."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:620
+#: src/ui/ArmyImport.tsx:623
 msgid "Keep this army on this device for later games, with its unit names, figures, dice and colour"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:627
+#: src/ui/ArmyImport.tsx:630
 msgid "Update {name}'s army on your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:628
+#: src/ui/ArmyImport.tsx:631
 msgid "Update it on your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:630
+#: src/ui/ArmyImport.tsx:633
 msgid "Save {name}'s army to your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:631
+#: src/ui/ArmyImport.tsx:634
 msgid "Save army to your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:655
+#: src/ui/ArmyImport.tsx:658
 msgid "on {mount}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:661
 #: src/ui/ArmyImport.tsx:664
+#: src/ui/ArmyImport.tsx:667
 msgid "({points} pts)"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:663
+#: src/ui/ArmyImport.tsx:666
 msgid "({points} pts; units {units})"
 msgstr ""
 
@@ -4205,13 +4205,13 @@ msgid "no re-roll"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:167
-#: src/ui/autoText.ts:135
-#: src/ui/autoText.ts:183
+#: src/ui/autoText.ts:141
+#: src/ui/autoText.ts:189
 msgid "re-roll 1s"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:168
-#: src/ui/autoText.ts:136
+#: src/ui/autoText.ts:142
 msgid "re-roll fails"
 msgstr ""
 
@@ -4499,104 +4499,109 @@ msgstr ""
 msgid "at"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:105
+#: src/ui/AutoAbilities.tsx:113
 msgid "Paste its name, then its When, Target and Effect."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:112
+#: src/ui/AutoAbilities.tsx:122
 msgid "Add a stratagem"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:114
+#: src/ui/AutoAbilities.tsx:124
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:121
+#: src/ui/AutoAbilities.tsx:131
 msgid "Stratagem text"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:122
+#: src/ui/AutoAbilities.tsx:132
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:198
+#: src/ui/AutoAbilities.tsx:208
 msgid "{name} ({cp} CP)"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:231
+#: src/ui/AutoAbilities.tsx:241
 msgid "Your army"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:237
+#: src/ui/AutoAbilities.tsx:247
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:251
+#: src/ui/AutoAbilities.tsx:258
+msgid "No stratagems in this list: add your detachment's below."
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:264
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:269
-#: src/ui/AutoAbilities.tsx:363
-#: src/ui/AutoAbilities.tsx:429
+#: src/ui/AutoAbilities.tsx:282
+#: src/ui/AutoAbilities.tsx:384
+#: src/ui/AutoAbilities.tsx:450
 msgid "Automate this?"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:278
-#: src/ui/AutoAbilities.tsx:378
+#: src/ui/AutoAbilities.tsx:294
+#: src/ui/AutoAbilities.tsx:392
+msgid "Automate all suggested"
+msgstr ""
+
+#: src/ui/AutoAbilities.tsx:299
+#: src/ui/AutoAbilities.tsx:399
 msgid "{names}: the app reminds you of it; play it yourself."
 msgid_plural "{names}: the app reminds you of these; play them yourself."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:329
+#: src/ui/AutoAbilities.tsx:350
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:337
+#: src/ui/AutoAbilities.tsx:358
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AutoAbilities.tsx:343
+#: src/ui/AutoAbilities.tsx:364
 msgid "Abilities the app can play for you"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:345
+#: src/ui/AutoAbilities.tsx:366
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:371
-msgid "Automate all suggested"
-msgstr ""
-
-#: src/ui/AutoAbilities.tsx:414
+#: src/ui/AutoAbilities.tsx:435
 msgid "Automated:"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:419
+#: src/ui/AutoAbilities.tsx:440
 msgid "Stop automating"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:453
+#: src/ui/AutoAbilities.tsx:474
 msgid "{ability}: on until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:459
+#: src/ui/AutoAbilities.tsx:480
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:462
+#: src/ui/AutoAbilities.tsx:483
 msgid "Use {ability}"
 msgstr ""
 
-#: src/ui/AutoAbilities.tsx:467
+#: src/ui/AutoAbilities.tsx:488
 msgid "{ability} used"
 msgstr ""
 
@@ -6364,47 +6369,51 @@ msgstr ""
 msgid "({cp} CP)"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:164
+#: src/ui/PlayPanel.tsx:165
+msgid "0 CP left"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:165
 msgid "{cp} CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:184
+#: src/ui/PlayPanel.tsx:186
 msgid "Pick a unit first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:196
+#: src/ui/PlayPanel.tsx:198
 msgid "On which unit…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:241
+#: src/ui/PlayPanel.tsx:243
 msgid "Cost"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:257
+#: src/ui/PlayPanel.tsx:259
 msgid "Not enough {resource}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:259
+#: src/ui/PlayPanel.tsx:261
 msgid "Name it first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:272
+#: src/ui/PlayPanel.tsx:274
 msgid "Dice to spend"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:275
+#: src/ui/PlayPanel.tsx:277
 msgid "Spends these {resource}:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:276
+#: src/ui/PlayPanel.tsx:278
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:324
+#: src/ui/PlayPanel.tsx:326
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:329
+#: src/ui/PlayPanel.tsx:331
 msgid "Apply"
 msgstr ""
 
@@ -8357,27 +8366,27 @@ msgstr ""
 msgid "The full list of changes"
 msgstr ""
 
-#: src/ui/autoText.ts:100
+#: src/ui/autoText.ts:106
 msgid "{unit}'s {ability}: rolled {roll}, {n} wound regained"
 msgid_plural "{unit}'s {ability}: rolled {roll}, {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:110
+#: src/ui/autoText.ts:116
 msgid "{unit}'s {ability}: {n} wound regained"
 msgid_plural "{unit}'s {ability}: {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:133
+#: src/ui/autoText.ts:139
 msgid "{by} to {roll}"
 msgstr ""
 
-#: src/ui/autoText.ts:134
+#: src/ui/autoText.ts:140
 msgid "{roll} target {by}"
 msgstr ""
 
-#: src/ui/autoText.ts:137
+#: src/ui/autoText.ts:143
 msgid "criticals on {n}+"
 msgstr ""
 
@@ -8393,7 +8402,7 @@ msgstr ""
 msgid "Its attacks"
 msgstr ""
 
-#: src/ui/autoText.ts:185
+#: src/ui/autoText.ts:191
 msgid "re-roll"
 msgstr ""
 
@@ -8409,107 +8418,119 @@ msgstr ""
 msgid "Attacks against it"
 msgstr ""
 
-#: src/ui/autoText.ts:25
-msgid "gain {rule}"
+#: src/ui/autoText.ts:26
+msgid "+{n} Attacks"
 msgstr ""
 
-#: src/ui/autoText.ts:27
-msgid "re-roll {roll} rolls of 1"
+#: src/ui/autoText.ts:28
+msgid "+{n} Strength"
 msgstr ""
 
 #: src/ui/autoText.ts:29
-msgid "re-roll failed {roll} rolls"
+msgid "AP improved by {n}"
 msgstr ""
 
 #: src/ui/autoText.ts:31
-msgid "−1 Damage (not below 1)"
+msgid "gain {rule}"
 msgstr ""
 
 #: src/ui/autoText.ts:33
-msgid "+1 to {roll}"
+msgid "re-roll {roll} rolls of 1"
 msgstr ""
 
-#: src/ui/autoText.ts:34
-msgid "−1 to {roll}"
-msgstr ""
-
-#: src/ui/autoText.ts:36
-msgid "against {keywords}"
-msgstr ""
-
-#: src/ui/autoText.ts:36
-msgid " or "
+#: src/ui/autoText.ts:35
+msgid "re-roll failed {roll} rolls"
 msgstr ""
 
 #: src/ui/autoText.ts:37
+msgid "−1 Damage (not below 1)"
+msgstr ""
+
+#: src/ui/autoText.ts:39
+msgid "+1 to {roll}"
+msgstr ""
+
+#: src/ui/autoText.ts:40
+msgid "−1 to {roll}"
+msgstr ""
+
+#: src/ui/autoText.ts:42
+msgid "against {keywords}"
+msgstr ""
+
+#: src/ui/autoText.ts:42
+msgid " or "
+msgstr ""
+
+#: src/ui/autoText.ts:43
 msgid "after charging"
 msgstr ""
 
-#: src/ui/autoText.ts:38
+#: src/ui/autoText.ts:44
 msgid "if it stayed still"
 msgstr ""
 
-#: src/ui/autoText.ts:51
+#: src/ui/autoText.ts:57
 msgid "gain {amount} {resource}"
 msgstr ""
 
-#: src/ui/autoText.ts:53
+#: src/ui/autoText.ts:59
 msgid "its most hurt model regains up to {amount} wounds"
 msgstr ""
 
-#: src/ui/autoText.ts:61
+#: src/ui/autoText.ts:67
 msgid "While leading a unit"
 msgstr ""
 
-#: src/ui/autoText.ts:65
+#: src/ui/autoText.ts:71
 msgid "Enemy {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:69
+#: src/ui/autoText.ts:75
 msgid "Friendly {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:74
+#: src/ui/autoText.ts:80
 msgid "Once per battle, for one phase"
 msgstr ""
 
-#: src/ui/autoText.ts:77
+#: src/ui/autoText.ts:83
 msgid "each"
 msgstr ""
 
-#: src/ui/autoText.ts:77
+#: src/ui/autoText.ts:83
 msgid "your"
 msgstr ""
 
-#: src/ui/autoText.ts:80
+#: src/ui/autoText.ts:86
 msgid "At the end of {turn} {phase} phase"
 msgstr ""
 
-#: src/ui/autoText.ts:81
+#: src/ui/autoText.ts:87
 msgid "At the start of {turn} {phase} phase"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:124
+#: src/ui/autoText.ts:130
 msgid "hit"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:126
+#: src/ui/autoText.ts:132
 msgid "wound"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:128
+#: src/ui/autoText.ts:134
 msgid "save"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:130
+#: src/ui/autoText.ts:136
 msgid "damage"
 msgstr ""
 
-#: src/ui/autoText.ts:92
+#: src/ui/autoText.ts:98
 msgid "{unit}'s {ability}: +{amount} {resource}"
 msgstr ""
 

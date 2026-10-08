@@ -146,7 +146,8 @@ export function armyFromGame(
     name: deployed.roster.name,
     system: game.system ?? "",
     savedAt: Date.now(),
-    roster: { ...deployed.roster, units },
+    // The army's rules as played, stratagems pasted at the table included (UX 371).
+    roster: { ...deployed.roster, units, ...(game.armies?.[owner] ? { army: game.armies[owner] } : {}) },
     figures,
     ...(player?.dice !== undefined ? { dice: player.dice } : {}),
     ...(player?.color ? { color: player.color } : {}),

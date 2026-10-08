@@ -685,6 +685,10 @@ details p {
 }
 
 /* Import modal */
+/* A sheet over the table reads on its own: nothing shows through (UX 375). */
+.panel.modal {
+  background: rgb(17 19 24);
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

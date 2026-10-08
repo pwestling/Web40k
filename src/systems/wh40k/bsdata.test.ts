@@ -3,7 +3,7 @@ import { fortyK } from "../../core/content/examples/forty-k";
 import { describesWeaponKeyword, isAutomated, isWeaponRule } from "../../core/content/player";
 import type { Unit } from "../../core";
 import { recognize, recognizeArmyRule, recognizeStratagem } from "./recognize";
-import { DETACHMENT_RULE, ENHANCEMENTS, loadRosterParsers, parseRosterText } from "./roster";
+import { ARMY_RULE, DETACHMENT_RULE, ENHANCEMENTS, loadRosterParsers, parseRosterText } from "./roster";
 
 /**
  * Real input (#51): rosters built from the public BSData catalogues by
@@ -36,7 +36,13 @@ describe.skipIf(!dir)("real rosters from BSData", () => {
           for (const k of ["T", "SV", "W"]) expect(m.profile.chars[k], `${u.name} ${k}`).toBeTruthy();
         const seen = new Set<string>();
         for (const a of u.sheet.abilities) {
-          if (seen.has(a.name) || a.group === ENHANCEMENTS || a.group === DETACHMENT_RULE) continue;
+          if (
+            seen.has(a.name) ||
+            a.group === ENHANCEMENTS ||
+            a.group === DETACHMENT_RULE ||
+            a.group === ARMY_RULE
+          )
+            continue;
           if (describesWeaponKeyword(fortyK, { sheet: u.sheet } as Unit, a)) continue;
           seen.add(a.name);
           total++;

@@ -173,8 +173,11 @@ describe("army from the roster (#49)", () => {
     const r = parseRosterText(XML);
     expect(r.army?.faction).toBe("Invented Order");
     expect(r.army?.detachment).toBe("Ember Vigil");
-    expect(r.army?.rules.map((a) => a.name)).toEqual(["Smouldering Watch", "Kindled Resolve"]);
-    expect(r.army?.rules.every((a) => a.group === "Detachment rule")).toBe(true);
+    expect(r.army?.rules.map((a) => [a.name, a.group])).toEqual([
+      ["Vow of Embers", "Army rule"],
+      ["Smouldering Watch", "Detachment rule"],
+      ["Kindled Resolve", "Detachment rule"],
+    ]);
   });
 
   it("reads stratagem profiles: cost from the name or a column, side, phases and target", () => {
@@ -185,6 +188,11 @@ describe("army from the roster (#49)", () => {
       ["signal-flare", "Signal Flare", 1, "either", undefined, false],
     ]);
     expect(s[0]!.effect).toMatch(/^Until the end of the phase/);
+    expect([s[0]!.targetKeywords, s[0]!.notYet, s[1]!.targetKeywords]).toEqual([
+      "Infantry",
+      "shot",
+      undefined,
+    ]);
     expect(s[0]!.text).toMatch(/Restrictions: Not twice/);
   });
 
@@ -253,7 +261,7 @@ describe("faction rules the recognizer reads (#49)", () => {
 
   it("automates what it reads and leaves the rest as reminders", () => {
     const army = automateArmy(parseRosterText(XML).army!, fortyK);
-    expect(army.rules.map((r) => !!r.auto)).toEqual([false, true]);
+    expect(army.rules.map((r) => !!r.auto)).toEqual([false, false, true]);
     expect(army.stratagems.map((s) => !!s.auto)).toEqual([true, true, false]);
   });
 });
@@ -276,5 +284,32 @@ describe("a pasted stratagem (#51)", () => {
       { kind: "attack", side: "making", roll: "hit", by: 1 },
     ]);
     expect(parseStratagemText("Just a name")).toBeNull();
+  });
+});
+
+describe("weapon characteristics (UX 372)", () => {
+  it("reads +Attacks, +Strength and better AP for one's own weapons", () => {
+    const read = (text: string) => recognizeArmyRule({ name: "x", text }, fortyK)?.parts;
+    expect(read("Add 1 to the Attacks characteristic of the bearer's melee weapons.")).toEqual([
+      { kind: "attack", side: "making", weapon: "melee", stat: "A", by: 1 },
+    ]);
+    expect(
+      read("Add 1 to the Strength characteristic of ranged weapons equipped by models in this unit."),
+    ).toEqual([{ kind: "attack", side: "making", weapon: "ranged", stat: "S", by: 1 }]);
+    expect(
+      read(
+        "Each time a model in this unit makes a melee attack, improve the Armour Penetration characteristic of that attack by 1.",
+      ),
+    ).toEqual([{ kind: "attack", side: "making", weapon: "melee", stat: "AP", by: -1 }]);
+    const auto = recognizeArmyRule(
+      { name: "x", text: "Add 1 to the Attacks characteristic of the bearer's melee weapons." },
+      fortyK,
+    );
+    expect(auto?.effects[0]?.do).toEqual([
+      { do: "modifyCharacteristic", target: "weapon", characteristic: "A", by: 1 },
+    ]);
+    expect(
+      read("Each time an attack targets this unit, add 1 to the Strength characteristic of that attack."),
+    ).toBeUndefined();
   });
 });

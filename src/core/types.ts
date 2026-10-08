@@ -92,6 +92,8 @@ export type AutoPart =
       by?: number;
       /** A weapon ability its attacks gain, e.g. "Lethal Hits". */
       grant?: string;
+      /** A weapon characteristic changed by `by` (#51): Attacks, Strength, or AP (−1 improves it). */
+      stat?: "A" | "S" | "AP";
     }
   | { kind: "fnp"; x: number }
   | { kind: "gain"; resource: string; amount: number }
@@ -143,6 +145,9 @@ export interface ArmyStratagem {
   phases?: string[];
   /** It picks one of the player's units. */
   targetsUnit?: boolean;
+  /** Read from its Target line (UX 373): the unit's keywords ("Infantry"), and an action it mustn't have taken yet. */
+  targetKeywords?: string;
+  notYet?: "shot" | "fought" | "charged";
   /** The When, Target and Effect text, for the panel. */
   when?: string;
   target?: string;

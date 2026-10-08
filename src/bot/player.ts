@@ -599,7 +599,9 @@ class Thinker implements Policy {
       for (const o of playerActions(state, p)) {
         if (!o.ok || o.def.custom || /re.?roll/i.test(o.def.id)) continue;
         // A faction stratagem that does something it can weigh: only on a unit that can still act.
-        const army = o.def.id.startsWith("army:") && o.def.do?.length;
+        const army =
+          o.def.id.startsWith("army:") &&
+          !!state.armies?.[p]?.stratagems.find((s) => o.def.id === `army:${p}:${s.id}`)?.auto;
         if (o.def.id.startsWith("army:") && !army) continue;
         const cp = o.payment.reduce((n, x) => n + (x.resource === "CP" ? (x.amount ?? 0) : 0), 0);
         for (const target of o.targets ?? [undefined])

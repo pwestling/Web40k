@@ -21,17 +21,23 @@ function attackText(p: Extract<AutoPart, { kind: "attack" }>): string {
         : p.weapon === "melee"
           ? t("Melee attacks against it")
           : t("Attacks against it");
-  const what = p.grant
-    ? t("gain {rule}", { rule: p.grant.replace(/\b\w/g, (c) => c.toUpperCase()) })
-    : p.reroll === "ones"
-      ? t("re-roll {roll} rolls of 1", { roll: roll(p.roll!) })
-      : p.reroll
-        ? t("re-roll failed {roll} rolls", { roll: roll(p.roll!) })
-        : p.roll === "damage"
-          ? t("−1 Damage (not below 1)")
-          : (p.by ?? 0) > 0
-            ? t("+1 to {roll}", { roll: roll(p.roll!) })
-            : t("−1 to {roll}", { roll: roll(p.roll!) });
+  const what = p.stat
+    ? p.stat === "A"
+      ? t("+{n} Attacks", { n: p.by ?? 0 })
+      : p.stat === "S"
+        ? t("+{n} Strength", { n: p.by ?? 0 })
+        : t("AP improved by {n}", { n: -(p.by ?? 0) })
+    : p.grant
+      ? t("gain {rule}", { rule: p.grant.replace(/\b\w/g, (c) => c.toUpperCase()) })
+      : p.reroll === "ones"
+        ? t("re-roll {roll} rolls of 1", { roll: roll(p.roll!) })
+        : p.reroll
+          ? t("re-roll failed {roll} rolls", { roll: roll(p.roll!) })
+          : p.roll === "damage"
+            ? t("−1 Damage (not below 1)")
+            : (p.by ?? 0) > 0
+              ? t("+1 to {roll}", { roll: roll(p.roll!) })
+              : t("−1 to {roll}", { roll: roll(p.roll!) });
   const conds = [
     ...(p.against ? [t("against {keywords}", { keywords: p.against.join(t(" or ")) })] : []),
     ...(p.when === "charged" ? [t("after charging")] : []),

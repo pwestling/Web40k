@@ -9,6 +9,7 @@ import { suggestions } from "../figures/match";
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
+import { automateArmy } from "../systems/wh40k/recognize";
 import { isPlaceholder } from "../core/content/systems";
 import { systemModule } from "../systems";
 import { formatDate, t, tn } from "../i18n";
@@ -106,7 +107,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
     try {
       const read = systemModule(game.system).importRoster ?? parseRosterFile;
       setFromShelf(null);
-      setRoster(await read(file.name, new Uint8Array(await file.arrayBuffer())));
+      const r = await read(file.name, new Uint8Array(await file.arrayBuffer()));
+      // The detachment's rules and stratagems the app can read start ticked (UX 370): untick to play one by hand.
+      setRoster(r.army ? { ...r, army: automateArmy(r.army, systemOf(game)) } : r);
     } finally {
       setBusy(false);
     }

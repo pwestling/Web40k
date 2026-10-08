@@ -57,6 +57,14 @@ function readEffect(text: string): Partial<AttackPart> | null {
   if (m) return { roll: "save", by: 1 };
   m = /^subtract (1|one) from the damage characteristic of (?:that|the) attack$/.exec(text);
   if (m) return { roll: "damage", by: -1 };
+  m = /^add (\d|one|two) to the (attacks|strength) characteristic of (?:that|the) (?:attack|weapon)$/.exec(
+    text,
+  );
+  if (m) return { stat: m[2] === "attacks" ? "A" : "S", by: num(m[1]!) };
+  m = /^improve the armou?r penetration characteristic of (?:that|the) (?:attack|weapon) by (\d|one)$/.exec(
+    text,
+  );
+  if (m) return { stat: "AP", by: -num(m[1]!) };
   m = /^(?:that attack|that weapon|the attack) has the \[?([a-z0-9 +-]+?)\]? ability$/.exec(text);
   if (m) return { grant: m[1]!.trim() };
   return null;
@@ -106,6 +114,8 @@ function readAttack(text: string): AttackPart[] | null {
     return null;
   // Attacking: the save and the damage characteristic only change from the defender's side here.
   if (making && effects.some((e) => (e.roll === "save" || e.roll === "damage") && e.by)) return null;
+  // Weapon characteristics change for one's own attacks only.
+  if (!making && effects.some((e) => e.stat)) return null;
   return effects.map((e) => ({ ...part, ...e }));
 }
 
@@ -119,6 +129,36 @@ function readGrant(text: string): AttackPart[] | null {
   return [
     { kind: "attack", side: "making", ...(m[1] ? { weapon: m[1] as "ranged" | "melee" } : {}), grant: m[2]! },
   ];
+}
+
+const OWN_WEAPONS =
+  "(?:(?:the bearer's|this model's|this unit's|that unit's) (?:(ranged|melee) )?weapons|(?:(ranged|melee) )?weapons equipped by (?:models in (?:this|that) unit|this model|the bearer))";
+
+/** "add 1 to the attacks characteristic of the bearer's melee weapons", "improve the ap … by 1" (UX 372). */
+function readStat(text: string): AttackPart[] | null {
+  let m = new RegExp(`^add (\\d|one|two) to the (attacks|strength) characteristics? of ${OWN_WEAPONS}$`).exec(
+    text,
+  );
+  if (m) {
+    const weapon = (m[3] ?? m[4]) as "ranged" | "melee" | undefined;
+    return [
+      {
+        kind: "attack",
+        side: "making",
+        ...(weapon ? { weapon } : {}),
+        stat: m[2] === "attacks" ? "A" : "S",
+        by: num(m[1]!),
+      },
+    ];
+  }
+  m = new RegExp(`^improve the armou?r penetration characteristics? of ${OWN_WEAPONS} by (\\d|one)$`).exec(
+    text,
+  );
+  if (m) {
+    const weapon = (m[1] ?? m[2]) as "ranged" | "melee" | undefined;
+    return [{ kind: "attack", side: "making", ...(weapon ? { weapon } : {}), stat: "AP", by: -num(m[3]!) }];
+  }
+  return null;
 }
 
 function readFnp(text: string): AutoPart[] | null {
@@ -231,6 +271,16 @@ function compileAttack(p: AttackPart, system: GameSystem): Effect[] | null {
     const effects = weaponRule(system, p.grant);
     return effects && effects.map((e) => ({ ...e, if: and(e.if) }));
   }
+  if (p.stat && p.by) {
+    const at = p.stat === "A" ? "attacks" : p.stat === "S" ? "wound" : "save";
+    return [
+      {
+        when: step(at),
+        if: and(),
+        do: [{ do: "modifyCharacteristic", target: "weapon", characteristic: p.stat, by: p.by }],
+      },
+    ];
+  }
   const action: EffectAction | null = p.reroll
     ? { do: "reroll", which: p.reroll }
     : p.by && p.roll === "damage"
@@ -273,7 +323,7 @@ export function recognize(ability: Pick<Ability, "name" | "text">, system: GameS
       parts.push(...t.parts);
       continue;
     }
-    const read = readAttack(s) ?? readGrant(s) ?? readFnp(s);
+    const read = readAttack(s) ?? readGrant(s) ?? readStat(s) ?? readFnp(s);
     if (!read) return null;
     parts.push(...read);
   }

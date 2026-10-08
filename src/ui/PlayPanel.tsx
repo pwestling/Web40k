@@ -161,7 +161,9 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
     <div className="stratagems">
       <p className="row spread">
         <span style={{ color: player.color }}>{displayName(player.name)}</span>
-        {cp !== undefined && <span className="muted">{t("{cp} CP", { cp })}</span>}
+        {cp !== undefined && (
+          <span className="muted">{cp === 0 ? t("0 CP left") : t("{cp} CP", { cp })}</span>
+        )}
       </p>
       {list}
     </div>

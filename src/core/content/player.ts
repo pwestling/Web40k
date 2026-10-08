@@ -1,7 +1,7 @@
 import { isAlive } from "../units";
 import type { Ability, ArmyStratagem, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
-import { bindRules, lookupRules, pattern, unitView } from "./runtime";
+import { bindRules, hasKeywordPhrase, lookupRules, pattern, unitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
 import { currentSlot, endActivation, systemOf } from "./turn";
 
@@ -67,7 +67,8 @@ function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
     cost: [{ resource: "CP", amount: s.cp }],
     limit: { count: 1, per: "phase" },
     ...(s.targetsUnit ? { target: { filter: { same: ["it.owner", "player.id"] } } } : {}),
-    ...(s.auto && s.targetsUnit ? { do: [{ do: "applyStatus", status: `strat.${s.id}` }] } : {}),
+    // On the unit for the phase: it runs when automated, and is a reminder on its attacks when not (UX 370).
+    ...(s.targetsUnit ? { do: [{ do: "applyStatus", status: `strat.${s.id}` }] } : {}),
     ...(s.effect || s.text ? { hint: s.effect ?? s.text } : {}),
   };
 }
@@ -76,6 +77,12 @@ function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
 function playerActionDefs(state: GameState, player: PlayerId): ActionDef[] {
   const own = (state.armies?.[player]?.stratagems ?? []).map((s) => armyAction(player, s));
   return [...systemOf(state).actions.filter((a) => a.by === "player"), ...own];
+}
+
+/** The faction stratagem behind an action id, if it is one. */
+function armyStratagem(state: GameState, id: string): ArmyStratagem | undefined {
+  const army = ARMY.exec(id);
+  return army ? state.armies?.[army[1]!]?.stratagems.find((x) => x.id === army[2]) : undefined;
 }
 
 /** Any action by id, a faction stratagem's included. */
@@ -121,9 +128,16 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
       ...(why || "why" in paid ? { why: why ?? (paid as { why: string }).why } : {}),
     };
     if (def.target) {
+      const army = armyStratagem(state, def.id);
       option.targets = Object.values(state.units)
         .filter((u) => {
           const it = unitView(state, system, u);
+          if (
+            army?.targetKeywords &&
+            !army.targetKeywords.split(/\s+or\s+/i).some((k) => hasKeywordPhrase(u, k))
+          )
+            return false;
+          if (army?.notYet && u.status?.[army.notYet]) return false;
           return (
             it.models.length > 0 && safeBool(def.target!.filter, { ...ctx, scope: { ...ctx.scope, it } })
           );
@@ -310,6 +324,15 @@ export function attackReminders(
           owner: unit.owner,
           ability,
           applied: !!unit.status?.[appliedKey(ability.name)],
+        });
+    // A faction stratagem used on it that the app doesn't run: its effect, to play by hand.
+    for (const s of state.armies?.[unit.owner]?.stratagems ?? [])
+      if (!s.auto && unit.status?.[`strat.${s.id}`])
+        out.push({
+          unitId: id,
+          owner: unit.owner,
+          ability: { name: s.name, text: s.effect ?? s.text },
+          applied: !!unit.status?.[appliedKey(s.name)],
         });
   }
   return out;

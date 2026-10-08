@@ -288,7 +288,9 @@ export function parseRosterText(input: string, extract: RosterExtractor = extrac
   const detachmentRules = new Set(army?.rules.map((a) => a.name.toLowerCase()));
   for (const u of units)
     u.sheet.abilities = u.sheet.abilities.map((a) =>
-      detachmentRules.has(a.name.toLowerCase()) && !a.group ? { ...a, group: DETACHMENT_RULE } : a,
+      detachmentRules.has(a.name.toLowerCase()) && !a.group
+        ? { ...a, group: army!.rules.find((r) => r.name.toLowerCase() === a.name.toLowerCase())!.group }
+        : a,
     );
   return { name: roster.name, points: roster.pts, units, ...(army ? { army } : {}), warnings };
 }
@@ -620,6 +622,8 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
 export const ENHANCEMENTS = "Enhancements";
 /** The heading a detachment's rules are listed under, on the army and on unit cards. */
 export const DETACHMENT_RULE = "Detachment rule";
+/** The heading the army rule (the faction's, on the force) is listed under. */
+export const ARMY_RULE = "Army rule";
 const ENHANCEMENT_RE = /enhancement/i;
 const STRATAGEM_RE = /stratagem/i;
 const PHASE_RE = /\b(command|movement|shooting|charge|fight)\s+phase/gi;
@@ -712,6 +716,13 @@ function makeStratagem(
   const when = fields.when ?? "";
   const phases = stratagemPhases(when);
   const target = fields.target ?? "";
+  const kws = /^\s*(?:one|a|an)\s+(.+?)\s+units?\b.*\bfrom your army/i
+    .exec(target)?.[1]
+    ?.replace(/\bfriendly\b/i, "")
+    .trim();
+  const notYet = /\bnot (?:yet )?(shot|fought|charged|made a charge move)\b/i
+    .exec(target)?.[1]
+    ?.toLowerCase();
   return {
     id: stratagemId(named.name, taken),
     name: named.name,
@@ -719,6 +730,10 @@ function makeStratagem(
     side: stratagemSide(when),
     ...(phases.length ? { phases } : {}),
     ...(/\bunits?\b/i.test(target) && /your army|friendly/i.test(target) ? { targetsUnit: true } : {}),
+    ...(kws ? { targetKeywords: kws } : {}),
+    ...(notYet
+      ? { notYet: notYet.startsWith("made") ? "charged" : (notYet as "shot" | "fought" | "charged") }
+      : {}),
     ...(when ? { when } : {}),
     ...(target ? { target } : {}),
     ...(fields.effect ? { effect: fields.effect } : {}),
@@ -811,7 +826,13 @@ function extractArmy(roster: RRoster): Army | undefined {
     for (const c of n.selections) scan(c, here);
   };
   for (const f of forces) {
-    for (const r of f.rules) if (isStratagemRule(r)) addStrat(ruleStratagem(r, taken));
+    // The army rule (on the force): listed with the detachment's (UX 372).
+    for (const r of f.rules)
+      if (isStratagemRule(r)) addStrat(ruleStratagem(r, taken));
+      else if (r.name && !seenRule.has(r.name.toLowerCase())) {
+        seenRule.add(r.name.toLowerCase());
+        rules.push({ ...r, group: ARMY_RULE });
+      }
     for (const sel of f.selections) {
       if (isDetachmentNode(sel) && !detachment) {
         // "Detachment" with the choice as its child, or the choice named in it ("Detachment: X").

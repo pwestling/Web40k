@@ -8,6 +8,7 @@ import { t, tn } from "../i18n";
 import { useStore } from "../store";
 import { systemModule } from "../systems";
 import {
+  ARMY_RULE,
   DETACHMENT_RULE,
   ENHANCEMENTS,
   parseStratagemText,
@@ -43,7 +44,13 @@ function readRoster(
     const asUnit = { sheet: u.sheet } as Unit;
     for (const a of u.sheet.abilities) {
       // Enhancements and the detachment's rule count with the detachment (ArmyAutomation).
-      if (seen.has(a.name) || a.group === ENHANCEMENTS || a.group === DETACHMENT_RULE) continue;
+      if (
+        seen.has(a.name) ||
+        a.group === ENHANCEMENTS ||
+        a.group === DETACHMENT_RULE ||
+        a.group === ARMY_RULE
+      )
+        continue;
       if (describesWeaponKeyword(system, asUnit, a)) continue;
       seen.add(a.name);
       total++;
@@ -93,6 +100,7 @@ function AddStratagem({
   roster: ImportedRoster;
   setRoster: (r: ImportedRoster) => void;
 }) {
+  const game = useStore((s) => s.game);
   const [text, setText] = useState("");
   const [why, setWhy] = useState("");
   if (!roster.army && !roster.units.length) return null;
@@ -103,12 +111,14 @@ function AddStratagem({
       army.stratagems.map((x) => x.id),
     );
     if (!s) return setWhy(t("Paste its name, then its When, Target and Effect."));
-    setRoster({ ...roster, army: { ...army, stratagems: [...army.stratagems, s] } });
+    const auto = s.targetsUnit ? recognizeStratagem(s.effect ?? s.text, systemOf(game)) : null;
+    setRoster({ ...roster, army: { ...army, stratagems: [...army.stratagems, auto ? { ...s, auto } : s] } });
     setText("");
     setWhy("");
   };
   return (
-    <details className="auto-abilities">
+    // Open when the list brought none: the usual case for a real export (UX 371).
+    <details className="auto-abilities" open={!roster.army?.stratagems.length}>
       <summary>{t("Add a stratagem")}</summary>
       <p className="muted small">
         {t(
@@ -244,6 +254,9 @@ function ArmyAutomation({
             },
           )}
         </strong>
+        {army.stratagems.length === 0 && (
+          <span className="muted"> · {t("No stratagems in this list: add your detachment's below.")}</span>
+        )}
         {army.stratagems.length > 0 && (
           <span className="muted">
             {" "}
@@ -272,6 +285,14 @@ function ArmyAutomation({
             </li>
           ))}
         </ul>
+      )}
+      {proposals.filter((p) => !p.on).length > 1 && (
+        <button
+          className="small"
+          onClick={() => setRoster(proposals.filter((p) => !p.on).reduce((r, p) => p.set(r, true), roster))}
+        >
+          {t("Automate all suggested")}
+        </button>
       )}
       {reminders.length > 0 && (
         <p className="muted small">
