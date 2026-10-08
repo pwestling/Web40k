@@ -1,3 +1,5 @@
+import { UnitWarnings } from "./TableWarnings";
+import { playerShape } from "./sides";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   actionTargets,
@@ -112,7 +114,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const flags = view.flags.filter(
     (f) =>
       !statuses.some((s) => s.id === f) &&
-      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.)/.test(f),
+      !/^(acting|actionsTaken|actionBudget|allowance|reacting|arrived|box\d+|used\.|ok\.)/.test(f),
   );
   const chars = system.characteristics.filter((c) => c.of === "model" && c.type !== "text");
   const texts = system.characteristics.filter((c) => c.of === "model" && c.type === "text");
@@ -125,9 +127,14 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
   const chargedText = charged !== null ? `Charged ${fmt(charged / scale, system)}` : null;
 
   return (
-    <div className="panel unitcard">
+    <div className="panel unitcard" tabIndex={-1} aria-label="Selected unit">
       <div className="row spread">
-        <h2 style={{ color: owner?.color }}>{unit.name}</h2>
+        <h2 style={{ color: owner?.color }}>
+          <span className="side-shape" aria-hidden="true">
+            {playerShape(game, unit.owner)}
+          </span>{" "}
+          {unit.name}
+        </h2>
         <button onClick={() => select(null)}>✕</button>
       </div>
       <p className="muted">
@@ -166,6 +173,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           Moved {fmt(moved / scale, system)} of {fmt(allowance / scale, system)} this round.
         </p>
       )}
+      <UnitWarnings unitId={unit.id} skip={allowance !== null ? ["moveDistance", "wheelDistance"] : []} />
 
       <div className="row wrap">
         <button

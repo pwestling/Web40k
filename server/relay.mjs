@@ -43,6 +43,14 @@ const turnUrls = list(env.TURN_URLS);
 const ttl = Number(env.TURN_TTL ?? 86400);
 const started = Date.now();
 
+// The secret signs TURN logins: anyone who knows it can use the TURN server.
+if (env.TURN_SECRET !== undefined && (env.TURN_SECRET === "change-me" || env.TURN_SECRET.length < 16)) {
+  console.error(
+    "TURN_SECRET is still the example or shorter than 16 characters. Set a long random one in .env, e.g. openssl rand -hex 32",
+  );
+  process.exit(1);
+}
+
 function signalUrl(req) {
   if (env.SIGNAL_URL) return env.SIGNAL_URL;
   const host = req?.headers["x-forwarded-host"] ?? req?.headers.host;

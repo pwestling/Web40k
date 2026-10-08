@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { create } from "zustand";
 import { reportProblem } from "./report";
 
 /** Where bug reports go: the bug form asks for the report file (.github/ISSUE_TEMPLATE). */
@@ -33,19 +34,40 @@ export function SavedNote({ file, kind }: { file: string; kind: "report" | "feed
   );
 }
 
+/** A file just saved from a menu, shown as a toast so it doesn't crowd the menu (UX 173). */
+const useSaved = create<{ file: string | null; kind: "report" | "feedback" }>(() => ({
+  file: null,
+  kind: "report",
+}));
+const TOAST_MS = 30_000;
+
+export function SavedToast() {
+  const { file, kind } = useSaved();
+  useEffect(() => {
+    if (!file) return;
+    const t = setTimeout(() => useSaved.setState({ file: null }), TOAST_MS);
+    return () => clearTimeout(t);
+  }, [file]);
+  if (!file) return null;
+  return (
+    <div className="panel saved-toast">
+      <SavedNote file={file} kind={kind} />
+      <button className="quiet" aria-label="Close" onClick={() => useSaved.setState({ file: null })}>
+        ✕
+      </button>
+    </div>
+  );
+}
+
 /** "Report a problem": download the report, then say where it went. */
 export function ReportButton({ className = "quiet", label = "Report a problem" }) {
-  const [file, setFile] = useState<string | null>(null);
   return (
-    <>
-      <button
-        className={className}
-        title="Download one file with this game, the app's version and recent errors, to send to whoever can fix it"
-        onClick={() => void reportProblem().then(setFile)}
-      >
-        {label}
-      </button>
-      {file && <SavedNote file={file} kind="report" />}
-    </>
+    <button
+      className={className}
+      title="Download one file with this game, the app's version and recent errors, to send to whoever can fix it"
+      onClick={() => void reportProblem().then((file) => useSaved.setState({ file, kind: "report" }))}
+    >
+      {label}
+    </button>
   );
 }

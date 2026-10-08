@@ -1,7 +1,14 @@
 :root {
+  /* --below-bar: where the top bar ends, kept up to date by TopBar (it wraps with wide dice pools). */
   color-scheme: dark;
   font-family: system-ui, sans-serif;
-  font-size: 14px;
+  /* --text-scale: the player's text size (src/ui/textSize.ts). Every other size is in rem. */
+  font-size: calc(14px * var(--text-scale, 1));
+}
+/* Keyboard play (#25): always show where focus is. */
+:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
 }
 html,
 body,
@@ -207,7 +214,7 @@ label.file.button.small {
 .whatnow-toggle {
   z-index: 19;
   position: absolute;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.85rem;
@@ -215,7 +222,7 @@ label.file.button.small {
 }
 .panel.whatnow {
   z-index: 19;
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 50%;
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 32px));
@@ -301,7 +308,7 @@ body.reeling .whatnow-toggle {
 
 /* Left panel */
 .hud {
-  top: 64px;
+  top: var(--below-bar, 64px);
   left: 12px;
   width: 300px;
   max-height: calc(100vh - 300px);
@@ -405,7 +412,7 @@ body.reeling .whatnow-toggle {
 
 /* Unit card */
 .unitcard {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
   max-height: calc(100vh - 140px);
@@ -482,7 +489,7 @@ details p {
 
 /* Attack panel */
 .attack {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 400px;
   max-height: calc(100vh - 140px);
@@ -534,6 +541,8 @@ details p {
 .die.ok {
   background: #166534;
   color: #ecfdf5;
+  /* A ring as well as the colour, for colour-blind players (#25). */
+  box-shadow: inset 0 0 0 2px #bbf7d0;
 }
 .die.crit {
   background: #ca8a04;
@@ -706,7 +715,7 @@ details p {
 
 /* Terrain editor */
 .terrainpanel {
-  top: 64px;
+  top: var(--below-bar, 64px);
   right: 12px;
   width: 360px;
   max-height: calc(100vh - 140px);
@@ -1072,7 +1081,8 @@ input.frontage {
 .net-banner {
   z-index: 30;
   position: absolute;
-  top: 64px;
+  /* Inside the top bar: just under it, however it wraps. */
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   padding: 6px 14px;
@@ -1143,7 +1153,7 @@ input.frontage {
   padding: 2px 6px;
   background: rgb(0 0 0 / 65%);
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.786rem;
   color: #f4f4f5;
   pointer-events: none;
 }
@@ -1157,7 +1167,7 @@ input.frontage {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.857rem;
 }
 
 /* Rules packages */
@@ -1332,7 +1342,7 @@ p.odds {
 }
 .stats-screen h4 {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: 0.857rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #9ca3af;
@@ -1360,7 +1370,7 @@ p.odds {
   stroke-width: 1;
 }
 .points-chart text {
-  font-size: 11px;
+  font-size: 0.786rem;
   text-anchor: middle;
 }
 .points-chart .value {
@@ -1377,7 +1387,7 @@ p.odds {
 .stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.929rem;
 }
 .stats-table th,
 .stats-table td {
@@ -1399,7 +1409,7 @@ p.odds {
   color: #fca5a5;
 }
 .round-card .swing-line {
-  font-size: 13px;
+  font-size: 0.929rem;
   color: #93c5fd;
 }
 /* Long package names wrap; the fingerprint stays whole on its line (UX 82). */
@@ -1468,7 +1478,7 @@ p.odds {
   top: 14px;
   z-index: 4;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.929rem;
   letter-spacing: 0.04em;
   color: #e7e3da;
   text-shadow: 0 1px 4px #000;
@@ -1616,7 +1626,7 @@ p.odds {
   background: var(--c);
   color: #10141a;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 1.286rem;
 }
 .dice-tray .tray-count.fail {
   filter: saturate(0.15) brightness(0.55);
@@ -1685,13 +1695,13 @@ p.odds {
 }
 .moment-title strong {
   font-weight: 900;
-  font-size: 26px;
+  font-size: 1.857rem;
   text-transform: uppercase;
   color: #e0b354;
   text-shadow: 0 3px 14px #000c;
 }
 .moment-title span {
-  font-size: 13px;
+  font-size: 0.929rem;
   color: #e0b354;
   text-shadow: 0 2px 6px #000;
 }
@@ -2207,7 +2217,7 @@ body.reeling
 }
 /* Top right, clear of the round card that opens top centre at the same moment. */
 .panel.score-panel {
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   max-width: min(400px, calc(100vw - 32px));
   display: flex;
@@ -2561,7 +2571,7 @@ body.showcase
 .on-air {
   z-index: 25;
   position: absolute;
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   right: 16px;
   padding: 4px 10px;
   border-radius: 999px;
@@ -2628,7 +2638,7 @@ body.showcase
   overflow: auto;
 }
 .panel.report-banner {
-  top: 70px;
+  top: calc(var(--below-bar, 64px) + 6px);
   left: 50%;
   transform: translateX(-50%);
   width: min(520px, calc(100vw - 32px));
@@ -2690,6 +2700,27 @@ body.showcase
 .saved-note code {
   overflow-wrap: anywhere;
 }
+/* The saved-file toast (UX 173). */
+.panel.saved-toast {
+  z-index: 60;
+  position: fixed;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+  background: #1b1f27;
+  border: 1px solid #3b4252;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 50%);
+}
+.panel.saved-toast .saved-note {
+  margin: 0;
+  flex: 1;
+}
 /* A guest still looking for the host (src/ui/Room.tsx). */
 .still-looking {
   margin-top: 6px;
@@ -2697,4 +2728,77 @@ body.showcase
 }
 .still-looking p {
   margin: 0 0 4px;
+}
+
+/* Table warnings (src/ui/TableWarnings.tsx). */
+.topbar > .warnings-button {
+  color: #e5e7eb;
+  cursor: pointer;
+}
+.topbar > .warnings-button.has {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.topbar > .warnings-button.on {
+  background: #3a2a0c;
+}
+.panel.table-warnings {
+  z-index: 25;
+  background: #15181f;
+  position: absolute;
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: 50vh;
+  overflow: auto;
+  box-sizing: border-box;
+}
+/* Beside the unit card (about 400px wide on the right), on screens wide enough for both. */
+@media (min-width: 1100px) {
+  .panel.table-warnings.beside-card {
+    right: 424px;
+  }
+}
+.table-warnings h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.table-warnings ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-warnings li {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}
+.table-warnings li.info {
+  border-color: #6b7280;
+}
+.unit-warnings {
+  margin: 4px 0;
+}
+.table-warnings li > .link {
+  text-align: left;
+}
+
+/* A side's shape next to its colour (src/ui/sides.ts, #25). */
+.side-shape {
+  font-size: 0.85em;
+}
+
+/* Read by screen readers, not shown (src/ui/Announcer.tsx). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
