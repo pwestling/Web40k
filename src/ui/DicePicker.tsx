@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useEffect, useRef, useState } from "react";
 import type { DiceSet, PlayerId } from "../core";
 import { useStore } from "../store";
@@ -53,7 +54,7 @@ export function DicePicker({ player }: { player: PlayerId }) {
   return (
     <div className="dice-picker">
       <label>
-        {hotseat ? t("{name}'s dice", { name: p.name }) : t("Your dice")}{" "}
+        {hotseat ? t("{name}'s dice", { name: displayName(p.name) }) : t("Your dice")}{" "}
         <select
           aria-label={t("Dice")}
           value={value}

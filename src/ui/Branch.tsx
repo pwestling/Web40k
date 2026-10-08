@@ -3,7 +3,7 @@ import { branchRecord, sha256Hex, stateAt, type GameRecord } from "../core";
 import { currentSlot } from "../core/content/turn";
 import { buildLog } from "./gameLog";
 import { NET_PARAMS } from "../net/config";
-import { t } from "../i18n";
+import { t, gameText } from "../i18n";
 import { useStore, type Mode } from "../store";
 
 /**
@@ -59,7 +59,7 @@ function momentAt(record: GameRecord, seq: number): string {
   const last = [...buildLog(record, seq)].reverse().find((l) => l.kind === "line" && !l.undone && l.text);
   const when = state.turn.round
     ? phase
-      ? t("round {round}, {phase}", { round: state.turn.round, phase })
+      ? t("round {round}, {phase}", { round: state.turn.round, phase: gameText(phase) })
       : t("round {round}", { round: state.turn.round })
     : t("deployment");
   return last ? t("{when}, just after {what}", { when, what: last.text }) : when;

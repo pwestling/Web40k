@@ -3450,9 +3450,15 @@ body.showcase
   box-sizing: border-box;
 }
 .companion-tabs button {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   max-width: 160px;
   min-height: 44px;
+  padding: 0 4px;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .companion-tabs button.on {
   border-color: #60a5fa;
@@ -3486,12 +3492,14 @@ body.showcase
   flex-wrap: wrap;
   gap: 4px;
 }
-.own-dice {
-  justify-content: center;
-}
-.own-dice button.on {
-  border-color: #60a5fa;
-  color: #bfdbfe;
+.companion-tabs .own-dice {
+  flex: 0 1 auto;
+  max-width: 96px;
+  font-size: 0.75rem;
+  line-height: 1.15;
+  white-space: normal;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 .row:has(> .dice-entry) {
   flex-wrap: wrap;
@@ -3510,7 +3518,7 @@ body.showcase
 }
 .dice-entry .faces {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
 .dice-entry .face {
@@ -3576,4 +3584,61 @@ body.showcase
 }
 .text-size button {
   white-space: nowrap;
+}
+
+/* UX 273-274: phone-sized targets and a compact header in the companion */
+.companion button,
+.companion select,
+.companion input:not([type="checkbox"]) {
+  min-height: 44px;
+}
+.companion button {
+  min-width: 44px;
+}
+.companion input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+}
+.companion .topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.companion .topbar > .player {
+  padding: 2px 8px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.companion .topbar > .turn {
+  padding: 2px 4px;
+}
+.companion .topbar > .help-key,
+.companion .topbar > .sound-toggle {
+  display: none;
+}
+.companion .topbar .counter button {
+  padding: 0 8px;
+}
+.companion .invite .invite-link {
+  word-break: break-all;
+  font-size: 0.8rem;
+}
+.dice-entry .face-count {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dice-entry .face-count .row {
+  gap: 2px;
+}
+.dice-entry .face-count input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  box-sizing: border-box;
+}
+.companion .dice-entry .face-count button.small {
+  min-width: 32px;
+  padding: 0;
 }

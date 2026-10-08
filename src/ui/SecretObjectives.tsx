@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { useState } from "react";
 import type { Player } from "../core";
 import { secretsWithPrefix } from "../core/secrets";
@@ -61,7 +62,7 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
   };
   return (
     <div className="stack-player">
-      <span style={{ color: player.color }}>{player.name}</span>{" "}
+      <span style={{ color: player.color }}>{displayName(player.name)}</span>{" "}
       {!mine && (
         <span className="muted small">
           {hidden ? t("{n} face down", { n: hidden }) : all.length ? "" : t("none yet")}
@@ -103,7 +104,7 @@ function Objectives({ player, mine }: { player: Player; mine: boolean }) {
           <input
             value={text}
             placeholder={t("Write one down")}
-            aria-label={t("New secret objective for {name}", { name: player.name })}
+            aria-label={t("New secret objective for {name}", { name: displayName(player.name) })}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && text.trim() && add()}
           />

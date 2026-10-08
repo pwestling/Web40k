@@ -260,7 +260,7 @@ function PointsChart({ players, rounds }: { players: PlayerStats[]; rounds: numb
                     <rect x={x} y={pad.t} width={bar} height={H - pad.t - pad.b} fill="transparent">
                       <title>
                         {t("{player}, round {round}: {n} pts", {
-                          player: p.name,
+                          player: displayName(p.name),
                           round: i + 1,
                           n: Math.round(v),
                         })}

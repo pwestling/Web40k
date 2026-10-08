@@ -41,12 +41,15 @@ export function CompanionScreen() {
   const before = game.turn.round === 0;
   const [tab, setTab] = useState<Tab>("units");
   const unit = selected ? game.units[selected] : undefined;
+  const mode = useStore((s) => s.mode);
+  const selfId = useStore((s) => s.session?.selfId);
 
   return (
     <div className="companion">
       <TopBar />
-      <OwnDiceSwitch />
       <main className="companion-main">
+        <Invite />
+        {mode !== "hotseat" && selfId && game.players[selfId] && <NameCard player={game.players[selfId]!} />}
         {reacting && <ReactionPrompt />}
         {attacking ? (
           <AttackPanel />
@@ -94,7 +97,40 @@ export function CompanionScreen() {
             {label}
           </button>
         ))}
+        <OwnDiceSwitch />
       </nav>
+    </div>
+  );
+}
+
+/** Until the other phones join (UX 270): the invite link, to copy or share. */
+function Invite() {
+  const game = useGame();
+  const { mode, roomId, role } = useStore();
+  const [copied, setCopied] = useState(false);
+  const seated = Object.values(game.players).filter((p) => p.seat !== undefined).length;
+  if (mode === "hotseat" || !roomId || role === "spectator" || seated >= 2 * (game.settings.teamSize ?? 1))
+    return null;
+  const link = location.href;
+  const share = typeof navigator.share === "function";
+  return (
+    <div className="panel invite" role="status">
+      <strong>{t("Waiting for the other player")}</strong>
+      <p className="small">{t("Send them this link to open on their phone:")}</p>
+      <code className="invite-link">{link}</code>
+      <div className="row wrap">
+        <button
+          className="primary"
+          onClick={() => void navigator.clipboard?.writeText(link).then(() => setCopied(true))}
+        >
+          {copied ? t("Copied ✓") : t("Copy invite link")}
+        </button>
+        {share && (
+          <button onClick={() => void navigator.share({ title: "Open Battle", url: link }).catch(() => {})}>
+            {t("Share…")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -185,8 +185,10 @@ export function DeployTray({ players }: { players: Player[] }) {
               <strong>
                 {mode === "hotseat"
                   ? todo.length
-                    ? tn(todo.length, "{name}: {n} to place", "{name}: {n} to place", { name: player.name })
-                    : t("{name}: All placed", { name: player.name })
+                    ? tn(todo.length, "{name}: {n} to place", "{name}: {n} to place", {
+                        name: displayName(player.name),
+                      })
+                    : t("{name}: All placed", { name: displayName(player.name) })
                   : todo.length
                     ? tn(todo.length, "{n} to place", "{n} to place")
                     : t("All placed")}

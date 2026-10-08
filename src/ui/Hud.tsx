@@ -1,3 +1,4 @@
+import { displayName } from "../i18n/names";
 import { ReportButton } from "./SavedNote";
 import { CampaignFold } from "../campaign/CampaignUI";
 import { TablePicker } from "../tables/TableLibrary";
@@ -354,7 +355,9 @@ export function NameCard({ player }: { player: Player }) {
         save();
       }}
     >
-      <p className="muted">{t("You're {name}. What should the others call you?", { name: player.name })}</p>
+      <p className="muted">
+        {t("You're {name}. What should the others call you?", { name: displayName(player.name) })}
+      </p>
       <div className="row">
         <input
           value={name}

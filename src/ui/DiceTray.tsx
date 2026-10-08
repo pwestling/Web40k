@@ -1,3 +1,4 @@
+import { touch } from "./touch";
 import { useEffect, useRef } from "react";
 import {
   applyEvent,
@@ -375,7 +376,7 @@ class Stage {
     this.banner.append(big, small);
     if (live) {
       const hint = div("hint");
-      hint.textContent = t("Click to continue");
+      hint.textContent = touch() ? t("Tap to continue") : t("Click to continue");
       this.banner.append(hint);
     }
     this.banner.className = `tray-banner on tray-legend ${rare.lucky ? "" : "cursed"}`;

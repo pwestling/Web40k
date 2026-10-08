@@ -1,3 +1,4 @@
+import { touch } from "./touch";
 import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
 import { focusSoon } from "./focusSoon";
@@ -282,6 +283,16 @@ const stageLabel = (stage: AttackState["stage"]): string =>
     done: "",
   })[stage];
 
+/** In the companion, what the other phone shows while this stage's roller rolls (UX 276). */
+const waitingFor = (stage: AttackState["stage"], name: string): string =>
+  ({
+    hit: t("Waiting for {name} to roll to hit", { name }),
+    wound: t("Waiting for {name} to roll to wound", { name }),
+    save: t("Waiting for {name} to roll saves", { name }),
+    damage: t("Waiting for {name} to roll damage", { name }),
+    done: "",
+  })[stage];
+
 function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean }) {
   const game = useGame();
   const { dispatch, role } = useStore();
@@ -295,6 +306,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
   const canControl = useCanControl();
   const theirs = !!roller && attack.stage === "save" && !canControl(roller);
+  // At a real table each player rolls their own dice on their own phone: the other phone waits (UX 276).
+  const waiting = !!game.settings.companion && !!roller && !canControl(roller) && attack.stage !== "done";
   const rollerName = roller ? playerName(game.players[roller]) || t("Your opponent") : "";
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
@@ -373,7 +386,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       )}
       {canAct && !(botRolls && botAttacks) && (
         <div className="row">
-          {attack.stage !== "done" && !botRolls && theirs && (
+          {waiting && !botRolls && <span className="muted">{waitingFor(attack.stage, rollerName)}</span>}
+          {attack.stage !== "done" && !botRolls && theirs && !waiting && (
             <>
               <span className="muted">{t("{name} rolls the saves", { name: rollerName })}</span>
               <RollButton
@@ -386,7 +400,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
               </RollButton>
             </>
           )}
-          {attack.stage !== "done" && !botRolls && !theirs && (
+          {attack.stage !== "done" && !botRolls && !theirs && !waiting && (
             <>
               <RollButton className="primary attack-roll" intent={{ type: "attack/roll" }} as={roller}>
                 {stageLabel(attack.stage)}
@@ -582,7 +596,11 @@ function WoundOrder({ attack }: { attack: AttackState }) {
         {wounded > 0 ? (
           <span className="warn">{t("A model that has already lost wounds should take the next one.")}</span>
         ) : mine && !chosen && groups.length > 1 ? (
-          <span className="muted">{t("Defender: click a model to put it first.")}</span>
+          <span className="muted">
+            {touch()
+              ? t("Defender: tap a model to put it first.")
+              : t("Defender: click a model to put it first.")}
+          </span>
         ) : null}
       </span>
     </div>
