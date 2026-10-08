@@ -8,6 +8,7 @@ import { create } from "zustand";
  */
 const KEY = "open-battle:sound";
 const FAST = "open-battle:fast-dice";
+const AMBIENCE = "open-battle:ambience";
 
 function stored(key: string, fallback: string): string {
   try {
@@ -25,24 +26,35 @@ function keep(key: string, value: string) {
   }
 }
 
-/** Sound on or off, and fast dice (half-length rolls), per device. */
-export const useSound = create<{ on: boolean; fast: boolean; toggle(): void; toggleFast(): void }>(
-  (set, get) => ({
-    on: stored(KEY, "on") !== "off",
-    fast: stored(FAST, "off") === "on",
-    toggle() {
-      const on = !get().on;
-      keep(KEY, on ? "on" : "off");
-      set({ on });
-      if (on) void audio();
-    },
-    toggleFast() {
-      const fast = !get().fast;
-      keep(FAST, fast ? "on" : "off");
-      set({ fast });
-    },
-  }),
-);
+/** Sound on or off, fast dice (half-length rolls) and the room's ambience (PX-5c), per device. */
+export const useSound = create<{
+  on: boolean;
+  fast: boolean;
+  ambience: boolean;
+  toggle(): void;
+  toggleFast(): void;
+  toggleAmbience(): void;
+}>((set, get) => ({
+  on: stored(KEY, "on") !== "off",
+  fast: stored(FAST, "off") === "on",
+  ambience: stored(AMBIENCE, "on") !== "off",
+  toggleAmbience() {
+    const ambience = !get().ambience;
+    keep(AMBIENCE, ambience ? "on" : "off");
+    set({ ambience });
+  },
+  toggle() {
+    const on = !get().on;
+    keep(KEY, on ? "on" : "off");
+    set({ on });
+    if (on) void audio();
+  },
+  toggleFast() {
+    const fast = !get().fast;
+    keep(FAST, fast ? "on" : "off");
+    set({ fast });
+  },
+}));
 
 let ac: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -65,6 +77,12 @@ function audio(): AudioContext | null {
   if (ac.state === "suspended") void ac.resume();
   // Until the page has had a click the context stays suspended; sounds are skipped, not queued.
   return ac.state === "running" ? ac : null;
+}
+
+/** The shared context and master bus, for the room's ambience (src/ui/ambience.ts); null while muted or asleep. */
+export function audioOut(): { ac: AudioContext; master: GainNode; noise: AudioBuffer } | null {
+  const a = audio();
+  return a && master && noise ? { ac: a, master, noise } : null;
 }
 
 // Browsers only allow audio after a gesture: wake it on the first one.
@@ -259,4 +277,56 @@ export function whoosh() {
   const t = a.currentTime;
   burst(a, t, { freq: 500, q: 0.6, dur: 0.35, gain: 0.08 });
   burst(a, t + 0.08, { freq: 1400, q: 0.8, dur: 0.25, gain: 0.05 });
+}
+
+/** The turn passing (PX-5c): a soft two-note chime. */
+export function turnBell() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  tone(a, t, { freq: 659, dur: 0.9, gain: 0.05 });
+  tone(a, t, { freq: 1318, dur: 0.5, gain: 0.012 });
+  tone(a, t + 0.22, { freq: 880, dur: 1.2, gain: 0.05 });
+  tone(a, t + 0.22, { freq: 1760, dur: 0.6, gain: 0.012 });
+}
+
+/** A low drum hit: a new round (twice), an army's card in the showcase (once). */
+export function drum(times = 1) {
+  const a = audio();
+  if (!a) return;
+  for (let i = 0; i < times; i++) {
+    const t = a.currentTime + i * 0.28;
+    tone(a, t, { freq: 75, to: 42, dur: 0.45, gain: 0.45 });
+    burst(a, t, { freq: 140, q: 0.8, dur: 0.18, gain: 0.25, type: "lowpass" });
+  }
+}
+
+/** A horn-like swell for "Round 1": two detuned sawtooths through a lowpass that opens. */
+export function horn() {
+  const a = audio();
+  if (!a || !master) return;
+  const t = a.currentTime;
+  const f = a.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(220, t);
+  f.frequency.exponentialRampToValueAtTime(1800, t + 1.2);
+  f.frequency.exponentialRampToValueAtTime(400, t + 2.4);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.12, t + 0.6);
+  g.gain.setTargetAtTime(0, t + 1.6, 0.35);
+  f.connect(g).connect(master);
+  for (const [freq, detune] of [
+    [110, -7],
+    [110, 7],
+    [165, 0],
+  ] as const) {
+    const o = a.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.value = freq;
+    o.detune.value = detune;
+    o.connect(f);
+    o.start(t);
+    o.stop(t + 3);
+  }
 }

@@ -331,19 +331,35 @@ function DicePool({
   );
 }
 
-/** Dice sounds on or off, for this device. */
+/** Sound on or off, with the table's ambience and fast dice in a small menu (PX-5c), for this device. */
 function SoundToggle() {
-  const { on, toggle } = useSound();
+  const { on, toggle, ambience, toggleAmbience, fast, toggleFast } = useSound();
+  const [open, setOpen] = useState(false);
   return (
-    <div className="sound-toggle">
+    <div className="sound-toggle overflow">
       <button
         className="quiet"
-        aria-pressed={on}
-        title={on ? "Dice sounds on (click to mute)" : "Dice sounds muted"}
-        onClick={toggle}
+        aria-expanded={open}
+        aria-label="Sound"
+        title={on ? "Sound on" : "Sound muted"}
+        onClick={() => setOpen(!open)}
       >
         {on ? "🔊" : "🔇"}
       </button>
+      {open && (
+        <div className="menu" role="menu" onMouseLeave={() => setOpen(false)}>
+          <label className="check">
+            <input type="checkbox" checked={on} onChange={toggle} /> Sound
+          </label>
+          <label className="check" title="A quiet room under the game; the turn bell follows Sound">
+            <input type="checkbox" checked={ambience} disabled={!on} onChange={toggleAmbience} /> Table
+            ambience
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={fast} onChange={toggleFast} /> Fast dice
+          </label>
+        </div>
+      )}
     </div>
   );
 }

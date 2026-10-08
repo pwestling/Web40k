@@ -24,6 +24,7 @@ import { useTableTalk } from "./talk/talk";
 import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
 import { BroadcastBadge } from "./broadcast/BroadcastControls";
 import { Moments } from "./broadcast/Moments";
+import { Ambience } from "./ui/Ambience";
 import { TopBar } from "./ui/TopBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -85,6 +86,7 @@ function BroadcastView() {
       <FloatingReactions />
       <BroadcastBadge />
       <Moments />
+      <Ambience />
       <StatsScreen />
     </>
   );
@@ -138,6 +140,7 @@ export function App() {
           <DiceTray />
           {!editing && <TalkPanel />}
           <Moments />
+          <Ambience />
           <StatsScreen />
           <PackageCards />
           <SandboxNotice />
