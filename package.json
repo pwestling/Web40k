@@ -28,7 +28,8 @@
     "smoke": "node scripts/smoke.mjs",
     "i18n": "node scripts/i18n.mjs",
     "i18n:check": "node scripts/i18n.mjs --check",
-    "perf:phone": "node scripts/phone.mjs"
+    "perf:phone": "node scripts/phone.mjs",
+    "perf:rift": "node scripts/rift.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

@@ -140,8 +140,14 @@ export function tn(n: number, one: string, other: string, params?: Params): stri
   return fill(text, { n, ...params });
 }
 
+/** Number formats by language and options: making one costs far more than using it (perf, #39). */
+const numberFormats = new Map<string, Intl.NumberFormat>();
+
 export function formatNumber(n: number, options?: Intl.NumberFormatOptions): string {
-  return new Intl.NumberFormat(current, options).format(n);
+  const key = `${current}|${options ? JSON.stringify(options) : ""}`;
+  let format = numberFormats.get(key);
+  if (!format) numberFormats.set(key, (format = new Intl.NumberFormat(current, options)));
+  return format.format(n);
 }
 
 export function formatDate(d: Date | number, options?: Intl.DateTimeFormatOptions): string {
