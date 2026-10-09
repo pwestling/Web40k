@@ -33,7 +33,7 @@ const WORKERS = Math.max(1, Math.min(6, (globalThis.navigator?.hardwareConcurren
  * (the closer looks) no longer leave one worker finishing long after the rest,
  * and a review comes out the same on every device.
  */
-export const SHARES = 12;
+const SHARES = 12;
 
 const sameGame = (record: GameRecord) => {
   const of = useReviewRun.getState().of;
