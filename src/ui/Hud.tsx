@@ -224,7 +224,7 @@ export function Hud() {
       )}
       <TemplateTools />
       <GameLog />
-      <div className="row">
+      <div className="row wrap hud-foot">
         {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
         {(battleOver(shown) || !session) && (
           <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>

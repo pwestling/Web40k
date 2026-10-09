@@ -29,7 +29,9 @@ export function useSelfSeat(): number {
   const selfId = useStore((s) => s.session?.selfId);
   const mode = useStore((s) => s.mode);
   const game = useStore((s) => s.game);
-  if (mode === "hotseat") return 0;
+  // A mail game is a hotseat under the hood; this device still plays one side (dogfood).
+  const mailSeat = useStore((s) => s.mail?.seat);
+  if (mode === "hotseat") return mailSeat ?? 0;
   return (selfId ? game.players[selfId]?.seat : undefined) ?? 0;
 }
 

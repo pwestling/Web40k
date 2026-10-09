@@ -452,7 +452,12 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   const session = useStore((s) => s.session);
   const mailMe = useMail((s) => s.game?.names[s.game.me]);
   const [open, setOpen] = useState(asked);
-  const [size, setSize] = useState("");
+  // The army on the table says how big a game it is, until the host types otherwise (dogfood).
+  const [sizeTyped, setSize] = useState<string | null>(null);
+  const myPoints = Object.values(game.units)
+    .filter((u) => u.owner === session?.selfId)
+    .reduce((n, u) => n + (u.sheet?.points ?? 0), 0);
+  const size = sizeTyped ?? (myPoints ? t("{n} points", { n: myPoints }) : "");
   const [when, setWhen] = useState("now");
   const [at, setAt] = useState("");
   const [lang, setLang] = useState(() => language());

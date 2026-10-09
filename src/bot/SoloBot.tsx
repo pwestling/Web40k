@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { noteReason } from "./reasons";
 import { useHold } from "../ui/hold";
-import { sidePlayers, type GameState, type Unit } from "../core";
+import { actingSeat, sidePlayers, type GameState, type Unit } from "../core";
 import { clearDrawings, hear } from "../talk/talk";
 import { t } from "../i18n";
 import { explain } from "./explain";
@@ -20,6 +20,11 @@ const BOT_PACE = 500;
 const ROLL_PACE = 1100;
 /** After the dice tray lands a roll: time to read the result before the computer moves on (PX solo 2, A). */
 const AFTER_DICE = 900;
+/**
+ * A roll that is the player's to make (their saves): the computer leaves it to them, and rolls
+ * it for them only after this long. Rolling saves is all they do in the computer's turn (PX).
+ */
+const PLAYER_ROLL_WAIT = 8000;
 
 /**
  * Solo against the computer (#45): plays the computer's side one move at a
@@ -50,6 +55,8 @@ export function SoloBot() {
     }
     if (!on || scrub !== null || timer.current !== null) return;
     const rolling = !!(game.attack || game.procedure || game.script?.waiting);
+    const acting = rolling ? actingSeat(game) : null;
+    const theirs = acting !== null && acting !== useSolo.getState().seat;
     const landed = wasTray.current;
     wasTray.current = false;
     timer.current = window.setTimeout(
@@ -57,7 +64,15 @@ export function SoloBot() {
         timer.current = null;
         void play();
       },
-      landed ? AFTER_DICE : rolling ? ROLL_PACE : glided(game) ? GLIDE_MS + BOT_PACE : BOT_PACE,
+      theirs
+        ? PLAYER_ROLL_WAIT
+        : landed
+          ? AFTER_DICE
+          : rolling
+            ? ROLL_PACE
+            : glided(game)
+              ? GLIDE_MS + BOT_PACE
+              : BOT_PACE,
     );
   }, [on, game, scrub, tray]);
 
@@ -144,7 +159,11 @@ async function play(): Promise<void> {
   dispatch(move.intent, move.as);
   if (move.then) {
     const after = useStore.getState();
-    if (remote || legal(after.record, after.game, move.then)) dispatch(move.then.intent, move.then.as);
+    // Never straight on into the player's own roll: that waits for them (PLAYER_ROLL_WAIT).
+    const acting = after.game.attack || after.game.procedure ? actingSeat(after.game) : null;
+    const theirs = acting !== null && acting !== solo.seat;
+    if (!theirs && (remote || legal(after.record, after.game, move.then)))
+      dispatch(move.then.intent, move.then.as);
   }
   if (worker) sawOffThread(move);
   useSolo.getState().policy?.saw?.(useStore.getState().game, move);

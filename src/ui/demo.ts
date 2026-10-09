@@ -1,6 +1,7 @@
 import { DEFAULT_SYSTEM, sides } from "../core";
 import { useStore } from "../store";
 import { deploySamples } from "../teach/setup";
+import { systemModule } from "../systems";
 import { owed } from "../render/showcase";
 import { useHelp } from "./help";
 
@@ -21,6 +22,12 @@ export function startDemo(system: string): void {
       return;
     }
     const { dispatch } = useStore.getState();
+    // The game's first mission, so there's something to score: with none, every game ended 0-0 (PX).
+    const mission = systemModule(system).missions?.[0];
+    if (mission) {
+      const { zones, objectives } = mission.setup(game.table);
+      dispatch({ type: "mission/set", mission: { id: mission.id, name: mission.name }, zones, objectives });
+    }
     deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
     // Ready, and into the battle: the army showcase opens it.
     owed.initial = useStore.getState().record.initial;

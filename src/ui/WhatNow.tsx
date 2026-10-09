@@ -55,7 +55,7 @@ function whatNow(
   if (game.pending)
     return {
       head: t("{phase}: a reaction", { phase }),
-      lines: [t("A player can react now. The panel at the bottom right shows what.")],
+      lines: [t("A player can react now: the panel at the top says how.")],
     };
   // Placing dice on cards (FSD's Pre-assign, Cleanup): both players at once (UX 261).
   if (currentSlot(game)?.placeDice) {

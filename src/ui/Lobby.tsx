@@ -36,6 +36,16 @@ const OpenTablesBoard = lazy(() =>
   import("../opentables/OpenTables").then((m) => ({ default: m.OpenTablesBoard })),
 );
 
+/** Run `then` once the game's session exists: at once, or when an online start has loaded WebRTC. */
+function whenStarted(then: () => void): void {
+  if (useStore.getState().session) return then();
+  const off = useStore.subscribe((s) => {
+    if (!s.session) return;
+    off();
+    then();
+  });
+}
+
 /** Rejoin once per page load (effects run twice in development). */
 let autoJoined = false;
 
@@ -111,9 +121,13 @@ export function Lobby() {
     const roomId = room || crypto.randomUUID().slice(0, 8);
     linkTo(roomId);
     start({ role: "host", mode, roomId, name, system });
-    namePackage();
-    if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
-    if (companion) useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
+    // Online, the session starts once WebRTC has loaded: until then a dispatch goes nowhere, and a
+    // 2 vs 2 room opened as 1 vs 1 (dogfood).
+    whenStarted(() => {
+      namePackage();
+      if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
+      if (companion) useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
+    });
   };
   /** Real models on a real table (#37): this screen keeps the cards, dice and score. */
   const companionHere = () => {
@@ -358,7 +372,11 @@ export function Lobby() {
             <input
               value={name}
               placeholder={t("Player 1 or 2, by seat")}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                // Kept as typed, so Open tables and mail invites offer it too (dogfood).
+                if (e.target.value.trim()) localStorage.setItem("open-battle:name", e.target.value.trim());
+              }}
             />
           </label>
           <label>

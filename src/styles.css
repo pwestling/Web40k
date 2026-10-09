@@ -457,6 +457,10 @@ body.reeling .whatnow-toggle {
   min-height: min(7rem, 25vh);
   overflow-y: auto;
 }
+/* Four buttons at the battle's end wrapped word by word in a narrow panel (dogfood). */
+.hud-foot > * {
+  white-space: nowrap;
+}
 .log li {
   padding: 2px 0;
 }
@@ -1005,7 +1009,8 @@ details p {
   transform: translateX(-50%);
   max-width: min(520px, calc(100vw - 32px));
   border-color: #f59e0b;
-  z-index: 5;
+  /* A choice waiting on a player: above the table's name labels and the What now card (dogfood). */
+  z-index: 20;
 }
 /* Watch mode: replay highlights, dice pop-ups and round cards. */
 .replaybar .highlight {
