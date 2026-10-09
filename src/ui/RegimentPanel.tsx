@@ -14,7 +14,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { ChargePanel } from "./ChargePanel";
 import { useGame } from "./hooks";
-import { t, tn } from "../i18n";
+import { t, tc, tn } from "../i18n";
 import { blockMoves, blockSummary, moveBudget, offTable, type Manoeuvre, type MoveBudget } from "./regiment";
 
 type OrderId = Exclude<BlockOrder, "disrupted"> | "skirmish";
@@ -255,8 +255,10 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           <span className="muted small">{t("or drag, wheel or turn")}</span>
         </div>
       )}
+      {/* The manoeuvres fold, so the stats stay in view (UX 401); dragging does most moves. */}
       {mine && (
-        <>
+        <details className="manoeuvres">
+          <summary>{tc("regiment manoeuvres", "Move")}</summary>
           <div className="row">
             <input
               type="number"
@@ -395,7 +397,7 @@ export function RegimentPanel({ unit }: { unit: Unit }) {
           {marching && used > 0.05 && (
             <p className="muted small">{t("Marching blocks may only move straight ahead and wheel.")}</p>
           )}
-        </>
+        </details>
       )}
       {showCharge && <ChargePanel unit={unit} />}
     </div>

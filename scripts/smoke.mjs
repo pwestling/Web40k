@@ -288,8 +288,8 @@ const checks = {
   },
 
   /**
-   * Unit cards fit (#56, UX 400): in each generic system's demo, no stats table is wider than the
-   * card (FSD's Systems and Conquest's specials go on rows of their own).
+   * Unit cards fit (#56, UX 400/401): in each generic system's demo, no stats table is wider than the
+   * card (FSD's Systems and Conquest's specials go on rows of their own), and the stats come first.
    */
   async "card-widths"() {
     const { page, context } = await device();
@@ -321,6 +321,17 @@ const checks = {
             : null;
         });
         if (over) throw new Error(`${demo}: ${over}`);
+        // The stats sit under the name, not below the regiment's manoeuvres (UX 401).
+        const low = await page.evaluate(() => {
+          const card = document.querySelector(".panel.unitcard");
+          const stats = card?.querySelector("table.stats");
+          if (!card || !stats) return null;
+          const top = stats.getBoundingClientRect().top - card.getBoundingClientRect().top;
+          return top > 150
+            ? `${card.querySelector("h2")?.textContent}: stats ${Math.round(top)}px down`
+            : null;
+        });
+        if (low) throw new Error(`${demo}: ${low}`);
       }
     }
     if (page.errors.length) throw new Error(page.errors[0]);

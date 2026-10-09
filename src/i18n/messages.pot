@@ -459,7 +459,7 @@ msgstr ""
 #: src/bot/YourArmy.tsx:104
 #: src/bot/YourArmy.tsx:151
 #: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:272
+#: src/ui/RegimentPanel.tsx:274
 msgid "Back"
 msgstr ""
 
@@ -1652,7 +1652,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:55
 #: src/ui/AttackPanel.tsx:93
-#: src/ui/SystemPanels.tsx:362
+#: src/ui/SystemPanels.tsx:363
 msgid "Weapon"
 msgstr ""
 
@@ -2169,7 +2169,7 @@ msgid "Figure"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:407
+#: src/ui/SystemPanels.tsx:408
 msgid "{height}\" tall"
 msgstr ""
 
@@ -3176,7 +3176,7 @@ msgid "{used}\" of {allowed}\""
 msgstr ""
 
 #: src/render/Regiment.tsx:206
-#: src/ui/RegimentPanel.tsx:440
+#: src/ui/RegimentPanel.tsx:442
 msgid "off the table"
 msgstr ""
 
@@ -3258,7 +3258,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:148
-#: src/ui/SystemPanels.tsx:559
+#: src/ui/SystemPanels.tsx:562
 msgid "{n} action"
 msgid_plural "{n} actions"
 msgstr[0] ""
@@ -3977,7 +3977,7 @@ msgstr ""
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:429
+#: src/ui/SystemPanels.tsx:430
 #: src/ui/TeachRule.tsx:518
 #: src/ui/TeachRule.tsx:519
 msgid "Remove"
@@ -4248,7 +4248,7 @@ msgstr ""
 
 #: src/ui/ArmyImport.tsx:314
 #: src/ui/RegimentPanel.tsx:95
-#: src/ui/RegimentPanel.tsx:334
+#: src/ui/RegimentPanel.tsx:336
 msgid "Frontage"
 msgstr ""
 
@@ -5287,11 +5287,17 @@ msgstr ""
 msgid "(optional)"
 msgstr ""
 
-#: src/ui/CodeActions.tsx:69
+#: src/ui/CodeActions.tsx:143
+msgid "{n} more, not now"
+msgid_plural "{n} more, not now"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui/CodeActions.tsx:67
 msgid "Not your unit"
 msgstr ""
 
-#: src/ui/CodeActions.tsx:69
+#: src/ui/CodeActions.tsx:67
 msgid "Not this side's go"
 msgstr ""
 
@@ -5595,7 +5601,7 @@ msgid "+1 to save"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:39
-#: src/ui/SystemPanels.tsx:276
+#: src/ui/SystemPanels.tsx:343
 #: src/ui/UnitCard.tsx:404
 msgid "Line of sight"
 msgstr ""
@@ -6985,7 +6991,7 @@ msgid "{unit}'s {weapon} is prepared: check whether {actor} is within its range 
 msgstr ""
 
 #: src/ui/ProcedurePanels.tsx:544
-#: src/ui/SystemPanels.tsx:629
+#: src/ui/SystemPanels.tsx:632
 msgid "Finish reaction"
 msgstr ""
 
@@ -7085,31 +7091,36 @@ msgstr ""
 msgid "or drag, wheel or turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:263
+#: src/ui/RegimentPanel.tsx:261
+msgctxt "regiment manoeuvres"
+msgid "Move"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:265
 msgid "Inches to move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:270
+#: src/ui/RegimentPanel.tsx:272
 msgid "Forward"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:275
+#: src/ui/RegimentPanel.tsx:277
 msgid "Sideways left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:278
+#: src/ui/RegimentPanel.tsx:280
 msgid "Sideways right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:281
+#: src/ui/RegimentPanel.tsx:283
 msgid "A march is double Movement, straight ahead"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:287
+#: src/ui/RegimentPanel.tsx:289
 msgid "March"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:294
+#: src/ui/RegimentPanel.tsx:296
 msgid "Degrees to wheel"
 msgstr ""
 
@@ -7117,11 +7128,11 @@ msgstr ""
 msgid "same way"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:304
+#: src/ui/RegimentPanel.tsx:306
 msgid "Wheel left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:307
+#: src/ui/RegimentPanel.tsx:309
 msgid "Wheel right"
 msgstr ""
 
@@ -7130,13 +7141,13 @@ msgstr ""
 msgid "left"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:313
-#: src/ui/RegimentPanel.tsx:319
-#: src/ui/RegimentPanel.tsx:325
+#: src/ui/RegimentPanel.tsx:315
+#: src/ui/RegimentPanel.tsx:321
+#: src/ui/RegimentPanel.tsx:327
 msgid "Costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:316
+#: src/ui/RegimentPanel.tsx:318
 msgid "Turn left"
 msgstr ""
 
@@ -7145,109 +7156,109 @@ msgstr ""
 msgid "right"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:322
+#: src/ui/RegimentPanel.tsx:324
 msgid "Turn right"
-msgstr ""
-
-#: src/ui/RegimentPanel.tsx:328
-msgid "About face"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:33
 msgid "about"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:345
-msgid "facing"
+#: src/ui/RegimentPanel.tsx:330
+msgid "About face"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:347
+msgid "facing"
+msgstr ""
+
+#: src/ui/RegimentPanel.tsx:349
 msgid "Facing after reforming"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:362
+#: src/ui/RegimentPanel.tsx:364
 msgid "Add or remove up to {max} models from the front rank; free before moving (Drilled)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:368
+#: src/ui/RegimentPanel.tsx:370
 msgid "Add or remove up to {max} models from the front rank; costs {distance}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:378
+#: src/ui/RegimentPanel.tsx:380
 msgid "Redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:382
+#: src/ui/RegimentPanel.tsx:384
 msgid "Rebuild the block around its centre; costs all its move ({distance})"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:391
+#: src/ui/RegimentPanel.tsx:393
 msgid "Reform"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:396
+#: src/ui/RegimentPanel.tsx:398
 msgid "Marching blocks may only move straight ahead and wheel."
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:424
+#: src/ui/RegimentPanel.tsx:426
 msgid "Off the table"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:435
+#: src/ui/RegimentPanel.tsx:437
 msgid "Moved {used}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:437
+#: src/ui/RegimentPanel.tsx:439
 msgid "Moved {used} of {allowed} (marching)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:438
+#: src/ui/RegimentPanel.tsx:440
 msgid "Moved {used} of {allowed}"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:439
+#: src/ui/RegimentPanel.tsx:441
 msgid "over its move"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:445
+#: src/ui/RegimentPanel.tsx:447
 msgid "{n} manoeuvre this move ({list}): only one is allowed"
 msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/RegimentPanel.tsx:456
+#: src/ui/RegimentPanel.tsx:458
 msgid "{piece}: -{n} Movement"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:460
+#: src/ui/RegimentPanel.tsx:462
 msgid "a marching block may only move ahead and wheel"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:462
+#: src/ui/RegimentPanel.tsx:464
 msgid "failed its march test: normal move, counts as marched"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:470
+#: src/ui/RegimentPanel.tsx:472
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:485
+#: src/ui/RegimentPanel.tsx:487
 msgid "back"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:487
+#: src/ui/RegimentPanel.tsx:489
 msgid "sideways"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:489
+#: src/ui/RegimentPanel.tsx:491
 msgid "turn"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:491
+#: src/ui/RegimentPanel.tsx:493
 msgid "redress"
 msgstr ""
 
-#: src/ui/RegimentPanel.tsx:493
+#: src/ui/RegimentPanel.tsx:495
 msgid "reform"
 msgstr ""
 
@@ -7731,110 +7742,110 @@ msgid_plural "{alive}/{n} bases"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:212
+#: src/ui/SystemPanels.tsx:208
+msgid "{value} on the card"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:279
 msgid "Click to end this spell"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:213
+#: src/ui/SystemPanels.tsx:280
 msgid "Click when the token is used or lost"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:221
+#: src/ui/SystemPanels.tsx:288
 msgid "{weapon} prepared"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:226
+#: src/ui/SystemPanels.tsx:293
 msgid "In reserve"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:228
+#: src/ui/SystemPanels.tsx:295
 msgid "Interacting"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:247
+#: src/ui/SystemPanels.tsx:314
 msgid "Undo activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:248
+#: src/ui/SystemPanels.tsx:315
 msgid "Undo {unit}'s activation? It can go again this round; the log says so."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:262
+#: src/ui/SystemPanels.tsx:329
 msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:278
+#: src/ui/SystemPanels.tsx:345
 #: src/ui/UnitCard.tsx:406
 msgid "Model's eye view"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:281
+#: src/ui/SystemPanels.tsx:348
 #: src/ui/UnitCard.tsx:316
 msgid "Rotate left (Q)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:284
+#: src/ui/SystemPanels.tsx:351
 #: src/ui/UnitCard.tsx:319
 msgid "Rotate right (E)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:314
-msgid "{value} on the card"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:399
+#: src/ui/SystemPanels.tsx:400
 msgid "Bases"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:406
+#: src/ui/SystemPanels.tsx:407
 msgid "removed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:429
+#: src/ui/SystemPanels.tsx:430
 msgid "Return"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:496
+#: src/ui/SystemPanels.tsx:497
 msgid "Waiting for {name} to react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:511
+#: src/ui/SystemPanels.tsx:514
 msgid "Reacting: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:515
+#: src/ui/SystemPanels.tsx:518
 msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:530
+#: src/ui/SystemPanels.tsx:533
 #: src/ui/TopBar.tsx:307
 msgid "End this activation; the other player goes next"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:536
+#: src/ui/SystemPanels.tsx:539
 #: src/ui/TopBar.tsx:314
 msgid "End activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:549
+#: src/ui/SystemPanels.tsx:552
 msgid "Costs {cost}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:580
+#: src/ui/SystemPanels.tsx:583
 msgid "Hover a greyed-out action for its reason."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:586
+#: src/ui/SystemPanels.tsx:589
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:621
+#: src/ui/SystemPanels.tsx:624
 msgid "with {n}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:654
+#: src/ui/SystemPanels.tsx:657
 msgid "Put a token on it: its effects last while the token stays"
 msgstr ""
 
@@ -7846,43 +7857,43 @@ msgstr ""
 msgid "a {face}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:696
+#: src/ui/SystemPanels.tsx:699
 msgid "Placed on its AD slots: spent when it's used"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:697
+#: src/ui/SystemPanels.tsx:700
 msgid "On card:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:708
+#: src/ui/SystemPanels.tsx:711
 msgid "Place:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:713
+#: src/ui/SystemPanels.tsx:716
 msgid "Put a {face} from your Ready dice on this card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:728
+#: src/ui/SystemPanels.tsx:731
 msgid "Discard"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:760
+#: src/ui/SystemPanels.tsx:763
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:761
+#: src/ui/SystemPanels.tsx:764
 msgid "Pay with this die"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:781
+#: src/ui/SystemPanels.tsx:784
 msgid "Has had its go this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:785
+#: src/ui/SystemPanels.tsx:788
 msgid "It moved on the table and does nothing else: its go is over"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:788
+#: src/ui/SystemPanels.tsx:791
 msgid "Moved only: end its go"
 msgstr ""
 

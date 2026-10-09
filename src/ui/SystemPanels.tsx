@@ -182,6 +182,73 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         {owner?.name} · {tn(all.length, "{alive}/{n} model", "{alive}/{n} bases", { alive: alive.length })}
         {unit.sheet?.points ? " · " + t("{points} pts", { points: unit.sheet.points }) : ""}
       </p>
+      {/* The stats straight under the name, above the actions (UX 401). */}
+      {/* Never wider than the card (UX 400): at most STAT_COLUMNS to a row, and numbered groups
+          (FSD's System 1-4) as rows of their own, only those the unit has. */}
+      {statRows(chars).map((row, i) => (
+        <table key={i} className="stats">
+          <thead>
+            <tr>
+              {row.map((c) => (
+                <th key={c.id} title={c.name}>
+                  {header(c)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {row.map((c) => {
+                const v = view[c.id];
+                const changed = v !== raw[c.id];
+                return (
+                  <td
+                    key={c.id}
+                    className={changed ? "warn" : ""}
+                    title={changed ? t("{value} on the card", { value: String(raw[c.id]) }) : undefined}
+                  >
+                    {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      ))}
+      {statGroups(chars).map((g) => {
+        // Only the groups this unit's card fills in (defaults don't count).
+        const has = g.chars.some((c) => rosterText(c, first?.profile?.chars) !== undefined);
+        return has ? (
+          <table key={g.name} className="stats group">
+            <thead>
+              <tr>
+                <th className="group-name">{g.name}</th>
+                {g.chars.map((c) => (
+                  <th key={c.id} title={c.name}>
+                    {c.name.slice(g.name.length + 1)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td />
+                {g.chars.map((c) => (
+                  <td key={c.id}>{shown(c, view[c.id], first?.profile?.chars)}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        ) : null;
+      })}
+      {texts.map((c) =>
+        view[c.id] ? (
+          <p key={c.id} className="small">
+            <strong>{c.name}:</strong> {String(view[c.id])}
+          </p>
+        ) : null,
+      )}
+
       {mine && game.turn.round > 0 && <SystemActions unit={unit} />}
       {children}
       {statuses
@@ -287,72 +354,6 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
             </>
           )}
         </div>
-      )}
-
-      {/* Never wider than the card (UX 400): at most STAT_COLUMNS to a row, and numbered groups
-          (FSD's System 1-4) as rows of their own, only those the unit has. */}
-      {statRows(chars).map((row, i) => (
-        <table key={i} className="stats">
-          <thead>
-            <tr>
-              {row.map((c) => (
-                <th key={c.id} title={c.name}>
-                  {header(c)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              {row.map((c) => {
-                const v = view[c.id];
-                const changed = v !== raw[c.id];
-                return (
-                  <td
-                    key={c.id}
-                    className={changed ? "warn" : ""}
-                    title={changed ? t("{value} on the card", { value: String(raw[c.id]) }) : undefined}
-                  >
-                    {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
-                  </td>
-                );
-              })}
-            </tr>
-          </tbody>
-        </table>
-      ))}
-      {statGroups(chars).map((g) => {
-        // Only the groups this unit's card fills in (defaults don't count).
-        const has = g.chars.some((c) => rosterText(c, first?.profile?.chars) !== undefined);
-        return has ? (
-          <table key={g.name} className="stats group">
-            <thead>
-              <tr>
-                <th className="group-name">{g.name}</th>
-                {g.chars.map((c) => (
-                  <th key={c.id} title={c.name}>
-                    {c.name.slice(g.name.length + 1)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td />
-                {g.chars.map((c) => (
-                  <td key={c.id}>{shown(c, view[c.id], first?.profile?.chars)}</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        ) : null;
-      })}
-      {texts.map((c) =>
-        view[c.id] ? (
-          <p key={c.id} className="small">
-            <strong>{c.name}:</strong> {String(view[c.id])}
-          </p>
-        ) : null,
       )}
 
       {weapons.length > 0 && (
@@ -501,6 +502,8 @@ function SystemActions({ unit }: { unit: Unit }) {
   for (const o of blocked) counts.set(why(o)!, (counts.get(why(o)!) ?? 0) + 1);
   const shared = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
   const paidWith = (o: ActionOption) => o.payment.flatMap((p) => p.indices ?? []);
+  // Nothing to offer (The Old World's actions are its code actions): no empty gap on the card.
+  if (!shown.length && !acting && !reacting) return null;
 
   return (
     <div className="actions">

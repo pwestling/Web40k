@@ -551,7 +551,7 @@ msgstr "Ranger sur l'étagère"
 #: src/bot/YourArmy.tsx:104
 #: src/bot/YourArmy.tsx:151
 #: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:272
+#: src/ui/RegimentPanel.tsx:274
 #, fuzzy
 msgid "Back"
 msgstr "Reculer"
@@ -2014,7 +2014,7 @@ msgstr "{unit} : combat"
 
 #: src/companion/TableAttack.tsx:55
 #: src/ui/AttackPanel.tsx:93
-#: src/ui/SystemPanels.tsx:362
+#: src/ui/SystemPanels.tsx:363
 #, fuzzy
 msgid "Weapon"
 msgstr "Arme"
@@ -2633,7 +2633,7 @@ msgid "Figure"
 msgstr "Figurine"
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:407
+#: src/ui/SystemPanels.tsx:408
 #, fuzzy
 msgid "{height}\" tall"
 msgstr "{height}\" de haut"
@@ -3875,7 +3875,7 @@ msgid "{used}\" of {allowed}\""
 msgstr "{used}\" sur {allowed}\""
 
 #: src/render/Regiment.tsx:206
-#: src/ui/RegimentPanel.tsx:440
+#: src/ui/RegimentPanel.tsx:442
 #, fuzzy
 msgid "off the table"
 msgstr "hors de la table"
@@ -3976,7 +3976,7 @@ msgstr[0] "{n} marque"
 msgstr[1] "{n} marques"
 
 #: src/replay/NotesPanel.tsx:148
-#: src/ui/SystemPanels.tsx:559
+#: src/ui/SystemPanels.tsx:562
 #, fuzzy
 msgid "{n} action"
 msgid_plural "{n} actions"
@@ -4861,7 +4861,7 @@ msgstr "Retirer {name} de ta bibliothèque ?"
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:429
+#: src/ui/SystemPanels.tsx:430
 #: src/ui/TeachRule.tsx:518
 #: src/ui/TeachRule.tsx:519
 #, fuzzy
@@ -5193,7 +5193,7 @@ msgstr "Figurines au premier rang"
 
 #: src/ui/ArmyImport.tsx:314
 #: src/ui/RegimentPanel.tsx:95
-#: src/ui/RegimentPanel.tsx:334
+#: src/ui/RegimentPanel.tsx:336
 #, fuzzy
 msgid "Frontage"
 msgstr "Front"
@@ -6470,12 +6470,19 @@ msgstr "Sur la table"
 msgid "(optional)"
 msgstr "(facultatif)"
 
-#: src/ui/CodeActions.tsx:69
+#: src/ui/CodeActions.tsx:143
+#, fuzzy
+msgid "{n} more, not now"
+msgid_plural "{n} more, not now"
+msgstr[0] "{n} de plus, pas maintenant"
+msgstr[1] "{n} de plus, pas maintenant"
+
+#: src/ui/CodeActions.tsx:67
 #, fuzzy
 msgid "Not your unit"
 msgstr "Pas votre unité"
 
-#: src/ui/CodeActions.tsx:69
+#: src/ui/CodeActions.tsx:67
 #, fuzzy
 msgid "Not this side's go"
 msgstr "Ce n'est pas le tour de ce camp"
@@ -6853,7 +6860,7 @@ msgid "+1 to save"
 msgstr "+1 à la sauvegarde"
 
 #: src/ui/GameSettings.tsx:39
-#: src/ui/SystemPanels.tsx:276
+#: src/ui/SystemPanels.tsx:343
 #: src/ui/UnitCard.tsx:404
 #, fuzzy
 msgid "Line of sight"
@@ -8578,7 +8585,7 @@ msgid "{unit}'s {weapon} is prepared: check whether {actor} is within its range 
 msgstr "{weapon} de {unit} est préparé : vérifie si {actor} est à sa portée de {range}."
 
 #: src/ui/ProcedurePanels.tsx:544
-#: src/ui/SystemPanels.tsx:629
+#: src/ui/SystemPanels.tsx:632
 #, fuzzy
 msgid "Finish reaction"
 msgstr "Terminer la réaction"
@@ -8702,37 +8709,43 @@ msgstr "Avancer de {distance}"
 msgid "or drag, wheel or turn"
 msgstr "ou glisser, pivoter ou tourner"
 
-#: src/ui/RegimentPanel.tsx:263
+#: src/ui/RegimentPanel.tsx:261
+#, fuzzy
+msgctxt "regiment manoeuvres"
+msgid "Move"
+msgstr "Déplacer"
+
+#: src/ui/RegimentPanel.tsx:265
 #, fuzzy
 msgid "Inches to move"
 msgstr "Pouces à parcourir"
 
-#: src/ui/RegimentPanel.tsx:270
+#: src/ui/RegimentPanel.tsx:272
 #, fuzzy
 msgid "Forward"
 msgstr "Avancer"
 
-#: src/ui/RegimentPanel.tsx:275
+#: src/ui/RegimentPanel.tsx:277
 #, fuzzy
 msgid "Sideways left"
 msgstr "De côté à gauche"
 
-#: src/ui/RegimentPanel.tsx:278
+#: src/ui/RegimentPanel.tsx:280
 #, fuzzy
 msgid "Sideways right"
 msgstr "De côté à droite"
 
-#: src/ui/RegimentPanel.tsx:281
+#: src/ui/RegimentPanel.tsx:283
 #, fuzzy
 msgid "A march is double Movement, straight ahead"
 msgstr "Une marche, c'est le double du Mouvement, tout droit"
 
-#: src/ui/RegimentPanel.tsx:287
+#: src/ui/RegimentPanel.tsx:289
 #, fuzzy
 msgid "March"
 msgstr "Marche"
 
-#: src/ui/RegimentPanel.tsx:294
+#: src/ui/RegimentPanel.tsx:296
 #, fuzzy
 msgid "Degrees to wheel"
 msgstr "Degrés de pivot"
@@ -8742,12 +8755,12 @@ msgstr "Degrés de pivot"
 msgid "same way"
 msgstr "même direction"
 
-#: src/ui/RegimentPanel.tsx:304
+#: src/ui/RegimentPanel.tsx:306
 #, fuzzy
 msgid "Wheel left"
 msgstr "Pivoter à gauche"
 
-#: src/ui/RegimentPanel.tsx:307
+#: src/ui/RegimentPanel.tsx:309
 #, fuzzy
 msgid "Wheel right"
 msgstr "Pivoter à droite"
@@ -8758,14 +8771,14 @@ msgstr "Pivoter à droite"
 msgid "left"
 msgstr "gauche"
 
-#: src/ui/RegimentPanel.tsx:313
-#: src/ui/RegimentPanel.tsx:319
-#: src/ui/RegimentPanel.tsx:325
+#: src/ui/RegimentPanel.tsx:315
+#: src/ui/RegimentPanel.tsx:321
+#: src/ui/RegimentPanel.tsx:327
 #, fuzzy
 msgid "Costs {distance}"
 msgstr "Coûte {distance}"
 
-#: src/ui/RegimentPanel.tsx:316
+#: src/ui/RegimentPanel.tsx:318
 #, fuzzy
 msgid "Turn left"
 msgstr "Tourner à gauche"
@@ -8776,134 +8789,134 @@ msgstr "Tourner à gauche"
 msgid "right"
 msgstr "droite"
 
-#: src/ui/RegimentPanel.tsx:322
+#: src/ui/RegimentPanel.tsx:324
 #, fuzzy
 msgid "Turn right"
 msgstr "Tourner à droite"
-
-#: src/ui/RegimentPanel.tsx:328
-#, fuzzy
-msgid "About face"
-msgstr "Demi-tour"
 
 #: src/ui/RegimentPanel.tsx:33
 #, fuzzy
 msgid "about"
 msgstr "demi-tour"
 
-#: src/ui/RegimentPanel.tsx:345
+#: src/ui/RegimentPanel.tsx:330
+#, fuzzy
+msgid "About face"
+msgstr "Demi-tour"
+
+#: src/ui/RegimentPanel.tsx:347
 #, fuzzy
 msgid "facing"
 msgstr "orientation"
 
-#: src/ui/RegimentPanel.tsx:347
+#: src/ui/RegimentPanel.tsx:349
 #, fuzzy
 msgid "Facing after reforming"
 msgstr "Orientation après reformation"
 
-#: src/ui/RegimentPanel.tsx:362
+#: src/ui/RegimentPanel.tsx:364
 #, fuzzy
 msgid "Add or remove up to {max} models from the front rank; free before moving (Drilled)"
 msgstr "Ajoute ou retire jusqu'à {max} figurines du premier rang ; gratuit avant de bouger (Drilled)"
 
-#: src/ui/RegimentPanel.tsx:368
+#: src/ui/RegimentPanel.tsx:370
 #, fuzzy
 msgid "Add or remove up to {max} models from the front rank; costs {distance}"
 msgstr "Ajouter ou retirer jusqu'à {max} figurines au premier rang ; coûte {distance}"
 
-#: src/ui/RegimentPanel.tsx:378
+#: src/ui/RegimentPanel.tsx:380
 #, fuzzy
 msgid "Redress"
 msgstr "Réaligner"
 
-#: src/ui/RegimentPanel.tsx:382
+#: src/ui/RegimentPanel.tsx:384
 #, fuzzy
 msgid "Rebuild the block around its centre; costs all its move ({distance})"
 msgstr "Reformer le bloc autour de son centre ; coûte tout son mouvement ({distance})"
 
-#: src/ui/RegimentPanel.tsx:391
+#: src/ui/RegimentPanel.tsx:393
 #, fuzzy
 msgid "Reform"
 msgstr "Reformer"
 
-#: src/ui/RegimentPanel.tsx:396
+#: src/ui/RegimentPanel.tsx:398
 #, fuzzy
 msgid "Marching blocks may only move straight ahead and wheel."
 msgstr "Les blocs en marche ne peuvent qu'avancer tout droit et pivoter."
 
-#: src/ui/RegimentPanel.tsx:424
+#: src/ui/RegimentPanel.tsx:426
 #, fuzzy
 msgid "Off the table"
 msgstr "Hors de la table"
 
-#: src/ui/RegimentPanel.tsx:435
+#: src/ui/RegimentPanel.tsx:437
 #, fuzzy
 msgid "Moved {used}"
 msgstr "Déplacé de {used}"
 
-#: src/ui/RegimentPanel.tsx:437
+#: src/ui/RegimentPanel.tsx:439
 #, fuzzy
 msgid "Moved {used} of {allowed} (marching)"
 msgstr "Déplacé de {used} sur {allowed} (en marche)"
 
-#: src/ui/RegimentPanel.tsx:438
+#: src/ui/RegimentPanel.tsx:440
 #, fuzzy
 msgid "Moved {used} of {allowed}"
 msgstr "Déplacé de {used} sur {allowed}"
 
-#: src/ui/RegimentPanel.tsx:439
+#: src/ui/RegimentPanel.tsx:441
 #, fuzzy
 msgid "over its move"
 msgstr "au-delà de son mouvement"
 
-#: src/ui/RegimentPanel.tsx:445
+#: src/ui/RegimentPanel.tsx:447
 #, fuzzy
 msgid "{n} manoeuvre this move ({list}): only one is allowed"
 msgid_plural "{n} manoeuvres this move ({list}): only one is allowed"
 msgstr[0] "{n} manœuvre ce mouvement ({list}) : une seule est permise"
 msgstr[1] "{n} manœuvres ce mouvement ({list}) : une seule est permise"
 
-#: src/ui/RegimentPanel.tsx:456
+#: src/ui/RegimentPanel.tsx:458
 #, fuzzy
 msgid "{piece}: -{n} Movement"
 msgstr "{piece} : -{n} Mouvement"
 
-#: src/ui/RegimentPanel.tsx:460
+#: src/ui/RegimentPanel.tsx:462
 #, fuzzy
 msgid "a marching block may only move ahead and wheel"
 msgstr "un bloc en marche ne peut qu'avancer et pivoter"
 
-#: src/ui/RegimentPanel.tsx:462
+#: src/ui/RegimentPanel.tsx:464
 #, fuzzy
 msgid "failed its march test: normal move, counts as marched"
 msgstr "test de marche raté : mouvement normal, compte comme ayant marché"
 
-#: src/ui/RegimentPanel.tsx:470
+#: src/ui/RegimentPanel.tsx:472
 #, fuzzy
 msgid "an enemy is within {distance}\": marching needs a Leadership test (if failed, it moves normally but counts as having marched)"
 msgstr "un ennemi est à moins de {distance}\" : marcher nécessite un test de Commandement (en cas d'échec, elle se déplace normalement mais compte comme ayant marché)"
 
-#: src/ui/RegimentPanel.tsx:485
+#: src/ui/RegimentPanel.tsx:487
 #, fuzzy
 msgid "back"
 msgstr "en arrière"
 
-#: src/ui/RegimentPanel.tsx:487
+#: src/ui/RegimentPanel.tsx:489
 #, fuzzy
 msgid "sideways"
 msgstr "de côté"
 
-#: src/ui/RegimentPanel.tsx:489
+#: src/ui/RegimentPanel.tsx:491
 #, fuzzy
 msgid "turn"
 msgstr "tourner"
 
-#: src/ui/RegimentPanel.tsx:491
+#: src/ui/RegimentPanel.tsx:493
 #, fuzzy
 msgid "redress"
 msgstr "réaligner"
 
-#: src/ui/RegimentPanel.tsx:493
+#: src/ui/RegimentPanel.tsx:495
 #, fuzzy
 msgid "reform"
 msgstr "reformer"
@@ -9502,134 +9515,134 @@ msgid_plural "{alive}/{n} bases"
 msgstr[0] "{alive}/{n} figurine"
 msgstr[1] "{alive}/{n} socles"
 
-#: src/ui/SystemPanels.tsx:212
+#: src/ui/SystemPanels.tsx:208
+#, fuzzy
+msgid "{value} on the card"
+msgstr "{value} sur la carte"
+
+#: src/ui/SystemPanels.tsx:279
 #, fuzzy
 msgid "Click to end this spell"
 msgstr "Clique pour mettre fin à ce sort"
 
-#: src/ui/SystemPanels.tsx:213
+#: src/ui/SystemPanels.tsx:280
 #, fuzzy
 msgid "Click when the token is used or lost"
 msgstr "Cliquez quand le marqueur est utilisé ou perdu"
 
-#: src/ui/SystemPanels.tsx:221
+#: src/ui/SystemPanels.tsx:288
 #, fuzzy
 msgid "{weapon} prepared"
 msgstr "{weapon} préparé"
 
-#: src/ui/SystemPanels.tsx:226
+#: src/ui/SystemPanels.tsx:293
 #, fuzzy
 msgid "In reserve"
 msgstr "En réserve"
 
-#: src/ui/SystemPanels.tsx:228
+#: src/ui/SystemPanels.tsx:295
 #, fuzzy
 msgid "Interacting"
 msgstr "Interagit"
 
-#: src/ui/SystemPanels.tsx:247
+#: src/ui/SystemPanels.tsx:314
 #, fuzzy
 msgid "Undo activation"
 msgstr "Annuler l'activation"
 
-#: src/ui/SystemPanels.tsx:248
+#: src/ui/SystemPanels.tsx:315
 #, fuzzy
 msgid "Undo {unit}'s activation? It can go again this round; the log says so."
 msgstr "Annuler l'activation de {unit} ? Elle pourra rejouer ce tour ; le journal le notera."
 
-#: src/ui/SystemPanels.tsx:262
+#: src/ui/SystemPanels.tsx:329
 #, fuzzy
 msgid "Moved {distance} of {allowance} this round."
 msgstr "{distance} sur {allowance} parcourus ce round."
 
-#: src/ui/SystemPanels.tsx:278
+#: src/ui/SystemPanels.tsx:345
 #: src/ui/UnitCard.tsx:406
 #, fuzzy
 msgid "Model's eye view"
 msgstr "Vue de la figurine"
 
-#: src/ui/SystemPanels.tsx:281
+#: src/ui/SystemPanels.tsx:348
 #: src/ui/UnitCard.tsx:316
 #, fuzzy
 msgid "Rotate left (Q)"
 msgstr "Tourner à gauche (Q)"
 
-#: src/ui/SystemPanels.tsx:284
+#: src/ui/SystemPanels.tsx:351
 #: src/ui/UnitCard.tsx:319
 #, fuzzy
 msgid "Rotate right (E)"
 msgstr "Tourner à droite (E)"
 
-#: src/ui/SystemPanels.tsx:314
-#, fuzzy
-msgid "{value} on the card"
-msgstr "{value} sur la carte"
-
-#: src/ui/SystemPanels.tsx:399
+#: src/ui/SystemPanels.tsx:400
 #, fuzzy
 msgid "Bases"
 msgstr "Socles"
 
-#: src/ui/SystemPanels.tsx:406
+#: src/ui/SystemPanels.tsx:407
 #, fuzzy
 msgid "removed"
 msgstr "retiré"
 
-#: src/ui/SystemPanels.tsx:429
+#: src/ui/SystemPanels.tsx:430
 #, fuzzy
 msgid "Return"
 msgstr "Remettre"
 
-#: src/ui/SystemPanels.tsx:496
+#: src/ui/SystemPanels.tsx:497
 #, fuzzy
 msgid "Waiting for {name} to react"
 msgstr "En attente de la réaction de {name}"
 
-#: src/ui/SystemPanels.tsx:511
+#: src/ui/SystemPanels.tsx:514
 #, fuzzy
 msgid "Reacting: {used} of {budget} actions used."
 msgstr "Réaction : {used} actions utilisées sur {budget}."
 
-#: src/ui/SystemPanels.tsx:515
+#: src/ui/SystemPanels.tsx:518
 #, fuzzy
 msgid "Activated: {used} of {budget} actions used."
 msgstr "Activée : {used} actions utilisées sur {budget}."
 
-#: src/ui/SystemPanels.tsx:530
+#: src/ui/SystemPanels.tsx:533
 #: src/ui/TopBar.tsx:307
 #, fuzzy
 msgid "End this activation; the other player goes next"
 msgstr "Terminer cette activation ; c'est au tour de l'autre joueur"
 
-#: src/ui/SystemPanels.tsx:536
+#: src/ui/SystemPanels.tsx:539
 #: src/ui/TopBar.tsx:314
 #, fuzzy
 msgid "End activation"
 msgstr "Terminer l'activation"
 
-#: src/ui/SystemPanels.tsx:549
+#: src/ui/SystemPanels.tsx:552
 #, fuzzy
 msgid "Costs {cost}"
 msgstr "Coûte {cost}"
 
-#: src/ui/SystemPanels.tsx:580
+#: src/ui/SystemPanels.tsx:583
 #, fuzzy
 msgid "Hover a greyed-out action for its reason."
 msgstr "Survole une action grisée pour en voir la raison."
 
-#: src/ui/SystemPanels.tsx:586
+#: src/ui/SystemPanels.tsx:589
 #, fuzzy
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] "Active aussi jusqu'à {n} unité :"
 msgstr[1] "Active aussi jusqu'à {n} unités :"
 
-#: src/ui/SystemPanels.tsx:621
+#: src/ui/SystemPanels.tsx:624
 #, fuzzy
 msgid "with {n}"
 msgstr "avec {n}"
 
-#: src/ui/SystemPanels.tsx:654
+#: src/ui/SystemPanels.tsx:657
 #, fuzzy
 msgid "Put a token on it: its effects last while the token stays"
 msgstr "Posez un marqueur dessus : ses effets durent tant que le marqueur reste"
@@ -9644,52 +9657,52 @@ msgstr "utilise {faces}"
 msgid "a {face}"
 msgstr "un {face}"
 
-#: src/ui/SystemPanels.tsx:696
+#: src/ui/SystemPanels.tsx:699
 #, fuzzy
 msgid "Placed on its AD slots: spent when it's used"
 msgstr "Placé sur ses emplacements AD : dépensé à l'utilisation"
 
-#: src/ui/SystemPanels.tsx:697
+#: src/ui/SystemPanels.tsx:700
 #, fuzzy
 msgid "On card:"
 msgstr "Sur la carte :"
 
-#: src/ui/SystemPanels.tsx:708
+#: src/ui/SystemPanels.tsx:711
 #, fuzzy
 msgid "Place:"
 msgstr "Placer :"
 
-#: src/ui/SystemPanels.tsx:713
+#: src/ui/SystemPanels.tsx:716
 #, fuzzy
 msgid "Put a {face} from your Ready dice on this card"
 msgstr "Place un {face} de tes dés prêts sur cette carte"
 
-#: src/ui/SystemPanels.tsx:728
+#: src/ui/SystemPanels.tsx:731
 #, fuzzy
 msgid "Discard"
 msgstr "Défausser"
 
-#: src/ui/SystemPanels.tsx:760
+#: src/ui/SystemPanels.tsx:763
 #, fuzzy
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr "Paiement avec ce dé ; clique à nouveau pour le plus bas qui convient"
 
-#: src/ui/SystemPanels.tsx:761
+#: src/ui/SystemPanels.tsx:764
 #, fuzzy
 msgid "Pay with this die"
 msgstr "Payer avec ce dé"
 
-#: src/ui/SystemPanels.tsx:781
+#: src/ui/SystemPanels.tsx:784
 #, fuzzy
 msgid "Has had its go this round."
 msgstr "A déjà joué ce round."
 
-#: src/ui/SystemPanels.tsx:785
+#: src/ui/SystemPanels.tsx:788
 #, fuzzy
 msgid "It moved on the table and does nothing else: its go is over"
 msgstr "Elle a bougé sur la table et ne fait rien d'autre : son tour est fini"
 
-#: src/ui/SystemPanels.tsx:788
+#: src/ui/SystemPanels.tsx:791
 #, fuzzy
 msgid "Moved only: end its go"
 msgstr "Seulement bougé : finir son tour"
