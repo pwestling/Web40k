@@ -4630,84 +4630,84 @@ msgstr "Die Analyse hat angehalten: {why}"
 msgid "Try again"
 msgstr "Erneut versuchen"
 
-#: src/review/words.ts:154
+#: src/review/words.ts:155
 #, fuzzy
 msgid "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer."
 msgstr "Deine beste Entscheidung: {move} in Runde {round}, etwa {n} % mehr Siegchance als alles andere."
 
-#: src/review/words.ts:163
+#: src/review/words.ts:164
 #, fuzzy
 msgid "{clean} of your {n} choices were as good as the best on offer."
 msgstr "{clean} deiner {n} Entscheidungen waren so gut wie die beste mögliche."
 
-#: src/review/words.ts:176
+#: src/review/words.ts:177
 #, fuzzy
 msgid "Next game, before a move, look at where the enemy can shoot next turn ({n} move could have done better)."
 msgid_plural "Next game, before a move, look at where the enemy can shoot next turn ({n} moves could have done better)."
 msgstr[0] "Nächstes Spiel: Schau vor einer Bewegung, wohin der Gegner im nächsten Zug schießen kann ({n} Bewegung hätte besser sein können)."
 msgstr[1] "Nächstes Spiel: Schau vor einer Bewegung, wohin der Gegner im nächsten Zug schießen kann ({n} Bewegungen hätten besser sein können)."
 
-#: src/review/words.ts:182
+#: src/review/words.ts:183
 #, fuzzy
 msgid "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack could have done better)."
 msgid_plural "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks could have done better)."
 msgstr[0] "Nächstes Spiel: Erledige eine angeschlagene Einheit, bevor du eine frische angreifst ({n} Angriff hätte besser sein können)."
 msgstr[1] "Nächstes Spiel: Erledige eine angeschlagene Einheit, bevor du eine frische angreifst ({n} Angriffe hätten besser sein können)."
 
-#: src/review/words.ts:187
+#: src/review/words.ts:188
 #, fuzzy
 msgid "Next game, keep stratagems for the attack that needs them."
 msgstr "Nächstes Spiel: Heb Stratageme für den Angriff auf, der sie braucht."
 
-#: src/review/words.ts:190
+#: src/review/words.ts:191
 #, fuzzy
 msgid "{n} move could have done better."
 msgid_plural "{n} moves could have done better."
 msgstr[0] "{n} Bewegung hätte besser sein können."
 msgstr[1] "{n} Bewegungen hätten besser sein können."
 
-#: src/review/words.ts:192
+#: src/review/words.ts:193
 #, fuzzy
 msgid "{n} attack could have done better."
 msgid_plural "{n} attacks could have done better."
 msgstr[0] "{n} Angriff hätte besser sein können."
 msgstr[1] "{n} Angriffe hätten besser sein können."
 
-#: src/review/words.ts:193
+#: src/review/words.ts:194
 #, fuzzy
 msgid "Some stratagems went where they mattered less."
 msgstr "Einige Strategeme kamen dort zum Einsatz, wo sie weniger zählten."
 
-#: src/review/words.ts:199
+#: src/review/words.ts:200
 #, fuzzy
 msgid "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing)."
 msgid_plural "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing)."
 msgstr[0] "Nächstes Spiel: Prüf jede Einheit, bevor du ▶ drückst ({n} Phase endete, obwohl noch etwas Lohnendes ging)."
 msgstr[1] "Nächstes Spiel: Prüf jede Einheit, bevor du ▶ drückst ({n} Phasen endeten, obwohl noch etwas Lohnendes ging)."
 
-#: src/review/words.ts:204
+#: src/review/words.ts:205
 #, fuzzy
 msgid "{n} phase ended with a unit that still had something worth doing."
 msgid_plural "{n} phases ended with units that still had something worth doing."
 msgstr[0] "{n} Phase endete mit einer Einheit, die noch etwas Lohnendes zu tun hatte."
 msgstr[1] "{n} Phasen endeten mit Einheiten, die noch etwas Lohnendes zu tun hatten."
 
-#: src/review/words.ts:217
+#: src/review/words.ts:218
 #, fuzzy
 msgid "One to replay: in round {round}, {move}; {better} was worth about {n}% more chance to win."
 msgstr "Zum Nachspielen: in Runde {round}, {move}; {better} hätte etwa {n} % mehr Siegchance gebracht."
 
-#: src/review/words.ts:237
+#: src/review/words.ts:238
 #, fuzzy
 msgid "The dice were kind to you this game."
 msgstr "Die Würfel waren dir in diesem Spiel wohlgesonnen."
 
-#: src/review/words.ts:238
+#: src/review/words.ts:239
 #, fuzzy
 msgid "The dice were against you this game. That part wasn't up to you."
 msgstr "Die Würfel waren in diesem Spiel gegen dich. Das lag nicht in deiner Hand."
 
-#: src/review/words.ts:251
+#: src/review/words.ts:252
 #, fuzzy
 msgid "the same move to a different spot"
 msgstr "dieselbe Bewegung an eine andere Stelle"

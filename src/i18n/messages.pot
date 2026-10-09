@@ -3793,71 +3793,71 @@ msgstr ""
 msgid "Try again"
 msgstr ""
 
-#: src/review/words.ts:154
+#: src/review/words.ts:155
 msgid "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer."
 msgstr ""
 
-#: src/review/words.ts:163
+#: src/review/words.ts:164
 msgid "{clean} of your {n} choices were as good as the best on offer."
 msgstr ""
 
-#: src/review/words.ts:176
+#: src/review/words.ts:177
 msgid "Next game, before a move, look at where the enemy can shoot next turn ({n} move could have done better)."
 msgid_plural "Next game, before a move, look at where the enemy can shoot next turn ({n} moves could have done better)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:182
+#: src/review/words.ts:183
 msgid "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack could have done better)."
 msgid_plural "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks could have done better)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:187
+#: src/review/words.ts:188
 msgid "Next game, keep stratagems for the attack that needs them."
 msgstr ""
 
-#: src/review/words.ts:190
+#: src/review/words.ts:191
 msgid "{n} move could have done better."
 msgid_plural "{n} moves could have done better."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:192
+#: src/review/words.ts:193
 msgid "{n} attack could have done better."
 msgid_plural "{n} attacks could have done better."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:193
+#: src/review/words.ts:194
 msgid "Some stratagems went where they mattered less."
 msgstr ""
 
-#: src/review/words.ts:199
+#: src/review/words.ts:200
 msgid "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing)."
 msgid_plural "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:204
+#: src/review/words.ts:205
 msgid "{n} phase ended with a unit that still had something worth doing."
 msgid_plural "{n} phases ended with units that still had something worth doing."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:217
+#: src/review/words.ts:218
 msgid "One to replay: in round {round}, {move}; {better} was worth about {n}% more chance to win."
 msgstr ""
 
-#: src/review/words.ts:237
+#: src/review/words.ts:238
 msgid "The dice were kind to you this game."
 msgstr ""
 
-#: src/review/words.ts:238
+#: src/review/words.ts:239
 msgid "The dice were against you this game. That part wasn't up to you."
 msgstr ""
 
-#: src/review/words.ts:251
+#: src/review/words.ts:252
 msgid "the same move to a different spot"
 msgstr ""
 
