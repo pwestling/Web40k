@@ -1,1 +1,0 @@
-function e(e,t){let n=[];for(let r of t){let t=e.find(e=>e.id===r.id);t?t.hash!==r.hash&&n.push(`${r.name} ${t.version} → ${r.version}`):n.push(`+ ${r.name} ${r.version}`)}for(let r of e)t.some(e=>e.id===r.id)||n.push(`− ${r.name} ${r.version}`);return n.join(`, `)}export{e as t};
