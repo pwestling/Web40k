@@ -150,7 +150,7 @@ function Review({
         )
         .slice(0, 8)
         .sort((a, b) => a.decision - b.decision || a.kind.localeCompare(b.kind)),
-    [folded],
+    [folded, review.decisions],
   );
   const [picked, setPicked] = useState<number | null>(null);
   return (

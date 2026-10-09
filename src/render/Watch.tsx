@@ -22,6 +22,7 @@ import { delaying, followed } from "../broadcast/broadcast";
 import { CasualtyPiles, Topple, TOPPLE_MS } from "./Casualties";
 import { useReel } from "../broadcast/reel";
 import { showcasing } from "./showcase";
+import { openingDistance } from "./openingView";
 import { clash, topple } from "../ui/sound";
 import { useStore } from "../store";
 import { GLIDE_MS, soloPlays, useSolo } from "../bot/solo";
@@ -454,6 +455,7 @@ export function WatchEffects() {
   });
 
   // The director: ease the camera to look at the latest action, keeping its angle.
+  const size = useThree((s) => s.size);
   const controls = useThree((s) => s.controls) as unknown as {
     target: Vector3;
     object: { position: Vector3 };
@@ -498,8 +500,8 @@ export function WatchEffects() {
     const ease = 1 - Math.exp(-Math.min(dt, 0.1) / (reel.index !== null || reel.replay ? 0.12 : 0.27));
     const delta = goal.sub(controls.target).multiplyScalar(ease);
     // Distance: close enough to see the action (both shooter and target), or the whole table.
-    const k = Math.max(table.width / 60, table.depth / 44);
-    const full = Math.hypot(52, 44) * k;
+    // The whole table is the opening view's distance: on an upright phone that is further back (dogfood round 2).
+    const full = openingDistance(table.width, table.depth, size.width, size.height);
     // On the computer's go in a solo game, about the opening view's distance at the closest (PX solo 3).
     const closest = computerGo() ? full * 0.85 : 22;
     const want = f.span === null ? full : Math.min(full, Math.max(closest, f.span * 1.6 + 14));

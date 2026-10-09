@@ -6,18 +6,10 @@ import { TableOnScreen } from "./TableOnScreen";
 import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
+import { openingPosition, openingScale } from "./openingView";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  PerspectiveCamera as PerspectiveCamera3,
-  Plane,
-  Raycaster,
-  TOUCH,
-  Vector2,
-  Vector3,
-  type Camera,
-  type Object3D,
-} from "three";
+import { Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import {
   baseSizeInches,
   modelHeight,
@@ -184,17 +176,10 @@ function Cameras() {
   const narrow = size.width < size.height;
   // Upright screens differ a lot in shape (a tablet, a phone): each gets its own fit.
   const shape = Math.round((size.width / Math.max(1, size.height)) * 20);
-  // Tuned for a 60" x 44" table; smaller tables (FSD's 36" x 24") bring the camera in. A tall,
-  // narrow screen (a phone) sees less across: back off until the width fits, so both deployment
-  // strips are in the opening view (UX 327). 28.2 is the half-width seen at k = 1.
-  const k = useMemo(() => {
-    const k0 = Math.max(game.table.width / 60, game.table.depth / 44);
-    // Upright, the whole table fits on screen, edge to edge (contain, not cover: UX 421).
-    if (narrow)
-      return portraitFit(game.table.width, game.table.depth, size.width / Math.max(1, size.height), k0);
-    const across = 28.2 * k0 * (size.width / Math.max(1, size.height));
-    return k0 * Math.max(1, (game.table.width * 0.52) / across);
-  }, [narrow, narrow && shape, reset, game.table.width, game.table.depth]); // eslint-disable-line react-hooks/exhaustive-deps
+  const k = useMemo(
+    () => openingScale(game.table.width, game.table.depth, size.width, size.height),
+    [narrow, narrow && shape, reset, game.table.width, game.table.depth], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   if (view === "eye" && eyeModel) {
     const z = (eyeModel.z ?? 0) + modelHeight(eyeModel) * 0.95 + 0.2;
     return (
@@ -212,7 +197,7 @@ function Cameras() {
       <PerspectiveCamera
         key={`${reset}-${game.table.width}x${game.table.depth}-${narrow ? `n${shape}` : "w"}`}
         makeDefault
-        position={narrow ? [0, 62 * k, 30 * k * side] : [0, 52 * k, 44 * k * side]}
+        position={openingPosition(k, narrow, side)}
         fov={45}
       />
     );
@@ -221,26 +206,6 @@ function Cameras() {
   // The tiny z offset keeps the camera's up vector defined and puts the
   // player's own edge at the bottom of the screen.
   return <OrthographicCamera key={reset} makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
-}
-
-/** How far back the upright camera stands so every corner of the table is on screen, with a margin. */
-function portraitFit(width: number, depth: number, aspect: number, k0: number): number {
-  const cam = new PerspectiveCamera3(45, aspect, 0.1, 1000);
-  const corners = [-1, 1].flatMap((x) =>
-    [-1, 1].map((z) => new Vector3((x * width) / 2, 0, (z * depth) / 2)),
-  );
-  const fits = (k: number) => {
-    cam.position.set(0, 62 * k, 30 * k);
-    cam.lookAt(0, 0, 0);
-    cam.updateMatrixWorld();
-    return corners.every((c) => {
-      const p = c.clone().project(cam);
-      return Math.abs(p.x) <= 0.94 && Math.abs(p.y) <= 0.94;
-    });
-  };
-  let k = k0;
-  while (!fits(k) && k < k0 * 6) k *= 1.04;
-  return k;
 }
 
 /** Width the right-hand panel (unit card, attack, terrain editor) takes when open. */
@@ -273,14 +238,20 @@ function CameraFit() {
     return () => clearInterval(t);
   }, [reset]);
   const target = useMemo(() => {
-    if (view === "eye" || !started) return { zoom: 1, centre: size.width / 2 };
+    const middle = size.height / 2;
+    if (view === "eye" || !started) return { zoom: 1, centre: size.width / 2, middle };
+    // An upright phone's unit card is a sheet over the lower half, right where your own units stand: the
+    // table sits in the upper part instead, so a selected unit can still be dragged (dogfood round 2).
+    if (size.width < PHONE_WIDTH && size.width < size.height)
+      return { zoom: 1, centre: size.width / 2, middle: size.height * 0.36 };
     // On a phone the card is a sheet over the table, so there is no side panel to fit around; a tablet held
     // upright has no room beside the table either, so the card sits over it there too (UX 420).
-    if (size.width < PHONE_WIDTH || size.width < size.height) return { zoom: 1, centre: size.width / 2 };
+    if (size.width < PHONE_WIDTH || size.width < size.height)
+      return { zoom: 1, centre: size.width / 2, middle };
     const gap = Math.max(300, size.width - left - RIGHT_PANEL);
-    return { zoom: Math.min(1.6, Math.max(1, (size.width * 0.82) / gap)), centre: left + gap / 2 };
-  }, [view, started, size.width, left, reset]); // eslint-disable-line react-hooks/exhaustive-deps
-  const current = useRef({ zoom: 1, centre: size.width / 2 });
+    return { zoom: Math.min(1.6, Math.max(1, (size.width * 0.82) / gap)), centre: left + gap / 2, middle };
+  }, [view, started, size.width, size.height, left, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  const current = useRef({ zoom: 1, centre: size.width / 2, middle: size.height / 2 });
   useFrame(() => {
     const cam = camera as Object3D & {
       setViewOffset?: (fw: number, fh: number, x: number, y: number, w: number, h: number) => void;
@@ -288,14 +259,18 @@ function CameraFit() {
     };
     if (!cam.setViewOffset) return;
     const c = current.current;
-    const done = Math.abs(c.zoom - target.zoom) < 0.001 && Math.abs(c.centre - target.centre) < 0.5;
+    const done =
+      Math.abs(c.zoom - target.zoom) < 0.001 &&
+      Math.abs(c.centre - target.centre) < 0.5 &&
+      Math.abs(c.middle - target.middle) < 0.5;
     if (done && (cam as { view?: { enabled: boolean } }).view?.enabled) return;
     c.zoom += (target.zoom - c.zoom) * 0.15;
     c.centre += (target.centre - c.centre) * 0.15;
-    // Render a window `zoom` times the screen, placed so the table centre lands at `centre`.
+    c.middle += (target.middle - c.middle) * 0.15;
+    // Render a window `zoom` times the screen, placed so the table centre lands at (`centre`, `middle`).
     const { width: W, height: H } = size;
     const k = c.zoom;
-    cam.setViewOffset(W, H, W / 2 - c.centre * k, (H / 2) * (1 - k), W * k, H * k);
+    cam.setViewOffset(W, H, W / 2 - c.centre * k, H / 2 - c.middle * k, W * k, H * k);
     cam.updateProjectionMatrix?.();
   });
   return null;
