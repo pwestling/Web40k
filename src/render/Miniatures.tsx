@@ -1,4 +1,4 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
   BufferAttribute,
@@ -21,6 +21,7 @@ import type { Model, ModelFigure, Vec2 } from "../core";
 import { useAssets } from "../assets/store";
 import { poseOf } from "./feel";
 import { toLinear } from "../assets/paint";
+import { batchable, StandeeBatch } from "./StandeeBatch";
 import type { ModelAsset } from "../assets/types";
 
 /** Top of the plastic base the figure stands on (see ModelInstances). */
@@ -38,7 +39,7 @@ const material = new MeshStandardMaterial({ color: "#c7ccd4", roughness: 0.75, m
 /** Shadows come from the coarsest level only: drawn into the shadow map, invisible on screen. */
 export const shadowMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
 
-interface Entry {
+export interface Entry {
   model: Model;
   binding: ModelFigure;
 }
@@ -84,9 +85,21 @@ export function Miniatures({
     return g;
   }, [models, assets]);
 
+  // Photo standees (#68) all draw in one batch where the browser can multi-draw: one draw however many.
+  const multiDraw = useThree((t) => t.gl.extensions.has("WEBGL_multi_draw"));
+  const [batched, apart] = useMemo(() => {
+    const photos: Entry[] = [];
+    const rest = new Map<string, Entry[]>();
+    for (const [id, entries] of groups)
+      if (multiDraw && batchable(assets[id]!)) photos.push(...entries);
+      else rest.set(id, entries);
+    return [photos, rest];
+  }, [groups, assets, multiDraw]);
+
   return (
     <>
-      {[...groups].map(([id, entries]) => (
+      {batched.length > 0 && <StandeeBatch entries={batched} positions={positions} heights={heights} />}
+      {[...apart].map(([id, entries]) => (
         <AssetInstances
           key={id}
           asset={assets[id]!}
@@ -224,6 +237,27 @@ const projScreen = new Matrix4();
 const tilt = new Quaternion();
 const euler = new Euler();
 
+/** Where a figure stands this frame, into `out`: position, facing and its pose (held, landing or settling; feel.ts). Returns its base's height. */
+export function placeFigure(
+  model: Model,
+  binding: ModelFigure,
+  positions: Record<string, Vec2>,
+  heights: Record<string, number>,
+  out: Matrix4,
+): number {
+  const p = positions[model.id] ?? model.position;
+  q.setFromAxisAngle(up, model.facing + binding.yaw);
+  const pose = poseOf(model.id);
+  if (pose && (pose.tiltX || pose.tiltZ))
+    q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
+  const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0) + (pose?.lift ?? 0);
+  v.set(p.x + (pose?.dx ?? 0), z, p.y + (pose?.dy ?? 0));
+  s.setScalar(binding.scale);
+  if (pose) s.y *= pose.squash;
+  out.compose(v, q, s);
+  return z;
+}
+
 function AssetInstances({
   asset,
   entries,
@@ -258,16 +292,7 @@ function AssetInstances({
 
     entries.forEach(({ model, binding }, i) => {
       const p = positions[model.id] ?? model.position;
-      q.setFromAxisAngle(up, model.facing + binding.yaw);
-      // Held, landing or settling (feel.ts).
-      const pose = poseOf(model.id);
-      if (pose && (pose.tiltX || pose.tiltZ))
-        q.premultiply(tilt.setFromEuler(euler.set(pose.tiltX, 0, pose.tiltZ)));
-      const z = BASE_TOP + (heights[model.id] ?? model.z ?? 0) + (pose?.lift ?? 0);
-      v.set(p.x + (pose?.dx ?? 0), z, p.y + (pose?.dy ?? 0));
-      s.setScalar(binding.scale);
-      if (pose) s.y *= pose.squash;
-      m4.compose(v, q, s);
+      const z = placeFigure(model, binding, positions, heights, m4);
       shadow?.setMatrixAt(i, m4);
 
       sphere.center.set(p.x, z + (height * binding.scale) / 2, p.y);

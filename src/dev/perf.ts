@@ -191,8 +191,9 @@ export const perf = {
         );
       }
     }
-    // Textures decode off the frame: wait for them, so gpu() counts what the table holds.
-    for (let t = 0; t < 100 && (renderer?.info.memory.textures ?? 0) < distinct; t++) await frame();
+    // Photos decode off the frame: give them time, so gpu() counts what the table holds.
+    await new Promise((r) => setTimeout(r, 2000));
+    await frame();
     const avg = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
     return {
       standees: distinct,
