@@ -12,7 +12,7 @@ import {
 } from "../core";
 import { useStore } from "../store";
 import { diceLook } from "./diceSets";
-import { useHold, watchForRolls } from "./hold";
+import { quietRolls, useHold, watchForRolls } from "./hold";
 import { useLiveGame } from "./hooks";
 import { chime, click, duckVoices, legendSting, scoop, sting, thump, useSound, womp } from "./sound";
 import { stakesOf, type Stakes } from "./stakes";
@@ -82,7 +82,8 @@ export function DiceTray() {
     let state = p.state;
     for (const { seq, event } of fresh) {
       const next = seq === pos ? shown : applyEvent(state, event);
-      for (const roll of rollsIn(state, next, [event], seq)) staged.push({ roll, seq });
+      if (seq > quietRolls.upTo)
+        for (const roll of rollsIn(state, next, [event], seq)) staged.push({ roll, seq });
       state = next;
     }
     const rolls = staged.map((r) => r.roll);

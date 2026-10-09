@@ -24,7 +24,7 @@ import { saveFile } from "../ui/files";
 import { siteUrl } from "./site";
 import { downloadReplay } from "../ui/Hud";
 import { shot } from "../render/focus";
-import { canRecord, defaultShape, startClip, type ClipShape } from "./clip";
+import { canRecord, CLIP_OVERHEAD_MS, defaultShape, startClip, type ClipShape } from "./clip";
 import { useShare } from "./store";
 
 /**
@@ -357,7 +357,7 @@ export function SharePanel() {
                         ))}
                       </select>
                     )}{" "}
-                    <span className="muted small">{about(length(s))}</span>
+                    <span className="muted small">{about(length(s) + CLIP_OVERHEAD_MS)}</span>
                   </span>
                 </label>
               ))}

@@ -13,6 +13,12 @@ export const useHold = create<{ held: number | null; busy: boolean }>(() => ({ h
 // `busy`: the tray has rolls queued or playing (replays too, which never hold), so the moments reel can wait for it.
 
 /**
+ * Rolls in events up to this seq aren't staged: a cut-down clip lands on an attack's last roll and shows
+ * only that one, as its length estimate counts (PX re-check of #56: the earlier steps doubled it).
+ */
+export const quietRolls = { upTo: 0 };
+
+/**
  * Hold new events that roll dice, set in the same update as the event, before
  * anything renders it, so the result never flashes up early. The tray starts
  * this when it mounts; returns the unsubscribe.

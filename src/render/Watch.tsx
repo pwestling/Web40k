@@ -337,6 +337,19 @@ export function WatchEffects() {
     if (shownSeq <= prev.seq || shownSeq - prev.seq > far) {
       // What was showing belongs to another moment.
       if (shownSeq !== prev.seq) setEffects((old) => (old.length ? [] : old));
+      // A jump forward (a cut-down clip skips to each roll): the camera still goes to where it lands,
+      // not back to the whole table (PX re-check of #56).
+      if (shownSeq > prev.seq) {
+        const jumped = record.events.filter((e) => e.seq > prev.seq && e.seq <= shownSeq);
+        for (let i = jumped.length - 1; i >= 0; i--) {
+          const f = focusFor(jumped[i]!.event, game, game);
+          if (!f) continue;
+          focus.current = f;
+          lastAction.current = performance.now();
+          overview.current = false;
+          break;
+        }
+      }
       return;
     }
     const logged = record.events.filter((e) => e.seq > prev.seq && e.seq <= shownSeq);

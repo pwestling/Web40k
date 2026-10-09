@@ -34,6 +34,8 @@ const SIZES: Record<ClipShape, { width: number; height: number }> = {
 const FPS = 30;
 /** The end frame (the result and where to play) stays this long (PX share 5). */
 const END_MS = 1500;
+/** What a recording adds to the table's own play time: the end frame plus starting and finishing the encoder (UX 67: estimates ran 3–4 s short). */
+export const CLIP_OVERHEAD_MS = END_MS + 1500;
 
 /** What the clip ends on. */
 interface ClipEnding {

@@ -6,7 +6,7 @@ import { battleOver } from "../ui/StatsScreen";
 import { useGame } from "../ui/hooks";
 import { pace } from "../ui/pace";
 import { clearTray } from "../ui/DiceTray";
-import { useHold } from "../ui/hold";
+import { quietRolls, useHold } from "../ui/hold";
 import { legendSting, whoosh } from "../ui/sound";
 import { sendMoment, useTalk } from "../talk/talk";
 import { useBroadcast } from "./broadcast";
@@ -43,6 +43,7 @@ let playing = 0;
 /** Stop any moment playing on the table. */
 export function stopMoment(): void {
   playing++;
+  quietRolls.upTo = 0;
 }
 
 /**
@@ -99,10 +100,13 @@ function rolls(e: GameRecord["events"][number]): boolean {
 /** About how long playing from `from` to `to` takes (ms), as `playMoment` paces it. */
 export function stretchLength(record: GameRecord, from: number, to: number): number {
   let ms = LEAD_MS + HOLD_MS;
-  for (const e of record.events)
-    if (e.seq >= from && e.seq <= to)
-      // A roll also waits for the tray to settle (procedures' rolls too: TOW, Conquest, 40k's computer).
-      ms += pace(record, e.seq) + (rolls(e) ? TRAY_MS : 0);
+  const shown = record.events.filter((e) => e.seq >= from && e.seq <= to);
+  shown.forEach((e, i) => {
+    ms += pace(record, e.seq);
+    // The tray plays an attack's rolls while play goes on, then holds the last: one wait a run of rolls
+    // (procedures' rolls too: TOW, Conquest, 40k's computer). Per roll, it doubled (PX re-check of #56).
+    if (rolls(e) && !(shown[i + 1] && rolls(shown[i + 1]!))) ms += TRAY_MS;
+  });
   return ms;
 }
 
@@ -113,7 +117,8 @@ interface Beat {
   round?: number;
 }
 
-const BEAT_MS: Record<Beat["kind"], number> = { round: 1600, move: 500, roll: TRAY_MS + 400 };
+// A roll beat as measured: the tray lands one roll in about 1.7 s, then the result stays up long enough to read.
+const BEAT_MS: Record<Beat["kind"], number> = { round: 1600, move: 500, roll: 600 + 1100 + 1200 };
 /** The condensed whole battle runs at most about this long (PX dogfood 3: a clip is for a feed). */
 const CONDENSED_MS = 60000;
 
@@ -199,10 +204,13 @@ export function playCondensed(beats: Beat[], done: () => void): void {
   const step = (i: number) => {
     const b = beats[i];
     if (!b) {
+      quietRolls.upTo = 0;
       useReel.setState({ replay: null });
       later(HOLD_MS, done);
       return;
     }
+    // A roll beat shows the attack's last roll only, not the steps before it.
+    quietRolls.upTo = b.kind === "roll" ? b.seq - 1 : 0;
     useStore.getState().setScrub(b.seq);
     if (b.kind === "round") {
       useReel.setState({
@@ -227,7 +235,7 @@ export function playCondensed(beats: Beat[], done: () => void): void {
     // A roll waits for the tray to land it, then a beat.
     const wait = (tries: number) => {
       if (useHold.getState().busy && tries > 0) later(150, () => wait(tries - 1));
-      else later(b.kind === "roll" ? 400 : 0, () => step(i + 1));
+      else later(b.kind === "roll" ? 1200 : 0, () => step(i + 1));
     };
     later(b.kind === "roll" ? 600 : BEAT_MS.move, () => wait(40));
   };
