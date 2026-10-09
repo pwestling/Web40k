@@ -484,6 +484,10 @@ export function resolveIntent(
   switch (intent.type) {
     case "script/start": {
       if (!state || state.script || !state.players[from]) return null;
+      // No unit acts after Battle over, forced or not (campaign afterGame hooks have no unit and still run).
+      const rounds = systemOf(state).turn.rounds;
+      if (typeof intent.args?.unit === "string" && typeof rounds === "number" && state.turn.round > rounds)
+        return null;
       // A code action the module says isn't available now (not this unit's go) is refused, as the UI would.
       if (!intent.force && codeActionWhy(state, intent.procedure, intent.args ?? {}, from) !== undefined)
         return null;

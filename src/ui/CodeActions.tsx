@@ -1,3 +1,4 @@
+import { battleOver } from "./StatsScreen";
 import { useState } from "react";
 import type { Unit } from "../core";
 import { currentSlot, plainActivations } from "../core/content/turn";
@@ -24,7 +25,8 @@ export function CodeActions({ unit }: { unit: Unit }) {
   const [told, setTold] = useState<Record<string, Record<string, boolean>>>({});
   const fromPackages = usePackageActions(unit);
   const mod = gameModule(game.system);
-  if (scrub !== null) return null;
+  // After Battle over the table is for looking back: no actions to start.
+  if (scrub !== null || battleOver(game)) return null;
   const phase = currentSlot(game)?.id;
   const phased = (mod?.actions ?? []).filter(
     (a) => a.by === "unit" && (!a.phases || (phase && a.phases.includes(phase))),

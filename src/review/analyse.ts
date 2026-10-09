@@ -1,5 +1,6 @@
 import {
   applyEvent,
+  sidePlayers,
   sides,
   undoneSeqs,
   type GameEvent,
@@ -290,6 +291,13 @@ export async function reviewGame(record: GameRecord, opts: Options = {}): Promis
   }
   settle(events.length);
   point(events.at(-1)?.seq ?? record.initial.seq, end);
+  // A finished game ends where it ended: the side with more VP won (UX: a 6–4 game read "53%" at the end).
+  const last = review.points.at(-1);
+  if (last && battleOver(end)) {
+    const vp = (seat: number) => end.resources[sidePlayers(end, seat)[0]?.id ?? ""]?.VP ?? 0;
+    const [a, b] = [vp(seats[0] ?? 0), vp(seats[1] ?? 1)];
+    if (a || b) last.p = a > b ? 1 : a < b ? 0 : 0.5;
+  }
   if (!opts.part) markUp(review);
   opts.onProgress?.(1);
   return review;

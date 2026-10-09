@@ -1,5 +1,5 @@
 import { DEFAULT_SYSTEM, type GameState } from "../core";
-import { getSystem } from "../core/content/systems";
+import { getSystem, isPlaceholder } from "../core/content/systems";
 import { t } from "../i18n";
 
 /**
@@ -70,5 +70,8 @@ export function gameTitle(state: GameState): string {
   } catch {
     // A package game that isn't loaded yet: its id will do.
   }
+  // Not loaded yet (the lobby's Resume tile): the package the game names says what it is.
+  if (isPlaceholder(id))
+    name = state.packages?.packages.find((p) => p.id === id)?.name ?? state.packages?.packages[0]?.name ?? id;
   return systemLabel(id, name);
 }

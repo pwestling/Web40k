@@ -26,6 +26,9 @@ import { useGame } from "./hooks";
 import { useCoach } from "../teach/store";
 import { narrow } from "./narrow";
 import { touch } from "./touch";
+import { startReview, useReviewRun } from "../review/run";
+import { reviewable } from "../review/ReviewPanel";
+import { BROADCAST } from "../broadcast/broadcast";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -230,16 +233,12 @@ export function Hud() {
       <GameLog />
       <div className="row wrap hud-foot">
         {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
-        {(battleOver(shown) || !session) && (
-          <button onClick={() => set({ stats: !(useStore.getState().stats ?? battleOver(shown)) })}>
-            {t("Stats")}
-          </button>
-        )}
+        {(battleOver(shown) || !session) && <StatsButton over={battleOver(shown)} live={!!session} />}
         <button onClick={() => void downloadReplay(record)}>{t("Download replay")}</button>
         {/* Notes go on a replay: the game just played becomes one (UX 231). */}
         {session && battleOver(shown) && (
           <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
-            {t("Review this game")}
+            {t("Replay with notes")}
           </button>
         )}
         <ReportButton />
@@ -463,5 +462,29 @@ function RejoinCard({ seated }: { seated: Player[] }) {
       )}
       <button onClick={watch}>{t("Watch")}</button>
     </div>
+  );
+}
+
+/**
+ * Stats, with a dot once the game review is ready (UX 424). At Battle over in
+ * a live game the review starts by itself, so it's waiting by the time the
+ * players look.
+ */
+function StatsButton({ over, live }: { over: boolean; live: boolean }) {
+  const set = useStore((s) => s.set);
+  const open = useStore((s) => s.stats ?? over);
+  const record = useStore((s) => s.record);
+  const game = useStore((s) => s.game);
+  const run = useReviewRun();
+  const auto = over && live && !BROADCAST && !VIEWER && reviewable(game);
+  useEffect(() => {
+    if (auto) startReview(useStore.getState().record);
+  }, [auto]);
+  const ready = run.status === "done" && run.of?.initial === record.initial && !open;
+  return (
+    <button onClick={() => set({ stats: !(useStore.getState().stats ?? over) })}>
+      {t("Stats")}
+      {ready && <span className="ready-dot" title={t("Review ready")} aria-label={t("Review ready")} />}
+    </button>
   );
 }

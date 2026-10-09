@@ -1,11 +1,12 @@
 import type { GameState } from "../core";
 import { playerActions } from "../core/content/player";
 import { systemOf } from "../core/content/turn";
+import { sideName } from "../core/teams";
 import { explain } from "../bot/explain";
 import { gameModule } from "../systems";
 import { formatNumber, gameText, t, tn } from "../i18n";
 import type { BotMove } from "../soak/bot";
-import type { Decision, GameReview } from "./analyse";
+import type { Decision, GameReview, Mark } from "./analyse";
 
 /**
  * The game review's words (#61): a decision as a player would say it, and
@@ -15,7 +16,20 @@ import type { Decision, GameReview } from "./analyse";
 
 const vp = (n: number) => formatNumber(Math.abs(n), { maximumFractionDigits: 0 });
 
-const unitName = (state: GameState, id: string | undefined) => (id ? state.units[id]?.name : undefined);
+const seatOfUnit = (state: GameState, id: string) => state.players[state.units[id]?.owner ?? ""]?.seat;
+
+/** A unit's name, with its side when the other side has a unit of the same name (UX 426). */
+function unitName(state: GameState, id: string | undefined): string | undefined {
+  const u = id ? state.units[id] : undefined;
+  if (!u) return undefined;
+  const seat = seatOfUnit(state, u.id);
+  const twin = Object.values(state.units).some(
+    (o) => o.id !== u.id && o.name === u.name && seatOfUnit(state, o.id) !== seat,
+  );
+  return twin && seat !== undefined
+    ? t("{unit} ({side})", { unit: u.name, side: sideName(state, seat) })
+    : u.name;
+}
 
 /** "Line Troopers: Advance, going for the East lantern", "Focused Fire on Bastion Walker". */
 export function moveText(state: GameState, move: BotMove | null): string {
@@ -29,7 +43,12 @@ export function moveText(state: GameState, move: BotMove | null): string {
       playerActions(state, move.as).find((o) => o.def.id === i.action)?.def.name ??
       i.action;
     const target = unitName(state, i.targetId);
-    return target ? t("{action} on {unit}", { action: gameText(name), unit: target }) : gameText(name);
+    if (!target) return t("used {action}", { action: gameText(name) });
+    // "used Focused Fire on their Lance Team": a stratagem, not a shooting target (UX 426).
+    const own = i.targetId && seatOfUnit(state, i.targetId) === state.players[move.as]?.seat;
+    return own
+      ? t("used {action} on their {unit}", { action: gameText(name), unit: target })
+      : t("used {action} on the enemy {unit}", { action: gameText(name), unit: target });
   }
   if (i.type === "action/take") {
     const unit = unitName(state, i.unitId) ?? "";
@@ -49,6 +68,25 @@ export function moveText(state: GameState, move: BotMove | null): string {
     return `${unit}: ${why ?? t("moving")}`;
   }
   return why ?? i.type;
+}
+
+/**
+ * A turning point's size as chance to win for the side that made it, in whole
+ * percent (UX 425): the evaluator's VP read through the same curve as the
+ * result line, from where that side stood at the time.
+ */
+export function winShare(review: GameReview, m: Mark): number {
+  const d = review.decisions[m.decision]!;
+  const k = 0.6 * Math.max(1, review.scale);
+  let p = review.points[0]?.p ?? 0.5;
+  for (const q of review.points) if (q.seq <= d.seq) p = q.p;
+  const mine = Math.min(0.99, Math.max(0.01, d.seat === (review.seats[0] ?? 0) ? p : 1 - p));
+  const u = k * Math.log(mine / (1 - mine));
+  const s = Math.abs(m.size);
+  const sig = (v: number) => 1 / (1 + Math.exp(-v / k));
+  // A costly or missed choice (or a bad roll) left the side short of u + s; a strong one (or a good roll) lifted it from u − s.
+  const behind = m.kind === "costly" || m.kind === "missed" || (m.kind === "dice" && m.size < 0);
+  return Math.max(1, Math.round(100 * (behind ? sig(u + s) - sig(u) : sig(u) - sig(u - s))));
 }
 
 type Kind = "move" | "attack" | "stratagem" | "other";
@@ -144,11 +182,14 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     const d = review.decisions[strong.decision]!;
     out.push({
       weight: strong.size * 0.9,
-      text: t("Your best call: {move} in round {round}, about {vp} VP better than anything else on offer.", {
-        move: moveText(states(d.seq), d.played),
-        round: d.round,
-        vp: vp(strong.size),
-      }),
+      text: t(
+        "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer.",
+        {
+          move: moveText(states(d.seq), d.played),
+          round: d.round,
+          n: winShare(review, strong),
+        },
+      ),
     });
   }
   const costly = review.marks
@@ -159,12 +200,15 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     const st = states(d.seq);
     out.push({
       weight: costly.size * 0.7,
-      text: t("The costliest call: {move} in round {round}. {better} was worth about {vp} VP more.", {
-        move: moveText(st, d.played),
-        round: d.round,
-        better: capital(moveText(st, d.best)),
-        vp: vp(costly.size),
-      }),
+      text: t(
+        "The costliest call: {move} in round {round}. {better} was worth about {n}% more chance to win.",
+        {
+          move: moveText(st, d.played),
+          round: d.round,
+          better: capital(moveText(st, d.best)),
+          n: winShare(review, costly),
+        },
+      ),
     });
   }
   if (out.length < 3) {
@@ -182,4 +226,4 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     .map((x) => x.text);
 }
 
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+export const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

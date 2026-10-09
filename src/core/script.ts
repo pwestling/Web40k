@@ -146,6 +146,10 @@ export function codeActionWhy(
   args: Record<string, unknown>,
   by: PlayerId,
 ): string | undefined {
+  // A finished game stays finished: no unit acts after Battle over (dogfood round 2). Campaign hooks still run.
+  const rounds = systemOf(state).turn.rounds;
+  if (typeof args.unit === "string" && typeof rounds === "number" && state.turn.round > rounds)
+    return "The battle is over";
   const system = systemOf(state).id;
   const action = codeActions.get(system)?.get(procedure);
   if (!action) return undefined;

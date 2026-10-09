@@ -102,7 +102,8 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     }
     case "player/rename":
       // Before the battle it's setting up ("Player 2 is now The Warden…" as a solo game starts, UX 409).
-      if (game.turn.round === 0) return "";
+      // A solo Rift Lanterns game sets the computer's name again once round 1 has begun: same name, nothing to say.
+      if (game.turn.round === 0 || before.players[event.player]?.name === event.name) return "";
       return t("{old} is now {name}", {
         old: playerName(before.players[event.player]) ?? t("A player"),
         name: event.name,

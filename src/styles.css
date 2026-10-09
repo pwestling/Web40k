@@ -5202,7 +5202,22 @@ button.teach-button:hover {
 .review-chart .mark {
   stroke: #111318;
   stroke-width: 2;
+}
+.review-chart .mark-hit {
   cursor: pointer;
+}
+.review-chart .tick.end {
+  fill: #e5e7eb;
+  font-weight: 600;
+}
+.ready-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  vertical-align: middle;
 }
 .game-review .chart-read {
   margin: 0;

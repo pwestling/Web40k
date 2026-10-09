@@ -9,7 +9,7 @@ import { branchGame } from "../ui/Branch";
 import { explain } from "../bot/explain";
 import { loadNotes, putNote, deviceId, type NoteMark } from "../replay/notes";
 import { startReview, useReviewRun } from "./run";
-import { moveText, takeaways } from "./words";
+import { capital, moveText, takeaways, winShare } from "./words";
 import type { Decision, GameReview, Mark } from "./analyse";
 
 /**
@@ -20,7 +20,9 @@ import type { Decision, GameReview, Mark } from "./analyse";
  * the battle is over, or in a replay.
  */
 
-const vp = (n: number) => formatNumber(Math.abs(n), { maximumFractionDigits: 1 });
+/** The turning point the chart just picked, to scroll the list to it (UX 423). */
+const scrollTo: { current: number | null } = { current: null };
+
 const pct = (p: number) => formatNumber(p * 100, { maximumFractionDigits: 0 });
 
 /** The table just before each of these entries, folded once. */
@@ -69,6 +71,7 @@ export function ReviewPanel({ watching, close }: { watching: boolean; close: () 
             : t("Going over every decision…")}
         </p>
         {run.done > 0 ? <progress value={run.done} max={1} /> : <progress />}
+        <p className="muted small">{t("About a minute. You can close this and keep watching.")}</p>
       </section>
     );
   if (run.status === "error" || !run.review)
@@ -135,6 +138,7 @@ function Review({
           {turning.map((m) => (
             <TurningPoint
               key={`${m.kind}-${m.decision}`}
+              review={review}
               mark={m}
               d={review.decisions[m.decision]!}
               state={at(review.decisions[m.decision]!.seq)}
@@ -204,7 +208,7 @@ function ResultLine({
   const [a, b] = [review.seats[0] ?? 0, review.seats[1] ?? 1];
   const W = 520;
   const H = 160;
-  const pad = { l: 8, r: 8, t: 10, b: 22 };
+  const pad = { l: 34, r: 34, t: 10, b: 22 };
   const x = (i: number) => pad.l + (i / (pts.length - 1)) * (W - pad.l - pad.r);
   const y = (p: number) => pad.t + (1 - p) * (H - pad.t - pad.b);
   const mid = y(0.5);
@@ -221,6 +225,11 @@ function ResultLine({
     i && p.round !== pts[i - 1]!.round && p.round <= last ? [{ i, round: p.round }] : [],
   );
   const shown = hover ?? null;
+  const end = pts[pts.length - 1]!.p;
+  const choose = (n: number) => {
+    scrollTo.current = review.decisions[n]!.seq;
+    pick(n);
+  };
   const onMove = (e: React.PointerEvent<SVGRectElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     const f = (e.clientX - box.left) / box.width;
@@ -255,6 +264,12 @@ function ResultLine({
         <path d={area} fill={color(a)} opacity={0.22} clipPath="url(#review-above)" />
         <path d={area} fill={color(b)} opacity={0.22} clipPath="url(#review-below)" />
         <line x1={pad.l} x2={W - pad.r} y1={mid} y2={mid} className="mid" />
+        <text x={pad.l - 4} y={mid + 4} className="tick" textAnchor="end">
+          {t("even")}
+        </text>
+        <text x={pad.l + 3} y={H - 6} className="tick">
+          {t("R{n}", { n: pts[0]!.round })}
+        </text>
         {rounds.map((r) => (
           <g key={r.i}>
             <line x1={x(r.i)} x2={x(r.i)} y1={pad.t} y2={H - pad.b} className="round" />
@@ -264,24 +279,7 @@ function ResultLine({
           </g>
         ))}
         <path d={line} className="line" />
-        {turning.map((m) => {
-          const d = review.decisions[m.decision]!;
-          const i = index(d.seq);
-          return (
-            <circle
-              key={`${m.kind}-${m.decision}`}
-              cx={x(i)}
-              cy={y(pts[i]!.p)}
-              r={picked === m.decision ? 6 : 4.5}
-              className={`mark ${m.kind}`}
-              fill={color(d.seat)}
-              onClick={() => pick(m.decision)}
-            >
-              <title>{kindText(m)}</title>
-            </circle>
-          );
-        })}
-        {shown !== null && <line x1={x(shown)} x2={x(shown)} y1={pad.t} y2={H - pad.b} className="cross" />}
+        {/* The hover strip sits under the dots so they take clicks; a click on it picks the nearest turning point (UX 423). */}
         <rect
           x={pad.l}
           y={0}
@@ -290,7 +288,48 @@ function ResultLine({
           fill="transparent"
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
+          onClick={(e) => {
+            const box = e.currentTarget.getBoundingClientRect();
+            const at = pad.l + ((e.clientX - box.left) / box.width) * (W - pad.l - pad.r);
+            const near = turning
+              .map((m) => ({ m, dx: Math.abs(x(index(review.decisions[m.decision]!.seq)) - at) }))
+              .sort((p, q) => p.dx - q.dx)[0];
+            if (near && near.dx <= 24) choose(near.m.decision);
+          }}
         />
+        {turning.map((m) => {
+          const d = review.decisions[m.decision]!;
+          const i = index(d.seq);
+          return (
+            <g key={`${m.kind}-${m.decision}`} onClick={() => choose(m.decision)} className="mark-hit">
+              <circle cx={x(i)} cy={y(pts[i]!.p)} r={12} fill="transparent" />
+              <circle
+                cx={x(i)}
+                cy={y(pts[i]!.p)}
+                r={picked === m.decision ? 7.5 : 6}
+                className={`mark ${m.kind}`}
+                fill={color(d.seat)}
+              >
+                <title>{kindText(m)}</title>
+              </circle>
+            </g>
+          );
+        })}
+        {shown !== null && (
+          <line
+            x1={x(shown)}
+            x2={x(shown)}
+            y1={pad.t}
+            y2={H - pad.b}
+            className="cross"
+            pointerEvents="none"
+          />
+        )}
+        {/* The leading side's chance at the end, by its colour (UX 428). */}
+        <circle cx={x(pts.length - 1)} cy={y(end)} r={3} fill={color(end >= 0.5 ? a : b)} />
+        <text x={W - pad.r + 4} y={y(end) + 4} className="tick end">
+          {t("{n}%", { n: pct(end >= 0.5 ? end : 1 - end) })}
+        </text>
       </svg>
       <p className="muted small chart-read">
         {shown !== null
@@ -306,6 +345,7 @@ function ResultLine({
 }
 
 function TurningPoint({
+  review,
   mark,
   d,
   state,
@@ -317,6 +357,7 @@ function TurningPoint({
   on,
   pick,
 }: {
+  review: GameReview;
   mark: Mark;
   d: Decision;
   state: GameState;
@@ -328,28 +369,22 @@ function TurningPoint({
   on: boolean;
   pick: () => void;
 }) {
-  const played = moveText(state, d.played);
+  const played = capital(moveText(state, d.played));
   const better = d.best ? moveText(state, d.best) : null;
+  const n = winShare(review, mark);
   const line =
     mark.kind === "costly"
-      ? t("{played}. Better: {better} (about {vp} VP more).", {
-          played,
-          better: better ?? "",
-          vp: vp(mark.size),
-        })
+      ? t("{played}. Better: {better}, about {n}% more chance to win.", { played, better: better ?? "", n })
       : mark.kind === "missed"
-        ? t("Moved on with {better} still to do (about {vp} VP).", {
+        ? t("Moved on with {better} still to do, about {n}% chance to win left behind.", {
             better: better ?? "",
-            vp: vp(mark.size),
+            n,
           })
         : mark.kind === "strong"
-          ? t("{played}: about {vp} VP better than the next best choice.", { played, vp: vp(mark.size) })
+          ? t("{played}: about {n}% more chance to win than the next best choice.", { played, n })
           : mark.size > 0
-            ? t("{played}: the dice gave about {vp} VP more than the average.", { played, vp: vp(mark.size) })
-            : t("{played}: the dice gave about {vp} VP less than the average.", {
-                played,
-                vp: vp(mark.size),
-              });
+            ? t("{played}: the dice added about {n}% to the chance to win.", { played, n })
+            : t("{played}: the dice took about {n}% off the chance to win.", { played, n });
   const prev = [...record.events].reverse().find((e) => e.seq < d.seq)?.seq ?? record.initial.seq;
   const show = () => {
     close();
@@ -380,7 +415,16 @@ function TurningPoint({
     setNoted(true);
   };
   return (
-    <li className={on ? "on" : ""} onClick={pick}>
+    <li
+      className={on ? "on" : ""}
+      onClick={pick}
+      ref={(el) => {
+        if (on && el && scrollTo.current === d.seq) {
+          scrollTo.current = null;
+          el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }}
+    >
       <div className="tp-head">
         <span className={`kind ${mark.kind}${mark.kind === "dice" && mark.size < 0 ? " down" : ""}`}>
           {kindText(mark)}
