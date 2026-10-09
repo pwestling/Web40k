@@ -252,3 +252,42 @@ UX 71 and 72 and the PX feel pass on Game review landed alongside (a28840e, 350c
 - **Rules engine:** Teach it can't express Reanimation Protocols (no regain-wounds effect) or Implacable's objective condition (fixed in #63: a heal that brings models back, and an objective condition). Sharp's shooting marks favour the Pyre Speaker strongly (evaluator, #63).
 - **UX:** Charge (2D6) is enabled and counted in What now with no enemy within 12″. Shoot everything offers only out-of-range targets. "Feel No Pain: damage" shows beside "Feel no pain 5+". A model climbing a crate adds the climb to the logged move. A drag on a unit beside the selected one can grab the neighbour; picking could prefer the selected unit. Phone touch targets under 36 px: VP −/+ (19×16), the replay bar and the table-talk row. Resume says "hotseat" for a game against the computer.
 - **PX:** a Hazardous die in the tray, as a feel idea.
+
+## Round 3: #70, 2026-10-09
+
+### How we played
+
+- The same Playwright driver, on a `vite preview` build, with the local relay and its Open tables board (`server/relay.mjs`, `OPEN_TABLES=on`). We used the dev server only when we needed to read state hashes from the store.
+- Photos were drawn on a canvas to look like phone shots (a figure on a paper sheet with a lamp shadow, saved as JPEG) and fed to the maker's file input.
+- One shortcut in the Old World game: the driver marched the Wolf Runners 18″ with a store `unit/move`, the same event a drag sends. Dragging regiments was already covered in rounds 1 and 2.
+
+### What we played
+
+| Game                                                     | Input       | Result           | Notes                                                                                                                                       |
+| -------------------------------------------------------- | ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Online event, Rift Lanterns, 4 players, 2 Swiss rounds   | Mouse ×4    | Cy won 2–0–0     | A fifth browser watched a top table from Live now each round. The final standings matched in all four browsers                              |
+| 40k against the computer (Easy), five units photographed | Phone touch | (to round 2)     | Each unit was photographed from the photo prompt. The computer played its turn around the standees                                          |
+| Rank and flank, both sides                               | Mouse       | Wolf Runners won | Frenzy charge: declared at 12″, Hold, 2D6 charge, +1 Attack (10 attacks), break test, a forced pursuit that caught and destroyed the Riders |
+
+### What worked
+
+- Events run end to end with no server: post, enter with a shelf army, Start now, "Play your game: table 1 against Cy", deploy the registered army, ranked by default, both sign, Back to the event, round 2 paired by score, final standings.
+- Top event tables appear on Live now within seconds of the battle starting, labelled "Dogfood Cup · Round 1 · Table 1".
+- Photographing a whole army on a phone is about a minute: the prompt walks through the units still in their stand-ins, and the maker's Use stays in reach.
+- The Old World Frenzy rules all fired and were logged: "Frenzy, +1 Attack each on the charge", "Wolf Runners must pursue (Frenzy)", and the "must declare a charge" warning in the top bar.
+
+### Fixed in this pass
+
+| Finding                                                                                                                                                   | Fix                                                                                                                                                     | Commit           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| A watcher from Live now never loaded a package game's rules, so they saw a 60×44 stand-in table with no VP, and "Your table doesn't match" at Battle over | The broadcast view loads package cards and the sandbox. Our own games install themselves wherever a table plays one. The events smoke now has a watcher | 707c27e, 19c5d8a |
+| Against the computer the game starts at round 1, so the photo prompt (in the setup panel) never showed                                                    | The prompt stays in the menu while any unit is in its stand-in                                                                                          | 1a3c9de          |
+| In hotseat, two identical "Photograph your painted figures" buttons                                                                                       | Each names its side                                                                                                                                     | f231e13          |
+| Two "Back to the event" buttons once the result was signed (the event bar and the result box)                                                             | Kept both: the result box leads now (PX). The smoke takes the first                                                                                     | 19c5d8a          |
+
+The PX feel passes on events (ranks before results, signed result first, entry wording, paused events, the lobby card) and on standees (paper shadows, cut warnings, rounded outlines, self-lit cards) landed in the same pass (19c5d8a, f231e13).
+
+### Sent on
+
+- **Rules engine:** Teach it is 40k-only. Only wh40k has `recognizeAbility`, so the Old World shows no Teach chips or button, and a taught rule can't be played there yet.
+- **UX:** after Use in the maker, the next unit's photo isn't offered at once. You go back to the menu's prompt, which a unit card can cover on a phone. Standees seen from the phone's high default camera are still small. Facing them toward the viewer (PX 5) is open.
