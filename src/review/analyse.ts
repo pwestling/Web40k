@@ -11,7 +11,8 @@ import {
   type PlayerId,
 } from "../core";
 import { phaseName, systemOf } from "../core/content/turn";
-import { analyst, usedKey, type Analyst } from "../bot/player";
+import { analyst, type Analyst } from "../bot/player";
+import { usedKey } from "../bot/moves";
 import { battleOver, phaseKey, type BotMove } from "../soak/bot";
 import { decisionKind, trusted, type DecisionKind } from "./trust";
 

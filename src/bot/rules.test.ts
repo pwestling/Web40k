@@ -25,7 +25,8 @@ import { fsdLayout } from "../systems/fsd/layout";
 import { fsdSample } from "../systems/fsd/sample";
 import { conquestLayout } from "../systems/conquest/layout";
 import { conquestSample } from "../systems/conquest/sample";
-import { botPolicy, destinations, moveInches, type Level } from "./player";
+import { botPolicy, type Level } from "./player";
+import { destinations, moveInches } from "./moves";
 import type { BotMove } from "../soak/bot";
 
 /**

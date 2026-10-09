@@ -4,7 +4,8 @@ import type { GameRecord, GameState, Intent, Model, PlayerId, Unit } from "../..
 import { maxWounds } from "../../core/attack";
 import { aliveModels } from "../../core/units";
 import { playMatch } from "../../bot/match";
-import { botPolicy, destinations } from "../../bot/player";
+import { botPolicy } from "../../bot/player";
+import { destinations } from "../../bot/moves";
 import type { Policy } from "../../bot/policy";
 import { chargeMove, type BotMove } from "../../soak/bot";
 
