@@ -443,7 +443,8 @@ function TurningPoint({
     setTimeout(() => useStore.getState().setScrub(d.endSeq), 900);
   };
   const tryBetter = () => {
-    if (better) useBetterMove.setState({ text: better, side: sideName(d.seat) });
+    // The whole move, unit included: on the table there's no "played" line beside it (dogfood round 2).
+    if (d.best) useBetterMove.setState({ text: moveText(state, d.best), side: sideName(d.seat) });
     branchGame(prev, "hotseat");
   };
   const [noted, setNoted] = useState(false);

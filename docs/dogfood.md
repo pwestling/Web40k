@@ -194,3 +194,61 @@ Every finding sent on above was fixed on main (8fa82da to a6e3c37), along with w
 | Fight phase coach said "Player 1's turn" against the fight order  | It leads with whose pick it is; the computer takes its picks, in the player's turn too (PX #57 review)                                           | (unit tests, by hand)   |
 
 The 40k charge's declared targets are kept on the unit as `chargeAt.<id>` flags until its next turn, so the rules can check that the charge move ends engaged with each.
+
+## Round 2: #62, 2026-10-09
+
+### How we played
+
+- The same Playwright driver as round 1, on a development build served by `vite preview`. The scripts tapped, dragged and clicked like a player, and read the store only to find where a unit stands on screen.
+- Touch games ran in emulated touch-only contexts: an iPad (1180×820) and a phone (390×844), with `scripts/touch.mjs` for taps and drags.
+- The 40k roster for #53 came from `.bsdata/` and was not committed.
+- Open tables ran over the local Nostr relay (`?nostr=ws://localhost:7777`).
+
+### What we played
+
+| Game                                        | Input         | Result                 | Notes                                             |
+| ------------------------------------------- | ------------- | ---------------------- | ------------------------------------------------- |
+| Rift Lanterns vs Sharp                      | Mouse         | Lost 4–6               | Review ran in the sandbox workers (package game)  |
+| 40k sample armies vs Sharp, #58 build       | Mouse         | Lost 35–55             | 5 rounds; #57/#58 rules live                      |
+| Rift Lanterns vs Steady                     | iPad touch    | Won 9–5                | Review started with the menu folded (UX 432)      |
+| 40k Necron roster vs Steady, #53 teach      | Mouse         | (setup)                | Imported, matched points, taught a rule           |
+| Rift Lanterns vs Steady                     | Phone touch   | Lost 0–9, then won 6–5 | The first game was lost to the camera bugs below  |
+| 40k, posted on Open tables, joined by phone | Mouse + phone | (opening)              | Post, find, join, ready, deploy and a synced move |
+
+### What worked
+
+- #57/#58 live in 40k: the Heavy note ("Moved 10.2″ this turn: no Heavy +1 to hit"), the charge declaration with its 12″ message, Braced Firing's Apply, Indirect Fire said once, and the computer's fights shown as "The computer is rolling…".
+- The What now fight coach follows the fight order (fixed in #56), including the computer's picks.
+- Game review for package games runs in the sandbox workers. It starts by itself at Battle over, with the dot on Stats and on the folded ☰ Menu.
+- Try the better move opens a branch just before the choice, and the better target is in the shoot list.
+- #53 on a real roster: Implacable Eradication (re-roll wound 1s) was taught from the card. The card shows "Automatic: Implacable Eradication", and the attack panel applies it.
+- Open tables from a phone: the post shows "Porter is waiting for an opponent · here now", Join asks for a name, the post comes down when the seat fills, and Start battle waits for Ready (or "Start anyway").
+
+### Fixed in this pass
+
+| Finding                                                                          | Fix                                                                               | Commit           |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------- |
+| Package games had no Game review                                                 | The review worker loads the package in its sandbox                                | 56e9c4f          |
+| Rift: Shoot was still offered after Battle over, and started a script            | Unit actions refuse past the last round; code actions hide                        | a28840e          |
+| The chart ended at 53% for a finished 6–4 game                                   | The last point is the result                                                      | a28840e          |
+| The Resume tile showed the package id and the wrong round                        | The package name, and "Back to {game}: Battle over" for a finished game           | a28840e, 1219f76 |
+| Follow action eased the camera mid-drag: a Bastion Walker chased the pointer 43″ | The director never moves under a drag, and doesn't follow your own drags          | b433257          |
+| The review called an attack-panel shot "missed: could still shoot"               | Attacks declared in the panel are judged (0 → 31 on the 40k game)                 | bb7b8dc          |
+| Touch players couldn't end a unit's go without moving it                         | "Hold: end its go here" on the unit card                                          | 1219f76          |
+| "You wins"                                                                       | "You win"                                                                         | 1219f76          |
+| A Rift fight in the review lost its target                                       | The script step keeps its target                                                  | 1219f76          |
+| Phone: the director's overview left two of three units off screen                | The overview is the opening view's distance                                       | f50c3de          |
+| Phone: the unit card sheet covered the selected unit, so drags did nothing       | The table sits in the upper third on a phone                                      | f50c3de          |
+| Review: the computer's takeaways said "30 of your 31 choices"                    | Against the computer only your takeaways show                                     | b2170bd          |
+| Review: "13 attacks gave up about 130 VP" (the evaluator's scale)                | Tips count choices; no VP figure                                                  | b2170bd          |
+| Review: "Ended the turn without Field Marshal Normal move…"                      | "Field Marshal still had something to do (Normal move, closing on Cinder Brutes)" | b2170bd          |
+| "You's most valuable unit"                                                       | "Your most valuable unit"                                                         | b2170bd          |
+| Try the better move's hint left out the unit                                     | It names it                                                                       | this commit      |
+
+UX 71 and 72 and the PX feel pass on Game review landed alongside (a28840e, 350cdbc, ae800cd).
+
+### Sent on
+
+- **Rules engine:** Teach it can't express Reanimation Protocols (no regain-wounds effect) or Implacable's objective condition. Sharp's shooting marks favour the Pyre Speaker strongly (evaluator, #63).
+- **UX:** Charge (2D6) is enabled and counted in What now with no enemy within 12″. Shoot everything offers only out-of-range targets. "Feel No Pain: damage" shows beside "Feel no pain 5+". A model climbing a crate adds the climb to the logged move. A drag on a unit beside the selected one can grab the neighbour; picking could prefer the selected unit. Phone touch targets under 36 px: VP −/+ (19×16), the replay bar and the table-talk row. Resume says "hotseat" for a game against the computer.
+- **PX:** a Hazardous die in the tray, as a feel idea.
