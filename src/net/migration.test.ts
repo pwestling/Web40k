@@ -111,8 +111,8 @@ describe("reconnect and host migration", () => {
     await settle();
     expect(a.net.status).toMatchObject({ role: "client", hostId: "p2" });
     a.session.dispatch({ type: "player/claim", player: "p1" });
-    a.session.dispatch({ type: "procedure/roll" });
-    // Now the second host goes, in the middle of the attack's rolls.
+    // Now the second host goes, in the middle of the attack (rolling first could end it at once:
+    // with no hits there is nothing more to roll).
     expect(p2.session.current.procedure?.run.done).toBe(false);
     p2.session.leave();
     await settle();
