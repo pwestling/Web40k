@@ -5,7 +5,16 @@ import { momentsOf, type Moment } from "../core/moments";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { useReel } from "../broadcast/reel";
-import { playMoment, reelLength, startReel, stopMoment, stretchLength } from "../broadcast/Moments";
+import {
+  condensedBeats,
+  condensedLength,
+  playCondensed,
+  playMoment,
+  reelLength,
+  startReel,
+  stopMoment,
+  stretchLength,
+} from "../broadcast/Moments";
 import { lossesBetween, readGame, replayIntro } from "../ui/highlights";
 import { battleOver } from "../ui/StatsScreen";
 import { voiceStreams } from "../voice/voice";
@@ -196,7 +205,7 @@ function playStretch(from: number, to: number, done: () => void) {
   playMoment(stretch, done);
 }
 
-type Stretch = "reel" | "here-round" | "here-game" | "whole" | "round";
+type Stretch = "reel" | "here-round" | "here-game" | "whole" | "full" | "round";
 
 /** "about 30 s": a length to say before recording (UX 338). */
 const about = (ms: number) => t("about {n} s", { n: Math.max(5, Math.round(ms / 5000) * 5) });
@@ -220,29 +229,52 @@ export function SharePanel() {
   const last = lastSeq(record);
   const pos = scrub ?? last;
   const start = replayIntro(record).startSeq || record.initial.seq;
-  // At the end (or live), "from here" means nothing: offer the whole battle or a round (UX 338).
-  const atEnd = pos >= last;
+  // At the end (or live), or at the very start of a replay, "from here" means nothing: offer the whole
+  // battle or a round (UX 338).
+  const atEnd = pos >= last || pos <= start;
   const roundEnd = rounds.find((r) => r.seq > pos)?.seq ?? last;
   const shownRound = round ?? rounds.at(-1)?.round ?? null;
   const roundSpan = (n: number): [number, number] => {
     const at = rounds.findIndex((r) => r.round === n);
     return [at > 0 ? rounds[at - 1]!.seq + 1 : start, rounds[at]?.seq ?? last];
   };
+  // The whole battle is a condensed cut of about a minute; the real-time one is Full length (PX dogfood 3).
   const spans: Partial<Record<Stretch, [number, number]>> = atEnd
-    ? { whole: [start, last], ...(shownRound !== null ? { round: roundSpan(shownRound) } : {}) }
+    ? {
+        whole: [start, last],
+        ...(shownRound !== null ? { round: roundSpan(shownRound) } : {}),
+        full: [start, last],
+      }
     : { "here-round": [pos, roundEnd], "here-game": [pos, last] };
+  // The highlights reel first whenever the game has one.
   const options: Stretch[] = [
-    ...(Object.keys(spans) as Stretch[]),
     ...(reel.length ? (["reel"] as const) : []),
+    ...(Object.keys(spans) as Stretch[]),
   ];
   const stretch = choice && options.includes(choice) ? choice : options[0]!;
+  // A round still being played has no summary yet: it runs to the last event.
+  const playing = final && !over && final.turn.round > (rounds.at(-1)?.round ?? 0);
+  const condensed = () =>
+    condensedBeats(
+      record,
+      start,
+      last,
+      playing ? [...rounds, { seq: last, round: final.turn.round }] : rounds,
+    );
   const length = (s: Stretch) =>
-    s === "reel" ? reelLength(record) : spans[s] ? stretchLength(record, ...spans[s]!) : 0;
+    s === "reel"
+      ? reelLength(record)
+      : s === "whole"
+        ? condensedLength(condensed())
+        : spans[s]
+          ? stretchLength(record, ...spans[s]!)
+          : 0;
   const labels: Record<Stretch, string> = {
     reel: t("The highlights reel"),
     "here-round": t("From here to the end of the round"),
     "here-game": t("From here to the end of the game"),
-    whole: t("The whole battle"),
+    whole: t("The whole battle, cut down"),
+    full: t("Full length"),
     round: t("A round"),
   };
   const talk = voiceStreams().length > 0;
@@ -255,7 +287,10 @@ export function SharePanel() {
   const clip = () => {
     const sound = { sounds, voice: voice && talk };
     if (stretch === "reel") recordClip(playReel, sound, shape);
-    else {
+    else if (stretch === "whole") {
+      const beats = condensed();
+      recordClip((done) => playCondensed(beats, done), sound, shape);
+    } else {
       const [from, to] = spans[stretch]!;
       recordClip((done) => playStretch(from, to, done), sound, shape);
     }

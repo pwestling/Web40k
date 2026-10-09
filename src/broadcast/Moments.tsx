@@ -86,14 +86,152 @@ function momentLength(record: GameRecord, m: Moment): number {
   return stretchLength(record, m.seq, Math.max(m.seq, m.end));
 }
 
+/** How long the dice tray holds a roll before play goes on, measured from recorded clips (PX dogfood 6). */
+const TRAY_MS = 3000;
+
+/** Whether an event puts dice in the tray: an attack's roll, a plain roll, or a procedure step that rolled. */
+function rolls(e: GameRecord["events"][number]): boolean {
+  const ev = e.event;
+  if (ev.type === "attack/roll" || ev.type === "dice/roll") return true;
+  return ev.type === "procedure/set" && !!ev.run.records.at(-1)?.dice?.length;
+}
+
 /** About how long playing from `from` to `to` takes (ms), as `playMoment` paces it. */
 export function stretchLength(record: GameRecord, from: number, to: number): number {
   let ms = LEAD_MS + HOLD_MS;
   for (const e of record.events)
     if (e.seq >= from && e.seq <= to)
-      // A roll also waits for the tray to settle.
-      ms += pace(record, e.seq) + (e.event.type === "attack/roll" || e.event.type === "dice/roll" ? 700 : 0);
+      // A roll also waits for the tray to settle (procedures' rolls too: TOW, Conquest, 40k's computer).
+      ms += pace(record, e.seq) + (rolls(e) ? TRAY_MS : 0);
   return ms;
+}
+
+/** A beat of the condensed cut: a round's title card, a jump to where some moves ended, an attack's last roll. */
+interface Beat {
+  seq: number;
+  kind: "round" | "move" | "roll";
+  round?: number;
+}
+
+const BEAT_MS: Record<Beat["kind"], number> = { round: 1600, move: 500, roll: TRAY_MS + 400 };
+/** The condensed whole battle runs at most about this long (PX dogfood 3: a clip is for a feed). */
+const CONDENSED_MS = 60000;
+
+/**
+ * The condensed cut of a stretch (PX dogfood 3): each round opens on a title
+ * card, a run of plain moves is one jump cut to where they ended, and each
+ * attack or action shows only its last roll. Past about a minute, the jump
+ * cuts go first, then rolls are thinned evenly, the last always kept.
+ */
+export function condensedBeats(
+  record: GameRecord,
+  from: number,
+  to: number,
+  rounds: { seq: number; round: number }[],
+): Beat[] {
+  const beats: Beat[] = [];
+  // Where each round starts: just after the one before it ends.
+  const starts = new Map<number, number>();
+  rounds.forEach((r, i) => {
+    const at = i > 0 ? rounds[i - 1]!.seq + 1 : from;
+    if (at >= from && at <= to) starts.set(at, r.round);
+  });
+  let moveEnd: number | null = null;
+  let lastRoll: number | null = null;
+  const flushMoves = () => {
+    if (moveEnd !== null) beats.push({ seq: moveEnd, kind: "move" });
+    moveEnd = null;
+  };
+  const flushRoll = () => {
+    if (lastRoll !== null) beats.push({ seq: lastRoll, kind: "roll" });
+    lastRoll = null;
+  };
+  const opening = [...starts.entries()].sort((a, b) => a[0] - b[0]);
+  let next = 0;
+  for (const e of record.events) {
+    if (e.seq < from || e.seq > to) continue;
+    for (; next < opening.length && opening[next]![0] <= e.seq; next++) {
+      flushMoves();
+      flushRoll();
+      beats.push({ seq: e.seq, kind: "round", round: opening[next]![1] });
+    }
+    const type = e.event.type;
+    if (type === "models/move" || type === "model/move" || type === "unit/move") {
+      flushRoll();
+      moveEnd = e.seq;
+    } else if (rolls(e)) {
+      flushMoves();
+      lastRoll = e.seq;
+    } else if (type === "attack/clear" || type === "procedure/clear" || type === "attack/declare") {
+      flushRoll();
+    }
+  }
+  flushMoves();
+  flushRoll();
+  const total = (bs: Beat[]) => bs.reduce((n, b) => n + BEAT_MS[b.kind], LEAD_MS + HOLD_MS);
+  let out = beats;
+  if (total(out) > CONDENSED_MS) out = out.filter((b) => b.kind !== "move");
+  const room = CONDENSED_MS - total(out.filter((b) => b.kind !== "roll"));
+  const rollsIn = out.filter((b) => b.kind === "roll");
+  const fits = Math.max(1, Math.floor(room / BEAT_MS.roll));
+  if (rollsIn.length > fits) {
+    // Evenly through the battle, the last roll always in.
+    const keep = new Set(
+      Array.from({ length: fits }, (_, i) => rollsIn[Math.round(((i + 1) * rollsIn.length) / fits) - 1]!.seq),
+    );
+    out = out.filter((b) => b.kind !== "roll" || keep.has(b.seq));
+  }
+  return out;
+}
+
+/** About how long the condensed cut runs (ms). */
+export function condensedLength(beats: Beat[]): number {
+  return beats.reduce((n, b) => n + BEAT_MS[b.kind], LEAD_MS + HOLD_MS);
+}
+
+/** Play the condensed cut on the table, then `done`. */
+export function playCondensed(beats: Beat[], done: () => void): void {
+  const token = ++playing;
+  const later = (ms: number, f: () => void) =>
+    setTimeout(() => {
+      if (token === playing) f();
+    }, ms);
+  const step = (i: number) => {
+    const b = beats[i];
+    if (!b) {
+      useReel.setState({ replay: null });
+      later(HOLD_MS, done);
+      return;
+    }
+    useStore.getState().setScrub(b.seq);
+    if (b.kind === "round") {
+      useReel.setState({
+        replay: {
+          kind: "swing",
+          seq: b.seq,
+          end: b.seq,
+          round: b.round ?? 0,
+          when: "",
+          title: t("Round {n}", { n: b.round ?? 0 }),
+          line: "",
+          units: [],
+          score: 0,
+        },
+      });
+      later(BEAT_MS.round, () => {
+        useReel.setState({ replay: null });
+        step(i + 1);
+      });
+      return;
+    }
+    // A roll waits for the tray to land it, then a beat.
+    const wait = (tries: number) => {
+      if (useHold.getState().busy && tries > 0) later(150, () => wait(tries - 1));
+      else later(b.kind === "roll" ? 400 : 0, () => step(i + 1));
+    };
+    later(b.kind === "roll" ? 600 : BEAT_MS.move, () => wait(40));
+  };
+  later(LEAD_MS, () => step(0));
 }
 
 /** About how long the highlights reel runs (ms). */

@@ -415,11 +415,11 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/bot/BestMoment.tsx:43
+#: src/broadcast/Moments.tsx:215
 #: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:320
-#: src/share/SharePanel.tsx:394
+#: src/share/SharePanel.tsx:354
+#: src/share/SharePanel.tsx:428
 #: src/share/cards.ts:310
-#: src/share/clip.ts:235
 msgid "Round {n}"
 msgstr ""
 
@@ -660,15 +660,15 @@ msgstr ""
 msgid "Delay"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:213
+#: src/broadcast/Moments.tsx:351
 msgid "{i} of {n}"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:217
+#: src/broadcast/Moments.tsx:355
 msgid "Next"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:219
+#: src/broadcast/Moments.tsx:357
 msgid "Skip to stats"
 msgstr ""
 
@@ -3430,152 +3430,156 @@ msgstr ""
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
 
-#: src/share/SharePanel.tsx:151
-#: src/share/SharePanel.tsx:376
+#: src/share/SharePanel.tsx:160
+#: src/share/SharePanel.tsx:410
 msgid "This browser can't record the table."
 msgstr ""
 
-#: src/share/SharePanel.tsx:157
+#: src/share/SharePanel.tsx:166
 msgid "Recording…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:164
+#: src/share/SharePanel.tsx:173
 msgid "Saving the clip…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:202
+#: src/share/SharePanel.tsx:211
 #: src/ui/RoundCard.tsx:140
 msgid "about {n} s"
 msgstr ""
 
-#: src/share/SharePanel.tsx:242
+#: src/share/SharePanel.tsx:272
 msgid "The highlights reel"
 msgstr ""
 
-#: src/share/SharePanel.tsx:243
+#: src/share/SharePanel.tsx:273
 msgid "From here to the end of the round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:244
+#: src/share/SharePanel.tsx:274
 msgid "From here to the end of the game"
 msgstr ""
 
-#: src/share/SharePanel.tsx:245
-msgid "The whole battle"
+#: src/share/SharePanel.tsx:275
+msgid "The whole battle, cut down"
 msgstr ""
 
-#: src/share/SharePanel.tsx:246
+#: src/share/SharePanel.tsx:276
+msgid "Full length"
+msgstr ""
+
+#: src/share/SharePanel.tsx:277
 msgid "A round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:264
-#: src/share/SharePanel.tsx:266
+#: src/share/SharePanel.tsx:298
+#: src/share/SharePanel.tsx:300
 #: src/ui/ReplayBar.tsx:277
 msgid "Share the battle"
 msgstr ""
 
-#: src/share/SharePanel.tsx:274
+#: src/share/SharePanel.tsx:308
 msgid "The replay"
 msgstr ""
 
-#: src/share/SharePanel.tsx:280
+#: src/share/SharePanel.tsx:314
 msgid "Making the page…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:286
+#: src/share/SharePanel.tsx:320
 msgid "Web page"
 msgstr ""
 
-#: src/share/SharePanel.tsx:288
+#: src/share/SharePanel.tsx:322
 msgid "Opens in any browser, even offline: send it to anyone."
 msgstr ""
 
-#: src/share/SharePanel.tsx:292
+#: src/share/SharePanel.tsx:326
 msgid "Replay file"
 msgstr ""
 
-#: src/share/SharePanel.tsx:294
+#: src/share/SharePanel.tsx:328
 msgid "Opens in Open Battle, with notes and What if…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:300
+#: src/share/SharePanel.tsx:334
 msgid "A clip"
 msgstr ""
 
-#: src/share/SharePanel.tsx:303
+#: src/share/SharePanel.tsx:337
 msgid "What to record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:311
+#: src/share/SharePanel.tsx:345
 msgid "Round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:330
+#: src/share/SharePanel.tsx:364
 msgid "No highlights reel: this game had no standout moments."
 msgstr ""
 
-#: src/share/SharePanel.tsx:336
+#: src/share/SharePanel.tsx:370
 msgid "Shape"
 msgstr ""
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:375
 msgid "Wide"
 msgstr ""
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:375
 msgid "16:9, for screens and video sites"
 msgstr ""
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:376
 msgid "Square"
 msgstr ""
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:376
 msgid "1:1, for feeds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:343
+#: src/share/SharePanel.tsx:377
 msgid "Tall"
 msgstr ""
 
-#: src/share/SharePanel.tsx:343
+#: src/share/SharePanel.tsx:377
 msgid "9:16, for stories"
 msgstr ""
 
-#: src/share/SharePanel.tsx:362
+#: src/share/SharePanel.tsx:396
 msgid "Dice and table sounds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:367
+#: src/share/SharePanel.tsx:401
 msgid "Table talk"
 msgstr ""
 
-#: src/share/SharePanel.tsx:372
+#: src/share/SharePanel.tsx:406
 msgid "Record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:381
+#: src/share/SharePanel.tsx:415
 msgid "Pictures"
 msgstr ""
 
-#: src/share/SharePanel.tsx:384
-#: src/share/SharePanel.tsx:392
+#: src/share/SharePanel.tsx:418
+#: src/share/SharePanel.tsx:426
 msgid "Drawing the card…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:385
+#: src/share/SharePanel.tsx:419
 msgid "End-of-game card"
 msgstr ""
 
-#: src/share/SharePanel.tsx:398
+#: src/share/SharePanel.tsx:432
 msgid "Cards come once a round has ended."
 msgstr ""
 
-#: src/share/SharePanel.tsx:416
+#: src/share/SharePanel.tsx:450
 msgid "Recording"
 msgstr ""
 
-#: src/share/SharePanel.tsx:417
+#: src/share/SharePanel.tsx:451
 msgid "Stop"
 msgstr ""
 

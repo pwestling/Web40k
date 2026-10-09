@@ -599,6 +599,22 @@ function focusFor(event: GameEvent | undefined, before: GameState, after: GameSt
       return event.roll.unitId
         ? ofModels(aliveModels(after, after.units[event.roll.unitId]).map((m) => m.id))
         : null;
+    // A system's attacks and actions run as procedures (40k's computer, TOW, Conquest, FSD): actor
+    // and target framed together, as an attack's are (PX dogfood 4).
+    case "procedure/set": {
+      const proc = after.procedure ?? before.procedure;
+      if (!proc) return null;
+      const standing = (st: GameState, id: string) => aliveModels(st, st.units[id]).length > 0;
+      if (proc.targetId && standing(before, proc.targetId) && standing(before, proc.unitId))
+        // The target as it stood, so a unit wiped out by the roll stays in the frame.
+        return pair(proc.unitId, proc.targetId, standing(after, proc.targetId) ? after : before);
+      return ofModels(aliveModels(after, after.units[proc.unitId]).map((m) => m.id));
+    }
+    // Each round opens on the whole table, an establishing shot.
+    case "turn/next":
+      return after.turn.round !== before.turn.round && after.turn.round > 0
+        ? { x: 0, y: 0, z: 0, span: null }
+        : null;
     default:
       return null;
   }

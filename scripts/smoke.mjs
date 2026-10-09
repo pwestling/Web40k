@@ -213,6 +213,38 @@ const checks = {
   },
 
   /**
+   * Clips (#56, PX dogfood 3): the whole battle is a cut of about a minute, with Full length
+   * beside it, for a replay opened from its file.
+   */
+  async "clip-options"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    for (let i = 0; i < 12; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(150);
+    }
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download replay" }).click();
+    const path = join(files, "clip.json");
+    await (await download).saveAs(path);
+    await lobby(page);
+    await page.locator("label.file", { hasText: "Open a replay file" }).locator("input").setInputFiles(path);
+    await page.getByRole("button", { name: "Share…" }).click();
+    const cut = page.locator(".share-options label", { hasText: "The whole battle, cut down" });
+    const about = Number((await cut.innerText()).match(/about (\d+) s/)?.[1]);
+    if (!(about > 0 && about <= 60)) throw new Error(`the cut-down battle is about ${about} s`);
+    await page.locator(".share-options label", { hasText: "Full length" }).waitFor();
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
+  /**
    * The 40k unit card (#56): in Shooting, "Shoot everything at…" lists each weapon against the
    * target (UX 398); in Charge, "Charge (2D6)" asks which unit first, with the rules' reasons (UX 396).
    */

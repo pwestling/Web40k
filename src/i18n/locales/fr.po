@@ -498,11 +498,11 @@ msgstr[0] "{unit} a abattu {n} de tes {victim}"
 msgstr[1] "{unit} a abattu {n} de tes {victim}"
 
 #: src/bot/BestMoment.tsx:43
+#: src/broadcast/Moments.tsx:215
 #: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:320
-#: src/share/SharePanel.tsx:394
+#: src/share/SharePanel.tsx:354
+#: src/share/SharePanel.tsx:428
 #: src/share/cards.ts:310
-#: src/share/clip.ts:235
 #, fuzzy
 msgid "Round {n}"
 msgstr "Round {n}"
@@ -798,17 +798,17 @@ msgstr "Regarde la partie avec ce retard, pour qu’un stream ne dévoile rien"
 msgid "Delay"
 msgstr "Délai"
 
-#: src/broadcast/Moments.tsx:213
+#: src/broadcast/Moments.tsx:351
 #, fuzzy
 msgid "{i} of {n}"
 msgstr "{i} sur {n}"
 
-#: src/broadcast/Moments.tsx:217
+#: src/broadcast/Moments.tsx:355
 #, fuzzy
 msgid "Next"
 msgstr "Suivant"
 
-#: src/broadcast/Moments.tsx:219
+#: src/broadcast/Moments.tsx:357
 #, fuzzy
 msgid "Skip to stats"
 msgstr "Passer aux stats"
@@ -4186,187 +4186,192 @@ msgstr "Après la bataille"
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Revoir la partie quitte son salon. La partie reste enregistrée et peut être reprise depuis la page d'accueil."
 
-#: src/share/SharePanel.tsx:151
-#: src/share/SharePanel.tsx:376
+#: src/share/SharePanel.tsx:160
+#: src/share/SharePanel.tsx:410
 #, fuzzy
 msgid "This browser can't record the table."
 msgstr "Ce navigateur ne peut pas enregistrer la table."
 
-#: src/share/SharePanel.tsx:157
+#: src/share/SharePanel.tsx:166
 #, fuzzy
 msgid "Recording…"
 msgstr "Enregistrement…"
 
-#: src/share/SharePanel.tsx:164
+#: src/share/SharePanel.tsx:173
 #, fuzzy
 msgid "Saving the clip…"
 msgstr "Enregistrement du clip…"
 
-#: src/share/SharePanel.tsx:202
+#: src/share/SharePanel.tsx:211
 #: src/ui/RoundCard.tsx:140
 #, fuzzy
 msgid "about {n} s"
 msgstr "environ {n} s"
 
-#: src/share/SharePanel.tsx:242
+#: src/share/SharePanel.tsx:272
 #, fuzzy
 msgid "The highlights reel"
 msgstr "Le résumé des temps forts"
 
-#: src/share/SharePanel.tsx:243
+#: src/share/SharePanel.tsx:273
 #, fuzzy
 msgid "From here to the end of the round"
 msgstr "D'ici à la fin du round"
 
-#: src/share/SharePanel.tsx:244
+#: src/share/SharePanel.tsx:274
 #, fuzzy
 msgid "From here to the end of the game"
 msgstr "D'ici à la fin de la partie"
 
-#: src/share/SharePanel.tsx:245
+#: src/share/SharePanel.tsx:275
 #, fuzzy
-msgid "The whole battle"
-msgstr "Toute la bataille"
+msgid "The whole battle, cut down"
+msgstr "Toute la bataille, en version courte"
 
-#: src/share/SharePanel.tsx:246
+#: src/share/SharePanel.tsx:276
+#, fuzzy
+msgid "Full length"
+msgstr "En entier"
+
+#: src/share/SharePanel.tsx:277
 #, fuzzy
 msgid "A round"
 msgstr "Un round"
 
-#: src/share/SharePanel.tsx:264
-#: src/share/SharePanel.tsx:266
+#: src/share/SharePanel.tsx:298
+#: src/share/SharePanel.tsx:300
 #: src/ui/ReplayBar.tsx:277
 #, fuzzy
 msgid "Share the battle"
 msgstr "Partager la bataille"
 
-#: src/share/SharePanel.tsx:274
+#: src/share/SharePanel.tsx:308
 #, fuzzy
 msgid "The replay"
 msgstr "La rediffusion"
 
-#: src/share/SharePanel.tsx:280
+#: src/share/SharePanel.tsx:314
 #, fuzzy
 msgid "Making the page…"
 msgstr "Création de la page…"
 
-#: src/share/SharePanel.tsx:286
+#: src/share/SharePanel.tsx:320
 #, fuzzy
 msgid "Web page"
 msgstr "Page web"
 
-#: src/share/SharePanel.tsx:288
+#: src/share/SharePanel.tsx:322
 #, fuzzy
 msgid "Opens in any browser, even offline: send it to anyone."
 msgstr "S'ouvre dans n'importe quel navigateur, même hors ligne : envoyez-la à qui vous voulez."
 
-#: src/share/SharePanel.tsx:292
+#: src/share/SharePanel.tsx:326
 #, fuzzy
 msgid "Replay file"
 msgstr "Fichier de rediffusion"
 
-#: src/share/SharePanel.tsx:294
+#: src/share/SharePanel.tsx:328
 #, fuzzy
 msgid "Opens in Open Battle, with notes and What if…"
 msgstr "S'ouvre dans Open Battle, avec les notes et Et si…"
 
-#: src/share/SharePanel.tsx:300
+#: src/share/SharePanel.tsx:334
 #, fuzzy
 msgid "A clip"
 msgstr "Un clip"
 
-#: src/share/SharePanel.tsx:303
+#: src/share/SharePanel.tsx:337
 #, fuzzy
 msgid "What to record"
 msgstr "Quoi enregistrer"
 
-#: src/share/SharePanel.tsx:311
+#: src/share/SharePanel.tsx:345
 #, fuzzy
 msgid "Round"
 msgstr "Round"
 
-#: src/share/SharePanel.tsx:330
+#: src/share/SharePanel.tsx:364
 #, fuzzy
 msgid "No highlights reel: this game had no standout moments."
 msgstr "Pas de temps forts : cette partie n'a pas eu de moment marquant."
 
-#: src/share/SharePanel.tsx:336
+#: src/share/SharePanel.tsx:370
 #, fuzzy
 msgid "Shape"
 msgstr "Format"
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:375
 #, fuzzy
 msgid "Wide"
 msgstr "Large"
 
-#: src/share/SharePanel.tsx:341
+#: src/share/SharePanel.tsx:375
 #, fuzzy
 msgid "16:9, for screens and video sites"
 msgstr "16:9, pour les écrans et les sites vidéo"
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:376
 #, fuzzy
 msgid "Square"
 msgstr "Carré"
 
-#: src/share/SharePanel.tsx:342
+#: src/share/SharePanel.tsx:376
 #, fuzzy
 msgid "1:1, for feeds"
 msgstr "1:1, pour les fils"
 
-#: src/share/SharePanel.tsx:343
+#: src/share/SharePanel.tsx:377
 #, fuzzy
 msgid "Tall"
 msgstr "Vertical"
 
-#: src/share/SharePanel.tsx:343
+#: src/share/SharePanel.tsx:377
 #, fuzzy
 msgid "9:16, for stories"
 msgstr "9:16, pour les stories"
 
-#: src/share/SharePanel.tsx:362
+#: src/share/SharePanel.tsx:396
 #, fuzzy
 msgid "Dice and table sounds"
 msgstr "Sons des dés et de la table"
 
-#: src/share/SharePanel.tsx:367
+#: src/share/SharePanel.tsx:401
 #, fuzzy
 msgid "Table talk"
 msgstr "Discussions à table"
 
-#: src/share/SharePanel.tsx:372
+#: src/share/SharePanel.tsx:406
 #, fuzzy
 msgid "Record"
 msgstr "Enregistrer"
 
-#: src/share/SharePanel.tsx:381
+#: src/share/SharePanel.tsx:415
 #, fuzzy
 msgid "Pictures"
 msgstr "Images"
 
-#: src/share/SharePanel.tsx:384
-#: src/share/SharePanel.tsx:392
+#: src/share/SharePanel.tsx:418
+#: src/share/SharePanel.tsx:426
 #, fuzzy
 msgid "Drawing the card…"
 msgstr "Dessin de la carte…"
 
-#: src/share/SharePanel.tsx:385
+#: src/share/SharePanel.tsx:419
 #, fuzzy
 msgid "End-of-game card"
 msgstr "Carte de fin de partie"
 
-#: src/share/SharePanel.tsx:398
+#: src/share/SharePanel.tsx:432
 #, fuzzy
 msgid "Cards come once a round has ended."
 msgstr "Les cartes arrivent une fois un round terminé."
 
-#: src/share/SharePanel.tsx:416
+#: src/share/SharePanel.tsx:450
 #, fuzzy
 msgid "Recording"
 msgstr "Enregistrement"
 
-#: src/share/SharePanel.tsx:417
+#: src/share/SharePanel.tsx:451
 #, fuzzy
 msgid "Stop"
 msgstr "Arrêter"
