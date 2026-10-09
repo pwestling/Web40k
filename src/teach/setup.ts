@@ -12,6 +12,9 @@ import { currentSlot } from "../core/content/turn";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import type { Lesson } from "./lesson";
 import type { ImportedRoster } from "../systems/wh40k/roster";
+import { automateArmy } from "../systems/wh40k/recognize";
+import type { OwnArmy } from "../bot/startSolo";
+import { dressFromShelf, useDeployed } from "../ui/shelfActions";
 
 type Send = (intent: Intent, as: PlayerId) => void;
 
@@ -45,6 +48,27 @@ export function deploySamples(
     if (color) send(color, owner);
     if (roster.army) send({ type: "player/army", army: roster.army }, owner);
   }
+}
+
+/**
+ * The player's own army on the near side and the computer's on the far side
+ * (#56): its sample army unless one is given. A shelf army comes with its
+ * figures and dice; either can be saved back to the shelf from the side panel.
+ */
+export function deployOwn(mine: OwnArmy, get: () => GameState, send: Send, theirs?: ImportedRoster): void {
+  const game = get();
+  const tag = crypto.randomUUID().slice(0, 6);
+  // A roster just read gets the rules the app can play ticked, as the import panel does (UX 370).
+  const roster =
+    mine.shelf || !mine.roster.army
+      ? mine.roster
+      : { ...mine.roster, army: automateArmy(mine.roster.army, systemOf(game)) };
+  deploySamples(get, send, tag, [roster, theirs ?? systemModule(game.system ?? DEFAULT_SYSTEM).sample(1)]);
+  const owner = sidePlayers(get(), 0)[0]?.id;
+  if (!owner) return;
+  const prefix = `${owner}-${tag}`;
+  useDeployed.setState({ [owner]: { roster, prefix, shelfId: mine.shelf?.id } });
+  if (mine.shelf) void dressFromShelf(mine.shelf, owner, prefix);
 }
 
 /** A seat's units in the order its sample list gave them. */

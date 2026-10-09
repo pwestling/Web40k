@@ -12,7 +12,7 @@ import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { startDemo } from "./demo";
 import { installRiftLanterns, playRiftAtTable, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
-import { startSolo } from "../bot/startSolo";
+import { YourArmy } from "../bot/YourArmy";
 import { characterName, levelName, savedLevel } from "../bot/solo";
 import type { Level } from "../bot/player";
 import { TextSizePicker } from "./TextSizePicker";
@@ -535,6 +535,8 @@ function roomFrom(text: string): string {
  */
 function HowHard({ system, onCancel }: { system: string; onCancel: () => void }) {
   const last = savedLevel();
+  const [level, setLevel] = useState<Level | null>(null);
+  if (level) return <YourArmy system={system} level={level} onBack={() => setLevel(null)} />;
   const levels: { level: Level; line: string }[] = [
     { level: "random", line: t("plays loosely; good for a first game") },
     { level: "steady", line: t("plays to win") },
@@ -548,7 +550,7 @@ function HowHard({ system, onCancel }: { system: string; onCancel: () => void })
           key={l.level}
           className={l.level === last ? "primary small" : "small"}
           autoFocus={l.level === last}
-          onClick={() => startSolo(system, l.level)}
+          onClick={() => setLevel(l.level)}
         >
           {levelName(l.level)} <span className="muted small">{characterName(l.level)}</span>{" "}
           <span className="muted small">{l.line}</span>

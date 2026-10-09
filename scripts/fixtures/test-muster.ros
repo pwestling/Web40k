@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Invented test data (as in src/systems/wh40k/roster.test.ts), for pnpm smoke. -->
+<roster id="r1" name="Test Muster" battleScribeVersion="2.03" gameSystemName="Test" xmlns="http://www.battlescribe.net/schema/rosterSchema">
+  <costs><cost name="pts" typeId="p" value="335.0"/></costs>
+  <forces>
+    <force id="f1" name="Main Force" catalogueName="Test">
+      <selections>
+        <selection id="s0" name="Detachment" type="upgrade" number="1">
+          <rules><rule name="Detachment Rule"><description>Should not become a unit.</description></rule></rules>
+        </selection>
+        <selection id="s1" name="Line Troopers" type="unit" number="1">
+          <costs><cost name="pts" typeId="p" value="90.0"/></costs>
+          <rules><rule name="Steadfast"><description>Invented rule text.</description></rule></rules>
+          <profiles>
+            <profile name="Hold Fast" typeName="Abilities">
+              <characteristics><characteristic name="Description">Add 1 to Leadership.</characteristic></characteristics>
+            </profile>
+          </profiles>
+          <categories>
+            <category name="Faction: Test Legion" primary="false"/>
+            <category name="Infantry" primary="false"/>
+            <category name="Battleline" primary="true"/>
+          </categories>
+          <selections>
+            <selection id="s2" name="Line Sergeant" type="model" number="1">
+              <profiles>
+                <profile name="Line Sergeant" typeName="Unit">
+                  <characteristics>
+                    <characteristic name="M">6&quot;</characteristic>
+                    <characteristic name="T">4</characteristic>
+                    <characteristic name="SV">3+</characteristic>
+                    <characteristic name="W">2</characteristic>
+                    <characteristic name="LD">6+</characteristic>
+                    <characteristic name="OC">2</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+              <selections>
+                <selection id="s3" name="Plasma Caster" type="upgrade" number="1">
+                  <profiles>
+                    <profile name="➤ Plasma Caster - standard" typeName="Ranged Weapons">
+                      <characteristics>
+                        <characteristic name="Range">12"</characteristic>
+                        <characteristic name="A">1</characteristic>
+                        <characteristic name="BS">3+</characteristic>
+                        <characteristic name="S">7</characteristic>
+                        <characteristic name="AP">-2</characteristic>
+                        <characteristic name="D">1</characteristic>
+                        <characteristic name="Keywords">Pistol</characteristic>
+                      </characteristics>
+                    </profile>
+                    <profile name="➤ Plasma Caster - overcharge" typeName="Ranged Weapons">
+                      <characteristics>
+                        <characteristic name="Range">12"</characteristic>
+                        <characteristic name="A">1</characteristic>
+                        <characteristic name="BS">3+</characteristic>
+                        <characteristic name="S">8</characteristic>
+                        <characteristic name="AP">-3</characteristic>
+                        <characteristic name="D">2</characteristic>
+                        <characteristic name="Keywords">Hazardous, Pistol</characteristic>
+                      </characteristics>
+                    </profile>
+                  </profiles>
+                </selection>
+              </selections>
+            </selection>
+            <selection id="s4" name="Line Trooper" type="model" number="4">
+              <costs><cost name="pts" typeId="p" value="0.0"/></costs>
+              <profiles>
+                <profile name="Line Trooper" typeName="Unit">
+                  <characteristics>
+                    <characteristic name="M">6"</characteristic>
+                    <characteristic name="T">4</characteristic>
+                    <characteristic name="SV">3+</characteristic>
+                    <characteristic name="W">1</characteristic>
+                    <characteristic name="LD">6+</characteristic>
+                    <characteristic name="OC">2</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+              <selections>
+                <selection id="s5" name="Pattern Rifle" type="upgrade" number="3">
+                  <profiles>
+                    <profile name="Pattern Rifle" typeName="Ranged Weapons">
+                      <characteristics>
+                        <characteristic name="Range">24"</characteristic>
+                        <characteristic name="A">2</characteristic>
+                        <characteristic name="BS">3+</characteristic>
+                        <characteristic name="S">4</characteristic>
+                        <characteristic name="AP">0</characteristic>
+                        <characteristic name="D">1</characteristic>
+                        <characteristic name="Keywords">Rapid Fire 1</characteristic>
+                      </characteristics>
+                    </profile>
+                  </profiles>
+                </selection>
+                <selection id="s6" name="Heavy Lance" type="upgrade" number="1">
+                  <profiles>
+                    <profile name="Heavy Lance" typeName="Ranged Weapons">
+                      <characteristics>
+                        <characteristic name="Range">36"</characteristic>
+                        <characteristic name="A">D6</characteristic>
+                        <characteristic name="BS">4+</characteristic>
+                        <characteristic name="S">9</characteristic>
+                        <characteristic name="AP">-3</characteristic>
+                        <characteristic name="D">D6+1</characteristic>
+                        <characteristic name="Keywords">Heavy, Blast</characteristic>
+                      </characteristics>
+                    </profile>
+                  </profiles>
+                </selection>
+              </selections>
+            </selection>
+            <selection id="s7" name="Combat Knife" type="upgrade" number="1">
+              <profiles>
+                <profile name="Combat Knife" typeName="Melee Weapons">
+                  <characteristics>
+                    <characteristic name="Range">Melee</characteristic>
+                    <characteristic name="A">3</characteristic>
+                    <characteristic name="WS">3+</characteristic>
+                    <characteristic name="S">4</characteristic>
+                    <characteristic name="AP">0</characteristic>
+                    <characteristic name="D">1</characteristic>
+                    <characteristic name="Keywords">-</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+            </selection>
+          </selections>
+        </selection>
+      </selections>
+      <forces>
+        <force id="f2" name="Allied Force">
+          <selections>
+            <selection id="s8" name="Field Marshal" type="model" number="1">
+              <costs><cost name="pts" typeId="p" value="75.0"/></costs>
+              <profiles>
+                <profile name="Field Marshal" typeName="Unit">
+                  <characteristics>
+                    <characteristic name="M">6"</characteristic>
+                    <characteristic name="T">4</characteristic>
+                    <characteristic name="SV">3+</characteristic>
+                    <characteristic name="W">5</characteristic>
+                    <characteristic name="LD">5+</characteristic>
+                    <characteristic name="OC">1</characteristic>
+                  </characteristics>
+                </profile>
+                <profile name="Invulnerable Save" typeName="Abilities">
+                  <characteristics><characteristic name="Description">4+</characteristic></characteristics>
+                </profile>
+                <profile name="Duty Blade" typeName="Melee Weapons">
+                  <characteristics>
+                    <characteristic name="Range">Melee</characteristic>
+                    <characteristic name="A">5</characteristic>
+                    <characteristic name="WS">2+</characteristic>
+                    <characteristic name="S">5</characteristic>
+                    <characteristic name="AP">-2</characteristic>
+                    <characteristic name="D">2</characteristic>
+                    <characteristic name="Keywords">Lethal Hits</characteristic>
+                  </characteristics>
+                </profile>
+              </profiles>
+              <categories>
+                <category name="Character" primary="true"/>
+                <category name="Infantry" primary="false"/>
+              </categories>
+            </selection>
+          </selections>
+        </force>
+      </forces>
+    </force>
+  </forces>
+</roster>

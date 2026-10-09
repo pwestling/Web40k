@@ -179,6 +179,9 @@ function blockIntent(
  * inside the deployment zone when there is one and the unit fits in it,
  * else anywhere on the owner's half.
  */
+/** How deep a side's setup strip is when the game has no deployment zones. */
+const NO_ZONE_DEPTH = 12;
+
 function findSpot(
   taken: { x: number; y: number; r: number }[],
   w: number,
@@ -208,12 +211,19 @@ function findSpot(
         [-1, 0, 1].every((j) => insidePolygon({ x: x + i * a, y: y + j * b }, zone)),
       );
     };
-    // From the zone's edge-most row inwards.
+    // From the zone's front row back towards the table edge, so the armies start within reach of
+    // each other, as players set up (#56: the back rows left them 35" apart).
     for (let k = d / 2 + inset; k <= y1 - y0 - d / 2; k += 0.5) {
-      const y = sign > 0 ? y1 - k : y0 + k;
+      const y = sign > 0 ? y0 + k : y1 - k;
       for (const x of across(x0 + w / 2 + inset, x1 - w / 2 - inset, 0.5))
         if (fits(x, y) && clear(x, y)) return { x, y };
     }
+  }
+  // No zone (no mission): a 12" strip along the player's edge, filled from its front row back.
+  const front = Math.max(d / 2 + inset, hy - NO_ZONE_DEPTH);
+  for (let y0 = front; y0 < hy; y0 += 1) {
+    const y = sign * Math.min(y0 + d / 2, hy - d / 2 - inset);
+    for (const x of across(-hx + w / 2 + inset, hx - w / 2 - inset, 1)) if (clear(x, y)) return { x, y };
   }
   for (let depth = d / 2 + inset; depth < hy; depth += 1) {
     for (const x of across(-hx + w / 2 + inset, hx - w / 2 - inset, 1)) {

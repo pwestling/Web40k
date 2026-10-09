@@ -3,7 +3,8 @@ import { useLibrary, type StoredPackage } from "../packages/library";
 import { owed } from "../render/showcase";
 import { useStore } from "../store";
 import { gameModule } from "../systems";
-import { deploySamples } from "../teach/setup";
+import { deployOwn, deploySamples } from "../teach/setup";
+import type { OwnArmy } from "../bot/startSolo";
 import { useHelp } from "../ui/help";
 import { refOf } from "../ui/Packages";
 import { APP_BUILD } from "../version";
@@ -38,7 +39,7 @@ export function installRiftLanterns(): Promise<StoredPackage | null> {
  * "Play now, nothing to import": a hotseat game of Rift Lanterns, two
  * warbands picked at random, the first mission set and the battle started.
  */
-export async function playRiftLanterns(): Promise<void> {
+export async function playRiftLanterns(mine?: OwnArmy): Promise<void> {
   const pkg = await installRiftLanterns();
   if (!pkg) return;
   const s = useStore.getState();
@@ -74,10 +75,12 @@ export async function playRiftLanterns(): Promise<void> {
       const { zones, objectives } = mission.setup(game.table);
       dispatch({ type: "mission/set", mission: { id: mission.id, name: mission.name }, zones, objectives });
     }
-    deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6), [
-      armies[a]!,
-      armies[b]!,
-    ]);
+    if (mine) deployOwn(mine, () => useStore.getState().game, dispatch, armies[b]!);
+    else
+      deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6), [
+        armies[a]!,
+        armies[b]!,
+      ]);
     owed.initial = useStore.getState().record.initial;
     useStore.getState().dispatch({ type: "turn/next" });
     useHelp.setState({ hint: true });

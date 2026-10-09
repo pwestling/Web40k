@@ -9,7 +9,7 @@
 // CHROMIUM=/path/to/chrome picks the browser; otherwise playwright-core's own
 // (CI runs `npx playwright-core install --with-deps chromium` first).
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
@@ -76,6 +76,16 @@ async function sampleArmies(page) {
     await deploy.click();
     await deploy.waitFor({ state: "detached" });
   }
+}
+
+/** A replay file's events, wherever the bundle keeps them. */
+function eventsIn(json) {
+  if (Array.isArray(json) && json.every((e) => e && typeof e === "object" && "event" in e)) return json;
+  for (const v of Object.values(json && typeof json === "object" ? json : {})) {
+    const found = v && typeof v === "object" ? eventsIn(v) : null;
+    if (found?.length) return found;
+  }
+  return null;
 }
 
 const checks = {
@@ -198,6 +208,46 @@ const checks = {
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download replay" }).click();
     await (await download).saveAs(join(files, "replay.json"));
+    await context.close();
+    return page.errors;
+  },
+
+  /**
+   * Play the computer with your own army (#56): How hard?, then Your army with a roster file. Your
+   * roster faces the computer's sample army, both at the front of their zones (#56: not 35" apart).
+   */
+  async "solo-own-army"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page
+      .locator(".demos .demo", { hasText: "Sci-fi battle" })
+      .getByRole("button", { name: "Play the computer" })
+      .click();
+    await page.locator(".how-hard button", { hasText: /^Easy/ }).click();
+    await page
+      .locator(".your-army input[type=file]")
+      .setInputFiles(new URL("./fixtures/test-muster.ros", import.meta.url).pathname);
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download replay" }).click();
+    const path = join(files, "solo.json");
+    await (await download).saveAs(path);
+    const events = eventsIn(JSON.parse(readFileSync(path, "utf8")));
+    const seats = {};
+    for (const e of events)
+      if (e.event.type === "player/join") seats[e.event.player.id] = e.event.player.seat;
+    const fronts = [Infinity, Infinity];
+    const armies = new Set();
+    for (const e of events.filter((e) => e.event.type === "unit/add")) {
+      const seat = seats[e.event.unit.owner];
+      if (seat === 0) armies.add(e.event.unit.army);
+      for (const m of e.event.models) fronts[seat] = Math.min(fronts[seat], Math.abs(m.position.y));
+    }
+    if (!armies.has("Test Muster")) throw new Error(`your side is ${[...armies].join(", ")}, not the roster`);
+    const gap = fronts[0] + fronts[1];
+    if (!(gap > 14 && gap < 28)) throw new Error(`the armies' front lines are ${gap.toFixed(1)}" apart`);
     await context.close();
     return page.errors;
   },
