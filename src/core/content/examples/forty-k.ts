@@ -943,6 +943,16 @@ export const fortyK: GameSystem = {
           why: 'No enemy within 12"',
         },
       ],
+      // Targets: enemy units within 12" (the 40k module's base-to-base gap).
+      target: {
+        filter: true,
+        notWhen: [
+          {
+            if: { cmp: ">", a: { call: "unitGap", args: [ref("self.id"), ref("it.id")] }, b: 12 },
+            why: 'Further than 12"',
+          },
+        ],
+      },
       move: { kind: "charge", distance: { dice: "2D6" } },
       sets: ["charged"],
     },

@@ -58,6 +58,11 @@ export const wh40kModule: GameModule<SystemModule> = {
   functions: {
     enemyGap: (view, unitId) => enemyGap(view, unitId),
     belowHalf: (view, unitId) => belowHalf(view, unitId),
+    // Inches, base to base, between two units (a charge target within 12").
+    unitGap: (view, a, b) => {
+      const [x, y] = [view.state.units[String(a)], view.state.units[String(b)]];
+      return x && y ? unitGap(view.state, x, y) : Infinity;
+    },
     // Within engagement range of an enemy unit, read from the table (the data's "engaged" status isn't derived).
     engaged: (view, unitId) => {
       const unit = view.state.units[String(unitId)];

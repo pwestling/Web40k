@@ -528,8 +528,12 @@ export interface ActionDef {
   custom?: boolean;
   /** A player action taken instead of an activation: only between activations, and the turn passes (FSD support cards). */
   endsTurn?: boolean;
-  /** Who or what the action targets, chosen by the player. */
-  target?: { filter: Expr; count?: number };
+  /**
+   * Who or what the action targets, chosen by the player. The filter sees
+   * "self", "it" (the candidate) and, once picked, "weapon". `notWhen` gives a
+   * candidate the filter allows a reason it shouldn't be picked (advisory).
+   */
+  target?: { filter: Expr; count?: number; notWhen?: { if: Expr; why: string }[] };
   /** A movement, measured by the engine and checked against `distance`. */
   move?: { kind: Id; distance: Expr };
   /** A dice procedure to run, e.g. the attack sequence per weapon. */

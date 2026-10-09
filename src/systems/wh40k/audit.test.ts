@@ -192,6 +192,16 @@ describe("40k audit: Movement phase", () => {
     expect(action(s, "mine", "charge")?.ok).toBe(false);
   });
 
+  it('lists charge targets within 12" as ok, and those further away with a reason', () => {
+    const s = goTo(setup(), "charge", 0);
+    // 10" apart, centre to centre: in reach.
+    expect(actionTargets(s, "mine", "charge")).toMatchObject([{ unitId: "theirs", ok: true }]);
+    const far = goTo(moveTo(moveTo(s, "t1", 0, 20), "t2", 1.5, 20), "charge", 0);
+    expect(actionTargets(far, "mine", "charge")).toMatchObject([
+      { unitId: "theirs", ok: false, why: 'Further than 12"' },
+    ]);
+  });
+
   it("a unit that Advanced can't charge", () => {
     const s = goTo(setup(), "movement", 0);
     expect(action(goTo(s, "charge", 0), "mine", "charge")?.ok).toBe(true);

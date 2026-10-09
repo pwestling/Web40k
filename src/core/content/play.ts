@@ -498,18 +498,25 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
   return out;
 }
 
-/** Enemy units a procedure action can target, with whether its `target.filter` allows them. */
+/**
+ * Enemy units an action can target, with whether its `target` allows them
+ * and, when it doesn't, why (the first `notWhen` that holds). `weaponId`
+ * puts the chosen weapon in scope as "weapon", so a filter can read its
+ * rules (40k Indirect Fire targets units out of sight).
+ */
 export function actionTargets(
   state: GameState,
   unitId: UnitId,
   actionId: Id,
-): { unitId: UnitId; ok: boolean; distance: number }[] {
+  weaponId?: string,
+): { unitId: UnitId; ok: boolean; distance: number; why?: string }[] {
   const unit = state.units[unitId];
   if (!unit) return [];
   const system = systemOf(state);
   const def = system.actions.find((a) => a.id === actionId);
   const self = unitView(state, system, unit);
-  const ctx = evalCtx(state, system, { self });
+  const w = weaponId ? unit.sheet?.weapons[weaponId] : undefined;
+  const ctx = evalCtx(state, system, { self, ...(w ? { weapon: weaponView(state, system, unit, w) } : {}) });
   const geometry = tableGeometry(state, system);
   return Object.values(state.units)
     .filter((u) => opposed(state, u.owner, unit.owner))
@@ -519,8 +526,9 @@ export function actionTargets(
       const distance = it.models.length
         ? Number(geometry({ kind: "distance", from: "self", to: "it", measure: "centre" }, c))
         : Infinity;
-      const ok = it.models.length > 0 && (!def?.target || safeBool(def.target.filter, c));
-      return { unitId: u.id, ok, distance };
+      const why = def?.target?.notWhen?.find((n) => safeBool(n.if, c))?.why;
+      const ok = it.models.length > 0 && (!def?.target || safeBool(def.target.filter, c)) && !why;
+      return { unitId: u.id, ok, distance, ...(why ? { why } : {}) };
     })
     .filter((t) => t.distance < Infinity)
     .sort((a, b) => Number(b.ok) - Number(a.ok) || a.distance - b.distance);
