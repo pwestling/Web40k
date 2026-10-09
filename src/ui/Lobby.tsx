@@ -1,6 +1,6 @@
 import type { ReplayFile } from "./replayFile";
 import { useOpenReport, type ReportFile } from "./report";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
@@ -10,10 +10,11 @@ import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
-import { startDemo } from "./demo";
+import { presetMission, startDemo } from "./demo";
+import { reloadedInto } from "./resumeHotseat";
 import { installRiftLanterns, playRiftAtTable, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
 import { YourArmy } from "../bot/YourArmy";
-import { characterName, levelName, savedLevel } from "../bot/solo";
+import { armSolo, characterName, levelName, savedLevel } from "../bot/solo";
 import type { Level } from "../bot/player";
 import { TextSizePicker } from "./TextSizePicker";
 import { LanguagePicker } from "../i18n/LanguagePicker";
@@ -24,7 +25,9 @@ import { openLibrary } from "../figures/open";
 import { openWorkshop } from "../workshop/open";
 import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/UpdateToast";
 import { PackageLibrary, refOf } from "./Packages";
-import { FRONT, systemLabel } from "./systemLabels";
+import { FRONT, plainSystemName, systemLabel } from "./systemLabels";
+import { stateAt } from "../core/log";
+import { getSystem } from "../core/content/systems";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Play by mail loads after the front door; it sits below the fold. */
@@ -90,7 +93,24 @@ export function Lobby() {
     const last = localStorage.getItem("open-battle:system");
     return systems.some((s) => s.id === last) ? last! : DEFAULT_SYSTEM;
   });
-  const saved = loadSavedGame();
+  const [saved] = useState(loadSavedGame);
+  // "Resume: Sci-fi battle, round 2" first in the lobby, not under everything else (UX 395).
+  const savedAt = useMemo(() => {
+    if (!saved) return null;
+    try {
+      const s = stateAt(saved.record);
+      const id = s.system ?? DEFAULT_SYSTEM;
+      let name = id;
+      try {
+        name = plainSystemName(getSystem(id).name);
+      } catch {
+        // A package game that isn't loaded yet: its id will do.
+      }
+      return { game: systemLabel(id, name), round: s.turn.round };
+    } catch {
+      return null;
+    }
+  }, [saved]);
   const mode: Mode = sameBrowser ? "local" : "online";
 
   const remember = (as = name) => {
@@ -125,6 +145,7 @@ export function Lobby() {
     // 2 vs 2 room opened as 1 vs 1 (dogfood).
     whenStarted(() => {
       namePackage();
+      presetMission();
       if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
       if (companion) useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
     });
@@ -134,6 +155,7 @@ export function Lobby() {
     remember();
     start({ role: "host", mode: "hotseat", name, system });
     namePackage();
+    presetMission();
     useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
   };
   const join = (role: "client" | "spectator", roomId = room, as = name) => {
@@ -152,6 +174,13 @@ export function Lobby() {
     autoJoined = true;
     const roomId = params.get("room");
     const back = roomId ? loadRoom(roomId) : null;
+    // A hotseat game reloaded in the middle goes straight back in, the computer's side too (UX 395).
+    const into = roomId ? null : reloadedInto(saved);
+    if (into && saved) {
+      start({ role: "host", mode: "hotseat", name, record: saved.record });
+      if (into.solo) armSolo(into.solo.level, into.solo.seat);
+      return;
+    }
     if (!roomId) return;
     const m: Mode = params.get("local") === "1" ? "local" : "online";
     const who = localStorage.getItem("open-battle:name") ?? "";
@@ -238,6 +267,37 @@ export function Lobby() {
       {/* Two columns on a wide screen (UX 288): getting started, then playing with people. */}
       <div className="lobby-cols">
         <div className="lobby-col">
+          {saved && (
+            <button className="primary resume-top" onClick={resume}>
+              <strong>
+                {savedAt
+                  ? savedAt.round > 0
+                    ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
+                    : t("Resume: {game}, deploying", { game: savedAt.game })
+                  : t("Resume last game")}
+              </strong>
+              <span className="small">
+                {tn(
+                  saved.record.events.length,
+                  "{mode}, {n} event, saved {date}",
+                  "{mode}, {n} events, saved {date}",
+                  {
+                    mode:
+                      { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
+                      saved.mode,
+                    date: formatDate(new Date(saved.savedAt), {
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      second: "numeric",
+                    }),
+                  },
+                )}
+              </span>
+            </button>
+          )}
           <button className="own-army" onClick={() => setGuide(true)}>
             <strong>{t("Play your own army: import a list")}</strong>
             <span className="muted small">
@@ -448,6 +508,7 @@ export function Lobby() {
                 remember();
                 start({ role: "host", mode: "hotseat", name, system });
                 namePackage();
+                presetMission();
               }}
             >
               {t("Set up a game on this screen (hotseat)")}
@@ -472,28 +533,6 @@ export function Lobby() {
           <button className="link" onClick={openWorkshop}>
             {t("Module workshop: write your own game system")}
           </button>
-          {saved && (
-            <button onClick={resume}>
-              {tn(
-                saved.record.events.length,
-                "Resume last game ({mode}, {n} event, {date})",
-                "Resume last game ({mode}, {n} events, {date})",
-                {
-                  mode:
-                    { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
-                    saved.mode,
-                  date: formatDate(new Date(saved.savedAt), {
-                    year: "numeric",
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    second: "numeric",
-                  }),
-                },
-              )}
-            </button>
-          )}
           <label className="file">
             {t("Open a replay file")}
             <input

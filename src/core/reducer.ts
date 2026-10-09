@@ -489,7 +489,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
         status: { ...u.status, [appliedKey(event.ability)]: true },
       }));
     case "mission/set":
-      return { ...state, mission: event.mission, zones: event.zones, objectives: event.objectives };
+      return {
+        ...state,
+        mission: event.mission ?? undefined,
+        zones: event.zones,
+        objectives: event.objectives,
+      };
     case "score/confirm": {
       if (state.scores?.some((s) => s.key === event.key)) return state;
       const { type: _t, ...entry } = event;

@@ -49,7 +49,9 @@ export function MissionPicker() {
   const chosen = missionOf(game);
   const pick = (id: string) => {
     const m = missions.find((x) => x.id === id);
-    if (!m) return;
+    // None: score by hand, keeping the zones and objectives already on the table.
+    if (!m)
+      return dispatch({ type: "mission/set", mission: null, zones: game.zones, objectives: game.objectives });
     const { zones, objectives } = m.setup(game.table);
     dispatch({ type: "mission/set", mission: { id: m.id, name: m.name }, zones, objectives });
   };

@@ -448,44 +448,44 @@ msgstr "Sie haben standgehalten. Ein Nahkampf kann sich bis in den nächsten Spi
 msgid "Setting up the table…"
 msgstr "Der Tisch wird aufgebaut …"
 
-#: src/GameScreen.tsx:306
+#: src/GameScreen.tsx:308
 #, fuzzy
 msgid "Fully visible"
 msgstr "Voll sichtbar"
 
-#: src/GameScreen.tsx:307
+#: src/GameScreen.tsx:309
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Teilweise sichtbar oder in Deckung"
 
-#: src/GameScreen.tsx:308
+#: src/GameScreen.tsx:310
 #, fuzzy
 msgid "Hidden"
 msgstr "Verborgen"
 
-#: src/GameScreen.tsx:309
+#: src/GameScreen.tsx:311
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 
-#: src/GameScreen.tsx:314
+#: src/GameScreen.tsx:316
 #: src/mail/MailLobby.tsx:165
 #: src/workshop/Workshop.tsx:380
 #, fuzzy
 msgid "Open"
 msgstr "Offen"
 
-#: src/GameScreen.tsx:315
+#: src/GameScreen.tsx:317
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Verdeckend: Deckung"
 
-#: src/GameScreen.tsx:316
+#: src/GameScreen.tsx:318
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Blockierend: keine Sicht"
 
-#: src/GameScreen.tsx:321
+#: src/GameScreen.tsx:323
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Modellperspektive verlassen (Esc)"
@@ -1117,8 +1117,8 @@ msgstr "Erzielte und kassierte Siegpunkte"
 
 #: src/campaign/CampaignUI.tsx:614
 #: src/campaign/EventTab.tsx:270
-#: src/ui/Missions.tsx:143
-#: src/ui/Missions.tsx:374
+#: src/ui/Missions.tsx:145
+#: src/ui/Missions.tsx:376
 #, fuzzy
 msgid "VP"
 msgstr "VP"
@@ -1163,7 +1163,7 @@ msgid "{players} won"
 msgstr "{players} gewinnt"
 
 #: src/campaign/CampaignUI.tsx:664
-#: src/ui/Missions.tsx:362
+#: src/ui/Missions.tsx:364
 #, fuzzy
 msgid "{scores} VP"
 msgstr "{scores} VP"
@@ -1776,7 +1776,7 @@ msgid "← All units"
 msgstr "← Alle Einheiten"
 
 #: src/companion/CompanionScreen.tsx:93
-#: src/ui/Missions.tsx:59
+#: src/ui/Missions.tsx:61
 #, fuzzy
 msgid "Mission"
 msgstr "Mission"
@@ -1788,7 +1788,7 @@ msgstr "Protokoll"
 
 #: src/companion/CompanionScreen.tsx:95
 #: src/opentables/OpenTables.tsx:192
-#: src/ui/Lobby.tsx:383
+#: src/ui/Lobby.tsx:443
 #, fuzzy
 msgid "Game"
 msgstr "Spiel"
@@ -3019,7 +3019,7 @@ msgstr "Du wurdest zu einem Mail-Spiel eingeladen"
 #: src/opentables/OpenTables.tsx:565
 #: src/replay/NotesPanel.tsx:252
 #: src/ui/Hud.tsx:377
-#: src/ui/Lobby.tsx:371
+#: src/ui/Lobby.tsx:431
 #, fuzzy
 msgid "Your name"
 msgstr "Dein Name"
@@ -3030,7 +3030,7 @@ msgid "Join the game"
 msgstr "Spiel beitreten"
 
 #: src/mail/MailLobby.tsx:99
-#: src/ui/Lobby.tsx:559
+#: src/ui/Lobby.tsx:598
 #, fuzzy
 msgid "Not now"
 msgstr "Nicht jetzt"
@@ -3418,7 +3418,7 @@ msgid "Your table"
 msgstr "Dein Tisch"
 
 #: src/opentables/OpenTables.tsx:415
-#: src/ui/Lobby.tsx:407
+#: src/ui/Lobby.tsx:467
 #, fuzzy
 msgid "Join"
 msgstr "Beitreten"
@@ -4129,7 +4129,7 @@ msgstr "Notizen und Kapitel ausblenden"
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:49
 #: src/ui/TerrainPanel.tsx:375
-#: src/ui/TopBar.tsx:226
+#: src/ui/TopBar.tsx:231
 #: src/ui/WhatNow.tsx:43
 #: src/ui/gameLog.ts:379
 #, fuzzy
@@ -4338,7 +4338,7 @@ msgstr "Gespielt auf Open Battle"
 
 #: src/share/cards.ts:253
 #: src/share/cards.ts:320
-#: src/ui/Missions.tsx:125
+#: src/ui/Missions.tsx:127
 #, fuzzy
 msgid "{vp} VP"
 msgstr "{vp} VP"
@@ -4427,7 +4427,7 @@ msgid "What happened"
 msgstr "Was passiert ist"
 
 #: src/share/clip.ts:235
-#: src/ui/TopBar.tsx:255
+#: src/ui/TopBar.tsx:260
 #, fuzzy
 msgid "Battle over"
 msgstr "Schlacht vorbei"
@@ -4616,7 +4616,7 @@ msgid "no stack: any regiment"
 msgstr "kein Stapel: beliebiges Regiment"
 
 #: src/systems/conquest/CommandPanel.tsx:88
-#: src/ui/Missions.tsx:242
+#: src/ui/Missions.tsx:244
 #: src/ui/SecretObjectives.tsx:68
 #, fuzzy
 msgid "{n} face down"
@@ -5444,7 +5444,7 @@ msgstr "Verheerend"
 #: src/ui/AttackPanel.tsx:259
 #: src/ui/AttackPanel.tsx:268
 #: src/ui/AttackPanel.tsx:351
-#: src/ui/TopBar.tsx:430
+#: src/ui/TopBar.tsx:447
 #, fuzzy
 msgid "none"
 msgstr "keine"
@@ -6169,7 +6169,7 @@ msgid "Untimed"
 msgstr "Ohne Zeitlimit"
 
 #: src/ui/Clocks.tsx:280
-#: src/ui/eventText.ts:137
+#: src/ui/eventText.ts:139
 #, fuzzy
 msgid "{n} minute"
 msgid_plural "{n} minutes"
@@ -6304,7 +6304,7 @@ msgid "Redo this step"
 msgstr "Schritt wiederholen"
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:318
+#: src/ui/TopBar.tsx:323
 #, fuzzy
 msgid "Next phase"
 msgstr "Nächste Phase"
@@ -6826,7 +6826,7 @@ msgid "Shorter dice rolls in the tray"
 msgstr "Kürzere Würfelwürfe in der Schale"
 
 #: src/ui/Hud.tsx:142
-#: src/ui/TopBar.tsx:539
+#: src/ui/TopBar.tsx:556
 #, fuzzy
 msgid "Fast dice"
 msgstr "Schnelle Würfel"
@@ -6944,7 +6944,7 @@ msgid "Rejoin as {name}"
 msgstr "Als {name} wieder beitreten"
 
 #: src/ui/Hud.tsx:423
-#: src/ui/Lobby.tsx:410
+#: src/ui/Lobby.tsx:470
 #, fuzzy
 msgid "Watch"
 msgstr "Zuschauen"
@@ -7146,377 +7146,392 @@ msgstr "Auswählen: ihre Karte rechts zeigt, was sie kann"
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr "Vorherige oder nächste eigene Einheit wählen (Umschalt: die der Gegenseite)"
 
-#: src/ui/Lobby.tsx:179
+#: src/ui/Lobby.tsx:208
 #, fuzzy
 msgid "That is not an Open Battle replay file."
 msgstr "Das ist keine Open-Battle-Wiederholungsdatei."
 
-#: src/ui/Lobby.tsx:233
+#: src/ui/Lobby.tsx:262
 #, fuzzy
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr "Tabletop-Schlachten auf einem 3D-Tisch in deinem Browser. Bring deine Armee mit; die Regeln zählen mit."
 
-#: src/ui/Lobby.tsx:242
+#: src/ui/Lobby.tsx:275
+#, fuzzy
+msgid "Resume: {game}, round {n}"
+msgstr "Weiterspielen: {game}, Runde {n}"
+
+#: src/ui/Lobby.tsx:276
+#, fuzzy
+msgid "Resume: {game}, deploying"
+msgstr "Weiterspielen: {game}, Aufstellung"
+
+#: src/ui/Lobby.tsx:277
+#, fuzzy
+msgid "Resume last game"
+msgstr "Letztes Spiel fortsetzen"
+
+#: src/ui/Lobby.tsx:280
+#, fuzzy
+msgid "{mode}, {n} event, saved {date}"
+msgid_plural "{mode}, {n} events, saved {date}"
+msgstr[0] "{mode}, {n} Ereignis, gespeichert {date}"
+msgstr[1] "{mode}, {n} Ereignisse, gespeichert {date}"
+
+#: src/ui/Lobby.tsx:286
+#, fuzzy
+msgid "online"
+msgstr "online"
+
+#: src/ui/Lobby.tsx:286
+#, fuzzy
+msgid "local"
+msgstr "lokal"
+
+#: src/ui/Lobby.tsx:286
+#, fuzzy
+msgid "hotseat"
+msgstr "Hotseat"
+
+#: src/ui/Lobby.tsx:302
 #, fuzzy
 msgid "Play your own army: import a list"
 msgstr "Spiel deine eigene Armee: Liste importieren"
 
-#: src/ui/Lobby.tsx:244
+#: src/ui/Lobby.tsx:304
 #, fuzzy
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr "Aus New Recruit oder BattleScribe, mit deinen eigenen Figuren, wenn du welche hast."
 
-#: src/ui/Lobby.tsx:250
+#: src/ui/Lobby.tsx:310
 #, fuzzy
 msgid "Find an opponent"
 msgstr "Gegner finden"
 
-#: src/ui/Lobby.tsx:251
+#: src/ui/Lobby.tsx:311
 #, fuzzy
 msgid "Join a game someone has put up on Open tables."
 msgstr "Tritt einem Spiel bei, das jemand bei Offene Tische eingestellt hat."
 
-#: src/ui/Lobby.tsx:259
+#: src/ui/Lobby.tsx:319
 #, fuzzy
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr "Unser eigenes Scharmützelspiel, frei weiterzugeben (CC BY). Vier Kriegerbanden kämpfen um Laternen, die in eine Kluft gefallen sind. Nichts zu importieren."
 
-#: src/ui/Lobby.tsx:265
-#: src/ui/Lobby.tsx:288
+#: src/ui/Lobby.tsx:325
+#: src/ui/Lobby.tsx:348
 #, fuzzy
 msgid "Play now (both sides)"
 msgstr "Jetzt spielen (beide Seiten)"
 
-#: src/ui/Lobby.tsx:268
-#: src/ui/Lobby.tsx:289
-#: src/ui/Lobby.tsx:331
+#: src/ui/Lobby.tsx:328
+#: src/ui/Lobby.tsx:349
+#: src/ui/Lobby.tsx:391
 #, fuzzy
 msgid "Play the computer"
 msgstr "Gegen den Computer"
 
-#: src/ui/Lobby.tsx:272
+#: src/ui/Lobby.tsx:332
 #, fuzzy
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr "Gedruckte oder echte Modelle auf deinem Tisch: dieses Handy führt Karten, Würfe und Punkte"
 
-#: src/ui/Lobby.tsx:277
-#: src/ui/Lobby.tsx:290
-#: src/ui/Lobby.tsx:414
+#: src/ui/Lobby.tsx:337
+#: src/ui/Lobby.tsx:350
+#: src/ui/Lobby.tsx:474
 #, fuzzy
 msgid "At a real table"
 msgstr "Am echten Spieltisch"
 
-#: src/ui/Lobby.tsx:280
+#: src/ui/Lobby.tsx:340
 #, fuzzy
 msgid "Rules, print and play"
 msgstr "Regeln, drucken und spielen"
 
-#: src/ui/Lobby.tsx:297
+#: src/ui/Lobby.tsx:357
 #, fuzzy
 msgid "Pick a game"
 msgstr "Wähle ein Spiel"
 
-#: src/ui/Lobby.tsx:299
+#: src/ui/Lobby.tsx:359
 #, fuzzy
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr "Lernen: eine geführte erste Partie gegen den Computer, mit einem Coach. Ausprobieren: zwei Beispielarmeen stehen bereit, und du spielst beide Seiten."
 
-#: src/ui/Lobby.tsx:304
+#: src/ui/Lobby.tsx:364
 #, fuzzy
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr "Das sind eingebaute Beispielregeln. Für dein eigenes Spielsystem lädst du sein Regelpaket unter Weitere Spielmöglichkeiten."
 
-#: src/ui/Lobby.tsx:321
+#: src/ui/Lobby.tsx:381
 #, fuzzy
 msgid "Learn (guided)"
 msgstr "Lernen (geführt)"
 
-#: src/ui/Lobby.tsx:326
+#: src/ui/Lobby.tsx:386
 #, fuzzy
 msgid "Try (both sides)"
 msgstr "Ausprobieren (beide Seiten)"
 
-#: src/ui/Lobby.tsx:341
+#: src/ui/Lobby.tsx:401
 #, fuzzy
 msgid "Play with friends"
 msgstr "Mit Freunden spielen"
 
-#: src/ui/Lobby.tsx:346
+#: src/ui/Lobby.tsx:406
 #, fuzzy
 msgid "Open tables: find an opponent"
 msgstr "Offene Tische: einen Gegner finden"
 
-#: src/ui/Lobby.tsx:348
+#: src/ui/Lobby.tsx:408
 #, fuzzy
 msgid "Games other players have put up. Join one, or post your own."
 msgstr "Spiele, die andere eingestellt haben. Tritt einem bei oder stell deins ein."
 
-#: src/ui/Lobby.tsx:374
+#: src/ui/Lobby.tsx:434
 #, fuzzy
 msgid "Player 1 or 2, by seat"
 msgstr "Spieler 1 oder 2, nach Platz"
 
-#: src/ui/Lobby.tsx:393
+#: src/ui/Lobby.tsx:453
 #, fuzzy
 msgid "Host a game"
 msgstr "Spiel hosten"
 
-#: src/ui/Lobby.tsx:395
+#: src/ui/Lobby.tsx:455
 #, fuzzy
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr "Du bekommst einen Link zum Verschicken; wer ihn öffnet, kommt an deinen Tisch."
 
-#: src/ui/Lobby.tsx:397
+#: src/ui/Lobby.tsx:457
 #: src/ui/Room.tsx:97
 #, fuzzy
 msgid "Room"
 msgstr "Raum"
 
-#: src/ui/Lobby.tsx:400
+#: src/ui/Lobby.tsx:460
 #, fuzzy
 msgid "a room code or invite link"
 msgstr "ein Raumcode oder Einladungslink"
 
-#: src/ui/Lobby.tsx:404
+#: src/ui/Lobby.tsx:464
 #, fuzzy
 msgid "Paste a room code or invite link to join."
 msgstr "Füge einen Raumcode oder Einladungslink ein, um beizutreten."
 
-#: src/ui/Lobby.tsx:416
+#: src/ui/Lobby.tsx:476
 #, fuzzy
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr "Spielst du mit deinen eigenen Modellen? Open Battle verwaltet Einheitenkarten, Wunden, CP, VP und Mission und rechnet jeden Angriff aus. Würfle am Bildschirm oder wirf deine eigenen Würfel und gib die Ergebnisse ein."
 
-#: src/ui/Lobby.tsx:421
+#: src/ui/Lobby.tsx:481
 #, fuzzy
 msgid "One phone for both of us"
 msgstr "Ein Handy für uns beide"
 
-#: src/ui/Lobby.tsx:424
+#: src/ui/Lobby.tsx:484
 #, fuzzy
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr "Du bekommst einen Link zum Verschicken; die andere Person öffnet ihn auf ihrem Handy"
 
-#: src/ui/Lobby.tsx:426
+#: src/ui/Lobby.tsx:486
 #, fuzzy
 msgid "A phone each"
 msgstr "Jeder ein Handy"
 
-#: src/ui/Lobby.tsx:430
+#: src/ui/Lobby.tsx:490
 #, fuzzy
 msgid "More ways to play"
 msgstr "Weitere Spielmöglichkeiten"
 
-#: src/ui/Lobby.tsx:432
+#: src/ui/Lobby.tsx:492
 #, fuzzy
 msgid "Players"
 msgstr "Spieler"
 
-#: src/ui/Lobby.tsx:434
+#: src/ui/Lobby.tsx:494
 #, fuzzy
 msgid "1 vs 1"
 msgstr "1 gegen 1"
 
-#: src/ui/Lobby.tsx:435
+#: src/ui/Lobby.tsx:495
 #, fuzzy
 msgid "2 vs 2 (teams share CP and VP)"
 msgstr "2 gegen 2 (Teams teilen CP und VP)"
 
-#: src/ui/Lobby.tsx:444
+#: src/ui/Lobby.tsx:504
 #, fuzzy
 msgid "Same browser (play between two tabs, no network)"
 msgstr "Gleicher Browser (zwischen zwei Tabs spielen, ohne Netzwerk)"
 
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:514
 #, fuzzy
 msgid "Set up a game on this screen (hotseat)"
 msgstr "Spiel an diesem Bildschirm einrichten (Hotseat)"
 
-#: src/ui/Lobby.tsx:470
+#: src/ui/Lobby.tsx:531
 #, fuzzy
 msgid "Figure library: your models, packs and storage"
 msgstr "Figurenbibliothek: deine Modelle, Pakete und Speicher"
 
-#: src/ui/Lobby.tsx:473
+#: src/ui/Lobby.tsx:534
 #, fuzzy
 msgid "Module workshop: write your own game system"
 msgstr "Modulwerkstatt: schreib dein eigenes Spielsystem"
 
-#: src/ui/Lobby.tsx:477
-#, fuzzy
-msgid "Resume last game ({mode}, {n} event, {date})"
-msgid_plural "Resume last game ({mode}, {n} events, {date})"
-msgstr[0] "Letztes Spiel fortsetzen ({mode}, {n} Ereignis, {date})"
-msgstr[1] "Letztes Spiel fortsetzen ({mode}, {n} Ereignisse, {date})"
-
-#: src/ui/Lobby.tsx:483
-#, fuzzy
-msgid "online"
-msgstr "online"
-
-#: src/ui/Lobby.tsx:483
-#, fuzzy
-msgid "local"
-msgstr "lokal"
-
-#: src/ui/Lobby.tsx:483
-#, fuzzy
-msgid "hotseat"
-msgstr "Hotseat"
-
-#: src/ui/Lobby.tsx:498
+#: src/ui/Lobby.tsx:537
 #, fuzzy
 msgid "Open a replay file"
 msgstr "Wiederholungsdatei öffnen"
 
-#: src/ui/Lobby.tsx:508
+#: src/ui/Lobby.tsx:547
 #, fuzzy
 msgid "No account: games run between your browsers."
 msgstr "Kein Konto nötig: Spiele laufen direkt zwischen euren Browsern."
 
-#: src/ui/Lobby.tsx:513
+#: src/ui/Lobby.tsx:552
 #, fuzzy
 msgid "Source code"
 msgstr "Quellcode"
 
-#: src/ui/Lobby.tsx:541
+#: src/ui/Lobby.tsx:580
 #, fuzzy
 msgid "plays loosely; good for a first game"
 msgstr "spielt locker; gut für ein erstes Spiel"
 
-#: src/ui/Lobby.tsx:542
+#: src/ui/Lobby.tsx:581
 #, fuzzy
 msgid "plays to win"
 msgstr "spielt auf Sieg"
 
-#: src/ui/Lobby.tsx:543
+#: src/ui/Lobby.tsx:582
 #, fuzzy
 msgid "thinks harder about every move"
 msgstr "denkt über jeden Zug länger nach"
 
-#: src/ui/Lobby.tsx:546
-#: src/ui/Lobby.tsx:547
+#: src/ui/Lobby.tsx:585
+#: src/ui/Lobby.tsx:586
 #, fuzzy
 msgid "How hard?"
 msgstr "Wie schwer?"
 
-#: src/ui/Lobby.tsx:86
+#: src/ui/Lobby.tsx:89
 #: src/workshop/Workshop.tsx:702
 #, fuzzy
 msgid "{name} {version}"
 msgstr "{name} {version}"
 
-#: src/ui/Missions.tsx:109
+#: src/ui/Missions.tsx:111
 #, fuzzy
 msgid "Scores to confirm"
 msgstr "Zu bestätigende Wertungen"
 
-#: src/ui/Missions.tsx:109
+#: src/ui/Missions.tsx:111
 #, fuzzy
 msgctxt "noun"
 msgid "Score"
 msgstr "Punktestand"
 
-#: src/ui/Missions.tsx:132
-#: src/ui/Missions.tsx:147
-#: src/ui/Missions.tsx:272
+#: src/ui/Missions.tsx:134
+#: src/ui/Missions.tsx:149
+#: src/ui/Missions.tsx:274
 #: src/ui/ProcedurePanels.tsx:365
-#: src/ui/TopBar.tsx:309
+#: src/ui/TopBar.tsx:314
 #, fuzzy
 msgid "Pass"
 msgstr "Passen"
 
-#: src/ui/Missions.tsx:139
+#: src/ui/Missions.tsx:141
 #, fuzzy
 msgid "VP for {rule}"
 msgstr "VP für {rule}"
 
-#: src/ui/Missions.tsx:145
+#: src/ui/Missions.tsx:147
 #, fuzzy
 msgid "Score it"
 msgstr "Werten"
 
-#: src/ui/Missions.tsx:152
+#: src/ui/Missions.tsx:154
 #, fuzzy
 msgid "Suggested {vp} VP · waiting for {side} to confirm"
 msgstr "Vorschlag {vp} VP · wartet auf Bestätigung von {side}"
 
-#: src/ui/Missions.tsx:156
+#: src/ui/Missions.tsx:158
 #, fuzzy
 msgid "Waiting for {side} to score it"
 msgstr "Warten, bis {side} das wertet"
 
-#: src/ui/Missions.tsx:215
+#: src/ui/Missions.tsx:217
 #, fuzzy
 msgid "Secret missions"
 msgstr "Geheime Missionen"
 
-#: src/ui/Missions.tsx:264
+#: src/ui/Missions.tsx:266
 #, fuzzy
 msgid "(drawn on another device)"
 msgstr "(auf einem anderen Gerät gezogen)"
 
-#: src/ui/Missions.tsx:270
+#: src/ui/Missions.tsx:272
 #, fuzzy
 msgid "Score {n} VP"
 msgstr "{n} VP werten"
 
-#: src/ui/Missions.tsx:280
+#: src/ui/Missions.tsx:282
 #, fuzzy
 msgid "passed"
 msgstr "gepasst"
 
-#: src/ui/Missions.tsx:281
+#: src/ui/Missions.tsx:283
 #, fuzzy
 msgid "scored {n} VP"
 msgstr "{n} VP gewertet"
 
-#: src/ui/Missions.tsx:283
+#: src/ui/Missions.tsx:285
 #, fuzzy
 msgid "revealed, waiting for {player} to score it"
 msgstr "aufgedeckt, wartet darauf, dass {player} sie wertet"
 
-#: src/ui/Missions.tsx:286
+#: src/ui/Missions.tsx:288
 #, fuzzy
 msgid "not scored"
 msgstr "nicht gewertet"
 
-#: src/ui/Missions.tsx:307
+#: src/ui/Missions.tsx:309
 #, fuzzy
 msgid "Reveal to score"
 msgstr "Zum Werten aufdecken"
 
-#: src/ui/Missions.tsx:315
+#: src/ui/Missions.tsx:317
 #, fuzzy
 msgid "Draw a card"
 msgstr "Karte ziehen"
 
-#: src/ui/Missions.tsx:349
+#: src/ui/Missions.tsx:351
 #, fuzzy
 msgid "Result"
 msgstr "Ergebnis"
 
-#: src/ui/Missions.tsx:357
+#: src/ui/Missions.tsx:359
 #, fuzzy
 msgid "{side} wins"
 msgstr "{side} gewinnt"
 
-#: src/ui/Missions.tsx:359
+#: src/ui/Missions.tsx:361
 #, fuzzy
 msgid "A draw"
 msgstr "Unentschieden"
 
-#: src/ui/Missions.tsx:376
+#: src/ui/Missions.tsx:378
 #, fuzzy
 msgid "R{n}"
 msgstr "R{n}"
 
-#: src/ui/Missions.tsx:378
+#: src/ui/Missions.tsx:380
 #, fuzzy
 msgid "Total"
 msgstr "Gesamt"
 
-#: src/ui/Missions.tsx:61
+#: src/ui/Missions.tsx:63
 #, fuzzy
 msgid "None (score by hand)"
 msgstr "Keine (von Hand werten)"
@@ -7969,7 +7984,7 @@ msgstr "Ohne es laufen Bewegungen, Würfel und Ergebnisse weiter; Regelhinweise,
 
 #: src/ui/Packages.tsx:674
 #: src/ui/ScriptPanel.tsx:39
-#: src/ui/eventText.ts:102
+#: src/ui/eventText.ts:104
 #, fuzzy
 msgid "A player"
 msgstr "Ein Spieler"
@@ -8365,7 +8380,7 @@ msgid "can't hit"
 msgstr "kann nicht treffen"
 
 #: src/ui/ProcedurePanels.tsx:462
-#: src/ui/eventText.ts:638
+#: src/ui/eventText.ts:640
 #: src/ui/gameLog.ts:256
 #, fuzzy
 msgid "A unit"
@@ -8587,7 +8602,7 @@ msgid "Wheel right"
 msgstr "Rechts schwenken"
 
 #: src/ui/RegimentPanel.tsx:31
-#: src/ui/eventText.ts:683
+#: src/ui/eventText.ts:685
 #, fuzzy
 msgid "left"
 msgstr "links"
@@ -8605,7 +8620,7 @@ msgid "Turn left"
 msgstr "Links drehen"
 
 #: src/ui/RegimentPanel.tsx:32
-#: src/ui/eventText.ts:679
+#: src/ui/eventText.ts:681
 #, fuzzy
 msgid "right"
 msgstr "rechts"
@@ -8916,7 +8931,7 @@ msgid "Tell the other player you've finished deploying"
 msgstr "Sag dem anderen Spieler, dass du mit dem Aufstellen fertig bist"
 
 #: src/ui/Room.tsx:230
-#: src/ui/TopBar.tsx:462
+#: src/ui/TopBar.tsx:479
 #, fuzzy
 msgid "Ready"
 msgstr "Bereit"
@@ -9400,13 +9415,13 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr "Aktiviert: {used} von {budget} Aktionen genutzt."
 
 #: src/ui/SystemPanels.tsx:466
-#: src/ui/TopBar.tsx:290
+#: src/ui/TopBar.tsx:295
 #, fuzzy
 msgid "End this activation; the other player goes next"
 msgstr "Diese Aktivierung beenden; der andere Spieler ist dran"
 
 #: src/ui/SystemPanels.tsx:472
-#: src/ui/TopBar.tsx:297
+#: src/ui/TopBar.tsx:302
 #, fuzzy
 msgid "End activation"
 msgstr "Aktivierung beenden"
@@ -9761,7 +9776,7 @@ msgid "if it stayed still"
 msgstr "wenn sie stehen blieb"
 
 #: src/ui/TeachRule.tsx:27
-#: src/ui/TopBar.tsx:470
+#: src/ui/TopBar.tsx:487
 #, fuzzy
 msgid "Re-roll"
 msgstr "Neu würfeln"
@@ -10235,198 +10250,203 @@ msgstr "{width} × {depth}, {height} hoch"
 msgid "Text size"
 msgstr "Textgröße"
 
-#: src/ui/TopBar.tsx:112
+#: src/ui/TopBar.tsx:117
 #, fuzzy
 msgid "Advance a phase during {side}'s turn?"
 msgstr "Im Zug von {side} eine Phase weiterschalten?"
 
-#: src/ui/TopBar.tsx:113
+#: src/ui/TopBar.tsx:118
 #, fuzzy
 msgid "Advance a phase during the other player's turn?"
 msgstr "Im Zug des anderen Spielers eine Phase weiterschalten?"
 
-#: src/ui/TopBar.tsx:115
+#: src/ui/TopBar.tsx:120
 #, fuzzy
 msgid "Go back a phase during {side}'s turn?"
 msgstr "Im Zug von {side} eine Phase zurückgehen?"
 
-#: src/ui/TopBar.tsx:116
+#: src/ui/TopBar.tsx:121
 #, fuzzy
 msgid "Go back a phase during the other player's turn?"
 msgstr "Im Zug des anderen Spielers eine Phase zurückgehen?"
 
-#: src/ui/TopBar.tsx:210
+#: src/ui/TopBar.tsx:215
 #, fuzzy
 msgid "{name} is playing…"
 msgstr "{name} ist am Zug…"
 
-#: src/ui/TopBar.tsx:215
+#: src/ui/TopBar.tsx:220
 #, fuzzy
 msgid "Let the computer play"
 msgstr "Computer weiterspielen lassen"
 
-#: src/ui/TopBar.tsx:219
+#: src/ui/TopBar.tsx:224
 #, fuzzy
 msgid "Previous phase"
 msgstr "Vorherige Phase"
 
-#: src/ui/TopBar.tsx:230
+#: src/ui/TopBar.tsx:235
 #, fuzzy
 msgid "First turn:"
 msgstr "Erster Zug:"
 
-#: src/ui/TopBar.tsx:243
+#: src/ui/TopBar.tsx:248
 #, fuzzy
 msgid "Place your units in your zone"
 msgstr "Stell deine Einheiten in deiner Zone auf"
 
-#: src/ui/TopBar.tsx:245
+#: src/ui/TopBar.tsx:250
 #, fuzzy
 msgid "Joining the game…"
 msgstr "Trete dem Spiel bei…"
 
-#: src/ui/TopBar.tsx:247
+#: src/ui/TopBar.tsx:252
 #, fuzzy
 msgid "Players are deploying"
 msgstr "Spieler stellen auf"
 
-#: src/ui/TopBar.tsx:257
+#: src/ui/TopBar.tsx:262
 #, fuzzy
 msgid "Round {round} of {rounds} · {side}"
 msgstr "Runde {round} von {rounds} · {side}"
 
-#: src/ui/TopBar.tsx:262
+#: src/ui/TopBar.tsx:267
 #, fuzzy
 msgid "Round {round} · {side}"
 msgstr "Runde {round} · {side}"
 
-#: src/ui/TopBar.tsx:289
+#: src/ui/TopBar.tsx:294
 #, fuzzy
 msgid "Answer the open question first"
 msgstr "Beantworte zuerst die offene Frage"
 
-#: src/ui/TopBar.tsx:304
+#: src/ui/TopBar.tsx:309
 #, fuzzy
 msgid "Both passed: the round moves on"
 msgstr "Beide haben gepasst: Die Runde geht weiter"
 
-#: src/ui/TopBar.tsx:305
+#: src/ui/TopBar.tsx:310
 #, fuzzy
 msgid "Pass; the other player goes next"
 msgstr "Passen; der andere Spieler ist dran"
 
-#: src/ui/TopBar.tsx:317
+#: src/ui/TopBar.tsx:322
 #, fuzzy
 msgid "Waiting for {names} to be ready"
 msgstr "Warte darauf, dass {names} bereit sind"
 
-#: src/ui/TopBar.tsx:329
+#: src/ui/TopBar.tsx:334
 #, fuzzy
 msgid "Start battle ▶"
 msgstr "Schlacht starten ▶"
 
-#: src/ui/TopBar.tsx:342
+#: src/ui/TopBar.tsx:349
+#, fuzzy
+msgid "Pick one"
+msgstr "Eine wählen"
+
+#: src/ui/TopBar.tsx:359
 #, fuzzy
 msgid "Start anyway"
 msgstr "Trotzdem starten"
 
-#: src/ui/TopBar.tsx:342
+#: src/ui/TopBar.tsx:359
 #, fuzzy
 msgid "Go on anyway"
 msgstr "Trotzdem weiter"
 
-#: src/ui/TopBar.tsx:344
+#: src/ui/TopBar.tsx:361
 #, fuzzy
 msgid "Not yet"
 msgstr "Noch nicht"
 
-#: src/ui/TopBar.tsx:351
+#: src/ui/TopBar.tsx:368
 #, fuzzy
 msgid "Phase options"
 msgstr "Phasenoptionen"
 
-#: src/ui/TopBar.tsx:363
+#: src/ui/TopBar.tsx:380
 #, fuzzy
 msgid "Skip to the next phase"
 msgstr "Zur nächsten Phase springen"
 
-#: src/ui/TopBar.tsx:375
+#: src/ui/TopBar.tsx:392
 #, fuzzy
 msgid "Pause the computer"
 msgstr "Computer anhalten"
 
-#: src/ui/TopBar.tsx:378
+#: src/ui/TopBar.tsx:395
 #, fuzzy
 msgid "Advance their phase"
 msgstr "Ihre Phase weiterschalten"
 
-#: src/ui/TopBar.tsx:379
+#: src/ui/TopBar.tsx:396
 #, fuzzy
 msgid "Back a phase"
 msgstr "Eine Phase zurück"
 
-#: src/ui/TopBar.tsx:389
+#: src/ui/TopBar.tsx:406
 #, fuzzy
 msgid "Controls (?)"
 msgstr "Steuerung (?)"
 
-#: src/ui/TopBar.tsx:448
+#: src/ui/TopBar.tsx:465
 #, fuzzy
 msgid "Already re-rolled this round"
 msgstr "In dieser Runde schon neu gewürfelt"
 
-#: src/ui/TopBar.tsx:450
+#: src/ui/TopBar.tsx:467
 #, fuzzy
 msgid "Re-roll the picked dice: once a round"
 msgstr "Gewählte Würfel neu werfen: einmal pro Runde"
 
-#: src/ui/TopBar.tsx:451
+#: src/ui/TopBar.tsx:468
 #, fuzzy
 msgid "Pick dice to re-roll first"
 msgstr "Wähl zuerst Würfel zum Neuwürfeln"
 
-#: src/ui/TopBar.tsx:455
+#: src/ui/TopBar.tsx:472
 #, fuzzy
 msgid "Re-roll (once)"
 msgstr "Neu werfen (einmal)"
 
-#: src/ui/TopBar.tsx:459
+#: src/ui/TopBar.tsx:476
 #, fuzzy
 msgid "Keep these dice as they are: you give up this round's re-roll"
 msgstr "Diese Würfel behalten: du verzichtest auf den Wurf dieser Runde"
 
-#: src/ui/TopBar.tsx:469
+#: src/ui/TopBar.tsx:486
 #, fuzzy
 msgid "Spend"
 msgstr "Ausgeben"
 
-#: src/ui/TopBar.tsx:511
-#: src/ui/TopBar.tsx:512
+#: src/ui/TopBar.tsx:528
+#: src/ui/TopBar.tsx:529
 #, fuzzy
 msgid "Sound and dice"
 msgstr "Sound und Würfel"
 
-#: src/ui/TopBar.tsx:512
+#: src/ui/TopBar.tsx:529
 #, fuzzy
 msgid "Sound muted"
 msgstr "Sound stumm"
 
-#: src/ui/TopBar.tsx:520
+#: src/ui/TopBar.tsx:537
 #, fuzzy
 msgid "Sound"
 msgstr "Sound"
 
-#: src/ui/TopBar.tsx:523
+#: src/ui/TopBar.tsx:540
 #, fuzzy
 msgid "Volume"
 msgstr "Lautstärke"
 
-#: src/ui/TopBar.tsx:534
+#: src/ui/TopBar.tsx:551
 #, fuzzy
 msgid "A quiet room under the game; the turn bell follows Sound"
 msgstr "Ein leiser Raum unter dem Spiel; die Zugglocke folgt der Sound-Einstellung"
 
-#: src/ui/TopBar.tsx:536
+#: src/ui/TopBar.tsx:553
 #, fuzzy
 msgid "Table ambience"
 msgstr "Tischatmosphäre"
@@ -10441,30 +10461,35 @@ msgstr "Warte auf die Antwort von {name}: {question}"
 msgid "a player"
 msgstr "ein Spieler"
 
-#: src/ui/TopBar.tsx:82
+#: src/ui/TopBar.tsx:84
 #, fuzzy
 msgid "{names} have no army yet"
 msgstr "{names} haben noch keine Armee"
 
-#: src/ui/TopBar.tsx:83
+#: src/ui/TopBar.tsx:85
 #, fuzzy
 msgid "{name} has no army yet"
 msgstr "{name} hat noch keine Armee"
 
-#: src/ui/TopBar.tsx:86
+#: src/ui/TopBar.tsx:88
 #, fuzzy
 msgid "{n} players aren't ready yet"
 msgstr "{n} Spieler sind noch nicht bereit"
 
-#: src/ui/TopBar.tsx:88
+#: src/ui/TopBar.tsx:90
 #, fuzzy
 msgid "{names} aren't ready yet"
 msgstr "{names} sind noch nicht bereit"
 
-#: src/ui/TopBar.tsx:89
+#: src/ui/TopBar.tsx:91
 #, fuzzy
 msgid "{name} isn't ready yet"
 msgstr "{name} ist noch nicht bereit"
+
+#: src/ui/TopBar.tsx:93
+#, fuzzy
+msgid "No mission: you'll score by hand"
+msgstr "Keine Mission: Ihr zählt die Punkte selbst"
 
 #: src/ui/UnitCard.tsx:208
 #, fuzzy
@@ -11213,458 +11238,463 @@ msgstr "Marmoriertes Grün"
 msgid "Ivory & red"
 msgstr "Elfenbein & Rot"
 
-#: src/ui/eventText.ts:101
+#: src/ui/eventText.ts:100
+#, fuzzy
+msgid "{name} picked their colour's dice"
+msgstr "{name} hat die Würfel seiner Farbe gewählt"
+
+#: src/ui/eventText.ts:103
 #, fuzzy
 msgid "{old} is now {name}"
 msgstr "{old} heißt jetzt {name}"
 
-#: src/ui/eventText.ts:107
+#: src/ui/eventText.ts:109
 #, fuzzy
 msgid "{name} cleared their army rules"
 msgstr "{name} hat die Armeeregeln entfernt"
 
-#: src/ui/eventText.ts:110
+#: src/ui/eventText.ts:112
 #, fuzzy
 msgid "{name} brings {detachment} ({n} rule)"
 msgid_plural "{name} brings {detachment} ({n} rules)"
 msgstr[0] "{name} bringt {detachment} mit ({n} Regel)"
 msgstr[1] "{name} bringt {detachment} mit ({n} Regeln)"
 
-#: src/ui/eventText.ts:114
+#: src/ui/eventText.ts:116
 #, fuzzy
 msgid "{name} brings their army's rules ({n} rule)"
 msgid_plural "{name} brings their army's rules ({n} rules)"
 msgstr[0] "{name} bringt die Armeeregeln mit ({n} Regel)"
 msgstr[1] "{name} bringt die Armeeregeln mit ({n} Regeln)"
 
-#: src/ui/eventText.ts:126
+#: src/ui/eventText.ts:128
 #, fuzzy
 msgid "{name} changed their colour"
 msgstr "{name} hat seine Farbe geändert"
 
-#: src/ui/eventText.ts:128
+#: src/ui/eventText.ts:130
 #, fuzzy
 msgid "{name} restarted the clocks"
 msgstr "{name} hat die Uhren neu gestartet"
 
-#: src/ui/eventText.ts:130
+#: src/ui/eventText.ts:132
 #, fuzzy
 msgid "The clocks stopped: a player is disconnected"
 msgstr "Die Uhren wurden angehalten: Ein Spieler ist nicht verbunden"
 
-#: src/ui/eventText.ts:131
+#: src/ui/eventText.ts:133
 #, fuzzy
 msgid "{name} stopped the clocks"
 msgstr "{name} hat die Uhren angehalten"
 
-#: src/ui/eventText.ts:138
+#: src/ui/eventText.ts:140
 #, fuzzy
 msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] "{n} Sekunde"
 msgstr[1] "{n} Sekunden"
 
-#: src/ui/eventText.ts:141
+#: src/ui/eventText.ts:143
 #, fuzzy
 msgid "{name} gave {side} {amount} on the clock"
 msgstr "{name} hat {side} {amount} auf der Uhr gegeben"
 
-#: src/ui/eventText.ts:142
+#: src/ui/eventText.ts:144
 #, fuzzy
 msgid "{name} took {amount} off {side}'s clock"
 msgstr "{name} hat {side} {amount} von der Uhr abgezogen"
 
-#: src/ui/eventText.ts:145
+#: src/ui/eventText.ts:147
 #, fuzzy
 msgid "{name} stopped playing for a campaign"
 msgstr "{name} spielt nicht mehr für eine Kampagne"
 
-#: src/ui/eventText.ts:147
+#: src/ui/eventText.ts:149
 #, fuzzy
 msgid "{name} brought the campaign book {book}"
 msgstr "{name} hat das Kampagnenbuch {book} mitgebracht"
 
-#: src/ui/eventText.ts:150
+#: src/ui/eventText.ts:152
 #, fuzzy
 msgid "{name} set the stakes: {territory}"
 msgstr "{name} hat den Einsatz festgelegt: {territory}"
 
-#: src/ui/eventText.ts:151
+#: src/ui/eventText.ts:153
 #, fuzzy
 msgid "{name} took the territory off the table"
 msgstr "{name} hat das Territorium vom Tisch genommen"
 
-#: src/ui/eventText.ts:152
+#: src/ui/eventText.ts:154
 #, fuzzy
 msgid "{book}: games from {name}'s copy were added to the table's"
 msgstr "{book}: Spiele aus {name}s Exemplar wurden zu dem des Tisches hinzugefügt"
 
-#: src/ui/eventText.ts:153
+#: src/ui/eventText.ts:155
 #, fuzzy
 msgid "{book} recorded this game"
 msgstr "{book} hat dieses Spiel festgehalten"
 
-#: src/ui/eventText.ts:153
+#: src/ui/eventText.ts:155
 #, fuzzy
 msgid "{name} shared their copy of {book}"
 msgstr "{name} hat sein Exemplar von {book} geteilt"
 
-#: src/ui/eventText.ts:168
+#: src/ui/eventText.ts:170
 #, fuzzy
 msgid "roll"
 msgstr "Wurf"
 
-#: src/ui/eventText.ts:178
+#: src/ui/eventText.ts:180
 #, fuzzy
 msgid "{unit} {label}: {n} of {total} ({dice})"
 msgstr "{unit} {label}: {n} von {total} ({dice})"
 
-#: src/ui/eventText.ts:179
+#: src/ui/eventText.ts:181
 #, fuzzy
 msgid "{label}: {n} of {total} ({dice})"
 msgstr "{label}: {n} von {total} ({dice})"
 
-#: src/ui/eventText.ts:181
+#: src/ui/eventText.ts:183
 #, fuzzy
 msgid "{unit} {label} {need}+: {n} of {total} ({dice})"
 msgstr "{unit} {label} {need}+: {n} von {total} ({dice})"
 
-#: src/ui/eventText.ts:182
+#: src/ui/eventText.ts:184
 #, fuzzy
 msgid "{label} {need}+: {n} of {total} ({dice})"
 msgstr "{label} {need}+: {n} von {total} ({dice})"
 
-#: src/ui/eventText.ts:188
-#: src/ui/eventText.ts:200
+#: src/ui/eventText.ts:190
+#: src/ui/eventText.ts:202
 #, fuzzy
 msgid "{name} rolled {what}: {results}"
 msgstr "{name} hat {what} gewürfelt: {results}"
 
-#: src/ui/eventText.ts:194
+#: src/ui/eventText.ts:196
 #, fuzzy
 msgid "{name} rolled {what}: {results} (= {total})"
 msgstr "{name} hat {what} gewürfelt: {results} (= {total})"
 
-#: src/ui/eventText.ts:203
+#: src/ui/eventText.ts:205
 #: src/ui/gameLog.ts:298
 #, fuzzy
 msgid "{name} took back an action"
 msgstr "{name} hat eine Aktion zurückgenommen"
 
-#: src/ui/eventText.ts:205
+#: src/ui/eventText.ts:207
 #, fuzzy
 msgid "{name} deployed {unit} ({n})"
 msgstr "{name} hat {unit} aufgestellt ({n})"
 
-#: src/ui/eventText.ts:207
+#: src/ui/eventText.ts:209
 #, fuzzy
 msgid "{name} added {terrain}"
 msgstr "{name} hat {terrain} hinzugefügt"
 
-#: src/ui/eventText.ts:209
+#: src/ui/eventText.ts:211
 #, fuzzy
 msgid "{name} changed {terrain}"
 msgstr "{name} hat {terrain} geändert"
 
-#: src/ui/eventText.ts:211
+#: src/ui/eventText.ts:213
 #, fuzzy
 msgid "{name} removed terrain"
 msgstr "{name} hat Gelände entfernt"
 
-#: src/ui/eventText.ts:214
+#: src/ui/eventText.ts:216
 #, fuzzy
 msgid "{name} is ready"
 msgstr "{name} ist bereit"
 
-#: src/ui/eventText.ts:214
+#: src/ui/eventText.ts:216
 #, fuzzy
 msgid "{name} is not ready yet"
 msgstr "{name} ist noch nicht bereit"
 
-#: src/ui/eventText.ts:221
+#: src/ui/eventText.ts:223
 #, fuzzy
 msgid "packages updated"
 msgstr "Pakete aktualisiert"
 
-#: src/ui/eventText.ts:223
+#: src/ui/eventText.ts:225
 #, fuzzy
 msgid "Rules changed: {changes} (both players agreed)"
 msgstr "Regeln geändert: {changes} (beide Spieler haben zugestimmt)"
 
-#: src/ui/eventText.ts:225
+#: src/ui/eventText.ts:227
 #, fuzzy
 msgid "Rules changed: {changes} (all players agreed)"
 msgstr "Regeln geändert: {changes} (alle Spieler haben zugestimmt)"
 
-#: src/ui/eventText.ts:226
+#: src/ui/eventText.ts:228
 #, fuzzy
 msgid "Rules changed: {changes} (agreed)"
 msgstr "Regeln geändert: {changes} (zugestimmt)"
 
-#: src/ui/eventText.ts:231
+#: src/ui/eventText.ts:233
 #, fuzzy
 msgid "Rules packages: {packages}"
 msgstr "Regelpakete: {packages}"
 
-#: src/ui/eventText.ts:232
+#: src/ui/eventText.ts:234
 #, fuzzy
 msgid "Rules packages: none (built-in rules only)"
 msgstr "Regelpakete: keine (nur eingebaute Regeln)"
 
-#: src/ui/eventText.ts:235
+#: src/ui/eventText.ts:237
 #, fuzzy
 msgid "{name} proposed changing the rules: {changes}"
 msgstr "{name} hat eine Regeländerung vorgeschlagen: {changes}"
 
-#: src/ui/eventText.ts:237
+#: src/ui/eventText.ts:239
 #, fuzzy
 msgid "no change"
 msgstr "keine Änderung"
 
-#: src/ui/eventText.ts:240
+#: src/ui/eventText.ts:242
 #, fuzzy
 msgid "{name} accepted the rules change"
 msgstr "{name} hat die Regeländerung angenommen"
 
-#: src/ui/eventText.ts:242
+#: src/ui/eventText.ts:244
 #, fuzzy
 msgid "{name} declined the rules change"
 msgstr "{name} hat die Regeländerung abgelehnt"
 
-#: src/ui/eventText.ts:244
+#: src/ui/eventText.ts:246
 #, fuzzy
 msgid "{name} withdrew the rules change"
 msgstr "{name} hat die Regeländerung zurückgezogen"
 
-#: src/ui/eventText.ts:246
+#: src/ui/eventText.ts:248
 #, fuzzy
 msgid "{name} resynced from the host"
 msgstr "{name} hat sich mit dem Host neu synchronisiert"
 
-#: src/ui/eventText.ts:251
+#: src/ui/eventText.ts:253
 #, fuzzy
 msgid "{name} is playing without {packages}: their table may disagree"
 msgstr "{name} spielt ohne {packages}: Sein Tisch könnte abweichen"
 
-#: src/ui/eventText.ts:253
+#: src/ui/eventText.ts:255
 #, fuzzy
 msgid "some of the rules"
 msgstr "einige der Regeln"
 
-#: src/ui/eventText.ts:255
+#: src/ui/eventText.ts:257
 #, fuzzy
 msgid "{name} now has the game's rules"
 msgstr "{name} hat jetzt die Regeln des Spiels"
 
-#: src/ui/eventText.ts:260
-#: src/ui/eventText.ts:271
+#: src/ui/eventText.ts:262
+#: src/ui/eventText.ts:273
 #, fuzzy
 msgid "template"
 msgstr "die Schablone"
 
-#: src/ui/eventText.ts:263
+#: src/ui/eventText.ts:265
 #, fuzzy
 msgid "{name} moved the {template}"
 msgstr "{name} hat {template} verschoben"
 
-#: src/ui/eventText.ts:264
+#: src/ui/eventText.ts:266
 #, fuzzy
 msgid "{name} placed the {template}"
 msgstr "{name} hat {template} platziert"
 
-#: src/ui/eventText.ts:265
+#: src/ui/eventText.ts:267
 #, fuzzy
 msgid "{name} removed the {template}"
 msgstr "{name} hat {template} entfernt"
 
-#: src/ui/eventText.ts:276
+#: src/ui/eventText.ts:278
 #, fuzzy
 msgid "{name} rolled a hit: the {template} stays put"
 msgstr "{name} hat einen Treffer gewürfelt: {template} bleibt liegen"
 
-#: src/ui/eventText.ts:277
+#: src/ui/eventText.ts:279
 #, fuzzy
 msgid "{name} rolled {roll} for the {template}: it doesn't move"
 msgstr "{name} hat {roll} für {template} gewürfelt: keine Abweichung"
 
-#: src/ui/eventText.ts:281
+#: src/ui/eventText.ts:283
 #, fuzzy
 msgid "{name} scattered the {template} {inches}\" towards the {direction}, off the table"
 msgstr "{name} hat {template} {inches}\" nach {direction} abweichen lassen, vom Tisch"
 
-#: src/ui/eventText.ts:282
+#: src/ui/eventText.ts:284
 #, fuzzy
 msgid "{name} scattered the {template} {inches}\" towards the {direction}"
 msgstr "{name} hat {template} {inches}\" nach {direction} abweichen lassen"
 
-#: src/ui/eventText.ts:286
+#: src/ui/eventText.ts:288
 #, fuzzy
 msgid "{name} cleared the ruler"
 msgstr "{name} hat das Lineal entfernt"
 
-#: src/ui/eventText.ts:287
-#: src/ui/eventText.ts:478
+#: src/ui/eventText.ts:289
+#: src/ui/eventText.ts:480
 #, fuzzy
 msgid "a model"
 msgstr "ein Modell"
 
-#: src/ui/eventText.ts:287
+#: src/ui/eventText.ts:289
 #, fuzzy
 msgid "a point"
 msgstr "ein Punkt"
 
-#: src/ui/eventText.ts:290
+#: src/ui/eventText.ts:292
 #, fuzzy
 msgid "{name} measured {distance} ({from} to {to})"
 msgstr "{name} hat {distance} gemessen ({from} bis {to})"
 
-#: src/ui/eventText.ts:296
+#: src/ui/eventText.ts:298
 #, fuzzy
 msgid "{name} measured {distance}"
 msgstr "{name} hat {distance} gemessen"
 
-#: src/ui/eventText.ts:299
+#: src/ui/eventText.ts:301
 #, fuzzy
 msgid "{name} moved an objective"
 msgstr "{name} hat ein Missionsziel verschoben"
 
-#: src/ui/eventText.ts:302
+#: src/ui/eventText.ts:304
 #, fuzzy
 msgid "{name} gave {unit} the figure {figure}"
 msgstr "{name} hat {unit} die Figur {figure} gegeben"
 
-#: src/ui/eventText.ts:307
+#: src/ui/eventText.ts:309
 #, fuzzy
 msgid "{name} took the figure off {unit}"
 msgstr "{name} hat {unit} die Figur abgenommen"
 
-#: src/ui/eventText.ts:309
+#: src/ui/eventText.ts:311
 #, fuzzy
 msgid "{name} set {unit} height to {height}\""
 msgstr "{name} hat die Höhe von {unit} auf {height}\" gesetzt"
 
-#: src/ui/eventText.ts:312
+#: src/ui/eventText.ts:314
 #, fuzzy
 msgid "default"
 msgstr "Standard"
 
-#: src/ui/eventText.ts:317
+#: src/ui/eventText.ts:319
 #, fuzzy
 msgid "cover −1 to hit"
 msgstr "Deckung −1 auf Treffen"
 
-#: src/ui/eventText.ts:317
+#: src/ui/eventText.ts:319
 #, fuzzy
 msgid "cover +1 to save"
 msgstr "Deckung +1 auf Rettungswurf"
 
-#: src/ui/eventText.ts:320
+#: src/ui/eventText.ts:322
 #, fuzzy
 msgid "line of sight: stand-in heights"
 msgstr "Sichtlinie: Ersatzhöhen"
 
-#: src/ui/eventText.ts:322
+#: src/ui/eventText.ts:324
 #, fuzzy
 msgid "line of sight: footprints"
 msgstr "Sichtlinie: Grundflächen"
 
-#: src/ui/eventText.ts:323
+#: src/ui/eventText.ts:325
 #, fuzzy
 msgid "line of sight: true"
 msgstr "Sichtlinie: echt"
 
-#: src/ui/eventText.ts:325
+#: src/ui/eventText.ts:327
 #, fuzzy
 msgid "vision all around"
 msgstr "Sicht rundum"
 
-#: src/ui/eventText.ts:325
+#: src/ui/eventText.ts:327
 #, fuzzy
 msgid "vision {deg}° arc"
 msgstr "Sicht im {deg}°-Bogen"
 
-#: src/ui/eventText.ts:327
+#: src/ui/eventText.ts:329
 #, fuzzy
 msgid "models block sight"
 msgstr "Modelle blockieren die Sicht"
 
-#: src/ui/eventText.ts:327
+#: src/ui/eventText.ts:329
 #, fuzzy
 msgid "models don't block sight"
 msgstr "Modelle blockieren die Sicht nicht"
 
-#: src/ui/eventText.ts:328
+#: src/ui/eventText.ts:330
 #, fuzzy
 msgid "playing with real models (table companion)"
 msgstr "Spiel mit echten Modellen (Tisch-Begleiter)"
 
-#: src/ui/eventText.ts:330
+#: src/ui/eventText.ts:332
 #, fuzzy
 msgid "{name} set {settings}"
 msgstr "{name} hat {settings} eingestellt"
 
-#: src/ui/eventText.ts:330
+#: src/ui/eventText.ts:332
 #, fuzzy
 msgid "game settings"
 msgstr "Spieleinstellungen"
 
-#: src/ui/eventText.ts:333
+#: src/ui/eventText.ts:335
 #, fuzzy
 msgid "{name} attached {unit} to {other}"
 msgstr "{name} hat {unit} {other} angeschlossen"
 
-#: src/ui/eventText.ts:339
+#: src/ui/eventText.ts:341
 #, fuzzy
 msgid "{unit} left {other}"
 msgstr "{unit} hat {other} verlassen"
 
-#: src/ui/eventText.ts:344
+#: src/ui/eventText.ts:346
 #, fuzzy
 msgid "{name} removed {unit}"
 msgstr "{name} hat {unit} entfernt"
 
-#: src/ui/eventText.ts:354
+#: src/ui/eventText.ts:356
 #, fuzzy
 msgid "{name} wheeled {unit} {deg}° right ({distance})"
 msgstr "{name} hat {unit} um {deg}° nach rechts geschwenkt ({distance})"
 
-#: src/ui/eventText.ts:355
+#: src/ui/eventText.ts:357
 #, fuzzy
 msgid "{name} wheeled {unit} {deg}° left ({distance})"
 msgstr "{name} hat {unit} um {deg}° nach links geschwenkt ({distance})"
 
-#: src/ui/eventText.ts:357
+#: src/ui/eventText.ts:359
 #, fuzzy
 msgid "{name} closed the door: {unit} lined up with its target ({distance})"
 msgstr "{name} hat die Tür geschlossen: {unit} hat sich an seinem Ziel ausgerichtet ({distance})"
 
-#: src/ui/eventText.ts:358
+#: src/ui/eventText.ts:360
 #, fuzzy
 msgid "{unit} charged {distance}"
 msgstr "{unit} hat {distance} angegriffen"
 
-#: src/ui/eventText.ts:359
+#: src/ui/eventText.ts:361
 #, fuzzy
 msgid "{unit} fled {distance}"
 msgstr "{unit} ist {distance} geflohen"
 
-#: src/ui/eventText.ts:360
+#: src/ui/eventText.ts:362
 #, fuzzy
 msgid "{unit} pursued {distance}"
 msgstr "{unit} hat {distance} verfolgt"
 
-#: src/ui/eventText.ts:362
-#: src/ui/eventText.ts:370
+#: src/ui/eventText.ts:364
+#: src/ui/eventText.ts:372
 #, fuzzy
 msgid "{name} moved {unit} back {distance}"
 msgstr "{name} hat {unit} {distance} zurückbewegt"
 
-#: src/ui/eventText.ts:366
+#: src/ui/eventText.ts:368
 #, fuzzy
 msgid "{name} moved {unit} sideways {distance}"
 msgstr "{name} hat {unit} {distance} seitlich bewegt"
 
-#: src/ui/eventText.ts:371
+#: src/ui/eventText.ts:373
 #, fuzzy
 msgid "{name} moved {unit} forward {distance}"
 msgstr "{name} hat {unit} {distance} vorwärtsbewegt"
@@ -11674,27 +11704,27 @@ msgstr "{name} hat {unit} {distance} vorwärtsbewegt"
 msgid "{name} turned models"
 msgstr "{name} hat Modelle gedreht"
 
-#: src/ui/eventText.ts:384
+#: src/ui/eventText.ts:386
 #, fuzzy
 msgid "{name} sent {unit} out as skirmishers"
 msgstr "{name} hat {unit} als Plänkler ausschwärmen lassen"
 
-#: src/ui/eventText.ts:387
+#: src/ui/eventText.ts:389
 #, fuzzy
 msgid "{name} put {unit} in column order"
 msgstr "{name} hat {unit} in Marschkolonne gebracht"
 
-#: src/ui/eventText.ts:389
+#: src/ui/eventText.ts:391
 #, fuzzy
 msgid "{name} put {unit} in open order"
 msgstr "{name} hat {unit} in offene Ordnung gebracht"
 
-#: src/ui/eventText.ts:391
+#: src/ui/eventText.ts:393
 #, fuzzy
 msgid "{name} put {unit} in disrupted order"
 msgstr "{name} hat {unit} in aufgelöste Ordnung gebracht"
 
-#: src/ui/eventText.ts:392
+#: src/ui/eventText.ts:394
 #, fuzzy
 msgid "{name} put {unit} in close order"
 msgstr "{name} hat {unit} in geschlossene Ordnung gebracht"
@@ -11704,55 +11734,50 @@ msgstr "{name} hat {unit} in geschlossene Ordnung gebracht"
 msgid "{name} turned {unit}"
 msgstr "{name} hat {unit} gedreht"
 
-#: src/ui/eventText.ts:400
+#: src/ui/eventText.ts:402
 #, fuzzy
 msgid "{name} turned {unit} about{cost}"
 msgstr "{name} hat {unit} kehrtmachen lassen{cost}"
 
-#: src/ui/eventText.ts:402
+#: src/ui/eventText.ts:404
 #, fuzzy
 msgid "{name} turned {unit} left{cost}"
 msgstr "{name} hat {unit} nach links gedreht{cost}"
 
-#: src/ui/eventText.ts:403
+#: src/ui/eventText.ts:405
 #, fuzzy
 msgid "{name} turned {unit} right{cost}"
 msgstr "{name} hat {unit} nach rechts gedreht{cost}"
 
-#: src/ui/eventText.ts:407
+#: src/ui/eventText.ts:409
 #, fuzzy
 msgid "{name} redressed {unit} {files} wide{cost}"
 msgstr "{name} hat {unit} auf {files} Breite ausgerichtet{cost}"
 
-#: src/ui/eventText.ts:408
+#: src/ui/eventText.ts:410
 #, fuzzy
 msgid "{name} redressed {unit}{cost}"
 msgstr "{name} hat {unit} ausgerichtet{cost}"
 
-#: src/ui/eventText.ts:410
+#: src/ui/eventText.ts:412
 #, fuzzy
 msgid "{name} reformed {unit} {files} wide{cost}"
 msgstr "{name} hat {unit} auf {files} Breite umformiert{cost}"
 
-#: src/ui/eventText.ts:411
+#: src/ui/eventText.ts:413
 #, fuzzy
 msgid "{name} reformed {unit}{cost}"
 msgstr "{name} hat {unit} umformiert{cost}"
-
-#: src/ui/eventText.ts:419
-#, fuzzy
-msgid "{unit} snapped back to {inches}\""
-msgstr "{unit} ist auf {inches}\" zurückgesprungen"
 
 #: src/ui/eventText.ts:42
 #, fuzzy
 msgid "{name} turned a model of {unit}"
 msgstr "{name} hat ein Modell von {unit} gedreht"
 
-#: src/ui/eventText.ts:429
+#: src/ui/eventText.ts:421
 #, fuzzy
-msgid "{name} automated {unit}'s {ability}"
-msgstr "{name} automatisierte {ability} von {unit}"
+msgid "{unit} snapped back to {inches}\""
+msgstr "{unit} ist auf {inches}\" zurückgesprungen"
 
 #: src/ui/eventText.ts:43
 #, fuzzy
@@ -11761,25 +11786,25 @@ msgid_plural "{name} turned {n} models of {unit}"
 msgstr[0] "{name} hat {n} Modell von {unit} gedreht"
 msgstr[1] "{name} hat {n} Modelle von {unit} gedreht"
 
-#: src/ui/eventText.ts:434
+#: src/ui/eventText.ts:431
+#, fuzzy
+msgid "{name} automated {unit}'s {ability}"
+msgstr "{name} automatisierte {ability} von {unit}"
+
+#: src/ui/eventText.ts:436
 #, fuzzy
 msgid "{name} stopped automating {unit}'s {ability}"
 msgstr "{name} automatisiert {ability} von {unit} nicht mehr"
 
-#: src/ui/eventText.ts:445
+#: src/ui/eventText.ts:447
 #, fuzzy
 msgid "system {n}"
 msgstr "System {n}"
 
-#: src/ui/eventText.ts:447
+#: src/ui/eventText.ts:449
 #, fuzzy
 msgid "{name} marked {unit} damaged: {what}"
 msgstr "{name} markierte {unit} als beschädigt: {what}"
-
-#: src/ui/eventText.ts:448
-#, fuzzy
-msgid "{name} cleared {unit}'s damage: {what}"
-msgstr "{name} entfernte den Schaden von {unit}: {what}"
 
 #: src/ui/eventText.ts:45
 #, fuzzy
@@ -11788,55 +11813,60 @@ msgstr "{name} hat Modelle {distance} bewegt"
 
 #: src/ui/eventText.ts:450
 #, fuzzy
+msgid "{name} cleared {unit}'s damage: {what}"
+msgstr "{name} entfernte den Schaden von {unit}: {what}"
+
+#: src/ui/eventText.ts:452
+#, fuzzy
 msgid "(placed dice lost: {faces})"
 msgstr "(gelegte Würfel verloren: {faces})"
 
-#: src/ui/eventText.ts:454
+#: src/ui/eventText.ts:456
 #, fuzzy
 msgid "{unit} used {ability}"
 msgstr "{unit} setzte {ability} ein"
 
-#: src/ui/eventText.ts:456
+#: src/ui/eventText.ts:458
 #, fuzzy
 msgid "{unit} is marching"
 msgstr "{unit} marschiert"
 
-#: src/ui/eventText.ts:456
+#: src/ui/eventText.ts:458
 #, fuzzy
 msgid "{unit} stopped marching"
 msgstr "{unit} marschiert nicht mehr"
 
-#: src/ui/eventText.ts:458
+#: src/ui/eventText.ts:460
 #, fuzzy
 msgid "{unit} is disrupted"
 msgstr "{unit} ist in Unordnung"
 
-#: src/ui/eventText.ts:458
+#: src/ui/eventText.ts:460
 #, fuzzy
 msgid "{unit} is no longer disrupted"
 msgstr "{unit} ist nicht mehr in Unordnung"
 
-#: src/ui/eventText.ts:459
+#: src/ui/eventText.ts:461
 #, fuzzy
 msgid "{unit} is fleeing"
 msgstr "{unit} flieht"
 
-#: src/ui/eventText.ts:459
+#: src/ui/eventText.ts:461
 #, fuzzy
 msgid "{unit} rallied"
 msgstr "{unit} hat sich gesammelt"
 
-#: src/ui/eventText.ts:462
+#: src/ui/eventText.ts:464
 #, fuzzy
 msgid "{unit} is under {spell}"
 msgstr "{unit} steht unter {spell}"
 
-#: src/ui/eventText.ts:462
+#: src/ui/eventText.ts:464
 #, fuzzy
 msgid "{spell} on {unit} ended"
 msgstr "{spell} auf {unit} ist beendet"
 
-#: src/ui/eventText.ts:467
+#: src/ui/eventText.ts:469
 #, fuzzy
 msgid "{name} marked {unit} as fine: {check}"
 msgstr "{name} hat {unit} als in Ordnung markiert: {check}"
@@ -11846,52 +11876,40 @@ msgstr "{name} hat {unit} als in Ordnung markiert: {check}"
 msgid "{name} moved {unit} {distance}"
 msgstr "{name} hat {unit} {distance} bewegt"
 
-#: src/ui/eventText.ts:471
+#: src/ui/eventText.ts:473
 #, fuzzy
 msgid "{name} set {unit} {key} = {value}"
 msgstr "{name} hat bei {unit} {key} = {value} gesetzt"
 
-#: src/ui/eventText.ts:474
+#: src/ui/eventText.ts:476
 #, fuzzy
 msgid "off"
 msgstr "aus"
 
-#: src/ui/eventText.ts:480
+#: src/ui/eventText.ts:482
 #, fuzzy
 msgid "{name} set wounds on {model} (destroyed)"
 msgstr "{name} hat die Lebenspunkte von {model} gesetzt (vernichtet)"
 
-#: src/ui/eventText.ts:481
+#: src/ui/eventText.ts:483
 #, fuzzy
 msgid "{name} set wounds on {model}"
 msgstr "{name} hat die Lebenspunkte von {model} gesetzt"
 
-#: src/ui/eventText.ts:484
+#: src/ui/eventText.ts:486
 #, fuzzy
 msgid "Table set up"
 msgstr "Tisch aufgebaut"
-
-#: src/ui/eventText.ts:488
-#, fuzzy
-msgid "Attack cancelled"
-msgstr "Angriff abgebrochen"
 
 #: src/ui/eventText.ts:49
 #, fuzzy
 msgid "{name} moved a model of {unit} {distance}"
 msgstr "{name} hat ein Modell von {unit} {distance} bewegt"
 
-#: src/ui/eventText.ts:498
+#: src/ui/eventText.ts:490
 #, fuzzy
-msgid "{unit} activates ({n} action)"
-msgid_plural "{unit} activates ({n} actions)"
-msgstr[0] "{unit} aktiviert ({n} Aktion)"
-msgstr[1] "{unit} aktiviert ({n} Aktionen)"
-
-#: src/ui/eventText.ts:499
-#, fuzzy
-msgid "{unit} activates"
-msgstr "{unit} aktiviert"
+msgid "Attack cancelled"
+msgstr "Angriff abgebrochen"
 
 #: src/ui/eventText.ts:50
 #, fuzzy
@@ -11900,199 +11918,206 @@ msgid_plural "{name} moved {n} models of {unit} {distance}"
 msgstr[0] "{name} hat {n} Modell von {unit} {distance} bewegt"
 msgstr[1] "{name} hat {n} Modelle von {unit} {distance} bewegt"
 
-#: src/ui/eventText.ts:503
+#: src/ui/eventText.ts:500
+#, fuzzy
+msgid "{unit} activates ({n} action)"
+msgid_plural "{unit} activates ({n} actions)"
+msgstr[0] "{unit} aktiviert ({n} Aktion)"
+msgstr[1] "{unit} aktiviert ({n} Aktionen)"
+
+#: src/ui/eventText.ts:501
+#, fuzzy
+msgid "{unit} activates"
+msgstr "{unit} aktiviert"
+
+#: src/ui/eventText.ts:505
 #, fuzzy
 msgid " with {units}"
 msgstr " mit {units}"
 
-#: src/ui/eventText.ts:505
+#: src/ui/eventText.ts:507
 #, fuzzy
 msgid " at {unit}"
 msgstr " auf {unit}"
 
-#: src/ui/eventText.ts:506
+#: src/ui/eventText.ts:508
 #, fuzzy
 msgid ", waiting on a reaction"
 msgstr ", wartet auf eine Reaktion"
 
-#: src/ui/eventText.ts:512
+#: src/ui/eventText.ts:514
 #, fuzzy
 msgid "Reaction over"
 msgstr "Reaktion vorbei"
 
-#: src/ui/eventText.ts:514
+#: src/ui/eventText.ts:516
 #, fuzzy
 msgid "Roll closed"
 msgstr "Wurf abgeschlossen"
 
-#: src/ui/eventText.ts:516
+#: src/ui/eventText.ts:518
 #, fuzzy
 msgid "{name} passed"
 msgstr "{name} hat gepasst"
 
-#: src/ui/eventText.ts:519
+#: src/ui/eventText.ts:521
 #, fuzzy
 msgid "{unit} moved and ended its go"
 msgstr "{unit} hat sich bewegt und den Zug beendet"
 
-#: src/ui/eventText.ts:520
+#: src/ui/eventText.ts:522
 #, fuzzy
 msgid "{name} ended the activation"
 msgstr "{name} hat die Aktivierung beendet"
 
-#: src/ui/eventText.ts:522
+#: src/ui/eventText.ts:524
 #, fuzzy
 msgid "{name} re-rolled or spent dice"
 msgstr "{name} hat Würfel neu geworfen oder ausgegeben"
 
-#: src/ui/eventText.ts:526
-#: src/ui/eventText.ts:541
+#: src/ui/eventText.ts:528
+#: src/ui/eventText.ts:543
 #, fuzzy
 msgid "a card"
 msgstr "eine Karte"
 
-#: src/ui/eventText.ts:528
+#: src/ui/eventText.ts:530
 #, fuzzy
 msgid "{name} placed a {face} on {unit}'s {weapon}"
 msgstr "{name} legte eine {face} auf {weapon} von {unit}"
 
-#: src/ui/eventText.ts:534
+#: src/ui/eventText.ts:536
 #, fuzzy
 msgid "{name} placed a die on {unit}'s {weapon}"
 msgstr "{name} legte einen Würfel auf {weapon} von {unit}"
 
-#: src/ui/eventText.ts:542
+#: src/ui/eventText.ts:544
 #, fuzzy
 msgid "{name} discarded the dice on {unit}'s {weapon}"
 msgstr "{name} warf die Würfel auf {weapon} von {unit} ab"
 
-#: src/ui/eventText.ts:551
+#: src/ui/eventText.ts:553
 #, fuzzy
 msgid " {n} secret stayed behind: lock them in again."
 msgid_plural " {n} secrets stayed behind: lock them in again."
 msgstr[0] " {n} Geheimnis ist zurückgeblieben: Leg es erneut fest."
 msgstr[1] " {n} Geheimnisse sind zurückgeblieben: Leg sie erneut fest."
 
-#: src/ui/eventText.ts:558
+#: src/ui/eventText.ts:560
 #, fuzzy
 msgid " \"{rule}\" was waiting on a player and didn't carry over."
 msgstr " „{rule}“ wartete auf einen Spieler und wurde nicht übernommen."
 
-#: src/ui/eventText.ts:561
+#: src/ui/eventText.ts:563
 #, fuzzy
 msgid "What if: from {moment}.{secrets}{rule}"
 msgstr "Was wäre, wenn: ab {moment}.{secrets}{rule}"
 
-#: src/ui/eventText.ts:569
-#: src/ui/eventText.ts:588
+#: src/ui/eventText.ts:571
+#: src/ui/eventText.ts:590
 #, fuzzy
 msgid "a secret"
 msgstr "ein Geheimnis"
 
-#: src/ui/eventText.ts:571
+#: src/ui/eventText.ts:573
 #, fuzzy
 msgid "{name} locked in {secret}: {n} cards, face down"
 msgstr "{name} hat {secret} festgelegt: {n} Karten, verdeckt"
 
-#: src/ui/eventText.ts:572
+#: src/ui/eventText.ts:574
 #, fuzzy
 msgid "{name} locked in {secret}"
 msgstr "{name} hat {secret} festgelegt"
 
-#: src/ui/eventText.ts:590
+#: src/ui/eventText.ts:592
 #, fuzzy
 msgid "{name} revealed {secret}: {shown}"
 msgstr "{name} hat {secret} aufgedeckt: {shown}"
 
-#: src/ui/eventText.ts:591
+#: src/ui/eventText.ts:593
 #, fuzzy
 msgid "{name} revealed {secret}: {shown} (didn't match what was locked in)"
 msgstr "{name} hat {secret} aufgedeckt: {shown} (stimmte nicht mit dem Festgelegten überein)"
 
-#: src/ui/eventText.ts:594
+#: src/ui/eventText.ts:596
 #, fuzzy
 msgid "Game: {system}"
 msgstr "Spiel: {system}"
 
-#: src/ui/eventText.ts:611
+#: src/ui/eventText.ts:613
 #, fuzzy
 msgid "{name} used {action} on {unit} ({spent})"
 msgstr "{name} hat {action} auf {unit} eingesetzt ({spent})"
 
-#: src/ui/eventText.ts:612
+#: src/ui/eventText.ts:614
 #, fuzzy
 msgid "{name} used {action} on {unit}"
 msgstr "{name} hat {action} auf {unit} eingesetzt"
 
-#: src/ui/eventText.ts:613
+#: src/ui/eventText.ts:615
 #, fuzzy
 msgid "{name} used {action} ({spent})"
 msgstr "{name} hat {action} eingesetzt ({spent})"
 
-#: src/ui/eventText.ts:613
+#: src/ui/eventText.ts:615
 #, fuzzy
 msgid "{name} used {action}"
 msgstr "{name} hat {action} eingesetzt"
 
-#: src/ui/eventText.ts:616
+#: src/ui/eventText.ts:618
 #, fuzzy
 msgid "{unit}: {ability} applied"
 msgstr "{unit}: {ability} angewendet"
 
-#: src/ui/eventText.ts:620
+#: src/ui/eventText.ts:622
 #, fuzzy
 msgid "{unit} went into reserves"
 msgstr "{unit} ist in die Reserve gegangen"
 
-#: src/ui/eventText.ts:622
+#: src/ui/eventText.ts:624
 #, fuzzy
 msgid "{unit} back on the table"
 msgstr "{unit} ist wieder auf dem Tisch"
 
-#: src/ui/eventText.ts:623
+#: src/ui/eventText.ts:625
 #, fuzzy
 msgid "{unit} arrives from reserves"
 msgstr "{unit} kommt aus der Reserve"
 
-#: src/ui/eventText.ts:626
+#: src/ui/eventText.ts:628
 #, fuzzy
 msgid "{unit} may move up to {inches}\" ({flag})"
 msgstr "{unit} darf sich bis zu {inches}\" bewegen ({flag})"
 
-#: src/ui/eventText.ts:632
+#: src/ui/eventText.ts:634
 #, fuzzy
 msgid "{name} chose the order their models take wounds"
 msgstr "{name} hat die Reihenfolge gewählt, in der seine Modelle Wunden nehmen"
 
-#: src/ui/eventText.ts:640
+#: src/ui/eventText.ts:642
 #, fuzzy
 msgid "{xp} XP"
 msgstr "{xp} XP"
 
-#: src/ui/eventText.ts:641
+#: src/ui/eventText.ts:643
 #, fuzzy
 msgid "honour: {honour}"
 msgstr "Ehre: {honour}"
 
-#: src/ui/eventText.ts:642
+#: src/ui/eventText.ts:644
 #, fuzzy
 msgid "scar: {scar}"
 msgstr "Narbe: {scar}"
 
-#: src/ui/eventText.ts:654
+#: src/ui/eventText.ts:656
 #, fuzzy
 msgid "{unit} is {status}"
 msgstr "{unit} ist {status}"
 
-#: src/ui/eventText.ts:655
+#: src/ui/eventText.ts:657
 #, fuzzy
 msgid "{unit} is no longer {status}"
 msgstr "{unit} ist nicht mehr {status}"
-
-#: src/ui/eventText.ts:658
-#, fuzzy
-msgid "{unit} destroyed"
-msgstr "{unit} vernichtet"
 
 #: src/ui/eventText.ts:66
 #: src/ui/gameLog.ts:155
@@ -12103,7 +12128,12 @@ msgstr "{unit} vernichtet"
 msgid "Someone"
 msgstr "Jemand"
 
-#: src/ui/eventText.ts:663
+#: src/ui/eventText.ts:660
+#, fuzzy
+msgid "{unit} destroyed"
+msgstr "{unit} vernichtet"
+
+#: src/ui/eventText.ts:665
 #: src/ui/gameLog.ts:399
 #: src/ui/gameLog.ts:433
 #, fuzzy
@@ -12113,7 +12143,7 @@ msgstr[0] "{n} Lebenspunkt verloren"
 msgstr[1] "{n} Lebenspunkte verloren"
 
 #: src/ui/eventText.ts:68
-#: src/ui/eventText.ts:340
+#: src/ui/eventText.ts:342
 #: src/ui/gameLog.ts:391
 #: src/ui/gameLog.ts:464
 #: src/ui/gameLog.ts:465
@@ -12122,32 +12152,32 @@ msgstr[1] "{n} Lebenspunkte verloren"
 msgid "a unit"
 msgstr "eine Einheit"
 
-#: src/ui/eventText.ts:680
+#: src/ui/eventText.ts:682
 #, fuzzy
 msgid "bottom-right"
 msgstr "rechts unten"
 
-#: src/ui/eventText.ts:681
+#: src/ui/eventText.ts:683
 #, fuzzy
 msgid "bottom"
 msgstr "unten"
 
-#: src/ui/eventText.ts:682
+#: src/ui/eventText.ts:684
 #, fuzzy
 msgid "bottom-left"
 msgstr "links unten"
 
-#: src/ui/eventText.ts:684
+#: src/ui/eventText.ts:686
 #, fuzzy
 msgid "top-left"
 msgstr "links oben"
 
-#: src/ui/eventText.ts:685
+#: src/ui/eventText.ts:687
 #, fuzzy
 msgid "top"
 msgstr "oben"
 
-#: src/ui/eventText.ts:686
+#: src/ui/eventText.ts:688
 #, fuzzy
 msgid "top-right"
 msgstr "rechts oben"
@@ -12167,35 +12197,35 @@ msgstr "{name} hat Platz genommen"
 msgid "{name} reconnected"
 msgstr "{name} ist wieder verbunden"
 
-#: src/ui/eventText.ts:78
+#: src/ui/eventText.ts:79
 #, fuzzy
 msgid "{name} chose the mission {mission}"
 msgstr "{name} hat die Mission {mission} gewählt"
 
-#: src/ui/eventText.ts:83
+#: src/ui/eventText.ts:80
+#, fuzzy
+msgid "{name} chose no mission: scoring by hand"
+msgstr "{name} hat keine Mission gewählt: Punkte von Hand"
+
+#: src/ui/eventText.ts:85
 #, fuzzy
 msgid "{side} passed on {why}"
 msgstr "{side} hat auf {why} verzichtet"
 
-#: src/ui/eventText.ts:86
+#: src/ui/eventText.ts:88
 #, fuzzy
 msgid "{side} scored {vp} VP (suggested {suggested}) · {why}"
 msgstr "{side} erzielt {vp} VP (vorgeschlagen: {suggested}) · {why}"
 
-#: src/ui/eventText.ts:92
+#: src/ui/eventText.ts:94
 #, fuzzy
 msgid "{side} scored {vp} VP · {why}"
 msgstr "{side} erzielt {vp} VP · {why}"
 
-#: src/ui/eventText.ts:97
+#: src/ui/eventText.ts:99
 #, fuzzy
 msgid "{name} picked new dice"
 msgstr "{name} hat neue Würfel gewählt"
-
-#: src/ui/eventText.ts:98
-#, fuzzy
-msgid "{name} picked their colour's dice"
-msgstr "{name} hat die Würfel seiner Farbe gewählt"
 
 #: src/ui/gameLog.ts:120
 #, fuzzy

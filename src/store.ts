@@ -172,7 +172,7 @@ interface Store {
 
 const SAVE_KEY = "open-battle:last-game";
 
-interface SavedGame {
+export interface SavedGame {
   mode: Mode;
   roomId: string | null;
   record: GameRecord;

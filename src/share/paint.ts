@@ -233,6 +233,19 @@ function paintText(
   ctx.fillStyle = style.color;
   ctx.font = `${style.fontStyle} ${style.fontWeight} ${px(style.fontSize) * f.scale}px ${style.fontFamily}`;
   ctx.textBaseline = "alphabetic";
+  // As the page lays the words out: an uppercase heading with its letter spacing filled its slots
+  // with gaps when painted in the raw case (PX dogfood 5: "Round   2").
+  const spacing =
+    style.letterSpacing && style.letterSpacing !== "normal" ? px(style.letterSpacing) * f.scale : 0;
+  if (spacing) ctx.letterSpacing = `${spacing}px`;
+  const cased = (w: string) =>
+    style.textTransform === "uppercase"
+      ? w.toUpperCase()
+      : style.textTransform === "lowercase"
+        ? w.toLowerCase()
+        : style.textTransform === "capitalize"
+          ? w.charAt(0).toUpperCase() + w.slice(1)
+          : w;
   const range = document.createRange();
   const words = /\S+/g;
   for (let m = words.exec(text); m; m = words.exec(text)) {
@@ -242,7 +255,7 @@ function paintText(
     if (!b.width) continue;
     // The baseline sits about a fifth of the line box up from its bottom.
     const base = b.bottom - (b.height - px(style.fontSize)) / 2 - px(style.fontSize) * 0.2;
-    ctx.fillText(m[0], (b.left - f.left) * f.scale, (base - f.top) * f.scale);
+    ctx.fillText(cased(m[0]), (b.left - f.left) * f.scale, (base - f.top) * f.scale);
   }
   range.detach();
   ctx.restore();

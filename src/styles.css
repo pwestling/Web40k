@@ -4887,3 +4887,13 @@ button.teach-button:hover {
   align-items: center;
   gap: 4px 6px;
 }
+
+/* Resume first in the lobby (UX 395). */
+.lobby .resume-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+}

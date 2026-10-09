@@ -77,7 +77,9 @@ export function TopBar() {
         )
         .map((seat) => sideName(game, seat))
     : [];
-  const warning = armyless.length
+  // A game with missions to pick from, and none picked, ends 0-0 unless scored by hand (UX 394).
+  const missionless = deploying && !game.mission && !!systemModule(game.system).missions?.length;
+  const people = armyless.length
     ? armyless.length > 1
       ? t("{names} have no army yet", { names: formatList(armyless) })
       : t("{name} has no army yet", { name: armyless[0] })
@@ -88,6 +90,9 @@ export function TopBar() {
           ? t("{names} aren't ready yet", { names: formatList(notReady) })
           : t("{name} isn't ready yet", { name: notReady[0] })
       : leaving.join(" · ");
+  const warning = [people, missionless ? t("No mission: you'll score by hand") : ""]
+    .filter(Boolean)
+    .join(" · ");
   const [asking, setAsking] = useState(false);
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
@@ -332,6 +337,18 @@ export function TopBar() {
         {asking && warning && (
           <span className="ask">
             {warning} ·{" "}
+            {missionless && (
+              <button
+                onClick={() => {
+                  setAsking(false);
+                  const pick = document.querySelector<HTMLSelectElement>(".mission-picker select");
+                  pick?.scrollIntoView({ block: "center" });
+                  pick?.focus();
+                }}
+              >
+                {t("Pick one")}
+              </button>
+            )}
             <button
               className="primary"
               onClick={() => {

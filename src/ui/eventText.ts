@@ -75,7 +75,9 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
         ? t("{name} took their seat", { name: nameOf(event.by) })
         : t("{name} reconnected", { name: nameOf(event.by) });
     case "mission/set":
-      return t("{name} chose the mission {mission}", { name: who, mission: event.mission.name });
+      return event.mission
+        ? t("{name} chose the mission {mission}", { name: who, mission: event.mission.name })
+        : t("{name} chose no mission: scoring by hand", { name: who });
     case "score/confirm": {
       // "Crossfire: controls 2 objectives" reads as "Crossfire, controls 2 objectives".
       const why = event.why.replace(/^([^:]+): /, "$1, ");

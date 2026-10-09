@@ -213,6 +213,32 @@ const checks = {
   },
 
   /**
+   * Hotseat (#56, UX 394/395): the first mission is preset, choosing None warns at Start battle with
+   * a Pick one, and a reload in the middle goes straight back into the game, not to the lobby.
+   */
+  async "hotseat-resume"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator("summary", { hasText: "More ways to play" }).click();
+    await page.getByRole("button", { name: "Set up a game on this screen (hotseat)" }).click();
+    const mission = page.locator(".mission-picker select").first();
+    if (!(await mission.inputValue())) throw new Error("hotseat started with no mission");
+    await mission.selectOption("");
+    await page.getByRole("button", { name: /Start battle/ }).click();
+    await page.locator(".ask").getByText("No mission").waitFor();
+    await page.getByRole("button", { name: "Pick one" }).click();
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForTimeout(1500);
+    await page.reload();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    if (await page.locator(".lobby").count()) throw new Error("the reload went back to the lobby");
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
+  /**
    * Play the computer with your own army (#56): How hard?, then Your army with a roster file. Your
    * roster faces the computer's sample army, both at the front of their zones (#56: not 35" apart).
    */

@@ -23,12 +23,7 @@ export function startDemo(system: string, mine?: OwnArmy): void {
       return;
     }
     const { dispatch } = useStore.getState();
-    // The game's first mission, so there's something to score: with none, every game ended 0-0 (PX).
-    const mission = systemModule(system).missions?.[0];
-    if (mission) {
-      const { zones, objectives } = mission.setup(game.table);
-      dispatch({ type: "mission/set", mission: { id: mission.id, name: mission.name }, zones, objectives });
-    }
+    presetMission();
     if (mine) deployOwn(mine, () => useStore.getState().game, dispatch);
     else deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
     // Ready, and into the battle: the army showcase opens it.
@@ -37,4 +32,23 @@ export function startDemo(system: string, mine?: OwnArmy): void {
     useHelp.setState({ hint: true });
   };
   go();
+}
+
+/**
+ * The game's first mission on a new game, so there's something to score: with
+ * none, every game ended 0-0 (PX, UX 394). Players can change it before the
+ * battle. A game whose rules haven't loaded yet (a package) is left as it is.
+ */
+export function presetMission(): void {
+  const { game, dispatch } = useStore.getState();
+  if (game.mission || game.turn.round > 0) return;
+  let mission;
+  try {
+    mission = systemModule(game.system).missions?.[0];
+  } catch {
+    return;
+  }
+  if (!mission) return;
+  const { zones, objectives } = mission.setup(game.table);
+  dispatch({ type: "mission/set", mission: { id: mission.id, name: mission.name }, zones, objectives });
 }

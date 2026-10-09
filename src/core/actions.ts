@@ -159,7 +159,12 @@ export type Intent =
   /** A time call written into the log when it's first made (UX 218): "last-turn", "time-up", "round-3", "out-1". */
   | { type: "clock/call"; kind: string; text: string }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
-  | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
+  | {
+      type: "mission/set";
+      mission: { id: string; name: string } | null;
+      zones: Zone[];
+      objectives: Objective[];
+    }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
   | {
       type: "score/confirm";
@@ -329,7 +334,12 @@ export type GameEvent =
   | { type: "clock/adjust"; seat: number; ms: number }
   | { type: "clock/call"; kind: string; text: string }
   /** Choose the mission: its deployment zones and objective markers replace the table's (terrain stays). */
-  | { type: "mission/set"; mission: { id: string; name: string }; zones: Zone[]; objectives: Objective[] }
+  | {
+      type: "mission/set";
+      mission: { id: string; name: string } | null;
+      zones: Zone[];
+      objectives: Objective[];
+    }
   /** Confirm the victory points suggested at a scoring moment (vp 0 and skipped to pass on it). */
   | {
       type: "score/confirm";

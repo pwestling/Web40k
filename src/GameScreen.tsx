@@ -37,6 +37,7 @@ import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
 import { useTableTalk } from "./talk/talk";
 import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
+import { useHotseatMark } from "./ui/resumeHotseat";
 import { BroadcastBadge } from "./broadcast/BroadcastControls";
 import { Moments } from "./broadcast/Moments";
 import { Ambience } from "./ui/Ambience";
@@ -207,6 +208,7 @@ function BroadcastView() {
 /** Everything on screen once a game is open, loaded after the front door (with three.js). */
 export function GameScreen({ started }: { started: boolean }) {
   useSpectatorDelay();
+  useHotseatMark();
   const editing = useStore((s) => s.editing);
   const holding = useHold((s) => s.held !== null);
   const SystemPanel = systemModule(useStore((s) => s.game.system)).panel;
