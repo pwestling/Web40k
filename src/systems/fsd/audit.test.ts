@@ -9,7 +9,7 @@ import {
   type PlayerId,
 } from "../../core";
 import { actionTargets, procedureEnv, procedureRoles, unitActions } from "../../core/content/play";
-import { abilityReminders, attackReminders } from "../../core/content/player";
+import { abilityReminders, attackReminders, isAutomated } from "../../core/content/player";
 import { previewRun, type TestPlan } from "../../core/content/runner";
 import { fsd } from "../../core/content/examples/fsd";
 import { systemConstants } from "../../core/content/gameSize";
@@ -961,23 +961,20 @@ describe("FSD rules audit: engine gaps (#57)", () => {
     expect(hitTarget(s, tank, "light-cannon", gang)).toBe(4);
   });
 
-  it("unit special rules show for the unit activated, once it moves, or while it reacts", () => {
+  it("unit special rules show for the unit activated, or once it moves", () => {
     let s = setup();
     const tank = unitNamed(s, "Lancer Tank", "p1").id;
-    const gang = unitNamed(s, "Raider Gang", "p2").id;
     s = place(s, tank, 0, 4);
-    s = place(s, gang, -1.5, -2);
-    s = editUnit(s, tank, { abilities: ["Fast", "Silent"] });
-    s = editUnit(s, gang, { abilities: ["Reactive"] });
+    // Fast is played by the Move action now (#66): only the hand-played ones are reminded.
+    s = editUnit(s, tank, { abilities: ["Fast", "Fire Base", "Side Movement"] });
     const now = (t: GameState) => abilityReminders(t).map((r) => r.ability.name);
     s = toActivations(s);
     expect(now(s)).toEqual([]);
     s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
-    expect(now(s)).toEqual(["Silent"]);
+    expect(now(s)).toEqual(["Fire Base"]);
     s = play(s, { type: "action/take", unitId: tank, action: "move" }, "p1");
-    expect(s.pending?.seat).toBe(1);
-    s = play(s, { type: "action/take", unitId: gang, action: "react" }, "p2");
-    expect(now(s)).toEqual(expect.arrayContaining(["Silent", "Fast", "Reactive"]));
+    expect(now(s)).toEqual(expect.arrayContaining(["Fire Base", "Side Movement"]));
+    expect(now(s)).not.toContain("Fast");
   });
 
   it("reminds of hand-played rules in the attack: lost when firing, transported units, wrecks, a System's own damage", () => {
@@ -1170,5 +1167,219 @@ describe("FSD rules audit: the last missing rows (#58)", () => {
 
   it("Interact says how retrieved and extracted objectives work", () => {
     expect(fsd.actions.find((a) => a.id === "interact")?.hint).toMatch(/Retrieve.*Extract/);
+  });
+});
+
+describe("FSD special rules by name (#66)", () => {
+  /** Fire one weapon to the end: no reaction, rolled with `seed`, closed. */
+  function fire(s: GameState, a: string, w: string, t: string, seed: number): GameState {
+    s = play(s, { type: "action/take", unitId: a, action: "fire", weapon: w, targetId: t }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    const r = rng(seed);
+    while (s.procedure && !s.procedure.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+    if (s.procedure) s = play(s, { type: "procedure/clear" }, "p1");
+    return s;
+  }
+  const woods = (s: GameState): GameState => ({
+    ...s,
+    terrain: [makePiece("Woods", "w", { x: 0, y: 0 }, 0, "obscuring")],
+  });
+
+  it("the target's rules in the hit roll: Nimble, Small and Large Target, Terrain Expert, Flying, Mounted", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, tank, 0, 6);
+    s = place(s, gang, 0, 0);
+    const as = (abilities: string[]) => editUnit(s, gang, { abilities });
+    // Nimble: the light cannon's d10 rolls a d8.
+    expect((preview(as(["Nimble"]), tank, "light-cannon", gang).plans.hit as TestPlan).sides).toBe(8);
+    expect((preview(s, tank, "light-cannon", gang).plans.hit as TestPlan).sides).toBe(10);
+    // At long range (coax MG, 3 DU): +1, +2 for a Small Target, nothing for a Large one.
+    s = place(s, gang, 0, -6);
+    expect(hitTarget(s, tank, "coax-mg", gang)).toBe(5);
+    expect(hitTarget(as(["Small Target"]), tank, "coax-mg", gang)).toBe(6);
+    expect(hitTarget(as(["Large Target"]), tank, "coax-mg", gang)).toBe(4);
+    // Behind woods (light cannon in range): infantry +2; Terrain Expert one more; Flying none;
+    // Mounted infantry +1, as a mech.
+    s = woods(place(place(s, tank, 0, 9), gang, 0, -6));
+    expect(hitTarget(s, tank, "light-cannon", gang)).toBe(6);
+    expect(hitTarget(as(["Terrain Expert"]), tank, "light-cannon", gang)).toBe(7);
+    expect(hitTarget(as(["Flying"]), tank, "light-cannon", gang)).toBe(4);
+    expect(hitTarget(as(["Mounted"]), tank, "light-cannon", gang)).toBe(5);
+    // A Large Target at long range gets no cover either.
+    const far = woods(place(place(setup(), tank, 0, 12), gang, 0, -9));
+    expect(hitTarget(editUnit(far, gang, { abilities: ["Large Target"] }), tank, "light-cannon", gang)).toBe(
+      4,
+    );
+  });
+
+  it("Camouflage: in cover, infantry can't be targeted from beyond 2 DU", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = woods(place(place(s, tank, 0, 9), gang, 0, -6));
+    s = editUnit(s, gang, { abilities: ["Camouflage"] });
+    expect(hitTarget(s, tank, "light-cannon", gang)).toBeNull();
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    const t = actionTargets(s, tank, "fire", "light-cannon").find((x) => x.unitId === gang);
+    expect(t?.why).toBe("Camouflage: in cover and too far to target");
+  });
+
+  it("Thick Armor: AP one less, close combat's AP1 too", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const crawler = unitNamed(s, "Scrap Crawler", "p2").id;
+    s = place(s, tank, 0, 6, Math.PI);
+    s = place(s, crawler, 0, -3, 0);
+    s = editUnit(s, crawler, { abilities: ["Thick Armor"] });
+    expect(savePlan(s, tank, "light-cannon", crawler).dicePerInput).toBe(3);
+    s = place(s, crawler, 0, 3.5, 0);
+    expect(savePlan(s, tank, "coax-mg", crawler).dicePerInput).toBe(3);
+  });
+
+  it("Suppress pins the target on a hit instead of damaging it; an Unpinnable unit is never pinned", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const walker = unitNamed(s, "Junk Walker", "p2").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, tank, 0, 6);
+    s = place(s, walker, 0, 0);
+    s = editWeapon(s, tank, "coax-mg", { keywords: ["Suppress"] });
+    // Played, not reminded.
+    expect(preview(s, tank, "coax-mg", walker).reminders).not.toContain("Suppress");
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    let pinned = false;
+    for (let seed = 1; seed < 10 && !pinned; seed++) {
+      const t = fire(s, tank, "coax-mg", walker, seed);
+      const w = t.units[walker]!;
+      pinned = !!w.status?.pinned;
+      // No damage boxes, whatever was hit.
+      expect(Object.keys(w.status ?? {}).filter((k) => k.startsWith("damage"))).toEqual([]);
+    }
+    expect(pinned).toBe(true);
+    // An Unpinnable gang shot with the plain MG: hit, but never pinned.
+    let u = place(editUnit(s, gang, { abilities: ["Unpinnable"] }), gang, 0, 0);
+    u = place(u, walker, 10, -10);
+    u = editWeapon(u, tank, "coax-mg", { keywords: [] });
+    for (let seed = 1; seed < 6; seed++)
+      expect(fire(u, tank, "coax-mg", gang, seed).units[gang]?.status?.pinned).toBeFalsy();
+  });
+
+  it("Fast moves again at full Move; Slow moves once an activation", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const twice = (abilities: string[]) => {
+      let t = toActivations(editUnit(s, tank, { abilities }));
+      t = play(t, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+      t = play(t, { type: "action/take", unitId: tank, action: "move" }, "p1");
+      if (t.pending) t = play(t, { type: "reaction/pass" }, "p2");
+      return t;
+    };
+    const fast = play(twice(["Fast"]), { type: "action/take", unitId: tank, action: "move" }, "p1");
+    expect(fast.units[tank]?.status?.allowance).toBe(24);
+    expect(option(twice(["Slow"]), tank, "move").why).toBe("Slow: one move per activation");
+    s = twice([]);
+    expect(option(s, tank, "move").ok).toBe(true);
+  });
+
+  it("Capable takes one more action; Reactive reacts with two; Inert never reacts; a Silent unit sets off none", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, tank, 0, 6);
+    s = place(s, gang, 0, 0);
+    s = toActivations(s);
+    const on = (st: GameState, id: string, abilities: string[]) => editUnit(st, id, { abilities });
+    const capable = play(
+      on(s, tank, ["Capable"]),
+      { type: "action/take", unitId: tank, action: "activate" },
+      "p1",
+    );
+    expect(capable.units[tank]?.status?.actionBudget).toBe(3);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    const moved = (st: GameState) => play(st, { type: "action/take", unitId: tank, action: "move" }, "p1");
+    const reactive = play(
+      moved(on(s, gang, ["Reactive"])),
+      { type: "action/take", unitId: gang, action: "react" },
+      "p2",
+    );
+    expect(reactive.units[gang]?.status?.actionBudget).toBe(2);
+    expect(option(moved(on(s, gang, ["Inert"])), gang, "react").ok).toBe(false);
+    expect(option(moved(on(s, tank, ["Silent"])), gang, "react").ok).toBe(false);
+    expect(option(moved(s), gang, "react").ok).toBe(true);
+  });
+
+  it("Lone Wolf and Disciplined activate without an AD and don't command; Commander commands at any range", () => {
+    let s = setup();
+    const boss = unitNamed(s, "Command Team", "p1").id;
+    const squad = unitNamed(s, "Rifle Squad", "p1").id;
+    s = place(s, boss, -6, 8);
+    s = place(s, squad, 6, 0);
+    s = toActivations(s);
+    const on = (st: GameState, id: string, abilities: string[]) => editUnit(st, id, { abilities });
+    expect(option(s, boss, "activateFree").ok).toBe(false);
+    const dice = (st: GameState) => JSON.stringify(st.pools?.p1?.readyDice);
+    const wolf = play(
+      on(s, boss, ["Lone Wolf"]),
+      { type: "action/take", unitId: boss, action: "activateFree" },
+      "p1",
+    );
+    expect(wolf.units[boss]?.status?.actionBudget).toBe(2);
+    expect(dice(wolf)).toBe(dice(s));
+    // (Activating as usual spends one.)
+    expect(dice(play(s, { type: "action/take", unitId: boss, action: "activate" }, "p1"))).not.toBe(dice(s));
+    const disc = play(
+      on(s, boss, ["Disciplined"]),
+      { type: "action/take", unitId: boss, action: "activateFree" },
+      "p1",
+    );
+    expect(disc.units[boss]?.status?.actionBudget).toBe(1);
+    // Commanding: the squad is 4 DU away, too far; a Commander reaches it; a Lone Wolf commands no one.
+    expect(option(s, boss, "activate").commands?.candidates).not.toContain(squad);
+    expect(option(on(s, boss, ["Commander"]), boss, "activate").commands?.candidates).toContain(squad);
+    expect(option(on(s, boss, ["Lone Wolf", "Commander"]), boss, "activate").commands?.count).toBe(0);
+    const lone = on(on(s, boss, ["Commander"]), squad, ["Lone Wolf"]);
+    expect(option(lone, boss, "activate").commands?.candidates).not.toContain(squad);
+  });
+
+  it("Unwavering acts while pinned, but still can't interact", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, gang, 0, 0);
+    s = place(s, tank, 0, 6);
+    s = status(editUnit(s, tank, { abilities: ["Unwavering"] }), tank, "pinned", true);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    expect(option(s, tank, "move").ok).toBe(true);
+    expect(option(s, tank, "fire", { weapon: "coax-mg", targetId: gang }).ok).toBe(true);
+    expect(option(s, tank, "interact").ok).toBe(false);
+  });
+
+  it("counts the rulebook's named special rules as automated or reminders by name", () => {
+    const unitAuto = [
+      "Nimble",
+      "Small Target",
+      "Large Target",
+      "Terrain Expert",
+      "Camouflage",
+      "Thick Armor",
+    ];
+    const more = ["Unpinnable", "Flying", "Mounted", "Fast", "Slow", "Capable", "Disciplined", "Lone Wolf"];
+    for (const name of [...unitAuto, ...more, "Inert", "Silent", "Commander", "Reactive", "Unwavering"])
+      expect(isAutomated(fsd, { name, text: "" }), name).toBe(true);
+    for (const name of [
+      "Evasive",
+      "Hard Shell",
+      "Charger",
+      "Fire Base",
+      "Jamming 2",
+      "Side Movement",
+      "Blunt",
+    ])
+      expect(isAutomated(fsd, { name, text: "" }), name).toBe(false);
   });
 });

@@ -10,9 +10,9 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 | System        | automated | advisory check | manual reminder | missing | rows |
 | ------------- | --------- | -------------- | --------------- | ------- | ---- |
 | 40k           | 73        | 13             | 24              | 0       | 110  |
-| The Old World | 73        | 8              | 12              | 0       | 93   |
-| FSD           | 86        | 11             | 31              | 0       | 128  |
-| Conquest      | 61        | 14             | 6               | 0       | 81   |
+| The Old World | 95        | 12             | 12              | 0       | 119  |
+| FSD           | 105       | 11             | 31              | 0       | 147  |
+| Conquest      | 77        | 14             | 7               | 0       | 98   |
 | Rift Lanterns | 31        | 3              | 0               | 0       | 34   |
 
 ## Known gaps that need engine work

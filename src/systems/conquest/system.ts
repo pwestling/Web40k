@@ -9,9 +9,8 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure, RuleDef } from "../..
  *
  * Written from the paraphrased core rules notes in research/conquest-rules.md
  * (2.0, 2026). No rules text, profiles or points: the sample armies are
- * invented. Special rules: Cleave, Support, Barrage, Impact, Flurry,
- * Shield, Hardened, Terrifying, Deadly Blades and Relentless Blows play
- * themselves; Unstoppable and Oblivious are reminders. Supremacy is a
+ * invented. Special rules play themselves by name (`specialRules`, and
+ * special.ts for those played in code); the rest are reminders. Supremacy is a
  * roll-off each round (no modifiers yet, and the higher goes first: the
  * rules have the lower roller choose; see docs/rules-coverage/conquest.md).
  */
@@ -67,7 +66,14 @@ const flanked: Expr = {
  * more wound. From a flank, passed Resolve tests are re-rolled; from the
  * rear, every test fails.
  */
-function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Expr): Procedure {
+function attack(
+  id: string,
+  name: string,
+  pool: Expr,
+  hitOn: string,
+  cleave: Expr,
+  afterHit: Procedure["steps"] = [],
+): Procedure {
   return {
     id,
     name,
@@ -83,6 +89,7 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
         alwaysPass: [1],
         roller: "attacker",
       },
+      ...afterHit,
       {
         kind: "test",
         id: "defense",
@@ -146,7 +153,17 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
         kind: "do",
         id: "aftermath",
         do: [
-          { do: "script", procedure: "aftermath", args: { unit: ref("target"), before: count("target") } },
+          {
+            do: "script",
+            procedure: "aftermath",
+            // Lethal Demise (special.ts) reads the wounds the attack cost.
+            args: {
+              unit: ref("target"),
+              before: count("target"),
+              attacker: ref("attacker"),
+              hp: { call: "woundsLeft", args: [ref("target.id")] },
+            },
+          },
         ],
       },
       {
@@ -163,19 +180,53 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
   };
 }
 
+/** Smite: the target's Defence counts as 0 against the attacker's melee attacks (Evasion still counts). */
+const melee = (cleave: Expr): Expr => ({
+  if: { hasRule: "attacker", rule: "smite" },
+  then: 99,
+  else: cleave,
+});
+
 /**
  * After a charge that made contact: Impact(X) attacks from each front-rank
- * stand, rolled like a clash (unverified: hits on Clash).
+ * stand, rolled like a clash (unverified: hits on Clash). Unstoppable Charge
+ * doubles them; Brutal Impact (X) lowers Defence against them like Cleave.
  */
 const impact = attack(
   "impact",
   "Impact",
-  { op: "*", args: [ref("attacker.Impact"), frontStands("attacker")] },
+  {
+    op: "*",
+    args: [
+      ref("attacker.Impact"),
+      frontStands("attacker"),
+      { if: { hasRule: "attacker", rule: "unstoppableCharge" }, then: 2, else: 1 },
+    ],
+  },
   "attacker.C",
-  ref("attacker.Cleave"),
+  melee({ op: "+", args: [ref("attacker.Cleave"), ref("attacker.BrutalImpact")] }),
 );
 
 /** Barrage shots from each front-rank stand with a clear shot (command.ts), one more each within half range. */
+/**
+ * Hits from a special rule (Lethal Demise, Aura of Death; special.ts): no hit
+ * roll, then Defense and Resolve as usual. The count waits in the module's state.
+ */
+const hitsBase = attack("hits", "Hits", { call: "pendingHits", args: [ref("target.id")] }, "attacker.C", 0);
+const hits: Procedure = {
+  ...hitsBase,
+  steps: hitsBase.steps
+    .filter((s) => s.id !== "hit")
+    .map((s) =>
+      s.kind === "do"
+        ? {
+            ...s,
+            do: s.do.map((a) => (a.do === "script" ? { ...a, args: { ...a.args, chained: true } } : a)),
+          }
+        : s,
+    ),
+};
+
 const volley = attack(
   "volley",
   "Volley",
@@ -201,7 +252,33 @@ const volley = attack(
     ],
   },
   "attacker.V",
-  0,
+  // Armour Piercing (X): Defence X lower against the volley.
+  ref("attacker.ArmourPiercing"),
+  [
+    {
+      // Torrential Fire, not at long range: each hit makes one more shot, which can't make more.
+      // Rolled as a test that each extra shot "fails" when it hits (V or less), so the
+      // hits go on with one more for each.
+      kind: "test",
+      id: "torrential",
+      if: {
+        all: [
+          { hasRule: "attacker", rule: "torrentialFire" },
+          {
+            cmp: "<=",
+            a: { query: { kind: "distance", from: "attacker", to: "target" } },
+            b: { op: "/", args: [ref("attacker.Range"), 2] },
+          },
+        ],
+      },
+      compare: "atLeast",
+      target: { op: "+", args: [ref("attacker.V"), 1] },
+      alwaysPass: [6],
+      alwaysFail: [1],
+      roller: "attacker",
+      passOn: "inputPlusFailures",
+    },
+  ],
 );
 
 /**
@@ -219,7 +296,7 @@ const clash = attack(
     ],
   },
   "attacker.C",
-  ref("attacker.Cleave"),
+  melee(ref("attacker.Cleave")),
 );
 
 const beforeHit = (procedure: string): Effect["when"] => ({
@@ -270,7 +347,18 @@ const effects: Effect[] = [
     // Take Aim: the volley re-rolls its misses.
     id: "Aimed shot",
     when: beforeHit("volley"),
-    if: { hasFlag: "attacker", flag: "aimed" },
+    // An Arcing Fire volley at an enemy only a friend sees loses the aim's benefit.
+    if: {
+      all: [
+        { hasFlag: "attacker", flag: "aimed" },
+        {
+          any: [
+            { not: { hasRule: "attacker", rule: "arcingFire" } },
+            { query: { kind: "visible", from: "attacker", to: "target" } },
+          ],
+        },
+      ],
+    },
     do: [{ do: "reroll", which: "failed" }],
   },
 ];
@@ -291,6 +379,29 @@ const onDie = (step: string, natural: number, procedure?: string): Effect["when"
     ],
   },
 });
+/** A rule the procedures, actions or module code look for by id (`hasRule`), with no effects of its own. */
+const played = (id: string, name: string, match: string): RuleDef => ({
+  id,
+  name,
+  match,
+  appliesTo: ["unit"],
+  effects: [],
+  played: "code",
+});
+/** "Cleave (X)": sets the characteristic the attack procedures read to X. */
+const setsFrom = (id: string, name: string, match: string, characteristic: string, x: number): RuleDef => ({
+  id,
+  name,
+  params: [{ id: "x", type: "number", default: x }],
+  match,
+  appliesTo: ["unit"],
+  effects: [
+    {
+      when: { event: "always" },
+      do: [{ do: "setCharacteristic", target: "self", characteristic, to: ref("param.x") }],
+    },
+  ],
+});
 const reminder = (id: string, name: string, match: string): RuleDef => ({
   id,
   name,
@@ -298,6 +409,9 @@ const reminder = (id: string, name: string, match: string): RuleDef => ({
   appliesTo: ["unit"],
   effects: [{ when: { event: "action.declared" }, do: [{ do: "manual", reminder: id }] }],
 });
+
+/** Fearless regiments ignore enemy Terrifying. */
+const notFearless: Expr = { not: { hasRule: "target", rule: "fearless" } };
 
 /**
  * Special rules, found in a regiment's ability names ("Flurry", "Hardened (1)").
@@ -350,12 +464,12 @@ const specialRules: RuleDef[] = [
     effects: [
       {
         when: beforeStep("resolve"),
-        if: owns("attacker"),
+        if: { all: [owns("attacker"), notFearless] },
         do: [{ do: "modifyTarget", by: { op: "-", args: [0, ref("param.x")] } }],
       },
       {
         when: beforeStep("resolve_flanked"),
-        if: owns("attacker"),
+        if: { all: [owns("attacker"), notFearless] },
         do: [{ do: "modifyTarget", by: { op: "-", args: [0, ref("param.x")] } }],
       },
     ],
@@ -366,7 +480,11 @@ const specialRules: RuleDef[] = [
     name: "Deadly Blades",
     match: "^deadly blades\\b",
     appliesTo: ["unit"],
-    effects: [{ when: onDie("defense", 6), if: owns("attacker"), do: [{ do: "addSuccesses", count: 1 }] }],
+    effects: ["clash", "impact"].map((p) => ({
+      when: onDie("defense", 6, p),
+      if: owns("attacker"),
+      do: [{ do: "addSuccesses", count: 1 }],
+    })),
   },
   {
     // A Clash hit roll of 1 scores a second hit.
@@ -378,9 +496,99 @@ const specialRules: RuleDef[] = [
       { when: onDie("hit", 1, "clash"), if: owns("attacker"), do: [{ do: "addSuccesses", count: 1 }] },
     ],
   },
-  // Played by hand for now: listed as reminders when they come up.
-  reminder("unstoppable", "Unstoppable", "^unstoppable\\b"),
+  // Characteristics read by the attack procedures above, set from the rule's name.
+  setsFrom("cleave", "Cleave", "^cleave\\s*\\(?\\s*(?<x>\\d+)?", "Cleave", 1),
+  // A bare "Support" (older lists) means two support attacks per stand.
+  setsFrom("support", "Support", "^support\\s*\\(?\\s*(?<x>\\d+)?", "Support", 2),
+  setsFrom("impact", "Impact", "^impact\\s*\\(?\\s*(?<x>\\d+)?", "Impact", 1),
+  setsFrom(
+    "armourPiercing",
+    "Armour Piercing",
+    "^armou?r piercing\\s*\\(?\\s*(?<x>\\d+)?",
+    "ArmourPiercing",
+    1,
+  ),
+  setsFrom("brutalImpact", "Brutal Impact", "^brutal impact\\s*\\(?\\s*(?<x>\\d+)?", "BrutalImpact", 1),
+  {
+    // Barrage (X) with its range and any Armour Piercing in brackets: "Barrage 2 (24", Armour Piercing 1)".
+    id: "barrage",
+    name: "Barrage",
+    params: [
+      { id: "x", type: "number", default: 1 },
+      { id: "range", type: "number", default: 0 },
+      { id: "ap", type: "number", default: 0 },
+    ],
+    match:
+      "^barrage\\s*\\(?\\s*(?<x>\\d+)?\\s*\\)?\\s*(?:\\(\\s*(?<range>\\d+)\\s*(?:\"|''|in)?\\s*(?:,\\s*armou?r piercing\\s*(?<ap>\\d+))?)?",
+    appliesTo: ["unit"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "Barrage", to: ref("param.x") }],
+      },
+      {
+        when: { event: "always" },
+        if: { cmp: ">", a: ref("param.range"), b: 0 },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "Range", to: ref("param.range") }],
+      },
+      {
+        when: { event: "always" },
+        if: { cmp: ">", a: ref("param.ap"), b: 0 },
+        do: [
+          { do: "setCharacteristic", target: "self", characteristic: "ArmourPiercing", to: ref("param.ap") },
+        ],
+      },
+    ],
+  },
+  {
+    // Like Deadly Blades, for its volleys.
+    id: "deadlyShot",
+    name: "Deadly Shot",
+    match: "^deadly shot\\b",
+    appliesTo: ["unit"],
+    effects: [
+      { when: onDie("defense", 6, "volley"), if: owns("attacker"), do: [{ do: "addSuccesses", count: 1 }] },
+    ],
+  },
+  {
+    // Re-roll missed hits against Monsters.
+    id: "fiendHunter",
+    name: "Fiend Hunter",
+    match: "^fiend hunter\\b",
+    appliesTo: ["unit"],
+    effects: [
+      {
+        when: beforeStep("hit"),
+        if: { all: [owns("attacker"), { is: "target.Type", value: "Monster" }] },
+        do: [{ do: "reroll", which: "failed" }],
+      },
+    ],
+  },
+  // Read by the procedures, actions and code by rule id (hasRule): see each one's use.
+  played("fearless", "Fearless", "^fearless\\b"), // ignores enemy Terrifying (above)
+  played("smite", "Smite", "^smite\\b"), // Defence 0 against its melee attacks (`melee`)
+  played("unstoppableCharge", "Unstoppable Charge", "^unstoppable charge\\b"), // twice the Impact attacks
+  played("torrentialFire", "Torrential Fire", "^torrential fire\\b"), // the volley's "torrential" step
+  played("fluidFormation", "Fluid Formation", "^fluid formation\\b"), // an extra Reform, sees all round
+  played("arcingFire", "Arcing Fire", "^arcing fire\\b"), // aimed volleys at targets a friend sees
+  played("vanguard", "Vanguard", "^vanguard\\b"), // a free March on arrival
+  played("unstoppable", "Unstoppable", "^unstoppable(?!\\s+charge)\\b"), // re-rolls a short charge (charge.ts)
+  played("lethalDemise", "Lethal Demise", "^lethal demise\\b"), // hits back for wounds taken (special.ts)
+  played("auraOfDeath", "Aura of Death", "^aura of death\\b"), // hits at round start (special.ts)
+  played("fly", "Fly", "^fly\\b"), // marches over impassable terrain (the terrain list below)
+  // Played by hand: listed as reminders when they come up.
   reminder("oblivious", "Oblivious", "^oblivious\\b"),
+  reminder("snapfire", "Snapfire", "^snapfire\\b"),
+  reminder("blessed", "Blessed", "^blessed\\b"),
+  reminder("fearsome", "Fearsome", "^fearsome\\b"),
+  reminder("resistDecay", "Resist Decay", "^resist decay\\b"),
+  reminder("devout", "Devout", "^devout\\b"),
+  reminder("feral", "Feral", "^feral\\b"),
+  reminder("flank", "Flank", "^flank\\b"),
+  reminder("quicksilverStrike", "Quicksilver Strike", "^quicksilver strike\\b"),
+  // Spellcasting characters: their spells are played by hand.
+  reminder("wizard", "Wizard", "^wizard\\b"),
+  reminder("priest", "Priest", "^priest\\b"),
 ];
 
 const arcs: ArcDef[] = [
@@ -400,6 +608,28 @@ const marchFirst = {
 const engaged: Expr = { call: "engaged", args: [ref("self.id")] };
 const notEngaged = { if: engaged, why: "Engaged: combat actions only" } satisfies { if: Expr; why: string };
 const mustBeEngaged = { if: { not: engaged }, why: "Not engaged" } satisfies { if: Expr; why: string };
+/**
+ * Volley targets in sight: Fluid Formation sees all round; Arcing Fire, having
+ * taken aim, may shoot at an enemy a friendly regiment sees (special.ts).
+ */
+const volleySight: Expr = {
+  any: [
+    { query: { kind: "visible", from: "self", to: "it" } },
+    {
+      all: [
+        { hasRule: "self", rule: "fluidFormation" },
+        { query: { kind: "visible", from: "self", to: "it", allAround: true } },
+      ],
+    },
+    {
+      all: [
+        { hasRule: "self", rule: "arcingFire" },
+        { hasFlag: "self", flag: "aimed" },
+        { call: "friendSees", args: [ref("self.id"), ref("it.id")] },
+      ],
+    },
+  ],
+};
 const within = (inches: Expr): Expr => ({
   cmp: "<=",
   a: { query: { kind: "distance", from: "self", to: "it" } },
@@ -429,6 +659,9 @@ export const conquest: GameSystem = {
     { id: "Cleave", name: "Cleave", of: "model", type: "number", default: 0 },
     { id: "Support", name: "Support", of: "model", type: "number", default: 0 },
     { id: "Impact", name: "Impact", of: "model", type: "number", default: 0 },
+    // Set by Armour Piercing (X) and Brutal Impact (X): Defence X lower against volleys, Impact attacks.
+    { id: "ArmourPiercing", name: "Armour Piercing", short: "AP", of: "model", type: "number", default: 0 },
+    { id: "BrutalImpact", name: "Brutal Impact", of: "model", type: "number", default: 0 },
     // Set by the Hardened(X) special rule: Cleave against it is X less.
     { id: "Hardened", name: "Hardened", of: "model", type: "number", default: 0 },
     // Set by the Shield special rule: +1 Defense against attacks from the front.
@@ -455,14 +688,20 @@ export const conquest: GameSystem = {
   terrain: [
     { id: "open", name: "Open ground" },
     { id: "obscuring", name: "Obscuring", blocksSight: true },
-    { id: "impassable", name: "Impassable", blocksMovement: true, blocksSight: true },
+    {
+      id: "impassable",
+      name: "Impassable",
+      blocksMovement: true,
+      blocksSight: true,
+      movement: [{ keywords: ["Fly"], blocks: false }],
+    },
     { id: "forest", name: "Forest", cover: true, blocksSight: true },
     { id: "hill", name: "Hill" },
     { id: "garrison", name: "Garrison", cover: true, blocksSight: true },
     { id: "defensible", name: "Defensible obstacle", cover: true },
   ],
   rules: specialRules,
-  procedures: [volley, clash, impact],
+  procedures: [volley, clash, impact, hits],
   coreEffects: effects,
   actions: [
     {
@@ -539,11 +778,7 @@ export const conquest: GameSystem = {
       notWhen: [marchFirst, notEngaged],
       hint: "Barrage shots from the front rank",
       if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
-      target: {
-        filter: {
-          all: [{ query: { kind: "visible", from: "self", to: "it" } }, within(ref("self.Range"))],
-        },
-      },
+      target: { filter: { all: [volleySight, within(ref("self.Range"))] } },
       limit: { count: 1, per: "round" },
       procedure: "volley",
     },
@@ -600,6 +835,46 @@ export const conquest: GameSystem = {
       hint: "Rearrange the stands, then turn",
       limit: { count: 1, per: "round" },
       move: { kind: "reform", distance: ref("self.M") },
+    },
+    {
+      // Fluid Formation: one more Reform, as the activation's first or last action.
+      id: "fluidReform",
+      name: "Fluid Formation",
+      verb: "reforms (Fluid Formation)",
+      by: "unit",
+      free: true,
+      hint: "An extra Reform, first or last",
+      if: { hasRule: "self", rule: "fluidFormation" },
+      notWhen: [
+        marchFirst,
+        notEngaged,
+        { if: { call: "midActivation", args: [ref("self.id")] }, why: "Only first or last" },
+      ],
+      limit: { count: 1, per: "round" },
+      move: { kind: "reform", distance: ref("self.M") },
+    },
+    {
+      // Vanguard: arrived this round and marched, with no enemy within 8": one more March, free.
+      id: "vanguardMarch",
+      name: "Vanguard",
+      verb: "marches again (Vanguard)",
+      by: "unit",
+      free: true,
+      hint: "A free March after arriving",
+      if: {
+        all: [
+          { hasRule: "self", rule: "vanguard" },
+          { hasFlag: "self", flag: "reinforced" },
+          { hasFlag: "self", flag: "marched" },
+        ],
+      },
+      notWhen: [
+        notEngaged,
+        { if: { call: "enemyWithin", args: [ref("self.id"), 8] }, why: 'An enemy within 8"' },
+      ],
+      limit: { count: 1, per: "round" },
+      move: { kind: "march", distance: ref("self.M") },
+      sets: ["marched"],
     },
     {
       // Engaged: played by hand, the button marks the action taken.
@@ -668,6 +943,8 @@ export const conquest: GameSystem = {
               "combatRally",
               "combatReform",
               "withdraw",
+              "fluidReform",
+              "vanguardMarch",
             ],
           },
         ],

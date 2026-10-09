@@ -12,6 +12,14 @@ const INFANTRY: BaseShape = { shape: "rect", widthMm: 40, depthMm: 40 };
 const CAVALRY: BaseShape = { shape: "rect", widthMm: 50, depthMm: 50 };
 const MONSTER: BaseShape = { shape: "rect", widthMm: 100, depthMm: 100 };
 
+/** A stand's base by its type (the same unverified guesses). */
+export const standBase = (type: string | undefined): BaseShape =>
+  /^(infantry|character)$/i.test(type ?? "") || !type
+    ? INFANTRY
+    : /^monster$/i.test(type)
+      ? MONSTER
+      : CAVALRY;
+
 type Stats = Record<"M" | "V" | "C" | "A" | "W" | "R" | "D", number> & {
   E?: number;
   Barrage?: number;
@@ -38,12 +46,7 @@ function regiment(
   rules: string[] = [],
   keywords: string[] = [],
 ): ImportedUnit {
-  const base =
-    stats.Type === "Infantry" || stats.Type === "Character"
-      ? INFANTRY
-      : stats.Type === "Monster"
-        ? MONSTER
-        : CAVALRY;
+  const base = standBase(stats.Type);
   const command = Math.floor((Math.min(3, stands) - 1) / 2);
   const models = Array.from({ length: stands }, (_, i) => ({
     profile: { name: i === command && stands > 1 ? `${name} command` : name, chars: chars(stats) },

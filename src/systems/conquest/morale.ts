@@ -1,5 +1,6 @@
 import type { GameState, Unit } from "../../core/types";
 import type { CodeProcedure } from "../../sdk";
+import { lethalDemise } from "./special";
 
 /**
  * Broken and Shattered, after an attack's casualties are removed:
@@ -16,7 +17,7 @@ const standing = (state: GameState, u: Unit) =>
 
 const roundKey = (unitId: string) => `round:${unitId}`;
 
-const aftermath: CodeProcedure = function* (ctx, args) {
+const brokenAndShattered: CodeProcedure = function* (ctx, args) {
   const view = ctx.view;
   const unit = view.state.units[String(args.unit ?? "")];
   if (!unit) return;
@@ -45,6 +46,12 @@ const aftermath: CodeProcedure = function* (ctx, args) {
     yield ctx.emit({ type: "unit/status", id: unit.id, key: "broken", value: true });
     yield ctx.note(`${unit.name} is Broken: ${now.length} of ${start} stands left this round`);
   }
+};
+
+/** Broken and Shattered, then Lethal Demise hitting back (special.ts). */
+const aftermath: CodeProcedure = function* (ctx, args) {
+  yield* brokenAndShattered(ctx, args);
+  yield* lethalDemise(ctx, args);
 };
 
 export const moraleProcedures: Record<string, CodeProcedure> = { aftermath };

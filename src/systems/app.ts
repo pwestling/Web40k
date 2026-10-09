@@ -53,6 +53,8 @@ export interface SystemModule {
    * player to confirm; null when it isn't understood in full.
    */
   recognizeAbility?(ability: { name: string; text: string }, system: GameSystem): AbilityAuto | null;
+  /** Ability groups the import puts on unit cards that aren't rules (a mount's profile): left out of the import's coverage line. */
+  profileGroups?: string[];
 }
 
 export interface TemplateKind {

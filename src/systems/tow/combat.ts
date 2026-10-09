@@ -5,16 +5,19 @@ import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sd
 import { towRanks } from "./troops";
 import { shooterCount } from "./ranks";
 import { opposed } from "../../core/teams";
+import { parseDice } from "../../core/dice";
 import {
   causesFear,
   causesTerror,
   frenzied,
   hasBattleStandard,
   hasRule,
-  hates,
+  hatesFoe,
   immune,
   isGeneral,
+  ruleNumber,
   stubborn,
+  troopOf,
   unbreakable,
 } from "./specialRules";
 
@@ -102,19 +105,24 @@ function ownLeadership(state: GameState, u: Unit): { ld: number; who: string } {
  * Leadership: the best in the unit, or the General's within 12" when it's
  * higher (Inspiring Presence), and whose it is.
  */
-function leadership(state: GameState, u: Unit): { ld: number; who: string } {
+function leadership(state: GameState, u: Unit, warband = true): { ld: number; who: string } {
   const own = ownLeadership(state, u);
   const general = friendNear(state, u, isGeneral);
+  let best = own;
   if (general && general.id !== u.id) {
     const g = ownLeadership(state, general);
-    if (g.ld > own.ld) return { ld: g.ld, who: `the General's, ${general.name}` };
+    if (g.ld > own.ld) best = { ld: g.ld, who: `the General's, ${general.name}` };
   }
-  return own;
+  // Warband: its rank bonus on its Leadership, up to 10, unless fleeing (not for restraint tests).
+  const ranks = warband && !u.status?.fleeing && hasRule(u, /^warband\b/i) ? rankBonus(state, u) : 0;
+  if (ranks && own.ld + ranks > best.ld)
+    return { ld: Math.min(10, own.ld + ranks), who: `${own.who ? `${own.who}, ` : ""}Warband +${ranks}` };
+  return best;
 }
 
 /** "Ld 9, Warden Captain" when a model other than the rank and file lends its Leadership. */
-function ldLabel(state: GameState, u: Unit): string {
-  const { ld, who } = leadership(state, u);
+function ldLabel(state: GameState, u: Unit, warband = true): string {
+  const { ld, who } = leadership(state, u, warband);
   return who && who !== u.name ? `Ld ${ld}, ${who}` : `Ld ${ld}`;
 }
 
@@ -186,7 +194,63 @@ const count = (r: Roll, target: number) => r.rolls.filter((x) => x !== 1 && x >=
 /** To hit: a natural 6 always hits, a natural 1 always misses. */
 const hitsOf = (r: Roll, target: number) => r.rolls.filter((x) => x === 6 || (x !== 1 && x >= target)).length;
 
-/** To wound, then armour, ward and regeneration saves. Returns the unsaved wounds. */
+/**
+ * An attack's special rules (by name, from its weapon or its maker; our own
+ * paraphrase, from the players' rules index, #66):
+ *  - Poisoned Attacks: a natural 6 to hit adds 2 to that hit's roll to wound;
+ *  - Killing Blow (combat): a natural 6 to wound against infantry or cavalry
+ *    allows no armour or regeneration save, and slays the model outright;
+ *    Monster Slayer does the same against monsters;
+ *  - Flaming Attacks: a Flammable target gets no regeneration save;
+ *  - Multiple Wounds (X): each unsaved wound costs X Wounds, rolled per wound,
+ *    and none spill over to the next model.
+ */
+interface Blow {
+  /** Hits from natural 6s to hit with Poisoned Attacks: +2 to wound. */
+  poisoned?: number;
+  killingBlow?: boolean;
+  monsterSlayer?: boolean;
+  flaming?: boolean;
+  /** Multiple Wounds' X: "2", "D3", "D3+1". */
+  multiple?: string;
+  /** Close combat: Killing Blow counts, and Parry or a two-handed weapon changes the armour. */
+  combat?: boolean;
+  /** The model struck (a challenge): its own Toughness and saves, and roll labels named after the two. */
+  model?: { atk: string; def: Model };
+  /** Out: wounds that each land on one model (Multiple Wounds' X; a slaying blow is Infinity). */
+  slain?: number[];
+}
+
+const isInfantryOrCavalry = (troop: string) => /infantry|cavalry/i.test(troop);
+const isMonster = (troop: string) => /behemoth|monstrous creature|^\s*monsters?\s*$/i.test(troop);
+/** All its close combat weapons need two hands (so it fights without its shield). */
+const twoHanded = (u: Unit) => {
+  const ws = Object.values(u.sheet?.weapons ?? {}).filter((w) => w.kind !== "ranged");
+  return ws.length > 0 && ws.every((w) => w.keywords.some((k) => /^requires two hands/i.test(k.trim())));
+};
+
+/** Roll X for each of `n` (Multiple Wounds (D3), Impact Hits (D6+1)): a number, or dice per one plus any bonus. */
+function* eachX(
+  ctx: Ctx,
+  n: number,
+  x: string,
+  label: string,
+  unitId: string,
+): Generator<Command, number[], unknown> {
+  let d: ReturnType<typeof parseDice>;
+  try {
+    d = parseDice(x);
+  } catch {
+    return Array.from({ length: n }, () => 1);
+  }
+  if (!d.sides || !n) return Array.from({ length: n }, () => Math.max(0, d.bonus));
+  const r = (yield ctx.roll(`${n * d.count}d${d.sides}`, label, unitId)) as Roll;
+  return Array.from({ length: n }, (_, i) =>
+    r.rolls.slice(i * d.count, (i + 1) * d.count).reduce((t, v) => t + v, d.bonus),
+  );
+}
+
+/** To wound, then armour, ward and regeneration saves. Returns the unsaved wounds (those in `blow.slain` apart). */
 export function* woundAndSave(
   ctx: Ctx,
   atk: Unit,
@@ -196,42 +260,111 @@ export function* woundAndSave(
   ap = 0,
   /** Armour Bane (X): wounds from a natural 6 worsen the armour save by this much more. */
   bane = 0,
+  blow: Blow = {},
 ): Generator<Command, number, unknown> {
   const view = ctx.view;
-  const woundOn = toWound(strength, stat(view, def, "T"));
-  if (woundOn === null) {
+  const target = blow.model?.def;
+  const own = (k: string, d: number) =>
+    target ? charNum(target, k, stat(view, def, k, d)) : stat(view, def, k, d);
+  const atkLabel = (l: string) => (blow.model ? `${blow.model.atk}: ${l}` : l);
+  const defLabel = (l: string) => (blow.model ? `${target?.profile?.name ?? def.name}: ${l}` : l);
+  const toughness = own("T", target ? 3 : 0);
+  const woundOn = toWound(strength, toughness);
+  const poisoned = Math.min(blow.poisoned ?? 0, hits);
+  // Poisoned: +2 to wound, so even a roll the plain hits can't make.
+  const poisonOn = 2 + toughness - strength <= 6 ? Math.max(2, 2 + toughness - strength) : null;
+  if (woundOn === null && (!poisoned || poisonOn === null)) {
     yield ctx.note(`${atk.name} can't wound ${def.name}`);
     return 0;
   }
-  const wound = (yield ctx.roll(`${hits}d6`, "to wound", atk.id, woundOn)) as Roll;
-  let left = count(wound, woundOn);
+  const wounds: number[] = [];
+  if (hits - poisoned > 0 && woundOn !== null) {
+    const r = (yield ctx.roll(`${hits - poisoned}d6`, atkLabel("to wound"), atk.id, woundOn)) as Roll;
+    wounds.push(...r.rolls.filter((x) => x !== 1 && x >= woundOn));
+  }
+  if (poisoned && poisonOn !== null) {
+    const r = (yield ctx.roll(
+      `${poisoned}d6`,
+      atkLabel("to wound (Poisoned Attacks +2)"),
+      atk.id,
+      poisonOn,
+    )) as Roll;
+    wounds.push(...r.rolls.filter((x) => x !== 1 && x >= poisonOn));
+  }
+  const sixes = wounds.filter((x) => x === 6).length;
+  const troop = target?.profile?.chars.Troop ?? troopOf(view.state, def);
+  const slaying =
+    blow.combat &&
+    ((blow.killingBlow && isInfantryOrCavalry(troop)) || (blow.monsterSlayer && isMonster(troop)));
+  // A slaying blow: no armour or regeneration save, and the model falls if the ward fails.
+  let slain = slaying ? sixes : 0;
+  if (slain)
+    yield ctx.note(
+      `${atk.name} strikes ${slain} ${blow.killingBlow && isInfantryOrCavalry(troop) ? "Killing" : "Monster Slaying"} ${slain === 1 ? "Blow" : "Blows"}`,
+    );
+  let left = wounds.length - slain;
   // Armour Bane: the wounds from natural 6s save on a worse armour roll, rolled apart.
-  const baned = bane > 0 && woundOn <= 6 ? wound.rolls.filter((x) => x === 6).length : 0;
+  const baned = !slaying && bane > 0 ? sixes : 0;
   for (const [save, name] of [
     ["armour", "armour"],
     ["ward", "ward"],
     ["regen", "regeneration"],
   ] as const) {
-    const raw = stat(view, def, save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
+    let raw = own(save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
+    if (save === "armour" && blow.combat) {
+      // In combat a two-handed weapon leaves the shield aside; Parry (hand weapon and shield) improves it, to 3+ at best.
+      const shield = hasRule(def, /^shield\b/i);
+      if (shield && twoHanded(def)) raw += 1;
+      else if (shield && hasRule(def, /^parry\b/i) && raw > 3) raw -= 1;
+    }
+    if (save === "regen" && blow.flaming && hasRule(def, /^flammable\b/i)) {
+      if (left) yield ctx.note(`${def.name} is Flammable: no regeneration save against Flaming Attacks`);
+      continue;
+    }
     // An armour save of 1+ is still rolled (a natural 1 fails); a ward or regeneration of 0 is none.
     const on = save === "armour" && raw >= 1 ? Math.max(2, raw) : raw;
+    if (save === "ward" && slain && on >= 2 && on <= 6) {
+      const r = (yield ctx.roll(`${slain}d6`, defLabel(`${name} save (slaying blow)`), def.id, on)) as Roll;
+      slain -= count(r, on);
+    }
     if (save === "armour" && baned && left) {
       const worse = on + bane;
       const plain = left - baned;
       if (plain && on >= 2 && on <= 6) {
-        const r = (yield ctx.roll(`${plain}d6`, `${name} save`, def.id, on)) as Roll;
+        const r = (yield ctx.roll(`${plain}d6`, defLabel(`${name} save`), def.id, on)) as Roll;
         left -= count(r, on);
       }
       if (worse >= 2 && worse <= 6) {
-        const r = (yield ctx.roll(`${baned}d6`, `${name} save (Armour Bane)`, def.id, worse)) as Roll;
+        const r = (yield ctx.roll(
+          `${baned}d6`,
+          defLabel(`${name} save (Armour Bane)`),
+          def.id,
+          worse,
+        )) as Roll;
         left -= count(r, worse);
       }
       continue;
     }
     if (!left || on < 2 || on > 6) continue;
-    const r = (yield ctx.roll(`${left}d6`, `${name} save`, def.id, on)) as Roll;
+    const r = (yield ctx.roll(`${left}d6`, defLabel(`${name} save`), def.id, on)) as Roll;
     left -= count(r, on);
   }
+  const out = blow.slain;
+  const big: number[] = Array.from({ length: slain }, () => Infinity);
+  if (blow.multiple && left) {
+    const each = yield* eachX(
+      ctx,
+      left,
+      blow.multiple,
+      atkLabel(`Multiple Wounds (${blow.multiple})`),
+      atk.id,
+    );
+    yield ctx.note(`Multiple Wounds: ${each.join(", ")} Wounds for each unsaved wound`);
+    big.push(...each);
+    left = 0;
+  }
+  if (!out) return left + big.reduce((t, v) => t + (Number.isFinite(v) ? v : stat(view, def, "W", 1)), 0);
+  out.push(...big);
   return left;
 }
 
@@ -262,6 +395,31 @@ function weaponRuleValue(w: WeaponProfile | undefined, name: RegExp): number {
 const ARMOUR_BANE = /armou?r bane/;
 const MULTIPLE_SHOTS = /multiple shots/;
 
+/** A rule an attack has: its weapon's (by name) or its maker's own. */
+const attackHas = (u: Unit, keys: string[], re: RegExp) =>
+  keys.some((k) => re.test(k.trim())) || hasRule(u, re);
+
+/** The special rules an attack carries, from its weapon's rules and its maker's (Blow). */
+function blowOf(u: Unit, keys: string[], combat: boolean): Blow {
+  const multiple = [...keys, ...(u.sheet?.abilities ?? []).map((a) => a.name)]
+    .map((k) => /^multiple wounds\s*\(\s*([^),]+?)\s*[),]/i.exec(k.trim())?.[1])
+    .find(Boolean);
+  return {
+    combat,
+    killingBlow: combat && attackHas(u, keys, /^killing blow\b/i),
+    monsterSlayer: combat && attackHas(u, keys, /^monster slayer\b/i),
+    flaming: attackHas(u, keys, /^flaming attacks\b/i),
+    ...(multiple ? { multiple } : {}),
+  };
+}
+
+/** Armour Bane (X) from the weapon, or the maker's own rule. */
+const baneOf = (u: Unit, w: WeaponProfile | undefined) =>
+  Math.max(weaponRuleValue(w, ARMOUR_BANE), ruleNumber(u, /^armou?r bane\b/i));
+
+/** Poisoned Attacks: the weapon's or the maker's. */
+const poisonous = (u: Unit, keys: string[]) => attackHas(u, keys, /^poisoned attacks\b/i);
+
 /** How many points a weapon's AP worsens armour saves by ("-2" or "2" is 2; "-" none). */
 export const weaponAp = (w: WeaponProfile | undefined) => Math.abs(Number.parseFloat(w?.chars.AP ?? "") || 0);
 
@@ -286,16 +444,17 @@ function* fightingWeapon(
   u: Unit,
   baseS: number,
   model?: Model,
-): Generator<Command, { s: number; ap: number; bane: number; name: string }, unknown> {
+): Generator<Command, { s: number; ap: number; bane: number; name: string; keys: string[] }, unknown> {
   const ws = meleeWeapons(u, model);
   const profile = (w: WeaponProfile) => {
-    const bane = weaponRuleValue(w, ARMOUR_BANE);
-    if (chargeOnly(w) && u.status?.charged !== true) return { s: baseS, ap: 0, bane, name: w.name };
-    return { s: weaponStrength(baseS, w.chars.S), ap: weaponAp(w), bane, name: w.name };
+    const bane = baneOf(u, w);
+    const keys = w.keywords ?? [];
+    if (chargeOnly(w) && u.status?.charged !== true) return { s: baseS, ap: 0, bane, name: w.name, keys };
+    return { s: weaponStrength(baseS, w.chars.S), ap: weaponAp(w), bane, name: w.name, keys };
   };
   const options = ws.map(profile);
-  const distinct = new Set(options.map((o) => `${o.s}/${o.ap}/${o.bane}`));
-  if (!options.length) return { s: baseS, ap: 0, bane: 0, name: "" };
+  const distinct = new Set(options.map((o) => `${o.s}/${o.ap}/${o.bane}/${o.keys.join()}`));
+  if (!options.length) return { s: baseS, ap: 0, bane: baneOf(u, undefined), name: "", keys: [] };
   if (distinct.size === 1) return options[0]!;
   const who = model?.profile?.name ?? u.name;
   const pick = (yield ctx.ask(
@@ -313,7 +472,13 @@ function* fightingWeapon(
  * the fighting rank, one attack each (a model not in base contact makes one
  * attack whatever its Attacks); none against an enemy's flank or rear.
  */
-export function supportingAttacks(view: GameView, atk: Unit, def: Unit): number {
+export function supportingAttacks(
+  view: GameView,
+  atk: Unit,
+  def: Unit,
+  /** Ranks deep the fighting rank is (Press of Battle: two). */
+  depth = 1,
+): number {
   const state = view.state;
   if (atk.formation.kind !== "ranked") return 0;
   const extraRank = (n: string) => /fight in extra rank/i.test(n);
@@ -327,7 +492,50 @@ export function supportingAttacks(view: GameView, atk: Unit, def: Unit): number 
   // The rank behind a front (or rear) fighting rank; the file beside a flank one.
   const side = inArc(state, atk, def);
   if (side === "left" || side === "right") return files > 1 ? Math.ceil(models / files) : 0;
-  return Math.max(0, Math.min(files, models - files));
+  return Math.max(0, Math.min(files, models - files * depth));
+}
+
+/**
+ * Initiative in combat: Strike First makes it 10, Strike Last 1 (the unit's
+ * rule, or every close combat weapon it has); both cancel out.
+ */
+function strikeOrder(u: Unit, initiative: number): number {
+  const ws = Object.values(u.sheet?.weapons ?? {}).filter((w) => w.kind !== "ranged");
+  const has = (re: RegExp) =>
+    hasRule(u, re) || (ws.length > 0 && ws.every((w) => w.keywords.some((k) => re.test(k.trim()))));
+  const first = has(/^strike first\b/i);
+  const last = has(/^strike last\b/i);
+  if (first && !last) return 10;
+  if (last && !first) return 1;
+  return initiative;
+}
+
+/** Charged this turn, moving 3" or more (Furious Charge, Impact Hits). */
+function chargedFar(view: GameView, u: Unit): boolean {
+  const c = view.own[`charge:${u.id}`] as ChargeRecord | undefined;
+  return u.status?.charged === true && !!c && c.round === view.round && c.distance >= 3;
+}
+
+/**
+ * Press of Battle: a unit in combat order that didn't charge this turn fights
+ * two ranks deep.
+ */
+const pressOfBattle = (state: GameState, u: Unit) =>
+  hasRule(u, /^press of battle\b/i) && u.status?.charged !== true && combatOrder(state, u);
+
+/** Unit Strength: each model standing counts its own (Fear compares them). */
+const unitStrength = (state: GameState, u: Unit) =>
+  alive(state, u).reduce((t, m) => t + Math.max(1, charNum(m, "US", 1)), 0);
+
+/**
+ * Whether `foe` frightens `u`: it causes Fear (or has Flaming Attacks and `u`
+ * is war beasts or a swarm) and has the higher Unit Strength; units that cause
+ * Fear, and units immune to psychology, aren't afraid.
+ */
+function frightens(state: GameState, foe: Unit, u: Unit): boolean {
+  const scary =
+    causesFear(foe) || (hasRule(foe, /^flaming attacks\b/i) && /war beast|swarm/i.test(troopOf(state, u)));
+  return scary && !causesFear(u) && !immune(u) && unitStrength(state, foe) > unitStrength(state, u);
 }
 
 /**
@@ -341,32 +549,48 @@ function* strike(
   def: Unit,
   how: { afraid?: boolean; hatred?: boolean } = {},
   duelling = 0,
-): Generator<Command, number, unknown> {
+): Generator<Command, { n: number; slain: number[] }, unknown> {
   const view = ctx.view;
   const state = view.state;
   const models = alive(state, atk).length;
-  if (!models || !alive(state, def).length) return 0;
+  if (!models || !alive(state, def).length) return { n: 0, slain: [] };
   const files = atk.formation.kind === "ranked" ? Math.min(atk.formation.files, models) : models;
-  const support = supportingAttacks(view, atk, def);
-  const frenzy = frenzied(atk) ? 1 : 0;
+  // Press of Battle: two ranks fight, and the supporting rank is the one behind them.
+  const depth = pressOfBattle(state, atk) ? 2 : 1;
+  const fighting = Math.min(models, files * depth);
+  const support = supportingAttacks(view, atk, def, depth);
+  // Frenzy and Furious Charge: +1 Attack in a turn it charged.
+  const frenzy = frenzied(atk) && atk.status?.charged === true ? 1 : 0;
+  const furious = hasRule(atk, /^furious charge\b/i) && chargedFar(view, atk) ? 1 : 0;
   // A model fighting a challenge strikes there, not at the unit.
-  const attacks = Math.max(0, files - duelling) * (Math.max(1, stat(view, atk, "A", 1)) + frenzy) + support;
-  if (!attacks) return 0;
-  const hitOn = how.afraid ? 6 : combatHit(stat(view, atk, "WS"), stat(view, def, "WS"));
-  const label = `to hit${support ? ` (${support} supporting)` : ""}${frenzy ? " (Frenzy +1 Attack)" : ""}${how.afraid ? " (afraid: 6s only)" : ""}`;
+  const attacks =
+    Math.max(0, fighting - duelling) * (Math.max(1, stat(view, atk, "A", 1)) + frenzy + furious) + support;
+  if (!attacks) return { n: 0, slain: [] };
+  // Afraid (a failed Fear test): -1 to hit; a natural 6 still hits.
+  const hitOn = Math.min(6, combatHit(stat(view, atk, "WS"), stat(view, def, "WS")) + (how.afraid ? 1 : 0));
+  const label = `to hit${support ? ` (${support} supporting)` : ""}${depth > 1 ? " (Press of Battle: two ranks)" : ""}${frenzy ? " (Frenzy +1 Attack)" : ""}${furious ? " (Furious Charge +1 Attack)" : ""}${how.afraid ? " (afraid: -1 to hit)" : ""}`;
   const hit = (yield ctx.roll(`${attacks}d6`, label, atk.id, hitOn)) as Roll;
   let hits = hitsOf(hit, hitOn);
+  let sixes = hit.rolls.filter((x) => x === 6).length;
   if (how.hatred && hits < attacks) {
     const again = (yield ctx.roll(`${attacks - hits}d6`, "to hit re-roll (Hatred)", atk.id, hitOn)) as Roll;
     hits += hitsOf(again, hitOn);
+    sixes += again.rolls.filter((x) => x === 6).length;
   }
-  if (!hits) return 0;
+  if (!hits) return { n: 0, slain: [] };
   const weapon = yield* fightingWeapon(ctx, atk, stat(view, atk, "S"));
   if (weapon.name && (weapon.s !== stat(view, atk, "S") || weapon.ap))
     yield ctx.note(
       `${atk.name} fights with ${weapon.name} (S${weapon.s}${weapon.ap ? `, AP -${weapon.ap}` : ""})`,
     );
-  return yield* woundAndSave(ctx, atk, def, hits, weapon.s, weapon.ap, weapon.bane);
+  const slain: number[] = [];
+  const blow: Blow = {
+    ...blowOf(atk, weapon.keys, true),
+    poisoned: poisonous(atk, weapon.keys) ? sixes : 0,
+    slain,
+  };
+  const n = yield* woundAndSave(ctx, atk, def, hits, weapon.s, weapon.ap, weapon.bane, blow);
+  return { n, slain };
 }
 
 /**
@@ -395,7 +619,8 @@ function* shoot(
   if (shots > 1) mods.push({ p: "multiple shots", by: 1 });
   if (range && unitGap(state, shooter, target) > range / 2) mods.push({ p: "long range", by: 1 });
   // Graded cover, as the Shooting phase has it: up to half the models seen in cover -1, more -2.
-  const share = coverShare(view, shooter, target);
+  // Large Targets get no cover.
+  const share = hasRule(target, /^large target\b/i) ? 0 : coverShare(view, shooter, target);
   if (share > 0.5) mods.push({ p: "full cover", by: 2 });
   else if (share > 0) mods.push({ p: "partial cover", by: 1 });
   const need = 7 - stat(view, shooter, "BS") + mods.reduce((t, m) => t + m.by, 0);
@@ -407,6 +632,9 @@ function* shoot(
   }
   const r = (yield ctx.roll(`${dice}d6`, label, shooter.id, Math.min(6, Math.max(2, need)))) as Roll;
   let hits = need <= 6 ? count(r, Math.max(2, need)) : r.rolls.filter((x) => x === 6).length;
+  // Poisoned Attacks: natural 6s to hit wound more easily (not when 7+ was needed).
+  const poisoned =
+    need <= 6 && poisonous(shooter, weapon.keywords) ? r.rolls.filter((x) => x === 6).length : 0;
   if (need >= 7 && hits) {
     const f = (yield ctx.roll(`${hits}d6`, "then", shooter.id, need - 3)) as Roll;
     hits = count(f, need - 3);
@@ -414,7 +642,10 @@ function* shoot(
   if (!hits) return 0;
   const s = Number.parseFloat(weapon.chars.S ?? "") || stat(view, shooter, "S");
   const ap = Math.abs(Number.parseFloat(weapon.chars.AP ?? "") || 0);
-  return yield* woundAndSave(ctx, shooter, target, hits, s, ap, weaponRuleValue(weapon, ARMOUR_BANE));
+  return yield* woundAndSave(ctx, shooter, target, hits, s, ap, baneOf(shooter, weapon), {
+    ...blowOf(shooter, weapon.keywords, false),
+    poisoned,
+  });
 }
 
 /** Of the target's models the shooter sees, the share in cover (0 when it sees none, or at a real table). */
@@ -425,8 +656,18 @@ function coverShare(view: GameView, shooter: Unit, target: Unit): number {
   return seen.filter((m) => view.inCover(shooter.id, m.id)).length / seen.length;
 }
 
-/** Casualties come off the rear rank: wounded models first, then rank and file, the command group last. */
-export function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Command, void, unknown> {
+/**
+ * Casualties come off the rear rank: wounded models first, then rank and
+ * file, the command group last. `slain` are wounds that each land on one
+ * model and don't spill over (Multiple Wounds' X; Infinity, a slaying blow).
+ * Returns the Wounds those cost.
+ */
+export function* casualties(
+  ctx: Ctx,
+  def: Unit,
+  wounds: number,
+  slain: number[] = [],
+): Generator<Command, number, unknown> {
   const state = ctx.view.state;
   const models = alive(state, def);
   const names = new Map<string, number>();
@@ -438,14 +679,33 @@ export function* casualties(ctx: Ctx, def: Unit, wounds: number): Generator<Comm
       k: ((m.woundsLost ?? 0) > 0 ? 0 : 2) + (m.profile?.name === common ? 0 : 4) - i / (models.length + 1),
     }))
     .sort((a, b) => a.k - b.k)
-    .map((x) => x.m);
-  for (const m of order) {
-    if (wounds <= 0) break;
-    const w = Math.max(1, charNum(m, "W", 1));
-    const lost = Math.min(w, (m.woundsLost ?? 0) + wounds);
-    wounds -= lost - (m.woundsLost ?? 0);
-    yield ctx.emit({ type: "model/wounds", id: m.id, woundsLost: lost, destroyed: lost >= w });
+    .map((x) => ({ m: x.m, w: Math.max(1, charNum(x.m, "W", 1)), lost: x.m.woundsLost ?? 0 }));
+  let k = 0;
+  /** `n` Wounds on the next model standing; what it took. */
+  const land = (n: number) => {
+    while (k < order.length && order[k]!.lost >= order[k]!.w) k++;
+    const slot = order[k];
+    if (!slot) return 0;
+    const take = Math.min(n, slot.w - slot.lost);
+    slot.lost += take;
+    return take;
+  };
+  for (let left = wounds; left > 0;) {
+    const took = land(left);
+    if (!took) break;
+    left -= took;
   }
+  let cost = 0;
+  for (const n of slain) cost += land(n);
+  for (const slot of order)
+    if (slot.lost !== (slot.m.woundsLost ?? 0))
+      yield ctx.emit({
+        type: "model/wounds",
+        id: slot.m.id,
+        woundsLost: slot.lost,
+        destroyed: slot.lost >= slot.w,
+      });
+  return cost;
 }
 
 /** The nearest enemy unit still standing and not fleeing, to run from. */
@@ -468,9 +728,18 @@ function* moveAway(ctx: Ctx, u: Unit, from: Unit | undefined, inches: number, tu
   if (move) yield ctx.emit(turn ? move : { ...move, turn: 0, how: "drag" });
 }
 
+/** Swiftstride: a flee or pursuit roll with +D6 (always taken: further is what the unit wants). */
+const swift = (u: Unit) => hasRule(u, /^swiftstride\b/i);
+function* swiftRoll(ctx: Ctx, u: Unit, dice: string, label: string): Generator<Command, Roll, unknown> {
+  const r = (yield ctx.roll(dice, label, u.id)) as Roll;
+  if (!swift(u)) return r;
+  const more = (yield ctx.roll("1d6", `${label}: Swiftstride +D6`, u.id)) as Roll;
+  return { rolls: r.rolls, total: r.total + more.total };
+}
+
 /** The unit flees 2D6" from `from` and is marked fleeing. */
 function* flee(ctx: Ctx, u: Unit, from: Unit | undefined, why: string): Generator<Command, void, unknown> {
-  const r = (yield ctx.roll(FLEE_DICE, "flee roll", u.id)) as Roll;
+  const r = yield* swiftRoll(ctx, u, FLEE_DICE, "flee roll");
   yield ctx.emit({ type: "unit/status", id: u.id, key: "fleeing", value: true });
   yield* moveAway(ctx, unitOf(ctx.view, u.id), from, r.total, true);
   yield ctx.note(`${u.name} ${why} and flees ${r.total}"`);
@@ -501,10 +770,11 @@ export function* leadershipTest(
   why = "",
 ): Generator<Command, { roll: Roll; ld: number; score: string; passed: boolean }, unknown> {
   const state = ctx.view.state;
-  const { ld } = leadership(state, u);
+  const warband = name !== "restraint test";
+  const { ld } = leadership(state, u, warband);
   // "Reaver Warband break test: 2D6 + 8 (lost by 8) against Ld 6, Reaver Chief"
   yield ctx.note(
-    `${u.name} ${name}: 2D6${mod ? ` + ${mod}${why ? ` (${why})` : ""}` : ""} against ${ldLabel(state, u)}`,
+    `${u.name} ${name}: 2D6${mod ? ` + ${mod}${why ? ` (${why})` : ""}` : ""} against ${ldLabel(state, u, warband)}`,
   );
   const failed = (r: Roll) => !r.rolls.every((x) => x === 1) && r.total + mod > ld;
   let roll = (yield ctx.roll("2d6", name, u.id)) as Roll;
@@ -633,29 +903,18 @@ function* duelStrike(
   )) as Roll;
   const hits = hitsOf(hit, hitOn);
   if (!hits) return 0;
-  const { s: strength, ap } = yield* fightingWeapon(ctx, atkUnit, charNum(atk, "S", 3), atk);
-  const woundOn = toWound(strength, charNum(def, "T", 3));
-  if (woundOn === null) return 0;
-  const wound = (yield ctx.roll(`${hits}d6`, `${name}: to wound`, atkUnit.id, woundOn)) as Roll;
-  let left = count(wound, woundOn);
-  const armour = charNum(def, "armour", stat(ctx.view, defUnit, "armour", 7)) + ap;
-  for (const [raw, label] of [
-    [armour, "armour save"],
-    [charNum(def, "ward", stat(ctx.view, defUnit, "ward", 0)), "ward save"],
-    [charNum(def, "regen", stat(ctx.view, defUnit, "regen", 0)), "regeneration save"],
-  ] as const) {
-    // An armour save of 1+ is still rolled (a natural 1 fails); a ward or regeneration of 0 is none.
-    const on = label === "armour save" && raw >= 1 ? Math.max(2, raw) : raw;
-    if (!left || on < 2 || on > 6) continue;
-    const r = (yield ctx.roll(
-      `${left}d6`,
-      `${def.profile?.name ?? defUnit.name}: ${label}`,
-      defUnit.id,
-      on,
-    )) as Roll;
-    left -= count(r, on);
-  }
-  return left;
+  const weapon = yield* fightingWeapon(ctx, atkUnit, charNum(atk, "S", 3), atk);
+  const slain: number[] = [];
+  const blow: Blow = {
+    ...blowOf(atkUnit, weapon.keys, true),
+    poisoned: poisonous(atkUnit, weapon.keys) ? hit.rolls.filter((x) => x === 6).length : 0,
+    model: { atk: name, def },
+    slain,
+  };
+  const left = yield* woundAndSave(ctx, atkUnit, defUnit, hits, weapon.s, weapon.ap, weapon.bane, blow);
+  // A slaying blow takes every Wound the model has left; Multiple Wounds count in full (overkill).
+  const had = Math.max(1, charNum(def, "W", 1)) - (def.woundsLost ?? 0);
+  return left + slain.reduce((t, n) => t + (Number.isFinite(n) ? n : had), 0);
 }
 
 /**
@@ -673,7 +932,7 @@ function* fightDuel(ctx: Ctx, duel: Duel, unit: Unit): Generator<Command, Map<st
   yield ctx.note(
     `Challenge: ${pair[0]!.m.profile?.name} (${pair[0]!.u.name}) fights ${pair[1]!.m.profile?.name} (${pair[1]!.u.name})`,
   );
-  const ini = (x: (typeof pair)[number]) => charNum(x.m, "I", 1);
+  const ini = (x: (typeof pair)[number]) => strikeOrder(x.u, charNum(x.m, "I", 1));
   const order =
     ini(pair[0]!) === ini(pair[1]!)
       ? [pair]
@@ -790,7 +1049,7 @@ const combat: CodeProcedure = function* (ctx, args) {
     for (const u of side) foes.set(u.id, foeOf(ctx.view.state, u, sides[1 - i]!, i === 0 ? b : a));
   const all = [...sides[0], ...sides[1]];
   // Highest Initiative strikes first; models with the same Initiative strike together.
-  const init = (u: Unit) => stat(ctx.view, u, "I") + chargeBonus(ctx.view, u);
+  const init = (u: Unit) => strikeOrder(u, stat(ctx.view, u, "I")) + chargeBonus(ctx.view, u);
   for (const u of all) {
     const bonus = chargeBonus(ctx.view, u);
     if (bonus) yield ctx.note(`${u.name} charged: Initiative +${bonus}`);
@@ -800,17 +1059,17 @@ const combat: CodeProcedure = function* (ctx, args) {
   for (const u of all) {
     const foe = foes.get(u.id)!;
     const h: { afraid?: boolean; hatred?: boolean } = {};
-    if (causesFear(foe) && !causesFear(u) && !immune(u)) {
+    if (frightens(ctx.view.state, foe, u)) {
       const t = yield* leadershipTest(ctx, u, "Fear test", 0, "");
       h.afraid = !t.passed;
       yield ctx.note(
         t.passed
           ? `${u.name} masters its fear (${t.roll.total})`
-          : `${u.name} is afraid of ${foe.name} (rolled ${t.roll.total}, over Ld ${t.ld}): it hits only on 6s this round`,
+          : `${u.name} is afraid of ${foe.name} (rolled ${t.roll.total}, over Ld ${t.ld}): -1 to hit this round`,
       );
     }
     const key = `hated:${u.id}:${foe.id}`;
-    if (hates(u) && !ctx.view.own[key]) {
+    if (hatesFoe(u, foe) && !ctx.view.own[key]) {
       h.hatred = true;
       yield ctx.set(key, true);
       yield ctx.note(`${u.name} hates ${foe.name}: it re-rolls missed hits this round`);
@@ -833,21 +1092,52 @@ const combat: CodeProcedure = function* (ctx, args) {
     const won = yield* fightDuel(ctx, duel, unitOf(ctx.view, u.id));
     for (const [id, n] of won) caused.set(id, (caused.get(id) ?? 0) + n);
   }
+  // Impact Hits first (a charger that moved 3" or more), Stomp Attacks after every other blow.
+  const autoHits = function* (rule: RegExp, why: string, when: (u: Unit) => boolean) {
+    for (const u of all) {
+      const atk = unitOf(ctx.view, u.id);
+      const x = (atk.sheet?.abilities ?? []).map((a) => rule.exec(a.name.trim())?.[1]).find(Boolean);
+      const def = unitOf(ctx.view, foes.get(u.id)!.id);
+      if (!x || !when(atk) || !alive(ctx.view.state, atk).length || !alive(ctx.view.state, def).length)
+        continue;
+      // Each model that has the rule and touches the foe: the front rank (one for a lone model).
+      const files = atk.formation.kind === "ranked" ? atk.formation.files : 1;
+      const makers = Math.max(1, Math.min(files, alive(ctx.view.state, atk).length));
+      const each = yield* eachX(ctx, makers, x, `${why} (${x})`, atk.id);
+      const hits = each.reduce((t, n) => t + n, 0);
+      if (!hits) continue;
+      // Thunderstomp: a behemoth's Stomp Attacks have AP -2, except against monsters.
+      const ap =
+        why === "Stomp Attacks" &&
+        hasRule(atk, /^thunderstomp\b/i) &&
+        !/monst|behemoth/i.test(troopOf(ctx.view.state, def))
+          ? 2
+          : 0;
+      yield ctx.note(
+        `${atk.name}: ${hits} ${why}, hitting automatically at Strength ${stat(ctx.view, atk, "S")}`,
+      );
+      const n = yield* woundAndSave(ctx, atk, def, hits, stat(ctx.view, atk, "S"), ap);
+      caused.set(u.id, (caused.get(u.id) ?? 0) + n);
+      if (n) yield* casualties(ctx, unitOf(ctx.view, def.id), n);
+    }
+  };
+  yield* autoHits(/^impact hits\s*\(\s*([^)]+?)\s*\)/i, "Impact Hits", (u) => chargedFar(ctx.view, u));
   const inits = [...new Set(all.map(init))].sort((x, y) => y - x);
   for (const step of inits.map((i) => all.filter((u) => init(u) === i))) {
     // Everyone in a step strikes before anyone in it is removed.
-    const hits: [Unit, Unit, number][] = [];
+    const hits: [Unit, Unit, { n: number; slain: number[] }][] = [];
     for (const u of step) {
       const atk = unitOf(ctx.view, u.id);
       const def = unitOf(ctx.view, foes.get(u.id)!.id);
       const away = (inDuel.has(u.id) ? 1 : 0) + (samePhase(ctx.view, ctx.view.own[`aside:${u.id}`]) ? 1 : 0);
       hits.push([u, def, yield* strike(ctx, atk, def, how.get(u.id), away)]);
     }
-    for (const [by, def, n] of hits) {
-      caused.set(by.id, (caused.get(by.id) ?? 0) + n);
-      if (n) yield* casualties(ctx, unitOf(ctx.view, def.id), n);
+    for (const [by, def, { n, slain }] of hits) {
+      const big = n || slain.length ? yield* casualties(ctx, unitOf(ctx.view, def.id), n, slain) : 0;
+      caused.set(by.id, (caused.get(by.id) ?? 0) + n + big);
     }
   }
+  yield* autoHits(/^stomp attacks\s*\(\s*([^)]+?)\s*\)/i, "Stomp Attacks", () => true);
 
   // Combat result, side against side.
   const state = ctx.view.state;
@@ -921,7 +1211,9 @@ const combat: CodeProcedure = function* (ctx, args) {
     }
     if (!alive(ctx.view.state, lost).length) continue;
     const from = unitOf(ctx.view, foes.get(l.id)!.id);
-    outcomes.push([l, yield* breakTest(ctx, lost, from, diff)]);
+    // Terror on the winning side: -1 Leadership for the losers' break tests.
+    const terror = winners.some((w) => causesTerror(w)) && !causesTerror(lost) ? 1 : 0;
+    outcomes.push([l, yield* breakTest(ctx, lost, from, diff, terror)]);
   }
   for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all, ended);
   // Winners whose foe was wiped out may overrun (moved by hand).
@@ -953,6 +1245,8 @@ function* breakTest(
   lost: Unit,
   won: Unit,
   diff: number,
+  /** Leadership lost for this test (Terror on the winning side). */
+  terror = 0,
 ): Generator<Command, "" | "flees" | "falls back", unknown> {
   if (unbreakable(lost)) {
     yield* moveAway(ctx, lost, won, GIVE_GROUND, false);
@@ -967,11 +1261,15 @@ function* breakTest(
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
   // naturally but over once the difference is added: fall back in good order. Otherwise (or a
   // double 1): give ground.
-  const {
-    roll: r,
-    ld,
-    score: total,
-  } = yield* leadershipTest(ctx, lost, "break test", diff, `lost by ${diff}`);
+  const test = yield* leadershipTest(
+    ctx,
+    lost,
+    "break test",
+    diff + terror,
+    `lost by ${diff}${terror ? ", Terror: Ld -1" : ""}`,
+  );
+  const { roll: r, score: total } = test;
+  const ld = test.ld - terror;
   const double1 = r.rolls.every((x) => x === 1);
   if (!double1 && r.total > ld) {
     // The same sum as the test line, and why it's the dice that count (UX 320).
@@ -1064,7 +1362,7 @@ function* afterBreak(
   const won = unitOf(ctx.view, winner.id);
   const lost = unitOf(ctx.view, loser.id);
   // Frenzied and hating units can't hold back.
-  const eager = frenzied(won) ? "Frenzy" : hates(won) ? "Hatred" : "";
+  const eager = frenzied(won) ? "Frenzy" : hatesFoe(won, lost) ? "Hatred" : "";
   if (eager) yield ctx.note(`${winner.name} must ${fled ? "pursue" : "follow up"} (${eager})`);
   const pick = eager
     ? "go"
@@ -1115,7 +1413,7 @@ function* pursue(
     yield ctx.note(`${won.name} follows up ${gap.toFixed(1)}" and stays in contact`);
     return;
   }
-  const r = (yield ctx.roll(PURSUE_DICE, "pursuit roll", won.id)) as Roll;
+  const r = yield* swiftRoll(ctx, won, PURSUE_DICE, "pursuit roll");
   const caught = r.total >= gap;
   const move = towards(Math.min(r.total, gap));
   if (move) yield ctx.emit(move);
@@ -1151,7 +1449,7 @@ const chargeReaction: CodeProcedure = function* (ctx, args) {
     distance >= stat(ctx.view, charger, "M");
   const now = ctx.view.state.turn;
   // Charging something frightening takes nerve: a failed Fear test and the charge isn't made.
-  if (causesFear(target) && !causesFear(charger) && !immune(charger)) {
+  if (frightens(ctx.view.state, target, charger)) {
     const t = yield* leadershipTest(ctx, charger, "Fear test", 0, "");
     if (!t.passed) {
       yield ctx.set(`fearTest:${charger.id}`, { round: now.round, seat: now.activeSeat });

@@ -36,6 +36,8 @@ function readRoster(
   roster: ImportedRoster,
   system: GameSystem,
   recognize: NonNullable<ReturnType<typeof systemModule>["recognizeAbility"]>,
+  /** Ability groups that aren't rules (SystemModule.profileGroups). */
+  profiles: string[] = [],
 ) {
   let automated = 0;
   let total = 0;
@@ -51,7 +53,8 @@ function readRoster(
         seen.has(a.name) ||
         a.group === ENHANCEMENTS ||
         a.group === DETACHMENT_RULE ||
-        a.group === ARMY_RULE
+        a.group === ARMY_RULE ||
+        profiles.includes(a.group ?? "")
       )
         continue;
       if (describesWeaponKeyword(system, asUnit, a)) continue;
@@ -82,15 +85,16 @@ export function ImportAutomation({
   const system = systemOf(game);
   const recognize = systemModule(game.system).recognizeAbility;
   const read = useMemo(
-    () => (recognize ? readRoster(roster, system, recognize) : null),
-    [roster, system, recognize],
+    () => readRoster(roster, system, recognize ?? (() => null), systemModule(game.system).profileGroups),
+    [roster, system, recognize, game.system],
   );
-  if (!read) return null;
   return (
     <>
       {roster.army && <ArmyAutomation roster={roster} setRoster={setRoster} system={system} />}
-      <AddStratagem roster={roster} setRoster={setRoster} />
-      {read.total > 0 && <Coverage read={read} roster={roster} setRoster={setRoster} system={system} />}
+      {recognize && <AddStratagem roster={roster} setRoster={setRoster} />}
+      {read.total > 0 && (
+        <Coverage read={read} roster={roster} setRoster={setRoster} system={system} teach={!!recognize} />
+      )}
     </>
   );
 }
@@ -426,11 +430,14 @@ function Coverage({
   roster,
   setRoster,
   system,
+  teach,
 }: {
   read: ReturnType<typeof readRoster>;
   roster: ImportedRoster;
   setRoster: (r: ImportedRoster) => void;
   system: GameSystem;
+  /** Reminders can be taught (#53): systems that read ability text. */
+  teach: boolean;
 }) {
   const [teaching, setTeaching] = useState<string | null>(null);
   // Open while proposals wait for an answer (UX 291).
@@ -508,8 +515,18 @@ function Coverage({
           )}
         </details>
       )}
-      {read.reminders.length > 0 && (
+      {read.reminders.length > 0 && teach && (
         <TeachChips names={read.reminders.map((n) => ({ key: n, label: n }))} onTeach={setTeaching} />
+      )}
+      {read.reminders.length > 0 && !teach && (
+        <p className="small muted">
+          {tn(
+            read.reminders.length,
+            "The app reminds you of this one; play it yourself: {names}",
+            "The app reminds you of these; play them yourself: {names}",
+            { names: read.reminders.join(", ") },
+          )}
+        </p>
       )}
       {teaching && (
         <TeachRule

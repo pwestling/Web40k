@@ -39,7 +39,11 @@ import type { AbilityTiming, Effect, Expr, GameSystem, RuleDef, RuleReminder } f
  *
  * Weapon keywords automated: AP, IC, Per Base (bases in range and sight),
  * Min, Short Range, Contact, Indirect Fire (+1 out of sight), Heavy (not
- * after moving); multiple attacks (x2, x3) and arcs of fire. Terrain slows or
+ * after moving), Suppress; multiple attacks (x2, x3) and arcs of fire. Unit
+ * rules by name or keyword (#66): Nimble, Small and Large Target, Terrain
+ * Expert, Camouflage, Thick Armor, Unpinnable, Flying, Mounted, Fast, Slow,
+ * Capable, Disciplined, Lone Wolf, Inert, Silent, Commander, Reactive and
+ * Unwavering. Terrain slows or
  * blocks moves by unit type (a table warning along each base's path). Other weapon and unit special rules are reminders, by name
  * (weaponRules, abilityTimings). Coverage: docs/rules-coverage/fsd.md.
  *
@@ -52,6 +56,51 @@ const ref = (r: string): Expr => ({ ref: r });
 
 const distance: Expr = { query: { kind: "distance", from: "attacker", to: "target", measure: "centre" } };
 const weaponHas = (keyword: string): Expr => ({ hasKeyword: "weapon", keyword });
+
+/**
+ * Unit special rules the attack, the actions and the reactions read (#66):
+ * an ability by that name at the bottom of the card, or the keyword.
+ */
+const UNIT_RULES: [id: string, name: string][] = [
+  ["nimble", "Nimble"],
+  ["smallTarget", "Small Target"],
+  ["largeTarget", "Large Target"],
+  ["terrainExpert", "Terrain Expert"],
+  ["camouflage", "Camouflage"],
+  ["thickArmor", "Thick Armou?r"],
+  ["unpinnable", "Unpinnable"],
+  ["flying", "Flying"],
+  ["mounted", "Mounted"],
+  ["fast", "Fast"],
+  ["slow", "Slow"],
+  ["capable", "Capable"],
+  ["disciplined", "Disciplined"],
+  ["loneWolf", "Lone Wolf"],
+  ["inert", "Inert"],
+  ["silent", "Silent"],
+  ["commander", "Commander"],
+  ["reactive", "Reactive"],
+  ["unwavering", "Unwavering"],
+];
+const unitRules: RuleDef[] = UNIT_RULES.map(([id, name]) => ({
+  id,
+  name: name.replace("u?", "u"),
+  match: `^${name.toLowerCase()}\\b`,
+  appliesTo: ["unit"],
+  effects: [],
+  played: "code",
+}));
+/** `role` has the unit rule: by an ability's name, or as a keyword ("FLYING"). */
+const trait = (role: string, id: string): Expr => {
+  const name = UNIT_RULES.find(([x]) => x === id)![1].replace("u?", "");
+  return {
+    any: [
+      { hasRule: role, rule: id },
+      { hasKeyword: role, keyword: name.toUpperCase() },
+    ],
+  };
+};
+const notTrait = (role: string, id: string): Expr => ({ not: trait(role, id) });
 /** `from` sees `to` with the weapon in scope: a Selective Fire weapon ignores units for sight, so only terrain blocks it. */
 const sees = (from: string, to: string): Expr => ({
   any: [
@@ -119,6 +168,24 @@ const heavyAfterMoving = {
   },
   why: "Heavy: not in a round the unit moved",
 };
+/** Beyond the weapon's range (up to double). */
+const longRange: Expr = { cmp: ">", a: distance, b: ref("weapon.range") };
+/** Large Target: no Defense bonus against a long range attack. */
+const largeAtLongRange: Expr = { all: [longRange, trait("target", "largeTarget")] };
+/** Suppress: a hit pins instead of damaging. */
+const suppress: Expr = weaponHas("SUPPRESS");
+/** Camouflage: `to`, in cover, can't be targeted from beyond 2 DU (infantry) or 4 DU (vehicles, mechs). */
+const camouflaged = (from: string, to: string): Expr => ({
+  all: [
+    trait(to, "camouflage"),
+    { query: { kind: "cover", from, to } },
+    {
+      cmp: ">",
+      a: { query: { kind: "distance", from, to, measure: "centre" } },
+      b: { if: { hasKeyword: to, keyword: "INFANTRY" }, then: 2, else: 4 },
+    },
+  ],
+});
 /** A special action marked prepared on the card (a square slot on its right). */
 const prepared: Expr = { hasKeyword: "weapon", keyword: "Prepared" };
 /** Taking another action ends interacting with an objective. */
@@ -126,6 +193,34 @@ const dropInteract = { do: "setFlag", target: "self", flag: "interacting", value
 /** Getting pinned ends interacting too (in an attack's outcomes). */
 const dropInteractTarget = { do: "removeStatus", target: "target", status: "interacting" } as const;
 const notPinned: Expr = { not: { hasStatus: "self", status: "pinned" } };
+/** Pinned units must unpin first; Unwavering ones act anyway. */
+const canAct: Expr = { any: [notPinned, trait("self", "unwavering")] };
+/** Two actions, for the Core and each Part of a behemoth; Capable adds one. */
+const fullActions: Expr = {
+  op: "+",
+  args: [
+    { op: "*", args: [2, { op: "+", args: [1, ref("self.Parts")] }] },
+    { if: trait("self", "capable"), then: 1, else: 0 },
+  ],
+};
+/** Once a round; a behemoth whose System reacted earlier can still activate its Core. */
+const canActivate: Expr = {
+  all: [
+    { not: { hasFlag: "self", flag: "reserves" } },
+    { not: { hasFlag: "self", flag: "coreActivated" } },
+    {
+      any: [
+        { not: { hasStatus: "self", status: "activated" } },
+        {
+          all: [
+            { hasKeyword: "self", keyword: "BEHEMOTH" },
+            { hasFlag: "self", flag: "reacted" },
+          ],
+        },
+      ],
+    },
+  ],
+};
 
 /**
  * Behemoths (multi-card units): the Core is the unit's one base, and up to
@@ -201,7 +296,15 @@ const weaponRules: RuleDef[] = [
   weaponReminder("area", "Area", "^area\\b"),
   weaponReminder("lethal", "Lethal", "^lethal$"),
   weaponReminder("surgical", "Surgical", "^surgical$"),
-  weaponReminder("suppress", "Suppress", "^suppress$"),
+  // Suppress plays itself in the attack (a hit pins instead of damaging, #66).
+  {
+    id: "suppress",
+    name: "Suppress",
+    match: "^suppress$",
+    appliesTo: ["weapon"],
+    effects: [],
+    played: "code",
+  },
   weaponReminder("passThrough", "Pass Through", "^pass[- ]through$"),
   // Not after moving is automated; this is for not moving after it fired.
   weaponReminder("heavy", "Heavy", "^heavy$"),
@@ -259,43 +362,22 @@ const outsideArc = outsideArcOf("attacker", "target");
 const abilityTimings: AbilityTiming[] = [
   {
     attack: "defender",
-    match: unitTraits([
-      "evasive",
-      "hard shell",
-      "camouflage",
-      "unpinnable",
-      "thick armou?r",
-      "nimble",
-      "small target",
-      "large target",
-      "terrain expert",
-      "flying",
-      "mounted",
-    ]),
+    // Nimble, Small and Large Target, Terrain Expert, Camouflage, Thick Armor, Unpinnable,
+    // Flying and Mounted play themselves in the attack (#66).
+    match: unitTraits(["evasive", "hard shell"]),
   },
   { attack: "attacker", match: unitTraits(["charger"]) },
-  // Finer than the phase: for the unit activated, once it moves, or while it reacts.
+  // Finer than the phase: for the unit activated, or once it moves.
   {
     on: "activation",
-    match: unitTraits([
-      "fire base",
-      "capable",
-      "disciplined",
-      "lone wolf",
-      "commander",
-      "jamming",
-      "unwavering",
-      "inert",
-      "silent",
-      "blunt",
-      "unpinnable",
-    ]),
+    // Capable, Disciplined, Lone Wolf, Commander, Unwavering, Inert and Silent play themselves (#66).
+    match: unitTraits(["fire base", "jamming", "blunt"]),
   },
   {
     on: "move",
-    match: unitTraits(["fast", "slow", "agile", "tracked", "side movement", "jump", "flying", "charger"]),
+    // Fast and Slow play themselves in the Move action (#66).
+    match: unitTraits(["agile", "tracked", "side movement", "jump", "flying", "charger"]),
   },
-  { on: "reaction", match: unitTraits(["reactive", "unwavering"]) },
   // A Character card behind the unit's (an ability named "Character: ..."): its abilities while the unit is activated.
   { on: "activation", match: "^character\\b" },
   // Abilities that re-roll a Ready AD or roll a Spent one: when the dice are rolled, before pre-assigning.
@@ -565,7 +647,7 @@ export const fsd: GameSystem = {
       flags: ["activated", "moved", "interacting", "commanded", "reacted", "coreActivated", "used.*"],
     },
   ],
-  rules: weaponRules,
+  rules: [...weaponRules, ...unitRules],
   abilityTimings,
   ruleReminders,
   deploymentHint:
@@ -592,26 +674,50 @@ export const fsd: GameSystem = {
         {
           kind: "test",
           id: "hit",
-          die: ref("weapon.die"),
+          // Nimble: dice above a d8 roll a d8.
+          die: {
+            if: trait("target", "nimble"),
+            then: { op: "min", args: [ref("weapon.die"), 8] },
+            else: ref("weapon.die"),
+          },
           compare: "atLeast",
           target: {
             op: "+",
             args: [
               shielded("Def"),
-              // Cover: +2 for infantry, +1 for vehicles and mechs; not in close combat or with IC.
+              // Cover: +2 for infantry (Mounted infantry +1, as a mech), +1 for vehicles and mechs,
+              // one more with Terrain Expert; not in close combat, with IC, or for a Flying unit.
               {
                 if: {
                   all: [
                     { not: close },
                     { not: { hasKeyword: "weapon", keyword: "IC" } },
+                    notTrait("target", "flying"),
+                    { not: largeAtLongRange },
                     { query: { kind: "cover", from: "attacker", to: "target" } },
                   ],
                 },
-                then: { if: { hasKeyword: "target", keyword: "INFANTRY" }, then: 2, else: 1 },
+                then: {
+                  op: "+",
+                  args: [
+                    {
+                      if: {
+                        all: [{ hasKeyword: "target", keyword: "INFANTRY" }, notTrait("target", "mounted")],
+                      },
+                      then: 2,
+                      else: 1,
+                    },
+                    { if: trait("target", "terrainExpert"), then: 1, else: 0 },
+                  ],
+                },
                 else: 0,
               },
-              // Beyond the weapon's range (up to double): +1.
-              { if: { cmp: ">", a: distance, b: ref("weapon.range") }, then: 1, else: 0 },
+              // Beyond the weapon's range (up to double): +1, +2 for a Small Target, none for a Large one.
+              {
+                if: { all: [longRange, { not: largeAtLongRange }] },
+                then: { if: trait("target", "smallTarget"), then: 2, else: 1 },
+                else: 0,
+              },
               // Indirect Fire at a target out of sight: +1.
               {
                 if: {
@@ -634,20 +740,26 @@ export const fsd: GameSystem = {
               { all: [weaponHas("SHORT RANGE"), { cmp: ">", a: distance, b: ref("weapon.range") }] },
               // Contact weapons need base contact, and can't hit a Flying unit.
               {
-                all: [
-                  weaponHas("CONTACT"),
-                  { any: [{ not: baseContact }, { hasKeyword: "target", keyword: "FLYING" }] },
-                ],
+                all: [weaponHas("CONTACT"), { any: [{ not: baseContact }, trait("target", "flying")] }],
               },
+              // Camouflage: in cover, it can't be targeted from afar.
+              camouflaged("attacker", "target"),
             ],
           },
           roller: "attacker",
         },
         {
-          // Infantry is pinned by any hit, saved or not.
+          // Infantry is pinned by any hit, saved or not (an Unpinnable unit never is).
           kind: "do",
           id: "pinInfantry",
-          if: { hasKeyword: "target", keyword: "INFANTRY" },
+          if: { all: [{ hasKeyword: "target", keyword: "INFANTRY" }, notTrait("target", "unpinnable")] },
+          do: [{ do: "applyStatus", target: "target", status: "pinned" }, dropInteractTarget],
+        },
+        {
+          // Suppress: no damage; a hit pins the target instead of being saved.
+          kind: "do",
+          id: "suppress",
+          if: { all: [suppress, notTrait("target", "unpinnable")] },
           do: [{ do: "applyStatus", target: "target", status: "pinned" }, dropInteractTarget],
         },
         {
@@ -656,6 +768,7 @@ export const fsd: GameSystem = {
           // rear of a vehicle saves with a die one size smaller.
           kind: "test",
           id: "save",
+          if: { not: suppress },
           // A behemoth doesn't suffer from attacks from the rear; a System it is shielded by saves.
           die: shieldedOr("saveDie", {
             op: "max",
@@ -689,7 +802,24 @@ export const fsd: GameSystem = {
                 op: "-",
                 args: [
                   shielded("saveDice"),
-                  { if: close, then: { op: "max", args: [1, ref("weapon.AP")] }, else: ref("weapon.AP") },
+                  {
+                    op: "max",
+                    args: [
+                      0,
+                      {
+                        op: "-",
+                        args: [
+                          {
+                            if: close,
+                            then: { op: "max", args: [1, ref("weapon.AP")] },
+                            else: ref("weapon.AP"),
+                          },
+                          // Thick Armor: AP (close combat's too) one less.
+                          { if: trait("target", "thickArmor"), then: 1, else: 0 },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -705,7 +835,7 @@ export const fsd: GameSystem = {
           // Units with a damage chart roll on it for each damage, and are pinned.
           kind: "do",
           id: "chart",
-          if: { all: [{ has: "target.Chart" }, unshielded] },
+          if: { all: [{ has: "target.Chart" }, unshielded, { not: suppress }] },
           do: [
             { do: "damageTrack", target: "target", chart: "target.Chart", status: "pinned" },
             dropInteractTarget,
@@ -715,7 +845,7 @@ export const fsd: GameSystem = {
         ...SYSTEMS.map((n) => ({
           kind: "do" as const,
           id: `chartS${n}`,
-          if: { all: [{ has: "target.Chart" }, shields(n)] },
+          if: { all: [{ has: "target.Chart" }, shields(n), { not: suppress }] },
           do: [
             {
               do: "damageTrack" as const,
@@ -727,22 +857,38 @@ export const fsd: GameSystem = {
           ],
         })),
         {
+          // An Unpinnable unit shrugs off the chart's pin.
+          kind: "do",
+          id: "unpinnable",
+          if: { all: [{ has: "target.Chart" }, trait("target", "unpinnable"), { not: suppress }] },
+          do: [{ do: "removeStatus", target: "target", status: "pinned" }],
+        },
+        {
           // Units without one lose the closest base per unsaved hit, and are pinned.
           kind: "do",
           id: "pinDamaged",
-          if: { not: { has: "target.Chart" } },
+          if: {
+            all: [{ not: { has: "target.Chart" } }, notTrait("target", "unpinnable"), { not: suppress }],
+          },
           do: [{ do: "applyStatus", target: "target", status: "pinned" }, dropInteractTarget],
         },
         {
           kind: "allocate",
           id: "bases",
+          if: { not: suppress },
           chooser: "attacker",
           // Closest base first, and only bases the attacker sees: hits beyond them are lost
           // (fire at a unit out of sight altogether, Indirect Fire, takes the closest).
           order: { query: { kind: "distance", from: "attacker", to: "model", measure: "centre" } },
           only: { any: [sees("attacker", "model"), { not: sees("attacker", "target") }] },
         },
-        { kind: "damage", id: "damage", if: { not: { has: "target.Chart" } }, amount: 1, spillover: false },
+        {
+          kind: "damage",
+          id: "damage",
+          if: { all: [{ not: { has: "target.Chart" } }, { not: suppress }] },
+          amount: 1,
+          spillover: false,
+        },
       ],
     },
   ],
@@ -755,40 +901,55 @@ export const fsd: GameSystem = {
       side: "active",
       hint: "A Character's abilities (its card behind the unit's) are used during the activation, each once a round, even while pinned, and don't count toward the two actions",
       // A behemoth's Systems and Attachments activate with its Core, two actions each.
-      activates: { op: "*", args: [2, { op: "+", args: [1, ref("self.Parts")] }] },
-      // Once a round; a behemoth whose System reacted earlier can still activate its Core.
-      if: {
-        all: [
-          { not: { hasFlag: "self", flag: "reserves" } },
-          { not: { hasFlag: "self", flag: "coreActivated" } },
-          {
-            any: [
-              { not: { hasStatus: "self", status: "activated" } },
-              { all: [isBehemoth("self"), { hasFlag: "self", flag: "reacted" }] },
-            ],
-          },
-        ],
-      },
+      activates: fullActions,
+      if: canActivate,
       cost: [{ resource: "readyDice", amount: 1 }],
-      // Commanded units: within 2 DU and in line of sight. Pinned units can't command.
+      // Commanded units: within 2 DU and in line of sight (anywhere for a Commander). Pinned
+      // and Lone Wolf units can't command; Lone Wolf units can't be commanded.
       do: [
         {
           do: "activate",
-          count: { if: { hasStatus: "self", status: "pinned" }, then: 0, else: ref("self.Cmd") },
+          count: {
+            if: { any: [{ hasStatus: "self", status: "pinned" }, trait("self", "loneWolf")] },
+            then: 0,
+            else: ref("self.Cmd"),
+          },
           filter: {
             all: [
               { not: { hasStatus: "it", status: "activated" } },
+              notTrait("it", "loneWolf"),
               {
-                cmp: "<=",
-                a: { query: { kind: "distance", from: "self", to: "it", measure: "centre" } },
-                b: ref("const.commandRange"),
+                any: [
+                  trait("self", "commander"),
+                  {
+                    all: [
+                      {
+                        cmp: "<=",
+                        a: { query: { kind: "distance", from: "self", to: "it", measure: "centre" } },
+                        b: ref("const.commandRange"),
+                      },
+                      { query: { kind: "visible", from: "self", to: "it" } },
+                    ],
+                  },
+                ],
               },
-              { query: { kind: "visible", from: "self", to: "it" } },
             ],
           },
         },
         { do: "setFlag", target: "self", flag: "coreActivated", value: true },
       ],
+    },
+    {
+      // Lone Wolf and Disciplined units may activate without an AD: no command, and a
+      // Disciplined unit activated this way takes one action.
+      id: "activateFree",
+      name: "Activate (no AD)",
+      by: "unit",
+      side: "active",
+      hint: "Lone Wolf or Disciplined: no AD spent; Disciplined takes one action this way, and neither commands",
+      activates: { if: trait("self", "loneWolf"), then: fullActions, else: 1 },
+      if: { all: [canActivate, { any: [trait("self", "loneWolf"), trait("self", "disciplined")] }] },
+      do: [{ do: "setFlag", target: "self", flag: "coreActivated", value: true }],
     },
     {
       // An unactivated unit may spend a die to react when it is shot at, or
@@ -797,7 +958,8 @@ export const fsd: GameSystem = {
       name: "React",
       by: "unit",
       side: "inactive",
-      activates: 1,
+      // Reactive: its normal two actions.
+      activates: { if: trait("self", "reactive"), then: 2, else: 1 },
       reactTo: {
         event: "action.declared",
         where: {
@@ -814,6 +976,9 @@ export const fsd: GameSystem = {
           { any: [{ not: { hasStatus: "self", status: "activated" } }, isBehemoth("self")] },
           { not: { hasFlag: "self", flag: "reserves" } },
           notPinned,
+          // Inert units never react; a Silent unit's actions never set off a reaction.
+          notTrait("self", "inert"),
+          notTrait("event.unit", "silent"),
           {
             any: [
               // Any target of the shot, a multiple attack's included.
@@ -849,16 +1014,31 @@ export const fsd: GameSystem = {
       id: "move",
       name: "Move",
       by: "unit",
-      if: notPinned,
+      if: canAct,
+      // Slow: one move per activation.
+      notWhen: [
+        {
+          if: { all: [trait("self", "slow"), { hasFlag: "self", flag: "moved" }] },
+          why: "Slow: one move per activation",
+        },
+      ],
       move: {
         kind: "normal",
+        // Fast: no shorter moves after the first.
         distance: {
           op: "max",
           args: [
             1,
             {
               op: "-",
-              args: [ref("self.Move"), { if: { hasFlag: "self", flag: "moved" }, then: 1, else: 0 }],
+              args: [
+                ref("self.Move"),
+                {
+                  if: { all: [{ hasFlag: "self", flag: "moved" }, notTrait("self", "fast")] },
+                  then: 1,
+                  else: 0,
+                },
+              ],
             },
           ],
         },
@@ -871,12 +1051,15 @@ export const fsd: GameSystem = {
       id: "fire",
       name: "Fire",
       by: "unit",
-      if: notPinned,
+      if: canAct,
       forWeapons: { not: prepared },
       // In sight, or out of sight with Indirect Fire (+1 Defense, in the hit roll); in the weapon's arc.
       target: {
         filter: { any: [sees("self", "it"), weaponHas("INDIRECT FIRE")] },
-        notWhen: [{ if: outsideArcOf("self", "it"), why: "Outside the weapon's arc of fire" }],
+        notWhen: [
+          { if: outsideArcOf("self", "it"), why: "Outside the weapon's arc of fire" },
+          { if: camouflaged("self", "it"), why: "Camouflage: in cover and too far to target" },
+        ],
       },
       limit: { count: 1, per: "round", perUnit: true },
       notWhen: [...damagedSystems, attachmentLost, heavyAfterMoving],
@@ -892,7 +1075,7 @@ export const fsd: GameSystem = {
       id: "prepare",
       name: "Prepare",
       by: "unit",
-      if: notPinned,
+      if: canAct,
       forWeapons: prepared,
       prepares: true,
       hint: "Its effect lasts while the token stays; clear the token when the action is used or its trigger comes",
@@ -932,7 +1115,8 @@ export const fsd: GameSystem = {
       name: "Deploy",
       by: "unit",
       side: "active",
-      activates: 1,
+      // Capable: one action more.
+      activates: { if: trait("self", "capable"), then: 2, else: 1 },
       hint: "Disembarking from a transport is deploying too: place the bases as close to it as possible",
       if: { hasFlag: "self", flag: "reserves" },
     },
@@ -971,7 +1155,17 @@ export const fsd: GameSystem = {
             kind: "phase",
             id: "activation",
             name: "Activations",
-            actions: ["activate", "deploy", "react", "unpin", "move", "fire", "prepare", "interact"],
+            actions: [
+              "activate",
+              "activateFree",
+              "deploy",
+              "react",
+              "unpin",
+              "move",
+              "fire",
+              "prepare",
+              "interact",
+            ],
           },
         ],
       },

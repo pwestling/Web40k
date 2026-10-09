@@ -5,6 +5,7 @@ import { blockFrame, formBlock } from "../../core/regiment";
 import type { GameState, Unit } from "../../core/types";
 import { opposed } from "../../core/teams";
 import type { CodeAction, CodeProcedure, GameView } from "../../sdk";
+import { hasRule } from "./specialRules";
 
 /**
  * Characters joining and leaving regiments (The Old World): a character on
@@ -29,6 +30,24 @@ function loneCharacter(state: GameState, u: Unit | undefined): boolean {
     !!u.sheet?.wizard ||
     Number.parseFloat(m?.profile?.chars.W ?? "1") > 1
   );
+}
+
+/**
+ * Rules that keep a character out of a regiment (#66): a Clumsy unit takes
+ * only a Clumsy character; Loner, Unbreakable and Ethereal characters and
+ * units only join their own kind. Null when it may join, else why not.
+ */
+export function joinBar(character: Unit, regiment: Unit): string | null {
+  if (hasRule(regiment, /^clumsy\b/i) && !hasRule(character, /^clumsy\b/i))
+    return `${regiment.name} is Clumsy: only a Clumsy character joins it`;
+  for (const [re, name] of [
+    [/^loner\b/i, "Loner"],
+    [/^unbreakable\b/i, "Unbreakable"],
+    [/^ethereal\b/i, "Ethereal"],
+  ] as const)
+    if (hasRule(regiment, re) !== hasRule(character, re))
+      return `${name}: only ${name} characters and units join each other`;
+  return null;
 }
 
 function regimentsNear(view: GameView, unitId: string): { u: Unit; d: number }[] {
@@ -118,13 +137,17 @@ export const characterActions: CodeAction[] = [
       const u = view.state.units[actor.unitId ?? ""];
       if (!loneCharacter(view.state, u)) return "Only a character on its own joins a regiment";
       if (u!.status?.fleeing) return "Fleeing characters don't join regiments";
-      return regimentsNear(view, u!.id).length ? true : `No friendly regiment within ${JOIN_RANGE}"`;
+      const near = regimentsNear(view, u!.id);
+      if (!near.length) return `No friendly regiment within ${JOIN_RANGE}"`;
+      return near.some((x) => !joinBar(u!, x.u)) ? true : joinBar(u!, near[0]!.u)!;
     },
     targets: (view, actor) =>
-      regimentsNear(view, actor.unitId ?? "").map((x) => ({
-        unitId: x.u.id,
-        label: `${x.u.name} (${x.d.toFixed(1)}")`,
-      })),
+      regimentsNear(view, actor.unitId ?? "")
+        .filter((x) => !joinBar(view.state.units[actor.unitId ?? ""]!, x.u))
+        .map((x) => ({
+          unitId: x.u.id,
+          label: `${x.u.name} (${x.d.toFixed(1)}")`,
+        })),
     run: join,
   },
   {

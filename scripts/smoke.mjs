@@ -53,6 +53,72 @@ const browser = await chromium.launch({
 const files = mkdtempSync(join(tmpdir(), "open-battle-smoke-"));
 
 /** A fresh device: its own storage, page errors collected. */
+/** #65: two browsers at a ranked Rift Lanterns table from Open tables, played to the result (Ana 1, Ben 0). */
+async function rankedToResult() {
+  const q = `?${SIGNAL}&openTables=1&board=${encodeURIComponent(`http://localhost:${RELAY}/board`)}`;
+  const host = await device();
+  const guest = await device();
+  const tables = async (page) => {
+    await lobby(page, q);
+    await page.getByRole("button", { name: /Open tables: find/ }).click();
+  };
+  await lobby(host.page, q);
+  const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
+  await game.locator('option[value="rift-lanterns"]').waitFor({ state: "attached", timeout: 20_000 });
+  await game.selectOption("rift-lanterns");
+  await host.page.getByRole("button", { name: /Open tables: find/ }).click();
+  await host.page.getByRole("button", { name: "Host a table and post it" }).click();
+  const form = host.page.locator(".post-table");
+  await form.locator("label", { hasText: "Your name" }).locator("input").fill("Ana");
+  await form.locator("label", { hasText: "Ranked" }).locator("input").check();
+  await form.getByRole("button", { name: /^Post:/ }).click();
+  await host.page.locator(".room").waitFor();
+  await tables(guest.page);
+  const post = guest.page.locator(".table-post:not(.live-game)").first();
+  await post.getByText("Ranked").first().waitFor({ timeout: 30_000 });
+  await post.getByRole("button", { name: "Join" }).click();
+  await guest.page.locator(".table-post:not(.live-game) input").first().fill("Ben");
+  await guest.page.getByRole("button", { name: "Join Ana" }).click();
+  // Opt-in: the guest says yes to ranked, on the card that greets them at the table (PX ranked 7).
+  await guest.page
+    .locator(".arrival")
+    .getByRole("button", { name: "Play ranked" })
+    .click({ timeout: 30_000 });
+  await host.page.locator(".topbar .ranked-chip").waitFor({ timeout: 15_000 });
+  for (const [i, { page }] of [host, guest].entries()) {
+    await page.locator('.panel.hud select[aria-label="Sample army"]').selectOption({ index: i + 1 });
+    const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+    if (await deploy.count()) await deploy.click();
+  }
+  await host.page.getByRole("button", { name: /Start battle/ }).click();
+  const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+  if (await anyway.count()) await anyway.first().click();
+  await host.page
+    .locator(".topbar")
+    .getByText(/Round 1/)
+    .first()
+    .waitFor({ timeout: 15_000 });
+  for (const { page } of [host, guest]) await page.keyboard.press("Escape");
+  // Ana scores a point by hand, then both pass every round to the end.
+  await host.page.locator(".topbar .player").first().getByRole("button", { name: "+" }).click();
+  const deadline = Date.now() + 120_000;
+  while (!(await host.page.locator(".ranked-sign").count())) {
+    if (Date.now() > deadline) throw new Error("the ranked game never reached its result");
+    for (const { page } of [host, guest]) {
+      const pass = page.locator(".topbar").getByRole("button", { name: "Pass", exact: true });
+      if (await pass.isEnabled().catch(() => false)) await pass.click({ timeout: 1500 }).catch(() => {});
+      const ask = page.locator(".topbar .ask button.primary");
+      if (await ask.count())
+        await ask
+          .first()
+          .click()
+          .catch(() => {});
+    }
+    await sleep(300);
+  }
+  return { host, guest, tables };
+}
+
 async function device(options = {}) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, ...options });
   const page = await context.newPage();
@@ -652,72 +718,24 @@ const checks = {
   // #65: a ranked Rift Lanterns game between two browsers, both sign, and after a reload
   // both ladders (worked out on each device from the signed result) agree.
   async ranked() {
-    const q = `?${SIGNAL}&openTables=1&board=${encodeURIComponent(`http://localhost:${RELAY}/board`)}`;
-    const host = await device();
-    const guest = await device();
-    const tables = async (page) => {
-      await lobby(page, q);
-      await page.getByRole("button", { name: /Open tables: find/ }).click();
-    };
-    await lobby(host.page, q);
-    const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
-    await game.locator('option[value="rift-lanterns"]').waitFor({ state: "attached", timeout: 20_000 });
-    await game.selectOption("rift-lanterns");
-    await host.page.getByRole("button", { name: /Open tables: find/ }).click();
-    await host.page.getByRole("button", { name: "Host a table and post it" }).click();
-    const form = host.page.locator(".post-table");
-    await form.locator("label", { hasText: "Your name" }).locator("input").fill("Ana");
-    await form.locator("label", { hasText: "Ranked" }).locator("input").check();
-    await form.getByRole("button", { name: /^Post:/ }).click();
-    await host.page.locator(".room").waitFor();
-    await tables(guest.page);
-    const post = guest.page.locator(".table-post:not(.live-game)").first();
-    await post.getByText("Ranked").first().waitFor({ timeout: 30_000 });
-    await post.getByRole("button", { name: "Join" }).click();
-    await guest.page.locator(".table-post:not(.live-game) input").first().fill("Ben");
-    await guest.page.getByRole("button", { name: "Join Ana" }).click();
-    // Opt-in: the guest says yes to ranked.
-    await guest.page.getByRole("button", { name: "Play ranked" }).click({ timeout: 30_000 });
-    await host.page.locator(".topbar .ranked-chip").waitFor({ timeout: 15_000 });
-    for (const [i, { page }] of [host, guest].entries()) {
-      await page.locator('.panel.hud select[aria-label="Sample army"]').selectOption({ index: i + 1 });
-      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
-      if (await deploy.count()) await deploy.click();
-    }
-    await host.page.getByRole("button", { name: /Start battle/ }).click();
-    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
-    if (await anyway.count()) await anyway.first().click();
-    await host.page
-      .locator(".topbar")
-      .getByText(/Round 1/)
-      .first()
-      .waitFor({ timeout: 15_000 });
-    for (const { page } of [host, guest]) await page.keyboard.press("Escape");
-    // Ana scores a point by hand, then both pass every round to the end.
-    await host.page.locator(".topbar .player").first().getByRole("button", { name: "+" }).click();
-    const deadline = Date.now() + 120_000;
-    while (!(await host.page.locator(".ranked-sign").count())) {
-      if (Date.now() > deadline) throw new Error("the ranked game never reached its result");
-      for (const { page } of [host, guest]) {
-        const pass = page.locator(".topbar").getByRole("button", { name: "Pass", exact: true });
-        if (await pass.isEnabled().catch(() => false)) await pass.click({ timeout: 1500 }).catch(() => {});
-        const ask = page.locator(".topbar .ask button.primary");
-        if (await ask.count())
-          await ask
-            .first()
-            .click()
-            .catch(() => {});
-      }
-      await sleep(300);
-    }
+    const { host, guest, tables } = await rankedToResult();
     for (const { page } of [host, guest])
       await page
         .locator(".ranked-sign")
         .first()
-        .getByRole("button", { name: "Sign: that's right" })
+        .getByRole("button", { name: /^Sign: / })
         .click({ timeout: 20_000 });
     for (const { page } of [host, guest])
       await page.locator(".ranked-sign.good").first().waitFor({ timeout: 20_000 });
+    // The winner sees the climb, the loser the cost and what wins it back (PX ranked 2).
+    await host.page
+      .locator(".ranked-sign .rating-move", { hasText: "1,516 (+16)" })
+      .first()
+      .waitFor({ timeout: 20_000 });
+    await guest.page
+      .locator(".ranked-sign", { hasText: /1,484 \(−16\).*A win against Ana wins back 17/s })
+      .first()
+      .waitFor({ timeout: 20_000 });
     const ladders = [];
     for (const { page } of [host, guest]) {
       await tables(page);
@@ -727,8 +745,50 @@ const checks = {
       ladders.push(await table.innerText());
     }
     if (ladders[0] !== ladders[1]) throw new Error(`the ladders differ: ${JSON.stringify(ladders)}`);
-    if (!/1\tAna\b.*\t1516\?/.test(ladders[0]))
+    if (!/1\tAna\b.*\t1,516\?/.test(ladders[0]))
       throw new Error(`unexpected ladder: ${JSON.stringify(ladders[0])}`);
+    for (const d of [host, guest]) await d.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
+  // PX ranked 1: "Don't sign" asks why. A wrong score is fixed on the table and written up again;
+  // a refusal shows kindly on both sides and in each player's sign rate.
+  async "ranked-refusal"() {
+    const { host, guest, tables } = await rankedToResult();
+    const sign = (page) => page.locator(".ranked-sign").first();
+    await sign(guest.page).getByRole("button", { name: "Don't sign" }).click({ timeout: 20_000 });
+    await sign(guest.page).getByRole("button", { name: "The score is wrong" }).click();
+    await sign(host.page)
+      .getByText(/Ben says the score is wrong/)
+      .waitFor({ timeout: 20_000 });
+    // Ben's point was missed: he puts it on, and the result is written again as a draw.
+    await guest.page.locator(".topbar .player").nth(1).getByRole("button", { name: "+" }).click();
+    await sign(guest.page).getByRole("button", { name: "Score fixed: write it up" }).click();
+    await sign(host.page)
+      .getByText(/Ana 1 – 1 Ben, a draw/)
+      .waitFor({ timeout: 20_000 });
+    await sign(host.page)
+      .getByRole("button", { name: /^Sign: / })
+      .click({ timeout: 20_000 });
+    await sign(guest.page).getByRole("button", { name: "Don't sign" }).click({ timeout: 20_000 });
+    await sign(guest.page).getByRole("button", { name: "We agreed it wouldn't count" }).click();
+    await sign(guest.page)
+      .getByText("You didn't sign, so this game doesn't count for either of you.")
+      .waitFor({ timeout: 20_000 });
+    await sign(host.page)
+      .getByText(/Ben didn't sign, so it won't move the ladder/)
+      .waitFor({ timeout: 20_000 });
+    await sign(host.page).getByText("Ben said: We agreed it wouldn't count").waitFor();
+    // Each card counts it: Ana signed, Ben didn't.
+    for (const [{ page }, line] of [
+      [host, "You've signed 1 of 1 result."],
+      [guest, "You've signed 0 of 1 result."],
+    ]) {
+      await tables(page);
+      await page.locator(".open-tables").getByRole("button", { name: "Ladder" }).click();
+      await page.locator(".player-card").getByRole("button", { name: "Your player card" }).click();
+      await page.locator(".player-card").getByText(line).waitFor({ timeout: 30_000 });
+    }
     for (const d of [host, guest]) await d.context.close();
     return [...host.page.errors, ...guest.page.errors];
   },

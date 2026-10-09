@@ -2,6 +2,7 @@ import { inArc } from "../../core/regiment";
 import { isAlive } from "../../core/units";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeProcedure, GameView, PureFn, TurnHooks } from "../../sdk";
+import { hasNamed, UNSTOPPABLE } from "./special";
 
 /**
  * Charges (research/conquest-rules.md, Actions): a regiment charges an enemy
@@ -83,7 +84,13 @@ const chargeOutcome: CodeProcedure = function* (ctx, args) {
     const targets = chargeTargets(view, unit.id);
     if (!targets.length) return;
     const gap = Math.min(...targets.map((t) => view.distance(unit.id, t.id)));
-    const reach = Number(args.roll ?? 0) + marchOf(view.state, unit);
+    let reach = Number(args.roll ?? 0) + marchOf(view.state, unit);
+    // Unstoppable re-rolls a failed charge roll (special.ts; not labelled "charge", so it doesn't start this again).
+    if (reach + 0.05 < gap && hasNamed(unit, UNSTOPPABLE)) {
+      const again = (yield ctx.roll("1d6", "Unstoppable: charge re-roll", unit.id)) as { total: number };
+      yield ctx.note(`${unit.name} is Unstoppable: the charge roll is re-rolled (${again.total})`);
+      reach = again.total + marchOf(view.state, unit);
+    }
     if (reach + 0.05 >= gap) {
       // A manual reminder at the moment it matters: how the charge move is made.
       yield ctx.note(

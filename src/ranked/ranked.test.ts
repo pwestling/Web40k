@@ -11,8 +11,17 @@ import {
 import { canonResult, rankedResultOf, type RankedResult } from "../core/ranked";
 import { sign, type Identity } from "../mail/keys";
 import { keyOf } from "../player/card";
-import { change, counted, expected, K, ladder, PAIR_CAP, START } from "./ratings";
-import { checkSigned, replayHash, signingText, type SignedResult } from "./verify";
+import { change, counted, expected, K, ladder, PAIR_CAP, ratingMove, START } from "./ratings";
+import { signRate } from "./store";
+import {
+  checkDeclined,
+  checkSigned,
+  declineText,
+  replayHash,
+  signingText,
+  type DeclinedResult,
+  type SignedResult,
+} from "./verify";
 
 async function newIdentity(): Promise<Identity> {
   const pair = (await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, [
@@ -77,6 +86,36 @@ describe("ranked results (#65)", () => {
     expect(await checkSigned(byOne)).toBeNull();
   });
 
+  it("keeps a refusal only with the decliner's own signature on it (PX ranked 1)", async () => {
+    const ids: [Identity, Identity] = [await newIdentity(), await newIdentity()];
+    const [a, b] = ids.map((i) => keyOf(i.publicKey)) as [string, string];
+    const r = result(a, b, 12, 8);
+    const canon = canonResult(r)!;
+    // Ana won and signed; Ben declined, saying something went wrong.
+    const refused: DeclinedResult = {
+      result: r,
+      sigs: [await sign(signingText(canon), ids[0]), null],
+      declined: { seat: 1, why: "broke", sig: await sign(declineText(canon, "broke"), ids[1]) },
+    };
+    expect(await checkDeclined(refused)).not.toBeNull();
+    // Made up by Ana: her signature on Ben's refusal doesn't hold.
+    const madeUp = {
+      ...refused,
+      declined: { ...refused.declined, sig: await sign(declineText(canon, "broke"), ids[0]) },
+    };
+    expect(await checkDeclined(madeUp)).toBeNull();
+    // Another reason than the one signed, or a "score" refusal, doesn't hold either.
+    expect(await checkDeclined({ ...refused, declined: { ...refused.declined, why: "agreed" } })).toBeNull();
+    expect(await checkDeclined({ ...refused, declined: { ...refused.declined, why: "score" } })).toBeNull();
+    // A refusal never passes as a signed result.
+    expect(await checkSigned(refused)).toBeNull();
+    // Sign rates: Ana signed it, Ben didn't.
+    const signedOne = { [HASH]: await signed(result(a, b, 1, 2, 5, "b".repeat(64)), ids) };
+    const declined = { [r.replay]: refused };
+    expect(signRate(a, signedOne, declined)).toEqual({ signed: 2, of: 2 });
+    expect(signRate(b, signedOne, declined)).toEqual({ signed: 1, of: 2 });
+  });
+
   it("refuses results that disagree with themselves", () => {
     const [a, b] = ["x".repeat(43) + "." + "y".repeat(43), "z".repeat(43) + "." + "w".repeat(43)];
     expect(canonResult(result(a, b, 3, 1))).not.toBeNull();
@@ -133,6 +172,19 @@ describe("ratings with no server (#65)", () => {
     expect([b!.key, b!.rating, b!.losses]).toEqual([B, START - 16, 1]);
     // A draw between equals changes nothing.
     expect(ladder([counts(A, B, 4, 4, 1)], "rift-lanterns").map((r) => r.rating)).toEqual([START, START]);
+  });
+
+  it("says how one game moved each player (PX ranked 2)", () => {
+    const first = counts(A, B, 10, 2, 1, 1);
+    const second = counts(B, A, 3, 1, 2 * 24 * 3600_000, 2);
+    const results = [first, second];
+    const win = ratingMove(results, "rift-lanterns", first.result.replay, A)!;
+    expect(win).toMatchObject({ before: START, after: START + 16, delta: 16, games: 1 });
+    expect(win.them).toEqual({ name: "Ben", rating: START - 16 });
+    const back = ratingMove(results, "rift-lanterns", second.result.replay, A)!;
+    expect(back.before).toBe(START + 16);
+    expect(back.delta).toBeLessThan(-16);
+    expect(ratingMove(results, "rift-lanterns", "f".repeat(64), A)).toBeNull();
   });
 
   it("agrees on the ladder whatever order the results arrived in, each replay once", () => {
@@ -196,7 +248,20 @@ describe("a ranked game in the log (#65)", () => {
     expect(refused(s, { type: "ranked/card", key: null }, "a")).toBe(true);
     s = play(s, { type: "ranked/sign", sig: "s".repeat(88) }, "a");
     expect(refused(s, { type: "ranked/sign", sig: "s".repeat(88) }, "a")).toBe(true);
-    s = play(s, { type: "ranked/sign", sig: null }, "b");
+    // "The score is wrong": the result comes down until the table says it's fixed, then it's written again.
+    s = play(s, { type: "ranked/sign", sig: null, why: "score" }, "b");
+    expect(s.ranked?.result).toBeUndefined();
+    expect(s.ranked?.sigs).toEqual({});
+    expect(refused(s, { type: "ranked/result", result: r }, "a")).toBe(true);
+    s = play(s, { type: "ranked/fixed" }, "a");
+    s = { ...s, resources: { a: { VP: 12 }, b: { VP: 10 } } };
+    const fixed = rankedResultOf(s, HASH, 6)!;
+    s = play(s, { type: "ranked/result", result: fixed }, "a");
+    s = play(s, { type: "ranked/sign", sig: "s".repeat(88) }, "a");
+    s = play(s, { type: "ranked/sign", sig: null, why: "agreed", decline: "d".repeat(88) }, "b");
     expect(s.ranked?.sigs).toEqual({ a: "s".repeat(88), b: null });
+    expect(s.ranked?.whys).toEqual({ b: "agreed" });
+    expect(s.ranked?.declines).toEqual({ b: "d".repeat(88) });
+    expect(s.ranked?.fixes).toBe(1);
   });
 });

@@ -60,8 +60,12 @@ export function counted(results: SignedResult[], system: string): SignedResult[]
   return out;
 }
 
-/** The ladder for one game system, best first. */
-export function ladder(results: SignedResult[], system: string): Rating[] {
+/** Every rating after each counted game, in order; `each` sees each game's change for its first player. */
+function fold(
+  results: SignedResult[],
+  system: string,
+  each?: (result: SignedResult["result"], a: Rating, b: Rating, d: number) => void,
+): Map<PlayerKey, Rating> {
   const by = new Map<PlayerKey, Rating>();
   const get = (key: PlayerKey, name: string) => {
     const r = by.get(key) ?? { key, name, rating: START, games: 0, wins: 0, losses: 0, draws: 0 };
@@ -87,10 +91,52 @@ export function ladder(results: SignedResult[], system: string): Rating[] {
       else if (s === 0) p.losses++;
       else p.draws++;
     }
+    each?.(result, a, b, d);
   }
-  return [...by.values()]
+  return by;
+}
+
+/** The ladder for one game system, best first. */
+export function ladder(results: SignedResult[], system: string): Rating[] {
+  return [...fold(results, system).values()]
     .map((r) => ({ ...r, rating: Math.round(r.rating) }))
     .sort((x, y) => y.rating - x.rating || y.games - x.games || (x.key < y.key ? -1 : 1));
+}
+
+/** What one game did to a player's rating (PX ranked 2): before, after, and the opponent's after. */
+export interface RatingMove {
+  before: number;
+  after: number;
+  /** Rounded, as shown: after − before. */
+  delta: number;
+  games: number;
+  them: { name: string; rating: number };
+}
+
+/** How the game with this replay moved `key`'s rating, or null if it didn't count (unsigned, past the pair cap). */
+export function ratingMove(
+  results: SignedResult[],
+  system: string,
+  replay: string,
+  key: PlayerKey,
+): RatingMove | null {
+  let move: RatingMove | null = null;
+  fold(results, system, (result, a, b, d) => {
+    if (result.replay !== replay) return;
+    const seat = result.players.findIndex((p) => p.key === key);
+    if (seat < 0) return;
+    const [me, them, mine] = seat === 0 ? [a, b, d] : [b, a, -d];
+    const after = Math.round(me.rating);
+    const before = Math.round(me.rating - mine);
+    move = {
+      before,
+      after,
+      delta: after - before,
+      games: me.games,
+      them: { name: them.name, rating: Math.round(them.rating) },
+    };
+  });
+  return move;
 }
 
 /** The game systems with ranked results, most played first. */

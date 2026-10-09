@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { netConfig } from "../net/config";
 import { useStore } from "../store";
-import type { SignedResult } from "../ranked/verify";
+import type { DeclinedResult, SignedResult } from "../ranked/verify";
 import { HEARTBEAT_MS, isUp, type SeenPost, type TablePost } from "./post";
 
 /**
@@ -29,7 +29,7 @@ export interface BoardBackend {
   /** The page is closing: a last word that doesn't wait for an answer. */
   leaving?(post: TablePost): void;
   /** Ranked results (#65): pass one on, signed by both players. */
-  publishResult(result: SignedResult): Promise<void>;
+  publishResult(result: SignedResult | DeclinedResult): Promise<void>;
   /** Read results (unchecked: src/ranked checks each) until the returned function is called. */
   watchResults(onResults: (raw: unknown[]) => void): () => void;
 }

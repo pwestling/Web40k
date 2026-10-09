@@ -27,9 +27,11 @@ export function importTowRoster(fileName: string, data: Uint8Array): Promise<Imp
 }
 
 /** Ability groups on the unit card. */
-const MOUNT_GROUP = "Mount and crew";
+export const MOUNT_GROUP = "Mount and crew";
 export const ITEM_GROUP = "Magic items and options";
-const RULE_GROUP = "Special rules";
+export const RULE_GROUP = "Special rules";
+/** A wizard's spells, listed for their text: cast from the card, so not rules to play by hand. */
+export const SPELL_GROUP = "Spells";
 
 /** Unit Strength per model by troop type (the rulebook's Troop Type table, via tow.whfb.app). */
 const UNIT_STRENGTH: [RegExp, number | "W"][] = [
@@ -220,7 +222,8 @@ function weaponOf(p: RProfile): Omit<WeaponProfile, "id"> | undefined {
     if (k === "R" || k === "RANGE" || k === "RNG") chars.Range = c.value;
     else if (k === "S" || k === "STRENGTH") chars.S = c.value;
     else if (k === "AP" || k === "ARMOURPIERCING" || k === "ARMORPIERCING") chars.AP = c.value;
-    else if (/special|rules|notes/i.test(c.name))
+    // Its special rules by name; a Notes column holds sentences, not rule names.
+    else if (/special|rules/i.test(c.name) || (/notes?$/i.test(c.name) && !/[.:]/.test(c.value)))
       keywords = c.value
         .split(/[,;]/)
         .map((s) => s.trim())
@@ -406,7 +409,8 @@ function extractUnit(sel: RNode, warnings: string[]): ImportedUnit {
               .filter((c) => c.value)
               .map((c) => `${c.name}: ${c.value}`)
               .join("; "),
-        group: n !== sel && n.pts > 0 ? ITEM_GROUP : RULE_GROUP,
+        // Spells are cast from the card (magic.ts); their text stays readable with the rules.
+        group: spell ? SPELL_GROUP : n !== sel && n.pts > 0 ? ITEM_GROUP : RULE_GROUP,
       });
     }
     for (const r of n.rules) addAbility({ ...r, group: n !== sel && n.pts > 0 ? ITEM_GROUP : RULE_GROUP });

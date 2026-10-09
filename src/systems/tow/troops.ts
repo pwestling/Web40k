@@ -1,4 +1,5 @@
 import type { GameState, Unit } from "../../core";
+import { hasRule } from "./specialRules";
 
 /**
  * Rank width and largest rank bonus by troop type, from the rules index's
@@ -21,5 +22,7 @@ const TROOPS: [RegExp, { width: number; maxBonus: number }][] = [
 export function towRanks(game: GameState, unit: Unit): { width: number; maxBonus: number } {
   const first = unit.modelIds.map((id) => game.models[id]).find((m) => m && !m.destroyed);
   const type = first?.profile?.chars.Troop ?? "";
-  return TROOPS.find(([re]) => re.test(type))?.[1] ?? { width: 5, maxBonus: 2 };
+  const ranks = TROOPS.find(([re]) => re.test(type))?.[1] ?? { width: 5, maxBonus: 2 };
+  // Horde: one more rank bonus than its troop type allows (#66).
+  return hasRule(unit, /^horde\b/i) ? { ...ranks, maxBonus: ranks.maxBonus + 1 } : ranks;
 }

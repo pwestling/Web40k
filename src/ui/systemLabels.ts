@@ -1,6 +1,7 @@
 import { DEFAULT_SYSTEM, type GameState } from "../core";
 import { getSystem, isPlaceholder } from "../core/content/systems";
 import { t } from "../i18n";
+import { useLibrary } from "../packages/library";
 
 /**
  * How the built-in games are named and pitched on screen (front door). Plain
@@ -76,5 +77,13 @@ export function gameTitle(state: GameState): string {
   return systemLabel(id, name);
 }
 
-/** A game system's name for players, from its id alone (a ladder, a ranked result: #65). */
-export const systemTitle = (id: string): string => gameTitle({ system: id } as GameState);
+/**
+ * A game system's name for players, from its id alone (a ladder, a ranked
+ * result: #65); a package game not loaded yet goes by its package's name (UX 451).
+ */
+export function systemTitle(id: string): string {
+  const title = gameTitle({ system: id } as GameState);
+  if (title !== id && !isPlaceholder(id)) return title;
+  const pkg = Object.values(useLibrary.getState().packages).find((p) => p.manifest.systems[0] === id);
+  return pkg ? plainSystemName(pkg.manifest.name) : title;
+}

@@ -12,11 +12,57 @@ const names = (u: Unit) => [...(u.sheet?.abilities ?? []).map((a) => a.name), ..
 export const hasRule = (u: Unit, re: RegExp) => names(u).some((n) => re.test(n));
 
 export const causesTerror = (u: Unit) => hasRule(u, /\bterror\b/i);
-/** Terror causes Fear as well. */
-export const causesFear = (u: Unit) => causesTerror(u) || hasRule(u, /\bfear\b/i);
+/** Terror causes Fear as well. ("Fear of Elves" is a fear the unit has, not one it causes.) */
+export const causesFear = (u: Unit) => causesTerror(u) || hasRule(u, /\bfear\b(?!\s+of\b)/i);
 /** Frenzy, until the unit loses a combat. */
 export const frenzied = (u: Unit) => hasRule(u, /\bfrenzy\b/i) && !u.status?.frenzyLost;
-export const hates = (u: Unit) => hasRule(u, /\bhatred\b/i);
+
+/** A word as foes are named: lower case, singular ("Elves" and "Elf" match). */
+const stemWord = (w: string) =>
+  w
+    .toLowerCase()
+    .replace(/ves$/, "f")
+    .replace(/(?<=[^s])s$/, "");
+
+/**
+ * Whether `u` hates `foe`: "Hatred" or "Hatred (all enemies)" hates everyone;
+ * "Hatred (High Elves)" or "Hatred (Orcs & Goblins)" only a foe whose name or
+ * keywords (its faction) carry those words.
+ */
+export function hatesFoe(u: Unit, foe: Unit): boolean {
+  const all = names(u).filter((n) => /\bhatred\b/i.test(n));
+  if (!all.length) return false;
+  const theirs = new Set(
+    [foe.name, ...(foe.sheet?.keywords ?? [])].flatMap((t) => t.split(/[^\p{L}]+/u)).map(stemWord),
+  );
+  return all.some((n) => {
+    const who = /\(([^)]*)\)/.exec(n)?.[1]?.trim();
+    if (!who || /\ball\b/i.test(who)) return true;
+    // "Orcs & Goblins": either; "High Elves": both words.
+    return who.split(/\s*(?:&|,|\band\b|\bor\b)\s*/i).some((part) => {
+      const words = part.split(/\s+/).filter((w) => w.length > 1);
+      return words.length > 0 && words.every((w) => theirs.has(stemWord(w)));
+    });
+  });
+}
+
+/**
+ * The number in a rule's name ("Regeneration (5+)" 5, "Armour Bane (2)" 2,
+ * "Magic Resistance (-1)" 1), or 0 when the unit hasn't the rule.
+ */
+export function ruleNumber(u: Unit, re: RegExp): number {
+  let best = 0;
+  for (const n of names(u)) {
+    if (!re.test(n)) continue;
+    const m = /\(\s*[-+]?(\d+)/.exec(n);
+    best = Math.max(best, m ? Number(m[1]) : 1);
+  }
+  return best;
+}
+
+/** A unit's troop type, from its first model standing ("Heavy Infantry"), or "". */
+export const troopOf = (state: GameState, u: Unit) =>
+  u.modelIds.map((id) => state.models[id]).find((m) => m && !m.destroyed)?.profile?.chars.Troop ?? "";
 export const stupid = (u: Unit) => hasRule(u, /\bstupidity\b/i);
 export const stubborn = (u: Unit) => hasRule(u, /\bstubborn\b/i);
 export const unbreakable = (u: Unit) => hasRule(u, /\bunbreakable\b/i);

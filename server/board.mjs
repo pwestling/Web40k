@@ -8,7 +8,7 @@
 //   POST /board/withdraw   {id, token}: take it down
 //   POST /board/report     {id, why}: three reports from different addresses hide it
 //   GET  /board/results    ranked results (#65), signed by both players
-//   POST /board/results    {result, sigs}: one more; the app checks both signatures
+//   POST /board/results    {result, sigs, declined?}: one more; the app checks the signatures
 //
 // The app checks every post again as it reads it (src/opentables/post.ts).
 
@@ -104,7 +104,11 @@ export function createBoard(options = {}) {
       if (hour.length >= RESULTS_PER_HOUR) return (json({ error: "too many" }, 429), true);
       if (results.size >= MAX_RESULTS) return (json({ error: "full" }, 503), true);
       sent.set(from, [...hour, now()]);
-      const kept = { result: body.result, sigs: body.sigs };
+      const kept = {
+        result: body.result,
+        sigs: body.sigs,
+        ...(body.declined ? { declined: body.declined } : {}),
+      };
       results.set(body.result.replay, kept);
       options.results?.add(kept);
       return (json({ ok: true }), true);
@@ -139,7 +143,18 @@ function resultLooksRight(r) {
     /^[a-f0-9]{64}$/.test(r.result.replay) &&
     Array.isArray(r.sigs) &&
     r.sigs.length === 2 &&
-    r.sigs.every((x) => typeof x === "string" && x.length <= 200)
+    // Signed by both, or by one with the other's signed refusal (PX ranked 1).
+    (r.declined
+      ? typeof r.declined === "object" &&
+        (r.declined.seat === 0 || r.declined.seat === 1) &&
+        typeof r.declined.why === "string" &&
+        r.declined.why.length <= 10 &&
+        typeof r.declined.sig === "string" &&
+        r.declined.sig.length <= 200 &&
+        r.sigs[r.declined.seat] === null &&
+        typeof r.sigs[1 - r.declined.seat] === "string" &&
+        r.sigs[1 - r.declined.seat].length <= 200
+      : r.sigs.every((x) => typeof x === "string" && x.length <= 200))
   );
 }
 

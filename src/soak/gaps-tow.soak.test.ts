@@ -8,6 +8,8 @@ import { scenarioSuite, withRules } from "./suite";
  * challenges, fights with more than two units, automatic Panic tests (from combat, shooting and
  * magic), march tests, characters joining and leaving regiments, and magic items.
  * #57: Multiple Shots and Armour Bane, found by name in a weapon's special rules.
+ * #66: universal special rules by name (armour, Killing Blow, Poisoned Attacks, Press of Battle,
+ * Stomp Attacks, Regeneration).
  */
 const watch = (s: GameState, events: GameEvent[]): string[] => {
   const steps = events.flatMap((e) =>
@@ -28,12 +30,19 @@ const watch = (s: GameState, events: GameEvent[]): string[] => {
     if (/ left /.test(n)) tags.push("character left");
     if (/ models: a Panic test$/.test(n)) tags.push("Panic from losses");
     if (/ uses .+ \(one use: now spent\)$/.test(n)) tags.push("magic item spent");
+    if (/strikes \d+ Killing Blows?/.test(n)) tags.push("Killing Blow");
+    if (/\d+ Stomp Attacks, hitting automatically/.test(n)) tags.push("Stomp Attacks");
   }
   // Armour Bane in close combat: the wounds from natural 6s save apart, on a worse roll.
   for (const e of steps)
     for (const x of e.events)
-      if (x.type === "dice/roll" && /\(Armour Bane\)$/.test(x.roll.label ?? ""))
-        tags.push("Armour Bane in combat");
+      if (x.type === "dice/roll") {
+        const label = x.roll.label ?? "";
+        if (/\(Armour Bane\)$/.test(label)) tags.push("Armour Bane in combat");
+        if (/Poisoned Attacks \+2/.test(label)) tags.push("Poisoned Attacks");
+        if (/Press of Battle/.test(label)) tags.push("Press of Battle");
+        if (/^regeneration save/.test(label)) tags.push("regeneration");
+      }
   // The shooting procedure: Multiple Shots at -1 to hit; Armour Bane on a natural 6 to wound.
   const proc = s.procedure;
   if (proc) {
@@ -118,4 +127,22 @@ describe("rules gaps: Old World challenges", () =>
       "Armour Bane in shooting",
       "Armour Bane in combat",
     ],
+  ));
+
+/** #66: the samples with universal special rules by name, as an imported list has them. */
+const universal = (seat: 0 | 1) =>
+  withRules(towSample(seat), {
+    "Marchwarden Spears": { abilities: ["Heavy Armour", "Shield", "Parry", "Press of Battle"] },
+    "Riders of the Downs": { abilities: ["Light Armour", "Barding", "Furious Charge", "Swiftstride"] },
+    "Reaver Warband": { abilities: ["Light Armour", "Killing Blow", "Warband", "Press of Battle"] },
+    "Tusk Brutes": { abilities: ["Regeneration (5+)", "Stomp Attacks (1)", "Impact Hits (1)"] },
+    "Wolf Runners": { abilities: ["Poisoned Attacks", "Swiftstride"] },
+  });
+
+describe("rules gaps: Old World universal special rules", () =>
+  scenarioSuite(
+    "Old World universal special rules by name",
+    "tow-hand",
+    { watch, closeIn: 14, lineUp: true, armies: universal, minSeeds: 10 },
+    ["combat result", "Press of Battle", "Killing Blow", "Stomp Attacks", "regeneration"],
   ));

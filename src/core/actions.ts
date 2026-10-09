@@ -1,10 +1,13 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
 import {
   canonResult,
+  DECLINE_WHYS,
   isPlayerKey,
+  MAX_FIXES,
   rankedOver,
   rankedReady,
   rankedResultOf,
+  type DeclineWhy,
   type PlayerKey,
   type RankedResult,
 } from "./ranked";
@@ -136,7 +139,9 @@ export type Intent =
   /** The result both players are asked to sign, once the battle is over (core/ranked.ts). */
   | { type: "ranked/result"; result: RankedResult }
   /** This player's signature on the result, or null: they don't agree with it. */
-  | { type: "ranked/sign"; sig: string | null }
+  | { type: "ranked/sign"; sig: string | null; why?: DeclineWhy; decline?: string }
+  /** The score has been fixed on the table: write the result again (after a "the score is wrong"). */
+  | { type: "ranked/fixed" }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -306,7 +311,8 @@ export type GameEvent =
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "ranked/card"; player: PlayerId; key: PlayerKey | null }
   | { type: "ranked/result"; result: RankedResult; by: PlayerId }
-  | { type: "ranked/sign"; player: PlayerId; sig: string | null }
+  | { type: "ranked/sign"; player: PlayerId; sig: string | null; why?: DeclineWhy; decline?: string }
+  | { type: "ranked/fixed"; player: PlayerId }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
@@ -550,6 +556,7 @@ export function resolveIntent(
     case "ranked/result": {
       // Once, after the battle, from one of the two players, and only the result the table shows.
       if (!state || !rankedOver(state) || !rankedReady(state) || state.ranked?.result) return null;
+      if (state.ranked?.fixing) return null;
       if (!state.ranked?.keys[from]) return null;
       const want = rankedResultOf(state, intent.result?.replay, intent.result?.at);
       const text = canonResult(intent.result);
@@ -564,7 +571,25 @@ export function resolveIntent(
         !(typeof intent.sig === "string" && /^[A-Za-z0-9+/=]{40,200}$/.test(intent.sig))
       )
         return null;
-      return { type: "ranked/sign", player: from, sig: intent.sig };
+      if (intent.sig !== null) return { type: "ranked/sign", player: from, sig: intent.sig };
+      const why = DECLINE_WHYS.includes(intent.why!) ? intent.why! : "broke";
+      // A wrong score is fixed and signed again, a few times at most; after that it's a plain decline.
+      const fix = why === "score" && (r.fixes ?? 0) < MAX_FIXES;
+      const decline =
+        typeof intent.decline === "string" && /^[A-Za-z0-9+/=]{40,200}$/.test(intent.decline)
+          ? intent.decline
+          : undefined;
+      return {
+        type: "ranked/sign",
+        player: from,
+        sig: null,
+        why: fix ? "score" : why === "score" ? "broke" : why,
+        ...(decline && !fix ? { decline } : {}),
+      };
+    }
+    case "ranked/fixed": {
+      const r = state?.ranked;
+      return r?.fixing && r.keys[from] ? { type: "ranked/fixed", player: from } : null;
     }
     case "player/rename": {
       const name = intent.name.trim().slice(0, 32);

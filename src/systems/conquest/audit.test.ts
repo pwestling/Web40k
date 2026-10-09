@@ -20,7 +20,10 @@ import { conquestLayout } from "./layout";
 import { arrivalTarget } from "./reinforce";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
-import { parseConquestList } from "./roster";
+import { importConquestList, parseConquestList } from "./roster";
+import { bindRules, lookupRules, unitView } from "../../core/content/runtime";
+import { isAutomated } from "../../core/content/player";
+import { terrainMoveWarning } from "../../core/content/moves";
 import { seizers, seizeTheField, standOf, standWarnings } from "./stands";
 
 /** Rules audit (#55): the automations in docs/rules-coverage/conquest.md not covered in conquest.test.ts. */
@@ -633,5 +636,295 @@ describe("Conquest rules audit: the last missing rows (#58)", () => {
     // The command stand in the centre of a three-wide front rank.
     expect(r.units[1]!.models[1]!.profile.name).toBe("Pikemen command");
     expect(() => parseConquestList("just some notes")).toThrow(/no Conquest list lines/);
+  });
+});
+
+describe("Conquest special rules by name (#66)", () => {
+  const view = (s: GameState, id: string) => unitView(s, conquest, s.units[id]!);
+  /** p1's `name` and the Thrall Host facing each other `gap` * 2 inches apart, `name` activated. */
+  function facing(name: string, gap: number, patch: (s: GameState, me: string, them: string) => GameState) {
+    let s = setup();
+    const me = unitNamed(s, name).id;
+    const them = unitNamed(s, "Thrall Host").id;
+    s = toCentre(s, me, gap);
+    s = toCentre(s, them, gap);
+    s = patch(s, me, them);
+    s = toActions(s, 0);
+    s = play(s, { type: "action/take", unitId: me, action: "activate" }, "p1");
+    return { s, me, them };
+  }
+  const turnAbout = (s: GameState, id: string): GameState => {
+    const models = { ...s.models };
+    for (const m of s.units[id]!.modelIds)
+      models[m] = { ...s.models[m]!, facing: s.models[m]!.facing + Math.PI };
+    return { ...s, models };
+  };
+
+  it("Cleave (X), Support, Impact (X), Armour Piercing (X), Brutal Impact (X) and Barrage (X) with its range set what the attacks read", () => {
+    let s = setup();
+    const id = unitNamed(s, "Thrall Host").id;
+    s = withAbilities(s, id, ["Cleave 2", "Support", "Impact (3)", "Armour Piercing 1", "Brutal Impact 2"]);
+    expect(view(s, id)).toMatchObject({
+      Cleave: 2,
+      Support: 2,
+      Impact: 3,
+      ArmourPiercing: 1,
+      BrutalImpact: 2,
+    });
+    s = withAbilities(s, id, ['Barrage 3 (18", Armour Piercing 2)', "Support (3)", "Cleave1"]);
+    expect(view(s, id)).toMatchObject({ Barrage: 3, Range: 18, ArmourPiercing: 2, Support: 3, Cleave: 1 });
+    // A real roster's rule shows as automated on import.
+    for (const name of ["Cleave 1", 'Barrage 1 (30")', "Fluid Formation", "Lethal Demise", "Unstoppable"])
+      expect(isAutomated(conquest, { name, text: "" }), name).toBe(true);
+    expect(isAutomated(conquest, { name: "Resist Decay 1", text: "" })).toBe(false);
+  });
+
+  it("names the special rules played by hand as reminders, not as automated", () => {
+    const names = [
+      "Oblivious",
+      "Snapfire",
+      "Blessed",
+      "Fearsome",
+      "Resist Decay 1",
+      "Devout",
+      "Feral",
+      "Flank",
+    ];
+    for (const name of [...names, "Quicksilver Strike", "Wizard (3)", "Priest (2)"]) {
+      const bound = lookupRules(conquest, bindRules(conquest.rules, [name], "unit"));
+      expect(bound.length, name).toBe(1);
+      expect(isAutomated(conquest, { name, text: "" }), name).toBe(false);
+    }
+  });
+
+  it("Armour Piercing lowers Defense against volleys", () => {
+    const { s, me, them } = facing("Ironmarch Crossbows", 4, (st, m, t) =>
+      withChars(withAbilities(st, m, ["Armour Piercing 1"]), t, { D: "3" }),
+    );
+    expect(target(attack(s, me, "volley", them, "p1"), "defense")).toBe(2);
+  });
+
+  it("Smite: Defense counts as 0 against its melee attacks, Evasion still counts", () => {
+    const { s, guard, thralls } = guardInContact((st, g, t) =>
+      withChars(withAbilities(st, g, ["Smite"]), t, { D: "4", E: "1" }),
+    );
+    expect(target(attack(s, guard, "clash", thralls, "p1"), "defense")).toBe(1);
+  });
+
+  it("Brutal Impact lowers Defense against Impact attacks; Unstoppable Charge doubles them", () => {
+    const impact = (rules: string[]) => {
+      let s = setup();
+      const riders = unitNamed(s, "Iron Riders").id;
+      const thralls = unitNamed(s, "Thrall Host").id;
+      s = toCentre(s, riders, 0.25);
+      s = toCentre(s, thralls, 0.25);
+      s = withChars(withAbilities(s, riders, ["Flurry", ...rules]), thralls, { D: "4" });
+      s = toActions(s, 0);
+      s = play(s, { type: "action/take", unitId: riders, action: "activate" }, "p1");
+      s = applyEvent(s, { type: "unit/status", id: riders, key: "charged", value: true });
+      return attack(s, riders, "impact", thralls, "p1");
+    };
+    const plain = impact([]);
+    // Cleave 1 alone, then with Brutal Impact 2.
+    expect(target(plain, "defense")).toBe(3);
+    expect(target(impact(["Brutal Impact 2"]), "defense")).toBe(1);
+    expect(step(impact(["Unstoppable Charge"]), "attacks")!.out).toBe(step(plain, "attacks")!.out * 2);
+  });
+
+  it("Deadly Shot: a volley's defense roll of 6 costs two wounds; Deadly Blades only counts in melee", () => {
+    let sixes = 0;
+    for (let seed = 1; seed < 30 && !sixes; seed++) {
+      const { s, me, them } = facing("Ironmarch Crossbows", 4, (st, m) =>
+        withAbilities(st, m, ["Deadly Shot", "Deadly Blades"]),
+      );
+      const done = attack(s, me, "volley", them, "p1", seed);
+      const d = step(done, "defense")!;
+      sixes = (d.dice ?? []).filter((x) => x.value === 6).length;
+      const failed = (d.dice ?? []).filter((x) => !x.success).length;
+      // Once for each 6 (Deadly Shot), not twice (Deadly Blades stays out of volleys).
+      expect(d.out).toBe(failed + sixes);
+    }
+    expect(sixes).toBeGreaterThan(0);
+  });
+
+  it("Fearless ignores an enemy's Terrifying", () => {
+    const resolve = (fearless: boolean) => {
+      const { s, guard, thralls } = guardInContact((st, g, t) =>
+        withAbilities(withAbilities(st, g, ["Terrifying (1)"]), t, fearless ? ["Fearless"] : []),
+      );
+      return target(attack(s, guard, "clash", thralls, "p1"), "resolve");
+    };
+    expect(resolve(true)).toBe(resolve(false)! + 1);
+  });
+
+  it("Fiend Hunter re-rolls missed hits against Monsters", () => {
+    const reroll = (type: string) => {
+      const { s, guard, thralls } = guardInContact((st, g, t) =>
+        withChars(withAbilities(st, g, ["Fiend Hunter"]), t, { Type: type }),
+      );
+      return (step(attack(s, guard, "clash", thralls, "p1"), "hit")!.plan as { reroll?: string }).reroll;
+    };
+    expect(reroll("Monster")).toBe("failed");
+    expect(reroll("Infantry")).not.toBe("failed");
+  });
+
+  it("Torrential Fire: within half range each hit makes one more shot, which can't make more", () => {
+    const volley = (gap: number) => {
+      const { s, me, them } = facing("Ironmarch Crossbows", gap, (st, m) =>
+        withAbilities(st, m, ["Torrential Fire"]),
+      );
+      return attack(s, me, "volley", them, "p1");
+    };
+    const near = volley(4);
+    const torrent = step(near, "torrential")!;
+    expect(torrent.plan).toMatchObject({ skip: false });
+    // Each hit goes on, plus one for each extra shot that hit (V 2 or less, never a 6).
+    const extra = (torrent.dice ?? []).filter((d) => d.value !== 6 && (d.value <= 2 || d.value === 1)).length;
+    expect(torrent.out).toBe(step(near, "hit")!.successes! + extra);
+    // At long range (16" of 24"), no extra shots.
+    expect(step(volley(8), "torrential")!.plan.kind).not.toBe("test");
+  });
+
+  it("Fluid Formation: one more Reform, free, first or last; its volleys see all round", () => {
+    const { s, me, them } = facing("Ironmarch Crossbows", 4, (st, m) =>
+      withAbilities(turnAbout(st, m), m, ["Fluid Formation"]),
+    );
+    expect(option(s, me, "fluidReform")?.ok).toBe(true);
+    const marched = play(s, { type: "action/take", unitId: me, action: "march" }, "p1");
+    expect(option(marched, me, "fluidReform")?.why).toBe("Only first or last");
+    const reformed = play(s, { type: "action/take", unitId: me, action: "fluidReform" }, "p1");
+    expect(reformed.units[me]?.status?.actionsTaken).toBe(0);
+    // Facing away, it still sees the Thrall Host, and every front stand shoots.
+    expect(actionTargets(s, me, "volley").find((t) => t.unitId === them)?.ok).toBe(true);
+    expect(step(attack(s, me, "volley", them, "p1"), "attacks")!.out).toBe(9);
+    const plain = withAbilities(s, me, []);
+    expect(actionTargets(plain, me, "volley").find((t) => t.unitId === them)?.ok).toBe(false);
+  });
+
+  it("Arcing Fire: having taken aim, it volleys at an enemy a friend sees, without the aim's re-roll", () => {
+    const { s, me, them } = facing("Ironmarch Crossbows", 4, (st, m) =>
+      withAbilities(turnAbout(st, m), m, ["Arcing Fire"]),
+    );
+    expect(actionTargets(s, me, "volley").find((t) => t.unitId === them)?.ok).toBe(false);
+    const aimed = play(s, { type: "action/take", unitId: me, action: "takeAim" }, "p1");
+    expect(actionTargets(aimed, me, "volley").find((t) => t.unitId === them)?.ok).toBe(true);
+    const done = attack(aimed, me, "volley", them, "p1");
+    expect(step(done, "attacks")!.out).toBe(9);
+    expect((step(done, "hit")!.plan as { reroll?: string }).reroll).not.toBe("failed");
+  });
+
+  it('Vanguard: after arriving and marching, a free March when no enemy is within 8"', () => {
+    const { s, me } = facing("Shieldwall Spears", 3, (st, m) => withAbilities(st, m, ["Vanguard"]));
+    let t = applyEvent(s, { type: "unit/status", id: me, key: "reinforced", value: true });
+    expect(option(t, me, "vanguardMarch")?.ok).toBe(false);
+    t = play(t, { type: "action/take", unitId: me, action: "march" }, "p1");
+    expect(option(t, me, "vanguardMarch")?.why).toBe('An enemy within 8"');
+    const far = facing("Shieldwall Spears", 12, (st, m) => withAbilities(st, m, ["Vanguard"]));
+    t = applyEvent(far.s, { type: "unit/status", id: far.me, key: "reinforced", value: true });
+    t = play(t, { type: "action/take", unitId: far.me, action: "march" }, "p1");
+    expect(option(t, far.me, "vanguardMarch")?.ok).toBe(true);
+    t = play(t, { type: "action/take", unitId: far.me, action: "vanguardMarch" }, "p1");
+    expect(t.units[far.me]?.status?.actionsTaken).toBe(1);
+  });
+
+  it("Unstoppable re-rolls a charge roll that falls short", () => {
+    const g = guardFacing(6);
+    let s = withAbilities(g.s, g.guard, ["Unstoppable"]);
+    s = hosted(s, { type: "action/take", unitId: g.guard, action: "charge" }, "p1");
+    const notes: string[] = [];
+    hosted(
+      s,
+      { type: "dice/roll", count: 1, sides: 6, label: "charge roll", unitId: g.guard },
+      "p1",
+      rng(1),
+      notes,
+    );
+    expect(notes.join(" ")).toMatch(/Unstoppable: the charge roll is re-rolled/);
+  });
+
+  it("Fly marches over impassable terrain without a warning", () => {
+    let s = setup();
+    const id = unitNamed(s, "Thrall Host").id;
+    const rock = {
+      id: "rock",
+      name: "Rock",
+      category: "impassable",
+      position: { x: 0, y: 0 },
+      width: 4,
+      depth: 4,
+      facing: 0,
+      solids: [],
+    };
+    s = { ...s, terrain: [rock] };
+    const u = s.units[id]!;
+    const moved = (st: GameState) => {
+      const models = { ...st.models };
+      for (const m of u.modelIds)
+        models[m] = { ...st.models[m]!, phaseStart: { x: -10, y: -0.5 }, position: { x: 10, y: -0.5 } };
+      return { ...st, models };
+    };
+    expect(terrainMoveWarning(moved(s), conquest, s.units[id]!)).toMatch(/can't cross/);
+    const flying = withAbilities(s, id, ["Fly"]);
+    expect(terrainMoveWarning(moved(flying), conquest, flying.units[id]!)).toBeNull();
+  });
+
+  it("Lethal Demise: each wound it takes in a clash is a hit back on the attacker", () => {
+    let hitBack = false;
+    for (let seed = 1; seed < 20 && !hitBack; seed++) {
+      const { s, guard, thralls } = guardInContact((st, _g, t) => withAbilities(st, t, ["Lethal Demise"]));
+      const done = attack(s, guard, "clash", thralls, "p1", seed);
+      const wounds = step(done, "wounds")?.in ?? 0;
+      const clear = resolveIntent({ type: "procedure/clear" }, "p1", rng(seed), done);
+      const after = applyEvent({ ...done, seq: done.seq + 1 }, clear!);
+      expect(after.script ?? null).toBeNull();
+      if (!wounds) continue;
+      // Rolled through the "hits" procedure (Defense and Resolve as usual), and named in the log.
+      expect(JSON.stringify(clear)).toMatch(new RegExp(`Lethal Demise: Warden Guard takes ${wounds} hits?`));
+      hitBack = true;
+    }
+    expect(hitBack).toBe(true);
+  });
+
+  it("Aura of Death: at the start of a round each enemy in contact takes a hit per stand", () => {
+    let s = setup();
+    const thralls = unitNamed(s, "Thrall Host").id;
+    const guard = unitNamed(s, "Warden Guard").id;
+    s = toCentre(s, guard, 0.25);
+    s = toCentre(s, thralls, 0.25);
+    s = withAbilities(s, thralls, ["Aura of Death"]);
+    const notes: string[] = [];
+    hosted(s, { type: "turn/next" }, "p1", rng(1), notes);
+    expect(notes.join(" ")).toMatch(/Thrall Host's Aura of Death: Warden Guard takes \d+ hits/);
+  });
+
+  it("imports a BattleScribe roster: profiles, stands with Additional Stands, rules by name", async () => {
+    const ros =
+      '<?xml version="1.0"?><roster name="Test Host" xmlns="http://www.battlescribe.net/schema/rosterSchema"><forces><force name="Army"><selections>' +
+      '<selection name="Iron Captain" type="model" number="1"><costs><cost name="pts" value="90"/></costs>' +
+      '<profiles><profile name="Iron Captain" typeName="Character"><characteristics>' +
+      ["Type:Infantry", "Class:Medium", "M:5", "V:1", "C:3", "A:4", "W:4", "R:4", "D:3", "E:1"]
+        .map((c) => `<characteristic name="${c.split(":")[0]}">${c.split(":")[1]}</characteristic>`)
+        .join("") +
+      "</characteristics></profile></profiles></selection>" +
+      '<selection name="Pike Block" type="unit" number="1"><costs><cost name="pts" value="140"/></costs>' +
+      '<rules><rule name="Cleave 1"><description>x</description></rule><rule name="Shield"><description>x</description></rule><rule name="Barrage 2 (24&quot;)"><description>x</description></rule></rules>' +
+      '<profiles><profile name="Pike Block" typeName="Regiment"><characteristics>' +
+      ["Type:Infantry", "Class:Heavy", "M:5", "V:1", "C:2", "A:1", "W:1", "R:2", "D:3", "E:0", "Stands:3"]
+        .map((c) => `<characteristic name="${c.split(":")[0]}">${c.split(":")[1]}</characteristic>`)
+        .join("") +
+      '</characteristics></profile></profiles><selections><selection name="Additional Stands" type="upgrade" number="2"/></selections></selection>' +
+      "</selections></force></forces></roster>";
+    const r = await importConquestList("host.ros", new TextEncoder().encode(ros));
+    expect(r.units.map((u) => [u.name, u.models.length, u.sheet.points])).toEqual([
+      ["Iron Captain", 1, 90],
+      ["Pike Block", 5, 140],
+    ]);
+    expect(r.units[0]!.sheet.keywords).toContain("Character");
+    expect(r.units[1]!.models[0]!.profile.chars).toMatchObject({ C: "2", D: "3", Class: "Heavy", Size: "1" });
+    expect(r.units[1]!.sheet.abilities.map((a) => a.name)).toEqual(["Cleave 1", "Shield", 'Barrage 2 (24")']);
+    // Barrage's shots and range go on the profile too (the bot's reach reads it).
+    expect(r.units[1]!.models[0]!.profile.chars).toMatchObject({ Barrage: "2", Range: '24"' });
+    expect(r.units[1]!.missing).toEqual([]);
+    expect(r.units[1]!.files).toBe(3);
   });
 });

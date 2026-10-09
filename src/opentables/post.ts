@@ -1,3 +1,4 @@
+import { systemTitle } from "../ui/systemLabels";
 import { isPlayerKey, type PlayerKey } from "../core/ranked";
 import { readInviteHash } from "../mail/mailbox";
 
@@ -108,6 +109,19 @@ function line(v: unknown, max: number): string | null {
   return v.replace(UNSAFE, " ").trim().slice(0, max);
 }
 
+/**
+ * The game's name on a post: a poster whose rules package hadn't loaded yet
+ * sent its stand-in name ("rift-lanterns (its rules package isn't loaded)"; PX
+ * ranked 6), so that reads as the game's own title where this app knows it.
+ */
+function gameOf(game: string | null, system: string | null): string | null {
+  if (!game || !system) return game;
+  const bare = game.replace(/\s*\(its rules package isn't loaded\)\s*$/, "");
+  if (bare !== system) return bare;
+  const title = systemTitle(system);
+  return title && !/rules package isn't loaded/.test(title) ? title : bare;
+}
+
 /** A post read off the board, checked; null when it isn't one or is past its time. */
 export function readPost(raw: unknown, now = Date.now()): TablePost | null {
   if (!raw || typeof raw !== "object") return null;
@@ -115,7 +129,7 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
   const id = typeof r.id === "string" && /^[a-f0-9]{8,32}$/.test(r.id) ? r.id : null;
   const name = line(r.name, LIMITS.name);
   const system = typeof r.system === "string" && /^[\w.:@/-]{1,64}$/.test(r.system) ? r.system : null;
-  const game = line(r.game, LIMITS.game);
+  const game = gameOf(line(r.game, LIMITS.game), system);
   const kind = r.kind === "live" || r.kind === "mail" ? r.kind : null;
   const join = typeof r.join === "string" ? r.join : "";
   if (!id || !name || !system || !game || !kind) return null;
