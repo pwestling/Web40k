@@ -11,6 +11,7 @@ import { leavingCommand } from "./leaving";
 import { marchWarnings } from "./march";
 import { reinforceProcedures } from "./reinforce";
 import { importConquestList } from "./roster";
+import { specialFunctions, specialHooks } from "./special";
 import { seizeTheField, standWarnings } from "./stands";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
@@ -22,8 +23,8 @@ export const conquestModule: GameModule<SystemModule> = {
   api: 1,
   system: conquest,
   procedures: { ...conquestProcedures, ...moraleProcedures, ...reinforceProcedures },
-  functions: { ...conquestFunctions, ...chargeFunctions },
-  hooks: chargeHooks,
+  functions: { ...conquestFunctions, ...chargeFunctions, ...specialFunctions },
+  hooks: { ...chargeHooks, ...specialHooks },
   checks: (view) => [...marchWarnings(view), ...standWarnings(view)],
   actions: characterActions,
   // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.

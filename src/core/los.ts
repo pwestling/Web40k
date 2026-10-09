@@ -135,6 +135,8 @@ export interface SightOptions {
   ignore?: Set<string>;
   /** Whether models from other units block sight. */
   modelsBlock?: boolean;
+  /** Ignore the game's vision arc: the observer sees all round. */
+  allAround?: boolean;
 }
 
 /** Whether a model's vision arc (if the game has one) takes in a point. */
@@ -280,7 +282,7 @@ export function modelSight(
   target: Model,
   options: SightOptions = {},
 ): Sight {
-  if (!inVisionArc(state, observer, target.position))
+  if (!options.allAround && !inVisionArc(state, observer, target.position))
     return { visible: false, fully: false, fraction: 0, obscuredBy: [] };
   if (state.settings.los === "heights") return heightsSight(state, observer, target, options);
   if (state.settings.los === "footprint") return footprintSight(state, observer, target, options);

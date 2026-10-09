@@ -536,6 +536,38 @@ describe("the computer opponent in Conquest (#58)", () => {
     expect(ends.some((t) => inArc(t, t.units[guard]!, t.units[thralls]!) === "front")).toBe(true);
   });
 
+  it("volleys all round with Fluid Formation, at enemies behind it it couldn't otherwise shoot (#66)", () => {
+    const volleyed = (rules: string[]) => {
+      let s = conquestTable();
+      const bows = named(s, "Ironmarch Crossbows");
+      const thralls = named(s, "Thrall Host");
+      s = toCentre(s, bows, 4);
+      s = toCentre(s, thralls, 4);
+      const models = { ...s.models };
+      for (const id of s.units[bows]!.modelIds)
+        models[id] = { ...models[id]!, facing: models[id]!.facing + Math.PI };
+      const u = s.units[bows]!;
+      s = {
+        ...s,
+        models,
+        units: {
+          ...s.units,
+          [bows]: { ...u, sheet: { ...u.sheet!, abilities: rules.map((name) => ({ name, text: "" })) } },
+        },
+      };
+      s = play(s, { type: "turn/next" }, "p1");
+      s = play(s, { type: "turn/next" }, "p1");
+      if (s.turn.activeSeat !== 0) s = play(s, { type: "turn/pass" }, "p2");
+      s = play(s, { type: "action/take", unitId: bows, action: "activate" }, "p1");
+      for (let m = decide(s, 0); m?.intent.type === "secret/commit"; m = decide(s, 0))
+        s = play(s, m.intent, m.as);
+      const m = decide(s, 0);
+      return m?.intent.type === "action/take" && m.intent.action === "volley";
+    };
+    expect(volleyed(["Fluid Formation"])).toBe(true);
+    expect(volleyed([])).toBe(false);
+  });
+
   it("Sharp stacks its command cards with the regiment nearest the enemy last, to answer the enemy's moves", () => {
     let s = conquestTable();
     const guard = named(s, "Warden Guard");

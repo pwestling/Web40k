@@ -1,5 +1,16 @@
 import type { BaseShape } from "../../core";
-import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
+import {
+  parseRosterFile,
+  walk,
+  type ImportedRoster,
+  type ImportedUnit,
+  type RForce,
+  type RNode,
+  type RProfile,
+  type RRoster,
+} from "../wh40k/roster";
+import { standBase } from "./sample";
+import { standOf } from "./stands";
 
 /**
  * Conquest army lists as shared in text (research/conquest-rules.md, Lists):
@@ -78,6 +89,85 @@ export function parseConquestList(text: string, fileName = "list"): ImportedRost
   };
 }
 
+/**
+ * BattleScribe / New Recruit rosters (#66), built on the community catalogue:
+ * each regiment or character with its profile (Type, Class, M V C A W R D E,
+ * Stands) and its special rules by name ("Cleave 1", "Barrage 2 (24")"),
+ * read with the same parser as 40k and the Old World.
+ */
+const STAT_NAMES = ["Type", "Class", "M", "V", "C", "A", "W", "R", "D", "E"];
+
+/** A regiment's or character's profile: one carrying the roll-under characteristics. */
+const isStatProfile = (p: RProfile) => ["M", "C", "D", "R"].every((k) => p.chars.some((c) => c.name === k));
+
+function collect(force: RForce, out: { node: RNode; profile: RProfile }[]): void {
+  for (const sel of force.selections) {
+    if (sel.type === "upgrade") continue;
+    let profile: RProfile | undefined;
+    walk(sel, (n) => (profile ??= n.profiles.find(isStatProfile)));
+    if (profile) out.push({ node: sel, profile });
+  }
+  for (const f of force.forces) collect(f, out);
+}
+
+function extractConquestUnits(roster: RRoster): ImportedUnit[] {
+  const found: { node: RNode; profile: RProfile }[] = [];
+  for (const f of roster.forces) collect(f, found);
+  return found.map(({ node, profile }) => {
+    const chars: Record<string, string> = {};
+    for (const c of profile.chars) if (STAT_NAMES.includes(c.name) && c.value !== "") chars[c.name] = c.value;
+    chars.Size = String(standOf(chars.Type).size);
+    const character = node.type === "model" || /character/i.test(profile.typeName);
+    // Bought stands: the profile's count, plus each "Additional Stands" pick.
+    let stands = character
+      ? 1
+      : Math.max(1, Number.parseInt(profile.chars.find((c) => c.name === "Stands")?.value ?? "1", 10) || 1);
+    const abilities: { name: string; text: string }[] = [];
+    walk(node, (n) => {
+      if (n !== node && /additional stand/i.test(n.name)) stands += n.number || 1;
+      for (const r of n.rules)
+        if (!abilities.some((a) => a.name === r.name)) abilities.push({ name: r.name, text: r.text });
+    });
+    // Barrage's shots and range on the profile too, for what reads the profile alone (the bot's reach).
+    const barrage = abilities
+      .map((a) => /^barrage\s*\(?\s*(\d+)\)?\s*\(\s*(\d+)/i.exec(a.name))
+      .find(Boolean);
+    if (barrage) Object.assign(chars, { Barrage: barrage[1]!, Range: `${barrage[2]}"` });
+    const command = Math.floor((Math.min(3, stands) - 1) / 2);
+    return {
+      name: node.name,
+      base: standBase(chars.Type),
+      sheet: {
+        weapons: {},
+        abilities,
+        keywords: [
+          ...(character ? ["Character"] : []),
+          ...[chars.Type, chars.Class].filter((k): k is string => !!k),
+        ],
+        ...(node.pts ? { points: node.pts } : {}),
+      },
+      models: Array.from({ length: stands }, (_, i) => ({
+        profile: {
+          name: i === command && stands > 1 ? `${node.name} command` : node.name,
+          chars: { ...chars },
+        },
+        weapons: [],
+      })),
+      missing: STAT_NAMES.filter((k) => !(k in chars)),
+      ...(stands > 1 ? { files: Math.min(3, stands) } : {}),
+    };
+  });
+}
+
+/** A roster file (XML, JSON or zipped) rather than list text. */
+function isRosterFile(fileName: string, data: Uint8Array): boolean {
+  if (/\.(ros|rosz|json|xml)$/i.test(fileName)) return true;
+  if (data[0] === 0x50 && data[1] === 0x4b) return true;
+  const head = new TextDecoder().decode(data.subarray(0, 64)).trim();
+  return head.startsWith("<") || head.startsWith("{");
+}
+
 export async function importConquestList(fileName: string, data: Uint8Array): Promise<ImportedRoster> {
+  if (isRosterFile(fileName, data)) return parseRosterFile(fileName, data, extractConquestUnits);
   return parseConquestList(new TextDecoder().decode(data), fileName);
 }

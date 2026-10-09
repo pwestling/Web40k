@@ -2,6 +2,7 @@ import { isAlive } from "../../core/units";
 import { secretsWithPrefix } from "../../core/secrets";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeProcedure, GameView, PureFn } from "../../sdk";
+import { FLUID_FORMATION, hasNamed, seesAllRound } from "./special";
 
 /**
  * The command stack: before the Action phase each player orders one card per
@@ -114,7 +115,20 @@ const clearShotsFn: PureFn = (view: GameView, unitId: unknown, targetId: unknown
   const files = unit!.formation.kind === "ranked" ? Math.max(1, unit!.formation.files) : stands.length;
   const front = stands.slice(0, files);
   if (view.atTable) return front.length;
-  return front.filter((id) => view.visible(id, String(targetId))).length;
+  const target = view.state.units[String(targetId)];
+  // Arcing Fire, having taken aim: every front stand shoots at what a friend sees (special.ts).
+  if (
+    target &&
+    unit!.status?.aimed &&
+    hasNamed(unit, /^arcing fire\b/i) &&
+    !view.visible(unit!.id, target.id)
+  )
+    return front.length;
+  // Fluid Formation sees all round.
+  const allRound = !!target && hasNamed(unit, FLUID_FORMATION);
+  return front.filter(
+    (id) => view.visible(id, String(targetId)) || (allRound && seesAllRound(view.state, id, target!)),
+  ).length;
 };
 
 export const conquestFunctions: Record<string, PureFn> = {

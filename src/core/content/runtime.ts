@@ -718,7 +718,7 @@ export function tableGeometry(state: GameState, system?: GameSystem): NonNullabl
       return a.some((x) =>
         b.some((y) => {
           const modelsBlock = query.models !== false && state.settings.modelsBlock;
-          const s = modelSight(state, x, y, { modelsBlock, ignore });
+          const s = modelSight(state, x, y, { modelsBlock, ignore, allAround: query.allAround });
           return query.fully ? s.fully : s.visible;
         }),
       );
