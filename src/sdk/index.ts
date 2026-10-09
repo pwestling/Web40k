@@ -124,6 +124,15 @@ export interface TurnHooks {
   roundStart?: CodeProcedure;
   activationEnd?: CodeProcedure;
   /**
+   * After a charge, for rules that react to how it went. Started with
+   * `{ unitId, kind, round, player }` and: for a charge roll (a dice roll
+   * labelled "charge" or "charge roll" for the unit), `kind: "roll"` and
+   * `roll` (the total); for a charge move (core `chargeFor`: a block's charge
+   * move, or models moved in a Charge phase), `kind: "move"`, `landed`
+   * (whether it ended in contact) and, when it did, `targetId`.
+   */
+  charge?: CodeProcedure;
+  /**
    * Campaign rules (roadmap 24b), for games played for a campaign book. The
    * book starts `beforeGame` once the battle begins, and `afterGame` once it
    * is over and scored, before it records the game. Both get

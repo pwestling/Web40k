@@ -7,7 +7,9 @@ import {
   type Intent,
   type PlayerId,
 } from "../../core";
-import { unitActions } from "../../core/content/play";
+import { actionTargets, unitActions } from "../../core/content/play";
+import { closeDoor } from "../../core/manoeuvre";
+import { hookIntents } from "../../core/script";
 import type { StepRecord } from "../../core/content";
 import { spawnIntents } from "../wh40k/deploy";
 import "../index";
@@ -122,7 +124,70 @@ function guardInContact(patch: (s: GameState, guard: string, thralls: string) =>
   return { s, guard, thralls };
 }
 
+/** Play an intent as the host does: the event, then the turn hooks it sets off (core hookIntents). */
+function hosted(state: GameState, intent: Intent, from: PlayerId, r = rng(1)): GameState {
+  const event = resolveIntent(intent, from, r, state);
+  if (!event) throw new Error(`Rejected: ${JSON.stringify(intent)}`);
+  let s = applyEvent({ ...state, seq: state.seq + 1 }, event);
+  for (const hook of hookIntents(state, s, event)) s = play(s, hook, from, r);
+  return s;
+}
+
+/** Warden Guard (p1) and Thrall Host (p2) facing each other `gap` * 2 inches apart, the Guard activated. */
+function guardFacing(gap: number) {
+  let s = setup();
+  const guard = unitNamed(s, "Warden Guard").id;
+  const thralls = unitNamed(s, "Thrall Host").id;
+  s = toCentre(s, guard, gap);
+  s = toCentre(s, thralls, gap);
+  s = toActions(s, 0);
+  s = play(s, { type: "action/take", unitId: guard, action: "activate" }, "p1");
+  return { s, guard, thralls };
+}
+
 describe("Conquest rules audit", () => {
+  it("a charge targets only enemies in the front arc and in sight", () => {
+    const { s, guard, thralls } = guardFacing(1.5);
+    const targets = actionTargets(s, guard, "charge");
+    expect(targets.find((t) => t.unitId === thralls)?.ok).toBe(true);
+    // Every other enemy regiment stands well off to the side or behind the Thrall Host: none ahead and seen.
+    expect(option(s, guard, "charge")?.ok).toBe(true);
+    // Turned about, the Guard has no enemy in its front arc.
+    const turned = { ...s, models: { ...s.models } };
+    for (const id of s.units[guard]!.modelIds)
+      turned.models[id] = { ...s.models[id]!, facing: s.models[id]!.facing + Math.PI };
+    expect(actionTargets(turned, guard, "charge").find((t) => t.unitId === thralls)?.ok).toBe(false);
+    expect(option(turned, guard, "charge")?.why).toBe("No enemy in the front arc and in sight");
+  });
+
+  it("a charge roll that can't reach falls short: Inspired lost, activation over", () => {
+    // 12" apart: March 5 and a D6 can't reach.
+    const g = guardFacing(6);
+    const guard = g.guard;
+    let s = g.s;
+    s = hosted(s, { type: "action/take", unitId: guard, action: "charge" }, "p1");
+    expect(s.units[guard]?.status).toMatchObject({ inspired: true, charged: true });
+    s = hosted(s, { type: "dice/roll", count: 1, sides: 6, label: "charge roll", unitId: guard }, "p1");
+    expect(s.units[guard]?.status?.inspired).toBeFalsy();
+    expect(option(s, guard, "march")?.why).toBe("No actions left");
+    expect(s.modules?.["conquest-hand"]?.[`short:${guard}`]).toBe(1);
+  });
+
+  it("a charge move into contact lands: Inspired, and the landing is noted", () => {
+    const g = guardFacing(1.5);
+    const { guard, thralls } = g;
+    let s = g.s;
+    s = hosted(s, { type: "action/take", unitId: guard, action: "charge" }, "p1");
+    // Clear Inspired, to see the landing give it.
+    s = applyEvent(s, { type: "unit/status", id: guard, key: "inspired", value: null });
+    s = hosted(s, { type: "dice/roll", count: 1, sides: 6, label: "charge roll", unitId: guard }, "p1");
+    expect(option(s, guard, "march")?.why).not.toBe("No actions left");
+    const door = closeDoor(s, s.units[guard]!, s.units[thralls]!)!;
+    s = hosted(s, { ...door.move, how: "charge" }, "p1");
+    expect(s.units[guard]?.status?.inspired).toBe(true);
+    expect(s.modules?.["conquest-hand"]?.[`landed:${guard}`]).toBe(1);
+  });
+
   it("Inspired adds 1 to Clash only while Clash stays under 5; from Clash 4 it is a reminder", () => {
     const g = guardInContact((st, g) => withChars(st, g, { C: "4" }));
     let s = g.s;

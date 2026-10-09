@@ -14,6 +14,7 @@ import { actingUnits, procedureEnv } from "./content/play";
 import { advance, findProcedure, startRun, type RoleRef } from "./content/runner";
 import type { GameEvent, Intent, Rng } from "./actions";
 import { BadFace, NeedDice, parseDice, rollDice } from "./dice";
+import { chargeFor } from "./charge";
 import { modelView, tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
 import { currentSlot, systemOf } from "./content/turn";
@@ -439,6 +440,8 @@ export interface HookTable {
   phaseEnd?: Record<Id, Id[]>;
   roundStart?: Id[];
   activationEnd?: Id[];
+  /** After a charge roll or charge move (TurnHooks.charge). */
+  charge?: Id[];
   /** Campaign games only: started by the campaign book, not by turns (src/campaign/rules.ts). */
   beforeGame?: Id[];
   afterGame?: Id[];
@@ -481,6 +484,7 @@ export function hookProcedures(
   }
   if (h.roundStart) table.roundStart = [add("roundStart", h.roundStart)];
   if (h.activationEnd) table.activationEnd = [add("activationEnd", h.activationEnd)];
+  if (h.charge) table.charge = [add("charge", h.charge)];
   if (h.beforeGame) table.beforeGame = [add("beforeGame", h.beforeGame)];
   if (h.afterGame) table.afterGame = [add("afterGame", h.afterGame)];
   return { procedures, table };
@@ -502,13 +506,25 @@ export function campaignHooks(system: Id): { beforeGame: Id[]; afterGame: Id[] }
  */
 export function hookIntents(before: GameState, after: GameState, event: GameEvent): Intent[] {
   const bySystem = hooks.get(systemOf(after).id);
-  // Turns move on turn events, and when a code action ends a unit's activation (UX 324).
-  const turnEvent = event.type.startsWith("turn/") || event.type === "script/step";
-  if (!bySystem?.size || !turnEvent || event.type === "turn/prev") return [];
+  if (!bySystem?.size) return [];
   const tables = [...bySystem.values()];
   const active = (s: GameState) =>
     Object.values(s.players).find((p) => p.seat === s.turn.activeSeat)?.id ?? "";
   const out: Intent[] = [];
+  if (tables.some((t) => t.charge?.length)) {
+    const args = chargeArgs(before, after, event);
+    if (args)
+      for (const t of tables)
+        for (const procedure of t.charge ?? [])
+          out.push({
+            type: "script/start",
+            procedure,
+            args: { ...args, round: after.turn.round, player: active(after) },
+          });
+  }
+  // Turns move on turn events, and when a code action ends a unit's activation (UX 324).
+  const turnEvent = event.type.startsWith("turn/") || event.type === "script/step";
+  if (!turnEvent || event.type === "turn/prev") return out;
   const start = (ids: Id[] | undefined, s: GameState, phase: Id | undefined) => {
     for (const procedure of ids ?? [])
       out.push({
@@ -531,6 +547,20 @@ export function hookIntents(before: GameState, after: GameState, event: GameEven
     for (const t of tables) start(t.roundStart, after, now);
   if (after.turn.round > 0 && now) for (const t of tables) start(t.phaseStart?.[now], after, now);
   return out;
+}
+
+/** What TurnHooks.charge is told about an event, or null when it isn't a charge roll or move. */
+function chargeArgs(before: GameState, after: GameState, event: GameEvent): Record<string, unknown> | null {
+  if (event.type === "dice/roll") {
+    const { label, unitId, results } = event.roll;
+    if (!unitId || !/^charge( roll)?$/i.test(label ?? "")) return null;
+    return { unitId, kind: "roll", roll: results.reduce((a, b) => a + b, 0) };
+  }
+  if (event.type !== "unit/move" && event.type !== "models/move") return null;
+  const c = chargeFor(event, before, after);
+  if (!c) return null;
+  const targetId = c.target ? after.models[c.target.ids[0] ?? ""]?.unitId : undefined;
+  return { unitId: c.unitId, kind: "move", landed: !!c.target, ...(targetId ? { targetId } : {}) };
 }
 
 /** At a real table: each target's questions for the players (CodeAction.told), as plain data. */

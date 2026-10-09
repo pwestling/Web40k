@@ -491,16 +491,22 @@ export const conquest: GameSystem = {
       name: "Charge",
       verb: "charges",
       by: "unit",
-      hint: "D6 + March at an enemy in the front arc; Inspired. Short: clear Inspired, activation over",
+      hint: "D6 + March at an enemy in the front arc and in sight; Inspired if it lands. Short: activation over",
       // Not in the round a regiment arrives from reserve.
       if: notBroken,
       notWhen: [
         notEngaged,
         { if: { hasFlag: "self", flag: "reinforced" }, why: "Arrived this round: can't charge" },
+        {
+          if: { not: { call: "chargeable", args: [ref("self.id")] } },
+          why: "No enemy in the front arc and in sight",
+        },
       ],
+      // Only enemies in the front arc that it can see (charge.ts); the outcome hook there reacts to the roll and move.
+      target: { filter: { call: "chargeable", args: [ref("self.id"), ref("it.id")] } },
       limit: { count: 1, per: "round" },
       sets: ["charged"],
-      // A charge that falls short loses it: clear Inspired on the card.
+      // Inspired as it charges (for charges moved by hand); a short charge loses it again (charge.ts).
       do: [{ do: "applyStatus", target: "self", status: "inspired" }],
     },
     {

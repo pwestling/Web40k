@@ -3,6 +3,7 @@ import { holdTheField } from "../../missions/holdTheField";
 import type { GameModule } from "../../sdk";
 import type { SystemModule } from "../app";
 import { characterActions } from "./characters";
+import { chargeFunctions, chargeHooks } from "./charge";
 import { conquestFunctions, conquestProcedures } from "./command";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
 import { moraleProcedures } from "./morale";
@@ -18,7 +19,8 @@ export const conquestModule: GameModule<SystemModule> = {
   api: 1,
   system: conquest,
   procedures: { ...conquestProcedures, ...moraleProcedures, ...reinforceProcedures },
-  functions: conquestFunctions,
+  functions: { ...conquestFunctions, ...chargeFunctions },
+  hooks: chargeHooks,
   actions: characterActions,
   // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.
   bot: { threat: 0 },
