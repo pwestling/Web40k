@@ -38,6 +38,7 @@ import { AbilityLine, OncePerBattle } from "./AutoAbilities";
 import { replayRoll, useGame, useRareStars } from "./hooks";
 import { opposed } from "../core/teams";
 import { RollButton } from "../companion/RealDice";
+import { ChargeDeclare } from "./ChargeDeclare";
 import { t } from "../i18n";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
@@ -294,9 +295,7 @@ export function UnitCard() {
           <RollButton className={phase === "Movement" ? "primary" : ""} intent={roll("advance", 1)} as={as}>
             {t("Advance (D6)")}
           </RollButton>
-          <RollButton className={phase === "Charge" ? "primary" : ""} intent={roll("charge", 2)} as={as}>
-            {t("Charge (2D6)")}
-          </RollButton>
+          <ChargeDeclare unit={unit} primary={phase === "Charge"} as={as} />
           <RollButton intent={roll("battleshock", 2)} as={as}>
             {t("Battle-shock test")}
           </RollButton>

@@ -4952,3 +4952,24 @@ button.teach-button:hover {
 .move-note {
   margin: 4px 0;
 }
+
+/* Charge (2D6) asks for its targets first (UX 396). */
+.charge-declare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  flex-basis: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line, #334155);
+  border-radius: 6px;
+}
+.charge-declare > strong,
+.charge-declare > p,
+.charge-declare > .row {
+  flex-basis: 100%;
+  margin: 0;
+}
+.charge-outcome {
+  flex-basis: 100%;
+}

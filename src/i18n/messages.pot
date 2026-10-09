@@ -1621,8 +1621,8 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:273
-#: src/ui/UnitCard.tsx:279
-#: src/ui/UnitCard.tsx:572
+#: src/ui/UnitCard.tsx:280
+#: src/ui/UnitCard.tsx:571
 msgid "Fight"
 msgstr ""
 
@@ -4910,6 +4910,30 @@ msgstr ""
 msgid "{when}, just after {what}"
 msgstr ""
 
+#: src/ui/ChargeDeclare.tsx:102
+msgid "Charge made: move up to {n}\" into {units}"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:103
+msgid "Charge fails: needed {n}"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:114
+msgid "Charge (2D6)"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:45
+msgid "Charge which unit(s)?"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:73
+msgid "No enemy unit can be charged from here."
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:86
+msgid "Roll charge (2D6): {n} needed"
+msgstr ""
+
 #: src/ui/ChargePanel.tsx:122
 msgid "Charge, flee, pursue"
 msgstr ""
@@ -5504,7 +5528,7 @@ msgstr ""
 
 #: src/ui/GameSettings.tsx:37
 #: src/ui/SystemPanels.tsx:242
-#: src/ui/UnitCard.tsx:397
+#: src/ui/UnitCard.tsx:396
 msgid "Line of sight"
 msgstr ""
 
@@ -7621,7 +7645,7 @@ msgid "Charged {distance}"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:149
-#: src/ui/UnitCard.tsx:230
+#: src/ui/UnitCard.tsx:231
 msgid "Selected unit"
 msgstr ""
 
@@ -7660,17 +7684,17 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:244
-#: src/ui/UnitCard.tsx:399
+#: src/ui/UnitCard.tsx:398
 msgid "Model's eye view"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:247
-#: src/ui/UnitCard.tsx:315
+#: src/ui/UnitCard.tsx:314
 msgid "Rotate left (Q)"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:250
-#: src/ui/UnitCard.tsx:318
+#: src/ui/UnitCard.tsx:317
 msgid "Rotate right (E)"
 msgstr ""
 
@@ -8582,190 +8606,186 @@ msgstr ""
 msgid "No mission: you'll score by hand"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:188
+#: src/ui/UnitCard.tsx:189
 msgid "Fell back this turn: it can't shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:191
+#: src/ui/UnitCard.tsx:192
 msgid "Advanced {n}\" this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:192
+#: src/ui/UnitCard.tsx:193
 msgid "Advanced this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:196
+#: src/ui/UnitCard.tsx:197
 msgid "Moved {n}\" this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:197
+#: src/ui/UnitCard.tsx:198
 msgid "Moved this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:199
+#: src/ui/UnitCard.tsx:200
 msgid "Moved {n}\" this turn"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:202
+#: src/ui/UnitCard.tsx:203
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:241
+#: src/ui/UnitCard.tsx:242
 msgid "{title}, round {round}: {line}. Click to replay it."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:246
+#: src/ui/UnitCard.tsx:247
 msgid "Replay: {title}, round {round}"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:256
+#: src/ui/UnitCard.tsx:257
 msgid "{player} · {alive}/{all} models"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:279
-#: src/ui/UnitCard.tsx:572
+#: src/ui/UnitCard.tsx:280
+#: src/ui/UnitCard.tsx:571
 msgid "Shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:291
+#: src/ui/UnitCard.tsx:292
 msgid "Shoot everything at…"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:295
+#: src/ui/UnitCard.tsx:296
 msgid "Advance (D6)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:298
-msgid "Charge (2D6)"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:301
+#: src/ui/UnitCard.tsx:300
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:305
+#: src/ui/UnitCard.tsx:304
 msgid "Up a floor (R)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:306
-#: src/ui/UnitCard.tsx:309
+#: src/ui/UnitCard.tsx:305
+#: src/ui/UnitCard.tsx:308
 msgid "Floor"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:308
+#: src/ui/UnitCard.tsx:307
 msgid "Down a floor (F)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:327
+#: src/ui/UnitCard.tsx:326
 msgid "Clear advance"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:344
+#: src/ui/UnitCard.tsx:343
 msgid "Advanced +{n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:347
+#: src/ui/UnitCard.tsx:346
 msgid "Charge roll {n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:351
+#: src/ui/UnitCard.tsx:350
 msgid "Charged {distance}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:363
+#: src/ui/UnitCard.tsx:362
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:371
+#: src/ui/UnitCard.tsx:370
 msgid "Snap back to {allowed}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:375
 msgid "Moved through {terrain}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:383
+#: src/ui/UnitCard.tsx:382
 msgid "Engaged with {units}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:402
+#: src/ui/UnitCard.tsx:401
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:405
+#: src/ui/UnitCard.tsx:404
 msgid "Ranges"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:409
+#: src/ui/UnitCard.tsx:408
 msgid "Longest range"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:420
+#: src/ui/UnitCard.tsx:419
 msgid "On a floor {height}\" up"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:45
-msgid "Moved"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:456
+#: src/ui/UnitCard.tsx:455
 msgid "Ranged"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:456
-#: src/ui/UnitCard.tsx:557
+#: src/ui/UnitCard.tsx:455
+#: src/ui/UnitCard.tsx:556
 msgid "Melee"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:46
-msgid "Fell back"
+msgid "Moved"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:47
-msgid "Shot"
+msgid "Fell back"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:48
-msgid "Charged"
+msgid "Shot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:487
+#: src/ui/UnitCard.tsx:486
 msgid "Abilities ({n})"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:49
-msgid "Fought"
+msgid "Charged"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:50
-msgid "Battle-shocked"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:500
+#: src/ui/UnitCard.tsx:499
 msgid "Models and wounds"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:508
+#: src/ui/UnitCard.tsx:50
+msgid "Fought"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:507
 msgid "Model height for line of sight"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:528
+#: src/ui/UnitCard.tsx:51
+msgid "Battle-shocked"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:527
 msgid "Remove {unit} from the game?"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:532
+#: src/ui/UnitCard.tsx:531
 msgid "Remove unit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:595
+#: src/ui/UnitCard.tsx:594
 msgid "{left}/{max} W"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:605
+#: src/ui/UnitCard.tsx:604
 msgid "Revive"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:605
+#: src/ui/UnitCard.tsx:604
 msgid "Slay"
 msgstr ""
 

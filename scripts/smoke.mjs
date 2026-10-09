@@ -213,6 +213,45 @@ const checks = {
   },
 
   /**
+   * The 40k unit card (#56): in Shooting, "Shoot everything at…" lists each weapon against the
+   * target (UX 398); in Charge, "Charge (2D6)" asks which unit first, with the rules' reasons (UX 396).
+   */
+  async "card-actions"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const next = async () => {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(300);
+    };
+    await next(); // Movement
+    await next(); // Shooting
+    await page
+      .locator("canvas")
+      .first()
+      .click({ position: { x: 5, y: 5 } });
+    await page.keyboard.press("]");
+    await page.getByRole("button", { name: "Shoot everything at…" }).click();
+    await page.locator(".panel.attack select.attack-target").selectOption({ index: 1 });
+    await page.locator(".panel.attack .volley").waitFor();
+    await page.locator(".panel.attack").getByRole("button", { name: "Cancel" }).click();
+    await next(); // Charge
+    await page.getByRole("button", { name: "Charge (2D6)" }).click();
+    await page
+      .locator(".charge-declare")
+      .getByText(/Further than 12"|Roll charge/)
+      .first()
+      .waitFor();
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
+  /**
    * Hotseat (#56, UX 394/395): the first mission is preset, choosing None warns at Start battle with
    * a Pick one, and a reload in the middle goes straight back into the game, not to the lobby.
    */
