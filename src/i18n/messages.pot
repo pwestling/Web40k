@@ -3443,7 +3443,7 @@ msgstr ""
 #: src/ui/Hud.tsx:87
 #: src/ui/PlayPanel.tsx:78
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:286
+#: src/ui/WhatNow.tsx:319
 msgid "Hide"
 msgstr ""
 
@@ -3455,7 +3455,7 @@ msgstr ""
 #: src/ui/PlayPanel.tsx:49
 #: src/ui/TerrainPanel.tsx:375
 #: src/ui/TopBar.tsx:237
-#: src/ui/WhatNow.tsx:43
+#: src/ui/WhatNow.tsx:45
 #: src/ui/gameLog.ts:405
 msgid "Deployment"
 msgstr ""
@@ -8904,177 +8904,203 @@ msgstr ""
 msgid "Slay"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:127
+#: src/ui/WhatNow.tsx:102
+msgid "{player} picks first: {units}, then you alternate."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:103
+msgid "{player}'s pick: {units}. The sides alternate until every unit has fought."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:105
+msgid "Click the unit, then Pile in, Fight and Consolidate on its card."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:106
+msgid "Waiting for {player} to pick."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:112
+#: src/ui/WhatNow.tsx:223
+msgid "{side}'s turn · {phase}"
+msgstr ""
+
+#: src/ui/WhatNow.tsx:160
 msgid "Put your command cards in the order you'll play them, then press Lock in stack."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:139
+#: src/ui/WhatNow.tsx:172
 msgid "Draw your top command card (Command stack, bottom right) to see which regiment acts."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:142
+#: src/ui/WhatNow.tsx:175
 msgid "{unit} is taking its go: shoot or fight with it, or press End activation."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:144
+#: src/ui/WhatNow.tsx:177
 msgid "All your units have had their go this round: press Pass."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:148
+#: src/ui/WhatNow.tsx:181
 msgid "Drag a unit to move it. The ruler shows how far it has gone against its limit."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:150
+#: src/ui/WhatNow.tsx:183
 msgid "No unit is close enough to charge: press ▶ to move on."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:152
+#: src/ui/WhatNow.tsx:185
 msgid "Nothing is in reach to attack yet: move closer first."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:153
+#: src/ui/WhatNow.tsx:186
 msgid "Nothing is in range to shoot yet. Get closer next turn."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:156
+#: src/ui/WhatNow.tsx:189
 msgid "You can: {actions}."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:159
+#: src/ui/WhatNow.tsx:192
 msgid "{action} ({n} unit)"
 msgid_plural "{action} ({n} units)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/WhatNow.tsx:166
+#: src/ui/WhatNow.tsx:199
 msgid "Tap one of your units to see its buttons."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:167
+#: src/ui/WhatNow.tsx:200
 msgid "Click one of your units to see its buttons."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:170
+#: src/ui/WhatNow.tsx:203
 msgid "Nothing to do this phase."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:174
+#: src/ui/WhatNow.tsx:207
 msgid "A unit's go ends when it shoots or fights, or press End activation after a move. Pass when you have nothing left."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:177
+#: src/ui/WhatNow.tsx:210
 msgid "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:178
-msgid "When you're done, press ▶ at the top for the next phase."
-msgstr ""
-
-#: src/ui/WhatNow.tsx:184
+#: src/ui/WhatNow.tsx:217
 msgid "Mission · {name}: {summary}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:190
+#: src/ui/WhatNow.tsx:223
 msgid "Your turn · {phase}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:207
+#: src/ui/WhatNow.tsx:240
 msgid "{unit} · {weapon} takes {faces}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:212
+#: src/ui/WhatNow.tsx:245
 msgid "(placed: {n})"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:244
+#: src/ui/WhatNow.tsx:277
 msgid "{name} is playing {unit}…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:245
+#: src/ui/WhatNow.tsx:278
 msgid "{name} is taking its turn…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:251
+#: src/ui/WhatNow.tsx:284
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:276
+#: src/ui/WhatNow.tsx:309
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:309
+#: src/ui/WhatNow.tsx:342
 msgid "Press"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:309
+#: src/ui/WhatNow.tsx:342
 msgid "for all the controls."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:40
+#: src/ui/WhatNow.tsx:42
 #: src/ui/gameLog.ts:101
 #: src/ui/gameLog.ts:103
 msgid "The battle is over"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:40
+#: src/ui/WhatNow.tsx:42
 msgid "The stats screen shows how it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:45
+#: src/ui/WhatNow.tsx:47
 msgid "Drag your units into your deployment zone, the shaded strip on your side."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:46
+#: src/ui/WhatNow.tsx:48
 msgid "No army yet? In the left panel, press Sample army, or Import army list for your own."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:47
+#: src/ui/WhatNow.tsx:49
 msgid "When both armies are down, press Start battle ▶ at the top."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:52
+#: src/ui/WhatNow.tsx:54
 msgid "{phase}: a roll is under way"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:53
+#: src/ui/WhatNow.tsx:55
 msgid "Finish it in the panel on the right: pick the next step or roll."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:57
+#: src/ui/WhatNow.tsx:59
 msgid "{phase}: a reaction"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:58
+#: src/ui/WhatNow.tsx:60
 msgid "A player can react now: the panel at the top says how."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:64
+#: src/ui/WhatNow.tsx:66
 msgid "{phase}: place dice on cards"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:66
+#: src/ui/WhatNow.tsx:68
 msgid "Put dice from your pool on the cards that take their faces. A die on a card waits there for that action."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:70
+#: src/ui/WhatNow.tsx:72
 msgid "Cards that take dice (click one to open it):"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:71
+#: src/ui/WhatNow.tsx:73
 msgid "None of your cards take dice now."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:72
+#: src/ui/WhatNow.tsx:74
 msgid "When both players are done, press ▶ at the top."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:79
-#: src/ui/WhatNow.tsx:190
-msgid "{side}'s turn · {phase}"
+#: src/ui/WhatNow.tsx:85
+msgid "{phase}: every unit has fought"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:80
+#: src/ui/WhatNow.tsx:88
+#: src/ui/WhatNow.tsx:211
+msgid "When you're done, press ▶ at the top for the next phase."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:89
+#: src/ui/WhatNow.tsx:113
 msgid "Waiting for {side}. You can look around, measure (M) and talk in the chat."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:99
+msgid "{phase} · {player}'s pick"
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:13

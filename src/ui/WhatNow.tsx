@@ -15,7 +15,9 @@ import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
 import { nextCard, stackOf } from "../systems/conquest/command";
 import { conquest } from "../systems/conquest/system";
-import { t, tn, gameText } from "../i18n";
+import { formatList, t, tn, gameText } from "../i18n";
+import { displayName } from "../i18n/names";
+import { fightOrder } from "../systems/wh40k/fight";
 
 /**
  * "What can I do now?" (front door): the current phase in plain words, built
@@ -72,6 +74,37 @@ function whatNow(
         t("When both players are done, press ▶ at the top."),
       ],
       units: slots,
+    };
+  }
+  // 40k's Fight phase goes by the fight order, not by whose turn it is (PX #57): say whose pick it is first.
+  const order = fightOrder(game);
+  if (order) {
+    const picker = order.picker ? game.players[order.picker] : undefined;
+    if (!picker)
+      return {
+        head: t("{phase}: every unit has fought", { phase }),
+        lines: [
+          mine
+            ? t("When you're done, press ▶ at the top for the next phase.")
+            : t("Waiting for {side}. You can look around, measure (M) and talk in the chat.", { side: who }),
+        ],
+      };
+    const p = {
+      player: displayName(picker.name),
+      units: formatList(order.eligible.map((id) => game.units[id]?.name ?? id)),
+    };
+    const first = !Object.values(game.units).some((u) => u.status?.fought);
+    const yours = hotseat || picker.id === me;
+    return {
+      head: t("{phase} · {player}'s pick", { phase, player: p.player }),
+      lines: [
+        first
+          ? t("{player} picks first: {units}, then you alternate.", p)
+          : t("{player}'s pick: {units}. The sides alternate until every unit has fought.", p),
+        yours
+          ? t("Click the unit, then Pile in, Fight and Consolidate on its card.")
+          : t("Waiting for {player} to pick.", p),
+      ],
     };
   }
   if (!mine)

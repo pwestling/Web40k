@@ -431,7 +431,7 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
 }
 
 /** A unit's actions now: procedure actions with a weapon and target each, others as they are. */
-function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMove> {
+export function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generator<BotMove> {
   const taken = ctx.taken?.phase === phaseKey(state) ? ctx.taken.keys : undefined;
   for (const o of shuffle(ctx.rng, unitActions(state, u.id))) {
     if (o.def.reactTo) continue;

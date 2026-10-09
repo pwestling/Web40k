@@ -1,10 +1,12 @@
 import { sidePlayers, type GameRecord, type GameState } from "../core";
 import { currentSlot } from "../core/content/turn";
+import { fightPick } from "../bot/fightPick";
 import {
   freeMoves,
   legal,
   noteTaken,
   offTurnMoves,
+  unitMoves,
   waitingOn,
   type BotContext,
   type BotMove,
@@ -46,6 +48,14 @@ export function opponentMove(
   }
   // Secret orders (Conquest's command stack) are locked in whoever's turn it is.
   for (const m of offTurnMoves(state, ctx, [...mine])) if (legal(record, state, m)) return m;
+  // The Fight phase goes by the fight order: it takes its pick, even in the learner's turn (PX #57). It
+  // doesn't wait on the learner's pick in its own turn, though: a newcomer may not know it's theirs.
+  const pick = fightPick(state, mine);
+  if (pick?.ours)
+    for (const id of pick.units)
+      for (const m of unitMoves(state, state.units[id]!, ctx))
+        if (m.intent.type === "action/take" && m.intent.action === "fight" && legal(record, state, m))
+          return m;
   if (state.turn.activeSeat !== seat) return null;
   for (const m of freeMoves(state, ctx))
     if (mine.has(m.as) && !(hold && moveOn(m)) && legal(record, state, m)) return m;

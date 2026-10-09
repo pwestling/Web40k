@@ -9,6 +9,7 @@ import {
   type Unit,
 } from "../core";
 import { opposed } from "../core/teams";
+import { fightPick } from "./fightPick";
 import { actingUnits, actionTargets, unitActions } from "../core/content/play";
 import { playerActions } from "../core/content/player";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
@@ -265,7 +266,10 @@ class Thinker implements Policy {
     }
     // Secret orders (Conquest's command stack) are locked in whoever's turn it is.
     for (const m of offTurnMoves(state, this.ctx, [...mine])) if (legal(record, state, m)) return m;
-    if (state.turn.activeSeat !== this.seat) return null;
+    // The Fight phase goes by the fight order: its pick, even in the player's turn, and never out of turn (PX #57).
+    const fights = fightPick(state, mine);
+    if (fights && !fights.ours) return null;
+    if (state.turn.activeSeat !== this.seat && !fights) return null;
     const phase = phaseKey(state);
     if (this.done.phase !== phase) this.done = { phase, keys: new Set(), decisions: 0 };
     this.done.decisions++;
@@ -274,7 +278,11 @@ class Thinker implements Policy {
       if (m.kind === "draw" && legal(record, state, m)) return m;
     const onward = this.onward(record, state, mine);
     if (this.done.decisions > 120) return onward;
-    const candidates = this.candidates(state, mine).filter((c) => !c.key || !this.done.keys.has(c.key));
+    const candidates = this.candidates(state, mine).filter(
+      (c) =>
+        (!c.key || !this.done.keys.has(c.key)) &&
+        (!fights || (c.move.intent.type === "action/take" && fights.units.includes(c.move.intent.unitId))),
+    );
     const legalOnes = candidates.filter((c) => legal(record, state, c.move));
     const pick = this.best(state, legalOnes, onward, mine);
     if (!pick) return null;

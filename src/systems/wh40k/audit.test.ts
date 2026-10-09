@@ -4,6 +4,7 @@ import "../index";
 import {
   applyEvent,
   createInitialState,
+  createRecord,
   currentSlot,
   previewAttack,
   resolveIntent,
@@ -21,6 +22,7 @@ import { fightOrder, fightOutOfOrder } from "./fight";
 import { makePiece } from "./layout";
 import { WH40K_MISSIONS } from "./missions";
 import { getSystem } from "../../core/content";
+import { botPolicy } from "../../bot/player";
 
 function play(state: GameState, intent: Intent, from: PlayerId): GameState {
   const event = resolveIntent(intent, from, () => 0.5, state);
@@ -651,5 +653,20 @@ describe("40k gaps (#57): more table checks", () => {
     expect(targets("fireOverwatch")).not.toContain("mine");
     const command = setStatus(goTo(setup(), "command", 0), "mine", { battleShocked: true });
     expect(playerActions(command, "p1").find((o) => o.def.id === "insaneBravery")?.targets).toContain("mine");
+  });
+});
+
+describe("the computer and the fight order (PX #57)", () => {
+  // In p1's Fight phase, p2 (not their turn) picks first: the computer playing p2 fights then, off its turn.
+  it.each(["random", "steady"] as const)("%s takes its pick when it's due", (level) => {
+    const s = engage(goTo(setup(), "fight", 0));
+    const bot = botPolicy(level, s, 1, { seed: 1 });
+    const move = bot.move(createRecord(s), s, { seat: 1, player: "p2" });
+    expect(move?.intent).toMatchObject({ type: "action/take", unitId: "theirs", action: "fight" });
+    // Its own Fight phase: p1 picks first, so the computer waits (the teaching opponent plays on).
+    if (level === "random") return;
+    const theirs = engage(goTo(setup(), "fight", 1));
+    const other = botPolicy(level, theirs, 1, { seed: 1 });
+    expect(other.move(createRecord(theirs), theirs, { seat: 1, player: "p2" })).toBeNull();
   });
 });
