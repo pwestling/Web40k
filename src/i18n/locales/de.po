@@ -7216,152 +7216,157 @@ msgstr "Welche Einheit(en) angreifen?"
 msgid "Charge anyway?"
 msgstr "Trotzdem angreifen?"
 
-#: src/ui/ChargePanel.tsx:122
+#: src/ui/ChargePanel.tsx:130
 #, fuzzy
 msgid "Charge, flee, pursue"
 msgstr "Angriffsbewegung, Flucht, Verfolgung"
 
-#: src/ui/ChargePanel.tsx:122
+#: src/ui/ChargePanel.tsx:130
 #, fuzzy
 msgctxt "panel heading"
 msgid "Charge"
 msgstr "Angriffsbewegung"
 
-#: src/ui/ChargePanel.tsx:124
+#: src/ui/ChargePanel.tsx:132
 #, fuzzy
 msgid "Enemy unit"
 msgstr "Feindliche Einheit"
 
-#: src/ui/ChargePanel.tsx:131
+#: src/ui/ChargePanel.tsx:139
 #, fuzzy
 msgid "Further away"
 msgstr "Weiter entfernt"
 
-#: src/ui/ChargePanel.tsx:143
+#: src/ui/ChargePanel.tsx:151
 #, fuzzy
 msgid "Roll to charge"
 msgstr "Angriffswurf"
 
-#: src/ui/ChargePanel.tsx:147
+#: src/ui/ChargePanel.tsx:155
 #, fuzzy
 msgid "The roll falls {distance} short of {unit}"
 msgstr "Der Wurf ist {distance} zu kurz für {unit}"
 
-#: src/ui/ChargePanel.tsx:151
+#: src/ui/ChargePanel.tsx:159
 #, fuzzy
 msgid "Move into contact with {unit}'s {edge}, lined up flush"
 msgstr "In Kontakt mit {unit} bewegen ({edge}), bündig ausgerichtet"
 
-#: src/ui/ChargePanel.tsx:161
+#: src/ui/ChargePanel.tsx:169
 #, fuzzy
 msgid "Charge into its {edge} ({distance})"
 msgstr "Angriffsbewegung: {edge} ({distance})"
 
-#: src/ui/ChargePanel.tsx:168
+#: src/ui/ChargePanel.tsx:176
 #, fuzzy
 msgid "Moves only: no Fear test or reaction. Declare charge on the unit card runs them."
 msgstr "Nur Bewegung: kein Angsttest und keine Reaktion. Angriff ansagen auf der Einheitenkarte führt sie aus."
 
-#: src/ui/ChargePanel.tsx:173
+#: src/ui/ChargePanel.tsx:182
+#, fuzzy
+msgid "needs {distance} of {range} (random movement {dice})"
+msgstr "braucht {distance} von {range} (zufällige Bewegung {dice})"
+
+#: src/ui/ChargePanel.tsx:187
 #, fuzzy
 msgid "needs {distance} of {range} ({roll} + M {move})"
 msgstr "braucht {distance} von {range} ({roll} + B {move})"
 
-#: src/ui/ChargePanel.tsx:179
+#: src/ui/ChargePanel.tsx:193
 #, fuzzy
 msgid "too short"
 msgstr "zu kurz"
 
-#: src/ui/ChargePanel.tsx:179
+#: src/ui/ChargePanel.tsx:193
 #, fuzzy
 msgid "reaches"
 msgstr "reicht"
 
-#: src/ui/ChargePanel.tsx:187
+#: src/ui/ChargePanel.tsx:201
 #, fuzzy
 msgid "Line up flush with {unit}'s {edge}"
 msgstr "Bündig an {unit} ausrichten ({edge})"
 
-#: src/ui/ChargePanel.tsx:190
+#: src/ui/ChargePanel.tsx:204
 #, fuzzy
 msgid "Close the door ({distance})"
 msgstr "Die Tür schließen ({distance})"
 
-#: src/ui/ChargePanel.tsx:195
+#: src/ui/ChargePanel.tsx:209
 #, fuzzy
 msgid "Charged {distance} this phase."
 msgstr "In dieser Phase {distance} angegriffen."
 
-#: src/ui/ChargePanel.tsx:202
+#: src/ui/ChargePanel.tsx:216
 #, fuzzy
 msgid "Inches to flee or pursue"
 msgstr "Zoll für Flucht oder Verfolgung"
 
-#: src/ui/ChargePanel.tsx:209
+#: src/ui/ChargePanel.tsx:223
 #, fuzzy
 msgid "Roll to flee"
 msgstr "Fluchtwurf"
 
-#: src/ui/ChargePanel.tsx:212
+#: src/ui/ChargePanel.tsx:226
 #, fuzzy
 msgid "Turn and run directly away from {unit}"
 msgstr "Umdrehen und direkt von {unit} wegrennen"
 
-#: src/ui/ChargePanel.tsx:215
+#: src/ui/ChargePanel.tsx:229
 #, fuzzy
 msgid "Flee"
 msgstr "Fliehen"
 
-#: src/ui/ChargePanel.tsx:219
+#: src/ui/ChargePanel.tsx:233
 #, fuzzy
 msgid "A fleeing unit runs towards the nearest table edge"
 msgstr "Eine fliehende Einheit rennt zur nächsten Tischkante"
 
-#: src/ui/ChargePanel.tsx:222
+#: src/ui/ChargePanel.tsx:236
 #, fuzzy
 msgid "Flee to edge"
 msgstr "Zur Kante fliehen"
 
-#: src/ui/ChargePanel.tsx:226
+#: src/ui/ChargePanel.tsx:240
 #, fuzzy
 msgid "Roll to pursue"
 msgstr "Verfolgungswurf"
 
-#: src/ui/ChargePanel.tsx:228
+#: src/ui/ChargePanel.tsx:242
 #, fuzzy
 msgid "Pursue {unit}"
 msgstr "{unit} verfolgen"
 
-#: src/ui/ChargePanel.tsx:233
+#: src/ui/ChargePanel.tsx:247
 #, fuzzy
 msgid "catches it after {distance}"
 msgstr "holt sie nach {distance} ein"
 
-#: src/ui/ChargePanel.tsx:235
+#: src/ui/ChargePanel.tsx:249
 #, fuzzy
 msgid "falls {distance} short"
 msgstr "{distance} zu kurz"
 
-#: src/ui/ChargePanel.tsx:236
+#: src/ui/ChargePanel.tsx:250
 #, fuzzy
 msgid "won't reach it"
 msgstr "erreicht sie nicht"
 
-#: src/ui/ChargePanel.tsx:244
+#: src/ui/ChargePanel.tsx:258
 #, fuzzy
 msgid "Fleeing"
 msgstr "Fliehend"
-
-#: src/ui/ChargePanel.tsx:248
-#, fuzzy
-msgid "Rallied"
-msgstr "Gesammelt"
 
 #: src/ui/ChargePanel.tsx:26
 #, fuzzy
 msgctxt "charge arc"
 msgid "front"
 msgstr "Front"
+
+#: src/ui/ChargePanel.tsx:262
+#, fuzzy
+msgid "Rallied"
+msgstr "Gesammelt"
 
 #: src/ui/ChargePanel.tsx:27
 #, fuzzy
@@ -7801,7 +7806,7 @@ msgstr "{title}: {n} von {total} bestanden"
 
 #: src/ui/DiceTray.tsx:351
 #: src/ui/StatsScreen.tsx:161
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 #, fuzzy
 msgid "Slain"
 msgstr "Getötet"
@@ -10671,7 +10676,7 @@ msgid "Dice that passed (hits, wounds, saves made)"
 msgstr "Bestandene Würfel (Treffer, Verwundungen, gelungene Schutzwürfe)"
 
 #: src/ui/StatsScreen.tsx:217
-#: src/ui/stakes.ts:73
+#: src/ui/stakes.ts:79
 #, fuzzy
 msgid "Passed"
 msgstr "Bestanden"
@@ -14214,50 +14219,50 @@ msgstr "lange Reichweite"
 msgid "That file isn't an Open Battle army."
 msgstr "Diese Datei ist keine Open-Battle-Armee."
 
-#: src/ui/stakes.ts:55
-#, fuzzy
-msgid "Charge!"
-msgstr "Angriff!"
-
-#: src/ui/stakes.ts:55
-#, fuzzy
-msgid "Short"
-msgstr "Zu kurz"
-
-#: src/ui/stakes.ts:56
-#, fuzzy
-msgid "{reach}, needed {need} to reach {unit}"
-msgstr "{reach}, {need} nötig, um {unit} zu erreichen"
-
-#: src/ui/stakes.ts:70
-#, fuzzy
-msgid "{n} or less"
-msgstr "{n} oder weniger"
-
-#: src/ui/stakes.ts:73
-#, fuzzy
-msgid "Failed"
-msgstr "Misslungen"
-
-#: src/ui/stakes.ts:74
-#, fuzzy
-msgid "{test}: {total}, needed {need}"
-msgstr "{test}: {total}, {need} nötig"
-
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 #, fuzzy
 msgid "Saved"
 msgstr "Gerettet"
 
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 #, fuzzy
 msgid "Wounded"
 msgstr "Verwundet"
 
-#: src/ui/stakes.ts:95
+#: src/ui/stakes.ts:101
 #, fuzzy
 msgid "{unit}, saving on {need}+: rolled {dice}"
 msgstr "{unit}, Rettungswurf auf {need}+: {dice} gewürfelt"
+
+#: src/ui/stakes.ts:61
+#, fuzzy
+msgid "Charge!"
+msgstr "Angriff!"
+
+#: src/ui/stakes.ts:61
+#, fuzzy
+msgid "Short"
+msgstr "Zu kurz"
+
+#: src/ui/stakes.ts:62
+#, fuzzy
+msgid "{reach}, needed {need} to reach {unit}"
+msgstr "{reach}, {need} nötig, um {unit} zu erreichen"
+
+#: src/ui/stakes.ts:76
+#, fuzzy
+msgid "{n} or less"
+msgstr "{n} oder weniger"
+
+#: src/ui/stakes.ts:79
+#, fuzzy
+msgid "Failed"
+msgstr "Misslungen"
+
+#: src/ui/stakes.ts:80
+#, fuzzy
+msgid "{test}: {total}, needed {need}"
+msgstr "{test}: {total}, {need} nötig"
 
 #: src/ui/systemLabels.ts:15
 #, fuzzy

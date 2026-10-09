@@ -5900,122 +5900,126 @@ msgstr ""
 msgid "Charge anyway?"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:122
+#: src/ui/ChargePanel.tsx:130
 msgid "Charge, flee, pursue"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:122
+#: src/ui/ChargePanel.tsx:130
 msgctxt "panel heading"
 msgid "Charge"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:124
+#: src/ui/ChargePanel.tsx:132
 msgid "Enemy unit"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:131
+#: src/ui/ChargePanel.tsx:139
 msgid "Further away"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:143
+#: src/ui/ChargePanel.tsx:151
 msgid "Roll to charge"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:147
+#: src/ui/ChargePanel.tsx:155
 msgid "The roll falls {distance} short of {unit}"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:151
+#: src/ui/ChargePanel.tsx:159
 msgid "Move into contact with {unit}'s {edge}, lined up flush"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:161
+#: src/ui/ChargePanel.tsx:169
 msgid "Charge into its {edge} ({distance})"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:168
+#: src/ui/ChargePanel.tsx:176
 msgid "Moves only: no Fear test or reaction. Declare charge on the unit card runs them."
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:173
-msgid "needs {distance} of {range} ({roll} + M {move})"
-msgstr ""
-
-#: src/ui/ChargePanel.tsx:179
-msgid "too short"
-msgstr ""
-
-#: src/ui/ChargePanel.tsx:179
-msgid "reaches"
+#: src/ui/ChargePanel.tsx:182
+msgid "needs {distance} of {range} (random movement {dice})"
 msgstr ""
 
 #: src/ui/ChargePanel.tsx:187
+msgid "needs {distance} of {range} ({roll} + M {move})"
+msgstr ""
+
+#: src/ui/ChargePanel.tsx:193
+msgid "too short"
+msgstr ""
+
+#: src/ui/ChargePanel.tsx:193
+msgid "reaches"
+msgstr ""
+
+#: src/ui/ChargePanel.tsx:201
 msgid "Line up flush with {unit}'s {edge}"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:190
+#: src/ui/ChargePanel.tsx:204
 msgid "Close the door ({distance})"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:195
+#: src/ui/ChargePanel.tsx:209
 msgid "Charged {distance} this phase."
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:202
+#: src/ui/ChargePanel.tsx:216
 msgid "Inches to flee or pursue"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:209
+#: src/ui/ChargePanel.tsx:223
 msgid "Roll to flee"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:212
+#: src/ui/ChargePanel.tsx:226
 msgid "Turn and run directly away from {unit}"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:215
+#: src/ui/ChargePanel.tsx:229
 msgid "Flee"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:219
+#: src/ui/ChargePanel.tsx:233
 msgid "A fleeing unit runs towards the nearest table edge"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:222
+#: src/ui/ChargePanel.tsx:236
 msgid "Flee to edge"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:226
+#: src/ui/ChargePanel.tsx:240
 msgid "Roll to pursue"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:228
+#: src/ui/ChargePanel.tsx:242
 msgid "Pursue {unit}"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:233
+#: src/ui/ChargePanel.tsx:247
 msgid "catches it after {distance}"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:235
+#: src/ui/ChargePanel.tsx:249
 msgid "falls {distance} short"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:236
+#: src/ui/ChargePanel.tsx:250
 msgid "won't reach it"
 msgstr ""
 
-#: src/ui/ChargePanel.tsx:244
+#: src/ui/ChargePanel.tsx:258
 msgid "Fleeing"
-msgstr ""
-
-#: src/ui/ChargePanel.tsx:248
-msgid "Rallied"
 msgstr ""
 
 #: src/ui/ChargePanel.tsx:26
 msgctxt "charge arc"
 msgid "front"
+msgstr ""
+
+#: src/ui/ChargePanel.tsx:262
+msgid "Rallied"
 msgstr ""
 
 #: src/ui/ChargePanel.tsx:27
@@ -6372,7 +6376,7 @@ msgstr ""
 
 #: src/ui/DiceTray.tsx:351
 #: src/ui/StatsScreen.tsx:161
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 msgid "Slain"
 msgstr ""
 
@@ -8686,7 +8690,7 @@ msgid "Dice that passed (hits, wounds, saves made)"
 msgstr ""
 
 #: src/ui/StatsScreen.tsx:217
-#: src/ui/stakes.ts:73
+#: src/ui/stakes.ts:79
 msgid "Passed"
 msgstr ""
 
@@ -11542,40 +11546,40 @@ msgstr ""
 msgid "That file isn't an Open Battle army."
 msgstr ""
 
-#: src/ui/stakes.ts:55
-msgid "Charge!"
-msgstr ""
-
-#: src/ui/stakes.ts:55
-msgid "Short"
-msgstr ""
-
-#: src/ui/stakes.ts:56
-msgid "{reach}, needed {need} to reach {unit}"
-msgstr ""
-
-#: src/ui/stakes.ts:70
-msgid "{n} or less"
-msgstr ""
-
-#: src/ui/stakes.ts:73
-msgid "Failed"
-msgstr ""
-
-#: src/ui/stakes.ts:74
-msgid "{test}: {total}, needed {need}"
-msgstr ""
-
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 msgid "Saved"
 msgstr ""
 
-#: src/ui/stakes.ts:94
+#: src/ui/stakes.ts:100
 msgid "Wounded"
 msgstr ""
 
-#: src/ui/stakes.ts:95
+#: src/ui/stakes.ts:101
 msgid "{unit}, saving on {need}+: rolled {dice}"
+msgstr ""
+
+#: src/ui/stakes.ts:61
+msgid "Charge!"
+msgstr ""
+
+#: src/ui/stakes.ts:61
+msgid "Short"
+msgstr ""
+
+#: src/ui/stakes.ts:62
+msgid "{reach}, needed {need} to reach {unit}"
+msgstr ""
+
+#: src/ui/stakes.ts:76
+msgid "{n} or less"
+msgstr ""
+
+#: src/ui/stakes.ts:79
+msgid "Failed"
+msgstr ""
+
+#: src/ui/stakes.ts:80
+msgid "{test}: {total}, needed {need}"
 msgstr ""
 
 #: src/ui/systemLabels.ts:15
