@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { noteReason } from "./reasons";
 import { useHold } from "../ui/hold";
-import { actingSeat, sidePlayers, type GameState, type Unit } from "../core";
+import { actingSeat, sidePlayers, type GameState, type Intent, type Unit } from "../core";
 import { clearDrawings, hear } from "../talk/talk";
 import { t } from "../i18n";
 import { explain } from "./explain";
@@ -45,23 +45,35 @@ export function SoloBot() {
   const tray = useHold((s) => s.held !== null || s.busy);
   const wasTray = useRef(false);
   const on = !!level && !paused && mine === session && !!session;
+  const rollsMine = useSolo((s) => s.rollsMine);
 
   useEffect(() => {
     if (tray) {
       wasTray.current = true;
       if (timer.current !== null) window.clearTimeout(timer.current);
       timer.current = null;
+      if (useSolo.getState().deadline !== null) useSolo.setState({ deadline: null });
       return;
+    }
+    // Ticked "Roll my saves for me" while the computer waited on them: it rolls them now.
+    if (rollsMine && timer.current !== null && useSolo.getState().deadline !== null) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+      useSolo.setState({ deadline: null });
     }
     if (!on || scrub !== null || timer.current !== null) return;
     const rolling = !!(game.attack || game.procedure || game.script?.waiting);
     const acting = rolling ? actingSeat(game) : null;
-    const theirs = acting !== null && acting !== useSolo.getState().seat;
+    // Nothing to save, or the player asked the computer to roll for them: no wait (UX 404).
+    const theirs =
+      acting !== null && acting !== useSolo.getState().seat && !rollsMine && !nothingToRoll(game);
     const landed = wasTray.current;
     wasTray.current = false;
+    if (theirs) useSolo.setState({ deadline: Date.now() + PLAYER_ROLL_WAIT, wait: PLAYER_ROLL_WAIT });
     timer.current = window.setTimeout(
       () => {
         timer.current = null;
+        if (useSolo.getState().deadline !== null) useSolo.setState({ deadline: null });
         void play();
       },
       theirs
@@ -74,17 +86,34 @@ export function SoloBot() {
               ? GLIDE_MS + BOT_PACE
               : BOT_PACE,
     );
-  }, [on, game, scrub, tray]);
+  }, [on, game, scrub, tray, rollsMine]);
 
   useEffect(
     () => () => {
       if (timer.current !== null) window.clearTimeout(timer.current);
       timer.current = null;
+      useSolo.setState({ deadline: null });
     },
     [],
   );
 
   return null;
+}
+
+/** The roll the game waits on the player for, made as them, if it's a roll (not a choice). */
+function rollTheirs(game: GameState, seat: number): { intent: Intent; as: string } | null {
+  const rolling = game.attack ? game.attack.stage !== "done" : game.procedure && !game.procedure.run.done;
+  if (!rolling || game.procedure?.run.pending || game.script?.waiting || game.pending) return null;
+  const acting = actingSeat(game);
+  const as = acting !== null && acting !== seat ? sidePlayers(game, acting)[0]?.id : undefined;
+  if (!as) return null;
+  return { intent: game.attack ? { type: "attack/roll" } : { type: "procedure/roll" }, as };
+}
+
+/** A roll with no dice left in it: no saves after no wounds (UX 404: the computer waited 8 s on it). */
+function nothingToRoll(game: GameState): boolean {
+  const run = game.attack?.run ?? game.procedure?.run;
+  return !!run && !run.done && !run.pending && run.records.length > 0 && run.tokens.length === 0;
 }
 
 /** Whether the newest event is the computer's own move, still gliding into place. */
@@ -126,6 +155,10 @@ async function play(): Promise<void> {
     );
     return;
   }
+  // The player's own roll (their saves), left to them for a while: the computer rolls it for them now.
+  // The Easy opponent never rolls a learner's dice by itself, so it would wait on them for ever (UX 404).
+  const yours = rollTheirs(game, solo.seat);
+  if (yours) return dispatch(yours.intent, yours.as);
   let move: BotMove | null;
   // Each decision shows as "bot:think" in the browser's performance timeline (scripts/bot.mjs reads them).
   const thinking = performance.now();

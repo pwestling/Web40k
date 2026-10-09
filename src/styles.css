@@ -4897,3 +4897,44 @@ button.teach-button:hover {
   padding: 10px 12px;
   text-align: left;
 }
+
+/* The computer rolls your saves for you if you don't (UX 404): a ring that empties on the button. */
+.self-roll-note {
+  font-weight: normal;
+  opacity: 0.85;
+}
+.self-roll-ring {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-left: 6px;
+  vertical-align: -0.1em;
+  border-radius: 50%;
+  background: conic-gradient(currentColor var(--self-roll, 100%), transparent 0);
+  animation-name: self-roll-empty;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@property --self-roll {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@keyframes self-roll-empty {
+  from {
+    --self-roll: 100%;
+  }
+  to {
+    --self-roll: 0%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .self-roll-ring {
+    animation: none;
+  }
+}
+.rolls-mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

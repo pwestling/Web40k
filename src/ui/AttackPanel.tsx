@@ -1,4 +1,5 @@
 import { becauseText, damageValue, stepValue } from "./autoText";
+import { RollsMineToggle, SelfRollCountdown } from "../bot/SelfRoll";
 import { touch } from "./touch";
 import { playerName } from "../i18n/names";
 import { useCoach, computerPlays } from "../teach/store";
@@ -317,6 +318,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
   const botAttacks = computerPlays(game, attacker?.owner);
+  // The computer's attack, your saves: it rolls them for you if you don't (UX 404).
+  const yourSaves = botAttacks && !botRolls && attack.stage === "save";
   // Rolling real dice (#37) goes a stage at a time, so each batch is asked for.
   const ownDice = useOwnDice((o) => o.own) && !!game.settings.companion;
   const rollAll = () => {
@@ -415,8 +418,10 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
             <>
               <RollButton className="primary attack-roll" intent={{ type: "attack/roll" }} as={roller}>
                 {stageLabel(attack.stage)}
+                {yourSaves && <SelfRollCountdown />}
               </RollButton>
               {!botAttacks && !ownDice && <button onClick={rollAll}>{t("Roll everything")}</button>}
+              {yourSaves && <RollsMineToggle />}
             </>
           )}
           {/* Calling off an attack is the attacker's choice; the other player gets Done at the end (dogfood). */}

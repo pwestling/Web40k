@@ -239,6 +239,39 @@ const checks = {
   },
 
   /**
+   * Solo saves (#56, UX 404): in the computer's turn your save roll counts down on its button
+   * ("rolls itself in 8…"), then the computer rolls it for you, even at Easy.
+   */
+  async "solo-saves"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page
+      .locator(".demos .demo", { hasText: "Sci-fi battle" })
+      .getByRole("button", { name: "Play the computer" })
+      .click();
+    await page.locator(".how-hard button", { hasText: /^Easy/ }).click();
+    await page.locator(".your-army button").first().click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    // Pass through your turn, phase by phase, until the computer shoots at you.
+    const deadline = Date.now() + 150000;
+    for (;;) {
+      if (Date.now() > deadline) throw new Error("the computer never shot at you in its first turn");
+      if (await page.locator(".self-roll-note").count()) break;
+      const anyway = page.locator(".topbar .ask button.primary");
+      const next = page.locator('.topbar button[title="Next phase"]');
+      if (await anyway.count()) await anyway.click().catch(() => {});
+      else if (await next.count()) await next.click().catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    // Left alone, the roll is made for you, and the attack goes on.
+    await page.locator(".self-roll-note").waitFor({ state: "detached", timeout: 15000 });
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
+  /**
    * Play the computer with your own army (#56): How hard?, then Your army with a roster file. Your
    * roster faces the computer's sample army, both at the front of their zones (#56: not 35" apart).
    */
