@@ -552,6 +552,47 @@ const checks = {
     return page.errors;
   },
 
+  /**
+   * A game at phone width (UX 17, 152–154): nothing wider than the screen, and every control
+   * (☰ Menu, the stratagems tab, the replay bar) on it, with a unit's sheet open too.
+   */
+  async "phone-table"() {
+    const { page, context } = await device({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").tap();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const offScreen = () =>
+      page.evaluate(() => {
+        const W = innerWidth;
+        const H = innerHeight;
+        const out = [...document.querySelectorAll("button, summary, [role=tab]")].flatMap((e) => {
+          const r = e.getBoundingClientRect();
+          if (!r.width || !r.height || e.closest("details:not([open]) > :not(summary)")) return [];
+          return r.right > W + 1 || r.bottom > H + 1 || r.left < -1
+            ? [`${(e.textContent ?? "").trim().slice(0, 24)} at ${Math.round(r.left)},${Math.round(r.top)}`]
+            : [];
+        });
+        const wide = document.documentElement.scrollWidth;
+        return wide > W ? [`page ${wide}px wide`, ...out] : out;
+      });
+    const off = await offScreen();
+    if (off.length) throw new Error(`off screen: ${off.join("; ")}`);
+    await page.getByRole("button", { name: /Menu/ }).first().tap();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("]");
+    await page.locator(".panel.unitcard").waitFor();
+    const sheet = await page.locator(".panel.unitcard").boundingBox();
+    if (!sheet || sheet.width > 390) throw new Error(`the unit sheet is ${sheet?.width}px wide`);
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
   async replay() {
     const path = join(files, "replay.json");
     if (!existsSync(path)) throw new Error("no replay saved (the hotseat check makes it)");
