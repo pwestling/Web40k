@@ -1,5 +1,6 @@
 import { aliveModels, centreAbove } from "../core/units";
 import { tableDrag } from "./dragging";
+import { clearDirection } from "./clearShot";
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -508,11 +509,22 @@ export function WatchEffects() {
     const offset = controls.object.position.clone().sub(controls.target);
     const len = offset.length();
     const step = (want - len) * ease;
-    if (delta.lengthSq() < 1e-4 && Math.abs(want - len) < 0.05) {
+    // A close-up looks at the action from where no wall or tree is in the way: raised or swung round if need be.
+    if (f.span !== null && !f.dir && len > 1e-6 && useStore.getState().view === "3d")
+      f.dir = clearDirection(
+        game.terrain,
+        { x: f.x, y: f.y, z: f.z },
+        f.span,
+        [offset.x, offset.y, offset.z],
+        want,
+      );
+    const turn = f.dir ? new Vector3(...f.dir).sub(offset.clone().normalize()) : null;
+    if (delta.lengthSq() < 1e-4 && Math.abs(want - len) < 0.05 && (!turn || turn.lengthSq() < 1e-4)) {
       focus.current = null;
       return;
     }
     controls.target.add(delta);
+    if (turn && len > 1e-6) offset.normalize().add(turn.multiplyScalar(ease)).normalize().multiplyScalar(len);
     if (len > 1e-6) offset.multiplyScalar((len + step) / len);
     controls.object.position.copy(controls.target).add(offset);
     controls.update();
@@ -607,7 +619,14 @@ function effectsFor(
 const OVERVIEW_AFTER_MS = 4000;
 
 /** Where the director looks, and how wide a view it needs (null: the whole table). */
-type Focus = { x: number; y: number; z: number; span: number | null };
+type Focus = {
+  x: number;
+  y: number;
+  z: number;
+  span: number | null;
+  /** The camera's direction for a close-up, chosen once so terrain isn't in the way (PX Live now 7). */
+  dir?: [number, number, number];
+};
 
 /** Where the director should look after an event, if anywhere. */
 function focusFor(event: GameEvent | undefined, before: GameState, after: GameState): Focus | null {
