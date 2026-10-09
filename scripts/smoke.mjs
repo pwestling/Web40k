@@ -279,6 +279,10 @@ const checks = {
       .getByText(/Further than 12"|Roll charge/)
       .first()
       .waitFor();
+    // Status chips only show (UX 399): the ⋯ beside them marks one, on purpose.
+    await page.locator(".panel.unitcard .status-menu summary").click();
+    await page.locator(".panel.unitcard .status-menu button", { hasText: "Mark Fought" }).click();
+    await page.locator(".panel.unitcard .chips .chip", { hasText: "Fought" }).waitFor();
     if (page.errors.length) throw new Error(page.errors[0]);
     await context.close();
   },

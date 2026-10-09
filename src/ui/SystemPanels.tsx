@@ -24,6 +24,7 @@ import { plainActivations } from "../core/content/turn";
 import { useGame } from "./hooks";
 import { eyeView, rotateUnit } from "./UnitCard";
 import { useCharged } from "../render/charges";
+import { StatusMenu } from "./StatusMenu";
 import { formatList, formatNumber, t, tn, gameText } from "../i18n";
 import { lengthText } from "./distance";
 
@@ -171,18 +172,11 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         ))}
       {(statuses.length > 0 || flags.length > 0 || chargedText) && (
         <div className="chips">
+          {/* Read-only: one click used to clear a spent regiment's Activated (UX 399). The ⋯ changes them. */}
           {statuses.map((s) => (
-            <button
-              key={s.id}
-              className="chip on"
-              disabled={!mine}
-              title={t("Click to clear")}
-              onClick={() =>
-                dispatch({ type: "unit/status", id: unit.id, key: s.id, value: null }, unit.owner)
-              }
-            >
+            <span key={s.id} className="chip on">
               {s.id === "charged" && chargedText ? chargedText : s.name}
-            </button>
+            </span>
           ))}
           {flags.map((f) =>
             // A spell on the unit (rank-and-flank magic) or a prepared action's token (FSD):
@@ -219,6 +213,25 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
           )}
           {chargedText && !statuses.some((s) => s.id === "charged") && !flags.includes("charged") && (
             <span className="chip on charged">{chargedText}</span>
+          )}
+          {mine && (
+            <StatusMenu
+              unitName={unit.name}
+              items={statuses.map((s) => ({
+                key: s.id,
+                label: s.name,
+                on: true,
+                ...(s.id === "activated"
+                  ? {
+                      clear: t("Undo activation"),
+                      confirm: t("Undo {unit}'s activation? It can go again this round; the log says so.", {
+                        unit: unit.name,
+                      }),
+                    }
+                  : {}),
+              }))}
+              onChange={(key) => dispatch({ type: "unit/status", id: unit.id, key, value: null }, unit.owner)}
+            />
           )}
         </div>
       )}

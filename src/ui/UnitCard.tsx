@@ -39,6 +39,7 @@ import { replayRoll, useGame, useRareStars } from "./hooks";
 import { opposed } from "../core/teams";
 import { RollButton } from "../companion/RealDice";
 import { ChargeDeclare } from "./ChargeDeclare";
+import { StatusMenu } from "./StatusMenu";
 import { t } from "../i18n";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
@@ -329,16 +330,14 @@ export function UnitCard() {
         </div>
       )}
       <div className="chips">
-        {flags().map(([key, label]) => (
-          <button
-            key={key}
-            className={`chip ${status[key] ? "on" : ""}`}
-            disabled={!mine}
-            onClick={() => flag(key, !status[key])}
-          >
-            {label}
-          </button>
-        ))}
+        {/* Read-only (UX 399): the ⋯ beside them marks or clears one on purpose. */}
+        {flags()
+          .filter(([key]) => status[key])
+          .map(([key, label]) => (
+            <span key={key} className="chip on">
+              {label}
+            </span>
+          ))}
         {typeof status.advance === "number" && (
           <span className="chip on">{t('Advanced +{n}"', { n: status.advance })}</span>
         )}
@@ -349,6 +348,13 @@ export function UnitCard() {
           <span className="chip on charged">
             {t('Charged {distance}"', { distance: charged.toFixed(1) })}
           </span>
+        )}
+        {mine && (
+          <StatusMenu
+            unitName={unit.name}
+            items={flags().map(([key, label]) => ({ key, label, on: !!status[key] }))}
+            onChange={flag}
+          />
         )}
       </div>
       <CoreAbilities unit={unit} />

@@ -472,6 +472,23 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
               ...p,
               check: checkName(game, event.key.slice(3)).toLowerCase(),
             });
+      // A game's own status, set or cleared by hand from the card's ⋯ (UX 399).
+      const flag: Record<string, string> = {
+        moved: t("Moved"),
+        fellBack: t("Fell back"),
+        shot: t("Shot"),
+        charged: t("Charged"),
+        fought: t("Fought"),
+      };
+      const named =
+        systemOf(game).statuses?.find((s) => s.id === event.key) ??
+        (flag[event.key] ? { name: flag[event.key]! } : undefined);
+      if (named)
+        return event.key === "activated" && !event.value
+          ? t("{name} undid {unit}'s activation", p)
+          : event.value
+            ? t("{name} marked {unit} {status}", { ...p, status: named.name })
+            : t("{name} cleared {status} on {unit}", { ...p, status: named.name });
       return t("{name} set {unit} {key} = {value}", {
         ...p,
         key: event.key,
