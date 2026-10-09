@@ -9,6 +9,7 @@ import { systemModule } from "../systems";
 import { useSandbox } from "../sandbox/runtime";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
+import { bothSigned } from "../ranked/RankedGame";
 import { battleOver } from "./StatsScreen";
 import { t, tc, tn, translated } from "../i18n";
 
@@ -340,6 +341,8 @@ export function Result() {
     [record, game, mission, answers],
   );
   if (!battleOver(game)) return null;
+  // Once both players signed a ranked result, the rows still unscored are chores: folded away (PX events 2).
+  const signed = !!bothSigned(game);
   const seats = sides(game);
   const vp = (seat: number) => game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0;
   const { rounds, bySeat } = vpByRound(game);
@@ -351,7 +354,7 @@ export function Result() {
         {t("Result")}
         {game.mission ? ` · ${game.mission.name}` : ""}
       </h4>
-      {pending.length ? (
+      {pending.length && !signed ? (
         <ScorePanel inline />
       ) : (
         <p className="result-line">
@@ -373,6 +376,14 @@ export function Result() {
               .join("–"),
           })}
         </p>
+      )}
+      {signed && pending.length > 0 && (
+        <details className="unscored">
+          <summary className="small muted">
+            {tn(pending.length, "{n} score left unconfirmed", "{n} scores left unconfirmed")}
+          </summary>
+          <ScorePanel inline />
+        </details>
       )}
       {rounds.length > 0 && (
         <table className="result-table">

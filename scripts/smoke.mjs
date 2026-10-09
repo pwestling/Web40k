@@ -860,7 +860,7 @@ const checks = {
     for (const round of [1, 2]) {
       for (const d of ds) {
         if (round === 2) {
-          await d.page.getByRole("button", { name: "Back to the event" }).click({ timeout: 20_000 });
+          await d.page.getByRole("button", { name: "Back to the event" }).first().click({ timeout: 20_000 });
         }
         step(`round ${round}: ${d.name} to the table`);
         const play = page(d).getByRole("button", { name: /^Play your game: table \d+$/ });
@@ -967,7 +967,7 @@ const checks = {
     // Back on the event: every browser works out the same final standings.
     const tables = [];
     for (const d of ds) {
-      await d.page.getByRole("button", { name: "Back to the event" }).click({ timeout: 20_000 });
+      await d.page.getByRole("button", { name: "Back to the event" }).first().click({ timeout: 20_000 });
       await page(d).getByRole("heading", { name: "Final standings" }).waitFor({ timeout: 120_000 });
       await sleep(500);
       tables.push(await page(d).locator("table.standings").innerText());

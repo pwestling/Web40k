@@ -9,7 +9,7 @@ import { playMoment } from "../broadcast/Moments";
 import { useReel } from "../broadcast/reel";
 import { BROADCAST } from "../broadcast/broadcast";
 import { WatcherInvite } from "../broadcast/BroadcastControls";
-import { RankedSign } from "../ranked/RankedGame";
+import { bothSigned, RankedSign } from "../ranked/RankedGame";
 import { FeedbackCard } from "./Feedback";
 import { ReviewPanel, reviewable } from "../review/ReviewPanel";
 import { Result } from "./Missions";
@@ -64,6 +64,7 @@ export function StatsScreen() {
   const reeling = useReel((s) => s.index !== null);
   if (!open || !data || reeling) return null;
   const close = () => set({ stats: false });
+  const signed = !!bothSigned(game);
   const owners = new Map(data.players.map((p) => [p.id, p]));
   const units = [...data.units].sort((a, b) => b.dealt - a.dealt || b.taken - a.taken);
 
@@ -90,10 +91,12 @@ export function StatsScreen() {
         )}
       </div>
 
+      {/* A signed ranked result leads (PX events 2); until then the scores come first, to sign them. */}
+      {!BROADCAST && signed && <RankedSign />}
       <Result />
       {/* Watching from Live now: the end of the game asks them to play (PX). */}
       {BROADCAST && <WatcherInvite end />}
-      {!BROADCAST && <RankedSign />}
+      {!BROADCAST && !signed && <RankedSign />}
       <BestMoment />
       {!BROADCAST && <FeedbackCard />}
       {!BROADCAST && afterwards && reviewable(game) && <ReviewPanel watching={watching} close={close} />}

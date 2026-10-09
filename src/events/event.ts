@@ -317,6 +317,25 @@ export function eventStandings(event: EventDoc, results: RankedResult[]): EventS
   }));
 }
 
+/**
+ * Each place's label: "1", or "=2" for players level on everything the order
+ * looks at; none ("–") before anyone has a result, so no one's ranked unearned (PX).
+ */
+export function rankLabels(rows: EventStanding[]): string[] {
+  if (!rows.some((r) => r.won + r.drawn + r.lost + r.byes > 0)) return rows.map(() => "–");
+  const level = (a: EventStanding, b: EventStanding) =>
+    a.points === b.points &&
+    a.sos === b.sos &&
+    a.vpFor - a.vpAgainst === b.vpFor - b.vpAgainst &&
+    a.vpFor === b.vpFor;
+  return rows.map((r, i) => {
+    let first = i;
+    while (first > 0 && level(rows[first - 1]!, r)) first--;
+    const tied = first < i || (i + 1 < rows.length && level(rows[i + 1]!, r));
+    return `${tied ? "=" : ""}${first + 1}`;
+  });
+}
+
 /** Whether every pairing in a round (from 1) has a result. */
 export function roundIn(event: EventDoc, round: number, results: RankedResult[]): boolean {
   const pairs = event.pairings[round - 1];

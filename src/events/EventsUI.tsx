@@ -10,7 +10,15 @@ import { useResultsOften } from "../ranked/store";
 import { systemModule } from "../systems";
 import { RIFT_LANTERNS } from "../games/riftLanterns";
 import { plainSystemName, systemLabel, systemTitle } from "../ui/systemLabels";
-import { armyHash, eventStandings, myPairing, resultOf, type EntryDoc, type EventDoc } from "./event";
+import {
+  armyHash,
+  eventStandings,
+  myPairing,
+  rankLabels,
+  resultOf,
+  type EntryDoc,
+  type EventDoc,
+} from "./event";
 import { closeEvent, openEvent, runAnEvent, useEventOpen } from "./open";
 import { playPairing } from "./play";
 import {
@@ -79,6 +87,10 @@ const AWAY_MS = 12 * 60_000;
 /** Mid-event, with the organiser's device not heard from: pairing has stopped. */
 const organiserAway = (e: EventDoc, now: number) => e.closed && !e.done && now - e.at > AWAY_MS;
 
+/** The organiser by the name they entered with, if they play; else "the organiser". */
+const organiserName = (e: EventDoc) =>
+  e.entrants.find((x) => x.key === e.organiser)?.name ?? t("the organiser");
+
 /** The time now (kept out of render's view: the lists are worked out when the docs change). */
 const clockNow = () => Date.now();
 
@@ -89,7 +101,8 @@ export function EventsSection() {
     () =>
       Object.values(events)
         .map((e) => e.doc)
-        .filter((e) => !e.done || e.at > clockNow() - 24 * 3600_000)
+        // Finished or abandoned (the organiser's device gone) a day ago: off the board.
+        .filter((e) => e.at > clockNow() - 24 * 3600_000 || (!e.done && !e.closed))
         .sort((a, b) => Number(a.done) - Number(b.done) || a.start - b.start),
     [events],
   );
@@ -120,9 +133,12 @@ export function EventsSection() {
                       .join(" · ")}
                   </span>
                   <div className="small">
-                    {stateLine(e)}
-                    {organiserAway(e, clockNow()) && (
-                      <span className="warn"> · {t("the organiser's device is away")}</span>
+                    {organiserAway(e, clockNow()) ? (
+                      <span className="warn">
+                        {t("Paused: {name} is away", { name: displayName(organiserName(e)) })}
+                      </span>
+                    ) : (
+                      stateLine(e)
                     )}
                   </div>
                 </div>
@@ -310,6 +326,7 @@ function EventPage({ id }: { id: string }) {
     );
   const organiser = doc.organiser === key;
   const standings = eventStandings(doc, results);
+  const ranks = rankLabels(standings);
   const round = doc.pairings.length;
   return (
     <>
@@ -322,7 +339,7 @@ function EventPage({ id }: { id: string }) {
           systemTitle(doc.system) === doc.system ? doc.game : systemTitle(doc.system),
           doc.points ? t("{n} pts", { n: doc.points }) : null,
           tn(doc.rounds, "{n} round", "{n} rounds"),
-          doc.clock ? tn(doc.clock, "{n} minute clocks", "{n} minute clocks") : null,
+          doc.clock ? tn(doc.clock, "{n}-minute clocks", "{n}-minute clocks") : null,
           when(doc.start),
         ]
           .filter(Boolean)
@@ -384,7 +401,7 @@ function EventPage({ id }: { id: string }) {
                     [s.key === key ? "me" : "", s.dropped ? "dropped" : ""].join(" ").trim() || undefined
                   }
                 >
-                  <td>{i + 1}</td>
+                  <td>{ranks[i]}</td>
                   <td>
                     {displayName(s.name)}
                     {s.dropped ? <span className="muted small"> {t("(dropped)")}</span> : null}
@@ -550,14 +567,26 @@ function Entries({ doc, entries, me }: { doc: EventDoc; entries: EntryDoc[]; me:
           {shown.map((e) => (
             <li key={e.key} className={e.key === me ? "me" : undefined}>
               {displayName(e.name)} <span className="muted">· {e.army}</span>
-              {e.waiting && <span className="muted"> · {t("waiting for the organiser's device")}</span>}
+              {e.waiting && (
+                <span className="muted">
+                  {" "}
+                  · {t("waiting for {name} to confirm it", { name: displayName(organiserName(doc)) })}
+                </span>
+              )}
             </li>
           ))}
         </ul>
       )}
       {meIn ? (
         <p className="row wrap small">
-          {t("You're in. Your army is locked once the organiser's device takes your entry.")}{" "}
+          {organiser || accepted.has(me!)
+            ? t("You're in.")
+            : t(
+                "You're in once {name} confirms it (their device does, when it's on). Your army locks then.",
+                {
+                  name: displayName(organiserName(doc)),
+                },
+              )}{" "}
           <button className="quiet small" disabled={busy} onClick={() => void withdraw()}>
             {t("Withdraw")}
           </button>

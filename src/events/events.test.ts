@@ -11,6 +11,7 @@ import {
   roundIn,
   type EntryDoc,
   type EventDoc,
+  rankLabels,
 } from "./event";
 import { advance } from "./store";
 
@@ -159,5 +160,26 @@ describe("online events (#67)", () => {
     // The pairing is part of what both sign.
     expect(canonResult(signed)).toContain(`"event":{"id":"${e.id}","round":1,"table":1}`);
     expect(canonResult({ ...signed, event: { id: e.id, round: 0, table: 1 } })).toBeNull();
+  });
+});
+
+describe("rankLabels", () => {
+  const row = (points: number, won = 0, sos = 0) => ({
+    key: String(Math.random()),
+    name: "x",
+    points,
+    won,
+    drawn: 0,
+    lost: won ? 0 : 1,
+    byes: 0,
+    vpFor: won,
+    vpAgainst: 0,
+    sos,
+    dropped: false,
+  });
+  it("ranks no one before a result, and shows players level on everything as tied", () => {
+    const none = [row(0), row(0)].map((r) => ({ ...r, lost: 0 }));
+    expect(rankLabels(none)).toEqual(["–", "–"]);
+    expect(rankLabels([row(3, 1), row(3, 1), row(0), row(0, 0, 3)])).toEqual(["=1", "=1", "3", "4"]);
   });
 });

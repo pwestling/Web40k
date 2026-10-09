@@ -1,6 +1,6 @@
 import { displayName, playerName } from "../i18n/names";
 import { readLessonPackage } from "../teach/lesson";
-import { installRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import { installOwnGame, ownGame } from "../games/riftLanterns";
 import { systemLabel } from "./systemLabels";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -427,10 +427,10 @@ export function PackageCards() {
     return last?.type === "game/packages" ? last : undefined;
   }, [isReplay, record]);
   const packages = isReplay ? replayPackages : game.packages;
-  // Our own game ships with the app: a table playing it needn't ask anyone for it (watchers from Live now).
-  const ours = packages?.system.id === RIFT_LANTERNS;
+  // Our own games ship with the app: a table playing one needn't ask anyone for it (watchers from Live now).
+  const ours = packages && ownGame(packages.system.id) ? packages.system.id : null;
   useEffect(() => {
-    if (ours) void installRiftLanterns();
+    if (ours) void installOwnGame(ours);
   }, [ours]);
   if (!loaded) return null;
   return (

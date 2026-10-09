@@ -152,6 +152,7 @@ export function Lobby() {
       const s = stateAt(saved.record);
       // A package game's rounds fold only with its package loaded: say no round rather than a wrong one.
       return {
+        event: s.settings.event ?? null,
         game: gameTitle(s),
         round: s.system && isPlaceholder(s.system) ? null : s.turn.round,
         over:
@@ -329,41 +330,54 @@ export function Lobby() {
       {/* Two columns on a wide screen (UX 288): getting started, then playing with people. */}
       <div className="lobby-cols">
         <div className="lobby-col">
-          {saved && (
-            <button className="primary resume-top" onClick={resume}>
-              <strong>
-                {savedAt
-                  ? savedAt.over
-                    ? t("Back to {game}: Battle over", { game: savedAt.game })
-                    : savedAt.round === null
-                      ? t("Resume: {game}", { game: savedAt.game })
-                      : savedAt.round > 0
-                        ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
-                        : t("Resume: {game}, deploying", { game: savedAt.game })
-                  : t("Resume last game")}
-              </strong>
+          {saved && savedAt?.event && savedAt.over ? (
+            // An event game played out: the event is what's next, not the finished table (PX events 6).
+            <button
+              className="primary resume-top"
+              onClick={() => void import("../events/play").then((m) => m.backToEvent(savedAt.event!.id))}
+            >
+              <strong>{t("{event}: back to the event", { event: savedAt.event.name })}</strong>
               <span className="small">
-                {tn(
-                  saved.record.events.length,
-                  "{mode}, {n} event, saved {date}",
-                  "{mode}, {n} events, saved {date}",
-                  {
-                    mode: saved.computer
-                      ? t("Against the computer ({level})", { level: levelName(saved.computer.level) })
-                      : ({ online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
-                        saved.mode),
-                    date: formatDate(new Date(saved.savedAt), {
-                      year: "numeric",
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                      second: "numeric",
-                    }),
-                  },
-                )}
+                {t("Event round {n} · Table {table}", { n: savedAt.event.round, table: savedAt.event.table })}
               </span>
             </button>
+          ) : (
+            saved && (
+              <button className="primary resume-top" onClick={resume}>
+                <strong>
+                  {savedAt
+                    ? savedAt.over
+                      ? t("Back to {game}: Battle over", { game: savedAt.game })
+                      : savedAt.round === null
+                        ? t("Resume: {game}", { game: savedAt.game })
+                        : savedAt.round > 0
+                          ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
+                          : t("Resume: {game}, deploying", { game: savedAt.game })
+                    : t("Resume last game")}
+                </strong>
+                <span className="small">
+                  {tn(
+                    saved.record.events.length,
+                    "{mode}, {n} event, saved {date}",
+                    "{mode}, {n} events, saved {date}",
+                    {
+                      mode: saved.computer
+                        ? t("Against the computer ({level})", { level: levelName(saved.computer.level) })
+                        : ({ online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
+                          saved.mode),
+                      date: formatDate(new Date(saved.savedAt), {
+                        year: "numeric",
+                        month: "numeric",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        second: "numeric",
+                      }),
+                    },
+                  )}
+                </span>
+              </button>
+            )
           )}
           <button className="own-army" onClick={() => setGuide(true)}>
             <strong>{t("Play your own army: import a list")}</strong>

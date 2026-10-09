@@ -14,6 +14,7 @@ import {
 import type { GameState } from "../core";
 import { gameTitle, systemTitle } from "../ui/systemLabels";
 import { myKey, signAsMe } from "../player/card";
+import { backToEvent } from "../events/play";
 import { useStore } from "../store";
 import { formatNumber, t, tn } from "../i18n";
 import { say } from "../talk/talk";
@@ -36,7 +37,7 @@ export async function playRanked(): Promise<void> {
 }
 
 /** The result's signatures by seat, once both players signed. */
-function bothSigned(game: GameState): SignedResult | null {
+export function bothSigned(game: GameState): SignedResult | null {
   const r = game.ranked;
   if (!r?.result) return null;
   const sigs = r.result.players.map((p) => {
@@ -414,6 +415,13 @@ export function RankedSign() {
           <RatingLine result={result} me={me} />
         ) : (
           <p className="small">{t("It counts on the {game} ladder.", { game: gameName(game) })}</p>
+        )}
+        {game.settings.event && (
+          <p>
+            <button className="primary small" onClick={() => backToEvent(game.settings.event!.id)}>
+              {t("Back to the event")}
+            </button>
+          </p>
         )}
       </div>
     );
