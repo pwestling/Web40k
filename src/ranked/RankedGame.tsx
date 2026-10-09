@@ -146,6 +146,14 @@ export function RankedOffer() {
   const r = game.ranked;
   if (!self || typeof game.players[self]?.seat !== "number" || r?.result || rankedOver(game)) return null;
   const others = Object.keys(r?.keys ?? {}).filter((p) => p !== self && game.players[p]);
+  // An event's game is ranked by entering: its signed result settles the pairing, so there's no opting out (UX 457).
+  const event = game.settings.event;
+  if (r?.keys[self] && event)
+    return (
+      <div className="claim ranked-offer small">
+        {t("Event game: the signed result counts for {event}.", { event: event.name })}
+      </div>
+    );
   if (r?.keys[self])
     return (
       <div className="claim ranked-offer small">

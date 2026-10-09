@@ -71,8 +71,13 @@ const when = (at: number) =>
 function stateLine(e: EventDoc): string {
   if (e.done) return t("Finished");
   if (!e.closed) return t("Taking entries · starts {when}", { when: when(e.start) });
-  return t("Round {n} of {of}", { n: e.pairings.length, of: e.rounds });
+  return t("Event round {n} of {of}", { n: e.pairings.length, of: e.rounds });
 }
+
+/** How long before an organiser's device counts as gone (it says it's there every few minutes; UX 458). */
+const AWAY_MS = 12 * 60_000;
+/** Mid-event, with the organiser's device not heard from: pairing has stopped. */
+const organiserAway = (e: EventDoc, now: number) => e.closed && !e.done && now - e.at > AWAY_MS;
 
 /** The time now (kept out of render's view: the lists are worked out when the docs change). */
 const clockNow = () => Date.now();
@@ -101,7 +106,7 @@ export function EventsSection() {
               ? e.entrants.length
               : Object.values(entries[e.id] ?? {}).filter((x) => !x.doc.out).length;
             return (
-              <li key={e.id} className="event-card">
+              <li key={e.id} className={organiserAway(e, clockNow()) ? "event-card away" : "event-card"}>
                 <div>
                   <strong>{e.name}</strong>{" "}
                   <span className="muted small">
@@ -114,7 +119,12 @@ export function EventsSection() {
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
-                  <div className="small">{stateLine(e)}</div>
+                  <div className="small">
+                    {stateLine(e)}
+                    {organiserAway(e, clockNow()) && (
+                      <span className="warn"> · {t("the organiser's device is away")}</span>
+                    )}
+                  </div>
                 </div>
                 <button className="primary small" onClick={() => openEvent(e.id)}>
                   {t("Open")}
@@ -319,9 +329,24 @@ function EventPage({ id }: { id: string }) {
           .join(" · ")}
       </p>
       <p className="event-state">
-        <strong>{stateLine(doc)}</strong>
-        {organiser && <span className="muted small"> · {t("You run this event: keep this device on.")}</span>}
+        {doc.done && standings[0] ? (
+          <strong>
+            {t("Finished: {name} wins {event}, {w}–{d}–{l}", {
+              name: displayName(standings[0].name),
+              event: doc.name,
+              w: standings[0].won,
+              d: standings[0].drawn,
+              l: standings[0].lost,
+            })}
+          </strong>
+        ) : (
+          <strong>{stateLine(doc)}</strong>
+        )}
+        {organiser && !doc.done && (
+          <span className="muted small"> · {t("You run this event: keep this device on.")}</span>
+        )}
       </p>
+      {!organiser && <OrganiserSeen doc={doc} />}
       {!doc.closed && (
         <Entries doc={doc} entries={Object.values(entries[id] ?? {}).map((e) => e.doc)} me={key} />
       )}
@@ -347,7 +372,7 @@ function EventPage({ id }: { id: string }) {
                 <th title={t("3 a win or a bye, 1 a draw")}>{t("Points")}</th>
                 <th>{t("W–D–L")}</th>
                 <th>{t("VP")}</th>
-                <th title={t("Strength of schedule: the points of everyone they played")}>{t("SoS")}</th>
+                <th title={t("Strength of schedule: your opponents' points")}>{t("SoS")}</th>
                 {organiser && <th />}
               </tr>
             </thead>
@@ -384,22 +409,105 @@ function EventPage({ id }: { id: string }) {
               ))}
             </tbody>
           </table>
-          {organiser && !doc.done && (
-            <p className="row wrap small">
-              <button className="small" onClick={() => void pairNext(doc.id, results)}>
-                {round >= doc.rounds ? t("Finish the event now") : t("Pair round {n} now", { n: round + 1 })}
-              </button>
-              <span className="muted">{t("Each round pairs itself once every result is in.")}</span>
-            </p>
-          )}
+          <p className="muted small">
+            {t(
+              "SoS: strength of schedule, your opponents' points. Ties go to SoS, then VP difference, then VP.",
+            )}
+          </p>
+          {organiser && !doc.done && <PairNow doc={doc} round={round} results={results} />}
         </>
       )}
     </>
   );
 }
 
+/** The organiser moves on before every result is in: asked first, with the tables still playing named (UX 456). */
+function PairNow({
+  doc,
+  round,
+  results,
+}: {
+  doc: EventDoc;
+  round: number;
+  results: ReturnType<typeof useEventResults>;
+}) {
+  const [asking, setAsking] = useState(false);
+  const names = new Map(doc.entrants.map((e) => [e.key, displayName(e.name)]));
+  const open = (doc.pairings[round - 1] ?? []).filter(
+    (p) => p.players.length === 2 && !resultOf(doc, round, p, results),
+  );
+  const last = round >= doc.rounds;
+  const go = () => {
+    setAsking(false);
+    void pairNext(doc.id, results);
+  };
+  return asking && open.length ? (
+    <div className="confirm small" role="alertdialog">
+      <p>
+        {tn(
+          open.length,
+          "{tables} has no result yet. It counts as not played: no points for either player.",
+          "{tables} have no result yet. They count as not played: no points for either player.",
+          {
+            tables: open
+              .map((p) =>
+                t("Table {n} ({a} vs {b})", {
+                  n: p.table,
+                  a: names.get(p.players[0]!) ?? "?",
+                  b: names.get(p.players[1]!) ?? "?",
+                }),
+              )
+              .join(", "),
+          },
+        )}
+      </p>
+      <p className="row wrap">
+        <button className="small" onClick={go}>
+          {last ? t("Finish anyway") : t("Pair anyway")}
+        </button>
+        <button className="small primary" onClick={() => setAsking(false)}>
+          {t("Wait for them")}
+        </button>
+        <span className="muted">{t("Or enter their results by hand above.")}</span>
+      </p>
+    </div>
+  ) : (
+    <p className="row wrap small">
+      <button className="small" onClick={() => (open.length ? setAsking(true) : go())}>
+        {last ? t("Finish the event now") : t("Pair round {n} now", { n: round + 1 })}
+      </button>
+      <span className="muted">{t("Each round pairs itself once every result is in.")}</span>
+    </p>
+  );
+}
+
+/** When the organiser's device was last heard from; mid-event, after a while, that pairing has stopped (UX 458). */
+function OrganiserSeen({ doc }: { doc: EventDoc }) {
+  const [now, setNow] = useState(clockNow);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  if (doc.done) return null;
+  const minutes = Math.floor((now - doc.at) / 60_000);
+  if (minutes < 7) return null;
+  return organiserAway(doc, now) ? (
+    <p className="warn small" role="status">
+      {t(
+        "The organiser's device was last seen {n} minutes ago, so the next round won't be paired until it's back. Games already played still count.",
+        { n: minutes },
+      )}
+    </p>
+  ) : (
+    <p className="muted small">
+      {t("The organiser's device was last seen {n} minutes ago.", { n: minutes })}
+    </p>
+  );
+}
+
 function Entries({ doc, entries, me }: { doc: EventDoc; entries: EntryDoc[]; me: string | null }) {
   const armies = useShelf((s) => s.armies);
+  const shelfLoaded = useShelf((s) => s.loaded);
   useEffect(() => void useShelf.getState().load(), []);
   const mine = useMemo(
     () =>
@@ -454,6 +562,8 @@ function Entries({ doc, entries, me }: { doc: EventDoc; entries: EntryDoc[]; me:
             {t("Withdraw")}
           </button>
         </p>
+      ) : !shelfLoaded ? (
+        <p className="muted small">{t("Checking your shelf…")}</p>
       ) : mine.length ? (
         <div className="row wrap">
           <label>

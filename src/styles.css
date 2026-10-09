@@ -5592,11 +5592,7 @@ body:has(.panel.better-move) .panel.whatnow {
   border-top: 1px solid #262b36;
 }
 .event-seat {
-  position: fixed;
-  top: 56px;
-  left: 12px;
-  z-index: 30;
-  max-width: min(360px, calc(100vw - 24px));
+  margin: 6px 0;
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #f5c542;
@@ -5643,4 +5639,13 @@ body:has(.panel.better-move) .panel.whatnow {
 }
 .cutout-editor canvas.checker {
   background: repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e37 0% 50%) 50% / 16px 16px;
+}
+.events-section .event-card.away {
+  opacity: 0.55;
+}
+.event-page .confirm {
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 6px 0;
 }

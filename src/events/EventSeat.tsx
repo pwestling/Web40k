@@ -112,8 +112,8 @@ export function EventSeat() {
       <strong>{at.name}</strong>{" "}
       <span className="small">
         {doc
-          ? t("Round {n} of {of} · Table {table}", { n: at.round, of: doc.rounds, table: at.table })
-          : t("Round {n} · Table {table}", { n: at.round, table: at.table })}
+          ? t("Event round {n} of {of} · Table {table}", { n: at.round, of: doc.rounds, table: at.table })
+          : t("Event round {n} · Table {table}", { n: at.round, table: at.table })}
       </span>
       {checks.length > 0 && (
         <ul className="plain small">

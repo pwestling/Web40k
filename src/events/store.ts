@@ -279,6 +279,9 @@ export function advance(
 const busy = new Set<string>();
 
 /** Run this device's events: entries, pairings and the end (mounted with the app while there are any). */
+/** How often a running event's organiser device republishes it, as a sign it's still there. */
+const HEARTBEAT_MS = 5 * 60_000;
+
 export function useRunMyEvents(): void {
   const mine = useEvents((s) => s.mine);
   const events = useEvents((s) => s.events);
@@ -297,10 +300,20 @@ export function useRunMyEvents(): void {
       void change(id, () => next).finally(() => busy.delete(id));
     }
   }, [mine, events, entries, results, key]);
-  // The start time passes with nothing else happening: look again each minute.
+  // The start time passes with nothing else happening: look again each minute. And say this device is
+  // still here every few minutes, so players can tell when it has gone (UX 458).
   useEffect(() => {
     if (!mine.length) return;
-    const timer = setInterval(() => useEvents.setState((s) => ({ events: { ...s.events } })), 30_000);
+    const timer = setInterval(() => {
+      useEvents.setState((s) => ({ events: { ...s.events } }));
+      const { events: now } = useEvents.getState();
+      for (const id of useEvents.getState().mine) {
+        const doc = now[id]?.doc;
+        if (!doc || doc.done || busy.has(id) || Date.now() - doc.at < HEARTBEAT_MS) continue;
+        busy.add(id);
+        void change(id, (d) => ({ ...d })).finally(() => busy.delete(id));
+      }
+    }, 30_000);
     return () => clearInterval(timer);
   }, [mine.length]);
 }

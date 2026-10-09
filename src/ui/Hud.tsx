@@ -9,7 +9,7 @@ import { TablePicker } from "../tables/TableLibrary";
 import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { undoneSeqs, type GameRecord, type Player } from "../core";
 import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
 import { BroadcastControls } from "../broadcast/BroadcastControls";
@@ -30,6 +30,9 @@ import { touch } from "./touch";
 import { startReview, useReviewRun } from "../review/run";
 import { reviewable } from "../review/ReviewPanel";
 import { BROADCAST } from "../broadcast/broadcast";
+
+/** An event's game (#67): its round, table and army checks, at the top of the panel (UX 459). */
+const EventSeat = lazy(() => import("../events/EventSeat").then((m) => ({ default: m.EventSeat })));
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -82,6 +85,7 @@ export function Hud() {
 
   // At Battle over in a live game the review starts by itself, folded menu or not (UX 424, 432).
   // Not on an exhibition table (#64): nobody there to read it, and the next game is coming.
+  const eventGame = useStore((s) => !!s.game.settings.event);
   const exhibition = useStore((s) => s.exhibition);
   const autoReview =
     battleOver(shown) && !!session && !BROADCAST && !VIEWER && !exhibition && reviewable(shown);
@@ -106,6 +110,11 @@ export function Hud() {
         <strong>Open Battle</strong>
         <button onClick={() => setCollapsed(true)}>{t("Hide")}</button>
       </div>
+      {eventGame && (
+        <Suspense fallback={null}>
+          <EventSeat />
+        </Suspense>
+      )}
       <RoomCard />
       {mode === "hotseat" && (
         <p className="muted">

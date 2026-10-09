@@ -374,38 +374,38 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:322
+#: src/GameScreen.tsx:315
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:323
+#: src/GameScreen.tsx:316
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:324
+#: src/GameScreen.tsx:317
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:325
+#: src/GameScreen.tsx:318
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:330
-#: src/events/EventsUI.tsx:120
+#: src/GameScreen.tsx:323
+#: src/events/EventsUI.tsx:130
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:380
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:331
+#: src/GameScreen.tsx:324
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:332
+#: src/GameScreen.tsx:325
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:337
+#: src/GameScreen.tsx:330
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -418,7 +418,7 @@ msgstr[1] ""
 #: src/bot/BestMoment.tsx:43
 #: src/broadcast/Moments.tsx:239
 #: src/campaign/EventTab.tsx:318
-#: src/events/EventsUI.tsx:516
+#: src/events/EventsUI.tsx:626
 #: src/share/SharePanel.tsx:360
 #: src/share/SharePanel.tsx:434
 msgid "Round {n}"
@@ -453,7 +453,7 @@ msgstr ""
 #: src/bot/YourArmy.tsx:101
 #: src/bot/YourArmy.tsx:142
 #: src/bot/YourArmy.tsx:144
-#: src/events/EventsUI.tsx:460
+#: src/events/EventsUI.tsx:570
 #: src/ui/AutoAbilities.tsx:325
 msgid "Your army"
 msgstr ""
@@ -508,7 +508,7 @@ msgstr ""
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
-#: src/ranked/RankedGame.tsx:451
+#: src/ranked/RankedGame.tsx:459
 #: src/standees/StandeeMaker.tsx:195
 #: src/ui/RegimentPanel.tsx:274
 msgid "Back"
@@ -947,7 +947,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:570
 #: src/events/EventsUI.tsx:49
-#: src/events/EventsUI.tsx:295
+#: src/events/EventsUI.tsx:305
 msgid "Event"
 msgstr ""
 
@@ -987,7 +987,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:609
 #: src/campaign/EventTab.tsx:268
-#: src/events/EventsUI.tsx:346
+#: src/events/EventsUI.tsx:371
 #: src/player/PlayerCard.tsx:325
 msgid "Player"
 msgstr ""
@@ -1036,7 +1036,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:614
 #: src/campaign/EventTab.tsx:270
-#: src/events/EventsUI.tsx:349
+#: src/events/EventsUI.tsx:374
 #: src/ui/Missions.tsx:145
 #: src/ui/Missions.tsx:381
 msgid "VP"
@@ -1085,8 +1085,8 @@ msgid "entered by hand"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:673
-#: src/events/EventsUI.tsx:111
-#: src/events/EventsUI.tsx:314
+#: src/events/EventsUI.tsx:116
+#: src/events/EventsUI.tsx:324
 #: src/ui/RoundCard.tsx:113
 #: src/ui/StatsScreen.tsx:74
 msgid "{n} round"
@@ -1115,7 +1115,7 @@ msgid "Kills, games and wounds fill in after each game. Honours, scars and XP ar
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:727
-#: src/ui/Hud.tsx:185
+#: src/ui/Hud.tsx:194
 msgid "Done editing"
 msgstr ""
 
@@ -1235,7 +1235,7 @@ msgid "Use the names players go by at the table, so their games find their pairi
 msgstr ""
 
 #: src/campaign/EventTab.tsx:106
-#: src/events/EventsUI.tsx:238
+#: src/events/EventsUI.tsx:248
 msgid "Rounds"
 msgstr ""
 
@@ -1320,12 +1320,11 @@ msgid "W-D-L"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:271
-#: src/events/EventsUI.tsx:350
 msgid "Strength of schedule: the points of everyone they played"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:271
-#: src/events/EventsUI.tsx:350
+#: src/events/EventsUI.tsx:375
 msgid "SoS"
 msgstr ""
 
@@ -1350,12 +1349,12 @@ msgid "Not paired from next round; their results stand"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:306
-#: src/events/EventsUI.tsx:378
+#: src/events/EventsUI.tsx:403
 msgid "Back in"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:306
-#: src/events/EventsUI.tsx:378
+#: src/events/EventsUI.tsx:403
 msgid "Drop"
 msgstr ""
 
@@ -1368,7 +1367,7 @@ msgid "Remove the event"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:362
-#: src/events/EventsUI.tsx:534
+#: src/events/EventsUI.tsx:644
 msgid "Table {n}"
 msgstr ""
 
@@ -1394,7 +1393,7 @@ msgstr ""
 
 #: src/campaign/EventTab.tsx:417
 #: src/companion/TableAttack.tsx:52
-#: src/events/EventsUI.tsx:623
+#: src/events/EventsUI.tsx:733
 #: src/opentables/OpenTables.tsx:567
 #: src/opentables/OpenTables.tsx:605
 #: src/opentables/OpenTables.tsx:907
@@ -1519,7 +1518,7 @@ msgid "No army yet."
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:196
-#: src/ui/Hud.tsx:215
+#: src/ui/Hud.tsx:224
 msgid "Add an army"
 msgstr ""
 
@@ -1554,7 +1553,7 @@ msgid "Number of dice"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:295
-#: src/ui/Hud.tsx:240
+#: src/ui/Hud.tsx:249
 msgid "D"
 msgstr ""
 
@@ -1563,18 +1562,18 @@ msgid "Sides"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:301
-#: src/ui/Hud.tsx:246
+#: src/ui/Hud.tsx:255
 #: src/ui/StatsScreen.tsx:215
 msgid "Roll"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:308
-#: src/ui/Hud.tsx:493
+#: src/ui/Hud.tsx:502
 msgid "Stats"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:310
-#: src/ui/Hud.tsx:254
+#: src/ui/Hud.tsx:263
 msgid "Download replay"
 msgstr ""
 
@@ -1592,7 +1591,7 @@ msgid "Log"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:95
-#: src/events/EventsUI.tsx:216
+#: src/events/EventsUI.tsx:226
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:310
 #: src/ui/Lobby.tsx:485
@@ -2156,11 +2155,11 @@ msgid "{name}'s army isn't the one registered ({army})"
 msgstr ""
 
 #: src/events/EventSeat.tsx:115
-msgid "Round {n} of {of} · Table {table}"
+msgid "Event round {n} of {of} · Table {table}"
 msgstr ""
 
 #: src/events/EventSeat.tsx:116
-msgid "Round {n} · Table {table}"
+msgid "Event round {n} · Table {table}"
 msgstr ""
 
 #: src/events/EventSeat.tsx:131
@@ -2175,39 +2174,43 @@ msgstr ""
 msgid "Back to the event"
 msgstr ""
 
-#: src/events/EventsUI.tsx:110
-#: src/events/EventsUI.tsx:313
+#: src/events/EventsUI.tsx:115
+#: src/events/EventsUI.tsx:323
 #: src/ui/StatsScreen.tsx:265
 msgid "{n} pts"
 msgstr ""
 
-#: src/events/EventsUI.tsx:112
+#: src/events/EventsUI.tsx:117
 msgid "{n} player"
 msgid_plural "{n} players"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/events/EventsUI.tsx:129
+#: src/events/EventsUI.tsx:125
+msgid "the organiser's device is away"
+msgstr ""
+
+#: src/events/EventsUI.tsx:139
 msgid "No events right now. Run one: a club night or a tournament, Swiss rounds, no server needed."
 msgstr ""
 
-#: src/events/EventsUI.tsx:130
+#: src/events/EventsUI.tsx:140
 msgid "Looking for events…"
 msgstr ""
 
-#: src/events/EventsUI.tsx:160
+#: src/events/EventsUI.tsx:170
 msgid "{name}'s event"
 msgstr ""
 
-#: src/events/EventsUI.tsx:160
+#: src/events/EventsUI.tsx:170
 msgid "Club night"
 msgstr ""
 
-#: src/events/EventsUI.tsx:208
+#: src/events/EventsUI.tsx:218
 msgid "Swiss rounds with no server: your browser publishes the event and pairs each round once the last is in, so keep this device on during the event. Players enter with their player card and a shelf army."
 msgstr ""
 
-#: src/events/EventsUI.tsx:213
+#: src/events/EventsUI.tsx:223
 #: src/figures/FigureLibrary.tsx:364
 #: src/player/PlayerCard.tsx:127
 #: src/standees/StandeeMaker.tsx:205
@@ -2216,213 +2219,263 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-#: src/events/EventsUI.tsx:227
-#: src/events/EventsUI.tsx:347
+#: src/events/EventsUI.tsx:237
+#: src/events/EventsUI.tsx:372
 msgid "Points"
 msgstr ""
 
-#: src/events/EventsUI.tsx:233
+#: src/events/EventsUI.tsx:243
 msgid "any"
 msgstr ""
 
-#: src/events/EventsUI.tsx:248
+#: src/events/EventsUI.tsx:258
 msgid "Minutes on each clock"
 msgstr ""
 
-#: src/events/EventsUI.tsx:253
+#: src/events/EventsUI.tsx:263
 #: src/opentables/OpenTables.tsx:808
 msgid "Starts"
 msgstr ""
 
-#: src/events/EventsUI.tsx:257
+#: src/events/EventsUI.tsx:267
 msgid "Round {n} mission"
 msgstr ""
 
-#: src/events/EventsUI.tsx:262
+#: src/events/EventsUI.tsx:272
 msgid "Players choose"
 msgstr ""
 
-#: src/events/EventsUI.tsx:273
+#: src/events/EventsUI.tsx:283
 msgid "Show the top tables on Live now"
 msgstr ""
 
-#: src/events/EventsUI.tsx:277
+#: src/events/EventsUI.tsx:287
 msgid "Post the event"
 msgstr ""
 
-#: src/events/EventsUI.tsx:298
+#: src/events/EventsUI.tsx:308
 msgid "Looking for this event on the board…"
 msgstr ""
 
-#: src/events/EventsUI.tsx:315
+#: src/events/EventsUI.tsx:325
 msgid "{n} minute clocks"
 msgid_plural "{n} minute clocks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/events/EventsUI.tsx:323
+#: src/events/EventsUI.tsx:334
+msgid "Finished: {name} wins {event}, {w}–{d}–{l}"
+msgstr ""
+
+#: src/events/EventsUI.tsx:346
 msgid "You run this event: keep this device on."
 msgstr ""
 
-#: src/events/EventsUI.tsx:333
+#: src/events/EventsUI.tsx:358
 msgid "Earlier rounds"
 msgstr ""
 
-#: src/events/EventsUI.tsx:341
+#: src/events/EventsUI.tsx:366
 msgid "Final standings"
 msgstr ""
 
-#: src/events/EventsUI.tsx:341
+#: src/events/EventsUI.tsx:366
 msgid "Standings"
 msgstr ""
 
-#: src/events/EventsUI.tsx:347
+#: src/events/EventsUI.tsx:372
 msgid "3 a win or a bye, 1 a draw"
 msgstr ""
 
-#: src/events/EventsUI.tsx:348
+#: src/events/EventsUI.tsx:373
 msgid "W–D–L"
 msgstr ""
 
-#: src/events/EventsUI.tsx:365
+#: src/events/EventsUI.tsx:375
+msgid "Strength of schedule: your opponents' points"
+msgstr ""
+
+#: src/events/EventsUI.tsx:390
 msgid "(dropped)"
 msgstr ""
 
-#: src/events/EventsUI.tsx:368
+#: src/events/EventsUI.tsx:393
 msgid "{w}–{d}–{l}"
 msgstr ""
 
-#: src/events/EventsUI.tsx:369
+#: src/events/EventsUI.tsx:394
 msgid "{for}–{against}"
 msgstr ""
 
-#: src/events/EventsUI.tsx:390
+#: src/events/EventsUI.tsx:413
+msgid "SoS: strength of schedule, your opponents' points. Ties go to SoS, then VP difference, then VP."
+msgstr ""
+
+#: src/events/EventsUI.tsx:447
+msgid "{tables} has no result yet. It counts as not played: no points for either player."
+msgid_plural "{tables} have no result yet. They count as not played: no points for either player."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/events/EventsUI.tsx:454
+msgid "Table {n} ({a} vs {b})"
+msgstr ""
+
+#: src/events/EventsUI.tsx:466
+msgid "Finish anyway"
+msgstr ""
+
+#: src/events/EventsUI.tsx:466
+msgid "Pair anyway"
+msgstr ""
+
+#: src/events/EventsUI.tsx:469
+msgid "Wait for them"
+msgstr ""
+
+#: src/events/EventsUI.tsx:471
+msgid "Or enter their results by hand above."
+msgstr ""
+
+#: src/events/EventsUI.tsx:477
 msgid "Finish the event now"
 msgstr ""
 
-#: src/events/EventsUI.tsx:390
+#: src/events/EventsUI.tsx:477
 msgid "Pair round {n} now"
 msgstr ""
 
-#: src/events/EventsUI.tsx:392
+#: src/events/EventsUI.tsx:479
 msgid "Each round pairs itself once every result is in."
 msgstr ""
 
-#: src/events/EventsUI.tsx:439
+#: src/events/EventsUI.tsx:49
+#: src/events/EventsUI.tsx:100
+#: src/events/EventsUI.tsx:214
+msgid "Run an event"
+msgstr ""
+
+#: src/events/EventsUI.tsx:496
+msgid "The organiser's device was last seen {n} minutes ago, so the next round won't be paired until it's back. Games already played still count."
+msgstr ""
+
+#: src/events/EventsUI.tsx:503
+msgid "The organiser's device was last seen {n} minutes ago."
+msgstr ""
+
+#: src/events/EventsUI.tsx:547
 msgid "{n} player in"
 msgid_plural "{n} players in"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/events/EventsUI.tsx:445
+#: src/events/EventsUI.tsx:553
 msgid "waiting for the organiser's device"
 msgstr ""
 
-#: src/events/EventsUI.tsx:452
+#: src/events/EventsUI.tsx:560
 msgid "You're in. Your army is locked once the organiser's device takes your entry."
 msgstr ""
 
-#: src/events/EventsUI.tsx:454
+#: src/events/EventsUI.tsx:562
 #: src/ui/Packages.tsx:748
 msgid "Withdraw"
 msgstr ""
 
-#: src/events/EventsUI.tsx:470
+#: src/events/EventsUI.tsx:566
+msgid "Checking your shelf…"
+msgstr ""
+
+#: src/events/EventsUI.tsx:580
 #: src/ui/Keys.tsx:12
 msgid "Enter"
 msgstr ""
 
-#: src/events/EventsUI.tsx:475
+#: src/events/EventsUI.tsx:585
 msgid "To enter, put the army you'll bring on your shelf first: deploy it in any game of {game} and press Save army to your shelf."
 msgstr ""
 
-#: src/events/EventsUI.tsx:484
+#: src/events/EventsUI.tsx:594
 msgid "Start now"
 msgstr ""
 
-#: src/events/EventsUI.tsx:486
+#: src/events/EventsUI.tsx:596
 msgid "Or it starts at its time with whoever has entered."
 msgstr ""
 
-#: src/events/EventsUI.tsx:49
-#: src/events/EventsUI.tsx:95
-#: src/events/EventsUI.tsx:204
-msgid "Run an event"
-msgstr ""
-
-#: src/events/EventsUI.tsx:522
+#: src/events/EventsUI.tsx:632
 msgid "Play your game: table {n}"
 msgstr ""
 
-#: src/events/EventsUI.tsx:525
+#: src/events/EventsUI.tsx:635
 msgid "against {name}"
 msgstr ""
 
-#: src/events/EventsUI.tsx:536
+#: src/events/EventsUI.tsx:646
 msgid "{name} has a bye"
 msgstr ""
 
-#: src/events/EventsUI.tsx:539
+#: src/events/EventsUI.tsx:649
 #: src/ui/RoundCard.tsx:101
 msgid "vs"
 msgstr ""
 
-#: src/events/EventsUI.tsx:542
+#: src/events/EventsUI.tsx:652
 msgid "entered by the organiser"
 msgstr ""
 
-#: src/events/EventsUI.tsx:542
+#: src/events/EventsUI.tsx:652
 msgid "signed"
 msgstr ""
 
-#: src/events/EventsUI.tsx:542
+#: src/events/EventsUI.tsx:652
 msgid "playing"
 msgstr ""
 
-#: src/events/EventsUI.tsx:578
+#: src/events/EventsUI.tsx:688
 msgid "Rule on it"
 msgstr ""
 
-#: src/events/EventsUI.tsx:578
+#: src/events/EventsUI.tsx:688
 msgid "Enter result"
 msgstr ""
 
-#: src/events/EventsUI.tsx:582
+#: src/events/EventsUI.tsx:692
 msgid "Clear ruling"
 msgstr ""
 
-#: src/events/EventsUI.tsx:603
+#: src/events/EventsUI.tsx:713
 msgid "First player's VP"
-msgstr ""
-
-#: src/events/EventsUI.tsx:611
-msgid "Second player's VP"
-msgstr ""
-
-#: src/events/EventsUI.tsx:616
-msgid "Note (why)"
-msgstr ""
-
-#: src/events/EventsUI.tsx:621
-#: src/mail/MailBar.tsx:152
-#: src/ui/AttackPanel.tsx:365
-#: src/workshop/Workshop.tsx:278
-msgid "Save"
 msgstr ""
 
 #: src/events/EventsUI.tsx:72
 msgid "Finished"
 msgstr ""
 
+#: src/events/EventsUI.tsx:721
+msgid "Second player's VP"
+msgstr ""
+
+#: src/events/EventsUI.tsx:726
+msgid "Note (why)"
+msgstr ""
+
 #: src/events/EventsUI.tsx:73
 msgid "Taking entries · starts {when}"
 msgstr ""
 
-#: src/events/EventsUI.tsx:74
-msgid "Round {n} of {of}"
+#: src/events/EventsUI.tsx:731
+#: src/mail/MailBar.tsx:152
+#: src/ui/AttackPanel.tsx:365
+#: src/workshop/Workshop.tsx:278
+msgid "Save"
 msgstr ""
 
-#: src/events/EventsUI.tsx:94
+#: src/events/EventsUI.tsx:74
+msgid "Event round {n} of {of}"
+msgstr ""
+
+#: src/events/EventsUI.tsx:99
 msgid "Events"
 msgstr ""
 
@@ -2880,7 +2933,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:788
 #: src/player/PlayerCard.tsx:131
 #: src/replay/NotesPanel.tsx:252
-#: src/ui/Hud.tsx:400
+#: src/ui/Hud.tsx:409
 msgid "Your name"
 msgstr ""
 
@@ -3082,12 +3135,12 @@ msgid "{name} wants to play this game ranked: at the end you both sign the resul
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1041
-#: src/ranked/RankedGame.tsx:179
+#: src/ranked/RankedGame.tsx:187
 msgid "Play ranked"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1044
-#: src/ranked/RankedGame.tsx:181
+#: src/ranked/RankedGame.tsx:189
 msgid "Not this time"
 msgstr ""
 
@@ -3229,7 +3282,7 @@ msgstr ""
 
 #: src/opentables/OpenTables.tsx:357
 #: src/opentables/OpenTables.tsx:425
-#: src/ui/Hud.tsx:483
+#: src/ui/Hud.tsx:492
 #: src/ui/Lobby.tsx:534
 msgid "Watch"
 msgstr ""
@@ -3287,7 +3340,7 @@ msgstr[1] ""
 #: src/opentables/OpenTables.tsx:463
 #: src/opentables/OpenTables.tsx:476
 #: src/player/PlayerCard.tsx:159
-#: src/ranked/RankedGame.tsx:193
+#: src/ranked/RankedGame.tsx:201
 #: src/workshop/Workshop.tsx:56
 msgid "Ranked"
 msgstr ""
@@ -3783,187 +3836,191 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:153
-msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
-msgstr ""
-
-#: src/ranked/RankedGame.tsx:156
-msgid "You play this game ranked. Waiting for your opponent to say yes."
+#: src/ranked/RankedGame.tsx:154
+msgid "Event game: the signed result counts for {event}."
 msgstr ""
 
 #: src/ranked/RankedGame.tsx:161
-msgid "Unranked"
+msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:164
+msgid "You play this game ranked. Waiting for your opponent to say yes."
 msgstr ""
 
 #: src/ranked/RankedGame.tsx:169
+msgid "Unranked"
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:177
 msgid "{name} wants to play this game ranked. At the end you both sign the result, and it counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:192
+#: src/ranked/RankedGame.tsx:200
 msgid "Both players play this game ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:201
+#: src/ranked/RankedGame.tsx:209
 msgid "{a} {va} – {vb} {b}, a draw"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:202
+#: src/ranked/RankedGame.tsx:210
 msgid "{a} {va} – {vb} {b}, {winner} wins"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:219
+#: src/ranked/RankedGame.tsx:227
 msgid "Against an even opponent a win gains {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:221
+#: src/ranked/RankedGame.tsx:229
 msgid "Against an even opponent a loss costs {n}; beat a stronger player and you gain more."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:222
+#: src/ranked/RankedGame.tsx:230
 msgid "A draw between even players moves little."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:225
+#: src/ranked/RankedGame.tsx:233
 msgid "Beating a stronger player gains more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:227
+#: src/ranked/RankedGame.tsx:235
 msgid "Losing to a stronger player costs less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:228
+#: src/ranked/RankedGame.tsx:236
 msgid "A draw against a stronger player gains you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:230
+#: src/ranked/RankedGame.tsx:238
 msgid "Beating a lower-rated player gains less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:232
+#: src/ranked/RankedGame.tsx:240
 msgid "Losing to a lower-rated player costs more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:233
+#: src/ranked/RankedGame.tsx:241
 msgid "A draw against a lower-rated player costs you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:239
+#: src/ranked/RankedGame.tsx:247
 msgid "Still finding your level: {n} more game."
 msgid_plural "Still finding your level: {n} more games."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ranked/RankedGame.tsx:257
+#: src/ranked/RankedGame.tsx:265
 msgid "You two have played three ranked games today, so this one doesn't move the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:262
-#: src/ranked/RankedGame.tsx:408
+#: src/ranked/RankedGame.tsx:270
+#: src/ranked/RankedGame.tsx:416
 msgid "It counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:269
+#: src/ranked/RankedGame.tsx:277
 msgid "You're now {rating} ({change}) on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:278
+#: src/ranked/RankedGame.tsx:286
 msgid "A win against {name} wins back {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:306
+#: src/ranked/RankedGame.tsx:314
 msgid "Fixing the score"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:308
+#: src/ranked/RankedGame.tsx:316
 msgid "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:311
+#: src/ranked/RankedGame.tsx:319
 msgid "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:318
+#: src/ranked/RankedGame.tsx:326
 msgid "Score fixed: write it up"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:327
+#: src/ranked/RankedGame.tsx:335
 msgid "The score is wrong"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:328
+#: src/ranked/RankedGame.tsx:336
 msgid "We agreed it wouldn't count"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:329
+#: src/ranked/RankedGame.tsx:337
 msgid "Something went wrong at the table"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:354
+#: src/ranked/RankedGame.tsx:362
 msgid "Writing up the ranked result…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:364
-#: src/ranked/RankedGame.tsx:373
+#: src/ranked/RankedGame.tsx:372
+#: src/ranked/RankedGame.tsx:381
 msgid "Not ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:365
+#: src/ranked/RankedGame.tsx:373
 msgid "You didn't sign, so this game doesn't count for either of you."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:366
+#: src/ranked/RankedGame.tsx:374
 msgid "You said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:375
+#: src/ranked/RankedGame.tsx:383
 msgid "{name} didn't sign the result, so this game doesn't count."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:377
+#: src/ranked/RankedGame.tsx:385
 msgid "You won {va}–{vb}. {name} didn't sign, so it won't move the ladder, but the win stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:385
+#: src/ranked/RankedGame.tsx:393
 msgid "{name} didn't sign, so it won't move the ladder. The game stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:390
+#: src/ranked/RankedGame.tsx:398
 msgid "{name} said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:394
+#: src/ranked/RankedGame.tsx:402
 msgid "{a} {va} – {vb} {b}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:404
+#: src/ranked/RankedGame.tsx:412
 msgid "Ranked result signed"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:435
+#: src/ranked/RankedGame.tsx:443
 msgid "Sign the ranked result"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:438
+#: src/ranked/RankedGame.tsx:446
 msgid "Signed. Waiting for your opponent to sign."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:441
+#: src/ranked/RankedGame.tsx:449
 msgid "Why not? It goes on the result, and both of you see it."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:458
+#: src/ranked/RankedGame.tsx:466
 msgid "Sign: good game 🤝"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:458
+#: src/ranked/RankedGame.tsx:466
 msgid "Sign: that's right"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:461
+#: src/ranked/RankedGame.tsx:469
 msgid "Don't sign"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:466
+#: src/ranked/RankedGame.tsx:474
 msgid "A game counts only when both players sign. Not signing means it doesn't count for either of you, and your card shows how often you sign."
 msgstr ""
 
@@ -4302,7 +4359,7 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
-#: src/ui/Hud.tsx:107
+#: src/ui/Hud.tsx:111
 #: src/ui/PlayPanel.tsx:79
 #: src/ui/TableWarnings.tsx:99
 #: src/ui/WhatNow.tsx:365
@@ -6717,7 +6774,7 @@ msgid "{name}'s dice"
 msgstr ""
 
 #: src/ui/DicePicker.tsx:59
-#: src/ui/Hud.tsx:227
+#: src/ui/Hud.tsx:236
 #: src/ui/StatsScreen.tsx:216
 msgid "Dice"
 msgstr ""
@@ -6958,185 +7015,185 @@ msgstr ""
 msgid "Other units' models block line of sight"
 msgstr ""
 
-#: src/ui/Hud.tsx:113
+#: src/ui/Hud.tsx:100
+msgid "☰ Menu"
+msgstr ""
+
+#: src/ui/Hud.tsx:122
 msgid "Lesson: the computer plays the other side."
 msgstr ""
 
-#: src/ui/Hud.tsx:115
+#: src/ui/Hud.tsx:124
 msgid "You play the near side; {name} plays the far side ({level})."
 msgstr ""
 
-#: src/ui/Hud.tsx:120
+#: src/ui/Hud.tsx:129
 msgid "Play by mail: you play your side; send your file when you're done."
 msgstr ""
 
-#: src/ui/Hud.tsx:121
+#: src/ui/Hud.tsx:130
 msgid "Hotseat: you control both sides."
 msgstr ""
 
-#: src/ui/Hud.tsx:124
+#: src/ui/Hud.tsx:133
 msgid "Spectating."
 msgstr ""
 
-#: src/ui/Hud.tsx:129
+#: src/ui/Hud.tsx:138
 #: src/ui/TouchLayer.tsx:151
 msgid "3D view"
 msgstr ""
 
-#: src/ui/Hud.tsx:129
+#: src/ui/Hud.tsx:138
 #: src/ui/TouchLayer.tsx:151
 msgid "Top-down view"
 msgstr ""
 
-#: src/ui/Hud.tsx:131
+#: src/ui/Hud.tsx:140
 #: src/ui/Keys.tsx:25
 msgid "Home"
 msgstr ""
 
-#: src/ui/Hud.tsx:132
+#: src/ui/Hud.tsx:141
 #: src/ui/TouchLayer.tsx:154
 msgid "Reset view"
 msgstr ""
 
-#: src/ui/Hud.tsx:137
+#: src/ui/Hud.tsx:146
 msgid "Drag between models or points to measure; both players see it (M)"
 msgstr ""
 
-#: src/ui/Hud.tsx:140
+#: src/ui/Hud.tsx:149
 msgid "Ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:145
+#: src/ui/Hud.tsx:154
 msgid "Clear the ruler (Esc)"
 msgstr ""
 
-#: src/ui/Hud.tsx:148
+#: src/ui/Hud.tsx:157
 msgid "Clear ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:152
+#: src/ui/Hud.tsx:161
 msgid "Unit names"
 msgstr ""
 
-#: src/ui/Hud.tsx:155
+#: src/ui/Hud.tsx:164
 msgid "X-ray terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:159
+#: src/ui/Hud.tsx:168
 msgid "Shorter dice rolls in the tray"
 msgstr ""
 
-#: src/ui/Hud.tsx:162
+#: src/ui/Hud.tsx:171
 #: src/ui/TopBar.tsx:575
 msgid "Fast dice"
 msgstr ""
 
-#: src/ui/Hud.tsx:166
+#: src/ui/Hud.tsx:175
 msgid "Camera follows the action: moves, shots and charges"
 msgstr ""
 
-#: src/ui/Hud.tsx:169
+#: src/ui/Hud.tsx:178
 msgid "Follow action"
 msgstr ""
 
-#: src/ui/Hud.tsx:179
+#: src/ui/Hud.tsx:188
 msgid "The battle has started. Unlock the terrain? Every change shows in the log."
 msgstr ""
 
-#: src/ui/Hud.tsx:185
+#: src/ui/Hud.tsx:194
 msgid "Unlock terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:185
+#: src/ui/Hud.tsx:194
 #: src/ui/TerrainPanel.tsx:184
 msgid "Edit terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:257
+#: src/ui/Hud.tsx:266
 #: src/ui/ReplayBar.tsx:175
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
-#: src/ui/Hud.tsx:258
+#: src/ui/Hud.tsx:267
 msgid "Replay with notes"
 msgstr ""
 
-#: src/ui/Hud.tsx:289
+#: src/ui/Hud.tsx:298
 msgid "Take back {what}"
 msgstr ""
 
-#: src/ui/Hud.tsx:290
+#: src/ui/Hud.tsx:299
 msgid "Take back your last action"
 msgstr ""
 
-#: src/ui/Hud.tsx:302
+#: src/ui/Hud.tsx:311
 msgid "Undo"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "three"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "four"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "five"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "six"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "seven"
 msgstr ""
 
-#: src/ui/Hud.tsx:357
+#: src/ui/Hud.tsx:366
 msgid "eight"
 msgstr ""
 
-#: src/ui/Hud.tsx:360
+#: src/ui/Hud.tsx:369
 msgid "Both players are here."
 msgstr ""
 
-#: src/ui/Hud.tsx:361
+#: src/ui/Hud.tsx:370
 msgid "All {count} seats are taken."
 msgstr ""
 
-#: src/ui/Hud.tsx:395
+#: src/ui/Hud.tsx:404
 msgid "You're {name}. What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:405
-#: src/ui/Hud.tsx:442
+#: src/ui/Hud.tsx:414
+#: src/ui/Hud.tsx:451
 msgid "Use this name"
 msgstr ""
 
-#: src/ui/Hud.tsx:420
+#: src/ui/Hud.tsx:429
 msgid "Connecting to the table as {name}…"
 msgstr ""
 
-#: src/ui/Hud.tsx:432
+#: src/ui/Hud.tsx:441
 msgid "Connecting to the table… What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:469
+#: src/ui/Hud.tsx:478
 msgid "This game is already under way. Rejoining?"
 msgstr ""
 
-#: src/ui/Hud.tsx:476
+#: src/ui/Hud.tsx:485
 msgid "Rejoin as {name}"
 msgstr ""
 
-#: src/ui/Hud.tsx:505
-#: src/ui/Hud.tsx:505
+#: src/ui/Hud.tsx:514
+#: src/ui/Hud.tsx:514
 msgid "Review ready"
-msgstr ""
-
-#: src/ui/Hud.tsx:96
-msgid "☰ Menu"
 msgstr ""
 
 #: src/ui/Keys.tsx:10
