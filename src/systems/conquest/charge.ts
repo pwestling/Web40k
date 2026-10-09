@@ -73,7 +73,13 @@ const chargeOutcome: CodeProcedure = function* (ctx, args) {
     if (!targets.length) return;
     const gap = Math.min(...targets.map((t) => view.distance(unit.id, t.id)));
     const reach = Number(args.roll ?? 0) + marchOf(view.state, unit);
-    if (reach + 0.05 >= gap) return;
+    if (reach + 0.05 >= gap) {
+      // A manual reminder at the moment it matters: how the charge move is made.
+      yield ctx.note(
+        `${unit.name} can reach (${reach}"): it charges straight ahead, with one free wheel of up to 90° at the start`,
+      );
+      return;
+    }
     short = true;
     why = `${reach}" of ${Math.round(gap * 10) / 10}" needed`;
   } else if (args.kind === "move") {

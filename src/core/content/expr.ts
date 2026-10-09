@@ -103,6 +103,15 @@ export function evaluate(expr: Expr, ctx: EvalContext): ExprValue {
     return tags(resolve(expr.hasKeyword, ctx), "keywords").some((k) => k.toUpperCase() === want);
   }
   if ("is" in expr) return resolve(expr.is, ctx) === expr.value;
+  if ("hasRule" in expr) {
+    const v = resolve(expr.hasRule, ctx);
+    const rules = v && typeof v === "object" ? (v as { rules?: unknown }).rules : undefined;
+    const ids = Array.isArray(rules) ? rules.map((r) => String((r as { rule?: unknown })?.rule ?? "")) : [];
+    if (expr.rule !== undefined && ids.includes(expr.rule)) return true;
+    if (expr.match === undefined) return false;
+    const re = new RegExp(expr.match, "i");
+    return [...tags(v, "keywords"), ...ids].some((k) => re.test(k));
+  }
   if ("hasStatus" in expr) return tags(resolve(expr.hasStatus, ctx), "statuses").includes(expr.status);
   if ("hasFlag" in expr) return tags(resolve(expr.hasFlag, ctx), "flags").includes(expr.flag);
   if ("same" in expr) {

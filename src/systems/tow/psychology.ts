@@ -1,15 +1,35 @@
 import type { CodeProcedure, Command, Ctx, TurnHooks } from "../../sdk";
 import { alive, leadershipTest } from "./combat";
 import { expireSpells } from "./magic";
-import { immune, stupid } from "./specialRules";
+import { hasRule, immune, isGeneral, stupid } from "./specialRules";
+import type { GameState, Unit } from "../../core/types";
 import { terrainDisruption } from "./terrainTests";
 
 /**
- * The start of a side's turn (the Strategy phase), as a turn hook: its own
- * lasting spells run out, and units with Stupidity test their Leadership. A
- * stupid unit is marked for the turn and played by hand (from general
- * knowledge: it stumbles straight ahead, and doesn't shoot or cast). Then
- * the side's fleeing units try to rally.
+ * Who acts in the Command sub-phase: the General, and units with a rule
+ * named for the command phase or sub-phase, or a command ability.
+ */
+function commanders(state: GameState, player: string): Unit[] {
+  return Object.values(state.units).filter(
+    (u) =>
+      u.owner === player &&
+      alive(state, u).length > 0 &&
+      !u.status?.reserves &&
+      (isGeneral(u) ||
+        hasRule(u, /command (sub-)?phase|command abilit/i) ||
+        (u.sheet?.abilities ?? []).some((a) => /command sub-phase|command phase/i.test(a.text))),
+  );
+}
+
+/**
+ * The start of a side's turn (the Strategy phase), as a turn hook, in its
+ * sub-phases' order. Start of turn: its own lasting spells run out, and units
+ * with Stupidity test their Leadership (a stupid unit is marked for the turn
+ * and played by hand: from general knowledge, it stumbles straight ahead and
+ * doesn't shoot or cast). Command sub-phase: a log line names who may use
+ * command abilities now (by hand; the abilities themselves come up on the
+ * cards, system.ts abilityTimings). Conjuration is cast from the cards
+ * (magic.ts). Then the side's fleeing units try to rally.
  */
 const startOfTurn: CodeProcedure = function* (ctx, args) {
   const player = String(args.player ?? ctx.view.activePlayer ?? "");
@@ -28,6 +48,11 @@ const startOfTurn: CodeProcedure = function* (ctx, args) {
       `${u.name} is stupid this turn (rolled ${t.roll.total}, over Ld ${t.ld}): it blunders straight ahead and does nothing clever`,
     );
   }
+  const leaders = commanders(ctx.view.state, player);
+  if (leaders.length)
+    yield ctx.note(
+      `Command sub-phase: ${leaders.map((u) => u.name).join(", ")} may use command abilities now (by hand)`,
+    );
   yield* rallyFleeing(ctx, player);
 };
 

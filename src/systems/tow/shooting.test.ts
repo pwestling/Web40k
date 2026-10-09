@@ -110,6 +110,71 @@ describe("The Old World shooting", () => {
     expect(p.fired.hit).toEqual(["Long range", "Moved and shot"]);
   });
 
+  it("reads Multiple Shots (X) and Armour Bane (X) from the weapon's special rules", () => {
+    let s = setup();
+    const bows = unitNamed(s, "Fen Bowmen");
+    const warband = unitNamed(s, "Reaver Warband");
+    const missile = s.units[bows.id]!.sheet!.weapons.missile!;
+    s = {
+      ...s,
+      units: {
+        ...s.units,
+        [bows.id]: {
+          ...s.units[bows.id]!,
+          sheet: {
+            ...s.units[bows.id]!.sheet!,
+            weapons: {
+              ...s.units[bows.id]!.sheet!.weapons,
+              missile: { ...missile, keywords: ["Multiple Shots (2)", "Armour Bane (1)"] },
+            },
+          },
+        },
+      },
+    };
+    const models = { ...s.models };
+    for (const id of s.units[warband.id]!.modelIds) {
+      const m = models[id]!;
+      models[id] = { ...m, profile: { ...m.profile!, chars: { ...m.profile!.chars, Sv: "4+" } } };
+    }
+    s = { ...s, models };
+    s = block(s, bows.id, 0, -10);
+    s = block(s, warband.id, 0, 4, 6, Math.PI);
+    s = toShooting(s, s.players.p1!.seat!);
+    const p = previewRun(
+      procedureEnv(s),
+      "shoot",
+      procedureRoles(getSystem("tow-hand"), "shoot", bows.id, { weapon: "missile", targetId: warband.id }),
+    );
+    // Twice the 11 shots, at -1 to hit (5+).
+    expect(p.plans.attacks).toMatchObject({
+      count: "22",
+      why: "the shooting ranks, each with Multiple Shots",
+    });
+    expect(p.plans.hit).toMatchObject({ target: 5 });
+    expect(p.fired.hit).toContain("Multiple Shots");
+    // Armour 4+, worsened to 5+ for a wound from a natural 6.
+    let sixes = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const r = rng(seed);
+      let st = play(
+        s,
+        { type: "action/take", unitId: bows.id, action: "shoot", weapon: "missile", targetId: warband.id },
+        "p1",
+        r,
+      );
+      while (st.procedure && !st.procedure.run.done) st = play(st, { type: "procedure/roll" }, "p1", r);
+      const rec = (id: string) => st.procedure!.run.records.find((x) => x.id === id);
+      const inputs = (rec("wound")?.dice ?? []).filter((d) => d.success).map((d) => d.value);
+      const armour = rec("armour")?.dice ?? [];
+      armour.forEach((d, i) => {
+        const need = inputs[i] === 6 ? 5 : 4;
+        if (inputs[i] === 6) sixes++;
+        expect(d.success).toBe(d.value !== 1 && d.value >= need);
+      });
+    }
+    expect(sixes).toBeGreaterThan(0);
+  });
+
   it("takes casualties from the rear rank, leaving the front rank and command", () => {
     let s = setup();
     const bows = unitNamed(s, "Fen Bowmen");

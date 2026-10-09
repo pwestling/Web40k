@@ -1,4 +1,4 @@
-import type { Effect, Expr, GameSystem, Procedure } from "../../core/content";
+import type { Effect, Expr, GameSystem, Procedure, RuleDef } from "../../core/content";
 
 const ref = (r: string): Expr => ({ ref: r });
 
@@ -26,8 +26,13 @@ const shooting: Procedure = {
     {
       kind: "pool",
       id: "attacks",
-      count: { call: "shooters", args: [ref("attacker.id")] },
+      // Multiple Shots (X) multiplies each shooter's shots (weapon.shots, set by the rule below).
+      count: { op: "*", args: [{ call: "shooters", args: [ref("attacker.id")] }, ref("weapon.shots")] },
       why: [
+        {
+          if: { hasRule: "weapon", rule: "multipleShots" },
+          say: "the shooting ranks, each with Multiple Shots",
+        },
         {
           if: {
             all: [
@@ -74,7 +79,14 @@ const shooting: Procedure = {
       kind: "test",
       id: "armour",
       compare: "atLeast",
-      target: { op: "-", args: [ref("target.armour"), ref("weapon.AP")] },
+      // Armour Bane (X): a natural 6 to wound (the input die) worsens the save by X more.
+      target: {
+        op: "+",
+        args: [
+          { op: "-", args: [ref("target.armour"), ref("weapon.AP")] },
+          { if: { cmp: ">=", a: ref("input.value"), b: 6 }, then: ref("weapon.bane"), else: 0 },
+        ],
+      },
       impossibleIf: { cmp: ">", a: { op: "-", args: [ref("target.armour"), ref("weapon.AP")] }, b: 6 },
       alwaysFail: [1],
       roller: "defender",
@@ -159,6 +171,44 @@ const shootingModifiers: Effect[] = [
 ];
 
 /**
+ * Weapon special rules, found by name in a weapon's special rules
+ * ("Multiple Shots (3)", "Armour Bane (1)"); the number fills X. Our own
+ * paraphrase, from general knowledge of the game (unverified):
+ *  - Multiple Shots (X): each model fires X shots, at -1 to hit;
+ *  - Armour Bane (X): a natural 6 to wound worsens the armour save by X more
+ *    (the shooting procedure's armour step; combat.ts in close combat).
+ */
+const weaponRules: RuleDef[] = [
+  {
+    id: "multipleShots",
+    name: "Multiple Shots",
+    match: "^multiple shots\\s*\\(?\\s*(?<x>\\d+)\\s*\\)?$",
+    params: [{ id: "x", type: "number", default: 1 }],
+    appliesTo: ["weapon"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "shots", to: ref("param.x") }],
+      },
+      { when: beforeHit, do: [{ do: "modifyTarget", by: 1 }] },
+    ],
+  },
+  {
+    id: "armourBane",
+    name: "Armour Bane",
+    match: "^armou?r bane\\s*\\(?\\s*(?<x>\\d+)\\s*\\)?$",
+    params: [{ id: "x", type: "number", default: 1 }],
+    appliesTo: ["weapon"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "bane", to: ref("param.x") }],
+      },
+    ],
+  },
+];
+
+/**
  * Rank-and-flank IGOUGO play in the style of Warhammer: The Old World, set up
  * to be played by hand: regiments are blocks with front, flank and rear arcs,
  * the engine measures moves, wheels and arcs, and players roll the dice and
@@ -229,6 +279,9 @@ export const oldWorld: GameSystem = {
       default: 0,
     },
     { id: "AP", name: "Armour piercing", of: "weapon", type: "number", aliases: ["AP"], default: 0 },
+    // Set by weapon special rules (weaponRules below): shots per model, and Armour Bane's X.
+    { id: "shots", name: "Shots", of: "weapon", type: "number", default: 1 },
+    { id: "bane", name: "Armour Bane", of: "weapon", type: "number", default: 0 },
   ],
   weaponKinds: ["missile", "combat"],
   unitShape: { kind: "ranked", minFiles: 1, manoeuvres: ["wheel", "reform", "turn", "march"] },
@@ -267,7 +320,10 @@ export const oldWorld: GameSystem = {
     { id: "hill", name: "Hill" },
     { id: "building", name: "Building", cover: true, blocksSight: true },
   ],
-  rules: [],
+  rules: weaponRules,
+  // The Strategy phase's Command sub-phase: imported abilities that say they are used then
+  // come up in the Strategy phase with a button to mark them used (psychology.ts notes the step).
+  abilityTimings: [{ match: "command sub-phase|command phase", phase: "strategy", side: "active" }],
   procedures: [shooting],
   actions: [
     {

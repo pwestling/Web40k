@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GameState, WeaponProfile } from "../../core";
 import { gameView } from "../../core/script";
+import { abilityReminders } from "../../core/content/player";
 import { towActions, weaponStrength, weaponAp } from "./combat";
 import { oldWorld } from "./system";
 import { towReminders } from "./reminders";
@@ -178,6 +179,30 @@ describe("Old World rules audit (#55)", () => {
     expect(seen).toBe(1);
   });
 
+  it("Armour Bane (X) in close combat: wounds from a natural 6 save on a worse armour roll", () => {
+    let seen = 0;
+    for (let seed = 1; seed < 40 && !seen; seed++) {
+      const { t, spears, warband } = setup();
+      melee(t, warband, {
+        id: "bane",
+        name: "Bane blade",
+        chars: { S: "S", AP: "-" },
+        keywords: ["Armour Bane (2)"],
+      });
+      char(t, spears, "armour", "4");
+      toPhase(t, "combat");
+      fight(t, spears, warband, seed);
+      const wounds = rolls(t, /^to wound$/).filter((r) => r.unitId === warband);
+      const sixes = wounds.reduce((n, r) => n + r.results.filter((x) => x === 6).length, 0);
+      const bane = rolls(t, /^armour save \(Armour Bane\)$/).filter((r) => r.unitId === spears);
+      if (!sixes) continue;
+      seen++;
+      expect(bane.map((r) => r.need)).toEqual([6]);
+      expect(bane[0]!.results).toHaveLength(sixes);
+    }
+    expect(seen).toBe(1);
+  });
+
   it("fix: a charging-only weapon counts only on the turn its unit charged, and the player picks between weapons", () => {
     let asked = false;
     for (let seed = 1; seed < 20 && !asked; seed++) {
@@ -318,6 +343,34 @@ describe("Old World rules audit (#55)", () => {
     status(t, warband, "fleeing", true);
     t.play({ type: "script/start", procedure: START, args: { player: "p1" } }, "p1");
     expect(rolls(t, /^Rally test/).length).toBe(0);
+  });
+
+  it("Command sub-phase: after the start of turn and before rallying, the General is named and command abilities come up", () => {
+    const { t, spears } = setup();
+    status(t, spears, "fleeing", true);
+    const general = Object.values(t.s.units).find((u) => u.owner === "p1" && u.id !== spears)!.id;
+    status(t, general, "general", true);
+    t.play({ type: "script/start", procedure: START, args: { player: "p1" } }, "p1", 3);
+    const notes = t.notes();
+    const command = notes.findIndex((n) => /^Command sub-phase: .*may use command abilities/.test(n));
+    const rally = notes.findIndex((n) => /rallies|keeps fleeing/.test(n));
+    expect(command).toBeGreaterThanOrEqual(0);
+    expect(notes[command]).toContain(t.s.units[general]!.name);
+    expect(command).toBeLessThan(rally);
+    // An imported ability that says it is used in the Command sub-phase comes up in its side's Strategy phase.
+    edit(t, spears, (u) => ({
+      ...u,
+      sheet: {
+        ...u.sheet!,
+        abilities: [...u.sheet!.abilities, { name: "Rousing call", text: "Used in the Command sub-phase." }],
+      },
+    }));
+    status(t, spears, "fleeing", false);
+    toPhase(t, "strategy");
+    expect(abilityReminders(t.s).map((r) => [r.unitId, r.ability.name])).toContainEqual([
+      spears,
+      "Rousing call",
+    ]);
   });
 
   it("new: reminders for compulsory flee moves, Frenzy's charge and Look Out, Sir!", () => {

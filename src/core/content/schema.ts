@@ -58,6 +58,12 @@ export type Expr =
   /** Text equality, e.g. { is: "event.step", value: "hit" }. */
   | { is: Ref; value: string }
   | { hasStatus: Ref; status: Id }
+  /**
+   * Whether a weapon, model or unit has a rule: bound to the rule `rule` (by
+   * id, see RuleDef.match), or with a keyword or rule name matching `match`, a
+   * case-insensitive regular expression ("^multiple shots").
+   */
+  | { hasRule: Ref; rule?: Id; match?: string }
   | { hasFlag: Ref; flag: Id }
   /** Whether a characteristic or value is present (not "-" or missing), e.g. a damage chart. */
   | { has: Ref }
@@ -369,6 +375,8 @@ export type StepKind =
       formation?: "rearRankFirst";
       /** With rearRankFirst: the two ends of a rank lose models in turn (Conquest). */
       alternateEnds?: boolean;
+      /** With rearRankFirst: models for which this holds ("model") go after every other, e.g. a command stand. */
+      last?: Expr;
     }
   /** Turn input successes into lost wounds. */
   /** `minAmount`: no attack does less than this after modifiers (40k: 1). */

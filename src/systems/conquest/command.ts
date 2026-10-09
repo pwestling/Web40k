@@ -82,6 +82,38 @@ const engagedFn: PureFn = (view: GameView, unitId: unknown) => {
   );
 };
 
-export const conquestFunctions: Record<string, PureFn> = { nextCard: nextCardFn, engaged: engagedFn };
+/**
+ * Whether a stand is its regiment's command stand, by name: a profile named
+ * "... command" or a COMMAND keyword. It is removed last (system.ts casualties).
+ */
+const commandStandFn: PureFn = (view: GameView, stand: unknown) => {
+  const id = (stand as { id?: unknown } | undefined)?.id;
+  const model = view.state.models[String(id ?? stand)];
+  if (!model) return false;
+  const keywords = (stand as { keywords?: string[] } | undefined)?.keywords ?? [];
+  return /\bcommand\b/i.test(model.profile?.name ?? "") || keywords.some((k) => /^command$/i.test(k));
+};
+
+/**
+ * Front-rank stands of a regiment with a clear shot at the target: each
+ * stand's own line of sight (a Volley counts only these). At a real table
+ * the positions aren't the table's, so every front-rank stand counts.
+ */
+const clearShotsFn: PureFn = (view: GameView, unitId: unknown, targetId: unknown) => {
+  const unit = view.state.units[String(unitId)];
+  if (!alive(view.state, unit)) return 0;
+  const stands = unit!.modelIds.filter((id) => view.state.models[id] && !view.state.models[id]!.destroyed);
+  const files = unit!.formation.kind === "ranked" ? Math.max(1, unit!.formation.files) : stands.length;
+  const front = stands.slice(0, files);
+  if (view.atTable) return front.length;
+  return front.filter((id) => view.visible(id, String(targetId))).length;
+};
+
+export const conquestFunctions: Record<string, PureFn> = {
+  clearShots: clearShotsFn,
+  nextCard: nextCardFn,
+  engaged: engagedFn,
+  commandStand: commandStandFn,
+};
 
 export const conquestProcedures: Record<string, CodeProcedure> = {};

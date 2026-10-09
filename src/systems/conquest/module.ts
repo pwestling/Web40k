@@ -8,6 +8,7 @@ import { conquestFunctions, conquestProcedures } from "./command";
 import { conquestLayout, CONQUEST_CATEGORIES } from "./layout";
 import { moraleProcedures } from "./morale";
 import { leavingCommand } from "./leaving";
+import { marchWarnings } from "./march";
 import { reinforceProcedures } from "./reinforce";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
@@ -21,6 +22,7 @@ export const conquestModule: GameModule<SystemModule> = {
   procedures: { ...conquestProcedures, ...moraleProcedures, ...reinforceProcedures },
   functions: { ...conquestFunctions, ...chargeFunctions },
   hooks: chargeHooks,
+  checks: marchWarnings,
   actions: characterActions,
   // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.
   bot: { threat: 0 },

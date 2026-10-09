@@ -82,6 +82,8 @@ export interface TestPlan {
   modifier: number;
   criticalOn: number | null;
   reroll: Reroll;
+  /** Natural results re-rolled whatever the outcome (`reroll: { values: [6] }`, Conquest's Inspired). */
+  rerollValues?: number[];
   alwaysFail: number[];
   alwaysPass: number[];
   /** Skipped: no dice, every input goes on. */
@@ -566,6 +568,8 @@ export interface FiredChange {
   /** To the target number. */
   target?: number;
   reroll?: Reroll;
+  /** Natural results re-rolled, e.g. [6]. */
+  rerollValues?: number[];
   crit?: number;
 }
 
@@ -608,6 +612,7 @@ function applyBefore(
     modifier: 0,
     targetModifier: 0,
     reroll: "none" as Reroll,
+    rerollValues: [] as number[],
     criticalOn: null as number | null,
     skip: false,
     ignoreDamage: null as number | null,
@@ -634,6 +639,9 @@ function applyBefore(
         if (typeof action.which === "string") {
           if (REROLL_STRENGTH[action.which] > REROLL_STRENGTH[acc.reroll]) acc.reroll = action.which;
           change(l).reroll = action.which;
+        } else {
+          for (const v of action.which.values) if (!acc.rerollValues.includes(v)) acc.rerollValues.push(v);
+          change(l).rerollValues = action.which.values;
         }
         return true;
       case "criticalOn": {
@@ -765,6 +773,7 @@ function planStep(env: RunEnv, run: ProcedureRun, step: Step, scope: Record<stri
         modifier,
         criticalOn,
         reroll: b.reroll,
+        ...(b.rerollValues.length ? { rerollValues: b.rerollValues } : {}),
         alwaysFail: step.alwaysFail ?? [],
         alwaysPass: step.alwaysPass ?? [],
         skip: b.skip,
@@ -1016,7 +1025,8 @@ function runTest(
     let rerolledFrom: number | undefined;
     const again =
       (plan.reroll === "ones" && r.value === 1) ||
-      ((plan.reroll === "failed" || plan.reroll === "any") && !j.success);
+      ((plan.reroll === "failed" || plan.reroll === "any") && !j.success) ||
+      !!plan.rerollValues?.includes(r.value);
     if (again) {
       rerolledFrom = r.value;
       r = roll();
@@ -1098,7 +1108,9 @@ function allocationOrder(
     .filter((m) => !m.destroyed && (Number(m.W ?? 1) || 1) - m.woundsLost > 0)
     .filter((m) => step.only === undefined || safeOnly(step.only, ctxFor(env, { ...scope, model: m })));
   if (step.formation === "rearRankFirst" && !chosen?.length)
-    return rearRankFirst(env, unit, models, !!step.alternateEnds);
+    return rearRankFirst(env, unit, models, !!step.alternateEnds, (m) =>
+      step.last === undefined ? false : safeOnly(step.last, ctxFor(env, { ...scope, model: m })),
+    );
   if (chosen?.length) {
     // The chooser's declared order wins; models it left out keep their place after.
     const rank = (m: ModelView) => {
@@ -1136,10 +1148,17 @@ function safeOnly(expr: Expr, ctx: ReturnType<typeof ctxFor>): boolean {
  * Casualties come off the back of a block so the front rank stays full:
  * rank and file from the rear forwards (the ends of a rank taking turns, if asked),
  * then the command models and
- * characters (any model whose profile isn't the unit's commonest one). A
- * model that has already lost wounds takes the next one.
+ * characters (any model whose profile isn't the unit's commonest one), and
+ * those the step's `last` names after everything. A model that has already
+ * lost wounds takes the next one.
  */
-function rearRankFirst(env: RunEnv, unit: UnitView, models: ModelView[], ends: boolean): ModelView[] {
+function rearRankFirst(
+  env: RunEnv,
+  unit: UnitView,
+  models: ModelView[],
+  ends: boolean,
+  last: (m: ModelView) => boolean,
+): ModelView[] {
   const source = env.state.units[unit.id];
   const slots = source ? blockSlots(env.state, source) : models.map((m) => m.id);
   const profile = (m: ModelView) => env.state.models[m.id]?.profile?.name ?? "";
@@ -1161,8 +1180,12 @@ function rearRankFirst(env: RunEnv, unit: UnitView, models: ModelView[], ends: b
     return (rows - row) * (files * 2 + 2) + fromEnd * 2 + end;
   };
   const span = (rows + 1) * (files * 2 + 2);
+  const lastOnes = new Set(models.filter(last).map((m) => m.id));
   const rank = (m: ModelView) =>
-    (m.woundsLost > 0 ? 0 : 2) + (profile(m) === common ? 0 : 4) + place(m) / span;
+    (m.woundsLost > 0 ? 0 : 2) +
+    (profile(m) === common ? 0 : 4) +
+    (lastOnes.has(m.id) ? 8 : 0) +
+    place(m) / span;
   return [...models].sort((a, b) => rank(a) - rank(b));
 }
 

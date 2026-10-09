@@ -4,6 +4,7 @@ import { fortyK } from "./examples/forty-k";
 import { advance, applyOutcomes, previewRun, respond, startRun, type RunEnv, type TestPlan } from "./runner";
 import { bindRules, parseDiceSum, readCharacteristics, unitView, formatDice } from "./runtime";
 import type { GameSystem } from "./schema";
+import { evaluate } from "./expr";
 
 /** An rng that yields the given faces in order; each entry is [face, sides] or a d6 face. */
 const dice = (...faces: (number | [number, number])[]) => {
@@ -301,6 +302,44 @@ describe("procedure runner: other dice mechanics", () => {
     expect(run.done).toBe(true);
   });
 
+  it("re-rolls only the named natural faces (reroll values: [6])", () => {
+    const system: GameSystem = {
+      ...rankAndFlank,
+      id: "reroll-face",
+      characteristics: [{ id: "C", name: "Clash", of: "model", type: "number" }],
+      coreEffects: [
+        {
+          id: "Sixes again",
+          when: { event: "step.before", where: { is: "event.step", value: "hit" } },
+          do: [{ do: "reroll", which: { values: [6] } }],
+        },
+      ],
+      procedures: [
+        {
+          id: "clash",
+          name: "Clash",
+          steps: [
+            { kind: "pool", id: "attacks", count: 3 },
+            { kind: "test", id: "hit", compare: "atMost", target: { ref: "attacker.C" }, roller: "attacker" },
+          ],
+        },
+      ],
+    };
+    const s = table({}, { C: "4" }, {});
+    let run = startRun({ system, state: s, rng: dice() }, "clash", roles);
+    // 6 is re-rolled into a 2; the 5 misses and stays; the 6 re-rolled into a 6 stays.
+    run = advance({ system, state: s, rng: dice(6, 2, 5, 6, 6) }, run);
+    const hit = run.records.find((r) => r.id === "hit")!;
+    expect((hit.plan as TestPlan).rerollValues).toEqual([6]);
+    expect(hit.dice?.map((d) => [d.value, d.rerolledFrom])).toEqual([
+      [2, 6],
+      [5, undefined],
+      [6, 6],
+    ]);
+    expect(run.tokens).toHaveLength(1);
+    expect(hit.fired).toContain("Sixes again");
+  });
+
   it("keeps the highest of several save dice against the hit roll on other die sizes (FSD)", () => {
     const system: GameSystem = {
       ...rankAndFlank,
@@ -438,6 +477,18 @@ describe("runtime views", () => {
       { rule: "feelNoPain", params: { threshold: 5 } },
       { rule: "deepStrike" },
     ]);
+  });
+
+  it("hasRule matches a bound rule by id or a keyword by name pattern", () => {
+    const weapon = {
+      keywords: ["Sustained Hits 2", "Assault"],
+      rules: bindRules(fortyK.rules, ["Sustained Hits 2", "Assault"], "weapon"),
+    };
+    const ctx = { scope: { weapon } };
+    expect(evaluate({ hasRule: "weapon", rule: "sustainedHits" }, ctx)).toBe(true);
+    expect(evaluate({ hasRule: "weapon", rule: "lethalHits" }, ctx)).toBe(false);
+    expect(evaluate({ hasRule: "weapon", match: "^sustained hits\\s*\\d" }, ctx)).toBe(true);
+    expect(evaluate({ hasRule: "weapon", match: "^heavy$" }, ctx)).toBe(false);
   });
 
   it("adds and formats dice sums", () => {

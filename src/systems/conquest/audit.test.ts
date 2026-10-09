@@ -9,7 +9,8 @@ import {
 } from "../../core";
 import { actionTargets, unitActions } from "../../core/content/play";
 import { closeDoor } from "../../core/manoeuvre";
-import { hookIntents } from "../../core/script";
+import { gameView, hookIntents } from "../../core/script";
+import { marchWarnings } from "./march";
 import type { StepRecord } from "../../core/content";
 import { spawnIntents } from "../wh40k/deploy";
 import "../index";
@@ -125,11 +126,22 @@ function guardInContact(patch: (s: GameState, guard: string, thralls: string) =>
 }
 
 /** Play an intent as the host does: the event, then the turn hooks it sets off (core hookIntents). */
-function hosted(state: GameState, intent: Intent, from: PlayerId, r = rng(1)): GameState {
+function hosted(
+  state: GameState,
+  intent: Intent,
+  from: PlayerId,
+  r = rng(1),
+  notes: string[] = [],
+): GameState {
   const event = resolveIntent(intent, from, r, state);
   if (!event) throw new Error(`Rejected: ${JSON.stringify(intent)}`);
   let s = applyEvent({ ...state, seq: state.seq + 1 }, event);
-  for (const hook of hookIntents(state, s, event)) s = play(s, hook, from, r);
+  for (const hook of hookIntents(state, s, event)) {
+    const e = resolveIntent(hook, from, r, s);
+    if (!e) throw new Error(`Rejected: ${JSON.stringify(hook)}`);
+    if (e.type === "script/step") for (const x of e.events) if (x.type === "log/note") notes.push(x.text);
+    s = applyEvent({ ...s, seq: s.seq + 1 }, e);
+  }
   return s;
 }
 
@@ -173,29 +185,67 @@ describe("Conquest rules audit", () => {
     expect(s.modules?.["conquest-hand"]?.[`short:${guard}`]).toBe(1);
   });
 
-  it("a charge move into contact lands: Inspired, and the landing is noted", () => {
+  it("a charge move into contact lands: Inspired, and the landing is noted; a roll that reaches reminds how to move", () => {
     const g = guardFacing(1.5);
     const { guard, thralls } = g;
     let s = g.s;
     s = hosted(s, { type: "action/take", unitId: guard, action: "charge" }, "p1");
     // Clear Inspired, to see the landing give it.
     s = applyEvent(s, { type: "unit/status", id: guard, key: "inspired", value: null });
-    s = hosted(s, { type: "dice/roll", count: 1, sides: 6, label: "charge roll", unitId: guard }, "p1");
+    const notes: string[] = [];
+    s = hosted(
+      s,
+      { type: "dice/roll", count: 1, sides: 6, label: "charge roll", unitId: guard },
+      "p1",
+      rng(1),
+      notes,
+    );
     expect(option(s, guard, "march")?.why).not.toBe("No actions left");
+    // The roll reaches: a reminder of how the charge move goes.
+    expect(notes.join(" ")).toMatch(/charges straight ahead, with one free wheel/);
     const door = closeDoor(s, s.units[guard]!, s.units[thralls]!)!;
     s = hosted(s, { ...door.move, how: "charge" }, "p1");
     expect(s.units[guard]?.status?.inspired).toBe(true);
     expect(s.modules?.["conquest-hand"]?.[`landed:${guard}`]).toBe(1);
   });
 
-  it("Inspired adds 1 to Clash only while Clash stays under 5; from Clash 4 it is a reminder", () => {
+  it('warns when a march goes sideways or back past half rate, or ends within 1" of an enemy', () => {
+    const g = guardFacing(6);
+    const { guard } = g;
+    let s = play(g.s, { type: "action/take", unitId: guard, action: "march" }, "p1");
+    // The Guard (seat 0) faces -y; March 5.
+    const shift = (st: GameState, dx: number, dy: number) =>
+      applyEvent(st, {
+        type: "models/move",
+        moves: st.units[guard]!.modelIds.map((id) => {
+          const p = st.models[id]!.position;
+          return { id, to: { x: p.x + dx, y: p.y + dy } };
+        }),
+      });
+    const ids = (st: GameState) => marchWarnings(gameView(st, "conquest-hand")).map((w) => w.id);
+    expect(ids(shift(s, 0, -4))).toEqual([]);
+    // 2" sideways is fine (4 of 5); 3" isn't (6 of 5); 2" back plus 2" forward isn't either.
+    expect(ids(shift(s, 2, 0))).toEqual([]);
+    expect(ids(shift(s, 3, 0))).toEqual(["marchRate"]);
+    expect(ids(shift(s, 2, -2))).toEqual(["marchRate"]);
+    expect(ids(shift(s, 0, 3))).toEqual(["marchRate"]);
+    // 11.5" forward ends half an inch from the Thrall Host (over March too, which the move check says).
+    s = shift(s, 0, -11.5);
+    expect(ids(s)).toEqual(["marchNearEnemy"]);
+  });
+
+  it("Inspired adds 1 to Clash only while Clash stays under 5; from Clash 4 it re-rolls natural 6s", () => {
     const g = guardInContact((st, g) => withChars(st, g, { C: "4" }));
     let s = g.s;
     const { guard, thralls } = g;
     s = play(s, { type: "action/take", unitId: guard, action: "inspire" }, "p1");
     s = attack(s, guard, "clash", thralls, "p1");
     expect(target(s, "hit")).toBe(4);
-    expect(step(s, "hit")?.reminders?.some((r) => r.startsWith("Inspired: re-roll natural 6s"))).toBe(true);
+    const hit = step(s, "hit")!;
+    expect((hit.plan as { rerollValues?: number[] }).rerollValues).toEqual([6]);
+    expect(hit.fired).toContain("Inspired: re-roll natural 6s to hit (Clash already 4+)");
+    // Only natural 6s were re-rolled.
+    for (const d of hit.dice ?? []) if (d.rerolledFrom !== undefined) expect(d.rerolledFrom).toBe(6);
   });
 
   it("a Broken regiment gets nothing from Inspired", () => {
@@ -263,6 +313,42 @@ describe("Conquest rules audit", () => {
     };
     // Barrage 2, Range 24: 3 shots a stand at 6", 2 at 16".
     expect(shots(3) * 2).toBe(shots(8) * 3);
+  });
+
+  it("a volley counts only the front-rank stands with a clear shot", () => {
+    const shots = (wall: boolean) => {
+      let s = setup();
+      const bows = unitNamed(s, "Ironmarch Crossbows").id;
+      const thralls = unitNamed(s, "Thrall Host").id;
+      s = toCentre(s, bows, 4);
+      s = toCentre(s, thralls, 4);
+      if (wall) {
+        // A tall wall right in front of the Crossbows' leftmost stand.
+        const stand = s.models[s.units[bows]!.modelIds[0]!]!;
+        s = {
+          ...s,
+          terrain: [
+            {
+              id: "wall",
+              name: "Wall",
+              category: "obscuring",
+              position: { x: stand.position.x, y: stand.position.y - 0.95 },
+              width: 1.7,
+              depth: 0.3,
+              facing: 0,
+              solids: [{ kind: "wall", x: 0, y: 0, z: 0, w: 1.7, d: 0.3, h: 6 }],
+            },
+          ],
+        };
+      }
+      s = toActions(s, 0);
+      s = play(s, { type: "action/take", unitId: bows, action: "activate" }, "p1");
+      s = attack(s, bows, "volley", thralls, "p1");
+      return step(s, "attacks")!.out;
+    };
+    // Barrage 2 + 1 within half range, from three front stands, one of them walled in.
+    expect(shots(false)).toBe(9);
+    expect(shots(true)).toBe(6);
   });
 
   it("plays 10 rounds", () => {
@@ -333,6 +419,35 @@ describe("Conquest rules audit", () => {
     // The last stands of the block go first; the command stand (the first) stays.
     expect(ids.slice(ids.length - lost).every((id) => s.models[id]?.destroyed)).toBe(true);
     expect(s.models[ids[0]!]?.destroyed).toBeFalsy();
+  });
+
+  it("removes the named command stand last, after any other stand", () => {
+    let seen = false;
+    for (let seed = 1; seed <= 80 && !seen; seed++) {
+      const g = guardInContact((st, guard, thralls) => {
+        st = withChars(st, guard, { A: "6", C: "4" });
+        st = withChars(st, thralls, { D: "0", E: "0", R: "0" });
+        // A stand unlike the rest (a character's, say) and the command stand, named so.
+        const ids = st.units[thralls]!.modelIds;
+        const m = st.models[ids[1]!]!;
+        return {
+          ...st,
+          models: { ...st.models, [m.id]: { ...m, profile: { ...m.profile!, name: "Bone banner" } } },
+        };
+      });
+      let s = g.s;
+      const ids = s.units[g.thralls]!.modelIds;
+      expect(s.models[ids[0]!]?.profile?.name).toMatch(/command/);
+      s = attack(s, g.guard, "clash", g.thralls, "p1", seed);
+      s = play(s, { type: "procedure/clear" }, "p1");
+      const dead = ids.filter((id) => s.models[id]?.destroyed).length;
+      if (dead !== ids.length - 1) continue;
+      // Everything else is gone, the odd stand too: only the command stand stands.
+      expect(s.models[ids[1]!]?.destroyed).toBe(true);
+      expect(s.models[ids[0]!]?.destroyed).toBeFalsy();
+      seen = true;
+    }
+    expect(seen).toBe(true);
   });
 
   it("takes a rank's casualties from its two ends in turn (#55)", () => {

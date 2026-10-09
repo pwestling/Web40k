@@ -194,6 +194,8 @@ export function* woundAndSave(
   hits: number,
   strength: number,
   ap = 0,
+  /** Armour Bane (X): wounds from a natural 6 worsen the armour save by this much more. */
+  bane = 0,
 ): Generator<Command, number, unknown> {
   const view = ctx.view;
   const woundOn = toWound(strength, stat(view, def, "T"));
@@ -203,6 +205,8 @@ export function* woundAndSave(
   }
   const wound = (yield ctx.roll(`${hits}d6`, "to wound", atk.id, woundOn)) as Roll;
   let left = count(wound, woundOn);
+  // Armour Bane: the wounds from natural 6s save on a worse armour roll, rolled apart.
+  const baned = bane > 0 && woundOn <= 6 ? wound.rolls.filter((x) => x === 6).length : 0;
   for (const [save, name] of [
     ["armour", "armour"],
     ["ward", "ward"],
@@ -211,6 +215,19 @@ export function* woundAndSave(
     const raw = stat(view, def, save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
     // An armour save of 1+ is still rolled (a natural 1 fails); a ward or regeneration of 0 is none.
     const on = save === "armour" && raw >= 1 ? Math.max(2, raw) : raw;
+    if (save === "armour" && baned && left) {
+      const worse = on + bane;
+      const plain = left - baned;
+      if (plain && on >= 2 && on <= 6) {
+        const r = (yield ctx.roll(`${plain}d6`, `${name} save`, def.id, on)) as Roll;
+        left -= count(r, on);
+      }
+      if (worse >= 2 && worse <= 6) {
+        const r = (yield ctx.roll(`${baned}d6`, `${name} save (Armour Bane)`, def.id, worse)) as Roll;
+        left -= count(r, worse);
+      }
+      continue;
+    }
     if (!left || on < 2 || on > 6) continue;
     const r = (yield ctx.roll(`${left}d6`, `${name} save`, def.id, on)) as Roll;
     left -= count(r, on);
@@ -230,6 +247,20 @@ export function weaponStrength(base: number, s: string | undefined): number {
   const n = Number.parseFloat(v);
   return Number.isFinite(n) ? n : base;
 }
+
+/**
+ * A weapon special rule's X, by name ("Armour Bane (2)" gives 2), or 0 when
+ * the weapon hasn't the rule; the same names system.ts weaponRules binds.
+ */
+function weaponRuleValue(w: WeaponProfile | undefined, name: RegExp): number {
+  for (const k of w?.keywords ?? []) {
+    const m = new RegExp(`^${name.source}\\s*\\(?\\s*(\\d+)\\s*\\)?$`, "i").exec(k.trim());
+    if (m) return Number(m[1]);
+  }
+  return 0;
+}
+const ARMOUR_BANE = /armou?r bane/;
+const MULTIPLE_SHOTS = /multiple shots/;
 
 /** How many points a weapon's AP worsens armour saves by ("-2" or "2" is 2; "-" none). */
 export const weaponAp = (w: WeaponProfile | undefined) => Math.abs(Number.parseFloat(w?.chars.AP ?? "") || 0);
@@ -255,15 +286,16 @@ function* fightingWeapon(
   u: Unit,
   baseS: number,
   model?: Model,
-): Generator<Command, { s: number; ap: number; name: string }, unknown> {
+): Generator<Command, { s: number; ap: number; bane: number; name: string }, unknown> {
   const ws = meleeWeapons(u, model);
   const profile = (w: WeaponProfile) => {
-    if (chargeOnly(w) && u.status?.charged !== true) return { s: baseS, ap: 0, name: w.name };
-    return { s: weaponStrength(baseS, w.chars.S), ap: weaponAp(w), name: w.name };
+    const bane = weaponRuleValue(w, ARMOUR_BANE);
+    if (chargeOnly(w) && u.status?.charged !== true) return { s: baseS, ap: 0, bane, name: w.name };
+    return { s: weaponStrength(baseS, w.chars.S), ap: weaponAp(w), bane, name: w.name };
   };
   const options = ws.map(profile);
-  const distinct = new Set(options.map((o) => `${o.s}/${o.ap}`));
-  if (!options.length) return { s: baseS, ap: 0, name: "" };
+  const distinct = new Set(options.map((o) => `${o.s}/${o.ap}/${o.bane}`));
+  if (!options.length) return { s: baseS, ap: 0, bane: 0, name: "" };
   if (distinct.size === 1) return options[0]!;
   const who = model?.profile?.name ?? u.name;
   const pick = (yield ctx.ask(
@@ -334,7 +366,7 @@ function* strike(
     yield ctx.note(
       `${atk.name} fights with ${weapon.name} (S${weapon.s}${weapon.ap ? `, AP -${weapon.ap}` : ""})`,
     );
-  return yield* woundAndSave(ctx, atk, def, hits, weapon.s, weapon.ap);
+  return yield* woundAndSave(ctx, atk, def, hits, weapon.s, weapon.ap, weapon.bane);
 }
 
 /**
@@ -354,10 +386,13 @@ function* shoot(
   if (!weapon) return 0;
   const carriers = alive(state, shooter).filter((m) => (m.weapons ?? []).includes(weapon.id)).length;
   // The front rank, or two on a hill; no Volley Fire when standing and shooting.
-  const dice = Math.min(carriers, shooterCount(state, shooter, { standAndShoot: true }));
+  // Multiple Shots (X): X shots a model, at -1 to hit.
+  const shots = weaponRuleValue(weapon, MULTIPLE_SHOTS);
+  const dice = Math.min(carriers, shooterCount(state, shooter, { standAndShoot: true })) * Math.max(1, shots);
   if (!dice) return 0;
   const range = Number.parseFloat(weapon.chars.Range ?? "") || 0;
   const mods = penalties.map((p) => ({ p, by: 1 }));
+  if (shots > 1) mods.push({ p: "multiple shots", by: 1 });
   if (range && unitGap(state, shooter, target) > range / 2) mods.push({ p: "long range", by: 1 });
   // Graded cover, as the Shooting phase has it: up to half the models seen in cover -1, more -2.
   const share = coverShare(view, shooter, target);
@@ -379,7 +414,7 @@ function* shoot(
   if (!hits) return 0;
   const s = Number.parseFloat(weapon.chars.S ?? "") || stat(view, shooter, "S");
   const ap = Math.abs(Number.parseFloat(weapon.chars.AP ?? "") || 0);
-  return yield* woundAndSave(ctx, shooter, target, hits, s, ap);
+  return yield* woundAndSave(ctx, shooter, target, hits, s, ap, weaponRuleValue(weapon, ARMOUR_BANE));
 }
 
 /** Of the target's models the shooter sees, the share in cover (0 when it sees none, or at a real table). */

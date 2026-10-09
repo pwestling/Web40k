@@ -155,6 +155,8 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
         chooser: "defender",
         formation: "rearRankFirst",
         alternateEnds: true,
+        // The command stand goes last of all, after any character (command.ts).
+        last: { call: "commandStand", args: [ref("model")] },
       },
       { kind: "damage", id: "wounds", amount: 1, spillover: true },
     ],
@@ -173,7 +175,7 @@ const impact = attack(
   ref("attacker.Cleave"),
 );
 
-/** Barrage shots from each front-rank stand, one more each within half range. */
+/** Barrage shots from each front-rank stand with a clear shot (command.ts), one more each within half range. */
 const volley = attack(
   "volley",
   "Volley",
@@ -195,7 +197,7 @@ const volley = attack(
           },
         ],
       },
-      frontStands("attacker"),
+      { call: "clearShots", args: [ref("attacker.id"), ref("target.id")] },
     ],
   },
   "attacker.V",
@@ -243,12 +245,11 @@ const effects: Effect[] = [
     do: [{ do: "modifyTarget", by: 1 }],
   },
   {
-    // At Clash 4 or more, Inspired re-rolls natural 6s to hit instead: the engine can't
-    // re-roll one face only, so it is a reminder.
+    // At Clash 4 or more, Inspired re-rolls natural 6s to hit instead.
     id: "Inspired: re-roll natural 6s to hit (Clash already 4+)",
     when: beforeHit("clash"),
     if: { all: [inspired, { cmp: ">=", a: ref("attacker.C"), b: 4 }] },
-    do: [{ do: "manual", reminder: "inspiredSixes" }],
+    do: [{ do: "reroll", which: { values: [6] } }],
   },
   {
     // Obscuring terrain halves Barrage (secondary source): the shots are set by hand.
@@ -445,7 +446,9 @@ export const conquest: GameSystem = {
     // Set on a regiment that came in from reserve this round (reinforce.ts).
     { id: "reinforced", name: "Arrived this round", on: "unit" },
   ],
-  resets: [{ at: "round", flags: ["activated", "inspired", "charged", "aimed", "reinforced", "used.*"] }],
+  resets: [
+    { at: "round", flags: ["activated", "inspired", "charged", "marched", "aimed", "reinforced", "used.*"] },
+  ],
   resources: [{ id: "VP", name: "Victory points", on: "player", initial: 0 }],
   terrain: [
     { id: "open", name: "Open ground" },
@@ -485,6 +488,8 @@ export const conquest: GameSystem = {
       hint: "Up to March forwards; may be taken twice",
       notWhen: [notEngaged],
       move: { kind: "march", distance: ref("self.M") },
+      // For the march checks (march.ts): half rate sideways or back, not ending near an enemy.
+      sets: ["marched"],
     },
     {
       id: "charge",

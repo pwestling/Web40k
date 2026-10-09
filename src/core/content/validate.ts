@@ -61,6 +61,7 @@ export function validateSystem(system: GameSystem, packs: ContentPack[] = []): s
     const o = node as Record<string, unknown>;
     if (typeof o.hasStatus === "string" && typeof o.status === "string")
       need(statuses, o.status, "status", where);
+    if (typeof o.hasRule === "string" && typeof o.rule === "string") need(rules, o.rule, "rule", where);
     if ((o.do === "applyStatus" || o.do === "removeStatus") && typeof o.status === "string")
       need(statuses, o.status, "status", where);
     if ((o.do === "gainResource" || o.do === "spendResource") && typeof o.resource === "string")

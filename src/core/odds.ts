@@ -157,15 +157,18 @@ export function passChance(plan: TestPlan, followUp?: number): number | null {
   };
   let first = 0;
   let again = 0;
+  let rerolledPasses = 0;
   dist.forEach((p, v) => {
     const ok = judge(v);
     if (ok) first += p;
     const reroll =
-      (plan.reroll === "ones" && v === 1) || ((plan.reroll === "failed" || plan.reroll === "any") && !ok);
+      (plan.reroll === "ones" && v === 1) ||
+      ((plan.reroll === "failed" || plan.reroll === "any") && !ok) ||
+      !!plan.rerollValues?.includes(v);
     if (reroll) again += p;
+    // A re-rolled die passes with the same chance as a fresh one; "ones" or a named face may re-roll a pass.
+    if (reroll && ok) rerolledPasses += p;
   });
-  // A re-rolled die passes with the same chance as a fresh one; "ones" may re-roll a pass.
-  const rerolledPasses = plan.reroll === "ones" ? (dist[1] ?? 0) * (judge(1) ? 1 : 0) : 0;
   const passed = first - rerolledPasses + again * first;
   if (!overflow) return passed;
   // The follow-up die fails on a 1 whatever it needs.

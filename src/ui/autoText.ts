@@ -144,6 +144,7 @@ function changeText(b: AttackBecause): string {
   if (c.target) parts.push(t("{roll} target {by}", { by: signed(c.target), roll: step }));
   if (c.reroll === "ones") parts.push(t("re-roll 1s"));
   else if (c.reroll) parts.push(t("re-roll fails"));
+  if (c.rerollValues?.length) parts.push(t("re-roll {faces}s", { faces: c.rerollValues.join(", ") }));
   if (c.crit) parts.push(t("criticals on {n}+", { n: c.crit }));
   return parts.join(", ");
 }
