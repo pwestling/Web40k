@@ -1,4 +1,5 @@
 import { useSolo } from "./bot/solo";
+import type { Level } from "./bot/player";
 import { create } from "zustand";
 import { useLibrary } from "./packages/library";
 import {
@@ -55,6 +56,8 @@ interface StartOptions {
   onIntent?: (intent: Intent, by: PlayerId) => void;
   /** Watch `record` (or the host's) together as a replay: nobody plays, nothing is added to it. */
   review?: boolean;
+  /** An exhibition table (#64): an online room where this screen seats both sides, for the computer to play. */
+  exhibition?: boolean;
 }
 
 /**
@@ -170,6 +173,8 @@ interface Store {
   dispatch(intent: Intent, as?: PlayerId): void;
   /** Play by mail: this screen plays one side of a hotseat session. */
   mail: MailSeat | null;
+  /** An exhibition table (#64): this screen seats both sides of an online room. */
+  exhibition: boolean;
 }
 
 const SAVE_KEY = "open-battle:last-game";
@@ -179,6 +184,14 @@ export interface SavedGame {
   roomId: string | null;
   record: GameRecord;
   savedAt: number;
+  /** Who the computer played (#45), so Resume says so and plays it again (UX 439). */
+  computer?: { level: Level; seat: number };
+}
+
+/** The computer's side in this screen's game, if it plays one. */
+function computerIn(session: Session | null): SavedGame["computer"] {
+  const { level, seat, both, session: its } = useSolo.getState();
+  return level && !both && session && its === session ? { level, seat } : undefined;
 }
 
 export function loadSavedGame(): SavedGame | null {
@@ -242,7 +255,7 @@ function saveRoom(roomId: string, record: GameRecord, seatedAs: string | undefin
 export function saveNow(): void {
   const { record, mode, session, roomId } = useStore.getState();
   if (!session || !record.events.length || !mode) return;
-  saveGame({ mode, roomId, record, savedAt: Date.now() });
+  saveGame({ mode, roomId, record, savedAt: Date.now(), computer: computerIn(session) });
 }
 
 function saveGame(game: SavedGame) {
@@ -287,6 +300,7 @@ export const useStore = create<Store>((set, get) => ({
   packagesWaived: {},
   seatAgain: null,
   mail: null,
+  exhibition: false,
   arcs: true,
   eye: null,
   set: (patch) => set(patch),
@@ -339,7 +353,14 @@ export const useStore = create<Store>((set, get) => ({
         const current = session?.status.role ?? role;
         // A review shows an old record: it is never this device's game to resume.
         if (review) return;
-        if (current === "host") saveGame({ mode, roomId: roomId ?? null, record: rec, savedAt: Date.now() });
+        if (current === "host")
+          saveGame({
+            mode,
+            roomId: roomId ?? null,
+            record: rec,
+            savedAt: Date.now(),
+            computer: computerIn(session),
+          });
         if (roomId && mode !== "hotseat")
           saveRoom(
             roomId,
@@ -375,6 +396,7 @@ export const useStore = create<Store>((set, get) => ({
       packagesWaived: {},
       seatAgain: () => takeSeat(),
       mail: null,
+      exhibition: !!options.exhibition && role === "host",
     });
 
     /**
@@ -437,7 +459,7 @@ export const useStore = create<Store>((set, get) => ({
       return;
     }
     seated = true;
-    if (mode === "hotseat") {
+    if (mode === "hotseat" || options.exhibition) {
       for (const p of HOTSEAT_PLAYERS) session.dispatch({ type: "player/join", player: p }, p.id);
     } else {
       session.dispatch({
@@ -480,7 +502,7 @@ export const useStore = create<Store>((set, get) => ({
       session.dispatch(intent, as ?? me?.id);
       return;
     }
-    if (mode === "hotseat") {
+    if (mode === "hotseat" || get().exhibition) {
       const active = Object.values(game.players).find((p) => p.seat === game.turn.activeSeat);
       session.dispatch(intent, as ?? active?.id);
     } else session.dispatch(intent);
@@ -509,6 +531,6 @@ export function useCanControl(): (owner: PlayerId) => boolean {
   const solo = useSolo((s) => (s.level && !s.paused && s.session === session ? s : null));
   if (mail) return (owner) => !mail.locked && seatOf[owner]?.seat === mail.seat;
   // Solo against the computer (#45): its side is its own, not yours to play (UX 347).
-  if (solo) return (owner) => role !== "spectator" && seatOf[owner]?.seat !== solo.seat;
+  if (solo) return (owner) => role !== "spectator" && !solo.both && seatOf[owner]?.seat !== solo.seat;
   return (owner) => role !== "spectator" && (mode === "hotseat" || owner === selfId);
 }

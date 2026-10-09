@@ -17,6 +17,9 @@
  *                                          VITE_MAILBOX_URL
  *   ?openTables=0  hide Open tables, the public board of games (#50)
  *                                          VITE_OPEN_TABLES=off
+ *   ?openTables=1&board=https://battle.example.com/relay/board
+ *                  turn it on with a given board (server/board.mjs), e.g. for
+ *                  smoke tests against a local relay (BOARD_ORIGIN there)
  *
  * Open tables posts to the public Nostr relays. A self-hosted site (or a page
  * pointed at a private relay with ?signal=) has it off unless its config.json
@@ -111,9 +114,21 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
     ...(q.get("forceTurn") === "1" ? { forceTurn: true } : {}),
     ...(mailbox ? { mailbox } : {}),
     openTables,
-    ...(openTables && selfHosted && site.board ? { board: site.board } : {}),
+    ...(openTables && (q.get("board") ?? (selfHosted ? site.board : undefined))
+      ? { board: q.get("board") ?? site.board }
+      : {}),
   };
 }
 
 /** The URL parameters to keep on an invite link so the guest uses the same relays. */
-export const NET_PARAMS = ["signal", "nostr", "turn", "turnUser", "turnPass", "forceTurn", "mailbox"];
+export const NET_PARAMS = [
+  "signal",
+  "nostr",
+  "turn",
+  "turnUser",
+  "turnPass",
+  "forceTurn",
+  "mailbox",
+  "board",
+  "openTables",
+];

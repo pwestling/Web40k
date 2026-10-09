@@ -13,6 +13,7 @@ import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
 import { GLIDE_MS, soloSideName, useSolo } from "./solo";
 import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
+import type { Policy } from "./policy";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
 const BOT_PACE = 500;
@@ -65,7 +66,11 @@ export function SoloBot() {
     const acting = rolling ? actingSeat(game) : null;
     // Nothing to save, or the player asked the computer to roll for them: no wait (UX 404).
     const theirs =
-      acting !== null && acting !== useSolo.getState().seat && !rollsMine && !nothingToRoll(game);
+      acting !== null &&
+      acting !== useSolo.getState().seat &&
+      !useSolo.getState().both &&
+      !rollsMine &&
+      !nothingToRoll(game);
     const landed = wasTray.current;
     wasTray.current = false;
     if (theirs) useSolo.setState({ deadline: Date.now() + PLAYER_ROLL_WAIT, wait: PLAYER_ROLL_WAIT });
@@ -124,13 +129,19 @@ function glided(game: GameState): boolean {
 
 /** The computer's next move, if it has one, sent as its player. */
 async function play(): Promise<void> {
-  const solo = useSolo.getState();
   const { record, game, dispatch, scrub, session } = useStore.getState();
   const hold = useHold.getState();
   if (hold.held !== null || hold.busy) return;
+  // An exhibition (#64): it plays whichever side the game waits on, each with its own memory.
+  if (useSolo.getState().both) {
+    const { seat } = useSolo.getState();
+    const next = [seat, 1 - seat].find((x) => waitsOn(game, x)) ?? seat;
+    if (next !== seat) switchSeat(next);
+  }
+  const solo = useSolo.getState();
   if (!solo.level || solo.paused || solo.session !== session || scrub !== null) return;
   // The sides by who plays them (UX 349, PX 4), if the game didn't name them as it began (UX 409).
-  for (const p of Object.values(game.players)) {
+  for (const p of solo.both ? [] : Object.values(game.players)) {
     if (p.seat === undefined) continue;
     const name = soloSideName(solo.level, solo.seat, p.seat);
     if (p.name !== name) {
@@ -178,6 +189,11 @@ async function play(): Promise<void> {
   if (!move || (!remote && !legal(record, game, move))) {
     // Nothing the rules allow just yet (a roll settling): look again shortly.
     if (waitsOn(game, solo.seat)) window.setTimeout(() => void play(), BOT_PACE);
+    // Playing both sides, the other may have the next move (a pick in the fight order).
+    else if (solo.both) {
+      switchSeat(1 - solo.seat);
+      window.setTimeout(() => void play(), BOT_PACE);
+    }
     return;
   }
   const why = tell(game, move, player);
@@ -195,6 +211,21 @@ async function play(): Promise<void> {
   }
   if (worker) sawOffThread(move);
   useSolo.getState().policy?.saw?.(useStore.getState().game, move);
+}
+
+/** Each side's memory in an exhibition, kept while the other side plays. */
+const policies = new Map<number, Policy | null>();
+let policiesFor: unknown = null;
+
+function switchSeat(seat: number): void {
+  const solo = useSolo.getState();
+  // A new game: last game's memories go.
+  if (policiesFor !== solo.session) {
+    policies.clear();
+    policiesFor = solo.session;
+  }
+  policies.set(solo.seat, solo.policy);
+  useSolo.setState({ seat, policy: policies.get(seat) ?? null });
 }
 
 /** Reasons waiting for the computer's move to land in the record. */

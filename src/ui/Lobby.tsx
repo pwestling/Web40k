@@ -8,6 +8,7 @@ import { listSystems } from "../core/content";
 import { NET_PARAMS } from "../net/config";
 import { boardOn, useOpenTables } from "../opentables/board";
 import { BROADCAST } from "../broadcast/broadcast";
+import { EXHIBITION, startExhibition } from "../broadcast/exhibition";
 import { useLibrary } from "../packages/library";
 import { APP_BUILD } from "../version";
 import { ArmyGuide } from "./ArmyGuide";
@@ -108,10 +109,6 @@ export function Lobby() {
           s.system && isPlaceholder(s.system)
             ? false
             : s.turn.round > (Number(systemOf(s).turn.rounds) || Infinity),
-        // Against the computer, its side is named with its level: "The Warden of Ash (Steady)" (UX 439).
-        computer: (["random", "steady", "sharp"] as const).find((level) =>
-          Object.values(s.players).some((p) => p.name.endsWith(` (${levelName(level)})`)),
-        ),
       };
     } catch {
       return null;
@@ -173,11 +170,15 @@ export function Lobby() {
     if (!saved) return;
     if (saved.roomId) linkTo(saved.roomId);
     start({ role: "host", mode: saved.mode, roomId: saved.roomId ?? undefined, name, record: saved.record });
+    // The computer takes its side again, at the level it played (UX 439).
+    if (saved.computer) armSolo(saved.computer.level, saved.computer.seat);
   };
   // A tab reloaded in the middle of a game goes straight back into its room.
   useEffect(() => {
     if (autoJoined) return;
     autoJoined = true;
+    // A volunteer's exhibition table (#64): the computer plays itself for Live now.
+    if (EXHIBITION) return startExhibition();
     const roomId = params.get("room");
     const back = roomId ? loadRoom(roomId) : null;
     // A hotseat game reloaded in the middle goes straight back in, the computer's side too (UX 395).
@@ -292,8 +293,8 @@ export function Lobby() {
                   "{mode}, {n} event, saved {date}",
                   "{mode}, {n} events, saved {date}",
                   {
-                    mode: savedAt?.computer
-                      ? t("Against the computer ({level})", { level: levelName(savedAt.computer) })
+                    mode: saved.computer
+                      ? t("Against the computer ({level})", { level: levelName(saved.computer.level) })
                       : ({ online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
                         saved.mode),
                     date: formatDate(new Date(saved.savedAt), {

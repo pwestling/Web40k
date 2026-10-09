@@ -78,7 +78,10 @@ export function Hud() {
   const amSeated = mode === "hotseat" || seated.some((p) => p.id === selfId);
 
   // At Battle over in a live game the review starts by itself, folded menu or not (UX 424, 432).
-  const autoReview = battleOver(shown) && !!session && !BROADCAST && !VIEWER && reviewable(shown);
+  // Not on an exhibition table (#64): nobody there to read it, and the next game is coming.
+  const exhibition = useStore((s) => s.exhibition);
+  const autoReview =
+    battleOver(shown) && !!session && !BROADCAST && !VIEWER && !exhibition && reviewable(shown);
   useEffect(() => {
     if (autoReview) startReview(useStore.getState().record);
   }, [autoReview]);
@@ -352,6 +355,9 @@ const seatsTaken = (n: number) =>
     ? t("Both players are here.")
     : t("All {count} seats are taken.", { count: numberWord(n) ?? String(n) });
 
+/** A name typed while connecting survives the swap to NameCard once seated. */
+let nameDraft = "";
+
 /**
  * Invite links join straight in, as "Player N": until the player names
  * themselves, ask, so the sides read "Ana & Cy" rather than "Ana & Player 3".
@@ -359,7 +365,7 @@ const seatsTaken = (n: number) =>
 export function NameCard({ player }: { player: Player }) {
   const { dispatch } = useStore();
   const [stored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => nameDraft);
   const unnamed = /^Player \d+$/.test(player.name);
   // A name this device already gave (the lobby, Open tables) is used, not asked again (PX).
   useEffect(() => {
@@ -388,7 +394,7 @@ export function NameCard({ player }: { player: Player }) {
           value={name}
           placeholder={t("Your name")}
           autoFocus
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setName((nameDraft = e.target.value))}
         />
         <button className="primary" disabled={!name.trim()}>
           {t("Use this name")}
@@ -404,7 +410,7 @@ export function NameCard({ player }: { player: Player }) {
  */
 function EarlyNameCard() {
   const [stored, setStored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => nameDraft);
   if (stored)
     return <p className="muted claim">{t("Connecting to the table as {name}…", { name: stored })}</p>;
   return (
@@ -425,7 +431,7 @@ function EarlyNameCard() {
           placeholder={t("Your name")}
           aria-label={t("Your name")}
           autoFocus
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setName((nameDraft = e.target.value))}
         />
         <button className="primary" disabled={!name.trim()}>
           {t("Use this name")}

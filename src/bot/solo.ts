@@ -15,6 +15,8 @@ interface Solo {
   level: Level | null;
   /** The computer's side. */
   seat: number;
+  /** An exhibition (#64): the computer plays both sides, `seat` being the one it plays just now. */
+  both: boolean;
   session: Session | null;
   policy: Policy | null;
   seed: number;
@@ -33,6 +35,7 @@ interface Solo {
 export const useSolo = create<Solo>(() => ({
   level: null,
   seat: 1,
+  both: false,
   session: null,
   policy: null,
   seed: 1,
@@ -89,6 +92,7 @@ export function armSolo(level: Level, seat = 1): void {
   useSolo.setState({
     level,
     seat,
+    both: false,
     session: useStore.getState().session,
     policy: null,
     seed: Date.now() % 2 ** 31,
@@ -104,7 +108,9 @@ export function armSolo(level: Level, seat = 1): void {
 export function soloPlays(game: GameState, player: string | undefined): boolean {
   const { level, seat, session } = useSolo.getState();
   if (!level || useSolo.getState().paused || !player || session !== useStore.getState().session) return false;
-  return game.players[player]?.seat === seat;
+  return useSolo.getState().both
+    ? game.players[player]?.seat !== undefined
+    : game.players[player]?.seat === seat;
 }
 
 /** Who the computer is at each level (PX solo review 4): someone to lose to, not something. */

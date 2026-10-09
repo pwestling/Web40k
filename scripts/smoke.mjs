@@ -42,7 +42,7 @@ const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--stric
 const relay = spawn("node", ["server/relay.mjs"], {
   stdio: "pipe",
   detached: true,
-  env: { ...process.env, PORT: String(RELAY) },
+  env: { ...process.env, PORT: String(RELAY), OPEN_TABLES: "on", BOARD_ORIGIN: `http://localhost:${PORT}` },
 });
 await Promise.all([started(server, "localhost"), started(relay, String(RELAY))]);
 
@@ -386,10 +386,11 @@ const checks = {
     await page.locator(".panel.attack .volley").waitFor();
     await page.locator(".panel.attack").getByRole("button", { name: "Cancel" }).click();
     await next(); // Charge
-    await page.getByRole("button", { name: "Charge (2D6)" }).click();
+    // With nothing within 12" the button says so and asks "Charge anyway?" (UX 434).
+    await page.getByRole("button", { name: /^Charge(: no enemy| \(2D6\))/ }).click();
     await page
       .locator(".charge-declare")
-      .getByText(/no charge possible|Roll charge/)
+      .getByText(/no charge possible|Roll charge|Charge anyway/)
       .first()
       .waitFor();
     // Status chips only show (UX 399): the ⋯ beside them marks one, on purpose.
@@ -506,6 +507,9 @@ const checks = {
     }
     // Left alone, the roll is made for you, and the attack goes on.
     await page.locator(".self-roll-note").waitFor({ state: "detached", timeout: 15000 });
+    // Resume names the computer's level from the saved game, not its side's name (UX 439).
+    await lobby(page);
+    await page.locator(".resume-top").getByText("Against the computer (Easy)").waitFor();
     if (page.errors.length) throw new Error(page.errors[0]);
     await context.close();
   },
@@ -592,6 +596,57 @@ const checks = {
     await host.context.close();
     await guest.context.close();
     return [...host.page.errors, ...guest.page.errors];
+  },
+
+  // #64: a public table, posted with watchers allowed, filled, then watched
+  // from Live now on a third device. The board is the relay's own.
+  async "live-now"() {
+    const q = `?${SIGNAL}&openTables=1&board=${encodeURIComponent(`http://localhost:${RELAY}/board`)}`;
+    const host = await device();
+    const guest = await device();
+    const watcher = await device();
+    const tables = async (page) => {
+      await lobby(page, q);
+      await page.getByRole("button", { name: /Open tables: find/ }).click();
+    };
+    await tables(host.page);
+    await host.page.getByRole("button", { name: "Host a table and post it" }).click();
+    const form = host.page.locator(".post-table");
+    await form.locator("label", { hasText: "Your name" }).locator("input").fill("Ana");
+    if (!(await form.locator("label", { hasText: "Allow watchers" }).locator("input").isChecked()))
+      throw new Error("Allow watchers is not on by default");
+    await form.getByRole("button", { name: /^Post:/ }).click();
+    await host.page.locator(".room").waitFor();
+    await tables(guest.page);
+    const post = guest.page.locator(".table-post:not(.live-game)").first();
+    await post.getByRole("button", { name: "Join" }).click({ timeout: 30_000 });
+    await guest.page.locator(".table-post:not(.live-game) input").first().fill("Ben");
+    await guest.page.getByRole("button", { name: "Join Ana" }).click();
+    await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 30_000 });
+    for (const { page } of [host, guest]) {
+      await page.getByRole("button", { name: "Sample army" }).first().click();
+      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+      await deploy.click();
+      await deploy.waitFor({ state: "detached" });
+    }
+    await host.page.getByRole("button", { name: /Start battle/ }).click();
+    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+    if (await anyway.count()) await anyway.first().click();
+    await tables(watcher.page);
+    // The board is polled, so a just-filled table can take a round to show as live.
+    const live = watcher.page.locator(".live-game").first();
+    await live.waitFor({ timeout: 45_000 });
+    await live.getByRole("button", { name: "Watch" }).click();
+    await watcher.page
+      .locator(".broadcast-badge")
+      .getByText(/behind/)
+      .waitFor({ timeout: 30_000 });
+    await host.page
+      .locator(".watching-chip")
+      .getByText(/1 watching/)
+      .waitFor({ timeout: 30_000 });
+    for (const d of [host, guest, watcher]) await d.context.close();
+    return [...host.page.errors, ...guest.page.errors, ...watcher.page.errors];
   },
 
   async companion() {

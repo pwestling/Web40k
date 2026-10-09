@@ -5288,13 +5288,25 @@ body:has(.panel.better-move) .panel.whatnow {
   top: calc(var(--below-bar, 64px) + 64px);
 }
 
-/* Finger-sized controls on touch screens (UX 436): the score steppers, the replay bar, table talk. */
+/* Finger-sized controls on touch screens (UX 436, 440): the score steppers, the replay bar, table
+   talk, the folded Menu and stratagem buttons, and What now's Hide. */
 @media (pointer: coarse) {
   .counter.open button,
   button.counter,
   .replaybar button,
-  .panel.talk button {
+  .panel.talk button,
+  .panel.hud.collapsed button,
+  .panel.play.collapsed button,
+  .panel.whatnow .row.spread button {
     min-height: 44px;
     min-width: 44px;
+  }
+  .replaybar input[type="range"] {
+    min-height: 44px;
+  }
+  /* The eight reactions share a phone's width rather than run off its edge. */
+  .panel.talk .talk-reactions-row button {
+    flex: 1;
+    min-width: 0;
   }
 }

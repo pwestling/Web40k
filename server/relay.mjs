@@ -32,6 +32,8 @@
 //   OPEN_TABLES   "on" turns on Open tables, a public board of games looking for
 //                 players, kept here (server/board.mjs, at /relay/board). Off by
 //                 default: a self-hosted site doesn't show the board otherwise
+//   BOARD_ORIGIN  another site allowed to use that board from its pages (CORS),
+//                 e.g. a dev server; same-site pages never need it
 import { createHmac } from "node:crypto";
 import dgram from "node:dgram";
 import { createServer } from "node:http";
@@ -143,6 +145,15 @@ const server = createServer(async (req, res) => {
   const from = String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "")
     .split(",")[0]
     .trim();
+  if (board && env.BOARD_ORIGIN && path.startsWith("/board")) {
+    res.setHeader("access-control-allow-origin", env.BOARD_ORIGIN);
+    res.setHeader("access-control-allow-headers", "content-type");
+    res.setHeader("access-control-allow-methods", "GET, POST");
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      return res.end();
+    }
+  }
   if (board && (await board.handle(req, res, path, from))) return;
   if (path === "/health.json") {
     const target = turnTarget();
