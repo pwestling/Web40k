@@ -2863,7 +2863,7 @@ msgid "Language"
 msgstr "Langue"
 
 #: src/i18n/names.ts:10
-#: src/review/ReviewPanel.tsx:105
+#: src/review/ReviewPanel.tsx:109
 #, fuzzy
 msgid "Player {n}"
 msgstr "Joueur {n}"
@@ -4275,149 +4275,149 @@ msgstr "Après la bataille"
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Revoir la partie quitte son salon. La partie reste enregistrée et peut être reprise depuis la page d'accueil."
 
-#: src/review/ReviewPanel.tsx:128
+#: src/review/ReviewPanel.tsx:132
 #, fuzzy
 msgid "Turning points"
 msgstr "Tournants"
 
-#: src/review/ReviewPanel.tsx:148
+#: src/review/ReviewPanel.tsx:152
 #, fuzzy
 msgid "No big swings: both sides played close to the best on offer."
 msgstr "Pas de grands écarts : les deux camps ont joué près du meilleur coup possible."
 
-#: src/review/ReviewPanel.tsx:150
+#: src/review/ReviewPanel.tsx:154
 #, fuzzy
 msgid "Takeaways"
 msgstr "À retenir"
 
-#: src/review/ReviewPanel.tsx:172
+#: src/review/ReviewPanel.tsx:176
 #, fuzzy
 msgid "Costly"
 msgstr "Coûteux"
 
-#: src/review/ReviewPanel.tsx:174
+#: src/review/ReviewPanel.tsx:178
 #, fuzzy
 msgid "Strong"
 msgstr "Fort"
 
-#: src/review/ReviewPanel.tsx:176
+#: src/review/ReviewPanel.tsx:180
 #, fuzzy
 msgid "Missed chance"
 msgstr "Occasion manquée"
 
-#: src/review/ReviewPanel.tsx:178
+#: src/review/ReviewPanel.tsx:182
 #, fuzzy
 msgid "Lucky dice"
 msgstr "Dés chanceux"
 
-#: src/review/ReviewPanel.tsx:179
+#: src/review/ReviewPanel.tsx:183
 #, fuzzy
 msgid "Unlucky dice"
 msgstr "Dés malchanceux"
 
-#: src/review/ReviewPanel.tsx:227
-#: src/review/ReviewPanel.tsx:231
+#: src/review/ReviewPanel.tsx:234
+#: src/review/ReviewPanel.tsx:238
 #, fuzzy
 msgid "{side} ahead"
 msgstr "{side} devant"
 
-#: src/review/ReviewPanel.tsx:238
+#: src/review/ReviewPanel.tsx:245
 #, fuzzy
 msgid "Expected result across the game"
 msgstr "Résultat attendu au fil de la partie"
 
-#: src/review/ReviewPanel.tsx:255
+#: src/review/ReviewPanel.tsx:262
 #: src/ui/Missions.tsx:378
 #, fuzzy
 msgid "R{n}"
 msgstr "R{n}"
 
-#: src/review/ReviewPanel.tsx:290
+#: src/review/ReviewPanel.tsx:297
 #, fuzzy
 msgid "Round {round}: {side} {n}% to win"
 msgstr "Round {round} : {side} gagne à {n} %"
 
-#: src/review/ReviewPanel.tsx:295
+#: src/review/ReviewPanel.tsx:302
 #, fuzzy
 msgid "How the computer rated each side's chances as the game went on."
 msgstr "Comment l'ordinateur a jugé les chances de chaque camp au fil de la partie."
 
-#: src/review/ReviewPanel.tsx:328
+#: src/review/ReviewPanel.tsx:335
 #, fuzzy
 msgid "{played}. Better: {better} (about {vp} VP more)."
 msgstr "{played}. Mieux : {better} (environ {vp} VP de plus)."
 
-#: src/review/ReviewPanel.tsx:334
+#: src/review/ReviewPanel.tsx:341
 #, fuzzy
 msgid "Moved on with {better} still to do (about {vp} VP)."
 msgstr "Passé à la suite alors qu'il restait {better} (environ {vp} VP)."
 
-#: src/review/ReviewPanel.tsx:339
+#: src/review/ReviewPanel.tsx:346
 #, fuzzy
 msgid "{played}: about {vp} VP better than the next best choice."
 msgstr "{played} : environ {vp} VP de mieux que le meilleur autre choix."
 
-#: src/review/ReviewPanel.tsx:341
+#: src/review/ReviewPanel.tsx:348
 #, fuzzy
 msgid "{played}: the dice gave about {vp} VP more than the average."
 msgstr "{played} : les dés ont donné environ {vp} VP de plus que la moyenne."
 
-#: src/review/ReviewPanel.tsx:342
+#: src/review/ReviewPanel.tsx:349
 #, fuzzy
 msgid "{played}: the dice gave about {vp} VP less than the average."
 msgstr "{played} : les dés ont donné environ {vp} VP de moins que la moyenne."
 
-#: src/review/ReviewPanel.tsx:383
+#: src/review/ReviewPanel.tsx:390
 #, fuzzy
 msgid "{side} · round {round}, {phase}"
 msgstr "{side} · round {round}, {phase}"
 
-#: src/review/ReviewPanel.tsx:392
+#: src/review/ReviewPanel.tsx:399
 #: src/ui/StatsScreen.tsx:123
 #, fuzzy
 msgid "Watch it again on the table"
 msgstr "Revoir sur la table"
 
-#: src/review/ReviewPanel.tsx:393
+#: src/review/ReviewPanel.tsx:400
 #, fuzzy
 msgid "Show"
 msgstr "Montrer"
 
-#: src/review/ReviewPanel.tsx:399
+#: src/review/ReviewPanel.tsx:406
 #, fuzzy
 msgid "A new game on this screen, just before this choice"
 msgstr "Une nouvelle partie sur cet écran, juste avant ce choix"
 
-#: src/review/ReviewPanel.tsx:401
+#: src/review/ReviewPanel.tsx:408
 #, fuzzy
 msgid "Try the better move"
 msgstr "Essayer le meilleur coup"
 
-#: src/review/ReviewPanel.tsx:408
+#: src/review/ReviewPanel.tsx:415
 #, fuzzy
 msgid "Keep it as a note on this replay"
 msgstr "Garder comme note sur ce replay"
 
-#: src/review/ReviewPanel.tsx:410
+#: src/review/ReviewPanel.tsx:417
 #, fuzzy
 msgid "Added to notes"
 msgstr "Ajouté aux notes"
 
-#: src/review/ReviewPanel.tsx:410
+#: src/review/ReviewPanel.tsx:417
 #, fuzzy
 msgid "Add to notes"
 msgstr "Ajouter aux notes"
 
-#: src/review/ReviewPanel.tsx:426
+#: src/review/ReviewPanel.tsx:433
 #, fuzzy
 msgid "Try the better move for {side}:"
 msgstr "Essaie le meilleur coup pour {side} :"
 
 #: src/review/ReviewPanel.tsx:51
 #: src/review/ReviewPanel.tsx:65
-#: src/review/ReviewPanel.tsx:73
-#: src/review/ReviewPanel.tsx:119
-#: src/review/ReviewPanel.tsx:366
+#: src/review/ReviewPanel.tsx:77
+#: src/review/ReviewPanel.tsx:123
+#: src/review/ReviewPanel.tsx:373
 #, fuzzy
 msgid "Game review"
 msgstr "Analyse de la partie"
@@ -4433,17 +4433,22 @@ msgstr "L'ordinateur repasse chaque décision : ce qu'elle valait, les tournants
 msgid "Review this game"
 msgstr "Revoir la partie"
 
-#: src/review/ReviewPanel.tsx:66
+#: src/review/ReviewPanel.tsx:68
 #, fuzzy
 msgid "Going over every decision… ({n}%)"
 msgstr "Analyse de chaque décision… ({n} %)"
 
-#: src/review/ReviewPanel.tsx:74
+#: src/review/ReviewPanel.tsx:69
+#, fuzzy
+msgid "Going over every decision…"
+msgstr "Examen de chaque décision…"
+
+#: src/review/ReviewPanel.tsx:78
 #, fuzzy
 msgid "The review stopped: {why}"
 msgstr "L'analyse s'est arrêtée : {why}"
 
-#: src/review/ReviewPanel.tsx:75
+#: src/review/ReviewPanel.tsx:79
 #: src/ui/Packages.tsx:582
 #, fuzzy
 msgid "Try again"

@@ -1,4 +1,5 @@
 import { SandboxEngine } from "./engine";
+import { reviewGame } from "../review/analyse";
 import type { FromSandbox, ToSandbox } from "./protocol";
 
 /**
@@ -38,6 +39,8 @@ function serve(port: MessagePort) {
           return reply({ id: m.id, t: "ok", value: engine.appState() });
         case "bot":
           return reply({ id: m.id, t: "ok", value: engine.botMove(m.level, m.seat, m.player, m.seed) });
+        case "review":
+          return reply({ id: m.id, t: "ok", value: await reviewGame(m.record, { part: m.part }) });
         case "importRoster":
           return reply({ id: m.id, t: "ok", value: await engine.importRoster(m.fileName, m.data) });
       }

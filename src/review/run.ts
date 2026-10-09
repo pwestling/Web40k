@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { lastSeq, type GameRecord } from "../core";
 import { mergeReviews, reviewGame, type GameReview } from "./analyse";
 import type { FromReview, ToReview } from "./worker";
+import { runningPackages } from "../sandbox/runtime";
+import { Sandbox, STARTUP_MS } from "../sandbox/host";
+import type { Loaded } from "../sandbox/protocol";
 
 /**
  * Running a game review (#61): one at a time, in a worker where there is
@@ -41,6 +44,11 @@ export function startReview(record: GameRecord): void {
   const mine = useReviewRun.getState().of;
   const still = () => useReviewRun.getState().of === mine;
   const finish = (r: Partial<ReviewRun>) => still() && useReviewRun.setState(r);
+  const packages = runningPackages();
+  if (packages?.length) {
+    void inSandboxes(record, packages, finish);
+    return;
+  }
   const n = WORKERS;
   try {
     workers = Array.from(
@@ -91,6 +99,51 @@ function stopWorkers(): void {
 
 function stopReview(): void {
   stopWorkers();
+  stopBoxes();
   if (useReviewRun.getState().status === "running")
     useReviewRun.setState({ of: null, status: "idle", done: 0, review: null });
+}
+
+/** Sandboxes reviewing a package game now, ended when another review starts. */
+let boxes: Sandbox[] = [];
+
+/** A long review share: this long, or the sandbox is stuck. */
+const SHARE_MS = 15 * 60_000;
+
+/**
+ * A package game's review (Rift Lanterns): its code runs only in the sandbox,
+ * so each share of the review runs in a sandbox of its own that has loaded the
+ * game's packages, never on the page.
+ */
+async function inSandboxes(
+  record: GameRecord,
+  packages: { hash: string; source: string }[],
+  finish: (r: Partial<ReviewRun>) => void,
+): Promise<void> {
+  const n = WORKERS;
+  let done = 0;
+  try {
+    const source = (await import("virtual:sandbox-worker")).default;
+    const started = await Promise.all(Array.from({ length: n }, () => Sandbox.start(source, () => {})));
+    boxes = started;
+    const parts = await Promise.all(
+      started.map(async (box, k) => {
+        const loaded = await box.call<Loaded>({ t: "load", packages }, STARTUP_MS);
+        if (loaded.errors.length) throw new Error(loaded.errors[0]!.error);
+        const part = await box.call<GameReview>({ t: "review", record, part: [k, n] }, SHARE_MS);
+        finish({ done: ++done / (n + 1) });
+        return part;
+      }),
+    );
+    finish({ status: "done", done: 1, review: mergeReviews(parts) });
+  } catch (e) {
+    finish({ status: "error", error: e instanceof Error ? e.message : String(e) });
+  } finally {
+    stopBoxes();
+  }
+}
+
+function stopBoxes(): void {
+  for (const b of boxes) b.stop();
+  boxes = [];
 }

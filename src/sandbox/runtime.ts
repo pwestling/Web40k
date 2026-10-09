@@ -263,6 +263,11 @@ async function start(packages: { hash: string; source: string }[]): Promise<void
   }
 }
 
+/** The trusted packages the game runs now, with their code (a package game's review loads them too). */
+export function runningPackages(): { hash: string; source: string }[] | null {
+  return wantedNow;
+}
+
 /** Keep the sandbox running the game's trusted packages. Mount once. */
 export function usePackageSandbox(): void {
   const wanted = useStore((s) => s.game.packages?.packages);

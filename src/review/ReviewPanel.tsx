@@ -63,8 +63,12 @@ export function ReviewPanel({ watching, close }: { watching: boolean; close: () 
     return (
       <section className="game-review">
         <h4>{t("Game review")}</h4>
-        <p className="muted small">{t("Going over every decision… ({n}%)", { n: pct(run.done) })}</p>
-        <progress value={run.done} max={1} />
+        <p className="muted small">
+          {run.done > 0
+            ? t("Going over every decision… ({n}%)", { n: pct(run.done) })
+            : t("Going over every decision…")}
+        </p>
+        {run.done > 0 ? <progress value={run.done} max={1} /> : <progress />}
       </section>
     );
   if (run.status === "error" || !run.review)
