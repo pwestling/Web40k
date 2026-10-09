@@ -120,3 +120,20 @@ export function characterName(level: Level): string {
 export function levelName(level: Level): string {
   return level === "random" ? t("Easy") : level === "sharp" ? t("Sharp") : t("Steady");
 }
+
+/** What a side is called in a game against the computer (UX 349, PX 4): "You" and "The Warden of Ash (Steady)". */
+export function soloSideName(level: Level, botSeat: number, seat: number): string {
+  return seat === botSeat
+    ? t("{name} ({level})", { name: characterName(level), level: levelName(level) })
+    : t("You");
+}
+
+/** The sides named before anything is deployed, so the log and showcase say who from the start (UX 409). */
+export function nameSoloSides(level: Level, botSeat = 1): void {
+  const { game, dispatch } = useStore.getState();
+  for (const p of Object.values(game.players)) {
+    if (p.seat === undefined) continue;
+    const name = soloSideName(level, botSeat, p.seat);
+    if (p.name !== name) dispatch({ type: "player/rename", player: p.id, name }, p.id);
+  }
+}

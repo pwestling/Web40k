@@ -100,6 +100,8 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
         : t("{name} picked their colour's dice", { name });
     }
     case "player/rename":
+      // Before the battle it's setting up ("Player 2 is now The Warden…" as a solo game starts, UX 409).
+      if (game.turn.round === 0) return "";
       return t("{old} is now {name}", {
         old: playerName(before.players[event.player]) ?? t("A player"),
         name: event.name,
@@ -109,14 +111,14 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
       if (!army) return t("{name} cleared their army rules", { name: who });
       const rules = army.rules.length + army.stratagems.length;
       return army.detachment
-        ? tn(rules, "{name} brings {detachment} ({n} rule)", "{name} brings {detachment} ({n} rules)", {
+        ? tn(rules, "{name} brought {detachment} ({n} rule)", "{name} brought {detachment} ({n} rules)", {
             name: who,
             detachment: army.detachment,
           })
         : tn(
             rules,
-            "{name} brings their army's rules ({n} rule)",
-            "{name} brings their army's rules ({n} rules)",
+            "{name} brought their army's rules ({n} rule)",
+            "{name} brought their army's rules ({n} rules)",
             {
               name: who,
             },

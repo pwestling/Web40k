@@ -286,6 +286,13 @@ const checks = {
     await page
       .locator(".your-army input[type=file]")
       .setInputFiles(new URL("./fixtures/test-muster.ros", import.meta.url).pathname);
+    // One line to check first (UX 408): the army, its size, the computer's.
+    await page
+      .locator(".army-check")
+      .getByText(/Test Muster · \d+ units/)
+      .waitFor();
+    await page.getByRole("button", { name: "Save to shelf" }).click();
+    await page.getByRole("button", { name: "Start", exact: true }).click();
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");

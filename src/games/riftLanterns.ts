@@ -39,7 +39,7 @@ export function installRiftLanterns(): Promise<StoredPackage | null> {
  * "Play now, nothing to import": a hotseat game of Rift Lanterns, two
  * warbands picked at random, the first mission set and the battle started.
  */
-export async function playRiftLanterns(mine?: OwnArmy): Promise<void> {
+export async function playRiftLanterns(mine?: OwnArmy, seated?: () => void): Promise<void> {
   const pkg = await installRiftLanterns();
   if (!pkg) return;
   const s = useStore.getState();
@@ -67,6 +67,7 @@ export async function playRiftLanterns(mine?: OwnArmy): Promise<void> {
       return;
     }
     const { dispatch } = useStore.getState();
+    seated?.();
     const armies = mod.armies ?? [mod.sample(0), mod.sample(1)];
     const a = Math.floor(Math.random() * armies.length);
     const b = (a + 1 + Math.floor(Math.random() * (armies.length - 1))) % armies.length;

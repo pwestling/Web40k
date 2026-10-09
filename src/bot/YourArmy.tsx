@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
+import { getSystem } from "../core/content/systems";
+import { automateArmy } from "../systems/wh40k/recognize";
 import { RIFT_LANTERNS } from "../games/riftLanterns";
-import { t } from "../i18n";
-import { useShelf } from "../packages/shelf";
+import { t, tn } from "../i18n";
+import { ARMY_FORMAT, useShelf, type SavedArmy } from "../packages/shelf";
 import { systemModule } from "../systems";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Level } from "./player";
@@ -21,8 +23,11 @@ function pointsOf(roster: ImportedRoster): number {
  * is noted beside the army, never blocked.
  */
 export function YourArmy({ system, level, onBack }: { system: string; level: Level; onBack: () => void }) {
-  const { armies, load } = useShelf();
+  const { armies, load, put } = useShelf();
   const [error, setError] = useState<string | null>(null);
+  // A roster just read: one line to check before the game starts (UX 408).
+  const [picked, setPicked] = useState<ImportedRoster | null>(null);
+  const [kept, setKept] = useState<SavedArmy | null>(null);
   useEffect(() => {
     void load();
   }, [load]);
@@ -45,11 +50,63 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
       const parse = module?.importRoster ?? (await import("../systems/wh40k/roster")).parseRosterFile;
       const roster = await parse(file.name, new Uint8Array(await file.arrayBuffer()));
       if (!roster.units.length) return setError(t("That file has no units this game can read."));
-      startSolo(system, level, { roster });
+      setKept(null);
+      setPicked(roster);
     } catch {
       setError(t("That file has no units this game can read."));
     }
   };
+  if (picked) {
+    const pts = pointsOf(picked);
+    const keep = () => {
+      let roster = picked;
+      try {
+        // Shelved, it keeps its rules ticked as a roster read at the table gets them (UX 370).
+        if (picked.army) roster = { ...picked, army: automateArmy(picked.army, getSystem(system)) };
+      } catch {
+        // A game whose rules aren't loaded: the army goes on the shelf as read.
+      }
+      const army: SavedArmy = {
+        format: ARMY_FORMAT,
+        id: crypto.randomUUID(),
+        name: picked.name,
+        system: system === DEFAULT_SYSTEM ? "" : system,
+        savedAt: Date.now(),
+        roster,
+        figures: {},
+      };
+      put(army);
+      setKept(army);
+    };
+    return (
+      <div className="how-hard your-army" role="group" aria-label={t("Your army")}>
+        <strong className="small">{t("Your army")}</strong>
+        <p className="small army-check">
+          {[
+            picked.name,
+            tn(picked.units.length, "{n} unit", "{n} units"),
+            ...(pts ? [t("{points} pts", { points: pts })] : []),
+            ...(theirs ? [t("the computer's is {n} pts", { n: theirs })] : []),
+          ].join(" · ")}
+        </p>
+        <button
+          className="primary small"
+          autoFocus
+          onClick={() =>
+            startSolo(system, level, kept ? { roster: kept.roster, shelf: kept } : { roster: picked })
+          }
+        >
+          {t("Start")}
+        </button>
+        <button className="small" disabled={!!kept} onClick={keep}>
+          {kept ? t("Saved to your shelf") : t("Save to shelf")}
+        </button>
+        <button className="quiet small" title={t("Back")} onClick={() => setPicked(null)}>
+          ←
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="how-hard your-army" role="group" aria-label={t("Your army")}>
       <strong className="small">

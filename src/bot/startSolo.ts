@@ -3,7 +3,7 @@ import type { SavedArmy } from "../packages/shelf";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import { startDemo } from "../ui/demo";
 import type { Level } from "./player";
-import { armSolo } from "./solo";
+import { armSolo, nameSoloSides } from "./solo";
 
 /** The player's own army for a game against the computer: off their shelf, or a roster just read. */
 export interface OwnArmy {
@@ -18,9 +18,9 @@ export interface OwnArmy {
  */
 export function startSolo(system: string, level: Level, mine?: OwnArmy): void {
   if (system === RIFT_LANTERNS) {
-    void playRiftLanterns(mine).then(() => armSolo(level));
+    void playRiftLanterns(mine, () => nameSoloSides(level)).then(() => armSolo(level));
     return;
   }
-  startDemo(system, mine);
+  startDemo(system, mine, () => nameSoloSides(level));
   armSolo(level);
 }

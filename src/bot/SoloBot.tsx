@@ -3,7 +3,6 @@ import { noteReason } from "./reasons";
 import { useHold } from "../ui/hold";
 import { actingSeat, sidePlayers, type GameState, type Intent, type Unit } from "../core";
 import { clearDrawings, hear } from "../talk/talk";
-import { t } from "../i18n";
 import { explain } from "./explain";
 import { pendingScores } from "../missions/scoring";
 import { sandboxBotMove } from "../sandbox/runtime";
@@ -12,7 +11,7 @@ import { useStore } from "../store";
 import { waitsOn } from "../teach/coach";
 import { missionOf } from "../ui/Missions";
 import { botPolicy } from "./player";
-import { characterName, GLIDE_MS, levelName, useSolo } from "./solo";
+import { GLIDE_MS, soloSideName, useSolo } from "./solo";
 import { canThinkOffThread, sawOffThread, thinkOffThread } from "./think";
 
 /** How long the computer waits before each move, and on each roll so the player can follow it. */
@@ -130,14 +129,10 @@ async function play(): Promise<void> {
   const hold = useHold.getState();
   if (hold.held !== null || hold.busy) return;
   if (!solo.level || solo.paused || solo.session !== session || scrub !== null) return;
-  // The sides by who plays them (UX 349, PX 4): "You" and "The Warden of Ash (Steady)".
-  // From the start, so the army showcase and deployment say so too, not "Player 2" (dogfood).
+  // The sides by who plays them (UX 349, PX 4), if the game didn't name them as it began (UX 409).
   for (const p of Object.values(game.players)) {
     if (p.seat === undefined) continue;
-    const name =
-      p.seat === solo.seat
-        ? t("{name} ({level})", { name: characterName(solo.level), level: levelName(solo.level) })
-        : t("You");
+    const name = soloSideName(solo.level, solo.seat, p.seat);
     if (p.name !== name) {
       dispatch({ type: "player/rename", player: p.id, name }, p.id);
       return;

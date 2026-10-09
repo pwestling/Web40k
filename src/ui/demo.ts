@@ -11,7 +11,7 @@ import { useHelp } from "./help";
  * armies deployed and the battle started, so a first-time visitor is playing
  * a turn in one click.
  */
-export function startDemo(system: string, mine?: OwnArmy): void {
+export function startDemo(system: string, mine?: OwnArmy, seated?: () => void): void {
   const s = useStore.getState();
   s.start({ role: "host", mode: "hotseat", name: localStorage.getItem("open-battle:name") ?? "", system });
   let tries = 0;
@@ -23,6 +23,7 @@ export function startDemo(system: string, mine?: OwnArmy): void {
       return;
     }
     const { dispatch } = useStore.getState();
+    seated?.();
     presetMission();
     if (mine) deployOwn(mine, () => useStore.getState().game, dispatch);
     else deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
