@@ -1716,6 +1716,18 @@ msgstr ""
 msgid "This battle round is over its time: finish it off."
 msgstr ""
 
+#: src/core/content/examples/forty-k.ts:1004
+#: src/core/content/examples/rank-and-flank.ts:194
+msgctxt "game"
+msgid "Movement"
+msgstr ""
+
+#: src/core/content/examples/forty-k.ts:1007
+#: src/core/content/examples/rank-and-flank.ts:195
+msgctxt "game"
+msgid "Shooting"
+msgstr ""
+
 #: src/core/content/examples/forty-k.ts:500
 msgctxt "game"
 msgid "Command Re-roll"
@@ -1853,44 +1865,32 @@ msgid "Shoot"
 msgstr ""
 
 #: src/core/content/examples/forty-k.ts:929
-#: src/core/content/examples/forty-k.ts:998
+#: src/core/content/examples/forty-k.ts:1008
 #: src/core/content/examples/rank-and-flank.ts:287
 msgctxt "game"
 msgid "Charge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:949
+#: src/core/content/examples/forty-k.ts:959
 msgctxt "game"
 msgid "Pile in"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:952
-#: src/core/content/examples/forty-k.ts:999
+#: src/core/content/examples/forty-k.ts:962
+#: src/core/content/examples/forty-k.ts:1009
 #: src/core/content/examples/rank-and-flank.ts:183
 msgctxt "game"
 msgid "Fight"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:962
+#: src/core/content/examples/forty-k.ts:972
 msgctxt "game"
 msgid "Consolidate"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:978
+#: src/core/content/examples/forty-k.ts:988
 msgctxt "game"
 msgid "Command"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:994
-#: src/core/content/examples/rank-and-flank.ts:194
-msgctxt "game"
-msgid "Movement"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:997
-#: src/core/content/examples/rank-and-flank.ts:195
-msgctxt "game"
-msgid "Shooting"
 msgstr ""
 
 #: src/core/content/examples/fsd.ts:623
@@ -3819,7 +3819,7 @@ msgstr ""
 msgid "all played"
 msgstr ""
 
-#: src/systems/wh40k/module.ts:74
+#: src/systems/wh40k/module.ts:79
 msgctxt "game"
 msgid "Secret objectives"
 msgstr ""

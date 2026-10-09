@@ -2093,6 +2093,20 @@ msgstr "Dernier tour : il reste le temps de finir ce round de bataille, pas un a
 msgid "This battle round is over its time: finish it off."
 msgstr "Ce round de bataille a dépassé son temps : le terminer."
 
+#: src/core/content/examples/forty-k.ts:1004
+#: src/core/content/examples/rank-and-flank.ts:194
+#, fuzzy
+msgctxt "game"
+msgid "Movement"
+msgstr "Mouvement"
+
+#: src/core/content/examples/forty-k.ts:1007
+#: src/core/content/examples/rank-and-flank.ts:195
+#, fuzzy
+msgctxt "game"
+msgid "Shooting"
+msgstr "Tir"
+
 #: src/core/content/examples/forty-k.ts:500
 #, fuzzy
 msgctxt "game"
@@ -2253,52 +2267,38 @@ msgid "Shoot"
 msgstr "Tirer"
 
 #: src/core/content/examples/forty-k.ts:929
-#: src/core/content/examples/forty-k.ts:998
+#: src/core/content/examples/forty-k.ts:1008
 #: src/core/content/examples/rank-and-flank.ts:287
 #, fuzzy
 msgctxt "game"
 msgid "Charge"
 msgstr "Charge"
 
-#: src/core/content/examples/forty-k.ts:949
+#: src/core/content/examples/forty-k.ts:959
 #, fuzzy
 msgctxt "game"
 msgid "Pile in"
 msgstr "Engagement"
 
-#: src/core/content/examples/forty-k.ts:952
-#: src/core/content/examples/forty-k.ts:999
+#: src/core/content/examples/forty-k.ts:962
+#: src/core/content/examples/forty-k.ts:1009
 #: src/core/content/examples/rank-and-flank.ts:183
 #, fuzzy
 msgctxt "game"
 msgid "Fight"
 msgstr "Combat"
 
-#: src/core/content/examples/forty-k.ts:962
+#: src/core/content/examples/forty-k.ts:972
 #, fuzzy
 msgctxt "game"
 msgid "Consolidate"
 msgstr "Consolidation"
 
-#: src/core/content/examples/forty-k.ts:978
+#: src/core/content/examples/forty-k.ts:988
 #, fuzzy
 msgctxt "game"
 msgid "Command"
 msgstr "Commandement"
-
-#: src/core/content/examples/forty-k.ts:994
-#: src/core/content/examples/rank-and-flank.ts:194
-#, fuzzy
-msgctxt "game"
-msgid "Movement"
-msgstr "Mouvement"
-
-#: src/core/content/examples/forty-k.ts:997
-#: src/core/content/examples/rank-and-flank.ts:195
-#, fuzzy
-msgctxt "game"
-msgid "Shooting"
-msgstr "Tir"
 
 #: src/core/content/examples/fsd.ts:623
 #, fuzzy
@@ -4667,7 +4667,7 @@ msgstr "{n} face cachée"
 msgid "all played"
 msgstr "toutes jouées"
 
-#: src/systems/wh40k/module.ts:74
+#: src/systems/wh40k/module.ts:79
 #, fuzzy
 msgctxt "game"
 msgid "Secret objectives"
