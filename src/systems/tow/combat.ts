@@ -473,14 +473,55 @@ function* fightingWeapon(
   const distinct = new Set(options.map((o) => `${o.s}/${o.ap}/${o.bane}/${o.keys.join()}`));
   if (!options.length) return { s: baseS, ap: 0, bane: baneOf(u, undefined), name: "", keys: [] };
   if (distinct.size === 1) return options[0]!;
-  const who = model?.profile?.name ?? u.name;
+  // Asked once a battle (PX #66): the answer stands until it's changed on the unit's card.
+  const key = weaponKey(u, model);
+  const kept = options.find((o) => o.name === ctx.view.own[key]);
+  if (kept) return kept;
   const pick = (yield ctx.ask(
     owner(u),
-    `Which weapon does ${who} fight with?`,
+    weaponQuestion(u, model),
     options.map((o, i) => ({ id: String(i), label: `${o.name} (S${o.s}${o.ap ? `, AP -${o.ap}` : ""})` })),
   )) as string;
-  return options[Number(pick)] ?? options[0]!;
+  const chosen = options[Number(pick)] ?? options[0]!;
+  yield ctx.set(key, chosen.name);
+  return chosen;
 }
+
+/** Where the module keeps the weapon a unit (or one of its models, in a challenge) fights with. */
+const weaponKey = (u: Unit, model?: { id: string }) => `weapon:${u.id}${model ? `:${model.id}` : ""}`;
+
+/** "Which weapon do the Hammerers fight with?"; a character by name, "does Thane". */
+function weaponQuestion(u: Unit, model?: Model): string {
+  const who = model?.profile?.name ?? u.name;
+  return model || u.modelIds.length === 1
+    ? `Which weapon does ${who} fight with?`
+    : `Which weapon do the ${who} fight with?`;
+}
+
+/** The weapon kept for this unit, when its weapons differ and one was picked. */
+function keptWeapon(view: GameView, u: Unit | undefined): string | null {
+  if (!u) return null;
+  const name = view.own[weaponKey(u)];
+  return typeof name === "string" && meleeWeapons(u).some((w) => w.name === name) ? name : null;
+}
+
+/** Pick the unit's weapon again from its card; its next fight uses the new one. */
+const changeWeapon: CodeProcedure = function* (ctx, args) {
+  const u = ctx.view.state.units[String(args.unit ?? "")];
+  if (!u) return;
+  const names = [...new Set(meleeWeapons(u).map((w) => w.name))];
+  const pick = (yield ctx.ask(
+    owner(u),
+    weaponQuestion(u),
+    names.map((n) => ({ id: n, label: n })),
+  )) as string;
+  const name = names.includes(pick) ? pick : names[0]!;
+  yield ctx.set(weaponKey(u), name);
+  // A model's own pick from a challenge goes too: the unit's new weapon stands for all.
+  for (const id of u.modelIds)
+    if (ctx.view.own[weaponKey(u, { id })]) yield ctx.set(weaponKey(u, { id }), null);
+  yield ctx.note(`${u.name} will fight with ${name}`);
+};
 
 /**
  * Supporting attacks (tow.whfb.app, supporting attacks and how many attacks,
@@ -1774,6 +1815,16 @@ export const towActions: CodeAction[] = [
     targets: (view, actor) =>
       fightTargets(view, actor.unitId ?? "").map((x) => ({ unitId: x.u.id, label: x.u.name })),
     run: combat,
+  },
+  {
+    id: "changeWeapon",
+    name: "Change weapon",
+    by: "unit",
+    applies: (view, actor) => !!keptWeapon(view, view.state.units[actor.unitId ?? ""]),
+    label: (view, actor) =>
+      `Fights with ${keptWeapon(view, view.state.units[actor.unitId ?? ""]) ?? "?"}: change`,
+    available: () => true,
+    run: changeWeapon,
   },
   {
     id: "challenge",

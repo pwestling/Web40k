@@ -213,7 +213,7 @@ describe("Old World rules audit (#55)", () => {
       u.play({ type: "script/start", procedure: "combat", args: { unit: s, target: w } }, "p1", seed);
       for (let i = 0; i < 20 && u.s.script?.waiting; i++) {
         const q = u.s.script.waiting;
-        if (/Which weapon does Reaver Warband fight with/.test(q.question)) {
+        if (/Which weapon do(es)? (the )?Reaver Warband fight with/.test(q.question)) {
           asked = true;
           expect(q.player).toBe("p2");
           expect(q.options.map((o) => o.label)).toEqual(["Hand weapon (S3)", "Great weapon (S5, AP -2)"]);
@@ -234,6 +234,35 @@ describe("Old World rules audit (#55)", () => {
       expect(u.notes().some((n) => /fights with Lance/.test(n))).toBe(false);
     }
     expect(seen).toBe(1);
+  });
+
+  it("PX: the weapon is asked once a battle, and changed from the unit's card", () => {
+    const { t: u, spears: s, warband: w } = setup();
+    melee(u, w, { id: "hw", name: "Hand weapon", chars: { S: "S", AP: "-" }, keywords: [] });
+    melee(u, w, { id: "gw", name: "Great weapon", chars: { S: "S+2", AP: "-2" }, keywords: [] });
+    toPhase(u, "combat");
+    const change = towActions.find((a) => a.id === "changeWeapon")!;
+    const actor = { player: "p2", unitId: w };
+    expect(change.applies!(gameView(u.s, "tow-hand"), actor)).toBe(false);
+    const asks = () => {
+      let n = 0;
+      for (let i = 0; i < 30 && u.s.script?.waiting; i++) {
+        const q = u.s.script.waiting;
+        if (/^Which weapon/.test(q.question)) n++;
+        const great = q.options.find((o) => o.label.startsWith("Great weapon"));
+        u.play({ type: "script/answer", answer: (great ?? q.options[0]!).id }, q.player, i + 1);
+      }
+      return n;
+    };
+    u.play({ type: "script/start", procedure: "combat", args: { unit: s, target: w } }, "p1", 3);
+    expect(asks()).toBe(1);
+    expect(change.label!(gameView(u.s, "tow-hand"), actor)).toBe("Fights with Great weapon: change");
+    // The card's change: the next fight uses the new pick without asking.
+    u.play({ type: "script/start", procedure: "changeWeapon", args: { unit: w } }, "p2");
+    const q = u.s.script!.waiting!;
+    expect(q.question).toBe("Which weapon do the Reaver Warband fight with?");
+    u.play({ type: "script/answer", answer: "Hand weapon" }, "p2");
+    expect(change.label!(gameView(u.s, "tow-hand"), actor)).toBe("Fights with Hand weapon: change");
   });
 
   it("fix: a unit that is already fleeing can only flee again when charged", () => {

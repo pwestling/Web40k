@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gameView } from "../../core/script";
 import { itemActions } from "./items";
+import { ITEM_GROUP } from "./roster";
 import { setup, toPhase, unitNamed } from "./testing";
 
 describe("Old World magic items (#40)", () => {
@@ -33,5 +34,26 @@ describe("Old World magic items (#40)", () => {
     );
     toPhase(t, "shooting");
     expect(itemActions[0]!.available(gameView(t.s, "tow-hand"), actor)).toBe(true);
+  });
+
+  it("a universal rule taken as an option isn't an item to use: the module plays it", () => {
+    const { t, spears } = setup();
+    const u = t.s.units[spears]!;
+    const abilities = (u.sheet?.abilities ?? []).filter((a) => a.group !== ITEM_GROUP);
+    t.s = {
+      ...t.s,
+      units: {
+        ...t.s.units,
+        [spears]: {
+          ...u,
+          sheet: {
+            ...u.sheet!,
+            abilities: [...abilities, { name: "Frenzy", text: "+1 Attack on the charge", group: ITEM_GROUP }],
+          },
+        },
+      },
+    };
+    const actor = { player: "p1", unitId: spears };
+    expect(itemActions[0]!.applies!(gameView(t.s, "tow-hand"), actor)).toBe(false);
   });
 });

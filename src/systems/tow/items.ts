@@ -2,6 +2,7 @@ import { isAlive } from "../../core/units";
 import type { Ability, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView } from "../../sdk";
 import { ITEM_GROUP } from "./roster";
+import { universalRules } from "./universalRules";
 
 /**
  * Magic items (The Old World): the roster brings each item in as an ability
@@ -30,12 +31,19 @@ const usedNow = (view: GameView, u: Unit) => {
   return used?.at === phaseMark(view) ? used.names : [];
 };
 
+/** A universal rule taken as an option ("Frenzy"): the module plays it, so it isn't an item to use (PX #66). */
+const RULES = universalRules.flatMap((r) => (r.match ? [new RegExp(r.match, "i")] : []));
+const playedRule = (a: Ability) => RULES.some((m) => m.test(a.name.trim()));
+
+/** An option the player uses from the card: with rules text, not a points line, not a rule the module plays. */
+const isItem = (a: Ability) => a.group === ITEM_GROUP && !pointsOnly(a) && !playedRule(a);
+
 /** The unit's items it can still use: in the items group, with rules text, not spent, not used this phase. */
 function usableItems(view: GameView, u: Unit | undefined): Ability[] {
   if (!u) return [];
   const now = usedNow(view, u);
   return (u.sheet?.abilities ?? []).filter(
-    (a) => a.group === ITEM_GROUP && !pointsOnly(a) && !u.status?.[spentKey(a.name)] && !now.includes(a.name),
+    (a) => isItem(a) && !u.status?.[spentKey(a.name)] && !now.includes(a.name),
   );
 }
 
@@ -65,7 +73,7 @@ export const itemActions: CodeAction[] = [
     name: "Use a magic item",
     by: "unit",
     applies: (view: GameView, actor) =>
-      (view.state.units[actor.unitId ?? ""]?.sheet?.abilities ?? []).some((a) => a.group === ITEM_GROUP),
+      (view.state.units[actor.unitId ?? ""]?.sheet?.abilities ?? []).some(isItem),
     // The item by name when there's one to use (UX 322).
     label: (view, actor) => {
       const items = usableItems(view, view.state.units[actor.unitId ?? ""]);
@@ -77,7 +85,7 @@ export const itemActions: CodeAction[] = [
       const u = view.state.units[actor.unitId ?? ""];
       if (!u || !isAlive(view.state, u)) return "The unit is gone";
       if (usableItems(view, u).length) return true;
-      const items = (u.sheet?.abilities ?? []).filter((a) => a.group === ITEM_GROUP && !pointsOnly(a));
+      const items = (u.sheet?.abilities ?? []).filter(isItem);
       const spent = items.filter((a) => u.status?.[spentKey(a.name)]).map((a) => a.name);
       const used = items.filter((a) => !spent.includes(a.name)).map((a) => a.name);
       if (!used.length) return `${spent.join(", ")} ${spent.length > 1 ? "are" : "is"} spent`;
