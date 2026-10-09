@@ -170,3 +170,27 @@ Every game above except the 2v2 round was recorded with Share… → A clip:
 | 40k against the new Sharp   | Square | The whole battle    |        |
 
 The clips are in the session's scratch space, not the repository: the 40k ones show imported roster names.
+
+## The fixes: #56, 2026-10-09
+
+Every finding sent on above was fixed on main (8fa82da to a6e3c37), along with what UX and PX raised while checking the fixes. Each path was re-played in the browser, and the ones a script can drive are in `pnpm smoke`.
+
+| Finding                                                           | Fix                                                                                                                                              | Smoke check             |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| Playing the computer meant its sample army against yours          | Play the computer asks for your army (the shelf, the sample, or a roster) and shows one confirm line with both sides' points (UX 408)            | solo-own-army           |
+| Auto-deploy put armies at the back, or in contact (TOW)           | Deploys to the front of each mission zone, about 20–24″ apart                                                                                    | try-it-now              |
+| Hotseat started with no mission; a reload lost the game           | The first mission is preset, None warns at Start battle, and Resume leads the lobby (UX 394, 395)                                                | hotseat-resume          |
+| 8 s waits on empty saves in solo                                  | No wait when there's nothing to roll, a countdown ring, and "Roll my saves for me" (UX 404)                                                      | solo-saves              |
+| Charge rolled with no target                                      | Charge asks which unit(s) with the rules' reasons, the roll carries the targets, the log and card say made or failed (UX 396, 411, 412)          | card-actions            |
+| Shooting one target with many weapons was a click per weapon      | "Shoot everything at…", and Shooting says what this turn's move means for Heavy and Assault (UX 397, 398)                                        | card-actions            |
+| One click on a status chip undid a regiment's activation          | Chips only show; the ⋯ beside them changes one, and Undo activation asks first (UX 399)                                                          | card-actions            |
+| FSD and Conquest stats overflowed the card; the TOW card was long | Stats in rows of seven, numbered systems on their own rows; stats first, manoeuvres under Move, unavailable actions folded (UX 400, 401)         | card-widths             |
+| Mail: the invitee saw Start battle; the invite named no one       | Only the inviter starts; the invite says "Ana invites you to Sci-fi battle (1 vs 1, Crossfire)"; mail games preset the mission too (UX 402, 405) | (two browsers, by hand) |
+| The fourth player's name prompt came 20 s late                    | The name is asked while the table connects and used the moment they sit down (UX 403)                                                            | p2p-host-join           |
+| 2 vs 2 hid under More ways to play                                | A 1 vs 1 / 2 vs 2 switch beside Host a game (UX 406)                                                                                             | (by hand)               |
+| The replay bar wrapped after the game                             | What if, Share and Review fold into ⋯ once the game is over (UX 407)                                                                             | (by hand)               |
+| Clips: the whole battle ran 2–3 minutes                           | The reel comes first; "The whole battle, cut down" is about a minute; the camera frames each attack; caption spacing matches the page            | clip-options            |
+| Solo log opened with joins and renames                            | Join lines take the name set before the battle, renames during setup aren't logged, and deploy lines name the force only (UX 409, 410)           | (unit tests)            |
+| Fight phase coach said "Player 1's turn" against the fight order  | It leads with whose pick it is; the computer takes its picks, in the player's turn too (PX #57 review)                                           | (unit tests, by hand)   |
+
+The 40k charge's declared targets are kept on the unit as `chargeAt.<id>` flags until its next turn, so the rules can check that the charge move ends engaged with each.
