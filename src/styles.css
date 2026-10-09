@@ -5165,3 +5165,106 @@ button.teach-button:hover {
     bottom: 140px;
   }
 }
+/* Game review (#61) on the stats sheet. */
+.game-review {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.game-review progress {
+  width: 100%;
+}
+.review-chart {
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.review-chart .line {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.review-chart .mid {
+  stroke: #6b7280;
+  stroke-dasharray: 3 3;
+}
+.review-chart .round {
+  stroke: #2f3542;
+}
+.review-chart .cross {
+  stroke: #9ca3af;
+}
+.review-chart .tick {
+  fill: #9ca3af;
+  font-size: 0.714rem;
+}
+.review-chart .mark {
+  stroke: #111318;
+  stroke-width: 2;
+  cursor: pointer;
+}
+.game-review .chart-read {
+  margin: 0;
+  min-height: 1.3em;
+}
+.game-review ol.turning {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.game-review ol.turning li {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #2f3542;
+}
+.game-review ol.turning li.on {
+  border-color: #60a5fa;
+}
+.game-review ol.turning .tp-head,
+.game-review ol.turning .tp-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.game-review .kind {
+  font-size: 0.786rem;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #1f2937;
+}
+.game-review .kind.costly,
+.game-review .kind.missed,
+.game-review .kind.down {
+  color: #fca5a5;
+}
+.game-review .kind.strong,
+.game-review .kind.dice {
+  color: #86efac;
+}
+.game-review .takeaways {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.game-review .takeaways ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.panel.better-move {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: min(560px, calc(100vw - 32px));
+}

@@ -374,37 +374,37 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:310
+#: src/GameScreen.tsx:312
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:311
+#: src/GameScreen.tsx:313
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:312
+#: src/GameScreen.tsx:314
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:313
+#: src/GameScreen.tsx:315
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:318
+#: src/GameScreen.tsx:320
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:380
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:319
+#: src/GameScreen.tsx:321
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:325
+#: src/GameScreen.tsx:327
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -912,7 +912,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:572
 #: src/companion/CompanionScreen.tsx:92
-#: src/ui/StatsScreen.tsx:145
+#: src/ui/StatsScreen.tsx:149
 msgid "Units"
 msgstr ""
 
@@ -970,7 +970,7 @@ msgid "D"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:613
-#: src/ui/StatsScreen.tsx:154
+#: src/ui/StatsScreen.tsx:158
 msgid "Lost"
 msgstr ""
 
@@ -1035,7 +1035,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:673
 #: src/ui/RoundCard.tsx:113
-#: src/ui/StatsScreen.tsx:69
+#: src/ui/StatsScreen.tsx:72
 msgid "{n} round"
 msgid_plural "{n} rounds"
 msgstr[0] ""
@@ -1073,7 +1073,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:736
 #: src/ui/ArmyImport.tsx:309
-#: src/ui/StatsScreen.tsx:150
+#: src/ui/StatsScreen.tsx:154
 msgid "Unit"
 msgstr ""
 
@@ -1441,7 +1441,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:141
 #: src/ui/ReplayBar.tsx:171
-#: src/ui/StatsScreen.tsx:78
+#: src/ui/StatsScreen.tsx:81
 msgid "Share…"
 msgstr ""
 
@@ -1503,7 +1503,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:301
 #: src/ui/Hud.tsx:226
-#: src/ui/StatsScreen.tsx:206
+#: src/ui/StatsScreen.tsx:210
 msgid "Roll"
 msgstr ""
 
@@ -2356,6 +2356,7 @@ msgid "Language"
 msgstr ""
 
 #: src/i18n/names.ts:10
+#: src/review/ReviewPanel.tsx:105
 msgid "Player {n}"
 msgstr ""
 
@@ -3157,31 +3158,31 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/render/Board.tsx:1018
+#: src/render/Board.tsx:1055
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1020
+#: src/render/Board.tsx:1057
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1025
+#: src/render/Board.tsx:1062
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1472
+#: src/render/Board.tsx:1509
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:954
+#: src/render/Board.tsx:991
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:956
+#: src/render/Board.tsx:993
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:957
+#: src/render/Board.tsx:994
 msgid "{label}: nobody holds it"
 msgstr ""
 
@@ -3501,6 +3502,213 @@ msgstr ""
 #: src/replay/review.ts:185
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
+
+#: src/review/ReviewPanel.tsx:128
+msgid "Turning points"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:148
+msgid "No big swings: both sides played close to the best on offer."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:150
+msgid "Takeaways"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:172
+msgid "Costly"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:174
+msgid "Strong"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:176
+msgid "Missed chance"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:178
+msgid "Lucky dice"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:179
+msgid "Unlucky dice"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:227
+#: src/review/ReviewPanel.tsx:231
+msgid "{side} ahead"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:238
+msgid "Expected result across the game"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:255
+#: src/ui/Missions.tsx:378
+msgid "R{n}"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:290
+msgid "Round {round}: {side} {n}% to win"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:295
+msgid "How the computer rated each side's chances as the game went on."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:328
+msgid "{played}. Better: {better} (about {vp} VP more)."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:334
+msgid "Moved on with {better} still to do (about {vp} VP)."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:339
+msgid "{played}: about {vp} VP better than the next best choice."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:341
+msgid "{played}: the dice gave about {vp} VP more than the average."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:342
+msgid "{played}: the dice gave about {vp} VP less than the average."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:383
+msgid "{side} · round {round}, {phase}"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:392
+#: src/ui/StatsScreen.tsx:123
+msgid "Watch it again on the table"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:393
+msgid "Show"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:399
+msgid "A new game on this screen, just before this choice"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:401
+msgid "Try the better move"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:408
+msgid "Keep it as a note on this replay"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:410
+msgid "Added to notes"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:410
+msgid "Add to notes"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:426
+msgid "Try the better move for {side}:"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:51
+#: src/review/ReviewPanel.tsx:65
+#: src/review/ReviewPanel.tsx:73
+#: src/review/ReviewPanel.tsx:119
+#: src/review/ReviewPanel.tsx:366
+msgid "Game review"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:53
+msgid "The computer goes back over every decision: what each was worth, the turning points, and what to try next time."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:58
+#: src/ui/Hud.tsx:242
+msgid "Review this game"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:66
+msgid "Going over every decision… ({n}%)"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:74
+msgid "The review stopped: {why}"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:75
+#: src/ui/Packages.tsx:582
+msgid "Try again"
+msgstr ""
+
+#: src/review/words.ts:101
+msgid "Your targets cost you most: {n} attack gave up about {vp} VP. Finish off a unit you've hurt before starting on a fresh one."
+msgid_plural "Your targets cost you most: {n} attacks gave up about {vp} VP between them. Finish off a unit you've hurt before starting on a fresh one."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/review/words.ts:108
+msgid "Your stratagems cost about {vp} VP: save them for the attack that needs them."
+msgstr ""
+
+#: src/review/words.ts:111
+msgid "Your choices gave up about {vp} VP over the game."
+msgstr ""
+
+#: src/review/words.ts:119
+msgid "You ended {n} phase with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
+msgid_plural "You ended {n} phases with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/review/words.ts:133
+msgid "Your dice ran hot: about {vp} VP above the average. Don't count on that next time."
+msgstr ""
+
+#: src/review/words.ts:136
+msgid "Your dice ran cold: about {vp} VP below the average. The choices matter more than that."
+msgstr ""
+
+#: src/review/words.ts:147
+msgid "Your best call: {move} in round {round}, about {vp} VP better than anything else on offer."
+msgstr ""
+
+#: src/review/words.ts:162
+msgid "The costliest call: {move} in round {round}. {better} was worth about {vp} VP more."
+msgstr ""
+
+#: src/review/words.ts:176
+msgid "{clean} of your {n} choices were as good as the best on offer."
+msgstr ""
+
+#: src/review/words.ts:22
+msgid "moving on to the next phase"
+msgstr ""
+
+#: src/review/words.ts:32
+msgid "{action} on {unit}"
+msgstr ""
+
+#: src/review/words.ts:39
+msgid "{action} with {weapon}"
+msgstr ""
+
+#: src/review/words.ts:40
+msgid "{unit}: {action}, {why}"
+msgstr ""
+
+#: src/review/words.ts:49
+msgid "moving"
+msgstr ""
+
+#: src/review/words.ts:94
+msgid "Movement cost you most: {n} move gave up about {vp} VP. Before moving, look at where the enemy can shoot next turn."
+msgid_plural "Movement cost you most: {n} moves gave up about {vp} VP between them. Before moving, look at where the enemy can shoot next turn."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/share/SharePanel.tsx:161
 #: src/share/SharePanel.tsx:416
@@ -5482,7 +5690,7 @@ msgstr ""
 
 #: src/ui/DicePicker.tsx:59
 #: src/ui/Hud.tsx:207
-#: src/ui/StatsScreen.tsx:207
+#: src/ui/StatsScreen.tsx:211
 msgid "Dice"
 msgstr ""
 
@@ -5512,7 +5720,7 @@ msgid "{title}: {n} of {total} pass"
 msgstr ""
 
 #: src/ui/DiceTray.tsx:351
-#: src/ui/StatsScreen.tsx:152
+#: src/ui/StatsScreen.tsx:156
 #: src/ui/stakes.ts:94
 msgid "Slain"
 msgstr ""
@@ -5803,10 +6011,6 @@ msgstr ""
 #: src/ui/Hud.tsx:241
 #: src/ui/ReplayBar.tsx:175
 msgid "Open this game as a replay to add notes and marks"
-msgstr ""
-
-#: src/ui/Hud.tsx:242
-msgid "Review this game"
 msgstr ""
 
 #: src/ui/Hud.tsx:273
@@ -6419,10 +6623,6 @@ msgstr ""
 msgid "A draw"
 msgstr ""
 
-#: src/ui/Missions.tsx:378
-msgid "R{n}"
-msgstr ""
-
 #: src/ui/Missions.tsx:380
 msgid "Total"
 msgstr ""
@@ -6734,10 +6934,6 @@ msgstr ""
 
 #: src/ui/Packages.tsx:577
 msgid "That didn't match what the game expects."
-msgstr ""
-
-#: src/ui/Packages.tsx:582
-msgid "Try again"
 msgstr ""
 
 #: src/ui/Packages.tsx:584
@@ -7750,111 +7946,107 @@ msgstr ""
 msgid "{side}'s army"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:108
+#: src/ui/StatsScreen.tsx:102
+msgid "Dice against the odds"
+msgstr ""
+
+#: src/ui/StatsScreen.tsx:112
 msgid "Moments"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:119
-msgid "Watch it again on the table"
-msgstr ""
-
-#: src/ui/StatsScreen.tsx:132
+#: src/ui/StatsScreen.tsx:136
 msgid "A new game on this screen, just before this moment"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:135
+#: src/ui/StatsScreen.tsx:139
 msgid "Practice from here"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:151
+#: src/ui/StatsScreen.tsx:155
 msgid "Wounds this unit's attacks took off enemy models"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:151
+#: src/ui/StatsScreen.tsx:155
 msgid "Dealt"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:152
+#: src/ui/StatsScreen.tsx:156
 msgid "Enemy models this unit's attacks destroyed"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:153
+#: src/ui/StatsScreen.tsx:157
 msgid "Wounds this unit lost, from any cause"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:153
+#: src/ui/StatsScreen.tsx:157
 msgid "Taken"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:154
+#: src/ui/StatsScreen.tsx:158
 msgid "Models this unit lost, from any cause"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:173
+#: src/ui/StatsScreen.tsx:177
 msgid "No damage dealt yet."
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:194
+#: src/ui/StatsScreen.tsx:198
 msgid "even overall (luck in one roll, not another)"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:195
+#: src/ui/StatsScreen.tsx:199
 msgid "right on the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:197
+#: src/ui/StatsScreen.tsx:201
 msgid "{dice} dice luckier than the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:198
+#: src/ui/StatsScreen.tsx:202
 msgid "{dice} dice unluckier than the odds"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:207
+#: src/ui/StatsScreen.tsx:211
 msgid "Dice rolled"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:208
+#: src/ui/StatsScreen.tsx:212
 msgid "Dice that passed (hits, wounds, saves made)"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:208
+#: src/ui/StatsScreen.tsx:212
 #: src/ui/stakes.ts:73
 msgid "Passed"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:209
+#: src/ui/StatsScreen.tsx:213
 msgid "Expected"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:210
+#: src/ui/StatsScreen.tsx:214
 msgid "Dice that passed minus dice expected to"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:228
+#: src/ui/StatsScreen.tsx:232
 msgid "No rolls yet."
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:256
+#: src/ui/StatsScreen.tsx:260
 msgid "{n} pts"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:279
+#: src/ui/StatsScreen.tsx:283
 msgid "{player}, round {round}: {n} pts"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:66
-#: src/ui/StatsScreen.tsx:68
+#: src/ui/StatsScreen.tsx:69
+#: src/ui/StatsScreen.tsx:71
 msgid "Battle stats"
 msgstr ""
 
-#: src/ui/StatsScreen.tsx:93
-#: src/ui/StatsScreen.tsx:264
+#: src/ui/StatsScreen.tsx:97
+#: src/ui/StatsScreen.tsx:268
 msgid "Points destroyed per round"
-msgstr ""
-
-#: src/ui/StatsScreen.tsx:98
-msgid "Dice against the odds"
 msgstr ""
 
 #: src/ui/StatusMenu.tsx:31

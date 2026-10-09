@@ -80,6 +80,8 @@ interface BotOptions {
   planWidth?: number;
   /** The planner's last step: the enemy's whole turn played greedily, not only their guns. */
   replyTurn?: boolean;
+  /** Reviewing a game (#61): goes of the rest of the turn per move judged. */
+  planPasses?: number;
 }
 
 /** The module's tuning for the bot, if it has any. */
@@ -87,22 +89,67 @@ function tuningOf(system: string | undefined): BotTuning | undefined {
   return gameModule(system)?.bot;
 }
 
-export function botPolicy(level: Level, start: GameState, seat: number, opts: BotOptions): Policy {
-  const kept = opts.kept ?? new Map();
-  const rng = seededRng(opts.seed);
-  const ctx: BotContext & { mark?: string } = {
+function contextFor(start: GameState, opts: BotOptions, rng: Rng): BotContext & { mark?: string } {
+  return {
     rng,
-    kept,
+    kept: opts.kept ?? new Map(),
     idle: 0,
     tidy: true,
     // A package game with no data actions: units head for the enemy and try their code actions.
     ...(systemOf(start).actions.length ? {} : { wholeGame: true }),
     ...(opts.packageActions ? { packageActions: opts.packageActions } : {}),
   };
+}
+
+export function botPolicy(level: Level, start: GameState, seat: number, opts: BotOptions): Policy {
+  const rng = seededRng(opts.seed);
+  const ctx = contextFor(start, opts, rng);
   return guarded(
     level === "random" ? randomPolicy(ctx, seat) : new Thinker(level, start, seat, ctx, rng, opts),
     seat,
   );
+}
+
+/** What a decision was worth against the others on offer, judged as Sharp judges a table (#61 Game review). */
+export interface Appraisal {
+  /** The best option found and its worth (on average, for one with dice). */
+  best: { move: BotMove; score: number } | null;
+  /** The move played, judged the same way; null when the rules wouldn't take it again. */
+  played: number | null;
+  /** The table as it stands, doing nothing. */
+  base: number;
+  /** How many options there were, and the middle one's worth. */
+  options: number;
+  median: number;
+  /** The best option that isn't the one played (another unit, action or target), if any. */
+  second?: number;
+  /** Judged with the rest of the turn played out (moves and charges, as Sharp plans them). */
+  deep?: boolean;
+  /** What the played move used up this phase (a unit's move, a weapon fired). */
+  key?: string;
+}
+
+/** Sharp's eye on a game already played, for one side (#61): what each decision was worth, and the table's. */
+export interface Analyst {
+  appraise(
+    record: GameRecord,
+    state: GameState,
+    played: BotMove | null,
+    used: ReadonlySet<string>,
+    /** A closer look (a turning point being checked): more dice and more goes of the turn. */
+    closer?: boolean,
+  ): Appraisal;
+  /** How the table stands for this side (higher is better). */
+  value(state: GameState): number;
+  /** What a whole army is worth on that scale. */
+  readonly armyVp: number;
+}
+
+export function analyst(start: GameState, seat: number, opts: Partial<BotOptions> = {}): Analyst {
+  const o: BotOptions = { seed: 1, tries: 3, beam: 0, plan: 0, planPasses: 3, planWidth: 4, ...opts };
+  const rng = seededRng(o.seed);
+  const thinker = new Thinker("sharp", start, seat, contextFor(start, o, rng), rng, o);
+  return thinker;
 }
 
 /** The teaching opponent: the tidy soak bot. */
@@ -187,7 +234,7 @@ const now = () => (globalThis.performance ?? Date).now();
 const CP_WORTH = 0.01;
 
 const DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.BOT_DBG;
-class Thinker implements Policy {
+class Thinker implements Policy, Analyst {
   readonly name: string;
   private readonly sim: Sim;
   private readonly judge: Judge;
@@ -200,6 +247,7 @@ class Thinker implements Policy {
   private readonly planWidth: number;
   /** The planner's last step: the enemy's whole turn (true) or only their guns. */
   private readonly replyTurn: boolean;
+  private readonly planPasses: number;
   private readonly weigh: BotContext;
 
   constructor(
@@ -232,7 +280,129 @@ class Thinker implements Policy {
     this.planMs = opts.plan ?? (sharp ? PLAN_MS : 0);
     this.planWidth = opts.planWidth ?? 5;
     this.replyTurn = opts.replyTurn ?? tuning?.planReply !== "shots";
+    this.planPasses = opts.planPasses ?? 3;
     this.weigh = { ...ctx, weighing: true };
+  }
+
+  get armyVp(): number {
+    return this.judge.armyVp;
+  }
+
+  value(state: GameState): number {
+    return evaluate(state, this.judge);
+  }
+
+  appraise(
+    record: GameRecord,
+    state: GameState,
+    played: BotMove | null,
+    used: ReadonlySet<string>,
+    closer = false,
+  ): Appraisal {
+    this.sim.update(record, state);
+    const tries = closer ? this.tries * 2 : this.tries;
+    const passes = closer ? this.planPasses * 3 : this.planPasses;
+    const own = this.rng;
+    const mine = new Set(sidePlayers(state, this.seat).map((p) => p.id));
+    const base = evaluate(this.sim.settle(state, own, new Map()), this.judge);
+    const fights = fightPick(state, mine);
+    const all = this.candidates(state, mine).filter(
+      (c) =>
+        (!c.key || !used.has(c.key)) &&
+        (!fights || (c.move.intent.type === "action/take" && fights.units.includes(c.move.intent.unitId))) &&
+        legal(record, state, c.move),
+    );
+    // Every option meets the same dice, so they differ by the choice, not by luck.
+    const seed = Math.floor(own() * 2 ** 31);
+    const worth = (c: Candidate, tries: number) => {
+      this.rng = seededRng(seed);
+      try {
+        return c.activates
+          ? this.activation(state, c, mine, base)
+          : c.boost
+            ? this.boosted(state, c, mine)
+            : this.scoreOf(state, c, c.tries > 1 ? tries : 1);
+      } finally {
+        this.rng = own;
+      }
+    };
+    // Taking a whole turn, every unit gets its go: a choice is weighed against what else that
+    // unit (or that stratagem) could have done, not against another unit going first.
+    const who = played ? unitOf(state, played) : undefined;
+    if (who !== undefined && !plainActivations(state))
+      all.splice(0, all.length, ...all.filter((c) => unitOf(state, c.move) === who));
+    const same = played ? all.find((c) => sameMove(c.move, played)) : undefined;
+    // The move as played (where it went, too), judged as its like would be; a code action whose
+    // move the rules make later is judged as the bot would have played it.
+    const key = played ? usedKey(state, played) : undefined;
+    const like =
+      played && !same && isMove(played) ? all.find((c) => c.key === key && isMove(c.move)) : undefined;
+    const mine1: Candidate | undefined = !played
+      ? undefined
+      : same
+        ? { ...same, move: same.move.then && !played.then ? same.move : played }
+        : like
+          ? { ...like, move: played }
+          : { move: played, ...(key ? { key } : {}), tries: isMove(played) ? 1 : tries };
+    // One go each, then the best few (and the one played) again with more dice.
+    const quick = all.flatMap((c) => {
+      const v = worth(c, 1);
+      return v === null || c === same ? [] : [{ c, v }];
+    });
+    quick.sort((a, b) => b.v - a.v);
+    for (const q of quick.slice(0, 5)) q.v = worth(q.c, tries) ?? q.v;
+    const playedScore = mine1 ? worth(mine1, tries) : null;
+    if (mine1 && playedScore !== null) quick.push({ c: mine1, v: playedScore });
+    quick.sort((a, b) => b.v - a.v);
+    // Moves in a side's whole turn pay off later in it: the best few, and the one played, each
+    // with the rest of the turn and the enemy's answer played out, as Sharp plans.
+    let deep = false;
+    if (!plainActivations(state) && (played ? isMove(played) : quick.some((q) => isMove(q.c.move)))) {
+      const options = [
+        ...quick.slice(0, this.planWidth).filter((q) => q.c !== mine1),
+        ...quick.filter((q) => q.c === mine1),
+      ];
+      const sums = options.map(() => ({ sum: 0, n: 0 }));
+      const round = state.turn.round;
+      for (let pass = 0; pass < passes; pass++) {
+        const passSeed = seed + pass * 7919;
+        options.forEach((o, i) => {
+          this.rng = seededRng(passSeed);
+          try {
+            const s = this.play(state, o.c.move);
+            const keys = new Set(used);
+            if (o.c.key) keys.add(o.c.key);
+            if (s) {
+              sums[i]!.sum += this.rollout(s, mine, keys, round);
+              sums[i]!.n++;
+            }
+          } finally {
+            this.rng = own;
+          }
+        });
+      }
+      if (sums.every((x) => x.n)) {
+        options.forEach((o, i) => (o.v = sums[i]!.sum / sums[i]!.n));
+        quick.splice(0, quick.length, ...options.sort((a, b) => b.v - a.v));
+        deep = true;
+      }
+    }
+    const top = quick[0];
+    const played1 = quick.find((q) => q.c === mine1);
+    const target = (m: BotMove) => ("targetId" in m.intent ? m.intent.targetId : undefined) ?? "";
+    const other = quick.find(
+      (q) => q.c !== mine1 && (!mine1 || q.c.key !== mine1.key || target(q.c.move) !== target(mine1.move)),
+    );
+    return {
+      best: top ? { move: top.c.move, score: top.v } : null,
+      played: played1?.v ?? null,
+      base,
+      options: all.length,
+      median: quick.length ? quick[Math.floor(quick.length / 2)]!.v : base,
+      ...(other ? { second: other.v } : {}),
+      ...(deep ? { deep } : {}),
+      ...(mine1?.key ? { key: mine1.key } : {}),
+    };
   }
 
   saw(state: GameState, move: BotMove): void {
@@ -897,6 +1067,51 @@ class Thinker implements Policy {
     }
     return out;
   }
+}
+
+/** The same choice: one unit's action (with its weapon and target), or the same placed moves. */
+function sameMove(a: BotMove, b: BotMove): boolean {
+  const x = a.intent;
+  const y = b.intent;
+  if (x.type !== y.type) return false;
+  if (x.type === "action/take" && y.type === "action/take")
+    return (
+      x.unitId === y.unitId &&
+      x.action === y.action &&
+      (("weapon" in x && x.weapon) || "") === (("weapon" in y && y.weapon) || "") &&
+      (("targetId" in x && x.targetId) || "") === (("targetId" in y && y.targetId) || "") &&
+      !a.then === !b.then
+    );
+  return JSON.stringify(x) === JSON.stringify(y);
+}
+
+/** The unit a move is for, or the player action's id. */
+function unitOf(state: GameState, m: BotMove): string | undefined {
+  const i = m.intent;
+  if (i.type === "action/take") return i.unitId;
+  if (i.type === "models/move") return i.moves[0] ? state.models[i.moves[0].id]?.unitId : undefined;
+  if (i.type === "script/start") return typeof i.args?.unit === "string" ? i.args.unit : undefined;
+  if (i.type === "player/action") return `player:${i.action}`;
+  return undefined;
+}
+
+/** What a move played uses up this phase, as the bot keys its own (a unit's move, a weapon fired). */
+export function usedKey(state: GameState, m: BotMove): string | undefined {
+  const i = m.intent;
+  if (i.type === "action/take") {
+    const def = systemOf(state).actions.find((a) => a.id === i.action);
+    return def?.procedure
+      ? `${i.unitId}:${i.action}:${("weapon" in i && i.weapon) || ""}`
+      : takenKey(state, i.unitId, i.action);
+  }
+  if (i.type === "models/move") {
+    const unit = i.moves[0] ? state.models[i.moves[0].id]?.unitId : undefined;
+    return unit ? `${unit}:move` : undefined;
+  }
+  if (i.type === "script/start" && typeof i.args?.unit === "string")
+    return `${i.args.unit}:code:${i.procedure}`;
+  if (i.type === "player/action") return `player:${i.action}`;
+  return undefined;
 }
 
 const isMove = (m: BotMove) => m.intent.type === "models/move" || m.then?.intent.type === "models/move";

@@ -9,6 +9,7 @@ import { playMoment } from "../broadcast/Moments";
 import { useReel } from "../broadcast/reel";
 import { BROADCAST } from "../broadcast/broadcast";
 import { FeedbackCard } from "./Feedback";
+import { ReviewPanel, reviewable } from "../review/ReviewPanel";
 import { Result } from "./Missions";
 import { gameStats, type PlayerStats, type StepLuck } from "../core/stats";
 import { useStore } from "../store";
@@ -43,6 +44,8 @@ export function StatsScreen() {
   // A watcher (the replay page, a spectator at someone's game) neither shares nor branches it (PX).
   const watching = useStore((s) => VIEWER || (!!s.session && !s.review && s.role === "spectator"));
   const game = useGame();
+  // The game review (#61) is for after the game or a replay, never mid-game.
+  const afterwards = useStore((s) => !s.session || s.review || battleOver(s.game));
   // Opens on its own once the battle ends, until someone closes it.
   const open = stats ?? battleOver(game);
   useEffect(() => {
@@ -88,6 +91,7 @@ export function StatsScreen() {
       <Result />
       <BestMoment />
       {!BROADCAST && <FeedbackCard />}
+      {!BROADCAST && afterwards && reviewable(game) && <ReviewPanel watching={watching} close={close} />}
 
       <section>
         <h4>{t("Points destroyed per round")}</h4>

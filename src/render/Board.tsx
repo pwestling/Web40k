@@ -7,7 +7,16 @@ import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@rea
 import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
+import {
+  PerspectiveCamera as PerspectiveCamera3,
+  Plane,
+  Raycaster,
+  TOUCH,
+  Vector2,
+  Vector3,
+  type Camera,
+  type Object3D,
+} from "three";
 import {
   baseSizeInches,
   modelHeight,
@@ -172,14 +181,19 @@ function Cameras() {
   const eyeModel = eye ? game.models[eye.modelId] : undefined;
   // Rebuilt (reset) only when the screen turns between tall and wide, not on every resize.
   const narrow = size.width < size.height;
+  // Upright screens differ a lot in shape (a tablet, a phone): each gets its own fit.
+  const shape = Math.round((size.width / Math.max(1, size.height)) * 20);
   // Tuned for a 60" x 44" table; smaller tables (FSD's 36" x 24") bring the camera in. A tall,
   // narrow screen (a phone) sees less across: back off until the width fits, so both deployment
   // strips are in the opening view (UX 327). 28.2 is the half-width seen at k = 1.
   const k = useMemo(() => {
     const k0 = Math.max(game.table.width / 60, game.table.depth / 44);
+    // Upright, the whole table fits on screen, edge to edge (contain, not cover: UX 421).
+    if (narrow)
+      return portraitFit(game.table.width, game.table.depth, size.width / Math.max(1, size.height), k0);
     const across = 28.2 * k0 * (size.width / Math.max(1, size.height));
     return k0 * Math.max(1, (game.table.width * 0.52) / across);
-  }, [narrow, reset, game.table.width, game.table.depth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [narrow, narrow && shape, reset, game.table.width, game.table.depth]); // eslint-disable-line react-hooks/exhaustive-deps
   if (view === "eye" && eyeModel) {
     const z = (eyeModel.z ?? 0) + modelHeight(eyeModel) * 0.95 + 0.2;
     return (
@@ -195,7 +209,7 @@ function Cameras() {
   if (view !== "top") {
     return (
       <PerspectiveCamera
-        key={`${reset}-${game.table.width}x${game.table.depth}-${narrow ? "n" : "w"}`}
+        key={`${reset}-${game.table.width}x${game.table.depth}-${narrow ? `n${shape}` : "w"}`}
         makeDefault
         position={narrow ? [0, 62 * k, 30 * k * side] : [0, 52 * k, 44 * k * side]}
         fov={45}
@@ -206,6 +220,26 @@ function Cameras() {
   // The tiny z offset keeps the camera's up vector defined and puts the
   // player's own edge at the bottom of the screen.
   return <OrthographicCamera key={reset} makeDefault position={[0, 100, 0.001 * side]} zoom={zoom} />;
+}
+
+/** How far back the upright camera stands so every corner of the table is on screen, with a margin. */
+function portraitFit(width: number, depth: number, aspect: number, k0: number): number {
+  const cam = new PerspectiveCamera3(45, aspect, 0.1, 1000);
+  const corners = [-1, 1].flatMap((x) =>
+    [-1, 1].map((z) => new Vector3((x * width) / 2, 0, (z * depth) / 2)),
+  );
+  const fits = (k: number) => {
+    cam.position.set(0, 62 * k, 30 * k);
+    cam.lookAt(0, 0, 0);
+    cam.updateMatrixWorld();
+    return corners.every((c) => {
+      const p = c.clone().project(cam);
+      return Math.abs(p.x) <= 0.94 && Math.abs(p.y) <= 0.94;
+    });
+  };
+  let k = k0;
+  while (!fits(k) && k < k0 * 6) k *= 1.04;
+  return k;
 }
 
 /** Width the right-hand panel (unit card, attack, terrain editor) takes when open. */

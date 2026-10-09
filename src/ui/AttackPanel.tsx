@@ -279,8 +279,8 @@ export function SpecEditor({
           {spec.kind === "melee" ? t("Fight") : t("Declare attack")}
         </button>
       )}
-      {/* In a lesson the numbers fold away: the form is just weapon, target and Declare (PX review). */}
-      <details className="more-options" open={!coaching && !game.settings.companion}>
+      {/* In a lesson, and on a tablet (UX 422), the numbers fold away: the form is just weapon, target and Declare (PX review). */}
+      <details className="more-options" open={!coaching && !game.settings.companion && !touch()}>
         <summary>{t("More options")}</summary>
         <div className="grid">
           <label>

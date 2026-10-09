@@ -635,8 +635,12 @@ export function resolveIntent(
       return { ...intent, player: from };
     }
     case "turn/next":
-    case "turn/pass":
+    case "turn/pass": {
+      // A finished game stays finished: a stale peer can't start round 6 (UX 70).
+      const rounds = state ? systemOf(state).turn.rounds : undefined;
+      if (state && typeof rounds === "number" && state.turn.round > rounds) return null;
       return { ...intent, seed: Math.floor(rng() * 2 ** 31) };
+    }
     case "game/system":
       try {
         getSystem(intent.system);

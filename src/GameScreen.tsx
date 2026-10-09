@@ -29,6 +29,7 @@ import { ReactionPrompt } from "./ui/ProcedurePanels";
 import { ReplayBar } from "./ui/ReplayBar";
 import { ReplayTitle, RoundCard } from "./ui/RoundCard";
 import { StatsScreen } from "./ui/StatsScreen";
+import { BetterMoveHint } from "./review/ReviewPanel";
 import { systemModule } from "./systems";
 import { PackageCards } from "./ui/Packages";
 import { ScorePanel } from "./ui/Missions";
@@ -293,6 +294,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <StatsScreen />
           <PackageCards />
           <SandboxNotice />
+          {!editing && <BetterMoveHint />}
           {!editing && <WhatNow />}
           {!editing && <Coach />}
           {!editing && <SoloBot />}

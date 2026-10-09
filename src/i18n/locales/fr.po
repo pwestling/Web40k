@@ -448,44 +448,44 @@ msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 msgid "Setting up the table…"
 msgstr "Installation de la table…"
 
-#: src/GameScreen.tsx:310
+#: src/GameScreen.tsx:312
 #, fuzzy
 msgid "Fully visible"
 msgstr "Entièrement visible"
 
-#: src/GameScreen.tsx:311
+#: src/GameScreen.tsx:313
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Partiellement visible ou à couvert"
 
-#: src/GameScreen.tsx:312
+#: src/GameScreen.tsx:314
 #, fuzzy
 msgid "Hidden"
 msgstr "Caché"
 
-#: src/GameScreen.tsx:313
+#: src/GameScreen.tsx:315
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 
-#: src/GameScreen.tsx:318
+#: src/GameScreen.tsx:320
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:380
 #, fuzzy
 msgid "Open"
 msgstr "Dégagé"
 
-#: src/GameScreen.tsx:319
+#: src/GameScreen.tsx:321
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Gênant : couvert"
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Bloquant : pas de vue"
 
-#: src/GameScreen.tsx:325
+#: src/GameScreen.tsx:327
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Quitter la vue de la figurine (Esc)"
@@ -1107,7 +1107,7 @@ msgstr "Parties"
 
 #: src/campaign/CampaignUI.tsx:572
 #: src/companion/CompanionScreen.tsx:92
-#: src/ui/StatsScreen.tsx:145
+#: src/ui/StatsScreen.tsx:149
 #, fuzzy
 msgid "Units"
 msgstr "Unités"
@@ -1178,7 +1178,7 @@ msgid "D"
 msgstr "N"
 
 #: src/campaign/CampaignUI.tsx:613
-#: src/ui/StatsScreen.tsx:154
+#: src/ui/StatsScreen.tsx:158
 #, fuzzy
 msgid "Lost"
 msgstr "Perdues"
@@ -1256,7 +1256,7 @@ msgstr "saisi à la main"
 
 #: src/campaign/CampaignUI.tsx:673
 #: src/ui/RoundCard.tsx:113
-#: src/ui/StatsScreen.tsx:69
+#: src/ui/StatsScreen.tsx:72
 #, fuzzy
 msgid "{n} round"
 msgid_plural "{n} rounds"
@@ -1302,7 +1302,7 @@ msgstr "Modifier"
 
 #: src/campaign/CampaignUI.tsx:736
 #: src/ui/ArmyImport.tsx:309
-#: src/ui/StatsScreen.tsx:150
+#: src/ui/StatsScreen.tsx:154
 #, fuzzy
 msgid "Unit"
 msgstr "Unité"
@@ -1757,7 +1757,7 @@ msgstr "Copier le lien d’invitation"
 
 #: src/companion/CompanionScreen.tsx:141
 #: src/ui/ReplayBar.tsx:171
-#: src/ui/StatsScreen.tsx:78
+#: src/ui/StatsScreen.tsx:81
 #, fuzzy
 msgid "Share…"
 msgstr "Partager…"
@@ -1833,7 +1833,7 @@ msgstr "Faces"
 
 #: src/companion/CompanionScreen.tsx:301
 #: src/ui/Hud.tsx:226
-#: src/ui/StatsScreen.tsx:206
+#: src/ui/StatsScreen.tsx:210
 #, fuzzy
 msgid "Roll"
 msgstr "Lancer"
@@ -2863,6 +2863,7 @@ msgid "Language"
 msgstr "Langue"
 
 #: src/i18n/names.ts:10
+#: src/review/ReviewPanel.tsx:105
 #, fuzzy
 msgid "Player {n}"
 msgstr "Joueur {n}"
@@ -3851,37 +3852,37 @@ msgstr "Dessin des figurines…"
 msgid "Saving page {n} of {total}…"
 msgstr "Enregistrement de la page {n} sur {total}…"
 
-#: src/render/Board.tsx:1018
+#: src/render/Board.tsx:1055
 #, fuzzy
 msgid "Not visible"
 msgstr "Non visible"
 
-#: src/render/Board.tsx:1020
+#: src/render/Board.tsx:1057
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} visibles · {cover} à couvert"
 
-#: src/render/Board.tsx:1025
+#: src/render/Board.tsx:1062
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} visibles"
 
-#: src/render/Board.tsx:1472
+#: src/render/Board.tsx:1509
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Mouvement {inches}\""
 
-#: src/render/Board.tsx:954
+#: src/render/Board.tsx:991
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label} : tenue par {player}"
 
-#: src/render/Board.tsx:956
+#: src/render/Board.tsx:993
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label} : contestée"
 
-#: src/render/Board.tsx:957
+#: src/render/Board.tsx:994
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label} : tenue par personne"
@@ -4273,6 +4274,261 @@ msgstr "Après la bataille"
 #, fuzzy
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Revoir la partie quitte son salon. La partie reste enregistrée et peut être reprise depuis la page d'accueil."
+
+#: src/review/ReviewPanel.tsx:128
+#, fuzzy
+msgid "Turning points"
+msgstr "Tournants"
+
+#: src/review/ReviewPanel.tsx:148
+#, fuzzy
+msgid "No big swings: both sides played close to the best on offer."
+msgstr "Pas de grands écarts : les deux camps ont joué près du meilleur coup possible."
+
+#: src/review/ReviewPanel.tsx:150
+#, fuzzy
+msgid "Takeaways"
+msgstr "À retenir"
+
+#: src/review/ReviewPanel.tsx:172
+#, fuzzy
+msgid "Costly"
+msgstr "Coûteux"
+
+#: src/review/ReviewPanel.tsx:174
+#, fuzzy
+msgid "Strong"
+msgstr "Fort"
+
+#: src/review/ReviewPanel.tsx:176
+#, fuzzy
+msgid "Missed chance"
+msgstr "Occasion manquée"
+
+#: src/review/ReviewPanel.tsx:178
+#, fuzzy
+msgid "Lucky dice"
+msgstr "Dés chanceux"
+
+#: src/review/ReviewPanel.tsx:179
+#, fuzzy
+msgid "Unlucky dice"
+msgstr "Dés malchanceux"
+
+#: src/review/ReviewPanel.tsx:227
+#: src/review/ReviewPanel.tsx:231
+#, fuzzy
+msgid "{side} ahead"
+msgstr "{side} devant"
+
+#: src/review/ReviewPanel.tsx:238
+#, fuzzy
+msgid "Expected result across the game"
+msgstr "Résultat attendu au fil de la partie"
+
+#: src/review/ReviewPanel.tsx:255
+#: src/ui/Missions.tsx:378
+#, fuzzy
+msgid "R{n}"
+msgstr "R{n}"
+
+#: src/review/ReviewPanel.tsx:290
+#, fuzzy
+msgid "Round {round}: {side} {n}% to win"
+msgstr "Round {round} : {side} gagne à {n} %"
+
+#: src/review/ReviewPanel.tsx:295
+#, fuzzy
+msgid "How the computer rated each side's chances as the game went on."
+msgstr "Comment l'ordinateur a jugé les chances de chaque camp au fil de la partie."
+
+#: src/review/ReviewPanel.tsx:328
+#, fuzzy
+msgid "{played}. Better: {better} (about {vp} VP more)."
+msgstr "{played}. Mieux : {better} (environ {vp} VP de plus)."
+
+#: src/review/ReviewPanel.tsx:334
+#, fuzzy
+msgid "Moved on with {better} still to do (about {vp} VP)."
+msgstr "Passé à la suite alors qu'il restait {better} (environ {vp} VP)."
+
+#: src/review/ReviewPanel.tsx:339
+#, fuzzy
+msgid "{played}: about {vp} VP better than the next best choice."
+msgstr "{played} : environ {vp} VP de mieux que le meilleur autre choix."
+
+#: src/review/ReviewPanel.tsx:341
+#, fuzzy
+msgid "{played}: the dice gave about {vp} VP more than the average."
+msgstr "{played} : les dés ont donné environ {vp} VP de plus que la moyenne."
+
+#: src/review/ReviewPanel.tsx:342
+#, fuzzy
+msgid "{played}: the dice gave about {vp} VP less than the average."
+msgstr "{played} : les dés ont donné environ {vp} VP de moins que la moyenne."
+
+#: src/review/ReviewPanel.tsx:383
+#, fuzzy
+msgid "{side} · round {round}, {phase}"
+msgstr "{side} · round {round}, {phase}"
+
+#: src/review/ReviewPanel.tsx:392
+#: src/ui/StatsScreen.tsx:123
+#, fuzzy
+msgid "Watch it again on the table"
+msgstr "Revoir sur la table"
+
+#: src/review/ReviewPanel.tsx:393
+#, fuzzy
+msgid "Show"
+msgstr "Montrer"
+
+#: src/review/ReviewPanel.tsx:399
+#, fuzzy
+msgid "A new game on this screen, just before this choice"
+msgstr "Une nouvelle partie sur cet écran, juste avant ce choix"
+
+#: src/review/ReviewPanel.tsx:401
+#, fuzzy
+msgid "Try the better move"
+msgstr "Essayer le meilleur coup"
+
+#: src/review/ReviewPanel.tsx:408
+#, fuzzy
+msgid "Keep it as a note on this replay"
+msgstr "Garder comme note sur ce replay"
+
+#: src/review/ReviewPanel.tsx:410
+#, fuzzy
+msgid "Added to notes"
+msgstr "Ajouté aux notes"
+
+#: src/review/ReviewPanel.tsx:410
+#, fuzzy
+msgid "Add to notes"
+msgstr "Ajouter aux notes"
+
+#: src/review/ReviewPanel.tsx:426
+#, fuzzy
+msgid "Try the better move for {side}:"
+msgstr "Essaie le meilleur coup pour {side} :"
+
+#: src/review/ReviewPanel.tsx:51
+#: src/review/ReviewPanel.tsx:65
+#: src/review/ReviewPanel.tsx:73
+#: src/review/ReviewPanel.tsx:119
+#: src/review/ReviewPanel.tsx:366
+#, fuzzy
+msgid "Game review"
+msgstr "Analyse de la partie"
+
+#: src/review/ReviewPanel.tsx:53
+#, fuzzy
+msgid "The computer goes back over every decision: what each was worth, the turning points, and what to try next time."
+msgstr "L'ordinateur repasse chaque décision : ce qu'elle valait, les tournants, et quoi essayer la prochaine fois."
+
+#: src/review/ReviewPanel.tsx:58
+#: src/ui/Hud.tsx:242
+#, fuzzy
+msgid "Review this game"
+msgstr "Revoir la partie"
+
+#: src/review/ReviewPanel.tsx:66
+#, fuzzy
+msgid "Going over every decision… ({n}%)"
+msgstr "Analyse de chaque décision… ({n} %)"
+
+#: src/review/ReviewPanel.tsx:74
+#, fuzzy
+msgid "The review stopped: {why}"
+msgstr "L'analyse s'est arrêtée : {why}"
+
+#: src/review/ReviewPanel.tsx:75
+#: src/ui/Packages.tsx:582
+#, fuzzy
+msgid "Try again"
+msgstr "Réessayer"
+
+#: src/review/words.ts:101
+#, fuzzy
+msgid "Your targets cost you most: {n} attack gave up about {vp} VP. Finish off a unit you've hurt before starting on a fresh one."
+msgid_plural "Your targets cost you most: {n} attacks gave up about {vp} VP between them. Finish off a unit you've hurt before starting on a fresh one."
+msgstr[0] "Tes cibles t'ont le plus coûté : {n} attaque a perdu environ {vp} VP. Achève une unité blessée avant d'en attaquer une intacte."
+msgstr[1] "Tes cibles t'ont le plus coûté : {n} attaques ont perdu environ {vp} VP en tout. Achève une unité blessée avant d'en attaquer une intacte."
+
+#: src/review/words.ts:108
+#, fuzzy
+msgid "Your stratagems cost about {vp} VP: save them for the attack that needs them."
+msgstr "Tes stratagèmes ont coûté environ {vp} VP : garde-les pour l'attaque qui en a besoin."
+
+#: src/review/words.ts:111
+#, fuzzy
+msgid "Your choices gave up about {vp} VP over the game."
+msgstr "Tes choix ont perdu environ {vp} VP sur la partie."
+
+#: src/review/words.ts:119
+#, fuzzy
+msgid "You ended {n} phase with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
+msgid_plural "You ended {n} phases with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
+msgstr[0] "Tu as terminé {n} phase alors qu'il restait quelque chose d'utile à faire (environ {vp} VP). Vérifie chaque unité avant d'appuyer sur ▶."
+msgstr[1] "Tu as terminé {n} phases alors qu'il restait quelque chose d'utile à faire (environ {vp} VP). Vérifie chaque unité avant d'appuyer sur ▶."
+
+#: src/review/words.ts:133
+#, fuzzy
+msgid "Your dice ran hot: about {vp} VP above the average. Don't count on that next time."
+msgstr "Tes dés étaient chauds : environ {vp} VP au-dessus de la moyenne. N'y compte pas la prochaine fois."
+
+#: src/review/words.ts:136
+#, fuzzy
+msgid "Your dice ran cold: about {vp} VP below the average. The choices matter more than that."
+msgstr "Tes dés étaient froids : environ {vp} VP sous la moyenne. Les choix comptent plus que ça."
+
+#: src/review/words.ts:147
+#, fuzzy
+msgid "Your best call: {move} in round {round}, about {vp} VP better than anything else on offer."
+msgstr "Ton meilleur choix : {move} au round {round}, environ {vp} VP de mieux que tout le reste."
+
+#: src/review/words.ts:162
+#, fuzzy
+msgid "The costliest call: {move} in round {round}. {better} was worth about {vp} VP more."
+msgstr "Le choix le plus coûteux : {move} au round {round}. {better} valait environ {vp} VP de plus."
+
+#: src/review/words.ts:176
+#, fuzzy
+msgid "{clean} of your {n} choices were as good as the best on offer."
+msgstr "{clean} de tes {n} choix valaient le meilleur possible."
+
+#: src/review/words.ts:22
+#, fuzzy
+msgid "moving on to the next phase"
+msgstr "passer à la phase suivante"
+
+#: src/review/words.ts:32
+#, fuzzy
+msgid "{action} on {unit}"
+msgstr "{action} sur {unit}"
+
+#: src/review/words.ts:39
+#, fuzzy
+msgid "{action} with {weapon}"
+msgstr "{action} avec {weapon}"
+
+#: src/review/words.ts:40
+#, fuzzy
+msgid "{unit}: {action}, {why}"
+msgstr "{unit} : {action}, {why}"
+
+#: src/review/words.ts:49
+#, fuzzy
+msgid "moving"
+msgstr "se déplace"
+
+#: src/review/words.ts:94
+#, fuzzy
+msgid "Movement cost you most: {n} move gave up about {vp} VP. Before moving, look at where the enemy can shoot next turn."
+msgid_plural "Movement cost you most: {n} moves gave up about {vp} VP between them. Before moving, look at where the enemy can shoot next turn."
+msgstr[0] "Le mouvement t'a le plus coûté : {n} mouvement a perdu environ {vp} VP. Avant de bouger, regarde où l'ennemi pourra tirer au prochain tour."
+msgstr[1] "Le mouvement t'a le plus coûté : {n} mouvements ont perdu environ {vp} VP en tout. Avant de bouger, regarde où l'ennemi pourra tirer au prochain tour."
 
 #: src/share/SharePanel.tsx:161
 #: src/share/SharePanel.tsx:416
@@ -6711,7 +6967,7 @@ msgstr "Dés de {name}"
 
 #: src/ui/DicePicker.tsx:59
 #: src/ui/Hud.tsx:207
-#: src/ui/StatsScreen.tsx:207
+#: src/ui/StatsScreen.tsx:211
 #, fuzzy
 msgid "Dice"
 msgstr "Dés"
@@ -6748,7 +7004,7 @@ msgid "{title}: {n} of {total} pass"
 msgstr "{title} : {n} sur {total} réussis"
 
 #: src/ui/DiceTray.tsx:351
-#: src/ui/StatsScreen.tsx:152
+#: src/ui/StatsScreen.tsx:156
 #: src/ui/stakes.ts:94
 #, fuzzy
 msgid "Slain"
@@ -7110,11 +7366,6 @@ msgstr "Modifier les décors"
 #, fuzzy
 msgid "Open this game as a replay to add notes and marks"
 msgstr "Ouvrir cette partie en replay pour ajouter des notes et des marques"
-
-#: src/ui/Hud.tsx:242
-#, fuzzy
-msgid "Review this game"
-msgstr "Revoir la partie"
 
 #: src/ui/Hud.tsx:273
 #, fuzzy
@@ -7873,11 +8124,6 @@ msgstr "{side} gagne"
 msgid "A draw"
 msgstr "Match nul"
 
-#: src/ui/Missions.tsx:378
-#, fuzzy
-msgid "R{n}"
-msgstr "R{n}"
-
 #: src/ui/Missions.tsx:380
 #, fuzzy
 msgid "Total"
@@ -8267,11 +8513,6 @@ msgstr "Réception depuis {name}… {percent} %"
 #, fuzzy
 msgid "That didn't match what the game expects."
 msgstr "Cela ne correspond pas à ce qu'attend la partie."
-
-#: src/ui/Packages.tsx:582
-#, fuzzy
-msgid "Try again"
-msgstr "Réessayer"
 
 #: src/ui/Packages.tsx:584
 #, fuzzy
@@ -9523,138 +9764,133 @@ msgstr "Clic ou Échap pour passer"
 msgid "{side}'s army"
 msgstr "Armée de {side}"
 
-#: src/ui/StatsScreen.tsx:108
+#: src/ui/StatsScreen.tsx:102
+#, fuzzy
+msgid "Dice against the odds"
+msgstr "Dés face aux probabilités"
+
+#: src/ui/StatsScreen.tsx:112
 #, fuzzy
 msgid "Moments"
 msgstr "Moments"
 
-#: src/ui/StatsScreen.tsx:119
-#, fuzzy
-msgid "Watch it again on the table"
-msgstr "Revoir sur la table"
-
-#: src/ui/StatsScreen.tsx:132
+#: src/ui/StatsScreen.tsx:136
 #, fuzzy
 msgid "A new game on this screen, just before this moment"
 msgstr "Une nouvelle partie sur cet écran, juste avant ce moment"
 
-#: src/ui/StatsScreen.tsx:135
+#: src/ui/StatsScreen.tsx:139
 #, fuzzy
 msgid "Practice from here"
 msgstr "S'entraîner d'ici"
 
-#: src/ui/StatsScreen.tsx:151
+#: src/ui/StatsScreen.tsx:155
 #, fuzzy
 msgid "Wounds this unit's attacks took off enemy models"
 msgstr "Points de vie retirés aux figurines ennemies par les attaques de cette unité"
 
-#: src/ui/StatsScreen.tsx:151
+#: src/ui/StatsScreen.tsx:155
 #, fuzzy
 msgid "Dealt"
 msgstr "Infligés"
 
-#: src/ui/StatsScreen.tsx:152
+#: src/ui/StatsScreen.tsx:156
 #, fuzzy
 msgid "Enemy models this unit's attacks destroyed"
 msgstr "Figurines ennemies détruites par les attaques de cette unité"
 
-#: src/ui/StatsScreen.tsx:153
+#: src/ui/StatsScreen.tsx:157
 #, fuzzy
 msgid "Wounds this unit lost, from any cause"
 msgstr "Points de vie perdus par cette unité, quelle qu'en soit la cause"
 
-#: src/ui/StatsScreen.tsx:153
+#: src/ui/StatsScreen.tsx:157
 #, fuzzy
 msgid "Taken"
 msgstr "Subis"
 
-#: src/ui/StatsScreen.tsx:154
+#: src/ui/StatsScreen.tsx:158
 #, fuzzy
 msgid "Models this unit lost, from any cause"
 msgstr "Figurines perdues par cette unité, quelle qu'en soit la cause"
 
-#: src/ui/StatsScreen.tsx:173
+#: src/ui/StatsScreen.tsx:177
 #, fuzzy
 msgid "No damage dealt yet."
 msgstr "Aucun dégât infligé pour l'instant."
 
-#: src/ui/StatsScreen.tsx:194
+#: src/ui/StatsScreen.tsx:198
 #, fuzzy
 msgid "even overall (luck in one roll, not another)"
 msgstr "équilibré au total (chance sur un jet, pas sur un autre)"
 
-#: src/ui/StatsScreen.tsx:195
+#: src/ui/StatsScreen.tsx:199
 #, fuzzy
 msgid "right on the odds"
 msgstr "pile dans la moyenne"
 
-#: src/ui/StatsScreen.tsx:197
+#: src/ui/StatsScreen.tsx:201
 #, fuzzy
 msgid "{dice} dice luckier than the odds"
 msgstr "{dice} dés de plus que la moyenne"
 
-#: src/ui/StatsScreen.tsx:198
+#: src/ui/StatsScreen.tsx:202
 #, fuzzy
 msgid "{dice} dice unluckier than the odds"
 msgstr "{dice} dés de moins que la moyenne"
 
-#: src/ui/StatsScreen.tsx:207
+#: src/ui/StatsScreen.tsx:211
 #, fuzzy
 msgid "Dice rolled"
 msgstr "Dés lancés"
 
-#: src/ui/StatsScreen.tsx:208
+#: src/ui/StatsScreen.tsx:212
 #, fuzzy
 msgid "Dice that passed (hits, wounds, saves made)"
 msgstr "Dés réussis (touches, blessures, sauvegardes réussies)"
 
-#: src/ui/StatsScreen.tsx:208
+#: src/ui/StatsScreen.tsx:212
 #: src/ui/stakes.ts:73
 #, fuzzy
 msgid "Passed"
 msgstr "Réussis"
 
-#: src/ui/StatsScreen.tsx:209
+#: src/ui/StatsScreen.tsx:213
 #, fuzzy
 msgid "Expected"
 msgstr "Attendus"
 
-#: src/ui/StatsScreen.tsx:210
+#: src/ui/StatsScreen.tsx:214
 #, fuzzy
 msgid "Dice that passed minus dice expected to"
 msgstr "Dés réussis moins dés attendus"
 
-#: src/ui/StatsScreen.tsx:228
+#: src/ui/StatsScreen.tsx:232
 #, fuzzy
 msgid "No rolls yet."
 msgstr "Aucun jet pour l'instant."
 
-#: src/ui/StatsScreen.tsx:256
+#: src/ui/StatsScreen.tsx:260
 #, fuzzy
 msgid "{n} pts"
 msgstr "{n} pts"
 
-#: src/ui/StatsScreen.tsx:279
+#: src/ui/StatsScreen.tsx:283
 #, fuzzy
 msgid "{player}, round {round}: {n} pts"
 msgstr "{player}, round {round} : {n} pts"
 
-#: src/ui/StatsScreen.tsx:66
-#: src/ui/StatsScreen.tsx:68
+#: src/ui/StatsScreen.tsx:69
+#: src/ui/StatsScreen.tsx:71
 #, fuzzy
 msgid "Battle stats"
 msgstr "Statistiques de bataille"
 
-#: src/ui/StatsScreen.tsx:93
-#: src/ui/StatsScreen.tsx:264
+#: src/ui/StatsScreen.tsx:97
+#: src/ui/StatsScreen.tsx:268
 #, fuzzy
 msgid "Points destroyed per round"
 msgstr "Points détruits par round"
-
-#: src/ui/StatsScreen.tsx:98
-#, fuzzy
-msgid "Dice against the odds"
-msgstr "Dés face aux probabilités"
 
 #: src/ui/StatusMenu.tsx:31
 #, fuzzy
