@@ -62,19 +62,41 @@ export const fsdBench: BenchSet = {
     }),
     item(
       "keep-command-safe",
-      "The Command Team backs away, not walk up to the enemy guns for nothing",
+      "The Command Team backs away from the Raiders' reach, not walk into it with nothing to shoot",
       async () => {
         const { t, record, id } = await table((t, id) => {
-          t.only(id("Command Team"), id("Raider Gang"), id("Boss Crew")).noObjectives();
-          t.place(id("Command Team"), 16, 6).place(id("Raider Gang"), 14, -6).place(id("Boss Crew"), 17, -6);
+          t.only(id("Command Team"), id("Raider Gang")).noObjectives();
+          // 19" between the nearest bases: out of the Raiders' move and shot (18") until the team
+          // walks 6" nearer, still beyond its own Rifles (9").
+          t.place(id("Command Team"), -9, 0).place(id("Raider Gang"), 14, 0);
           t.activate(id("Command Team"));
         });
         const s = t.s;
         const u = id("Command Team");
         return {
           p: positionOf(record, s, 0),
-          better: moveWith(s, u, "move", goal(s, u, 6, 16, 12)),
-          worse: moveWith(s, u, "move", goal(s, u, 6, 16, 0)),
+          better: moveWith(s, u, "move", goal(s, u, 6, -15, 0)),
+          worse: moveWith(s, u, "move", goal(s, u, 6, 14, 0)),
+        };
+      },
+    ),
+    item(
+      "close-on-the-boss",
+      "Rifles move into range of the Boss Crew's last base, not away from it",
+      async () => {
+        const { t, record, id } = await table((t, id) => {
+          t.only(id("Rifle Squad"), id("Boss Crew")).noObjectives();
+          t.hurt(id("Boss Crew"), 1);
+          // 13" between the nearest bases: beyond the Rifles (9") until they move 6" nearer.
+          t.place(id("Rifle Squad"), -6, 0).place(id("Boss Crew"), 10, 0);
+          t.activate(id("Rifle Squad"));
+        });
+        const s = t.s;
+        const u = id("Rifle Squad");
+        return {
+          p: positionOf(record, s, 0),
+          better: moveWith(s, u, "move", goal(s, u, 6, 10, 0)),
+          worse: moveWith(s, u, "move", goal(s, u, 6, -16, 0)),
         };
       },
     ),

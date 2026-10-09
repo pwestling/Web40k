@@ -236,6 +236,28 @@ describe("Conquest rules audit", () => {
     expect(s.modules?.["conquest-hand"]?.[`landed:${guard}`]).toBe(1);
   });
 
+  it("a charge move into contact lands when it goes further than the die alone (the roll remembered, as the computer rolls it) (#66)", () => {
+    // 8" apart: a 6 and March 5 reach, but the move is longer than the 6.
+    const g = guardFacing(4);
+    const { guard, thralls } = g;
+    let s = hosted(g.s, { type: "action/take", unitId: guard, action: "charge", targetId: thralls }, "p1");
+    s = hosted(
+      s,
+      { type: "dice/roll", count: 1, sides: 6, label: "charge", unitId: guard, targets: [thralls] },
+      "p1",
+      () => 0.99,
+    );
+    expect(s.units[guard]?.status?.charge).toBe(6);
+    const door = closeDoor(s, s.units[guard]!, s.units[thralls]!)!;
+    expect(door.distance).toBeGreaterThan(6);
+    s = hosted(s, { ...door.move, how: "charge" }, "p1");
+    expect(s.units[guard]?.status?.inspired).toBe(true);
+    expect(s.modules?.["conquest-hand"]?.[`landed:${guard}`]).toBe(1);
+    expect(s.modules?.["conquest-hand"]?.[`short:${guard}`]).toBeUndefined();
+    // Its second action is left for the Clash.
+    expect(option(s, guard, "clash", thralls)?.ok).toBe(true);
+  });
+
   it('warns when a march goes sideways or back past half rate, or ends within 1" of an enemy', () => {
     const g = guardFacing(6);
     const { guard } = g;

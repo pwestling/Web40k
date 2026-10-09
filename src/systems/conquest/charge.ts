@@ -101,11 +101,13 @@ const chargeOutcome: CodeProcedure = function* (ctx, args) {
     short = true;
     why = `${reach}" of ${Math.round(gap * 10) / 10}" needed`;
   } else if (args.kind === "move") {
-    if (args.landed) {
+    // In contact is landed: a roll remembered on the unit (the computer's) is the die alone, not the
+    // D6 + March a charge goes, so the core's "went further than the roll" doesn't apply here.
+    if (args.landed || (view.engaged(unit.id).length > 0 && !view.atTable)) {
       if (!unit.status?.broken && !unit.status?.inspired)
         yield ctx.emit({ type: "unit/status", id: unit.id, key: "inspired", value: true });
       yield ctx.set(`landed:${unit.id}`, view.round);
-      const target = view.state.units[String(args.targetId ?? "")];
+      const target = view.state.units[String(args.targetId ?? view.engaged(unit.id)[0] ?? "")];
       yield ctx.note(`${unit.name}'s charge lands${target ? ` on ${target.name}` : ""}: Inspired`);
       return;
     }

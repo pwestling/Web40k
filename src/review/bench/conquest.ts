@@ -112,6 +112,26 @@ export const conquestBench: BenchSet = {
         worse: moveWith(s, u, "march", goal(s, u, 5, 30, -8)),
       };
     }),
+    item(
+      "march-into-range",
+      "Crossbows march into range of the last Bone Archer stand, not away from it",
+      async () => {
+        const { t, record, id } = await table((t, id) => {
+          t.only(id("Ironmarch Crossbows"), id("Bone Archers")).noObjectives();
+          t.hurt(id("Bone Archers"), 1, 1);
+          // Beyond the Crossbows' 24" until they march 5" nearer.
+          t.place(id("Ironmarch Crossbows"), 0, 13).place(id("Bone Archers"), 0, -14);
+          t.activate(id("Ironmarch Crossbows"));
+        });
+        const s = t.s;
+        const u = id("Ironmarch Crossbows");
+        return {
+          p: positionOf(record, s, 0),
+          better: moveWith(s, u, "march", goal(s, u, 5, 0, -14)),
+          worse: moveWith(s, u, "march", goal(s, u, 5, 0, 30)),
+        };
+      },
+    ),
     item("take-the-objective", "March onto the empty objective, not away from it", async () => {
       const { t, record, id } = await table((t, id) => {
         t.only(id("Shieldwall Spears"), id("Thrall Host"));
@@ -142,6 +162,23 @@ export const conquestBench: BenchSet = {
           p: positionOf(record, s, 0),
           better: rolledCharge(s, id("Shieldwall Spears"), id("Bone Archers")),
           worse: rolledCharge(s, id("Shieldwall Spears"), id("Thrall Host")),
+        };
+      },
+    ),
+    item(
+      "charge-the-archers-not-the-host",
+      "Riders charge the Bone Archers they can cut down, not into the nine-stand Thrall Host",
+      async () => {
+        const { t, record, id } = await table((t, id) => {
+          t.only(id("Iron Riders"), id("Bone Archers"), id("Thrall Host"));
+          t.place(id("Iron Riders"), 0, 11).place(id("Bone Archers"), 5.5, 2).place(id("Thrall Host"), -6, 1);
+          t.activate(id("Iron Riders"));
+        });
+        const s = t.s;
+        return {
+          p: positionOf(record, s, 0),
+          better: rolledCharge(s, id("Iron Riders"), id("Bone Archers")),
+          worse: rolledCharge(s, id("Iron Riders"), id("Thrall Host")),
         };
       },
     ),

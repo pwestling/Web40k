@@ -42,8 +42,8 @@ export function decisionKind(m: BotMove | null): DecisionKind {
 export const TRUSTED: Readonly<Record<string, readonly DecisionKind[]>> = {
   "forty-k-11": ["attack", "move", "charge"],
   "tow-hand": ["attack", "move", "charge"],
-  "fsd-1.7": ["attack"],
-  "conquest-hand": ["attack"],
+  "fsd-1.7": ["attack", "move"],
+  "conquest-hand": ["attack", "move", "charge"],
 };
 
 /** Whether the review may call a decision of this kind costly or strong in this game. */

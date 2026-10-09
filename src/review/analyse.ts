@@ -284,6 +284,10 @@ export async function reviewGame(record: GameRecord, opts: Options = {}): Promis
           then: { intent: { type: "models/move", moves: next.event.moves }, as: logged.by!, kind: "played" },
         };
         j = k;
+      } else if (next?.event.type === "unit/move" || next?.event.type === "unit/form") {
+        // A block moved as one (Conquest, The Old World): without it a march read as a march nowhere (#66).
+        move = { ...move, then: { intent: { ...next.event }, as: logged.by!, kind: "played" } };
+        j = k;
       }
     }
     const keys = usedFor(seat, st);

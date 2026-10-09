@@ -395,7 +395,15 @@ class Thinker implements Policy, Analyst {
     const who = played ? unitOf(state, played) : undefined;
     if (who !== undefined && !plainActivations(state))
       all.splice(0, all.length, ...all.filter((c) => unitOf(state, c.move) === who));
-    const same = played ? all.find((c) => sameMove(c.move, played)) : undefined;
+    // A charge rolled by hand is logged as its declaration, the roll after it: it's the bot's own
+    // rolled charge at that target, judged by the odds (#66: judged as never rolled, it read as costly).
+    const same = played
+      ? all.find(
+          (c) =>
+            sameMove(c.move, played) ||
+            (!!c.charge && !played.then && sameMove(c.move, { ...played, then: c.move.then })),
+        )
+      : undefined;
     // The move as played (where it went, too), judged as its like would be; a code action whose
     // move the rules make later is judged as the bot would have played it.
     const key = played ? usedKey(state, played) : undefined;
