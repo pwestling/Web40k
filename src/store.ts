@@ -78,6 +78,8 @@ export interface AttackDraft {
   picking: boolean;
   /** The game system action this sets up (generic systems), e.g. "fire". */
   action?: string;
+  /** "Shoot everything at…" (UX 398): every weapon that can, at one target. */
+  all?: boolean;
 }
 
 interface Store {

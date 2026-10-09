@@ -1969,16 +1969,16 @@ msgid "The target can't be seen."
 msgstr "Das Ziel ist nicht sichtbar."
 
 #: src/companion/TableAttack.tsx:161
-#: src/ui/AttackPanel.tsx:206
-#: src/ui/AttackPanel.tsx:214
+#: src/ui/AttackPanel.tsx:265
+#: src/ui/AttackPanel.tsx:273
 #, fuzzy
 msgid "Declare attack"
 msgstr "Angriff ansagen"
 
 #: src/companion/TableAttack.tsx:161
-#: src/ui/AttackPanel.tsx:214
-#: src/ui/UnitCard.tsx:246
-#: src/ui/UnitCard.tsx:528
+#: src/ui/AttackPanel.tsx:273
+#: src/ui/UnitCard.tsx:279
+#: src/ui/UnitCard.tsx:572
 #, fuzzy
 msgid "Fight"
 msgstr "Nahkampf"
@@ -2001,32 +2001,32 @@ msgid "No"
 msgstr "Nein"
 
 #: src/companion/TableAttack.tsx:50
-#: src/ui/AttackPanel.tsx:79
+#: src/ui/AttackPanel.tsx:84
 #, fuzzy
 msgid "{unit}: shoot"
 msgstr "{unit}: schießen"
 
 #: src/companion/TableAttack.tsx:50
-#: src/ui/AttackPanel.tsx:80
+#: src/ui/AttackPanel.tsx:85
 #, fuzzy
 msgid "{unit}: fight"
 msgstr "{unit}: kämpfen"
 
 #: src/companion/TableAttack.tsx:55
-#: src/ui/AttackPanel.tsx:86
+#: src/ui/AttackPanel.tsx:92
 #: src/ui/SystemPanels.tsx:298
 #, fuzzy
 msgid "Weapon"
 msgstr "Waffe"
 
 #: src/companion/TableAttack.tsx:60
-#: src/ui/AttackPanel.tsx:90
+#: src/ui/AttackPanel.tsx:96
 #, fuzzy
 msgid "Weapon…"
 msgstr "Waffe…"
 
 #: src/companion/TableAttack.tsx:68
-#: src/ui/AttackPanel.tsx:100
+#: src/ui/AttackPanel.tsx:107
 #, fuzzy
 msgid "Target"
 msgstr "Ziel"
@@ -2093,14 +2093,14 @@ msgstr "Letzter Zug: Die Zeit reicht, um diese Schlachtrunde zu beenden, aber ke
 msgid "This battle round is over its time: finish it off."
 msgstr "Diese Schlachtrunde hat ihre Zeit überschritten: Runde zu Ende spielen."
 
-#: src/core/content/examples/forty-k.ts:1004
+#: src/core/content/examples/forty-k.ts:1005
 #: src/core/content/examples/rank-and-flank.ts:194
 #, fuzzy
 msgctxt "game"
 msgid "Movement"
 msgstr "Bewegung"
 
-#: src/core/content/examples/forty-k.ts:1007
+#: src/core/content/examples/forty-k.ts:1008
 #: src/core/content/examples/rank-and-flank.ts:195
 #, fuzzy
 msgctxt "game"
@@ -2229,72 +2229,72 @@ msgctxt "game"
 msgid "Other stratagem"
 msgstr "Anderes Stratagem"
 
-#: src/core/content/examples/forty-k.ts:844
+#: src/core/content/examples/forty-k.ts:845
 #, fuzzy
 msgctxt "game"
 msgid "Battle-shock test"
 msgstr "Kampfschocktest"
 
-#: src/core/content/examples/forty-k.ts:858
+#: src/core/content/examples/forty-k.ts:859
 #, fuzzy
 msgctxt "game"
 msgid "Remain stationary"
 msgstr "Stehen bleiben"
 
-#: src/core/content/examples/forty-k.ts:866
+#: src/core/content/examples/forty-k.ts:867
 #, fuzzy
 msgctxt "game"
 msgid "Normal move"
 msgstr "Normale Bewegung"
 
-#: src/core/content/examples/forty-k.ts:877
+#: src/core/content/examples/forty-k.ts:878
 #, fuzzy
 msgctxt "game"
 msgid "Advance"
 msgstr "Vorrücken"
 
-#: src/core/content/examples/forty-k.ts:887
+#: src/core/content/examples/forty-k.ts:888
 #, fuzzy
 msgctxt "game"
 msgid "Fall back"
 msgstr "Zurückfallen"
 
-#: src/core/content/examples/forty-k.ts:897
+#: src/core/content/examples/forty-k.ts:898
 #: src/core/content/examples/rank-and-flank.ts:182
 #, fuzzy
 msgctxt "game"
 msgid "Shoot"
 msgstr "Schießen"
 
-#: src/core/content/examples/forty-k.ts:929
-#: src/core/content/examples/forty-k.ts:1008
+#: src/core/content/examples/forty-k.ts:930
+#: src/core/content/examples/forty-k.ts:1009
 #: src/core/content/examples/rank-and-flank.ts:287
 #, fuzzy
 msgctxt "game"
 msgid "Charge"
 msgstr "Angriff"
 
-#: src/core/content/examples/forty-k.ts:959
+#: src/core/content/examples/forty-k.ts:960
 #, fuzzy
 msgctxt "game"
 msgid "Pile in"
 msgstr "Nachrücken"
 
-#: src/core/content/examples/forty-k.ts:962
-#: src/core/content/examples/forty-k.ts:1009
+#: src/core/content/examples/forty-k.ts:963
+#: src/core/content/examples/forty-k.ts:1010
 #: src/core/content/examples/rank-and-flank.ts:183
 #, fuzzy
 msgctxt "game"
 msgid "Fight"
 msgstr "Kämpfen"
 
-#: src/core/content/examples/forty-k.ts:972
+#: src/core/content/examples/forty-k.ts:973
 #, fuzzy
 msgctxt "game"
 msgid "Consolidate"
 msgstr "Konsolidieren"
 
-#: src/core/content/examples/forty-k.ts:988
+#: src/core/content/examples/forty-k.ts:989
 #, fuzzy
 msgctxt "game"
 msgid "Command"
@@ -2826,7 +2826,7 @@ msgid "Your name, for your opponent"
 msgstr "Dein Name, für deinen Gegner"
 
 #: src/mail/MailBar.tsx:152
-#: src/ui/AttackPanel.tsx:260
+#: src/ui/AttackPanel.tsx:319
 #: src/workshop/Workshop.tsx:278
 #, fuzzy
 msgid "Save"
@@ -5354,199 +5354,224 @@ msgid "({points} pts; units {units})"
 msgstr "({points} Pkt.; Einheiten {units})"
 
 #: src/ui/AttackPanel.tsx:104
+#: src/ui/ProcedurePanels.tsx:147
+#, fuzzy
+msgid "at"
+msgstr "auf"
+
+#: src/ui/AttackPanel.tsx:111
 #: src/ui/ProcedurePanels.tsx:152
 #, fuzzy
 msgid "Target…"
 msgstr "Ziel…"
 
-#: src/ui/AttackPanel.tsx:108
+#: src/ui/AttackPanel.tsx:115
 #, fuzzy
 msgid "{unit} ({distance}\", out of range)"
 msgstr "{unit} ({distance}\", außer Reichweite)"
 
-#: src/ui/AttackPanel.tsx:117
+#: src/ui/AttackPanel.tsx:124
 #: src/ui/ProcedurePanels.tsx:165
 #, fuzzy
 msgid "Click a target on the table…"
 msgstr "Klicke auf ein Ziel auf dem Tisch…"
 
-#: src/ui/AttackPanel.tsx:117
+#: src/ui/AttackPanel.tsx:124
 #: src/ui/ProcedurePanels.tsx:165
 #, fuzzy
 msgid "Pick on table"
 msgstr "Auf dem Tisch wählen"
 
-#: src/ui/AttackPanel.tsx:167
+#: src/ui/AttackPanel.tsx:153
+#, fuzzy
+msgid "No weapon can reach and see that target."
+msgstr "Keine Waffe erreicht und sieht dieses Ziel."
+
+#: src/ui/AttackPanel.tsx:174
+#, fuzzy
+msgid "{n} model in range"
+msgid_plural "{n} models in range"
+msgstr[0] "{n} Modell in Reichweite"
+msgstr[1] "{n} Modelle in Reichweite"
+
+#: src/ui/AttackPanel.tsx:188
+#, fuzzy
+msgid "Shoot {n} weapon"
+msgid_plural "Shoot {n} weapons"
+msgstr[0] "{n} Waffe abfeuern"
+msgstr[1] "{n} Waffen abfeuern"
+
+#: src/ui/AttackPanel.tsx:226
 #, fuzzy
 msgid "no re-roll"
 msgstr "kein Wiederholungswurf"
 
-#: src/ui/AttackPanel.tsx:168
+#: src/ui/AttackPanel.tsx:227
 #: src/ui/autoText.ts:145
 #: src/ui/autoText.ts:193
 #, fuzzy
 msgid "re-roll 1s"
 msgstr "1er wiederholen"
 
-#: src/ui/AttackPanel.tsx:169
+#: src/ui/AttackPanel.tsx:228
 #: src/ui/autoText.ts:146
 #, fuzzy
 msgid "re-roll fails"
 msgstr "Fehlwürfe wiederholen"
 
-#: src/ui/AttackPanel.tsx:179
+#: src/ui/AttackPanel.tsx:238
 #, fuzzy
 msgid "{inRange}/{carriers} models in engagement range"
 msgstr "{inRange}/{carriers} Modelle in Nahkampfreichweite"
 
-#: src/ui/AttackPanel.tsx:180
+#: src/ui/AttackPanel.tsx:239
 #, fuzzy
 msgid "{inRange}/{carriers} models in range · {visible}/{targets} targets visible"
 msgstr "{inRange}/{carriers} Modelle in Reichweite · {visible}/{targets} Ziele sichtbar"
 
-#: src/ui/AttackPanel.tsx:186
+#: src/ui/AttackPanel.tsx:245
 #, fuzzy
 msgid "{n} in cover"
 msgstr "{n} in Deckung"
 
-#: src/ui/AttackPanel.tsx:198
+#: src/ui/AttackPanel.tsx:257
 #, fuzzy
 msgid "Out of range ({range})"
 msgstr "Außer Reichweite ({range})"
 
-#: src/ui/AttackPanel.tsx:199
+#: src/ui/AttackPanel.tsx:258
 #, fuzzy
 msgid "Out of range"
 msgstr "Außer Reichweite"
 
-#: src/ui/AttackPanel.tsx:205
+#: src/ui/AttackPanel.tsx:264
 #, fuzzy
 msgid "No model has the target in range, so there are no attacks to roll"
 msgstr "Kein Modell hat das Ziel in Reichweite, also gibt es keine Attacken zu würfeln"
 
-#: src/ui/AttackPanel.tsx:209
+#: src/ui/AttackPanel.tsx:268
 #, fuzzy
 msgid "No models in range, or no target visible"
 msgstr "Keine Modelle in Reichweite oder kein Ziel sichtbar"
 
-#: src/ui/AttackPanel.tsx:210
+#: src/ui/AttackPanel.tsx:269
 #, fuzzy
 msgid "Declare anyway"
 msgstr "Trotzdem ansagen"
 
-#: src/ui/AttackPanel.tsx:219
+#: src/ui/AttackPanel.tsx:278
 #, fuzzy
 msgid "More options"
 msgstr "Weitere Optionen"
 
-#: src/ui/AttackPanel.tsx:222
+#: src/ui/AttackPanel.tsx:281
 #: src/ui/TeachRule.tsx:473
 #, fuzzy
 msgid "Attacks"
 msgstr "Attacken"
 
-#: src/ui/AttackPanel.tsx:226
+#: src/ui/AttackPanel.tsx:285
 #, fuzzy
 msgid "Hit"
 msgstr "Treffer"
 
-#: src/ui/AttackPanel.tsx:226
-#: src/ui/AttackPanel.tsx:350
+#: src/ui/AttackPanel.tsx:285
+#: src/ui/AttackPanel.tsx:410
 #, fuzzy
 msgid "auto"
 msgstr "auto"
 
-#: src/ui/AttackPanel.tsx:230
+#: src/ui/AttackPanel.tsx:289
 #, fuzzy
 msgid "Sustained"
 msgstr "Anhaltende Treffer"
 
-#: src/ui/AttackPanel.tsx:241
+#: src/ui/AttackPanel.tsx:300
 #, fuzzy
 msgid "Lethal hits"
 msgstr "Tödliche Treffer"
 
-#: src/ui/AttackPanel.tsx:244
+#: src/ui/AttackPanel.tsx:303
 #, fuzzy
 msgid "Wound"
 msgstr "Verwunden"
 
-#: src/ui/AttackPanel.tsx:249
+#: src/ui/AttackPanel.tsx:308
 #, fuzzy
 msgid "Crit wound on"
 msgstr "Krit. Wunde ab"
 
-#: src/ui/AttackPanel.tsx:257
+#: src/ui/AttackPanel.tsx:316
 #, fuzzy
 msgid "Devastating"
 msgstr "Verheerend"
 
-#: src/ui/AttackPanel.tsx:260
-#: src/ui/AttackPanel.tsx:269
-#: src/ui/AttackPanel.tsx:354
+#: src/ui/AttackPanel.tsx:319
+#: src/ui/AttackPanel.tsx:328
+#: src/ui/AttackPanel.tsx:414
 #: src/ui/TopBar.tsx:459
 #, fuzzy
 msgid "none"
 msgstr "keine"
 
-#: src/ui/AttackPanel.tsx:264
-#: src/ui/AttackPanel.tsx:505
+#: src/ui/AttackPanel.tsx:323
+#: src/ui/AttackPanel.tsx:576
 #: src/ui/TeachRule.tsx:476
 #, fuzzy
 msgid "Damage"
 msgstr "Schaden"
 
-#: src/ui/AttackPanel.tsx:269
+#: src/ui/AttackPanel.tsx:328
 #, fuzzy
 msgid "Feel no pain"
 msgstr "Verletzungen ignorieren"
 
-#: src/ui/AttackPanel.tsx:285
+#: src/ui/AttackPanel.tsx:344
 #, fuzzy
 msgid "Roll to hit"
 msgstr "Trefferwurf"
 
-#: src/ui/AttackPanel.tsx:286
+#: src/ui/AttackPanel.tsx:345
 #, fuzzy
 msgid "Roll to wound"
 msgstr "Verwundungswurf"
 
-#: src/ui/AttackPanel.tsx:287
+#: src/ui/AttackPanel.tsx:346
 #, fuzzy
 msgid "Roll saves"
 msgstr "Schutzwürfe"
 
-#: src/ui/AttackPanel.tsx:288
+#: src/ui/AttackPanel.tsx:347
 #, fuzzy
 msgid "Roll damage"
 msgstr "Schadenswurf"
 
-#: src/ui/AttackPanel.tsx:295
+#: src/ui/AttackPanel.tsx:354
 #, fuzzy
 msgid "Waiting for {name} to roll to hit"
 msgstr "Warten, bis {name} auf Treffer würfelt"
 
-#: src/ui/AttackPanel.tsx:296
+#: src/ui/AttackPanel.tsx:355
 #, fuzzy
 msgid "Waiting for {name} to roll to wound"
 msgstr "Warten, bis {name} auf Verwunden würfelt"
 
-#: src/ui/AttackPanel.tsx:297
+#: src/ui/AttackPanel.tsx:356
 #, fuzzy
 msgid "Waiting for {name} to roll saves"
 msgstr "Warten, bis {name} Rettungswürfe würfelt"
 
-#: src/ui/AttackPanel.tsx:298
+#: src/ui/AttackPanel.tsx:357
 #, fuzzy
 msgid "Waiting for {name} to roll damage"
 msgstr "Warten, bis {name} Schaden würfelt"
 
-#: src/ui/AttackPanel.tsx:317
+#: src/ui/AttackPanel.tsx:377
 #, fuzzy
 msgid "Your opponent"
 msgstr "Dein Gegner"
 
-#: src/ui/AttackPanel.tsx:345
+#: src/ui/AttackPanel.tsx:405
 #: src/ui/gameLog.ts:407
 #: src/ui/gameLog.ts:470
 #, fuzzy
@@ -5555,42 +5580,42 @@ msgid_plural "{n} attacks"
 msgstr[0] "{n} Attacke"
 msgstr[1] "{n} Attacken"
 
-#: src/ui/AttackPanel.tsx:347
+#: src/ui/AttackPanel.tsx:407
 #, fuzzy
 msgid "(rolled {dice})"
 msgstr "({dice} gewürfelt)"
 
-#: src/ui/AttackPanel.tsx:349
+#: src/ui/AttackPanel.tsx:409
 #, fuzzy
 msgid "hit {value}"
 msgstr "Treffer {value}"
 
-#: src/ui/AttackPanel.tsx:352
+#: src/ui/AttackPanel.tsx:412
 #, fuzzy
 msgid "wound {value}"
 msgstr "Wunde {value}"
 
-#: src/ui/AttackPanel.tsx:353
+#: src/ui/AttackPanel.tsx:413
 #, fuzzy
 msgid "save {value}"
 msgstr "Schutzwurf {value}"
 
-#: src/ui/AttackPanel.tsx:356
+#: src/ui/AttackPanel.tsx:416
 #, fuzzy
 msgid "D {value}"
 msgstr "SC {value}"
 
-#: src/ui/AttackPanel.tsx:357
+#: src/ui/AttackPanel.tsx:417
 #, fuzzy
 msgid "FNP {value}"
 msgstr "FNP {value}"
 
-#: src/ui/AttackPanel.tsx:362
+#: src/ui/AttackPanel.tsx:422
 #, fuzzy
 msgid "Hits"
 msgstr "Treffer"
 
-#: src/ui/AttackPanel.tsx:365
+#: src/ui/AttackPanel.tsx:425
 #: src/ui/gameLog.ts:408
 #: src/ui/gameLog.ts:474
 #, fuzzy
@@ -5599,27 +5624,27 @@ msgid_plural "{n} hits"
 msgstr[0] "{n} Treffer"
 msgstr[1] "{n} Treffer"
 
-#: src/ui/AttackPanel.tsx:366
+#: src/ui/AttackPanel.tsx:426
 #, fuzzy
 msgid "{n} critical"
 msgstr "{n} kritisch"
 
-#: src/ui/AttackPanel.tsx:367
+#: src/ui/AttackPanel.tsx:427
 #, fuzzy
 msgid "{n} auto-wound"
 msgstr "{n} Auto-Wunde"
 
-#: src/ui/AttackPanel.tsx:372
+#: src/ui/AttackPanel.tsx:432
 #, fuzzy
 msgid "Torrent: {n} automatic hits"
 msgstr "Torrent: {n} automatische Treffer"
 
-#: src/ui/AttackPanel.tsx:375
+#: src/ui/AttackPanel.tsx:435
 #, fuzzy
 msgid "Wounds"
 msgstr "Wunden"
 
-#: src/ui/AttackPanel.tsx:377
+#: src/ui/AttackPanel.tsx:437
 #: src/ui/gameLog.ts:409
 #: src/ui/gameLog.ts:452
 #: src/ui/gameLog.ts:454
@@ -5630,50 +5655,57 @@ msgid_plural "{n} wounds"
 msgstr[0] "{n} Wunde"
 msgstr[1] "{n} Wunden"
 
-#: src/ui/AttackPanel.tsx:378
+#: src/ui/AttackPanel.tsx:438
 #, fuzzy
 msgid "{n} skip saves"
 msgstr "{n} ohne Schutzwurf"
 
-#: src/ui/AttackPanel.tsx:384
+#: src/ui/AttackPanel.tsx:444
 #, fuzzy
 msgid "Saves"
 msgstr "Schutzwürfe"
 
-#: src/ui/AttackPanel.tsx:388
+#: src/ui/AttackPanel.tsx:448
 #: src/ui/gameLog.ts:410
 #: src/ui/gameLog.ts:476
 #, fuzzy
 msgid "{n} unsaved"
 msgstr "{n} nicht verhindert"
 
-#: src/ui/AttackPanel.tsx:399
+#: src/ui/AttackPanel.tsx:459
 #: src/ui/ProcedurePanels.tsx:373
 #, fuzzy
 msgid "The computer is rolling…"
 msgstr "Der Computer würfelt…"
 
-#: src/ui/AttackPanel.tsx:406
+#: src/ui/AttackPanel.tsx:463
+#, fuzzy
+msgid "Then {n} more weapon at this target"
+msgid_plural "Then {n} more weapons at this target"
+msgstr[0] "Danach noch {n} Waffe auf dieses Ziel"
+msgstr[1] "Danach noch {n} Waffen auf dieses Ziel"
+
+#: src/ui/AttackPanel.tsx:475
 #, fuzzy
 msgid "{name} rolls the saves"
 msgstr "{name} würfelt die Schutzwürfe"
 
-#: src/ui/AttackPanel.tsx:409
+#: src/ui/AttackPanel.tsx:478
 #, fuzzy
 msgid "Dice hold no choices, so either player may roll them"
 msgstr "Bei den Würfeln gibt es nichts zu entscheiden, also darf jeder Spieler würfeln"
 
-#: src/ui/AttackPanel.tsx:413
+#: src/ui/AttackPanel.tsx:482
 #, fuzzy
 msgid "Roll for them"
 msgstr "Für sie würfeln"
 
-#: src/ui/AttackPanel.tsx:423
+#: src/ui/AttackPanel.tsx:492
 #, fuzzy
 msgid "Roll everything"
 msgstr "Alles würfeln"
 
-#: src/ui/AttackPanel.tsx:437
+#: src/ui/AttackPanel.tsx:508
 #: src/ui/Coach.tsx:87
 #: src/ui/ProcedurePanels.tsx:386
 #: src/ui/TerrainPanel.tsx:185
@@ -5681,73 +5713,73 @@ msgstr "Alles würfeln"
 msgid "Done"
 msgstr "Fertig"
 
-#: src/ui/AttackPanel.tsx:486
+#: src/ui/AttackPanel.tsx:557
 #, fuzzy
 msgid "re-rolled from {value}"
 msgstr "wiederholt von {value}"
 
-#: src/ui/AttackPanel.tsx:513
+#: src/ui/AttackPanel.tsx:584
 #, fuzzy
 msgid "re-rolled from {n}"
 msgstr "neu gewürfelt, vorher {n}"
 
-#: src/ui/AttackPanel.tsx:524
+#: src/ui/AttackPanel.tsx:595
 #, fuzzy
 msgid "{lost} wounds lost, {n} model destroyed"
 msgid_plural "{lost} wounds lost, {n} models destroyed"
 msgstr[0] "{lost} Lebenspunkte verloren, {n} Modell vernichtet"
 msgstr[1] "{lost} Lebenspunkte verloren, {n} Modelle vernichtet"
 
-#: src/ui/AttackPanel.tsx:528
+#: src/ui/AttackPanel.tsx:599
 #, fuzzy
 msgid "{n} ignored by feel no pain"
 msgstr "{n} durch Verletzungen ignorieren abgewehrt"
 
-#: src/ui/AttackPanel.tsx:590
+#: src/ui/AttackPanel.tsx:661
 #, fuzzy
 msgid "Wounds go to"
 msgstr "Wunden gehen an"
 
-#: src/ui/AttackPanel.tsx:600
+#: src/ui/AttackPanel.tsx:671
 #, fuzzy
 msgid "Take wounds on these models first"
 msgstr "Diese Modelle zuerst verwunden"
 
-#: src/ui/AttackPanel.tsx:609
+#: src/ui/AttackPanel.tsx:680
 #, fuzzy
 msgid "{n} W left"
 msgstr "{n} W übrig"
 
-#: src/ui/AttackPanel.tsx:613
+#: src/ui/AttackPanel.tsx:684
 #, fuzzy
 msgid "+{n} more"
 msgstr "+{n} weitere"
 
-#: src/ui/AttackPanel.tsx:617
+#: src/ui/AttackPanel.tsx:688
 #, fuzzy
 msgid "A model that has already lost wounds should take the next one."
 msgstr "Ein Modell, das bereits Lebenspunkte verloren hat, sollte die nächste Wunde nehmen."
 
-#: src/ui/AttackPanel.tsx:621
+#: src/ui/AttackPanel.tsx:692
 #, fuzzy
 msgid "Defender: tap a model to put it first."
 msgstr "Verteidigung: tippe auf ein Modell, um es nach vorn zu setzen."
 
-#: src/ui/AttackPanel.tsx:622
+#: src/ui/AttackPanel.tsx:693
 #, fuzzy
 msgid "Defender: click a model to put it first."
 msgstr "Verteidiger: Klicke auf ein Modell, um es nach vorn zu setzen."
 
-#: src/ui/AttackPanel.tsx:93
+#: src/ui/AttackPanel.tsx:82
+#, fuzzy
+msgid "{unit}: shoot everything"
+msgstr "{unit}: mit allem schießen"
+
+#: src/ui/AttackPanel.tsx:99
+#: src/ui/volley.ts:34
 #, fuzzy
 msgid "used this phase"
 msgstr "in dieser Phase benutzt"
-
-#: src/ui/AttackPanel.tsx:97
-#: src/ui/ProcedurePanels.tsx:147
-#, fuzzy
-msgid "at"
-msgstr "auf"
 
 #: src/ui/AutoAbilities.tsx:119
 #, fuzzy
@@ -6708,7 +6740,7 @@ msgstr "+1 auf Schutzwurf"
 
 #: src/ui/GameSettings.tsx:37
 #: src/ui/SystemPanels.tsx:242
-#: src/ui/UnitCard.tsx:353
+#: src/ui/UnitCard.tsx:397
 #, fuzzy
 msgid "Line of sight"
 msgstr "Sichtlinie"
@@ -9334,7 +9366,7 @@ msgid "Charged {distance}"
 msgstr "Angriffsbewegung {distance}"
 
 #: src/ui/SystemPanels.tsx:149
-#: src/ui/UnitCard.tsx:197
+#: src/ui/UnitCard.tsx:230
 #, fuzzy
 msgid "Selected unit"
 msgstr "Gewählte Einheit"
@@ -9382,19 +9414,19 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr "{distance} von {allowance} in dieser Runde bewegt."
 
 #: src/ui/SystemPanels.tsx:244
-#: src/ui/UnitCard.tsx:355
+#: src/ui/UnitCard.tsx:399
 #, fuzzy
 msgid "Model's eye view"
 msgstr "Modellperspektive"
 
 #: src/ui/SystemPanels.tsx:247
-#: src/ui/UnitCard.tsx:272
+#: src/ui/UnitCard.tsx:315
 #, fuzzy
 msgid "Rotate left (Q)"
 msgstr "Nach links drehen (Q)"
 
 #: src/ui/SystemPanels.tsx:250
-#: src/ui/UnitCard.tsx:275
+#: src/ui/UnitCard.tsx:318
 #, fuzzy
 msgid "Rotate right (E)"
 msgstr "Nach rechts drehen (E)"
@@ -10531,133 +10563,157 @@ msgstr "{name} ist noch nicht bereit"
 msgid "No mission: you'll score by hand"
 msgstr "Keine Mission: Ihr zählt die Punkte selbst"
 
-#: src/ui/UnitCard.tsx:208
+#: src/ui/UnitCard.tsx:188
+#, fuzzy
+msgid "Fell back this turn: it can't shoot"
+msgstr "Diesen Zug zurückgefallen: kann nicht schießen"
+
+#: src/ui/UnitCard.tsx:191
+#, fuzzy
+msgid "Advanced {n}\" this turn: Assault weapons only"
+msgstr "Diesen Zug {n}\" vorgerückt: nur Sturmwaffen"
+
+#: src/ui/UnitCard.tsx:192
+#, fuzzy
+msgid "Advanced this turn: Assault weapons only"
+msgstr "Diesen Zug vorgerückt: nur Sturmwaffen"
+
+#: src/ui/UnitCard.tsx:196
+#, fuzzy
+msgid "Moved {n}\" this turn: no Heavy +1 to hit"
+msgstr "Diesen Zug {n}\" bewegt: kein +1 zum Treffen für Schwer"
+
+#: src/ui/UnitCard.tsx:197
+#, fuzzy
+msgid "Moved this turn: no Heavy +1 to hit"
+msgstr "Diesen Zug bewegt: kein +1 zum Treffen für Schwer"
+
+#: src/ui/UnitCard.tsx:199
+#, fuzzy
+msgid "Moved {n}\" this turn"
+msgstr "Diesen Zug {n}\" bewegt"
+
+#: src/ui/UnitCard.tsx:202
+#, fuzzy
+msgid "Stood still this turn: Heavy +1 to hit"
+msgstr "Diesen Zug stehen geblieben: Schwer +1 zum Treffen"
+
+#: src/ui/UnitCard.tsx:241
 #, fuzzy
 msgid "{title}, round {round}: {line}. Click to replay it."
 msgstr "{title}, Runde {round}: {line}. Klicken zum Wiederholen."
 
-#: src/ui/UnitCard.tsx:213
+#: src/ui/UnitCard.tsx:246
 #, fuzzy
 msgid "Replay: {title}, round {round}"
 msgstr "Wiederholung: {title}, Runde {round}"
 
-#: src/ui/UnitCard.tsx:223
+#: src/ui/UnitCard.tsx:256
 #, fuzzy
 msgid "{player} · {alive}/{all} models"
 msgstr "{player} · {alive}/{all} Modelle"
 
-#: src/ui/UnitCard.tsx:246
-#: src/ui/UnitCard.tsx:528
+#: src/ui/UnitCard.tsx:279
+#: src/ui/UnitCard.tsx:572
 #, fuzzy
 msgid "Shoot"
 msgstr "Schießen"
 
-#: src/ui/UnitCard.tsx:252
+#: src/ui/UnitCard.tsx:291
+#, fuzzy
+msgid "Shoot everything at…"
+msgstr "Mit allem schießen auf …"
+
+#: src/ui/UnitCard.tsx:295
 #, fuzzy
 msgid "Advance (D6)"
 msgstr "Vorrücken (D6)"
 
-#: src/ui/UnitCard.tsx:255
+#: src/ui/UnitCard.tsx:298
 #, fuzzy
 msgid "Charge (2D6)"
 msgstr "Angriffsbewegung (2D6)"
 
-#: src/ui/UnitCard.tsx:258
+#: src/ui/UnitCard.tsx:301
 #, fuzzy
 msgid "Battle-shock test"
 msgstr "Moraltest"
 
-#: src/ui/UnitCard.tsx:262
+#: src/ui/UnitCard.tsx:305
 #, fuzzy
 msgid "Up a floor (R)"
 msgstr "Ein Stockwerk hoch (R)"
 
-#: src/ui/UnitCard.tsx:263
-#: src/ui/UnitCard.tsx:266
+#: src/ui/UnitCard.tsx:306
+#: src/ui/UnitCard.tsx:309
 #, fuzzy
 msgid "Floor"
 msgstr "Stockwerk"
 
-#: src/ui/UnitCard.tsx:265
+#: src/ui/UnitCard.tsx:308
 #, fuzzy
 msgid "Down a floor (F)"
 msgstr "Ein Stockwerk runter (F)"
 
-#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:327
 #, fuzzy
 msgid "Clear advance"
 msgstr "Vorrücken zurücksetzen"
 
-#: src/ui/UnitCard.tsx:301
+#: src/ui/UnitCard.tsx:344
 #, fuzzy
 msgid "Advanced +{n}\""
 msgstr "Vorgerückt +{n}\""
 
-#: src/ui/UnitCard.tsx:304
+#: src/ui/UnitCard.tsx:347
 #, fuzzy
 msgid "Charge roll {n}\""
 msgstr "Angriffswurf {n}\""
 
-#: src/ui/UnitCard.tsx:308
+#: src/ui/UnitCard.tsx:351
 #, fuzzy
 msgid "Charged {distance}\""
 msgstr "Angriffsbewegung {distance}\""
 
-#: src/ui/UnitCard.tsx:319
+#: src/ui/UnitCard.tsx:363
 #, fuzzy
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr "{moved}\" von {allowed}\" in dieser Phase bewegt."
 
-#: src/ui/UnitCard.tsx:327
+#: src/ui/UnitCard.tsx:371
 #, fuzzy
 msgid "Snap back to {allowed}\""
 msgstr "Auf {allowed}\" zurücksetzen"
 
-#: src/ui/UnitCard.tsx:332
+#: src/ui/UnitCard.tsx:376
 #, fuzzy
 msgid "Moved through {terrain}."
 msgstr "Durch {terrain} bewegt."
 
-#: src/ui/UnitCard.tsx:339
+#: src/ui/UnitCard.tsx:383
 #, fuzzy
 msgid "Engaged with {units}."
 msgstr "Im Nahkampf mit {units}."
 
-#: src/ui/UnitCard.tsx:358
+#: src/ui/UnitCard.tsx:402
 #, fuzzy
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr "Bewegung (blau) und längste Waffenreichweite (gelb) um jedes Modell"
 
-#: src/ui/UnitCard.tsx:361
+#: src/ui/UnitCard.tsx:405
 #, fuzzy
 msgid "Ranges"
 msgstr "Reichweiten"
 
-#: src/ui/UnitCard.tsx:365
+#: src/ui/UnitCard.tsx:409
 #, fuzzy
 msgid "Longest range"
 msgstr "Längste Reichweite"
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:420
 #, fuzzy
 msgid "On a floor {height}\" up"
 msgstr "Auf einem Stockwerk {height}\" hoch"
-
-#: src/ui/UnitCard.tsx:412
-#, fuzzy
-msgid "Ranged"
-msgstr "Fernkampf"
-
-#: src/ui/UnitCard.tsx:412
-#: src/ui/UnitCard.tsx:513
-#, fuzzy
-msgid "Melee"
-msgstr "Nahkampf"
-
-#: src/ui/UnitCard.tsx:443
-#, fuzzy
-msgid "Abilities ({n})"
-msgstr "Fähigkeiten ({n})"
 
 #: src/ui/UnitCard.tsx:45
 #, fuzzy
@@ -10666,18 +10722,19 @@ msgstr "Bewegt"
 
 #: src/ui/UnitCard.tsx:456
 #, fuzzy
-msgid "Models and wounds"
-msgstr "Modelle und Lebenspunkte"
+msgid "Ranged"
+msgstr "Fernkampf"
+
+#: src/ui/UnitCard.tsx:456
+#: src/ui/UnitCard.tsx:557
+#, fuzzy
+msgid "Melee"
+msgstr "Nahkampf"
 
 #: src/ui/UnitCard.tsx:46
 #, fuzzy
 msgid "Fell back"
 msgstr "Zurückgefallen"
-
-#: src/ui/UnitCard.tsx:464
-#, fuzzy
-msgid "Model height for line of sight"
-msgstr "Modellhöhe für die Sichtlinie"
 
 #: src/ui/UnitCard.tsx:47
 #, fuzzy
@@ -10689,15 +10746,10 @@ msgstr "Geschossen"
 msgid "Charged"
 msgstr "Angriffsbewegung durchgeführt"
 
-#: src/ui/UnitCard.tsx:484
+#: src/ui/UnitCard.tsx:487
 #, fuzzy
-msgid "Remove {unit} from the game?"
-msgstr "{unit} aus dem Spiel entfernen?"
-
-#: src/ui/UnitCard.tsx:488
-#, fuzzy
-msgid "Remove unit"
-msgstr "Einheit entfernen"
+msgid "Abilities ({n})"
+msgstr "Fähigkeiten ({n})"
 
 #: src/ui/UnitCard.tsx:49
 #, fuzzy
@@ -10709,17 +10761,37 @@ msgstr "Hat gekämpft"
 msgid "Battle-shocked"
 msgstr "Kampfschock"
 
-#: src/ui/UnitCard.tsx:551
+#: src/ui/UnitCard.tsx:500
+#, fuzzy
+msgid "Models and wounds"
+msgstr "Modelle und Lebenspunkte"
+
+#: src/ui/UnitCard.tsx:508
+#, fuzzy
+msgid "Model height for line of sight"
+msgstr "Modellhöhe für die Sichtlinie"
+
+#: src/ui/UnitCard.tsx:528
+#, fuzzy
+msgid "Remove {unit} from the game?"
+msgstr "{unit} aus dem Spiel entfernen?"
+
+#: src/ui/UnitCard.tsx:532
+#, fuzzy
+msgid "Remove unit"
+msgstr "Einheit entfernen"
+
+#: src/ui/UnitCard.tsx:595
 #, fuzzy
 msgid "{left}/{max} W"
 msgstr "{left}/{max} W"
 
-#: src/ui/UnitCard.tsx:561
+#: src/ui/UnitCard.tsx:605
 #, fuzzy
 msgid "Revive"
 msgstr "Wiederbeleben"
 
-#: src/ui/UnitCard.tsx:561
+#: src/ui/UnitCard.tsx:605
 #, fuzzy
 msgid "Slay"
 msgstr "Ausschalten"
@@ -12461,6 +12533,7 @@ msgstr "innerhalb der Mindestreichweite"
 
 #: src/ui/rangeNote.ts:17
 #: src/ui/rangeNote.ts:18
+#: src/ui/volley.ts:36
 #, fuzzy
 msgid "out of range"
 msgstr "außer Reichweite"
@@ -12577,6 +12650,11 @@ msgstr "Groß"
 #, fuzzy
 msgid "Larger"
 msgstr "Größer"
+
+#: src/ui/volley.ts:37
+#, fuzzy
+msgid "can't see it"
+msgstr "sieht es nicht"
 
 #: src/ui/warnings.ts:33
 #, fuzzy

@@ -25,6 +25,7 @@ import { opposed } from "../core/teams";
 import { t, tn } from "../i18n";
 import { RollButton, useOwnDice } from "../companion/RealDice";
 import { TableAttackSetup } from "../companion/TableAttack";
+import { fireNext, useVolley, volleyWeapons } from "./volley";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -69,31 +70,37 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
     })
     .sort((a, b) => Number(a.out) - Number(b.out) || a.distance - b.distance);
   const suggestion =
-    weaponId && draft.targetId ? suggestAttack(game, attacker.id, weaponId, draft.targetId) : null;
+    weaponId && draft.targetId && !draft.all
+      ? suggestAttack(game, attacker.id, weaponId, draft.targetId)
+      : null;
 
   return (
     <div className="panel attack">
       <div className="row spread">
         <strong>
-          {draft.kind === "ranged"
-            ? t("{unit}: shoot", { unit: attacker.name })
-            : t("{unit}: fight", { unit: attacker.name })}
+          {draft.all
+            ? t("{unit}: shoot everything", { unit: attacker.name })
+            : draft.kind === "ranged"
+              ? t("{unit}: shoot", { unit: attacker.name })
+              : t("{unit}: fight", { unit: attacker.name })}
         </strong>
         <button onClick={() => setDraft(null)}>{t("Cancel")}</button>
       </div>
       <div className="row wrap">
-        <select
-          aria-label={t("Weapon")}
-          value={weaponId ?? ""}
-          onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
-        >
-          <option value="">{t("Weapon…")}</option>
-          {weapons.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.name} (×{w.count}){attacker.status?.[`fired.${w.id}`] ? ` · ${t("used this phase")}` : ""}
-            </option>
-          ))}
-        </select>
+        {!draft.all && (
+          <select
+            aria-label={t("Weapon")}
+            value={weaponId ?? ""}
+            onChange={(e) => setDraft({ ...draft, weaponId: e.target.value || undefined })}
+          >
+            <option value="">{t("Weapon…")}</option>
+            {weapons.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} (×{w.count}){attacker.status?.[`fired.${w.id}`] ? ` · ${t("used this phase")}` : ""}
+              </option>
+            ))}
+          </select>
+        )}
         <span>{t("at")}</span>
         <select
           className="attack-target"
@@ -117,6 +124,9 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
         </button>
       </div>
+      {draft.all && draft.targetId && (
+        <VolleyPick key={draft.targetId} attackerId={attacker.id} targetId={draft.targetId} />
+      )}
       {suggestion && (
         <SpecEditor
           key={`${weaponId}|${draft.targetId}`}
@@ -128,6 +138,55 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           }}
         />
       )}
+    </div>
+  );
+}
+
+/** Every weapon that can fire at the target, ticked; untick to split fire (UX 398). */
+function VolleyPick({ attackerId, targetId }: { attackerId: string; targetId: string }) {
+  const game = useGame();
+  const { setDraft } = useStore();
+  const weapons = useMemo(() => volleyWeapons(game, attackerId, targetId), [game, attackerId, targetId]);
+  const [off, setOff] = useState<Set<string>>(() => new Set());
+  const on = weapons.filter((w) => !w.why && !off.has(w.id));
+  if (!weapons.some((w) => !w.why))
+    return <p className="warn">{t("No weapon can reach and see that target.")}</p>;
+  return (
+    <div className="volley">
+      {weapons.map((w) =>
+        w.why ? (
+          <span key={w.id} className="muted small">
+            {w.name}: {w.why}
+          </span>
+        ) : (
+          <label key={w.id} className="row">
+            <input
+              type="checkbox"
+              checked={!off.has(w.id)}
+              onChange={(e) => {
+                const next = new Set(off);
+                if (e.target.checked) next.delete(w.id);
+                else next.add(w.id);
+                setOff(next);
+              }}
+            />{" "}
+            {w.name}{" "}
+            <span className="muted small">{tn(w.inRange, "{n} model in range", "{n} models in range")}</span>
+          </label>
+        ),
+      )}
+      <button
+        className="primary"
+        disabled={!on.length}
+        onClick={() => {
+          useVolley.setState({ queue: { attackerId, targetId, weapons: on.map((w) => w.id) } });
+          setDraft(null);
+          fireNext();
+          focusSoon(".panel.attack .attack-roll");
+        }}
+      >
+        {tn(on.length, "Shoot {n} weapon", "Shoot {n} weapons")}
+      </button>
     </div>
   );
 }
@@ -307,6 +366,7 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const target = game.units[spec.targetUnitId];
   const canAct = live && role !== "spectator";
   const remaining = useMemo(() => stagesLeft(attack), [attack]);
+  const volley = useVolley((v) => v.queue);
   // Saves are the defender's roll; everything else is the attacker's.
   const roller = attack.stage === "save" ? target?.owner : attacker?.owner;
   // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
@@ -398,6 +458,15 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
       {canAct && botRolls && attack.stage !== "done" && (
         <p className="muted">{t("The computer is rolling…")}</p>
       )}
+      {volley && volley.attackerId === spec.attackerUnitId && (
+        <p className="muted small">
+          {tn(
+            volley.weapons.length,
+            "Then {n} more weapon at this target",
+            "Then {n} more weapons at this target",
+          )}
+        </p>
+      )}
       {canAct && !(botRolls && botAttacks) && (
         <div className="row">
           {waiting && !botRolls && <span className="muted">{waitingFor(attack.stage, rollerName)}</span>}
@@ -430,6 +499,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
               ref={done}
               className="attack-done"
               onClick={() => {
+                // Cancelling one attack of "Shoot everything" stops the rest too.
+                if (attack.stage !== "done") useVolley.setState({ queue: null });
                 dispatch({ type: "attack/clear" }, attacker?.owner);
                 focusSoon(".panel.unitcard");
               }}

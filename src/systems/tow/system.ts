@@ -239,7 +239,7 @@ export const oldWorld: GameSystem = {
     { id: "leftFlank", name: "Left flank", from: 225, to: 315, origin: "baseCorners" },
   ],
   // A charge, a march and its test last the unit's own turn.
-  resets: [{ at: "playerTurn", flags: ["charged", "marching", "marchTest", "moved"] }],
+  resets: [{ at: "playerTurn", flags: ["charged", "marching", "marchTest", "moved", "movedBy"] }],
   // Regiments move by hand: a unit that moved is marked as the phase ends (Moved and shot, Volley Fire).
   marksMoved: true,
   // Psychology marks on a regiment (combat.ts, psychology.ts); spells show as their own names.

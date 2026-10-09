@@ -50,6 +50,13 @@ export const flags = (): [string, string][] => [
   ["battleShocked", t("Battle-shocked")],
 ];
 
+/** Whether any of a unit's weapons has a keyword (Heavy, Assault). */
+function weaponsHave(unit: Unit, keyword: string): boolean {
+  return Object.values(unit.sheet?.weapons ?? {}).some((w) =>
+    w.keywords.some((k) => k.toLowerCase() === keyword.toLowerCase()),
+  );
+}
+
 /** Turn a unit 15° around its centre (Q / E with the unit selected). */
 export function rotateUnit(unitId: string, dir: 1 | -1) {
   const { game, dispatch } = useStore.getState();
@@ -169,6 +176,32 @@ export function UnitCard() {
   const slot = currentSlot(game);
   const movingNow = !slot || slot.kind === "alternate" || /move|charge/i.test(slot.id);
   const moved = unitMoved(alive);
+  // In Shooting, what this turn's move means for it (UX 397): "Moved 4" this turn: no Heavy bonus".
+  const heavy = weaponsHave(unit, "Heavy");
+  const by = typeof status.movedBy === "number" ? status.movedBy : null;
+  const moveNote =
+    game.turn.round > 0 &&
+    slot &&
+    /shoot/i.test(slot.id) &&
+    game.players[unit.owner]?.seat === game.turn.activeSeat
+      ? status.fellBack
+        ? t("Fell back this turn: it can't shoot")
+        : status.advanced
+          ? by !== null
+            ? t('Advanced {n}" this turn: Assault weapons only', { n: by })
+            : t("Advanced this turn: Assault weapons only")
+          : status.moved
+            ? heavy
+              ? by !== null
+                ? t('Moved {n}" this turn: no Heavy +1 to hit', { n: by })
+                : t("Moved this turn: no Heavy +1 to hit")
+              : by !== null
+                ? t('Moved {n}" this turn', { n: by })
+                : null
+            : heavy
+              ? t("Stood still this turn: Heavy +1 to hit")
+              : null
+      : null;
   const engaged = engagedWith(game, unit);
   const phase = phaseName(game);
   // Floor buttons only show when the unit stands where there is a floor to climb to.
@@ -248,6 +281,16 @@ export function UnitCard() {
               )
             );
           })}
+          {mainWeapon(game, unit, "ranged") && (
+            <button
+              onClick={() => {
+                setDraft({ attackerId: unit.id, kind: "ranged", picking: true, all: true });
+                focusSoon(".panel.attack select.attack-target");
+              }}
+            >
+              {t("Shoot everything at…")}
+            </button>
+          )}
           <RollButton className={phase === "Movement" ? "primary" : ""} intent={roll("advance", 1)} as={as}>
             {t("Advance (D6)")}
           </RollButton>
@@ -312,6 +355,7 @@ export function UnitCard() {
       <CoreAbilities unit={unit} />
       <OncePerBattle unit={unit} mine={mine} />
       <CodeActions unit={unit} />
+      {moveNote && <p className="small move-note">{moveNote}</p>}
       {!companion && (
         <p className="muted">
           {(game.turn.round > 0 || !!status.scouting) && allowed !== null && (movingNow || moved > 0.05) && (

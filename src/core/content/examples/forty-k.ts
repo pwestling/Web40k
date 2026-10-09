@@ -721,6 +721,7 @@ export const fortyK: GameSystem = {
       // Battle-shock lasts until the start of the unit's next Command phase, which opens its player's turn.
       flags: [
         "moved",
+        "movedBy",
         "stationary",
         "advanced",
         "fellBack",

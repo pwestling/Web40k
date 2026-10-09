@@ -266,15 +266,22 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     const units = { ...state.units };
     for (const u of Object.values(state.units)) {
       // Set up from reserves counts as having moved (40k: Heavy, Remained Stationary).
-      const went =
-        !!u.status?.arrived ||
-        u.modelIds.some((id) => {
+      // How far it went: its furthest model, for the card's "Moved 4" this turn" (UX 397).
+      const far = Math.max(
+        0,
+        ...u.modelIds.map((id) => {
           const m = state.models[id];
-          return (
-            !!m?.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) > 0.05
-          );
-        });
-      if (went && !u.status?.moved) units[u.id] = { ...u, status: { ...u.status, moved: true } };
+          return m?.phaseStart && !m.destroyed
+            ? Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y)
+            : 0;
+        }),
+      );
+      const went = !!u.status?.arrived || far > 0.05;
+      if (!went) continue;
+      const status = { ...u.status };
+      if (!status.moved) status.moved = true;
+      if (far > 0.05 && status.movedBy === undefined) status.movedBy = Math.round(far * 10) / 10;
+      units[u.id] = { ...u, status };
     }
     state = { ...state, units };
   }

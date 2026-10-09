@@ -4938,3 +4938,17 @@ button.teach-button:hover {
   align-items: center;
   gap: 4px;
 }
+
+/* Shoot everything at… (UX 398): the weapons that can fire, ticked, and those that can't. */
+.panel.attack .volley {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+.panel.attack .volley > button {
+  align-self: flex-start;
+}
+.move-note {
+  margin: 4px 0;
+}
