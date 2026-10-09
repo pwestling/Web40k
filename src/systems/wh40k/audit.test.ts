@@ -20,6 +20,7 @@ import { abilityReminders, attackReminders } from "../../core/content/player";
 import { wh40kChecks } from "./checks";
 import { fightOrder, fightOutOfOrder } from "./fight";
 import { makePiece } from "./layout";
+import { suggestAttack } from "./rules";
 import { WH40K_MISSIONS } from "./missions";
 import { getSystem } from "../../core/content";
 import { botPolicy } from "../../bot/player";
@@ -559,6 +560,16 @@ describe("40k gaps (#57): Indirect Fire", () => {
     expect(unseen.hitMod).toBe(-1);
     // Cover: Ballistic Skill 1 worse.
     expect(unseen.hit).toBe(seen.hit! + 1);
+  });
+
+  it("says out of sight with Indirect Fire as a normal attack, and no target visible without it (PX #57)", () => {
+    const hidden = wall(goTo(setup({ gun: gun(["Indirect Fire"]) }), "shooting", 0));
+    const lobbed = suggestAttack(hidden, "mine", "gun", "theirs")!;
+    expect(lobbed.indirect).toBe(true);
+    expect(lobbed.notes).toContain("Out of sight: Indirect Fire (−1 to hit, target in cover)");
+    const plain = suggestAttack(wall(goTo(setup(), "shooting", 0)), "mine", "gun", "theirs")!;
+    expect(plain.indirect).toBeUndefined();
+    expect(plain.notes).toContain("No target model is visible");
   });
 });
 

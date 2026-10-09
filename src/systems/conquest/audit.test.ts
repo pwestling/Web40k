@@ -174,6 +174,28 @@ describe("Conquest rules audit", () => {
     expect(option(turned, guard, "charge")?.why).toBe("No enemy in the front arc and in sight");
   });
 
+  it("a charge with no enemy ahead and in sight can be taken anyway, and the log says so (PX #57)", () => {
+    const { s, guard } = guardFacing(1.5);
+    const turned = { ...s, models: { ...s.models } };
+    for (const id of s.units[guard]!.modelIds)
+      turned.models[id] = { ...s.models[id]!, facing: s.models[id]!.facing + Math.PI };
+    expect(option(turned, guard, "charge")?.overridable).toBe(true);
+    expect(
+      resolveIntent({ type: "action/take", unitId: guard, action: "charge" }, "p1", rng(1), turned),
+    ).toBeNull();
+    const event = resolveIntent(
+      { type: "action/take", unitId: guard, action: "charge", force: true },
+      "p1",
+      rng(1),
+      turned,
+    );
+    expect(event).toMatchObject({ type: "action/take", forced: "No enemy in the front arc and in sight" });
+    expect(
+      hosted(turned, { type: "action/take", unitId: guard, action: "charge", force: true }, "p1").units[guard]
+        ?.status,
+    ).toMatchObject({ charged: true });
+  });
+
   it("a charge roll that can't reach falls short: Inspired lost, activation over", () => {
     // 12" apart: March 5 and a D6 can't reach.
     const g = guardFacing(6);

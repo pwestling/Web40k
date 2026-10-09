@@ -16,6 +16,8 @@ import {
   type AttackSuggestion,
 } from "../systems/wh40k/rules";
 import { attackReminders } from "../core/content/player";
+import { actionTargets } from "../core/content/play";
+import { systemOf } from "../core/content/turn";
 import { commonLoadout, loadoutKey } from "../core/content/runtime";
 import { useCanControl, useStore, type AttackDraft } from "../store";
 import { Reminders } from "./PlayPanel";
@@ -63,13 +65,23 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
   const reach = weapon ? weaponReach(weapon) : null;
   // Closest models carrying the weapon; enemies out of its reach go last and say so.
   const shooters = weapon ? carriers(game, attacker, weapon.id) : aliveModels(game, attacker);
+  // With a ranged weapon chosen, the shoot action says which targets it allows (out of sight
+  // unless it has Indirect Fire, PX review of #57); those it doesn't go last with the reason.
+  const allowed =
+    draft.kind === "ranged" && weapon && systemOf(game).actions.some((a) => a.id === "shoot")
+      ? new Map(actionTargets(game, attacker.id, "shoot", weapon.id).map((x) => [x.unitId, x]))
+      : null;
   const enemies = Object.values(game.units)
     .filter((u) => opposed(game, u.owner, attacker.owner) && aliveModels(game, u).length > 0)
     .map((u) => {
       const distance = unitDistance(shooters, aliveModels(game, u));
-      return { unit: u, distance, out: reach !== null && distance > reach };
+      const ok = allowed?.get(u.id);
+      const why = ok && !ok.ok ? (ok.why ?? t("out of sight")) : undefined;
+      return { unit: u, distance, out: reach !== null && distance > reach, why };
     })
-    .sort((a, b) => Number(a.out) - Number(b.out) || a.distance - b.distance);
+    .sort(
+      (a, b) => Number(!!a.why) - Number(!!b.why) || Number(a.out) - Number(b.out) || a.distance - b.distance,
+    );
   const suggestion =
     weaponId && draft.targetId && !draft.all
       ? suggestAttack(game, attacker.id, weaponId, draft.targetId)
@@ -110,11 +122,13 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
           <option value="">{t("Target…")}</option>
-          {enemies.map(({ unit: u, distance, out }) => (
+          {enemies.map(({ unit: u, distance, out, why }) => (
             <option key={u.id} value={u.id}>
-              {out
-                ? t('{unit} ({distance}", out of range)', { unit: u.name, distance: distance.toFixed(1) })
-                : `${u.name} (${distance.toFixed(1)}")`}
+              {why
+                ? t('{unit} ({distance}", {why})', { unit: u.name, distance: distance.toFixed(1), why })
+                : out
+                  ? t('{unit} ({distance}", out of range)', { unit: u.name, distance: distance.toFixed(1) })
+                  : `${u.name} (${distance.toFixed(1)}")`}
             </option>
           ))}
         </select>
@@ -270,7 +284,7 @@ export function SpecEditor({
         <button disabled title={t("No model has the target in range, so there are no attacks to roll")}>
           {t("Declare attack")}
         </button>
-      ) : s.inRange === 0 || s.visible === 0 ? (
+      ) : s.inRange === 0 || (s.visible === 0 && !s.indirect) ? (
         <button onClick={() => onDeclare(spec)} title={t("No models in range, or no target visible")}>
           {t("Declare anyway")}
         </button>

@@ -189,4 +189,26 @@ describe("terrain rules", () => {
     expect(blockedMoves(s, s.units.v!).map((p) => p.id)).toEqual(["b"]);
     expect(blockedMoves(s, s.units.i!)).toEqual([]);
   });
+
+  it("warns when a vehicle drives through a ruin's wall, not when infantry walks through it (PX #57)", () => {
+    let s = createInitialState();
+    s = applyEvent(s, {
+      type: "layout/set",
+      layout: { terrain: [makePiece("Ruin", "r", { x: 0, y: 0 })], objectives: [], zones: [] },
+    });
+    // The ruin's long back wall runs along y = -3 (its depth is 6), with a doorway in the middle:
+    // the tank's hull doesn't fit through it, though its centre would.
+    const tank = { ...m("v1", "p1", 0, -6, {}), base: { shape: "round" as const, diameterMm: 100 } };
+    s = applyEvent(s, unit("v", "p1", ["Vehicle"], [tank]));
+    s = applyEvent(s, unit("i", "p1", ["Infantry"], [m("i1", "p1", 1, -6, {})]));
+    s = applyEvent(s, {
+      type: "models/move",
+      moves: [
+        { id: "v1", to: { x: 0, y: 1 } },
+        { id: "i1", to: { x: 1, y: 1 } },
+      ],
+    });
+    expect(blockedMoves(s, s.units.v!).map((p) => p.id)).toEqual(["r"]);
+    expect(blockedMoves(s, s.units.i!)).toEqual([]);
+  });
 });

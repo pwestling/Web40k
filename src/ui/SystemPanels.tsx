@@ -574,6 +574,20 @@ function SystemActions({ unit }: { unit: Unit }) {
             ) : null}
           </button>
         ))}
+        {/* A rule the players may set aside (Conquest's front arc): take it anyway, logged for everyone (PX #57). */}
+        {shown
+          .filter((o) => !o.ok && o.overridable)
+          .map((o) => (
+            <button
+              key={`anyway-${o.def.id}`}
+              title={t("{why}. The log tells everyone it was taken anyway.", { why: why(o) ?? "" })}
+              onClick={() =>
+                dispatch({ type: "action/take", unitId: unit.id, action: o.def.id, force: true }, unit.owner)
+              }
+            >
+              {t("{action} anyway", { action: gameText(o.def.name) })}
+            </button>
+          ))}
       </div>
       {/* What an action open now asks of the players, in the rules data's words (FSD's reaction). */}
       {shown

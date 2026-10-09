@@ -122,6 +122,8 @@ export interface AttackSuggestion {
   inCover: number;
   targetModels: number;
   sight: UnitSight;
+  /** No target model is visible, but the weapon has Indirect Fire, so the attack is a normal one. */
+  indirect?: boolean;
 }
 
 /** What a step is called in notes. */
@@ -182,7 +184,12 @@ export function suggestAttack(
     weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;
   if (cover && state.settings.cover === "save")
     notes.push("Target in cover: +1 to save (not 3+ against AP 0)");
-  if (weapon.kind === "ranged" && sight.visible === 0) notes.push("No target model is visible");
+  const indirect =
+    weapon.kind === "ranged" &&
+    sight.visible === 0 &&
+    preview.weaponRules.some((r) => r.rule === "indirectFire");
+  if (indirect) notes.push("Out of sight: Indirect Fire (−1 to hit, target in cover)");
+  else if (weapon.kind === "ranged" && sight.visible === 0) notes.push("No target model is visible");
   if (sight.hidden)
     notes.push(
       `${sight.hidden} target model(s) Hidden in dense terrain (only visible within ${HIDDEN_RANGE}")`,
@@ -199,6 +206,7 @@ export function suggestAttack(
     inCover: sight.inCover,
     sight,
     targetModels: aliveModels(state, target).length,
+    ...(indirect ? { indirect } : {}),
   };
 }
 
@@ -352,10 +360,30 @@ export function blockedMoves(state: GameState, unit: Unit, positions?: Record<st
       const rule = categoryRule(p.category);
       if (rule.impassable && (inFootprint(p, to) || moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)))
         hit.add(p);
-      else if (!throughWalls && moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)) hit.add(p);
+      else if (!throughWalls && sweepCrossesWall(p, m, from, to)) hit.add(p);
     }
   }
   return [...hit];
+}
+
+/**
+ * Whether a model's base, sliding from `from` to `to`, meets a wall: its
+ * centre line and the two lines along its edges, so a tank doesn't slip
+ * through a doorway its hull couldn't (PX review of #57).
+ */
+function sweepCrossesWall(p: TerrainPiece, m: Model, from: Vec2, to: Vec2): boolean {
+  const len = Math.hypot(to.x - from.x, to.y - from.y);
+  const { width, depth } = baseSizeInches(m.base);
+  const r = Math.min(width, depth) / 2 - 0.05;
+  const n = { x: -(to.y - from.y) / len, y: (to.x - from.x) / len };
+  return [0, r, -r].some((k) =>
+    moveCrossesWall(
+      [p],
+      { x: from.x + n.x * k, y: from.y + n.y * k },
+      { x: to.x + n.x * k, y: to.y + n.y * k },
+      m.phaseStartZ ?? 0,
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------

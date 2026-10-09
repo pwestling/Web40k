@@ -6,7 +6,7 @@ import { systemLabel } from "./systemLabels";
 import { sideName, rulerLength, systemOf, type GameState, type LoggedEvent } from "../core";
 import { findAction } from "../core/content/player";
 import { systemModule } from "../systems";
-import { formatList, t, tn } from "../i18n";
+import { formatList, gameText, t, tn } from "../i18n";
 import { describePackageChange } from "./packageChange";
 import { chargeNeeded } from "../systems/wh40k/charge";
 
@@ -544,7 +544,9 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
       }
       // The verb or action is the game's own ("Spears marches"), so the line keeps its order.
       const target = event.targetId ? t(" at {unit}", { unit: unitName(event.targetId) }) : "";
-      const hold = event.hold ? t(", waiting on a reaction") : "";
+      const hold =
+        (event.hold ? t(", waiting on a reaction") : "") +
+        (event.forced ? t(", anyway ({why})", { why: gameText(event.forced) }) : "");
       if (def?.verb)
         return `${unitName(event.unitId)} ${def.verb}${weapon ? ` (${weapon})` : ""}${target}${also}${hold}`;
       return `${unitName(event.unitId)}: ${action}${weapon ? ` (${weapon})` : ""}${target}${also}${hold}`;

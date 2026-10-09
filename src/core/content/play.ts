@@ -68,6 +68,12 @@ export interface ActionOption {
   commands?: { count: number; candidates: UnitId[] };
   /** Attacks it makes (ActionDef.repeat), each at a target of its own, when more than one. */
   repeat?: number;
+  /**
+   * Only a `notWhen` stands in the way (a rule the players may agree to set
+   * aside, such as Conquest's front arc): `action/take` with `force` takes it
+   * anyway, and the log says so.
+   */
+  overridable?: boolean;
 }
 
 interface ActionRequest {
@@ -486,6 +492,13 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       payment: "payment" in paid ? paid.payment : [],
       ...(why || "why" in paid ? { why: why ?? (paid as { why: string }).why } : {}),
     };
+    if (
+      why &&
+      !("why" in paid) &&
+      (def.notWhen ?? []).some((n) => n.why === why && safeBool(n.if, ctx)) &&
+      (def.if === undefined || safeBool(def.if, ctx))
+    )
+      option.overridable = true;
     if (def.move) option.move = safeNum(def.move.distance, ctx);
     if (def.repeat !== undefined && wView) {
       const n = Math.floor(safeNum(def.repeat, ctx, 1));
@@ -630,6 +643,8 @@ export interface ActionTaken extends ActionTrigger {
   run?: ProcedureRun;
   /** The other player may react first: the action waits. */
   hold?: boolean;
+  /** Taken although this rule said no (ActionOption.overridable): the players set it aside. */
+  forced?: string;
 }
 
 export function setStatus(

@@ -297,7 +297,7 @@ function ashenHost(): ImportedRoster {
         chars: stats('6"', "4", "5+", "4", "6+", "1"),
         count: 1,
         weapons: [
-          ranged("Pyre Wave", '12"', "D6", "N/A", "6", "-1", "1", ["Torrent", "Psychic"]),
+          ranged("Pyre Wave", '12"', "D6", "N/A", "6", "-1", "1", ["Torrent", "Psychic", "Hazardous"]),
           melee("Ember Staff", "3", "3+", "6", "-1", "D3"),
         ],
       },

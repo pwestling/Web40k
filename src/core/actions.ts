@@ -210,6 +210,8 @@ export type Intent =
       with?: UnitId[];
       /** Pool dice the player picked to pay with. */
       dice?: number[];
+      /** Take it although a `notWhen` says no (ActionOption.overridable); logged for everyone. */
+      force?: boolean;
     }
   /** A player is done re-rolling their pool for this round. */
   | { type: "pool/ready"; player: PlayerId; resource: string }
@@ -728,7 +730,7 @@ export function resolveIntent(
         ...req,
         ...(intent.dice ? { dice: intent.dice } : {}),
       }).find((o) => o.def.id === intent.action);
-      if (!option?.ok) return null;
+      if (!option?.ok && !(intent.force && option?.overridable)) return null;
       const allowed = new Set(option.commands?.candidates ?? []);
       const commanded = (intent.with ?? [])
         .filter((id) => allowed.has(id))
@@ -748,6 +750,7 @@ export function resolveIntent(
         ...(more.length ? { more } : {}),
         payment: option.payment,
         ...(commanded.length ? { with: commanded } : {}),
+        ...(!option.ok && option.why ? { forced: option.why } : {}),
       };
       // The other player may react before a fire or move action goes on.
       const paid = applyAction(state, taken);
