@@ -4,6 +4,7 @@ import { actionTargets, unitActions } from "../core/content/play";
 import { formatList, t } from "../i18n";
 import { RollButton } from "../companion/RealDice";
 import { useGame } from "./hooks";
+import { engagedWith } from "../systems/wh40k/rules";
 import { chargeNeeded } from "../systems/wh40k/charge";
 
 /**
@@ -38,7 +39,7 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
     return (
       <div className="charge-declare">
         <strong className="small">{t("Charge which unit(s)?")}</strong>
-        {own && !own.ok && own.why && own.why !== "Not allowed now" && (
+        {own && !own.ok && own.why && own.why !== "Not allowed now" && targets.some((x) => x.ok) && (
           <p className="warn small">{own.why}</p>
         )}
         {/* Nothing in reach: one line, the list folded under it (UX 412). */}
@@ -110,10 +111,14 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
       : landed
         ? t('Charge made: move up to {n}" into {units}', { n: roll!, units: names(declared) })
         : t("Charge fails: needed {n}", { n: needed(declared) });
+  // Already in combat: no charge to declare (UX 413: it offered one at 0.0", then logged it "made").
+  const inCombat = !declared.length && engagedWith(game, unit).length > 0;
   return (
     <>
       <button
-        className={primary ? "primary" : ""}
+        className={primary && !inCombat ? "primary" : ""}
+        disabled={inCombat}
+        title={inCombat ? t("Already in combat: it can't charge") : undefined}
         onClick={() => {
           const ok = actionTargets(game, unit.id, "charge").filter((x) => x.ok);
           // The nearest enemy that can be charged, ticked to start with.
@@ -122,6 +127,7 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
       >
         {t("Charge (2D6)")}
       </button>
+      {inCombat && <span className="muted small">{t("Already in combat: it can't charge")}</span>}
       {outcome && (
         <span className={landed ? "charge-outcome small" : "charge-outcome small warn"}>{outcome}</span>
       )}

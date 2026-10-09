@@ -210,7 +210,7 @@ async function inviteText(box: Box): Promise<string | null> {
     const size = (s.settings.teamSize ?? 1) > 1 ? t("2 vs 2") : t("1 vs 1");
     const p = { name: file.name, game: gameTitle(s), size, mission: s.mission?.name ?? "" };
     return s.mission
-      ? t("{name} invites you to {game} ({size}, {mission})", p)
+      ? t("{name} invites you to {game} ({size} · {mission})", p)
       : t("{name} invites you to {game} ({size})", p);
   } catch {
     return null;

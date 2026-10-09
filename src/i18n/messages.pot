@@ -2556,7 +2556,7 @@ msgid "1 vs 1"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:213
-msgid "{name} invites you to {game} ({size}, {mission})"
+msgid "{name} invites you to {game} ({size} · {mission})"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:214
@@ -4970,31 +4970,36 @@ msgstr ""
 msgid "{when}, just after {what}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:111
+#: src/ui/ChargeDeclare.tsx:112
 msgid "Charge made: move up to {n}\" into {units}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:112
+#: src/ui/ChargeDeclare.tsx:113
 msgid "Charge fails: needed {n}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:123
+#: src/ui/ChargeDeclare.tsx:121
+#: src/ui/ChargeDeclare.tsx:130
+msgid "Already in combat: it can't charge"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:128
 msgid "Charge (2D6)"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:40
+#: src/ui/ChargeDeclare.tsx:41
 msgid "Charge which unit(s)?"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:75
+#: src/ui/ChargeDeclare.tsx:76
 msgid "No enemy unit can be charged from here."
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:79
+#: src/ui/ChargeDeclare.tsx:80
 msgid "Nearest enemy {distance}\" away: no charge possible"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:95
+#: src/ui/ChargeDeclare.tsx:96
 msgid "Roll charge (2D6): {n} needed"
 msgstr ""
 

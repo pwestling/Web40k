@@ -3110,8 +3110,8 @@ msgstr "1 gegen 1"
 
 #: src/mail/MailLobby.tsx:213
 #, fuzzy
-msgid "{name} invites you to {game} ({size}, {mission})"
-msgstr "{name} lädt dich zu {game} ein ({size}, {mission})"
+msgid "{name} invites you to {game} ({size} · {mission})"
+msgstr "{name} lädt dich zu {game} ein ({size} · {mission})"
 
 #: src/mail/MailLobby.tsx:214
 #, fuzzy
@@ -6076,37 +6076,43 @@ msgstr "Aufstellung"
 msgid "{when}, just after {what}"
 msgstr "{when}, direkt nach {what}"
 
-#: src/ui/ChargeDeclare.tsx:111
+#: src/ui/ChargeDeclare.tsx:112
 #, fuzzy
 msgid "Charge made: move up to {n}\" into {units}"
 msgstr "Angriff gelungen: bis zu {n}\" in {units} bewegen"
 
-#: src/ui/ChargeDeclare.tsx:112
+#: src/ui/ChargeDeclare.tsx:113
 #, fuzzy
 msgid "Charge fails: needed {n}"
 msgstr "Angriff gescheitert: {n} nötig"
 
-#: src/ui/ChargeDeclare.tsx:123
+#: src/ui/ChargeDeclare.tsx:121
+#: src/ui/ChargeDeclare.tsx:130
+#, fuzzy
+msgid "Already in combat: it can't charge"
+msgstr "Schon im Nahkampf: kann nicht angreifen"
+
+#: src/ui/ChargeDeclare.tsx:128
 #, fuzzy
 msgid "Charge (2D6)"
 msgstr "Angriffsbewegung (2D6)"
 
-#: src/ui/ChargeDeclare.tsx:40
+#: src/ui/ChargeDeclare.tsx:41
 #, fuzzy
 msgid "Charge which unit(s)?"
 msgstr "Welche Einheit(en) angreifen?"
 
-#: src/ui/ChargeDeclare.tsx:75
+#: src/ui/ChargeDeclare.tsx:76
 #, fuzzy
 msgid "No enemy unit can be charged from here."
 msgstr "Von hier kann keine feindliche Einheit angegriffen werden."
 
-#: src/ui/ChargeDeclare.tsx:79
+#: src/ui/ChargeDeclare.tsx:80
 #, fuzzy
 msgid "Nearest enemy {distance}\" away: no charge possible"
 msgstr "Nächster Feind {distance}\" entfernt: kein Angriff möglich"
 
-#: src/ui/ChargeDeclare.tsx:95
+#: src/ui/ChargeDeclare.tsx:96
 #, fuzzy
 msgid "Roll charge (2D6): {n} needed"
 msgstr "Angriff würfeln (2W6): {n} nötig"
