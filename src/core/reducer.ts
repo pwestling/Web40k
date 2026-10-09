@@ -294,10 +294,29 @@ function reduce(state: GameState, event: GameEvent): GameState {
     }
     case "ranked/result":
       return state.ranked ? { ...state, ranked: { ...state.ranked, result: event.result, sigs: {} } } : state;
-    case "ranked/sign":
-      return state.ranked
-        ? { ...state, ranked: { ...state.ranked, sigs: { ...state.ranked.sigs, [event.player]: event.sig } } }
-        : state;
+    case "ranked/sign": {
+      const r = state.ranked;
+      if (!r) return state;
+      // "The score is wrong": the result comes down, the table fixes the score, and it is written again.
+      if (event.sig === null && event.why === "score") {
+        const { result: _was, ...rest } = r;
+        return { ...state, ranked: { ...rest, sigs: {}, fixing: event.player, fixes: (r.fixes ?? 0) + 1 } };
+      }
+      return {
+        ...state,
+        ranked: {
+          ...r,
+          sigs: { ...r.sigs, [event.player]: event.sig },
+          ...(event.why ? { whys: { ...r.whys, [event.player]: event.why } } : {}),
+          ...(event.decline ? { declines: { ...r.declines, [event.player]: event.decline } } : {}),
+        },
+      };
+    }
+    case "ranked/fixed": {
+      if (!state.ranked) return state;
+      const { fixing: _was, ...ranked } = state.ranked;
+      return { ...state, ranked };
+    }
     case "player/color": {
       const p = state.players[event.player];
       return p ? { ...state, players: { ...state.players, [p.id]: { ...p, color: event.color } } } : state;

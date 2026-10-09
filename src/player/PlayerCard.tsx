@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { formatDate, t, tn } from "../i18n";
+import { formatDate, formatNumber, t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import { useCampaigns } from "../campaign/store";
 import { safeFileName, saveJson } from "../ui/files";
 import { systemTitle } from "../ui/systemLabels";
-import { useLadder, useRankedResults } from "../ranked/store";
+import { useLadder, useRankedResults, useSignRate } from "../ranked/store";
 import { PROVISIONAL, rankedSystems, type Rating } from "../ranked/ratings";
-import { cardFile, importCardFile, keyTag, myKey, useCard } from "./card";
+import { settling } from "../ranked/RankedGame";
+import { cardFile, keyTag, myKey, readCardFile, takeCardFile, useCard, type CardFile } from "./card";
 import { closePlayer, openLadder, openPlayerCard, usePlayerOpen } from "./open";
 
 /**
@@ -86,15 +87,35 @@ function CardView() {
     saveJson(safeFileName(name || "player", "player", ".player.json"), await cardFile());
     setNote(t("Saved. Keep it private: whoever has this file plays as you."));
   };
+  // A card file replaces this device's own key: asked first when that would lose a name or ranked games (UX 450).
+  const [replacing, setReplacing] = useState<CardFile | null>(null);
+  const picker = useRef<HTMLInputElement>(null);
+  const myGames = Object.values(results).filter((r) => r.result.players.some((p) => p.key === key)).length;
   const importFile = async (file: File | undefined) => {
     if (!file) return;
+    let read: CardFile | null;
     try {
-      const ok = await importCardFile(JSON.parse(await file.text()));
-      setNote(ok ? t("This device now plays as you.") : t("That isn't a player card file."));
+      read = await readCardFile(JSON.parse(await file.text()));
     } catch {
-      setNote(t("That isn't a player card file."));
+      read = null;
     }
+    if (!read) return setNote(t("That isn't a player card file."));
+    if (read.key === key) {
+      takeCardFile(read);
+      return setNote(t("That's already this device's card."));
+    }
+    if (myGames > 0 || (name.trim() && name.trim() !== read.card.name.trim())) return setReplacing(read);
+    takeCardFile(read);
+    setNote(t("This device now plays as you."));
   };
+  const replace = async (saveFirst: boolean) => {
+    if (!replacing) return;
+    if (saveFirst) saveJson(safeFileName(name || "player", "player", ".player.json"), await cardFile());
+    takeCardFile(replacing);
+    setReplacing(null);
+    setNote(t("This device now plays as you."));
+  };
+  const rate = useSignRate(key);
   return (
     <>
       <Head title={t("Your player card")} other={{ label: t("Ladder"), run: () => openLadder() }} />
@@ -136,6 +157,13 @@ function CardView() {
         </div>
       </div>
       <h3>{t("Ranked")}</h3>
+      {rate && rate.of > 0 && (
+        <p className="muted small">
+          {tn(rate.of, "You've signed {signed} of {n} result.", "You've signed {signed} of {n} results.", {
+            signed: rate.signed,
+          })}
+        </p>
+      )}
       {systems.length ? (
         <ul className="plain">
           {systems.map((s) => (
@@ -181,16 +209,44 @@ function CardView() {
       </p>
       <div className="row wrap">
         <button onClick={() => void exportFile()}>{t("Save player card file")}</button>
-        <label className="button file">
-          {t("Use a player card file…")}
-          <input
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={(e) => void importFile(e.target.files?.[0])}
-          />
-        </label>
+        {/* A real button, so Tab reaches it (UX 452). */}
+        <button onClick={() => picker.current?.click()}>{t("Use a player card file…")}</button>
+        <input
+          ref={picker}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={(e) => {
+            void importFile(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
       </div>
+      {replacing && (
+        <div className="panel-note warn-note" role="alertdialog" aria-label={t("Replace your player card?")}>
+          <p>
+            {myGames
+              ? tn(
+                  myGames,
+                  "This replaces your card ({name}, {n} ranked game). Save your current card first?",
+                  "This replaces your card ({name}, {n} ranked games). Save your current card first?",
+                  { name: name.trim() || t("no name") },
+                )
+              : t("This replaces your card ({name}). Save your current card first?", {
+                  name: name.trim() || t("no name"),
+                })}
+          </p>
+          <div className="row wrap">
+            <button className="primary" onClick={() => void replace(true)}>
+              {t("Save and replace")}
+            </button>
+            <button onClick={() => void replace(false)}>{t("Replace")}</button>
+            <button className="quiet" onClick={() => setReplacing(null)}>
+              {t("Cancel")}
+            </button>
+          </div>
+        </div>
+      )}
       {note && (
         <p className="small" role="status">
           {note}
@@ -215,12 +271,13 @@ function MyRating({ system, me }: { system: string; me: string | null }) {
         "{rating} · #{place} of {of} · {n} game ({record})",
         "{rating} · #{place} of {of} · {n} games ({record})",
         {
-          rating: r.rating,
+          rating: formatNumber(r.rating),
           place: i + 1,
           of: rows.length,
           record: record(r),
         },
       )}
+      {settling(r.games) && <span className="muted small"> · {settling(r.games)}</span>}
     </li>
   );
 }
@@ -233,6 +290,12 @@ function LadderView() {
   const [system, setSystem] = useState(asked ?? "");
   const shown = system || systems[0] || "";
   const rows = useLadder(shown);
+  const clash = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const r of rows)
+      seen.set(r.name.trim().toLowerCase(), (seen.get(r.name.trim().toLowerCase()) ?? 0) + 1);
+    return new Set([...seen].filter(([, n]) => n > 1).map(([k]) => k));
+  }, [rows]);
   useEffect(() => void myKey(), []);
   return (
     <>
@@ -270,11 +333,21 @@ function LadderView() {
               <tr key={r.key} className={r.key === key ? "me" : undefined}>
                 <td>{i + 1}</td>
                 <td>
-                  {displayName(r.name)} <span className="muted small">{keyTag(r.key)}</span>
+                  {displayName(r.name)}
+                  {/* The key only tells two players of one name apart (PX ranked 5). */}
+                  {clash.has(r.name.trim().toLowerCase()) && (
+                    <span className="key-tag"> {keyTag(r.key)}</span>
+                  )}
                 </td>
                 <td>
-                  {r.rating}
-                  {r.games < PROVISIONAL ? "?" : ""}
+                  {formatNumber(r.rating)}
+                  {r.games < PROVISIONAL ? (
+                    <span className="provisional" title={settling(r.games) ?? undefined}>
+                      ?
+                    </span>
+                  ) : (
+                    ""
+                  )}
                 </td>
                 <td>{r.games}</td>
                 <td>{record(r)}</td>
@@ -284,6 +357,9 @@ function LadderView() {
         </table>
       ) : (
         <p className="muted">{t("No ranked results yet.")}</p>
+      )}
+      {rows.some((r) => r.games < PROVISIONAL) && (
+        <p className="muted small">{t("? still finding their level: fewer than five games so far.")}</p>
       )}
     </>
   );

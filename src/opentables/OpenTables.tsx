@@ -1,15 +1,15 @@
 import { openLadder } from "../player/open";
-import { myKey, signAsMe, signedBy } from "../player/card";
-import { useRating } from "../ranked/store";
+import { myKey, signAsMe, signedBy, useCard } from "../player/card";
+import { signsLine, useRating, useSignRate } from "../ranked/store";
 import { PROVISIONAL, type Rating } from "../ranked/ratings";
-import { playRanked } from "../ranked/RankedGame";
+import { notRanked, playRanked, useRankedAsk } from "../ranked/RankedGame";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { systemOf, type GameState } from "../core";
-import { formatDate, language, t, tn } from "../i18n";
+import { formatDate, formatNumber, language, t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import { untakenSeat } from "../ui/Branch";
-import { plainSystemName, systemLabel } from "../ui/systemLabels";
+import { gameTitle, plainSystemName } from "../ui/systemLabels";
 import { useStore } from "../store";
 import { useMail } from "../mail/store";
 import { inviteCode } from "../mail/mailbox";
@@ -194,9 +194,7 @@ export function OpenTablesBoard({
       >
         <div className="row spread">
           <h2>{t("Open tables")}</h2>
-          <button className="small" onClick={() => openLadder()}>
-            {t("Ladder")}
-          </button>
+          <button onClick={() => openLadder()}>{t("Ladder")}</button>
           <button className="quiet" title={t("Close")} onClick={onClose}>
             ✕
           </button>
@@ -416,9 +414,17 @@ function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }
 /** A player's standing, as a card shows it: "1516 (12 games)", or new to the ladder. */
 function standing(r: Rating | null): string {
   if (!r) return t("new to the ladder");
+  // The "?" said in words (PX ranked 4).
   return r.games < PROVISIONAL
-    ? tn(r.games, "{rating}? ({n} game)", "{rating}? ({n} games)", { rating: r.rating })
-    : tn(r.games, "{rating} ({n} game)", "{rating} ({n} games)", { rating: r.rating });
+    ? tn(
+        r.games,
+        "{rating} ({n} game, still finding their level)",
+        "{rating} ({n} games, still finding their level)",
+        {
+          rating: formatNumber(r.rating),
+        },
+      )
+    : tn(r.games, "{rating} ({n} game)", "{rating} ({n} games)", { rating: formatNumber(r.rating) });
 }
 
 /** A ranked table (#65): ranked, and the poster's rating once their key's signature on the post checks out. */
@@ -433,10 +439,12 @@ function RankedLine({ post }: { post: SeenPost }) {
     };
   }, [post.id, post.player, post.proof]);
   const rating = useRating(proven ? post.player : undefined, post.system);
+  const signs = signsLine(useSignRate(proven ? post.player : null));
   return (
     <div className="small ranked-line">
       <span className="ranked-chip small">{t("Ranked")}</span>{" "}
       {proven ? t("{name}: {standing}", { name: displayName(post.name), standing: standing(rating) }) : null}
+      {proven && signs ? ` · ${signs}` : null}
     </div>
   );
 }
@@ -650,14 +658,17 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   // Until typed in, it follows the room's, so a name given in the side panel fills this too (PX).
   const [edited, setTyped] = useState<string | null>(null);
   const own = kind === "mail" ? mailMe : self?.name;
-  const typed = edited ?? (own && !/^Player \d+$/.test(own) ? own : (myName() ?? ""));
+  // The player card's name, live, so naming yourself there fills this in (UX 449).
+  const cardName = useCard((c) => c.name.trim());
+  const typed = edited ?? (own && !/^Player \d+$/.test(own) ? own : cardName || (myName() ?? ""));
   useEffect(() => {
     if (asked) useOpenTables.setState({ asked: false });
   }, [asked]);
   if (!boardOn()) return null;
   const name = typed.trim().slice(0, LIMITS.name);
   const system = game.system ?? systemOf(game).id;
-  const gameName = plainSystemName(systemLabel(system, systemOf(game).name));
+  // The game's title, also before its rules package has loaded (PX ranked 6).
+  const gameName = plainSystemName(gameTitle(game));
   const here = mine && mine.post.join === join;
 
   if (here)
@@ -973,11 +984,14 @@ function GuestArrival() {
     return !!host && host !== s.session?.selfId && !!s.game.players[host] && s.game.turn.round === 0;
   });
   const [closed, setClosed] = useState(false);
+  // The host's ranked offer, on this card where the guest is looking (PX ranked 7); the card waits for an answer.
+  const asker = useRankedAsk();
+  const askerName = useStore((s) => (asker ? s.game.players[asker]?.name : undefined));
   useEffect(() => {
-    if (!hostThere) return;
+    if (!hostThere || asker) return;
     const timer = setTimeout(() => setClosed(true), 45_000);
     return () => clearTimeout(timer);
-  }, [hostThere]);
+  }, [hostThere, asker]);
   if (!post || !hostThere || closed) return null;
   const hello = (text: string) => {
     say({ kind: "chat", text });
@@ -992,6 +1006,23 @@ function GuestArrival() {
         </button>
       </div>
       {post.note && <p className="small">“{post.note}”</p>}
+      {asker && askerName && (
+        <div className="arrival-ranked">
+          <p className="small">
+            {t("{name} wants to play this game ranked: at the end you both sign the result.", {
+              name: displayName(askerName),
+            })}
+          </p>
+          <div className="row wrap">
+            <button className="primary small" onClick={() => void playRanked()}>
+              {t("Play ranked")}
+            </button>
+            <button className="small" onClick={notRanked}>
+              {t("Not this time")}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="row wrap">
         {[t("👋 Hi!"), t("Thanks for having me"), t("Ready when you are")].map((text) => (
           <button key={text} className="small" onClick={() => hello(text)}>

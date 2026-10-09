@@ -1,4 +1,5 @@
 import { openPlayerCard } from "../player/open";
+import { useCard } from "../player/card";
 import { systemOf } from "../core/content/turn";
 import { isPlaceholder } from "../core/content/systems";
 import type { ReplayFile } from "./replayFile";
@@ -61,6 +62,13 @@ export function Lobby() {
   const { start, openReplay } = useStore();
   const params = new URLSearchParams(location.search);
   const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
+  // A name given on the player card fills this in at once, unless the player typed another (UX 449).
+  const cardName = useCard((c) => c.name.trim());
+  const [lastCard, setLastCard] = useState(cardName);
+  if (cardName !== lastCard) {
+    setLastCard(cardName);
+    if (!name.trim() || name.trim() === lastCard) setName(cardName);
+  }
   const [room, setRoom] = useState(() => params.get("room") ?? "");
   const [sameBrowser, setSameBrowser] = useState(params.get("local") === "1");
   // Players per side when hosting: 1 (1v1) or 2 (a 2v2 team game, core/teams.ts).
@@ -277,6 +285,7 @@ export function Lobby() {
         <h1>Open Battle</h1>
         {/* Settings out of the way, but in sight (UX 285). */}
         <div className="lobby-settings">
+          <CardChip />
           <TextSizePicker />
           <LanguagePicker />
         </div>
@@ -575,9 +584,6 @@ export function Lobby() {
           </Suspense>
           <InstallLink />
           <hr />
-          <button className="link" onClick={openPlayerCard}>
-            {t("Your player card: name, colours, ranked games")}
-          </button>
           <button className="link" onClick={() => openLibrary()}>
             {t("Figure library: your models, packs and storage")}
           </button>
@@ -650,5 +656,22 @@ function HowHard({ system, onCancel }: { system: string; onCancel: () => void })
         ✕
       </button>
     </div>
+  );
+}
+
+/** The player card in the lobby's header (UX 453): name and colour, one tap to the card and the ladder. */
+function CardChip() {
+  const name = useCard((c) => c.name.trim());
+  const color = useCard((c) => c.colors[0]);
+  return (
+    <button
+      className="card-chip"
+      onClick={openPlayerCard}
+      title={t("Your player card: name, colours, ranked games")}
+      aria-label={t("Your player card: name, colours, ranked games")}
+    >
+      <span className="swatch" style={{ background: color }} aria-hidden="true" />
+      {name || t("Your player card")}
+    </button>
   );
 }

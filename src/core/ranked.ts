@@ -34,12 +34,32 @@ export interface RankedResult {
   at: number;
 }
 
+/**
+ * Why a player didn't sign (PX ranked 1): the score is wrong (both fix it on
+ * the table and the result is written again), the two agreed it wouldn't
+ * count, or something went wrong at the table.
+ */
+export type DeclineWhy = "score" | "agreed" | "broke";
+
+export const DECLINE_WHYS: readonly DeclineWhy[] = ["score", "agreed", "broke"];
+
+/** A result can be written again this many times for a wrong score; then a decline is a decline. */
+export const MAX_FIXES = 3;
+
 export interface RankedState {
   /** Each opted-in player's key. */
   keys: Record<PlayerId, PlayerKey>;
   result?: RankedResult;
   /** Each player's signature on the result; null: they didn't sign it (disputed). */
   sigs: Record<PlayerId, string | null>;
+  /** Why each player who didn't sign said so. */
+  whys?: Record<PlayerId, DeclineWhy>;
+  /** Each decliner's signature on their decline (src/ranked/verify.ts), so a refusal can't be made up. */
+  declines?: Record<PlayerId, string>;
+  /** Who said the score was wrong: the table fixes it before the result is written again. */
+  fixing?: PlayerId;
+  /** Results written again for a wrong score so far. */
+  fixes?: number;
 }
 
 export const isPlayerKey = (k: unknown): k is PlayerKey =>

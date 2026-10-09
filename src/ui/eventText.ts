@@ -146,9 +146,17 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     case "ranked/sign":
       return event.sig
         ? t("{name} signed the result", { name: playerName(game.players[event.player]) ?? who })
-        : t("{name} didn't sign the result: it won't count", {
-            name: playerName(game.players[event.player]) ?? who,
-          });
+        : event.why === "score"
+          ? t("{name} says the score is wrong: fix it on the table, then sign again", {
+              name: playerName(game.players[event.player]) ?? who,
+            })
+          : t("{name} didn't sign the result: it won't count", {
+              name: playerName(game.players[event.player]) ?? who,
+            });
+    case "ranked/fixed":
+      return t("{name} fixed the score: the result is up for signing again", {
+        name: playerName(game.players[event.player]) ?? who,
+      });
     case "player/color":
       // Before the battle it's setting up (an army brings its colour, UX 335), not news.
       if (game.turn.round === 0) return "";

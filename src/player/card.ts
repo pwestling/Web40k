@@ -81,29 +81,40 @@ export async function cardFile(): Promise<unknown> {
   return { format: FILE, card: { name, colors }, identity: await identity() };
 }
 
-/**
- * Take in an identity file from another device. Returns false when it isn't
- * one (or its keys don't sign for each other).
- */
-export async function importCardFile(raw: unknown): Promise<boolean> {
+/** A player card file, checked: its card and the identity whose keys sign for each other. */
+export interface CardFile {
+  card: PlayerCard;
+  identity: Identity;
+  key: PlayerKey;
+}
+
+/** Read an identity file from another device; null when it isn't one (or its keys don't sign for each other). */
+export async function readCardFile(raw: unknown): Promise<CardFile | null> {
   const f = raw as { format?: unknown; card?: Partial<PlayerCard>; identity?: Partial<Identity> } | null;
-  if (!f || f.format !== FILE || !f.identity?.publicKey || !f.identity.privateKey) return false;
+  if (!f || f.format !== FILE || !f.identity?.publicKey || !f.identity.privateKey) return null;
   const id = f.identity as Identity;
-  if (!isPlayerKey(keyOf(id.publicKey))) return false;
+  if (!isPlayerKey(keyOf(id.publicKey))) return null;
   // The private key must sign for the public one, or ranked results would never check.
   try {
     const probe = `open-battle-card:${Date.now()}`;
-    if (!(await verifySignature(probe, await sign(probe, id), id.publicKey))) return false;
+    if (!(await verifySignature(probe, await sign(probe, id), id.publicKey))) return null;
   } catch {
-    return false;
+    return null;
   }
-  setIdentity(id);
-  const name = typeof f.card?.name === "string" ? f.card.name.slice(0, 32) : useCard.getState().name;
+  const now = useCard.getState();
   const c = f.card?.colors;
-  useCard.setState({
-    name,
-    colors: Array.isArray(c) && hex(c[0]) && hex(c[1]) ? [c[0], c[1]] : useCard.getState().colors,
+  return {
+    identity: id,
     key: keyOf(id.publicKey),
-  });
-  return true;
+    card: {
+      name: typeof f.card?.name === "string" ? f.card.name.slice(0, 32) : now.name,
+      colors: Array.isArray(c) && hex(c[0]) && hex(c[1]) ? [c[0], c[1]] : now.colors,
+    },
+  };
+}
+
+/** This device plays as the card in the file from now on (its own key is replaced: UX 450 asks first). */
+export function takeCardFile(file: CardFile): void {
+  setIdentity(file.identity);
+  useCard.setState({ ...file.card, key: file.key });
 }

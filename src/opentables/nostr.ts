@@ -190,7 +190,7 @@ export function nostrBoard(options: NostrOptions): BoardBackend {
       const tags = [
         ["d", RESULT_D + r.result.replay],
         ["t", RESULT_TAG],
-        ["alt", "An Open Battle ranked result, signed by both players"],
+        ["alt", "An Open Battle ranked result, signed by its players"],
       ];
       await send(await signEvent(secret, KIND, tags, JSON.stringify(r)));
     },
