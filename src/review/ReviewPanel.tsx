@@ -418,7 +418,7 @@ function TurningPoint({
       : mark.kind === "missed"
         ? t("Ended the turn without {better}, about {n}% chance to win left behind.", {
             // "Spark Drones going for the Middle lantern" (UX 430).
-            better: (better ?? "").replace(": ", " "),
+            better: (d.best && movePhrase(state, d.best).doing) || (better ?? "").replace(": ", " "),
             n,
           })
         : mark.kind === "strong"

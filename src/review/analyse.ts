@@ -116,11 +116,29 @@ const take = (e: Extract<GameEvent, { type: "action/take" }>): Intent => ({
 });
 
 /** A decision's move as the bot would make it, from the log entry that starts it (null if it isn't one). */
-function decisionAt(state: GameState, logged: LoggedEvent): BotMove | null {
+export function decisionAt(state: GameState, logged: LoggedEvent): BotMove | null {
   const e = logged.event;
   const as = logged.by;
   if (!as || !state.players[as]) return null;
   if (e.type === "action/take") return { intent: take(e), as, kind: "played" };
+  // A shot or blow declared in the attack panel is the same choice as the shoot or fight action the
+  // computer takes; without it a player's attacks went unjudged, and the unit read as still to shoot.
+  if (e.type === "attack/declare") {
+    const spec = e.attack.spec;
+    const action = spec.kind === "ranged" ? "shoot" : "fight";
+    if (!systemOf(state).actions.some((a) => a.id === action)) return null;
+    return {
+      intent: {
+        type: "action/take",
+        unitId: spec.attackerUnitId,
+        action,
+        weapon: spec.weaponId,
+        targetId: spec.targetUnitId,
+      },
+      as,
+      kind: "played",
+    };
+  }
   if (e.type === "models/move")
     return { intent: { type: "models/move", moves: e.moves }, as, kind: "played" };
   if (e.type === "player/action")

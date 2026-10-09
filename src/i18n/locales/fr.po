@@ -4491,88 +4491,103 @@ msgstr "L'analyse s'est arrêtée : {why}"
 msgid "Try again"
 msgstr "Réessayer"
 
-#: src/review/words.ts:134
+#: src/review/words.ts:149
 #, fuzzy
 msgid "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer."
 msgstr "Ton meilleur choix : {move} au round {round}, environ {n} % de chances de victoire en plus que tout le reste."
 
-#: src/review/words.ts:143
+#: src/review/words.ts:158
 #, fuzzy
 msgid "{clean} of your {n} choices were as good as the best on offer."
 msgstr "{clean} de tes {n} choix valaient le meilleur possible."
 
-#: src/review/words.ts:155
+#: src/review/words.ts:170
 #, fuzzy
 msgid "Next game, before a move, look at where the enemy can shoot next turn ({n} move gave up about {vp} VP)."
 msgid_plural "Next game, before a move, look at where the enemy can shoot next turn ({n} moves gave up about {vp} VP)."
 msgstr[0] "La prochaine fois, avant de bouger, regarde où l'ennemi pourra tirer au prochain tour ({n} mouvement a coûté environ {vp} VP)."
 msgstr[1] "La prochaine fois, avant de bouger, regarde où l'ennemi pourra tirer au prochain tour ({n} mouvements ont coûté environ {vp} VP)."
 
-#: src/review/words.ts:162
+#: src/review/words.ts:177
 #, fuzzy
 msgid "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack gave up about {vp} VP)."
 msgid_plural "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks gave up about {vp} VP)."
 msgstr[0] "La prochaine fois, achève une unité blessée avant d'en attaquer une intacte ({n} attaque a coûté environ {vp} VP)."
 msgstr[1] "La prochaine fois, achève une unité blessée avant d'en attaquer une intacte ({n} attaques ont coûté environ {vp} VP)."
 
-#: src/review/words.ts:168
+#: src/review/words.ts:183
 #, fuzzy
 msgid "Next game, keep stratagems for the attack that needs them (about {vp} VP went on them)."
 msgstr "La prochaine fois, garde les stratagèmes pour l'attaque qui en a besoin (environ {vp} VP y sont passés)."
 
-#: src/review/words.ts:176
+#: src/review/words.ts:191
 #, fuzzy
 msgid "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing)."
 msgid_plural "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing)."
 msgstr[0] "La prochaine fois, vérifie chaque unité avant d'appuyer sur ▶ ({n} phase s'est terminée avec encore quelque chose à faire)."
 msgstr[1] "La prochaine fois, vérifie chaque unité avant d'appuyer sur ▶ ({n} phases se sont terminées avec encore quelque chose à faire)."
 
-#: src/review/words.ts:188
+#: src/review/words.ts:203
 #, fuzzy
 msgid "One to replay: {move} in round {round}. {better} was worth about {n}% more chance to win."
 msgstr "À rejouer : {move} au round {round}. {better} valait environ {n} % de chances de victoire en plus."
 
-#: src/review/words.ts:208
+#: src/review/words.ts:223
 #, fuzzy
 msgid "The dice were kind to you: about {vp} VP above the average."
 msgstr "Les dés t'ont souri : environ {vp} VP au-dessus de la moyenne."
 
-#: src/review/words.ts:209
+#: src/review/words.ts:224
 #, fuzzy
 msgid "The dice were against you: about {vp} VP below the average. That part wasn't up to you."
 msgstr "Les dés étaient contre toi : environ {vp} VP sous la moyenne. Ça, tu n'y pouvais rien."
 
-#: src/review/words.ts:23
+#: src/review/words.ts:30
 #, fuzzy
 msgid "moving on to the next phase"
 msgstr "passer à la phase suivante"
 
-#: src/review/words.ts:33
+#: src/review/words.ts:42
 #, fuzzy
 msgid "used {action}"
 msgstr "a utilisé {action}"
 
-#: src/review/words.ts:39
+#: src/review/words.ts:42
+#, fuzzy
+msgid "using {action}"
+msgstr "utiliser {action}"
+
+#: src/review/words.ts:49
 #, fuzzy
 msgid "used {action} on their {unit}"
 msgstr "a utilisé {action} sur sa propre unité {unit}"
 
-#: src/review/words.ts:40
+#: src/review/words.ts:50
+#, fuzzy
+msgid "using {action} on their {unit}"
+msgstr "utiliser {action} sur sa propre unité {unit}"
+
+#: src/review/words.ts:54
 #, fuzzy
 msgid "used {action} on the enemy {unit}"
 msgstr "a utilisé {action} sur l'unité ennemie {unit}"
 
-#: src/review/words.ts:48
+#: src/review/words.ts:55
+#, fuzzy
+msgid "using {action} on the enemy {unit}"
+msgstr "utiliser {action} sur l'unité ennemie {unit}"
+
+#: src/review/words.ts:63
 #, fuzzy
 msgid "{action} with {weapon}"
 msgstr "{action} avec {weapon}"
 
-#: src/review/words.ts:49
+#: src/review/words.ts:64
 #, fuzzy
 msgid "{action}, {why}"
 msgstr "{action}, {why}"
 
-#: src/review/words.ts:58
+#: src/review/words.ts:73
 #, fuzzy
 msgid "moving"
 msgstr "se déplace"

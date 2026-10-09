@@ -19,7 +19,14 @@ const seatOfUnit = (state: GameState, id: string) => state.players[state.units[i
 const unitName = unitLabel;
 
 /** A decision in two parts: the unit, and what it did ("going for the East lantern"). */
-export function movePhrase(state: GameState, move: BotMove | null): { unit: string; what: string } {
+export function movePhrase(
+  state: GameState,
+  move: BotMove | null,
+): {
+  unit: string;
+  what: string;
+  /** "using Focused Fire on their Line Troopers", for "Ended the turn without…" */ doing?: string;
+} {
   if (!move) return { unit: "", what: t("moving on to the next phase") };
   const i = move.intent;
   const why = explain(state, move)?.text;
@@ -30,15 +37,23 @@ export function movePhrase(state: GameState, move: BotMove | null): { unit: stri
       playerActions(state, move.as).find((o) => o.def.id === i.action)?.def.name ??
       i.action;
     const target = unitName(state, i.targetId);
-    if (!target) return { unit: "", what: t("used {action}", { action: gameText(name) }) };
+    const action = gameText(name);
+    if (!target)
+      return { unit: "", what: t("used {action}", { action }), doing: t("using {action}", { action }) };
     // "used Focused Fire on their Lance Team": a stratagem, not a shooting target (UX 426). "Their" says whose.
     const own = i.targetId && seatOfUnit(state, i.targetId) === state.players[move.as]?.seat;
-    return {
-      unit: "",
-      what: own
-        ? t("used {action} on their {unit}", { action: gameText(name), unit: state.units[i.targetId!]!.name })
-        : t("used {action} on the enemy {unit}", { action: gameText(name), unit: target }),
-    };
+    const unit = own ? state.units[i.targetId!]!.name : target;
+    return own
+      ? {
+          unit: "",
+          what: t("used {action} on their {unit}", { action, unit }),
+          doing: t("using {action} on their {unit}", { action, unit }),
+        }
+      : {
+          unit: "",
+          what: t("used {action} on the enemy {unit}", { action, unit }),
+          doing: t("using {action} on the enemy {unit}", { action, unit }),
+        };
   }
   if (i.type === "action/take") {
     const unit = unitName(state, i.unitId) ?? "";
