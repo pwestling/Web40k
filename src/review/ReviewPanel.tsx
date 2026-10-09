@@ -9,7 +9,7 @@ import { branchGame } from "../ui/Branch";
 import { explain } from "../bot/explain";
 import { loadNotes, putNote, deviceId, type NoteMark } from "../replay/notes";
 import { startReview, useReviewRun } from "./run";
-import { capital, movePhrase, moveText, takeaways, winShare } from "./words";
+import { betterText, capital, movePhrase, moveText, takeaways, winShare } from "./words";
 import type { Decision, GameReview, Mark } from "./analyse";
 
 /**
@@ -408,12 +408,8 @@ function TurningPoint({
   pick: () => void;
 }) {
   const played = capital(moveText(state, d.played));
-  // The unit named once: "Field Marshal: closing on Pyre Speaker. Better: a Normal move…" (PX feel pass d).
-  const sameUnit =
-    !!d.best &&
-    movePhrase(state, d.best).unit !== "" &&
-    movePhrase(state, d.best).unit === movePhrase(state, d.played).unit;
-  const better = d.best ? (sameUnit ? movePhrase(state, d.best).what : moveText(state, d.best)) : null;
+  // The unit named once: "Field Marshal closing on Pyre Speaker. Better: a Normal move…" (PX feel pass d).
+  const better = d.best ? betterText(state, d.played, d.best) : null;
   const n = winShare(review, mark);
   const line =
     mark.kind === "costly"

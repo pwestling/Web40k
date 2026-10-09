@@ -44,5 +44,8 @@ export async function checkReview(system: string): Promise<void> {
     const lines = takeaways(review, (seq) => stateAt(record, seq - 1), seat);
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.length).toBeLessThanOrEqual(3);
+    // At most one order per side, and no unit followed by a colon and its move (PX review words).
+    expect(lines.filter((l) => l.startsWith("Next game")).length).toBeLessThanOrEqual(1);
+    for (const l of lines) expect(l.split(": ").length).toBeLessThanOrEqual(2);
   }
 }

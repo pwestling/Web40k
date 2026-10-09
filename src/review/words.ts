@@ -73,10 +73,17 @@ export function movePhrase(
   return { unit: "", what: why ?? i.type };
 }
 
-/** "Line Troopers: Advance, going for the East lantern", "used Focused Fire on their Lance Team". */
+/**
+ * A move as words in a sentence, with no colon after the unit (PX review words 3): "Bastion Walker
+ * closing on Cinder Colossus", "Line Troopers' Advance, going for the East lantern", "used Focused
+ * Fire on their Lance Team".
+ */
 export function moveText(state: GameState, move: BotMove | null): string {
   const { unit, what } = movePhrase(state, move);
-  return unit ? `${unit}: ${what}` : what;
+  if (!unit) return what;
+  // A description ("closing on…") follows the unit; an action's name ("Advance") is the unit's.
+  if (what.charAt(0) !== what.charAt(0).toUpperCase()) return t("{unit} {what}", { unit, what });
+  return /s$/.test(unit) ? t("{unit}' {what}", { unit, what }) : t("{unit}'s {what}", { unit, what });
 }
 
 /**
@@ -154,8 +161,9 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     );
   } else if (judged)
     lead = t("{clean} of your {n} choices were as good as the best on offer.", { clean, n: judged });
-  // Up to two things to try next game, the costliest first.
-  const tips: { weight: number; text: string }[] = [];
+  // Up to two things to try next game, the costliest first. Only one is said as an order ("Next
+  // game, …"); a second reads as an observation (PX review words 1).
+  const tips: { weight: number; text: string; seen?: string }[] = [];
   const worstKind = (["move", "attack", "stratagem"] as Kind[]).sort(
     (a, b) => cost[b].loss - cost[a].loss,
   )[0]!;
@@ -177,6 +185,12 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
                 "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks could have done better).",
               )
             : t("Next game, keep stratagems for the attack that needs them."),
+      seen:
+        worstKind === "move"
+          ? tn(w.costly, "{n} move could have done better.", "{n} moves could have done better.")
+          : worstKind === "attack"
+            ? tn(w.costly, "{n} attack could have done better.", "{n} attacks could have done better.")
+            : t("Some stratagems went where they mattered less."),
     });
   const missed = mine.filter((d) => !d.played);
   if (missed.length)
@@ -187,17 +201,23 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
         "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing).",
         "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing).",
       ),
+      seen: tn(
+        missed.length,
+        "{n} phase ended with a unit that still had something worth doing.",
+        "{n} phases ended with units that still had something worth doing.",
+      ),
     });
   const costly = ofSide("costly");
   if (costly) {
     const d = review.decisions[costly.decision]!;
     const st = states(d.seq);
+    // The unit named once, and a sentence rather than a log line (PX review words 2).
     tips.push({
       weight: costly.size * 0.7,
-      text: t("One to replay: {move} in round {round}. {better} was worth about {n}% more chance to win.", {
+      text: t("One to replay: in round {round}, {move}; {better} was worth about {n}% more chance to win.", {
         move: moveText(st, d.played),
         round: d.round,
-        better: capital(moveText(st, d.best)),
+        better: betterText(st, d.played, d.best),
         n: winShare(review, costly),
       }),
     });
@@ -207,7 +227,7 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     ...tips
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 2)
-      .map((x) => x.text),
+      .map((x, i, top) => (x.seen && top.slice(0, i).some((y) => y.seen) ? x.seen : x.text)),
   ];
   // The dice, last and kindly, when there's room.
   const luck = review.totals[seat]?.luck ?? 0;
@@ -218,6 +238,18 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
         : t("The dice were against you this game. That part wasn't up to you."),
     );
   return out;
+}
+
+/**
+ * The better move, beside the one played: the unit not named twice, and when both read the same,
+ * what was different (PX review words 4): the same move to another spot.
+ */
+export function betterText(state: GameState, played: BotMove | null, best: BotMove | null): string {
+  if (!best) return "";
+  const a = movePhrase(state, played);
+  const b = movePhrase(state, best);
+  if (b.what === a.what && b.unit === a.unit) return t("the same move to a different spot");
+  return b.unit && b.unit === a.unit ? b.what : moveText(state, best);
 }
 
 export const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
