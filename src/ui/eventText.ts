@@ -1,3 +1,4 @@
+import { STANDEE_EXTENSION } from "../standees/file";
 import { playerName } from "../i18n/names";
 import { reasonFor } from "../bot/reasons";
 import { checkName } from "./warnings";
@@ -352,13 +353,16 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     case "objective/move":
       return t("{name} moved an objective", { name: who });
     case "unit/figure":
-      return event.figure
-        ? t("{name} gave {unit} the figure {figure}", {
-            name: who,
-            unit: unitName(event.id),
-            figure: event.figure.name,
-          })
-        : t("{name} took the figure off {unit}", { name: who, unit: unitName(event.id) });
+      // A photo standee is named for its file; the log says what it is (PX standees 7).
+      return event.figure?.name.endsWith(STANDEE_EXTENSION)
+        ? t("{name} dressed {unit} in a photo standee", { name: who, unit: unitName(event.id) })
+        : event.figure
+          ? t("{name} gave {unit} the figure {figure}", {
+              name: who,
+              unit: unitName(event.id),
+              figure: event.figure.name,
+            })
+          : t("{name} took the figure off {unit}", { name: who, unit: unitName(event.id) });
     case "unit/height":
       return t('{name} set {unit} height to {height}"', {
         name: who,

@@ -5680,3 +5680,6 @@ body:has(.panel.better-move) .panel.whatnow {
   padding: 6px 10px;
   margin: 6px 0;
 }
+.standee-maker .slider-ends {
+  display: block;
+}

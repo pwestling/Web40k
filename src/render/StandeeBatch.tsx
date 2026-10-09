@@ -39,11 +39,11 @@ const m4 = new Matrix4();
 /** Lit like a standee's own material (Miniatures makeLook): mostly the light it was photographed in. */
 function photoMaterial(map: DataArrayTexture): MeshStandardMaterial {
   const material = new MeshStandardMaterial({
-    color: "#8c8c8c",
+    color: "#5a5a5a",
     roughness: 1,
     metalness: 0,
     emissive: "#ffffff",
-    emissiveIntensity: 0.55,
+    emissiveIntensity: 0.8,
   });
   material.onBeforeCompile = (shader) => {
     shader.uniforms.photoMap = { value: map };

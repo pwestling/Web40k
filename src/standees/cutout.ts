@@ -77,6 +77,16 @@ function backdropColours(img: Pixels, k = 3): Rgb[] {
 }
 
 const lum = ([r, g, b]: Rgb) => 0.299 * r + 0.587 * g + 0.114 * b;
+/** How coloured: 0 grey, 1 pure colour. */
+const saturation = ([r, g, b]: Rgb) => {
+  const hi = Math.max(r, g, b);
+  return hi ? (hi - Math.min(r, g, b)) / hi : 0;
+};
+/** The colour without its brightness: red and green shares. */
+const chroma = ([r, g, b]: Rgb): [number, number] => {
+  const sum = r + g + b || 1;
+  return [r / sum, g / sum];
+};
 
 /** Otsu's threshold over values 0..max: the split that best separates the two groups. */
 function otsu(values: Float32Array, max: number, bins = 128): number {
@@ -159,13 +169,25 @@ export function autoMask(img: Pixels, options: MaskOptions = {}): Mask {
   );
   const grad = edges(img);
   const strong = Math.max(120, otsu(grad, 1500) * 1.2);
+  // The paper in shadow (beside the feet, under a lamp): the backdrop's own hue, unsaturated, only darker (PX).
+  const shades = bg.filter((c) => saturation(c) < 0.2).map((c) => ({ c, l: lum(c), k: chroma(c) }));
+  const shade = (i: number): boolean => {
+    const p: Rgb = [data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!];
+    if (saturation(p) > 0.22) return false;
+    const l = lum(p);
+    const k = chroma(p);
+    return shades.some(
+      (x) => l <= x.l * 1.02 && l >= x.l * 0.45 && Math.hypot(k[0] - x.k[0], k[1] - x.k[1]) < 0.01,
+    );
+  };
 
   // Fill from the border: backdrop-coloured, and not across a strong edge unless plainly backdrop.
   const cut = new Uint8Array(n);
   const stack: number[] = [];
   const take = (i: number) => {
     if (cut[i]) return;
-    const close = d[i]! < tol;
+    // A shade of the paper counts as close, never as plain: the miniature's outline still stops it.
+    const close = d[i]! < tol || shade(i);
     const plain = d[i]! < tol * 0.5;
     if (close && (plain || grad[i]! < strong)) {
       cut[i] = 1;
@@ -358,4 +380,16 @@ export function stroke(
   const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / Math.max(1, radius / 2)));
   for (let k = 1; k <= steps; k++)
     paint(from.x + ((to.x - from.x) * k) / steps, from.y + ((to.y - from.y) * k) / steps);
+}
+
+/**
+ * What the cut kept, to warn of a cut that went wrong (PX): its share of the
+ * photo, and its biggest piece's share of what was kept.
+ */
+export function keptShape(mask: Mask, w: number, h: number): { share: number; whole: number } {
+  const n = w * h;
+  const pieces = components(n, w, h, (i) => mask[i] === 255);
+  const kept = pieces.reduce((a, p) => a + p.length, 0);
+  const biggest = pieces.reduce((a, p) => Math.max(a, p.length), 0);
+  return { share: kept / n, whole: kept ? biggest / kept : 0 };
 }

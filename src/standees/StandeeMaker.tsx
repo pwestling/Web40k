@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAssets } from "../assets/store";
 import type { BaseShape, Unit } from "../core";
 import { t } from "../i18n";
-import { autoMask, baseTop, baseWidth, bounds, cutInside, stroke, type Mask } from "./cutout";
+import { autoMask, baseTop, baseWidth, bounds, cutInside, keptShape, stroke, type Mask } from "./cutout";
 import { standeeBytes, STANDEE_EXTENSION } from "./file";
 
 /**
@@ -225,6 +225,11 @@ export function StandeeMaker({
             />
           )}
         </div>
+        {front && !back && (
+          <p className="muted small">
+            {t("From your side of the table you'll mostly see your figures' backs: a back photo shows them.")}
+          </p>
+        )}
         {front && back && (
           <div className="row tabs small" role="tablist">
             {(["front", "back"] as const).map((s) => (
@@ -241,13 +246,7 @@ export function StandeeMaker({
           </div>
         )}
         {current && <CutoutEditor side={current} onChange={setCurrent} />}
-        {current && cutInside(current.auto, current.img.width, current.img.height) > 0.2 && (
-          <p className="warn small">
-            {t(
-              "A lot inside the miniature was cut: its paint may be close to the sheet's colour. A darker or coloured sheet will cut it out better, or paint it back with Keep.",
-            )}
-          </p>
-        )}
+        {current && <CutHint side={current} />}
         {error && <p className="warn small">{error}</p>}
         {front && (
           <div className="row wrap maker-footer">
@@ -472,6 +471,9 @@ function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => v
               onChange({ ...side, auto, adjust, mask: combine(auto, side.edits) });
             }}
           />
+          <span className="muted small slider-ends" aria-hidden>
+            {t("← keep more · cut more →")}
+          </span>
         </label>
         <button className="quiet" onClick={() => onChange(fresh(img))}>
           {t("Start again")}
@@ -479,4 +481,29 @@ function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => v
       </div>
     </div>
   );
+}
+
+/**
+ * One line when the cut looks wrong (PX): next to nothing kept or in pieces (a
+ * busy desk behind it), the figure small in the photo (shot from too far), or
+ * a lot cut inside it (paint close to the sheet's colour). Use still works.
+ */
+function CutHint({ side }: { side: Side }) {
+  const hint = useMemo(() => {
+    const { img, mask, auto } = side;
+    const { share, whole } = keptShape(mask, img.width, img.height);
+    if (share < 0.08 || whole < 0.7)
+      return t(
+        "That doesn't look like one whole figure. Try a plain sheet behind it, or paint over it with Keep.",
+      );
+    const box = bounds(mask, img.width, img.height);
+    if (box && box.height < img.height * 0.4)
+      return t("Get closer: with the figure filling the frame, the cut and its detail come out better.");
+    if (cutInside(auto, img.width, img.height) > 0.2)
+      return t(
+        "A lot inside the miniature was cut: its paint may be close to the sheet's colour. A darker or coloured sheet will cut it out better, or paint it back with Keep.",
+      );
+    return null;
+  }, [side]);
+  return hint ? <p className="warn small">{hint}</p> : null;
 }

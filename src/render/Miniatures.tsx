@@ -155,14 +155,14 @@ function makeLook(asset: ModelAsset): Look {
   const top = asset.lods[0];
   const painted = !!(asset.texture || top?.colors);
   if (!painted) return { geometries, material, painted, dispose: () => built.forEach((g) => g.dispose()) };
-  // A photo standee (#68) carries the light it was photographed in: mostly its own, a little of the table's.
+  // A photo standee (#68) carries the light it was photographed in: mostly its own (it keeps its colour under the high camera, PX), a little of the table's.
   const photo = asset.look === "photo";
   const own = new MeshStandardMaterial({
-    color: photo ? "#8c8c8c" : "#ffffff",
+    color: photo ? "#5a5a5a" : "#ffffff",
     roughness: photo ? 1 : 0.75,
     metalness: photo ? 0 : 0.05,
     vertexColors: !!top?.colors,
-    ...(photo ? { emissive: "#ffffff", emissiveIntensity: 0.55 } : {}),
+    ...(photo ? { emissive: "#ffffff", emissiveIntensity: 0.8 } : {}),
   });
   let texture: Texture | null = null;
   let gone = false;

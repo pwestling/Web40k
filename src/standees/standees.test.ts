@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoMask, baseTop, baseWidth, bounds, brush, type Pixels } from "./cutout";
+import { autoMask, baseTop, baseWidth, bounds, brush, keptShape, type Pixels } from "./cutout";
 import { standeeShape, THICKNESS, traceOutlines } from "./mesh";
 
 /** A photo: a backdrop with a soft gradient and a shadow, and a "miniature" drawn by `paint`. */
@@ -55,6 +55,25 @@ describe("photo standees (#68)", () => {
     expect(Math.abs(base - 61)).toBeLessThanOrEqual(3);
     // The base starts where the legs meet it.
     expect(Math.abs(baseTop(mask, img.width, box, base) - 140)).toBeLessThanOrEqual(2);
+  });
+
+  it("takes the paper in shadow beside the feet with the paper, but keeps a dark grey miniature", () => {
+    // A lamp's shadow to the right of the base: the paper's hue, a third darker.
+    const shadowed = (x: number, y: number): [number, number, number] | null => {
+      const t = trooper(x, y);
+      if (t) return t;
+      if (y >= 130 && y <= 156 && x > 90 && x < 115) return [150, 149, 146];
+      return null;
+    };
+    const img = photo(120, 170, shadowed);
+    const mask = autoMask(img);
+    expect(mask[145 * img.width + 100]).toBe(0);
+    expect(mask[70 * img.width + 60]).toBe(255);
+    // Dark grey armour, the same unsaturated grey as a shadow but walled by its outline, stays.
+    const grey = photo(120, 170, (x, y) => (trooper(x, y) ? [70, 70, 72] : null));
+    const g = autoMask(grey);
+    expect(g[70 * grey.width + 60]).toBe(255);
+    expect(keptShape(g, grey.width, grey.height).whole).toBeGreaterThan(0.9);
   });
 
   it("the brush keeps or cuts", () => {

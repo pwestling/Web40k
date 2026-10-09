@@ -91,6 +91,18 @@ export function traceOutlines(mask: Mask, w: number, box: Box): { loops: Pt[][];
   return { loops: px, cell };
 }
 
+/** One round of Chaikin's corner cutting on a closed loop: each corner becomes two points a quarter in. */
+function chaikin(loop: Pt[]): Pt[] {
+  if (loop.length < 3) return loop;
+  return loop.flatMap((p, i) => {
+    const q = loop[(i + 1) % loop.length]!;
+    return [
+      [0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]] as Pt,
+      [0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1]] as Pt,
+    ];
+  });
+}
+
 /** Douglas–Peucker on a closed loop: fewer points, within `eps` of the original. */
 function simplifyLoop(loop: Pt[], eps: number): Pt[] {
   if (loop.length < 8) return loop;
@@ -157,7 +169,8 @@ interface ShapeOptions {
 export function standeeShape(mask: Mask, w: number, options: ShapeOptions): StandeeShape {
   const { box, scale } = options;
   const { loops, cell } = traceOutlines(mask, w, box);
-  const smooth = loops.map((l) => simplifyLoop(l, SMOOTH * cell)).filter((l) => l.length >= 3);
+  // Simplified, then its corners rounded once, so a close-up shows a curve, not pixel steps (PX).
+  const smooth = loops.map((l) => chaikin(simplifyLoop(l, SMOOTH * cell))).filter((l) => l.length >= 3);
   // Outer outlines one way round, holes the other; each hole goes with the outline around it.
   const outers = smooth.filter((l) => area(l) < 0);
   const holes = smooth.filter((l) => area(l) > 0);

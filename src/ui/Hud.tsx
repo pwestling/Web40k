@@ -222,7 +222,10 @@ export function Hud() {
         ) : (
           <>
             {/* Photographing the army needn't wait for setup: a game against the computer starts at once (dogfood). */}
-            {role !== "spectator" && mine.map((p) => <PhotoFigures key={p.id} owner={p.id} />)}
+            {role !== "spectator" &&
+              mine.map((p) => (
+                <PhotoFigures key={p.id} owner={p.id} name={mine.length > 1 ? p.name : null} />
+              ))}
             <details className="fold">
               <summary>{t("Add an army")}</summary>
               <ArmyImport players={mine} />
