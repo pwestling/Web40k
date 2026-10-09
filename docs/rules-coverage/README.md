@@ -9,16 +9,16 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 
 | System        | automated | advisory check | manual reminder | missing | rows |
 | ------------- | --------- | -------------- | --------------- | ------- | ---- |
-| 40k           | 73        | 12             | 23              | 2       | 110  |
+| 40k           | 73        | 13             | 24              | 0       | 110  |
 | The Old World | 73        | 8              | 12              | 0       | 93   |
-| FSD           | 84        | 10             | 22              | 11      | 127  |
-| Conquest      | 59        | 11             | 6               | 5       | 81   |
+| FSD           | 86        | 11             | 31              | 0       | 128  |
+| Conquest      | 61        | 14             | 6               | 0       | 81   |
 | Rift Lanterns | 31        | 3              | 0               | 0       | 34   |
 
 ## Known gaps that need engine work
 
-The eleven listed after #55 were closed in #57. Still open (each matrix's own notes say more):
+The eleven listed after #55 were closed in #57; #58 closed Selective Fire, the 40k declared charge targets and the
+last missing rows (no matrix row is missing now). Still open (each matrix's own notes say more):
 
-- FSD Selective Fire: a sight query that leaves enemy bases out (a reminder for now).
-- FSD reactions that answer a reaction (chains): one reaction per action is offered.
-- 40k: a charge must end engaged with every declared target; waits on the declared targets from the charge picker (UX 396).
+- FSD reactions that answer a reaction (chains): one reaction per action is offered; a chain is a manual reminder.
+  It needs a stack of open reactions in core play.ts.

@@ -18,14 +18,14 @@ Status key: **automated** (the app does it), **advisory check** (the app flags i
 
 ## Stands
 
-| Rule                                                                  | Status         | Where (file:symbol)                                                                                      | Test (file > test name)                                         | Notes                                                                                                                                                                    |
-| --------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Models per stand and stand Size by type                               | missing        | —                                                                                                        | —                                                               | Sample armies use one model per stand. Size only matters for the scenario seize value (see Scenarios).                                                                   |
-| Front rank of at least 2 stands; equal ranks, only the rear one short | advisory check | module.ts:`rankRules` (width 2); system.ts `constants.rankWidth`                                         | —                                                               | The app's rank checks warn. Nothing blocks.                                                                                                                              |
-| Command stand in the centre of the front rank                         | missing        | —                                                                                                        | —                                                               | A joined character goes to the middle of the front rank (characters.ts:`join`). Command stands aren't placed.                                                            |
-| Command stand (and characters) removed last                           | automated      | core `rearRankFirst` (allocate `last`) via system.ts:`attack` casualties step; command.ts:`commandStand` | A > removes the named command stand last, after any other stand | **#57:** a stand named "... command" (or with a COMMAND keyword) goes after every other stand, characters included. The first stand of the block and characters go last. |
-| Casualties from the rear rank; a wounded stand finished first         | automated      | system.ts:`attack` (`allocate` rearRankFirst, `damage` spillover)                                        | A > removes casualties from the rear rank first                 |                                                                                                                                                                          |
-| Removals alternate between the ends of the rank                       | automated      | core runner.ts:`rearRankFirst` via system.ts:`attack` allocate step (`alternateEnds: true`)              | A > takes a rank's casualties from its two ends in turn (#55)   | **Fixed** (#55)                                                                                                                                                          |
+| Rule                                                                  | Status         | Where (file:symbol)                                                                                      | Test (file > test name)                                                                               | Notes                                                                                                                                                                    |
+| --------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Models per stand and stand Size by type                               | automated      | stands.ts:`standOf`; sample.ts `Size`; system.ts characteristic `Size`                                   | A > gives each stand its models and Size by type: infantry 4 and 1, cavalry 1 and 2, monsters 1 and 3 | **New** (#58). A stand is one token; no core rule reads models per stand                                                                                                 |
+| Front rank of at least 2 stands; equal ranks, only the rear one short | advisory check | module.ts:`rankRules` (width 2); system.ts `constants.rankWidth`                                         | —                                                                                                     | The app's rank checks warn. Nothing blocks.                                                                                                                              |
+| Command stand in the centre of the front rank                         | advisory check | stands.ts:`standWarnings` (`commandStand`); sample.ts and roster.ts place it there                       | A > flags a command stand out of the centre of the front rank                                         | **New** (#58). Beside a joined character, the front rank is enough                                                                                                       |
+| Command stand (and characters) removed last                           | automated      | core `rearRankFirst` (allocate `last`) via system.ts:`attack` casualties step; command.ts:`commandStand` | A > removes the named command stand last, after any other stand                                       | **#57:** a stand named "... command" (or with a COMMAND keyword) goes after every other stand, characters included. The first stand of the block and characters go last. |
+| Casualties from the rear rank; a wounded stand finished first         | automated      | system.ts:`attack` (`allocate` rearRankFirst, `damage` spillover)                                        | A > removes casualties from the rear rank first                                                       |                                                                                                                                                                          |
+| Removals alternate between the ends of the rank                       | automated      | core runner.ts:`rearRankFirst` via system.ts:`attack` allocate step (`alternateEnds: true`)              | A > takes a rank's casualties from its two ends in turn (#55)                                         | **Fixed** (#55)                                                                                                                                                          |
 
 ## Round
 
@@ -117,26 +117,26 @@ Status key: **automated** (the app does it), **advisory check** (the app flags i
 
 ## Scenarios [secondary]
 
-| Rule                                                   | Status         | Where (file:symbol)                                       | Test (file > test name) | Notes                                                             |
-| ------------------------------------------------------ | -------------- | --------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| VP scored each round                                   | advisory check | module.ts `missions` (holdTheField `scoring.at.roundEnd`) | —                       | The sample mission suggests VP each round.                        |
-| Objective zones 6"/9"; seize by stands and seize value | missing        | —                                                         | —                       | No Conquest scenario. The sample mission counts models within 3". |
-| One Warlord; each character leads 1–4 regiments        | missing        | —                                                         | —                       |                                                                   |
+| Rule                                                   | Status         | Where (file:symbol)                                                                    | Test (file > test name)                                                                                    | Notes                                                                                                     |
+| ------------------------------------------------------ | -------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| VP scored each round                                   | advisory check | module.ts `missions` (holdTheField `scoring.at.roundEnd`)                              | —                                                                                                          | The sample mission suggests VP each round.                                                                |
+| Objective zones 6"/9"; seize by stands and seize value | advisory check | stands.ts:`seizers`, `seizeTheField` (sample mission, 6" zones)                        | A > seizes an objective zone by seize value (Light 0, Medium and Heavy 1, Monster 3), then stands          | **New** (#58). VP suggested for the player to confirm; the tie-break on stands is our reading [secondary] |
+| One Warlord; each character leads 1–4 regiments        | advisory check | stands.ts:`standWarnings` (`warlord`, `regimentsPerCharacter`); sample Warlord keyword | A > flags an army without exactly one Warlord, or characters leading fewer than 1 or more than 4 regiments | **New** (#58). Counted over the army, not per character                                                   |
 
 ## Lists
 
-| Rule                                           | Status  | Where (file:symbol) | Test (file > test name) | Notes                                                                   |
-| ---------------------------------------------- | ------- | ------------------- | ----------------------- | ----------------------------------------------------------------------- |
-| Import from the official builder's text format | missing | —                   | —                       | Only the invented sample armies (sample.ts). The format is unconfirmed. |
+| Rule                                           | Status    | Where (file:symbol)                                   | Test (file > test name)                                                                                           | Notes                                                                                                           |
+| ---------------------------------------------- | --------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Import from the official builder's text format | automated | roster.ts:`parseConquestList` (module `importRoster`) | A > reads a list shared as text: characters, regiments with their stands, points and options; profiles to fill in | **New** (#58). The notes' text format, unconfirmed; the list has no profiles, so the import panel asks for them |
 
 ## Summary
 
 | Status          | Rows |
 | --------------- | ---- |
-| automated       | 59   |
-| advisory check  | 11   |
+| automated       | 61   |
+| advisory check  | 14   |
 | manual reminder | 6    |
-| missing         | 5    |
+| missing         | 0    |
 
 **Known wrong**
 
@@ -159,4 +159,12 @@ Status key: **automated** (the app does it), **advisory check** (the app flags i
 - Casualty order: the allocate step's `last` holds a named command stand back until last.
 - Volley counts only front-rank stands with a clear shot.
 
-**Still missing:** stand Size and models per stand, the command stand's place in the front rank, objective zones and seize values, the Warlord and how many regiments a character leads, and importing from the official builder's text format.
+**Closed in #58** (stands.ts, roster.ts)
+
+- Stand Size and models per stand by type (`standOf`); the samples' stands carry their Size.
+- The command stand stands in the centre of the front rank (samples and imports) and is flagged when it doesn't.
+- Objective zones: `seizers` and the sample mission Seize the Field (6" zones, seize value then stands).
+- One Warlord, and 1–4 regiments per character, as list warnings.
+- Lists shared as text (`== Character`, `* Regiment (stands) [pts]: options`, unconfirmed format) import, with the profiles filled in on the import panel.
+
+**Still missing:** nothing.

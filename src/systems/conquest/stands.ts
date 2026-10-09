@@ -27,7 +27,7 @@ export function standOf(type: string | undefined): { models: number; size: numbe
 }
 
 /** What a stand adds to seizing an objective zone: Light 0, Medium and Heavy 1, Monster 3. */
-export function seizeValue(model: Pick<Model, "profile">): number {
+function seizeValue(model: Pick<Model, "profile">): number {
   const chars = model.profile?.chars ?? {};
   if (/^monster$/i.test(chars.Type ?? "")) return 3;
   return /^light$/i.test(chars.Class ?? "") ? 0 : 1;

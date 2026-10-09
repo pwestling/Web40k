@@ -14,8 +14,9 @@ const watch = (s: GameState): string[] => {
 };
 
 describe("rules gaps: Conquest", () =>
-  // Five games: since volleys count only stands with a clear shot (#57), three rarely break a regiment.
-  scenarioSuite("Conquest special rules and Supremacy", "conquest-hand", { watch, minSeeds: 5 }, [
+  // Eight games: since volleys count only stands with a clear shot (#57), a few rarely break a regiment
+  // (five stopped being enough once the command stand moved to the centre of the front rank, #58).
+  scenarioSuite("Conquest special rules and Supremacy", "conquest-hand", { watch, minSeeds: 8 }, [
     "Flurry: hit",
     "Terrifying: resolve",
     "Deadly Blades: defense",

@@ -672,14 +672,25 @@ describe("the computer and the fight order (PX #57)", () => {
 });
 
 describe("40k last missing rows (#58)", () => {
-  it("after a charge move, reminds the charging unit to end engaged with its declared targets only", () => {
-    const names = (st: GameState) => abilityReminders(st).map((r) => `${r.unitId}:${r.ability.name}`);
-    const s = goTo(setup(), "charge", 0);
-    expect(names(s)).not.toContain("mine:Charge targets");
-    const charged = setStatus(s, "mine", { charged: true });
-    expect(names(charged)).toContain("mine:Charge targets");
-    // Only in its own Charge phase.
-    expect(names(goTo(charged, "fight", 0))).not.toContain("mine:Charge targets");
+  it("warns when a charge move doesn't end engaged with every declared target, or ends engaged with another", () => {
+    const warned = (st: GameState) =>
+      wh40kChecks({ state: st } as never)
+        .filter((w) => w.unitId === "mine")
+        .map((w) => w.id);
+    let s = addUnit(goTo(setup(), "charge", 0), "other", "p2", [model("o1", "p2", 6, 4)]);
+    s = goTo(s, "charge", 0);
+    s = applyEvent(s, { type: "unit/status", id: "mine", key: "chargeAt.theirs", value: true });
+    expect(warned(s)).not.toContain("chargeTargets");
+    // Moved, but short of the target: warned.
+    let t = moveTo(moveTo(s, "m1", 0, 3), "m2", 1.5, 3);
+    expect(warned(t)).toContain("chargeTargets");
+    // Into engagement with it: fine.
+    t = moveTo(moveTo(s, "m1", 0, 8.6), "m2", 1.5, 8.6);
+    expect(warned(t)).not.toContain("chargeTargets");
+    expect(warned(t)).not.toContain("chargeOthers");
+    // Engaged with an undeclared unit too: warned.
+    t = moveTo(t, "m2", 6, 5.4);
+    expect(warned(t)).toContain("chargeOthers");
   });
 
   it("reminds of an ability that keeps an objective under your control in your Command phase", () => {

@@ -16,7 +16,7 @@ import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
  */
 
 /** Characteristics the list leaves out, for the player to fill in (the import panel asks). */
-export const CONQUEST_STATS = ["M", "V", "C", "A", "W", "R", "D", "Type", "Class"];
+const CONQUEST_STATS = ["M", "V", "C", "A", "W", "R", "D", "Type", "Class"];
 
 /** A stand's base until the player sets the type: an unverified guess, as the samples use. */
 const STAND: BaseShape = { shape: "rect", widthMm: 40, depthMm: 40 };
@@ -37,7 +37,7 @@ function unitOf(line: string): ImportedUnit | null {
     .filter(Boolean);
   // The command stand in the centre of the front rank (three wide or fewer).
   const command = Math.floor((Math.min(3, stands) - 1) / 2);
-  const chars = character ? { Type: "Character" } : {};
+  const chars: Record<string, string> = character ? { Type: "Character" } : {};
   return {
     name,
     base: STAND,

@@ -615,10 +615,7 @@ export const fsd: GameSystem = {
               // Indirect Fire at a target out of sight: +1.
               {
                 if: {
-                  all: [
-                    weaponHas("INDIRECT FIRE"),
-                    { not: sees("attacker", "target") },
-                  ],
+                  all: [weaponHas("INDIRECT FIRE"), { not: sees("attacker", "target") }],
                 },
                 then: 1,
                 else: 0,

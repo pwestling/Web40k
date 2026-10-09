@@ -511,16 +511,6 @@ const ruleReminders: RuleReminder[] = [
     if: kw("self", "TRANSPORT"),
   },
   {
-    // The engine can't check it: the targets declared in the charge picker (UX 396) stay in the
-    // player's own screen, not in the game record. So it is a reminder after the charge move.
-    id: "chargeTargets",
-    name: "Charge targets",
-    text: "The charge move ends in Engagement Range of every unit it declared as a target, and of no other enemy unit; else it fails.",
-    phase: "charge",
-    side: "active",
-    if: { hasFlag: "self", flag: "charged" },
-  },
-  {
     id: "aircraft",
     name: "Aircraft",
     text: "Moves at least its minimum distance in a straight line, or goes into reserves; it can't charge, and only units that can Fly fight it.",

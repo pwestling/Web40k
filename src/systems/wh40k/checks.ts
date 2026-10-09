@@ -118,6 +118,34 @@ export function wh40kChecks(view: GameView): Warning[] {
           message: `Moved through ${through.map((p) => p.name.toLowerCase()).join(", ")}`,
         });
     }
+    // A charge move ends engaged with every unit the charge roll declared (chargeAt.<id>), and no other.
+    if (playing && currentSlot(state)?.id === "charge") {
+      const declared = Object.keys(unit.status ?? {})
+        .filter((k) => k.startsWith("chargeAt.") && unit.status![k])
+        .map((k) => k.slice("chargeAt.".length));
+      const charged = alive.some(
+        (m) =>
+          m.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) >= 0.05,
+      );
+      if (declared.length && charged) {
+        const engaged = engagedWith(state, unit);
+        const name = (id: string) => state.units[id]?.name ?? id;
+        const short = declared.filter((id) => state.units[id] && !engaged.includes(id));
+        const others = engaged.filter((id) => !declared.includes(id));
+        if (short.length)
+          out.push({
+            id: "chargeTargets",
+            unitId: unit.id,
+            message: `Charge move doesn't end engaged with ${short.map(name).join(", ")}, a declared target`,
+          });
+        if (others.length)
+          out.push({
+            id: "chargeOthers",
+            unitId: unit.id,
+            message: `Charge move ends engaged with ${others.map(name).join(", ")}, not a declared target`,
+          });
+      }
+    }
     // Piling in and consolidating: each model that moved ends closer to the closest enemy model.
     if (playing && currentSlot(state)?.id === "fight") {
       const enemies = Object.values(state.units)
