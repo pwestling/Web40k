@@ -25,7 +25,7 @@ import { fsdLayout } from "../systems/fsd/layout";
 import { fsdSample } from "../systems/fsd/sample";
 import { conquestLayout } from "../systems/conquest/layout";
 import { conquestSample } from "../systems/conquest/sample";
-import { botPolicy, destinations, type Level } from "./player";
+import { botPolicy, destinations, moveInches, type Level } from "./player";
 import type { BotMove } from "../soak/bot";
 
 /**
@@ -583,5 +583,23 @@ describe("the computer opponent in Conquest (#58)", () => {
     );
     expect(order.length).toBeGreaterThan(1);
     expect(order.at(-1)).toBe(guard);
+  });
+});
+
+describe("the computer opponent and Random Movement (#66)", () => {
+  it('reads a Movement of "2D6+1" as its average (8"), not 2', () => {
+    const s = conquestTable();
+    const u = s.units[named(s, "Iron Riders")]!;
+    const withM = (m: string): GameState => {
+      const models = { ...s.models };
+      for (const id of u.modelIds) {
+        const was = models[id]!;
+        models[id] = { ...was, profile: { ...was.profile!, chars: { ...was.profile!.chars, M: m } } };
+      }
+      return { ...s, models };
+    };
+    expect(moveInches(withM("2D6+1"), u)).toBe(8);
+    expect(moveInches(withM("3D6"), u)).toBe(10.5);
+    expect(moveInches(withM("8"), u)).toBe(8);
   });
 });

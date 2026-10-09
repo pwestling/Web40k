@@ -25,6 +25,7 @@ import { fightPick } from "./fightPick";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { seededRng } from "../sandbox/protocol";
+import { parseDice, type DiceExpr } from "../core/dice";
 import { gameModule, systemModule } from "../systems";
 import type { CodeAction } from "../sdk";
 import {
@@ -1669,9 +1670,12 @@ const num = (s: string | undefined) => {
 };
 
 /** How far a unit moves by hand: the module's say, else its Move characteristic, else 6". */
-function moveInches(state: GameState, u: Unit, tuning?: BotTuning): number {
+export function moveInches(state: GameState, u: Unit, tuning?: BotTuning): number {
   if (tuning?.moveInches) return tuning.moveInches(state, u);
   const c = aliveModels(state, u)[0]?.profile?.chars;
+  // Random Movement ("2D6+1", The Old World): its average, not the 2 it starts with.
+  const random = randomMove(state, u);
+  if (random) return (random.count * (random.sides + 1)) / 2 + random.bonus;
   // In the system's unit (FSD's Move is in DU of 3").
   const move = num(c?.M) ?? num(c?.Move);
   return move === undefined ? 6 : move * inchesPerUnit(systemOf(state));
@@ -1869,15 +1873,35 @@ function handCharge(state: GameState, u: Unit): Intent | null {
 
 /**
  * How far a code action's charge goes in a try: the unit's move plus the
- * game's charge roll (TOW: the higher of 2D6), rolled; 24" where the game
- * names no roll. A charge that falls short stops there.
+ * game's charge roll (TOW: the higher of 2D6), rolled, or a Random Movement's
+ * dice rolled in their place; 24" where the game names no roll. A charge that
+ * falls short stops there.
  */
 function chargeReach(state: GameState, u: Unit, rng: Rng): number {
   const dice = systemModule(state.system ?? "").chargeRoll;
   if (!dice) return 24;
+  // Random Movement is rolled for the charge instead of the charge dice plus Movement.
+  const random = randomMove(state, u);
+  if (random)
+    return Array.from({ length: random.count }, () => 1 + Math.floor(rng() * random.sides)).reduce(
+      (a, b) => a + b,
+      random.bonus,
+    );
   const faces = Array.from({ length: dice.count }, () => 1 + Math.floor(rng() * dice.sides));
   const roll = dice.keep === "highest" ? Math.max(...faces) : faces.reduce((a, b) => a + b, 0);
   return moveInches(state, u, tuningOf(state.system)) + roll;
+}
+
+/** A unit's Movement written as dice ("2D6+1": rolled for each move and charge), else null. */
+function randomMove(state: GameState, u: Unit): DiceExpr | null {
+  const m = (aliveModels(state, u)[0]?.profile?.chars.M ?? "").trim();
+  if (!/^\d*\s*d\s*\d/i.test(m)) return null;
+  try {
+    const d = parseDice(m.replace(/\s+/g, ""));
+    return d.sides ? d : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A unit's March (its M), in inches. */
