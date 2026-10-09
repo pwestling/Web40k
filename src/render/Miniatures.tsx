@@ -136,11 +136,12 @@ interface Look {
 const shared = new Map<string, { look: Look; users: number; timer?: ReturnType<typeof setTimeout> }>();
 
 function makeLook(asset: ModelAsset): Look {
-  const geometries = asset.lods.map(toGeometry);
+  // Levels the pipeline found no fewer triangles for are the same mesh (a standee's are all one): build each once.
+  const built = new Map<ModelAsset["lods"][number], BufferGeometry>();
+  const geometries = asset.lods.map((m) => built.get(m) ?? built.set(m, toGeometry(m)).get(m)!);
   const top = asset.lods[0];
   const painted = !!(asset.texture || top?.colors);
-  if (!painted)
-    return { geometries, material, painted, dispose: () => geometries.forEach((g) => g.dispose()) };
+  if (!painted) return { geometries, material, painted, dispose: () => built.forEach((g) => g.dispose()) };
   // A photo standee (#68) carries the light it was photographed in: mostly its own, a little of the table's.
   const photo = asset.look === "photo";
   const own = new MeshStandardMaterial({
@@ -177,7 +178,7 @@ function makeLook(asset: ModelAsset): Look {
     painted,
     dispose() {
       gone = true;
-      geometries.forEach((g) => g.dispose());
+      built.forEach((g) => g.dispose());
       own.dispose();
       if (texture) {
         (texture.image as ImageBitmap).close();
@@ -240,6 +241,8 @@ function AssetInstances({
   const capacity = entries.length;
   const height = asset.bounds.max[1];
   const radius = Math.hypot(asset.bounds.max[0], asset.bounds.max[1] / 2, asset.bounds.max[2]);
+  // A level sharing its mesh with a finer one draws in that one's instances: one draw, not one per level.
+  const drawn = useMemo(() => geometries.map((g) => geometries.indexOf(g)), [geometries]);
 
   useFrame(({ camera, size }) => {
     const meshes = lodRefs.current;
@@ -275,7 +278,7 @@ function AssetInstances({
         : height * binding.scale * zoom;
       let lod = LOD_PIXELS.findIndex((t) => px > t);
       if (lod === -1) lod = geometries.length - 1;
-      lod = Math.min(lod, geometries.length - 1);
+      lod = drawn[Math.min(lod, geometries.length - 1)]!;
       const mesh = meshes[lod];
       if (!mesh) return;
       mesh.setMatrixAt(counts[lod]!++, m4);
@@ -294,19 +297,21 @@ function AssetInstances({
 
   return (
     <>
-      {geometries.map((g, lod) => (
-        <instancedMesh
-          // Capacity is fixed at creation; remount when it changes.
-          key={`${lod}:${capacity}`}
-          ref={(m) => {
-            lodRefs.current[lod] = m;
-          }}
-          args={[g, look, capacity]}
-          frustumCulled={false}
-          receiveShadow
-          raycast={() => null}
-        />
-      ))}
+      {geometries.map((g, lod) =>
+        drawn[lod] !== lod ? null : (
+          <instancedMesh
+            // Capacity is fixed at creation; remount when it changes.
+            key={`${lod}:${capacity}`}
+            ref={(m) => {
+              lodRefs.current[lod] = m;
+            }}
+            args={[g, look, capacity]}
+            frustumCulled={false}
+            receiveShadow
+            raycast={() => null}
+          />
+        ),
+      )}
       <instancedMesh
         key={`shadow:${capacity}`}
         ref={shadowRef}

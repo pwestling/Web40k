@@ -9,6 +9,8 @@
 import { BufferGeometry, type Mesh, type Object3D, type WebGLRenderer } from "three";
 import { unitKeys, useAssets } from "../assets/store";
 import { processMesh, processModel, ready, weld } from "../assets/pipeline";
+import { parseModelFile } from "../assets/parse";
+import { standeeBytes } from "../standees/file";
 import { bakePaint } from "../assets/paint";
 import { encodeAsset } from "../assets/codec";
 import { synthMiniature } from "../assets/synth";
@@ -147,6 +149,61 @@ export const perf = {
     });
     await frame();
     return { pieces: game.terrain.length, pipelineMs: assets.map((a) => a.stats.ms) };
+  },
+
+  /**
+   * A table of photo standees (#68): `distinct` standee files made from
+   * synthetic cut-out photos (a phone-sized crop, painted and noisy so the
+   * texture compresses like a real photo), imported as a player's are, and
+   * handed round the units so every distinct standee is on the table.
+   */
+  async standees(distinct = 24) {
+    await ready;
+    const { game, dispatch } = useStore.getState();
+    const { addAsset } = useAssets.getState();
+    const assets: ModelAsset[] = [];
+    const fileKB: number[] = [];
+    for (let i = 0; i < distinct; i++) {
+      const front = await standeePhoto(i);
+      const bytes = standeeBytes({ name: `standee ${i}`, basePx: 300, baseMm: 32, front });
+      fileKB.push(Math.round(bytes.byteLength / 1024));
+      const raw = await parseModelFile(
+        `standee-${i}.standee`,
+        bytes.buffer as ArrayBuffer,
+        BUDGETS.miniature.texture.side,
+      );
+      const asset = await processModel(raw, {
+        id: `synth-standee-${i}`,
+        name: `standee ${i}`,
+        kind: "miniature",
+      });
+      addAsset(asset);
+      assets.push(asset);
+    }
+    let n = 0;
+    for (const unit of Object.values(game.units)) {
+      for (const key of unitKeys(unit.modelIds.flatMap((id) => game.models[id] ?? []))) {
+        const asset = assets[n++ % assets.length]!;
+        const figure = { asset: asset.id, name: key, yaw: 0, scale: 1 };
+        dispatch(
+          { type: "unit/figure", id: unit.id, keys: [key], figure, bands: asset.figure?.bands },
+          unit.owner,
+        );
+      }
+    }
+    // Textures decode off the frame: wait for them, so gpu() counts what the table holds.
+    for (let t = 0; t < 100 && (renderer?.info.memory.textures ?? 0) < distinct; t++) await frame();
+    const avg = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
+    return {
+      standees: distinct,
+      onTable: Math.min(n, distinct),
+      fileKB: avg(fileKB),
+      importMs: avg(assets.map((a) => a.stats.ms)),
+      lodTriangles: assets[0]!.lods.map((l) => l.indices.length / 3),
+      distinctLevels: avg(assets.map((a) => new Set(a.lods).size)),
+      textureKB: avg(assets.map((a) => (a.texture?.bytes.byteLength ?? 0) / 1024)),
+      ...perf.gpu(),
+    };
   },
 
   /** Take every figure off. */
@@ -397,4 +454,49 @@ async function paintScheme(side: number): Promise<ImageBitmap> {
     g.stroke();
   }
   return createImageBitmap(c);
+}
+
+/** A cut-out photo of a painted miniature, as a WebP data URL: 600x900, transparent round it. */
+async function standeePhoto(i: number): Promise<string> {
+  const c = new OffscreenCanvas(600, 900);
+  const g = c.getContext("2d")!;
+  let seed = 11 + i * 97;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const hue = (i * 47) % 360;
+  // Base, legs, body, arms, head: a different stance each time.
+  g.fillStyle = "#26262b";
+  g.beginPath();
+  g.ellipse(300, 860, 150, 30, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillRect(150, 820, 300, 40);
+  g.fillStyle = `hsl(${hue} 15% 55%)`;
+  const spread = 20 + rand() * 60;
+  g.fillRect(300 - spread - 50, 560, 55, 270);
+  g.fillRect(300 + spread - 5, 560, 55, 270);
+  g.fillStyle = `hsl(${hue} 60% 38%)`;
+  g.fillRect(190, 300, 220, 280);
+  const reach = rand() * 120;
+  g.fillRect(120 - reach / 2, 320, 70, 200 + reach);
+  g.fillRect(410, 300 - reach, 70, 220);
+  g.fillStyle = "#c9a07d";
+  g.beginPath();
+  g.arc(300, 230, 70, 0, Math.PI * 2);
+  g.fill();
+  // Paint detail and photo noise, so it compresses like a photo and not a flat drawing.
+  const img = g.getImageData(0, 0, 600, 900);
+  const d = img.data;
+  for (let p = 0; p < d.length; p += 4) {
+    if (!d[p + 3]) continue;
+    const n = (rand() - 0.5) * 40;
+    d[p] = d[p]! + n;
+    d[p + 1] = d[p + 1]! + n;
+    d[p + 2] = d[p + 2]! + n;
+  }
+  g.putImageData(img, 0, 0);
+  const blob = await c.convertToBlob({ type: "image/webp", quality: 0.85 });
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
 }

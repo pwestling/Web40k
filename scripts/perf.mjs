@@ -60,6 +60,10 @@ try {
   await run("painted, 1M sculpts + 2K textures", () => window.openBattlePerf.dress(1_000_000, false, true));
   if (process.env.PAINT_SCREENSHOT && (!only || "painted, 1M sculpts + 2K textures".includes(only)))
     await page.screenshot({ path: process.env.PAINT_SCREENSHOT });
+  // Photo standees (#68): 24 distinct cut-out cards (the budget's most before textures drop a size) round the table.
+  await run("standees, 24 distinct", () => window.openBattlePerf.standees(24));
+  if (process.env.STANDEE_SCREENSHOT && (!only || "standees, 24 distinct".includes(only)))
+    await page.screenshot({ path: process.env.STANDEE_SCREENSHOT });
   // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
   await run("terrain-heavy: uploaded terrain + 1M figures", () => window.openBattlePerf.terrain(500_000));
   if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
