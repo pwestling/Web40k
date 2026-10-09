@@ -407,6 +407,18 @@ describe("40k audit: reminders for core abilities", () => {
   });
 });
 
+describe("40k audit: whose Command phase", () => {
+  it("lists a 'your Command phase' rule only in its owner's Command phase (dogfood #54)", () => {
+    // Imported rule text can carry non-breaking spaces (BSData).
+    const yours = { name: "Rise Again", text: "At the end of your\u00a0Command\u00a0phase, return a model." };
+    const theirs = { name: "Spite", text: "In your opponent's Command phase, roll a D6." };
+    const s = setup({ abilities: [yours, theirs] });
+    const now = (st: GameState) => abilityReminders(st).map((r) => r.ability.name);
+    expect(now(goTo(s, "command", 0))).toEqual(["Rise Again"]);
+    expect(now(goTo(s, "command", 1))).toEqual(["Spite"]);
+  });
+});
+
 describe("40k audit: sample mission scoring", () => {
   it("suggests VP for the objectives a side controls", () => {
     let s = setup();

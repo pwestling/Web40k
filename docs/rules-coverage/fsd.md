@@ -222,3 +222,5 @@ it hides part of the target; hits beyond the seen bases are lost.
   `constants.adCapacity`).
 - Reminders for unit special rules at more precise moments than "the Activations phase" (on activation, on
   moving, on reacting) would need new timing hooks.
+
+Dogfood #54 (folded into #55): the log names the units a command activation brings along (fsd.test.ts > "commands nearby units and ends the round when both players pass"); an attack with no hits ends without save or damage rolls (core/content/runner.test.ts > "goes straight to the end when nothing hits: no wound, save or damage rolls (dogfood #54)").

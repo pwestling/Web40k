@@ -138,3 +138,5 @@ Status key: **automated** (the app does it), **advisory check** (the app measure
 - **Needs core change:**
   - Multiple Shots and other weapon special rules (Armour Bane, Killing Blow, Poisoned Attacks) need a way for the data shooting procedure to read a weapon's rule names (`hasKeyword` matches whole names only). A `hasRule`-style pattern expression in `src/core/content/expr.ts` would let `system.ts` add them as effects.
   - A Command sub-phase hook for command abilities needs sub-phase steps in the turn structure (`src/core/content/schema.ts` segments inside a phase).
+
+Dogfood #54 (folded into #55): the shoot panel says "long range" only past half range and "out of range" past the weapon's range (ui/rangeNote.test.ts > "The Old World: long range past half, out of range past the weapon's range (dogfood #54)").
