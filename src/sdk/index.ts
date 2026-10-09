@@ -69,6 +69,12 @@ export interface BotTuning {
   >;
   /** Regiments turn to face where they march, or end facing the nearest enemy (Conquest: charges go at the front arc). */
   faceMoves?: boolean;
+  /**
+   * How many goes, each on its own dice, the game review (#63) plays out of
+   * the moves it weighs closely (default 3); more where one go says little
+   * (Conquest: a whole activation and the enemy's answer).
+   */
+  reviewPasses?: number;
 }
 
 /** What a package's default export holds: additions to one or more systems. */

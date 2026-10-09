@@ -5,6 +5,7 @@ import { playMatch } from "../bot/match";
 import { botPolicy } from "../bot/player";
 import { mergeReviews, reviewGame } from "./analyse";
 import { moveText, takeaways } from "./words";
+import { decisionKind, trusted } from "./trust";
 
 /** A quick Sharp-against-Steady game to read back. */
 async function game(system: string, seed: number, maxSteps?: number): Promise<GameRecord> {
@@ -39,6 +40,13 @@ export async function checkReview(system: string): Promise<void> {
   expect(review.points.length).toBeGreaterThan(10);
   for (const p of review.points) expect(p.p >= 0 && p.p <= 1).toBe(true);
   for (const m of review.marks) expect(review.decisions[m.decision]).toBeDefined();
+  // Costly and strong only on the kinds of decision the review benchmark backs in this game (#63).
+  for (const d of review.decisions) {
+    expect(d.kind).toBe(decisionKind(d.played));
+    expect(d.trusted).toBe(trusted(system, d.kind));
+  }
+  for (const m of review.marks)
+    if (m.kind === "costly" || m.kind === "strong") expect(review.decisions[m.decision]!.trusted).toBe(true);
   // Every side gets its takeaways, in words.
   for (const seat of review.seats) {
     const lines = takeaways(review, (seq) => stateAt(record, seq - 1), seat);

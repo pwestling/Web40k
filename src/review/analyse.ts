@@ -13,6 +13,7 @@ import {
 import { phaseName, systemOf } from "../core/content/turn";
 import { analyst, usedKey, type Analyst } from "../bot/player";
 import { battleOver, phaseKey, type BotMove } from "../soak/bot";
+import { decisionKind, trusted, type DecisionKind } from "./trust";
 
 /**
  * Game review (roadmap #61): a finished game read back decision by
@@ -53,6 +54,9 @@ export interface Decision {
   options: number;
   /** Judged with the rest of the turn played out (moves). */
   deep: boolean;
+  /** What kind of choice it was, and whether the review benchmark backs judging that kind in this game (trust.ts). */
+  kind: DecisionKind;
+  trusted: boolean;
 }
 
 export interface Mark {
@@ -174,6 +178,24 @@ function movesNext(state: GameState, m: BotMove): boolean {
 
 const expected = (v: number, army: number) => 1 / (1 + Math.exp(-v / Math.max(1e-6, SPREAD * army)));
 
+/**
+ * A decision judged as the review judges it: a look, and at a turning point (a
+ * costly mark in the making) a closer one, so luck in the few goes tried
+ * doesn't make one. The review benchmark (bench/) judges its plays so too.
+ */
+export function lookAt(
+  eye: Analyst,
+  record: GameRecord,
+  st: GameState,
+  move: BotMove | null,
+  keys: Set<string>,
+  scale: number,
+): ReturnType<Analyst["appraise"]> {
+  const a = eye.appraise(record, st, move, keys);
+  const gap = (a.best?.score ?? a.base) - (move ? (a.played ?? a.base) : a.base);
+  return gap >= COSTLY * scale ? eye.appraise(record, st, move, keys, true) : a;
+}
+
 export async function reviewGame(record: GameRecord, opts: Options = {}): Promise<GameReview> {
   const undone = undoneSeqs(record);
   const events = record.events.filter((e) => !undone.has(e.seq) && e.event.type !== "undo");
@@ -273,10 +295,7 @@ export async function reviewGame(record: GameRecord, opts: Options = {}): Promis
       i = j;
       continue;
     }
-    let a = eye.appraise(upTo(i), st, move, keys);
-    // A turning point gets a closer look, so luck in the few goes tried doesn't make one.
-    const gap = (a.best?.score ?? a.base) - (move ? (a.played ?? a.base) : a.base);
-    if (gap >= COSTLY * review.scale) a = eye.appraise(upTo(i), st, move, keys, true);
+    const a = lookAt(eye, upTo(i), st, move, keys, review.scale);
     if (a.key) keys.add(a.key);
     const bestScore = a.best?.score ?? a.base;
     const playedScore = move ? (a.played ?? bestScore) : a.base;
@@ -296,6 +315,8 @@ export async function reviewGame(record: GameRecord, opts: Options = {}): Promis
       luck: 0,
       options: a.options,
       deep: !!a.deep,
+      kind: decisionKind(move),
+      trusted: trusted(systemOf(st).id, decisionKind(move)),
     };
     // Moving on with nothing worth doing left isn't a decision worth showing.
     if (!move && d.loss < MISSED * review.scale) {
@@ -364,10 +385,11 @@ function markUp(review: GameReview): void {
     }
     t.luck += d.luck;
     if (!d.played) review.marks.push({ kind: "missed", decision: n, size: d.loss });
-    else if (d.loss >= COSTLY * army) {
+    // Costly and strong only where the review benchmark backs the judgement (#63, trust.ts).
+    else if (d.trusted && d.loss >= COSTLY * army) {
       review.marks.push({ kind: "costly", decision: n, size: d.loss });
       t.costly++;
-    } else if (d.gain >= STRONG * army && d.loss < 0.005 * army && d.options > 2) {
+    } else if (d.trusted && d.gain >= STRONG * army && d.loss < 0.005 * army && d.options > 2) {
       review.marks.push({ kind: "strong", decision: n, size: d.gain });
       t.strong++;
     }

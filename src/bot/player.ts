@@ -98,6 +98,15 @@ interface BotOptions {
   replyPasses?: number;
   /** Conquest's command stack: units nearest the enemy first or last (Sharp: last, so they answer the enemy's moves); shuffled if unset. */
   stackOrder?: "near" | "far";
+  /**
+   * "best": a try played as the game review needs it (#63), unset for play.
+   * The game's questions (a charge reaction, a pursuit) are answered as the
+   * side asked would, not at random (a random flee made charging the biggest
+   * unit a lottery); a charge goes as far as its roll, not always home; a unit
+   * that charged makes no other move; and a choice inside a try is made
+   * without seeing its dice.
+   */
+  answers?: "best";
 }
 
 /** The module's tuning for the bot, if it has any. */
@@ -162,7 +171,22 @@ export interface Analyst {
 }
 
 export function analyst(start: GameState, seat: number, opts: Partial<BotOptions> = {}): Analyst {
-  const o: BotOptions = { seed: 1, tries: 3, beam: 0, plan: 0, planPasses: 3, planWidth: 4, ...opts };
+  const o: BotOptions = {
+    seed: 1,
+    // Six goes of each shot or blow: three left a long shot that came off once (or missed every
+    // time) ranked above a sure thing (#63).
+    tries: 6,
+    beam: 0,
+    plan: 0,
+    planPasses: tuningOf(start.system)?.reviewPasses ?? 3,
+    planWidth: 4,
+    answers: "best",
+    replyTurn: true,
+    ...opts,
+  };
+  // A wounded unit fights on whole until its last model falls: the review counts more of its worth
+  // as going only then (#63: a 2-wound monster read as worth less than a fresh character).
+  if (!plainGame(start)) o.weights = { finish: 0.5, ...o.weights };
   const rng = seededRng(o.seed);
   const thinker = new Thinker("sharp", start, seat, contextFor(start, o, rng), rng, o);
   return thinker;
@@ -275,6 +299,7 @@ class Thinker implements Policy, Analyst {
   /** Sharp, in plain activations: passes of the dice for each activation and the enemy's answer. */
   private readonly replyPasses: number;
   private readonly stackOrder?: "near" | "far";
+  private readonly answers?: "best";
   private readonly weigh: BotContext;
 
   constructor(
@@ -315,6 +340,7 @@ class Thinker implements Policy, Analyst {
     this.deepen = opts.deepen ?? (sharp ? 2 : 0);
     this.replyPasses = opts.replyPasses ?? 3;
     this.stackOrder = opts.stackOrder ?? (sharp ? "far" : undefined);
+    if (opts.answers) this.answers = opts.answers;
     this.weigh = { ...ctx, weighing: true };
   }
 
@@ -346,10 +372,14 @@ class Thinker implements Policy, Analyst {
         (!fights || (c.move.intent.type === "action/take" && fights.units.includes(c.move.intent.unitId))) &&
         legal(record, state, c.move),
     );
-    // Every option meets the same dice, so they differ by the choice, not by luck.
+    // Every option meets the same dice, so they differ by the choice, not by luck. Each look takes
+    // fresh dice (seeds a, b, c): the option that looked best on one look is judged again on the
+    // next, so one lucky go doesn't make it the best on offer (#63: a long shot at a lone character
+    // that came off once read as the play to make).
     const seed = Math.floor(own() * 2 ** 31);
-    const worth = (c: Candidate, tries: number) => {
-      this.rng = seededRng(seed);
+    const looks = [seed, seed + 104729, seed + 2 * 104729] as const;
+    const worth = (c: Candidate, tries: number, at: number = looks[0]) => {
+      this.rng = seededRng(at);
       try {
         return c.activates
           ? this.activation(state, c, mine, base)
@@ -384,22 +414,20 @@ class Thinker implements Policy, Analyst {
       return v === null || c === same ? [] : [{ c, v }];
     });
     quick.sort((a, b) => b.v - a.v);
-    for (const q of quick.slice(0, 5)) q.v = worth(q.c, tries) ?? q.v;
-    const playedScore = mine1 ? worth(mine1, tries) : null;
+    for (const q of quick.slice(0, 5)) q.v = worth(q.c, tries, looks[1]) ?? q.v;
+    const playedScore = mine1 ? worth(mine1, tries, looks[1]) : null;
     if (mine1 && playedScore !== null) quick.push({ c: mine1, v: playedScore });
     quick.sort((a, b) => b.v - a.v);
     // Moves in a side's whole turn pay off later in it: the best few, and the one played, each
-    // with the rest of the turn and the enemy's answer played out, as Sharp plans.
-    let deep = false;
-    if (!plainActivations(state) && (played ? isMove(played) : quick.some((q) => isMove(q.c.move)))) {
-      const options = [
-        ...quick.slice(0, this.planWidth).filter((q) => q.c !== mine1),
-        ...quick.filter((q) => q.c === mine1),
-      ];
+    // with the rest of the turn and the enemy's answer played out, as Sharp plans. Once one of the
+    // best few is a move, they all are judged so (staying put against moving, a shot against a
+    // move), never a played-out move against an option judged where it stands.
+    const acts = actionActivations(state);
+    const deepOf = (options: { c: Candidate }[], at: number): (number | null)[] => {
       const sums = options.map(() => ({ sum: 0, n: 0 }));
       const round = state.turn.round;
       for (let pass = 0; pass < passes; pass++) {
-        const passSeed = seed + pass * 7919;
+        const passSeed = at + pass * 7919;
         options.forEach((o, i) => {
           this.rng = seededRng(passSeed);
           try {
@@ -407,7 +435,11 @@ class Thinker implements Policy, Analyst {
             const keys = new Set(used);
             if (o.c.key) keys.add(o.c.key);
             if (s) {
-              sums[i]!.sum += this.rollout(s, mine, keys, round);
+              // Taking turns at activations (FSD, Conquest): the rest of the activation, then the
+              // enemy's that hurts most, as Sharp plans one; else the rest of the turn.
+              sums[i]!.sum += acts
+                ? this.answeredActivation(this.finished(s, mine, 1), mine)
+                : this.rollout(s, mine, keys, round);
               sums[i]!.n++;
             }
           } finally {
@@ -415,10 +447,36 @@ class Thinker implements Policy, Analyst {
           }
         });
       }
-      if (sums.every((x) => x.n)) {
-        options.forEach((o, i) => (o.v = sums[i]!.sum / sums[i]!.n));
+      return sums.map((x) => (x.n ? x.sum / x.n : null));
+    };
+    let deep = false;
+    const moves = played
+      ? isMove(played) || quick.slice(0, this.planWidth).some((q) => isMove(q.c.move))
+      : quick.some((q) => isMove(q.c.move));
+    if (!plainActivations(state) && moves) {
+      const options = [
+        ...quick.slice(0, this.planWidth).filter((q) => q.c !== mine1),
+        ...quick.filter((q) => q.c === mine1),
+      ];
+      const got = deepOf(options, looks[1]);
+      if (got.every((v) => v !== null)) {
+        options.forEach((o, i) => (o.v = got[i]!));
         quick.splice(0, quick.length, ...options.sort((a, b) => b.v - a.v));
         deep = true;
+      }
+    }
+    // The last look: the best found, the one played and the best other choice judged again on fresh
+    // dice, so the one that rolled best on the dice that picked it isn't taken at its word.
+    const confirm = quick.filter(
+      (q, i) => i === 0 || q.c === mine1 || q === quick.find((x) => x.c !== mine1 && x !== quick[0]),
+    );
+    if (confirm.length > 1) {
+      const again = deep
+        ? deepOf(confirm, looks[2])
+        : confirm.map((q) => worth(q.c, q.c.tries > 1 ? tries : 1, looks[2]));
+      if (again.every((v) => v !== null)) {
+        confirm.forEach((q, i) => (q.v = again[i]!));
+        quick.sort((a, b) => b.v - a.v);
       }
     }
     const top = quick[0];
@@ -990,17 +1048,32 @@ class Thinker implements Policy, Analyst {
 
   /** The table judged after the enemy's activation that leaves us worst off, if it's theirs to activate now. */
   private answeredActivation(s: GameState, mine: Set<PlayerId>): number {
-    let worst = evaluate(s, this.judge);
+    const worst = evaluate(s, this.judge);
     const enemy = s.turn.activeSeat;
     if (enemy === this.seat) return worst;
     const theirs = new Set(sidePlayers(s, enemy).map((p) => p.id));
     if ([...theirs].some((p) => mine.has(p))) return worst;
-    for (const e of this.candidates(s, theirs)) {
-      if (!e.activates) continue;
+    // Reviewing (#63), the one that looks worst on dice of its own (by its first action, a charge
+    // with its move into contact), played to its end on the try's; playing, its first action.
+    const answer = (e: Candidate, whole: boolean) => {
       const t = this.play(s, e.move);
-      if (t) worst = Math.min(worst, evaluate(this.followed(t, theirs, -1), this.judge));
-    }
-    return worst;
+      return t && (whole ? this.finished(t, theirs, -1) : this.followed(t, theirs, -1));
+    };
+    const choose = () => {
+      let pick: Candidate | null = null;
+      let low = worst;
+      for (const e of this.candidates(s, theirs)) {
+        if (!e.activates) continue;
+        const t = answer(e, false);
+        const v = t ? evaluate(t, this.judge) : Infinity;
+        if (v < low) [pick, low] = [e, v];
+      }
+      return { pick, low };
+    };
+    if (!this.answers) return choose().low;
+    const { pick } = this.unseen(choose);
+    const t = pick && answer(pick, true);
+    return t ? evaluate(t, this.judge) : worst;
   }
 
   /**
@@ -1029,16 +1102,45 @@ class Thinker implements Policy, Analyst {
 
   /** The table after a side's acting unit does its best (sign 1: best for us; -1: worst). */
   private followed(s: GameState, side: Set<PlayerId>, sign: 1 | -1): GameState {
-    let best = s;
-    let top = sign * evaluate(s, this.judge);
-    for (const f of this.candidates(s, side)) {
-      if (f.activates) continue;
+    const all = this.candidates(s, side).filter((f) => !f.activates);
+    // Reviewing, what must be played comes first (a charge that reached makes its move into contact).
+    const musts = this.answers ? all.filter((f) => f.must) : [];
+    const step = (f: Candidate) => {
       const t = this.play(s, f.move);
-      if (!t) continue;
-      const v = sign * evaluate(t, this.judge);
-      if (v > top) [best, top] = [t, v];
+      // A charge rolled by hand pays off after it: its move into contact, then what that leads to.
+      return t && f.charge && this.answers ? this.followed(this.followed(t, side, sign), side, sign) : t;
+    };
+    const choose = () => {
+      let pick: Candidate | null = null;
+      let best = s;
+      let top = musts.length ? -Infinity : sign * evaluate(s, this.judge);
+      for (const f of musts.length ? musts : all) {
+        const t = step(f);
+        if (!t) continue;
+        const v = sign * evaluate(t, this.judge);
+        if (v > top) [pick, best, top] = [f, t, v];
+      }
+      return { pick, best };
+    };
+    if (!this.answers) return choose().best;
+    const { pick } = this.unseen(choose);
+    return pick ? (step(pick) ?? s) : s;
+  }
+
+  /**
+   * Reviewing (#63): a choice inside a try made on dice of its own, then played
+   * on the try's dice, so a try doesn't keep whichever choice happened to roll
+   * well (a unit's luckiest shot read as its follow-up made any move that left
+   * it a shot look strong, and the enemy's luckiest answer any move look poor).
+   */
+  private unseen<T>(choose: () => T): T {
+    const real = this.rng;
+    this.rng = seededRng(Math.floor(real() * 2 ** 31));
+    try {
+      return choose();
+    } finally {
+      this.rng = real;
     }
-    return best;
   }
 
   /** Ending whatever activation the side still has going. */
@@ -1133,7 +1235,7 @@ class Thinker implements Policy, Analyst {
     if (p > 0) {
       const hit = rolled(sides);
       const unit = hit?.units[u.id];
-      const move = hit && unit ? landing(hit, unit) : null;
+      const move = hit && unit ? landing(hit, unit, !!this.answers) : null;
       const landed = hit && move ? this.play(hit, move) : hit;
       if (!landed) return null;
       // What landing is for: the fight it starts (Impact, a Clash) with the actions left.
@@ -1151,16 +1253,42 @@ class Thinker implements Policy, Analyst {
   /** A move and what follows it on a copy of the table. */
   private play(state: GameState, move: BotMove): GameState | null {
     const local = new Map<number, GameState>();
+    const answer = this.answers ? this.answerer(local) : undefined;
     let s = this.sim.step(state, move.intent, move.as, this.rng, local);
     if (!s) return null;
-    s = this.sim.settle(s, this.rng, local);
+    s = this.sim.settle(s, this.rng, local, answer);
     if (move.then)
       s = this.sim.settle(
         this.sim.step(s, move.then.intent, move.then.as, this.rng, local) ?? s,
         this.rng,
         local,
+        answer,
       );
     return s;
+  }
+
+  /**
+   * A question in a try answered as the side asked would: the option that
+   * leaves the table best for it once what follows is played out (any
+   * question after that taking its first option).
+   */
+  private answerer(local: Map<number, GameState>): (s: GameState) => string | undefined {
+    const first = (s: GameState) => s.script?.waiting?.options[0]?.id;
+    return (s) => {
+      const q = s.script?.waiting;
+      if (!q || q.options.length < 2) return undefined;
+      const sign = s.players[q.player]?.seat === this.seat ? 1 : -1;
+      let pick: string | undefined;
+      let top = -Infinity;
+      for (const o of q.options) {
+        const inner = new Map(local);
+        const r = this.sim.step(s, { type: "script/answer", answer: o.id }, q.player, this.rng, inner);
+        if (!r) continue;
+        const v = sign * evaluate(this.sim.settle(r, this.rng, inner, first), this.judge);
+        if (v > top) [pick, top] = [o.id, v];
+      }
+      return pick;
+    };
   }
 
   /**
@@ -1198,7 +1326,7 @@ class Thinker implements Policy, Analyst {
     for (const u of units) {
       let moveAction = false;
       // A charge rolled that reaches: the move into contact comes next.
-      const land = landing(state, u);
+      const land = landing(state, u, !!this.answers);
       if (land) out.push({ move: land, key: `${u.id}:landing`, tries: 1, must: true });
       for (const o of unitActions(state, u.id)) {
         if (o.def.reactTo) continue;
@@ -1275,7 +1403,15 @@ class Thinker implements Policy, Analyst {
             // Rolled and moved by hand (Conquest): roll the charge now; the move follows if it reaches.
             if (roll) {
               out.push({
-                move: { ...declared, then: { intent: roll, as: u.owner, kind: "roll" } },
+                move: {
+                  ...declared,
+                  // Reviewing, the roll names its target, so the move that follows goes at it.
+                  then: {
+                    intent: (this.answers ? { ...roll, targets: [e.id] } : roll) as Intent,
+                    as: u.owner,
+                    kind: "roll",
+                  },
+                },
                 key,
                 tries: 1,
                 charge: { unit: u.id, target: e.id },
@@ -1293,6 +1429,9 @@ class Thinker implements Policy, Analyst {
         }
         if (o.move !== undefined) {
           moveAction = true;
+          // Reviewing (#63), a unit that declared a charge makes the charge move or none (it marched or
+          // reformed after one in tries); piling in and consolidating (40k) are moves of a fight.
+          if (this.answers && u.status?.charged && !/pile|consolidat/i.test(o.def.id)) continue;
           // The move is in the system's unit (FSD: DU of 3").
           for (const then of destinations(state, u, Math.max(1, o.move) * inchesPerUnit(systemOf(state))))
             out.push({ move: { ...take, then }, key, tries: 1 });
@@ -1307,8 +1446,10 @@ class Thinker implements Policy, Analyst {
       }
       // Moving by hand in a movement phase, where the unit has no move action; with plain
       // activations (a package game), moving is how a unit starts its go.
+      // Reviewing, a unit that charged this turn has made its move (TOW: it moved again in tries).
       if (
         !moveAction &&
+        !(this.answers && u.status?.charged) &&
         (/move/i.test(slot) || plain) &&
         !unitActions(state, u.id).some((o) => o.move !== undefined)
       )
@@ -1410,7 +1551,18 @@ class Thinker implements Policy, Analyst {
           };
           const charge = /charge/i.test(r.id) && target;
           out.push({
-            move: charge ? { ...move, then: chargeMove(state, u, this.ctx, 24, target) } : move,
+            move: charge
+              ? {
+                  ...move,
+                  then: chargeMove(
+                    state,
+                    u,
+                    this.ctx,
+                    this.answers ? chargeReach(state, u, this.rng) : 24,
+                    target,
+                  ),
+                }
+              : move,
             key: `${u.id}:code:${r.id}`,
             tries: this.tries,
             must: fighting && /fight|combat|strike|melee/i.test(r.id) && !/challenge/i.test(r.id),
@@ -1467,7 +1619,9 @@ export function usedKey(state: GameState, m: BotMove): string | undefined {
   return undefined;
 }
 
-const isMove = (m: BotMove) => m.intent.type === "models/move" || m.then?.intent.type === "models/move";
+/** A move of models, or of a regiment as a block (Conquest). */
+const moving = (t: string | undefined) => t === "models/move" || t === "unit/move";
+const isMove = (m: BotMove) => moving(m.intent.type) || moving(m.then?.intent.type);
 
 const standing = (state: GameState, u: Unit) =>
   u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed);
@@ -1705,6 +1859,19 @@ function handCharge(state: GameState, u: Unit): Intent | null {
   return { type: "dice/roll", count: dice.count, sides: dice.sides, label: "charge", unitId: u.id };
 }
 
+/**
+ * How far a code action's charge goes in a try: the unit's move plus the
+ * game's charge roll (TOW: the higher of 2D6), rolled; 24" where the game
+ * names no roll. A charge that falls short stops there.
+ */
+function chargeReach(state: GameState, u: Unit, rng: Rng): number {
+  const dice = systemModule(state.system ?? "").chargeRoll;
+  if (!dice) return 24;
+  const faces = Array.from({ length: dice.count }, () => 1 + Math.floor(rng() * dice.sides));
+  const roll = dice.keep === "highest" ? Math.max(...faces) : faces.reduce((a, b) => a + b, 0);
+  return moveInches(state, u, tuningOf(state.system)) + roll;
+}
+
 /** A unit's March (its M), in inches. */
 function marchOf(state: GameState, u: Unit): number {
   return num(aliveModels(state, u)[0]?.profile?.chars.M) ?? 0;
@@ -1716,16 +1883,20 @@ function marchOf(state: GameState, u: Unit): number {
  * reaches, as "close the door" would; null if none does (a short charge,
  * which the game's charge hook ends the activation for).
  */
-function landing(state: GameState, u: Unit): BotMove | null {
+function landing(state: GameState, u: Unit, declaredOnly = false): BotMove | null {
   const roll = u.status?.charge;
   if (!u.status?.charged || typeof roll !== "number") return null;
   const short = state.modules?.[state.system ?? ""]?.[`short:${u.id}`];
   if (short === state.turn.round) return null;
   const reach = roll + marchOf(state, u);
+  // Reviewing (#63), the enemy the charge was declared against, where the roll names it (chargeAt flags).
+  const declared = Object.keys(declaredOnly ? (u.status ?? {}) : {})
+    .filter((k) => k.startsWith("chargeAt."))
+    .map((k) => k.slice("chargeAt.".length));
   let best: { move: BotMove; d: number } | null = null;
   for (const t of targetsOf(state, u.id, "charge")) {
     const e = state.units[t.unitId];
-    if (!t.ok || !e) continue;
+    if (!t.ok || !e || (declared.length && !declared.includes(e.id))) continue;
     // Reached as the game's charge hook measures it: the gap between the units.
     const gap = unitGap(state, u, e);
     const door = closeDoor(state, u, e);

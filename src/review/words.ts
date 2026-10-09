@@ -134,7 +134,8 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     other: { loss: 0, n: 0, costly: 0 },
   };
   for (const d of mine) {
-    if (!d.played) continue;
+    // A tip only from choices the review benchmark backs judging (#63).
+    if (!d.played || !d.trusted) continue;
     const c = cost[kindOf(d)];
     c.loss += d.loss;
     c.n++;

@@ -60,4 +60,6 @@ Outside `src/`: `games/` holds Rift Lanterns, our own game, written as a package
 
 `pnpm format:check`, `pnpm lint`, `pnpm tsc -b`, `pnpm vitest run`, `pnpm i18n:check` and `pnpm deadcode` (knip: unused files, exports and dependencies) all run in CI. `pnpm smoke` drives the real app in a browser.
 
+The game review (`src/review`) is checked against a benchmark: positions built in code, one set per game with a bot (`src/review/bench`), each with a play any player would call better than another. `src/review/trust.ts` lists the decision kinds (attack, charge, move) the benchmark backs in each game; the review puts costly and strong marks only on those. The `*.bench.test.ts` files check one seed of the review's dice in the normal run. `REVIEW_BENCH=1 npx vitest run src/review/bench` checks six seeds and prints the pass rate per kind: run it after changing the evaluator or how the review appraises a decision, and keep `trust.ts` in line with it.
+
 The unit tests take about 53 seconds on four cores. The bot's whole-game tests in `src/bot/bot.test.ts` are the longest file (about 44 seconds).
