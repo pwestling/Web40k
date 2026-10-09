@@ -1,6 +1,6 @@
 import { awayFrom, fleeMove, unitCentre, unitGap } from "../../core/manoeuvre";
 import { blockModels, inArc, rankCount } from "../../core/regiment";
-import type { GameState, Model, Unit } from "../../core/types";
+import type { GameState, Model, Unit, WeaponProfile } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { towRanks } from "./troops";
 import { shooterCount } from "./ranks";
@@ -208,12 +208,70 @@ export function* woundAndSave(
     ["ward", "ward"],
     ["regen", "regeneration"],
   ] as const) {
-    const on = stat(view, def, save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
+    const raw = stat(view, def, save, save === "armour" ? 7 : 0) + (save === "armour" ? ap : 0);
+    // An armour save of 1+ is still rolled (a natural 1 fails); a ward or regeneration of 0 is none.
+    const on = save === "armour" && raw >= 1 ? Math.max(2, raw) : raw;
     if (!left || on < 2 || on > 6) continue;
     const r = (yield ctx.roll(`${left}d6`, `${name} save`, def.id, on)) as Roll;
     left -= count(r, on);
   }
   return left;
+}
+
+/**
+ * A close combat weapon's Strength from its S entry: "S" or "-" is the
+ * wielder's own, "S+2" or "+2" adds to it, a bare number stands as it is.
+ */
+export function weaponStrength(base: number, s: string | undefined): number {
+  const v = (s ?? "").trim();
+  if (!v || v === "-" || /^s$/i.test(v)) return base;
+  const plus = /^s?\s*([+-])\s*(\d+)$/i.exec(v);
+  if (plus) return base + (plus[1] === "-" ? -1 : 1) * Number(plus[2]);
+  const n = Number.parseFloat(v);
+  return Number.isFinite(n) ? n : base;
+}
+
+/** How many points a weapon's AP worsens armour saves by ("-2" or "2" is 2; "-" none). */
+export const weaponAp = (w: WeaponProfile | undefined) => Math.abs(Number.parseFloat(w?.chars.AP ?? "") || 0);
+
+/** A weapon whose bonus counts only on the turn its wielder charged ("charging only", "on the charge"). */
+const chargeOnly = (w: WeaponProfile) =>
+  [...(w.keywords ?? []), w.chars.Rules ?? "", w.chars.Notes ?? ""].some((k) => /charg/i.test(k));
+
+/** The close combat weapons a model (or the unit's rank and file) carries. */
+function meleeWeapons(u: Unit, model?: Model): WeaponProfile[] {
+  const all = Object.values(u.sheet?.weapons ?? {}).filter((w) => w.kind !== "ranged");
+  const own = model?.weapons?.length ? all.filter((w) => model.weapons!.includes(w.id)) : [];
+  return own.length ? own : all;
+}
+
+/**
+ * The weapon a unit (or a duelling model) fights with this round: the only one
+ * it has, or the player's pick when its weapons differ. Its Strength and AP
+ * count; a charging-only bonus only on the turn the unit charged.
+ */
+function* fightingWeapon(
+  ctx: Ctx,
+  u: Unit,
+  baseS: number,
+  model?: Model,
+): Generator<Command, { s: number; ap: number; name: string }, unknown> {
+  const ws = meleeWeapons(u, model);
+  const profile = (w: WeaponProfile) => {
+    if (chargeOnly(w) && u.status?.charged !== true) return { s: baseS, ap: 0, name: w.name };
+    return { s: weaponStrength(baseS, w.chars.S), ap: weaponAp(w), name: w.name };
+  };
+  const options = ws.map(profile);
+  const distinct = new Set(options.map((o) => `${o.s}/${o.ap}`));
+  if (!options.length) return { s: baseS, ap: 0, name: "" };
+  if (distinct.size === 1) return options[0]!;
+  const who = model?.profile?.name ?? u.name;
+  const pick = (yield ctx.ask(
+    owner(u),
+    `Which weapon does ${who} fight with?`,
+    options.map((o, i) => ({ id: String(i), label: `${o.name} (S${o.s}${o.ap ? `, AP -${o.ap}` : ""})` })),
+  )) as string;
+  return options[Number(pick)] ?? options[0]!;
 }
 
 /**
@@ -271,7 +329,12 @@ function* strike(
     hits += hitsOf(again, hitOn);
   }
   if (!hits) return 0;
-  return yield* woundAndSave(ctx, atk, def, hits, stat(view, atk, "S"));
+  const weapon = yield* fightingWeapon(ctx, atk, stat(view, atk, "S"));
+  if (weapon.name && (weapon.s !== stat(view, atk, "S") || weapon.ap))
+    yield ctx.note(
+      `${atk.name} fights with ${weapon.name} (S${weapon.s}${weapon.ap ? `, AP -${weapon.ap}` : ""})`,
+    );
+  return yield* woundAndSave(ctx, atk, def, hits, weapon.s, weapon.ap);
 }
 
 /**
@@ -294,13 +357,17 @@ function* shoot(
   const dice = Math.min(carriers, shooterCount(state, shooter, { standAndShoot: true }));
   if (!dice) return 0;
   const range = Number.parseFloat(weapon.chars.Range ?? "") || 0;
-  const mods = [...penalties];
-  if (range && unitGap(state, shooter, target) > range / 2) mods.push("long range");
-  if (view.inCover(shooter.id, target.id)) mods.push("cover");
-  const need = 7 - stat(view, shooter, "BS") + mods.length;
-  const label = `to hit${need >= 7 ? ` (6 then ${need - 3}+)` : ""}${mods.length ? ` (${mods.join(", ")})` : ""}`;
+  const mods = penalties.map((p) => ({ p, by: 1 }));
+  if (range && unitGap(state, shooter, target) > range / 2) mods.push({ p: "long range", by: 1 });
+  // Graded cover, as the Shooting phase has it: up to half the models seen in cover -1, more -2.
+  const share = coverShare(view, shooter, target);
+  if (share > 0.5) mods.push({ p: "full cover", by: 2 });
+  else if (share > 0) mods.push({ p: "partial cover", by: 1 });
+  const need = 7 - stat(view, shooter, "BS") + mods.reduce((t, m) => t + m.by, 0);
+  const why = mods.map((m) => m.p).join(", ");
+  const label = `to hit${need >= 7 ? ` (6 then ${need - 3}+)` : ""}${why ? ` (${why})` : ""}`;
   if (need >= 10) {
-    yield ctx.note(`${shooter.name} can't hit (${mods.join(", ")})`);
+    yield ctx.note(`${shooter.name} can't hit (${why})`);
     return 0;
   }
   const r = (yield ctx.roll(`${dice}d6`, label, shooter.id, Math.min(6, Math.max(2, need)))) as Roll;
@@ -313,6 +380,14 @@ function* shoot(
   const s = Number.parseFloat(weapon.chars.S ?? "") || stat(view, shooter, "S");
   const ap = Math.abs(Number.parseFloat(weapon.chars.AP ?? "") || 0);
   return yield* woundAndSave(ctx, shooter, target, hits, s, ap);
+}
+
+/** Of the target's models the shooter sees, the share in cover (0 when it sees none, or at a real table). */
+function coverShare(view: GameView, shooter: Unit, target: Unit): number {
+  if (view.atTable) return view.inCover(shooter.id, target.id) ? 1 : 0;
+  const seen = alive(view.state, target).filter((m) => view.visible(shooter.id, m.id));
+  if (!seen.length) return view.inCover(shooter.id, target.id) ? 1 : 0;
+  return seen.filter((m) => view.inCover(shooter.id, m.id)).length / seen.length;
 }
 
 /** Casualties come off the rear rank: wounded models first, then rank and file, the command group last. */
@@ -523,15 +598,19 @@ function* duelStrike(
   )) as Roll;
   const hits = hitsOf(hit, hitOn);
   if (!hits) return 0;
-  const woundOn = toWound(charNum(atk, "S", 3), charNum(def, "T", 3));
+  const { s: strength, ap } = yield* fightingWeapon(ctx, atkUnit, charNum(atk, "S", 3), atk);
+  const woundOn = toWound(strength, charNum(def, "T", 3));
   if (woundOn === null) return 0;
   const wound = (yield ctx.roll(`${hits}d6`, `${name}: to wound`, atkUnit.id, woundOn)) as Roll;
   let left = count(wound, woundOn);
-  const armour = charNum(def, "armour", stat(ctx.view, defUnit, "armour", 7));
-  for (const [on, label] of [
+  const armour = charNum(def, "armour", stat(ctx.view, defUnit, "armour", 7)) + ap;
+  for (const [raw, label] of [
     [armour, "armour save"],
     [charNum(def, "ward", stat(ctx.view, defUnit, "ward", 0)), "ward save"],
+    [charNum(def, "regen", stat(ctx.view, defUnit, "regen", 0)), "regeneration save"],
   ] as const) {
+    // An armour save of 1+ is still rolled (a natural 1 fails); a ward or regeneration of 0 is none.
+    const on = label === "armour save" && raw >= 1 ? Math.max(2, raw) : raw;
     if (!left || on < 2 || on > 6) continue;
     const r = (yield ctx.roll(
       `${left}d6`,
@@ -782,7 +861,14 @@ const combat: CodeProcedure = function* (ctx, args) {
   // Units wiped out in the fight shake their friends nearby.
   const wiped = all.filter((u) => !alive(ctx.view.state, unitOf(ctx.view, u.id)).length);
   if (sa.s === sb.s) {
-    yield ctx.note("The combat is a draw");
+    const music = (side: Unit[]) =>
+      side.some((u) =>
+        alive(ctx.view.state, unitOf(ctx.view, u.id)).some((m) => MUSICIAN.test(m.profile?.name ?? "")),
+      );
+    const tune = music(sides[0]) !== music(sides[1]) ? names(music(sides[0]) ? sides[0] : sides[1]) : "";
+    yield ctx.note(
+      `The combat is a draw${tune ? ` (${tune} has a musician: check its rule for drawn combats, by hand)` : ""}`,
+    );
     for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all);
     return;
   }
@@ -803,6 +889,12 @@ const combat: CodeProcedure = function* (ctx, args) {
     outcomes.push([l, yield* breakTest(ctx, lost, from, diff)]);
   }
   for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all, ended);
+  // Winners whose foe was wiped out may overrun (moved by hand).
+  for (const w of winners) {
+    const foe = foes.get(w.id);
+    if (foe && wiped.some((x) => x.id === foe.id) && alive(ctx.view.state, unitOf(ctx.view, w.id)).length)
+      yield ctx.note(`${w.name} destroyed ${foe.name}: it may overrun (move it by hand) or reform`);
+  }
   const pursued = new Set<string>();
   for (const [l, fled] of outcomes) {
     if (fled === "flees") yield* panicNear(ctx, unitOf(ctx.view, l.id), "broke and fled", all, ended);
@@ -1020,6 +1112,7 @@ const chargeReaction: CodeProcedure = function* (ctx, args) {
   const shoots =
     Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged") &&
     !target.status?.fleeing &&
+    !inCombat(ctx.view, target.id) &&
     distance >= stat(ctx.view, charger, "M");
   const now = ctx.view.state.turn;
   // Charging something frightening takes nerve: a failed Fear test and the charge isn't made.
@@ -1056,6 +1149,14 @@ const chargeReaction: CodeProcedure = function* (ctx, args) {
       return;
     }
     yield ctx.note(`${target.name} stands its ground against ${charger.name} (${t.roll.total})`);
+  }
+  // A unit that is already fleeing can only flee again.
+  if (target.status?.fleeing) {
+    yield* flee(ctx, target, charger, "is already fleeing");
+    yield ctx.note(
+      `If ${charger.name}'s charge still reaches ${target.name}, the fleeing unit is destroyed (by hand)`,
+    );
+    return;
   }
   const options = [
     { id: "hold", label: "Hold" },
@@ -1180,6 +1281,22 @@ function enemies(view: GameView, unitId: string, within: number, fleeing = true)
 /** Touching, for close combat. */
 const CONTACT = 0.5;
 
+const MUSICIAN = /musician|drummer|horn|bugler|trumpeter/i;
+
+/** In base contact with an enemy that isn't fleeing. */
+export function inCombat(view: GameView, unitId: string): boolean {
+  return enemies(view, unitId, CONTACT, false).length > 0;
+}
+
+/** For data: `{ call: "inCombat", args: [unit id] }`. */
+export const inCombatFn = (view: GameView, unitId: unknown) => inCombat(view, String(unitId));
+
+/** For data: it marched this turn (a failed march test counts), and has no rule letting it shoot after. */
+export const marchedNoShot = (view: GameView, unitId: unknown): boolean => {
+  const u = view.state.units[String(unitId)];
+  return !!u?.status?.marching && !hasRule(u, /quick shot/i);
+};
+
 /** Close combat targets: in contact, not fleeing, and not already fought this phase. */
 function fightTargets(view: GameView, unitId: string) {
   return enemies(view, unitId, CONTACT, false).filter((x) => !foughtNow(view, x.u.id));
@@ -1207,6 +1324,11 @@ const marchTest: CodeProcedure = function* (ctx, args) {
       : `${u.name} fails its march test (rolled ${t.roll.total}, over Ld ${t.ld}): it moves normally but counts as having marched`,
   );
 };
+
+/** Enemies a unit could declare a charge against: within 24" and in its sight (its vision arc). */
+function chargeable(view: GameView, unitId: string) {
+  return enemies(view, unitId, 24, false).filter((x) => view.atTable || view.visible(unitId, x.u.id));
+}
 
 /** Enemies in contact that could answer a challenge (with a character or champion, and not in one already). */
 function challengeTargets(view: GameView, unitId: string) {
@@ -1236,10 +1358,11 @@ export const towActions: CodeAction[] = [
       const now = view.state.turn;
       if (fear && fear.round === now.round && fear.seat === now.activeSeat)
         return "Failed its Fear test this turn";
-      return enemies(view, u.id, 24, false).length ? true : 'No enemy within 24"';
+      if (!enemies(view, u.id, 24, false).length) return 'No enemy within 24"';
+      return chargeable(view, u.id).length ? true : "No enemy it can see to charge";
     },
     targets: (view, actor) =>
-      enemies(view, actor.unitId ?? "", 24, false).map((x) => ({
+      chargeable(view, actor.unitId ?? "").map((x) => ({
         unitId: x.u.id,
         label: `${x.u.name} (${x.d.toFixed(1)}")`,
       })),

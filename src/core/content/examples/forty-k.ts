@@ -125,6 +125,18 @@ const weaponRules: RuleDef[] = [
           { do: "modifyCharacteristic", target: "weapon", characteristic: "D", by: { dice: ref("param.x") } },
         ],
       },
+      {
+        // Damage is rolled for the whole pool: with only some models within half range,
+        // the player adds it to those models' attacks by hand.
+        when: { event: "action.declared" },
+        if: {
+          all: [
+            { some: "step.attacks.members", as: "bearer", test: bearerWithinHalfRange },
+            { not: allWithinHalfRange },
+          ],
+        },
+        do: [{ do: "manual", reminder: "melta" }],
+      },
     ],
   },
   {
@@ -419,7 +431,7 @@ const engagementRange: Expr = {
 const abilityTimings: AbilityTiming[] = [
   {
     phase: "deployment",
-    match: "deploy|declare battle formations|start of the (first battle round|battle)\\b",
+    match: "deploy|infiltrators|declare battle formations|start of the (first battle round|battle)\\b",
   },
   { phase: "command", side: "inactive", match: "opponent.s command phase" },
   { phase: "command", side: "active", match: "your command phase" },
@@ -432,7 +444,7 @@ const abilityTimings: AbilityTiming[] = [
     match: "movement phase|(normal|advance|fall back) move|from (strategic )?reserves|reinforcements",
   },
   { phase: "shooting", side: "inactive", match: "opponent.s shooting phase" },
-  { phase: "shooting", side: "active", match: "your shooting phase|selected to shoot|has shot" },
+  { phase: "shooting", side: "active", match: "your shooting phase|selected to shoot|has shot|firing deck" },
   { phase: "shooting", side: "either", match: "shooting phase" },
   { phase: "charge", side: "inactive", match: "opponent.s charge phase" },
   { phase: "charge", side: "active", match: "your charge phase|declares? a charge|charge move" },
@@ -445,7 +457,7 @@ const abilityTimings: AbilityTiming[] = [
   {
     attack: "defender",
     match:
-      "attack (targets|is allocated to) (this|that) (unit|model)|made against (it|this unit)|benefit of cover|model is destroyed",
+      "attack (targets|is allocated to) (this|that) (unit|model)|made against (it|this unit)|benefit of cover|model is destroyed|deadly demise",
   },
 ];
 
@@ -465,7 +477,23 @@ const ownWith = (keyword: string): Expr => ({ all: [own, kw("it", keyword)] });
 const ownWithAny = (...keywords: string[]): Expr => ({
   all: [own, { any: keywords.map((k) => kw("it", k)) }],
 });
-const unengaged: Expr = { not: { hasStatus: "it", status: "engaged" } };
+/**
+ * Within engagement range of an enemy unit, asked of the 40k module
+ * (wh40k/module.ts) since the "engaged" status isn't derived from the table.
+ */
+const engagedCall = (who: string): Expr => ({ call: "engaged", args: [ref(`${who}.id`)] });
+const unengaged: Expr = { not: engagedCall("it") };
+const engaged = engagedCall("self");
+/** One move a turn in the Movement phase: Remain stationary, Normal move, Advance or Fall back. */
+const movedAlready = {
+  if: {
+    any: [
+      { hasFlag: "self", flag: "moved" },
+      { hasFlag: "self", flag: "stationary" },
+    ],
+  },
+  why: "Already moved this turn",
+};
 const stratagems: ActionDef[] = [
   {
     id: "commandReroll",
@@ -485,6 +513,8 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: { count: 1, per: "battle" },
     target: { filter: { all: [own, { hasStatus: "it", status: "battleShocked" }] } },
+    // Used on a unit that just failed its test: it passes instead.
+    do: [{ do: "removeStatus", status: "battleShocked" }],
     hint: "Pass a Battle-shock test",
   },
   {
@@ -506,7 +536,8 @@ const stratagems: ActionDef[] = [
     phases: ["charge"],
     cost: cp(1),
     limit: once,
-    target: { filter: ownWithAny("MONSTER", "VEHICLE") },
+    // Just after the unit's charge move: only a Monster or Vehicle that charged (PX, #55).
+    target: { filter: { all: [ownWithAny("MONSTER", "VEHICLE"), { hasFlag: "it", flag: "charged" }] } },
     hint: "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)",
   },
   {
@@ -687,11 +718,25 @@ export const fortyK: GameSystem = {
   resets: [
     {
       at: "playerTurn",
-      flags: ["moved", "advanced", "fellBack", "shot", "charged", "fought", "advance", "charge"],
+      // Battle-shock lasts until the start of the unit's next Command phase, which opens its player's turn.
+      flags: [
+        "moved",
+        "stationary",
+        "advanced",
+        "fellBack",
+        "shot",
+        "charged",
+        "fought",
+        "advance",
+        "charge",
+        "battleShocked",
+      ],
     },
     // "auto.*": once-per-battle abilities in use (#38), and "strat.*": faction stratagems (#49), last until the end of the phase.
     { at: "phase", flags: ["goneToGround", "smokescreen", "scouting", "arrived", "auto.*", "strat.*"] },
   ],
+  // Units moved by hand get "moved" as the phase ends, so Heavy knows (as well as the move actions' sets).
+  marksMoved: true,
   abilityTimings,
   terrain: [
     { id: "exposed", name: "Exposed" },
@@ -808,32 +853,44 @@ export const fortyK: GameSystem = {
       },
       procedure: "battleShockTest",
     },
-    { id: "remainStationary", name: "Remain stationary", by: "unit", side: "active", sets: ["stationary"] },
+    {
+      id: "remainStationary",
+      name: "Remain stationary",
+      by: "unit",
+      side: "active",
+      notWhen: [movedAlready],
+      sets: ["stationary"],
+    },
     {
       id: "normalMove",
       name: "Normal move",
       by: "unit",
       side: "active",
-      if: { not: { hasStatus: "self", status: "engaged" } },
+      notWhen: [movedAlready],
+      if: { not: engaged },
       move: { kind: "normal", distance: ref("self.M") },
+      // Heavy and "remained stationary" read this (and marksMoved, for moves by hand).
+      sets: ["moved"],
     },
     {
       id: "advance",
       name: "Advance",
       by: "unit",
       side: "active",
-      if: { not: { hasStatus: "self", status: "engaged" } },
+      notWhen: [movedAlready],
+      if: { not: engaged },
       move: { kind: "advance", distance: { op: "+", args: [ref("self.M"), { dice: "D6" }] } },
-      sets: ["advanced"],
+      sets: ["advanced", "moved"],
     },
     {
       id: "fallBack",
       name: "Fall back",
       by: "unit",
       side: "active",
-      if: { hasStatus: "self", status: "engaged" },
+      notWhen: [movedAlready],
+      if: engaged,
       move: { kind: "fallBack", distance: ref("self.M") },
-      sets: ["fellBack"],
+      sets: ["fellBack", "moved"],
     },
     {
       id: "shoot",
@@ -852,6 +909,17 @@ export const fortyK: GameSystem = {
           },
           why: "Advanced: only Assault weapons",
         },
+        // Engaged: only Pistols, unless the unit is a Monster or Vehicle (Big Guns Never Tire).
+        {
+          if: {
+            all: [
+              engaged,
+              { not: { hasKeyword: "weapon", keyword: "Pistol" } },
+              { not: { any: [kw("self", "MONSTER"), kw("self", "VEHICLE")] } },
+            ],
+          },
+          why: "Engaged: only Pistols",
+        },
       ],
       target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
       procedure: "attack",
@@ -863,7 +931,7 @@ export const fortyK: GameSystem = {
       side: "active",
       if: {
         all: [
-          { not: { hasStatus: "self", status: "engaged" } },
+          { not: engaged },
           { not: { hasFlag: "self", flag: "advanced" } },
           { not: { hasFlag: "self", flag: "fellBack" } },
         ],
@@ -885,10 +953,7 @@ export const fortyK: GameSystem = {
       by: "unit",
       side: "either",
       if: {
-        any: [
-          { hasStatus: "self", status: "engaged" },
-          { hasFlag: "self", flag: "charged" },
-        ],
+        any: [engaged, { hasFlag: "self", flag: "charged" }],
       },
       procedure: "attack",
     },
@@ -976,7 +1041,9 @@ export const fortyK: GameSystem = {
   ],
   coreEffects: [
     {
-      // Cover: -1 to hit, when the table plays cover that way.
+      // Cover (11th edition): the attacker's Ballistic Skill is 1 worse, so it stacks with
+      // hit roll modifiers rather than counting toward their cap. Unverified against the rules
+      // text: from two published summaries (Frontline Gaming, Tabletop Battles, May 2026).
       id: "Cover",
       when: beforeStep("hit"),
       if: {
@@ -987,7 +1054,7 @@ export const fortyK: GameSystem = {
           { not: { is: "settings.cover", value: "save" } },
         ],
       },
-      do: [{ do: "modifyRoll", by: -1 }],
+      do: [{ do: "modifyTarget", by: 1 }],
     },
     {
       // Every shooter stands well above every target.

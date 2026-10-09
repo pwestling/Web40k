@@ -12,7 +12,8 @@ import type { ArcDef, Effect, Expr, GameSystem, Procedure, RuleDef } from "../..
  * invented. Special rules: Cleave, Support, Barrage, Impact, Flurry,
  * Shield, Hardened, Terrifying, Deadly Blades and Relentless Blows play
  * themselves; Unstoppable and Oblivious are reminders. Supremacy is a
- * roll-off each round (no modifiers yet).
+ * roll-off each round (no modifiers yet, and the higher goes first: the
+ * rules have the lower roller choose; see docs/rules-coverage/conquest.md).
  */
 
 const ref = (r: string): Expr => ({ ref: r });
@@ -93,7 +94,18 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
             {
               op: "-",
               args: [
-                ref("target.D"),
+                // Shield adds to Defense (not Evasion) against attacks from the front.
+                {
+                  op: "+",
+                  args: [
+                    ref("target.D"),
+                    {
+                      if: { query: { kind: "inArc", from: "target", to: "attacker", arc: "front" } },
+                      then: ref("target.Shield"),
+                      else: 0,
+                    },
+                  ],
+                },
                 { op: "max", args: [0, { op: "-", args: [cleave, ref("target.Hardened")] }] },
               ],
             },
@@ -137,7 +149,13 @@ function attack(id: string, name: string, pool: Expr, hitOn: string, cleave: Exp
           { do: "script", procedure: "aftermath", args: { unit: ref("target"), before: count("target") } },
         ],
       },
-      { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
+      {
+        kind: "allocate",
+        id: "casualties",
+        chooser: "defender",
+        formation: "rearRankFirst",
+        alternateEnds: true,
+      },
       { kind: "damage", id: "wounds", amount: 1, spillover: true },
     ],
   };
@@ -155,11 +173,31 @@ const impact = attack(
   ref("attacker.Cleave"),
 );
 
-/** Barrage shots from each front-rank stand. */
+/** Barrage shots from each front-rank stand, one more each within half range. */
 const volley = attack(
   "volley",
   "Volley",
-  { op: "*", args: [ref("attacker.Barrage"), frontStands("attacker")] },
+  {
+    op: "*",
+    args: [
+      {
+        op: "+",
+        args: [
+          ref("attacker.Barrage"),
+          {
+            if: {
+              cmp: "<=",
+              a: { query: { kind: "distance", from: "attacker", to: "target" } },
+              b: { op: "/", args: [ref("attacker.Range"), 2] },
+            },
+            then: 1,
+            else: 0,
+          },
+        ],
+      },
+      frontStands("attacker"),
+    ],
+  },
   "attacker.V",
   0,
 );
@@ -192,13 +230,40 @@ const beforeHit = (procedure: string): Effect["when"] => ({
   },
 });
 
+const inspired: Expr = {
+  all: [{ hasStatus: "attacker", status: "inspired" }, { not: { hasStatus: "attacker", status: "broken" } }],
+};
+
 const effects: Effect[] = [
   {
-    // Inspired: +1 Clash.
+    // Inspired: +1 Clash, while that leaves Clash under 5. A Broken regiment can't be Inspired.
     id: "Inspired",
     when: beforeHit("clash"),
-    if: { hasStatus: "attacker", status: "inspired" },
+    if: { all: [inspired, { cmp: "<=", a: ref("attacker.C"), b: 3 }] },
     do: [{ do: "modifyTarget", by: 1 }],
+  },
+  {
+    // At Clash 4 or more, Inspired re-rolls natural 6s to hit instead: the engine can't
+    // re-roll one face only, so it is a reminder.
+    id: "Inspired: re-roll natural 6s to hit (Clash already 4+)",
+    when: beforeHit("clash"),
+    if: { all: [inspired, { cmp: ">=", a: ref("attacker.C"), b: 4 }] },
+    do: [{ do: "manual", reminder: "inspiredSixes" }],
+  },
+  {
+    // Obscuring terrain halves Barrage (secondary source): the shots are set by hand.
+    id: "Obscured: halve Barrage (set the shots by hand)",
+    when: {
+      event: "step.before",
+      where: {
+        all: [
+          { is: "event.step", value: "attacks" },
+          { is: "event.procedure", value: "volley" },
+        ],
+      },
+    },
+    if: { query: { kind: "cover", from: "attacker", to: "target" } },
+    do: [{ do: "manual", reminder: "obscured" }],
   },
   {
     // Take Aim: the volley re-rolls its misses.
@@ -247,18 +312,16 @@ const specialRules: RuleDef[] = [
     effects: [{ when: beforeHit("clash"), if: owns("attacker"), do: [{ do: "reroll", which: "failed" }] }],
   },
   {
-    // +1 Defense against attacks from the front.
+    // +1 Defense against attacks from the front (the defense step reads Shield,
+    // so it raises Defense only, never Evasion).
     id: "shield",
     name: "Shield",
     match: "^shield\\b",
     appliesTo: ["unit"],
     effects: [
       {
-        when: beforeStep("defense"),
-        if: {
-          all: [owns("target"), { query: { kind: "inArc", from: "target", to: "attacker", arc: "front" } }],
-        },
-        do: [{ do: "modifyTarget", by: 1 }],
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "Shield", to: 1 }],
       },
     ],
   },
@@ -332,6 +395,10 @@ const marchFirst = {
   if: { all: [{ hasFlag: "self", flag: "reinforced" }, { not: { hasFlag: "self", flag: "actionsTaken" } }] },
   why: "Arrived this round: march first",
 } satisfies { if: Expr; why: string };
+/** Engaged: an enemy within reach (command.ts). */
+const engaged: Expr = { call: "engaged", args: [ref("self.id")] };
+const notEngaged = { if: engaged, why: "Engaged: combat actions only" } satisfies { if: Expr; why: string };
+const mustBeEngaged = { if: { not: engaged }, why: "Not engaged" } satisfies { if: Expr; why: string };
 const within = (inches: Expr): Expr => ({
   cmp: "<=",
   a: { query: { kind: "distance", from: "self", to: "it" } },
@@ -363,6 +430,8 @@ export const conquest: GameSystem = {
     { id: "Impact", name: "Impact", of: "model", type: "number", default: 0 },
     // Set by the Hardened(X) special rule: Cleave against it is X less.
     { id: "Hardened", name: "Hardened", of: "model", type: "number", default: 0 },
+    // Set by the Shield special rule: +1 Defense against attacks from the front.
+    { id: "Shield", name: "Shield", of: "model", type: "number", default: 0 },
     { id: "Type", name: "Type", of: "model", type: "text" },
     { id: "Class", name: "Class", of: "model", type: "text" },
   ],
@@ -414,6 +483,7 @@ export const conquest: GameSystem = {
       verb: "marches",
       by: "unit",
       hint: "Up to March forwards; may be taken twice",
+      notWhen: [notEngaged],
       move: { kind: "march", distance: ref("self.M") },
     },
     {
@@ -421,10 +491,13 @@ export const conquest: GameSystem = {
       name: "Charge",
       verb: "charges",
       by: "unit",
-      hint: "D6 + March at an enemy in the front arc; a charge that lands is Inspired",
+      hint: "D6 + March at an enemy in the front arc; Inspired. Short: clear Inspired, activation over",
       // Not in the round a regiment arrives from reserve.
       if: notBroken,
-      notWhen: [{ if: { hasFlag: "self", flag: "reinforced" }, why: "Arrived this round: can't charge" }],
+      notWhen: [
+        notEngaged,
+        { if: { hasFlag: "self", flag: "reinforced" }, why: "Arrived this round: can't charge" },
+      ],
       limit: { count: 1, per: "round" },
       sets: ["charged"],
       // A charge that falls short loses it: clear Inspired on the card.
@@ -450,7 +523,7 @@ export const conquest: GameSystem = {
       name: "Volley",
       verb: "volleys",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, notEngaged],
       hint: "Barrage shots from the front rank",
       if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
       target: {
@@ -477,7 +550,7 @@ export const conquest: GameSystem = {
       name: "Take Aim",
       verb: "takes aim",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, notEngaged],
       hint: "This round's volley re-rolls misses",
       if: { cmp: ">", a: ref("self.Barrage"), b: 0 },
       limit: { count: 1, per: "round" },
@@ -488,7 +561,7 @@ export const conquest: GameSystem = {
       name: "Inspire",
       verb: "is inspired",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, mustBeEngaged],
       hint: "+1 Clash this round",
       if: notBroken,
       limit: { count: 1, per: "round" },
@@ -499,7 +572,7 @@ export const conquest: GameSystem = {
       name: "Rally",
       verb: "rallies",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, notEngaged],
       hint: "No longer Broken",
       if: { hasStatus: "self", status: "broken" },
       limit: { count: 1, per: "round" },
@@ -510,17 +583,37 @@ export const conquest: GameSystem = {
       name: "Reform",
       verb: "reforms",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, notEngaged],
       hint: "Rearrange the stands, then turn",
       limit: { count: 1, per: "round" },
       move: { kind: "reform", distance: ref("self.M") },
+    },
+    {
+      // Engaged: played by hand, the button marks the action taken.
+      id: "combatRally",
+      name: "Combat Rally",
+      verb: "makes a Combat Rally",
+      by: "unit",
+      notWhen: [marchFirst, mustBeEngaged],
+      hint: "Rally while engaged: resolve it by hand",
+      limit: { count: 1, per: "round" },
+    },
+    {
+      // Engaged: a Resolve test, then the stands are rearranged by hand.
+      id: "combatReform",
+      name: "Combat Reform",
+      verb: "makes a Combat Reform",
+      by: "unit",
+      notWhen: [marchFirst, mustBeEngaged],
+      hint: "Reform while engaged: a Resolve test first, by hand",
+      limit: { count: 1, per: "round" },
     },
     {
       id: "withdraw",
       name: "Withdraw",
       verb: "withdraws",
       by: "unit",
-      notWhen: [marchFirst],
+      notWhen: [marchFirst, mustBeEngaged],
       hint: "Leave a fight (Light and Medium)",
       if: { not: { is: "self.Class", value: "Heavy" } },
       limit: { count: 1, per: "round" },
@@ -530,9 +623,11 @@ export const conquest: GameSystem = {
   turn: {
     // 10 rounds: two secondary sources agree ("almost always 10"); the rulebook itself isn't in research.
     rounds: 10,
-    // Supremacy: a roll-off each round, the higher goes first (secondary sources; modifiers aren't modelled).
+    // Supremacy: rolled once the command stacks are set, -1 to the side with fewer cards (a card
+    // a regiment on the table), and the lower roll picks the First Player (research/conquest-rules.md).
     initiative: "rollOffEachRound",
     rollOffName: "Supremacy",
+    rollOff: { after: "command", fewerUnits: 1, chooses: "lower" },
     round: [
       // Each player orders their command stack (command.ts).
       { kind: "phase", id: "command", name: "Command" },
@@ -557,6 +652,8 @@ export const conquest: GameSystem = {
               "inspire",
               "rally",
               "reform",
+              "combatRally",
+              "combatReform",
               "withdraw",
             ],
           },

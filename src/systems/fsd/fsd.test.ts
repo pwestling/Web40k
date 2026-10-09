@@ -15,6 +15,7 @@ import { fsdLayout } from "./layout";
 import { fsdBehemothSample, fsdSample } from "./sample";
 import { fsdChecks } from "./checks";
 import { gameView } from "../../core/script";
+import { describe as describeEvent } from "../../ui/eventText";
 
 /** A seeded rng, so every run of the test rolls the same dice. */
 function rng(seed: number) {
@@ -31,8 +32,13 @@ function rng(seed: number) {
 function play(state: GameState, intent: Intent, from: PlayerId, r = rng(1)): GameState {
   const event = resolveIntent(intent, from, r, state);
   if (!event) throw new Error(`Rejected: ${JSON.stringify(intent)}`);
-  return applyEvent({ ...state, seq: state.seq + 1 }, event);
+  const next = applyEvent({ ...state, seq: state.seq + 1 }, event);
+  // These tests have p1 go first: whoever wins the Initiative hands it to them.
+  if (handOver && next.rolledOff?.chooses && next.turn.firstSeat !== 0)
+    return applyEvent({ ...next, seq: next.seq + 1 }, { type: "turn/first", seat: 0 });
+  return next;
 }
+const handOver = true;
 
 /** Two seated players, FSD chosen, the sample table and warbands deployed. */
 function setup(sample = fsdSample): GameState {
@@ -168,7 +174,12 @@ describe("Full Spectrum Dominance in play", () => {
     const activate = unitActions(s, boss.id).find((o) => o.def.id === "activate")!;
     expect(activate.commands?.count).toBe(2);
     expect(activate.commands?.candidates).toContain(squad.id);
-    s = play(s, { type: "action/take", unitId: boss.id, action: "activate", with: [squad.id] }, "p1");
+    const intent: Intent = { type: "action/take", unitId: boss.id, action: "activate", with: [squad.id] };
+    const event = resolveIntent(intent, "p1", rng(1), s)!;
+    const line = describeEvent({ seq: 1, by: "p1", at: 0, event }, s, applyEvent(s, event));
+    // The log names the units it commands (dogfood #54).
+    expect(line).toContain(" with Rifle Squad");
+    s = play(s, intent, "p1");
     expect(s.pools?.p1?.readyDice).toHaveLength(7);
     expect(s.units[squad.id]?.status).toMatchObject({ acting: true, commanded: true });
     s = play(s, { type: "turn/endActivation" }, "p1");

@@ -10,6 +10,7 @@ import { recognize } from "./recognize";
 import { unitGap } from "../../core/manoeuvre";
 import { opposed } from "../../core/teams";
 import { maxWounds, woundsRemaining } from "../../core/attack";
+import { engagedWith } from "./rules";
 
 /** Inches, base to base, from a unit to the nearest enemy unit still standing (Infinity if none). */
 function enemyGap(view: { state: GameState }, unitId: unknown): number {
@@ -57,6 +58,11 @@ export const wh40kModule: GameModule<SystemModule> = {
   functions: {
     enemyGap: (view, unitId) => enemyGap(view, unitId),
     belowHalf: (view, unitId) => belowHalf(view, unitId),
+    // Within engagement range of an enemy unit, read from the table (the data's "engaged" status isn't derived).
+    engaged: (view, unitId) => {
+      const unit = view.state.units[String(unitId)];
+      return !!unit && engagedWith(view.state, unit).length > 0;
+    },
   },
   checks: wh40kChecks,
   // Coherency here counts floors, and a move counts climbing and the phase's allowance.

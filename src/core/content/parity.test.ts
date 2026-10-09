@@ -113,6 +113,9 @@ describe("attack execution parity with the hand-written sequence", () => {
       while (before.stage !== "done") {
         before = legacyRollStage(state, before, oldRng);
         after = rollStage(state, after, newRng);
+        // With nothing left to roll for (no hits, say), the runner goes straight on to the end.
+        while (after.stage === "done" && before.stage !== "done")
+          before = legacyRollStage(state, before, oldRng);
         expect(visible(after), `attack ${i} ${before.stage} ${JSON.stringify(spec)}`).toEqual(before);
       }
       expect(after.stage).toBe("done");

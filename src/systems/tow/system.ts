@@ -174,6 +174,7 @@ export const oldWorld: GameSystem = {
   name: "Rank and flank (by hand)",
   version: "0.1.0",
   units: "inch",
+  longRange: "half",
   defaultTable: { width: 72, depth: 48 },
   settings: { los: "true", modelsBlock: true, visionArc: 90 },
   dice: [{ id: "d6", sides: 6 }],
@@ -268,7 +269,23 @@ export const oldWorld: GameSystem = {
   ],
   rules: [],
   procedures: [shooting],
-  actions: [{ id: "shoot", name: "Shoot", by: "unit", side: "active", procedure: "shoot" }],
+  actions: [
+    {
+      id: "shoot",
+      name: "Shoot",
+      by: "unit",
+      side: "active",
+      procedure: "shoot",
+      notWhen: [
+        { if: { hasFlag: "self", flag: "fleeing" }, why: "Fleeing units can't shoot" },
+        { if: { call: "inCombat", args: [ref("self.id")] }, why: "In combat: it can't shoot" },
+        {
+          if: { call: "marchedNoShot", args: [ref("self.id")] },
+          why: "It marched this turn: it can't shoot",
+        },
+      ],
+    },
+  ],
   coreEffects: shootingModifiers,
   turn: {
     rounds: 6,

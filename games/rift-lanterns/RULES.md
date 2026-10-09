@@ -1,4 +1,4 @@
-<!-- Made by `pnpm rulebook` from the rift-lanterns module (version 1.3.0). Don't edit by hand. -->
+<!-- Made by `pnpm rulebook` from the rift-lanterns module (version 1.3.1). Don't edit by hand. -->
 
 # Rift Lanterns: the rules
 

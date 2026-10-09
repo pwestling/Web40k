@@ -229,22 +229,56 @@ describe("Conquest", () => {
     expect(plan("resolve").target).toBe(1);
   });
 
-  it("rolls off for Supremacy each round; the higher goes first (#40)", () => {
+  it("rolls off for Supremacy once the stacks are set; the lower roll picks, -1 for fewer cards (#55)", () => {
     let s = setup();
     const firsts = new Set<number>();
     const dice = rng(5);
     for (let round = 0; round < 6; round++) {
       do s = play(s, { type: "turn/next" }, "p1", dice);
       while (currentSlot(s)?.id !== "command");
+      // Not at the start of the round: the stacks aren't set yet.
+      expect(s.rolledOff ?? null).toBeNull();
+      s = play(s, { type: "turn/next" }, "p1", dice);
       const r = s.rolledOff!;
       expect(r).toBeTruthy();
+      expect(r.chooses).toBe(true);
       const last = r.rolls.map((rolls) => rolls.at(-1)!);
-      expect(last[r.seat]).toBe(Math.max(...last));
+      expect(last[r.seat]).toBe(Math.min(...last));
       expect(new Set(last).size).toBe(2);
+      // The chooser goes first unless they hand it over.
       expect(s.turn.firstSeat).toBe(r.seat);
+      expect(s.turn.activeSeat).toBe(r.seat);
       firsts.add(r.seat);
     }
     expect(firsts.size).toBe(2);
+    // The chooser hands it over.
+    const chooser = s.rolledOff!.seat;
+    s = play(s, { type: "turn/first", seat: 1 - chooser }, "p1", dice);
+    expect(s.turn.activeSeat).toBe(1 - chooser);
+    // One side a regiment down: its roll takes -1.
+    let t = setup();
+    do t = play(t, { type: "turn/next" }, "p1", dice);
+    while (currentSlot(t)?.id !== "command");
+    const gone = Object.values(t.units).find((u) => t.players[u.owner]?.seat === 1 && !u.status?.reserves);
+    if (gone)
+      for (const id of gone.modelIds)
+        t = applyEvent(t, { type: "model/wounds", id, woundsLost: 9, destroyed: true });
+    t = play(t, { type: "turn/next" }, "p1", dice);
+    const counts = [0, 1].map(
+      (seat) =>
+        Object.values(t.units).filter(
+          (u) =>
+            t.players[u.owner]?.seat === seat &&
+            !u.status?.reserves &&
+            u.modelIds.some((id) => !t.models[id]?.destroyed),
+        ).length,
+    );
+    expect(counts[0]).not.toBe(counts[1]);
+    {
+      const fewer = counts[0]! < counts[1]! ? 0 : 1;
+      expect(t.rolledOff!.modifiers?.[fewer]).toBe(-1);
+      expect(t.rolledOff!.modifiers?.[1 - fewer]).toBe(0);
+    }
   });
 
   it("breaks a regiment that lost half its stands this round, and shatters it if it loses half again", () => {
@@ -310,7 +344,8 @@ describe("Conquest", () => {
     const colossus = unitNamed(s, "Ossuary Colossus");
     const spears = unitNamed(s, "Shieldwall Spears");
     s = toCentre(s, spears.id, 0.25);
-    s = toCentre(s, colossus.id, 0.25);
+    // A few inches off: a regiment already engaged can't charge.
+    s = toCentre(s, colossus.id, 3);
     s = play(s, { type: "turn/next" }, "p1");
     s = play(s, { type: "turn/next" }, "p1");
     if (s.turn.activeSeat !== 1) s = play(s, { type: "turn/pass" }, "p1");
@@ -319,6 +354,8 @@ describe("Conquest", () => {
       false,
     );
     s = play(s, { type: "action/take", unitId: colossus.id, action: "charge" }, "p2");
+    // The charge move, made on the table.
+    s = toCentre(s, colossus.id, 0.25);
     expect(s.units[colossus.id]?.status).toMatchObject({ inspired: true, actionsTaken: 1 });
     s = play(s, { type: "action/take", unitId: colossus.id, action: "impact", targetId: spears.id }, "p2");
     const r = rng(5);

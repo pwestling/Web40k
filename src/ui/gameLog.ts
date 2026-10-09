@@ -107,7 +107,12 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       if (state.rolledOff) {
         const r = state.rolledOff;
         const p = {
-          rolls: r.rolls.map((rolls, seat) => `${sideName(state, seat)} ${rolls.join(", ")}`).join(" · "),
+          rolls: r.rolls
+            .map(
+              (rolls, seat) =>
+                `${sideName(state, seat)} ${rolls.join(", ")}${r.modifiers?.[seat] ? ` (${r.modifiers[seat]! > 0 ? "+" : ""}${r.modifiers[seat]})` : ""}`,
+            )
+            .join(" · "),
           side: sideName(state, r.seat),
           rule: gameText(systemOf(state).turn.rollOffName ?? ""),
         };
@@ -116,9 +121,19 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
           key: `${key}/r`,
           seq: logged.seq,
           // Named for the rule where the game has one (Conquest's Supremacy, UX 304).
-          text: p.rule
-            ? t("{rule} roll-off: {rolls}. {side} goes first.", p)
-            : t("Roll-off: {rolls}. {side} goes first.", p),
+          text: r.chooses
+            ? systemOf(state).turn.rollOff?.chooses === "lower"
+              ? t(
+                  "{rule} roll-off: {rolls}. {side} rolled lower and picks who goes first: they do, unless they hand it over.",
+                  p,
+                )
+              : t(
+                  "{rule} roll-off: {rolls}. {side} won and picks who goes first: they do, unless they hand it over.",
+                  p,
+                )
+            : p.rule
+              ? t("{rule} roll-off: {rolls}. {side} goes first.", p)
+              : t("Roll-off: {rolls}. {side} goes first.", p),
           undone: false,
         });
       }

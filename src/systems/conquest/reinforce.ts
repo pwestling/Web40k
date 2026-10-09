@@ -5,7 +5,7 @@ import type { CodeProcedure } from "../../sdk";
  * Reinforcements: every regiment starts in reserve. Each round, before the
  * command stacks, each player brings in one regiment of every class that may
  * arrive that round, and rolls a die for each of the others: one that rolls
- * the round's number or less arrives too. An arriving regiment is set up at
+ * the class's number for that round or less (ARRIVAL) arrives too. An arriving regiment is set up at
  * its owner's table edge by hand; its first action is a March and it can't
  * Charge that round (the "reinforced" flag, system.ts).
  */

@@ -168,7 +168,7 @@ export function suggestAttack(
   if (count < all.length) notes.push(`${count} of ${all.length} models in range (${range}")`);
   for (const [step, names] of Object.entries(preview.fired))
     for (const name of names)
-      if (name === "Cover") notes.push("Target in cover: −1 to hit");
+      if (name === "Cover") notes.push("Target in cover: Ballistic Skill 1 worse");
       else if (name === "Higher ground")
         notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
       else {

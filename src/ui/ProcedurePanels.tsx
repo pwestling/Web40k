@@ -9,11 +9,9 @@ import {
   previewRun,
   procedureEnv,
   procedureRoles,
-  readCharacteristics,
   seatName,
   systemOf,
   unitActions,
-  type GameSystem,
   type StepPlan,
   type StepRecord,
 } from "../core/content";
@@ -25,26 +23,12 @@ import { useGame } from "./hooks";
 import { computerPlays } from "../teach/store";
 import { t, gameText } from "../i18n";
 import { lengthText, unitSymbol } from "./distance";
+import { rangeNote } from "./rangeNote";
 
 /**
  * A rules procedure on screen: setting one up (who, with what, at whom), its
  * steps as they resolve, and a reaction the other side is offered.
  */
-
-/** Why a target can't be hit, or a range note, from the weapon's range and the step plans. */
-function rangeNote(
-  system: GameSystem,
-  weapon: { chars: Record<string, string> } | undefined,
-  distance: number,
-  impossible: boolean,
-): string | null {
-  const v = weapon ? readCharacteristics(system, "weapon", weapon.chars) : {};
-  const range = typeof v.range === "number" ? v.range : null;
-  const min = typeof v.minRange === "number" ? v.minRange : 0;
-  if (min && distance < min) return t("inside minimum range");
-  if (range && distance > range) return impossible ? t("out of range") : t("long range");
-  return impossible ? t("can't hit") : null;
-}
 
 /**
  * Whether a preview has a dice step that can't succeed and that hurts the
@@ -430,11 +414,16 @@ function RecordRow({ record: r, why }: { record: StepRecord; why?: string }) {
           </span>
         ))}
       </span>
-      {r.dice && (
+      {r.plan.kind === "test" && !r.in && <span className="result muted">{t("nothing to roll")}</span>}
+      {r.dice && r.in > 0 && (
         <span className="result">
           {r.plan.kind === "test" && r.plan.passOn === "failures"
             ? t("{successes} of {count} saved", { successes: r.successes ?? 0, count: r.in })
             : t("{successes} of {count} succeed", { successes: r.successes ?? 0, count: r.in })}
+          {/* What each die needed, kept once rolled (dogfood #54: the Hit row hid it). */}
+          {r.plan.kind === "test" && r.plan.target !== null && !r.plan.skip ? (
+            <span className="muted"> · {describePlan(r.plan)}</span>
+          ) : null}
           {why ? <span className="warn">: {why}</span> : null}
         </span>
       )}

@@ -89,6 +89,8 @@ describe("reconnect and host migration", () => {
     as1(row(tank.id, 0, 4));
     as2(row(gang.id, -1.5, -2));
     as1({ type: "turn/next" }); // rolls the dice, to pre-assigning
+    // Whoever wins the Initiative hands it to the tank's side.
+    if (p1.session.current.turn.activeSeat !== 0) as2({ type: "turn/first", seat: 0 });
     as1({ type: "turn/next" });
     as1({ type: "action/take", unitId: tank.id, action: "activate" });
     as1({ type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: gang.id });

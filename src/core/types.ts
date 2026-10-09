@@ -490,7 +490,12 @@ export interface GameState {
   /** Automated abilities that went off as the turn marker last moved (for the log). */
   triggered?: Triggered[] | null;
   /** The roll-off for who goes first, when the turn marker last started a round with one (Conquest's Supremacy). */
-  rolledOff?: { rolls: number[][]; seat: number } | null;
+  /**
+   * This round's roll-off for who goes first: each side's rolls (ties rolled
+   * again), after any modifier, and who won it, or, where the lower roll
+   * chooses, who chose (`chooses`).
+   */
+  rolledOff?: { rolls: number[][]; seat: number; modifiers?: number[]; chooses?: boolean } | null;
   /** Player actions taken (stratagems), for their once-per-phase limits. */
   used?: Record<PlayerId, PlayerActionUse[]>;
   /** Each player's army-wide rules from their roster (#49): detachment, its rules and stratagems. */
@@ -548,6 +553,13 @@ export interface GameSettings {
   cover: "hit" | "save";
   /** Whether models from other units block line of sight. */
   modelsBlock: boolean;
+  /**
+   * Which models block, where not all (FSD): only the enemy's, and a target
+   * with one of the `tall` keywords only behind a model with one too
+   * (vehicles and mechs hide behind vehicles, mechs and behemoths; infantry
+   * behind anything).
+   */
+  blockers?: { enemiesOnly?: boolean; tall?: string[] };
   /**
    * How line of sight works. "true" traces the model and terrain shapes.
    * "heights" uses stand-in heights instead, as games such as Warhammer: The Old

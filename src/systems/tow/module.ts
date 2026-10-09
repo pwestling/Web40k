@@ -1,6 +1,7 @@
 import { TOW_MISSIONS } from "./missions";
 import type { GameModule } from "../../sdk";
-import { heavyLossesProcedure, towActions } from "./combat";
+import { heavyLossesProcedure, inCombatFn, marchedNoShot, towActions } from "./combat";
+import { towReminders } from "./reminders";
 import { magicActions } from "./magic";
 import { characterActions } from "./characters";
 import { itemActions } from "./items";
@@ -23,8 +24,8 @@ export const towModule: GameModule<SystemModule> = {
   system: oldWorld,
   actions: [...towActions, ...magicActions, ...characterActions, ...itemActions, ...terrainActions],
   procedures: { heavyLosses: heavyLossesProcedure },
-  functions: { shooters, shootsOnHill, shootsVolley, shootsRanked },
-  checks: terrainWarnings,
+  functions: { shooters, shootsOnHill, shootsVolley, shootsRanked, inCombat: inCombatFn, marchedNoShot },
+  checks: (view) => [...terrainWarnings(view), ...towReminders(view)],
   hooks: towHooks,
   // Sharp's whole-turn plan judged against the enemy's guns: their whole turn played greedily
   // won fewer games here (58% against 69% of 64 with guns only, 2026-10-08).

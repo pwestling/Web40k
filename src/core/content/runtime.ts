@@ -395,7 +395,13 @@ function makeUnitView(state: GameState, system: GameSystem, unit: Unit, opts: Vi
     startingStrength: unit.modelIds.length,
   };
   Object.defineProperty(view, "source", { value: unit, enumerable: false });
-  return applyContinuous(system, view, opts.rules);
+  // Statuses already changed the models' characteristics the unit reads from: not twice (#55).
+  return applyContinuous(system, view, opts.rules, modelChars(system));
+}
+
+/** The characteristics a unit view copies from its models. */
+function modelChars(system: GameSystem): Set<string> {
+  return new Set(system.characteristics.filter((c) => c.of === "model").map((c) => c.id));
 }
 
 export function weaponView(
@@ -439,8 +445,14 @@ function statusesOf(system: GameSystem, flags: string[]): string[] {
 }
 
 /** Fold "always" effects of the view's rules and statuses into it. */
-function applyContinuous<V extends View>(system: GameSystem, view: V, extra?: RuleDef[]): V {
-  const sources: { effects: Effect[]; param: Record<string, unknown> }[] = lookupRules(
+function applyContinuous<V extends View>(
+  system: GameSystem,
+  view: V,
+  extra?: RuleDef[],
+  /** Characteristics statuses have already changed (on the models a unit view reads them from). */
+  done?: Set<string>,
+): V {
+  const sources: { effects: Effect[]; param: Record<string, unknown>; status?: boolean }[] = lookupRules(
     system,
     view.rules,
     extra,
@@ -448,15 +460,19 @@ function applyContinuous<V extends View>(system: GameSystem, view: V, extra?: Ru
   if ("statuses" in view)
     for (const s of system.statuses ?? [])
       if ((view.statuses as string[]).includes(s.id) && s.effects)
-        sources.push({ effects: s.effects, param: {} });
+        sources.push({ effects: s.effects, param: {}, status: true });
   const source = sourceOf(view);
   let out = view;
-  for (const { effects, param } of sources) {
+  for (const { effects, param, status } of sources) {
     for (const effect of effects) {
       if (effect.when.event !== "always") continue;
       const ctx: EvalContext = { scope: { self: out, param, weapon: out } };
       if (effect.if !== undefined && !safeBool(effect.if, ctx)) continue;
-      for (const action of effect.do) out = applyToView(out, action, ctx);
+      for (const action of effect.do) {
+        if (status && done && action.do === "modifyCharacteristic" && done.has(action.characteristic))
+          continue;
+        out = applyToView(out, action, ctx);
+      }
     }
   }
   if (out !== view && source) Object.defineProperty(out, "source", { value: source, enumerable: false });
@@ -850,7 +866,9 @@ function coverFrom(
     if (!sights.some((x) => x.visible)) continue;
     seen++;
     if (
-      state.terrain.some((p) => givesCover(p) && inFootprint(p, t.position, r)) ||
+      state.terrain.some(
+        (p) => givesCover(p) && !categories.get(p.category)?.coverWhenHiding && inFootprint(p, t.position, r),
+      ) ||
       sights.some(
         (x) => x.visible && x.obscuredBy.some((p) => footprintVisibility(p) === "obscuring" || givesCover(p)),
       )

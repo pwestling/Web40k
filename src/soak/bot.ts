@@ -353,6 +353,9 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
 
   // A tidy bot's movement phase: each unit (the acting one, mid-activation) heads for the enemy once.
   const slotId = currentSlot(state)?.id ?? "";
+  // A character beside a regiment it can join (The Old World) gets the chance first, now and then:
+  // the moment is rare, and other moves would mostly crowd it out.
+  if (/move/i.test(slotId) && ctx.rng() < 0.3) yield* codeMoves(state, ctx, units, /join/i);
   if (ctx.tidy && /move/i.test(slotId)) {
     const phase = `${round}:${state.turn.activeSeat}:${state.turn.phase}`;
     if (ctx.moved?.phase !== phase) ctx.moved = { phase, units: new Set() };

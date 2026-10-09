@@ -104,6 +104,25 @@ describe("40k suggestions", () => {
     expect(s.spec.save).toBe(5);
   });
 
+  it("adds Melta when every bearer is within half range, else reminds for the ones that are (#55)", () => {
+    let st = table();
+    // A second melta 8" away: in range, not within half.
+    st = {
+      ...st,
+      models: {
+        ...st.models,
+        s2: { ...st.models.s2!, position: { x: 0, y: -2 }, weapons: ["rifle", "melta"] },
+      },
+    };
+    const split = suggestAttack(st, "a", "melta", "t")!;
+    expect(split.spec.damage).toBe("D6");
+    const byHand = (n: string[]) => n.find((x) => x.startsWith("Check by hand")) ?? "";
+    expect(byHand(split.notes)).toContain("Melta");
+    const close = suggestAttack(table(), "a", "melta", "t")!;
+    expect(close.spec.damage).toBe("D6+2");
+    expect(byHand(close.notes)).not.toContain("Melta");
+  });
+
   it("flags models out of coherency", () => {
     const st = table();
     expect([...incoherentModels([st.models.s1!, st.models.s2!])].sort()).toEqual(["s1", "s2"]);

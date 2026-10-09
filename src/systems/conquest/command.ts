@@ -16,8 +16,6 @@ const pad = (n: number) => String(n).padStart(3, "0");
 const stackPrefix = (round: number) => `stack:${pad(round)}:`;
 export const cardKey = (round: number, i: number) => `${stackPrefix(round)}${pad(i)}`;
 
-/** On the table: standing and not waiting in reserve (reinforce.ts). */
-
 /** On the table, not waiting in reserve. */
 const alive = (state: GameState, u: Unit | undefined) => !!u && !u.status?.reserves && isAlive(state, u);
 
@@ -65,6 +63,25 @@ const nextCardFn: PureFn = (view: GameView, unitId: unknown) => {
   return !next || next.unitId === unit.id;
 };
 
-export const conquestFunctions: Record<string, PureFn> = { nextCard: nextCardFn };
+/** How close an enemy must be for a regiment to count as engaged (the Clash action's reach). */
+const ENGAGED_RANGE = 1;
+
+/**
+ * Whether the regiment is engaged: an enemy regiment on the table within
+ * ENGAGED_RANGE. Engaged regiments take the combat actions (Clash, Inspire,
+ * Combat Rally, Combat Reform, Withdraw); the others only when not engaged.
+ */
+const engagedFn: PureFn = (view: GameView, unitId: unknown) => {
+  const unit = view.state.units[String(unitId)];
+  if (!alive(view.state, unit)) return false;
+  return Object.values(view.state.units).some(
+    (u) =>
+      u.owner !== unit!.owner &&
+      alive(view.state, u) &&
+      view.distance(unit!.id, u.id) <= ENGAGED_RANGE + 1e-4,
+  );
+};
+
+export const conquestFunctions: Record<string, PureFn> = { nextCard: nextCardFn, engaged: engagedFn };
 
 export const conquestProcedures: Record<string, CodeProcedure> = {};

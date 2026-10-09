@@ -316,7 +316,7 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     case "settings/set": {
       const st = event.settings;
       const parts = [
-        st.cover && (st.cover === "hit" ? t("cover −1 to hit") : t("cover +1 to save")),
+        st.cover && (st.cover === "hit" ? t("cover: Ballistic Skill 1 worse") : t("cover +1 to save")),
         st.los &&
           (st.los === "heights"
             ? t("line of sight: stand-in heights")
@@ -492,18 +492,21 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
       const weapon = event.weapon ? game.units[event.unitId]?.sheet?.weapons[event.weapon]?.name : undefined;
       const def = systemOf(game).actions.find((a) => a.id === event.action);
       const action = def?.name ?? event.action;
-      // Activation games read as sentences: "Spears activates (2 actions)", "Spears marches" (UX 112).
-      if (def?.activates !== undefined) {
-        const n = Number(game.units[event.unitId]?.status?.actionBudget ?? 0);
-        const unit = unitName(event.unitId);
-        return n
-          ? tn(n, "{unit} activates ({n} action)", "{unit} activates ({n} actions)", { unit })
-          : t("{unit} activates", { unit });
-      }
-      // The verb or action is the game's own ("Spears marches"), so the line keeps its order.
       const also = event.with?.length
         ? t(" with {units}", { units: event.with.map(unitName).join(", ") })
         : "";
+      // Activation games read as sentences: "Spears activates (2 actions)", "Spears marches" (UX 112).
+      // Units it commands are named too: "Lancer activates (2 actions) with Raiders" (dogfood #54).
+      if (def?.activates !== undefined) {
+        const n = Number(game.units[event.unitId]?.status?.actionBudget ?? 0);
+        const unit = unitName(event.unitId);
+        return (
+          (n
+            ? tn(n, "{unit} activates ({n} action)", "{unit} activates ({n} actions)", { unit })
+            : t("{unit} activates", { unit })) + also
+        );
+      }
+      // The verb or action is the game's own ("Spears marches"), so the line keeps its order.
       const target = event.targetId ? t(" at {unit}", { unit: unitName(event.targetId) }) : "";
       const hold = event.hold ? t(", waiting on a reaction") : "";
       if (def?.verb)

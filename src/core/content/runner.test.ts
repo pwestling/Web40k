@@ -229,6 +229,19 @@ describe("procedure runner: rank and flank", () => {
     expect(after.models.t0?.destroyed).toBe(true);
   });
 
+  it("goes straight to the end when nothing hits: no wound, save or damage rolls (dogfood #54)", () => {
+    const s = table(
+      { sheet: { weapons: weapon, abilities: [], keywords: [] } },
+      { BS: "5" },
+      { T: "3", Sv: "5+" },
+    );
+    const env = (rng: () => number): RunEnv => ({ system: rankAndFlank, state: s, rng });
+    let run = startRun(env(dice()), "shoot", roles);
+    run = advance(env(dice(1, 1)), run); // both miss
+    expect(run.done).toBe(true);
+    expect(run.outcomes).toEqual([]);
+  });
+
   it("waits for the defender's reaction mid-procedure and acts on the answer", () => {
     const s = table({ sheet: { weapons: weapon, abilities: [], keywords: [] } }, { BS: "3" }, { T: "3" });
     const env: RunEnv = { system: rankAndFlank, state: s, rng: dice(3, 4) };
@@ -332,6 +345,33 @@ describe("procedure runner: other dice mechanics", () => {
       { value: 6, dice: [4, 6], success: false, critical: false },
     ]);
     expect(run.tokens).toHaveLength(1);
+  });
+
+  it("applies a status's relative change once, not again on the unit's view of its models (#55)", () => {
+    const slowed: GameSystem = {
+      ...fortyK,
+      statuses: [
+        ...(fortyK.statuses ?? []),
+        {
+          id: "slowed",
+          name: "Slowed",
+          on: "unit",
+          effects: [
+            { when: { event: "always" }, do: [{ do: "modifyCharacteristic", characteristic: "M", by: -2 }] },
+          ],
+        },
+      ],
+    };
+    let s = createInitialState();
+    s = applyEvent(s, {
+      type: "unit/add",
+      unit: { id: "u", owner: "p1", name: "U", modelIds: [], formation: { kind: "skirmish" } },
+      models: [fig("m", "p1", 0, 0, { M: '6"', OC: "2" })],
+    });
+    s = applyEvent(s, { type: "unit/status", id: "u", key: "slowed", value: true });
+    const view = unitView(s, slowed, s.units.u!, { rules: [] });
+    expect(parseFloat(String(view.models[0]!.M))).toBe(4);
+    expect(parseFloat(String(view.M))).toBe(4);
   });
 
   it("runs 40k's battle-shock test from data and applies the status on a failure", () => {

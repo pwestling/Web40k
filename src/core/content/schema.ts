@@ -363,8 +363,12 @@ export type StepKind =
       groupBy?: Ref[];
       /** Expression giving sort priority; lower goes first. */
       order?: Expr;
+      /** Only models for which this holds can be hit; hits beyond them are lost (FSD: bases the attacker sees). */
+      only?: Expr;
       /** Formations: remove casualties from the rear rank, front stays full. */
       formation?: "rearRankFirst";
+      /** With rearRankFirst: the two ends of a rank lose models in turn (Conquest). */
+      alternateEnds?: boolean;
     }
   /** Turn input successes into lost wounds. */
   /** `minAmount`: no attack does less than this after modifiers (40k: 1). */
@@ -415,6 +419,21 @@ export interface TurnStructure {
   initiative?: "fixed" | "rollOff" | "rollOffEachRound" | { expr: Expr };
   /** The rule's name for that roll-off, for the log ("Supremacy"). */
   rollOffName?: string;
+  /**
+   * How the round's roll-off goes, where it isn't a plain higher-goes-first
+   * at the start of the round: rolled as play leaves phase `after`
+   * (Conquest's Supremacy, once the stacks are set); `fewerUnits` off the
+   * roll of the side with fewer units on the table; plus the `best` value of
+   * a characteristic among a side's units on the table (FSD's Command,
+   * pinned units aside); and `chooses`: that roll (the lower or the higher)
+   * picks who goes first, going first unless they hand it over (turn/first).
+   */
+  rollOff?: {
+    after?: Id;
+    fewerUnits?: number;
+    best?: { characteristic: Id; unless?: Id };
+    chooses?: "lower" | "higher";
+  };
   round: Segment[];
 }
 
@@ -654,6 +673,8 @@ export interface TerrainCategoryDef {
   cover?: boolean;
   /** Only these unit keywords get its cover, e.g. ["INFANTRY"]. */
   coverFor?: Keyword[];
+  /** Cover only when it hides part of the target, not just for touching it (FSD's buildings). */
+  coverWhenHiding?: boolean;
   /** How it blocks sight in "footprint" line of sight. */
   visibility?: "open" | "obscuring" | "blocking";
   /**
@@ -673,6 +694,13 @@ export interface GameSystem {
    * arriving at least `distance` (in the system's unit) from enemies.
    */
   reserves?: { distance: number };
+  /**
+   * What a weapon's range means, for the range notes on screen: "half" (The
+   * Old World) is long range past half of it and out of range past it;
+   * "double" (FSD) is long range past it, up to twice it. Unset, it is simply
+   * the furthest the weapon reaches.
+   */
+  longRange?: "half" | "double";
   /** Distance unit. FSD uses a configurable "DU" worth some number of inches. */
   units: "inch" | "cm" | { name: string; inches: number };
   defaultTable?: Table;

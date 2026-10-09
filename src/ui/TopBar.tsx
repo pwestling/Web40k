@@ -279,6 +279,18 @@ export function TopBar() {
             </>
           )}
         </div>
+        {/* Supremacy (#55): the lower roll picks who goes first, and may hand it over before anyone acts. */}
+        {myTurn &&
+          game.rolledOff?.chooses &&
+          game.rolledOff.seat === game.turn.activeSeat &&
+          !Object.values(game.units).some((u) => u.status?.activated) && (
+            <button
+              title={t("The roll-off lets you pick who goes first this round")}
+              onClick={() => dispatch({ type: "turn/first", seat: (game.turn.activeSeat + 1) % 2 })}
+            >
+              {t("Let {side} go first", { side: sideName(game, (game.turn.activeSeat + 1) % 2) })}
+            </button>
+          )}
         {myTurn &&
           view.alternating &&
           !deploying &&

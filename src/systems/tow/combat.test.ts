@@ -448,6 +448,8 @@ describe("Panic from shooting (#40)", () => {
       const slingers = unitNamed(t.s, "Reaver Slingers").id;
       block(t, bows, -20, 5, 0);
       block(t, slingers, -12, 5, Math.PI);
+      // The sample deploys the Wolf Runners where the bows now stand: out of the way (a unit in combat can't shoot).
+      block(t, unitNamed(t.s, "Wolf Runners").id, 20, 5, Math.PI);
       toPhase(t, "shooting");
       t.play(
         { type: "action/take", unitId: bows, action: "shoot", weapon: "missile", targetId: slingers },

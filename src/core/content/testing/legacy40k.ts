@@ -259,15 +259,17 @@ export function legacySuggestAttack(
   const cover =
     weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;
   let save = sv - ap;
+  let worseSkill = 0;
   if (cover && state.settings.cover === "save") {
     // Cover does not improve a 3+ or better save against AP 0.
     if (!(ap === 0 && sv <= 3)) {
       save -= 1;
       notes.push("Target in cover: +1 to save");
     }
-  } else if (cover) {
-    hitMod -= 1;
-    notes.push("Target in cover: −1 to hit");
+  } else if (cover && !torrent) {
+    // 11th edition: the attacker's Ballistic Skill is 1 worse.
+    worseSkill = 1;
+    notes.push("Target in cover: Ballistic Skill 1 worse");
   }
   if (weapon.kind === "ranged" && sight.higherGround) {
     hitMod += 1;
@@ -305,7 +307,7 @@ export function legacySuggestAttack(
     weaponName: weapon.name,
     kind: weapon.kind,
     attacks,
-    hit: torrent ? null : (skill ?? 4),
+    hit: torrent ? null : (skill ?? 4) + worseSkill,
     hitMod,
     critHit: 6,
     rerollHits: "none",

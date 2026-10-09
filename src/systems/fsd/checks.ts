@@ -26,6 +26,8 @@ import { aliveModels, unitMoved } from "../wh40k/rules";
  *    more move actions the rules allow either, so only single moves are
  *    checked.
  *  - A unit deployed from reserve arrives at least 2 DU from every enemy.
+ *  - A multi-base unit out of coherence while not moving (it lost a base): it
+ *    is pinned, and must move back within 1 DU before any special action.
  */
 export function fsdChecks(view: GameView): Warning[] {
   const state = view.state;
@@ -50,6 +52,14 @@ export function fsdChecks(view: GameView): Warning[] {
           message: "Deployed within 2 DU of an enemy: units from reserve arrive at least 2 DU away",
         });
     }
+    // Out of coherence while not moving (a base was lost): pinned, and must move back in.
+    if (!unit.status?.acting && alive.length > 1 && outOfCoherence(alive, aoc))
+      out.push({
+        id: "coherence",
+        unitId: unit.id,
+        message:
+          "Out of coherence: a unit split by losing a base is Pinned, and must move back within 1 DU before any special action",
+      });
     const moved = unitMoved(alive);
     if (!unit.status?.activated) {
       if (moved > 0.05)
@@ -76,6 +86,15 @@ export function fsdChecks(view: GameView): Warning[] {
     }
   }
   return out;
+}
+
+/** Some base has no other base of the unit within 1 DU (centre to centre). */
+function outOfCoherence(alive: Model[], du: number): boolean {
+  return alive.some((m) =>
+    alive.every(
+      (o) => o === m || Math.hypot(o.position.x - m.position.x, o.position.y - m.position.y) > du + 1e-6,
+    ),
+  );
 }
 
 function fliesOrJumps(unit: Unit): boolean {

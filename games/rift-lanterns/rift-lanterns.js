@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.3.0",
+  version: "1.3.1",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,7 +34,7 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.3.0",
+  version: "1.3.1",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
@@ -74,6 +74,14 @@ const system = {
         b: { op: "+", args: [{ ref: "event.allowed" }, 0.05] },
       },
       message: "Moved further than its Move this round.",
+    },
+    {
+      // Only where it ends is seen here, not the path: a move through a wreck is the players' to spot.
+      id: "wreck",
+      name: "Wreck",
+      when: { event: "move.end" },
+      require: { not: { query: { kind: "inArea", subject: "self", area: "terrain.wreck" } } },
+      message: "Ended a move inside a wreck: wrecks can't be walked through.",
     },
   ],
   turn: {
@@ -308,36 +316,106 @@ const reach = (state, me) =>
   );
 
 /**
- * Enemy units this one can shoot: seen, in range of a shooter, and (`veil`) not Veiled beyond 12".
+ * Enemy units this one can shoot: one shooter both sees it and has it within
+ * its own Range (and, `veil`, within 12" of a Veiled target).
  * At a real table nothing here is measured: every enemy is offered and the players say (`told`).
  */
 function shootable(view, unitId, veil = true) {
   const state = view.state;
   const me = state.units[unitId];
   if (view.atTable) return reach(state, me) ? enemies(state, me) : [];
-  const range = Math.max(
-    0,
-    ...alive(state, me)
-      .filter((m) => stat(m, "Shoot") > 0)
-      .map((m) => stat(m, "Range")),
-  );
-  if (!range) return [];
-  return Object.values(state.units).filter((u) => {
-    if (!opponents(state, me.owner, u.owner) || !alive(state, u).length) return false;
-    const d = view.distance(unitId, u.id);
-    if (d > range || (veil && has(u, "GLOAM") && d > 12)) return false;
-    return view.visible(unitId, u.id);
+  const shooters = alive(state, me).filter((m) => stat(m, "Shoot") > 0);
+  if (!shooters.length) return [];
+  return enemies(state, me).filter((u) => {
+    const limit = veil && has(u, "GLOAM") ? 12 : Infinity;
+    return shooters.some((m) => {
+      const d = view.distance(m.id, u.id);
+      return d <= Math.min(stat(m, "Range"), limit) && view.visible(m.id, u.id);
+    });
   });
 }
 
 /**
+ * Why this unit can't take an action now, or null: one unit activates at a
+ * time, on its side's go, and only once a round (moving counts as its go).
+ */
+function notItsGo(view, unitId) {
+  const state = view.state;
+  const me = state.units[unitId];
+  if (!me) return "No such unit";
+  if (acted(view, unitId)) return "Already acted this round";
+  if (seatOf(state, me.owner) !== state.turn.activeSeat) return "Not your go";
+  const other = Object.values(state.units).find((u) => u.id !== unitId && u.status?.acting);
+  if (other) return `${other.name} are activating: end their go first`;
+  if (me.status?.activated && !me.status?.acting) return "Already activated this round";
+  return null;
+}
+
+/** A model's base radius in inches (a round base, or the longer side of another). */
+const baseRadius = (m) => {
+  const b = m.base ?? {};
+  const mm = b.shape === "round" ? b.diameterMm : Math.max(b.widthMm ?? 0, b.depthMm ?? 0);
+  return (mm || 0) / 25.4 / 2;
+};
+
+/** Whether the line from `a` to `b` crosses a terrain piece's footprint (`margin` widens it). */
+function crosses(piece, a, b, margin = 0) {
+  const c = Math.cos(piece.facing ?? 0);
+  const s = Math.sin(piece.facing ?? 0);
+  const local = (p) => {
+    const dx = p.x - piece.position.x;
+    const dy = p.y - piece.position.y;
+    return { x: dx * c - dy * s, y: dx * s + dy * c };
+  };
+  const p = local(a);
+  const q = local(b);
+  const hw = piece.width / 2 + margin;
+  const hd = piece.depth / 2 + margin;
+  // Clip the segment to the rectangle (Liang-Barsky): it crosses if anything is left.
+  let t0 = 0;
+  let t1 = 1;
+  for (const [d, from, lo, hi] of [
+    [q.x - p.x, p.x, -hw, hw],
+    [q.y - p.y, p.y, -hd, hd],
+  ]) {
+    if (Math.abs(d) < 1e-9) {
+      if (from < lo || from > hi) return false;
+      continue;
+    }
+    let ta = (lo - from) / d;
+    let tb = (hi - from) / d;
+    if (ta > tb) [ta, tb] = [tb, ta];
+    t0 = Math.max(t0, ta);
+    t1 = Math.min(t1, tb);
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+/**
  * In cover: most of the target's models the shooters can see are in cover
- * terrain or seen through it. One model in a ruin doesn't hide the rest.
+ * terrain or seen past it. One model in a ruin doesn't hide the rest. A
+ * thicket between a shooter and a model it sees gives cover whatever the
+ * table's line of sight (true line of sight sees through its foliage).
  */
 function inCover(view, unitId, target) {
-  const seen = alive(view.state, target).filter((m) => view.visible(unitId, m.id));
-  const covered = seen.filter((m) => view.inCover(unitId, m.id)).length;
-  return covered * 2 > seen.length;
+  const state = view.state;
+  const shooters = alive(state, state.units[unitId]).filter((m) => stat(m, "Shoot") > 0);
+  const thickets = (state.terrain ?? []).filter((p) => p.category === "thicket");
+  let seen = 0;
+  let covered = 0;
+  for (const m of alive(state, target)) {
+    const by = shooters.filter((s) => view.visible(s.id, m.id));
+    if (!by.length) continue;
+    seen++;
+    const past = by.some((s) =>
+      thickets.some(
+        (p) => crosses(p, s.position, m.position) && !crosses(p, s.position, s.position, baseRadius(s)),
+      ),
+    );
+    if (past || view.inCover(unitId, m.id)) covered++;
+  }
+  return covered * 2 > seen;
 }
 
 /** Enemy units within 1" (at a real table: any enemy, and the players say). */
@@ -495,14 +573,14 @@ function edgeZones(table, deep) {
   return [strip(0, hy - deep, hy), strip(1, -hy, -(hy - deep))];
 }
 
-/** The seat holding each lantern: the most models within 3", nobody on a tie. */
+/** The seat holding each lantern: the most models within 3" (measured from the base's edge, as every distance here is), nobody on a tie. */
 function holders(state) {
   const out = {};
   for (const o of state.objectives) {
     const count = {};
     for (const m of Object.values(state.models)) {
       if (m.destroyed || !m.unitId) continue;
-      if (Math.hypot(m.position.x - o.position.x, m.position.y - o.position.y) > 3) continue;
+      if (Math.hypot(m.position.x - o.position.x, m.position.y - o.position.y) - baseRadius(m) > 3) continue;
       const seat = seatOf(state, m.owner);
       if (seat === undefined) continue;
       count[seat] = (count[seat] ?? 0) + 1;
@@ -615,7 +693,7 @@ const MISSIONS = [
       {
         id: "last",
         name: "The last lantern",
-        at: { roundEnd: true },
+        at: { roundEnd: true, fromRound: 2 },
         suggest: (game, seat) =>
           game.turn.round >= 2 && heldBy(game, seat).length ? { vp: 2, why: "holds the last lantern" } : null,
         ask: {
@@ -742,7 +820,7 @@ const RULEBOOK = {
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.3.0",
+    version: "1.3.1",
     api: 1,
     system,
     app: {
@@ -760,7 +838,8 @@ export default {
         by: "unit",
         phases: ["activations"],
         available: (view, actor) => {
-          if (acted(view, actor.unitId)) return "Already acted this round";
+          const why = notItsGo(view, actor.unitId);
+          if (why) return why;
           if (view.atTable) return reach(view.state, view.state.units[actor.unitId]) ? true : "Can't shoot";
           if (inContact(view, actor.unitId).length) return "Locked in a fight";
           if (shootable(view, actor.unitId).length) return true;
@@ -787,7 +866,7 @@ export default {
               : []),
             {
               id: "cover",
-              question: `In cover: most of ${target.name} in or touching a ruin or thicket (hits need one more)`,
+              question: `In cover: most of ${target.name} in or touching a ruin or thicket, or seen past one (hits need one more)`,
             },
           ];
         },
@@ -799,7 +878,8 @@ export default {
         by: "unit",
         phases: ["activations"],
         available: (view, actor) => {
-          if (acted(view, actor.unitId)) return "Already acted this round";
+          const why = notItsGo(view, actor.unitId);
+          if (why) return why;
           return inContact(view, actor.unitId).length ? true : 'No enemy within 1"';
         },
         targets: (view, actor) => inContact(view, actor.unitId).map((u) => ({ unitId: u.id, label: u.name })),

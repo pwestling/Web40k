@@ -213,7 +213,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     if (dir === -1) return state;
     round = 1;
     phase = 0;
-    ({ firstSeat, rolledOff } = rollForFirst(system, firstSeat, rng));
+    ({ firstSeat, rolledOff } = rollForFirst(state, system, firstSeat, rng));
     activeSeat = firstSeat;
     newRound = true;
     newPlayerTurn = true;
@@ -229,11 +229,14 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     } else if (phase + 1 >= slots.length) {
       round += 1;
       phase = 0;
-      ({ firstSeat, rolledOff } = rollForFirst(system, firstSeat, rng));
+      ({ firstSeat, rolledOff } = rollForFirst(state, system, firstSeat, rng));
       activeSeat = firstSeat;
       newRound = true;
       newPlayerTurn = true;
     } else {
+      // A roll-off made as play leaves a phase (Conquest's Supremacy, after the command stacks).
+      if (system.turn.rollOff?.after && slot?.id === system.turn.rollOff.after)
+        ({ firstSeat, rolledOff } = rollForFirst(state, system, firstSeat, rng, true));
       phase += 1;
       if (slots[phase]!.playerTurn && !slot?.playerTurn) {
         activeSeat = firstSeat;
@@ -258,16 +261,19 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     } else phase -= 1;
   }
 
-  // Units moved by hand this phase get "moved" as it ends (system.marksMoved).
+  // Units moved by hand (or arriving) this phase get "moved" as it ends (system.marksMoved).
   if (system.marksMoved && dir === 1 && state.turn.round > 0) {
     const units = { ...state.units };
     for (const u of Object.values(state.units)) {
-      const went = u.modelIds.some((id) => {
-        const m = state.models[id];
-        return (
-          !!m?.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) > 0.05
-        );
-      });
+      // Set up from reserves counts as having moved (40k: Heavy, Remained Stationary).
+      const went =
+        !!u.status?.arrived ||
+        u.modelIds.some((id) => {
+          const m = state.models[id];
+          return (
+            !!m?.phaseStart && Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y) > 0.05
+          );
+        });
       if (went && !u.status?.moved) units[u.id] = { ...u, status: { ...u.status, moved: true } };
     }
     state = { ...state, units };
@@ -311,28 +317,88 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
 }
 
 /**
- * A roll-off at the start of each round (`initiative: "rollOffEachRound"`,
- * Conquest's Supremacy): each side rolls a D6, ties roll again, and the
- * higher goes first. Otherwise whoever went first still does.
+ * A roll-off for who goes first each round (`initiative: "rollOffEachRound"`,
+ * Conquest's Supremacy): each side rolls a D6, ties roll again. Plainly, the
+ * higher goes first at the start of the round; with `rollOff`, it's rolled as
+ * play leaves a phase, the side with fewer units on the table takes a
+ * modifier, and the lower roll chooses (going first unless they hand it over).
+ * Otherwise whoever went first still does.
  */
 function rollForFirst(
+  state: GameState,
   system: GameSystem,
   firstSeat: number,
   rng: () => number,
+  now = false,
 ): { firstSeat: number; rolledOff: GameState["rolledOff"] } {
   if (system.turn.initiative !== "rollOffEachRound") return { firstSeat, rolledOff: null };
+  const how = system.turn.rollOff;
+  if (!!how?.after !== now) return { firstSeat, rolledOff: null };
+  const counts = Array.from({ length: SEATS }, (_, seat) =>
+    Object.values(state.units).filter(
+      (u) =>
+        state.players[u.owner]?.seat === seat &&
+        !u.status?.reserves &&
+        u.modelIds.some((id) => state.models[id] && !state.models[id]!.destroyed),
+    ),
+  ).map((us) => us.length);
+  const fewest = Math.min(...counts);
+  const modifiers = counts.map(
+    (n, seat) =>
+      (how?.fewerUnits && n === fewest && counts.some((m) => m > n) ? -how.fewerUnits : 0) +
+      (how?.best ? bestOf(state, system, seat, how.best) : 0),
+  );
   const rolls: number[][] = Array.from({ length: SEATS }, () => []);
   for (let tries = 0; tries < 20; tries++) {
-    const round = rolls.map((r) => {
-      const v = die(rng, 6);
+    const round = rolls.map((r, seat) => {
+      const v = die(rng, 6) + modifiers[seat]!;
       r.push(v);
       return v;
     });
-    const top = Math.max(...round);
-    const winners = round.flatMap((v, seat) => (v === top ? [seat] : []));
-    if (winners.length === 1) return { firstSeat: winners[0]!, rolledOff: { rolls, seat: winners[0]! } };
+    const pick = how?.chooses === "lower" ? Math.min(...round) : Math.max(...round);
+    const winners = round.flatMap((v, seat) => (v === pick ? [seat] : []));
+    if (winners.length === 1)
+      return {
+        firstSeat: winners[0]!,
+        rolledOff: {
+          rolls,
+          seat: winners[0]!,
+          ...(modifiers.some((m) => m) ? { modifiers } : {}),
+          ...(how?.chooses ? { chooses: true } : {}),
+        },
+      };
   }
   return { firstSeat, rolledOff: { rolls, seat: firstSeat } };
+}
+
+/** The best of a characteristic among a side's units on the table (pinned ones aside, say), for its roll-off. */
+function bestOf(
+  state: GameState,
+  system: GameSystem,
+  seat: number,
+  best: { characteristic: Id; unless?: Id },
+): number {
+  let top = 0;
+  for (const u of Object.values(state.units)) {
+    if (state.players[u.owner]?.seat !== seat || u.status?.reserves) continue;
+    if (best.unless && u.status?.[best.unless]) continue;
+    for (const id of u.modelIds) {
+      const m = state.models[id];
+      if (!m || m.destroyed) continue;
+      const v = parseFloat(
+        String(m.profile?.chars?.[best.characteristic] ?? aliasOf(system, m, best.characteristic) ?? ""),
+      );
+      if (Number.isFinite(v)) top = Math.max(top, v);
+    }
+  }
+  return top;
+}
+
+/** A characteristic read by one of its aliases ("Command" for Cmd). */
+function aliasOf(system: GameSystem, m: Model, id: Id): string | undefined {
+  const def = system.characteristics.find((c) => c.id === id);
+  for (const a of def?.aliases ?? []) if (m.profile?.chars?.[a] !== undefined) return m.profile.chars[a];
+  return undefined;
 }
 
 /**

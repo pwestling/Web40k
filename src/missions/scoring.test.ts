@@ -15,7 +15,7 @@ import { spawnIntents } from "../systems/wh40k/deploy";
 import { wh40kModule } from "../systems/wh40k/module";
 import { towModule } from "../systems/tow/module";
 import type { Mission } from "../sdk";
-import { pendingScores, vpByRound } from "./scoring";
+import { momentMatches, pendingScores, vpByRound } from "./scoring";
 import { commitmentOf } from "../core/secrets";
 import { buildLog } from "../ui/gameLog";
 
@@ -178,5 +178,14 @@ describe("missions and scoring", () => {
     expect(lines).toContain("Ana chose the mission Crossfire (sample)");
     expect(lines.some((l) => /^Ana revealed a secret mission card: Seize the centre$/.test(l))).toBe(true);
     expect(lines).toContain(`Ana scored 3 VP (suggested ${s.vp}) · Seize the centre, ${s.why}`);
+  });
+});
+
+describe("scoring moments", () => {
+  it("a round-end score from round 2 skips the first round (Rift Lanterns' The Last Lantern, #55)", () => {
+    const end = (round: number) => ({ kind: "roundEnd", round }) as Parameters<typeof momentMatches>[1];
+    expect(momentMatches({ roundEnd: true, fromRound: 2 }, end(1))).toBe(false);
+    expect(momentMatches({ roundEnd: true, fromRound: 2 }, end(2))).toBe(true);
+    expect(momentMatches({ roundEnd: true }, end(1))).toBe(true);
   });
 });

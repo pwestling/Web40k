@@ -10,6 +10,7 @@ import {
   standInHeight,
   type Vec3,
 } from "./terrain";
+import { opposed } from "./teams";
 import type { GameState, Model, TerrainPiece, Vec2 } from "./types";
 
 /**
@@ -150,6 +151,21 @@ function lineBlockedBy(
   return shaped.length ? sightBlockedBy(shaped, a, b) : null;
 }
 
+/** Whether another model can stand in the way between these two, by the game's blocking rules. */
+function canBlock(state: GameState, observer: Model, target: Model, m: Model): boolean {
+  const rule = state.settings.blockers;
+  if (!rule) return true;
+  if (rule.enemiesOnly && !opposed(state, m.owner, observer.owner)) return false;
+  if (rule.tall?.length) {
+    const tall = (x: Model) => {
+      const kws = (x.unitId ? state.units[x.unitId]?.sheet?.keywords : undefined) ?? [];
+      return kws.some((k) => rule.tall!.some((t) => t.toUpperCase() === k.toUpperCase()));
+    };
+    if (tall(target) && !tall(m)) return false;
+  }
+  return true;
+}
+
 export function modelSight(
   state: GameState,
   observer: Model,
@@ -171,6 +187,7 @@ export function modelSight(
             m.id !== observer.id &&
             m.id !== target.id &&
             !options.ignore?.has(m.id) &&
+            canBlock(state, observer, target, m) &&
             // Only models near the line between the two can be in the way.
             segmentPointDistance2D(observer.position, target.position, m.position) < 4,
         );
@@ -226,6 +243,7 @@ function heightsSight(state: GameState, observer: Model, target: Model, options:
             m.id !== observer.id &&
             m.id !== target.id &&
             !options.ignore?.has(m.id) &&
+            canBlock(state, observer, target, m) &&
             segmentPointDistance2D(observer.position, target.position, m.position) < 4,
         );
   const obscured = new Set<TerrainPiece>();
@@ -289,7 +307,12 @@ function footprintSight(state: GameState, observer: Model, target: Model, option
     options.modelsBlock === false
       ? []
       : Object.values(state.models).filter(
-          (m) => !m.destroyed && m.id !== observer.id && m.id !== target.id && !options.ignore?.has(m.id),
+          (m) =>
+            !m.destroyed &&
+            m.id !== observer.id &&
+            m.id !== target.id &&
+            !options.ignore?.has(m.id) &&
+            canBlock(state, observer, target, m),
         );
   const obscured = new Set<TerrainPiece>();
   let seen = 0;

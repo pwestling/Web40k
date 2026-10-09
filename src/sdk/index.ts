@@ -346,7 +346,8 @@ export interface Mission {
 }
 
 /** When a rule scores: the end of a phase (the side whose turn it was), the end of each round, or the battle's end (every side). */
-export type ScoringMoment = { phaseEnd: Id; fromRound?: number } | { roundEnd: true } | { gameEnd: true };
+export type ScoringMoment =
+  { phaseEnd: Id; fromRound?: number } | { roundEnd: true; fromRound?: number } | { gameEnd: true };
 
 export interface ScoringRule {
   id: Id;

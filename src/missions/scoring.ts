@@ -73,7 +73,7 @@ export const momentMatches = (at: ScoringMoment, m: Moment) =>
   "phaseEnd" in at
     ? m.kind === "phaseEnd" && m.phase === at.phaseEnd && m.round >= (at.fromRound ?? 1)
     : "roundEnd" in at
-      ? m.kind === "roundEnd"
+      ? m.kind === "roundEnd" && m.round >= (at.fromRound ?? 1)
       : m.kind === "gameEnd";
 
 /** Scores the mission suggests that nobody has confirmed or passed on yet, oldest first. */

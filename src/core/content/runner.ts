@@ -499,6 +499,16 @@ function collectReminders(env: RunEnv, run: ProcedureRun, scope: Record<string, 
   const out: string[] = [];
   for (const l of gatherEffects(env, run, scope)) {
     const manual = l.effect.do.some((a) => a.do === "manual");
+    // A reminder only while its condition holds (one it can't judge yet still shows).
+    if (manual && l.effect.if !== undefined) {
+      let holds: boolean;
+      try {
+        holds = bool(l.effect.if, ctxFor(env, { ...scope, param: l.param }));
+      } catch {
+        holds = true;
+      }
+      if (!holds) continue;
+    }
     const handled = ["step.before", "die.result", "always"].includes(l.effect.when.event);
     if (manual || (!handled && l.owner)) if (!out.includes(l.name)) out.push(l.name);
   }
@@ -811,7 +821,10 @@ function rollsDice(env: RunEnv, run: ProcedureRun, step: Step): boolean {
     const scope = buildScope(env, run);
     if (!safe(() => bool(step.if!, ctxFor(env, scope)))) return false;
   }
-  if (step.kind === "pool" || step.kind === "damage") return true;
+  if (step.kind === "pool") return true;
+  // Nothing came through to roll for (no hits, say): the step goes by without a roll.
+  if (!run.tokens.length) return false;
+  if (step.kind === "damage") return true;
   if (step.kind !== "test") return false;
   const plan = planStep(env, run, step, buildScope(env, run)).plan as TestPlan;
   return !plan.skip;
@@ -1042,8 +1055,10 @@ function allocationOrder(
   if (!unit?.models) return [];
   const models = unit.models
     .map((m) => (woundsLost?.has(m.id) ? { ...m, woundsLost: woundsLost.get(m.id)! } : m))
-    .filter((m) => !m.destroyed && (Number(m.W ?? 1) || 1) - m.woundsLost > 0);
-  if (step.formation === "rearRankFirst" && !chosen?.length) return rearRankFirst(env, unit, models);
+    .filter((m) => !m.destroyed && (Number(m.W ?? 1) || 1) - m.woundsLost > 0)
+    .filter((m) => step.only === undefined || safeOnly(step.only, ctxFor(env, { ...scope, model: m })));
+  if (step.formation === "rearRankFirst" && !chosen?.length)
+    return rearRankFirst(env, unit, models, !!step.alternateEnds);
   if (chosen?.length) {
     // The chooser's declared order wins; models it left out keep their place after.
     const rank = (m: ModelView) => {
@@ -1069,21 +1084,45 @@ function allocationOrder(
     .map((x) => x.m);
 }
 
+function safeOnly(expr: Expr, ctx: ReturnType<typeof ctxFor>): boolean {
+  try {
+    return bool(expr, ctx);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Casualties come off the back of a block so the front rank stays full:
- * rank and file from the rear forwards, then the command models and
+ * rank and file from the rear forwards (the ends of a rank taking turns, if asked),
+ * then the command models and
  * characters (any model whose profile isn't the unit's commonest one). A
  * model that has already lost wounds takes the next one.
  */
-function rearRankFirst(env: RunEnv, unit: UnitView, models: ModelView[]): ModelView[] {
+function rearRankFirst(env: RunEnv, unit: UnitView, models: ModelView[], ends: boolean): ModelView[] {
   const source = env.state.units[unit.id];
   const slots = source ? blockSlots(env.state, source) : models.map((m) => m.id);
   const profile = (m: ModelView) => env.state.models[m.id]?.profile?.name ?? "";
   const counts = new Map<string, number>();
   for (const m of models) counts.set(profile(m), (counts.get(profile(m)) ?? 0) + 1);
   const common = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  // With `alternateEnds`, the ends of a rank take turns (Conquest), so the block stays centred.
+  const files = source?.formation.kind === "ranked" ? Math.max(1, source.formation.files) : slots.length || 1;
+  const rows = Math.ceil(slots.length / files);
+  const place = (m: ModelView) => {
+    const at = slots.indexOf(m.id);
+    if (at < 0) return 0;
+    const row = Math.floor(at / files);
+    const width = Math.min(files, slots.length - row * files);
+    const col = at % files;
+    if (!ends) return (rows - row) * (files * 2 + 2) + (files - 1 - col) * 2;
+    const fromEnd = Math.min(col, width - 1 - col);
+    const end = col > width - 1 - col ? 0 : 1;
+    return (rows - row) * (files * 2 + 2) + fromEnd * 2 + end;
+  };
+  const span = (rows + 1) * (files * 2 + 2);
   const rank = (m: ModelView) =>
-    (m.woundsLost > 0 ? 0 : 2) + (profile(m) === common ? 0 : 4) - slots.indexOf(m.id) / (slots.length + 1);
+    (m.woundsLost > 0 ? 0 : 2) + (profile(m) === common ? 0 : 4) + place(m) / span;
   return [...models].sort((a, b) => rank(a) - rank(b));
 }
 

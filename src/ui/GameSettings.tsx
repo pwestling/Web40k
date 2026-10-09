@@ -29,7 +29,7 @@ export function GameSettings() {
           <label>
             {t("Cover")}{" "}
             <select value={cover} onChange={(e) => change({ cover: e.target.value as "hit" | "save" })}>
-              <option value="hit">{t("−1 to hit")}</option>
+              <option value="hit">{t("Ballistic Skill 1 worse")}</option>
               <option value="save">{t("+1 to save")}</option>
             </select>
           </label>
@@ -87,7 +87,7 @@ export function GameSettings() {
             : los === "footprint"
               ? t("Footprint line of sight.")
               : t("True line of sight.")}{" "}
-          {t("Cover: {cover}.", { cover: cover === "hit" ? t("−1 to hit") : t("+1 to save") })}{" "}
+          {t("Cover: {cover}.", { cover: cover === "hit" ? t("Ballistic Skill 1 worse") : t("+1 to save") })}{" "}
           {game.settings.visionArc && game.settings.visionArc < 360
             ? `${t("Models see in a {degrees}° front arc.", { degrees: game.settings.visionArc })} `
             : ""}
