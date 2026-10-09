@@ -58,6 +58,15 @@ export const wh40kModule: GameModule<SystemModule> = {
   functions: {
     enemyGap: (view, unitId) => enemyGap(view, unitId),
     belowHalf: (view, unitId) => belowHalf(view, unitId),
+    // An enemy unit engaged with the shooter's other units (it can't be shot at).
+    engagedWithOthers: (view, targetId, shooterId) => {
+      const target = view.state.units[String(targetId)];
+      const shooter = view.state.units[String(shooterId)];
+      if (!target || !shooter) return false;
+      return engagedWith(view.state, target).some(
+        (id) => id !== shooter.id && !opposed(view.state, view.state.units[id]!.owner, shooter.owner),
+      );
+    },
     // Inches, base to base, between two units (a charge target within 12").
     unitGap: (view, a, b) => {
       const [x, y] = [view.state.units[String(a)], view.state.units[String(b)]];

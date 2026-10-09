@@ -223,7 +223,10 @@ describe("the package sandbox", () => {
     await t.sandbox.load([{ hash: "a1", source: arena }]);
     const red = Object.values(t.state.units).find((u) => u.name === "Champion")!;
     const blue = Object.values(t.state.units).find((u) => u.name === "Spear fighters")!;
-    t.playBoxed({ type: "script/start", procedure: "strike", args: { unit: red.id, target: blue.id } }, "p1");
+    t.playBoxed(
+      { type: "script/start", force: true, procedure: "strike", args: { unit: red.id, target: blue.id } },
+      "p1",
+    );
     const step = t.record.events.at(-1)!.event;
     const roll = step.type === "script/step" ? step.events.find((e) => e.type === "dice/roll") : undefined;
     const hits = roll?.type === "dice/roll" ? roll.roll.results.filter((r) => r >= 3).length : -1;

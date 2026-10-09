@@ -203,7 +203,12 @@ describe("Old World psychology", () => {
       const { t, spears, warband } = setup();
       rule(t, warband, "Terror");
       t.play(
-        { type: "script/start", procedure: "chargeReaction", args: { unit: warband, target: spears } },
+        {
+          type: "script/start",
+          force: true,
+          procedure: "chargeReaction",
+          args: { unit: warband, target: spears },
+        },
         "p2",
         seed,
       );
@@ -219,7 +224,12 @@ describe("Old World psychology", () => {
     rule(t, spears, "Immune to Psychology");
     rule(t, warband, "Terror");
     t.play(
-      { type: "script/start", procedure: "chargeReaction", args: { unit: warband, target: spears } },
+      {
+        type: "script/start",
+        force: true,
+        procedure: "chargeReaction",
+        args: { unit: warband, target: spears },
+      },
       "p2",
     );
     expect(rolls(t, /Terror/)).toEqual([]);
@@ -249,14 +259,14 @@ describe("Old World psychology", () => {
     const { t } = setup();
     const slingers = unitNamed(t.s, "Reaver Slingers").id;
     block(t, slingers, 6, 5, Math.PI);
-    t.play({ type: "script/start", procedure: "panic", args: { unit: slingers } }, "p2");
+    t.play({ type: "script/start", force: true, procedure: "panic", args: { unit: slingers } }, "p2");
     expect(t.notes()[0]).toMatch(/against Ld 8, the General's, Reaver Warband/);
 
     let rerolled = 0;
     for (let seed = 1; seed < 40; seed++) {
       const { t: s, spears } = setup();
       rule(s, spears, "Battle Standard Bearer");
-      s.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1", seed);
+      s.play({ type: "script/start", force: true, procedure: "panic", args: { unit: spears } }, "p1", seed);
       const tests = rolls(s, /^Panic test/);
       expect(tests.length).toBe(sum(tests[0]!) > 9 ? 2 : 1);
       if (tests.length === 2) rerolled++;

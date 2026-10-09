@@ -2,7 +2,7 @@ import { DEFAULT_SYSTEM } from "../core";
 import { registerSystem } from "../core/content";
 import { unregisterSystem } from "../core/content/systems";
 import { registerFunctions } from "../core/content/calls";
-import { hookProcedures, registerCode, registerHooks } from "../core/script";
+import { hookProcedures, registerCode, registerCodeActions, registerHooks } from "../core/script";
 import type { GameModule } from "../sdk";
 import type { SystemModule } from "./app";
 import { conquestModule } from "./conquest/module";
@@ -27,7 +27,10 @@ export function registerModule(m: GameModule<SystemModule>): void {
   if (m.procedures) registerCode(m.system.id, m.procedures);
   if (m.functions) registerFunctions(m.system.id, m.functions);
   // A code action runs as the procedure of the same id.
-  if (m.actions) registerCode(m.system.id, Object.fromEntries(m.actions.map((a) => [a.id, a.run])));
+  if (m.actions) {
+    registerCode(m.system.id, Object.fromEntries(m.actions.map((a) => [a.id, a.run])));
+    registerCodeActions(m.system.id, m.actions);
+  }
   if (m.hooks) {
     const { procedures, table } = hookProcedures(m.system.id, m.hooks);
     registerCode(m.system.id, procedures);

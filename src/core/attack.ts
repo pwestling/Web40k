@@ -1,6 +1,7 @@
 import type { Rng } from "./actions";
 import {
   advance,
+  resolvedOutcomes,
   averageSum,
   getSystem,
   nextStep,
@@ -8,6 +9,7 @@ import {
   previewRun,
   startRun,
   type DamagePlan,
+  type Outcome,
   type FiredChange,
   type PoolPlan,
   type ProcedureRun,
@@ -122,6 +124,11 @@ export interface AttackState {
    * and the table changes. The fields above are read from it for the panel.
    */
   run?: ProcedureRun;
+  /**
+   * Table changes from the weapon's rules that wait for the attack to
+   * resolve (Hazardous), worked out by the host when it ends.
+   */
+  resolved?: Outcome[];
 }
 
 /** Applies the always-fails-on-1 rule and the ±1 cap used by most d6 games. */
@@ -261,7 +268,12 @@ export function rollStage(state: GameState, attack: AttackState, rng: Rng): Atta
         overrides: { ...specToRun(attack.spec).overrides, attacks: { count: String(attack.attackCount) } },
       },
     );
-  return projectAttack(attack.spec, advance(env(state, rng), run));
+  const next = projectAttack(attack.spec, advance(env(state, rng), run));
+  if (next.stage !== "done" || !next.run) return next;
+  // The panel's run has only its own numbers: the weapon's bound rules fire now it's over.
+  const action = attack.spec.kind === "melee" ? "fight" : "shoot";
+  const resolved = resolvedOutcomes(env(state, rng), { ...next.run, action });
+  return resolved.length ? { ...next, resolved } : next;
 }
 
 /** What the data says an attack should be, before any player edits. */

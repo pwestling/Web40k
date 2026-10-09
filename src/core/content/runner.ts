@@ -7,6 +7,7 @@ import {
   lookupRules,
   modelView,
   parseDiceSum,
+  readCharacteristics,
   rollSum,
   averageSum,
   tableGeometry,
@@ -179,6 +180,8 @@ export interface ProcedureRun {
   /** Only `rules` count: no core, status or keyword effects (the players set every number). */
   explicit?: boolean;
   overrides?: Record<Id, PlanOverride>;
+  /** The action this run resolves (40k "shoot"), for "action.resolved" effects. */
+  action?: Id;
   /** Index of the next step. */
   next: number;
   tokens: Token[];
@@ -209,6 +212,7 @@ export interface StartOptions {
   rules?: ProcedureRun["rules"];
   explicit?: boolean;
   overrides?: ProcedureRun["overrides"];
+  action?: Id;
 }
 
 // ---------------------------------------------------------------------------
@@ -236,6 +240,7 @@ export function startRun(
     ...(opts.rules ? { rules: opts.rules } : {}),
     ...(opts.explicit ? { explicit: true } : {}),
     ...(opts.overrides ? { overrides: opts.overrides } : {}),
+    ...(opts.action ? { action: opts.action } : {}),
     next: 0,
     tokens: [],
     records: [],
@@ -276,7 +281,36 @@ export function advance(env: RunEnv, run: ProcedureRun): ProcedureRun {
     cur = next;
   }
   if (!cur.pending && cur.next >= proc.steps.length) cur = { ...cur, done: true };
+  // Once it's over, the rules that wait for the action to resolve (40k Hazardous) fire.
+  if (cur.done && !run.done && !cur.explicit)
+    cur = { ...cur, outcomes: [...cur.outcomes, ...resolvedOutcomes(env, cur)] };
   return cur;
+}
+
+/**
+ * Fire the "action.resolved" effects of a finished run's roles (payload:
+ * the action and procedure ids), rolling with the env's rng. A run with
+ * explicit rules (the 40k attack panel's numbers) still fires its roles'
+ * own rules here, so callers outside `advance` use this for those.
+ */
+export function resolvedOutcomes(env: RunEnv, run: ProcedureRun): Outcome[] {
+  if (!env.rng) return [];
+  const bound: ProcedureRun = { ...run, explicit: false };
+  delete bound.rules;
+  const scope = buildScope(env, bound);
+  const payload = { action: run.action ?? null, procedure: run.procedure };
+  const out: Outcome[] = [];
+  for (const l of firing(env, gatherEffects(env, bound, scope), "action.resolved", payload, scope)) {
+    const ctx = ctxFor(env, { ...scope, event: payload }, l.param);
+    let done: Outcome[];
+    try {
+      done = doActions(env, bound, l.effect.do, ctx);
+    } catch {
+      done = [{ kind: "reminder", text: l.name }];
+    }
+    out.push(...done.map((o) => (o.kind === "note" ? { ...o, text: `${l.name}: ${o.text}` } : o)));
+  }
+  return out;
 }
 
 /** Answer a window: pick an option id, or "pass". The run then goes on from there. */
@@ -500,18 +534,23 @@ function collectReminders(env: RunEnv, run: ProcedureRun, scope: Record<string, 
   const out: string[] = [];
   for (const l of gatherEffects(env, run, scope)) {
     const manual = l.effect.do.some((a) => a.do === "manual");
+    // Engine events whose effects the runner applies itself ("action.resolved" when a run ends).
+    const handled = ["step.before", "die.result", "always", "action.resolved"].includes(l.effect.when.event);
+    if (!manual && (handled || !l.owner)) continue;
     // A reminder only while its condition holds (one it can't judge yet still shows).
-    if (manual && l.effect.if !== undefined) {
+    if (l.effect.if !== undefined) {
       let holds: boolean;
       try {
-        holds = bool(l.effect.if, ctxFor(env, { ...scope, param: l.param }));
+        holds = bool(l.effect.if, {
+          ...ctxFor(env, scope, l.param),
+          scope: { ...scope, param: l.param, ruleOwner: l.owner ?? null },
+        });
       } catch {
         holds = true;
       }
       if (!holds) continue;
     }
-    const handled = ["step.before", "die.result", "always"].includes(l.effect.when.event);
-    if (manual || (!handled && l.owner)) if (!out.includes(l.name)) out.push(l.name);
+    if (!out.includes(l.name)) out.push(l.name);
   }
   return out;
 }
@@ -1236,6 +1275,7 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
       case "roll": {
         if (!env.rng) break;
         const v = rollSum(parseDiceSum(a.dice), env.rng).total;
+        out.push({ kind: "note", text: `rolled ${v}` });
         for (const o of a.outcomes) if (v >= o.min && v <= o.max) out.push(...doActions(env, run, o.do, ctx));
         break;
       }
@@ -1256,10 +1296,54 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
       case "damageTrack":
         if (env.rng) out.push(...damageTrack(run, a, ctx, env.rng));
         break;
+      case "inflictDamage":
+        out.push(...inflict(env, resolve(a.target, ctx), num(a.amount, ctx), a.kind));
+        break;
       default:
         out.push({ kind: "reminder", text: a.do });
     }
   }
+  return out;
+}
+
+/**
+ * Wounds dealt outside the attack sequence (mortal wounds): each one to the
+ * first standing model of the target (models named first, then the rest of
+ * their unit, wounded ones first), spilling over to the next.
+ */
+function inflict(env: RunEnv, target: unknown, amount: number, kind?: Id): Outcome[] {
+  const { state, system } = env;
+  const views = (Array.isArray(target) ? target : [target]) as {
+    kind?: string;
+    id?: string;
+    unitId?: string;
+  }[];
+  const first = views.flatMap((v) => (v?.kind === "model" && v.id ? [v.id] : []));
+  const unitId = views.find((v) => v?.kind === "unit")?.id ?? views.find((v) => v?.unitId)?.unitId;
+  const unit = unitId ? state.units[unitId] : undefined;
+  const rest = (unit?.modelIds ?? [])
+    .filter((id) => !first.includes(id))
+    .sort((a, b) => (state.models[b]?.woundsLost ?? 0) - (state.models[a]?.woundsLost ?? 0));
+  const lost: Record<string, number> = {};
+  const left = (id: string) => {
+    const m = state.models[id];
+    if (!m || m.destroyed) return 0;
+    const w = Number(readCharacteristics(system, "model", m.profile?.chars).W ?? 1) || 1;
+    return w - (m.woundsLost ?? 0) - (lost[id] ?? 0);
+  };
+  let n = Math.max(0, Math.floor(amount));
+  for (const id of [...first, ...rest])
+    while (n > 0 && left(id) > 0) {
+      lost[id] = (lost[id] ?? 0) + 1;
+      n--;
+    }
+  const out: Outcome[] = Object.entries(lost).map(([modelId, l]) => ({ kind: "wounds", modelId, lost: l }));
+  const total = Object.values(lost).reduce((a, b) => a + b, 0);
+  if (total)
+    out.push({
+      kind: "note",
+      text: `${total} ${kind === "mortal" ? "mortal " : ""}wound${total === 1 ? "" : "s"} to ${unit?.name ?? "the unit"}`,
+    });
   return out;
 }
 

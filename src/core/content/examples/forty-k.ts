@@ -1,4 +1,4 @@
-import type { AbilityTiming, ActionDef, Effect, Expr, GameSystem, RuleDef } from "../schema";
+import type { AbilityTiming, ActionDef, Effect, Expr, GameSystem, RuleDef, RuleReminder } from "../schema";
 
 /**
  * Example GameSystem: 40k 11th edition core mechanics, encoded as data.
@@ -53,6 +53,13 @@ const manualRule = (id: string, name: string, match: string): RuleDef => ({
   appliesTo: ["weapon"],
   effects: [{ when: { event: "action.declared" }, do: [{ do: "manual", reminder: id }] }],
 });
+
+/** Some attacking model sees some target model. */
+const attackerSees: Expr = { query: { kind: "visible", from: "attacker", to: "target" } };
+/** An Indirect Fire weapon shooting at a unit none of the attackers can see. */
+const indirectUnseen: Expr = {
+  all: [{ hasKeyword: "weapon", keyword: "Indirect Fire" }, { not: attackerSees }],
+};
 
 const weaponRules: RuleDef[] = [
   {
@@ -213,13 +220,15 @@ const weaponRules: RuleDef[] = [
     ],
   },
   {
+    // After the unit shoots or fights with it (the engine's "action.resolved"): roll; on a 1-2
+    // the bearers take mortal wounds (3 for a Character or Monster). Edition values, unverified.
     id: "hazardous",
     name: "Hazardous",
     match: keyword("hazardous"),
     appliesTo: ["weapon"],
     effects: [
       {
-        when: { event: "action.resolved", where: { is: "event.action", value: "shoot" } },
+        when: { event: "action.resolved" },
         do: [
           {
             do: "roll",
@@ -231,10 +240,10 @@ const weaponRules: RuleDef[] = [
                 do: [
                   {
                     do: "inflictDamage",
-                    target: "bearer",
+                    target: "weapon.bearers",
                     kind: "mortal",
                     amount: {
-                      if: { any: [kw("bearer", "CHARACTER"), kw("bearer", "MONSTER")] },
+                      if: { any: [kw("attacker", "CHARACTER"), kw("attacker", "MONSTER")] },
                       then: 3,
                       else: 1,
                     },
@@ -255,7 +264,14 @@ const weaponRules: RuleDef[] = [
     appliesTo: ["weapon"],
     effects: [{ when: beforeStep("allocate"), do: [{ do: "manual", reminder: "precision" }] }],
   },
-  manualRule("indirectFire", "Indirect Fire", keyword("indirect fire")),
+  {
+    // It may target units out of sight (the shoot target filter); against one, -1 to hit (cover is the Cover rule).
+    id: "indirectFire",
+    name: "Indirect Fire",
+    match: keyword("indirect fire"),
+    appliesTo: ["weapon"],
+    effects: [{ when: beforeStep("hit"), if: { not: attackerSees }, do: [{ do: "modifyRoll", by: -1 }] }],
+  },
   manualRule("pistol", "Pistol", keyword("pistol")),
   manualRule("assault", "Assault", keyword("assault")),
   manualRule("extraAttacks", "Extra Attacks", keyword("extra attacks")),
@@ -369,7 +385,7 @@ const coverHelpsSave: Expr = {
   all: [
     { is: "settings.cover", value: "save" },
     { is: "weapon.weaponKind", value: "ranged" },
-    ref("sight.cover"),
+    { any: [ref("sight.cover"), indirectUnseen] },
     { not: { hasFlag: "weapon", flag: "ignoresCover" } },
     {
       not: {
@@ -461,6 +477,47 @@ const abilityTimings: AbilityTiming[] = [
   },
 ];
 
+/** Core rules the app leaves to the players, reminded for the units they concern. Our own words. */
+const ruleReminders: RuleReminder[] = [
+  {
+    id: "desperateEscape",
+    name: "Desperate Escape",
+    text: "Battle-shocked and engaged: if it Falls Back, test for each model; each failure loses a model.",
+    phase: "movement",
+    side: "active",
+    if: {
+      all: [
+        { hasStatus: "self", status: "battleShocked" },
+        { call: "engaged", args: [ref("self.id")] },
+      ],
+    },
+  },
+  {
+    id: "strategicReserves",
+    name: "Strategic Reserves",
+    text: 'From the second round: set up within 6" of a table edge, outside the enemy deployment zone and more than 9" from enemies. Not on the table by the end of the battle: destroyed.',
+    phase: "movement",
+    side: "active",
+    if: { hasFlag: "self", flag: "reserves" },
+  },
+  {
+    id: "transport",
+    name: "Transport",
+    text: 'Units may embark within 3" or disembark wholly within 3" (not if it Advanced or Fell Back). If it is destroyed, the units inside disembark and roll for casualties.',
+    phase: "movement",
+    side: "active",
+    if: kw("self", "TRANSPORT"),
+  },
+  {
+    id: "aircraft",
+    name: "Aircraft",
+    text: "Moves at least its minimum distance in a straight line, or goes into reserves; it can't charge, and only units that can Fly fight it.",
+    phase: "movement",
+    side: "active",
+    if: kw("self", "AIRCRAFT"),
+  },
+];
+
 /**
  * The 11th edition core stratagems, each once per phase. Costs and timings
  * from the 11th edition core rules (June 2026): Grenade is now Explosives,
@@ -472,7 +529,9 @@ const abilityTimings: AbilityTiming[] = [
  */
 const once = { count: 1, per: "phase" as const };
 const cp = (amount: number) => [{ resource: "CP", amount }];
-const own: Expr = { same: ["it.owner", "player.id"] };
+const ownUnit: Expr = { same: ["it.owner", "player.id"] };
+/** The player's own unit, not Battle-shocked (those can't be picked for stratagems; Insane Bravery aside). */
+const own: Expr = { all: [ownUnit, { not: { hasStatus: "it", status: "battleShocked" } }] };
 const ownWith = (keyword: string): Expr => ({ all: [own, kw("it", keyword)] });
 const ownWithAny = (...keywords: string[]): Expr => ({
   all: [own, { any: keywords.map((k) => kw("it", k)) }],
@@ -512,7 +571,7 @@ const stratagems: ActionDef[] = [
     phases: ["command"],
     cost: cp(1),
     limit: { count: 1, per: "battle" },
-    target: { filter: { all: [own, { hasStatus: "it", status: "battleShocked" }] } },
+    target: { filter: { all: [ownUnit, { hasStatus: "it", status: "battleShocked" }] } },
     // Used on a unit that just failed its test: it passes instead.
     do: [{ do: "removeStatus", status: "battleShocked" }],
     hint: "Pass a Battle-shock test",
@@ -734,11 +793,16 @@ export const fortyK: GameSystem = {
       ],
     },
     // "auto.*": once-per-battle abilities in use (#38), and "strat.*": faction stratagems (#49), last until the end of the phase.
-    { at: "phase", flags: ["goneToGround", "smokescreen", "scouting", "arrived", "auto.*", "strat.*"] },
+    // "fought" too: both sides fight in each Fight phase, and the fight order counts who has.
+    {
+      at: "phase",
+      flags: ["goneToGround", "smokescreen", "scouting", "arrived", "fought", "auto.*", "strat.*"],
+    },
   ],
   // Units moved by hand get "moved" as the phase ends, so Heavy knows (as well as the move actions' sets).
   marksMoved: true,
   abilityTimings,
+  ruleReminders,
   terrain: [
     { id: "exposed", name: "Exposed" },
     { id: "light", name: "Light" },
@@ -922,7 +986,21 @@ export const fortyK: GameSystem = {
           why: "Engaged: only Pistols",
         },
       ],
-      target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
+      // Visible units, or any with an Indirect Fire weapon; not one engaged with the shooter's other units.
+      target: {
+        filter: {
+          any: [
+            { query: { kind: "visible", from: "self", to: "it" } },
+            { hasKeyword: "weapon", keyword: "Indirect Fire" },
+          ],
+        },
+        notWhen: [
+          {
+            if: { call: "engagedWithOthers", args: [ref("it.id"), ref("self.id")] },
+            why: "Engaged with your other units",
+          },
+        ],
+      },
       procedure: "attack",
     },
     {
@@ -967,6 +1045,8 @@ export const fortyK: GameSystem = {
         any: [engaged, { hasFlag: "self", flag: "charged" }],
       },
       procedure: "attack",
+      // The fight order (wh40k/fight.ts) reads it.
+      sets: ["fought"],
     },
     {
       id: "consolidate",
@@ -1060,12 +1140,39 @@ export const fortyK: GameSystem = {
       if: {
         all: [
           { is: "weapon.weaponKind", value: "ranged" },
-          ref("sight.cover"),
+          // Indirect Fire at a unit out of sight: the target counts as in cover.
+          { any: [ref("sight.cover"), indirectUnseen] },
           { not: { hasFlag: "weapon", flag: "ignoresCover" } },
           { not: { is: "settings.cover", value: "save" } },
         ],
       },
       do: [{ do: "modifyTarget", by: 1 }],
+    },
+    {
+      // A Monster or Vehicle shooting while engaged (not with a Pistol): the hit penalty, by hand.
+      id: "Big Guns Never Tire",
+      when: { event: "action.declared" },
+      if: {
+        all: [
+          { is: "weapon.weaponKind", value: "ranged" },
+          { call: "engaged", args: [ref("attacker.id")] },
+          { any: [kw("attacker", "MONSTER"), kw("attacker", "VEHICLE")] },
+          { not: { hasKeyword: "weapon", keyword: "Pistol" } },
+        ],
+      },
+      do: [{ do: "manual", reminder: "bigGunsNeverTire" }],
+    },
+    {
+      // Shooting at an enemy unit that is engaged with the shooter's other units.
+      id: "Target engaged with your units",
+      when: { event: "action.declared" },
+      if: {
+        all: [
+          { is: "weapon.weaponKind", value: "ranged" },
+          { call: "engagedWithOthers", args: [ref("target.id"), ref("attacker.id")] },
+        ],
+      },
+      do: [{ do: "manual", reminder: "engagedTarget" }],
     },
     {
       // Every shooter stands well above every target.

@@ -469,6 +469,23 @@ async function sandbox() {
   return { engine, loaded, play, state };
 }
 
+describe("Rift Lanterns: raw intents (#57)", () => {
+  it("refuses a raw script/start for an action the module says isn't available, unless forced", async () => {
+    const { engine, loaded, play, state } = await sandbox();
+    for (const i of spawnIntents(state(), "p1", loaded.armies[0]!.units.slice(1, 2), "p1", "a"))
+      play(i, "p1");
+    for (const i of spawnIntents(state(), "p2", loaded.armies[1]!.units.slice(1, 2), "p2", "b"))
+      play(i, "p2");
+    play({ type: "turn/next" }, "p1");
+    const s = state();
+    const waiting = Object.values(s.units).find((u) => s.players[u.owner]?.seat !== s.turn.activeSeat)!;
+    const shoot = { type: "script/start", procedure: "shoot", args: { unit: waiting.id } } as const;
+    // Not that side's go: the module's notItsGo says no, so the host refuses it.
+    expect(engine.resolve(shoot, waiting.owner, 1)).toBeNull();
+    expect(engine.resolve({ ...shoot, force: true }, waiting.owner, 1)).not.toBeNull();
+  });
+});
+
 describe("Rift Lanterns: moving (Table warnings)", () => {
   it("flags a move past the unit's Move, and a move into or through a wreck", async () => {
     const { loaded, play, state } = await sandbox();

@@ -73,7 +73,7 @@ export function unitDistance(a: Model[], b: Model[]): number {
   return best;
 }
 
-function hasKeyword(keywords: string[], name: string): boolean {
+export function hasKeyword(keywords: string[], name: string): boolean {
   const n = name.toLowerCase();
   return keywords.some((k) => k.trim().toLowerCase() === n);
 }

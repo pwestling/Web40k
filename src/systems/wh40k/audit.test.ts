@@ -17,6 +17,7 @@ import {
 import { actionTargets, unitActions } from "../../core/content/play";
 import { abilityReminders, attackReminders } from "../../core/content/player";
 import { wh40kChecks } from "./checks";
+import { fightOrder, fightOutOfOrder } from "./fight";
 import { makePiece } from "./layout";
 import { WH40K_MISSIONS } from "./missions";
 import { getSystem } from "../../core/content";
@@ -374,8 +375,8 @@ describe("40k audit: weapon abilities", () => {
     expect(spec(["Lance"], (s) => setStatus(s, "mine", { charged: true })).woundMod).toBe(1);
   });
 
-  it("Indirect Fire, Pistol, Precision, Extra Attacks and Hazardous are reminders", () => {
-    for (const k of ["Indirect Fire", "Pistol", "Precision", "Extra Attacks", "Hazardous"]) {
+  it("Pistol, Precision and Extra Attacks are reminders", () => {
+    for (const k of ["Pistol", "Precision", "Extra Attacks"]) {
       const s = goTo(setup({ gun: gun([k]) }), "shooting", 0);
       expect(previewAttack(s, "mine", "gun", "theirs")!.reminders).toContain(k);
     }
@@ -467,5 +468,188 @@ describe("40k audit: attack sequence and battle length", () => {
 
   it("lasts five battle rounds", () => {
     expect(getSystem("forty-k-11").turn.rounds).toBe(5);
+  });
+});
+
+/** Resolve with dice that all come up 1. */
+const playOnes = (state: GameState, intent: Intent, from: PlayerId): GameState => {
+  const event = resolveIntent(intent, from, () => 0.01, state);
+  if (!event) throw new Error(`Rejected: ${JSON.stringify(intent)}`);
+  return applyEvent({ ...state, seq: state.seq + 1 }, event);
+};
+
+/** A wall between the two units, so neither sees the other. */
+const wall = (s: GameState) =>
+  applyEvent(s, {
+    type: "layout/set",
+    layout: { terrain: [makePiece("Container", "c", { x: 0.75, y: 5 })], objectives: [], zones: [] },
+  });
+
+describe("40k gaps (#57): conditional reminders", () => {
+  it("Big Guns Never Tire shows only for an engaged Monster or Vehicle shooting a non-Pistol", () => {
+    const named = (st: GameState, weapon = "gun") =>
+      previewAttack(st, "mine", weapon, "theirs")!.reminders.includes("Big Guns Never Tire");
+    const tank = goTo(setup({ keywords: ["VEHICLE"] }), "shooting", 0);
+    expect(named(tank)).toBe(false);
+    expect(named(engage(tank))).toBe(true);
+    expect(named(engage(tank), "pistol")).toBe(false);
+    expect(named(engage(goTo(setup(), "shooting", 0)))).toBe(false);
+  });
+
+  it("warns of a target engaged with the shooter's other units, in the target list and the attack", () => {
+    let s = goTo(setup(), "shooting", 0);
+    expect(previewAttack(s, "mine", "gun", "theirs")!.reminders).not.toContain(
+      "Target engaged with your units",
+    );
+    s = addUnit(s, "ally", "p1", [model("a1", "p1", 0, 8.6)]);
+    expect(actionTargets(s, "mine", "shoot", "gun")).toMatchObject([
+      { unitId: "theirs", ok: false, why: "Engaged with your other units" },
+    ]);
+    expect(previewAttack(s, "mine", "gun", "theirs")!.reminders).toContain("Target engaged with your units");
+  });
+
+  it("reminds of Transport, Aircraft, Strategic Reserves and Desperate Escape for the units they concern, in their Movement phase", () => {
+    const names = (st: GameState) => abilityReminders(st).map((r) => `${r.unitId}:${r.ability.name}`);
+    const s = goTo(setup({ keywords: ["VEHICLE", "TRANSPORT"] }), "movement", 0);
+    expect(names(s)).toContain("mine:Transport");
+    expect(names(goTo(s, "movement", 1))).not.toContain("mine:Transport");
+    expect(names(s)).not.toContain("mine:Desperate Escape");
+    expect(names(engage(setStatus(s, "mine", { battleShocked: true })))).toContain("mine:Desperate Escape");
+    expect(names(setStatus(s, "mine", { reserves: true }))).toContain("mine:Strategic Reserves");
+    expect(names(goTo(setup({ keywords: ["AIRCRAFT"] }), "movement", 0))).toContain("mine:Aircraft");
+    // A core rule's reminder can be marked as applied like an ability.
+    const applied = play(s, { type: "ability/apply", unitId: "mine", ability: "Transport" }, "p1");
+    expect(abilityReminders(applied).find((r) => r.ability.name === "Transport")?.applied).toBe(true);
+  });
+});
+
+describe("40k gaps (#57): ability timings with a condition", () => {
+  it("shows an ability's reminder only while its timing's `if` holds", () => {
+    const timings = getSystem("forty-k-11").abilityTimings!;
+    // Ahead of the data's own Fight phase entry, which would match first.
+    timings.unshift({
+      phase: "fight",
+      side: "either",
+      match: "^Grudge$",
+      if: { call: "engaged", args: [{ ref: "self.id" }] },
+    });
+    try {
+      const s = goTo(setup({ abilities: [{ name: "Grudge", text: "" }] }), "fight", 0);
+      const now = (st: GameState) => abilityReminders(st).map((r) => r.ability.name);
+      expect(now(s)).not.toContain("Grudge");
+      expect(now(engage(s))).toContain("Grudge");
+    } finally {
+      timings.shift();
+    }
+  });
+});
+
+describe("40k gaps (#57): Indirect Fire", () => {
+  it("targets units out of sight, at -1 to hit and with the target in cover", () => {
+    const open = goTo(setup({ gun: gun(["Indirect Fire"]) }), "shooting", 0);
+    const hidden = wall(open);
+    expect(actionTargets(hidden, "mine", "shoot")[0]?.ok).toBe(false);
+    expect(actionTargets(hidden, "mine", "shoot", "pistol")[0]?.ok).toBe(false);
+    expect(actionTargets(hidden, "mine", "shoot", "gun")[0]?.ok).toBe(true);
+    const seen = previewAttack(open, "mine", "gun", "theirs")!.spec;
+    const unseen = previewAttack(hidden, "mine", "gun", "theirs")!.spec;
+    expect(seen.hitMod).toBe(0);
+    expect(unseen.hitMod).toBe(-1);
+    // Cover: Ballistic Skill 1 worse.
+    expect(unseen.hit).toBe(seen.hit! + 1);
+  });
+});
+
+describe("40k gaps (#57): Hazardous", () => {
+  it("rolls after the unit shoots with it: on a 1 the bearer takes a mortal wound (action)", () => {
+    const s = goTo(setup({ gun: gun(["Hazardous"]) }), "shooting", 0);
+    let after = playOnes(
+      s,
+      { type: "action/take", unitId: "mine", action: "shoot", weapon: "gun", targetId: "theirs" },
+      "p1",
+    );
+    while (after.procedure && !after.procedure.run.done)
+      after = playOnes(after, { type: "procedure/roll" }, "p1");
+    expect(after.models.m1?.destroyed).toBe(true);
+    expect(after.procedure?.run.outcomes.map((o) => ("text" in o ? o.text : ""))).toContain(
+      "Hazardous: rolled 1",
+    );
+  });
+
+  it("rolls after an attack declared from the attack panel, and leaves the unit alone on a 3+", () => {
+    let s = goTo(setup({ gun: gun(["Hazardous"]) }), "shooting", 0);
+    const spec = previewAttack(s, "mine", "gun", "theirs")!.spec;
+    let ok = play(s, { type: "attack/declare", spec }, "p1");
+    s = playOnes(s, { type: "attack/declare", spec }, "p1");
+    while (s.attack && s.attack.stage !== "done") s = playOnes(s, { type: "attack/roll" }, "p1");
+    expect(s.attack?.resolved?.length).toBeGreaterThan(0);
+    expect(s.models.m1?.destroyed).toBe(true);
+    // Rolled 4s: no harm done.
+    while (ok.attack && ok.attack.stage !== "done") ok = play(ok, { type: "attack/roll" }, "p1");
+    expect(ok.models.m1?.destroyed ?? false).toBe(false);
+    expect(ok.models.m2?.destroyed ?? false).toBe(false);
+  });
+});
+
+describe("40k gaps (#57): fight order", () => {
+  it("Fights First units fight first, then the players alternate, starting with the one whose turn it isn't", () => {
+    const s = engage(goTo(setup(), "fight", 0));
+    // Nobody charged: the remaining step, and p2 (not their turn) picks first.
+    expect(fightOrder(s)).toEqual({ step: "remaining", picker: "p2", eligible: ["theirs"] });
+    expect(fightOutOfOrder(s, "mine")).toBe("pick");
+    expect(fightOutOfOrder(s, "theirs")).toBeUndefined();
+    // A unit that charged fights first.
+    const charged = setStatus(s, "mine", { charged: true });
+    expect(fightOrder(charged)).toEqual({ step: "fightsFirst", picker: "p1", eligible: ["mine"] });
+    expect(fightOutOfOrder(charged, "theirs")).toBe("fightsFirst");
+    // Once it has fought, the rest.
+    expect(fightOrder(setStatus(charged, "mine", { fought: true }))?.eligible).toEqual(["theirs"]);
+    // p2 has fought: p1's pick.
+    expect(fightOrder(setStatus(s, "theirs", { fought: true }))).toEqual({
+      step: "remaining",
+      picker: "p1",
+      eligible: ["mine"],
+    });
+  });
+
+  it("marks a unit as fought when it fights, until the phase ends", () => {
+    const s = engage(goTo(setup(), "fight", 0));
+    const fought = play(
+      s,
+      { type: "action/take", unitId: "theirs", action: "fight", weapon: "blade", targetId: "mine" },
+      "p2",
+    );
+    expect(fought.units.theirs?.status?.fought).toBe(true);
+    expect(goTo(fought, "command", 1).units.theirs?.status?.fought).toBeUndefined();
+  });
+});
+
+describe("40k gaps (#57): more table checks", () => {
+  const ids = (st: GameState) => wh40kChecks({ state: st } as never).map((w) => w.id);
+
+  it("warns when a player gains more than 1 extra CP in a battle round", () => {
+    let s = goTo(setup(), "command", 0);
+    s = play(s, { type: "resource/adjust", player: "p1", resource: "CP", delta: 1 }, "p1");
+    expect(ids(s)).not.toContain("cpCap");
+    s = play(s, { type: "resource/adjust", player: "p1", resource: "CP", delta: 1 }, "p1");
+    expect(ids(s)).toContain("cpCap");
+    // A new round, a new allowance.
+    expect(ids(goTo(goTo(s, "command", 1), "command", 0))).not.toContain("cpCap");
+  });
+
+  it("warns when a move goes through enemy models or ends in engagement range", () => {
+    const s = goTo(setup(), "movement", 0);
+    expect(ids(moveTo(s, "m1", 0, 4))).not.toContain("throughEnemies");
+    expect(ids(moveTo(s, "m1", 0, 4))).not.toContain("endsEngaged");
+    expect(ids(moveTo(s, "m1", 0, 12))).toContain("throughEnemies");
+    expect(ids(moveTo(s, "m1", 0, 8.6))).toContain("endsEngaged");
+  });
+
+  it("leaves Battle-shocked units out of stratagem targets, except Insane Bravery", () => {
+    const s = setStatus(goTo(setup(), "movement", 1), "mine", { battleShocked: true });
+    const targets = (id: string) => playerActions(s, "p1").find((o) => o.def.id === id)?.targets ?? [];
+    expect(targets("fireOverwatch")).not.toContain("mine");
+    const command = setStatus(goTo(setup(), "command", 0), "mine", { battleShocked: true });
+    expect(playerActions(command, "p1").find((o) => o.def.id === "insaneBravery")?.targets).toContain("mine");
   });
 });

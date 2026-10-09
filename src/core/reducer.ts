@@ -447,18 +447,23 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case "resource/adjust": {
       const own = state.resources[event.player] ?? {};
       const value = (own[event.resource] ?? 0) + event.delta;
-      return {
+      let next: GameState = {
         ...state,
         resources: { ...state.resources, [event.player]: { ...own, [event.resource]: value } },
       };
+      // Each point gained by hand in the battle is noted, for per-round caps (40k extra CP).
+      if (state.turn.round > 0)
+        for (let i = 0; i < event.delta; i++) next = recordUse(next, event.player, `gain:${event.resource}`);
+      return next;
     }
     case "attack/declare":
       return { ...state, attack: event.attack };
     case "attack/roll": {
       const next = { ...state, attack: event.attack };
-      return event.attack.damage && event.attack.stage === "done"
-        ? applyDamage(next, event.attack.damage)
-        : next;
+      const damaged =
+        event.attack.damage && event.attack.stage === "done" ? applyDamage(next, event.attack.damage) : next;
+      // Rules that wait for the attack to resolve (Hazardous) land after its damage.
+      return event.attack.resolved?.length ? applyRunOutcomes(damaged, event.attack.resolved) : damaged;
     }
     case "attack/allocate": {
       const attack = state.attack;

@@ -58,7 +58,7 @@ function finish(t: Table, seed: number) {
 }
 
 function fight(t: Table, unit: string, target: string, seed: number) {
-  t.play({ type: "script/start", procedure: "combat", args: { unit, target } }, "p1", seed);
+  t.play({ type: "script/start", force: true, procedure: "combat", args: { unit, target } }, "p1", seed);
   finish(t, seed);
 }
 
@@ -103,7 +103,11 @@ describe("Old World rules audit (#55)", () => {
     toPhase(t, "movement");
     let doubles = 0;
     for (let seed = 1; seed < 160; seed++) {
-      t.play({ type: "script/start", procedure: "marchTest", args: { unit: spears } }, "p1", seed);
+      t.play(
+        { type: "script/start", force: true, procedure: "marchTest", args: { unit: spears } },
+        "p1",
+        seed,
+      );
       const r = rolls(t, /^march test/).at(-1)!;
       const double1 = r.results.every((x) => x === 1);
       if (double1) doubles++;
@@ -212,7 +216,12 @@ describe("Old World rules audit (#55)", () => {
     status(t, warband, "fleeing", true);
     toPhase(t, "movement");
     t.play(
-      { type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: warband } },
+      {
+        type: "script/start",
+        force: true,
+        procedure: "chargeReaction",
+        args: { unit: spears, target: warband },
+      },
       "p1",
     );
     expect(t.s.script).toBeNull();
@@ -230,7 +239,12 @@ describe("Old World rules audit (#55)", () => {
     block(t, warband, -30, 6, 0);
     toPhase(t, "movement");
     t.play(
-      { type: "script/start", procedure: "chargeReaction", args: { unit: warband, target: bows } },
+      {
+        type: "script/start",
+        force: true,
+        procedure: "chargeReaction",
+        args: { unit: warband, target: bows },
+      },
       "p2",
     );
     const q = t.s.script?.waiting;

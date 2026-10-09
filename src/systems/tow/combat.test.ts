@@ -249,7 +249,11 @@ describe("The Old World combat as code", () => {
     const spears = unitNamed(setup().t.s, "Marchwarden Spears").id;
     for (let seed = 1; seed < 40; seed++) {
       const { t: fresh } = setup();
-      fresh.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1", seed);
+      fresh.play(
+        { type: "script/start", force: true, procedure: "panic", args: { unit: spears } },
+        "p1",
+        seed,
+      );
       // The Battle Standard Bearer in the unit re-rolls a failed test once: the last roll decides.
       const rolls = fresh.events.flatMap((ev) =>
         ev.type === "script/step"
@@ -281,7 +285,7 @@ describe("The Old World combat as code", () => {
     expect(offered()).toMatch(/Nothing to panic about/);
     t.play({ type: "model/wounds", id: ids.at(-7)!, woundsLost: 1, destroyed: true }, "p1");
     expect(offered()).toBe(true);
-    t.play({ type: "script/start", procedure: "panic", args: { unit: spears } }, "p1");
+    t.play({ type: "script/start", force: true, procedure: "panic", args: { unit: spears } }, "p1");
     if (!t.s.units[spears]!.status?.fleeing) expect(offered()).toBe("Already tested this phase");
   });
 

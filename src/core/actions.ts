@@ -20,6 +20,7 @@ import { getSystem } from "./content/systems";
 import { currentSlot, systemOf } from "./content/turn";
 import { die, parseDice, rollDice } from "./dice";
 import {
+  codeActionWhy,
   startScript,
   stepScript,
   type CampaignAward,
@@ -250,8 +251,12 @@ export type Intent =
   /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   | { type: "undo"; seq: number; also?: number[] }
-  /** Run a game module's code procedure (core/script.ts). */
-  | { type: "script/start"; procedure: string; args?: Record<string, unknown> }
+  /**
+   * Run a game module's code procedure (core/script.ts). A code action whose
+   * `available` says no is refused unless `force` (the players agreed to
+   * play it anyway, or a test sets the scene).
+   */
+  | { type: "script/start"; procedure: string; args?: Record<string, unknown>; force?: boolean }
   /** Answer the question the running code procedure is waiting on. */
   | { type: "script/answer"; answer: string };
 
@@ -477,6 +482,9 @@ export function resolveIntent(
   switch (intent.type) {
     case "script/start": {
       if (!state || state.script || !state.players[from]) return null;
+      // A code action the module says isn't available now (not this unit's go) is refused, as the UI would.
+      if (!intent.force && codeActionWhy(state, intent.procedure, intent.args ?? {}, from) !== undefined)
+        return null;
       return startScript(state, intent.procedure, intent.args ?? {}, from, rng);
     }
     case "script/answer": {
@@ -778,7 +786,9 @@ export function resolveIntent(
     }
     case "ability/apply": {
       const unit = state?.units[intent.unitId];
-      if (!unit || !unit.sheet?.abilities.some((a) => a.name === intent.ability)) return null;
+      // One of its abilities, or a core rule reminded for it (`ruleReminders`).
+      const rule = state && systemOf(state).ruleReminders?.some((r) => r.name === intent.ability);
+      if (!unit || !(rule || unit.sheet?.abilities.some((a) => a.name === intent.ability))) return null;
       return intent;
     }
     case "mission/set":

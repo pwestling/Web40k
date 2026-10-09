@@ -26,6 +26,7 @@ import { t, tn } from "../i18n";
 import { RollButton, useOwnDice } from "../companion/RealDice";
 import { TableAttackSetup } from "../companion/TableAttack";
 import { fireNext, useVolley, volleyWeapons } from "./volley";
+import { FightOrderNote } from "../systems/wh40k/FightOrderNote";
 
 /**
  * The attack sequence. Choosing a weapon and target is local; once declared,
@@ -127,6 +128,7 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
       {draft.all && draft.targetId && (
         <VolleyPick key={draft.targetId} attackerId={attacker.id} targetId={draft.targetId} />
       )}
+      {draft.kind === "melee" && <FightOrderNote unitId={attacker.id} />}
       {suggestion && (
         <SpecEditor
           key={`${weaponId}|${draft.targetId}`}

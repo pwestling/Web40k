@@ -615,7 +615,7 @@ export function startActionRun(
   const params = findProcedure(system, def.procedure).params ?? [];
   if (params.some((p) => !roles[p])) return null;
   try {
-    return startRun(procedureEnv(state, rng), def.procedure, roles);
+    return startRun(procedureEnv(state, rng), def.procedure, roles, { action: trigger.action });
   } catch {
     return null;
   }

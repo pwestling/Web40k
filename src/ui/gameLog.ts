@@ -424,6 +424,8 @@ function attackSummary(a: AttackState, state: GameState): string {
     const lost = a.damage.reduce((n, d) => n + d.lost, 0);
     parts.push(slain ? tn(slain, "{n} slain", "{n} slain") : tn(lost, "{n} wound lost", "{n} wounds lost"));
   }
+  // Rules that fired once it was over (Hazardous: "rolled 2", "1 mortal wound to ...").
+  for (const o of a.resolved ?? []) if (o.kind === "note" || o.kind === "reminder") parts.push(o.text);
   // The rules that changed the rolls, by name (UX 290).
   const because = becauseText(s);
   const params = {

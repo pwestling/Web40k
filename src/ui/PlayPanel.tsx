@@ -392,7 +392,7 @@ export function Reminders({
                 {t("Apply")}
               </button>
             )}
-            {live && canControl(r.owner) && teachable && (
+            {live && canControl(r.owner) && teachable && !r.rule && (
               <button
                 className="teach-button small"
                 title={t("Teach it this rule")}

@@ -775,6 +775,12 @@ export interface GameSystem {
    * moment with a manual-apply button. Per phase, the first matching entry wins.
    */
   abilityTimings?: AbilityTiming[];
+  /**
+   * Core rules the engine leaves to the players, reminded for each unit
+   * whose `if` holds in the phase they matter (40k: a Transport, a unit in
+   * Strategic Reserves). Shown with the ability reminders.
+   */
+  ruleReminders?: RuleReminder[];
   /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
   settings?: Record<string, unknown>;
 }
@@ -796,6 +802,22 @@ export interface AbilityTiming {
    * ("move"), or while it reacts ("reaction"). `phase`, if given, still applies.
    */
   on?: "activation" | "move" | "reaction";
+  /** Only while this holds, with "self" the ability's unit (and in an attack, "target" the other one). */
+  if?: Expr;
+}
+
+/** A core rule reminded per unit (see `GameSystem.ruleReminders`). */
+export interface RuleReminder {
+  id: Id;
+  name: string;
+  /** What to do, in the module's own words. */
+  text: string;
+  /** A phase id, or "deployment". */
+  phase: Id;
+  /** Whose turn, relative to the unit's owner. */
+  side?: "active" | "inactive" | "either";
+  /** For the units where this holds ("self" is the unit). */
+  if?: Expr;
 }
 
 // ---------------------------------------------------------------------------

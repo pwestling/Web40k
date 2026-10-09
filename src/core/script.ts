@@ -126,6 +126,44 @@ function codeProcedure(system: Id, id: Id): CodeProcedure | undefined {
   return procedures.get(system)?.[id];
 }
 
+const codeActions = new Map<Id, Map<Id, CodeAction>>();
+
+/** Code actions a system's module provides, so a raw `script/start` for one can be checked. */
+export function registerCodeActions(system: Id, actions: CodeAction[]): void {
+  const own = codeActions.get(system) ?? new Map<Id, CodeAction>();
+  for (const a of actions) own.set(a.id, a);
+  codeActions.set(system, own);
+}
+
+/**
+ * Why a code action can't be started now (its phases, `applies` or
+ * `available` say no), or undefined when it can or `procedure` isn't one.
+ * The UI and bots only offer available actions; this keeps a raw intent to them.
+ */
+export function codeActionWhy(
+  state: GameState,
+  procedure: Id,
+  args: Record<string, unknown>,
+  by: PlayerId,
+): string | undefined {
+  const system = systemOf(state).id;
+  const action = codeActions.get(system)?.get(procedure);
+  if (!action) return undefined;
+  const phase = currentSlot(state)?.id;
+  if (action.phases && !(phase && action.phases.includes(phase))) return "Not in this phase";
+  const unitId = typeof args.unit === "string" ? args.unit : undefined;
+  if (action.by === "unit" && (!unitId || state.units[unitId]?.owner !== by)) return "Not your unit";
+  const actor = { player: by, ...(unitId ? { unitId } : {}) };
+  try {
+    const view = gameView(state, system);
+    if (action.applies && !action.applies(view, actor)) return "Not for this unit";
+    const ok = action.available(view, actor);
+    return ok === true ? undefined : String(ok);
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
 /** Commands one step may run before it is stopped as a runaway loop. */
 const MAX_COMMANDS = 5000;
 

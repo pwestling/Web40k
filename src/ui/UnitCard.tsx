@@ -40,6 +40,7 @@ import { opposed } from "../core/teams";
 import { RollButton } from "../companion/RealDice";
 import { ChargeDeclare } from "./ChargeDeclare";
 import { StatusMenu } from "./StatusMenu";
+import { FightOrderNote } from "../systems/wh40k/FightOrderNote";
 import { t } from "../i18n";
 
 const STATS = ["M", "T", "SV", "W", "LD", "OC", "INV"];
@@ -392,6 +393,7 @@ export function UnitCard() {
       )}
       {/* Coherency, moves, Deep Strike: the table checks (src/ui/warnings.ts). */}
       <UnitWarnings unitId={unit.id} skip={["moveDistance"]} />
+      <FightOrderNote unitId={unit.id} />
 
       {!companion && (
         <div className="row wrap">

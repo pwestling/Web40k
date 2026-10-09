@@ -17,7 +17,7 @@ import {
 import { registerFunctions } from "../core/content/calls";
 import { extendSystem, listSystems, type SystemAdditions } from "../core/content/systems";
 import { currentSlot, systemOf } from "../core/content/turn";
-import { gameView, hookProcedures, registerCode, toldFor } from "../core/script";
+import { gameView, hookProcedures, registerCode, registerCodeActions, toldFor } from "../core/script";
 import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
 import type { CodeAction, GameModule, PackageApp, PackageContents, PanelSpec } from "../sdk";
@@ -155,6 +155,7 @@ export class SandboxEngine {
           if (contents.procedures) registerCode(system, contents.procedures);
           if (contents.functions) registerFunctions(system, contents.functions);
           registerCode(system, Object.fromEntries(actions.map((a) => [a.id, a.run])));
+          registerCodeActions(system, actions);
           this.actions.set(system, [
             ...(this.actions.get(system) ?? []).filter((a) => !actions.some((b) => b.id === a.id)),
             ...actions,

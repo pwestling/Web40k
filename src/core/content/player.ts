@@ -1,6 +1,7 @@
 import { woundsRemaining } from "../attack";
 import { isAlive } from "../units";
 import type { Ability, ArmyStratagem, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
+import { bool } from "./expr";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
 import { bindRules, hasKeywordPhrase, lookupRules, pattern, unitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
@@ -207,6 +208,8 @@ export interface AbilityReminder {
   ability: Ability;
   /** Set when a player has applied it this phase. */
   applied: boolean;
+  /** A core rule of the system (`ruleReminders`), not one of the unit's own abilities. */
+  rule?: true;
 }
 
 export const appliedKey = (ability: string) => `applied.${ability}`;
@@ -281,6 +284,22 @@ function atMoment(unit: Unit, on: NonNullable<AbilityTiming["on"]>): boolean {
   return !!s.acting && !s.reacting;
 }
 
+/** Whether a timing's (or rule reminder's) `if` holds for the unit; one that can't be judged holds. */
+function holdsFor(state: GameState, unit: Unit, cond: AbilityTiming["if"], other?: UnitId): boolean {
+  if (cond === undefined) return true;
+  const system = systemOf(state);
+  const target = other ? state.units[other] : undefined;
+  const ctx = evalCtx(state, system, {
+    self: unitView(state, system, unit),
+    ...(target ? { target: unitView(state, system, target) } : {}),
+  });
+  try {
+    return bool(cond, ctx);
+  } catch {
+    return true;
+  }
+}
+
 /**
  * Abilities whose text says they matter now, for both players: in the
  * current phase, or (timings with `on`) for the unit activated, moving or
@@ -295,13 +314,24 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
   for (const unit of Object.values(state.units)) {
     if (!isAlive(state, unit)) continue;
     const active = seatOf(state, unit.owner) === state.turn.activeSeat;
+    const sideFits = (side: AbilityTiming["side"]) =>
+      state.turn.round === 0 || !side || side === "either" || (side === "active") === active;
+    // The system's own rules that matter for this unit now (a Transport, a unit in reserves).
+    for (const r of system.ruleReminders ?? [])
+      if (r.phase === phase && sideFits(r.side) && holdsFor(state, unit, r.if))
+        out.push({
+          unitId: unit.id,
+          owner: unit.owner,
+          ability: { name: r.name, text: r.text },
+          applied: !!unit.status?.[appliedKey(r.name)],
+          rule: true,
+        });
     for (const ability of manualAbilities(system, unit)) {
       if (!damagedFits(state, unit, ability)) continue;
       const fits = timingsOf(system, ability).some((t) =>
-        t.on
+        (t.on
           ? !t.attack && (!t.phase || t.phase === phase) && atMoment(unit, t.on)
-          : t.phase === phase &&
-            (state.turn.round === 0 || !t.side || t.side === "either" || (t.side === "active") === active),
+          : t.phase === phase && sideFits(t.side)) && holdsFor(state, unit, t.if),
       );
       if (fits)
         out.push({
@@ -350,7 +380,10 @@ export function attackReminders(
       if (
         damagedFits(state, unit, ability) &&
         timingsOf(system, ability).some(
-          (t) => t.attack === role && (!t.weaponKind || t.weaponKind === weaponKind),
+          (t) =>
+            t.attack === role &&
+            (!t.weaponKind || t.weaponKind === weaponKind) &&
+            holdsFor(state, unit, t.if, role === "attacker" ? targetId : attackerId),
         )
       )
         out.push({
