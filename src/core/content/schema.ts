@@ -493,7 +493,13 @@ export type Segment =
       id: Id;
       pool: ActivationPool;
       activation: Segment[];
-      /** Actions allowed per activation (Conquest: two). */
+      /**
+       * Actions allowed per activation (Conquest: two). In a game of plain
+       * activations (no data action `activates`, a package game) they are
+       * action points: each unit code action spends its `cost` (default 1),
+       * and the activation goes on until they are spent or its player ends
+       * it. A number or a `const.` ref.
+       */
       actionsPerActivation?: Expr;
     }
   /** Secret simultaneous planning, e.g. ordering a command stack. */

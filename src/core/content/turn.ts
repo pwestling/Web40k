@@ -559,7 +559,11 @@ export function plainActivations(state: GameState): boolean {
   return !systemOf(state).actions.some((a) => a.activates !== undefined);
 }
 
-/** A unit of the side whose go it is starts its activation (moving, or a code action). */
+/**
+ * A unit of the side whose go it is starts its activation (moving, or a code action).
+ * Where the slot gives `actionsPerActivation`, they are its action points:
+ * `actionBudget` is set and `actionsTaken` starts at 0 (see `actionPointsLeft`).
+ */
 export function startActivation(state: GameState, unitId: string): GameState {
   const unit = state.units[unitId];
   if (!unit || unit.status?.acting || !plainActivations(state)) return state;
@@ -568,7 +572,34 @@ export function startActivation(state: GameState, unitId: string): GameState {
   if (state.players[unit.owner]?.seat !== state.turn.activeSeat) return state;
   // Someone else already acting: their activation goes on (the app warns).
   if (Object.values(state.units).some((u) => u.status?.acting)) return state;
-  const status = { ...unit.status, acting: true, activated: true };
+  const points = currentSlot(state)?.actionsPerActivation;
+  const status: Record<string, number | boolean> = { ...unit.status, acting: true, activated: true };
+  if (points !== undefined)
+    Object.assign(status, { actionBudget: constant(state, systemOf(state), points), actionsTaken: 0 });
+  return { ...state, units: { ...state.units, [unitId]: { ...unit, status } } };
+}
+
+/**
+ * Action points a unit has left in a game of plain activations whose slot
+ * gives `actionsPerActivation` (a skirmish game's "2 AP a go"), or null
+ * where activations don't count them. A unit not yet activated this round
+ * has them all. Code actions spend their `cost` (default 1); a game's own
+ * rules may spend more by setting the unit's `actionsTaken` status (moving,
+ * say, from a `moved` hook).
+ */
+export function actionPointsLeft(state: GameState, unit: Unit): number | null {
+  const points = currentSlot(state)?.actionsPerActivation;
+  if (points === undefined || !plainActivations(state)) return null;
+  if (!unit.status?.acting) return unit.status?.activated ? 0 : constant(state, systemOf(state), points);
+  return Math.max(0, Number(unit.status.actionBudget ?? 0) - Number(unit.status.actionsTaken ?? 0));
+}
+
+/** A unit's code action spends `cost` of its action points (1 when not given), where its go counts them. */
+export function spendActionPoints(state: GameState, unitId: string, cost = 1): GameState {
+  const unit = state.units[unitId];
+  if (!unit?.status?.acting || unit.status.actionBudget === undefined || !plainActivations(state))
+    return state;
+  const status = { ...unit.status, actionsTaken: Number(unit.status.actionsTaken ?? 0) + cost };
   return { ...state, units: { ...state.units, [unitId]: { ...unit, status } } };
 }
 

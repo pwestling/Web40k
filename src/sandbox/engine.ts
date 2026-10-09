@@ -17,7 +17,14 @@ import {
 import { registerFunctions } from "../core/content/calls";
 import { extendSystem, listSystems, type SystemAdditions } from "../core/content/systems";
 import { currentSlot, systemOf } from "../core/content/turn";
-import { gameView, hookProcedures, registerCode, registerCodeActions, toldFor } from "../core/script";
+import {
+  gameView,
+  hookProcedures,
+  pointsShort,
+  registerCode,
+  registerCodeActions,
+  toldFor,
+} from "../core/script";
 import { systemMatches } from "../packages/library";
 import { readManifest } from "../packages/manifest";
 import type { CodeAction, GameModule, PackageApp, PackageContents, PanelSpec } from "../sdk";
@@ -300,7 +307,7 @@ export class SandboxEngine {
       .filter((a) => a.by === "unit" && (!a.phases || (phase && a.phases.includes(phase))))
       .filter((a) => !a.applies || a.applies(view, actor))
       .map((a) => {
-        const available = a.available(view, actor);
+        const available = pointsShort(this.state, a, unitId) ?? a.available(view, actor);
         const targets = available === true && a.targets ? a.targets(view, actor) : [];
         return {
           id: a.id,

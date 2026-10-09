@@ -21,6 +21,10 @@ export interface RulebookUnit {
   points: number;
   /** Characteristic id to value, as the card shows them. */
   stats: Record<string, string>;
+  /** What the model is, when it isn't its name (a skirmish game's "Long-gun" called Ness). */
+  role?: string;
+  /** Its own rules besides its army's. */
+  abilities?: { name: string; text: string }[];
 }
 
 export interface RulebookArmy {
@@ -54,6 +58,10 @@ export interface RulebookDoc {
   terrain: { id: string; name: string; does: string }[];
   armies: RulebookArmy[];
   missions: RulebookMission[];
+  /** The game's words for armies, units and markers (Rulebook.words); see `wordsOf`. */
+  words?: NonNullable<Rulebook["words"]>;
+  /** The map's colours by terrain category, over TERRAIN_COLORS. */
+  terrainColors?: Record<string, string>;
   /** The starter table: footprints as rotated boxes, by terrain category. */
   map: {
     pieces: {
@@ -99,7 +107,11 @@ interface SourceUnit {
   name: string;
   base?: { diameterMm?: number };
   sheet?: { abilities?: { name: string; text: string }[]; points?: number };
-  models: { profile?: { chars?: Record<string, string> }; look?: StandInLook; height?: number }[];
+  models: {
+    profile?: { name?: string; chars?: Record<string, string> };
+    look?: StandInLook;
+    height?: number;
+  }[];
 }
 
 export function rulebookOf(source: RulebookSource): RulebookDoc {
@@ -117,6 +129,7 @@ export function rulebookOf(source: RulebookSource): RulebookDoc {
       rule: { name: rule.name, text: rule.text },
       units: a.units.map((u) => {
         const m = u.models[0];
+        const own = (u.sheet?.abilities ?? []).slice(1);
         return {
           name: u.name,
           count: u.models.length,
@@ -125,6 +138,8 @@ export function rulebookOf(source: RulebookSource): RulebookDoc {
           look: m?.look ?? { shape: "trooper" },
           points: u.sheet?.points ?? 0,
           stats: { ...(m?.profile?.chars ?? {}) },
+          ...(m?.profile?.name && m.profile.name !== u.name ? { role: m.profile.name } : {}),
+          ...(own.length ? { abilities: own.map((x) => ({ name: x.name, text: x.text })) } : {}),
         } as RulebookUnit;
       }),
     };
@@ -160,6 +175,8 @@ export function rulebookOf(source: RulebookSource): RulebookDoc {
     terrain: (system.terrain ?? []).map((t) => ({ id: t.id, name: t.name, does: does(t) })),
     armies,
     missions,
+    ...(book.words ? { words: book.words } : {}),
+    ...(book.terrainColors ? { terrainColors: book.terrainColors } : {}),
     map: {
       pieces: layout.terrain.map((p) => ({
         name: p.name,
@@ -187,8 +204,28 @@ export function statText(doc: RulebookDoc, id: string, value: string | undefined
   return value;
 }
 
-/** The terrain colours the map and sheets use, by category. */
-export const TERRAIN_COLORS: Record<string, string> = {
+/** A game's words for its armies, units and markers: its own, or Rift Lanterns'. */
+export function wordsOf(doc: RulebookDoc): NonNullable<Rulebook["words"]> {
+  return (
+    doc.words ?? {
+      army: "warband",
+      armies: "warbands",
+      unit: "unit",
+      units: "units",
+      marker: "lantern",
+      markers: "lanterns",
+      reach: 3,
+    }
+  );
+}
+
+/** A terrain category's colour on the map and sheets. */
+export function terrainColor(doc: RulebookDoc, category: string): string | undefined {
+  return doc.terrainColors?.[category] ?? TERRAIN_COLORS[category];
+}
+
+/** The terrain colours the map and sheets use, by category, unless a game gives its own. */
+const TERRAIN_COLORS: Record<string, string> = {
   ruin: "#8c877d",
   thicket: "#4f7a3a",
   wreck: "#7a4a2b",
@@ -222,13 +259,13 @@ export function mapSvg(doc: RulebookDoc, opts: { scale?: number; labels?: boolea
   for (const p of doc.map.pieces) {
     const deg = round1((-p.facing * 180) / Math.PI);
     out.push(
-      `<rect x="${round1((-p.width * k) / 2)}" y="${round1((-p.depth * k) / 2)}" width="${round1(p.width * k)}" height="${round1(p.depth * k)}" rx="${p.category === "thicket" ? round1(Math.min(p.width, p.depth) * k * 0.45) : 2}" fill="${TERRAIN_COLORS[p.category] ?? "#999"}" stroke="#1f2937" stroke-opacity="0.5" transform="translate(${X(p.x)} ${Y(p.y)}) rotate(${deg})"/>`,
+      `<rect x="${round1((-p.width * k) / 2)}" y="${round1((-p.depth * k) / 2)}" width="${round1(p.width * k)}" height="${round1(p.depth * k)}" rx="${p.category === "thicket" ? round1(Math.min(p.width, p.depth) * k * 0.45) : 2}" fill="${terrainColor(doc, p.category) ?? "#999"}" stroke="#1f2937" stroke-opacity="0.5" transform="translate(${X(p.x)} ${Y(p.y)}) rotate(${deg})"/>`,
     );
   }
   const lanterns = doc.missions[0]?.objectives ?? [];
   for (const o of lanterns) {
     out.push(
-      `<circle cx="${X(o.x)}" cy="${Y(o.y)}" r="${3 * k}" fill="#ffe9b0" fill-opacity="0.18" stroke="#ffe9b0" stroke-dasharray="6 5"/>`,
+      `<circle cx="${X(o.x)}" cy="${Y(o.y)}" r="${wordsOf(doc).reach * k}" fill="#ffe9b0" fill-opacity="0.18" stroke="#ffe9b0" stroke-dasharray="6 5"/>`,
     );
     out.push(`<circle cx="${X(o.x)}" cy="${Y(o.y)}" r="${0.6 * k}" fill="#ffd36b" stroke="#3b2f1a"/>`);
   }
@@ -293,25 +330,38 @@ export function rulebookMarkdown(doc: RulebookDoc): string {
   for (const s of doc.sections) {
     lines.push(`## ${s.title}`, "", md(s.text), "");
   }
-  lines.push("## The warbands", "");
+  const w = wordsOf(doc);
+  const Cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+  lines.push(`## The ${w.armies}`, "");
   lines.push(
-    `Each warband is about ${doc.armies[0]?.points ?? 100} points, ${doc.armies[0]?.units.length ?? 3} units.`,
+    `Each ${w.army} is about ${doc.armies[0]?.points ?? 100} points, ${doc.armies[0]?.units.length ?? 3} ${w.units}.`,
     "",
   );
-  lines.push("| Warband | Rule |", "| --- | --- |");
+  lines.push(`| ${Cap(w.army)} | Rule |`, "| --- | --- |");
   for (const a of doc.armies)
     lines.push(
       `| **${a.name}**${a.about ? `: ${a.about.replace(/\.$/, "").toLowerCase()}` : ""} | **${a.rule.name}.** ${a.rule.text} |`,
     );
   lines.push("");
-  lines.push(`| Unit | Warband | Models | ${stats.map((c) => c.name).join(" | ")} | Points |`);
-  lines.push(`| --- | --- | --- | ${stats.map(() => "---").join(" | ")} | --- |`);
+  // A skirmish game's named models: what each is and its own rules, in place of a model count.
+  const roles = doc.armies.some((a) => a.units.some((u) => u.role || u.abilities));
+  const head = roles ? `${Cap(w.unit)} | ${Cap(w.army)} | Role` : `Unit | ${Cap(w.army)} | Models`;
+  const tail = roles ? " | Points | Rules |" : " | Points |";
+  lines.push(`| ${head} | ${stats.map((c) => c.name).join(" | ")}${tail}`);
+  lines.push(`| --- | --- | --- | ${stats.map(() => "---").join(" | ")} | ---${roles ? " | --- |" : " |"}`);
   for (const a of doc.armies)
     for (const u of a.units)
       lines.push(
-        `| ${u.name} | ${a.name} | ${u.count} | ${stats.map((c) => statText(doc, c.id, u.stats[c.id])).join(" | ")} | ${u.points} |`,
+        `| ${u.name} | ${a.name} | ${roles ? (u.role ?? "") : u.count} | ${stats.map((c) => statText(doc, c.id, u.stats[c.id])).join(" | ")} | ${u.points} |${roles ? ` ${(u.abilities ?? []).map((x) => x.name).join(", ")} |` : ""}`,
       );
   lines.push("");
+  const abilities = new Map(
+    doc.armies.flatMap((a) => a.units.flatMap((u) => u.abilities ?? [])).map((x) => [x.name, x.text]),
+  );
+  if (abilities.size) {
+    for (const [name, text] of abilities) lines.push(`- **${name}.** ${text}`);
+    lines.push("");
+  }
   lines.push("## Missions", "");
   lines.push(
     `Both players deploy in a strip ${deployDepth(doc)}" deep along their long edge of a ${doc.table.width}" x ${doc.table.depth}" table.`,
@@ -321,7 +371,7 @@ export function rulebookMarkdown(doc: RulebookDoc): string {
   lines.push("");
   lines.push("## The starter table", "");
   lines.push(
-    "![The starter table: deployment strips at the top and bottom, the lanterns across the middle](table.svg)",
+    `![The starter table: deployment strips at the top and bottom, the ${w.markers} across the middle](table.svg)`,
     "",
   );
   for (const t of doc.terrain) lines.push(`- **${t.name}**: ${t.does}.`);

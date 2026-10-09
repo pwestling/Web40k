@@ -8,7 +8,8 @@ import {
   mapSvg,
   statText,
   textBlocks,
-  TERRAIN_COLORS,
+  terrainColor,
+  wordsOf,
   type RulebookDoc,
   type RulebookUnit,
 } from "./rulebook";
@@ -246,9 +247,10 @@ async function rulesPages(
     f.heading(s.title);
     f.words(s.text);
   }
-  f.heading("The warbands");
+  const w = wordsOf(doc);
+  f.heading(`The ${w.armies}`);
   f.words(
-    `Each warband is about ${doc.armies[0]?.points ?? 100} points. Its rule works for every unit in it.`,
+    `Each ${w.army} is about ${doc.armies[0]?.points ?? 100} points. Its rule works for every ${w.unit} in it.`,
   );
   for (const a of doc.armies) {
     f.room(12);
@@ -265,7 +267,7 @@ async function rulesPages(
         9,
       ) + 1.5;
   }
-  f.words("Each unit's numbers are on its card (the unit cards pages).", 8.5);
+  f.words(`Each ${w.unit}'s numbers are on its card (the ${w.unit} cards pages).`, 8.5);
   f.heading("Missions");
   f.words(
     `Both players deploy in a strip ${deployDepth(doc)}" deep along their long edge of a ${doc.table.width}" x ${doc.table.depth}" table. Pick a mission:`,
@@ -279,8 +281,8 @@ async function rulesPages(
   f.page.ctx.drawImage(map, MARGIN, f.y, mw, mh);
   // The key, beside the map.
   let ky = f.y + 4;
-  for (const t of doc.terrain.filter((x) => TERRAIN_COLORS[x.id])) {
-    f.page.ctx.fillStyle = TERRAIN_COLORS[t.id]!;
+  for (const t of doc.terrain.filter((x) => terrainColor(doc, x.id))) {
+    f.page.ctx.fillStyle = terrainColor(doc, t.id)!;
     f.page.ctx.fillRect(MARGIN + mw + 4, ky - 3, 4, 4);
     f.page.ctx.fillStyle = INK;
     ky = rich(f.page, `**${t.name}:** ${t.does}`, MARGIN + mw + 10, ky, f.width - mw - 10, 7.5) + 1;
@@ -288,6 +290,8 @@ async function rulesPages(
   f.y += mh + 4;
   return f.pages;
 }
+
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
 /** The size of a unit card: a playing card, 63 x 88 mm. */
 const CARD = { width: 63, height: 88 };
@@ -320,7 +324,7 @@ function unitCard(
   page.font(6.5);
   ctx.fillStyle = MUTED;
   ctx.fillText(
-    `${a.name} · ${u.count} ${u.count === 1 ? "model" : "models"} · ${u.points} pts`,
+    `${a.name} · ${u.role ?? `${u.count} ${u.count === 1 ? "model" : "models"}`} · ${u.points} pts`,
     x + 3,
     y + 15,
   );
@@ -347,7 +351,9 @@ function unitCard(
     ctx.fillText(statText(doc, c.id, u.stats[c.id]), bx + bw / 2, y + 57.5);
     ctx.textAlign = "left";
   });
-  rich(page, `**${a.rule.name}:** ${a.rule.text}`, x + 3, y + 64, CARD.width - 6, 6.5, 1.25);
+  // Its army's rule, then its own (named only, to fit: the rules sheet has their words).
+  const own = u.abilities?.length ? ` **${u.abilities.map((r) => r.name).join(", ")}.**` : "";
+  rich(page, `**${a.rule.name}:** ${a.rule.text}${own}`, x + 3, y + 64, CARD.width - 6, 6.5, 1.25);
   // A group of wound boxes per model, side by side, to tick off.
   const wounds = Number(u.stats.W) || 1;
   const box = 3.2;
@@ -411,7 +417,7 @@ function missionCard(page: Page, x: number, y: number, doc: RulebookDoc, m: Rule
   const yy = rich(page, m.summary, x + 3, y + 21, CARD.width - 6, 7.2, 1.3) + 1.5;
   rich(
     page,
-    `**Deploy:** a strip ${deployDepth(doc)}" deep along your long edge. **Lanterns:** ${m.objectives.length}, as on the map.`,
+    `**Deploy:** a strip ${deployDepth(doc)}" deep along your long edge. **${cap(wordsOf(doc).markers)}:** ${m.objectives.length}, as on the map.`,
     x + 3,
     yy,
     CARD.width - 6,
@@ -532,14 +538,15 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
     }
     ctx.textAlign = "left";
   };
-  // Lanterns: a token for each, 40 mm across, with their names.
+  // Lanterns (the game's markers): a token for each, 40 mm across, with their names.
+  const w = wordsOf(doc);
   page.font(10, 800);
-  ctx.fillText("Lanterns", MARGIN, y);
+  ctx.fillText(cap(w.markers), MARGIN, y);
   y += 4;
   const names = [...new Set(doc.missions.flatMap((m) => m.objectives.map((o) => o.label)))];
   names.forEach((n, i) => {
     const cx = MARGIN + 20 + i * 44;
-    circle(cx, y + 20, 20, inkSaver ? "#ffffff" : "#ffe9b0", "Lantern", n);
+    circle(cx, y + 20, 20, inkSaver ? "#ffffff" : "#ffe9b0", cap(w.marker), n);
     ctx.beginPath();
     ctx.arc(cx, y + 11, 4, 0, Math.PI * 2);
     ctx.fillStyle = "#ffb938";
@@ -623,12 +630,12 @@ function tokenPage(doc: RulebookDoc, paper: { width: number; height: number }, f
   ctx.fillStyle = MUTED;
   ctx.fillText("glue", MARGIN + 1.5, y + 18.5);
   ctx.fillStyle = INK;
-  ruler(page, MARGIN, y + 27, 3, `3": a lantern's reach`);
-  ruler(page, MARGIN + 3 * 25.4 + 6, y + 27, 1, `1": in a fight`);
+  ruler(page, MARGIN, y + 27, w.reach, `${w.reach}": a ${w.marker}'s reach`);
+  ruler(page, MARGIN + w.reach * 25.4 + 6, y + 27, 1, `1": in a fight`);
   y += 44;
   // Lantern standees: fold-over, like the figures, to stand on the table where the lanterns are.
   page.font(10, 800);
-  ctx.fillText("Lantern standees", MARGIN, y);
+  ctx.fillText(`${cap(w.marker)} standees`, MARGIN, y);
   y += 4;
   const W = 18;
   const H = 38;

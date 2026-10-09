@@ -52,8 +52,12 @@ export interface BotTuning {
   armyVp?: number;
   /** A unit's worth, when the sheet has no points. */
   unitValue?(state: GameState, unit: Unit): number;
-  /** Extra to add to the judgement, from `seat`'s side (a module's own sense of what matters). */
-  evaluate?(state: GameState, seat: number): number;
+  /**
+   * Extra to add to the judgement, from `seat`'s side (a module's own sense
+   * of what matters). `view` asks the table's geometry (sight, cover,
+   * distance) as a module's actions do, for judging positions by them.
+   */
+  evaluate?(state: GameState, seat: number, view: GameView): number;
   /** Inches a unit moves in a straight move it makes by hand, when there's no move action. */
   moveInches?(state: GameState, unit: Unit): number;
   /** How much it fears enemies in reach of its units (default 0.3; 0 turns it off). */
@@ -67,6 +71,12 @@ export interface BotTuning {
   sharp?: Partial<
     Record<"projectNext" | "projectLater" | "approach" | "contest" | "engage" | "threat" | "finish", number>
   >;
+  /**
+   * Height matters here (vantage from upper floors): the computer also tries
+   * moving its units up onto the nearest floors and blocks it can reach,
+   * climbing counted, and steps them down where a floor ends.
+   */
+  climbs?: boolean;
   /** Regiments turn to face where they march, or end facing the nearest enemy (Conquest: charges go at the front arc). */
   faceMoves?: boolean;
   /**
@@ -112,6 +122,14 @@ export interface CodeAction {
    * question with `need` answered no stops the action ("Can they see it?").
    */
   told?(view: GameView, actor: Actor, target: Id | undefined): TableQuestion[];
+  /**
+   * Action points it spends, in a game whose activations count them (the
+   * alternate slot's `actionsPerActivation`, e.g. 2 a go): 1 when missing,
+   * 0 for a free action. The engine refuses it when the unit has fewer left,
+   * and the unit's go ends once they're all spent. A rule may spend more
+   * by emitting `{ type: "unit/status", id, key: "actionsTaken", value }`.
+   */
+  cost?: number;
   run: CodeProcedure;
 }
 
@@ -144,6 +162,13 @@ export interface TurnHooks {
    * (whether it ended in contact) and, when it did, `targetId`.
    */
   charge?: CodeProcedure;
+  /**
+   * After a unit moves in the battle (dragged, or moved as a block; not set
+   * up, and not before round 1), for rules that answer a move: a guard's
+   * shot at a model that moves in its sight, or charging the move's cost to
+   * the mover's action points. Started with `{ unitId, round, player }`.
+   */
+  moved?: CodeProcedure;
   /**
    * Campaign rules (roadmap 24b), for games played for a campaign book. The
    * book starts `beforeGame` once the battle begins, and `afterGame` once it
@@ -408,4 +433,21 @@ export interface Rulebook {
   sections: { id: Id; title: string; text: string }[];
   /** The quick-reference card, a line each. */
   quickRef?: string[];
+  /**
+   * What the game calls its armies, units and objective markers, for the
+   * headings and tables made from its data (Rift Lanterns' warbands, units
+   * and lanterns when missing). `reach` is how near a model must be to hold
+   * a marker, in inches, for the print-and-play gauge.
+   */
+  words?: {
+    army: string;
+    armies: string;
+    unit: string;
+    units: string;
+    marker: string;
+    markers: string;
+    reach: number;
+  };
+  /** The starter map's colour for each of the game's terrain categories, over the built-in ones. */
+  terrainColors?: Record<string, string>;
 }

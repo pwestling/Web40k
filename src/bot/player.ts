@@ -18,12 +18,13 @@ import {
   type Unit,
 } from "../core";
 import { opposed } from "../core/teams";
+import { settleZ } from "../core/terrain";
 import { actingUnits, actionTargets, placeablePool, unitActions } from "../core/content/play";
 import { armyStratagem, playerActions } from "../core/content/player";
 import { fightOrder } from "../systems/wh40k/fight";
 import { fightPick } from "./fightPick";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
-import { gameView } from "../core/script";
+import { gameView, pointsShort } from "../core/script";
 import { seededRng } from "../sandbox/protocol";
 import { parseDice, type DiceExpr } from "../core/dice";
 import { gameModule, systemModule } from "../systems";
@@ -35,6 +36,7 @@ import {
   legal,
   noteTaken,
   offTurnMoves,
+  perches,
   phaseKey,
   pointless,
   reaches,
@@ -1325,7 +1327,9 @@ class Thinker implements Policy, Analyst {
         mine.has(u.owner) &&
         (!only || u.id === only) &&
         standing(state, u) &&
-        !u.status?.reserves &&
+        // In reserve, a unit can still take a code action that brings it on (a hidden model emerging) in a
+        // game of plain activations, where it has a go to spend; it doesn't move or take data actions.
+        (!u.status?.reserves || plain) &&
         // Plain activations: each unit has one go a round.
         !(plain && !u.status?.acting && u.status?.activated),
     );
@@ -1333,6 +1337,7 @@ class Thinker implements Policy, Analyst {
     const fighting = /combat|fight|melee/i.test(slot);
     const out: Candidate[] = [];
     for (const u of units) {
+      if (u.status?.reserves) continue;
       let moveAction = false;
       // A charge rolled that reaches: the move into contact comes next.
       const land = landing(state, u, !!this.answers);
@@ -1464,6 +1469,10 @@ class Thinker implements Policy, Analyst {
       )
         for (const m of [
           ...destinations(state, u, moveInches(state, u, tuningOf(state.system))),
+          // Up onto floors, in a game where height matters (BotTuning.climbs).
+          ...(tuningOf(state.system)?.climbs
+            ? perches(state, u, moveInches(state, u, tuningOf(state.system)))
+            : []),
           // Into contact, for a unit that fights hand to hand.
           ...(Object.values(u.sheet?.weapons ?? {}).some((w) => w.kind === "melee")
             ? enemiesWithin(state, u, moveInches(state, u, tuningOf(state.system))).map((e) =>
@@ -1529,7 +1538,7 @@ class Thinker implements Policy, Analyst {
               )
               .filter((a) => !a.applies || a.applies(view, actor))
               .map((a) => {
-                const available = a.available(view, actor);
+                const available = pointsShort(state, a, u.id) ?? a.available(view, actor);
                 return {
                   id: a.id,
                   available,
@@ -1717,6 +1726,7 @@ export function destinations(state: GameState, u: Unit, inches: number): BotMove
   const frame = tuningOf(state.system)?.faceMoves ? blockFrame(state, u) : null;
   const pivot = frame ? unitCentre(state, u) : c;
   const ground = terrainCheck(state, u);
+  const climbs = !!tuningOf(state.system)?.climbs;
   const out: BotMove[] = [];
   for (const g of goals) {
     const dist = Math.hypot(g.x - c.x, g.y - c.y);
@@ -1771,7 +1781,12 @@ export function destinations(state: GameState, u: Unit, inches: number): BotMove
       out.push({
         intent: {
           type: "models/move",
-          moves: ms.map((m, i) => ({ id: m.id, to: step.to[i]! })),
+          // A model up on a floor steps down where the floor ends, as a drag does (core/terrain.ts settleZ).
+          moves: ms.map((m, i) =>
+            (m.z ?? 0) > 0 || climbs
+              ? { id: m.id, to: step.to[i]!, z: settleZ(state.terrain, step.to[i]!, m.z ?? 0) }
+              : { id: m.id, to: step.to[i]! },
+          ),
         } as Intent,
         as: u.owner,
         kind: "move",

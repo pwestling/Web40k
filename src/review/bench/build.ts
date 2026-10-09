@@ -26,11 +26,14 @@ export interface Position {
 
 class Reached extends Error {}
 
+/** A whole game's package source, for a game that isn't built in. */
+type Package = Parameters<typeof playMatch>[0]["systemPkg"];
+
 /** The game as Steady plays it from the sample armies, stopped at the first table `at` accepts. */
 async function reach(
   system: string,
   at: (s: GameState) => boolean,
-  opts: { seed?: number; first?: number } = {},
+  opts: { seed?: number; first?: number; systemPkg?: Package } = {},
 ): Promise<{ record: GameRecord; state: GameState }> {
   const seed = opts.seed ?? 1;
   let got: { record: GameRecord; state: GameState } | null = null;
@@ -45,10 +48,14 @@ async function reach(
     },
     saw: (s, m) => p.saw?.(s, m),
   });
-  await playMatch({ system, seed, ...(opts.first !== undefined ? { first: opts.first } : {}) }, (start) => [
-    stop(botPolicy("steady", start, 0, { seed })),
-    stop(botPolicy("steady", start, 1, { seed: seed + 1 })),
-  ]);
+  const pkg = opts.systemPkg ? { systemPkg: opts.systemPkg } : {};
+  await playMatch(
+    { system, seed, ...pkg, ...(opts.first !== undefined ? { first: opts.first } : {}) },
+    (start) => [
+      stop(botPolicy("steady", start, 0, { seed })),
+      stop(botPolicy("steady", start, 1, { seed: seed + 1 })),
+    ],
+  );
   if (!got) throw new Error(`${system}: never reached the position asked for`);
   return got;
 }
@@ -287,17 +294,20 @@ const reached = new Map<string, Promise<{ record: GameRecord; state: GameState }
 /**
  * A game reached once (and kept) by `key`, then laid out afresh by `lay`:
  * terrain cleared, each unit's turn flags cleared but those `keep` matches.
+ * `systemPkg` benches a whole game from a package (#69): it is loaded for the
+ * game reached and stays registered, code and hooks, for the judging after.
  */
 export async function scene(
   system: string,
   key: string,
   at: (s: GameState) => boolean,
   lay: (t: Table, id: (name: string) => string) => void,
-  opts: { first?: number; keep?: RegExp; terrain?: boolean } = {},
+  opts: { first?: number; keep?: RegExp; terrain?: boolean; systemPkg?: Package } = {},
 ) {
   const k = `${system}:${key}`;
   let got = reached.get(k);
-  if (!got) reached.set(k, (got = reach(system, at, { first: opts.first ?? 0 })));
+  const pkg = opts.systemPkg ? { systemPkg: opts.systemPkg } : {};
+  if (!got) reached.set(k, (got = reach(system, at, { first: opts.first ?? 0, ...pkg })));
   const { record, state } = await got;
   const t = new Table(state).fresh(opts.keep);
   if (!opts.terrain) t.noTerrain();

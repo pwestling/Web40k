@@ -3,6 +3,7 @@ import { revealMatches } from "./secrets";
 import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
 import {
+  actingUnits,
   applyAction,
   applyDeferred,
   applyRunOutcomes,
@@ -18,9 +19,11 @@ import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import {
   advanceTurn,
   endActivation,
+  actionPointsLeft,
   initialResources,
   passTurn,
   plainActivations,
+  spendActionPoints,
   startActivation,
   systemOf,
 } from "./content/turn";
@@ -619,11 +622,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return setRun(state, event.run);
     case "script/step": {
       // A unit's code action starts its activation, and the activation ends with it (UX 324).
+      // With action points (actionsPerActivation), the action spends its cost and the go lasts while any are left.
       const unit = event.unit ?? (state.script?.args.unit as string | undefined);
-      const begun = event.unit ? startActivation(state, event.unit) : state;
+      const begun = event.unit
+        ? spendActionPoints(startActivation(state, event.unit), event.unit, event.cost)
+        : state;
       const after = { ...event.events.reduce(applyEvent, begun), script: event.script };
+      if (event.script || !plainActivations(after)) return after;
       const acting = unit ? after.units[unit]?.status?.acting : false;
-      return !event.script && acting && plainActivations(after) ? endActivation(after) : after;
+      if (acting && actionPointsLeft(after, after.units[unit!]!) === null) return endActivation(after);
+      // A go ends once its points are spent (by the action, or a rule such as a move's cost), or its unit is gone.
+      const done = actingUnits(after).some(
+        (u) =>
+          actionPointsLeft(after, u) === 0 ||
+          !u.modelIds.some((id) => after.models[id] && !after.models[id]!.destroyed),
+      );
+      return done ? endActivation(after) : after;
     }
     case "log/note":
     case "campaign/award":

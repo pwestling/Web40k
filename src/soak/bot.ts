@@ -1,4 +1,5 @@
 import { isAlive } from "../core/units";
+import { settleZ, toWorld } from "../core/terrain";
 import {
   closeDoor,
   commitmentOf,
@@ -305,11 +306,16 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     Object.values(state.units).filter((u) => mine(u.owner) && isAlive(state, u) && !u.status?.reserves),
   );
   const acting = actingUnits(state);
+  // Units in reserve still have a go in plain activations: a code action may bring them on (emerging).
+  const reserved =
+    round > 0 && plainActivations(state)
+      ? Object.values(state.units).filter((u) => mine(u.owner) && isAlive(state, u) && u.status?.reserves)
+      : [];
   // Taking turns at activating units, ▶ ends the whole round: a tidy bot with units still to go gives
   // one of them its go (it holds) instead, so none of its units, or the other side's, are skipped (UX 355).
   const holding =
     round > 0 && ctx.tidy && !acting.length && plainActivations(state)
-      ? units.find((u) => !u.status?.activated && !u.status?.acting)
+      ? [...units, ...reserved].find((u) => !u.status?.activated && !u.status?.acting)
       : undefined;
   const next: BotMove[] = holding
     ? [
@@ -398,13 +404,19 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     yield* codeMoves(state, ctx, units);
   }
   if (ctx.wholeGame && ctx.idle < 6) {
-    yield* codeMoves(state, ctx, units);
+    const code = [...codeMoves(state, ctx, acting.length ? acting : [...reserved, ...units])];
+    // With action points (#69) a go mixes moves and actions: a moving unit sometimes moves before it acts.
+    const first = acting.some((u) => u.status?.actionBudget !== undefined) && ctx.rng() < 0.4;
+    if (!first) yield* code;
     const u = (acting.length ? acting : units)[Math.floor(ctx.rng() * (acting.length || units.length))];
     if (ctx.went?.round !== round) ctx.went = { round, units: new Set() };
     if (u && !(ctx.tidy && ctx.went.units.has(u.id))) {
       ctx.went.units.add(u.id);
-      yield* shifted(state, moveUnit(state, u, { ...ctx, tidy: true }, 6));
+      // Now and then up onto a floor within reach, so moves with heights come up (#69).
+      const up = ctx.rng() < 0.25 ? pick(ctx.rng, perches(state, u, 12)) : undefined;
+      yield* shifted(state, up ?? moveUnit(state, u, { ...ctx, tidy: true }, 6));
     }
+    if (first) yield* code;
   }
   // ...and charges are declared more often than not, so fights (and crowded ones) come up.
   if (/move/i.test(currentSlot(state)?.id ?? "") && ctx.rng() < 0.5)
@@ -627,6 +639,42 @@ function* stratagems(state: GameState, ctx: BotContext, players: PlayerId[]): Ge
         kind: `stratagem:${o.def.id}`,
       };
     }
+}
+
+/**
+ * Up onto a floor (BotTuning.climbs): the tops of the nearest few floors and
+ * blocks a unit can reach with `inches` of movement, climbing counted, each
+ * model keeping its place in the unit and standing on the floor's top.
+ */
+export function perches(state: GameState, u: Unit, inches: number): BotMove[] {
+  const ms = aliveModels(state, u);
+  if (!ms.length) return [];
+  const c = {
+    x: ms.reduce((n, m) => n + m.position.x, 0) / ms.length,
+    y: ms.reduce((n, m) => n + m.position.y, 0) / ms.length,
+  };
+  const z0 = ms[0]!.z ?? 0;
+  const spots: { d: number; at: { x: number; y: number }; top: number }[] = [];
+  for (const piece of state.terrain)
+    for (const solid of piece.solids) {
+      if (solid.kind !== "floor" && solid.kind !== "block") continue;
+      const top = Math.round((solid.z + solid.h) * 100) / 100;
+      if (top < 1 || Math.abs(top - z0) < 0.3) continue;
+      const at = toWorld(piece, { x: solid.x, y: solid.y });
+      const d = Math.hypot(at.x - c.x, at.y - c.y) + Math.abs(top - z0);
+      if (d <= inches + 0.05) spots.push({ d, at, top });
+    }
+  return spots
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 3)
+    .flatMap(({ at, top }) => {
+      const moves = ms.map((m) => {
+        const to = { x: at.x + m.position.x - c.x, y: at.y + m.position.y - c.y };
+        return { id: m.id, to, z: settleZ(state.terrain, to, top) };
+      });
+      if (moves.some((m) => Math.abs(m.z - top) > 0.05)) return [];
+      return [{ intent: { type: "models/move", moves } as Intent, as: u.owner, kind: "move" }];
+    });
 }
 
 /** Move a unit as a block by up to `inches` in a random direction, staying on the table. */

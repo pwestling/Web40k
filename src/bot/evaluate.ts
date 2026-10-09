@@ -1,6 +1,7 @@
 import type { GameState, Model, Unit } from "../core";
 import { maxWounds, woundsRemaining } from "../core/attack";
 import { systemOf } from "../core/content/turn";
+import { gameView } from "../core/script";
 import { inchesPerUnit } from "../core/content/runtime";
 import type { BotTuning, Mission } from "../sdk";
 
@@ -205,7 +206,7 @@ export function evaluate(state: GameState, j: Judge): number {
   let score = side(j.seat);
   for (const s of enemySeats) score -= side(s) / enemySeats.length;
   score += position(state, j);
-  if (j.tuning?.evaluate) score += j.tuning.evaluate(state, j.seat);
+  if (j.tuning?.evaluate) score += j.tuning.evaluate(state, j.seat, gameView(state, systemOf(state).id));
   return score;
 }
 

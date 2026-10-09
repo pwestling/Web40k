@@ -56,6 +56,8 @@ An action is a button on the unit card:
 
 `applies`, `available` and `targets` run every time the card redraws, so keep them quick and side-effect free.
 
+**Action points.** In a game of plain activations (an `alternate` slot whose units take their goes one at a time), the slot's `actionsPerActivation` is how many action points each go has: a number, or a `const.` ref. Moving or taking an action starts the unit's go with that many, every action spends its `cost` (1 when it doesn't say; 0 for a free one), and the go lasts while any are left. The host refuses an action that costs more than the unit has left, and the card greys it out with the reason. A go also ends when its unit is taken out in the middle of it. The points are the unit's `actionBudget` and `actionsTaken` statuses: a rule can spend more (moving further than its Move, say) or give one back by emitting `unit/status` for `actionsTaken`. Without `actionsPerActivation`, a go is one move and one action, as before.
+
 ## Procedures: rules as generators
 
 A rule is a generator function. It yields commands and receives each command's result back:
@@ -95,8 +97,11 @@ hooks: {
   phaseEnd: { combat: function* (ctx, args) { ... } },
   roundStart: function* (ctx, args) { ... },
   activationEnd: function* (ctx, args) { ... }, // games where units activate one at a time
+  moved: function* (ctx, args) { ... }, // args: { unitId, round, player }
 }
 ```
+
+`moved` runs after each move of a unit in the battle (not while setting up), once the move is on the table: what a move costs in action points, or a guard who sees it.
 
 The host starts them one after another, in this order: phase end, round start, phase start. If one asks a question, the next waits for the answer. `args.player` is the player whose turn it is.
 
@@ -171,9 +176,12 @@ The rest of `app` (`PackageApp` in `src/sdk`) is optional, and all of it runs in
 - `missions` are picked at setup, like a built-in game's (`Mission` in `src/sdk`). They run in the sandbox: `setup` once for the system's `defaultTable` (scaled to the table played on), and each `suggest` as the game goes, with the answers handed to the app.
 - `importRoster(fileName, data)` reads an army list file (`data` is its bytes) and returns a roster shaped like `sample`'s. The lobby's **Add an army** uses it for the package's game.
 - `rankRules(game, unit)` returns `{ width, maxBonus }` for rank-and-file games, and `leaving(game)` lists the units that must leave the table. Both run after every event, and the app reads their latest answers.
+- `rulebook` is the game's rules in words, for its rules page and print and play (`Rulebook` in `src/sdk`; `pnpm rulebook` writes `RULES.md` from it). `words` names the game's armies, units and markers in the page's headings, and `terrainColors` colours its own terrain categories on the starter map.
 - `sidePanel(view)` describes a panel of the game's own, as data: a `title`, text `lines`, and `buttons` that each start one of the package's procedures (`{ label, procedure, args?, player?, disabled? }`). It is redrawn after every event; return `null` to hide it.
 
-[`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game, and [`games/rift-lanterns`](../games/rift-lanterns/README.md) is a whole one, with factions, missions and stand-in figures.
+The module's `bot` (`BotTuning` in `src/sdk`) tunes the computer player for the game. Among its fields, `evaluate(state, seat, view)` adds the game's own sense of the table to the computer's (the `view` answers sight and cover as rules do), `moveInches(state, unit)` says how far a unit goes in a move, and `climbs: true` has it try moves up onto terrain floors (a game where height matters).
+
+[`examples/packages/arena.js`](../examples/packages/arena.js) is a complete small game, and [`games/rift-lanterns`](../games/rift-lanterns/README.md) is a whole one, with factions, missions and stand-in figures. [`games/brinewatch`](../games/brinewatch/README.md) is a second, with action points, guards, hidden deployment and a campaign.
 
 ## The sandbox
 

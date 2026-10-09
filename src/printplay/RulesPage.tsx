@@ -159,7 +159,8 @@ export default function RulesPage({
         ))}
 
         <section>
-          <h2>{t("The warbands")}</h2>
+          {/* The game's own word for its armies (Rulebook.words), in its own language like the rest. */}
+          <h2>{doc.words ? `The ${doc.words.armies}` : t("The warbands")}</h2>
           {doc.armies.map((a) => (
             <div key={a.name} className="warband" style={{ borderColor: a.color }}>
               <h3 style={{ color: a.color }}>{a.name}</h3>
@@ -174,8 +175,11 @@ export default function RulesPage({
                     <div>
                       <strong>{u.name}</strong>{" "}
                       <span className="muted small">
-                        × {u.count} · {t("{points} pts", { points: u.points })}
+                        {u.role ?? `× ${u.count}`} · {t("{points} pts", { points: u.points })}
                       </span>
+                      {u.abilities?.length ? (
+                        <span className="muted small"> · {u.abilities.map((r) => r.name).join(", ")}</span>
+                      ) : null}
                       <table className="stats">
                         <thead>
                           <tr>

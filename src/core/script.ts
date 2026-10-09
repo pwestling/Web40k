@@ -17,7 +17,7 @@ import { BadFace, NeedDice, parseDice, rollDice } from "./dice";
 import { chargeFor } from "./charge";
 import { modelView, tableGeometry, unitView, type UnitView } from "./content/runtime";
 import type { GeoQuery, Id } from "./content/schema";
-import { currentSlot, systemOf } from "./content/turn";
+import { actionPointsLeft, currentSlot, systemOf } from "./content/turn";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import type { GameState, PlayerId } from "./types";
 import { opposed } from "./teams";
@@ -82,6 +82,8 @@ export interface ScriptStep {
   unit?: Id;
   /** And the unit it targets, if it named one: the game review judges the choice by it. */
   target?: Id;
+  /** On that step: the action points it spends where activations count them (CodeAction.cost; 1 when missing). */
+  cost?: number;
 }
 
 /** A module's own state, `state.modules[module][key]`. */
@@ -163,11 +165,24 @@ export function codeActionWhy(
   try {
     const view = gameView(state, system);
     if (action.applies && !action.applies(view, actor)) return "Not for this unit";
+    const short = unitId ? pointsShort(state, action, unitId) : undefined;
+    if (short) return short;
     const ok = action.available(view, actor);
     return ok === true ? undefined : String(ok);
   } catch (e) {
     return e instanceof Error ? e.message : String(e);
   }
+}
+
+/**
+ * Why a unit can't afford a code action's `cost` from its action points
+ * (TurnSlot actionsPerActivation), or undefined. The host refuses such an
+ * action; the unit card and the computer don't offer it.
+ */
+export function pointsShort(state: GameState, action: CodeAction, unitId: Id): string | undefined {
+  const unit = state.units[unitId];
+  const left = unit && action.by === "unit" ? actionPointsLeft(state, unit) : null;
+  return left !== null && left < (action.cost ?? 1) ? "Not enough action points left" : undefined;
 }
 
 /** Commands one step may run before it is stopped as a runaway loop. */
@@ -190,11 +205,13 @@ export function startScript(
   };
   const unit = typeof args.unit === "string" && state.units[args.unit] ? args.unit : undefined;
   const target = typeof args.target === "string" && state.units[args.target] ? args.target : undefined;
+  const cost = codeActions.get(script.system)?.get(procedure)?.cost;
   return {
     ...stepScript(script, state, rng),
     started: procedure,
     ...(unit ? { unit } : {}),
     ...(unit && target ? { target } : {}),
+    ...(unit && cost !== undefined && cost !== 1 ? { cost } : {}),
   };
 }
 
@@ -492,6 +509,8 @@ export interface HookTable {
   activationEnd?: Id[];
   /** After a charge roll or charge move (TurnHooks.charge). */
   charge?: Id[];
+  /** After a unit moves in the battle (TurnHooks.moved). */
+  moved?: Id[];
   /** Campaign games only: started by the campaign book, not by turns (src/campaign/rules.ts). */
   beforeGame?: Id[];
   afterGame?: Id[];
@@ -535,6 +554,7 @@ export function hookProcedures(
   if (h.roundStart) table.roundStart = [add("roundStart", h.roundStart)];
   if (h.activationEnd) table.activationEnd = [add("activationEnd", h.activationEnd)];
   if (h.charge) table.charge = [add("charge", h.charge)];
+  if (h.moved) table.moved = [add("moved", h.moved)];
   if (h.beforeGame) table.beforeGame = [add("beforeGame", h.beforeGame)];
   if (h.afterGame) table.afterGame = [add("afterGame", h.afterGame)];
   return { procedures, table };
@@ -572,6 +592,17 @@ export function hookIntents(before: GameState, after: GameState, event: GameEven
             args: { ...args, round: after.turn.round, player: active(after) },
           });
   }
+  if (tables.some((t) => t.moved?.length)) {
+    const unitId = movedUnit(after, event);
+    if (unitId)
+      for (const t of tables)
+        for (const procedure of t.moved ?? [])
+          out.push({
+            type: "script/start",
+            procedure,
+            args: { unitId, round: after.turn.round, player: active(after) },
+          });
+  }
   // Turns move on turn events, and when a code action ends a unit's activation (UX 324).
   const turnEvent = event.type.startsWith("turn/") || event.type === "script/step";
   if (!turnEvent || event.type === "turn/prev") return out;
@@ -597,6 +628,15 @@ export function hookIntents(before: GameState, after: GameState, event: GameEven
     for (const t of tables) start(t.roundStart, after, now);
   if (after.turn.round > 0 && now) for (const t of tables) start(t.phaseStart?.[now], after, now);
   return out;
+}
+
+/** The unit a battle move moved (a drag, a block move), or null: setup moves and moves before round 1 don't count. */
+function movedUnit(after: GameState, event: GameEvent): Id | null {
+  if (after.turn.round < 1 || after.turn.round > (Number(systemOf(after).turn.rounds) || Infinity))
+    return null;
+  if (event.type === "unit/move") return after.units[event.id] ? event.id : null;
+  if (event.type !== "models/move" || event.setup) return null;
+  return after.models[event.moves[0]?.id ?? ""]?.unitId ?? null;
 }
 
 /** What TurnHooks.charge is told about an event, or null when it isn't a charge roll or move. */
