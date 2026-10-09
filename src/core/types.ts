@@ -536,6 +536,8 @@ export interface GameState {
   campaign?: CampaignRef;
   /** A ranked game (#65): the players' keys, the result and their signatures (core/ranked.ts). */
   ranked?: RankedState;
+  /** An event game's armies (#67): each player's deployed army hash, checked against what they registered. */
+  eventArmies?: Record<PlayerId, string>;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }
@@ -603,6 +605,8 @@ export interface GameSettings {
   points?: number;
   /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
   clock?: ClockSettings | null;
+  /** An online event's game (#67): which event, round and table, so its ranked result settles that pairing. */
+  event?: EventTable | null;
   /**
    * Table companion (#37): the players have real models on a real table. No
    * 3D board; range, sight and moves are theirs to judge, and positions here
@@ -742,4 +746,12 @@ export interface Ruler {
   to: Vec2;
   fromModel?: ModelId;
   toModel?: ModelId;
+}
+
+/** An online event's table (#67): the event, its round (from 1) and table number (from 1). */
+export interface EventTable {
+  id: string;
+  name: string;
+  round: number;
+  table: number;
 }

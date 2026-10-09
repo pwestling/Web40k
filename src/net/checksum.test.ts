@@ -74,4 +74,34 @@ describe("state checksum", () => {
     expect(client.log.events.at(-1)?.event).toEqual({ type: "player/resync", player: "c" });
     expect(client.current.table.width).toBe(host.current.table.width);
   });
+
+  it("drops a mismatch found before the rules arrived, once the log is folded with them", async () => {
+    const net = createLoopbackNetwork();
+    let status: NetStatus | undefined;
+    const host = new Session({ transport: net.connect("h"), role: "host", onChange: () => {}, graceMs: 10 });
+    const client = new Session({
+      transport: net.connect("c"),
+      role: "client",
+      onChange: () => {},
+      graceMs: 10,
+      onNet: (s) => (status = s),
+    });
+    await sleep(30);
+    host.dispatch({ type: "player/join", player: { id: "h", name: "Ann", color: "#00f", seat: 0 } });
+    // The client's table is the stand-in's until its rules package loads.
+    (client as unknown as { state: GameState }).state = {
+      ...client.current,
+      table: { ...client.current.table, width: 61 },
+    };
+    for (let i = 0; i < 10; i++) host.dispatch({ type: "dice/roll", count: 1, sides: 6 });
+    await sleep(30);
+    expect(status?.desync).toMatchObject({ seq: 10 });
+    // The package arrives: the whole log folds again, and the tables agree.
+    client.refold();
+    expect(status?.desync ?? null).toBeNull();
+    for (let i = 0; i < 10; i++) host.dispatch({ type: "dice/roll", count: 1, sides: 6 });
+    await sleep(30);
+    expect(status?.desync ?? null).toBeNull();
+    expect(client.checksumAt(20)).toBe(host.checksumAt(20));
+  });
 });

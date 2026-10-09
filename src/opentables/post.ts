@@ -47,6 +47,8 @@ export interface TablePost {
   /** The poster's player key and its signature on `postProof(id)`, so their rating can show. */
   player?: PlayerKey;
   proof?: string;
+  /** An online event's game (#67): its top tables show on Live now as such. */
+  event?: { id: string; name: string; round: number; table: number };
   /** When the post goes away on its own (epoch ms). */
   expires: number;
 }
@@ -166,7 +168,20 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
     ...(isPlayerKey(r.player) && typeof r.proof === "string" && /^[A-Za-z0-9+/=]{40,200}$/.test(r.proof)
       ? { player: r.player, proof: r.proof }
       : {}),
+    ...(live && readEvent(r.event) ? { event: readEvent(r.event)! } : {}),
   };
+}
+
+/** A post's event line (#67), checked like the rest. */
+function readEvent(v: unknown): TablePost["event"] | null {
+  const e = v as Record<string, unknown> | null;
+  if (!e || typeof e !== "object") return null;
+  const id = typeof e.id === "string" && /^[a-z0-9]{8,40}$/.test(e.id) ? e.id : null;
+  const name = line(e.name, 60);
+  const ok = (x: unknown, max: number) => typeof x === "number" && Number.isInteger(x) && x >= 1 && x <= max;
+  return id && name && ok(e.round, 20) && ok(e.table, 500)
+    ? { id, name, round: e.round as number, table: e.table as number }
+    : null;
 }
 
 /** A post's game-in-progress line, checked like the rest. */

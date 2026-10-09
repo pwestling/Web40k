@@ -32,6 +32,8 @@ export interface RankedResult {
   /** SHA-256 (hex) of the game's events up to the result (core/ranked replayText). */
   replay: string;
   at: number;
+  /** An online event's game (#67): the pairing this result settles. Part of what both sign. */
+  event?: { id: string; round: number; table: number };
 }
 
 /**
@@ -114,6 +116,15 @@ export function rankedResultOf(state: GameState, replay: string, at: number): Ra
     winner: winnerOf(players),
     replay,
     at,
+    ...(state.settings.event
+      ? {
+          event: {
+            id: state.settings.event.id,
+            round: state.settings.event.round,
+            table: state.settings.event.table,
+          },
+        }
+      : {}),
   };
 }
 
@@ -146,6 +157,22 @@ export function canonResult(raw: unknown): string | null {
   if (r.winner !== winnerOf(players as [RankedPlayer, RankedPlayer])) return null;
   if (typeof r.replay !== "string" || !/^[a-f0-9]{64}$/.test(r.replay)) return null;
   if (!Number.isFinite(r.at) || r.at! <= 0) return null;
+  const e = r.event;
+  if (
+    e !== undefined &&
+    !(
+      e &&
+      typeof e.id === "string" &&
+      /^[a-z0-9]{8,40}$/.test(e.id) &&
+      Number.isInteger(e.round) &&
+      e.round >= 1 &&
+      e.round <= 20 &&
+      Number.isInteger(e.table) &&
+      e.table >= 1 &&
+      e.table <= 500
+    )
+  )
+    return null;
   return JSON.stringify({
     v: 1,
     system: r.system,
@@ -155,5 +182,7 @@ export function canonResult(raw: unknown): string | null {
     winner: r.winner,
     replay: r.replay,
     at: Math.round(r.at!),
+    // Only when there is one, so results from before events sign the same.
+    ...(e ? { event: { id: e.id, round: e.round, table: e.table } } : {}),
   });
 }

@@ -2,7 +2,8 @@ import { openLadder } from "../player/open";
 import { myKey, signAsMe, signedBy, useCard } from "../player/card";
 import { signsLine, useRating, useSignRate } from "../ranked/store";
 import { PROVISIONAL, type Rating } from "../ranked/ratings";
-import { notRanked, playRanked, useRankedAsk } from "../ranked/RankedGame";
+import { notRanked, offerOnCard, playRanked, useRankedAsk } from "../ranked/RankedGame";
+import { EventsSection } from "../events/EventsUI";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { systemOf, type GameState } from "../core";
@@ -161,7 +162,14 @@ export function OpenTablesBoard({
   // Games under way, to watch (#64): above the tables looking for players.
   const liveNow = shown
     .filter((p) => isLiveGame(p) && (!game || p.system === game) && (!lang || p.lang === lang))
-    .sort((a, b) => (b.live?.watching ?? 0) - (a.live?.watching ?? 0) || b.at - a.at);
+    // An event's top tables first, the top of each event first (#67); then the most watched.
+    .sort(
+      (a, b) =>
+        Number(!a.event) - Number(!b.event) ||
+        (a.event && b.event ? a.event.table - b.event.table : 0) ||
+        (b.live?.watching ?? 0) - (a.live?.watching ?? 0) ||
+        b.at - a.at,
+    );
   const list = shown
     .filter((p) => !isLiveGame(p))
     .filter(
@@ -280,6 +288,7 @@ export function OpenTablesBoard({
             </ul>
           </section>
         )}
+        <EventsSection />
         <p className="muted small" role="status">
           {!status.loaded
             ? t("Looking at the board…")
@@ -397,7 +406,16 @@ function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }
     live.watching ? tn(live.watching, "{n} watching", "{n} watching") : "",
   ].filter(Boolean);
   return (
-    <li className="table-post live-game">
+    <li className={post.event ? "table-post live-game event-table" : "table-post live-game"}>
+      {post.event && (
+        <div className="small event-line">
+          {t("{event} · Round {n} · Table {table}", {
+            event: post.event.name,
+            n: post.event.round,
+            table: post.event.table,
+          })}
+        </div>
+      )}
       <strong className="table-lead">{lead}</strong>
       <div className="small muted">{details.join(" · ")}</div>
       {live.keys && <LiveRatings post={post} keys={live.keys} />}
@@ -987,6 +1005,11 @@ function GuestArrival() {
   // The host's ranked offer, on this card where the guest is looking (PX ranked 7); the card waits for an answer.
   const asker = useRankedAsk();
   const askerName = useStore((s) => (asker ? s.game.players[asker]?.name : undefined));
+  const showing = !!post && hostThere && !closed && !!asker && !!askerName;
+  useEffect(() => {
+    offerOnCard(showing);
+    return () => offerOnCard(false);
+  }, [showing]);
   useEffect(() => {
     if (!hostThere || asker) return;
     const timer = setTimeout(() => setClosed(true), 45_000);

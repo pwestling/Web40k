@@ -5,7 +5,7 @@ import type { TerrainPiece } from "../core/types";
  * A close-up that sees the fight (PX Live now 7): in about a quarter of the
  * director's close-ups a ruin wall or a tree filled the frame. Before easing
  * in, look along the camera's line to the action; if terrain is in the way,
- * raise the camera, then swing it round, until the line is clear.
+ * swing round at the same height first, then raise the camera, until the line is clear.
  *
  * Directions are three.js offsets from the target to the camera: x across the
  * table, y up, z along the table's depth (table y).
@@ -65,7 +65,10 @@ export function clearDirection(
   };
   const start = Math.max(LOWEST, elevation);
   const tries: Dir[] = [[dx, dy, dz]];
-  for (let e = start; e <= HIGHEST + 1e-6; e += 10 * DEG) {
+  // A low shot round the side reads better than one from above (PX), so swing all the way round first.
+  for (const swing of [0, 25, -25, 50, -50, 75, -75, 105, -105, 135, -135, 180])
+    tries.push(fromAngles(azimuth + swing * DEG, start));
+  for (let e = start + 10 * DEG; e <= HIGHEST + 1e-6; e += 10 * DEG) {
     for (const swing of [0, 25, -25, 50, -50]) tries.push(fromAngles(azimuth + swing * DEG, e));
   }
   return tries.find(clear) ?? fromAngles(azimuth, HIGHEST);

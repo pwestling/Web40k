@@ -39,6 +39,8 @@ const NAMES: Record<string, () => string> = {
   moveAction: () => t("Move action"),
   areaOfControl: () => t("Area of control"),
   deployDistance: () => t("Deploying from reserve"),
+  towFormation: () => t("Formation"),
+  towRandomMovement: () => t("Random movement"),
 };
 
 export function checkName(state: GameState, id: string): string {

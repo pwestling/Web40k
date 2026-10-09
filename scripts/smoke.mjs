@@ -793,6 +793,177 @@ const checks = {
     return [...host.page.errors, ...guest.page.errors];
   },
 
+  // #67: an online event with four browsers and no server of its own: Ana runs it, all four
+  // enter with a shelf army, two Swiss rounds are played as ranked games from one-click
+  // pairings, and every browser ends on the same final standings.
+  async events() {
+    const q = `?${SIGNAL}&openTables=1&board=${encodeURIComponent(`http://localhost:${RELAY}/board`)}`;
+    const names = ["Ana", "Ben", "Cy", "Dee"];
+    const step = (x) => process.env.SMOKE_STEPS && console.log(new Date().toISOString().slice(11, 19), x);
+    const ds = [];
+    for (const name of names) {
+      const d = await device();
+      d.name = name;
+      ds.push(d);
+      step(`shelf army for ${name}`);
+      // A shelf army: deploy Rift Lanterns' sample warband at a table of one's own and save it.
+      await lobby(d.page, q);
+      await d.page.locator(".lobby label", { hasText: "Your name" }).locator("input").fill(name);
+      const game = d.page.locator(".lobby label", { hasText: "Game" }).locator("select");
+      await game.locator('option[value="rift-lanterns"]').waitFor({ state: "attached", timeout: 20_000 });
+      await game.selectOption("rift-lanterns");
+      await d.page.getByRole("button", { name: /^Host/ }).first().click();
+      await d.page.locator('.panel.hud select[aria-label="Sample army"]').selectOption({ index: 1 });
+      await d.page
+        .getByRole("button", { name: /^Deploy for/ })
+        .first()
+        .click();
+      await d.page.getByRole("button", { name: "Save army to your shelf" }).click();
+      await d.page.getByText("This army is on your shelf as it is now.").waitFor();
+    }
+    const board = async (page) => {
+      await lobby(page, q);
+      await page.getByRole("button", { name: /Open tables: find/ }).click();
+    };
+    const [ana] = ds;
+    step("run the event");
+    await board(ana.page);
+    await ana.page.locator(".events-section").getByRole("button", { name: "Run an event" }).click();
+    const form = ana.page.locator(".run-event");
+    await form.locator("label", { hasText: "Name" }).first().locator("input").fill("Smoke Cup");
+    await form.locator("label", { hasText: "Game" }).locator("select").selectOption("rift-lanterns");
+    await form.locator("label", { hasText: "Rounds" }).locator("input").fill("2");
+    await form.getByRole("button", { name: "Post the event" }).click();
+    const page = (d) => d.page.locator(".event-page");
+    for (const d of ds) {
+      if (d !== ana) {
+        await board(d.page);
+        const card = d.page.locator(".events-section .event-card", { hasText: "Smoke Cup" });
+        await card.waitFor({ timeout: 30_000 });
+        await card.getByRole("button", { name: "Open" }).click();
+      }
+      step(`${d.name} enters`);
+      await page(d).getByRole("button", { name: "Enter" }).click({ timeout: 20_000 });
+      await page(d)
+        .getByText(/^You're in/)
+        .waitFor({ timeout: 20_000 });
+    }
+    step("start");
+    // The organiser's device takes all four entries, then starts it.
+    await page(ana)
+      .locator(".event-entries li:not(:has-text('waiting'))")
+      .nth(3)
+      .waitFor({ timeout: 45_000 });
+    await page(ana).getByRole("button", { name: "Start now" }).click();
+
+    for (const round of [1, 2]) {
+      for (const d of ds) {
+        if (round === 2) {
+          await d.page.getByRole("button", { name: "Back to the event" }).click({ timeout: 20_000 });
+        }
+        step(`round ${round}: ${d.name} to the table`);
+        const play = page(d).getByRole("button", { name: /^Play your game: table \d+$/ });
+        await play.waitFor({ timeout: 90_000 });
+        await page(d)
+          .getByRole("heading", { name: new RegExp(`^Round ${round}`) })
+          .first()
+          .waitFor();
+        await play.click();
+      }
+      step(`round ${round}: deploy`);
+      // Each puts down the army they entered with; the host of each table starts the battle.
+      for (const d of ds) {
+        const deploy = d.page.locator(".event-seat").getByRole("button", { name: /^Deploy / });
+        await deploy.click({ timeout: 60_000 });
+      }
+      step(`round ${round}: checks`);
+      for (const d of ds) {
+        await d.page.locator(".event-seat li.good").nth(1).waitFor({ timeout: 30_000 });
+        await d.page.locator(".topbar .ranked-chip").waitFor({ timeout: 30_000 });
+      }
+      step(`round ${round}: start battles`);
+      for (const d of ds) {
+        // Each table's host starts it.
+        if (
+          !(await d.page
+            .locator(".room .people")
+            .getByText(/^you · host/)
+            .count())
+        )
+          continue;
+        const start = d.page.locator(".topbar").getByRole("button", { name: /Start battle/ });
+        if (process.env.SMOKE_SHOTS)
+          await d.page.screenshot({ path: `${process.env.SMOKE_SHOTS}/${d.name}-${round}.png` });
+        await start.click();
+        const anyway = d.page.getByRole("button", { name: /Start anyway/ });
+        if (await anyway.count()) await anyway.first().click();
+      }
+      // Every guest's table matches its host's, though the game's rules package loaded as they joined.
+      await sleep(3000);
+      for (const d of ds)
+        if (await d.page.locator(".net-banner.desync").count())
+          throw new Error(`round ${round}: ${d.name}'s table doesn't match the host's`);
+      for (const d of ds) {
+        await d.page
+          .locator(".topbar")
+          .getByText(/Round 1/)
+          .first()
+          .waitFor({ timeout: 20_000 });
+        await d.page.keyboard.press("Escape");
+      }
+      // Each table's first side scores a point, then everyone passes to the end.
+      for (const d of ds) {
+        const plus = d.page.locator(".topbar .player").first().getByRole("button", { name: "+" });
+        if ((await d.page.locator(".topbar .player").first().innerText()).includes(d.name))
+          await plus.click();
+      }
+      step(`round ${round}: play`);
+      const deadline = Date.now() + 240_000;
+      while (true) {
+        let done = 0;
+        for (const d of ds) {
+          if (await d.page.locator(".ranked-sign").count()) {
+            done++;
+            continue;
+          }
+          const pass = d.page.locator(".topbar").getByRole("button", { name: "Pass", exact: true });
+          if (await pass.isEnabled().catch(() => false)) await pass.click({ timeout: 1500 }).catch(() => {});
+          const ask = d.page.locator(".topbar .ask button.primary");
+          if (await ask.count())
+            await ask
+              .first()
+              .click()
+              .catch(() => {});
+        }
+        if (done === ds.length) break;
+        if (Date.now() > deadline) throw new Error(`round ${round}'s games never reached their results`);
+        await sleep(300);
+      }
+      for (const d of ds)
+        await d.page
+          .locator(".ranked-sign")
+          .first()
+          .getByRole("button", { name: /^Sign: / })
+          .click({ timeout: 30_000 });
+      for (const d of ds) await d.page.locator(".ranked-sign.good").first().waitFor({ timeout: 30_000 });
+    }
+    step("final standings");
+    // Back on the event: every browser works out the same final standings.
+    const tables = [];
+    for (const d of ds) {
+      await d.page.getByRole("button", { name: "Back to the event" }).click({ timeout: 20_000 });
+      await page(d).getByRole("heading", { name: "Final standings" }).waitFor({ timeout: 120_000 });
+      await sleep(500);
+      tables.push(await page(d).locator("table.standings").innerText());
+    }
+    const strip = (x) => x.replace(/\t(Drop|Back in)?$/gm, "");
+    if (new Set(tables.map(strip)).size !== 1)
+      throw new Error(`the standings differ: ${JSON.stringify(tables)}`);
+    if (!/\t6\t2–0–0\t/.test(tables[0])) throw new Error(`no one won both: ${JSON.stringify(tables[0])}`);
+    for (const d of ds) await d.context.close();
+    return ds.flatMap((d) => d.page.errors);
+  },
+
   async companion() {
     const { page, context } = await device({
       viewport: { width: 390, height: 844 },

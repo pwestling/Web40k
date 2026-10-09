@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { netConfig } from "../net/config";
 import { useStore } from "../store";
 import type { DeclinedResult, SignedResult } from "../ranked/verify";
+import type { SignedDoc } from "../events/event";
 import { HEARTBEAT_MS, isUp, type SeenPost, type TablePost } from "./post";
 
 /**
@@ -31,7 +32,11 @@ export interface BoardBackend {
   /** Ranked results (#65): pass one on, signed by both players. */
   publishResult(result: SignedResult | DeclinedResult): Promise<void>;
   /** Read results (unchecked: src/ranked checks each) until the returned function is called. */
-  watchResults(onResults: (raw: unknown[]) => void): () => void;
+  watchResults(onResults: (raw: unknown[]) => void, everyMs?: number): () => void;
+  /** Online events (#67): an organiser's event or a player's entry, signed by its author. */
+  publishDoc(doc: SignedDoc): Promise<void>;
+  /** Read event docs (unchecked: src/events checks each) until the returned function is called. */
+  watchDocs(onDocs: (raw: unknown[]) => void, everyMs?: number): () => void;
 }
 
 /** Whether this site has Open tables at all. */

@@ -306,7 +306,7 @@ describe("The Old World combat as code", () => {
       t.play({ type: "script/answer", answer: "go" }, q.player, seed);
       const text = t.notes().join(" ");
       const caught = /catches .* which is destroyed/.test(text);
-      expect(caught || /falls [\d.]+" short/.test(text)).toBe(true);
+      expect(caught || /falls ([\d.]+"|just) short/.test(text)).toBe(true);
       expect(standing(t.s, loser) === 0).toBe(caught);
     }
     expect(seen).toBeGreaterThan(0);

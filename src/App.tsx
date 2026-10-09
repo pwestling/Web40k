@@ -7,6 +7,7 @@ import { SavedToast } from "./ui/SavedNote";
 import { Lobby } from "./ui/Lobby";
 import { useLibraryOpen } from "./figures/open";
 import { useWorkshopOpen } from "./workshop/open";
+import { useEventOpen, useRunsEvents } from "./events/open";
 
 /**
  * The 3D table, three.js and every in-game panel load as their own chunk,
@@ -22,6 +23,9 @@ const FigureLibrary = lazy(() =>
 );
 /** The player card and ladder (#65) load when first opened. */
 const PlayerDialog = lazy(() => import("./player/PlayerCard").then((m) => ({ default: m.PlayerDialog })));
+/** Online events (#67): an event's page when opened, and the organiser's running of theirs. */
+const EventDialog = lazy(() => import("./events/EventsUI").then((m) => ({ default: m.EventDialog })));
+const EventRunner = lazy(() => import("./events/EventsUI").then((m) => ({ default: m.EventRunner })));
 /** The module workshop (#41) and its editor load when it's first opened. */
 const Workshop = lazy(() => import("./workshop/Workshop").then((m) => ({ default: m.Workshop })));
 
@@ -30,6 +34,8 @@ export function App() {
   const library = useLibraryOpen((s) => s.tab !== null);
   const workshop = useWorkshopOpen((s) => s.open);
   const player = usePlayerOpen((s) => s.view !== null);
+  const eventOpen = useEventOpen((s) => s.id !== null || s.running);
+  const runsEvents = useRunsEvents((s) => s.on);
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
@@ -74,6 +80,16 @@ export function App() {
       {player && (
         <Suspense fallback={null}>
           <PlayerDialog />
+        </Suspense>
+      )}
+      {eventOpen && (
+        <Suspense fallback={null}>
+          <EventDialog />
+        </Suspense>
+      )}
+      {runsEvents && (
+        <Suspense fallback={null}>
+          <EventRunner />
         </Suspense>
       )}
     </>

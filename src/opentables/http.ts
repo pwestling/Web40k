@@ -11,6 +11,8 @@ import type { BoardBackend, BoardStatus } from "./board";
 const POLL_MS = 20_000;
 /** Ranked results change slowly: a look a minute. */
 const RESULTS_POLL_MS = 60_000;
+/** An event's page asks more often: pairings and results move while a round is on. */
+const DOCS_POLL_MS = 15_000;
 
 /** The board answered no: 429 is too many tables from this network. */
 class BoardRefused extends Error {
@@ -20,6 +22,26 @@ class BoardRefused extends Error {
 }
 
 export function httpBoard(url: string, key: string, token: (id: string) => string): BoardBackend {
+  /** Ask for a list every so often, until the returned function is called. */
+  const poll = (path: string, field: string, on: (raw: unknown[]) => void, everyMs: number) => {
+    let stopped = false;
+    const look = async () => {
+      try {
+        const res = await fetch(`${url}${path}`, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
+        const body = res.ok ? ((await res.json()) as Record<string, unknown>) : null;
+        const list = body?.[field];
+        if (!stopped && Array.isArray(list)) on(list);
+      } catch {
+        // Offline, or an older board: what this browser already has still counts.
+      }
+    };
+    void look();
+    const timer = setInterval(() => void look(), everyMs);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  };
   const post = async (path: string, body: unknown) => {
     const res = await fetch(`${url}${path}`, {
       method: "POST",
@@ -66,27 +88,9 @@ export function httpBoard(url: string, key: string, token: (id: string) => strin
       };
     },
     publishResult: (r) => post("/results", r),
-    watchResults(onResults) {
-      let stopped = false;
-      const look = async () => {
-        try {
-          const res = await fetch(`${url}/results`, {
-            cache: "no-store",
-            signal: AbortSignal.timeout(10_000),
-          });
-          const body = res.ok ? ((await res.json()) as { results?: unknown[] }) : null;
-          if (!stopped && Array.isArray(body?.results)) onResults(body.results);
-        } catch {
-          // Offline, or an older board: what this browser already has still counts.
-        }
-      };
-      void look();
-      const timer = setInterval(() => void look(), RESULTS_POLL_MS);
-      return () => {
-        stopped = true;
-        clearInterval(timer);
-      };
-    },
+    watchResults: (onResults, everyMs = RESULTS_POLL_MS) => poll("/results", "results", onResults, everyMs),
+    publishDoc: (d) => post("/events", d),
+    watchDocs: (onDocs, everyMs = DOCS_POLL_MS) => poll("/events", "docs", onDocs, everyMs),
     leaving(p) {
       // The page is closing: a beacon still gets there.
       navigator.sendBeacon?.(`${url}/withdraw`, JSON.stringify({ id: p.id, token: token(p.id) }));

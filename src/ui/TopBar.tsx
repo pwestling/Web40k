@@ -596,12 +596,17 @@ function Counter({
   if (!step) return <span className="counter">{`${label} ${value}`}</span>;
   if (coarse && !open)
     return (
-      <button className="counter quiet" title={t("Change {label}", { label })} onClick={() => setOpen(true)}>
+      <button
+        className="counter quiet"
+        data-label={label}
+        title={t("Change {label}", { label })}
+        onClick={() => setOpen(true)}
+      >
         {`${label} ${value}`}
       </button>
     );
   return (
-    <span className={coarse ? "counter open" : "counter"}>
+    <span className={coarse ? "counter open" : "counter"} data-label={label}>
       {`${label} ${value}`}
       <button onClick={() => step(-1)}>−</button>
       <button onClick={() => step(1)}>+</button>

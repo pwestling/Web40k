@@ -312,6 +312,8 @@ function reduce(state: GameState, event: GameEvent): GameState {
         },
       };
     }
+    case "event/army":
+      return { ...state, eventArmies: { ...state.eventArmies, [event.player]: event.hash } };
     case "ranked/fixed": {
       if (!state.ranked) return state;
       const { fixing: _was, ...ranked } = state.ranked;

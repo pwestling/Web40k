@@ -142,6 +142,8 @@ export type Intent =
   | { type: "ranked/sign"; sig: string | null; why?: DeclineWhy; decline?: string }
   /** The score has been fixed on the table: write the result again (after a "the score is wrong"). */
   | { type: "ranked/fixed" }
+  /** An event game (#67): the hash of the army this player deployed, to check against their registration. */
+  | { type: "event/army"; hash: string }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -313,6 +315,7 @@ export type GameEvent =
   | { type: "ranked/result"; result: RankedResult; by: PlayerId }
   | { type: "ranked/sign"; player: PlayerId; sig: string | null; why?: DeclineWhy; decline?: string }
   | { type: "ranked/fixed"; player: PlayerId }
+  | { type: "event/army"; player: PlayerId; hash: string }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
@@ -587,6 +590,10 @@ export function resolveIntent(
         ...(decline && !fix ? { decline } : {}),
       };
     }
+    case "event/army":
+      return typeof state?.players[from]?.seat === "number" && /^[a-f0-9]{64}$/.test(intent.hash)
+        ? { type: "event/army", player: from, hash: intent.hash }
+        : null;
     case "ranked/fixed": {
       const r = state?.ranked;
       return r?.fixing && r.keys[from] ? { type: "ranked/fixed", player: from } : null;

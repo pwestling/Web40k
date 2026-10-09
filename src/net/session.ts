@@ -296,7 +296,11 @@ export class Session {
   refold(): void {
     this.state = stateAt(this.record);
     this.checks.clear();
+    // A mismatch found before the rules arrived compared the stand-in's table: it no longer holds.
+    const stale = !!this.desync;
+    this.desync = null;
     this.onChange(this.state, this.record);
+    if (stale) this.notify();
   }
 
   /** The latest checksums sent (as host) or compared (as a client), oldest first. */

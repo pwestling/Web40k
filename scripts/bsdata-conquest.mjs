@@ -57,7 +57,8 @@ const esc = (s) =>
 function linkName(link, fallback) {
   let name = attr(link, "name") || fallback;
   for (const m of kids(link, "modifiers", "modifier"))
-    if (attr(m, "field") === "name" && attr(m, "type") === "append") name = `${name} ${attr(m, "value").trim()}`;
+    if (attr(m, "field") === "name" && attr(m, "type") === "append")
+      name = `${name} ${attr(m, "value").trim()}`;
     else if (attr(m, "field") === "name" && attr(m, "type") === "set") name = attr(m, "value");
   return name;
 }

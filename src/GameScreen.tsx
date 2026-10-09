@@ -53,6 +53,8 @@ import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 /** three.js and the 3D table load on their own: the table companion (#37) never draws them. */
 export const loadBoard = () => import("./render/Board");
 const Board = lazy(() => loadBoard().then((m) => ({ default: m.Board })));
+/** An online event's game (#67): its bar loads only at an event's table. */
+const EventSeat = lazy(() => import("./events/EventSeat").then((m) => ({ default: m.EventSeat })));
 
 /**
  * Keyboard: [ ] pick a unit, arrows move it, Enter opens its card; ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
@@ -213,6 +215,7 @@ export function GameScreen({ started }: { started: boolean }) {
   useSpectatorDelay();
   useHotseatMark();
   const editing = useStore((s) => s.editing);
+  const eventGame = useStore((s) => !!s.game.settings.event);
   const holding = useHold((s) => s.held !== null);
   const SystemPanel = systemModule(useStore((s) => s.game.system)).panel;
   // The attack flow takes the unit card's place on the right, keeping the table clear.
@@ -303,6 +306,11 @@ export function GameScreen({ started }: { started: boolean }) {
           <MyTableKeeper />
           <TableArrivals />
           <RankedKeeper />
+          {eventGame && (
+            <Suspense fallback={null}>
+              <EventSeat />
+            </Suspense>
+          )}
           <KeysSheet />
           <CampaignKeeper />
           <ClockKeeper />

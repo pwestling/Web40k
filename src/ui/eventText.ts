@@ -153,6 +153,8 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
           : t("{name} didn't sign the result: it won't count", {
               name: playerName(game.players[event.player]) ?? who,
             });
+    case "event/army":
+      return t("{name} deployed their event army", { name: playerName(game.players[event.player]) ?? who });
     case "ranked/fixed":
       return t("{name} fixed the score: the result is up for signing again", {
         name: playerName(game.players[event.player]) ?? who,

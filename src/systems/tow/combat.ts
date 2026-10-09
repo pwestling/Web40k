@@ -1469,8 +1469,11 @@ function* pursue(
   const move = towards(Math.min(r.total, gap));
   if (move) yield ctx.emit(move);
   if (!caught) {
+    const short = (gap - r.total).toFixed(1);
     yield ctx.note(
-      `${won.name} pursues ${r.total}" and falls ${(gap - r.total).toFixed(1)}" short of ${lost.name}`,
+      short === "0.0"
+        ? `${won.name} pursues ${r.total}" and falls just short (under 0.1") of ${lost.name}`
+        : `${won.name} pursues ${r.total}" and falls ${short}" short of ${lost.name}`,
     );
     return;
   }

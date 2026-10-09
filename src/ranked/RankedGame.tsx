@@ -119,7 +119,10 @@ export function RankedKeeper() {
 }
 
 /** "Not this time" to the ranked offer, for this room (the arrival card and the panel share it). */
-const useNotRanked = create<{ room: string | null }>(() => ({ room: null }));
+const useNotRanked = create<{ room: string | null; onCard: boolean }>(() => ({ room: null, onCard: false }));
+
+/** The arrival card is showing the offer: the panel doesn't ask a second time (UX 454). */
+export const offerOnCard = (on: boolean) => useNotRanked.setState({ onCard: on });
 export const notRanked = () => useNotRanked.setState({ room: useStore.getState().roomId ?? "" });
 
 /** Whose ranked offer this player hasn't answered yet: the opponent's id, or null. */
@@ -139,6 +142,7 @@ export function RankedOffer() {
   const game = useStore((s) => s.game);
   const self = useStore((s) => s.session?.selfId);
   const no = useNotRanked((s) => s.room !== null && s.room === (useStore.getState().roomId ?? ""));
+  const onCard = useNotRanked((s) => s.onCard);
   const r = game.ranked;
   if (!self || typeof game.players[self]?.seat !== "number" || r?.result || rankedOver(game)) return null;
   const others = Object.keys(r?.keys ?? {}).filter((p) => p !== self && game.players[p]);
@@ -158,7 +162,7 @@ export function RankedOffer() {
         </button>
       </div>
     );
-  if (!others.length || no) return null;
+  if (!others.length || no || onCard) return null;
   return (
     <div className="claim ranked-offer">
       <p>
@@ -268,14 +272,54 @@ function RatingLine({ result, me }: { result: RankedResult; me: string }) {
           game,
         })}
       </p>
+      {/* After a loss, the hopeful line comes first (PX). */}
+      {score === 0 && (
+        <p className="wins-back">
+          {t("A win against {name} wins back {n}.", { name: move.them.name, n: formatNumber(back) })}
+        </p>
+      )}
       <p className="muted small">
-        {whyItMoved(score, move.before, move.them.rating + move.delta, move.delta)}{" "}
-        {score === 0
-          ? t("A win against {name} wins back {n}.", { name: move.them.name, n: formatNumber(back) })
-          : null}{" "}
-        {settling(move.games)}
+        {whyItMoved(score, move.before, move.them.rating + move.delta, move.delta)} {settling(move.games)}
       </p>
     </>
+  );
+}
+
+/** The score is being fixed: where to fix it (the VP − and + in the top bar, pulsing; UX 455), then write it up again. */
+function FixingScore({
+  self,
+  fixing,
+  name,
+  keyed,
+}: {
+  self?: string;
+  fixing: string;
+  name: string;
+  keyed: boolean;
+}) {
+  useEffect(() => {
+    document.body.classList.add("fixing-score");
+    return () => document.body.classList.remove("fixing-score");
+  }, []);
+  return (
+    <div className="panel-note ranked-sign">
+      <strong>{t("Fixing the score")}</strong>{" "}
+      {fixing === self
+        ? t(
+            "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again.",
+          )
+        : t(
+            "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again.",
+            { name },
+          )}
+      {keyed && (
+        <div className="row">
+          <button className="primary" onClick={() => useStore.getState().dispatch({ type: "ranked/fixed" })}>
+            {t("Score fixed: write it up")}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -305,29 +349,7 @@ export function RankedSign() {
   if (!ranked || !rankedReady(game) || !rankedOver(game)) return null;
   const nameOf = (id: string) => game.players[id]?.name ?? "?";
   if (!result && ranked.fixing)
-    return (
-      <div className="panel-note ranked-sign">
-        <strong>{t("Fixing the score")}</strong>{" "}
-        {ranked.fixing === self
-          ? t("You said the score is wrong. Fix it on the table, then write the result up again.")
-          : t(
-              "{name} says the score is wrong. Fix it on the table together, then write the result up again.",
-              {
-                name: nameOf(ranked.fixing),
-              },
-            )}
-        {me && (
-          <div className="row">
-            <button
-              className="primary"
-              onClick={() => useStore.getState().dispatch({ type: "ranked/fixed" })}
-            >
-              {t("Score fixed: write it up")}
-            </button>
-          </div>
-        )}
-      </div>
-    );
+    return <FixingScore self={self} fixing={ranked.fixing} name={nameOf(ranked.fixing)} keyed={!!me} />;
   if (!result)
     return <div className="panel-note ranked-sign muted">{t("Writing up the ranked result…")}</div>;
   const mySeat = me ? result.players.findIndex((p) => p.key === me) : -1;

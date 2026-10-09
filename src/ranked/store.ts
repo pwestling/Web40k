@@ -182,3 +182,24 @@ export function signsLine(rate: { signed: number; of: number } | null): string |
     ? tn(rate.of, "signs {signed} of {n} result", "signs {signed} of {n} results", { signed: rate.signed })
     : null;
 }
+
+/**
+ * Read the board's results often while something needs them soon (an event's
+ * round under way, #67): the usual watch looks once a minute.
+ */
+export function useResultsOften(on: boolean): void {
+  useRankedResults();
+  useEffect(() => {
+    if (!on) return;
+    let stop: (() => void) | null = null;
+    let live = true;
+    void board().then((b) => {
+      if (!b || !live) return;
+      stop = b.watchResults((raw) => void takeResults(raw), 10_000);
+    });
+    return () => {
+      live = false;
+      stop?.();
+    };
+  }, [on]);
+}

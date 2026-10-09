@@ -9,6 +9,8 @@
 //   POST /board/report     {id, why}: three reports from different addresses hide it
 //   GET  /board/results    ranked results (#65), signed by both players
 //   POST /board/results    {result, sigs, declined?}: one more; the app checks the signatures
+//   GET  /board/events     online events (#67): each organiser's event and each player's entry
+//   POST /board/events     {doc, sig}: the newest of each (kind, event, author) is kept; the app checks the signatures
 //
 // The app checks every post again as it reads it (src/opentables/post.ts).
 
@@ -23,6 +25,13 @@ const MAX_BODY = 4096;
 const MAX_RESULTS = 20_000;
 // Results an address may send per hour: two players at one club and the copies they pass on.
 const RESULTS_PER_HOUR = 60;
+// Online events (#67): an event's doc carries its entrants and pairings, so it can be bigger.
+const MAX_EVENT_BODY = 96 * 1024;
+const MAX_DOCS = 5000;
+// An organiser republishes as entries and results come in, and while the event page is open.
+const DOCS_PER_HOUR = 600;
+// An event nobody has republished for this long has finished with.
+const DOC_TTL_MS = 2 * 24 * 3600_000;
 
 /**
  * @param {{now?: () => number, results?: {load(): any[], add(r: any): void}}} [options]
@@ -35,6 +44,10 @@ export function createBoard(options = {}) {
   for (const r of options.results?.load() ?? []) if (resultLooksRight(r)) results.set(r.result.replay, r);
   /** @type {Map<string, number[]>} */
   const sent = new Map();
+  /** Event docs by `${kind}:${event}:${author}`, the newest of each. */
+  const docs = new Map();
+  /** @type {Map<string, number[]>} */
+  const docsSent = new Map();
   /** @type {Map<string, {post: any, key: string, token: string, at: number, from: string}>} */
   const posts = new Map();
   /** @type {Map<string, Set<string>>} */
@@ -73,12 +86,16 @@ export function createBoard(options = {}) {
     };
     if (req.method === "GET" && path === "/board/results")
       return (json({ results: [...results.values()] }), true);
+    if (req.method === "GET" && path === "/board/events") {
+      for (const [k, d] of docs) if (now() - d.seen > DOC_TTL_MS) docs.delete(k);
+      return (json({ docs: [...docs.values()].map((d) => ({ doc: d.doc, sig: d.sig })) }), true);
+    }
     if (req.method === "GET" && path === "/board") {
       sweep();
       return (json({ posts: [...posts.values()].map((e) => ({ ...e.post, key: e.key, at: e.at })) }), true);
     }
     if (req.method !== "POST") return (json({ error: "method" }, 405), true);
-    const body = await readJson(req);
+    const body = await readJson(req, path === "/board/events" ? MAX_EVENT_BODY : MAX_BODY);
     if (!body) return (json({ error: "body" }, 400), true);
     sweep();
     if (path === "/board") {
@@ -111,6 +128,18 @@ export function createBoard(options = {}) {
       };
       results.set(body.result.replay, kept);
       options.results?.add(kept);
+      return (json({ ok: true }), true);
+    }
+    if (path === "/board/events") {
+      const k = docKey(body);
+      if (!k) return (json({ error: "doc" }, 400), true);
+      const was = docs.get(k);
+      if (was && was.doc.at >= body.doc.at) return (json({ ok: true }), true);
+      const hour = (docsSent.get(from) ?? []).filter((t) => now() - t < 3600_000);
+      if (hour.length >= DOCS_PER_HOUR) return (json({ error: "too many" }, 429), true);
+      if (!was && docs.size >= MAX_DOCS) return (json({ error: "full" }, 503), true);
+      docsSent.set(from, [...hour, now()]);
+      docs.set(k, { doc: body.doc, sig: body.sig, seen: now() });
       return (json({ ok: true }), true);
     }
     if (path === "/board/withdraw") {
@@ -158,13 +187,25 @@ function resultLooksRight(r) {
   );
 }
 
-function readJson(req) {
+/** An event doc's place on the board, roughly checked: the app checks it and its signature properly. */
+function docKey(body) {
+  const d = body?.doc;
+  if (!d || typeof d !== "object" || typeof body.sig !== "string" || body.sig.length > 200) return null;
+  if (typeof d.at !== "number" || !Number.isFinite(d.at)) return null;
+  const event = d.kind === "event" ? d.id : d.kind === "entry" ? d.event : null;
+  const author = d.kind === "event" ? d.organiser : d.key;
+  if (typeof event !== "string" || !/^[a-z0-9]{8,40}$/.test(event)) return null;
+  if (typeof author !== "string" || author.length > 100) return null;
+  return `${d.kind}:${event}:${author}`;
+}
+
+function readJson(req, max = MAX_BODY) {
   return new Promise((resolve) => {
     let text = "";
     req.setEncoding("utf8");
     req.on("data", (chunk) => {
       text += chunk;
-      if (text.length > MAX_BODY) {
+      if (text.length > max) {
         resolve(null);
         req.destroy();
       }

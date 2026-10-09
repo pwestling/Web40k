@@ -5493,6 +5493,134 @@ body:has(.panel.better-move) .panel.whatnow {
   font-weight: 600;
   margin: 6px 0 2px;
 }
+.ranked-sign .wins-back {
+  margin: 0 0 2px;
+  color: #9fd8a8;
+}
 .ranked-sign .decline-why {
   margin-top: 6px;
+}
+/* UX 455: while a ranked score is being fixed, the VP − and + show where. */
+@keyframes vp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(245 197 66 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(245 197 66 / 55%);
+  }
+}
+.fixing-score .topbar .counter[data-label="VP"] button {
+  animation: vp-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fixing-score .topbar .counter[data-label="VP"] button {
+    animation: none;
+    outline: 2px solid rgb(245 197 66);
+  }
+}
+/* #67 online events. */
+.panel.modal.event-page {
+  width: min(680px, calc(100vw - 32px));
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.event-page h3 {
+  margin: 14px 0 4px;
+  font-size: 0.95rem;
+}
+.event-page .event-state {
+  margin: 4px 0 8px;
+}
+.event-page li.me,
+.standings tr.me td {
+  background: rgb(245 197 66 / 10%);
+}
+.event-page .pairings li {
+  padding: 4px 0;
+  border-bottom: 1px solid #262b36;
+}
+.event-page .table-no {
+  display: inline-block;
+  min-width: 4.5em;
+  color: #9aa3b2;
+}
+.event-page .hand-entry {
+  margin-left: 6px;
+}
+.event-page .hand-entry input[type="number"] {
+  width: 4.5em;
+}
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.standings th,
+.standings td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid #262b36;
+}
+.standings tr.dropped td {
+  color: #8b93a3;
+}
+.run-event {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.run-event input[type="number"] {
+  width: 6em;
+}
+.events-section {
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #2d3340;
+  border-radius: 10px;
+}
+.events-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.events-section .event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid #262b36;
+}
+.event-seat {
+  position: fixed;
+  top: 56px;
+  left: 12px;
+  z-index: 30;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #f5c542;
+  background: rgb(17 19 24 / 94%);
+}
+.event-seat ul {
+  margin: 4px 0 0;
+}
+.event-seat li.good {
+  color: #4ade80;
+}
+.event-seat li.warn {
+  color: #fbbf24;
+}
+.event-seat li.muted {
+  color: #9aa3b2;
+}
+.live-game.event-table .event-line {
+  color: #f5c542;
+}
+@media (pointer: coarse) {
+  .event-page button,
+  .run-event button,
+  .events-section button {
+    min-height: 44px;
+  }
 }
