@@ -220,7 +220,7 @@ function whatNow(
     activation
       ? plain
         ? t(
-            "A unit's go ends when it shoots or fights, or press End activation after a move. Pass when you have nothing left.",
+            "A unit's go ends when it shoots or fights, or press End activation after a move; Hold on its card keeps it where it is. Pass when you have nothing left.",
           )
         : t("When a unit has acted, press End activation at the top; when you have nothing left, Pass.")
       : t("When you're done, press ▶ at the top for the next phase."),

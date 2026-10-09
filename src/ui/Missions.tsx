@@ -356,7 +356,12 @@ export function Result() {
       ) : (
         <p className="result-line">
           {winners.length === 1 ? (
-            <strong>{t("{side} wins", { side: sideName(game, winners[0]!) })}</strong>
+            <strong>
+              {/* Against the computer the player's side is "You": "You win", not "You wins" (iPad dogfood). */}
+              {sideName(game, winners[0]!) === t("You")
+                ? t("You win")
+                : t("{side} wins", { side: sideName(game, winners[0]!) })}
+            </strong>
           ) : (
             <strong>{t("A draw")}</strong>
           )}{" "}

@@ -80,6 +80,8 @@ export interface ScriptStep {
   started?: Id;
   /** On that step: the unit a unit's code action is for (it activates, UX 324). */
   unit?: Id;
+  /** And the unit it targets, if it named one: the game review judges the choice by it. */
+  target?: Id;
 }
 
 /** A module's own state, `state.modules[module][key]`. */
@@ -187,7 +189,13 @@ export function startScript(
     results: [],
   };
   const unit = typeof args.unit === "string" && state.units[args.unit] ? args.unit : undefined;
-  return { ...stepScript(script, state, rng), started: procedure, ...(unit ? { unit } : {}) };
+  const target = typeof args.target === "string" && state.units[args.target] ? args.target : undefined;
+  return {
+    ...stepScript(script, state, rng),
+    started: procedure,
+    ...(unit ? { unit } : {}),
+    ...(unit && target ? { target } : {}),
+  };
 }
 
 /**

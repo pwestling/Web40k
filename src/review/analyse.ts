@@ -149,7 +149,11 @@ export function decisionAt(state: GameState, logged: LoggedEvent): BotMove | nul
     };
   // A code action's first step (not a hook's): its id, and the unit (and target) it was for.
   if (e.type === "script/step" && e.started && !e.started.startsWith("hook:") && e.unit) {
-    const args = e.script?.procedure === e.started ? e.script.args : { unit: e.unit };
+    // A code action that ended at once has no script left: the step keeps its unit and target.
+    const args =
+      e.script?.procedure === e.started
+        ? e.script.args
+        : { unit: e.unit, ...(e.target ? { target: e.target } : {}) };
     return { intent: { type: "script/start", procedure: e.started, args }, as, kind: "played" };
   }
   return null;

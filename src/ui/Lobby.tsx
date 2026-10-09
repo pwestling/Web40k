@@ -1,3 +1,4 @@
+import { systemOf } from "../core/content/turn";
 import { isPlaceholder } from "../core/content/systems";
 import type { ReplayFile } from "./replayFile";
 import { useOpenReport, type ReportFile } from "./report";
@@ -100,7 +101,14 @@ export function Lobby() {
     try {
       const s = stateAt(saved.record);
       // A package game's rounds fold only with its package loaded: say no round rather than a wrong one.
-      return { game: gameTitle(s), round: s.system && isPlaceholder(s.system) ? null : s.turn.round };
+      return {
+        game: gameTitle(s),
+        round: s.system && isPlaceholder(s.system) ? null : s.turn.round,
+        over:
+          s.system && isPlaceholder(s.system)
+            ? false
+            : s.turn.round > (Number(systemOf(s).turn.rounds) || Infinity),
+      };
     } catch {
       return null;
     }
@@ -265,11 +273,13 @@ export function Lobby() {
             <button className="primary resume-top" onClick={resume}>
               <strong>
                 {savedAt
-                  ? savedAt.round === null
-                    ? t("Resume: {game}", { game: savedAt.game })
-                    : savedAt.round > 0
-                      ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
-                      : t("Resume: {game}, deploying", { game: savedAt.game })
+                  ? savedAt.over
+                    ? t("Back to {game}: Battle over", { game: savedAt.game })
+                    : savedAt.round === null
+                      ? t("Resume: {game}", { game: savedAt.game })
+                      : savedAt.round > 0
+                        ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
+                        : t("Resume: {game}, deploying", { game: savedAt.game })
                   : t("Resume last game")}
               </strong>
               <span className="small">

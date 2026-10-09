@@ -34,6 +34,12 @@ describe("game review of a package game (#62)", () => {
       const code = review.decisions.filter((d) => d.played?.intent.type === "script/start");
       expect(code.length).toBeGreaterThan(0);
       expect(code.some((d) => d.options > 1)).toBe(true);
+      // A shot or a fight that ended at once still names its target (iPad dogfood: "Dusk Stalkers: fight").
+      expect(
+        code.some(
+          (d) => d.played?.intent.type === "script/start" && typeof d.played.intent.args?.target === "string",
+        ),
+      ).toBe(true);
       expect(review.points.length).toBeGreaterThan(5);
     } finally {
       restoreSystems();

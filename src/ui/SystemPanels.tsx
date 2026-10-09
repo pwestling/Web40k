@@ -330,6 +330,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         </div>
       )}
       {companion && plain && mine && game.turn.round > 0 && <MovedOnTable unit={unit} />}
+      {!companion && plain && mine && game.turn.round > 0 && <HoldHere unit={unit} />}
       {allowance !== null && !companion && (
         <p className={moved > allowance + 0.05 ? "warn" : "muted"}>
           {t("Moved {distance} of {allowance} this round.", {
@@ -789,6 +790,29 @@ export function PoolPicker({
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Alternating activations: a unit that should stay put (on a lantern, say)
+ * takes its go without moving. Before, its card had no way to end it; only
+ * Pass, which reads as giving up the round (dogfood round 2, Rift on a tablet).
+ */
+function HoldHere({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const dispatch = useStore((s) => s.dispatch);
+  if (game.players[unit.owner]?.seat !== game.turn.activeSeat || game.script || unit.status?.activated)
+    return null;
+  if (Object.values(game.units).some((u) => u.status?.acting)) return null;
+  if (!unit.modelIds.some((id) => !game.models[id]?.destroyed)) return null;
+  return (
+    <button
+      className="quiet small"
+      title={t("It stays where it is and does nothing else this round")}
+      onClick={() => dispatch({ type: "turn/endActivation", unit: unit.id }, unit.owner)}
+    >
+      {t("Hold: end its go here")}
+    </button>
   );
 }
 
