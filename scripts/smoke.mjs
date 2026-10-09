@@ -964,6 +964,159 @@ const checks = {
     return ds.flatMap((d) => d.page.errors);
   },
 
+  // #68: three miniatures photographed (drawn here as JPEGs of a painted figure on paper), two on a
+  // laptop and one on a phone, stand on the table in both browsers, within the texture budget.
+  async standees() {
+    const host = await device();
+    const guest = await device({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await lobby(host.page, `?${SIGNAL}`);
+    await host.page.locator(".lobby input").first().fill("Ana");
+    await host.page.getByRole("button", { name: "Host a game", exact: true }).click();
+    await host.page.locator(".room").waitFor();
+    await guest.page.goto(host.page.url());
+    await guest.page.getByPlaceholder("Your name").fill("Ben");
+    await guest.page.getByRole("button", { name: "Use this name" }).click();
+    await host.page.locator(".room").getByText("connected").waitFor({ timeout: 30_000 });
+    for (const d of [host, guest]) {
+      await d.page.getByRole("button", { name: "Sample army" }).click();
+      await d.page
+        .getByRole("button", { name: /^Deploy for/ })
+        .first()
+        .click();
+    }
+    await guest.page.keyboard.press("Escape");
+    const names = [];
+    const dress = async (d, seed) => {
+      const { page } = d;
+      const card = page.locator(".panel.unitcard");
+      const title = async () =>
+        (await card.count()) ? (await card.locator("h2, h3").first().innerText()).trim() : "";
+      // One of this player's units not dressed yet.
+      for (let k = 0; k < 12 && (!(await title()) || names.includes(await title())); k++)
+        await page.keyboard.press("]");
+      const name = await title();
+      names.push(name);
+      const figures = card.locator("details.figures");
+      if ((await figures.getAttribute("open")) === null) await figures.locator("> summary").click();
+      await card
+        .getByRole("button", { name: /Photo…/ })
+        .first()
+        .click();
+      const maker = page.locator(".standee-maker");
+      // A phone photo: a painted figure on a sheet of paper lit from one side, with its shadow, as a JPEG.
+      await page.evaluate(async (seed) => {
+        const c = document.createElement("canvas");
+        c.width = 900;
+        c.height = 1200;
+        const g = c.getContext("2d");
+        const paper = g.createLinearGradient(0, 0, 900, 0);
+        paper.addColorStop(0, "#efece6");
+        paper.addColorStop(1, "#cfcac0");
+        g.fillStyle = paper;
+        g.fillRect(0, 0, 900, 1200);
+        g.fillStyle = "rgba(0,0,0,0.12)";
+        g.beginPath();
+        g.ellipse(520, 1010, 230, 40, 0, 0, Math.PI * 2);
+        g.fill();
+        const hue = [0, 120, 220][seed];
+        g.fillStyle = "#26262b";
+        g.beginPath();
+        g.ellipse(450, 1000, 200, 36, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillRect(250, 950, 400, 50);
+        g.fillStyle = `hsl(${hue} 60% 38%)`;
+        g.fillRect(380, 520, 140, 430);
+        g.fillRect(330, 560, 50, 260);
+        g.fillRect(520, 560, 50, 260);
+        g.fillStyle = "#c9a27c";
+        g.beginPath();
+        g.arc(450, 450, 70, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = "#8a6d3b";
+        g.lineWidth = 14;
+        g.beginPath();
+        g.moveTo(560, 800);
+        g.lineTo(640 + seed * 30, 300);
+        g.stroke();
+        for (let i = 0; i < 4000; i++) {
+          g.fillStyle = `rgba(${Math.random() > 0.5 ? "255,255,255" : "0,0,0"},0.05)`;
+          g.fillRect(Math.random() * 900, Math.random() * 1200, 2, 2);
+        }
+        const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85));
+        const input = [...document.querySelectorAll(".standee-maker input[type=file]")].find(
+          (i) => !i.capture,
+        );
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], `photo-${seed}.jpg`, { type: "image/jpeg" }));
+        input.files = dt.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }, seed);
+      await maker.locator(".cutout-editor canvas").waitFor();
+      if (process.env.SMOKE_SHOTS)
+        await page.screenshot({ path: join(process.env.SMOKE_SHOTS, `standee-maker-${seed}.png`) });
+      await maker.getByRole("button", { name: /^Use for/ }).click();
+      await maker.waitFor({ state: "detached", timeout: 30_000 });
+      if ((await figures.getAttribute("open")) === null) await figures.locator("> summary").click();
+      await card.locator('button[title="Back to the stand-in"]').first().waitFor({ timeout: 30_000 });
+    };
+    await host.page
+      .locator("canvas")
+      .first()
+      .click({ position: { x: 5, y: 5 } });
+    await dress(host, 0);
+    await dress(host, 1);
+    await dress(guest, 2);
+    // Both browsers have all three: each figure library notes the standees that reached it.
+    const library = (page) =>
+      page.evaluate(async () => {
+        const db = await new Promise((r) => {
+          const req = indexedDB.open("open-battle-figures");
+          req.onsuccess = () => r(req.result);
+          req.onerror = () => r(null);
+        });
+        if (!db) return [];
+        const out = [];
+        for (const n of db.objectStoreNames) {
+          const all = await new Promise((r) => {
+            const req = db.transaction(n).objectStore(n).getAll();
+            req.onsuccess = () => r(req.result);
+          });
+          for (const e of all)
+            if (e?.name?.endsWith(" standee"))
+              out.push({ name: e.name, bytes: e.bytes, triangles: e.triangles, height: e.height });
+        }
+        return out;
+      });
+    for (const d of [host, guest]) {
+      let got = [];
+      for (let i = 0; i < 40 && got.length < 3; i++) {
+        got = await library(d.page);
+        if (got.length < 3) await d.page.waitForTimeout(500);
+      }
+      if (got.length !== 3)
+        throw new Error(`a browser has ${got.length} of the 3 standees: ${JSON.stringify(got)}`);
+      // The texture budget: a figure's texture is at most 160 KB; these are well under.
+      if (got.some((x) => x.bytes > 160_000 || x.triangles > 12_000))
+        throw new Error(`over budget: ${JSON.stringify(got)}`);
+      if (d === host) console.log("  standees:", JSON.stringify(got));
+    }
+    if (process.env.SMOKE_SHOTS) {
+      await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "standees-host.png") });
+      await guest.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "standees-guest.png") });
+      // The army showcase at the start of the battle comes in close on them.
+      await host.page.getByRole("button", { name: /Start battle/ }).click();
+      const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+      if (await anyway.count()) await anyway.first().click();
+      for (let i = 0; i < 6; i++) {
+        await host.page.waitForTimeout(1500);
+        await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, `standees-showcase-${i}.png`) });
+      }
+    }
+    await host.context.close();
+    await guest.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
   async companion() {
     const { page, context } = await device({
       viewport: { width: 390, height: 844 },

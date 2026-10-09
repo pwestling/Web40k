@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { Model, Unit } from "../core";
 import { bindingKey, restyleUnit, unitKeys, useAssets } from "../assets/store";
 import { MODEL_EXTENSIONS } from "../assets/types";
@@ -7,6 +7,10 @@ import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
 import { openLibrary } from "../figures/open";
 import { t } from "../i18n";
+
+const StandeeMaker = lazy(() =>
+  import("../standees/StandeeMaker").then((m) => ({ default: m.StandeeMaker })),
+);
 
 const k = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n));
 
@@ -66,6 +70,7 @@ function FigureRow({
   editable: boolean;
 }) {
   const { assets, status, dressUnit } = useAssets();
+  const [photo, setPhoto] = useState(false);
   const figure = models.find((m) => m.figure)?.figure;
   const asset = figure && assets[figure.asset];
   const message = status[unit.id];
@@ -100,6 +105,26 @@ function FigureRow({
             }}
           />
         </label>
+      )}
+      {editable && models[0] && (
+        <button
+          className="small"
+          title={t("Photograph your painted miniature and stand it on its base")}
+          onClick={() => setPhoto(true)}
+        >
+          📷 {t("Photo…")}
+        </button>
+      )}
+      {photo && models[0] && (
+        <Suspense fallback={null}>
+          <StandeeMaker
+            unit={unit}
+            keys={keys}
+            label={label}
+            base={models[0].base}
+            onClose={() => setPhoto(false)}
+          />
+        </Suspense>
       )}
       {editable && <FromLibrary unit={unit} label={label} keys={keys} current={figure?.asset} />}
       {editable && figure && (

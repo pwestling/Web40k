@@ -5624,3 +5624,23 @@ body:has(.panel.better-move) .panel.whatnow {
     min-height: 44px;
   }
 }
+/* #68: photo standees. */
+.standee-maker {
+  width: min(560px, 94vw);
+}
+.standee-maker .photo-buttons {
+  gap: 6px;
+  align-items: center;
+}
+.cutout-editor canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 52vh;
+  margin: 8px auto;
+  touch-action: none;
+  cursor: crosshair;
+  border-radius: 6px;
+}
+.cutout-editor canvas.checker {
+  background: repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e37 0% 50%) 50% / 16px 16px;
+}

@@ -610,6 +610,7 @@ msgstr "Ranger sur l'étagère"
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
 #: src/ranked/RankedGame.tsx:451
+#: src/standees/StandeeMaker.tsx:195
 #: src/ui/RegimentPanel.tsx:274
 #, fuzzy
 msgid "Back"
@@ -2005,6 +2006,7 @@ msgid "Use these dice"
 msgstr "Utiliser ces dés"
 
 #: src/companion/RealDice.tsx:237
+#: src/standees/StandeeMaker.tsx:352
 #, fuzzy
 msgid "Start again"
 msgstr "Recommencer"
@@ -2677,6 +2679,7 @@ msgstr "Rondes suisses sans serveur : ton navigateur publie l'événement et app
 #: src/events/EventsUI.tsx:213
 #: src/figures/FigureLibrary.tsx:364
 #: src/player/PlayerCard.tsx:127
+#: src/standees/StandeeMaker.tsx:205
 #: src/ui/PlayPanel.tsx:257
 #: src/ui/TeachRule.tsx:120
 #, fuzzy
@@ -3250,7 +3253,7 @@ msgstr "Bibliothèque de figurines"
 #: src/figures/FigureLibrary.tsx:94
 #: src/figures/FigureLibrary.tsx:158
 #: src/figures/FigureLibrary.tsx:202
-#: src/ui/FigurePicker.tsx:29
+#: src/ui/FigurePicker.tsx:33
 #, fuzzy
 msgid "Figures"
 msgstr "Figurines"
@@ -5936,6 +5939,113 @@ msgstr "Bataille terminée"
 msgid "Making the replay page needs a connection."
 msgstr "Créer la page de rediffusion nécessite une connexion."
 
+#: src/standees/StandeeMaker.tsx:108
+#, fuzzy
+msgid "That photo couldn't be read. Try a JPEG or PNG."
+msgstr "Impossible de lire cette photo. Essaie un JPEG ou un PNG."
+
+#: src/standees/StandeeMaker.tsx:115
+#: src/standees/StandeeMaker.tsx:125
+#, fuzzy
+msgid "Nothing is left of the miniature: paint it back with Keep."
+msgstr "Il ne reste rien de la figurine : repeins-la avec Garder."
+
+#: src/standees/StandeeMaker.tsx:157
+#: src/standees/StandeeMaker.tsx:161
+#, fuzzy
+msgid "Photo standee for {name}"
+msgstr "Silhouette photo pour {name}"
+
+#: src/standees/StandeeMaker.tsx:167
+#, fuzzy
+msgid "Stand the painted miniature on a plain sheet of paper and photograph it from the front, at its eye level, base and all. The app cuts it out and scales it to its base; one photo dresses every {name}."
+msgstr "Pose la figurine peinte sur une feuille de papier unie et photographie-la de face, à hauteur de ses yeux, socle compris. L'appli la détoure et la met à l'échelle de son socle ; une photo habille tous les {name}."
+
+#: src/standees/StandeeMaker.tsx:174
+#, fuzzy
+msgid "Retake the front"
+msgstr "Reprendre l'avant"
+
+#: src/standees/StandeeMaker.tsx:174
+#, fuzzy
+msgid "Front photo"
+msgstr "Photo de face"
+
+#: src/standees/StandeeMaker.tsx:179
+#, fuzzy
+msgid "Retake the back"
+msgstr "Reprendre l'arrière"
+
+#: src/standees/StandeeMaker.tsx:179
+#, fuzzy
+msgid "Back photo (optional)"
+msgstr "Photo de dos (facultatif)"
+
+#: src/standees/StandeeMaker.tsx:195
+#, fuzzy
+msgid "Front"
+msgstr "Avant"
+
+#: src/standees/StandeeMaker.tsx:209
+#, fuzzy
+msgid "Stand it on the table's base (cut the photo's base off)"
+msgstr "La poser sur le socle de la table (couper le socle de la photo)"
+
+#: src/standees/StandeeMaker.tsx:212
+#, fuzzy
+msgid "Standing it up…"
+msgstr "Mise en place…"
+
+#: src/standees/StandeeMaker.tsx:212
+#, fuzzy
+msgid "Use for {name}"
+msgstr "Utiliser pour {name}"
+
+#: src/standees/StandeeMaker.tsx:241
+#, fuzzy
+msgid "Take a photo"
+msgstr "Prendre une photo"
+
+#: src/standees/StandeeMaker.tsx:245
+#, fuzzy
+msgid "Choose a photo…"
+msgstr "Choisir une photo…"
+
+#: src/standees/StandeeMaker.tsx:302
+#, fuzzy
+msgid "The cut-out: paint to keep or cut"
+msgstr "Le détourage : peins pour garder ou couper"
+
+#: src/standees/StandeeMaker.tsx:315
+#, fuzzy
+msgid "Brush"
+msgstr "Pinceau"
+
+#: src/standees/StandeeMaker.tsx:317
+#, fuzzy
+msgid "Keep"
+msgstr "Garder"
+
+#: src/standees/StandeeMaker.tsx:320
+#, fuzzy
+msgid "Cut"
+msgstr "Couper"
+
+#: src/standees/StandeeMaker.tsx:324
+#, fuzzy
+msgid "Brush size"
+msgstr "Taille du pinceau"
+
+#: src/standees/StandeeMaker.tsx:334
+#, fuzzy
+msgid "Backdrop"
+msgstr "Fond"
+
+#: src/standees/StandeeMaker.tsx:341
+#, fuzzy
+msgid "Move right if bits of the backdrop are left, left if bits of the miniature are cut"
+msgstr "Vers la droite s'il reste des bouts du fond, vers la gauche si des bouts de la figurine sont coupés"
+
 #: src/sw/UpdateToast.tsx:12
 #, fuzzy
 msgid "A new version of Open Battle is ready."
@@ -6489,7 +6599,7 @@ msgstr "Ta liste reste à toi : elle va aux joueurs de ta partie et nulle part a
 
 #: src/ui/ArmyGuide.tsx:80
 #: src/ui/ArmyImport.tsx:422
-#: src/ui/FigurePicker.tsx:180
+#: src/ui/FigurePicker.tsx:205
 #, fuzzy
 msgid "Your figures"
 msgstr "Tes figurines"
@@ -6688,7 +6798,7 @@ msgid "Stand-ins"
 msgstr "Figurines génériques"
 
 #: src/ui/ArmyImport.tsx:414
-#: src/ui/FigurePicker.tsx:172
+#: src/ui/FigurePicker.tsx:197
 #, fuzzy
 msgid "Fits this unit"
 msgstr "Adaptées à cette unité"
@@ -8208,77 +8318,87 @@ msgstr "sur 5"
 msgid "Saved ✓"
 msgstr "Enregistré ✓"
 
-#: src/ui/FigurePicker.tsx:109
+#: src/ui/FigurePicker.tsx:112
+#, fuzzy
+msgid "Photograph your painted miniature and stand it on its base"
+msgstr "Photographie ta figurine peinte et pose-la sur son socle"
+
+#: src/ui/FigurePicker.tsx:115
+#, fuzzy
+msgid "Photo…"
+msgstr "Photo…"
+
+#: src/ui/FigurePicker.tsx:134
 #, fuzzy
 msgid "Turn the figure 90°"
 msgstr "Tourner la figurine de 90°"
 
-#: src/ui/FigurePicker.tsx:116
+#: src/ui/FigurePicker.tsx:141
 #, fuzzy
 msgid "Smaller"
 msgstr "Plus petite"
 
-#: src/ui/FigurePicker.tsx:123
+#: src/ui/FigurePicker.tsx:148
 #, fuzzy
 msgid "Bigger"
 msgstr "Plus grande"
 
-#: src/ui/FigurePicker.tsx:128
+#: src/ui/FigurePicker.tsx:153
 #, fuzzy
 msgid "Back to the stand-in"
 msgstr "Revenir au substitut"
 
-#: src/ui/FigurePicker.tsx:162
+#: src/ui/FigurePicker.tsx:187
 #, fuzzy
 msgid "Figure from the library for {name}"
 msgstr "Figurine de la bibliothèque pour {name}"
 
-#: src/ui/FigurePicker.tsx:170
+#: src/ui/FigurePicker.tsx:195
 #, fuzzy
 msgid "From the library…"
 msgstr "Depuis la bibliothèque…"
 
-#: src/ui/FigurePicker.tsx:180
+#: src/ui/FigurePicker.tsx:205
 #, fuzzy
 msgid "Everything else"
 msgstr "Tout le reste"
 
-#: src/ui/FigurePicker.tsx:187
+#: src/ui/FigurePicker.tsx:212
 #, fuzzy
 msgid "Open the figure library…"
 msgstr "Ouvrir la bibliothèque de figurines…"
 
-#: src/ui/FigurePicker.tsx:32
+#: src/ui/FigurePicker.tsx:36
 #, fuzzy
 msgid "Everyone in the game sees uploaded figures. You can also drop a model file onto the unit."
 msgstr "Tout le monde dans la partie voit les figurines importées. Tu peux aussi déposer un fichier 3D sur l'unité."
 
-#: src/ui/FigurePicker.tsx:38
+#: src/ui/FigurePicker.tsx:42
 #, fuzzy
 msgid "Use for every model in this unit"
 msgstr "Utiliser pour chaque figurine de cette unité"
 
-#: src/ui/FigurePicker.tsx:77
+#: src/ui/FigurePicker.tsx:82
 #, fuzzy
 msgid "Fetching {name}…"
 msgstr "Récupération de {name}…"
 
-#: src/ui/FigurePicker.tsx:84
+#: src/ui/FigurePicker.tsx:89
 #, fuzzy
 msgid "{name}: {triangles} triangles, drawn at {levels} depending on distance"
 msgstr "{name} : {triangles} triangles, affiché en {levels} selon la distance"
 
-#: src/ui/FigurePicker.tsx:89
+#: src/ui/FigurePicker.tsx:94
 #, fuzzy
 msgid "Model file: {extensions}"
 msgstr "Fichier 3D : {extensions}"
 
-#: src/ui/FigurePicker.tsx:92
+#: src/ui/FigurePicker.tsx:97
 #, fuzzy
 msgid "Replace…"
 msgstr "Remplacer…"
 
-#: src/ui/FigurePicker.tsx:92
+#: src/ui/FigurePicker.tsx:97
 #, fuzzy
 msgid "Upload…"
 msgstr "Importer…"

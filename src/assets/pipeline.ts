@@ -23,8 +23,9 @@ export const ready = Promise.all([MeshoptSimplifier.ready, MeshoptEncoder.ready]
 
 /** processMesh, plus the paint: the atlas compressed within the texture budget. */
 export async function processModel(raw: RawModel, options: ProcessOptions): Promise<ModelAsset> {
-  const { atlas, sourceTexture, ...mesh } = raw;
+  const { atlas, sourceTexture, look, ...mesh } = raw;
   const asset = processMesh(mesh, options);
+  if (look) asset.look = look;
   if (atlas) {
     const start = performance.now();
     asset.texture = await encodeTexture(atlas, BUDGETS[options.kind].texture);

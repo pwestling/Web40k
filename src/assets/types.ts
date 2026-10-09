@@ -87,6 +87,8 @@ export interface ModelAsset {
   hull?: number[];
   /** Painted models: the texture the levels' uvs point into. */
   texture?: AssetTexture;
+  /** "photo": a photo standee (#68), its light already in the picture, so the table's lights touch it less. */
+  look?: "photo";
   /** Axis-aligned bounds in inches after normalisation. */
   bounds: { min: [number, number, number]; max: [number, number, number] };
   stats: AssetStats;
@@ -105,4 +107,4 @@ export function assetBuffers(asset: ModelAsset): ArrayBuffer[] {
 }
 
 /** The model files the importer reads (assets/parse.ts). Here, not there, so a file picker doesn't pull in three.js and its loaders. */
-export const MODEL_EXTENSIONS = [".glb", ".gltf", ".stl", ".obj", ".ply"];
+export const MODEL_EXTENSIONS = [".glb", ".gltf", ".stl", ".obj", ".ply", ".standee"];

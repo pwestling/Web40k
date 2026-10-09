@@ -141,11 +141,14 @@ function makeLook(asset: ModelAsset): Look {
   const painted = !!(asset.texture || top?.colors);
   if (!painted)
     return { geometries, material, painted, dispose: () => geometries.forEach((g) => g.dispose()) };
+  // A photo standee (#68) carries the light it was photographed in: mostly its own, a little of the table's.
+  const photo = asset.look === "photo";
   const own = new MeshStandardMaterial({
-    color: "#ffffff",
-    roughness: 0.75,
-    metalness: 0.05,
+    color: photo ? "#8c8c8c" : "#ffffff",
+    roughness: photo ? 1 : 0.75,
+    metalness: photo ? 0 : 0.05,
     vertexColors: !!top?.colors,
+    ...(photo ? { emissive: "#ffffff", emissiveIntensity: 0.55 } : {}),
   });
   let texture: Texture | null = null;
   let gone = false;
@@ -161,6 +164,7 @@ function makeLook(asset: ModelAsset): Look {
         texture.anisotropy = 4;
         texture.needsUpdate = true;
         own.map = texture;
+        if (photo) own.emissiveMap = texture;
         own.needsUpdate = true;
       })
       .catch(() => {

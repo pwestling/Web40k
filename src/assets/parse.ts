@@ -11,9 +11,12 @@ import type { MeshData } from "./types";
 export interface RawModel extends MeshData {
   atlas?: OffscreenCanvas;
   sourceTexture?: [number, number];
+  look?: "photo";
 }
 
 import { MODEL_EXTENSIONS } from "./types";
+import { standeeModel } from "../standees/build";
+import { STANDEE_EXTENSION } from "../standees/file";
 
 /**
  * Read an uploaded model file into one triangle soup, y up, in the file's own
@@ -44,6 +47,9 @@ export async function parseModelFile(name: string, bytes: ArrayBuffer, atlasSide
       const parts = partsOf(gltf.scene, index);
       return merge(parts, bakePaint(parts, materials, atlasSide));
     }
+    case STANDEE_EXTENSION:
+      // A photo standee (#68): the card is already in inches, y up.
+      return standeeModel(bytes, atlasSide);
     default:
       throw new Error(`Unsupported model format "${ext}". Use ${MODEL_EXTENSIONS.join(", ")}.`);
   }
