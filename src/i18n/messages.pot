@@ -617,8 +617,8 @@ msgid "Steady"
 msgstr ""
 
 #: src/bot/solo.ts:134
-#: src/review/ReviewPanel.tsx:195
-#: src/review/ReviewPanel.tsx:195
+#: src/review/ReviewPanel.tsx:204
+#: src/review/ReviewPanel.tsx:204
 #: src/share/cards.ts:292
 #: src/ui/Missions.tsx:361
 msgid "You"
@@ -2413,7 +2413,7 @@ msgid "Language"
 msgstr ""
 
 #: src/i18n/names.ts:10
-#: src/review/ReviewPanel.tsx:112
+#: src/review/ReviewPanel.tsx:121
 msgid "Player {n}"
 msgstr ""
 
@@ -3868,167 +3868,173 @@ msgstr ""
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:167
+#: src/review/ReviewPanel.tsx:176
 msgid "Turning points"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:189
+#: src/review/ReviewPanel.tsx:198
 msgid "No big swings: both sides played close to the best on offer."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:191
+#: src/review/ReviewPanel.tsx:200
 msgid "Takeaways"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:216
+#: src/review/ReviewPanel.tsx:225
 msgid "Costly"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:218
+#: src/review/ReviewPanel.tsx:227
 msgid "Strong"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:220
+#: src/review/ReviewPanel.tsx:229
 msgid "Missed chance"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:222
+#: src/review/ReviewPanel.tsx:231
 msgid "Lucky dice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:223
+#: src/review/ReviewPanel.tsx:232
 msgid "Unlucky dice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:279
-#: src/review/ReviewPanel.tsx:283
+#: src/review/ReviewPanel.tsx:288
+#: src/review/ReviewPanel.tsx:292
 msgid "{side} ahead"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:290
+#: src/review/ReviewPanel.tsx:299
 msgid "Expected result across the game"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:304
+#: src/review/ReviewPanel.tsx:313
 msgid "even"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:307
-#: src/review/ReviewPanel.tsx:313
+#: src/review/ReviewPanel.tsx:316
+#: src/review/ReviewPanel.tsx:322
 #: src/ui/Missions.tsx:383
 msgid "R{n}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:367
+#: src/review/ReviewPanel.tsx:376
 msgid "{n}%"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:372
+#: src/review/ReviewPanel.tsx:381
 msgid "Round {round}: {side} {n}% to win"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:377
+#: src/review/ReviewPanel.tsx:386
 msgid "How the computer rated each side's chances as the game went on."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:416
+#: src/review/ReviewPanel.tsx:425
 msgid "{played}. Better: {better}, about {n}% more chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:420
+#: src/review/ReviewPanel.tsx:429
 msgid "{unit} still had something to do ({what}), about {n}% chance to win left behind."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:425
+#: src/review/ReviewPanel.tsx:434
 msgid "Ended the turn without {better}, about {n}% chance to win left behind."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:430
+#: src/review/ReviewPanel.tsx:439
 msgid "{played}: about {n}% more chance to win than the next best choice."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:432
+#: src/review/ReviewPanel.tsx:441
 msgid "{played}: the dice added about {n}% to the chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:433
+#: src/review/ReviewPanel.tsx:442
 msgid "{played}: the dice took about {n}% off the chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:482
+#: src/review/ReviewPanel.tsx:47
+msgid "This can take a few minutes. You can close this and keep watching."
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:48
+msgid "About {n} minute left. You can close this and keep watching."
+msgid_plural "About {n} minutes left. You can close this and keep watching."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/review/ReviewPanel.tsx:491
 msgid "{side} · rounds {rounds}, {phase}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:487
+#: src/review/ReviewPanel.tsx:496
 msgid "{side} · round {round}, {phase}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:496
+#: src/review/ReviewPanel.tsx:505
 #: src/ui/StatsScreen.tsx:128
 msgid "Watch it again on the table"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:497
+#: src/review/ReviewPanel.tsx:506
 msgid "Show"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:503
+#: src/review/ReviewPanel.tsx:512
 msgid "A new game on this screen, just before this choice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:505
+#: src/review/ReviewPanel.tsx:514
 msgid "Try the better move"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:512
+#: src/review/ReviewPanel.tsx:521
 msgid "Keep it as a note on this replay"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:514
+#: src/review/ReviewPanel.tsx:523
 msgid "Added to notes"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:514
+#: src/review/ReviewPanel.tsx:523
 msgid "Add to notes"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:53
-#: src/review/ReviewPanel.tsx:67
-#: src/review/ReviewPanel.tsx:80
-#: src/review/ReviewPanel.tsx:158
-#: src/review/ReviewPanel.tsx:455
-msgid "Game review"
-msgstr ""
-
-#: src/review/ReviewPanel.tsx:530
+#: src/review/ReviewPanel.tsx:539
 msgid "Try the better move for {side}:"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:55
+#: src/review/ReviewPanel.tsx:62
+#: src/review/ReviewPanel.tsx:76
+#: src/review/ReviewPanel.tsx:89
+#: src/review/ReviewPanel.tsx:167
+#: src/review/ReviewPanel.tsx:464
+msgid "Game review"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:64
 msgid "The computer goes back over every decision: what each was worth, the turning points, and what to try next time."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:60
+#: src/review/ReviewPanel.tsx:69
 msgid "Review this game"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:70
+#: src/review/ReviewPanel.tsx:79
 msgid "Going over every decision… ({n}%)"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:71
+#: src/review/ReviewPanel.tsx:80
 msgid "Going over every decision…"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:74
-msgid "About a minute. You can close this and keep watching."
-msgstr ""
-
-#: src/review/ReviewPanel.tsx:81
+#: src/review/ReviewPanel.tsx:90
 msgid "The review stopped: {why}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:82
+#: src/review/ReviewPanel.tsx:91
 #: src/ui/Packages.tsx:582
 msgid "Try again"
 msgstr ""

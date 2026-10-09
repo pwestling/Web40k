@@ -4,11 +4,11 @@ import { applyEvent, sidePlayers, undoneSeqs, type GameRecord, type GameState } 
 import { gameModule } from "../systems";
 import { useStore } from "../store";
 import { displayName } from "../i18n/names";
-import { formatNumber, gameText, t } from "../i18n";
+import { formatNumber, gameText, t, tn } from "../i18n";
 import { branchGame } from "../ui/Branch";
 import { explain } from "../bot/explain";
 import { loadNotes, putNote, deviceId, type NoteMark } from "../replay/notes";
-import { startReview, useReviewRun } from "./run";
+import { minutesLeft, startReview, useReviewRun } from "./run";
 import { betterText, capital, movePhrase, moveText, takeaways, winShare } from "./words";
 import type { Decision, GameReview, Mark } from "./analyse";
 
@@ -43,6 +43,15 @@ export function reviewable(game: GameState): boolean {
   return !!gameModule(game.system);
 }
 
+function waitText(left: number | null): string {
+  if (left === null) return t("This can take a few minutes. You can close this and keep watching.");
+  return tn(
+    left,
+    "About {n} minute left. You can close this and keep watching.",
+    "About {n} minutes left. You can close this and keep watching.",
+  );
+}
+
 export function ReviewPanel({ watching, close }: { watching: boolean; close: () => void }) {
   const record = useStore((s) => s.record);
   const run = useReviewRun();
@@ -71,7 +80,7 @@ export function ReviewPanel({ watching, close }: { watching: boolean; close: () 
             : t("Going over every decision…")}
         </p>
         {run.done > 0 ? <progress value={run.done} max={1} /> : <progress />}
-        <p className="muted small">{t("About a minute. You can close this and keep watching.")}</p>
+        <p className="muted small">{waitText(minutesLeft(run))}</p>
       </section>
     );
   if (run.status === "error" || !run.review)

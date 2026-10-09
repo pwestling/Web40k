@@ -745,8 +745,8 @@ msgid "Steady"
 msgstr "Solide"
 
 #: src/bot/solo.ts:134
-#: src/review/ReviewPanel.tsx:195
-#: src/review/ReviewPanel.tsx:195
+#: src/review/ReviewPanel.tsx:204
+#: src/review/ReviewPanel.tsx:204
 #: src/share/cards.ts:292
 #: src/ui/Missions.tsx:361
 #, fuzzy
@@ -2931,7 +2931,7 @@ msgid "Language"
 msgstr "Sprache"
 
 #: src/i18n/names.ts:10
-#: src/review/ReviewPanel.tsx:112
+#: src/review/ReviewPanel.tsx:121
 #, fuzzy
 msgid "Player {n}"
 msgstr "Spieler {n}"
@@ -4720,205 +4720,212 @@ msgstr "Nach der Schlacht"
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Zum Ansehen verlässt du den Raum dieses Spiels. Das Spiel bleibt gespeichert und lässt sich auf der Startseite fortsetzen."
 
-#: src/review/ReviewPanel.tsx:167
+#: src/review/ReviewPanel.tsx:176
 #, fuzzy
 msgid "Turning points"
 msgstr "Wendepunkte"
 
-#: src/review/ReviewPanel.tsx:189
+#: src/review/ReviewPanel.tsx:198
 #, fuzzy
 msgid "No big swings: both sides played close to the best on offer."
 msgstr "Keine großen Ausschläge: Beide Seiten spielten nahe am bestmöglichen Zug."
 
-#: src/review/ReviewPanel.tsx:191
+#: src/review/ReviewPanel.tsx:200
 #, fuzzy
 msgid "Takeaways"
 msgstr "Was du mitnimmst"
 
-#: src/review/ReviewPanel.tsx:216
+#: src/review/ReviewPanel.tsx:225
 #, fuzzy
 msgid "Costly"
 msgstr "Teuer"
 
-#: src/review/ReviewPanel.tsx:218
+#: src/review/ReviewPanel.tsx:227
 #, fuzzy
 msgid "Strong"
 msgstr "Stark"
 
-#: src/review/ReviewPanel.tsx:220
+#: src/review/ReviewPanel.tsx:229
 #, fuzzy
 msgid "Missed chance"
 msgstr "Verpasste Chance"
 
-#: src/review/ReviewPanel.tsx:222
+#: src/review/ReviewPanel.tsx:231
 #, fuzzy
 msgid "Lucky dice"
 msgstr "Glückswürfel"
 
-#: src/review/ReviewPanel.tsx:223
+#: src/review/ReviewPanel.tsx:232
 #, fuzzy
 msgid "Unlucky dice"
 msgstr "Pechwürfel"
 
-#: src/review/ReviewPanel.tsx:279
-#: src/review/ReviewPanel.tsx:283
+#: src/review/ReviewPanel.tsx:288
+#: src/review/ReviewPanel.tsx:292
 #, fuzzy
 msgid "{side} ahead"
 msgstr "{side} vorn"
 
-#: src/review/ReviewPanel.tsx:290
+#: src/review/ReviewPanel.tsx:299
 #, fuzzy
 msgid "Expected result across the game"
 msgstr "Erwartetes Ergebnis im Lauf der Partie"
 
-#: src/review/ReviewPanel.tsx:304
+#: src/review/ReviewPanel.tsx:313
 #, fuzzy
 msgid "even"
 msgstr "ausgeglichen"
 
-#: src/review/ReviewPanel.tsx:307
-#: src/review/ReviewPanel.tsx:313
+#: src/review/ReviewPanel.tsx:316
+#: src/review/ReviewPanel.tsx:322
 #: src/ui/Missions.tsx:383
 #, fuzzy
 msgid "R{n}"
 msgstr "R{n}"
 
-#: src/review/ReviewPanel.tsx:367
+#: src/review/ReviewPanel.tsx:376
 #, fuzzy
 msgid "{n}%"
 msgstr "{n} %"
 
-#: src/review/ReviewPanel.tsx:372
+#: src/review/ReviewPanel.tsx:381
 #, fuzzy
 msgid "Round {round}: {side} {n}% to win"
 msgstr "Runde {round}: {side} gewinnt zu {n} %"
 
-#: src/review/ReviewPanel.tsx:377
+#: src/review/ReviewPanel.tsx:386
 #, fuzzy
 msgid "How the computer rated each side's chances as the game went on."
 msgstr "Wie der Computer die Chancen beider Seiten im Lauf der Partie einschätzte."
 
-#: src/review/ReviewPanel.tsx:416
+#: src/review/ReviewPanel.tsx:425
 #, fuzzy
 msgid "{played}. Better: {better}, about {n}% more chance to win."
 msgstr "{played}. Besser: {better}, etwa {n} % mehr Siegchance."
 
-#: src/review/ReviewPanel.tsx:420
+#: src/review/ReviewPanel.tsx:429
 #, fuzzy
 msgid "{unit} still had something to do ({what}), about {n}% chance to win left behind."
 msgstr "{unit} hätte noch etwas tun können ({what}), etwa {n} % Siegchance liegen gelassen."
 
-#: src/review/ReviewPanel.tsx:425
+#: src/review/ReviewPanel.tsx:434
 #, fuzzy
 msgid "Ended the turn without {better}, about {n}% chance to win left behind."
 msgstr "Zug beendet, ohne {better}: etwa {n} % Siegchance verschenkt."
 
-#: src/review/ReviewPanel.tsx:430
+#: src/review/ReviewPanel.tsx:439
 #, fuzzy
 msgid "{played}: about {n}% more chance to win than the next best choice."
 msgstr "{played}: etwa {n} % mehr Siegchance als die nächstbeste Wahl."
 
-#: src/review/ReviewPanel.tsx:432
+#: src/review/ReviewPanel.tsx:441
 #, fuzzy
 msgid "{played}: the dice added about {n}% to the chance to win."
 msgstr "{played}: Die Würfel brachten etwa {n} % Siegchance dazu."
 
-#: src/review/ReviewPanel.tsx:433
+#: src/review/ReviewPanel.tsx:442
 #, fuzzy
 msgid "{played}: the dice took about {n}% off the chance to win."
 msgstr "{played}: Die Würfel kosteten etwa {n} % Siegchance."
 
-#: src/review/ReviewPanel.tsx:482
+#: src/review/ReviewPanel.tsx:47
+#, fuzzy
+msgid "This can take a few minutes. You can close this and keep watching."
+msgstr "Das kann ein paar Minuten dauern. Du kannst das schließen und weiterschauen."
+
+#: src/review/ReviewPanel.tsx:48
+#, fuzzy
+msgid "About {n} minute left. You can close this and keep watching."
+msgid_plural "About {n} minutes left. You can close this and keep watching."
+msgstr[0] "Noch etwa {n} Minute. Du kannst das schließen und weiterschauen."
+msgstr[1] "Noch etwa {n} Minuten. Du kannst das schließen und weiterschauen."
+
+#: src/review/ReviewPanel.tsx:491
 #, fuzzy
 msgid "{side} · rounds {rounds}, {phase}"
 msgstr "{side} · Runden {rounds}, {phase}"
 
-#: src/review/ReviewPanel.tsx:487
+#: src/review/ReviewPanel.tsx:496
 #, fuzzy
 msgid "{side} · round {round}, {phase}"
 msgstr "{side} · Runde {round}, {phase}"
 
-#: src/review/ReviewPanel.tsx:496
+#: src/review/ReviewPanel.tsx:505
 #: src/ui/StatsScreen.tsx:128
 #, fuzzy
 msgid "Watch it again on the table"
 msgstr "Noch mal auf dem Tisch ansehen"
 
-#: src/review/ReviewPanel.tsx:497
+#: src/review/ReviewPanel.tsx:506
 #, fuzzy
 msgid "Show"
 msgstr "Zeigen"
 
-#: src/review/ReviewPanel.tsx:503
+#: src/review/ReviewPanel.tsx:512
 #, fuzzy
 msgid "A new game on this screen, just before this choice"
 msgstr "Eine neue Partie an diesem Bildschirm, kurz vor dieser Entscheidung"
 
-#: src/review/ReviewPanel.tsx:505
+#: src/review/ReviewPanel.tsx:514
 #, fuzzy
 msgid "Try the better move"
 msgstr "Den besseren Zug probieren"
 
-#: src/review/ReviewPanel.tsx:512
+#: src/review/ReviewPanel.tsx:521
 #, fuzzy
 msgid "Keep it as a note on this replay"
 msgstr "Als Notiz in dieser Wiederholung behalten"
 
-#: src/review/ReviewPanel.tsx:514
+#: src/review/ReviewPanel.tsx:523
 #, fuzzy
 msgid "Added to notes"
 msgstr "Zu den Notizen hinzugefügt"
 
-#: src/review/ReviewPanel.tsx:514
+#: src/review/ReviewPanel.tsx:523
 #, fuzzy
 msgid "Add to notes"
 msgstr "Zu den Notizen"
 
-#: src/review/ReviewPanel.tsx:53
-#: src/review/ReviewPanel.tsx:67
-#: src/review/ReviewPanel.tsx:80
-#: src/review/ReviewPanel.tsx:158
-#: src/review/ReviewPanel.tsx:455
-#, fuzzy
-msgid "Game review"
-msgstr "Spielanalyse"
-
-#: src/review/ReviewPanel.tsx:530
+#: src/review/ReviewPanel.tsx:539
 #, fuzzy
 msgid "Try the better move for {side}:"
 msgstr "Probiere den besseren Zug für {side}:"
 
-#: src/review/ReviewPanel.tsx:55
+#: src/review/ReviewPanel.tsx:62
+#: src/review/ReviewPanel.tsx:76
+#: src/review/ReviewPanel.tsx:89
+#: src/review/ReviewPanel.tsx:167
+#: src/review/ReviewPanel.tsx:464
+#, fuzzy
+msgid "Game review"
+msgstr "Spielanalyse"
+
+#: src/review/ReviewPanel.tsx:64
 #, fuzzy
 msgid "The computer goes back over every decision: what each was worth, the turning points, and what to try next time."
 msgstr "Der Computer geht jede Entscheidung noch einmal durch: was sie wert war, die Wendepunkte und was du nächstes Mal probieren kannst."
 
-#: src/review/ReviewPanel.tsx:60
+#: src/review/ReviewPanel.tsx:69
 #, fuzzy
 msgid "Review this game"
 msgstr "Spiel analysieren"
 
-#: src/review/ReviewPanel.tsx:70
+#: src/review/ReviewPanel.tsx:79
 #, fuzzy
 msgid "Going over every decision… ({n}%)"
 msgstr "Gehe jede Entscheidung durch … ({n} %)"
 
-#: src/review/ReviewPanel.tsx:71
+#: src/review/ReviewPanel.tsx:80
 #, fuzzy
 msgid "Going over every decision…"
 msgstr "Gehe jede Entscheidung durch…"
 
-#: src/review/ReviewPanel.tsx:74
-#, fuzzy
-msgid "About a minute. You can close this and keep watching."
-msgstr "Etwa eine Minute. Du kannst das schließen und weiter zuschauen."
-
-#: src/review/ReviewPanel.tsx:81
+#: src/review/ReviewPanel.tsx:90
 #, fuzzy
 msgid "The review stopped: {why}"
 msgstr "Die Analyse hat angehalten: {why}"
 
-#: src/review/ReviewPanel.tsx:82
+#: src/review/ReviewPanel.tsx:91
 #: src/ui/Packages.tsx:582
 #, fuzzy
 msgid "Try again"
