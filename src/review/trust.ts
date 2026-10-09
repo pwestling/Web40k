@@ -44,6 +44,8 @@ export const TRUSTED: Readonly<Record<string, readonly DecisionKind[]>> = {
   "tow-hand": ["attack", "move", "charge"],
   "fsd-1.7": ["attack", "move"],
   "conquest-hand": ["attack", "move", "charge"],
+  // Shots and fights: 26 of 30 (87%) over six seeds, a die or two each, so not yet.
+  brinewatch: ["move"],
 };
 
 /** Whether the review may call a decision of this kind costly or strong in this game. */

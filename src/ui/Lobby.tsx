@@ -17,7 +17,18 @@ import { ArmyGuide } from "./ArmyGuide";
 import { NetCheck } from "./NetCheck";
 import { presetMission, startDemo } from "./demo";
 import { reloadedInto } from "./resumeHotseat";
-import { installRiftLanterns, playRiftAtTable, playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import {
+  BRINEWATCH,
+  installOwnGame,
+  installRiftLanterns,
+  ownGame,
+  playOwnAtTable,
+  playOwnGame,
+  playRiftAtTable,
+  playRiftLanterns,
+  RIFT_LANTERNS,
+} from "../games/riftLanterns";
+import type { RulebookDoc } from "../printplay/rulebook";
 import { YourArmy } from "../bot/YourArmy";
 import { armSolo, characterName, levelName, savedLevel } from "../bot/solo";
 import type { Level } from "../bot/player";
@@ -38,6 +49,16 @@ import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 const MailLobby = lazy(() => import("../mail/MailLobby").then((m) => ({ default: m.MailLobby })));
 /** Rift Lanterns' rules page (#47), with its print and play, on demand. */
 const RulesPage = lazy(() => import("../printplay/RulesPage"));
+/** Brinewatch's rules page (#69): the same page with its own rulebook. */
+const BrinewatchRules = lazy(() =>
+  Promise.all([import("../printplay/RulesPage"), import("../../games/brinewatch/rulebook.json")]).then(
+    ([page, book]) => ({
+      default: (props: Omit<Parameters<typeof page.default>[0], "doc">) => (
+        <page.default {...props} doc={book.default as RulebookDoc} />
+      ),
+    }),
+  ),
+);
 /** Open tables (#50): the public board of games, read only when opened. */
 const OpenTablesBoard = lazy(() =>
   import("../opentables/OpenTables").then((m) => ({ default: m.OpenTablesBoard })),
@@ -75,6 +96,7 @@ export function Lobby() {
   const [teamSize, setTeamSize] = useState(1);
   const [guide, setGuide] = useState(false);
   const [rules, setRules] = useState(params.get("rules") === "rift-lanterns");
+  const [brineRules, setBrineRules] = useState(params.get("rules") === BRINEWATCH);
   const [tables, setTables] = useState(() => {
     // Back from a table whose host had gone, or a game that ended under a watcher: the board says so.
     if (params.get("tables") === "gone") useOpenTables.setState({ gone: "table" });
@@ -93,7 +115,7 @@ export function Lobby() {
   // `?play=<game>`: a watcher's "Play this yourself" (PX) lands on that game's "How hard?".
   const [asking, setAsking] = useState<string | null>(() => {
     const play = params.get("play") ?? "";
-    return FRONT[play] || play === RIFT_LANTERNS ? play : null;
+    return FRONT[play] || ownGame(play) ? play : null;
   });
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
@@ -101,7 +123,10 @@ export function Lobby() {
     void useLibrary.getState().load();
     // Our own game goes in the library after the front door is up, so it's in the game list (#42).
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 500));
-    idle(() => void installRiftLanterns());
+    idle(() => {
+      void installRiftLanterns();
+      void installOwnGame(BRINEWATCH);
+    });
   }, []);
   const fromPackages = Object.values(library).filter(
     (p) => p.trusted && p.manifest.kind === "system" && p.manifest.systems[0],
@@ -395,6 +420,53 @@ export function Lobby() {
               </Suspense>
             )}
             {asking === RIFT_LANTERNS && <HowHard system={RIFT_LANTERNS} onCancel={() => setAsking(null)} />}
+          </div>
+          {/* Our second (#69): a skirmish game of model-by-model goes, guards and hidden lurkers. */}
+          <div className="demo ours">
+            {/* i18n-ignore */}
+            <strong>Brinewatch</strong>
+            <span className="muted small">
+              {t(
+                "Our own skirmish game, free to share (CC BY). Crews of five to ten climb a drowned town's towers at low tide: two actions a go, guards and hidden lurkers. Nothing to import.",
+              )}
+            </span>
+            <div className="row wrap">
+              <button className="primary small play-now" onClick={() => void playOwnGame(BRINEWATCH)}>
+                {t("Play now (both sides)")}
+              </button>
+              <button className="small solo" onClick={() => setAsking(BRINEWATCH)}>
+                {t("Play the computer")}
+              </button>
+              <button
+                className="small"
+                title={t(
+                  "Printed or real models on your table: this phone keeps the cards, rolls and scores",
+                )}
+                onClick={() => void playOwnAtTable(BRINEWATCH)}
+              >
+                {t("At a real table")}
+              </button>
+              <button className="small" onClick={() => setBrineRules(true)}>
+                {t("Rules, print and play")}
+              </button>
+            </div>
+            {brineRules && (
+              <Suspense fallback={null}>
+                <BrinewatchRules
+                  onClose={() => setBrineRules(false)}
+                  play={[
+                    {
+                      label: t("Play now (both sides)"),
+                      primary: true,
+                      run: () => void playOwnGame(BRINEWATCH),
+                    },
+                    { label: t("Play the computer"), run: () => setAsking(BRINEWATCH) },
+                    { label: t("At a real table"), run: () => void playOwnAtTable(BRINEWATCH) },
+                  ]}
+                />
+              </Suspense>
+            )}
+            {asking === BRINEWATCH && <HowHard system={BRINEWATCH} onCancel={() => setAsking(null)} />}
           </div>
           <h2>{t("Pick a game")}</h2>
           <p className="muted small">

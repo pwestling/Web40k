@@ -18,6 +18,7 @@ import skirmish from "../../examples/workshop/skirmish.js?raw";
 import ranked from "../../examples/workshop/ranked.js?raw";
 import activations from "../../examples/workshop/activations.js?raw";
 import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
+import brinewatch from "../../games/brinewatch/brinewatch.js?raw";
 import {
   fileName,
   GALLERY,
@@ -67,6 +68,12 @@ const TEMPLATES = [
     source: riftLanterns,
     name: () => "Rift Lanterns",
     what: () => t("A finished game of ours to take apart: four warbands, three missions."),
+  },
+  {
+    id: "brinewatch",
+    source: brinewatch,
+    name: () => "Brinewatch",
+    what: () => t("Our second, to take apart: action points, guards, hidden lurkers and a campaign."),
   },
 ];
 

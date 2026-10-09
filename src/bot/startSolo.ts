@@ -1,4 +1,4 @@
-import { playRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import { ownGame, playOwnGame } from "../games/riftLanterns";
 import type { SavedArmy } from "../packages/shelf";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import { startDemo } from "../ui/demo";
@@ -19,8 +19,8 @@ export interface OwnArmy {
  * army when you bring one (#56); the computer fields its sample army.
  */
 export function startSolo(system: string, level: Level, mine?: OwnArmy): void {
-  if (system === RIFT_LANTERNS) {
-    void playRiftLanterns(mine, () => nameSoloSides(level)).then(() => armSolo(level));
+  if (ownGame(system)) {
+    void playOwnGame(system, mine, () => nameSoloSides(level)).then(() => armSolo(level));
     return;
   }
   startDemo(system, mine, () => nameSoloSides(level));

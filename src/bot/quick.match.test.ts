@@ -81,10 +81,11 @@ function naive(seat: number, seed: number): Policy {
 const policy = (level: string, start: GameState, seat: number, opts: { seed: number }) =>
   level === "naive" ? naive(seat, opts.seed) : botPolicy(level as Level, start, seat, opts);
 import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
+import brinewatch from "../../games/brinewatch/brinewatch.js?raw";
 import { readManifest } from "../packages/manifest";
 
 /** Package games by name: their source, played through the sandbox engine. */
-const PACKAGES: Record<string, string> = { "rift-lanterns": riftLanterns };
+const PACKAGES: Record<string, string> = { "rift-lanterns": riftLanterns, brinewatch };
 
 function gameOf(name: string): { system: string; systemPkg?: { source: string } } {
   const source = PACKAGES[name];

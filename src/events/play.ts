@@ -7,7 +7,7 @@ import { myKey } from "../player/card";
 import { useStore } from "../store";
 import { gameModule, systemModule } from "../systems";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
-import { installRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
+import { installOwnGame, ownGame } from "../games/riftLanterns";
 import { dressFromShelf, useDeployed } from "../ui/shelfActions";
 import { refOf } from "../ui/Packages";
 import { APP_BUILD } from "../version";
@@ -41,7 +41,7 @@ export async function playPairing(event: EventDoc, round: number, pairing: Event
   const q = new URLSearchParams({ room: roomId });
   for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
   history.replaceState(null, "", `?${q}`);
-  if (event.system === RIFT_LANTERNS) await installRiftLanterns();
+  if (ownGame(event.system)) await installOwnGame(event.system);
   closeEvent();
   localStorage.setItem("open-battle:name", me.name);
   useStore.getState().start({

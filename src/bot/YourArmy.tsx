@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { getSystem } from "../core/content/systems";
 import { automateArmy } from "../systems/wh40k/recognize";
-import { RIFT_LANTERNS } from "../games/riftLanterns";
+import { ownGame } from "../games/riftLanterns";
 import { t, tn } from "../i18n";
 import { ARMY_FORMAT, useShelf, type SavedArmy } from "../packages/shelf";
 import { systemModule } from "../systems";
@@ -33,8 +33,8 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
     // The default game's armies are shelved with no system named.
     .filter((a) => (a.system || DEFAULT_SYSTEM) === system)
     .sort((a, b) => b.savedAt - a.savedAt);
-  // Rift Lanterns' module loads with the game; its warbands are close enough in size to need no note.
-  const module = system === RIFT_LANTERNS ? null : systemModule(system);
+  // Our own games' modules load with the game; their warbands are close enough in size to need no note.
+  const module = ownGame(system) ? null : systemModule(system);
   const sample = module?.sample(0);
   const theirs = module ? pointsOf(module.sample(1)) : 0;
   const gap = (pts: number) =>
@@ -166,7 +166,7 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
           </button>
         );
       })}
-      {system !== RIFT_LANTERNS && (
+      {!ownGame(system) && (
         <label className="file small">
           {t("Import a roster…")}
           <input

@@ -17,42 +17,68 @@ import { APP_BUILD } from "../version";
  * hash as usual. Its text loads after the front door.
  */
 export const RIFT_LANTERNS = "rift-lanterns";
+/** Brinewatch (#69), our second: a skirmish game of model-by-model goes (games/brinewatch). */
+export const BRINEWATCH = "brinewatch";
 
-let installing: Promise<StoredPackage | null> | null = null;
+/** The app's own games, by system id: each one's package text, loaded when first wanted. */
+const OWN: Record<string, () => Promise<{ default: string }>> = {
+  [RIFT_LANTERNS]: () => import("../../games/rift-lanterns/rift-lanterns.js?raw"),
+  [BRINEWATCH]: () => import("../../games/brinewatch/brinewatch.js?raw"),
+};
 
-/** Put the game in this device's package library (once), trusted. */
+/** Whether the system is one of the app's own games, which ship with it and play with nothing to import. */
+export function ownGame(system: string): boolean {
+  return system in OWN;
+}
+
+const installing = new Map<string, Promise<StoredPackage | null>>();
+
+/** Put one of our own games in this device's package library (once), trusted. */
+export function installOwnGame(system: string): Promise<StoredPackage | null> {
+  let got = installing.get(system);
+  if (got) return got;
+  const load = OWN[system];
+  if (!load) return Promise.resolve(null);
+  got = load().then(async ({ default: source }) => {
+    const lib = useLibrary.getState();
+    await lib.load();
+    const r = await lib.add(new TextEncoder().encode(source), { own: true });
+    if (!r.ok) return null;
+    if (!r.pkg.trusted) lib.trust(r.pkg.hash, true);
+    return useLibrary.getState().packages[r.pkg.hash] ?? r.pkg;
+  });
+  installing.set(system, got);
+  return got;
+}
+
+/** Put Rift Lanterns in this device's package library (once), trusted. */
 export function installRiftLanterns(): Promise<StoredPackage | null> {
-  installing ??= import("../../games/rift-lanterns/rift-lanterns.js?raw").then(
-    async ({ default: source }) => {
-      const lib = useLibrary.getState();
-      await lib.load();
-      const r = await lib.add(new TextEncoder().encode(source), { own: true });
-      if (!r.ok) return null;
-      if (!r.pkg.trusted) lib.trust(r.pkg.hash, true);
-      return useLibrary.getState().packages[r.pkg.hash] ?? r.pkg;
-    },
-  );
-  return installing;
+  return installOwnGame(RIFT_LANTERNS);
 }
 
 /**
  * "Play now, nothing to import": a hotseat game of Rift Lanterns, two
  * warbands picked at random, the first mission set and the battle started.
  */
-export async function playRiftLanterns(mine?: OwnArmy, seated?: () => void): Promise<void> {
-  const pkg = await installRiftLanterns();
+export function playRiftLanterns(mine?: OwnArmy, seated?: () => void): Promise<void> {
+  return playOwnGame(RIFT_LANTERNS, mine, seated);
+}
+
+/** Play now for any of our own games (see playRiftLanterns): two of its armies at random, its first mission. */
+export async function playOwnGame(system: string, mine?: OwnArmy, seated?: () => void): Promise<void> {
+  const pkg = await installOwnGame(system);
   if (!pkg) return;
   const s = useStore.getState();
   s.start({
     role: "host",
     mode: "hotseat",
     name: localStorage.getItem("open-battle:name") ?? "",
-    system: RIFT_LANTERNS,
+    system,
   });
   useStore.getState().dispatch({
     type: "game/packages",
     app: APP_BUILD,
-    system: { id: RIFT_LANTERNS, builtIn: false },
+    system: { id: system, builtIn: false },
     packages: [refOf(pkg)],
   });
   // Wait for the rules however long they take (a slow device, a retry): never give up silently, as
@@ -61,8 +87,8 @@ export async function playRiftLanterns(mine?: OwnArmy, seated?: () => void): Pro
   const go = () => {
     const { game } = useStore.getState();
     if (useStore.getState().session !== session || game.turn.round !== 0) return;
-    const mod = gameModule(RIFT_LANTERNS)?.app;
-    if (!mod || game.system !== RIFT_LANTERNS || sides(game).length < 2 || !game.terrain.length) {
+    const mod = gameModule(system)?.app;
+    if (!mod || game.system !== system || sides(game).length < 2 || !game.terrain.length) {
       setTimeout(go, 100);
       return;
     }
@@ -94,20 +120,25 @@ export async function playRiftLanterns(mine?: OwnArmy, seated?: () => void): Pro
  * companion for printed or real models. The players pick and deploy their
  * warbands the companion's way.
  */
-export async function playRiftAtTable(): Promise<void> {
-  const pkg = await installRiftLanterns();
+export function playRiftAtTable(): Promise<void> {
+  return playOwnAtTable(RIFT_LANTERNS);
+}
+
+/** At a real table for any of our own games (see playRiftAtTable). */
+export async function playOwnAtTable(system: string): Promise<void> {
+  const pkg = await installOwnGame(system);
   if (!pkg) return;
   useStore.getState().start({
     role: "host",
     mode: "hotseat",
     name: localStorage.getItem("open-battle:name") ?? "",
-    system: RIFT_LANTERNS,
+    system,
   });
   const { dispatch } = useStore.getState();
   dispatch({
     type: "game/packages",
     app: APP_BUILD,
-    system: { id: RIFT_LANTERNS, builtIn: false },
+    system: { id: system, builtIn: false },
     packages: [refOf(pkg)],
   });
   dispatch({ type: "settings/set", settings: { companion: true } });
@@ -116,8 +147,8 @@ export async function playRiftAtTable(): Promise<void> {
   const pick = () => {
     const { game } = useStore.getState();
     if (useStore.getState().session !== session || game.turn.round !== 0 || game.mission) return;
-    const mission = gameModule(RIFT_LANTERNS)?.app?.missions?.[0];
-    if (!mission || game.system !== RIFT_LANTERNS) return void setTimeout(pick, 100);
+    const mission = gameModule(system)?.app?.missions?.[0];
+    if (!mission || game.system !== system) return void setTimeout(pick, 100);
     const { zones, objectives } = mission.setup(game.table);
     useStore
       .getState()
