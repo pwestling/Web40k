@@ -1,4 +1,4 @@
-import { shot } from "../render/focus";
+import { onScreen, shot } from "../render/focus";
 import { sideName, sidePlayers, sides, stateAt, systemOf, type GameState } from "../core";
 import { t } from "../i18n";
 import { displayName } from "../i18n/names";
@@ -95,19 +95,23 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
     // A tall clip of a wide screen fits the whole table across (UX 367: edge units were cut) and
     // uses the bands above and below: the score and dice on top, the caption underneath.
     const tall = narrow && height / width > 1.3 && r.width >= r.height;
-    const k = tall ? fit : narrow ? fit + (cover - fit) * 0.45 : cover;
-    const dx = (width - r.width * k) / 2;
-    const dy = (height - r.height * k) / 2;
+    // Tall, it crops in to the table itself, which then fills the frame's width (UX 367: it filled 13% of the
+    // height), leaving at least a fifth of the frame above and below it for the score, dice and caption.
+    const c = tall ? tallCrop(r, width, height) : { x: 0, y: 0, w: r.width, h: r.height };
+    const k = tall ? width / c.w : narrow ? fit + (cover - fit) * 0.45 : cover;
+    const dx = (width - c.w * k) / 2;
+    const dy = (height - c.h * k) / 2;
     ctx.fillStyle = "#111318";
     ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(src, dx, dy, r.width * k, r.height * k);
+    const px = src.width / r.width;
+    ctx.drawImage(src, c.x * px, c.y * px, c.w * px, c.h * px, dx, dy, c.w * k, c.h * k);
     if (tall) drawScore(ctx, width, dy);
     paintOverlays(
       ctx,
-      { left: r.left - dx / k, top: r.top - dy / k, scale: k },
+      { left: r.left + c.x - dx / k, top: r.top + c.y - dy / k, scale: k },
       document,
       // Cropped from a screen of another shape, the tray would sit squeezed in a corner (UX 55).
-      narrow ? { width, height, below: dy + r.height * k, ...(tall ? { above: dy } : {}) } : undefined,
+      narrow ? { width, height, below: dy + c.h * k, ...(tall ? { above: dy } : {}) } : undefined,
     );
   });
 
@@ -144,6 +148,7 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
   shot.capturing++;
   const finish = () => {
     shot.capturing = Math.max(0, shot.capturing - 1);
+    if (!shot.capturing) onScreen.table = null;
     document.body.classList.remove("clip-narrow");
     stopFrames();
     for (const t of tracks) t.stop();
@@ -185,6 +190,29 @@ export function startClip(sound: ClipSound, shape: ClipShape, ending: () => Clip
       recorder.stop();
     },
   };
+}
+
+/**
+ * The part of the table canvas a tall clip shows (CSS pixels from its corner): the table with a margin, as
+ * wide as the frame allows while the picture stays within the middle three fifths of its height, and the
+ * whole canvas when the camera is close in (the table runs off the screen) or the table isn't measured.
+ */
+function tallCrop(r: DOMRect, width: number, height: number) {
+  const whole = { x: 0, y: 0, w: r.width, h: r.height };
+  const t = onScreen.table;
+  if (!t || t.x1 - t.x0 < 50) return whole;
+  const margin = (t.x1 - t.x0) * 0.04;
+  // Wide enough that the crop, scaled to the frame's width, is at most 3/5 of its height.
+  const w = Math.min(
+    r.width,
+    Math.max(t.x1 - t.x0 + margin * 2, (t.y1 - t.y0 + margin * 2) * (width / (height * 0.6))),
+  );
+  const h = Math.min(r.height, (w * height * 0.6) / width, Math.max(t.y1 - t.y0 + margin * 2, w * 0.3));
+  const cx = (t.x0 + t.x1) / 2;
+  const cy = (t.y0 + t.y1) / 2;
+  const x = Math.max(0, Math.min(r.width - w, cx - w / 2));
+  const y = Math.max(0, Math.min(r.height - h, cy - h / 2));
+  return { x, y, w, h };
 }
 
 let shown: { scrub: number; game: GameState } | null = null;

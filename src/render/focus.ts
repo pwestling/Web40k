@@ -21,3 +21,6 @@ export const shot: {
   /** A picture or clip is being taken: nothing right in front of the lens (UX 369). */
   capturing: number;
 } = { request: null, restore: false, capturing: 0 };
+
+/** Where the table is on the canvas (CSS pixels), kept by TableOnScreen while a clip records; null otherwise. */
+export const onScreen: { table: { x0: number; y0: number; x1: number; y1: number } | null } = { table: null };

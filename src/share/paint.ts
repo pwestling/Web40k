@@ -89,7 +89,8 @@ function trayFrame(
     const room = top - score;
     const scale = Math.min((size.width * 0.8) / r.width, (room * 0.85) / r.height);
     const x = (size.width - r.width * scale) / 2;
-    const y = score + (room - r.height * scale) / 2;
+    // Down against the table, not adrift in the band (UX review 67).
+    const y = Math.max(score, top - size.height * 0.015 - r.height * scale);
     return { scale, left: r.left - x / scale, top: r.top - y / scale };
   }
   const band = size.height - (size.below ?? size.height);
@@ -126,7 +127,8 @@ function bandFrames(els: HTMLElement[], size: { width: number; height: number; b
   );
   const total = rects.reduce((n, r, i) => n + r.height * scales[i]!, 0) + gap * (els.length - 1);
   const shrink = Math.min(1, (band * 0.9) / Math.max(1, total));
-  let y = below + (band - total * shrink) / 2;
+  // Up against the table's foot, not centred in the band (UX review 67).
+  let y = below + gap;
   return rects.map((r, i) => {
     const scale = scales[i]! * shrink;
     const x = (size.width - r.width * scale) / 2;

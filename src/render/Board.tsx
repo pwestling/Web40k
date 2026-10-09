@@ -1,6 +1,7 @@
 import { toggleGroup, updatePieces, useTableEdit } from "../tables/edit";
 import { Sightlines } from "../tables/Sightlines";
 import { FocusCamera } from "./FocusCamera";
+import { TableOnScreen } from "./TableOnScreen";
 import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { ShowcaseCamera } from "./ShowcaseCamera";
@@ -1087,6 +1088,7 @@ function Scene() {
       <CasterCamera />
       <ShowcaseCamera />
       <FocusCamera />
+      <TableOnScreen />
 
       {/* The ruler being dragged, else the last one shared. */}
       {drag?.kind === "ruler" && drag.moved ? (
