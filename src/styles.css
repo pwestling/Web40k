@@ -239,6 +239,10 @@ label.file.button.small {
   border: 1px solid #4b5563;
   border-radius: 6px;
 }
+/* A card asking How hard? / Your army takes the whole row, so the card beside it doesn't stretch into an empty box (PX re-check of #56). */
+.lobby .demo:has(.how-hard) {
+  grid-column: 1 / -1;
+}
 .lobby .demo .row {
   margin-top: auto;
   padding-top: 6px;

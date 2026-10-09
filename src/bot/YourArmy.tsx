@@ -9,12 +9,8 @@ import { systemModule } from "../systems";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import type { Level } from "./player";
 import { characterName, levelName } from "./solo";
+import { matchPoints, pointsOf } from "./matchPoints";
 import { startSolo } from "./startSolo";
-
-/** An army's points: its own total, else its units'. */
-function pointsOf(roster: ImportedRoster): number {
-  return roster.points || roster.units.reduce((a, u) => a + (u.sheet.points ?? 0), 0);
-}
 
 /**
  * "Your army" (#56, PX dogfood 1): after How hard?, the army the player
@@ -78,6 +74,25 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
       put(army);
       setKept(army);
     };
+    const start = (cut?: ImportedRoster) =>
+      startSolo(system, level, {
+        ...(kept ? { roster: kept.roster, shelf: kept } : { roster: picked }),
+        ...(cut ? { theirs: cut } : {}),
+      });
+    // About 2 to 1 either way is said in words, not left to the numbers (PX re-check of #56).
+    const ratio = pts && theirs ? theirs / pts : 1;
+    const times = Math.round(Math.max(ratio, 1 / ratio));
+    const lopsided =
+      ratio >= 1.8
+        ? times === 2
+          ? t("The computer's army is about twice yours.")
+          : t("The computer's army is about {n} times yours.", { n: times })
+        : ratio <= 1 / 1.8
+          ? times === 2
+            ? t("Your army is about twice the computer's.")
+            : t("Your army is about {n} times the computer's.", { n: times })
+          : null;
+    const canMatch = !!module && ratio > 1.25;
     return (
       <div className="how-hard your-army" role="group" aria-label={t("Your army")}>
         <strong className="small">{t("Your army")}</strong>
@@ -86,18 +101,26 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
             picked.name,
             tn(picked.units.length, "{n} unit", "{n} units"),
             ...(pts ? [t("{points} pts", { points: pts })] : []),
+            // Said once, here: the list's own total disagrees with what its units add up to.
+            ...(picked.points && pts && picked.points !== pts
+              ? [t("the list itself says {n} pts", { n: picked.points })]
+              : []),
             ...(theirs ? [t("the computer's is {n} pts", { n: theirs })] : []),
           ].join(" · ")}
         </p>
-        <button
-          className="primary small"
-          autoFocus
-          onClick={() =>
-            startSolo(system, level, kept ? { roster: kept.roster, shelf: kept } : { roster: picked })
-          }
-        >
+        {lopsided && <p className="warn small">{lopsided}</p>}
+        <button className="primary small" autoFocus onClick={() => start()}>
           {t("Start")}
         </button>
+        {canMatch && (
+          <button
+            className="small"
+            title={t("The computer fields part of its sample army, about as many points as yours")}
+            onClick={() => start(matchPoints(module!.sample(1), pts))}
+          >
+            {t("Match my points")}
+          </button>
+        )}
         <button className="small" disabled={!!kept} onClick={keep}>
           {kept ? t("Saved to your shelf") : t("Save to shelf")}
         </button>

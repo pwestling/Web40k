@@ -415,7 +415,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/bot/BestMoment.tsx:43
-#: src/broadcast/Moments.tsx:215
+#: src/broadcast/Moments.tsx:223
 #: src/campaign/EventTab.tsx:318
 #: src/share/SharePanel.tsx:355
 #: src/share/SharePanel.tsx:429
@@ -449,74 +449,102 @@ msgid "Roll my saves for me"
 msgstr ""
 
 #: src/bot/YourArmy.tsx:102
-msgid "Saved to your shelf"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:102
-msgid "Save to shelf"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:104
-#: src/bot/YourArmy.tsx:151
-#: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:274
-msgid "Back"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:115
-msgid "against {who}"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:119
-msgid "Sample army: {name}"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:119
-msgid "A sample army"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:140
-msgid "Import a roster…"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:44
-msgid "the computer's army is {n} pts"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:52
-#: src/bot/YourArmy.tsx:56
-msgid "That file has no units this game can read."
-msgstr ""
-
-#: src/bot/YourArmy.tsx:82
-#: src/bot/YourArmy.tsx:83
-#: src/bot/YourArmy.tsx:111
-#: src/bot/YourArmy.tsx:113
-#: src/ui/AutoAbilities.tsx:321
-msgid "Your army"
-msgstr ""
-
-#: src/bot/YourArmy.tsx:87
 msgid "{n} unit"
 msgid_plural "{n} units"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/bot/YourArmy.tsx:88
-#: src/bot/YourArmy.tsx:121
-#: src/bot/YourArmy.tsx:133
+#: src/bot/YourArmy.tsx:103
+#: src/bot/YourArmy.tsx:144
+#: src/bot/YourArmy.tsx:156
 #: src/printplay/RulesPage.tsx:177
 #: src/ui/Showcase.tsx:53
 #: src/ui/SystemPanels.tsx:183
 msgid "{points} pts"
 msgstr ""
 
-#: src/bot/YourArmy.tsx:89
+#: src/bot/YourArmy.tsx:106
+msgid "the list itself says {n} pts"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:108
 msgid "the computer's is {n} pts"
 msgstr ""
 
-#: src/bot/YourArmy.tsx:99
+#: src/bot/YourArmy.tsx:113
 msgid "Start"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:118
+msgid "The computer fields part of its sample army, about as many points as yours"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:121
+msgid "Match my points"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:125
+msgid "Saved to your shelf"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:125
+msgid "Save to shelf"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:127
+#: src/bot/YourArmy.tsx:174
+#: src/companion/RealDice.tsx:242
+#: src/ui/RegimentPanel.tsx:274
+msgid "Back"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:138
+msgid "against {who}"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:142
+msgid "Sample army: {name}"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:142
+msgid "A sample army"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:163
+msgid "Import a roster…"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:40
+msgid "the computer's army is {n} pts"
+msgstr ""
+
+#: src/bot/YourArmy.tsx:48
+#: src/bot/YourArmy.tsx:52
+msgid "That file has no units this game can read."
+msgstr ""
+
+#: src/bot/YourArmy.tsx:88
+msgid "The computer's army is about twice yours."
+msgstr ""
+
+#: src/bot/YourArmy.tsx:89
+msgid "The computer's army is about {n} times yours."
+msgstr ""
+
+#: src/bot/YourArmy.tsx:92
+msgid "Your army is about twice the computer's."
+msgstr ""
+
+#: src/bot/YourArmy.tsx:93
+msgid "Your army is about {n} times the computer's."
+msgstr ""
+
+#: src/bot/YourArmy.tsx:97
+#: src/bot/YourArmy.tsx:98
+#: src/bot/YourArmy.tsx:134
+#: src/bot/YourArmy.tsx:136
+#: src/ui/AutoAbilities.tsx:321
+msgid "Your army"
 msgstr ""
 
 #: src/bot/explain.ts:102
@@ -660,15 +688,15 @@ msgstr ""
 msgid "Delay"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:351
+#: src/broadcast/Moments.tsx:359
 msgid "{i} of {n}"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:355
+#: src/broadcast/Moments.tsx:363
 msgid "Next"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:357
+#: src/broadcast/Moments.tsx:365
 msgid "Skip to stats"
 msgstr ""
 
@@ -3701,7 +3729,7 @@ msgstr ""
 msgid "What happened"
 msgstr ""
 
-#: src/share/clip.ts:235
+#: src/share/clip.ts:237
 #: src/ui/TopBar.tsx:266
 msgid "Battle over"
 msgstr ""
@@ -5464,26 +5492,26 @@ msgstr ""
 msgid "Pips"
 msgstr ""
 
-#: src/ui/DiceTray.tsx:333
+#: src/ui/DiceTray.tsx:334
 msgid "{title}: {n} of {total} saved"
 msgstr ""
 
-#: src/ui/DiceTray.tsx:334
-#: src/ui/DiceTray.tsx:605
+#: src/ui/DiceTray.tsx:335
+#: src/ui/DiceTray.tsx:606
 msgid "{title}: {n} of {total} pass"
 msgstr ""
 
-#: src/ui/DiceTray.tsx:350
+#: src/ui/DiceTray.tsx:351
 #: src/ui/StatsScreen.tsx:152
 #: src/ui/stakes.ts:94
 msgid "Slain"
 msgstr ""
 
-#: src/ui/DiceTray.tsx:379
+#: src/ui/DiceTray.tsx:380
 msgid "Tap to continue"
 msgstr ""
 
-#: src/ui/DiceTray.tsx:379
+#: src/ui/DiceTray.tsx:380
 msgid "Click to continue"
 msgstr ""
 

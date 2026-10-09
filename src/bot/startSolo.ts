@@ -9,6 +9,8 @@ import { armSolo, nameSoloSides } from "./solo";
 export interface OwnArmy {
   roster: ImportedRoster;
   shelf?: SavedArmy;
+  /** The computer's army instead of its sample (Match my points). */
+  theirs?: ImportedRoster;
 }
 
 /**

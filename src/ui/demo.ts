@@ -25,7 +25,7 @@ export function startDemo(system: string, mine?: OwnArmy, seated?: () => void): 
     const { dispatch } = useStore.getState();
     seated?.();
     presetMission();
-    if (mine) deployOwn(mine, () => useStore.getState().game, dispatch);
+    if (mine) deployOwn(mine, () => useStore.getState().game, dispatch, mine.theirs);
     else deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
     // Ready, and into the battle: the army showcase opens it.
     owed.initial = useStore.getState().record.initial;

@@ -415,10 +415,15 @@ const checks = {
     // One line to check first (UX 408): the army, its size, the computer's.
     await page
       .locator(".army-check")
-      .getByText(/Test Muster · \d+ units/)
+      .getByText(/Test Muster · \d+ units · 165 pts · the list itself says 335 pts/)
+      .waitFor();
+    // About 4 to 1 against the computer's sample is said in words, with a way to even it (PX re-check of #56).
+    await page
+      .locator(".your-army .warn")
+      .getByText(/The computer's army is about \d+ times yours/)
       .waitFor();
     await page.getByRole("button", { name: "Save to shelf" }).click();
-    await page.getByRole("button", { name: "Start", exact: true }).click();
+    await page.getByRole("button", { name: "Match my points" }).click();
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -432,12 +437,16 @@ const checks = {
       if (e.event.type === "player/join") seats[e.event.player.id] = e.event.player.seat;
     const fronts = [Infinity, Infinity];
     const armies = new Set();
+    const points = [0, 0];
     for (const e of events.filter((e) => e.event.type === "unit/add")) {
       const seat = seats[e.event.unit.owner];
       if (seat === 0) armies.add(e.event.unit.army);
+      points[seat] += e.event.unit.sheet?.points ?? 0;
       for (const m of e.event.models) fronts[seat] = Math.min(fronts[seat], Math.abs(m.position.y));
     }
     if (!armies.has("Test Muster")) throw new Error(`your side is ${[...armies].join(", ")}, not the roster`);
+    if (points[1] > 400)
+      throw new Error(`Match my points left the computer ${points[1]} pts against ${points[0]}`);
     const gap = fronts[0] + fronts[1];
     if (!(gap > 14 && gap < 28)) throw new Error(`the armies' front lines are ${gap.toFixed(1)}" apart`);
     await context.close();

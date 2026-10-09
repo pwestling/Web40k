@@ -498,7 +498,7 @@ msgstr[0] "{unit} hat {n} deiner {victim} ausgeschaltet"
 msgstr[1] "{unit} hat {n} deiner {victim} ausgeschaltet"
 
 #: src/bot/BestMoment.tsx:43
-#: src/broadcast/Moments.tsx:215
+#: src/broadcast/Moments.tsx:223
 #: src/campaign/EventTab.tsx:318
 #: src/share/SharePanel.tsx:355
 #: src/share/SharePanel.tsx:429
@@ -540,72 +540,14 @@ msgstr "Meine Schutzwürfe für mich würfeln"
 
 #: src/bot/YourArmy.tsx:102
 #, fuzzy
-msgid "Saved to your shelf"
-msgstr "In deinem Regal gespeichert"
-
-#: src/bot/YourArmy.tsx:102
-#, fuzzy
-msgid "Save to shelf"
-msgstr "Im Regal speichern"
-
-#: src/bot/YourArmy.tsx:104
-#: src/bot/YourArmy.tsx:151
-#: src/companion/RealDice.tsx:242
-#: src/ui/RegimentPanel.tsx:274
-#, fuzzy
-msgid "Back"
-msgstr "Zurück"
-
-#: src/bot/YourArmy.tsx:115
-#, fuzzy
-msgid "against {who}"
-msgstr "gegen {who}"
-
-#: src/bot/YourArmy.tsx:119
-#, fuzzy
-msgid "Sample army: {name}"
-msgstr "Beispielarmee: {name}"
-
-#: src/bot/YourArmy.tsx:119
-#, fuzzy
-msgid "A sample army"
-msgstr "Eine Beispielarmee"
-
-#: src/bot/YourArmy.tsx:140
-#, fuzzy
-msgid "Import a roster…"
-msgstr "Armeeliste importieren…"
-
-#: src/bot/YourArmy.tsx:44
-#, fuzzy
-msgid "the computer's army is {n} pts"
-msgstr "die Armee des Computers hat {n} Pkt."
-
-#: src/bot/YourArmy.tsx:52
-#: src/bot/YourArmy.tsx:56
-#, fuzzy
-msgid "That file has no units this game can read."
-msgstr "Diese Datei enthält keine Einheiten, die dieses Spiel lesen kann."
-
-#: src/bot/YourArmy.tsx:82
-#: src/bot/YourArmy.tsx:83
-#: src/bot/YourArmy.tsx:111
-#: src/bot/YourArmy.tsx:113
-#: src/ui/AutoAbilities.tsx:321
-#, fuzzy
-msgid "Your army"
-msgstr "Deine Armee"
-
-#: src/bot/YourArmy.tsx:87
-#, fuzzy
 msgid "{n} unit"
 msgid_plural "{n} units"
 msgstr[0] "{n} Einheit"
 msgstr[1] "{n} Einheiten"
 
-#: src/bot/YourArmy.tsx:88
-#: src/bot/YourArmy.tsx:121
-#: src/bot/YourArmy.tsx:133
+#: src/bot/YourArmy.tsx:103
+#: src/bot/YourArmy.tsx:144
+#: src/bot/YourArmy.tsx:156
 #: src/printplay/RulesPage.tsx:177
 #: src/ui/Showcase.tsx:53
 #: src/ui/SystemPanels.tsx:183
@@ -613,15 +555,108 @@ msgstr[1] "{n} Einheiten"
 msgid "{points} pts"
 msgstr "{points} pts"
 
-#: src/bot/YourArmy.tsx:89
+#: src/bot/YourArmy.tsx:106
+#, fuzzy
+msgid "the list itself says {n} pts"
+msgstr "die Liste selbst nennt {n} pts"
+
+#: src/bot/YourArmy.tsx:108
 #, fuzzy
 msgid "the computer's is {n} pts"
 msgstr "die des Computers hat {n} pts"
 
-#: src/bot/YourArmy.tsx:99
+#: src/bot/YourArmy.tsx:113
 #, fuzzy
 msgid "Start"
 msgstr "Los"
+
+#: src/bot/YourArmy.tsx:118
+#, fuzzy
+msgid "The computer fields part of its sample army, about as many points as yours"
+msgstr "Der Computer stellt einen Teil seiner Beispielarmee auf, etwa so viele Punkte wie deine"
+
+#: src/bot/YourArmy.tsx:121
+#, fuzzy
+msgid "Match my points"
+msgstr "Meine Punkte angleichen"
+
+#: src/bot/YourArmy.tsx:125
+#, fuzzy
+msgid "Saved to your shelf"
+msgstr "In deinem Regal gespeichert"
+
+#: src/bot/YourArmy.tsx:125
+#, fuzzy
+msgid "Save to shelf"
+msgstr "Im Regal speichern"
+
+#: src/bot/YourArmy.tsx:127
+#: src/bot/YourArmy.tsx:174
+#: src/companion/RealDice.tsx:242
+#: src/ui/RegimentPanel.tsx:274
+#, fuzzy
+msgid "Back"
+msgstr "Zurück"
+
+#: src/bot/YourArmy.tsx:138
+#, fuzzy
+msgid "against {who}"
+msgstr "gegen {who}"
+
+#: src/bot/YourArmy.tsx:142
+#, fuzzy
+msgid "Sample army: {name}"
+msgstr "Beispielarmee: {name}"
+
+#: src/bot/YourArmy.tsx:142
+#, fuzzy
+msgid "A sample army"
+msgstr "Eine Beispielarmee"
+
+#: src/bot/YourArmy.tsx:163
+#, fuzzy
+msgid "Import a roster…"
+msgstr "Armeeliste importieren…"
+
+#: src/bot/YourArmy.tsx:40
+#, fuzzy
+msgid "the computer's army is {n} pts"
+msgstr "die Armee des Computers hat {n} Pkt."
+
+#: src/bot/YourArmy.tsx:48
+#: src/bot/YourArmy.tsx:52
+#, fuzzy
+msgid "That file has no units this game can read."
+msgstr "Diese Datei enthält keine Einheiten, die dieses Spiel lesen kann."
+
+#: src/bot/YourArmy.tsx:88
+#, fuzzy
+msgid "The computer's army is about twice yours."
+msgstr "Die Armee des Computers ist etwa doppelt so groß wie deine."
+
+#: src/bot/YourArmy.tsx:89
+#, fuzzy
+msgid "The computer's army is about {n} times yours."
+msgstr "Die Armee des Computers ist etwa {n}-mal so groß wie deine."
+
+#: src/bot/YourArmy.tsx:92
+#, fuzzy
+msgid "Your army is about twice the computer's."
+msgstr "Deine Armee ist etwa doppelt so groß wie die des Computers."
+
+#: src/bot/YourArmy.tsx:93
+#, fuzzy
+msgid "Your army is about {n} times the computer's."
+msgstr "Deine Armee ist etwa {n}-mal so groß wie die des Computers."
+
+#: src/bot/YourArmy.tsx:97
+#: src/bot/YourArmy.tsx:98
+#: src/bot/YourArmy.tsx:134
+#: src/bot/YourArmy.tsx:136
+#: src/ui/AutoAbilities.tsx:321
+#, fuzzy
+msgid "Your army"
+msgstr "Deine Armee"
 
 #: src/bot/explain.ts:102
 #, fuzzy
@@ -798,17 +833,17 @@ msgstr "Schau das Spiel mit so viel Verzögerung, damit ein Stream nichts verrä
 msgid "Delay"
 msgstr "Verzögerung"
 
-#: src/broadcast/Moments.tsx:351
+#: src/broadcast/Moments.tsx:359
 #, fuzzy
 msgid "{i} of {n}"
 msgstr "{i} von {n}"
 
-#: src/broadcast/Moments.tsx:355
+#: src/broadcast/Moments.tsx:363
 #, fuzzy
 msgid "Next"
 msgstr "Weiter"
 
-#: src/broadcast/Moments.tsx:357
+#: src/broadcast/Moments.tsx:365
 #, fuzzy
 msgid "Skip to stats"
 msgstr "Zur Statistik springen"
@@ -4519,7 +4554,7 @@ msgstr "ausgelöscht: {units}"
 msgid "What happened"
 msgstr "Was passiert ist"
 
-#: src/share/clip.ts:235
+#: src/share/clip.ts:237
 #: src/ui/TopBar.tsx:266
 #, fuzzy
 msgid "Battle over"
@@ -6689,30 +6724,30 @@ msgstr "Körper"
 msgid "Pips"
 msgstr "Augen"
 
-#: src/ui/DiceTray.tsx:333
+#: src/ui/DiceTray.tsx:334
 #, fuzzy
 msgid "{title}: {n} of {total} saved"
 msgstr "{title}: {n} von {total} gerettet"
 
-#: src/ui/DiceTray.tsx:334
-#: src/ui/DiceTray.tsx:605
+#: src/ui/DiceTray.tsx:335
+#: src/ui/DiceTray.tsx:606
 #, fuzzy
 msgid "{title}: {n} of {total} pass"
 msgstr "{title}: {n} von {total} bestanden"
 
-#: src/ui/DiceTray.tsx:350
+#: src/ui/DiceTray.tsx:351
 #: src/ui/StatsScreen.tsx:152
 #: src/ui/stakes.ts:94
 #, fuzzy
 msgid "Slain"
 msgstr "Getötet"
 
-#: src/ui/DiceTray.tsx:379
+#: src/ui/DiceTray.tsx:380
 #, fuzzy
 msgid "Tap to continue"
 msgstr "Tippen zum Weitermachen"
 
-#: src/ui/DiceTray.tsx:379
+#: src/ui/DiceTray.tsx:380
 #, fuzzy
 msgid "Click to continue"
 msgstr "Klicken zum Fortfahren"
