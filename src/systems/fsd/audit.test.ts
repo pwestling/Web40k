@@ -8,7 +8,7 @@ import {
   type Intent,
   type PlayerId,
 } from "../../core";
-import { procedureEnv, procedureRoles, unitActions } from "../../core/content/play";
+import { actionTargets, procedureEnv, procedureRoles, unitActions } from "../../core/content/play";
 import { abilityReminders, attackReminders } from "../../core/content/player";
 import { previewRun, type TestPlan } from "../../core/content/runner";
 import { fsd } from "../../core/content/examples/fsd";
@@ -922,6 +922,29 @@ describe("FSD rules audit: engine gaps (#57)", () => {
     // All round by default.
     const round = editWeapon(place(s, tank, 0, 6, 0), tank, "coax-mg", { chars: { Arc: "0" } });
     expect(hitTarget(round, tank, "coax-mg", gang)).toBe(4);
+  });
+
+  it("Fire's targets follow the weapon: outside its arc greyed out with why, Indirect Fire picks unseen units at +1", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    const pick = (t: GameState, weapon: string) =>
+      actionTargets(t, tank, "fire", weapon).find((x) => x.unitId === gang)!;
+    s = place(s, gang, 0, 0);
+    s = place(s, tank, 0, 9, Math.PI);
+    s = editWeapon(s, tank, "coax-mg", { chars: { Arc: "90" } });
+    expect(pick(s, "coax-mg")).toMatchObject({ ok: true });
+    // Turned away: listed, greyed out, and why.
+    const away = place(s, tank, 0, 9, 0);
+    expect(pick(away, "coax-mg")).toMatchObject({ ok: false, why: "Outside the weapon's arc of fire" });
+    expect(pick(away, "light-cannon").ok).toBe(true);
+    // A ruin between: out of sight, so not a target, unless the weapon fires indirectly.
+    const hidden = { ...s, terrain: [makePiece("Ruin", "r", { x: 0, y: 4.5 }, 0, "blocking")] };
+    expect(pick(hidden, "light-cannon").ok).toBe(false);
+    const indirect = editWeapon(hidden, tank, "light-cannon", { keywords: ["Indirect Fire"] });
+    expect(pick(indirect, "light-cannon").ok).toBe(true);
+    // At +1 Defense out of sight, and it takes the closest bases.
+    expect(hitTarget(indirect, tank, "light-cannon", gang)).toBe(4 + 1);
   });
 
   it("terrain touching the shooter's base is ignored for its own shots' cover", () => {

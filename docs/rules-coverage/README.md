@@ -17,5 +17,4 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 
 ## Known gaps that need engine work
 
-- `actionTargets(state, unit, action, weapon)` now has the weapon in scope (40k Indirect Fire uses it); FSD's target filters don't use it yet (FSD).
 - Plain activations (`startActivation`) don't refuse a unit already activated this round; `script/start` now checks a code action's `available` (Rift Lanterns).

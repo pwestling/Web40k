@@ -197,8 +197,6 @@ const weaponRules: RuleDef[] = [
   weaponReminder("suppress", "Suppress", "^suppress$"),
   weaponReminder("passThrough", "Pass Through", "^pass[- ]through$"),
   weaponReminder("selectiveFire", "Selective Fire", "^selective fire$"),
-  // Its +1 Defense out of sight is automated; this is for picking an unseen target.
-  weaponReminder("indirectFire", "Indirect Fire", "^indirect fire$"),
   // Not after moving is automated; this is for not moving after it fired.
   weaponReminder("heavy", "Heavy", "^heavy$"),
 ];
@@ -229,8 +227,8 @@ const infantryCrosses = [
 ];
 /** Weapon arcs of fire, in degrees. */
 const FIRE_ARCS = [45, 90, 135, 180, 225, 270, 315];
-/** The target lies outside the weapon's arc of fire (all round when unset). */
-const outsideArc: Expr = {
+/** `to` lies outside the weapon's arc of fire from `from` (all round when unset). */
+const outsideArcOf = (from: string, to: string): Expr => ({
   all: [
     { cmp: ">", a: ref("weapon.arc"), b: 0 },
     { cmp: "<", a: ref("weapon.arc"), b: 360 },
@@ -239,13 +237,14 @@ const outsideArc: Expr = {
         any: FIRE_ARCS.map((w) => ({
           all: [
             { cmp: "==", a: ref("weapon.arc"), b: w },
-            { query: { kind: "inArc", from: "attacker", to: "target", arc: `fire${w}` } },
+            { query: { kind: "inArc", from, to, arc: `fire${w}` } },
           ],
         })),
       },
     },
   ],
-};
+});
+const outsideArc = outsideArcOf("attacker", "target");
 /**
  * Unit special rules (abilities at the bottom of a card), shown as reminders
  * when they matter: in an attack the unit makes or takes, during the
@@ -854,7 +853,11 @@ export const fsd: GameSystem = {
       by: "unit",
       if: notPinned,
       forWeapons: { not: prepared },
-      target: { filter: { query: { kind: "visible", from: "self", to: "it" } } },
+      // In sight, or out of sight with Indirect Fire (+1 Defense, in the hit roll); in the weapon's arc.
+      target: {
+        filter: { any: [{ query: { kind: "visible", from: "self", to: "it" } }, weaponHas("INDIRECT FIRE")] },
+        notWhen: [{ if: outsideArcOf("self", "it"), why: "Outside the weapon's arc of fire" }],
+      },
       limit: { count: 1, per: "round", perUnit: true },
       notWhen: [...damagedSystems, attachmentLost, heavyAfterMoving],
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],

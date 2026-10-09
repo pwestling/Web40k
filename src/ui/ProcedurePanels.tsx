@@ -89,7 +89,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
   const weaponId = armed
     ? (draft.weaponId ?? options.find((x) => x.o?.ok)?.w.id ?? weapons[0]?.id)
     : undefined;
-  const targets = unit && def ? actionTargets(game, unit.id, def.id) : [];
+  const targets = unit && def ? actionTargets(game, unit.id, def.id, weaponId) : [];
   const scale = inchesPerUnit(system);
   const chosen = options.find((x) => x.w.id === weaponId);
   const ready = (armed ? chosen?.o : unit) && draft.targetId;
@@ -157,7 +157,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           {targets.map((tg) => (
             <option key={tg.unitId} value={tg.unitId}>
               {game.units[tg.unitId]?.name} ({lengthText(system, tg.distance * scale)}
-              {tg.ok ? "" : `, ${t("not visible")}`}
+              {tg.ok ? "" : `, ${tg.why ? gameText(tg.why) : t("not visible")}`}
               {notes[tg.unitId] ? `, ${notes[tg.unitId]}` : ""})
             </option>
           ))}
