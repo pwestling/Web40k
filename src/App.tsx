@@ -1,3 +1,4 @@
+import { usePlayerOpen } from "./player/open";
 import { lazy, Suspense, useEffect } from "react";
 import { t } from "./i18n";
 import { loadTrystero, useStore } from "./store";
@@ -19,6 +20,8 @@ const GameScreen = lazy(() => loadGame().then((m) => ({ default: m.GameScreen })
 const FigureLibrary = lazy(() =>
   import("./figures/FigureLibrary").then((m) => ({ default: m.FigureLibrary })),
 );
+/** The player card and ladder (#65) load when first opened. */
+const PlayerDialog = lazy(() => import("./player/PlayerCard").then((m) => ({ default: m.PlayerDialog })));
 /** The module workshop (#41) and its editor load when it's first opened. */
 const Workshop = lazy(() => import("./workshop/Workshop").then((m) => ({ default: m.Workshop })));
 
@@ -26,6 +29,7 @@ export function App() {
   const started = useStore((s) => s.session !== null || s.role === "spectator");
   const library = useLibraryOpen((s) => s.tab !== null);
   const workshop = useWorkshopOpen((s) => s.open);
+  const player = usePlayerOpen((s) => s.view !== null);
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
@@ -65,6 +69,11 @@ export function App() {
       {library && (
         <Suspense fallback={null}>
           <FigureLibrary />
+        </Suspense>
+      )}
+      {player && (
+        <Suspense fallback={null}>
+          <PlayerDialog />
         </Suspense>
       )}
     </>

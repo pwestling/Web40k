@@ -1,3 +1,4 @@
+import { isPlayerKey, type PlayerKey } from "../core/ranked";
 import { readInviteHash } from "../mail/mailbox";
 
 /**
@@ -40,6 +41,11 @@ export interface TablePost {
   watch?: boolean;
   /** A game under way that can be watched: its round, score and how many watch (#64). */
   live?: LiveInfo;
+  /** A ranked game (#65): both players sign the result, and it counts on the ladder. */
+  ranked?: boolean;
+  /** The poster's player key and its signature on `postProof(id)`, so their rating can show. */
+  player?: PlayerKey;
+  proof?: string;
   /** When the post goes away on its own (epoch ms). */
   expires: number;
 }
@@ -58,7 +64,12 @@ export interface LiveInfo {
   since?: number;
   /** The computer plays both sides (the exhibition table). */
   computer?: boolean;
+  /** A ranked game's player keys, by side, so watchers see the ratings (#65). */
+  keys?: PlayerKey[];
 }
+
+/** What a poster signs with their player key, so nobody else can show their rating on a post. */
+export const postProof = (id: string) => `open-battle-post:${id}`;
 
 /** A post as read off the board. */
 export interface SeenPost extends TablePost {
@@ -137,6 +148,10 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
     expires,
     ...(watch ? { watch } : {}),
     ...(live ? { live } : {}),
+    ...(kind === "live" && r.ranked === true ? { ranked: true } : {}),
+    ...(isPlayerKey(r.player) && typeof r.proof === "string" && /^[A-Za-z0-9+/=]{40,200}$/.test(r.proof)
+      ? { player: r.player, proof: r.proof }
+      : {}),
   };
 }
 
@@ -169,6 +184,9 @@ function readLive(v: unknown): LiveInfo | null {
     ...(sides.length >= 2 ? { sides } : {}),
     ...(since !== null ? { since } : {}),
     ...(r.computer === true ? { computer: true } : {}),
+    ...(Array.isArray(r.keys) && r.keys.length === 2 && r.keys.every(isPlayerKey)
+      ? { keys: r.keys as PlayerKey[] }
+      : {}),
   };
 }
 

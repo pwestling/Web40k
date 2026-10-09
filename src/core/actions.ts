@@ -1,4 +1,13 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import {
+  canonResult,
+  isPlayerKey,
+  rankedOver,
+  rankedReady,
+  rankedResultOf,
+  type PlayerKey,
+  type RankedResult,
+} from "./ranked";
 import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
 import { opposed } from "./teams";
@@ -122,6 +131,12 @@ export type Intent =
       name?: string;
       system?: string;
     }
+  /** Play this game ranked (#65) with this player key, or not (null). Before the result only. */
+  | { type: "ranked/card"; key: PlayerKey | null }
+  /** The result both players are asked to sign, once the battle is over (core/ranked.ts). */
+  | { type: "ranked/result"; result: RankedResult }
+  /** This player's signature on the result, or null: they don't agree with it. */
+  | { type: "ranked/sign"; sig: string | null }
   /** A peer whose table no longer matches the host's asks for the host's copy (logged, never silent). */
   | { type: "player/resync" }
   /** This player chose to play without these packages ("Join with mine anyway"). */
@@ -289,6 +304,9 @@ export type GameEvent =
   /** `source`: the starter or library table it came from, so every player's picker can name it. */
   | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
+  | { type: "ranked/card"; player: PlayerId; key: PlayerKey | null }
+  | { type: "ranked/result"; result: RankedResult; by: PlayerId }
+  | { type: "ranked/sign"; player: PlayerId; sig: string | null }
   | { type: "player/rename"; player: PlayerId; name: string }
   | { type: "player/dice"; player: PlayerId; dice: DiceSet | null }
   /** A side colour, e.g. from a saved army (#27). */
@@ -522,6 +540,31 @@ export function resolveIntent(
       const unit = state?.units[intent.id];
       if (!unit || unit.owner !== from) return null;
       return unit.sheet?.abilities.some((a) => a.name === intent.ability) ? intent : null;
+    }
+    case "ranked/card": {
+      // Seated players only, and not once a result is up for signing.
+      if (typeof state?.players[from]?.seat !== "number" || state.ranked?.result) return null;
+      if (intent.key !== null && !isPlayerKey(intent.key)) return null;
+      return { type: "ranked/card", player: from, key: intent.key };
+    }
+    case "ranked/result": {
+      // Once, after the battle, from one of the two players, and only the result the table shows.
+      if (!state || !rankedOver(state) || !rankedReady(state) || state.ranked?.result) return null;
+      if (!state.ranked?.keys[from]) return null;
+      const want = rankedResultOf(state, intent.result?.replay, intent.result?.at);
+      const text = canonResult(intent.result);
+      if (!want || !text || text !== canonResult(want)) return null;
+      return { type: "ranked/result", result: JSON.parse(text) as RankedResult, by: from };
+    }
+    case "ranked/sign": {
+      const r = state?.ranked;
+      if (!r?.result || !r.keys[from] || from in r.sigs) return null;
+      if (
+        intent.sig !== null &&
+        !(typeof intent.sig === "string" && /^[A-Za-z0-9+/=]{40,200}$/.test(intent.sig))
+      )
+        return null;
+      return { type: "ranked/sign", player: from, sig: intent.sig };
     }
     case "player/rename": {
       const name = intent.name.trim().slice(0, 32);

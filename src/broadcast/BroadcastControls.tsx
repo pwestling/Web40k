@@ -240,7 +240,9 @@ function useHostGone(): void {
     let seen = Date.now();
     const timer = setInterval(() => {
       const net = useStore.getState().net;
-      if (net?.hostId && net.peers.includes(net.hostId) && !net.migrating) seen = Date.now();
+      // At Battle over a host leaving is the table packing up, not a lost game (PX).
+      const over = battleOver(useStore.getState().game);
+      if (over || (net?.hostId && net.peers.includes(net.hostId) && !net.migrating)) seen = Date.now();
       else if (Date.now() - seen > GONE_MS) {
         clearInterval(timer);
         backToTables(useStore.getState().roomId);

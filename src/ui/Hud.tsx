@@ -1,3 +1,4 @@
+import { RankedOffer, RankedSign } from "../ranked/RankedGame";
 import { saveJson } from "./files";
 import { characterName, levelName, useSolo } from "../bot/solo";
 import { displayName } from "../i18n/names";
@@ -51,6 +52,8 @@ export function Hud() {
     review,
   } = useStore();
   const canControl = useCanControl();
+  // A ranked result to sign stays at hand when the stats sheet was closed (#65).
+  const statsClosed = useStore((s) => s.stats === false);
   // The table on screen (a replay's scrub point), which decides whether stats are showing.
   const shown = useGame();
   const fastDice = useSound((s) => s.fast);
@@ -184,6 +187,8 @@ export function Hud() {
         )}
       </div>
       <GameSettings />
+      <RankedOffer />
+      {statsClosed && <RankedSign />}
 
       {role === "client" && !amSeated && seated.length >= 2 * (liveGame.settings.teamSize ?? 1) ? (
         <RejoinCard seated={seated} />

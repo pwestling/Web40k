@@ -32,10 +32,14 @@
 //   OPEN_TABLES   "on" turns on Open tables, a public board of games looking for
 //                 players, kept here (server/board.mjs, at /relay/board). Off by
 //                 default: a self-hosted site doesn't show the board otherwise
+//   BOARD_RESULTS a file that keeps the board's ranked results (#65) past a restart,
+//                 one JSON line each; without it they live in memory (players' own
+//                 browsers keep and pass them back on too)
 //   BOARD_ORIGIN  another site allowed to use that board from its pages (CORS),
 //                 e.g. a dev server; same-site pages never need it
 import { createHmac } from "node:crypto";
 import dgram from "node:dgram";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { createWsRelayServer } from "@trystero-p2p/ws-relay/server";
 import { createBoard } from "./board.mjs";
@@ -50,7 +54,31 @@ const list = (v) =>
 const turnUrls = list(env.TURN_URLS);
 const ttl = Number(env.TURN_TTL ?? 86400);
 const started = Date.now();
-const board = env.OPEN_TABLES === "on" ? createBoard() : null;
+const resultsFile = env.BOARD_RESULTS;
+const board =
+  env.OPEN_TABLES === "on"
+    ? createBoard({
+        ...(resultsFile
+          ? {
+              results: {
+                load: () =>
+                  existsSync(resultsFile)
+                    ? readFileSync(resultsFile, "utf8")
+                        .split("\n")
+                        .flatMap((line) => {
+                          try {
+                            return line ? [JSON.parse(line)] : [];
+                          } catch {
+                            return [];
+                          }
+                        })
+                    : [],
+                add: (r) => appendFileSync(resultsFile, JSON.stringify(r) + "\n"),
+              },
+            }
+          : {}),
+      })
+    : null;
 
 // The secret signs TURN logins: anyone who knows it can use the TURN server.
 if (env.TURN_SECRET !== undefined && (env.TURN_SECRET === "change-me" || env.TURN_SECRET.length < 16)) {

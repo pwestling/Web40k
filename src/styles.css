@@ -2245,7 +2245,8 @@ body.broadcast .caption {
   right: 12px;
   display: flex;
   gap: 8px;
-  z-index: 5;
+  /* Over the units' name plates (LABEL_Z tops out at 9; UX 448). */
+  z-index: 12;
 }
 .broadcast-badge span {
   padding: 4px 10px;
@@ -5371,5 +5372,84 @@ body:has(.panel.better-move) .panel.whatnow {
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
+  }
+}
+
+/* Ranked games and player cards (#65). */
+.watching-chip,
+.ranked-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid #3a4152;
+  white-space: nowrap;
+}
+.ranked-chip {
+  border-color: #b8913a;
+  color: #f5c542;
+}
+.ranked-line {
+  margin: 2px 0;
+}
+.ranked-offer p {
+  margin: 0 0 6px;
+}
+.ranked-sign {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid #b8913a;
+  border-radius: 8px;
+  background: rgb(245 197 66 / 7%);
+}
+.ranked-sign.good {
+  border-color: #3f8f5a;
+  background: rgb(63 143 90 / 10%);
+}
+.ranked-sign .row {
+  margin-top: 6px;
+}
+.panel.modal.player-card {
+  width: min(560px, calc(100vw - 32px));
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.player-card h3 {
+  margin: 14px 0 4px;
+  font-size: 0.95rem;
+}
+.player-card .card-face {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 3px solid;
+  border-radius: 12px;
+}
+.player-card ul.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.player-card ul.plain li {
+  margin: 3px 0;
+}
+.ladder {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ladder th,
+.ladder td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid #262b36;
+}
+.ladder tr.me td {
+  background: rgb(245 197 66 / 10%);
+}
+@media (pointer: coarse) {
+  .player-card button,
+  .player-card input,
+  .player-card label.button {
+    min-height: 44px;
   }
 }

@@ -16,6 +16,8 @@ interface ReviewRun {
   of: { initial: GameRecord["initial"]; last: number } | null;
   status: "idle" | "running" | "done" | "error";
   done: number;
+  /** When this run started, for the time-left estimate. */
+  started?: number;
   review: GameReview | null;
   error?: string;
 }
@@ -31,6 +33,18 @@ const sameGame = (record: GameRecord) => {
   return !!of && of.initial === record.initial && of.last === lastSeq(record);
 };
 
+/**
+ * Minutes left on a running review, from how fast it has gone so far; null
+ * until there is enough progress to say. The time depends on the game's length
+ * and the device, so it is measured, not promised.
+ */
+export function minutesLeft(run: Pick<ReviewRun, "done" | "started">): number | null {
+  if (!run.started || run.done < 0.05) return null;
+  const spent = Date.now() - run.started;
+  if (spent < 3000) return null;
+  return Math.ceil((spent * (1 - run.done)) / run.done / 60_000);
+}
+
 export function startReview(record: GameRecord): void {
   if (sameGame(record) && useReviewRun.getState().status !== "error") return;
   stopReview();
@@ -38,6 +52,7 @@ export function startReview(record: GameRecord): void {
     of: { initial: record.initial, last: lastSeq(record) },
     status: "running",
     done: 0,
+    started: Date.now(),
     review: null,
     error: undefined,
   });

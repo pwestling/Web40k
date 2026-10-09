@@ -14,6 +14,9 @@ import type { BoardBackend, BoardStatus } from "./board";
 const KIND = 30078;
 const TAG = "open-battle-table";
 const D = "open-battle/table/";
+/** Ranked results (#65): the same kind, their own tag, one address per replay. */
+const RESULT_TAG = "open-battle-result";
+const RESULT_D = "open-battle/result/";
 /** Reports from this many keys hide a post. */
 export const REPORTS_TO_HIDE = 3;
 const RETRY_MS = [5_000, 15_000, 60_000];
@@ -182,6 +185,43 @@ export function nostrBoard(options: NostrOptions): BoardBackend {
         ["t", TAG],
       ];
       await send(await signEvent(secret, 1984, tags, ""));
+    },
+    async publishResult(r) {
+      const tags = [
+        ["d", RESULT_D + r.result.replay],
+        ["t", RESULT_TAG],
+        ["alt", "An Open Battle ranked result, signed by both players"],
+      ];
+      await send(await signEvent(secret, KIND, tags, JSON.stringify(r)));
+    },
+    watchResults(onResults) {
+      let stopped = false;
+      const sockets: Socket[] = [];
+      for (const url of relays) {
+        let s: Socket;
+        try {
+          s = open(url);
+        } catch {
+          continue;
+        }
+        sockets.push(s);
+        s.onopen = () =>
+          s.send(JSON.stringify(["REQ", "results", { kinds: [KIND], "#t": [RESULT_TAG], limit: 5000 }]));
+        s.onmessage = (m) => {
+          const msg = parse(m.data);
+          if (msg?.[0] !== "EVENT" || msg[1] !== "results") return;
+          const e = msg[2] as NostrEvent;
+          void verifyEvent(e).then((ok) => {
+            if (ok && !stopped && e.tags.some((x) => x[0] === "t" && x[1] === RESULT_TAG))
+              onResults([json(e.content)]);
+          });
+        };
+        s.onerror = s.onclose = () => {};
+      }
+      return () => {
+        stopped = true;
+        for (const s of sockets) s.close();
+      };
     },
     watch(onPosts, onStatus) {
       const posts = new Map<string, SeenPost>();

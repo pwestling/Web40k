@@ -649,6 +649,90 @@ const checks = {
     return [...host.page.errors, ...guest.page.errors, ...watcher.page.errors];
   },
 
+  // #65: a ranked Rift Lanterns game between two browsers, both sign, and after a reload
+  // both ladders (worked out on each device from the signed result) agree.
+  async ranked() {
+    const q = `?${SIGNAL}&openTables=1&board=${encodeURIComponent(`http://localhost:${RELAY}/board`)}`;
+    const host = await device();
+    const guest = await device();
+    const tables = async (page) => {
+      await lobby(page, q);
+      await page.getByRole("button", { name: /Open tables: find/ }).click();
+    };
+    await lobby(host.page, q);
+    const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
+    await game.locator('option[value="rift-lanterns"]').waitFor({ state: "attached", timeout: 20_000 });
+    await game.selectOption("rift-lanterns");
+    await host.page.getByRole("button", { name: /Open tables: find/ }).click();
+    await host.page.getByRole("button", { name: "Host a table and post it" }).click();
+    const form = host.page.locator(".post-table");
+    await form.locator("label", { hasText: "Your name" }).locator("input").fill("Ana");
+    await form.locator("label", { hasText: "Ranked" }).locator("input").check();
+    await form.getByRole("button", { name: /^Post:/ }).click();
+    await host.page.locator(".room").waitFor();
+    await tables(guest.page);
+    const post = guest.page.locator(".table-post:not(.live-game)").first();
+    await post.getByText("Ranked").first().waitFor({ timeout: 30_000 });
+    await post.getByRole("button", { name: "Join" }).click();
+    await guest.page.locator(".table-post:not(.live-game) input").first().fill("Ben");
+    await guest.page.getByRole("button", { name: "Join Ana" }).click();
+    // Opt-in: the guest says yes to ranked.
+    await guest.page.getByRole("button", { name: "Play ranked" }).click({ timeout: 30_000 });
+    await host.page.locator(".topbar .ranked-chip").waitFor({ timeout: 15_000 });
+    for (const [i, { page }] of [host, guest].entries()) {
+      await page.locator('.panel.hud select[aria-label="Sample army"]').selectOption({ index: i + 1 });
+      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+      if (await deploy.count()) await deploy.click();
+    }
+    await host.page.getByRole("button", { name: /Start battle/ }).click();
+    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+    if (await anyway.count()) await anyway.first().click();
+    await host.page
+      .locator(".topbar")
+      .getByText(/Round 1/)
+      .first()
+      .waitFor({ timeout: 15_000 });
+    for (const { page } of [host, guest]) await page.keyboard.press("Escape");
+    // Ana scores a point by hand, then both pass every round to the end.
+    await host.page.locator(".topbar .player").first().getByRole("button", { name: "+" }).click();
+    const deadline = Date.now() + 120_000;
+    while (!(await host.page.locator(".ranked-sign").count())) {
+      if (Date.now() > deadline) throw new Error("the ranked game never reached its result");
+      for (const { page } of [host, guest]) {
+        const pass = page.locator(".topbar").getByRole("button", { name: "Pass", exact: true });
+        if (await pass.isEnabled().catch(() => false)) await pass.click({ timeout: 1500 }).catch(() => {});
+        const ask = page.locator(".topbar .ask button.primary");
+        if (await ask.count())
+          await ask
+            .first()
+            .click()
+            .catch(() => {});
+      }
+      await sleep(300);
+    }
+    for (const { page } of [host, guest])
+      await page
+        .locator(".ranked-sign")
+        .first()
+        .getByRole("button", { name: "Sign: that's right" })
+        .click({ timeout: 20_000 });
+    for (const { page } of [host, guest])
+      await page.locator(".ranked-sign.good").first().waitFor({ timeout: 20_000 });
+    const ladders = [];
+    for (const { page } of [host, guest]) {
+      await tables(page);
+      await page.locator(".open-tables").getByRole("button", { name: "Ladder" }).click();
+      const table = page.locator(".player-card table.ladder");
+      await table.waitFor({ timeout: 20_000 });
+      ladders.push(await table.innerText());
+    }
+    if (ladders[0] !== ladders[1]) throw new Error(`the ladders differ: ${JSON.stringify(ladders)}`);
+    if (!/1\tAna\b.*\t1516\?/.test(ladders[0]))
+      throw new Error(`unexpected ladder: ${JSON.stringify(ladders[0])}`);
+    for (const d of [host, guest]) await d.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
   async companion() {
     const { page, context } = await device({
       viewport: { width: 390, height: 844 },

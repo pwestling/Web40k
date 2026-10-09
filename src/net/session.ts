@@ -1,3 +1,4 @@
+import { rankedOver } from "../core/ranked";
 import {
   appendEvent,
   applyEvent,
@@ -321,6 +322,8 @@ export class Session {
   }
 
   leave(): void {
+    // Watchers behind the game get the rest of it before the host goes (PX).
+    this.flushBehind();
     this.left = true;
     if (this.timer) clearTimeout(this.timer);
     this.transport.leave();
@@ -443,6 +446,16 @@ export class Session {
   /** A peer that doesn't get events as they happen: a watcher behind, or anyone not known as a player yet. */
   private heldBack(peer: string): boolean {
     return this.behind.has(peer) || (this.spectatorFloorMs > 0 && this.peers.get(peer)?.role !== "client");
+  }
+
+  /** The game is over (or the host is going): every watcher behind it gets the rest now. */
+  private flushBehind(): void {
+    if (this.role !== "host") return;
+    for (const [peer, b] of this.behind) {
+      const events = this.record.events.filter((e) => e.seq > b.sent);
+      if (events.length) this.transport.send({ t: "events", events }, peer);
+    }
+    this.behind.clear();
   }
 
   /** Send each watcher behind the game the events that have come of age for it. */
@@ -623,6 +636,11 @@ export class Session {
     // Watchers behind the game get it later (sendBehind); everyone else now.
     if (!this.behind.size && !this.spectatorFloorMs) this.transport.send(message);
     else for (const peer of this.peers.keys()) if (!this.heldBack(peer)) this.transport.send(message, peer);
+    // Battle over: nothing is left to keep from watchers, and they shouldn't miss the end (PX).
+    if (this.behind.size && rankedOver(this.state)) {
+      this.flushBehind();
+      this.spectatorFloorMs = 0;
+    }
     for (const intent of hookIntents(before, this.state, logged.event)) this.hooks.push([intent, logged.by]);
     this.runHooks();
   }

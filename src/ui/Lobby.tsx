@@ -1,3 +1,4 @@
+import { openPlayerCard } from "../player/open";
 import { systemOf } from "../core/content/turn";
 import { isPlaceholder } from "../core/content/systems";
 import type { ReplayFile } from "./replayFile";
@@ -574,6 +575,9 @@ export function Lobby() {
           </Suspense>
           <InstallLink />
           <hr />
+          <button className="link" onClick={openPlayerCard}>
+            {t("Your player card: name, colours, ranked games")}
+          </button>
           <button className="link" onClick={() => openLibrary()}>
             {t("Figure library: your models, packs and storage")}
           </button>

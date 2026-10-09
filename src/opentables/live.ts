@@ -1,5 +1,6 @@
 import { sides, sidePlayers, type GameState } from "../core";
 import { systemOf } from "../core/content/turn";
+import { rankedReady, rankedSeats } from "../core/ranked";
 import { useStore } from "../store";
 import type { LiveInfo } from "./post";
 
@@ -38,6 +39,8 @@ export function liveInfo(game: GameState, watching: number): LiveInfo {
       .map((seat) => vp(seat))
       .join("–"),
     watching: Math.min(9999, watching),
+    // A ranked game's keys by side, so the board can show each player's rating (#65).
+    ...(rankedReady(game) ? { keys: rankedSeats(game).map((p) => game.ranked!.keys[p]!) } : {}),
     sides: sides(game).map((seat) =>
       sidePlayers(game, seat)
         .map((p) => p.name.slice(0, 32))
