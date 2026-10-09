@@ -50,7 +50,7 @@ import { TalkLayer } from "./TalkLayer";
 import { carry, pickUp, setDown } from "./feel";
 import { FeelLayer } from "./FeelLayer";
 import { MAX_LINE, useTalk, type Said } from "../talk/talk";
-import { HOLD_MS, SLOP_PX, useTouch } from "./touchState";
+import { HOLD_MS, SLOP_PX, STILL_PX, useTouch } from "./touchState";
 import { turnByTwist } from "./touchTurn";
 import { talkOrNote } from "../replay/notes";
 import { NotesLayer } from "./NotesLayer";
@@ -197,7 +197,7 @@ function Cameras() {
       <PerspectiveCamera
         key={`${reset}-${game.table.width}x${game.table.depth}-${narrow ? "n" : "w"}`}
         makeDefault
-        position={[0, 52 * k, 44 * k * side]}
+        position={narrow ? [0, 62 * k, 30 * k * side] : [0, 52 * k, 44 * k * side]}
         fov={45}
       />
     );
@@ -239,8 +239,9 @@ function CameraFit() {
   }, [reset]);
   const target = useMemo(() => {
     if (view === "eye" || !started) return { zoom: 1, centre: size.width / 2 };
-    // On a phone the card is a sheet over the table, so there is no side panel to fit around.
-    if (size.width < PHONE_WIDTH) return { zoom: 1, centre: size.width / 2 };
+    // On a phone the card is a sheet over the table, so there is no side panel to fit around; a tablet held
+    // upright has no room beside the table either, so the card sits over it there too (UX 420).
+    if (size.width < PHONE_WIDTH || size.width < size.height) return { zoom: 1, centre: size.width / 2 };
     const gap = Math.max(300, size.width - left - RIGHT_PANEL);
     return { zoom: Math.min(1.6, Math.max(1, (size.width * 0.82) / gap)), centre: left + gap / 2 };
   }, [view, started, size.width, left, reset]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -313,6 +314,11 @@ function Scene() {
     set: setUi,
   } = useStore();
   const canControl = useCanControl();
+  // For the canvas's own listeners, set up once: who may move what changes as seats are taken (PX re-check of #60).
+  const canControlNow = useRef(canControl);
+  useEffect(() => {
+    canControlNow.current = canControl;
+  });
   const [drag, setDrag] = useState<Drag | null>(null);
   const [hoverModel, setHoverModel] = useState<string | null>(null);
   const [templateDrag, setTemplateDrag] = useState(false);
@@ -570,7 +576,9 @@ function Scene() {
         const now = pts.get(e.pointerId);
         const d = dragRef.current;
         // Lifted, moved, a second finger (a pinch or twist), or a box being drawn: not a press.
-        if (!now || pts.size !== 1 || Math.hypot(now.x - start.x, now.y - start.y) > SLOP_PX) return;
+        // Still means still: a finger already a few pixels on its way is a drag that a slow page hasn't caught up
+        // with yet (UX 416: pans after a move came out as rulers), not a hold.
+        if (!now || pts.size !== 1 || Math.hypot(now.x - start.x, now.y - start.y) > STILL_PX) return;
         if (useTouch.getState().twist || (d && (d.moved || d.kind === "box" || d.kind === "stroke"))) return;
         const s = useStore.getState();
         if (s.scrub !== null && !s.review) return;
@@ -644,12 +652,19 @@ function Scene() {
       const under =
         !!unit &&
         aliveModels(s.game, unit).some((m) => {
-          const v = new Vector3(m.position.x, m.z ?? 0, m.position.y).project(camera);
-          const x = rect.left + ((v.x + 1) / 2) * rect.width;
-          const y = rect.top + ((1 - v.y) / 2) * rect.height;
-          return fingers.some((f) => Math.hypot(f.x - x, f.y - y) < 48);
+          // The whole figure, foot to head: in 3D a finger lands on the model, well above its base (PX re-check).
+          const at = (up: number) => {
+            const v = new Vector3(m.position.x, (m.z ?? 0) + up, m.position.y).project(camera);
+            return {
+              x: rect.left + ((v.x + 1) / 2) * rect.width,
+              y: rect.top + ((1 - v.y) / 2) * rect.height,
+            };
+          };
+          const foot = at(0);
+          const head = at(modelHeight(m));
+          return fingers.some((f) => toSegment(f, foot, head) < 48);
         });
-      if (unit && under && s.scrub === null && s.view !== "eye" && canControl(unit.owner)) {
+      if (unit && under && s.scrub === null && s.view !== "eye" && canControlNow.current(unit.owner)) {
         twist = { unit: true, a0: angle(), az0: 0 };
         if (controls) controls.enabled = false;
         useTouch.setState({ twist: { unitId: unit.id, angle: 0, ...centre() } });
@@ -711,17 +726,18 @@ function Scene() {
       twist = null;
     };
     el.addEventListener("pointerdown", down, { capture: true });
-    window.addEventListener("pointermove", move);
+    // On the canvas, capturing: a touch stays with the canvas, and nothing on the way can swallow the finger moving.
+    el.addEventListener("pointermove", move, { capture: true });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     return () => {
       clearTimeout(timer);
       el.removeEventListener("pointerdown", down, { capture: true });
-      window.removeEventListener("pointermove", move);
+      el.removeEventListener("pointermove", move, { capture: true });
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
     };
-  }, [gl, controls, camera]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gl, controls, camera]);
 
   // Terrain and objectives as shown: a dragged piece follows the pointer.
   const terrain = useMemo(() => {
@@ -811,6 +827,26 @@ function Scene() {
       ...(fromModel ? { fromModel } : {}),
     });
 
+  /** The enemy unit (of `attackerId`) with a model within a finger's width of a tap, if any. */
+  const enemyNear = (e: MouseEvent, attackerId: string): string | null => {
+    const attacker = game.units[attackerId];
+    if (!attacker) return null;
+    const rect = gl.domElement.getBoundingClientRect();
+    let best: { id: string; d: number } | null = null;
+    for (const u of Object.values(game.units)) {
+      if (!opposed(game, u.owner, attacker.owner)) continue;
+      for (const m of aliveModels(game, u)) {
+        const v = new Vector3(m.position.x, (m.z ?? 0) + modelHeight(m) / 2, m.position.y).project(camera);
+        const d = Math.hypot(
+          e.clientX - (rect.left + ((v.x + 1) / 2) * rect.width),
+          e.clientY - (rect.top + ((1 - v.y) / 2) * rect.height),
+        );
+        if (d < 32 && (!best || d < best.d)) best = { id: u.id, d };
+      }
+    }
+    return best?.id ?? null;
+  };
+
   const onModelDown = (m: Model, shift: boolean, e?: PointerEvent) => {
     // A second finger is a pinch or twist, never a drag of the model it lands on (PX touch pass).
     if (e?.pointerType === "touch" && touchCount.current > 1) return;
@@ -830,6 +866,14 @@ function Scene() {
       if (m.unitId && m.unitId !== draft.attackerId)
         setDraft({ ...draft, targetId: m.unitId, picking: false });
       return;
+    }
+    // An attack being set up: another enemy tapped is a new target, not a new selection that drops the attack (UX 417).
+    if (draft && m.unitId && m.unitId !== draft.attackerId) {
+      const attacker = game.units[draft.attackerId];
+      if (attacker && opposed(game, m.owner, attacker.owner)) {
+        setDraft({ ...draft, targetId: m.unitId });
+        return;
+      }
     }
     const { picked, oneModel } = useTouch.getState();
     const group = m.unitId && picked.length > 1 && picked.includes(m.unitId);
@@ -1177,7 +1221,13 @@ function Scene() {
           startRuler(at);
         }}
         onClick={(e) => {
-          if (tool || e.altKey || measuring || draft?.picking || e.delta >= 3) return;
+          // Picking a target: a tap near an enemy model (a finger's width) takes its unit (UX 417).
+          if (draft?.picking && e.delta < 3) {
+            const near = enemyNear(e.nativeEvent, draft.attackerId);
+            if (near) setDraft({ ...draft, targetId: near, picking: false });
+            return;
+          }
+          if (tool || e.altKey || measuring || e.delta >= 3) return;
           select(null);
           if (editing) setUi({ selectedTerrain: null });
         }}
@@ -1509,4 +1559,13 @@ function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said 
         at: drag.grab,
         radius: Math.hypot(drag.to.x - drag.grab.x, drag.to.y - drag.grab.y),
       };
+}
+
+/** A point's distance to a segment, in screen pixels. */
+function toSegment(p: Vec2, a: Vec2, b: Vec2): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const k =
+    dx || dy ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy))) : 0;
+  return Math.hypot(p.x - (a.x + dx * k), p.y - (a.y + dy * k));
 }

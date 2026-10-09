@@ -29,3 +29,5 @@ export const useTouch = create<{
 export const HOLD_MS = 450;
 /** How far a finger can wander (px) and still be pressing, not dragging. */
 export const SLOP_PX = 10;
+/** How far a finger may drift and still be holding: past this, a long press is a drag on its way. */
+export const STILL_PX = 5;

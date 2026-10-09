@@ -2,6 +2,7 @@ import { displayName } from "../i18n/names";
 import { RulesText } from "./RulesText";
 import { useState } from "react";
 import { narrow } from "./narrow";
+import { touch } from "./touch";
 import type { Player } from "../core";
 import {
   abilityReminders,
@@ -33,8 +34,8 @@ export function PlayPanel() {
   const busy = !!selected || !!draft || !!game.attack || !!game.procedure;
   const context = `${selected ?? ""}|${busy}`;
   const [choice, setChoice] = useState<{ context: string; open: boolean } | null>(null);
-  // On a phone it opens only when asked (UX 17).
-  const open = choice?.context === context ? choice.open : !busy && !narrow();
+  // On a phone it opens only when asked (UX 17), and on a tablet too: open, it covers a corner of the table (UX 418).
+  const open = choice?.context === context ? choice.open : !busy && !narrow() && !touch();
   const setOpen = (o: boolean) => setChoice({ context, open: o });
   const system = systemOf(game);
   const reminders = abilityReminders(game);

@@ -180,7 +180,7 @@ export function ReplayBar() {
   );
   return (
     <>
-      {captioned && (phase || now) && (
+      {captioned && now && (
         <div className="caption">
           {phase && <span className="when">{phase.text}</span>}
           {now && <span>{now}</span>}

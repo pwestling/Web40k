@@ -95,13 +95,18 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const IPAD = { viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true };
 
 /** On a tablet, by touch: past the showcase, then the top-down view from the table's long-press menu. */
-async function touchTable(page, t) {
+async function touchTable(page, t, top = true) {
   await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 30000 });
   for (let i = 0; i < 60 && (await page.evaluate(() => document.body.classList.contains("showcase"))); i++) {
     await t.tap(600, 420);
     await sleep(400);
   }
   await sleep(1500);
+  if (top) await topDown(page, t);
+}
+
+/** The top-down view, from the table's long-press menu. */
+async function topDown(page, t) {
   await t.press(600, 450, 700);
   await page.locator(".touch-menu").waitFor({ timeout: 5000 });
   await page.locator(".touch-menu").getByRole("menuitem", { name: "Top-down view" }).tap();
@@ -127,6 +132,8 @@ async function tapOwnUnit(page, t) {
       [16, 0],
       [-16, 0],
       [0, 18],
+      [0, 28],
+      [0, 38],
     ]) {
       await t.tap(pl.x + dx, pl.y + dy);
       await sleep(400);
@@ -732,6 +739,22 @@ const checks = {
     await touchMove(page, t, u, { x: 30, y: -50 });
     if (!/End activation/.test(await primary.textContent()))
       throw new Error("the moved unit didn't start activating");
+    // With a unit moved and selected, a finger dragged across empty table still pans, never measures (UX 416).
+    const rulers = await page.locator(".ruler").count();
+    const rulerText = await page.locator(".ruler").allTextContents();
+    const before = await page.locator(".plate [data-unit]").first().boundingBox();
+    await t.drag({ x: 560, y: 480 }, { x: 460, y: 440 }, { stepMs: 30 });
+    await sleep(800);
+    const after = await page.locator(".plate [data-unit]").first().boundingBox();
+    if ((await page.locator(".ruler").count()) > rulers)
+      throw new Error(
+        `a drag on empty table measured instead of panning: ${rulerText} -> ${await page.locator(".ruler").allTextContents()}`,
+      );
+    if (Math.hypot(after.x - before.x, after.y - before.y) < 20) {
+      if (process.env.SMOKE_SHOTS)
+        await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "touch-pan.png") });
+      throw new Error(`a drag on empty table didn't pan (${JSON.stringify([before, after])})`);
+    }
     await t.drag({ x: 640, y: 420 }, { x: 760, y: 360 }, { hold: 700 });
     await page
       .locator(".ruler")
@@ -763,7 +786,8 @@ const checks = {
       .locator(".demos .demo", { hasText: "Sci-fi battle" })
       .getByRole("button", { name: "Try (both sides)" })
       .tap();
-    await touchTable(page, t);
+    // The 3D view first (where most play happens): a twist must work there (PX re-check of #60).
+    await touchTable(page, t, false);
     const next = page.locator(".topbar .turn button", { hasText: "▶" });
     const phase = () => page.locator(".topbar .turn .phases .current").textContent();
     await next.tap();
@@ -777,7 +801,8 @@ const checks = {
     await t.two({ x: mover.x, y: mover.y }, { d0: 50, d1: 50, a0: 0, a1: 0.6, stagger: 60 });
     await sleep(1500);
     if (!((await moved()) > 0)) throw new Error("a two-finger twist on the selected unit didn't turn it");
-    // Turned, its models stand elsewhere: find one again to drag.
+    // Top-down from here; turned, its models stand elsewhere: find one again to drag.
+    await topDown(page, t);
     await touchMove(page, t, await tapOwnUnit(page, t), { x: 0, y: -40 });
     await next.tap();
     await sleep(1500);
@@ -785,7 +810,7 @@ const checks = {
       .locator(".unitcard button", { hasText: /^Shoot$/ })
       .first()
       .tap();
-    await page.getByText("Tap a target on the table…").waitFor();
+    await page.getByText("Tap an enemy unit, or pick one from the list").waitFor();
     // An enemy unit in range (from the attack's own target list): its plate, tapped until the attack has a target.
     const inRange = (await page.locator(".attack option").allTextContents())
       .filter((o) => /\(\d/.test(o) && !o.includes("out of range"))
@@ -811,15 +836,9 @@ const checks = {
         [0, 18],
       ]) {
         if (await declare.count()) break;
-        // A tap that missed picks whatever was there instead: the shooter's card back, then Shoot again.
-        if (!(await page.locator(".attack").count())) {
-          await tapOwnUnit(page, t);
-          await page
-            .locator(".unitcard button", { hasText: /^Shoot$/ })
-            .first()
-            .tap();
-          await sleep(800);
-        }
+        // While picking, a tap never selects another unit or drops the attack (UX 417).
+        if (!(await page.locator(".attack").count()))
+          throw new Error("a tap while picking a target dropped the attack");
         await t.tap(e.x + dx, e.y + dy);
         await sleep(500);
         if (await page.locator(".touch-menu").count()) await page.locator(".touch-menu-scrim").tap();

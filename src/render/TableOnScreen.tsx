@@ -8,11 +8,12 @@ import { onScreen, shot } from "./focus";
  * CSS pixels: a tall clip crops to it so the table fills the frame's width (UX 367).
  */
 export function TableOnScreen() {
-  const { camera, size } = useThree();
+  const { camera, size, controls } = useThree();
   const { width, depth } = useGame().table;
   const v = new Vector3();
   useFrame(() => {
     // Development: where a point on the table is on screen, for browser tests of touch play (#60).
+    if (import.meta.env.DEV) (window as { openBattleControls?: unknown }).openBattleControls = controls;
     if (import.meta.env.DEV)
       (window as { openBattleScreenOf?: unknown }).openBattleScreenOf = (x: number, y: number, z = 0) => {
         const p = new Vector3(x, z, y).project(camera);

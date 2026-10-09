@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
@@ -287,6 +287,17 @@ function computerGo(
   };
 }
 
+/** The coach has folded on this screen: it starts folded from then on. */
+const foldedOnce = { done: false };
+
+/** Once it has folded, later phases start folded (UX 419): the player knows where it is. */
+function FoldedOnce() {
+  useEffect(() => {
+    foldedOnce.done = true;
+  }, []);
+  return null;
+}
+
 export function WhatNow() {
   // Re-read on the computer's turns (UX 347).
   useSolo((s) => s.level);
@@ -319,12 +330,14 @@ export function WhatNow() {
   // The computer's go (UX 347): say so, in one line, and nothing to press.
   const computer = computerGo(game);
   const { head, lines, units } = computer ?? whatNow(game, me, hotseat, ready);
-  if (touch() && !computer && fold.key === phaseKey && events > fold.at && !fold.open)
+  if (touch() && !computer && fold.key === phaseKey && (events > fold.at || foldedOnce.done) && !fold.open) {
     return (
       <button className="panel whatnow folded" onClick={() => setFold({ ...fold, open: true })}>
         <strong>{head}</strong> <span aria-hidden>▾</span>
+        <FoldedOnce />
       </button>
     );
+  }
   return (
     <div className="panel whatnow">
       <div className="row spread">

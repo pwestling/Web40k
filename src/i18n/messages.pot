@@ -417,8 +417,8 @@ msgstr[1] ""
 #: src/bot/BestMoment.tsx:43
 #: src/broadcast/Moments.tsx:239
 #: src/campaign/EventTab.tsx:318
-#: src/share/SharePanel.tsx:355
-#: src/share/SharePanel.tsx:429
+#: src/share/SharePanel.tsx:360
+#: src/share/SharePanel.tsx:434
 #: src/share/cards.ts:310
 msgid "Round {n}"
 msgstr ""
@@ -2191,7 +2191,7 @@ msgid "Pick for a pack"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:364
-#: src/ui/PlayPanel.tsx:258
+#: src/ui/PlayPanel.tsx:259
 #: src/ui/TeachRule.tsx:120
 msgid "Name"
 msgstr ""
@@ -3157,32 +3157,32 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/render/Board.tsx:1425
-msgid "Move {inches}\""
-msgstr ""
-
-#: src/render/Board.tsx:913
-msgid "{label}: held by {player}"
-msgstr ""
-
-#: src/render/Board.tsx:915
-msgid "{label}: contested"
-msgstr ""
-
-#: src/render/Board.tsx:916
-msgid "{label}: nobody holds it"
-msgstr ""
-
-#: src/render/Board.tsx:977
+#: src/render/Board.tsx:1018
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:979
+#: src/render/Board.tsx:1020
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:984
+#: src/render/Board.tsx:1025
 msgid "{visible}/{n} visible"
+msgstr ""
+
+#: src/render/Board.tsx:1472
+msgid "Move {inches}\""
+msgstr ""
+
+#: src/render/Board.tsx:954
+msgid "{label}: held by {player}"
+msgstr ""
+
+#: src/render/Board.tsx:956
+msgid "{label}: contested"
+msgstr ""
+
+#: src/render/Board.tsx:957
+msgid "{label}: nobody holds it"
 msgstr ""
 
 #: src/render/Casualties.tsx:220
@@ -3475,9 +3475,9 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:89
-#: src/ui/PlayPanel.tsx:78
+#: src/ui/PlayPanel.tsx:79
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:332
+#: src/ui/WhatNow.tsx:345
 msgid "Hide"
 msgstr ""
 
@@ -3486,7 +3486,7 @@ msgid "Hide notes and chapters"
 msgstr ""
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:49
+#: src/ui/PlayPanel.tsx:50
 #: src/ui/TerrainPanel.tsx:375
 #: src/ui/TopBar.tsx:237
 #: src/ui/WhatNow.tsx:46
@@ -3502,156 +3502,156 @@ msgstr ""
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
 
-#: src/share/SharePanel.tsx:160
-#: src/share/SharePanel.tsx:411
+#: src/share/SharePanel.tsx:161
+#: src/share/SharePanel.tsx:416
 msgid "This browser can't record the table."
 msgstr ""
 
-#: src/share/SharePanel.tsx:166
+#: src/share/SharePanel.tsx:167
 msgid "Recording…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:173
+#: src/share/SharePanel.tsx:174
 msgid "Saving the clip…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:211
+#: src/share/SharePanel.tsx:212
 #: src/ui/RoundCard.tsx:140
 msgid "about {n} s"
 msgstr ""
 
-#: src/share/SharePanel.tsx:273
+#: src/share/SharePanel.tsx:278
 msgid "The highlights reel"
 msgstr ""
 
-#: src/share/SharePanel.tsx:274
+#: src/share/SharePanel.tsx:279
 msgid "From here to the end of the round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:275
+#: src/share/SharePanel.tsx:280
 msgid "From here to the end of the game"
 msgstr ""
 
-#: src/share/SharePanel.tsx:276
+#: src/share/SharePanel.tsx:281
 msgid "The whole battle, cut down"
 msgstr ""
 
-#: src/share/SharePanel.tsx:277
+#: src/share/SharePanel.tsx:282
 msgid "Full length"
 msgstr ""
 
-#: src/share/SharePanel.tsx:278
+#: src/share/SharePanel.tsx:283
 msgid "A round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:299
-#: src/share/SharePanel.tsx:301
+#: src/share/SharePanel.tsx:304
+#: src/share/SharePanel.tsx:306
 #: src/ui/ReplayBar.tsx:162
 msgid "Share the battle"
 msgstr ""
 
-#: src/share/SharePanel.tsx:309
+#: src/share/SharePanel.tsx:314
 msgid "The replay"
 msgstr ""
 
-#: src/share/SharePanel.tsx:315
+#: src/share/SharePanel.tsx:320
 msgid "Making the page…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:321
+#: src/share/SharePanel.tsx:326
 msgid "Web page"
 msgstr ""
 
-#: src/share/SharePanel.tsx:323
+#: src/share/SharePanel.tsx:328
 msgid "Opens in any browser, even offline: send it to anyone."
 msgstr ""
 
-#: src/share/SharePanel.tsx:327
+#: src/share/SharePanel.tsx:332
 msgid "Replay file"
 msgstr ""
 
-#: src/share/SharePanel.tsx:329
+#: src/share/SharePanel.tsx:334
 msgid "Opens in Open Battle, with notes and What if…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:335
+#: src/share/SharePanel.tsx:340
 msgid "A clip"
 msgstr ""
 
-#: src/share/SharePanel.tsx:338
+#: src/share/SharePanel.tsx:343
 msgid "What to record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:346
+#: src/share/SharePanel.tsx:351
 msgid "Round"
 msgstr ""
 
-#: src/share/SharePanel.tsx:365
+#: src/share/SharePanel.tsx:370
 msgid "No highlights reel: this game had no standout moments."
 msgstr ""
 
-#: src/share/SharePanel.tsx:371
+#: src/share/SharePanel.tsx:376
 msgid "Shape"
 msgstr ""
 
-#: src/share/SharePanel.tsx:376
+#: src/share/SharePanel.tsx:381
 msgid "Wide"
 msgstr ""
 
-#: src/share/SharePanel.tsx:376
+#: src/share/SharePanel.tsx:381
 msgid "16:9, for screens and video sites"
 msgstr ""
 
-#: src/share/SharePanel.tsx:377
+#: src/share/SharePanel.tsx:382
 msgid "Square"
 msgstr ""
 
-#: src/share/SharePanel.tsx:377
+#: src/share/SharePanel.tsx:382
 msgid "1:1, for feeds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:378
+#: src/share/SharePanel.tsx:383
 msgid "Tall"
 msgstr ""
 
-#: src/share/SharePanel.tsx:378
+#: src/share/SharePanel.tsx:383
 msgid "9:16, for stories"
 msgstr ""
 
-#: src/share/SharePanel.tsx:397
+#: src/share/SharePanel.tsx:402
 msgid "Dice and table sounds"
 msgstr ""
 
-#: src/share/SharePanel.tsx:402
+#: src/share/SharePanel.tsx:407
 msgid "Table talk"
 msgstr ""
 
-#: src/share/SharePanel.tsx:407
+#: src/share/SharePanel.tsx:412
 msgid "Record"
 msgstr ""
 
-#: src/share/SharePanel.tsx:416
+#: src/share/SharePanel.tsx:421
 msgid "Pictures"
 msgstr ""
 
-#: src/share/SharePanel.tsx:419
-#: src/share/SharePanel.tsx:427
+#: src/share/SharePanel.tsx:424
+#: src/share/SharePanel.tsx:432
 msgid "Drawing the card…"
 msgstr ""
 
-#: src/share/SharePanel.tsx:420
+#: src/share/SharePanel.tsx:425
 msgid "End-of-game card"
 msgstr ""
 
-#: src/share/SharePanel.tsx:433
+#: src/share/SharePanel.tsx:438
 msgid "Cards come once a round has ended."
 msgstr ""
 
-#: src/share/SharePanel.tsx:451
+#: src/share/SharePanel.tsx:456
 msgid "Recording"
 msgstr ""
 
-#: src/share/SharePanel.tsx:452
+#: src/share/SharePanel.tsx:457
 msgid "Stop"
 msgstr ""
 
@@ -4017,8 +4017,8 @@ msgid "This table is for another game"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:216
-#: src/ui/PlayPanel.tsx:295
+#: src/ui/PlayPanel.tsx:217
+#: src/ui/PlayPanel.tsx:296
 msgid "Use"
 msgstr ""
 
@@ -4490,7 +4490,7 @@ msgstr ""
 
 #: src/ui/AttackPanel.tsx:127
 #: src/ui/ProcedurePanels.tsx:172
-msgid "Tap a target on the table…"
+msgid "Tap an enemy unit, or pick one from the list"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:128
@@ -4916,8 +4916,8 @@ msgid "Automated:"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:574
-#: src/ui/PlayPanel.tsx:438
-#: src/ui/PlayPanel.tsx:487
+#: src/ui/PlayPanel.tsx:439
+#: src/ui/PlayPanel.tsx:488
 msgid "Change"
 msgstr ""
 
@@ -4931,16 +4931,16 @@ msgid "Not quite?"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:596
-#: src/ui/PlayPanel.tsx:398
-#: src/ui/PlayPanel.tsx:484
+#: src/ui/PlayPanel.tsx:399
+#: src/ui/PlayPanel.tsx:485
 #: src/ui/TeachRule.tsx:94
 msgid "Teach it this rule"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:599
-#: src/ui/PlayPanel.tsx:401
-#: src/ui/PlayPanel.tsx:438
-#: src/ui/PlayPanel.tsx:487
+#: src/ui/PlayPanel.tsx:402
+#: src/ui/PlayPanel.tsx:439
+#: src/ui/PlayPanel.tsx:488
 msgid "Teach it"
 msgstr ""
 
@@ -6843,152 +6843,152 @@ msgstr ""
 msgid "Withdraw"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:111
+#: src/ui/PlayPanel.tsx:112
 msgid "No core stratagems fit this moment."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:127
+#: src/ui/PlayPanel.tsx:128
 msgid "No {cards} in this phase."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:134
+#: src/ui/PlayPanel.tsx:135
 #: src/ui/TeachRule.tsx:133
 msgid "CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:135
+#: src/ui/PlayPanel.tsx:136
 msgid "Other stratagem…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:147
+#: src/ui/PlayPanel.tsx:148
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:169
+#: src/ui/PlayPanel.tsx:170
 msgid "can react: {stratagems}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:170
+#: src/ui/PlayPanel.tsx:171
 msgid "nothing to react with"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:171
+#: src/ui/PlayPanel.tsx:172
 msgid "({cp} CP)"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:181
+#: src/ui/PlayPanel.tsx:182
 msgid "0 CP left"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:181
+#: src/ui/PlayPanel.tsx:182
 msgid "{cp} CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:210
+#: src/ui/PlayPanel.tsx:211
 msgid "Pick a unit first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:223
+#: src/ui/PlayPanel.tsx:224
 msgid "On which unit…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:268
+#: src/ui/PlayPanel.tsx:269
 #: src/ui/TeachRule.tsx:125
 msgid "Cost"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:284
+#: src/ui/PlayPanel.tsx:285
 msgid "Not enough {resource}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:286
+#: src/ui/PlayPanel.tsx:287
 msgid "Name it first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:299
+#: src/ui/PlayPanel.tsx:300
 msgid "Dice to spend"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:302
+#: src/ui/PlayPanel.tsx:303
 msgid "Spends these {resource}:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:303
+#: src/ui/PlayPanel.tsx:304
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:369
+#: src/ui/PlayPanel.tsx:370
 msgid "{unit} and {n} other unit"
 msgid_plural "{unit} and {n} other units"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:372
+#: src/ui/PlayPanel.tsx:373
 msgid " and "
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:385
+#: src/ui/PlayPanel.tsx:386
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:392
+#: src/ui/PlayPanel.tsx:393
 msgid "Apply"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:435
+#: src/ui/PlayPanel.tsx:436
 msgid "Teach the app what this stratagem does"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:435
+#: src/ui/PlayPanel.tsx:436
 msgid "A stratagem your list didn't bring"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:438
+#: src/ui/PlayPanel.tsx:439
 #: src/ui/TeachRule.tsx:98
 msgid "Teach a stratagem"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:469
+#: src/ui/PlayPanel.tsx:470
 msgid "{n} army rule"
 msgid_plural "{n} army rules"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:477
+#: src/ui/PlayPanel.tsx:478
 msgid "The app plays it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:479
+#: src/ui/PlayPanel.tsx:480
 msgid "A reminder; you play it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:64
+#: src/ui/PlayPanel.tsx:65
 msgid "{phase}: {cards}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:65
+#: src/ui/PlayPanel.tsx:66
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:66
+#: src/ui/PlayPanel.tsx:67
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:75
+#: src/ui/PlayPanel.tsx:76
 msgid "{phase}: {cards} and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:76
+#: src/ui/PlayPanel.tsx:77
 msgid "{phase}: stratagems and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:87
+#: src/ui/PlayPanel.tsx:88
 msgid "No abilities flagged for this phase."
 msgstr ""
 
@@ -9213,19 +9213,19 @@ msgstr ""
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:316
+#: src/ui/WhatNow.tsx:327
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:355
+#: src/ui/WhatNow.tsx:368
 msgid "Tap"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:355
+#: src/ui/WhatNow.tsx:368
 msgid "Press"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:355
+#: src/ui/WhatNow.tsx:368
 msgid "for all the controls."
 msgstr ""
 

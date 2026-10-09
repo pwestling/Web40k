@@ -1,3 +1,4 @@
+import { systemOf } from "../core/content/turn";
 import { useMemo, useState } from "react";
 import { VIEWER } from "../viewer/flag";
 import { stateAt, type GameRecord } from "../core";
@@ -259,7 +260,11 @@ export function SharePanel() {
       record,
       start,
       last,
-      playing ? [...rounds, { seq: last, round: final.turn.round }] : rounds,
+      // Only the battle's own rounds get a title card: none for the "Round 6" after the last (UX 69).
+      (playing ? [...rounds, { seq: last, round: final.turn.round }] : rounds).filter((r) => {
+        const most = final ? systemOf(final).turn.rounds : undefined;
+        return typeof most !== "number" || r.round <= most;
+      }),
     );
   const length = (s: Stretch) =>
     s === "reel"

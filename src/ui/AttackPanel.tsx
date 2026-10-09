@@ -124,7 +124,7 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
         >
           {draft.picking
             ? touch()
-              ? t("Tap a target on the table…")
+              ? t("Tap an enemy unit, or pick one from the list")
               : t("Click a target on the table…")
             : t("Pick on table")}
         </button>

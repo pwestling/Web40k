@@ -169,7 +169,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
         >
           {draft.picking
             ? touch()
-              ? t("Tap a target on the table…")
+              ? t("Tap an enemy unit, or pick one from the list")
               : t("Click a target on the table…")
             : t("Pick on table")}
         </button>
