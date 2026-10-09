@@ -7,7 +7,7 @@ import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@rea
 import { ShowcaseCamera } from "./ShowcaseCamera";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plane, Raycaster, Vector2, Vector3, type Object3D } from "three";
+import { Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import {
   baseSizeInches,
   modelHeight,
@@ -49,7 +49,9 @@ import { Lanterns, type LanternItem } from "./Lanterns";
 import { TalkLayer } from "./TalkLayer";
 import { carry, pickUp, setDown } from "./feel";
 import { FeelLayer } from "./FeelLayer";
-import { useTalk, type Said } from "../talk/talk";
+import { MAX_LINE, useTalk, type Said } from "../talk/talk";
+import { HOLD_MS, SLOP_PX, useTouch } from "./touchState";
+import { turnByTwist } from "./touchTurn";
 import { talkOrNote } from "../replay/notes";
 import { NotesLayer } from "./NotesLayer";
 import { BlockArcs, BlockMoveLabel } from "./Regiment";
@@ -278,9 +280,13 @@ type Drag = {
       unitId?: string;
     }
   | { kind: "terrain" | "objective"; id: string; start: Vec2 }
-  | { kind: "ruler"; fromModel?: string }
-  /** Table talk: an arrow or an area being drawn. */
+  /** `held`: started by a long press (#60); let go without moving, it opens the press's menu instead. */
+  | { kind: "ruler"; fromModel?: string; held?: boolean; client?: Vec2 }
+  /** Table talk: an arrow or an area being drawn; a freehand line with a stylus (#60). */
   | { kind: "talk"; tool: "arrow" | "area" }
+  | { kind: "stroke"; points: Vec2[] }
+  /** Select several (#60): a box drawn with a finger, from this client point. */
+  | { kind: "box"; from: Vec2 }
 );
 
 function Scene() {
@@ -315,6 +321,17 @@ function Scene() {
     dragRef.current = drag;
   });
   const { camera, gl, size } = useThree();
+  const controls = useThree((s) => s.controls) as {
+    enabled?: boolean;
+    getAzimuthalAngle?: () => number;
+    setAzimuthalAngle?: (a: number) => void;
+    update?: () => void;
+  } | null;
+  // Fingers on the table now, and a twist on a unit in progress (#60).
+  const touchCount = useRef(0);
+  // The model a finger came down on, if any: a long press there measures from it, or opens its unit's menu.
+  const pressedModel = useRef<string | null>(null);
+  const twisting = useTouch((s) => s.twist !== null);
   const { width, depth } = game.table;
   const cameraReset = useStore((s) => s.cameraReset);
   const live = scrub === null;
@@ -324,6 +341,26 @@ function Scene() {
   useEffect(() => {
     if (dragging) setUi({ hoverUnit: null });
   }, [dragging, setUi]);
+
+  // The pointer's last press, move and lift, always: a drag's listeners catch up from them.
+  const recent = useRef<{ down: number; move: PointerEvent | null; up: PointerEvent | null }>({
+    down: 0,
+    move: null,
+    up: null,
+  });
+  useEffect(() => {
+    const down = (e: PointerEvent) => (recent.current = { down: e.timeStamp, move: null, up: null });
+    const move = (e: PointerEvent) => (recent.current.move = e);
+    const up = (e: PointerEvent) => (recent.current.up = e);
+    window.addEventListener("pointerdown", down, { capture: true });
+    window.addEventListener("pointermove", move, { capture: true });
+    window.addEventListener("pointerup", up, { capture: true });
+    return () => {
+      window.removeEventListener("pointerdown", down, { capture: true });
+      window.removeEventListener("pointermove", move, { capture: true });
+      window.removeEventListener("pointerup", up, { capture: true });
+    };
+  }, []);
 
   // Track the pointer on a horizontal plane while dragging, wherever it is.
   useEffect(() => {
@@ -375,6 +412,14 @@ function Scene() {
         }
       }
       const moved = d.moved || Math.hypot(to.x - d.grab.x, to.y - d.grab.y) > 0.15;
+      if (d.kind === "box") {
+        useTouch.setState({ box: { x0: d.from.x, y0: d.from.y, x1: e.clientX, y1: e.clientY } });
+      }
+      if (d.kind === "stroke") {
+        const last = d.points.at(-1)!;
+        if (Math.hypot(to.x - last.x, to.y - last.y) > 0.25 && d.points.length < MAX_LINE)
+          return setDrag((dragRef.current = { ...d, to, moved, points: [...d.points, to] }));
+      }
       if (d.kind === "models") {
         // Picked up once it really moves (a click only selects); then it leans into the carry.
         if (moved && !d.moved) pickUp(d.ids);
@@ -384,12 +429,14 @@ function Scene() {
           carry(((to.x - last.x) * 1000) / (t - last.t), ((to.y - last.y) * 1000) / (t - last.t));
         hand.current = { t, x: to.x, y: to.y };
       }
-      setDrag({ ...d, to, moved });
+      // Kept at once, not at the next render: a drop straight after reads it (catch-up below).
+      setDrag((dragRef.current = { ...d, to, moved }));
     };
     const drop = () => {
       const d = dragRef.current;
       setDrag(null);
       hand.current = null;
+      if (d?.kind === "box") pickInBox(camera, gl.domElement, canControl, select);
       if (!d || !d.moved) return;
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
@@ -418,7 +465,11 @@ function Scene() {
           { dull: limit !== null && far > limit + 0.05 },
         );
       }
-      if (d.kind === "talk") {
+      if (d.kind === "stroke") {
+        if (d.points.length > 1) talkOrNote({ kind: "line", points: d.points });
+      } else if (d.kind === "box") {
+        // Picked above.
+      } else if (d.kind === "talk") {
         talkOrNote(
           d.tool === "arrow"
             ? { kind: "arrow", from: d.grab, to: d.to }
@@ -472,11 +523,194 @@ function Scene() {
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", drop);
+    // On a slow device the pointer can move, or even lift, before these listeners are in (#60: a drag on a
+    // tablet moved nothing): catch up with where it went since it came down.
+    const r = recent.current;
+    if (r.move && r.move.timeStamp > r.down) move(r.move);
+    if (r.up && r.up.timeStamp > r.down) drop();
     return () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", drop);
     };
   }, [drag !== null, camera, gl, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Two fingers twisting (#60): on the selected unit a first finger came down on, it turns the unit
+  // (a wheel for a block), set down when a finger lifts; anywhere else it orbits the camera.
+  useEffect(() => {
+    const el = gl.domElement;
+    const pts = new Map<number, Vec2>();
+    let twist: { unit: boolean; a0: number; az0: number } | null = null;
+    const two = () => [...pts.values()].slice(0, 2) as [Vec2, Vec2];
+    // A finger held still, anywhere on the table (#60): a ruler from there if it then moves, else its menu.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // The press being held, kept here: React may not have drawn its ruler by the time the finger lifts.
+    let held: {
+      id: number;
+      client: Vec2;
+      at: Vec2;
+      since: number;
+      prior: Drag | null;
+      unitId?: string;
+    } | null = null;
+    const hold = (e: PointerEvent) => {
+      clearTimeout(timer);
+      held = null;
+      pressedModel.current = null;
+      const start = { x: e.clientX, y: e.clientY };
+      // Frames drawn since the press: input waiting behind a slow frame is handled before the next one starts.
+      let frames = 0;
+      const count = () => {
+        frames++;
+        if (frames < 3) requestAnimationFrame(count);
+      };
+      requestAnimationFrame(count);
+      const fire = () => {
+        // Not a press until the page has caught up with the finger: on a slow device its moves may still be queued.
+        if (frames < 3) return void requestAnimationFrame(fire);
+        const now = pts.get(e.pointerId);
+        const d = dragRef.current;
+        // Lifted, moved, a second finger (a pinch or twist), or a box being drawn: not a press.
+        if (!now || pts.size !== 1 || Math.hypot(now.x - start.x, now.y - start.y) > SLOP_PX) return;
+        if (useTouch.getState().twist || (d && (d.moved || d.kind === "box" || d.kind === "stroke"))) return;
+        const s = useStore.getState();
+        if (s.scrub !== null && !s.review) return;
+        const rect = el.getBoundingClientRect();
+        const ray = new Raycaster();
+        ray.setFromCamera(
+          new Vector2(
+            ((start.x - rect.left) / rect.width) * 2 - 1,
+            -((start.y - rect.top) / rect.height) * 2 + 1,
+          ),
+          camera,
+        );
+        const hit = new Vector3();
+        if (!ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), hit)) return;
+        const model = pressedModel.current ? s.game.models[pressedModel.current] : undefined;
+        const at = model ? model.position : { x: hit.x, y: hit.z };
+        navigator.vibrate?.(12);
+        held = {
+          id: e.pointerId,
+          client: start,
+          at,
+          since: e.timeStamp,
+          prior: d,
+          ...(model?.unitId ? { unitId: model.unitId } : {}),
+        };
+        setDrag(
+          (dragRef.current = {
+            kind: "ruler",
+            grab: at,
+            to: at,
+            moved: false,
+            planeZ: 0,
+            held: true,
+            client: start,
+            ...(model ? { fromModel: model.id } : {}),
+          }),
+        );
+      };
+      timer = setTimeout(fire, HOLD_MS);
+    };
+    const angle = () => {
+      const [a, b] = two();
+      return Math.atan2(b.y - a.y, b.x - a.x);
+    };
+    const centre = () => {
+      const [a, b] = two();
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
+    const down = (e: PointerEvent) => {
+      // A stylus draws and moves things; it never swings the camera (that's for fingers).
+      if (e.pointerType === "pen" && controls) controls.enabled = false;
+      if (e.pointerType !== "touch") return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      touchCount.current = pts.size;
+      if (pts.size === 1) hold(e);
+      if (pts.size !== 2) {
+        twist = null;
+        return;
+      }
+      // A second finger: a pinch or twist, never a drag of what the first finger came down on.
+      if (dragRef.current) setDrag((dragRef.current = null));
+      useTouch.setState({ box: null });
+      // The controls, off for that drag, take this finger now (this runs before they see it): a pinch, not nothing.
+      if (controls) controls.enabled = true;
+      const s = useStore.getState();
+      const unitId = useTouch.getState().downOn;
+      const unit = unitId ? s.game.units[unitId] : undefined;
+      if (unit && unitId === s.selected && s.scrub === null && s.view !== "eye" && canControl(unit.owner)) {
+        twist = { unit: true, a0: angle(), az0: 0 };
+        if (controls) controls.enabled = false;
+        useTouch.setState({ twist: { unitId: unit.id, angle: 0, ...centre() } });
+      } else if (s.view !== "top" && controls?.getAzimuthalAngle)
+        twist = { unit: false, a0: angle(), az0: controls.getAzimuthalAngle() };
+    };
+    const move = (e: PointerEvent) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      // A busy page can run the hold timer before the moves that came first: the finger was dragging, not holding.
+      const h = held;
+      if (
+        h?.id === e.pointerId &&
+        e.timeStamp - h.since < HOLD_MS &&
+        Math.hypot(e.clientX - h.client.x, e.clientY - h.client.y) > SLOP_PX
+      ) {
+        held = null;
+        setDrag((dragRef.current = h.prior));
+      }
+      if (!twist || pts.size !== 2) return;
+      let da = angle() - twist.a0;
+      da = Math.atan2(Math.sin(da), Math.cos(da));
+      if (twist.unit) {
+        const tw = useTouch.getState().twist;
+        if (tw) useTouch.setState({ twist: { ...tw, angle: da, ...centre() } });
+      } else {
+        controls?.setAzimuthalAngle?.(twist.az0 + da);
+        controls?.update?.();
+      }
+    };
+    const up = (e: PointerEvent) => {
+      if (!pts.delete(e.pointerId)) return;
+      if (!pts.size) {
+        clearTimeout(timer);
+        // A long press let go where it was: its menu, on the unit it was on, if any.
+        const h = held;
+        held = null;
+        // A busy page can run the timer before a quick tap's lift arrives: the lift's own time says it was a tap.
+        if (h && e.timeStamp - h.since < HOLD_MS) {
+          if (dragRef.current?.kind === "ruler" && dragRef.current.held) setDrag((dragRef.current = null));
+        } else if (
+          h &&
+          h.id === e.pointerId &&
+          Math.hypot(e.clientX - h.client.x, e.clientY - h.client.y) <= SLOP_PX
+        ) {
+          setDrag(null);
+          useTouch.setState({
+            menu: { x: h.client.x, y: h.client.y, at: h.at, ...(h.unitId ? { unitId: h.unitId } : {}) },
+          });
+        }
+      }
+      touchCount.current = pts.size;
+      if (pts.size >= 2) return;
+      const tw = useTouch.getState().twist;
+      if (twist?.unit && tw) {
+        useTouch.setState({ twist: null });
+        turnByTwist(tw.unitId, tw.angle);
+      }
+      twist = null;
+    };
+    el.addEventListener("pointerdown", down, { capture: true });
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("pointerdown", down, { capture: true });
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [gl, controls, camera]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Terrain and objectives as shown: a dragged piece follows the pointer.
   const terrain = useMemo(() => {
@@ -566,7 +800,11 @@ function Scene() {
       ...(fromModel ? { fromModel } : {}),
     });
 
-  const onModelDown = (m: Model, shift: boolean) => {
+  const onModelDown = (m: Model, shift: boolean, e?: PointerEvent) => {
+    if (e?.pointerType === "touch") {
+      useTouch.setState({ downOn: m.unitId ?? null, menu: null });
+      pressedModel.current = m.id;
+    }
     if (tool) {
       talkAt(m.position, m.unitId);
       return;
@@ -580,10 +818,24 @@ function Scene() {
         setDraft({ ...draft, targetId: m.unitId, picking: false });
       return;
     }
-    if (m.unitId) select(m.unitId);
+    const { picked, oneModel } = useTouch.getState();
+    const group = m.unitId && picked.length > 1 && picked.includes(m.unitId);
+    if (m.unitId && !group) {
+      select(m.unitId);
+      if (picked.length) useTouch.setState({ picked: [] });
+    }
     if (!live || !canControl(m.owner) || view === "eye") return;
     const unit = m.unitId ? game.units[m.unitId] : undefined;
-    const ids = shift || !unit ? [m.id] : aliveModels(game, unit).map((x) => x.id);
+    // Picked with Select several: all of them move together (#60); One model moves just this one.
+    const ids = group
+      ? picked.flatMap((id) =>
+          game.units[id] && canControl(game.units[id]!.owner)
+            ? aliveModels(game, game.units[id]!).map((x) => x.id)
+            : [],
+        )
+      : shift || oneModel || !unit
+        ? [m.id]
+        : aliveModels(game, unit).map((x) => x.id);
     const starts: Record<string, Vec2> = {};
     const startZ: Record<string, number> = {};
     for (const id of ids) {
@@ -599,7 +851,7 @@ function Scene() {
       to: m.position,
       moved: false,
       planeZ: m.z ?? 0,
-      unitId: unit?.id,
+      ...(group ? {} : { unitId: unit?.id }),
     });
   };
 
@@ -852,7 +1104,9 @@ function Scene() {
       {/* Remount on view change so the controls bind to the new camera. */}
       <OrbitControls
         key={`${view}-${eye?.modelId ?? ""}-${cameraReset}-${width}x${depth}`}
-        enabled={!drag && !templateDrag}
+        enabled={!drag && !templateDrag && !twisting}
+        // Fingers (#60): one pans the table, two pan and pinch (a twist orbits: TouchTwist).
+        touches={{ ONE: view === "eye" ? TOUCH.ROTATE : TOUCH.PAN, TWO: TOUCH.DOLLY_PAN }}
         enableRotate={view !== "top"}
         // Never lower than about 25 degrees above the table, so the camera can't end up level with it.
         maxPolarAngle={view === "eye" ? Math.PI : (65 * Math.PI) / 180}
@@ -885,9 +1139,28 @@ function Scene() {
             talkAt({ x: e.point.x, y: e.point.z });
             return;
           }
-          if (!measuring) return;
+          const at = { x: e.point.x, y: e.point.z };
+          if (!measuring) {
+            // A stylus draws on the table (#60); a finger draws a box with Select several, else pans.
+            if (e.nativeEvent.pointerType === "pen" && view !== "eye") {
+              e.stopPropagation();
+              setDrag({ kind: "stroke", points: [at], grab: at, to: at, moved: false, planeZ: 0 });
+              return;
+            }
+            if (e.nativeEvent.pointerType === "touch") {
+              useTouch.setState({ menu: null, downOn: null });
+              if (useTouch.getState().boxMode) {
+                e.stopPropagation();
+                const from = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };
+                useTouch.setState({ box: { x0: from.x, y0: from.y, x1: from.x, y1: from.y } });
+                setDrag({ kind: "box", from, grab: at, to: at, moved: false, planeZ: 0 });
+                return;
+              }
+            }
+            return;
+          }
           e.stopPropagation();
-          startRuler({ x: e.point.x, y: e.point.z });
+          startRuler(at);
         }}
         onClick={(e) => {
           if (tool || e.altKey || measuring || draft?.picking || e.delta >= 3) return;
@@ -984,7 +1257,7 @@ function Scene() {
       <ModelInstances
         draws={modelDraws}
         hovered={drag ? null : hoverModel}
-        onDown={(model, shift) => onModelDown(model, shift)}
+        onDown={(model, shift, e) => onModelDown(model, shift, e)}
         onHover={(model) => {
           // No hover tooltips mid-drag: they would sit on the drag's own label.
           if (dragRef.current) return;
@@ -1023,7 +1296,8 @@ function Scene() {
           style={{ borderColor: l.color }}
         >
           {l.name && (
-            <div>
+            // Which unit it names, for browser tests of touch play (#60) and anything reading the page.
+            <div data-unit={l.unitId}>
               <span className="side-shape" style={{ color: l.color }} aria-hidden="true">
                 {l.shape}
               </span>{" "}
@@ -1173,11 +1447,46 @@ function Scene() {
 }
 
 /** The arrow or area being drawn, in this player's colour. */
+/** Select several (#60): the units of yours whose middle is inside the box drawn. */
+function pickInBox(
+  camera: Camera,
+  el: HTMLElement,
+  canControl: (owner: string) => boolean,
+  select: (id: string | null) => void,
+) {
+  const box = useTouch.getState().box;
+  useTouch.setState({ box: null });
+  if (!box) return;
+  const rect = el.getBoundingClientRect();
+  const [x0, x1] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)];
+  const [y0, y1] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)];
+  const state = useStore.getState().game;
+  const v = new Vector3();
+  const picked = Object.values(state.units)
+    .filter((u) => canControl(u.owner))
+    .filter((u) => {
+      const ms = aliveModels(state, u);
+      if (!ms.length) return false;
+      v.set(
+        ms.reduce((a, m) => a + m.position.x, 0) / ms.length,
+        0,
+        ms.reduce((a, m) => a + m.position.y, 0) / ms.length,
+      ).project(camera);
+      const sx = rect.left + ((v.x + 1) / 2) * rect.width;
+      const sy = rect.top + ((1 - v.y) / 2) * rect.height;
+      return sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1;
+    })
+    .map((u) => u.id);
+  useTouch.setState({ picked });
+  select(picked[0] ?? null);
+}
+
 function talkPreview(drag: Drag | null, game: ReturnType<typeof useGame>): Said | null {
-  if (drag?.kind !== "talk" || !drag.moved) return null;
+  if ((drag?.kind !== "talk" && drag?.kind !== "stroke") || !drag.moved) return null;
   const self = useStore.getState().session?.selfId ?? "";
   const color = game.players[self]?.color ?? "#a1a1aa";
   const base = { id: "draft", by: self, name: "", color, sentAt: Date.now() };
+  if (drag.kind === "stroke") return { ...base, kind: "line", points: drag.points };
   return drag.tool === "arrow"
     ? { ...base, kind: "arrow", from: drag.grab, to: drag.to }
     : {

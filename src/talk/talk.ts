@@ -20,9 +20,12 @@ export const LIFETIME: Record<TalkItem["kind"], number> = {
   react: 3000,
   arrow: 45000,
   area: 45000,
+  line: 45000,
   chat: 15000,
 };
 export const MAX_CHAT = 280;
+/** The most points a freehand line keeps. */
+export const MAX_LINE = 200;
 
 export type Said = TalkItem & { by: string; name: string; color: string; sentAt: number };
 
@@ -103,6 +106,10 @@ export function cleanItem(item: unknown): TalkItem | null {
       return point(i.at) && typeof i.radius === "number" && i.radius > 0 && i.radius < 200
         ? { id: i.id, kind: "area", at: i.at, radius: i.radius }
         : null;
+    case "line": {
+      const points = Array.isArray(i.points) ? i.points.slice(0, MAX_LINE) : [];
+      return points.length >= 2 && points.every(point) ? { id: i.id, kind: "line", points } : null;
+    }
     case "chat": {
       const text = typeof i.text === "string" ? i.text.trim().slice(0, MAX_CHAT) : "";
       return text ? { id: i.id, kind: "chat", text } : null;
@@ -188,7 +195,9 @@ export function hear(item: TalkItem, by: string, now = Date.now(), name?: string
 /** Clear `by`'s arrows and areas. */
 export function clearDrawings(by: string): void {
   useTalk.setState((s) => ({
-    items: s.items.filter((x) => x.by !== by || (x.kind !== "arrow" && x.kind !== "area")),
+    items: s.items.filter(
+      (x) => x.by !== by || (x.kind !== "arrow" && x.kind !== "area" && x.kind !== "line"),
+    ),
   }));
 }
 

@@ -159,7 +159,8 @@ export function saveDraft(by: string, color: string): void {
  */
 export function talkOrNote(item: Parameters<typeof say>[0]): void {
   const draft = useNotes.getState().draft;
-  if (!draft || item.kind === "chat" || item.kind === "react") return say(item);
+  // A freehand line is table talk only: a note keeps arrows, areas and pins.
+  if (!draft || item.kind === "chat" || item.kind === "react" || item.kind === "line") return say(item);
   const mark: NoteMark =
     item.kind === "arrow"
       ? { kind: "arrow", from: item.from, to: item.to }

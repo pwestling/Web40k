@@ -12,6 +12,13 @@ export function TableOnScreen() {
   const { width, depth } = useGame().table;
   const v = new Vector3();
   useFrame(() => {
+    // Development: where a point on the table is on screen, for browser tests of touch play (#60).
+    if (import.meta.env.DEV)
+      (window as { openBattleScreenOf?: unknown }).openBattleScreenOf = (x: number, y: number, z = 0) => {
+        const p = new Vector3(x, z, y).project(camera);
+        const r = document.querySelector("canvas")!.getBoundingClientRect();
+        return { x: r.left + ((p.x + 1) / 2) * r.width, y: r.top + ((1 - p.y) / 2) * r.height };
+      };
     if (!shot.capturing) return;
     let x0 = Infinity;
     let y0 = Infinity;

@@ -17,7 +17,7 @@ export function TalkLayer({ game, preview }: { game: GameState; preview: Said | 
   const items = useTalk((s) => s.items);
   // Drawings fade over their last seconds: a coarse clock is enough for that.
   const [now, setNow] = useState(() => Date.now());
-  const drawings = items.some((i) => i.kind === "arrow" || i.kind === "area");
+  const drawings = items.some((i) => i.kind === "arrow" || i.kind === "area" || i.kind === "line");
   useEffect(() => {
     if (!drawings) return;
     const timer = setInterval(() => setNow(Date.now()), 250);
@@ -33,11 +33,14 @@ export function TalkLayer({ game, preview }: { game: GameState; preview: Said | 
           <Arrow key={`${i.by}:${i.id}`} from={i.from} to={i.to} color={i.color} opacity={opacity(i)} />
         ) : i.kind === "area" ? (
           <Area key={`${i.by}:${i.id}`} at={i.at} radius={i.radius} color={i.color} opacity={opacity(i)} />
+        ) : i.kind === "line" ? (
+          <Stroke key={`${i.by}:${i.id}`} points={i.points} color={i.color} opacity={opacity(i)} />
         ) : null,
       )}
       {preview?.kind === "arrow" && (
         <Arrow from={preview.from} to={preview.to} color={preview.color} opacity={0.8} />
       )}
+      {preview?.kind === "line" && <Stroke points={preview.points} color={preview.color} opacity={0.8} />}
       {preview?.kind === "area" && (
         <Area at={preview.at} radius={preview.radius} color={preview.color} opacity={0.8} />
       )}
@@ -158,5 +161,21 @@ export function Area({
         renderOrder={10}
       />
     </>
+  );
+}
+
+/** A freehand line (a stylus, #60). */
+function Stroke({ points, color, opacity }: { points: Vec2[]; color: string; opacity: number }) {
+  if (points.length < 2) return null;
+  return (
+    <Line
+      points={points.map((p): [number, number, number] => [p.x, Y, p.y])}
+      color={color}
+      lineWidth={4}
+      transparent
+      opacity={opacity}
+      depthTest={false}
+      renderOrder={10}
+    />
   );
 }

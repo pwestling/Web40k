@@ -17,6 +17,7 @@ import { DiceTray } from "./ui/DiceTray";
 import { useHold } from "./ui/hold";
 import { useHelp } from "./ui/help";
 import { Hud } from "./ui/Hud";
+import { TouchLayer } from "./ui/TouchLayer";
 import { KeysSheet } from "./ui/Keys";
 import { WhatNow } from "./ui/WhatNow";
 import { Coach } from "./ui/Coach";
@@ -284,6 +285,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <DiceTray />
           {/* A replay page has no one to ping or react to (UX 344, PX share 7). */}
           {!editing && !VIEWER && <TalkPanel />}
+          {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
           <Moments />
           <Ambience />

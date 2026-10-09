@@ -43,7 +43,7 @@ interface Handlers {
 interface Props {
   draws: ModelDraw[];
   hovered: string | null;
-  onDown(model: Model, shift: boolean): void;
+  onDown(model: Model, shift: boolean, e: PointerEvent): void;
   onHover(model: Model | null): void;
 }
 
@@ -167,7 +167,7 @@ export function ModelInstances({ draws, hovered, onDown, onHover }: Props) {
       const d = e.instanceId === undefined ? undefined : list[e.instanceId];
       if (!d || e.button !== 0) return;
       e.stopPropagation();
-      onDown(d.model, e.shiftKey);
+      onDown(d.model, e.shiftKey, e.nativeEvent);
     },
     onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
     onPointerOver: (e: ThreeEvent<PointerEvent>) => {

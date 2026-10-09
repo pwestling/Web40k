@@ -75,6 +75,8 @@ export type TalkItem = { id: string } & (
   | { kind: "ping"; at: { x: number; y: number }; unitId?: string }
   | { kind: "arrow"; from: { x: number; y: number }; to: { x: number; y: number } }
   | { kind: "area"; at: { x: number; y: number }; radius: number }
+  /** A freehand line, drawn with a stylus (#60). */
+  | { kind: "line"; points: { x: number; y: number }[] }
   | { kind: "chat"; text: string }
   | { kind: "react"; emoji: string }
 );

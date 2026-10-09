@@ -1,3 +1,4 @@
+import { useTouch } from "./render/touchState";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -44,7 +45,12 @@ void Promise.all([loadSiteConfig(), loadLanguage()]).then(() =>
 
 // Expose the store in development for debugging and browser tests.
 if (import.meta.env.DEV) {
-  Object.assign(window, { openBattle: useStore, openBattleCore: core, openBattleAssets: useAssets });
+  Object.assign(window, {
+    openBattle: useStore,
+    openBattleCore: core,
+    openBattleAssets: useAssets,
+    openBattleTouch: useTouch,
+  });
   void import("./dev/perf").then(({ perf }) => Object.assign(window, { openBattlePerf: perf }));
   void import("./dev/soak").then(({ soakBrowser }) => Object.assign(window, { openBattleSoak: soakBrowser }));
 }

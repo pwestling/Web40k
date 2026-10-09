@@ -339,7 +339,7 @@ export function WhatNow() {
         </ul>
       )}
       <p className="muted small">
-        {t("Press")} <kbd>?</kbd> {t("for all the controls.")}
+        {touch() ? t("Tap") : t("Press")} <kbd>?</kbd> {t("for all the controls.")}
       </p>
     </div>
   );

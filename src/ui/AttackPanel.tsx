@@ -122,7 +122,11 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           className={draft.picking ? "on" : ""}
           onClick={() => setDraft({ ...draft, picking: !draft.picking })}
         >
-          {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
+          {draft.picking
+            ? touch()
+              ? t("Tap a target on the table…")
+              : t("Click a target on the table…")
+            : t("Pick on table")}
         </button>
       </div>
       {draft.all && draft.targetId && (

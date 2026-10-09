@@ -5000,3 +5000,152 @@ button.teach-button:hover {
   width: 100%;
   text-align: left;
 }
+
+/* Touch play (#60): the Select several box, a twist's turn, a long press's menu, and the touch toggles. */
+.touch-box {
+  position: fixed;
+  z-index: 30;
+  border: 2px dashed #93c5fd;
+  background: rgb(147 197 253 / 12%);
+  pointer-events: none;
+}
+.touch-twist {
+  position: fixed;
+  z-index: 31;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 88%);
+  border: 1px solid #93c5fd;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.touch-menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.touch-menu {
+  position: fixed;
+  z-index: 41;
+  width: 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  background: #171a21;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+}
+.touch-menu button {
+  min-height: 44px;
+  text-align: left;
+}
+.touch-menu .row button {
+  flex: 1;
+}
+.touch-menu p {
+  margin: 0;
+}
+.touch-tools {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 84px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: rgb(17 19 24 / 92%);
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+}
+.touch-tools button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Tablets (#60): every control at least 44 px for a finger, from 641 px up (phones have their own sheet). */
+@media (pointer: coarse) and (min-width: 641px) {
+  /* The scrub bar's moment marks: a finger-sized target around each glyph. */
+  .replaybar .highlight {
+    min-width: 44px;
+  }
+  button,
+  select,
+  summary,
+  label.file,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]) {
+    min-height: 44px;
+  }
+  button {
+    min-width: 44px;
+  }
+  button,
+  label.file {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  /* Still a list item, so it keeps its ▶. */
+  summary {
+    min-width: 44px;
+    padding-block: 10px;
+    box-sizing: border-box;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+  }
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input[type="range"] {
+    height: 44px;
+  }
+  .topbar .counter button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .topbar > * {
+    padding: 2px 6px;
+  }
+  .unitcard,
+  .attack {
+    width: min(400px, 46vw);
+  }
+  /* The reactions wrap rather than run under the replay bar, and wait behind 💬 until the chat opens. */
+  .panel.talk .row {
+    flex-wrap: wrap;
+  }
+  .panel.talk.collapsed .talk-reactions-row {
+    display: none;
+  }
+}
+/* A tablet held upright, or a small one: the replay bar takes the bottom row, the talk dock sits above it. */
+@media (pointer: coarse) and (min-width: 641px) and (max-width: 1100px) {
+  .replaybar {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+    min-width: 0;
+  }
+  .talk-dock {
+    bottom: 76px;
+  }
+  .touch-tools {
+    bottom: 140px;
+  }
+}

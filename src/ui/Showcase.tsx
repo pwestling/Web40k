@@ -3,6 +3,7 @@ import { delaying } from "../broadcast/broadcast";
 import { useReel } from "../broadcast/reel";
 import { modelHeight, sideName, sidePlayers, sides, type GameState } from "../core";
 import { owed, quiet, useShowcase, type Shot } from "../render/showcase";
+import { touch } from "./touch";
 import { t } from "../i18n";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
@@ -174,8 +175,9 @@ export function Showcase() {
     later(at + ROUND_MS, stop);
   }, [turn.round, scrub, initial]);
 
-  // Anyone can skip it: a click or Esc, on this screen only.
-  const on = card !== null || round;
+  // Anyone can skip it: a click or Esc, on this screen only; between cards too (a tap there did nothing, #60).
+  const showing = useShowcase((s) => s.on);
+  const on = card !== null || round || showing;
   useEffect(() => {
     if (!on) return;
     const key = (e: KeyboardEvent) => e.key === "Escape" && stop();
@@ -232,7 +234,7 @@ export function Showcase() {
         {card.title}
       </div>
       <div className="line">{card.line}</div>
-      <div className="skip">{t("Click or Esc to skip")}</div>
+      <div className="skip">{touch() ? t("Tap to skip") : t("Click or Esc to skip")}</div>
     </div>
   );
 }

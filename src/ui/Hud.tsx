@@ -25,6 +25,7 @@ import { reviewThisGame } from "../replay/review";
 import { useGame } from "./hooks";
 import { useCoach } from "../teach/store";
 import { narrow } from "./narrow";
+import { touch } from "./touch";
 
 /** The left panel: room, players, army import, dice, undo and the game log. */
 export function Hud() {
@@ -55,7 +56,8 @@ export function Hud() {
   // On a phone the menu folds away once the battle starts, so the table shows (UX 17).
   const started = liveGame.turn.round > 0;
   const [fold, setFold] = useState<{ started: boolean; collapsed: boolean } | null>(null);
-  const collapsed = fold?.started === started ? fold.collapsed : started && narrow();
+  // A tablet too (#60): its fingers need the table more than the menu.
+  const collapsed = fold?.started === started ? fold.collapsed : started && (narrow() || touch());
   const setCollapsed = (c: boolean) => setFold({ started, collapsed: c });
   const [dice, setDice] = useState(false);
   // Starting the battle (or any later phase change) locks the terrain again.

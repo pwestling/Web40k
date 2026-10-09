@@ -13,6 +13,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
+import { touch } from "./touch.mjs";
 
 const PORT = 4180;
 const RELAY = 8798;
@@ -87,6 +88,111 @@ function eventsIn(json) {
   }
   return null;
 }
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** An iPad (#60): touch only, so the app sees fingers, not a mouse. */
+const IPAD = { viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true };
+
+/** On a tablet, by touch: past the showcase, then the top-down view from the table's long-press menu. */
+async function touchTable(page, t) {
+  await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 30000 });
+  for (let i = 0; i < 60 && (await page.evaluate(() => document.body.classList.contains("showcase"))); i++) {
+    await t.tap(600, 420);
+    await sleep(400);
+  }
+  await sleep(1500);
+  await t.press(600, 450, 700);
+  await page.locator(".touch-menu").waitFor({ timeout: 5000 });
+  await page.locator(".touch-menu").getByRole("menuitem", { name: "Top-down view" }).tap();
+  await sleep(2000);
+}
+
+/** A unit of the side to play, picked by tapping around its name plate; where to put a finger on it. */
+async function tapOwnUnit(page, t) {
+  const who = (await page.locator(".topbar .turn strong").textContent()).split(" · ").at(-1).trim();
+  const plates = await page.locator(".plate [data-unit]").evaluateAll((els) =>
+    els.map((e) => {
+      const r = e.getBoundingClientRect();
+      return { id: e.dataset.unit, x: r.x + r.width / 2, y: r.y + r.height / 2, name: e.textContent.trim() };
+    }),
+  );
+  for (const pl of plates)
+    for (const [dx, dy] of [
+      [0, 0],
+      [0, 10],
+      [0, -10],
+      [10, 0],
+      [-10, 0],
+      [16, 0],
+      [-16, 0],
+      [0, 18],
+    ]) {
+      await t.tap(pl.x + dx, pl.y + dy);
+      await sleep(400);
+      // A slow page can read a quick tap as a long press: put its menu away.
+      if (await page.locator(".touch-menu").count()) await page.locator(".touch-menu-scrim").tap();
+      const card = await page
+        .locator(".unitcard")
+        .first()
+        .textContent({ timeout: 500 })
+        .catch(() => "");
+      if (card.includes(pl.name.replace(/^[^A-Za-z]+/, "").slice(0, 12)) && card.includes(who)) {
+        // Selecting can slide the view over for the card: follow the plate.
+        await sleep(1500);
+        const now = await page.locator(`.plate [data-unit="${pl.id}"]`).boundingBox();
+        return { id: pl.id, x: now.x + now.width / 2 + dx, y: now.y + now.height / 2 + dy };
+      }
+    }
+  throw new Error(`no unit of ${who} could be picked by tapping`);
+}
+
+/**
+ * Drag a unit by one finger and check its plate followed. Software WebGL can take longer than a long press to
+ * draw one frame, so the press may read as "hold, then drag" (a ruler): then it's put away and tried again.
+ */
+async function touchMove(page, t, u, by) {
+  const plate = page.locator(`.plate [data-unit="${u.id}"]`);
+  const before = await plate.boundingBox();
+  for (let i = 0; i < 4; i++) {
+    await t.drag({ x: u.x, y: u.y }, { x: u.x + by.x, y: u.y + by.y }, { stepMs: 40 });
+    await sleep(1000);
+    const after = await plate.boundingBox();
+    if (Math.hypot(after.x - before.x, after.y - before.y) >= 15) return;
+    await sleep(1500);
+  }
+  if (process.env.SMOKE_SHOTS)
+    await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "touch-move.png") });
+  throw new Error(`a one-finger drag from ${Math.round(u.x)},${Math.round(u.y)} didn't move ${u.id}`);
+}
+
+/** Touch targets under 44 px, and anything off screen, at this size. */
+const smallTargets = (page) =>
+  page.evaluate(() => {
+    const small = [...document.querySelectorAll("button, [role=button], select, input, summary, label.file")]
+      .filter((e) => {
+        const r = e.getBoundingClientRect();
+        if (
+          !r.width ||
+          !r.height ||
+          getComputedStyle(e).visibility === "hidden" ||
+          e.closest("[aria-hidden=true]")
+        )
+          return false;
+        if (e.matches("input[type=checkbox], input[type=radio]"))
+          return (e.closest("label")?.getBoundingClientRect().height ?? 0) < 44;
+        return r.height < 44 || r.width < 44;
+      })
+      .map((e) => {
+        const r = e.getBoundingClientRect();
+        return `${(e.textContent || e.getAttribute("aria-label") || "").trim().slice(0, 24)} ${Math.round(r.width)}×${Math.round(r.height)}`;
+      });
+    const wide =
+      document.documentElement.scrollWidth > innerWidth
+        ? [`page ${document.documentElement.scrollWidth}px wide`]
+        : [];
+    return [...wide, ...small];
+  });
 
 const checks = {
   async "try-it-now"() {
@@ -600,6 +706,138 @@ const checks = {
     if (!sheet || sheet.width > 390) throw new Error(`the unit sheet is ${sheet?.width}px wide`);
     if (page.errors.length) throw new Error(page.errors[0]);
     await context.close();
+  },
+
+  /**
+   * A tablet, touch only (#60): a Rift Lanterns game played out with fingers (drag, hold-to-measure, pinch,
+   * twist), then a 40k turn (move, shoot by tapping the target, every roll), with 44 px targets in both
+   * orientations.
+   */
+  async "tablet-touch"() {
+    const { page, context } = await device(IPAD);
+    const t = await touch(page);
+    await lobby(page);
+    await page.getByRole("button", { name: "Play now (both sides)" }).tap();
+    await touchTable(page, t);
+    const primary = page.locator(".topbar .turn button.primary");
+    const u = await tapOwnUnit(page, t);
+    await touchMove(page, t, u, { x: 30, y: -50 });
+    if (!/End activation/.test(await primary.textContent()))
+      throw new Error("the moved unit didn't start activating");
+    await t.drag({ x: 640, y: 420 }, { x: 760, y: 360 }, { hold: 700 });
+    await page
+      .locator(".ruler")
+      .first()
+      .waitFor({ timeout: 3000 })
+      .catch(() => {
+        throw new Error("holding then dragging showed no ruler");
+      });
+    const plate = () => page.locator(".plate [data-unit]").first().boundingBox();
+    const p0 = await plate();
+    await t.two({ x: 640, y: 440 }, { d0: 120, d1: 240 });
+    await sleep(600);
+    const p1 = await plate();
+    if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < 5) throw new Error("a pinch didn't zoom");
+    const off = await smallTargets(page);
+    if (off.length) throw new Error(`small or off screen at 1180×820: ${off.slice(0, 4).join("; ")}`);
+    for (let i = 0; i < 80; i++) {
+      if (/Battle over/.test(await page.locator(".topbar .turn strong").textContent())) break;
+      if (!(await primary.isEnabled()))
+        throw new Error(`stuck at ${await page.locator(".topbar .turn strong").textContent()}`);
+      await primary.tap();
+      await sleep(200);
+    }
+    if (!/Battle over/.test(await page.locator(".topbar .turn strong").textContent()))
+      throw new Error("the Rift Lanterns game didn't finish");
+
+    await lobby(page);
+    await page
+      .locator(".demos .demo", { hasText: "Sci-fi battle" })
+      .getByRole("button", { name: "Try (both sides)" })
+      .tap();
+    await touchTable(page, t);
+    const next = page.locator(".topbar .turn button", { hasText: "▶" });
+    const phase = () => page.locator(".topbar .turn .phases .current").textContent();
+    await next.tap();
+    await sleep(1000);
+    if ((await phase()) !== "Movement") throw new Error(`▶ went to ${await phase()}, not Movement`);
+    const mover = await tapOwnUnit(page, t);
+    await touchMove(page, t, mover, { x: 0, y: -40 });
+    await next.tap();
+    await sleep(1500);
+    await page
+      .locator(".unitcard button", { hasText: /^Shoot$/ })
+      .first()
+      .tap();
+    await page.getByText("Tap a target on the table…").waitFor();
+    // An enemy unit in range (from the attack's own target list): its plate, tapped until the attack has a target.
+    const inRange = (await page.locator(".attack option").allTextContents())
+      .filter((o) => /\(\d/.test(o) && !o.includes("out of range"))
+      .map((o) => o.replace(/ \(.*$/, ""));
+    const enemies = await page.locator(".plate [data-unit]").evaluateAll(
+      (els, names) =>
+        els
+          .filter((e) => names.some((n) => e.textContent.includes(n)))
+          .map((e) => {
+            const r = e.getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+          }),
+      inRange,
+    );
+    const declare = page.locator(".attack button", { hasText: "Declare attack" });
+    for (const e of enemies) {
+      for (const [dx, dy] of [
+        [0, 10],
+        [0, -10],
+        [0, 0],
+        [10, 0],
+        [-10, 0],
+        [0, 18],
+      ]) {
+        if (await declare.count()) break;
+        // A tap that missed picks whatever was there instead: the shooter's card back, then Shoot again.
+        if (!(await page.locator(".attack").count())) {
+          await tapOwnUnit(page, t);
+          await page
+            .locator(".unitcard button", { hasText: /^Shoot$/ })
+            .first()
+            .tap();
+          await sleep(800);
+        }
+        await t.tap(e.x + dx, e.y + dy);
+        await sleep(500);
+        if (await page.locator(".touch-menu").count()) await page.locator(".touch-menu-scrim").tap();
+      }
+      if (await declare.count()) break;
+    }
+    if (!(await declare.count())) {
+      if (process.env.SMOKE_SHOTS)
+        await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "touch-target.png") });
+      throw new Error(
+        `tapping enemy models (${inRange.join(", ")}: ${enemies.length} plates) picked no target`,
+      );
+    }
+    await declare.tap();
+    for (let i = 0; i < 10; i++) {
+      const roll = page.locator(".attack button.primary, .procedure button.primary").first();
+      if (!(await roll.count())) break;
+      await roll.tap();
+      await sleep(2500);
+    }
+    await page.locator(".attack button, .procedure button", { hasText: "Done" }).first().tap();
+    for (let i = 0; i < 8 && /Player 1/.test(await page.locator(".topbar .turn strong").textContent()); i++) {
+      await next.tap();
+      await sleep(800);
+    }
+    if (!/Player 2/.test(await page.locator(".topbar .turn strong").textContent()))
+      throw new Error("▶ never reached the other player's turn");
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await sleep(1500);
+    const portrait = await smallTargets(page);
+    if (portrait.length)
+      throw new Error(`small or off screen at 820×1180: ${portrait.slice(0, 4).join("; ")}`);
+    await context.close();
+    return page.errors;
   },
 
   async replay() {

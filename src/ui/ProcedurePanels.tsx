@@ -1,3 +1,4 @@
+import { touch } from "./touch";
 import { PoolPicker, usesFaces } from "./SystemPanels";
 import { RollsMineToggle, SelfRollCountdown } from "../bot/SelfRoll";
 import { RollButton } from "../companion/RealDice";
@@ -166,7 +167,11 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           className={draft.picking ? "on" : ""}
           onClick={() => setDraft({ ...draft, picking: !draft.picking })}
         >
-          {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
+          {draft.picking
+            ? touch()
+              ? t("Tap a target on the table…")
+              : t("Click a target on the table…")
+            : t("Pick on table")}
         </button>
       </div>
       {draft.targetId && repeat > 1 && (
