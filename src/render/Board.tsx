@@ -1,4 +1,5 @@
 import { toggleGroup, updatePieces, useTableEdit } from "../tables/edit";
+import { tableDrag } from "./dragging";
 import { Sightlines } from "../tables/Sightlines";
 import { FocusCamera } from "./FocusCamera";
 import { TableOnScreen } from "./TableOnScreen";
@@ -379,6 +380,7 @@ function Scene() {
   // A drag clears the hover tooltip (and hover rings) until it ends.
   const dragging = drag !== null;
   useEffect(() => {
+    tableDrag.active = dragging;
     if (dragging) setUi({ hoverUnit: null });
   }, [dragging, setUi]);
 

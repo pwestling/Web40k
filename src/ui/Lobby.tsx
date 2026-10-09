@@ -100,7 +100,7 @@ export function Lobby() {
     try {
       const s = stateAt(saved.record);
       // A package game's rounds fold only with its package loaded: say no round rather than a wrong one.
-      return { game: gameTitle(s), round: isPlaceholder(s.system ?? "") ? null : s.turn.round };
+      return { game: gameTitle(s), round: s.system && isPlaceholder(s.system) ? null : s.turn.round };
     } catch {
       return null;
     }

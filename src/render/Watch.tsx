@@ -1,4 +1,5 @@
 import { aliveModels, centreAbove } from "../core/units";
+import { tableDrag } from "./dragging";
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -440,7 +441,11 @@ export function WatchEffects() {
         TOPPLE_MS + ids.length * 40,
       );
     }
-    const f = focusFor(events.at(-1), prev.game, game);
+    // Your own drag is already where you're looking: following it pulled the table from under the next
+    // drag, and a model chased the pointer 40" (dogfood round 2).
+    const latest = logged.at(-1);
+    const own = latest && draggedHere(latest.event, latest.by) && !soloPlays(game, latest.by);
+    const f = own ? null : focusFor(events.at(-1), prev.game, game);
     if (f) {
       focus.current = f;
       lastAction.current = now;
@@ -473,6 +478,11 @@ export function WatchEffects() {
       }
     } else if (n) nudge.current = null;
     if (!director || !controls || followed.active || showcasing()) return;
+    // Never move the table under a drag; the quiet time starts again when it ends.
+    if (tableDrag.active) {
+      lastAction.current = performance.now();
+      return;
+    }
     // An attack or action still resolving (its dice in the tray, or the next step's roll to come) isn't quiet:
     // the camera stays on it (PX re-check of #56: it pulled out to the table for the save roll).
     if (useHold.getState().busy || game.attack || game.procedure) lastAction.current = performance.now();
