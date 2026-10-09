@@ -162,30 +162,17 @@ export function TopBar() {
               </strong>
             ))}
             {counters.map(({ id: r }) => (
-              <span key={r} className="counter">
-                {r} {game.resources[lead.id]?.[r] ?? 0}
-                {live && mine && (
-                  <>
-                    <button
-                      onClick={() =>
-                        dispatch(
-                          { type: "resource/adjust", player: mine.id, resource: r, delta: -1 },
-                          mine.id,
-                        )
-                      }
-                    >
-                      −
-                    </button>
-                    <button
-                      onClick={() =>
-                        dispatch({ type: "resource/adjust", player: mine.id, resource: r, delta: 1 }, mine.id)
-                      }
-                    >
-                      +
-                    </button>
-                  </>
-                )}
-              </span>
+              <Counter
+                key={r}
+                label={r}
+                value={game.resources[lead.id]?.[r] ?? 0}
+                step={
+                  live && mine
+                    ? (delta) =>
+                        dispatch({ type: "resource/adjust", player: mine.id, resource: r, delta }, mine.id)
+                    : null
+                }
+              />
             ))}
             <SideClock seat={seat} />
             {team.flatMap((p) =>
@@ -584,5 +571,38 @@ function SoundToggle() {
         </div>
       )}
     </div>
+  );
+}
+
+/** "VP 3 − +". On a touch screen the − and + wait behind a tap on the number, at full finger size (UX 436). */
+function Counter({
+  label,
+  value,
+  step,
+}: {
+  label: string;
+  value: number;
+  step: ((delta: number) => void) | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  if (!step) return <span className="counter">{`${label} ${value}`}</span>;
+  if (coarse && !open)
+    return (
+      <button className="counter quiet" title={t("Change {label}", { label })} onClick={() => setOpen(true)}>
+        {`${label} ${value}`}
+      </button>
+    );
+  return (
+    <span className={coarse ? "counter open" : "counter"}>
+      {`${label} ${value}`}
+      <button onClick={() => step(-1)}>−</button>
+      <button onClick={() => step(1)}>+</button>
+      {coarse && (
+        <button className="quiet" title={t("Done")} onClick={() => setOpen(false)}>
+          ✓
+        </button>
+      )}
+    </span>
   );
 }

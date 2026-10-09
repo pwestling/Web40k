@@ -183,6 +183,8 @@ export function suggestAttack(
         // What it did, not just where (UX 290): "Smouldering Ward: −1 to hit".
         const change = preview.changes[step]?.[name];
         const label = change ? changeLabel(step, change) : "";
+        // A Feel No Pain is said once, below, with its roll (UX 437: "Feel No Pain: damage" sat beside it).
+        if (!label && step === "damage" && spec.fnp) continue;
         notes.push(`${name}: ${label || (STEP_NOUN[step] ?? step)}`);
       }
   const ignoresCover = preview.weaponRules.some((r) => r.rule === "ignoresCover");
@@ -196,7 +198,7 @@ export function suggestAttack(
     notes.push(
       `${sight.hidden} target model(s) Hidden in dense terrain (only visible within ${HIDDEN_RANGE}")`,
     );
-  if (spec.fnp) notes.push(`Feel no pain ${spec.fnp}+`);
+  if (spec.fnp) notes.push(`Feel No Pain ${spec.fnp}+ (each damage)`);
   if (preview.reminders.length) notes.push(`Check by hand: ${preview.reminders.join(", ")}`);
 
   return {

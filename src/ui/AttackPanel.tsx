@@ -62,14 +62,27 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
     .sort((a, b) => b.count - a.count);
   const weaponId = draft.weaponId ?? mainWeapon(game, attacker, draft.kind);
   const weapon = weapons.find((w) => w.id === weaponId);
-  const reach = weapon ? weaponReach(weapon) : null;
+  // Shoot everything reaches as far as its longest weapon, from every model (UX 433: it judged by one weapon).
+  const reach = draft.all
+    ? Math.max(0, ...weapons.map((w) => weaponReach(w) ?? 0))
+    : weapon
+      ? weaponReach(weapon)
+      : null;
   // Closest models carrying the weapon; enemies out of its reach go last and say so.
-  const shooters = weapon ? carriers(game, attacker, weapon.id) : aliveModels(game, attacker);
+  const shooters = weapon && !draft.all ? carriers(game, attacker, weapon.id) : aliveModels(game, attacker);
   // With a ranged weapon chosen, the shoot action says which targets it allows (out of sight
   // unless it has Indirect Fire, PX review of #57); those it doesn't go last with the reason.
   const allowed =
     draft.kind === "ranged" && weapon && systemOf(game).actions.some((a) => a.id === "shoot")
-      ? new Map(actionTargets(game, attacker.id, "shoot", weapon.id).map((x) => [x.unitId, x]))
+      ? draft.all
+        ? // Any weapon allowing it is enough for Shoot everything.
+          weapons
+            .flatMap((w) => actionTargets(game, attacker.id, "shoot", w.id))
+            .reduce(
+              (m, x) => (m.get(x.unitId)?.ok ? m : m.set(x.unitId, x)),
+              new Map<string, ReturnType<typeof actionTargets>[number]>(),
+            )
+        : new Map(actionTargets(game, attacker.id, "shoot", weapon.id).map((x) => [x.unitId, x]))
       : null;
   const enemies = Object.values(game.units)
     .filter((u) => opposed(game, u.owner, attacker.owner) && aliveModels(game, u).length > 0)
@@ -122,15 +135,28 @@ function BoardAttackSetup({ draft }: { draft: AttackDraft }) {
           onChange={(e) => setDraft({ ...draft, targetId: e.target.value || undefined, picking: false })}
         >
           <option value="">{t("Target…")}</option>
-          {enemies.map(({ unit: u, distance, out, why }) => (
-            <option key={u.id} value={u.id}>
-              {why
-                ? t('{unit} ({distance}", {why})', { unit: u.name, distance: distance.toFixed(1), why })
-                : out
-                  ? t('{unit} ({distance}", out of range)', { unit: u.name, distance: distance.toFixed(1) })
-                  : `${u.name} (${distance.toFixed(1)}")`}
-            </option>
-          ))}
+          {enemies
+            .filter((x) => !x.why && !x.out)
+            .map(({ unit: u, distance }) => (
+              <option key={u.id} value={u.id}>{`${u.name} (${distance.toFixed(1)}")`}</option>
+            ))}
+          {/* Out of range or sight underneath, still pickable: the rules advise (UX 433). */}
+          {enemies.some((x) => x.why || x.out) && (
+            <optgroup label={t("Out of range or sight")}>
+              {enemies
+                .filter((x) => x.why || x.out)
+                .map(({ unit: u, distance, why }) => (
+                  <option key={u.id} value={u.id}>
+                    {why
+                      ? t('{unit} ({distance}", {why})', { unit: u.name, distance: distance.toFixed(1), why })
+                      : t('{unit} ({distance}", out of range)', {
+                          unit: u.name,
+                          distance: distance.toFixed(1),
+                        })}
+                  </option>
+                ))}
+            </optgroup>
+          )}
         </select>
         <button
           className={draft.picking ? "on" : ""}

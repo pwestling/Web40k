@@ -108,6 +108,10 @@ export function Lobby() {
           s.system && isPlaceholder(s.system)
             ? false
             : s.turn.round > (Number(systemOf(s).turn.rounds) || Infinity),
+        // Against the computer, its side is named with its level: "The Warden of Ash (Steady)" (UX 439).
+        computer: (["random", "steady", "sharp"] as const).find((level) =>
+          Object.values(s.players).some((p) => p.name.endsWith(` (${levelName(level)})`)),
+        ),
       };
     } catch {
       return null;
@@ -288,9 +292,10 @@ export function Lobby() {
                   "{mode}, {n} event, saved {date}",
                   "{mode}, {n} events, saved {date}",
                   {
-                    mode:
-                      { online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
-                      saved.mode,
+                    mode: savedAt?.computer
+                      ? t("Against the computer ({level})", { level: levelName(savedAt.computer) })
+                      : ({ online: t("online"), local: t("local"), hotseat: t("hotseat") }[saved.mode] ??
+                        saved.mode),
                     date: formatDate(new Date(saved.savedAt), {
                       year: "numeric",
                       month: "numeric",

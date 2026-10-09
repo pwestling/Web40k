@@ -5287,3 +5287,14 @@ button.teach-button:hover {
 body:has(.panel.better-move) .panel.whatnow {
   top: calc(var(--below-bar, 64px) + 64px);
 }
+
+/* Finger-sized controls on touch screens (UX 436): the score steppers, the replay bar, table talk. */
+@media (pointer: coarse) {
+  .counter.open button,
+  button.counter,
+  .replaybar button,
+  .panel.talk button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

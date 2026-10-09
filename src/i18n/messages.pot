@@ -1539,7 +1539,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:95
 #: src/opentables/OpenTables.tsx:192
-#: src/ui/Lobby.tsx:449
+#: src/ui/Lobby.tsx:454
 msgid "Game"
 msgstr ""
 
@@ -1653,13 +1653,13 @@ msgid "The target can't be seen."
 msgstr ""
 
 #: src/companion/TableAttack.tsx:161
-#: src/ui/AttackPanel.tsx:285
-#: src/ui/AttackPanel.tsx:293
+#: src/ui/AttackPanel.tsx:311
+#: src/ui/AttackPanel.tsx:319
 msgid "Declare attack"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:161
-#: src/ui/AttackPanel.tsx:293
+#: src/ui/AttackPanel.tsx:319
 #: src/ui/UnitCard.tsx:288
 #: src/ui/UnitCard.tsx:585
 msgid "Fight"
@@ -1680,28 +1680,28 @@ msgid "No"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:50
-#: src/ui/AttackPanel.tsx:97
+#: src/ui/AttackPanel.tsx:110
 msgid "{unit}: shoot"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:50
-#: src/ui/AttackPanel.tsx:98
+#: src/ui/AttackPanel.tsx:111
 msgid "{unit}: fight"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:55
-#: src/ui/AttackPanel.tsx:105
+#: src/ui/AttackPanel.tsx:118
 #: src/ui/SystemPanels.tsx:370
 msgid "Weapon"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:60
-#: src/ui/AttackPanel.tsx:109
+#: src/ui/AttackPanel.tsx:122
 msgid "Weapon…"
 msgstr ""
 
 #: src/companion/TableAttack.tsx:68
-#: src/ui/AttackPanel.tsx:120
+#: src/ui/AttackPanel.tsx:133
 msgid "Target"
 msgstr ""
 
@@ -2397,7 +2397,7 @@ msgid "Your name, for your opponent"
 msgstr ""
 
 #: src/mail/MailBar.tsx:152
-#: src/ui/AttackPanel.tsx:339
+#: src/ui/AttackPanel.tsx:365
 #: src/workshop/Workshop.tsx:278
 msgid "Save"
 msgstr ""
@@ -2551,7 +2551,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:619
+#: src/ui/Lobby.tsx:624
 msgid "Not now"
 msgstr ""
 
@@ -2596,12 +2596,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:467
+#: src/ui/Lobby.tsx:472
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:466
+#: src/ui/Lobby.tsx:471
 msgid "1 vs 1"
 msgstr ""
 
@@ -2927,7 +2927,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:415
-#: src/ui/Lobby.tsx:495
+#: src/ui/Lobby.tsx:500
 msgid "Join"
 msgstr ""
 
@@ -3175,31 +3175,31 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/render/Board.tsx:1032
+#: src/render/Board.tsx:1059
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1034
+#: src/render/Board.tsx:1061
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1039
+#: src/render/Board.tsx:1066
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1486
+#: src/render/Board.tsx:1513
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:968
+#: src/render/Board.tsx:995
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:970
+#: src/render/Board.tsx:997
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:971
+#: src/render/Board.tsx:998
 msgid "{label}: nobody holds it"
 msgstr ""
 
@@ -3506,7 +3506,7 @@ msgstr ""
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:50
 #: src/ui/TerrainPanel.tsx:375
-#: src/ui/TopBar.tsx:237
+#: src/ui/TopBar.tsx:224
 #: src/ui/WhatNow.tsx:46
 #: src/ui/gameLog.ts:423
 msgid "Deployment"
@@ -3607,40 +3607,40 @@ msgstr ""
 msgid "{played}: the dice took about {n}% off the chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:485
+#: src/review/ReviewPanel.tsx:486
 msgid "{side} · rounds {rounds}, {phase}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:490
+#: src/review/ReviewPanel.tsx:491
 msgid "{side} · round {round}, {phase}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:499
+#: src/review/ReviewPanel.tsx:500
 #: src/ui/StatsScreen.tsx:123
 msgid "Watch it again on the table"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:500
+#: src/review/ReviewPanel.tsx:501
 msgid "Show"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:506
+#: src/review/ReviewPanel.tsx:507
 msgid "A new game on this screen, just before this choice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:508
+#: src/review/ReviewPanel.tsx:509
 msgid "Try the better move"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:515
+#: src/review/ReviewPanel.tsx:516
 msgid "Keep it as a note on this replay"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:517
+#: src/review/ReviewPanel.tsx:518
 msgid "Added to notes"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:517
+#: src/review/ReviewPanel.tsx:518
 msgid "Add to notes"
 msgstr ""
 
@@ -3648,11 +3648,11 @@ msgstr ""
 #: src/review/ReviewPanel.tsx:67
 #: src/review/ReviewPanel.tsx:80
 #: src/review/ReviewPanel.tsx:158
-#: src/review/ReviewPanel.tsx:458
+#: src/review/ReviewPanel.tsx:459
 msgid "Game review"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:533
+#: src/review/ReviewPanel.tsx:534
 msgid "Try the better move for {side}:"
 msgstr ""
 
@@ -3999,7 +3999,7 @@ msgid "What happened"
 msgstr ""
 
 #: src/share/clip.ts:266
-#: src/ui/TopBar.tsx:266
+#: src/ui/TopBar.tsx:253
 msgid "Battle over"
 msgstr ""
 
@@ -4734,199 +4734,207 @@ msgstr ""
 msgid "({points} pts; units {units})"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:112
+#: src/ui/AttackPanel.tsx:108
+msgid "{unit}: shoot everything"
+msgstr ""
+
+#: src/ui/AttackPanel.tsx:125
 #: src/ui/volley.ts:34
 msgid "used this phase"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:117
+#: src/ui/AttackPanel.tsx:130
 #: src/ui/ProcedurePanels.tsx:152
 msgid "at"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:124
+#: src/ui/AttackPanel.tsx:137
 #: src/ui/ProcedurePanels.tsx:157
 msgid "Target…"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:128
+#: src/ui/AttackPanel.tsx:145
+msgid "Out of range or sight"
+msgstr ""
+
+#: src/ui/AttackPanel.tsx:151
 msgid "{unit} ({distance}\", {why})"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:130
+#: src/ui/AttackPanel.tsx:152
 msgid "{unit} ({distance}\", out of range)"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:141
+#: src/ui/AttackPanel.tsx:167
 #: src/ui/ProcedurePanels.tsx:172
 msgid "Tap an enemy unit, or pick one from the list"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:142
+#: src/ui/AttackPanel.tsx:168
 #: src/ui/ProcedurePanels.tsx:173
 msgid "Click a target on the table…"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:143
+#: src/ui/AttackPanel.tsx:169
 #: src/ui/ProcedurePanels.tsx:174
 msgid "Pick on table"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:173
+#: src/ui/AttackPanel.tsx:199
 msgid "No weapon can reach and see that target."
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:194
+#: src/ui/AttackPanel.tsx:220
 msgid "{n} model in range"
 msgid_plural "{n} models in range"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:208
+#: src/ui/AttackPanel.tsx:234
 msgid "Shoot {n} weapon"
 msgid_plural "Shoot {n} weapons"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:246
+#: src/ui/AttackPanel.tsx:272
 msgid "no re-roll"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:247
+#: src/ui/AttackPanel.tsx:273
 #: src/ui/autoText.ts:145
 #: src/ui/autoText.ts:194
 msgid "re-roll 1s"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:248
+#: src/ui/AttackPanel.tsx:274
 #: src/ui/autoText.ts:146
 msgid "re-roll fails"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:258
+#: src/ui/AttackPanel.tsx:284
 msgid "{inRange}/{carriers} models in engagement range"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:259
+#: src/ui/AttackPanel.tsx:285
 msgid "{inRange}/{carriers} models in range · {visible}/{targets} targets visible"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:265
+#: src/ui/AttackPanel.tsx:291
 msgid "{n} in cover"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:277
+#: src/ui/AttackPanel.tsx:303
 msgid "Out of range ({range})"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:278
+#: src/ui/AttackPanel.tsx:304
 msgid "Out of range"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:284
+#: src/ui/AttackPanel.tsx:310
 msgid "No model has the target in range, so there are no attacks to roll"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:288
+#: src/ui/AttackPanel.tsx:314
 msgid "No models in range, or no target visible"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:289
+#: src/ui/AttackPanel.tsx:315
 msgid "Declare anyway"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:298
+#: src/ui/AttackPanel.tsx:324
 msgid "More options"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:301
+#: src/ui/AttackPanel.tsx:327
 #: src/ui/TeachRule.tsx:473
 msgid "Attacks"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:305
+#: src/ui/AttackPanel.tsx:331
 msgid "Hit"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:305
-#: src/ui/AttackPanel.tsx:430
+#: src/ui/AttackPanel.tsx:331
+#: src/ui/AttackPanel.tsx:456
 msgid "auto"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:309
+#: src/ui/AttackPanel.tsx:335
 msgid "Sustained"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:320
+#: src/ui/AttackPanel.tsx:346
 msgid "Lethal hits"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:323
+#: src/ui/AttackPanel.tsx:349
 msgid "Wound"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:328
+#: src/ui/AttackPanel.tsx:354
 msgid "Crit wound on"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:336
+#: src/ui/AttackPanel.tsx:362
 msgid "Devastating"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:339
-#: src/ui/AttackPanel.tsx:348
-#: src/ui/AttackPanel.tsx:434
-#: src/ui/TopBar.tsx:472
+#: src/ui/AttackPanel.tsx:365
+#: src/ui/AttackPanel.tsx:374
+#: src/ui/AttackPanel.tsx:460
+#: src/ui/TopBar.tsx:459
 msgid "none"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:343
-#: src/ui/AttackPanel.tsx:596
+#: src/ui/AttackPanel.tsx:369
+#: src/ui/AttackPanel.tsx:622
 #: src/ui/TeachRule.tsx:476
 msgid "Damage"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:348
+#: src/ui/AttackPanel.tsx:374
 msgid "Feel no pain"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:364
+#: src/ui/AttackPanel.tsx:390
 msgid "Roll to hit"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:365
+#: src/ui/AttackPanel.tsx:391
 msgid "Roll to wound"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:366
+#: src/ui/AttackPanel.tsx:392
 msgid "Roll saves"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:367
+#: src/ui/AttackPanel.tsx:393
 msgid "Roll damage"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:374
+#: src/ui/AttackPanel.tsx:400
 msgid "Waiting for {name} to roll to hit"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:375
+#: src/ui/AttackPanel.tsx:401
 msgid "Waiting for {name} to roll to wound"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:376
+#: src/ui/AttackPanel.tsx:402
 msgid "Waiting for {name} to roll saves"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:377
+#: src/ui/AttackPanel.tsx:403
 msgid "Waiting for {name} to roll damage"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:397
+#: src/ui/AttackPanel.tsx:423
 msgid "Your opponent"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:425
+#: src/ui/AttackPanel.tsx:451
 #: src/ui/gameLog.ts:436
 #: src/ui/gameLog.ts:501
 msgid "{n} attack"
@@ -4934,35 +4942,35 @@ msgid_plural "{n} attacks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:427
+#: src/ui/AttackPanel.tsx:453
 msgid "(rolled {dice})"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:429
+#: src/ui/AttackPanel.tsx:455
 msgid "hit {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:432
+#: src/ui/AttackPanel.tsx:458
 msgid "wound {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:433
+#: src/ui/AttackPanel.tsx:459
 msgid "save {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:436
+#: src/ui/AttackPanel.tsx:462
 msgid "D {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:437
+#: src/ui/AttackPanel.tsx:463
 msgid "FNP {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:442
+#: src/ui/AttackPanel.tsx:468
 msgid "Hits"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:445
+#: src/ui/AttackPanel.tsx:471
 #: src/ui/gameLog.ts:437
 #: src/ui/gameLog.ts:505
 msgid "{n} hit"
@@ -4970,23 +4978,23 @@ msgid_plural "{n} hits"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:446
+#: src/ui/AttackPanel.tsx:472
 msgid "{n} critical"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:447
+#: src/ui/AttackPanel.tsx:473
 msgid "{n} auto-wound"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:452
+#: src/ui/AttackPanel.tsx:478
 msgid "Torrent: {n} automatic hits"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:455
+#: src/ui/AttackPanel.tsx:481
 msgid "Wounds"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:457
+#: src/ui/AttackPanel.tsx:483
 #: src/ui/gameLog.ts:438
 #: src/ui/gameLog.ts:483
 #: src/ui/gameLog.ts:485
@@ -4996,107 +5004,104 @@ msgid_plural "{n} wounds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:458
+#: src/ui/AttackPanel.tsx:484
 msgid "{n} skip saves"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:464
+#: src/ui/AttackPanel.tsx:490
 msgid "Saves"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:468
+#: src/ui/AttackPanel.tsx:494
 #: src/ui/gameLog.ts:439
 #: src/ui/gameLog.ts:507
 msgid "{n} unsaved"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:479
+#: src/ui/AttackPanel.tsx:505
 #: src/ui/ProcedurePanels.tsx:408
 msgid "The computer is rolling…"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:483
+#: src/ui/AttackPanel.tsx:509
 msgid "Then {n} more weapon at this target"
 msgid_plural "Then {n} more weapons at this target"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:495
+#: src/ui/AttackPanel.tsx:521
 msgid "{name} rolls the saves"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:498
+#: src/ui/AttackPanel.tsx:524
 msgid "Dice hold no choices, so either player may roll them"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:502
+#: src/ui/AttackPanel.tsx:528
 msgid "Roll for them"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:512
+#: src/ui/AttackPanel.tsx:538
 msgid "Roll everything"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:528
+#: src/ui/AttackPanel.tsx:554
 #: src/ui/Coach.tsx:87
 #: src/ui/ProcedurePanels.tsx:421
 #: src/ui/TerrainPanel.tsx:185
+#: src/ui/TopBar.tsx:602
 #: src/ui/TouchLayer.tsx:72
 msgid "Done"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:577
+#: src/ui/AttackPanel.tsx:603
 msgid "re-rolled from {value}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:604
+#: src/ui/AttackPanel.tsx:630
 msgid "re-rolled from {n}"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:615
+#: src/ui/AttackPanel.tsx:641
 msgid "{lost} wounds lost, {n} model destroyed"
 msgid_plural "{lost} wounds lost, {n} models destroyed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/AttackPanel.tsx:619
+#: src/ui/AttackPanel.tsx:645
 msgid "{n} ignored by feel no pain"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:681
+#: src/ui/AttackPanel.tsx:707
 msgid "Wounds go to"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:691
+#: src/ui/AttackPanel.tsx:717
 msgid "Take wounds on these models first"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:700
+#: src/ui/AttackPanel.tsx:726
 msgid "{n} W left"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:704
+#: src/ui/AttackPanel.tsx:730
 msgid "+{n} more"
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:708
+#: src/ui/AttackPanel.tsx:734
 msgid "A model that has already lost wounds should take the next one."
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:712
+#: src/ui/AttackPanel.tsx:738
 msgid "Defender: tap a model to put it first."
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:713
+#: src/ui/AttackPanel.tsx:739
 msgid "Defender: click a model to put it first."
 msgstr ""
 
-#: src/ui/AttackPanel.tsx:79
+#: src/ui/AttackPanel.tsx:92
 msgid "out of sight"
-msgstr ""
-
-#: src/ui/AttackPanel.tsx:95
-msgid "{unit}: shoot everything"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:119
@@ -5281,37 +5286,45 @@ msgstr ""
 msgid "{when}, just after {what}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:112
+#: src/ui/ChargeDeclare.tsx:103
+msgid "No enemy unit can be charged from here."
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:107
+msgid "Nearest enemy {distance}\" away: no charge possible"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:123
+msgid "Roll charge (2D6): {n} needed"
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:139
 msgid "Charge made: move up to {n}\" into {units}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:113
+#: src/ui/ChargeDeclare.tsx:140
 msgid "Charge fails: needed {n}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:121
-#: src/ui/ChargeDeclare.tsx:130
+#: src/ui/ChargeDeclare.tsx:151
+#: src/ui/ChargeDeclare.tsx:161
 msgid "Already in combat: it can't charge"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:128
+#: src/ui/ChargeDeclare.tsx:159
+msgid "Charge: no enemy within 12\""
+msgstr ""
+
+#: src/ui/ChargeDeclare.tsx:159
 msgid "Charge (2D6)"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:41
+#: src/ui/ChargeDeclare.tsx:43
 msgid "Charge which unit(s)?"
 msgstr ""
 
 #: src/ui/ChargeDeclare.tsx:76
-msgid "No enemy unit can be charged from here."
-msgstr ""
-
-#: src/ui/ChargeDeclare.tsx:80
-msgid "Nearest enemy {distance}\" away: no charge possible"
-msgstr ""
-
-#: src/ui/ChargeDeclare.tsx:96
-msgid "Roll charge (2D6): {n} needed"
+msgid "Charge anyway?"
 msgstr ""
 
 #: src/ui/ChargePanel.tsx:122
@@ -5506,7 +5519,7 @@ msgid "Untimed"
 msgstr ""
 
 #: src/ui/Clocks.tsx:280
-#: src/ui/eventText.ts:143
+#: src/ui/eventText.ts:154
 msgid "{n} minute"
 msgid_plural "{n} minutes"
 msgstr[0] ""
@@ -5615,7 +5628,7 @@ msgid "Redo this step"
 msgstr ""
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:348
+#: src/ui/TopBar.tsx:335
 msgid "Next phase"
 msgstr ""
 
@@ -6056,7 +6069,7 @@ msgid "Shorter dice rolls in the tray"
 msgstr ""
 
 #: src/ui/Hud.tsx:156
-#: src/ui/TopBar.tsx:581
+#: src/ui/TopBar.tsx:568
 msgid "Fast dice"
 msgstr ""
 
@@ -6160,7 +6173,7 @@ msgid "Rejoin as {name}"
 msgstr ""
 
 #: src/ui/Hud.tsx:472
-#: src/ui/Lobby.tsx:498
+#: src/ui/Lobby.tsx:503
 msgid "Watch"
 msgstr ""
 
@@ -6394,228 +6407,232 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Lobby.tsx:210
+#: src/ui/Lobby.tsx:214
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:264
+#: src/ui/Lobby.tsx:268
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:277
+#: src/ui/Lobby.tsx:281
 msgid "Back to {game}: Battle over"
 msgstr ""
 
-#: src/ui/Lobby.tsx:279
+#: src/ui/Lobby.tsx:283
 msgid "Resume: {game}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:281
+#: src/ui/Lobby.tsx:285
 msgid "Resume: {game}, round {n}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:282
+#: src/ui/Lobby.tsx:286
 msgid "Resume: {game}, deploying"
 msgstr ""
 
-#: src/ui/Lobby.tsx:283
+#: src/ui/Lobby.tsx:287
 msgid "Resume last game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:286
+#: src/ui/Lobby.tsx:290
 msgid "{mode}, {n} event, saved {date}"
 msgid_plural "{mode}, {n} events, saved {date}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:292
+#: src/ui/Lobby.tsx:296
+msgid "Against the computer ({level})"
+msgstr ""
+
+#: src/ui/Lobby.tsx:297
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:292
+#: src/ui/Lobby.tsx:297
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:292
+#: src/ui/Lobby.tsx:297
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:308
+#: src/ui/Lobby.tsx:313
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:310
+#: src/ui/Lobby.tsx:315
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:316
+#: src/ui/Lobby.tsx:321
 msgid "Find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:317
+#: src/ui/Lobby.tsx:322
 msgid "Join a game someone has put up on Open tables."
 msgstr ""
 
-#: src/ui/Lobby.tsx:325
+#: src/ui/Lobby.tsx:330
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:331
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:336
+#: src/ui/Lobby.tsx:359
 msgid "Play now (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:334
-#: src/ui/Lobby.tsx:355
-#: src/ui/Lobby.tsx:397
+#: src/ui/Lobby.tsx:339
+#: src/ui/Lobby.tsx:360
+#: src/ui/Lobby.tsx:402
 msgid "Play the computer"
 msgstr ""
 
-#: src/ui/Lobby.tsx:338
+#: src/ui/Lobby.tsx:343
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr ""
 
-#: src/ui/Lobby.tsx:343
-#: src/ui/Lobby.tsx:356
-#: src/ui/Lobby.tsx:502
+#: src/ui/Lobby.tsx:348
+#: src/ui/Lobby.tsx:361
+#: src/ui/Lobby.tsx:507
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:346
+#: src/ui/Lobby.tsx:351
 msgid "Rules, print and play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:363
+#: src/ui/Lobby.tsx:368
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:365
+#: src/ui/Lobby.tsx:370
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:370
+#: src/ui/Lobby.tsx:375
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:387
+#: src/ui/Lobby.tsx:392
 msgid "Learn (guided)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:392
+#: src/ui/Lobby.tsx:397
 msgid "Try (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:407
+#: src/ui/Lobby.tsx:412
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:412
+#: src/ui/Lobby.tsx:417
 msgid "Open tables: find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:414
+#: src/ui/Lobby.tsx:419
 msgid "Games other players have put up. Join one, or post your own."
 msgstr ""
 
-#: src/ui/Lobby.tsx:440
+#: src/ui/Lobby.tsx:445
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:461
+#: src/ui/Lobby.tsx:466
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:463
+#: src/ui/Lobby.tsx:468
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:466
+#: src/ui/Lobby.tsx:471
 msgid "Two players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:467
+#: src/ui/Lobby.tsx:472
 msgid "Four players in two teams; teams share CP and VP"
 msgstr ""
 
-#: src/ui/Lobby.tsx:483
+#: src/ui/Lobby.tsx:488
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:485
+#: src/ui/Lobby.tsx:490
 #: src/ui/Room.tsx:97
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:488
+#: src/ui/Lobby.tsx:493
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:492
+#: src/ui/Lobby.tsx:497
 msgid "Paste a room code or invite link to join."
 msgstr ""
 
-#: src/ui/Lobby.tsx:504
+#: src/ui/Lobby.tsx:509
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:509
+#: src/ui/Lobby.tsx:514
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:512
+#: src/ui/Lobby.tsx:517
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:514
+#: src/ui/Lobby.tsx:519
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:518
+#: src/ui/Lobby.tsx:523
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:525
+#: src/ui/Lobby.tsx:530
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:535
+#: src/ui/Lobby.tsx:540
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:552
+#: src/ui/Lobby.tsx:557
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:555
+#: src/ui/Lobby.tsx:560
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:558
+#: src/ui/Lobby.tsx:563
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:568
+#: src/ui/Lobby.tsx:573
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:573
+#: src/ui/Lobby.tsx:578
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:601
+#: src/ui/Lobby.tsx:606
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:602
+#: src/ui/Lobby.tsx:607
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:603
+#: src/ui/Lobby.tsx:608
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:606
-#: src/ui/Lobby.tsx:607
+#: src/ui/Lobby.tsx:611
+#: src/ui/Lobby.tsx:612
 msgid "How hard?"
 msgstr ""
 
@@ -6637,7 +6654,7 @@ msgstr ""
 #: src/ui/Missions.tsx:149
 #: src/ui/Missions.tsx:274
 #: src/ui/ProcedurePanels.tsx:387
-#: src/ui/TopBar.tsx:332
+#: src/ui/TopBar.tsx:319
 msgid "Pass"
 msgstr ""
 
@@ -7073,7 +7090,7 @@ msgstr ""
 
 #: src/ui/Packages.tsx:674
 #: src/ui/ScriptPanel.tsx:39
-#: src/ui/eventText.ts:108
+#: src/ui/eventText.ts:119
 msgid "A player"
 msgstr ""
 
@@ -7389,7 +7406,7 @@ msgid "{successes} of {count} succeed"
 msgstr ""
 
 #: src/ui/ProcedurePanels.tsx:491
-#: src/ui/eventText.ts:681
+#: src/ui/eventText.ts:692
 #: src/ui/gameLog.ts:286
 msgid "A unit"
 msgstr ""
@@ -7573,7 +7590,7 @@ msgid "Wheel right"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:31
-#: src/ui/eventText.ts:726
+#: src/ui/eventText.ts:737
 msgid "left"
 msgstr ""
 
@@ -7588,7 +7605,7 @@ msgid "Turn left"
 msgstr ""
 
 #: src/ui/RegimentPanel.tsx:32
-#: src/ui/eventText.ts:722
+#: src/ui/eventText.ts:733
 msgid "right"
 msgstr ""
 
@@ -7840,7 +7857,7 @@ msgid "Tell the other player you've finished deploying"
 msgstr ""
 
 #: src/ui/Room.tsx:230
-#: src/ui/TopBar.tsx:504
+#: src/ui/TopBar.tsx:491
 msgid "Ready"
 msgstr ""
 
@@ -8254,12 +8271,12 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:540
-#: src/ui/TopBar.tsx:313
+#: src/ui/TopBar.tsx:300
 msgid "End this activation; the other player goes next"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:546
-#: src/ui/TopBar.tsx:320
+#: src/ui/TopBar.tsx:307
 msgid "End activation"
 msgstr ""
 
@@ -8556,7 +8573,7 @@ msgid "if it stayed still"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:27
-#: src/ui/TopBar.tsx:512
+#: src/ui/TopBar.tsx:499
 msgid "Re-roll"
 msgstr ""
 
@@ -8952,165 +8969,169 @@ msgstr ""
 msgid "Go back a phase during the other player's turn?"
 msgstr ""
 
-#: src/ui/TopBar.tsx:221
+#: src/ui/TopBar.tsx:208
 msgid "{name} is playing…"
 msgstr ""
 
-#: src/ui/TopBar.tsx:226
+#: src/ui/TopBar.tsx:213
 msgid "Let the computer play"
 msgstr ""
 
-#: src/ui/TopBar.tsx:230
+#: src/ui/TopBar.tsx:217
 msgid "Previous phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:241
+#: src/ui/TopBar.tsx:228
 msgid "First turn:"
 msgstr ""
 
-#: src/ui/TopBar.tsx:254
+#: src/ui/TopBar.tsx:241
 msgid "Place your units in your zone"
 msgstr ""
 
-#: src/ui/TopBar.tsx:256
+#: src/ui/TopBar.tsx:243
 msgid "Joining the game…"
 msgstr ""
 
-#: src/ui/TopBar.tsx:258
+#: src/ui/TopBar.tsx:245
 msgid "Players are deploying"
 msgstr ""
 
-#: src/ui/TopBar.tsx:268
+#: src/ui/TopBar.tsx:255
 msgid "Round {round} of {rounds} · {side}"
 msgstr ""
 
-#: src/ui/TopBar.tsx:273
+#: src/ui/TopBar.tsx:260
 msgid "Round {round} · {side}"
 msgstr ""
 
-#: src/ui/TopBar.tsx:294
+#: src/ui/TopBar.tsx:281
 msgid "The roll-off lets you pick who goes first this round"
 msgstr ""
 
-#: src/ui/TopBar.tsx:297
+#: src/ui/TopBar.tsx:284
 msgid "Let {side} go first"
 msgstr ""
 
-#: src/ui/TopBar.tsx:312
+#: src/ui/TopBar.tsx:299
 msgid "Answer the open question first"
 msgstr ""
 
-#: src/ui/TopBar.tsx:327
+#: src/ui/TopBar.tsx:314
 msgid "Both passed: the round moves on"
 msgstr ""
 
-#: src/ui/TopBar.tsx:328
+#: src/ui/TopBar.tsx:315
 msgid "Pass; the other player goes next"
 msgstr ""
 
-#: src/ui/TopBar.tsx:338
+#: src/ui/TopBar.tsx:325
 msgid "Deploy, then Send to {name}"
 msgstr ""
 
-#: src/ui/TopBar.tsx:339
+#: src/ui/TopBar.tsx:326
 msgid "Waiting for {name} to start"
 msgstr ""
 
-#: src/ui/TopBar.tsx:347
+#: src/ui/TopBar.tsx:334
 msgid "Waiting for {names} to be ready"
 msgstr ""
 
-#: src/ui/TopBar.tsx:359
+#: src/ui/TopBar.tsx:346
 msgid "Start battle ▶"
 msgstr ""
 
-#: src/ui/TopBar.tsx:374
+#: src/ui/TopBar.tsx:361
 msgid "Pick one"
 msgstr ""
 
-#: src/ui/TopBar.tsx:384
+#: src/ui/TopBar.tsx:371
 msgid "Start anyway"
 msgstr ""
 
-#: src/ui/TopBar.tsx:384
+#: src/ui/TopBar.tsx:371
 msgid "Go on anyway"
 msgstr ""
 
-#: src/ui/TopBar.tsx:386
+#: src/ui/TopBar.tsx:373
 msgid "Not yet"
 msgstr ""
 
-#: src/ui/TopBar.tsx:393
+#: src/ui/TopBar.tsx:380
 msgid "Phase options"
 msgstr ""
 
-#: src/ui/TopBar.tsx:405
+#: src/ui/TopBar.tsx:392
 msgid "Skip to the next phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:417
+#: src/ui/TopBar.tsx:404
 msgid "Pause the computer"
 msgstr ""
 
-#: src/ui/TopBar.tsx:420
+#: src/ui/TopBar.tsx:407
 msgid "Advance their phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:421
+#: src/ui/TopBar.tsx:408
 msgid "Back a phase"
 msgstr ""
 
-#: src/ui/TopBar.tsx:431
+#: src/ui/TopBar.tsx:418
 msgid "Controls (?)"
 msgstr ""
 
-#: src/ui/TopBar.tsx:490
+#: src/ui/TopBar.tsx:477
 msgid "Already re-rolled this round"
 msgstr ""
 
-#: src/ui/TopBar.tsx:492
+#: src/ui/TopBar.tsx:479
 msgid "Re-roll the picked dice: once a round"
 msgstr ""
 
-#: src/ui/TopBar.tsx:493
+#: src/ui/TopBar.tsx:480
 msgid "Pick dice to re-roll first"
 msgstr ""
 
-#: src/ui/TopBar.tsx:497
+#: src/ui/TopBar.tsx:484
 msgid "Re-roll (once)"
 msgstr ""
 
-#: src/ui/TopBar.tsx:501
+#: src/ui/TopBar.tsx:488
 msgid "Keep these dice as they are: you give up this round's re-roll"
 msgstr ""
 
-#: src/ui/TopBar.tsx:511
+#: src/ui/TopBar.tsx:498
 msgid "Spend"
 msgstr ""
 
-#: src/ui/TopBar.tsx:553
-#: src/ui/TopBar.tsx:554
+#: src/ui/TopBar.tsx:540
+#: src/ui/TopBar.tsx:541
 msgid "Sound and dice"
 msgstr ""
 
-#: src/ui/TopBar.tsx:554
+#: src/ui/TopBar.tsx:541
 msgid "Sound muted"
 msgstr ""
 
-#: src/ui/TopBar.tsx:562
+#: src/ui/TopBar.tsx:549
 msgid "Sound"
 msgstr ""
 
-#: src/ui/TopBar.tsx:565
+#: src/ui/TopBar.tsx:552
 msgid "Volume"
 msgstr ""
 
-#: src/ui/TopBar.tsx:576
+#: src/ui/TopBar.tsx:563
 msgid "A quiet room under the game; the turn bell follows Sound"
 msgstr ""
 
-#: src/ui/TopBar.tsx:578
+#: src/ui/TopBar.tsx:565
 msgid "Table ambience"
+msgstr ""
+
+#: src/ui/TopBar.tsx:592
+msgid "Change {label}"
 msgstr ""
 
 #: src/ui/TopBar.tsx:69
@@ -9332,12 +9353,12 @@ msgid "Melee"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:49
-#: src/ui/eventText.ts:494
+#: src/ui/eventText.ts:505
 msgid "Moved"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:50
-#: src/ui/eventText.ts:495
+#: src/ui/eventText.ts:506
 msgid "Fell back"
 msgstr ""
 
@@ -9346,7 +9367,7 @@ msgid "Abilities ({n})"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:51
-#: src/ui/eventText.ts:496
+#: src/ui/eventText.ts:507
 msgid "Shot"
 msgstr ""
 
@@ -9355,7 +9376,7 @@ msgid "Models and wounds"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:52
-#: src/ui/eventText.ts:497
+#: src/ui/eventText.ts:508
 msgid "Charged"
 msgstr ""
 
@@ -9364,7 +9385,7 @@ msgid "Model height for line of sight"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:53
-#: src/ui/eventText.ts:498
+#: src/ui/eventText.ts:509
 msgid "Fought"
 msgstr ""
 
@@ -9885,768 +9906,763 @@ msgid "Ivory & red"
 msgstr ""
 
 #: src/ui/eventText.ts:100
+msgid "{side} scored {vp} VP (suggested {suggested}) · {why}"
+msgstr ""
+
+#: src/ui/eventText.ts:106
+msgid "{side} scored {vp} VP · {why}"
+msgstr ""
+
+#: src/ui/eventText.ts:111
 msgid "{name} picked new dice"
 msgstr ""
 
-#: src/ui/eventText.ts:101
+#: src/ui/eventText.ts:112
 msgid "{name} picked their colour's dice"
 msgstr ""
 
-#: src/ui/eventText.ts:107
+#: src/ui/eventText.ts:118
 msgid "{old} is now {name}"
 msgstr ""
 
-#: src/ui/eventText.ts:113
+#: src/ui/eventText.ts:124
 msgid "{name} cleared their army rules"
 msgstr ""
 
-#: src/ui/eventText.ts:116
+#: src/ui/eventText.ts:127
 msgid "{name} brought {detachment} ({n} rule)"
 msgid_plural "{name} brought {detachment} ({n} rules)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:120
+#: src/ui/eventText.ts:131
 msgid "{name} brought their army's rules ({n} rule)"
 msgid_plural "{name} brought their army's rules ({n} rules)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:132
+#: src/ui/eventText.ts:143
 msgid "{name} changed their colour"
 msgstr ""
 
-#: src/ui/eventText.ts:134
+#: src/ui/eventText.ts:145
 msgid "{name} restarted the clocks"
 msgstr ""
 
-#: src/ui/eventText.ts:136
+#: src/ui/eventText.ts:147
 msgid "The clocks stopped: a player is disconnected"
 msgstr ""
 
-#: src/ui/eventText.ts:137
+#: src/ui/eventText.ts:148
 msgid "{name} stopped the clocks"
 msgstr ""
 
-#: src/ui/eventText.ts:144
+#: src/ui/eventText.ts:155
 msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:147
+#: src/ui/eventText.ts:158
 msgid "{name} gave {side} {amount} on the clock"
 msgstr ""
 
-#: src/ui/eventText.ts:148
+#: src/ui/eventText.ts:159
 msgid "{name} took {amount} off {side}'s clock"
 msgstr ""
 
-#: src/ui/eventText.ts:151
+#: src/ui/eventText.ts:162
 msgid "{name} stopped playing for a campaign"
 msgstr ""
 
-#: src/ui/eventText.ts:153
+#: src/ui/eventText.ts:164
 msgid "{name} brought the campaign book {book}"
 msgstr ""
 
-#: src/ui/eventText.ts:156
+#: src/ui/eventText.ts:167
 msgid "{name} set the stakes: {territory}"
 msgstr ""
 
-#: src/ui/eventText.ts:157
+#: src/ui/eventText.ts:168
 msgid "{name} took the territory off the table"
 msgstr ""
 
-#: src/ui/eventText.ts:158
+#: src/ui/eventText.ts:169
 msgid "{book}: games from {name}'s copy were added to the table's"
 msgstr ""
 
-#: src/ui/eventText.ts:159
+#: src/ui/eventText.ts:170
 msgid "{book} recorded this game"
 msgstr ""
 
-#: src/ui/eventText.ts:159
+#: src/ui/eventText.ts:170
 msgid "{name} shared their copy of {book}"
 msgstr ""
 
-#: src/ui/eventText.ts:174
+#: src/ui/eventText.ts:185
 msgid "roll"
 msgstr ""
 
-#: src/ui/eventText.ts:184
+#: src/ui/eventText.ts:195
 msgid "{unit} {label}: {n} of {total} ({dice})"
 msgstr ""
 
-#: src/ui/eventText.ts:185
+#: src/ui/eventText.ts:196
 msgid "{label}: {n} of {total} ({dice})"
 msgstr ""
 
-#: src/ui/eventText.ts:187
+#: src/ui/eventText.ts:198
 msgid "{unit} {label} {need}+: {n} of {total} ({dice})"
 msgstr ""
 
-#: src/ui/eventText.ts:188
+#: src/ui/eventText.ts:199
 msgid "{label} {need}+: {n} of {total} ({dice})"
 msgstr ""
 
-#: src/ui/eventText.ts:195
+#: src/ui/eventText.ts:206
 msgid "{name} rolled {what} at {targets}: {results} (= {total})"
 msgstr ""
 
-#: src/ui/eventText.ts:205
+#: src/ui/eventText.ts:216
 msgid "{line} · made, up to {n}\""
 msgstr ""
 
-#: src/ui/eventText.ts:206
+#: src/ui/eventText.ts:217
 msgid "{line} · fails (needed {n})"
 msgstr ""
 
-#: src/ui/eventText.ts:209
-#: src/ui/eventText.ts:221
+#: src/ui/eventText.ts:220
+#: src/ui/eventText.ts:232
 msgid "{name} rolled {what}: {results}"
 msgstr ""
 
-#: src/ui/eventText.ts:215
+#: src/ui/eventText.ts:226
 msgid "{name} rolled {what}: {results} (= {total})"
 msgstr ""
 
-#: src/ui/eventText.ts:224
+#: src/ui/eventText.ts:235
 #: src/ui/gameLog.ts:328
 msgid "{name} took back an action"
 msgstr ""
 
-#: src/ui/eventText.ts:226
+#: src/ui/eventText.ts:237
 msgid "{name} deployed {unit} ({n})"
 msgstr ""
 
-#: src/ui/eventText.ts:228
+#: src/ui/eventText.ts:239
 msgid "{name} added {terrain}"
 msgstr ""
 
-#: src/ui/eventText.ts:230
+#: src/ui/eventText.ts:241
 msgid "{name} changed {terrain}"
 msgstr ""
 
-#: src/ui/eventText.ts:232
+#: src/ui/eventText.ts:243
 msgid "{name} removed terrain"
 msgstr ""
 
-#: src/ui/eventText.ts:235
+#: src/ui/eventText.ts:246
 msgid "{name} is ready"
 msgstr ""
 
-#: src/ui/eventText.ts:235
+#: src/ui/eventText.ts:246
 msgid "{name} is not ready yet"
 msgstr ""
 
-#: src/ui/eventText.ts:242
+#: src/ui/eventText.ts:253
 msgid "packages updated"
 msgstr ""
 
-#: src/ui/eventText.ts:244
+#: src/ui/eventText.ts:255
 msgid "Rules changed: {changes} (both players agreed)"
 msgstr ""
 
-#: src/ui/eventText.ts:246
+#: src/ui/eventText.ts:257
 msgid "Rules changed: {changes} (all players agreed)"
 msgstr ""
 
-#: src/ui/eventText.ts:247
+#: src/ui/eventText.ts:258
 msgid "Rules changed: {changes} (agreed)"
 msgstr ""
 
-#: src/ui/eventText.ts:252
+#: src/ui/eventText.ts:263
 msgid "Rules packages: {packages}"
 msgstr ""
 
-#: src/ui/eventText.ts:253
+#: src/ui/eventText.ts:264
 msgid "Rules packages: none (built-in rules only)"
 msgstr ""
 
-#: src/ui/eventText.ts:256
+#: src/ui/eventText.ts:267
 msgid "{name} proposed changing the rules: {changes}"
 msgstr ""
 
-#: src/ui/eventText.ts:258
+#: src/ui/eventText.ts:269
 msgid "no change"
 msgstr ""
 
-#: src/ui/eventText.ts:261
+#: src/ui/eventText.ts:272
 msgid "{name} accepted the rules change"
 msgstr ""
 
-#: src/ui/eventText.ts:263
+#: src/ui/eventText.ts:274
 msgid "{name} declined the rules change"
 msgstr ""
 
-#: src/ui/eventText.ts:265
+#: src/ui/eventText.ts:276
 msgid "{name} withdrew the rules change"
 msgstr ""
 
-#: src/ui/eventText.ts:267
+#: src/ui/eventText.ts:278
 msgid "{name} resynced from the host"
 msgstr ""
 
-#: src/ui/eventText.ts:272
+#: src/ui/eventText.ts:283
 msgid "{name} is playing without {packages}: their table may disagree"
 msgstr ""
 
-#: src/ui/eventText.ts:274
+#: src/ui/eventText.ts:285
 msgid "some of the rules"
 msgstr ""
 
-#: src/ui/eventText.ts:276
+#: src/ui/eventText.ts:287
 msgid "{name} now has the game's rules"
 msgstr ""
 
-#: src/ui/eventText.ts:281
 #: src/ui/eventText.ts:292
+#: src/ui/eventText.ts:303
 msgid "template"
 msgstr ""
 
-#: src/ui/eventText.ts:284
+#: src/ui/eventText.ts:295
 msgid "{name} moved the {template}"
 msgstr ""
 
-#: src/ui/eventText.ts:285
+#: src/ui/eventText.ts:296
 msgid "{name} placed the {template}"
 msgstr ""
 
-#: src/ui/eventText.ts:286
+#: src/ui/eventText.ts:297
 msgid "{name} removed the {template}"
 msgstr ""
 
-#: src/ui/eventText.ts:297
+#: src/ui/eventText.ts:308
 msgid "{name} rolled a hit: the {template} stays put"
 msgstr ""
 
-#: src/ui/eventText.ts:298
+#: src/ui/eventText.ts:309
 msgid "{name} rolled {roll} for the {template}: it doesn't move"
 msgstr ""
 
-#: src/ui/eventText.ts:302
+#: src/ui/eventText.ts:313
 msgid "{name} scattered the {template} {inches}\" towards the {direction}, off the table"
 msgstr ""
 
-#: src/ui/eventText.ts:303
+#: src/ui/eventText.ts:314
 msgid "{name} scattered the {template} {inches}\" towards the {direction}"
 msgstr ""
 
-#: src/ui/eventText.ts:307
+#: src/ui/eventText.ts:318
 msgid "{name} cleared the ruler"
 msgstr ""
 
-#: src/ui/eventText.ts:308
-#: src/ui/eventText.ts:516
+#: src/ui/eventText.ts:319
+#: src/ui/eventText.ts:527
 msgid "a model"
 msgstr ""
 
-#: src/ui/eventText.ts:308
+#: src/ui/eventText.ts:319
 msgid "a point"
 msgstr ""
 
-#: src/ui/eventText.ts:311
+#: src/ui/eventText.ts:322
 msgid "{name} measured {distance} ({from} to {to})"
 msgstr ""
 
-#: src/ui/eventText.ts:317
+#: src/ui/eventText.ts:328
 msgid "{name} measured {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:320
+#: src/ui/eventText.ts:331
 msgid "{name} moved an objective"
 msgstr ""
 
-#: src/ui/eventText.ts:323
+#: src/ui/eventText.ts:334
 msgid "{name} gave {unit} the figure {figure}"
 msgstr ""
 
-#: src/ui/eventText.ts:328
+#: src/ui/eventText.ts:339
 msgid "{name} took the figure off {unit}"
 msgstr ""
 
-#: src/ui/eventText.ts:330
+#: src/ui/eventText.ts:341
 msgid "{name} set {unit} height to {height}\""
 msgstr ""
 
-#: src/ui/eventText.ts:333
+#: src/ui/eventText.ts:344
 msgid "default"
 msgstr ""
 
-#: src/ui/eventText.ts:338
+#: src/ui/eventText.ts:349
 msgid "cover: Ballistic Skill 1 worse"
 msgstr ""
 
-#: src/ui/eventText.ts:338
+#: src/ui/eventText.ts:349
 msgid "cover +1 to save"
 msgstr ""
 
-#: src/ui/eventText.ts:341
+#: src/ui/eventText.ts:352
 msgid "line of sight: stand-in heights"
 msgstr ""
 
-#: src/ui/eventText.ts:343
+#: src/ui/eventText.ts:354
 msgid "line of sight: footprints"
 msgstr ""
 
-#: src/ui/eventText.ts:344
+#: src/ui/eventText.ts:355
 msgid "line of sight: true"
 msgstr ""
 
-#: src/ui/eventText.ts:346
+#: src/ui/eventText.ts:357
 msgid "vision all around"
 msgstr ""
 
-#: src/ui/eventText.ts:346
+#: src/ui/eventText.ts:357
 msgid "vision {deg}° arc"
 msgstr ""
 
-#: src/ui/eventText.ts:348
+#: src/ui/eventText.ts:359
 msgid "models block sight"
 msgstr ""
 
-#: src/ui/eventText.ts:348
+#: src/ui/eventText.ts:359
 msgid "models don't block sight"
 msgstr ""
 
-#: src/ui/eventText.ts:349
+#: src/ui/eventText.ts:360
 msgid "playing with real models (table companion)"
 msgstr ""
 
-#: src/ui/eventText.ts:351
+#: src/ui/eventText.ts:362
 msgid "{name} set {settings}"
 msgstr ""
 
-#: src/ui/eventText.ts:351
+#: src/ui/eventText.ts:362
 msgid "game settings"
 msgstr ""
 
-#: src/ui/eventText.ts:354
+#: src/ui/eventText.ts:365
 msgid "{name} attached {unit} to {other}"
 msgstr ""
 
-#: src/ui/eventText.ts:360
+#: src/ui/eventText.ts:371
 msgid "{unit} left {other}"
 msgstr ""
 
-#: src/ui/eventText.ts:365
+#: src/ui/eventText.ts:376
 msgid "{name} removed {unit}"
 msgstr ""
 
-#: src/ui/eventText.ts:375
+#: src/ui/eventText.ts:386
 msgid "{name} wheeled {unit} {deg}° right ({distance})"
 msgstr ""
 
-#: src/ui/eventText.ts:376
+#: src/ui/eventText.ts:387
 msgid "{name} wheeled {unit} {deg}° left ({distance})"
 msgstr ""
 
-#: src/ui/eventText.ts:378
+#: src/ui/eventText.ts:389
 msgid "{name} closed the door: {unit} lined up with its target ({distance})"
 msgstr ""
 
-#: src/ui/eventText.ts:379
+#: src/ui/eventText.ts:390
 msgid "{unit} charged {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:380
+#: src/ui/eventText.ts:391
 msgid "{unit} fled {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:381
+#: src/ui/eventText.ts:392
 msgid "{unit} pursued {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:383
-#: src/ui/eventText.ts:391
+#: src/ui/eventText.ts:394
+#: src/ui/eventText.ts:402
 msgid "{name} moved {unit} back {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:387
+#: src/ui/eventText.ts:398
 msgid "{name} moved {unit} sideways {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:39
-msgid "{name} turned models"
-msgstr ""
-
-#: src/ui/eventText.ts:392
+#: src/ui/eventText.ts:403
 msgid "{name} moved {unit} forward {distance}"
 msgstr ""
 
-#: src/ui/eventText.ts:405
+#: src/ui/eventText.ts:416
 msgid "{name} sent {unit} out as skirmishers"
 msgstr ""
 
-#: src/ui/eventText.ts:408
+#: src/ui/eventText.ts:419
 msgid "{name} put {unit} in column order"
 msgstr ""
 
-#: src/ui/eventText.ts:41
-msgid "{name} turned {unit}"
-msgstr ""
-
-#: src/ui/eventText.ts:410
-msgid "{name} put {unit} in open order"
-msgstr ""
-
-#: src/ui/eventText.ts:412
-msgid "{name} put {unit} in disrupted order"
-msgstr ""
-
-#: src/ui/eventText.ts:413
-msgid "{name} put {unit} in close order"
+#: src/ui/eventText.ts:42
+msgid "{distance} ({climb} of it climbing)"
 msgstr ""
 
 #: src/ui/eventText.ts:421
-msgid "{name} turned {unit} about{cost}"
+msgid "{name} put {unit} in open order"
 msgstr ""
 
 #: src/ui/eventText.ts:423
-msgid "{name} turned {unit} left{cost}"
+msgid "{name} put {unit} in disrupted order"
 msgstr ""
 
 #: src/ui/eventText.ts:424
-msgid "{name} turned {unit} right{cost}"
-msgstr ""
-
-#: src/ui/eventText.ts:428
-msgid "{name} redressed {unit} {files} wide{cost}"
-msgstr ""
-
-#: src/ui/eventText.ts:429
-msgid "{name} redressed {unit}{cost}"
-msgstr ""
-
-#: src/ui/eventText.ts:43
-msgid "{name} turned a model of {unit}"
-msgstr ""
-
-#: src/ui/eventText.ts:431
-msgid "{name} reformed {unit} {files} wide{cost}"
+msgid "{name} put {unit} in close order"
 msgstr ""
 
 #: src/ui/eventText.ts:432
+msgid "{name} turned {unit} about{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:434
+msgid "{name} turned {unit} left{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:435
+msgid "{name} turned {unit} right{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:439
+msgid "{name} redressed {unit} {files} wide{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:440
+msgid "{name} redressed {unit}{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:442
+msgid "{name} reformed {unit} {files} wide{cost}"
+msgstr ""
+
+#: src/ui/eventText.ts:443
 msgid "{name} reformed {unit}{cost}"
 msgstr ""
 
-#: src/ui/eventText.ts:44
+#: src/ui/eventText.ts:451
+msgid "{unit} snapped back to {inches}\""
+msgstr ""
+
+#: src/ui/eventText.ts:461
+msgid "{name} automated {unit}'s {ability}"
+msgstr ""
+
+#: src/ui/eventText.ts:466
+msgid "{name} stopped automating {unit}'s {ability}"
+msgstr ""
+
+#: src/ui/eventText.ts:477
+msgid "system {n}"
+msgstr ""
+
+#: src/ui/eventText.ts:479
+msgid "{name} marked {unit} damaged: {what}"
+msgstr ""
+
+#: src/ui/eventText.ts:480
+msgid "{name} cleared {unit}'s damage: {what}"
+msgstr ""
+
+#: src/ui/eventText.ts:482
+msgid "(placed dice lost: {faces})"
+msgstr ""
+
+#: src/ui/eventText.ts:486
+msgid "{unit} used {ability}"
+msgstr ""
+
+#: src/ui/eventText.ts:488
+msgid "{unit} is marching"
+msgstr ""
+
+#: src/ui/eventText.ts:488
+msgid "{unit} stopped marching"
+msgstr ""
+
+#: src/ui/eventText.ts:490
+msgid "{unit} is disrupted"
+msgstr ""
+
+#: src/ui/eventText.ts:490
+msgid "{unit} is no longer disrupted"
+msgstr ""
+
+#: src/ui/eventText.ts:491
+msgid "{unit} is fleeing"
+msgstr ""
+
+#: src/ui/eventText.ts:491
+msgid "{unit} rallied"
+msgstr ""
+
+#: src/ui/eventText.ts:494
+msgid "{unit} is under {spell}"
+msgstr ""
+
+#: src/ui/eventText.ts:494
+msgid "{spell} on {unit} ended"
+msgstr ""
+
+#: src/ui/eventText.ts:499
+msgid "{name} marked {unit} as fine: {check}"
+msgstr ""
+
+#: src/ui/eventText.ts:50
+msgid "{name} turned models"
+msgstr ""
+
+#: src/ui/eventText.ts:516
+msgid "{name} undid {unit}'s activation"
+msgstr ""
+
+#: src/ui/eventText.ts:518
+msgid "{name} marked {unit} {status}"
+msgstr ""
+
+#: src/ui/eventText.ts:519
+msgid "{name} cleared {status} on {unit}"
+msgstr ""
+
+#: src/ui/eventText.ts:52
+msgid "{name} turned {unit}"
+msgstr ""
+
+#: src/ui/eventText.ts:520
+msgid "{name} set {unit} {key} = {value}"
+msgstr ""
+
+#: src/ui/eventText.ts:523
+msgid "off"
+msgstr ""
+
+#: src/ui/eventText.ts:529
+msgid "{name} set wounds on {model} (destroyed)"
+msgstr ""
+
+#: src/ui/eventText.ts:530
+msgid "{name} set wounds on {model}"
+msgstr ""
+
+#: src/ui/eventText.ts:533
+msgid "Table set up"
+msgstr ""
+
+#: src/ui/eventText.ts:537
+msgid "Attack cancelled"
+msgstr ""
+
+#: src/ui/eventText.ts:54
+msgid "{name} turned a model of {unit}"
+msgstr ""
+
+#: src/ui/eventText.ts:543
+msgid " with {units}"
+msgstr ""
+
+#: src/ui/eventText.ts:55
 msgid "{name} turned {n} model of {unit}"
 msgid_plural "{name} turned {n} models of {unit}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:440
-msgid "{unit} snapped back to {inches}\""
-msgstr ""
-
-#: src/ui/eventText.ts:450
-msgid "{name} automated {unit}'s {ability}"
-msgstr ""
-
-#: src/ui/eventText.ts:455
-msgid "{name} stopped automating {unit}'s {ability}"
-msgstr ""
-
-#: src/ui/eventText.ts:46
-msgid "{name} moved models {distance}"
-msgstr ""
-
-#: src/ui/eventText.ts:466
-msgid "system {n}"
-msgstr ""
-
-#: src/ui/eventText.ts:468
-msgid "{name} marked {unit} damaged: {what}"
-msgstr ""
-
-#: src/ui/eventText.ts:469
-msgid "{name} cleared {unit}'s damage: {what}"
-msgstr ""
-
-#: src/ui/eventText.ts:471
-msgid "(placed dice lost: {faces})"
-msgstr ""
-
-#: src/ui/eventText.ts:475
-msgid "{unit} used {ability}"
-msgstr ""
-
-#: src/ui/eventText.ts:477
-msgid "{unit} is marching"
-msgstr ""
-
-#: src/ui/eventText.ts:477
-msgid "{unit} stopped marching"
-msgstr ""
-
-#: src/ui/eventText.ts:479
-msgid "{unit} is disrupted"
-msgstr ""
-
-#: src/ui/eventText.ts:479
-msgid "{unit} is no longer disrupted"
-msgstr ""
-
-#: src/ui/eventText.ts:48
-msgid "{name} moved {unit} {distance}"
-msgstr ""
-
-#: src/ui/eventText.ts:480
-msgid "{unit} is fleeing"
-msgstr ""
-
-#: src/ui/eventText.ts:480
-msgid "{unit} rallied"
-msgstr ""
-
-#: src/ui/eventText.ts:483
-msgid "{unit} is under {spell}"
-msgstr ""
-
-#: src/ui/eventText.ts:483
-msgid "{spell} on {unit} ended"
-msgstr ""
-
-#: src/ui/eventText.ts:488
-msgid "{name} marked {unit} as fine: {check}"
-msgstr ""
-
-#: src/ui/eventText.ts:50
-msgid "{name} moved a model of {unit} {distance}"
-msgstr ""
-
-#: src/ui/eventText.ts:505
-msgid "{name} undid {unit}'s activation"
-msgstr ""
-
-#: src/ui/eventText.ts:507
-msgid "{name} marked {unit} {status}"
-msgstr ""
-
-#: src/ui/eventText.ts:508
-msgid "{name} cleared {status} on {unit}"
-msgstr ""
-
-#: src/ui/eventText.ts:509
-msgid "{name} set {unit} {key} = {value}"
-msgstr ""
-
-#: src/ui/eventText.ts:51
-msgid "{name} moved {n} model of {unit} {distance}"
-msgid_plural "{name} moved {n} models of {unit} {distance}"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/ui/eventText.ts:512
-msgid "off"
-msgstr ""
-
-#: src/ui/eventText.ts:518
-msgid "{name} set wounds on {model} (destroyed)"
-msgstr ""
-
-#: src/ui/eventText.ts:519
-msgid "{name} set wounds on {model}"
-msgstr ""
-
-#: src/ui/eventText.ts:522
-msgid "Table set up"
-msgstr ""
-
-#: src/ui/eventText.ts:526
-msgid "Attack cancelled"
-msgstr ""
-
-#: src/ui/eventText.ts:532
-msgid " with {units}"
-msgstr ""
-
-#: src/ui/eventText.ts:541
+#: src/ui/eventText.ts:552
 msgid "{unit} activates ({n} action)"
 msgid_plural "{unit} activates ({n} actions)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:542
+#: src/ui/eventText.ts:553
 msgid "{unit} activates"
 msgstr ""
 
-#: src/ui/eventText.ts:546
+#: src/ui/eventText.ts:557
 msgid " at {unit}"
 msgstr ""
 
-#: src/ui/eventText.ts:548
+#: src/ui/eventText.ts:559
 msgid ", waiting on a reaction"
 msgstr ""
 
-#: src/ui/eventText.ts:549
+#: src/ui/eventText.ts:560
 msgid ", anyway ({why})"
 msgstr ""
 
-#: src/ui/eventText.ts:555
+#: src/ui/eventText.ts:566
 msgid "Reaction over"
 msgstr ""
 
-#: src/ui/eventText.ts:557
+#: src/ui/eventText.ts:568
 msgid "Roll closed"
 msgstr ""
 
-#: src/ui/eventText.ts:559
+#: src/ui/eventText.ts:57
+msgid "{name} moved models {distance}"
+msgstr ""
+
+#: src/ui/eventText.ts:570
 msgid "{name} passed"
 msgstr ""
 
-#: src/ui/eventText.ts:562
+#: src/ui/eventText.ts:573
 msgid "{unit} moved and ended its go"
 msgstr ""
 
-#: src/ui/eventText.ts:563
+#: src/ui/eventText.ts:574
 msgid "{name} ended the activation"
 msgstr ""
 
-#: src/ui/eventText.ts:565
+#: src/ui/eventText.ts:576
 msgid "{name} re-rolled or spent dice"
 msgstr ""
 
-#: src/ui/eventText.ts:569
-#: src/ui/eventText.ts:584
+#: src/ui/eventText.ts:580
+#: src/ui/eventText.ts:595
 msgid "a card"
 msgstr ""
 
-#: src/ui/eventText.ts:571
+#: src/ui/eventText.ts:582
 msgid "{name} placed a {face} on {unit}'s {weapon}"
 msgstr ""
 
-#: src/ui/eventText.ts:577
+#: src/ui/eventText.ts:588
 msgid "{name} placed a die on {unit}'s {weapon}"
 msgstr ""
 
-#: src/ui/eventText.ts:585
+#: src/ui/eventText.ts:59
+msgid "{name} moved {unit} {distance}"
+msgstr ""
+
+#: src/ui/eventText.ts:596
 msgid "{name} discarded the dice on {unit}'s {weapon}"
 msgstr ""
 
-#: src/ui/eventText.ts:594
+#: src/ui/eventText.ts:605
 msgid " {n} secret stayed behind: lock them in again."
 msgid_plural " {n} secrets stayed behind: lock them in again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:601
-msgid " \"{rule}\" was waiting on a player and didn't carry over."
-msgstr ""
-
-#: src/ui/eventText.ts:604
-msgid "What if: from {moment}.{secrets}{rule}"
+#: src/ui/eventText.ts:61
+msgid "{name} moved a model of {unit} {distance}"
 msgstr ""
 
 #: src/ui/eventText.ts:612
-#: src/ui/eventText.ts:631
-msgid "a secret"
-msgstr ""
-
-#: src/ui/eventText.ts:614
-msgid "{name} locked in {secret}: {n} cards, face down"
+msgid " \"{rule}\" was waiting on a player and didn't carry over."
 msgstr ""
 
 #: src/ui/eventText.ts:615
+msgid "What if: from {moment}.{secrets}{rule}"
+msgstr ""
+
+#: src/ui/eventText.ts:62
+msgid "{name} moved {n} model of {unit} {distance}"
+msgid_plural "{name} moved {n} models of {unit} {distance}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui/eventText.ts:623
+#: src/ui/eventText.ts:642
+msgid "a secret"
+msgstr ""
+
+#: src/ui/eventText.ts:625
+msgid "{name} locked in {secret}: {n} cards, face down"
+msgstr ""
+
+#: src/ui/eventText.ts:626
 msgid "{name} locked in {secret}"
 msgstr ""
 
-#: src/ui/eventText.ts:633
+#: src/ui/eventText.ts:644
 msgid "{name} revealed {secret}: {shown}"
 msgstr ""
 
-#: src/ui/eventText.ts:634
+#: src/ui/eventText.ts:645
 msgid "{name} revealed {secret}: {shown} (didn't match what was locked in)"
 msgstr ""
 
-#: src/ui/eventText.ts:637
+#: src/ui/eventText.ts:648
 msgid "Game: {system}"
 msgstr ""
 
-#: src/ui/eventText.ts:654
+#: src/ui/eventText.ts:665
 msgid "{name} used {action} on {unit} ({spent})"
 msgstr ""
 
-#: src/ui/eventText.ts:655
+#: src/ui/eventText.ts:666
 msgid "{name} used {action} on {unit}"
 msgstr ""
 
-#: src/ui/eventText.ts:656
+#: src/ui/eventText.ts:667
 msgid "{name} used {action} ({spent})"
 msgstr ""
 
-#: src/ui/eventText.ts:656
+#: src/ui/eventText.ts:667
 msgid "{name} used {action}"
 msgstr ""
 
-#: src/ui/eventText.ts:659
+#: src/ui/eventText.ts:670
 msgid "{unit}: {ability} applied"
 msgstr ""
 
-#: src/ui/eventText.ts:663
+#: src/ui/eventText.ts:674
 msgid "{unit} went into reserves"
 msgstr ""
 
-#: src/ui/eventText.ts:665
+#: src/ui/eventText.ts:676
 msgid "{unit} back on the table"
 msgstr ""
 
-#: src/ui/eventText.ts:666
+#: src/ui/eventText.ts:677
 msgid "{unit} arrives from reserves"
 msgstr ""
 
-#: src/ui/eventText.ts:669
+#: src/ui/eventText.ts:680
 msgid "{unit} may move up to {inches}\" ({flag})"
 msgstr ""
 
-#: src/ui/eventText.ts:67
-#: src/ui/gameLog.ts:172
-#: src/ui/gameLog.ts:301
-#: src/ui/gameLog.ts:311
-#: src/ui/highlights.ts:54
-msgid "Someone"
-msgstr ""
-
-#: src/ui/eventText.ts:675
+#: src/ui/eventText.ts:686
 msgid "{name} chose the order their models take wounds"
 msgstr ""
 
-#: src/ui/eventText.ts:683
+#: src/ui/eventText.ts:694
 msgid "{xp} XP"
 msgstr ""
 
-#: src/ui/eventText.ts:684
+#: src/ui/eventText.ts:695
 msgid "honour: {honour}"
 msgstr ""
 
-#: src/ui/eventText.ts:685
+#: src/ui/eventText.ts:696
 msgid "scar: {scar}"
 msgstr ""
 
-#: src/ui/eventText.ts:69
-#: src/ui/eventText.ts:361
-#: src/ui/gameLog.ts:435
-#: src/ui/gameLog.ts:510
-#: src/ui/gameLog.ts:511
-#: src/ui/gameLog.ts:536
-msgid "a unit"
-msgstr ""
-
-#: src/ui/eventText.ts:697
+#: src/ui/eventText.ts:708
 msgid "{unit} is {status}"
 msgstr ""
 
-#: src/ui/eventText.ts:698
+#: src/ui/eventText.ts:709
 msgid "{unit} is no longer {status}"
 msgstr ""
 
-#: src/ui/eventText.ts:701
+#: src/ui/eventText.ts:712
 msgid "{unit} destroyed"
 msgstr ""
 
-#: src/ui/eventText.ts:706
+#: src/ui/eventText.ts:717
 #: src/ui/gameLog.ts:443
 #: src/ui/gameLog.ts:479
 msgid "{n} wound lost"
@@ -10654,60 +10670,69 @@ msgid_plural "{n} wounds lost"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/eventText.ts:72
-msgid "{name} joined"
-msgstr ""
-
-#: src/ui/eventText.ts:723
+#: src/ui/eventText.ts:734
 msgid "bottom-right"
 msgstr ""
 
-#: src/ui/eventText.ts:724
+#: src/ui/eventText.ts:735
 msgid "bottom"
 msgstr ""
 
-#: src/ui/eventText.ts:725
+#: src/ui/eventText.ts:736
 msgid "bottom-left"
 msgstr ""
 
-#: src/ui/eventText.ts:727
+#: src/ui/eventText.ts:738
 msgid "top-left"
 msgstr ""
 
-#: src/ui/eventText.ts:728
+#: src/ui/eventText.ts:739
 msgid "top"
 msgstr ""
 
-#: src/ui/eventText.ts:729
+#: src/ui/eventText.ts:740
 msgid "top-right"
 msgstr ""
 
-#: src/ui/eventText.ts:76
-msgid "{name} took their seat"
-msgstr ""
-
-#: src/ui/eventText.ts:77
-msgid "{name} reconnected"
+#: src/ui/eventText.ts:78
+#: src/ui/gameLog.ts:172
+#: src/ui/gameLog.ts:301
+#: src/ui/gameLog.ts:311
+#: src/ui/highlights.ts:54
+msgid "Someone"
 msgstr ""
 
 #: src/ui/eventText.ts:80
+#: src/ui/eventText.ts:372
+#: src/ui/gameLog.ts:435
+#: src/ui/gameLog.ts:510
+#: src/ui/gameLog.ts:511
+#: src/ui/gameLog.ts:536
+msgid "a unit"
+msgstr ""
+
+#: src/ui/eventText.ts:83
+msgid "{name} joined"
+msgstr ""
+
+#: src/ui/eventText.ts:87
+msgid "{name} took their seat"
+msgstr ""
+
+#: src/ui/eventText.ts:88
+msgid "{name} reconnected"
+msgstr ""
+
+#: src/ui/eventText.ts:91
 msgid "{name} chose the mission {mission}"
 msgstr ""
 
-#: src/ui/eventText.ts:81
+#: src/ui/eventText.ts:92
 msgid "{name} chose no mission: scoring by hand"
 msgstr ""
 
-#: src/ui/eventText.ts:86
+#: src/ui/eventText.ts:97
 msgid "{side} passed on {why}"
-msgstr ""
-
-#: src/ui/eventText.ts:89
-msgid "{side} scored {vp} VP (suggested {suggested}) · {why}"
-msgstr ""
-
-#: src/ui/eventText.ts:95
-msgid "{side} scored {vp} VP · {why}"
 msgstr ""
 
 #: src/ui/gameLog.ts:128

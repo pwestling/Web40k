@@ -280,6 +280,8 @@ type Drag = {
   grab: Vec2;
   to: Vec2;
   moved: boolean;
+  /** The unit actually under the press, when it was steered to the selected unit (UX 435). */
+  tapped?: string;
   /** Height of the plane the pointer is tracked on (the grabbed model's floor). */
   planeZ: number;
 } & (
@@ -454,6 +456,8 @@ function Scene() {
       setDrag(null);
       hand.current = null;
       if (d?.kind === "box") pickInBox(camera, gl.domElement, canControl, select);
+      // A tap (no drag) on the neighbour the press was steered away from selects the neighbour (UX 435).
+      if (d?.kind === "models" && !d.moved && d.tapped) select(d.tapped);
       if (!d || !d.moved) return;
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
@@ -858,7 +862,29 @@ function Scene() {
     return best?.id ?? null;
   };
 
-  const onModelDown = (m: Model, shift: boolean, e?: PointerEvent) => {
+  /** A model of the selected unit within a finger's width of the press, if the press landed on another unit. */
+  const selectedNear = (e: PointerEvent, hit: Model): Model | null => {
+    const selected = useStore.getState().selected;
+    const unit = selected && selected !== hit.unitId ? game.units[selected] : undefined;
+    if (!unit) return null;
+    const rect = gl.domElement.getBoundingClientRect();
+    const slop = e.pointerType === "touch" ? 32 : 16;
+    let best: { m: Model; d: number } | null = null;
+    for (const m of aliveModels(game, unit)) {
+      const v = new Vector3(m.position.x, (m.z ?? 0) + modelHeight(m) / 2, m.position.y).project(camera);
+      const d = Math.hypot(
+        e.clientX - (rect.left + ((v.x + 1) / 2) * rect.width),
+        e.clientY - (rect.top + ((1 - v.y) / 2) * rect.height),
+      );
+      if (d < slop && (!best || d < best.d)) best = { m, d };
+    }
+    return best?.m ?? null;
+  };
+
+  const onModelDown = (hit: Model, shift: boolean, e?: PointerEvent) => {
+    // With a unit selected, a press near its models picks it, not the neighbour drawn in front;
+    // switching to the neighbour takes a tap on it first (UX 435).
+    const m = (e && !useTouch.getState().picked.length && selectedNear(e, hit)) || hit;
     // A second finger is a pinch or twist, never a drag of the model it lands on (PX touch pass).
     if (e?.pointerType === "touch" && touchCount.current > 1) return;
     if (e?.pointerType === "touch") {
@@ -920,6 +946,7 @@ function Scene() {
       moved: false,
       planeZ: m.z ?? 0,
       ...(group ? {} : { unitId: unit?.id }),
+      ...(m !== hit && hit.unitId ? { tapped: hit.unitId } : {}),
     });
   };
 

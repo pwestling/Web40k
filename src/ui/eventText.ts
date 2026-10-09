@@ -19,6 +19,7 @@ import { chargeNeeded } from "../systems/wh40k/charge";
 /** "Ann moved Troopers 6.0"": how far the furthest model moved, counting climbs. */
 export function moveText(who: string, before: GameState, after: GameState, ids: string[]): string {
   let far = 0;
+  let climbed = 0;
   let unitId: string | undefined;
   for (const id of ids) {
     const a = before.models[id];
@@ -26,14 +27,24 @@ export function moveText(who: string, before: GameState, after: GameState, ids: 
     if (!a || !b) continue;
     unitId ??= a.unitId;
     // Measured as the unit card measures moves: across the table plus any climb.
-    const d =
-      Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y) +
-      Math.abs((b.z ?? 0) - (a.z ?? 0));
-    far = Math.max(far, d);
+    const climb = Math.abs((b.z ?? 0) - (a.z ?? 0));
+    const d = Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y) + climb;
+    if (d > far) {
+      far = d;
+      climbed = climb;
+    }
   }
   const unit = unitId ? after.units[unitId] : undefined;
   const whole = unit && ids.length >= unit.modelIds.length;
-  const p = { name: who, unit: unit?.name ?? "", distance: distanceText(after, far) };
+  // A climb counts, and says so: a 2" step onto a crate read as a long move (UX 438).
+  const distance =
+    climbed >= 0.05
+      ? t("{distance} ({climb} of it climbing)", {
+          distance: distanceText(after, far),
+          climb: distanceText(after, climbed),
+        })
+      : distanceText(after, far);
+  const p = { name: who, unit: unit?.name ?? "", distance };
   if (far < 0.05)
     return !unit
       ? t("{name} turned models", p)
