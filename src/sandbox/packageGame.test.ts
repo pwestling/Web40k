@@ -6,6 +6,7 @@ import { shapeProblems, lineOf } from "../core/content/shape";
 import { SandboxEngine } from "./engine";
 import { seededRng } from "./protocol";
 import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
+import brinewatch from "../../games/brinewatch/brinewatch.js?raw";
 import gallery from "../../docs/community-modules.md?raw";
 import { fingerprint, sha256 } from "../packages/manifest";
 
@@ -132,6 +133,12 @@ describe("the community gallery", () => {
   it("lists Rift Lanterns with the fingerprint of the file in the repo", async () => {
     const hash = await sha256(new TextEncoder().encode(riftLanterns));
     const row = gallery.split("\n").find((l) => l.startsWith("| [Rift Lanterns]"));
+    expect(row).toContain(`\`${fingerprint(hash)}\``);
+  });
+
+  it("lists Brinewatch with the fingerprint of the file in the repo", async () => {
+    const hash = await sha256(new TextEncoder().encode(brinewatch));
+    const row = gallery.split("\n").find((l) => l.startsWith("| [Brinewatch]"));
     expect(row).toContain(`\`${fingerprint(hash)}\``);
   });
 });

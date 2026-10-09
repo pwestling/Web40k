@@ -1,0 +1,909 @@
+{
+  "id": "brinewatch",
+  "name": "Brinewatch",
+  "version": "1.0.0",
+  "licence": "CC BY 4.0",
+  "intro": "A skirmish game for two players, about an hour long, played with a crew of five to ten models each. At low tide the drowned harbour town of Brinewatch comes up out of the sea, and three crews climb its broken towers for what the water left.",
+  "sections": [
+    {
+      "id": "need",
+      "title": "What you need",
+      "text": "A table 30\" x 22\", a tape measure in inches, a handful of six-sided dice, and a crew each: your own models or the print-and-play stand-ins. Put plenty of terrain on the table, some of it tall: ruins with upper floors, reed beds (a fluffy cloth will do) and a couple of hulks (boxes).\n\nOn a screen, Open Battle measures, rolls and keeps every rule. At a real table it keeps the score: open it on a phone and pick **At a real table**."
+    },
+    {
+      "id": "turn",
+      "title": "Rounds and goes",
+      "text": "The game lasts **4 rounds**. Each model is its own unit. In each round players take turns giving one **ready** model its **go**, starting with the player who goes first, until every model is **expended**. Then all are ready again.\n- A model's go has **2 action points** (AP). Spend them on the actions below, in any order and mix. Its go ends when they are spent, or when its player ends it.\n- When one player has no ready models left, the other gives theirs their goes in turn.\n- A model can't be activated twice in a round."
+    },
+    {
+      "id": "actions",
+      "title": "Actions",
+      "text": "1. **Move (1 AP):** up to its Move in inches. Climbing up or down counts: a floor is 3\" up. A second Move costs another point. Hulks can't be walked through.\n2. **Shoot (1 AP):** at an enemy it can see within its Range, if no enemy is within 1\" of it. Once a go.\n3. **Fight (1 AP):** an enemy within 1\". Once a go.\n4. **Stand guard (1 AP):** it watches; this ends its go, whatever it has left.\n5. **Emerge (1 AP):** a hidden Lurker comes out of its hideout."
+    },
+    {
+      "id": "shooting",
+      "title": "Shooting",
+      "text": "Roll the shooter's **Shoot** dice. Each die that rolls its **Hits on** number or higher hits. The target rolls a die for each hit; each that rolls its **Saves on** number or higher saves it. Each hit not saved takes a wound; a model with no wounds left is **out of action**.\n- **Cover:** a target in or behind a ruin or reed bed, from the shooter's view, saves on one less (a 4+ save becomes 3+).\n- **Obscured:** a shot through a reed bed neither model stands in needs one more to hit.\n- **Vantage:** a shooter standing 2\" or more higher than its target (up a floor) takes its cover away. A model with **Long Eye** also hits on one less with vantage."
+    },
+    {
+      "id": "fighting",
+      "title": "Fighting",
+      "text": "The attacker rolls its **Fight** dice and hits and wounds as when shooting (no cover in a fight). If the target is still standing, it strikes back the same way."
+    },
+    {
+      "id": "guard",
+      "title": "Standing guard",
+      "text": "A model on guard watches until it fires or the round ends. The first time an enemy model **ends a move**, **emerges**, or **goes to shoot or fight** where the guard can see it and has it in Range (and no enemy is within 1\" of the guard), the guard fires at it at once, before that enemy's shot or blow: a **snap shot** that needs one more to hit. Then it is off guard."
+    },
+    {
+      "id": "lurkers",
+      "title": "Hidden lurkers",
+      "text": "Each crew has a **Lurker**. As the first round starts, the Lurkers are set aside, and each player secretly picks one of their three **hideouts** for each of their Lurkers: west, middle or east, 4.5\" ahead of their deployment strip. Write it down; Open Battle keeps the choice sealed on your device.\n- A hidden Lurker's go can be spent hiding (end it at once), or on **Emerge**: reveal the hideout and set it up there, then spend its other point.\n- Any Lurker still hidden when round 3 begins emerges then, without spending a go."
+    },
+    {
+      "id": "markers",
+      "title": "Holding a marker",
+      "text": "A side **holds** a marker when it has more models within 2\" of it than the other side (the bells: within 3\" and standing 2\" or more up). Nobody holds it on a tie. The side with more victory points after round 4 wins."
+    },
+    {
+      "id": "campaign",
+      "title": "The campaign",
+      "text": "Play the three missions in order with the same crews, and keep a campaign book (Open Battle's **Campaign** keeps it for you). After each game:\n- **Experience:** each model gets 1 for coming through and 1 for each enemy it took out (2 at most).\n- **Honours:** at 3 and at 6 experience, roll a D3: 1 **Keen Eye** (hits on one less shooting), 2 **Brawler** (+1 Fight), 3 **Fleet** (+1\" Move). Already have it? Take the next.\n- **Scars:** a model taken out rolls a D6: 1 **Lost** (it sits out every later game), 2 **Limp** (-1\" Move), 3 **Shaky Hand** (needs one more to hit shooting), 4-6 it walks it off.\nThe crew with more wins after three games takes the town."
+    }
+  ],
+  "quickRef": [
+    "**4 rounds.** Take turns giving one ready model its go; it's then expended.",
+    "**A go: 2 AP.** Move, Shoot, Fight 1 each (Shoot and Fight once a go); Stand guard 1 and ends the go.",
+    "**Shoot:** see it, in Range, no enemy within 1\". Hits on Hits on; one more if Obscured.",
+    "**Cover:** saves on one less. **Vantage** (2\" higher) takes cover away.",
+    "**Guard:** snap shot (one more to hit) at the first enemy that moves, shoots or fights in sight.",
+    "**Lurkers:** hide in a secret hideout; Emerge (1 AP) reveals it."
+  ],
+  "rounds": 4,
+  "table": {
+    "width": 30,
+    "depth": 22
+  },
+  "characteristics": [
+    {
+      "id": "M",
+      "name": "Move",
+      "type": "distance",
+      "format": "{v}\""
+    },
+    {
+      "id": "Shoot",
+      "name": "Shoot",
+      "type": "number"
+    },
+    {
+      "id": "Range",
+      "name": "Range",
+      "type": "distance",
+      "format": "{v}\""
+    },
+    {
+      "id": "Fight",
+      "name": "Fight",
+      "type": "number"
+    },
+    {
+      "id": "Hit",
+      "name": "Hits on",
+      "type": "number",
+      "format": "{v}+"
+    },
+    {
+      "id": "Save",
+      "name": "Saves on",
+      "type": "number",
+      "format": "{v}+"
+    },
+    {
+      "id": "W",
+      "name": "Wounds",
+      "type": "number"
+    }
+  ],
+  "terrain": [
+    {
+      "id": "ruin",
+      "name": "Ruin",
+      "does": "cover"
+    },
+    {
+      "id": "reeds",
+      "name": "Reed bed",
+      "does": "cover"
+    },
+    {
+      "id": "hulk",
+      "name": "Hulk",
+      "does": "can't be walked through; blocks sight"
+    },
+    {
+      "id": "open",
+      "name": "Open ground",
+      "does": "no effect"
+    }
+  ],
+  "armies": [
+    {
+      "name": "Tollkeepers",
+      "about": "Harbour wardens with long guns, holding the watchtowers.",
+      "color": "#b8863b",
+      "points": 100,
+      "rule": {
+        "name": "Steady Watch",
+        "text": "Their guard shots hit as normal shots do (no snap penalty)."
+      },
+      "units": [
+        {
+          "name": "Captain Orrin",
+          "count": 1,
+          "baseMm": 32,
+          "look": {
+            "shape": "brute",
+            "color": "#b8863b",
+            "gear": [
+              "shield"
+            ]
+          },
+          "points": 20,
+          "stats": {
+            "M": "6",
+            "Shoot": "3",
+            "Range": "18",
+            "Fight": "3",
+            "Hit": "3",
+            "Save": "4",
+            "W": "4"
+          },
+          "role": "Toll Captain",
+          "abilities": [
+            {
+              "name": "Leader",
+              "text": "The crew's leader. Some missions score for taking it out."
+            }
+          ]
+        },
+        {
+          "name": "Ness",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "pole"
+            ]
+          },
+          "points": 15,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "30",
+            "Fight": "1",
+            "Hit": "3",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Long-gun",
+          "abilities": [
+            {
+              "name": "Long Eye",
+              "text": "With vantage, its shots hit on one less."
+            }
+          ]
+        },
+        {
+          "name": "Harl",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "pole"
+            ]
+          },
+          "points": 15,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "30",
+            "Fight": "1",
+            "Hit": "3",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Long-gun",
+          "abilities": [
+            {
+              "name": "Long Eye",
+              "text": "With vantage, its shots hit on one less."
+            }
+          ]
+        },
+        {
+          "name": "Brack",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "shield"
+            ]
+          },
+          "points": 13,
+          "stats": {
+            "M": "6",
+            "Shoot": "2",
+            "Range": "20",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "4",
+            "W": "3"
+          },
+          "role": "Warden"
+        },
+        {
+          "name": "Tamsin",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "shield"
+            ]
+          },
+          "points": 13,
+          "stats": {
+            "M": "6",
+            "Shoot": "2",
+            "Range": "20",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "4",
+            "W": "3"
+          },
+          "role": "Warden"
+        },
+        {
+          "name": "Joss",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "shield"
+            ]
+          },
+          "points": 13,
+          "stats": {
+            "M": "6",
+            "Shoot": "2",
+            "Range": "20",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "4",
+            "W": "3"
+          },
+          "role": "Warden"
+        },
+        {
+          "name": "Pim",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#b8863b",
+            "gear": [
+              "hunched"
+            ]
+          },
+          "points": 11,
+          "stats": {
+            "M": "7",
+            "Shoot": "2",
+            "Range": "12",
+            "Fight": "2",
+            "Hit": "4",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Tide-rat",
+          "abilities": [
+            {
+              "name": "Lurker",
+              "text": "Hides in a secret hideout at the start of the battle, and emerges there when it acts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gullrunners",
+      "about": "Quick smugglers with hooks and knives.",
+      "color": "#3f8f8a",
+      "points": 100,
+      "rule": {
+        "name": "Slippery",
+        "text": "Guard shots at them need one more to hit."
+      },
+      "units": [
+        {
+          "name": "Mother Skerry",
+          "count": 1,
+          "baseMm": 32,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "blades"
+            ]
+          },
+          "points": 18,
+          "stats": {
+            "M": "7",
+            "Shoot": "2",
+            "Range": "12",
+            "Fight": "4",
+            "Hit": "3",
+            "Save": "5",
+            "W": "4"
+          },
+          "role": "Gull Boss",
+          "abilities": [
+            {
+              "name": "Leader",
+              "text": "The crew's leader. Some missions score for taking it out."
+            }
+          ]
+        },
+        {
+          "name": "Fin",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "blades"
+            ]
+          },
+          "points": 11,
+          "stats": {
+            "M": "7",
+            "Shoot": "1",
+            "Range": "8",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Cutter"
+        },
+        {
+          "name": "Wick",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "blades"
+            ]
+          },
+          "points": 11,
+          "stats": {
+            "M": "7",
+            "Shoot": "1",
+            "Range": "8",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Cutter"
+        },
+        {
+          "name": "Dace",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "blades"
+            ]
+          },
+          "points": 11,
+          "stats": {
+            "M": "7",
+            "Shoot": "1",
+            "Range": "8",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Cutter"
+        },
+        {
+          "name": "Rook",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "blades"
+            ]
+          },
+          "points": 11,
+          "stats": {
+            "M": "7",
+            "Shoot": "1",
+            "Range": "8",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Cutter"
+        },
+        {
+          "name": "Sable",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "cog"
+            ]
+          },
+          "points": 13,
+          "stats": {
+            "M": "6",
+            "Shoot": "3",
+            "Range": "18",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "6",
+            "W": "2"
+          },
+          "role": "Hookshot"
+        },
+        {
+          "name": "Lugg",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "cog"
+            ]
+          },
+          "points": 13,
+          "stats": {
+            "M": "6",
+            "Shoot": "3",
+            "Range": "18",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "6",
+            "W": "2"
+          },
+          "role": "Hookshot"
+        },
+        {
+          "name": "Mudskulk",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "trooper",
+            "color": "#3f8f8a",
+            "gear": [
+              "hunched"
+            ]
+          },
+          "points": 12,
+          "stats": {
+            "M": "7",
+            "Shoot": "1",
+            "Range": "10",
+            "Fight": "3",
+            "Hit": "3",
+            "Save": "5",
+            "W": "2"
+          },
+          "role": "Lurker",
+          "abilities": [
+            {
+              "name": "Lurker",
+              "text": "Hides in a secret hideout at the start of the battle, and emerges there when it acts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Deepkin",
+      "about": "A shell-backed choir that walks up out of the water.",
+      "color": "#7b5aa6",
+      "points": 100,
+      "rule": {
+        "name": "Undertow",
+        "text": "A Deepkin model that takes an enemy out in a fight gets 1 action point back."
+      },
+      "units": [
+        {
+          "name": "Abbess Maren",
+          "count": 1,
+          "baseMm": 32,
+          "height": 2.4,
+          "look": {
+            "shape": "robed",
+            "color": "#7b5aa6"
+          },
+          "points": 22,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "16",
+            "Fight": "4",
+            "Hit": "3",
+            "Save": "3",
+            "W": "5"
+          },
+          "role": "Abbess of the Deep",
+          "abilities": [
+            {
+              "name": "Leader",
+              "text": "The crew's leader. Some missions score for taking it out."
+            }
+          ]
+        },
+        {
+          "name": "Corran",
+          "count": 1,
+          "baseMm": 28,
+          "height": 1.8,
+          "look": {
+            "shape": "mound",
+            "color": "#7b5aa6"
+          },
+          "points": 16,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "16",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "3",
+            "W": "3"
+          },
+          "role": "Shellguard"
+        },
+        {
+          "name": "Tull",
+          "count": 1,
+          "baseMm": 28,
+          "height": 1.8,
+          "look": {
+            "shape": "mound",
+            "color": "#7b5aa6"
+          },
+          "points": 16,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "16",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "3",
+            "W": "3"
+          },
+          "role": "Shellguard"
+        },
+        {
+          "name": "Vesk",
+          "count": 1,
+          "baseMm": 28,
+          "height": 1.8,
+          "look": {
+            "shape": "mound",
+            "color": "#7b5aa6"
+          },
+          "points": 16,
+          "stats": {
+            "M": "5",
+            "Shoot": "2",
+            "Range": "16",
+            "Fight": "3",
+            "Hit": "4",
+            "Save": "3",
+            "W": "3"
+          },
+          "role": "Shellguard"
+        },
+        {
+          "name": "Ilse",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "robed",
+            "color": "#7b5aa6"
+          },
+          "points": 16,
+          "stats": {
+            "M": "5",
+            "Shoot": "3",
+            "Range": "24",
+            "Fight": "1",
+            "Hit": "4",
+            "Save": "4",
+            "W": "3"
+          },
+          "role": "Choir-diver",
+          "abilities": [
+            {
+              "name": "Long Eye",
+              "text": "With vantage, its shots hit on one less."
+            }
+          ]
+        },
+        {
+          "name": "The Drowned One",
+          "count": 1,
+          "baseMm": 28,
+          "look": {
+            "shape": "robed",
+            "color": "#7b5aa6",
+            "gear": [
+              "hunched"
+            ]
+          },
+          "points": 14,
+          "stats": {
+            "M": "6",
+            "Shoot": "1",
+            "Range": "8",
+            "Fight": "4",
+            "Hit": "3",
+            "Save": "4",
+            "W": "3"
+          },
+          "role": "Drowned One",
+          "abilities": [
+            {
+              "name": "Lurker",
+              "text": "Hides in a secret hideout at the start of the battle, and emerges there when it acts."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "id": "salvage",
+      "name": "Low Tide Salvage",
+      "summary": "Three salvage caches lie across the middle of the town. At the end of each round, each side scores 1 for each cache it holds.",
+      "scoring": [
+        "Caches held"
+      ],
+      "objectives": [
+        {
+          "label": "West cache",
+          "x": -10,
+          "y": 0
+        },
+        {
+          "label": "Middle cache",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "label": "East cache",
+          "x": 10,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "id": "bells",
+      "name": "The Bell Towers",
+      "summary": "A warning bell hangs on the top floor of each tall ruin. From round 2, at the end of each round, each side scores 2 for each bell it holds from up on the floors.",
+      "scoring": [
+        "Bells held"
+      ],
+      "objectives": [
+        {
+          "label": "West bell",
+          "x": -10.4,
+          "y": 0.1
+        },
+        {
+          "label": "East bell",
+          "x": 10.4,
+          "y": -0.1
+        }
+      ]
+    },
+    {
+      "id": "cut-the-line",
+      "name": "Cut the Line",
+      "summary": "One marker in the middle: holding it at the end of a round scores 1. At the end of the game, the enemy Leader out of action scores 3, and half or more of their crew out of action scores 2.",
+      "scoring": [
+        "The line",
+        "Leader out",
+        "Crew broken"
+      ],
+      "objectives": [
+        {
+          "label": "The line",
+          "x": 0,
+          "y": 0
+        }
+      ]
+    }
+  ],
+  "words": {
+    "army": "crew",
+    "armies": "crews",
+    "unit": "model",
+    "units": "models",
+    "marker": "marker",
+    "markers": "markers",
+    "reach": 2
+  },
+  "terrainColors": {
+    "reeds": "#6f8f4e",
+    "hulk": "#5b4636"
+  },
+  "map": {
+    "pieces": [
+      {
+        "name": "Tall ruin",
+        "category": "ruin",
+        "x": -9,
+        "y": 1.5,
+        "width": 8,
+        "depth": 8,
+        "facing": 0
+      },
+      {
+        "name": "Tall ruin",
+        "category": "ruin",
+        "x": 9,
+        "y": -1.5,
+        "width": 8,
+        "depth": 8,
+        "facing": 3.14
+      },
+      {
+        "name": "Woods",
+        "category": "reeds",
+        "x": 3.5,
+        "y": 4,
+        "width": 9,
+        "depth": 6,
+        "facing": 0
+      },
+      {
+        "name": "Woods",
+        "category": "reeds",
+        "x": -3.5,
+        "y": -4,
+        "width": 9,
+        "depth": 6,
+        "facing": 3.14
+      },
+      {
+        "name": "Barricade",
+        "category": "ruin",
+        "x": -1.5,
+        "y": 2.5,
+        "width": 5,
+        "depth": 1.5,
+        "facing": 0
+      },
+      {
+        "name": "Barricade",
+        "category": "ruin",
+        "x": 1.5,
+        "y": -2.5,
+        "width": 5,
+        "depth": 1.5,
+        "facing": 3.14
+      },
+      {
+        "name": "Container",
+        "category": "hulk",
+        "x": 13,
+        "y": 3.5,
+        "width": 5,
+        "depth": 2.5,
+        "facing": 1.57
+      },
+      {
+        "name": "Container",
+        "category": "hulk",
+        "x": -13,
+        "y": -3.5,
+        "width": 5,
+        "depth": 2.5,
+        "facing": 4.71
+      },
+      {
+        "name": "Small ruin",
+        "category": "ruin",
+        "x": -3,
+        "y": 7.5,
+        "width": 6,
+        "depth": 4,
+        "facing": 0
+      },
+      {
+        "name": "Small ruin",
+        "category": "ruin",
+        "x": 3,
+        "y": -7.5,
+        "width": 6,
+        "depth": 4,
+        "facing": 3.14
+      }
+    ],
+    "zones": [
+      {
+        "seat": 0,
+        "points": [
+          {
+            "x": -15,
+            "y": 7
+          },
+          {
+            "x": 15,
+            "y": 7
+          },
+          {
+            "x": 15,
+            "y": 11
+          },
+          {
+            "x": -15,
+            "y": 11
+          }
+        ]
+      },
+      {
+        "seat": 1,
+        "points": [
+          {
+            "x": -15,
+            "y": -11
+          },
+          {
+            "x": 15,
+            "y": -11
+          },
+          {
+            "x": 15,
+            "y": -7
+          },
+          {
+            "x": -15,
+            "y": -7
+          }
+        ]
+      }
+    ]
+  }
+}

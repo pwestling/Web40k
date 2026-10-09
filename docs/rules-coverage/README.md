@@ -2,7 +2,7 @@
 
 One file per system: core rules by name with our own paraphrase (no rules text), the app's status, the code and the
 test. Audit #55. Since then a status's relative characteristic change applies once, not twice (`applyContinuous`).
-[40k](40k.md) · [The Old World](tow.md) · [FSD](fsd.md) · [Conquest](conquest.md) · [Rift Lanterns](rift-lanterns.md)
+[40k](40k.md) · [The Old World](tow.md) · [FSD](fsd.md) · [Conquest](conquest.md) · [Rift Lanterns](rift-lanterns.md) · [Brinewatch](brinewatch.md)
 
 Status key: **automated** (the app does it), **advisory check** (the app warns, the player decides), **manual
 reminder** (the app shows it at the right time, the player resolves it), **missing** (nothing).
@@ -14,6 +14,7 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 | FSD           | 105       | 11             | 31              | 0       | 147  |
 | Conquest      | 77        | 14             | 7               | 0       | 98   |
 | Rift Lanterns | 31        | 3              | 0               | 0       | 34   |
+| Brinewatch    | 49        | 2              | 1               | 0       | 52   |
 
 ## Known gaps that need engine work
 

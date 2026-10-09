@@ -5,6 +5,7 @@ import skirmish from "../../../examples/workshop/skirmish.js?raw";
 import ranked from "../../../examples/workshop/ranked.js?raw";
 import activations from "../../../examples/workshop/activations.js?raw";
 import riftLanterns from "../../../games/rift-lanterns/rift-lanterns.js?raw";
+import brinewatch from "../../../games/brinewatch/brinewatch.js?raw";
 
 const checker = createChecker(files);
 
@@ -14,6 +15,7 @@ describe("the workshop's type checker (#43)", () => {
     ["ranked", ranked],
     ["activations", activations],
     ["Rift Lanterns", riftLanterns],
+    ["Brinewatch", brinewatch],
   ])("finds nothing wrong in the %s template", (_name, source) => {
     const problems = checker.problems(source).map((p) => {
       const line = source.slice(0, p.from).split("\n").length;

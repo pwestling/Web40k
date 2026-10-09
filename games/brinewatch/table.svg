@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 440" width="600" height="440" font-family="system-ui, sans-serif">
+<rect width="600" height="440" fill="#5e7d4a"/>
+<line x1="120" y1="0" x2="120" y2="440" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="240" y1="0" x2="240" y2="440" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="360" y1="0" x2="360" y2="440" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="480" y1="0" x2="480" y2="440" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="0" y1="120" x2="600" y2="120" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="0" y1="240" x2="600" y2="240" stroke="#ffffff" stroke-opacity="0.12"/>
+<line x1="0" y1="360" x2="600" y2="360" stroke="#ffffff" stroke-opacity="0.12"/>
+<polygon points="0,80 600,80 600,0 0,0" fill="#3b82f6" fill-opacity="0.18"/>
+<polygon points="0,440 600,440 600,360 0,360" fill="#f97316" fill-opacity="0.18"/>
+<rect x="-80" y="-80" width="160" height="160" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(120 190) rotate(0)"/>
+<rect x="-80" y="-80" width="160" height="160" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(480 250) rotate(-179.91)"/>
+<rect x="-90" y="-60" width="180" height="120" rx="2" fill="#6f8f4e" stroke="#1f2937" stroke-opacity="0.5" transform="translate(370 140) rotate(0)"/>
+<rect x="-90" y="-60" width="180" height="120" rx="2" fill="#6f8f4e" stroke="#1f2937" stroke-opacity="0.5" transform="translate(230 300) rotate(-179.91)"/>
+<rect x="-50" y="-15" width="100" height="30" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(270 170) rotate(0)"/>
+<rect x="-50" y="-15" width="100" height="30" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(330 270) rotate(-179.91)"/>
+<rect x="-50" y="-25" width="100" height="50" rx="2" fill="#5b4636" stroke="#1f2937" stroke-opacity="0.5" transform="translate(560 150) rotate(-89.95)"/>
+<rect x="-50" y="-25" width="100" height="50" rx="2" fill="#5b4636" stroke="#1f2937" stroke-opacity="0.5" transform="translate(40 290) rotate(-269.86)"/>
+<rect x="-60" y="-40" width="120" height="80" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(240 70) rotate(0)"/>
+<rect x="-60" y="-40" width="120" height="80" rx="2" fill="#8c877d" stroke="#1f2937" stroke-opacity="0.5" transform="translate(360 370) rotate(-179.91)"/>
+<circle cx="100" cy="220" r="40" fill="#ffe9b0" fill-opacity="0.18" stroke="#ffe9b0" stroke-dasharray="6 5"/>
+<circle cx="100" cy="220" r="12" fill="#ffd36b" stroke="#3b2f1a"/>
+<circle cx="300" cy="220" r="40" fill="#ffe9b0" fill-opacity="0.18" stroke="#ffe9b0" stroke-dasharray="6 5"/>
+<circle cx="300" cy="220" r="12" fill="#ffd36b" stroke="#3b2f1a"/>
+<circle cx="500" cy="220" r="40" fill="#ffe9b0" fill-opacity="0.18" stroke="#ffe9b0" stroke-dasharray="6 5"/>
+<circle cx="500" cy="220" r="12" fill="#ffd36b" stroke="#3b2f1a"/>
+<text x="300" y="28" text-anchor="middle" font-size="16" fill="#ffffff" fill-opacity="0.85">Player 1 deploys here</text>
+<text x="300" y="426" text-anchor="middle" font-size="16" fill="#ffffff" fill-opacity="0.85">Player 2 deploys here</text>
+</svg>
