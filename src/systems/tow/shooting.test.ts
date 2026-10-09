@@ -15,6 +15,7 @@ import { blockSlots } from "../../core/regiment";
 import "../index";
 import { spawnIntents } from "../wh40k/deploy";
 import { towSample } from "./sample";
+import { backToEdges } from "./testing";
 
 function rng(seed: number) {
   let a = seed >>> 0;
@@ -44,7 +45,7 @@ function setup(): GameState {
     ["p2", 1],
   ] as const)
     for (const i of spawnIntents(s, p, towSample(seat).units, p, "army")) s = play(s, i, p);
-  return s;
+  return backToEdges(s);
 }
 
 const unitNamed = (s: GameState, name: string) => Object.values(s.units).find((u) => u.name === name)!;

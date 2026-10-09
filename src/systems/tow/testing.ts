@@ -82,6 +82,8 @@ export function setup(): { t: Table; spears: string; warband: string } {
     ["p2", 1],
   ] as const)
     for (const i of spawnIntents(t.s, p, towSample(seat).units, p, "army")) t.play(i, p);
+  t.s = backToEdges(t.s);
+  t.states.set(t.s.seq, t.s);
   const spears = unitNamed(t.s, "Marchwarden Spears").id;
   const warband = unitNamed(t.s, "Reaver Warband").id;
   // Front ranks touching.
@@ -100,3 +102,16 @@ export function toPhase(t: Table, id: string) {
 
 export const standing = (s: GameState, unitId: string) =>
   s.units[unitId]!.modelIds.filter((id) => !s.models[id]!.destroyed).length;
+
+/**
+ * Auto-deploy stands the armies at the front of their halves (#56); these tests move a few
+ * units into place by hand, so the rest step back 8" towards their own edge, out of the way.
+ */
+export function backToEdges(s: GameState): GameState {
+  const models = { ...s.models };
+  for (const m of Object.values(s.models)) {
+    const sign = Math.sign(m.position.y) || 1;
+    models[m.id] = { ...m, position: { x: m.position.x, y: m.position.y + sign * 8 } };
+  }
+  return { ...s, models };
+}
