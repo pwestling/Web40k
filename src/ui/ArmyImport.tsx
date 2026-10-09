@@ -647,7 +647,7 @@ function SaveToShelf({ owner, name }: { owner: PlayerId; name: string | null }) 
 }
 
 /** Your painted army on the table (#68, UX 471): photograph the units still in their stand-ins, one after another. */
-function PhotoFigures({ owner }: { owner: PlayerId }) {
+export function PhotoFigures({ owner }: { owner: PlayerId }) {
   const game = useStore((s) => s.game);
   const left = useMemo(() => undressed(game, owner).length, [game, owner]);
   if (!left) return null;

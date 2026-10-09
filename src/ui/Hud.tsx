@@ -15,7 +15,7 @@ import { buildLog, collapseEmpty, undoGroup } from "./gameLog";
 import { BroadcastControls } from "../broadcast/BroadcastControls";
 import { t } from "../i18n";
 import { loadRoom, useCanControl, useStore } from "../store";
-import { ArmyImport } from "./ArmyImport";
+import { ArmyImport, PhotoFigures } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
 import { MissionPicker, SecretMissions } from "./Missions";
 import { SecretObjectives } from "./SecretObjectives";
@@ -220,10 +220,14 @@ export function Hud() {
             <DeployTray players={mine} />
           </>
         ) : (
-          <details className="fold">
-            <summary>{t("Add an army")}</summary>
-            <ArmyImport players={mine} />
-          </details>
+          <>
+            {/* Photographing the army needn't wait for setup: a game against the computer starts at once (dogfood). */}
+            {role !== "spectator" && mine.map((p) => <PhotoFigures key={p.id} owner={p.id} />)}
+            <details className="fold">
+              <summary>{t("Add an army")}</summary>
+              <ArmyImport players={mine} />
+            </details>
+          </>
         ))}
       <SecretObjectives players={mine} />
       <SecretMissions players={mine} />
