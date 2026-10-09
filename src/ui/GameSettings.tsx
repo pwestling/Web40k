@@ -1,6 +1,7 @@
 import { ClockSettingsRow } from "./Clocks";
 import type { GameSettings as Settings } from "../core";
 import { t } from "../i18n";
+import { systemOf } from "../core/content/turn";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 import { GamePackagesSettings } from "./Packages";
@@ -13,6 +14,7 @@ export function GameSettings() {
   const mail = useStore((s) => s.mail !== null);
   const { cover, modelsBlock } = game.settings;
   const los = game.settings.los ?? "true";
+  const size = systemOf(game).gameSize;
   const editable = role !== "spectator" && scrub === null;
   // Once the battle has started, changing a rule takes a confirm (and shows in the log).
   const change = (settings: Partial<Settings>) => {
@@ -70,6 +72,22 @@ export function GameSettings() {
               <option value={90}>{t("In a {degrees}° front arc", { degrees: 90 })}</option>
             </select>
           </label>
+          {/* Systems whose numbers follow the game size (FSD's AD Pool and Capacity). */}
+          {size && (
+            <label>
+              {t("Game size (points)")}{" "}
+              <input
+                type="number"
+                min={1}
+                step={5}
+                value={game.settings.points ?? size.points}
+                onChange={(e) => {
+                  const points = Math.floor(Number(e.target.value));
+                  if (points > 0) change({ points });
+                }}
+              />
+            </label>
+          )}
           {!mail && <ClockSettingsRow value={game.settings.clock} change={(clock) => change({ clock })} />}
           <label className="check">
             <input

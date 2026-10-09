@@ -1,4 +1,4 @@
-import type { AbilityTiming, Expr, GameSystem, RuleDef } from "../schema";
+import type { AbilityTiming, Effect, Expr, GameSystem, RuleDef } from "../schema";
 
 /**
  * Full Spectrum Dominance (free rulebook v1.7.1 by Pantalone & Valsecchi),
@@ -20,7 +20,8 @@ import type { AbilityTiming, Expr, GameSystem, RuleDef } from "../schema";
  *
  * Also covered: ADs placed on cards' slots ahead of time (in pre-assigning,
  * at the start of a player's alternating turn, and at cleanup) and kept over
- * the round, the AD Pool of 12 counting dice still on cards; reactions that
+ * the round, the AD Pool (12 at 60 points, following the game size) counting
+ * dice still on cards; reactions that
  * resolve at the same time as the action they answer; damaged systems S1-S4
  * switching off the action on that card line (a weapon's Line, or its place
  * on the card) and dropping the dice on it; prepared actions (weapons with
@@ -38,7 +39,8 @@ import type { AbilityTiming, Expr, GameSystem, RuleDef } from "../schema";
  *
  * Weapon keywords automated: AP, IC, Per Base (bases in range and sight),
  * Min, Short Range, Contact, Indirect Fire (+1 out of sight), Heavy (not
- * after moving). Other weapon and unit special rules are reminders, by name
+ * after moving); multiple attacks (x2, x3) and arcs of fire. Terrain slows or
+ * blocks moves by unit type (a table warning along each base's path). Other weapon and unit special rules are reminders, by name
  * (weaponRules, abilityTimings). Coverage: docs/rules-coverage/fsd.md.
  *
  * Left to the players: what a prepared action or support card does while it
@@ -202,6 +204,48 @@ const weaponRules: RuleDef[] = [
 ];
 
 const unitTraits = (names: string[]) => `^(${names.join("|")})\\b`;
+
+/** The AD Pool for a game of so many points. */
+function adPoolFor(points: Expr): Expr {
+  return {
+    op: "+",
+    args: [6, { op: "*", args: [2, { op: "ceil", args: [{ op: "/", args: [points, 20] }] }] }],
+  };
+}
+
+/** A rule the players apply by hand, named in the attack while `when` holds. */
+function attackReminder(id: string, when: Expr): Effect {
+  return { id, when: { event: "action.declared" }, if: when, do: [{ do: "manual", reminder: id }] };
+}
+
+/** Units that fly or jump over any terrain. */
+const PASS_OVER = ["FLYING", "JUMP"];
+/** Traversable terrain: infantry crosses it (1 DU), others can't (mounted infantry moves as a mech). */
+const infantryCrosses = [
+  { keywords: [...PASS_OVER, "AGILE"] },
+  { keywords: ["MOUNTED"], blocks: true },
+  { keywords: ["INFANTRY"], slows: 1 },
+  { keywords: ["*"], blocks: true },
+];
+/** Weapon arcs of fire, in degrees. */
+const FIRE_ARCS = [45, 90, 135, 180, 225, 270, 315];
+/** The target lies outside the weapon's arc of fire (all round when unset). */
+const outsideArc: Expr = {
+  all: [
+    { cmp: ">", a: ref("weapon.arc"), b: 0 },
+    { cmp: "<", a: ref("weapon.arc"), b: 360 },
+    {
+      not: {
+        any: FIRE_ARCS.map((w) => ({
+          all: [
+            { cmp: "==", a: ref("weapon.arc"), b: w },
+            { query: { kind: "inArc", from: "attacker", to: "target", arc: `fire${w}` } },
+          ],
+        })),
+      },
+    },
+  ],
+};
 /**
  * Unit special rules (abilities at the bottom of a card), shown as reminders
  * when they matter: in an attack the unit makes or takes, during the
@@ -225,32 +269,28 @@ const abilityTimings: AbilityTiming[] = [
     ]),
   },
   { attack: "attacker", match: unitTraits(["charger"]) },
+  // Finer than the phase: for the unit activated, once it moves, or while it reacts.
   {
-    phase: "activations",
-    side: "either",
+    on: "activation",
     match: unitTraits([
-      "fast",
-      "slow",
-      "agile",
-      "tracked",
-      "side movement",
-      "jump",
       "fire base",
       "capable",
       "disciplined",
       "lone wolf",
       "commander",
       "jamming",
-      "reactive",
       "unwavering",
       "inert",
       "silent",
-      "flying",
       "blunt",
-      "charger",
       "unpinnable",
     ]),
   },
+  {
+    on: "move",
+    match: unitTraits(["fast", "slow", "agile", "tracked", "side movement", "jump", "flying", "charger"]),
+  },
+  { on: "reaction", match: unitTraits(["reactive", "unwavering"]) },
   { phase: "scoring", side: "either", match: unitTraits(["blunt", "flying", "mounted"]) },
 ];
 
@@ -345,6 +385,27 @@ export const fsd: GameSystem = {
       aliases: ["Line", "System", "Sys"],
       default: 0,
     },
+    // Multiple attacks: "x2" by the action's name, each attack at a target named up front.
+    {
+      id: "times",
+      name: "Multiple attacks",
+      short: "x",
+      of: "weapon",
+      type: "number",
+      aliases: ["x", "Times", "Multiple"],
+      pattern: "(\\d+)",
+      default: 1,
+    },
+    // Arc of fire in degrees, centred ahead (45, 90, ... 315); 0 or 360 is all round.
+    {
+      id: "arc",
+      name: "Arc of fire",
+      short: "Arc",
+      of: "weapon",
+      type: "number",
+      aliases: ["Arc"],
+      default: 0,
+    },
     // Behemoths: Systems and Attachments activating with the Core.
     { id: "Parts", name: "Parts", of: "model", type: "number", default: 0 },
     ...behemothChars,
@@ -360,16 +421,46 @@ export const fsd: GameSystem = {
     { id: "rightSide", name: "Right side", from: 45, to: 135, origin: "centre" },
     { id: "rearSide", name: "Rear side", from: 135, to: 225, origin: "centre" },
     { id: "leftSide", name: "Left side", from: 225, to: 315, origin: "centre" },
+    // Weapons' arcs of fire, centred ahead.
+    ...FIRE_ARCS.map((w) => ({
+      id: `fire${w}`,
+      name: `Fire arc ${w}°`,
+      from: -w / 2,
+      to: w / 2,
+      origin: "centre" as const,
+    })),
   ],
+  // Movement by unit type: crossing costs 1 DU (an area: 1 DU off the move), checked along the path.
   terrain: [
     { id: "open", name: "Open", visibility: "open" },
-    { id: "broken", name: "Broken ground", visibility: "open", cover: true, coverFor: ["INFANTRY"] },
+    {
+      id: "broken",
+      name: "Broken ground",
+      visibility: "open",
+      cover: true,
+      coverFor: ["INFANTRY"],
+      movement: [{ keywords: [...PASS_OVER, "TRACKED", "AGILE"] }, { keywords: ["VEHICLE"], slows: 1 }],
+    },
     {
       id: "traversable",
       name: "Traversable (walls, fences)",
       visibility: "obscuring",
       cover: true,
       coverFor: ["INFANTRY"],
+      movement: infantryCrosses,
+    },
+    {
+      // Vehicles and mechs drive through it; infantry crosses it as traversable.
+      id: "fragile",
+      name: "Fragile (barricades, wooden fences)",
+      visibility: "obscuring",
+      cover: true,
+      coverFor: ["INFANTRY"],
+      movement: [
+        { keywords: [...PASS_OVER, "TRACKED", "AGILE", "MOUNTED"] },
+        { keywords: ["INFANTRY"], slows: 1 },
+        { keywords: ["*"] },
+      ],
     },
     { id: "obscuring", name: "Obscuring (woods, scrub)", visibility: "obscuring", cover: true },
     {
@@ -380,6 +471,17 @@ export const fsd: GameSystem = {
       cover: true,
       // Behind the corner: cover when partly hidden by it, not for touching it in full view.
       coverWhenHiding: true,
+      // Buildings and ruins: traversable by infantry.
+      movement: infantryCrosses,
+    },
+    {
+      id: "impassable",
+      name: "Impassable (tall walls, rock formations)",
+      visibility: "blocking",
+      blocksMovement: true,
+      cover: true,
+      coverWhenHiding: true,
+      movement: [{ keywords: PASS_OVER }],
     },
   ],
   statuses: [
@@ -421,11 +523,19 @@ export const fsd: GameSystem = {
       reset: "round",
       rerollOnce: true,
       // The AD Pool: dice still on cards are rolled again only once spent.
-      total: 12,
+      total: ref("const.adPool"),
     },
     { id: "VP", name: "VP", on: "player", initial: 0 },
   ],
   constants: { adPool: 12, adCapacity: 8, closeCombat: 1, commandRange: 2 },
+  // The AD Pool is 6, plus 2 per 20 points (or part of 20) played; the Capacity is 4 less.
+  gameSize: {
+    points: 60,
+    constants: {
+      adPool: adPoolFor(ref("game.points")),
+      adCapacity: { op: "-", args: [adPoolFor(ref("game.points")), 4] },
+    },
+  },
   resets: [
     {
       at: "round",
@@ -495,6 +605,8 @@ export const fsd: GameSystem = {
               { cmp: "<", a: distance, b: ref("weapon.minRange") },
               // A minimum range of 1 DU or more can't fight in close combat.
               { all: [close, { cmp: ">=", a: ref("weapon.minRange"), b: 1 }] },
+              // Outside the weapon's arc of fire the target isn't in its sight.
+              outsideArc,
               // Short Range weapons can't fire at long range.
               { all: [weaponHas("SHORT RANGE"), { cmp: ">", a: distance, b: ref("weapon.range") }] },
               // Contact weapons need base contact, and can't hit a Flying unit.
@@ -685,7 +797,13 @@ export const fsd: GameSystem = {
           notPinned,
           {
             any: [
-              { all: [{ is: "event.action", value: "fire" }, { same: ["event.target", "self"] }] },
+              // Any target of the shot, a multiple attack's included.
+              {
+                all: [
+                  { is: "event.action", value: "fire" },
+                  { some: "event.targets", as: "shotAt", test: { same: ["shotAt", "self"] } },
+                ],
+              },
               {
                 all: [
                   { is: "event.action", value: "move" },
@@ -697,6 +815,7 @@ export const fsd: GameSystem = {
         ],
       },
       cost: [{ resource: "readyDice", amount: 1 }],
+      hint: "To a move, pick the point on its path where the reaction happens. A reaction may set off another (a chain), all landing together; a unit may also deploy from reserve as a reaction",
       do: [{ do: "setFlag", target: "self", flag: "reacted", value: true }],
     },
     {
@@ -740,6 +859,8 @@ export const fsd: GameSystem = {
       notWhen: [...damagedSystems, attachmentLost, heavyAfterMoving],
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
       procedure: "attack",
+      // x2, x3: one action, an attack per target named.
+      repeat: ref("weapon.times"),
       do: [dropInteract],
     },
     {
@@ -751,6 +872,7 @@ export const fsd: GameSystem = {
       if: notPinned,
       forWeapons: prepared,
       prepares: true,
+      hint: "Its effect lasts while the token stays; clear the token when the action is used or its trigger comes",
       limit: { count: 1, per: "round", perUnit: true },
       notWhen: [...damagedSystems, attachmentLost, heavyAfterMoving],
       cost: [{ resource: "readyDice", amount: 0, slotsFrom: "weapon.slots" }],
@@ -769,6 +891,7 @@ export const fsd: GameSystem = {
       custom: true,
       endsTurn: true,
       phases: ["activations"],
+      hint: "Each card once a round; Single Use cards are discarded. A card's attack from a unit doesn't activate it or allow reactions, and the target keeps its cover and range bonuses",
       cost: [{ resource: "readyDice", amount: 0 }],
     },
     {
@@ -780,6 +903,7 @@ export const fsd: GameSystem = {
       by: "unit",
       side: "active",
       activates: 1,
+      hint: "Disembarking from a transport is deploying too: place the bases as close to it as possible",
       if: { hasFlag: "self", flag: "reserves" },
     },
   ],
@@ -800,7 +924,13 @@ export const fsd: GameSystem = {
         ],
       },
       // Before the activations, both players may place Ready dice on cards.
-      { kind: "phase", id: "preassign", name: "Pre-assign ADs", placeDice: true },
+      {
+        kind: "phase",
+        id: "preassign",
+        name: "Pre-assign ADs",
+        placeDice: true,
+        hint: "Reinforcement waves due this round join the Reserve (mark them in reserve)",
+      },
       {
         kind: "alternate",
         id: "activations",
@@ -815,11 +945,28 @@ export const fsd: GameSystem = {
           },
         ],
       },
-      { kind: "phase", id: "scoring", name: "Scoring" },
+      {
+        kind: "phase",
+        id: "scoring",
+        name: "Scoring",
+        hint: "Objectives: an unpinned unit interacting in base contact at round end controls one, unless an unpinned enemy interacting within 1 DU contests it. Infantry always count as interacting; mechs (behemoths too) only for contesting; vehicles must Interact. Draw Victory Cards as the scenario says. At the end of the game, lose 1 VP per 5 points of units removed",
+      },
       // Discard dice from cards, and place Ready dice for next round.
       { kind: "phase", id: "cleanup", name: "Cleanup", placeDice: true },
     ],
   },
+  // Reminders in the attack panel, for rules the players play by hand.
+  coreEffects: [
+    attackReminder("Lost when firing", isBehemoth("attacker")),
+    attackReminder("Damage to transported units", { hasKeyword: "target", keyword: "TRANSPORT" }),
+    attackReminder("Wrecks (optional)", {
+      any: [
+        { hasKeyword: "target", keyword: "VEHICLE" },
+        { hasKeyword: "target", keyword: "MECH" },
+      ],
+    }),
+    attackReminder("System damage effects", { any: SYSTEMS.map(shields) }),
+  ],
   checks: [
     {
       id: "baseCoherency",

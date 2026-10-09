@@ -566,6 +566,14 @@ function SystemActions({ unit }: { unit: Unit }) {
           </button>
         ))}
       </div>
+      {/* What an action open now asks of the players, in the rules data's words (FSD's reaction). */}
+      {shown
+        .filter((o) => o.ok && o.def.hint)
+        .map((o) => (
+          <p key={`hint-${o.def.id}`} className="muted small">
+            {gameText(o.def.name)}: {gameText(o.def.hint!)}
+          </p>
+        ))}
       {shared && (
         <p className="muted small">
           {shared[0]}
@@ -629,17 +637,22 @@ function SystemActions({ unit }: { unit: Unit }) {
 function PrepareButton({ unit, weaponId }: { unit: Unit; weaponId: string }) {
   const game = useGame();
   const { dispatch } = useStore();
-  if (!unit.status?.acting) return null;
+  const token = !!unit.status?.[`prepared.${weaponId}`];
+  if (!unit.status?.acting && !token) return null;
   const o = unitActions(game, unit.id, { weapon: weaponId }).find((x) => x.def.prepares);
-  // Once used this round, or while its token is down, there's nothing to press (UX 294).
+  // While its token is down, what it asks of the players (the rules data's own words).
+  if (token) return o?.def.hint ? <p className="muted small">{gameText(o.def.hint)}</p> : null;
+  // Once used this round, there's nothing to press (UX 294).
   if (!o || o.why === "Not for this weapon" || o.why === "Weapon already used this round") return null;
-  if (unit.status?.[`prepared.${weaponId}`]) return null;
   return (
     <div className="actions">
       <button
         className={`small ${o.ok ? "primary" : ""}`}
         disabled={!o.ok}
-        title={o.why ?? t("Put a token on it: its effects last while the token stays")}
+        title={
+          o.why ??
+          (o.def.hint ? gameText(o.def.hint) : t("Put a token on it: its effects last while the token stays"))
+        }
         onClick={() =>
           dispatch({ type: "action/take", unitId: unit.id, action: o.def.id, weapon: weaponId }, unit.owner)
         }

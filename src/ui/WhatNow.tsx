@@ -287,6 +287,10 @@ export function WhatNow() {
           ✕
         </button>
       </div>
+      {/* The phase's own reminder, from the rules data (FSD's scoring). */}
+      {!computer && game.turn.round > 0 && currentSlot(game)?.hint && (
+        <p className="muted">{gameText(currentSlot(game)!.hint!)}</p>
+      )}
       {lines.map((l) => (
         <p key={l}>{l}</p>
       ))}

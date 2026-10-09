@@ -470,7 +470,7 @@ async function sandbox() {
 }
 
 describe("Rift Lanterns: moving (Table warnings)", () => {
-  it("flags a move past the unit's Move, and a move that ends inside a wreck", async () => {
+  it("flags a move past the unit's Move, and a move into or through a wreck", async () => {
     const { loaded, play, state } = await sandbox();
     const layout = loaded.layout as Any;
     const wreck = layout.terrain.find((p: Any) => p.category === "wreck");
@@ -486,9 +486,15 @@ describe("Rift Lanterns: moving (Table warnings)", () => {
     // 4" on its 5" Move, into open ground: nothing to say.
     play({ type: "models/move", moves: [{ id, to: { x: wreck.position.x + 4, y: 9 } }] }, "p1");
     expect(warned()).toEqual([]);
+    // Through the wreck to open ground beyond it: the path is checked, not only where it ends (#57).
+    play(
+      { type: "models/move", moves: [{ id, to: { x: wreck.position.x, y: wreck.position.y - 4 } }] },
+      "p1",
+    );
+    expect(warned()).toContain("terrain");
     // Into the wreck, past its Move.
     play({ type: "models/move", moves: [{ id, to: wreck.position }] }, "p1");
-    expect(warned()).toEqual(expect.arrayContaining(["moveDistance", "wreck"]));
+    expect(warned()).toEqual(expect.arrayContaining(["moveDistance", "terrain"]));
   });
 });
 

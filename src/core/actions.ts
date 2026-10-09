@@ -1,6 +1,7 @@
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
 import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
+import { opposed } from "./teams";
 import {
   applyAction,
   cantPlace,
@@ -201,6 +202,8 @@ export type Intent =
       action: string;
       weapon?: string;
       targetId?: UnitId;
+      /** A multiple attack's other targets, in order (ActionDef.repeat); missing ones are the first target. */
+      more?: UnitId[];
       with?: UnitId[];
       /** Pool dice the player picked to pay with. */
       dice?: number[];
@@ -381,7 +384,13 @@ export type GameEvent =
   | { type: "procedure/set"; run: ProcedureRun }
   /** Close the procedure; `end` closes a finished reaction too. */
   /** `script`: a code procedure the closed run asked for (`{ do: "script" }`), started on the state before the clear. */
-  | { type: "procedure/clear"; end?: { run?: ProcedureRun }; script?: ScriptStep }
+  /** `next`: a multiple attack's next attack, started at its target (the rest still to come). */
+  | {
+      type: "procedure/clear";
+      end?: { run?: ProcedureRun };
+      script?: ScriptStep;
+      next?: { run: ProcedureRun; targetId: UnitId; more: UnitId[] };
+    }
   | ({ type: "player/action" } & PlayerActionTaken)
   | { type: "ability/apply"; unitId: UnitId; ability: string }
   | { type: "unit/reserve"; id: UnitId; reserve: boolean; moves: { id: ModelId; to: Vec2 }[] }
@@ -705,11 +714,19 @@ export function resolveIntent(
       const commanded = (intent.with ?? [])
         .filter((id) => allowed.has(id))
         .slice(0, option.commands?.count ?? 0);
+      // A multiple attack: one target per attack, the first again where none (or no enemy) is named.
+      const enemy = (id: UnitId | undefined) =>
+        id && state.units[id] && opposed(state, state.units[id].owner, unit.owner) ? id : undefined;
+      const more =
+        option.repeat && intent.targetId
+          ? Array.from({ length: option.repeat - 1 }, (_, i) => enemy(intent.more?.[i]) ?? intent.targetId!)
+          : [];
       const taken: ActionTaken = {
         unitId: unit.id,
         action: intent.action,
         by: from,
         ...req,
+        ...(more.length ? { more } : {}),
         payment: option.payment,
         ...(commanded.length ? { with: commanded } : {}),
       };
@@ -854,6 +871,19 @@ export function resolveIntent(
           ? { script: startScript(state, wanted.procedure, wanted.args, state.procedure.by, rng) }
           : {};
       const cleared: GameState = { ...state, procedure: null };
+      // A multiple attack goes on at its next target (skipping any it can't attack now).
+      const proc = state.procedure;
+      const more = proc.run.done ? (proc.more ?? []) : [];
+      for (let i = 0; i < more.length; i++) {
+        const trigger = { ...proc, targetId: more[i]!, more: more.slice(i + 1) };
+        const run = startActionRun(cleared, trigger, rng);
+        if (run)
+          return {
+            type: "procedure/clear",
+            next: { run, targetId: more[i]!, more: trigger.more },
+            ...script,
+          };
+      }
       if (!reactionOver(cleared)) return { type: "procedure/clear", ...script };
       const run = state.pending
         ? startActionRun(endReaction({ ...cleared, deferred: null }, null), state.pending.trigger, rng)

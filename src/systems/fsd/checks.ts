@@ -3,11 +3,13 @@ import {
   baseOutline,
   baseToBaseDistance,
   polygonDistance,
+  type GameState,
   type Model,
   type Unit,
   type Vec2,
 } from "../../core";
 import { inchesPerUnit, systemOf } from "../../core/content";
+import { gamePoints } from "../../core/content/gameSize";
 import { opposed } from "../../core/teams";
 import { aliveModels, unitMoved } from "../wh40k/rules";
 
@@ -28,11 +30,13 @@ import { aliveModels, unitMoved } from "../wh40k/rules";
  *  - A unit deployed from reserve arrives at least 2 DU from every enemy.
  *  - A multi-base unit out of coherence while not moving (it lost a base): it
  *    is pinned, and must move back within 1 DU before any special action.
+ *  - A move can't end with a base overlapping another.
+ *  - List building: an army over the game's points, or two copies of a Unique unit.
  */
 export function fsdChecks(view: GameView): Warning[] {
   const state = view.state;
-  if (state.turn.round === 0) return [];
-  const out: Warning[] = [];
+  const out: Warning[] = listChecks(state);
+  if (state.turn.round === 0) return out;
   const aoc = inchesPerUnit(systemOf(state));
   for (const unit of Object.values(state.units)) {
     const alive = aliveModels(state, unit);
@@ -80,12 +84,60 @@ export function fsdChecks(view: GameView): Warning[] {
       });
       continue;
     }
+    if (moved > 0.05 && overlapping(state, alive))
+      out.push({ id: "overlap", unitId: unit.id, message: "A base ends its move overlapping another base" });
     if (moved > 0.05 && Number(unit.status?.moves ?? 0) <= 1 && !fliesOrJumps(unit)) {
       const w = areaOfControl(view, unit, alive, aoc);
       if (w) out.push(w);
     }
   }
   return out;
+}
+
+/** The army's points against the game size, and Unique units fielded twice. */
+function listChecks(state: GameState): Warning[] {
+  const out: Warning[] = [];
+  const size = gamePoints(state, systemOf(state));
+  for (const player of Object.keys(state.players)) {
+    const units = Object.values(state.units).filter((u) => u.owner === player);
+    const points = units.reduce((t, u) => t + (u.sheet?.points ?? 0), 0);
+    if (size && points > size)
+      out.push({
+        id: "points",
+        unitId: units[0]?.id,
+        message: `${state.players[player]?.name ?? player}'s army is ${points} points, over the game's ${size}`,
+      });
+    const seen = new Set<string>();
+    for (const u of units) {
+      if (!(u.sheet?.abilities ?? []).some((a) => /^unique\b/i.test(a.name.trim()))) continue;
+      if (seen.has(u.name))
+        out.push({ id: "unique", unitId: u.id, message: `${u.name} is Unique: only one may be fielded` });
+      seen.add(u.name);
+    }
+  }
+  return out;
+}
+
+/** A base, shrunk a little so touching isn't overlapping. */
+function inner(m: Model): Model {
+  const b = m.base;
+  const base =
+    b.shape === "round"
+      ? { ...b, diameterMm: b.diameterMm * 0.9 }
+      : { ...b, widthMm: b.widthMm * 0.9, depthMm: b.depthMm * 0.9 };
+  return { ...m, base };
+}
+
+/** Some base of the unit overlaps another model's base. */
+function overlapping(state: GameState, alive: Model[]): boolean {
+  const others = Object.values(state.models).filter((o) => !o.destroyed && !alive.includes(o));
+  return alive.some((m) =>
+    [...others, ...alive.filter((o) => o !== m)].some(
+      (o) =>
+        Math.hypot(o.position.x - m.position.x, o.position.y - m.position.y) < 6 &&
+        baseToBaseDistance(inner(m), inner(o)) === 0,
+    ),
+  );
 }
 
 /** Some base has no other base of the unit within 1 DU (centre to centre). */

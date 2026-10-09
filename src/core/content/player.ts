@@ -261,7 +261,7 @@ function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[] {
   const out: AbilityTiming[] = [];
   const keys = new Set<string>();
   for (const t of system.abilityTimings ?? []) {
-    const key = t.attack ? `attack:${t.attack}` : `phase:${t.phase}`;
+    const key = t.attack ? `attack:${t.attack}` : t.on ? `on:${t.on}:${t.phase}` : `phase:${t.phase}`;
     if (keys.has(key)) continue;
     // Armies imported before no-break spaces were made plain still have them.
     const text = ability.text.replace(/\u00a0/g, " ");
@@ -273,7 +273,19 @@ function timingsOf(system: GameSystem, ability: Ability): AbilityTiming[] {
   return out;
 }
 
-/** Abilities whose text says they matter in the current phase, for both players. */
+/** Whether a unit is at the moment a timing names: activated, after a move in its activation, or reacting. */
+function atMoment(unit: Unit, on: NonNullable<AbilityTiming["on"]>): boolean {
+  const s = unit.status ?? {};
+  if (on === "reaction") return !!s.reacting;
+  if (on === "move") return !!s.acting && Number(s.moves ?? 0) > 0;
+  return !!s.acting && !s.reacting;
+}
+
+/**
+ * Abilities whose text says they matter now, for both players: in the
+ * current phase, or (timings with `on`) for the unit activated, moving or
+ * reacting.
+ */
 export function abilityReminders(state: GameState): AbilityReminder[] {
   const system = systemOf(state);
   const slot = currentSlot(state);
@@ -285,10 +297,11 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
     const active = seatOf(state, unit.owner) === state.turn.activeSeat;
     for (const ability of manualAbilities(system, unit)) {
       if (!damagedFits(state, unit, ability)) continue;
-      const fits = timingsOf(system, ability).some(
-        (t) =>
-          t.phase === phase &&
-          (state.turn.round === 0 || !t.side || t.side === "either" || (t.side === "active") === active),
+      const fits = timingsOf(system, ability).some((t) =>
+        t.on
+          ? !t.attack && (!t.phase || t.phase === phase) && atMoment(unit, t.on)
+          : t.phase === phase &&
+            (state.turn.round === 0 || !t.side || t.side === "either" || (t.side === "active") === active),
       );
       if (fits)
         out.push({

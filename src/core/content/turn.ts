@@ -1,6 +1,7 @@
 import { die, parseDice } from "../dice";
 import type { GameState, Model, PlayerId, Triggered, Unit } from "../types";
 import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
+import { systemConstants } from "./gameSize";
 import { getSystem } from "./systems";
 
 /**
@@ -36,6 +37,8 @@ export interface TurnSlot {
   actionsPerActivation?: Expr;
   /** Players may place pool dice on card slots here. */
   placeDice?: boolean;
+  /** The phase's reminder (Segment.hint). */
+  hint?: string;
 }
 
 const cache = new WeakMap<GameSystem, TurnSlot[]>();
@@ -64,6 +67,7 @@ function flatten(segments: Segment[], playerTurn: boolean): TurnSlot[] {
           actions: seg.actions ?? [],
           onEnter,
           ...(seg.placeDice ? { placeDice: true } : {}),
+          ...(seg.hint ? { hint: seg.hint } : {}),
         });
         out.push(
           ...flatten(
@@ -575,11 +579,11 @@ function resetFor(
   return { ...state, units, resources, ...(pools ? { pools } : {}) };
 }
 
-function constant(system: GameSystem, expr: Expr): number {
+function constant(state: GameState, system: GameSystem, expr: Expr): number {
   if (typeof expr === "number") return expr;
   if (typeof expr === "object" && expr !== null && "ref" in expr) {
     const m = /^const\.(\w+)$/.exec(expr.ref);
-    if (m) return system.constants?.[m[1]!] ?? 0;
+    if (m) return systemConstants(state, system)[m[1]!] ?? 0;
   }
   return 0;
 }
@@ -597,13 +601,14 @@ function turnAction(
   const player = action.player === "opponent" ? opponent : owner;
   if (!player) return state;
   const def = system.resources?.find((r) => r.id === action.resource);
-  const amount = constant(system, action.amount) * (action.do === "spendResource" ? -1 : 1);
+  const amount = constant(state, system, action.amount) * (action.do === "spendResource" ? -1 : 1);
   if (def?.kind === "dicePool") {
     const sides = def.sides ?? 6;
     const have = state.pools?.[player]?.[def.id] ?? [];
     // Dice placed on cards are out of the pool until spent (FSD: fewer to roll).
     const placed = Object.values(state.placed?.[player] ?? {}).reduce((n, f) => n + f.length, 0);
-    const room = def.total !== undefined ? def.total - placed - have.length : Infinity;
+    const room =
+      def.total !== undefined ? constant(state, system, def.total) - placed - have.length : Infinity;
     const rolled = Array.from({ length: Math.max(0, Math.min(amount, room)) }, () => die(rng, sides));
     return {
       ...state,

@@ -11,7 +11,7 @@ import {
   type AbilityReminder,
   type PlayerActionOption,
 } from "../core/content/player";
-import { phaseName, systemOf } from "../core/content/turn";
+import { currentSlot, phaseName, systemOf } from "../core/content/turn";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { t, tn, gameText } from "../i18n";
@@ -77,6 +77,10 @@ export function PlayPanel() {
         </strong>
         <button onClick={() => setOpen(false)}>{t("Hide")}</button>
       </div>
+      {/* The phase's own reminder, from the rules data (FSD's scoring). */}
+      {game.turn.round > 0 && currentSlot(game)?.hint && (
+        <p className="muted small">{gameText(currentSlot(game)!.hint!)}</p>
+      )}
       {stratagems &&
         game.turn.round > 0 &&
         players.map((p, i) => <PlayerStratagems key={p.id} player={p} brief={i > 0} />)}
@@ -123,6 +127,7 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           {t("No {cards} in this phase.", { cards: `${custom.def.name.toLowerCase()}s` })}
         </p>
       )}
+      {custom?.ok && custom.def.hint && <p className="muted small">{gameText(custom.def.hint)}</p>}
       {custom?.ok && (
         <CustomStratagem
           cp={have}

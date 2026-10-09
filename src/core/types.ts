@@ -579,6 +579,8 @@ export interface GameSettings {
   visionArc?: number;
   /** Players per side (2 for a 2v2). Missing means one each. */
   teamSize?: number;
+  /** The game's size in points, for systems whose numbers follow it (GameSystem.gameSize). */
+  points?: number;
   /** Chess clocks and time limits (core/clock.ts); missing means untimed. */
   clock?: ClockSettings | null;
   /**
@@ -631,6 +633,8 @@ export interface ProcedureState {
   by: PlayerId;
   targetId?: UnitId;
   weapon?: string;
+  /** Targets still to attack in the same action (ActionDef.repeat), in order. */
+  more?: UnitId[];
   /** Whether the run's outcomes have been applied to the table. */
   applied?: boolean;
 }
@@ -642,6 +646,8 @@ export interface ActionTrigger {
   by: PlayerId;
   targetId?: UnitId;
   weapon?: string;
+  /** Further targets of a multiple attack (ActionDef.repeat), attacked after `targetId`. */
+  more?: UnitId[];
 }
 
 /**

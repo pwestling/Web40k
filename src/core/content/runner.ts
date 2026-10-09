@@ -17,6 +17,7 @@ import {
 } from "./runtime";
 import { blockSlots } from "../regiment";
 import { callFor } from "./calls";
+import { systemConstants } from "./gameSize";
 import type { Effect, EffectAction, Expr, GameSystem, Id, Procedure, RuleDef, RuleRef, Step } from "./schema";
 import { opposed } from "../teams";
 
@@ -371,7 +372,7 @@ function buildScope(
   const { state, system } = env;
   const opts = { rules: env.rules };
   const scope: Record<string, unknown> = {
-    const: system.constants ?? {},
+    const: systemConstants(state, system),
     settings: state.settings,
     reaction: run.reactions,
     ...env.facts,

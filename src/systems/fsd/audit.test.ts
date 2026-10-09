@@ -12,6 +12,10 @@ import { procedureEnv, procedureRoles, unitActions } from "../../core/content/pl
 import { abilityReminders, attackReminders } from "../../core/content/player";
 import { previewRun, type TestPlan } from "../../core/content/runner";
 import { fsd } from "../../core/content/examples/fsd";
+import { systemConstants } from "../../core/content/gameSize";
+import { terrainMoveWarning, terrainOnMove } from "../../core/content/moves";
+import { schedule } from "../../core/content/turn";
+import { tableWarnings } from "../../ui/warnings";
 import { gameView } from "../../core/script";
 import { modelSight } from "../../core/los";
 import { baseSizeInches } from "../../core/geometry";
@@ -675,9 +679,14 @@ describe("FSD rules audit: reminders and checks", () => {
     expect(names).toEqual(expect.arrayContaining(["Evasive", "Charger"]));
     expect(names).not.toContain("Fast");
     s = toActivations(s);
-    const now = abilityReminders(s).map((r) => r.ability.name);
-    expect(now).toContain("Fast");
-    expect(now).not.toContain("Evasive");
+    const now = () => abilityReminders(s).map((r) => r.ability.name);
+    // The gang's Fast is for when it moves (#57), the tank's Charger once it has moved.
+    expect(now()).toEqual([]);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank, action: "move" }, "p1");
+    expect(now()).toContain("Charger");
+    expect(now()).not.toContain("Fast");
+    expect(now()).not.toContain("Evasive");
   });
 
   it("warns when a multi-base unit is out of coherence after losing a base", () => {
@@ -777,5 +786,236 @@ describe("FSD rules audit: bases in the way (#55)", () => {
     s = put(s, rifles, 30, 24);
     s = put(s, walker, 0, 0);
     expect(sees(s, raiders, tank)).toBe(false);
+  });
+});
+
+describe("FSD rules audit: engine gaps (#57)", () => {
+  it("the AD Pool and Capacity follow the game size: 6 plus 2 per 20 points or part, the Capacity 4 less", () => {
+    let s = setup();
+    expect(systemConstants(s, fsd)).toMatchObject({ adPool: 12, adCapacity: 8 });
+    const at = (points: number) => systemConstants({ ...s, settings: { ...s.settings, points } }, fsd);
+    expect(at(40)).toMatchObject({ adPool: 10, adCapacity: 6 });
+    expect(at(50)).toMatchObject({ adPool: 12, adCapacity: 8 });
+    expect(at(80)).toMatchObject({ adPool: 14, adCapacity: 10 });
+    // A 40-point game rolls 6 dice a round.
+    s = play(s, { type: "settings/set", settings: { points: 40 } }, "p1");
+    s = toActivations(s);
+    expect(s.pools?.p1?.readyDice).toHaveLength(6);
+  });
+
+  it("a multiple attack (x2) rolls once per target named, in one action with one reaction, landing together", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gangA = unitNamed(s, "Raider Gang", "p2").id;
+    const gangB = unitNamed(s, "Raider Gang B", "p2").id;
+    s = place(s, tank, 0, 6, Math.PI);
+    s = place(s, gangA, -6, 0);
+    s = place(s, gangB, 3, 0);
+    s = editWeapon(s, tank, "coax-mg", { chars: { x: "x2" } });
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    expect(option(s, tank, "fire", { weapon: "coax-mg" }).repeat).toBe(2);
+    s = play(
+      s,
+      {
+        type: "action/take",
+        unitId: tank,
+        action: "fire",
+        weapon: "coax-mg",
+        targetId: gangA,
+        more: [gangB],
+      },
+      "p1",
+    );
+    // Either target may react, but only one reaction answers the action.
+    expect(s.pending?.trigger.more).toEqual([gangB]);
+    expect(option(s, gangB, "react").ok).toBe(true);
+    s = play(s, { type: "reaction/pass" }, "p2");
+    expect(s.procedure?.targetId).toBe(gangA);
+    const r = rng(3);
+    while (!s.procedure!.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+    // The first attack's results wait for the second.
+    expect(s.deferred ?? []).toEqual(s.procedure!.run.outcomes);
+    const before = s.units[gangA]!;
+    s = play(s, { type: "procedure/clear" }, "p1");
+    expect(s.procedure?.targetId).toBe(gangB);
+    expect(s.units[gangA]).toEqual(before);
+    while (!s.procedure!.run.done) s = play(s, { type: "procedure/roll" }, "p1", r);
+    expect(s.deferred ?? null).toBeNull();
+    s = play(s, { type: "procedure/clear" }, "p1");
+    expect(s.procedure ?? null).toBeNull();
+    // One action, the weapon's once-a-round use spent once.
+    expect(s.units[tank]!.status).toMatchObject({ actionsTaken: 1, "used.fire.coax-mg": 1 });
+    // Without other targets named, every attack goes at the first.
+    const one = resolveIntent(
+      { type: "action/take", unitId: gangA, action: "fire", weapon: "carbines", targetId: tank },
+      "p2",
+      rng(1),
+      s,
+    );
+    expect(one && "more" in one ? one.more : undefined).toBeUndefined();
+  });
+
+  it("terrain movement by unit type: infantry crosses walls for 1 DU, vehicles can't, fliers pass, fragile is driven through", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    const wall = makePiece("Barricade", "wall", { x: 0, y: 0 }, 0, "traversable");
+    const fence = makePiece("Barricade", "fence", { x: 12, y: 0 }, 0, "fragile");
+    const rock = makePiece("Barricade", "rock", { x: -12, y: 0 }, 0, "impassable");
+    s = { ...s, terrain: [wall, fence, rock] };
+    s = place(s, tank, 0, 3);
+    s = place(s, gang, -12, 3);
+    s = toActivations(s);
+    const moveTo = (t: GameState, unitId: string, x: number, y: number) => place(t, unitId, x, y);
+    const blocked = (t: GameState, unitId: string) =>
+      terrainOnMove(t, fsd, t.units[unitId]!).blocked.map((p) => p.id);
+    // The tank across the wall: blocked. Across the fence: driven through.
+    expect(blocked(moveTo(s, tank, 0, -3), tank)).toEqual(["wall"]);
+    const byFence = toActivations(place({ ...setup(), terrain: [fence] }, tank, 12, 3));
+    expect(blocked(moveTo(byFence, tank, 12, -3), tank)).toEqual([]);
+    // The gang over the rocks: impassable, even for infantry.
+    expect(blocked(moveTo(s, gang, -12, -3), gang)).toEqual(["rock"]);
+    // Infantry over the wall: crossed, at 1 DU's cost.
+    const over = moveTo(place(s, gang, -1.5, 3), gang, -1.5, -3);
+    expect(blocked(over, gang)).toEqual([]);
+    expect(terrainOnMove(over, fsd, over.units[gang]!).slowed).toMatchObject({ by: 1 });
+    // A flying unit passes over the rocks.
+    const flier = editUnit(moveTo(s, gang, -12, -3), gang, { abilities: ["Flying"] });
+    expect(blocked(flier, gang)).toEqual([]);
+    // Moving through warns on the table.
+    const warned = tableWarnings(moveTo(s, tank, 0, -3)).filter((w) => w.unitId === tank);
+    expect(warned.map((w) => w.checkId)).toContain("terrain");
+  });
+
+  it("terrain areas: a move entering or starting in broken ground has 1 DU less", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    s = { ...s, terrain: [makePiece("Crater", "crater", { x: 0, y: 0 }, 0, "broken")] };
+    s = place(s, tank, 0, 9);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    // Move 4 DU (12"): into the crater it may go 3 DU (9").
+    expect(s.units[tank]!.status?.allowance).toBe(12);
+    expect(terrainMoveWarning(place(s, tank, 0, 1), fsd, s.units[tank]!)).toBeNull();
+    const far = place(s, tank, 0, -1.5);
+    expect(terrainMoveWarning(far, fsd, far.units[tank]!)).toMatch(/costs 1 of its move/);
+    // Infantry ignores broken ground.
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    const g = place(place(s, gang, 0, -9), gang, 0, 0);
+    expect(terrainOnMove(g, fsd, g.units[gang]!).slowed).toBeNull();
+  });
+
+  it("an arc of fire limits a weapon to targets inside it", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    // The tank faces -y, towards the gang.
+    s = place(s, tank, 0, 6, Math.PI);
+    s = place(s, gang, 0, 0);
+    s = editWeapon(s, tank, "coax-mg", { chars: { Arc: "90" } });
+    expect(hitTarget(s, tank, "coax-mg", gang)).toBe(4);
+    // Turned away: the gang is behind it.
+    expect(hitTarget(place(s, tank, 0, 6, 0), tank, "coax-mg", gang)).toBeNull();
+    // All round by default.
+    const round = editWeapon(place(s, tank, 0, 6, 0), tank, "coax-mg", { chars: { Arc: "0" } });
+    expect(hitTarget(round, tank, "coax-mg", gang)).toBe(4);
+  });
+
+  it("terrain touching the shooter's base is ignored for its own shots' cover", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, gang, 0, -6);
+    // Woods between, the tank well clear of them: the gang is in cover.
+    s = { ...s, terrain: [makePiece("Woods", "w", { x: 0, y: 0 }, 0, "obscuring")] };
+    s = place(s, tank, 0, 9);
+    expect(hitTarget(s, tank, "light-cannon", gang)).toBe(4 + 2);
+    // The tank touching the woods' edge, shooting out past them: no cover.
+    s = place(s, tank, 0, 3.6);
+    expect(hitTarget(s, tank, "light-cannon", gang)).toBe(4);
+  });
+
+  it("unit special rules show for the unit activated, once it moves, or while it reacts", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(s, tank, 0, 4);
+    s = place(s, gang, -1.5, -2);
+    s = editUnit(s, tank, { abilities: ["Fast", "Silent"] });
+    s = editUnit(s, gang, { abilities: ["Reactive"] });
+    const now = (t: GameState) => abilityReminders(t).map((r) => r.ability.name);
+    s = toActivations(s);
+    expect(now(s)).toEqual([]);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    expect(now(s)).toEqual(["Silent"]);
+    s = play(s, { type: "action/take", unitId: tank, action: "move" }, "p1");
+    expect(s.pending?.seat).toBe(1);
+    s = play(s, { type: "action/take", unitId: gang, action: "react" }, "p2");
+    expect(now(s)).toEqual(expect.arrayContaining(["Silent", "Fast", "Reactive"]));
+  });
+
+  it("reminds of hand-played rules in the attack: lost when firing, transported units, wrecks, a System's own damage", () => {
+    let s = setup(fsdBehemothSample);
+    const mine = unitNamed(s, "Siege Hauler", "p1").id;
+    const theirs = unitNamed(s, "Siege Hauler", "p2").id;
+    // Their hauler faces us: its front System shields it.
+    s = place(s, theirs, 0, 0, 0);
+    s = place(s, mine, 0, 10, Math.PI);
+    s = editUnit(s, theirs, { keywords: ["VEHICLE", "BEHEMOTH", "TRANSPORT"] });
+    expect(preview(s, mine, "hull-guns", theirs).reminders).toEqual(
+      expect.arrayContaining([
+        "Lost when firing",
+        "Damage to transported units",
+        "Wrecks (optional)",
+        "System damage effects",
+      ]),
+    );
+    // An infantry target, by a unit that isn't a behemoth: none of them.
+    const tank = unitNamed(setup(), "Lancer Tank", "p1").id;
+    let t = setup();
+    const gang = unitNamed(t, "Raider Gang", "p2").id;
+    t = place(place(t, tank, 0, 6), gang, 0, 0);
+    expect(preview(t, tank, "coax-mg", gang).reminders).toEqual([]);
+  });
+
+  it("shows the rules played by hand at their moment: scoring, reinforcements, reactions, deploying, support cards, prepared tokens", () => {
+    let s = setup();
+    const hints = (id: string) => fsd.actions.find((a) => a.id === id)?.hint;
+    for (const id of ["react", "deploy", "support", "prepare"]) expect(hints(id)).toBeTruthy();
+    s = toActivations(s);
+    for (let i = 0; i < 6 && currentSlot(s)?.id !== "scoring"; i++) {
+      s = play(s, { type: "turn/pass" }, s.turn.activeSeat === 0 ? "p1" : "p2");
+    }
+    expect(currentSlot(s)?.id).toBe("scoring");
+    expect(currentSlot(s)?.hint).toMatch(/Victory Cards/);
+    const preassign = schedule(fsd).find((x) => x.id === "preassign");
+    expect(preassign?.hint).toMatch(/Reinforcement/);
+  });
+
+  it("flags an army over the game's points, a Unique unit fielded twice, and a move ending on another base", () => {
+    let s = setup();
+    const ids = (t: GameState) => fsdChecks(gameView(t, "fsd-1.7")).map((w) => w.id);
+    expect(ids(s)).not.toContain("points");
+    s = play(s, { type: "settings/set", settings: { points: 20 } }, "p1");
+    expect(ids(s)).toContain("points");
+    const a = unitNamed(s, "Rifle Squad", "p1").id;
+    const b = unitNamed(s, "Rifle Squad B", "p1").id;
+    s = editUnit(editUnit(s, a, { abilities: ["Unique"] }), b, { abilities: ["Unique"] });
+    expect(ids(s)).not.toContain("unique");
+    s = { ...s, units: { ...s.units, [a]: { ...s.units[a]!, name: "Rifle Squad B" } } };
+    expect(ids(s)).toContain("unique");
+    // Moving onto another unit's base.
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const gang = unitNamed(s, "Raider Gang", "p2").id;
+    s = place(place(s, tank, 0, 6), gang, 0, 0);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank, action: "move" }, "p1");
+    if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
+    expect(ids(s)).not.toContain("overlap");
+    expect(ids(place(s, tank, 0.5, 0.5))).toContain("overlap");
   });
 });

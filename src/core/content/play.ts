@@ -10,6 +10,7 @@ import {
   type Outcome,
 } from "./runner";
 import { callFor } from "./calls";
+import { systemConstants } from "./gameSize";
 import {
   inchesPerUnit,
   readCharacteristics,
@@ -65,6 +66,8 @@ export interface ActionOption {
   move?: number;
   /** Units this action may activate as well (FSD command), and how many. */
   commands?: { count: number; candidates: UnitId[] };
+  /** Attacks it makes (ActionDef.repeat), each at a target of its own, when more than one. */
+  repeat?: number;
 }
 
 interface ActionRequest {
@@ -76,7 +79,7 @@ interface ActionRequest {
 
 export function evalCtx(state: GameState, system: GameSystem, scope: Record<string, unknown>): EvalContext {
   return {
-    scope: { const: system.constants ?? {}, settings: state.settings, ...scope },
+    scope: { const: systemConstants(state, system), settings: state.settings, ...scope },
     tables: Object.fromEntries((system.tables ?? []).map((t) => [t.id, t])),
     geometry: tableGeometry(state, system),
     call: callFor(state, system.id),
@@ -116,10 +119,16 @@ function playerAtSeat(state: GameState, seat: number): PlayerId | undefined {
 function triggerPayload(state: GameState, system: GameSystem, t: ActionTrigger) {
   const unit = state.units[t.unitId];
   const target = t.targetId ? state.units[t.targetId] : undefined;
+  // Every unit a multiple attack is aimed at, for reactions by any of them.
+  const targets = [...new Set([t.targetId, ...(t.more ?? [])])].flatMap((id) => {
+    const u = id ? state.units[id] : undefined;
+    return u ? [unitView(state, system, u)] : [];
+  });
   return {
     action: t.action,
     unit: unit ? unitView(state, system, unit) : undefined,
     target: target ? unitView(state, system, target) : undefined,
+    targets,
   };
 }
 
@@ -478,6 +487,10 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
       ...(why || "why" in paid ? { why: why ?? (paid as { why: string }).why } : {}),
     };
     if (def.move) option.move = safeNum(def.move.distance, ctx);
+    if (def.repeat !== undefined && wView) {
+      const n = Math.floor(safeNum(def.repeat, ctx, 1));
+      if (n > 1) option.repeat = n;
+    }
     const command = def.do?.find((a): a is Extract<EffectAction, { do: "activate" }> => a.do === "activate");
     if (command) {
       const count = safeNum(command.count, ctx);
@@ -680,6 +693,7 @@ export function applyAction(state: GameState, ev: ActionTaken): GameState {
     by: ev.by,
     ...(ev.targetId ? { targetId: ev.targetId } : {}),
     ...(ev.weapon ? { weapon: ev.weapon } : {}),
+    ...(ev.more?.length ? { more: ev.more } : {}),
   };
   if (ev.hold) {
     const seat = Object.values(next.players).find(
@@ -724,7 +738,7 @@ export function pay(state: GameState, player: PlayerId, payment: Payment[]): Gam
 }
 
 /** Put a procedure run into the state, applying its outcomes once it is done. */
-function withRun(state: GameState, trigger: ActionTrigger, run: ProcedureRun): GameState {
+export function withRun(state: GameState, trigger: ActionTrigger, run: ProcedureRun): GameState {
   const system = systemOf(state);
   const def = system.actions.find((a) => a.id === trigger.action);
   const unit = state.units[trigger.unitId];
@@ -743,6 +757,7 @@ function withRun(state: GameState, trigger: ActionTrigger, run: ProcedureRun): G
       by: trigger.by,
       ...(trigger.targetId ? { targetId: trigger.targetId } : {}),
       ...(trigger.weapon ? { weapon: trigger.weapon } : {}),
+      ...(trigger.more?.length ? { more: trigger.more } : {}),
     },
   };
   return run.done ? finishRun(next) : next;
@@ -758,8 +773,9 @@ export function setRun(state: GameState, run: ProcedureRun): GameState {
 function finishRun(state: GameState): GameState {
   const proc = state.procedure;
   if (!proc || proc.applied) return state;
-  // A reaction's results wait for the action it answers, and land with them.
-  if (state.pending?.reactor && state.pending.reactor === proc.unitId)
+  // A reaction's results wait for the action it answers, and land with them; so do a
+  // multiple attack's, until its last attack is rolled.
+  if ((state.pending?.reactor && state.pending.reactor === proc.unitId) || proc.more?.length)
     return {
       ...state,
       deferred: [...(state.deferred ?? []), ...proc.run.outcomes],
@@ -770,7 +786,7 @@ function finishRun(state: GameState): GameState {
 }
 
 /** Apply a reaction's results held back for the action it answered, then drop dice on switched-off actions. */
-function applyDeferred(state: GameState): GameState {
+export function applyDeferred(state: GameState): GameState {
   const held = state.deferred;
   const next = held?.length ? { ...applyRunOutcomes(state, held), deferred: null } : state;
   return dropDisabledPlacements(next);

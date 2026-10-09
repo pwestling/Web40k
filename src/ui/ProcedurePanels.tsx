@@ -66,6 +66,8 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
   const game = useGame();
   const { setDraft, dispatch } = useStore();
   const [pick, setPick] = useState<number | null>(null);
+  // A multiple attack's other targets, by attack (the first target where none is picked).
+  const [more, setMore] = useState<string[]>([]);
   const unit = game.units[draft.attackerId];
   const system = systemOf(game);
   const def = system.actions.find((a) => a.id === draft.action);
@@ -120,6 +122,8 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
     }),
   );
   const hopeless = cannotSucceed(preview);
+  const repeat = chosen?.o?.repeat ?? 1;
+  const moreTargets = Array.from({ length: repeat - 1 }, (_, i) => more[i] ?? draft.targetId ?? "");
 
   return (
     <div className="panel attack">
@@ -165,6 +169,25 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
           {draft.picking ? t("Click a target on the table…") : t("Pick on table")}
         </button>
       </div>
+      {draft.targetId && repeat > 1 && (
+        <div className="row wrap">
+          {moreTargets.map((id, i) => (
+            <label key={i}>
+              {t("Attack {n} at", { n: i + 2 })}{" "}
+              <select
+                value={id}
+                onChange={(e) => setMore(moreTargets.map((x, j) => (j === i ? e.target.value : x)))}
+              >
+                {targets.map((tg) => (
+                  <option key={tg.unitId} value={tg.unitId}>
+                    {game.units[tg.unitId]?.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      )}
       {preview && (
         <ul className="plan">
           {findProcedure(system, def.procedure).steps.map((step) => {
@@ -207,6 +230,7 @@ export function ActionSetup({ draft }: { draft: AttackDraft & { action: string }
               action: def.id,
               weapon: weaponId,
               targetId: draft.targetId,
+              ...(repeat > 1 ? { more: moreTargets } : {}),
               ...dice,
             },
             unit.owner,

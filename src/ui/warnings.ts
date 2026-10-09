@@ -10,6 +10,7 @@ import { t } from "../i18n";
 import { gameModule } from "../systems";
 import { aliveModels, moveAllowance, unitMoved } from "../systems/wh40k/rules";
 import { plainActivations } from "../core/content/turn";
+import { terrainMoveWarning } from "../core/content/moves";
 
 /**
  * The Table warnings panel's checks (roadmap #26): every data check in the
@@ -141,6 +142,13 @@ export function tableWarnings(state: GameState): TableWarning[] {
     for (const unit of Object.values(state.units)) {
       if (unit.status?.reserves || !aliveModels(state, unit).length) continue;
       found.push(...dataWarnings(state, unit, data));
+    }
+  // Moves through terrain the unit can't cross, or that costs it movement (core/content/moves.ts).
+  if (!ids.has("terrain") && state.turn.round > 0)
+    for (const unit of Object.values(state.units)) {
+      if (unit.status?.reserves || !aliveModels(state, unit).length) continue;
+      const message = terrainMoveWarning(state, system, unit);
+      if (message) found.push({ checkId: "terrain", unitId: unit.id, message, severity: "warning" });
     }
   // At a real table (#37) positions here mean nothing: checks that measure the board stay quiet.
   const measured = (w: { checkId: string }) =>

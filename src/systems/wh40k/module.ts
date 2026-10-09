@@ -70,8 +70,8 @@ export const wh40kModule: GameModule<SystemModule> = {
     },
   },
   checks: wh40kChecks,
-  // Coherency here counts floors, and a move counts climbing and the phase's allowance.
-  replacesChecks: ["coherency", "moveDistance"],
+  // Coherency here counts floors, a move counts climbing and the phase's allowance, and walls by unit type.
+  replacesChecks: ["coherency", "moveDistance", "terrain"],
   app: {
     sample: sampleRoster,
     layout: (t) => standardLayout(t.width, t.depth),

@@ -4,6 +4,7 @@ import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
 import {
   applyAction,
+  applyDeferred,
   applyRunOutcomes,
   dropDisabledPlacements,
   endReaction,
@@ -11,6 +12,7 @@ import {
   placedKey,
   setPlaced,
   setRun,
+  withRun,
 } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import {
@@ -576,7 +578,14 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return { ...state, modules: { ...state.modules, [event.module]: mine } };
     }
     case "procedure/clear": {
-      const cleared = { ...state, procedure: null };
+      const proc = state.procedure;
+      let cleared: GameState = { ...state, procedure: null };
+      if (proc && event.next) {
+        const { run, targetId, more } = event.next;
+        cleared = withRun(cleared, { ...proc, targetId, more }, run);
+      } else if (proc?.more?.length && state.pending?.reactor !== proc.unitId)
+        // A multiple attack's last attack couldn't be made: the ones made land now.
+        cleared = applyDeferred(cleared);
       const ended = event.end ? endReaction(cleared, event.end.run ?? null) : cleared;
       return event.script ? applyEvent(ended, event.script) : ended;
     }

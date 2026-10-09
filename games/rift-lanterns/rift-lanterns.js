@@ -6,7 +6,7 @@
 export const manifest = {
   id: "open-battle.rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.3.1",
+  version: "1.3.2",
   author: "Open Battle contributors",
   api: 1,
   kind: "system",
@@ -34,7 +34,7 @@ const CATEGORIES = {
 const system = {
   id: "rift-lanterns",
   name: "Rift Lanterns",
-  version: "1.3.1",
+  version: "1.3.2",
   units: "inch",
   dice: [{ id: "d6", sides: 6 }],
   defaultDie: "d6",
@@ -54,6 +54,7 @@ const system = {
   terrain: [
     { id: "ruin", name: "Ruin", cover: true },
     { id: "thicket", name: "Thicket", cover: true, visibility: "obscuring" },
+    // Can't be walked through: the app flags a move whose path goes into or through one.
     { id: "wreck", name: "Wreck", blocksMovement: true, blocksSight: true },
     { id: "open", name: "Open ground" },
   ],
@@ -74,14 +75,6 @@ const system = {
         b: { op: "+", args: [{ ref: "event.allowed" }, 0.05] },
       },
       message: "Moved further than its Move this round.",
-    },
-    {
-      // Only where it ends is seen here, not the path: a move through a wreck is the players' to spot.
-      id: "wreck",
-      name: "Wreck",
-      when: { event: "move.end" },
-      require: { not: { query: { kind: "inArea", subject: "self", area: "terrain.wreck" } } },
-      message: "Ended a move inside a wreck: wrecks can't be walked through.",
     },
   ],
   turn: {
@@ -820,7 +813,7 @@ const RULEBOOK = {
 export default {
   module: {
     id: "rift-lanterns",
-    version: "1.3.1",
+    version: "1.3.2",
     api: 1,
     system,
     app: {

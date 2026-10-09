@@ -11,7 +11,7 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 | ------------- | --------- | -------------- | --------------- | ------- | ---- |
 | 40k           | 70        | 8              | 21              | 11      | 110  |
 | The Old World | 71        | 8              | 11              | 2       | 92   |
-| FSD           | 80        | 5              | 5               | 37      | 127  |
+| FSD           | 84        | 10             | 22              | 11      | 127  |
 | Conquest      | 55        | 9              | 7               | 10      | 81   |
 | Rift Lanterns | 31        | 3              | 0               | 0       | 34   |
 
@@ -23,8 +23,5 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 - Re-rolling a single die face (`reroll: { values: [6] }`) isn't supported (Conquest Inspired).
 - Charges: no landed / fell-short event; targets not limited to front arc and sight (Conquest).
 - March limits (half rate sideways/back, not within 1" of an enemy); command stand removed last (Conquest).
-- Multiple attacks (x2, x3) in one action, each with its own target (FSD).
-- Terrain movement by unit type; `blocksMovement` isn't enforced on a move's path (FSD, Rift Lanterns wrecks).
-- AD Pool and Capacity from game size; reminder timing on activation, move or reaction (FSD).
 - Activations and `script/start` don't recheck availability for a raw intent (Rift Lanterns).
 - Weapon rules by name pattern (`hasRule`, e.g. Multiple Shots); Command sub-phase steps (TOW).

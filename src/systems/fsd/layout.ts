@@ -8,7 +8,7 @@ export const FSD_CATEGORIES: Record<string, string> = {
   "Tall ruin": "blocking",
   Container: "blocking",
   Woods: "obscuring",
-  Barricade: "traversable",
+  Barricade: "fragile",
   Crater: "broken",
   Hill: "open",
 };

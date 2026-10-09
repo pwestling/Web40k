@@ -226,6 +226,17 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     if (event.type === "procedure/set" || (event.type === "procedure/clear" && procLine)) {
       if (event.type === "procedure/clear") {
         procLine = null;
+        // A multiple attack's next attack starts its own line.
+        if (event.next && !skipped && state.procedure)
+          items.push(
+            (procLine = {
+              kind: "line",
+              key,
+              seq: logged.seq,
+              text: procedureSummary(state),
+              undone: skipped,
+            }),
+          );
         continue;
       }
       const text = procedureSummary(state);

@@ -447,6 +447,8 @@ export type Segment =
       segments?: Segment[];
       /** Players may place pool dice on their cards' slots here (FSD pre-assigning and cleanup). */
       placeDice?: boolean;
+      /** A reminder shown while the phase is on, in the system author's own words (FSD scoring). */
+      hint?: string;
     }
   /** Each player takes a full turn of the nested segments (IGOUGO). */
   | { kind: "playerTurns"; segments: Segment[] }
@@ -538,6 +540,13 @@ export interface ActionDef {
   move?: { kind: Id; distance: Expr };
   /** A dice procedure to run, e.g. the attack sequence per weapon. */
   procedure?: Id;
+  /**
+   * Multiple attacks in one action (FSD's x2, x3): the procedure runs this
+   * many times, each at a target named up front (the first, then `more`).
+   * It stays one action, with one cost and one reaction, and every run's
+   * results land together once the last is done.
+   */
+  repeat?: Expr;
   do?: EffectAction[];
   /** Flags set on the acting unit afterwards, e.g. "advanced". */
   sets?: Id[];
@@ -643,9 +652,10 @@ export interface ResourceDef {
   reset?: "playerTurn" | "round";
   /**
    * Dice in the whole pool (FSD's AD Pool): dice still placed on cards count
-   * against it, so a roll takes fewer when many are placed.
+   * against it, so a roll takes fewer when many are placed. May name a
+   * constant ("const.adPool") that follows the game size.
    */
-  total?: number;
+  total?: number | Expr;
 }
 
 /** An advisory rule check. Breaking it warns; it never blocks. */
@@ -686,6 +696,15 @@ export interface TerrainCategoryDef {
    * its move in this terrain (The Old World's difficult terrain: 1, never below 1).
    */
   slows?: number;
+  /**
+   * How a move treats it by unit type, in place of `blocksMovement` and
+   * `slows` for a unit with one of `keywords` (unit keywords, or an ability
+   * whose name starts with it; "*" is any unit); the first entry that fits
+   * wins. FSD: infantry crosses traversable terrain for 1 DU, vehicles can't,
+   * and flying or jumping units pass over everything. Checked along each
+   * model's path this phase (a warning, src/core/content/moves.ts).
+   */
+  movement?: { keywords: Keyword[]; blocks?: boolean; slows?: number }[];
   effects?: Effect[];
 }
 
@@ -732,6 +751,13 @@ export interface GameSystem {
   /** Named numbers such as engagement range, available as "const.<id>". */
   constants?: Record<Id, number>;
   /**
+   * Constants that follow the game's size in points (FSD's AD Pool and
+   * Capacity). `points` is the standard size, used until the players set
+   * another (settings.points); each of `constants` replaces the constant of
+   * that id, worked out from "game.points".
+   */
+  gameSize?: { points: number; constants: Record<Id, Expr> };
+  /**
    * Unit flags cleared at the start of each player turn (for that player's
    * units), each round, or the end of each activation (for everyone), e.g.
    * "moved" or "activated". A trailing "*" clears every flag with that prefix.
@@ -764,6 +790,12 @@ export interface AbilityTiming {
   attack?: "attacker" | "defender";
   /** Only for attacks of this weapon kind, e.g. "melee". */
   weaponKind?: Id;
+  /**
+   * Finer than a phase: shown for the unit only while it is activated
+   * ("activation"), once it has taken a move action in its activation
+   * ("move"), or while it reacts ("reaction"). `phase`, if given, still applies.
+   */
+  on?: "activation" | "move" | "reaction";
 }
 
 // ---------------------------------------------------------------------------
