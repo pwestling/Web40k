@@ -77,10 +77,19 @@ export function Hud() {
   const mine = seated.filter((p) => canControl(p.id));
   const amSeated = mode === "hotseat" || seated.some((p) => p.id === selfId);
 
+  // At Battle over in a live game the review starts by itself, folded menu or not (UX 424, 432).
+  const autoReview = battleOver(shown) && !!session && !BROADCAST && !VIEWER && reviewable(shown);
+  useEffect(() => {
+    if (autoReview) startReview(useStore.getState().record);
+  }, [autoReview]);
+
   if (collapsed)
     return (
       <div className="panel hud collapsed">
-        <button onClick={() => setCollapsed(false)}>{t("☰ Menu")}</button>
+        <button onClick={() => setCollapsed(false)}>
+          {t("☰ Menu")}
+          <ReviewReadyDot over={battleOver(shown)} />
+        </button>
       </div>
     );
 
@@ -233,7 +242,7 @@ export function Hud() {
       <GameLog />
       <div className="row wrap hud-foot">
         {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
-        {(battleOver(shown) || !session) && <StatsButton over={battleOver(shown)} live={!!session} />}
+        {(battleOver(shown) || !session) && <StatsButton over={battleOver(shown)} />}
         <button onClick={() => void downloadReplay(record)}>{t("Download replay")}</button>
         {/* Notes go on a replay: the game just played becomes one (UX 231). */}
         {session && battleOver(shown) && (
@@ -465,26 +474,22 @@ function RejoinCard({ seated }: { seated: Player[] }) {
   );
 }
 
-/**
- * Stats, with a dot once the game review is ready (UX 424). At Battle over in
- * a live game the review starts by itself, so it's waiting by the time the
- * players look.
- */
-function StatsButton({ over, live }: { over: boolean; live: boolean }) {
+/** Stats, with a dot once the game review is ready (UX 424). */
+function StatsButton({ over }: { over: boolean }) {
   const set = useStore((s) => s.set);
-  const open = useStore((s) => s.stats ?? over);
-  const record = useStore((s) => s.record);
-  const game = useStore((s) => s.game);
-  const run = useReviewRun();
-  const auto = over && live && !BROADCAST && !VIEWER && reviewable(game);
-  useEffect(() => {
-    if (auto) startReview(useStore.getState().record);
-  }, [auto]);
-  const ready = run.status === "done" && run.of?.initial === record.initial && !open;
   return (
     <button onClick={() => set({ stats: !(useStore.getState().stats ?? over) })}>
       {t("Stats")}
-      {ready && <span className="ready-dot" title={t("Review ready")} aria-label={t("Review ready")} />}
+      <ReviewReadyDot over={over} />
     </button>
   );
+}
+
+/** A green dot while this game's review is ready and the stats sheet is closed. */
+function ReviewReadyDot({ over }: { over: boolean }) {
+  const open = useStore((s) => s.stats ?? over);
+  const record = useStore((s) => s.record);
+  const run = useReviewRun();
+  if (run.status !== "done" || run.of?.initial !== record.initial || open) return null;
+  return <span className="ready-dot" title={t("Review ready")} aria-label={t("Review ready")} />;
 }

@@ -111,14 +111,39 @@ function Review({
       .map((p) => displayName(p.name))
       .join(" & ") || t("Player {n}", { n: seat + 1 });
   const color = (seat: number) => sidePlayers(final, seat)[0]?.color ?? "#9ca3af";
+  // The same chance missed round after round is one turning point, with its rounds (UX 430).
+  const { folded, roundsOf } = useMemo(() => {
+    const groups = new Map<string, { mark: Mark; rounds: number[] }>();
+    const out: Mark[] = [];
+    for (const m of review.marks) {
+      const d = review.decisions[m.decision]!;
+      if (m.kind !== "missed" || !d.best) {
+        out.push(m);
+        continue;
+      }
+      const key = `${d.seat}|${moveText(states.get(d.seq) ?? final, d.best)}`;
+      const g = groups.get(key);
+      if (!g) groups.set(key, { mark: m, rounds: [d.round] });
+      else {
+        if (!g.rounds.includes(d.round)) g.rounds.push(d.round);
+        if (Math.abs(m.size) > Math.abs(g.mark.size)) g.mark = { ...g.mark, size: m.size };
+      }
+    }
+    const roundsOf = new Map<number, number[]>();
+    for (const g of groups.values()) {
+      out.push(g.mark);
+      roundsOf.set(g.mark.decision, g.rounds);
+    }
+    return { folded: out, roundsOf };
+  }, [review, states, final]);
   // The biggest turning points, in the order they happened.
   const turning = useMemo(
     () =>
-      [...review.marks]
+      [...folded]
         .sort((a, b) => Math.abs(b.size) - Math.abs(a.size))
         .slice(0, 8)
         .sort((a, b) => a.decision - b.decision || a.kind.localeCompare(b.kind)),
-    [review],
+    [folded],
   );
   const [picked, setPicked] = useState<number | null>(null);
   return (
@@ -139,6 +164,7 @@ function Review({
             <TurningPoint
               key={`${m.kind}-${m.decision}`}
               review={review}
+              rounds={roundsOf.get(m.decision) ?? [review.decisions[m.decision]!.round]}
               mark={m}
               d={review.decisions[m.decision]!}
               state={at(review.decisions[m.decision]!.seq)}
@@ -346,6 +372,7 @@ function ResultLine({
 
 function TurningPoint({
   review,
+  rounds,
   mark,
   d,
   state,
@@ -358,6 +385,7 @@ function TurningPoint({
   pick,
 }: {
   review: GameReview;
+  rounds: number[];
   mark: Mark;
   d: Decision;
   state: GameState;
@@ -376,8 +404,9 @@ function TurningPoint({
     mark.kind === "costly"
       ? t("{played}. Better: {better}, about {n}% more chance to win.", { played, better: better ?? "", n })
       : mark.kind === "missed"
-        ? t("Moved on with {better} still to do, about {n}% chance to win left behind.", {
-            better: better ?? "",
+        ? t("Ended the turn without {better}, about {n}% chance to win left behind.", {
+            // "Spark Drones going for the Middle lantern" (UX 430).
+            better: (better ?? "").replace(": ", " "),
             n,
           })
         : mark.kind === "strong"
@@ -431,11 +460,17 @@ function TurningPoint({
         </span>
         <span className="swatch" style={{ background: color(d.seat) }} />
         <span className="muted small">
-          {t("{side} · round {round}, {phase}", {
-            side: sideName(d.seat),
-            round: d.round,
-            phase: gameText(d.phase),
-          })}
+          {rounds.length > 1
+            ? t("{side} · rounds {rounds}, {phase}", {
+                side: sideName(d.seat),
+                rounds: [...rounds].sort((a, b) => a - b).join(", "),
+                phase: gameText(d.phase),
+              })
+            : t("{side} · round {round}, {phase}", {
+                side: sideName(d.seat),
+                round: d.round,
+                phase: gameText(d.phase),
+              })}
         </span>
       </div>
       <div>{line}</div>

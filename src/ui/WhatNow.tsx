@@ -320,7 +320,9 @@ export function WhatNow() {
   const events = useStore((s) => s.record.events.length);
   const [fold, setFold] = useState({ key: phaseKey, at: events, open: false });
   if (fold.key !== phaseKey) setFold({ key: phaseKey, at: events, open: false });
-  if (spectator || scrub !== null || coaching || asking) return null;
+  // The stats sheet open at Battle over is what to look at: the card would cover its header (UX 429).
+  const statsOpen = useStore((s) => s.stats ?? battleOver(game));
+  if (spectator || scrub !== null || coaching || asking || (battleOver(game) && statsOpen)) return null;
   if (!open)
     return (
       <button className="whatnow-toggle" onClick={() => useHelp.setState({ hint: true })}>

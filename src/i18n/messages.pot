@@ -551,40 +551,44 @@ msgstr ""
 msgid "Your army is about {n} times the computer's."
 msgstr ""
 
-#: src/bot/explain.ts:102
+#: src/bot/explain.ts:117
 msgid "going for the {objective}"
 msgstr ""
 
-#: src/bot/explain.ts:103
+#: src/bot/explain.ts:118
 msgid "going for an objective"
 msgstr ""
 
-#: src/bot/explain.ts:107
+#: src/bot/explain.ts:122
 msgid "closing on {target}"
 msgstr ""
 
-#: src/bot/explain.ts:109
+#: src/bot/explain.ts:124
 msgid "pulling back from {target}"
 msgstr ""
 
-#: src/bot/explain.ts:110
+#: src/bot/explain.ts:125
 msgid "moving up"
 msgstr ""
 
-#: src/bot/explain.ts:38
-#: src/bot/explain.ts:94
+#: src/bot/explain.ts:45
+msgid "{unit} ({side})"
+msgstr ""
+
+#: src/bot/explain.ts:53
+#: src/bot/explain.ts:109
 msgid "charging {target}"
 msgstr ""
 
-#: src/bot/explain.ts:39
+#: src/bot/explain.ts:54
 msgid "shooting at {target}"
 msgstr ""
 
-#: src/bot/explain.ts:40
+#: src/bot/explain.ts:55
 msgid "fighting {target}"
 msgstr ""
 
-#: src/bot/explain.ts:41
+#: src/bot/explain.ts:56
 msgid "{action} at {target}"
 msgstr ""
 
@@ -1062,7 +1066,7 @@ msgid "Kills, games and wounds fill in after each game. Honours, scars and XP ar
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:727
-#: src/ui/Hud.tsx:170
+#: src/ui/Hud.tsx:179
 msgid "Done editing"
 msgstr ""
 
@@ -1458,7 +1462,7 @@ msgid "No army yet."
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:196
-#: src/ui/Hud.tsx:198
+#: src/ui/Hud.tsx:207
 msgid "Add an army"
 msgstr ""
 
@@ -1493,7 +1497,7 @@ msgid "Number of dice"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:295
-#: src/ui/Hud.tsx:223
+#: src/ui/Hud.tsx:232
 msgid "D"
 msgstr ""
 
@@ -1502,18 +1506,18 @@ msgid "Sides"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:301
-#: src/ui/Hud.tsx:229
+#: src/ui/Hud.tsx:238
 #: src/ui/StatsScreen.tsx:210
 msgid "Roll"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:308
-#: src/ui/Hud.tsx:486
+#: src/ui/Hud.tsx:482
 msgid "Stats"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:310
-#: src/ui/Hud.tsx:237
+#: src/ui/Hud.tsx:246
 msgid "Download replay"
 msgstr ""
 
@@ -1532,7 +1536,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:95
 #: src/opentables/OpenTables.tsx:192
-#: src/ui/Lobby.tsx:435
+#: src/ui/Lobby.tsx:439
 msgid "Game"
 msgstr ""
 
@@ -2534,8 +2538,8 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:391
 #: src/opentables/OpenTables.tsx:565
 #: src/replay/NotesPanel.tsx:252
-#: src/ui/Hud.tsx:380
-#: src/ui/Hud.tsx:416
+#: src/ui/Hud.tsx:389
+#: src/ui/Hud.tsx:425
 msgid "Your name"
 msgstr ""
 
@@ -2544,7 +2548,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:605
+#: src/ui/Lobby.tsx:609
 msgid "Not now"
 msgstr ""
 
@@ -2589,12 +2593,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:457
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:452
+#: src/ui/Lobby.tsx:456
 msgid "1 vs 1"
 msgstr ""
 
@@ -2920,7 +2924,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:415
-#: src/ui/Lobby.tsx:481
+#: src/ui/Lobby.tsx:485
 msgid "Join"
 msgstr ""
 
@@ -3485,10 +3489,10 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
-#: src/ui/Hud.tsx:92
+#: src/ui/Hud.tsx:101
 #: src/ui/PlayPanel.tsx:79
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:345
+#: src/ui/WhatNow.tsx:347
 msgid "Hide"
 msgstr ""
 
@@ -3513,131 +3517,135 @@ msgstr ""
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:135
+#: src/review/ReviewPanel.tsx:160
 msgid "Turning points"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:156
+#: src/review/ReviewPanel.tsx:182
 msgid "No big swings: both sides played close to the best on offer."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:158
+#: src/review/ReviewPanel.tsx:184
 msgid "Takeaways"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:180
+#: src/review/ReviewPanel.tsx:206
 msgid "Costly"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:182
+#: src/review/ReviewPanel.tsx:208
 msgid "Strong"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:184
+#: src/review/ReviewPanel.tsx:210
 msgid "Missed chance"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:186
+#: src/review/ReviewPanel.tsx:212
 msgid "Lucky dice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:187
+#: src/review/ReviewPanel.tsx:213
 msgid "Unlucky dice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:243
-#: src/review/ReviewPanel.tsx:247
+#: src/review/ReviewPanel.tsx:269
+#: src/review/ReviewPanel.tsx:273
 msgid "{side} ahead"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:254
+#: src/review/ReviewPanel.tsx:280
 msgid "Expected result across the game"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:268
+#: src/review/ReviewPanel.tsx:294
 msgid "even"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:271
-#: src/review/ReviewPanel.tsx:277
+#: src/review/ReviewPanel.tsx:297
+#: src/review/ReviewPanel.tsx:303
 #: src/ui/Missions.tsx:378
 msgid "R{n}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:331
+#: src/review/ReviewPanel.tsx:357
 msgid "{n}%"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:336
+#: src/review/ReviewPanel.tsx:362
 msgid "Round {round}: {side} {n}% to win"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:341
+#: src/review/ReviewPanel.tsx:367
 msgid "How the computer rated each side's chances as the game went on."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:377
+#: src/review/ReviewPanel.tsx:405
 msgid "{played}. Better: {better}, about {n}% more chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:379
-msgid "Moved on with {better} still to do, about {n}% chance to win left behind."
+#: src/review/ReviewPanel.tsx:407
+msgid "Ended the turn without {better}, about {n}% chance to win left behind."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:384
+#: src/review/ReviewPanel.tsx:413
 msgid "{played}: about {n}% more chance to win than the next best choice."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:386
+#: src/review/ReviewPanel.tsx:415
 msgid "{played}: the dice added about {n}% to the chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:387
+#: src/review/ReviewPanel.tsx:416
 msgid "{played}: the dice took about {n}% off the chance to win."
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:434
+#: src/review/ReviewPanel.tsx:464
+msgid "{side} · rounds {rounds}, {phase}"
+msgstr ""
+
+#: src/review/ReviewPanel.tsx:469
 msgid "{side} · round {round}, {phase}"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:443
+#: src/review/ReviewPanel.tsx:478
 #: src/ui/StatsScreen.tsx:123
 msgid "Watch it again on the table"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:444
+#: src/review/ReviewPanel.tsx:479
 msgid "Show"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:450
+#: src/review/ReviewPanel.tsx:485
 msgid "A new game on this screen, just before this choice"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:452
+#: src/review/ReviewPanel.tsx:487
 msgid "Try the better move"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:459
+#: src/review/ReviewPanel.tsx:494
 msgid "Keep it as a note on this replay"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:461
+#: src/review/ReviewPanel.tsx:496
 msgid "Added to notes"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:461
+#: src/review/ReviewPanel.tsx:496
 msgid "Add to notes"
 msgstr ""
 
-#: src/review/ReviewPanel.tsx:477
+#: src/review/ReviewPanel.tsx:512
 msgid "Try the better move for {side}:"
 msgstr ""
 
 #: src/review/ReviewPanel.tsx:53
 #: src/review/ReviewPanel.tsx:67
 #: src/review/ReviewPanel.tsx:80
-#: src/review/ReviewPanel.tsx:126
-#: src/review/ReviewPanel.tsx:408
+#: src/review/ReviewPanel.tsx:151
+#: src/review/ReviewPanel.tsx:437
 msgid "Game review"
 msgstr ""
 
@@ -3670,81 +3678,77 @@ msgstr ""
 msgid "Try again"
 msgstr ""
 
-#: src/review/words.ts:132
+#: src/review/words.ts:119
 msgid "Movement cost you most: {n} move gave up about {vp} VP. Before moving, look at where the enemy can shoot next turn."
 msgid_plural "Movement cost you most: {n} moves gave up about {vp} VP between them. Before moving, look at where the enemy can shoot next turn."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:139
+#: src/review/words.ts:126
 msgid "Your targets cost you most: {n} attack gave up about {vp} VP. Finish off a unit you've hurt before starting on a fresh one."
 msgid_plural "Your targets cost you most: {n} attacks gave up about {vp} VP between them. Finish off a unit you've hurt before starting on a fresh one."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:146
+#: src/review/words.ts:133
 msgid "Your stratagems cost about {vp} VP: save them for the attack that needs them."
 msgstr ""
 
-#: src/review/words.ts:149
+#: src/review/words.ts:136
 msgid "Your choices gave up about {vp} VP over the game."
 msgstr ""
 
-#: src/review/words.ts:157
+#: src/review/words.ts:144
 msgid "You ended {n} phase with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
 msgid_plural "You ended {n} phases with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/review/words.ts:171
+#: src/review/words.ts:158
 msgid "Your dice ran hot: about {vp} VP above the average. Don't count on that next time."
 msgstr ""
 
-#: src/review/words.ts:174
+#: src/review/words.ts:161
 msgid "Your dice ran cold: about {vp} VP below the average. The choices matter more than that."
 msgstr ""
 
-#: src/review/words.ts:185
+#: src/review/words.ts:172
 msgid "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer."
 msgstr ""
 
-#: src/review/words.ts:203
+#: src/review/words.ts:190
 msgid "The costliest call: {move} in round {round}. {better} was worth about {n}% more chance to win."
 msgstr ""
 
-#: src/review/words.ts:220
+#: src/review/words.ts:207
 msgid "{clean} of your {n} choices were as good as the best on offer."
 msgstr ""
 
-#: src/review/words.ts:30
-msgid "{unit} ({side})"
-msgstr ""
-
-#: src/review/words.ts:36
+#: src/review/words.ts:23
 msgid "moving on to the next phase"
 msgstr ""
 
-#: src/review/words.ts:46
+#: src/review/words.ts:33
 msgid "used {action}"
 msgstr ""
 
-#: src/review/words.ts:50
+#: src/review/words.ts:37
 msgid "used {action} on their {unit}"
 msgstr ""
 
-#: src/review/words.ts:51
+#: src/review/words.ts:38
 msgid "used {action} on the enemy {unit}"
 msgstr ""
 
-#: src/review/words.ts:58
+#: src/review/words.ts:45
 msgid "{action} with {weapon}"
 msgstr ""
 
-#: src/review/words.ts:59
+#: src/review/words.ts:46
 msgid "{unit}: {action}, {why}"
 msgstr ""
 
-#: src/review/words.ts:68
+#: src/review/words.ts:55
 msgid "moving"
 msgstr ""
 
@@ -5735,7 +5739,7 @@ msgid "{name}'s dice"
 msgstr ""
 
 #: src/ui/DicePicker.tsx:59
-#: src/ui/Hud.tsx:210
+#: src/ui/Hud.tsx:219
 #: src/ui/StatsScreen.tsx:211
 msgid "Dice"
 msgstr ""
@@ -5968,190 +5972,190 @@ msgstr ""
 msgid "Other units' models block line of sight"
 msgstr ""
 
-#: src/ui/Hud.tsx:100
-msgid "You play the near side; {name} plays the far side ({level})."
-msgstr ""
-
-#: src/ui/Hud.tsx:105
-msgid "Play by mail: you play your side; send your file when you're done."
-msgstr ""
-
-#: src/ui/Hud.tsx:106
-msgid "Hotseat: you control both sides."
+#: src/ui/Hud.tsx:107
+msgid "Lesson: the computer plays the other side."
 msgstr ""
 
 #: src/ui/Hud.tsx:109
-msgid "Spectating."
+msgid "You play the near side; {name} plays the far side ({level})."
 msgstr ""
 
 #: src/ui/Hud.tsx:114
+msgid "Play by mail: you play your side; send your file when you're done."
+msgstr ""
+
+#: src/ui/Hud.tsx:115
+msgid "Hotseat: you control both sides."
+msgstr ""
+
+#: src/ui/Hud.tsx:118
+msgid "Spectating."
+msgstr ""
+
+#: src/ui/Hud.tsx:123
 #: src/ui/TouchLayer.tsx:151
 msgid "3D view"
 msgstr ""
 
-#: src/ui/Hud.tsx:114
+#: src/ui/Hud.tsx:123
 #: src/ui/TouchLayer.tsx:151
 msgid "Top-down view"
 msgstr ""
 
-#: src/ui/Hud.tsx:116
+#: src/ui/Hud.tsx:125
 #: src/ui/Keys.tsx:25
 msgid "Home"
 msgstr ""
 
-#: src/ui/Hud.tsx:117
+#: src/ui/Hud.tsx:126
 #: src/ui/TouchLayer.tsx:154
 msgid "Reset view"
 msgstr ""
 
-#: src/ui/Hud.tsx:122
+#: src/ui/Hud.tsx:131
 msgid "Drag between models or points to measure; both players see it (M)"
 msgstr ""
 
-#: src/ui/Hud.tsx:125
+#: src/ui/Hud.tsx:134
 msgid "Ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:130
+#: src/ui/Hud.tsx:139
 msgid "Clear the ruler (Esc)"
 msgstr ""
 
-#: src/ui/Hud.tsx:133
+#: src/ui/Hud.tsx:142
 msgid "Clear ruler"
 msgstr ""
 
-#: src/ui/Hud.tsx:137
+#: src/ui/Hud.tsx:146
 msgid "Unit names"
 msgstr ""
 
-#: src/ui/Hud.tsx:140
+#: src/ui/Hud.tsx:149
 msgid "X-ray terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:144
+#: src/ui/Hud.tsx:153
 msgid "Shorter dice rolls in the tray"
 msgstr ""
 
-#: src/ui/Hud.tsx:147
+#: src/ui/Hud.tsx:156
 #: src/ui/TopBar.tsx:581
 msgid "Fast dice"
 msgstr ""
 
-#: src/ui/Hud.tsx:151
+#: src/ui/Hud.tsx:160
 msgid "Camera follows the action: moves, shots and charges"
 msgstr ""
 
-#: src/ui/Hud.tsx:154
+#: src/ui/Hud.tsx:163
 msgid "Follow action"
 msgstr ""
 
-#: src/ui/Hud.tsx:164
+#: src/ui/Hud.tsx:173
 msgid "The battle has started. Unlock the terrain? Every change shows in the log."
 msgstr ""
 
-#: src/ui/Hud.tsx:170
+#: src/ui/Hud.tsx:179
 msgid "Unlock terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:170
+#: src/ui/Hud.tsx:179
 #: src/ui/TerrainPanel.tsx:184
 msgid "Edit terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:240
+#: src/ui/Hud.tsx:249
 #: src/ui/ReplayBar.tsx:175
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
-#: src/ui/Hud.tsx:241
+#: src/ui/Hud.tsx:250
 msgid "Replay with notes"
 msgstr ""
 
-#: src/ui/Hud.tsx:272
+#: src/ui/Hud.tsx:281
 msgid "Take back {what}"
 msgstr ""
 
-#: src/ui/Hud.tsx:273
+#: src/ui/Hud.tsx:282
 msgid "Take back your last action"
 msgstr ""
 
-#: src/ui/Hud.tsx:285
+#: src/ui/Hud.tsx:294
 msgid "Undo"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "three"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "four"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "five"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "six"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "seven"
 msgstr ""
 
-#: src/ui/Hud.tsx:340
+#: src/ui/Hud.tsx:349
 msgid "eight"
 msgstr ""
 
-#: src/ui/Hud.tsx:343
+#: src/ui/Hud.tsx:352
 msgid "Both players are here."
 msgstr ""
 
-#: src/ui/Hud.tsx:344
+#: src/ui/Hud.tsx:353
 msgid "All {count} seats are taken."
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:384
 msgid "You're {name}. What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:385
-#: src/ui/Hud.tsx:422
+#: src/ui/Hud.tsx:394
+#: src/ui/Hud.tsx:431
 msgid "Use this name"
 msgstr ""
 
-#: src/ui/Hud.tsx:400
+#: src/ui/Hud.tsx:409
 msgid "Connecting to the table as {name}…"
 msgstr ""
 
-#: src/ui/Hud.tsx:412
+#: src/ui/Hud.tsx:421
 msgid "Connecting to the table… What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:449
+#: src/ui/Hud.tsx:458
 msgid "This game is already under way. Rejoining?"
 msgstr ""
 
-#: src/ui/Hud.tsx:456
+#: src/ui/Hud.tsx:465
 msgid "Rejoin as {name}"
 msgstr ""
 
-#: src/ui/Hud.tsx:463
-#: src/ui/Lobby.tsx:484
+#: src/ui/Hud.tsx:472
+#: src/ui/Lobby.tsx:488
 msgid "Watch"
 msgstr ""
 
-#: src/ui/Hud.tsx:487
-#: src/ui/Hud.tsx:487
+#: src/ui/Hud.tsx:494
+#: src/ui/Hud.tsx:494
 msgid "Review ready"
 msgstr ""
 
-#: src/ui/Hud.tsx:83
+#: src/ui/Hud.tsx:90
 msgid "☰ Menu"
-msgstr ""
-
-#: src/ui/Hud.tsx:98
-msgid "Lesson: the computer plays the other side."
 msgstr ""
 
 #: src/ui/Keys.tsx:10
@@ -6375,224 +6379,228 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Lobby.tsx:200
+#: src/ui/Lobby.tsx:202
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:254
+#: src/ui/Lobby.tsx:256
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:267
+#: src/ui/Lobby.tsx:269
+msgid "Resume: {game}"
+msgstr ""
+
+#: src/ui/Lobby.tsx:271
 msgid "Resume: {game}, round {n}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:268
+#: src/ui/Lobby.tsx:272
 msgid "Resume: {game}, deploying"
 msgstr ""
 
-#: src/ui/Lobby.tsx:269
+#: src/ui/Lobby.tsx:273
 msgid "Resume last game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:272
+#: src/ui/Lobby.tsx:276
 msgid "{mode}, {n} event, saved {date}"
 msgid_plural "{mode}, {n} events, saved {date}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:278
+#: src/ui/Lobby.tsx:282
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:278
+#: src/ui/Lobby.tsx:282
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:278
+#: src/ui/Lobby.tsx:282
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:294
+#: src/ui/Lobby.tsx:298
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:296
+#: src/ui/Lobby.tsx:300
 msgid "From New Recruit or BattleScribe, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:302
+#: src/ui/Lobby.tsx:306
 msgid "Find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:303
+#: src/ui/Lobby.tsx:307
 msgid "Join a game someone has put up on Open tables."
 msgstr ""
 
-#: src/ui/Lobby.tsx:311
+#: src/ui/Lobby.tsx:315
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:317
-#: src/ui/Lobby.tsx:340
+#: src/ui/Lobby.tsx:321
+#: src/ui/Lobby.tsx:344
 msgid "Play now (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:320
-#: src/ui/Lobby.tsx:341
-#: src/ui/Lobby.tsx:383
+#: src/ui/Lobby.tsx:324
+#: src/ui/Lobby.tsx:345
+#: src/ui/Lobby.tsx:387
 msgid "Play the computer"
 msgstr ""
 
-#: src/ui/Lobby.tsx:324
+#: src/ui/Lobby.tsx:328
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr ""
 
-#: src/ui/Lobby.tsx:329
-#: src/ui/Lobby.tsx:342
-#: src/ui/Lobby.tsx:488
+#: src/ui/Lobby.tsx:333
+#: src/ui/Lobby.tsx:346
+#: src/ui/Lobby.tsx:492
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:332
+#: src/ui/Lobby.tsx:336
 msgid "Rules, print and play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:349
+#: src/ui/Lobby.tsx:353
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:351
+#: src/ui/Lobby.tsx:355
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:356
+#: src/ui/Lobby.tsx:360
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:373
+#: src/ui/Lobby.tsx:377
 msgid "Learn (guided)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:378
+#: src/ui/Lobby.tsx:382
 msgid "Try (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:393
+#: src/ui/Lobby.tsx:397
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:398
+#: src/ui/Lobby.tsx:402
 msgid "Open tables: find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:400
+#: src/ui/Lobby.tsx:404
 msgid "Games other players have put up. Join one, or post your own."
 msgstr ""
 
-#: src/ui/Lobby.tsx:426
+#: src/ui/Lobby.tsx:430
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:447
+#: src/ui/Lobby.tsx:451
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:449
+#: src/ui/Lobby.tsx:453
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:452
+#: src/ui/Lobby.tsx:456
 msgid "Two players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:453
+#: src/ui/Lobby.tsx:457
 msgid "Four players in two teams; teams share CP and VP"
 msgstr ""
 
-#: src/ui/Lobby.tsx:469
+#: src/ui/Lobby.tsx:473
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:471
+#: src/ui/Lobby.tsx:475
 #: src/ui/Room.tsx:97
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:474
+#: src/ui/Lobby.tsx:478
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:478
+#: src/ui/Lobby.tsx:482
 msgid "Paste a room code or invite link to join."
 msgstr ""
 
-#: src/ui/Lobby.tsx:490
+#: src/ui/Lobby.tsx:494
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:495
+#: src/ui/Lobby.tsx:499
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:498
+#: src/ui/Lobby.tsx:502
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:500
+#: src/ui/Lobby.tsx:504
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:504
+#: src/ui/Lobby.tsx:508
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:511
+#: src/ui/Lobby.tsx:515
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:521
+#: src/ui/Lobby.tsx:525
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:538
+#: src/ui/Lobby.tsx:542
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:541
+#: src/ui/Lobby.tsx:545
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:544
+#: src/ui/Lobby.tsx:548
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:554
+#: src/ui/Lobby.tsx:558
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:559
+#: src/ui/Lobby.tsx:563
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:587
+#: src/ui/Lobby.tsx:591
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:588
+#: src/ui/Lobby.tsx:592
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:589
+#: src/ui/Lobby.tsx:593
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:592
-#: src/ui/Lobby.tsx:593
+#: src/ui/Lobby.tsx:596
+#: src/ui/Lobby.tsx:597
 msgid "How hard?"
 msgstr ""
 
-#: src/ui/Lobby.tsx:88
+#: src/ui/Lobby.tsx:89
 #: src/workshop/Workshop.tsx:702
 msgid "{name} {version}"
 msgstr ""
@@ -9468,19 +9476,19 @@ msgstr ""
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:327
+#: src/ui/WhatNow.tsx:329
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:366
+#: src/ui/WhatNow.tsx:368
 msgid "Tap"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:366
+#: src/ui/WhatNow.tsx:368
 msgid "Press"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:366
+#: src/ui/WhatNow.tsx:368
 msgid "for all the controls."
 msgstr ""
 

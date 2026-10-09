@@ -1,5 +1,5 @@
 import type { GameState, Unit } from "../core";
-import { opposed } from "../core/teams";
+import { opposed, sideName } from "../core/teams";
 import { systemOf } from "../core/content/turn";
 import { gameModule } from "../systems";
 import { t } from "../i18n";
@@ -31,6 +31,21 @@ const centre = (state: GameState, u: Unit) => {
   };
 };
 
+const seatOfUnit = (state: GameState, id: string) => state.players[state.units[id]?.owner ?? ""]?.seat;
+
+/** A unit's name, with its side when the other side has a unit of the same name (UX 426, 431). */
+export function unitLabel(state: GameState, id: string | undefined): string | undefined {
+  const u = id ? state.units[id] : undefined;
+  if (!u) return undefined;
+  const seat = seatOfUnit(state, u.id);
+  const twin = Object.values(state.units).some(
+    (o) => o.id !== u.id && o.name === u.name && seatOfUnit(state, o.id) !== seat,
+  );
+  return twin && seat !== undefined
+    ? t("{unit} ({side})", { unit: u.name, side: sideName(state, seat) })
+    : u.name;
+}
+
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** An attack's line, by what kind of attack it is. */
@@ -44,7 +59,7 @@ function attackLine(id: string, name: string, target: string): string {
 export function explain(state: GameState, move: BotMove): Explained | null {
   const i = move.intent;
   if (i.type === "action/take" && "targetId" in i && i.targetId) {
-    const target = state.units[i.targetId]?.name;
+    const target = unitLabel(state, i.targetId);
     const def = systemOf(state).actions.find((a) => a.id === i.action);
     if (!target || !def) return null;
     return { unitId: i.unitId, text: attackLine(def.id, def.name, target) };
@@ -53,7 +68,7 @@ export function explain(state: GameState, move: BotMove): Explained | null {
     const unitId = typeof i.args?.unit === "string" ? i.args.unit : null;
     const targetId = typeof i.args?.target === "string" ? i.args.target : null;
     if (!unitId || !targetId) return null;
-    const target = state.units[targetId]?.name;
+    const target = unitLabel(state, targetId);
     const action = gameModule(state.system)?.actions?.find((a) => a.id === i.procedure);
     if (!target) return null;
     return { unitId, text: attackLine(i.procedure, action?.name ?? i.procedure, target) };
@@ -91,7 +106,7 @@ export function explain(state: GameState, move: BotMove): Explained | null {
         return x && !x.destroyed && dist(x.position, m.to) < 1.6;
       }),
     );
-  if (touching) return line(t("charging {target}", { target: foe.e.name }));
+  if (touching) return line(t("charging {target}", { target: unitLabel(state, foe.e.id)! }));
   if (
     objective &&
     dist(objective.position, to) < 4 &&
@@ -104,8 +119,8 @@ export function explain(state: GameState, move: BotMove): Explained | null {
     );
   const near = nearest(from);
   if (near && dist(near.c, to) < dist(near.c, from) - 0.5)
-    return line(t("closing on {target}", { target: near.e.name }));
+    return line(t("closing on {target}", { target: unitLabel(state, near.e.id)! }));
   if (near && dist(near.c, to) > dist(near.c, from) + 0.5)
-    return line(t("pulling back from {target}", { target: near.e.name }));
+    return line(t("pulling back from {target}", { target: unitLabel(state, near.e.id)! }));
   return line(t("moving up"));
 }

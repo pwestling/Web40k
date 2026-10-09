@@ -1,3 +1,4 @@
+import { isPlaceholder } from "../core/content/systems";
 import type { ReplayFile } from "./replayFile";
 import { useOpenReport, type ReportFile } from "./report";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -98,7 +99,8 @@ export function Lobby() {
     if (!saved) return null;
     try {
       const s = stateAt(saved.record);
-      return { game: gameTitle(s), round: s.turn.round };
+      // A package game's rounds fold only with its package loaded: say no round rather than a wrong one.
+      return { game: gameTitle(s), round: isPlaceholder(s.system ?? "") ? null : s.turn.round };
     } catch {
       return null;
     }
@@ -263,9 +265,11 @@ export function Lobby() {
             <button className="primary resume-top" onClick={resume}>
               <strong>
                 {savedAt
-                  ? savedAt.round > 0
-                    ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
-                    : t("Resume: {game}, deploying", { game: savedAt.game })
+                  ? savedAt.round === null
+                    ? t("Resume: {game}", { game: savedAt.game })
+                    : savedAt.round > 0
+                      ? t("Resume: {game}, round {n}", { game: savedAt.game, n: savedAt.round })
+                      : t("Resume: {game}, deploying", { game: savedAt.game })
                   : t("Resume last game")}
               </strong>
               <span className="small">

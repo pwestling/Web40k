@@ -1,8 +1,7 @@
 import type { GameState } from "../core";
 import { playerActions } from "../core/content/player";
 import { systemOf } from "../core/content/turn";
-import { sideName } from "../core/teams";
-import { explain } from "../bot/explain";
+import { explain, unitLabel } from "../bot/explain";
 import { gameModule } from "../systems";
 import { formatNumber, gameText, t, tn } from "../i18n";
 import type { BotMove } from "../soak/bot";
@@ -17,19 +16,7 @@ import type { Decision, GameReview, Mark } from "./analyse";
 const vp = (n: number) => formatNumber(Math.abs(n), { maximumFractionDigits: 0 });
 
 const seatOfUnit = (state: GameState, id: string) => state.players[state.units[id]?.owner ?? ""]?.seat;
-
-/** A unit's name, with its side when the other side has a unit of the same name (UX 426). */
-function unitName(state: GameState, id: string | undefined): string | undefined {
-  const u = id ? state.units[id] : undefined;
-  if (!u) return undefined;
-  const seat = seatOfUnit(state, u.id);
-  const twin = Object.values(state.units).some(
-    (o) => o.id !== u.id && o.name === u.name && seatOfUnit(state, o.id) !== seat,
-  );
-  return twin && seat !== undefined
-    ? t("{unit} ({side})", { unit: u.name, side: sideName(state, seat) })
-    : u.name;
-}
+const unitName = unitLabel;
 
 /** "Line Troopers: Advance, going for the East lantern", "Focused Fire on Bastion Walker". */
 export function moveText(state: GameState, move: BotMove | null): string {
@@ -44,10 +31,10 @@ export function moveText(state: GameState, move: BotMove | null): string {
       i.action;
     const target = unitName(state, i.targetId);
     if (!target) return t("used {action}", { action: gameText(name) });
-    // "used Focused Fire on their Lance Team": a stratagem, not a shooting target (UX 426).
+    // "used Focused Fire on their Lance Team": a stratagem, not a shooting target (UX 426). "Their" says whose.
     const own = i.targetId && seatOfUnit(state, i.targetId) === state.players[move.as]?.seat;
     return own
-      ? t("used {action} on their {unit}", { action: gameText(name), unit: target })
+      ? t("used {action} on their {unit}", { action: gameText(name), unit: state.units[i.targetId!]!.name })
       : t("used {action} on the enemy {unit}", { action: gameText(name), unit: target });
   }
   if (i.type === "action/take") {
