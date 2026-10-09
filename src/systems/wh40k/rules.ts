@@ -168,9 +168,15 @@ export function suggestAttack(
   const notes: string[] = [];
   const range = weapon.kind === "melee" ? ENGAGEMENT_RANGE : (num(weapon.chars.RANGE) ?? 0);
   if (count < all.length) notes.push(`${count} of ${all.length} models in range (${range}")`);
+  const indirect =
+    weapon.kind === "ranged" &&
+    sight.visible === 0 &&
+    preview.weaponRules.some((r) => r.rule === "indirectFire");
   for (const [step, names] of Object.entries(preview.fired))
     for (const name of names)
-      if (name === "Cover") notes.push("Target in cover: Ballistic Skill 1 worse");
+      // Out of sight, Indirect Fire's one line below says both of its effects (PX re-check of #58: it read three times).
+      if (indirect && (name === "Cover" || /indirect/i.test(name))) continue;
+      else if (name === "Cover") notes.push("Target in cover: Ballistic Skill 1 worse");
       else if (name === "Higher ground")
         notes.push(`Higher ground: +1 to hit (shooters ${HIGHER_GROUND}"+ above the target)`);
       else {
@@ -184,10 +190,6 @@ export function suggestAttack(
     weapon.kind === "ranged" && !ignoresCover && sight.visible > 0 && sight.inCover >= sight.visible;
   if (cover && state.settings.cover === "save")
     notes.push("Target in cover: +1 to save (not 3+ against AP 0)");
-  const indirect =
-    weapon.kind === "ranged" &&
-    sight.visible === 0 &&
-    preview.weaponRules.some((r) => r.rule === "indirectFire");
   if (indirect) notes.push("Out of sight: Indirect Fire (−1 to hit, target in cover)");
   else if (weapon.kind === "ranged" && sight.visible === 0) notes.push("No target model is visible");
   if (sight.hidden)

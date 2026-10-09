@@ -3869,37 +3869,37 @@ msgstr "Figuren werden gezeichnet…"
 msgid "Saving page {n} of {total}…"
 msgstr "Seite {n} von {total} wird gespeichert…"
 
-#: src/render/Board.tsx:1055
+#: src/render/Board.tsx:1057
 #, fuzzy
 msgid "Not visible"
 msgstr "Nicht sichtbar"
 
-#: src/render/Board.tsx:1057
+#: src/render/Board.tsx:1059
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} sichtbar · {cover} in Deckung"
 
-#: src/render/Board.tsx:1062
+#: src/render/Board.tsx:1064
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} sichtbar"
 
-#: src/render/Board.tsx:1509
+#: src/render/Board.tsx:1511
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Bewegung {inches}\""
 
-#: src/render/Board.tsx:991
+#: src/render/Board.tsx:993
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label}: gehalten von {player}"
 
-#: src/render/Board.tsx:993
+#: src/render/Board.tsx:995
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label}: umkämpft"
 
-#: src/render/Board.tsx:994
+#: src/render/Board.tsx:996
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label}: von niemandem gehalten"
@@ -4262,7 +4262,7 @@ msgstr "Kapitel"
 #: src/ui/Hud.tsx:101
 #: src/ui/PlayPanel.tsx:79
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:347
+#: src/ui/WhatNow.tsx:361
 #, fuzzy
 msgid "Hide"
 msgstr "Ausblenden"
@@ -4292,156 +4292,156 @@ msgstr "Nach der Schlacht"
 msgid "Reviewing leaves this game's room. The game stays saved, to resume from the start page."
 msgstr "Zum Ansehen verlässt du den Raum dieses Spiels. Das Spiel bleibt gespeichert und lässt sich auf der Startseite fortsetzen."
 
-#: src/review/ReviewPanel.tsx:160
+#: src/review/ReviewPanel.tsx:167
 #, fuzzy
 msgid "Turning points"
 msgstr "Wendepunkte"
 
-#: src/review/ReviewPanel.tsx:182
+#: src/review/ReviewPanel.tsx:189
 #, fuzzy
 msgid "No big swings: both sides played close to the best on offer."
 msgstr "Keine großen Ausschläge: Beide Seiten spielten nahe am bestmöglichen Zug."
 
-#: src/review/ReviewPanel.tsx:184
+#: src/review/ReviewPanel.tsx:191
 #, fuzzy
 msgid "Takeaways"
 msgstr "Was du mitnimmst"
 
-#: src/review/ReviewPanel.tsx:206
+#: src/review/ReviewPanel.tsx:213
 #, fuzzy
 msgid "Costly"
 msgstr "Teuer"
 
-#: src/review/ReviewPanel.tsx:208
+#: src/review/ReviewPanel.tsx:215
 #, fuzzy
 msgid "Strong"
 msgstr "Stark"
 
-#: src/review/ReviewPanel.tsx:210
+#: src/review/ReviewPanel.tsx:217
 #, fuzzy
 msgid "Missed chance"
 msgstr "Verpasste Chance"
 
-#: src/review/ReviewPanel.tsx:212
+#: src/review/ReviewPanel.tsx:219
 #, fuzzy
 msgid "Lucky dice"
 msgstr "Glückswürfel"
 
-#: src/review/ReviewPanel.tsx:213
+#: src/review/ReviewPanel.tsx:220
 #, fuzzy
 msgid "Unlucky dice"
 msgstr "Pechwürfel"
 
-#: src/review/ReviewPanel.tsx:269
-#: src/review/ReviewPanel.tsx:273
+#: src/review/ReviewPanel.tsx:276
+#: src/review/ReviewPanel.tsx:280
 #, fuzzy
 msgid "{side} ahead"
 msgstr "{side} vorn"
 
-#: src/review/ReviewPanel.tsx:280
+#: src/review/ReviewPanel.tsx:287
 #, fuzzy
 msgid "Expected result across the game"
 msgstr "Erwartetes Ergebnis im Lauf der Partie"
 
-#: src/review/ReviewPanel.tsx:294
+#: src/review/ReviewPanel.tsx:301
 #, fuzzy
 msgid "even"
 msgstr "ausgeglichen"
 
-#: src/review/ReviewPanel.tsx:297
-#: src/review/ReviewPanel.tsx:303
+#: src/review/ReviewPanel.tsx:304
+#: src/review/ReviewPanel.tsx:310
 #: src/ui/Missions.tsx:378
 #, fuzzy
 msgid "R{n}"
 msgstr "R{n}"
 
-#: src/review/ReviewPanel.tsx:357
+#: src/review/ReviewPanel.tsx:364
 #, fuzzy
 msgid "{n}%"
 msgstr "{n} %"
 
-#: src/review/ReviewPanel.tsx:362
+#: src/review/ReviewPanel.tsx:369
 #, fuzzy
 msgid "Round {round}: {side} {n}% to win"
 msgstr "Runde {round}: {side} gewinnt zu {n} %"
 
-#: src/review/ReviewPanel.tsx:367
+#: src/review/ReviewPanel.tsx:374
 #, fuzzy
 msgid "How the computer rated each side's chances as the game went on."
 msgstr "Wie der Computer die Chancen beider Seiten im Lauf der Partie einschätzte."
 
-#: src/review/ReviewPanel.tsx:405
+#: src/review/ReviewPanel.tsx:417
 #, fuzzy
 msgid "{played}. Better: {better}, about {n}% more chance to win."
 msgstr "{played}. Besser: {better}, etwa {n} % mehr Siegchance."
 
-#: src/review/ReviewPanel.tsx:407
+#: src/review/ReviewPanel.tsx:419
 #, fuzzy
 msgid "Ended the turn without {better}, about {n}% chance to win left behind."
 msgstr "Zug beendet, ohne {better}: etwa {n} % Siegchance verschenkt."
 
-#: src/review/ReviewPanel.tsx:413
+#: src/review/ReviewPanel.tsx:425
 #, fuzzy
 msgid "{played}: about {n}% more chance to win than the next best choice."
 msgstr "{played}: etwa {n} % mehr Siegchance als die nächstbeste Wahl."
 
-#: src/review/ReviewPanel.tsx:415
+#: src/review/ReviewPanel.tsx:427
 #, fuzzy
 msgid "{played}: the dice added about {n}% to the chance to win."
 msgstr "{played}: Die Würfel brachten etwa {n} % Siegchance dazu."
 
-#: src/review/ReviewPanel.tsx:416
+#: src/review/ReviewPanel.tsx:428
 #, fuzzy
 msgid "{played}: the dice took about {n}% off the chance to win."
 msgstr "{played}: Die Würfel kosteten etwa {n} % Siegchance."
 
-#: src/review/ReviewPanel.tsx:464
+#: src/review/ReviewPanel.tsx:476
 #, fuzzy
 msgid "{side} · rounds {rounds}, {phase}"
 msgstr "{side} · Runden {rounds}, {phase}"
 
-#: src/review/ReviewPanel.tsx:469
+#: src/review/ReviewPanel.tsx:481
 #, fuzzy
 msgid "{side} · round {round}, {phase}"
 msgstr "{side} · Runde {round}, {phase}"
 
-#: src/review/ReviewPanel.tsx:478
+#: src/review/ReviewPanel.tsx:490
 #: src/ui/StatsScreen.tsx:123
 #, fuzzy
 msgid "Watch it again on the table"
 msgstr "Noch mal auf dem Tisch ansehen"
 
-#: src/review/ReviewPanel.tsx:479
+#: src/review/ReviewPanel.tsx:491
 #, fuzzy
 msgid "Show"
 msgstr "Zeigen"
 
-#: src/review/ReviewPanel.tsx:485
+#: src/review/ReviewPanel.tsx:497
 #, fuzzy
 msgid "A new game on this screen, just before this choice"
 msgstr "Eine neue Partie an diesem Bildschirm, kurz vor dieser Entscheidung"
 
-#: src/review/ReviewPanel.tsx:487
+#: src/review/ReviewPanel.tsx:499
 #, fuzzy
 msgid "Try the better move"
 msgstr "Den besseren Zug probieren"
 
-#: src/review/ReviewPanel.tsx:494
+#: src/review/ReviewPanel.tsx:506
 #, fuzzy
 msgid "Keep it as a note on this replay"
 msgstr "Als Notiz in dieser Wiederholung behalten"
 
-#: src/review/ReviewPanel.tsx:496
+#: src/review/ReviewPanel.tsx:508
 #, fuzzy
 msgid "Added to notes"
 msgstr "Zu den Notizen hinzugefügt"
 
-#: src/review/ReviewPanel.tsx:496
+#: src/review/ReviewPanel.tsx:508
 #, fuzzy
 msgid "Add to notes"
 msgstr "Zu den Notizen"
 
-#: src/review/ReviewPanel.tsx:512
+#: src/review/ReviewPanel.tsx:524
 #, fuzzy
 msgid "Try the better move for {side}:"
 msgstr "Probiere den besseren Zug für {side}:"
@@ -4449,8 +4449,8 @@ msgstr "Probiere den besseren Zug für {side}:"
 #: src/review/ReviewPanel.tsx:53
 #: src/review/ReviewPanel.tsx:67
 #: src/review/ReviewPanel.tsx:80
-#: src/review/ReviewPanel.tsx:151
-#: src/review/ReviewPanel.tsx:437
+#: src/review/ReviewPanel.tsx:158
+#: src/review/ReviewPanel.tsx:449
 #, fuzzy
 msgid "Game review"
 msgstr "Spielanalyse"
@@ -4491,61 +4491,56 @@ msgstr "Die Analyse hat angehalten: {why}"
 msgid "Try again"
 msgstr "Erneut versuchen"
 
-#: src/review/words.ts:119
-#, fuzzy
-msgid "Movement cost you most: {n} move gave up about {vp} VP. Before moving, look at where the enemy can shoot next turn."
-msgid_plural "Movement cost you most: {n} moves gave up about {vp} VP between them. Before moving, look at where the enemy can shoot next turn."
-msgstr[0] "Bewegung hat dich am meisten gekostet: {n} Bewegung verschenkte etwa {vp} VP. Schau vor dem Bewegen, wohin der Gegner im nächsten Zug schießen kann."
-msgstr[1] "Bewegung hat dich am meisten gekostet: {n} Bewegungen verschenkten zusammen etwa {vp} VP. Schau vor dem Bewegen, wohin der Gegner im nächsten Zug schießen kann."
-
-#: src/review/words.ts:126
-#, fuzzy
-msgid "Your targets cost you most: {n} attack gave up about {vp} VP. Finish off a unit you've hurt before starting on a fresh one."
-msgid_plural "Your targets cost you most: {n} attacks gave up about {vp} VP between them. Finish off a unit you've hurt before starting on a fresh one."
-msgstr[0] "Deine Ziele haben dich am meisten gekostet: {n} Angriff verschenkte etwa {vp} VP. Erledige eine angeschlagene Einheit, bevor du eine frische angreifst."
-msgstr[1] "Deine Ziele haben dich am meisten gekostet: {n} Angriffe verschenkten zusammen etwa {vp} VP. Erledige eine angeschlagene Einheit, bevor du eine frische angreifst."
-
-#: src/review/words.ts:133
-#, fuzzy
-msgid "Your stratagems cost about {vp} VP: save them for the attack that needs them."
-msgstr "Deine Stratagems kosteten etwa {vp} VP: Heb sie für den Angriff auf, der sie braucht."
-
-#: src/review/words.ts:136
-#, fuzzy
-msgid "Your choices gave up about {vp} VP over the game."
-msgstr "Deine Entscheidungen haben über die Partie etwa {vp} VP verschenkt."
-
-#: src/review/words.ts:144
-#, fuzzy
-msgid "You ended {n} phase with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
-msgid_plural "You ended {n} phases with something still worth doing (about {vp} VP). Check every unit before pressing ▶."
-msgstr[0] "Du hast {n} Phase beendet, obwohl sich noch etwas lohnte (etwa {vp} VP). Prüfe jede Einheit, bevor du ▶ drückst."
-msgstr[1] "Du hast {n} Phasen beendet, obwohl sich noch etwas lohnte (etwa {vp} VP). Prüfe jede Einheit, bevor du ▶ drückst."
-
-#: src/review/words.ts:158
-#, fuzzy
-msgid "Your dice ran hot: about {vp} VP above the average. Don't count on that next time."
-msgstr "Deine Würfel liefen heiß: etwa {vp} VP über dem Schnitt. Verlass dich nächstes Mal nicht darauf."
-
-#: src/review/words.ts:161
-#, fuzzy
-msgid "Your dice ran cold: about {vp} VP below the average. The choices matter more than that."
-msgstr "Deine Würfel liefen kalt: etwa {vp} VP unter dem Schnitt. Die Entscheidungen zählen mehr als das."
-
-#: src/review/words.ts:172
+#: src/review/words.ts:134
 #, fuzzy
 msgid "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer."
 msgstr "Deine beste Entscheidung: {move} in Runde {round}, etwa {n} % mehr Siegchance als alles andere."
 
-#: src/review/words.ts:190
-#, fuzzy
-msgid "The costliest call: {move} in round {round}. {better} was worth about {n}% more chance to win."
-msgstr "Die teuerste Entscheidung: {move} in Runde {round}. {better} war etwa {n} % mehr Siegchance wert."
-
-#: src/review/words.ts:207
+#: src/review/words.ts:143
 #, fuzzy
 msgid "{clean} of your {n} choices were as good as the best on offer."
 msgstr "{clean} deiner {n} Entscheidungen waren so gut wie die beste mögliche."
+
+#: src/review/words.ts:155
+#, fuzzy
+msgid "Next game, before a move, look at where the enemy can shoot next turn ({n} move gave up about {vp} VP)."
+msgid_plural "Next game, before a move, look at where the enemy can shoot next turn ({n} moves gave up about {vp} VP)."
+msgstr[0] "Nächstes Spiel: Schau vor einer Bewegung, wohin der Gegner nächste Runde schießen kann ({n} Bewegung kostete etwa {vp} VP)."
+msgstr[1] "Nächstes Spiel: Schau vor einer Bewegung, wohin der Gegner nächste Runde schießen kann ({n} Bewegungen kosteten etwa {vp} VP)."
+
+#: src/review/words.ts:162
+#, fuzzy
+msgid "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack gave up about {vp} VP)."
+msgid_plural "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks gave up about {vp} VP)."
+msgstr[0] "Nächstes Spiel: Erledige eine angeschlagene Einheit, bevor du eine frische angreifst ({n} Angriff kostete etwa {vp} VP)."
+msgstr[1] "Nächstes Spiel: Erledige eine angeschlagene Einheit, bevor du eine frische angreifst ({n} Angriffe kosteten etwa {vp} VP)."
+
+#: src/review/words.ts:168
+#, fuzzy
+msgid "Next game, keep stratagems for the attack that needs them (about {vp} VP went on them)."
+msgstr "Nächstes Spiel: Heb Stratagems für den Angriff auf, der sie braucht (etwa {vp} VP gingen dafür drauf)."
+
+#: src/review/words.ts:176
+#, fuzzy
+msgid "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing)."
+msgid_plural "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing)."
+msgstr[0] "Nächstes Spiel: Prüf jede Einheit, bevor du ▶ drückst ({n} Phase endete, obwohl noch etwas Lohnendes ging)."
+msgstr[1] "Nächstes Spiel: Prüf jede Einheit, bevor du ▶ drückst ({n} Phasen endeten, obwohl noch etwas Lohnendes ging)."
+
+#: src/review/words.ts:188
+#, fuzzy
+msgid "One to replay: {move} in round {round}. {better} was worth about {n}% more chance to win."
+msgstr "Zum Nachspielen: {move} in Runde {round}. {better} war etwa {n} % mehr Siegchance wert."
+
+#: src/review/words.ts:208
+#, fuzzy
+msgid "The dice were kind to you: about {vp} VP above the average."
+msgstr "Die Würfel meinten es gut mit dir: etwa {vp} VP über dem Schnitt."
+
+#: src/review/words.ts:209
+#, fuzzy
+msgid "The dice were against you: about {vp} VP below the average. That part wasn't up to you."
+msgstr "Die Würfel waren gegen dich: etwa {vp} VP unter dem Schnitt. Dafür konntest du nichts."
 
 #: src/review/words.ts:23
 #, fuzzy
@@ -4557,27 +4552,27 @@ msgstr "weiter zur nächsten Phase"
 msgid "used {action}"
 msgstr "setzte {action} ein"
 
-#: src/review/words.ts:37
+#: src/review/words.ts:39
 #, fuzzy
 msgid "used {action} on their {unit}"
 msgstr "setzte {action} auf die eigene Einheit {unit} ein"
 
-#: src/review/words.ts:38
+#: src/review/words.ts:40
 #, fuzzy
 msgid "used {action} on the enemy {unit}"
 msgstr "setzte {action} auf die feindliche Einheit {unit} ein"
 
-#: src/review/words.ts:45
+#: src/review/words.ts:48
 #, fuzzy
 msgid "{action} with {weapon}"
 msgstr "{action} mit {weapon}"
 
-#: src/review/words.ts:46
+#: src/review/words.ts:49
 #, fuzzy
-msgid "{unit}: {action}, {why}"
-msgstr "{unit}: {action}, {why}"
+msgid "{action}, {why}"
+msgstr "{action}, {why}"
 
-#: src/review/words.ts:55
+#: src/review/words.ts:58
 #, fuzzy
 msgid "moving"
 msgstr "bewegt sich"
@@ -11524,165 +11519,180 @@ msgstr "Wiederbeleben"
 msgid "Slay"
 msgstr "Ausschalten"
 
-#: src/ui/WhatNow.tsx:100
+#: src/ui/WhatNow.tsx:109
+#, fuzzy
+msgid "{phase} · your pick"
+msgstr "{phase} · du wählst"
+
+#: src/ui/WhatNow.tsx:110
 #, fuzzy
 msgid "{phase} · {player}'s pick"
 msgstr "{phase} · {player} wählt"
 
-#: src/ui/WhatNow.tsx:103
+#: src/ui/WhatNow.tsx:114
+#, fuzzy
+msgid "You pick first: {units}, then you alternate."
+msgstr "Du wählst zuerst: {units}, danach abwechselnd."
+
+#: src/ui/WhatNow.tsx:115
+#, fuzzy
+msgid "Your pick: {units}. The sides alternate until every unit has fought."
+msgstr "Du wählst: {units}. Die Seiten wechseln sich ab, bis jede Einheit gekämpft hat."
+
+#: src/ui/WhatNow.tsx:117
 #, fuzzy
 msgid "{player} picks first: {units}, then you alternate."
 msgstr "{player} wählt zuerst: {units}, dann wechselt ihr euch ab."
 
-#: src/ui/WhatNow.tsx:104
+#: src/ui/WhatNow.tsx:118
 #, fuzzy
 msgid "{player}'s pick: {units}. The sides alternate until every unit has fought."
 msgstr "{player} wählt: {units}. Die Seiten wechseln sich ab, bis jede Einheit gekämpft hat."
 
-#: src/ui/WhatNow.tsx:106
+#: src/ui/WhatNow.tsx:120
 #, fuzzy
 msgid "Click the unit, then Pile in, Fight and Consolidate on its card."
 msgstr "Klicke die Einheit an, dann Nachrücken, Nahkampf und Konsolidieren auf ihrer Karte."
 
-#: src/ui/WhatNow.tsx:107
+#: src/ui/WhatNow.tsx:121
 #, fuzzy
 msgid "Waiting for {player} to pick."
 msgstr "Warte, bis {player} wählt."
 
-#: src/ui/WhatNow.tsx:113
-#: src/ui/WhatNow.tsx:224
+#: src/ui/WhatNow.tsx:127
+#: src/ui/WhatNow.tsx:238
 #, fuzzy
 msgid "{side}'s turn · {phase}"
 msgstr "{side} ist am Zug · {phase}"
 
-#: src/ui/WhatNow.tsx:161
+#: src/ui/WhatNow.tsx:175
 #, fuzzy
 msgid "Put your command cards in the order you'll play them, then press Lock in stack."
 msgstr "Lege deine Befehlskarten in der Reihenfolge, in der du sie spielst, und drücke dann Stapel festlegen."
 
-#: src/ui/WhatNow.tsx:173
+#: src/ui/WhatNow.tsx:187
 #, fuzzy
 msgid "Draw your top command card (Command stack, bottom right) to see which regiment acts."
 msgstr "Ziehe deine oberste Befehlskarte (Befehlsstapel, unten rechts), um zu sehen, welches Regiment handelt."
 
-#: src/ui/WhatNow.tsx:176
+#: src/ui/WhatNow.tsx:190
 #, fuzzy
 msgid "{unit} is taking its go: shoot or fight with it, or press End activation."
 msgstr "{unit} ist am Zug: schießen oder kämpfen, oder Aktivierung beenden drücken."
 
-#: src/ui/WhatNow.tsx:178
+#: src/ui/WhatNow.tsx:192
 #, fuzzy
 msgid "All your units have had their go this round: press Pass."
 msgstr "Alle deine Einheiten waren in dieser Runde dran: drücke Passen."
 
-#: src/ui/WhatNow.tsx:182
+#: src/ui/WhatNow.tsx:196
 #, fuzzy
 msgid "Drag a unit to move it. The ruler shows how far it has gone against its limit."
 msgstr "Zieh eine Einheit, um sie zu bewegen. Das Lineal zeigt, wie weit sie im Vergleich zu ihrem Limit gekommen ist."
 
-#: src/ui/WhatNow.tsx:184
+#: src/ui/WhatNow.tsx:198
 #, fuzzy
 msgid "No unit is close enough to charge: press ▶ to move on."
 msgstr "Keine Einheit ist nah genug für eine Angriffsbewegung: Drück ▶, um weiterzumachen."
 
-#: src/ui/WhatNow.tsx:186
+#: src/ui/WhatNow.tsx:200
 #, fuzzy
 msgid "Nothing is in reach to attack yet: move closer first."
 msgstr "Noch ist nichts in Reichweite für einen Angriff: Rück zuerst näher heran."
 
-#: src/ui/WhatNow.tsx:187
+#: src/ui/WhatNow.tsx:201
 #, fuzzy
 msgid "Nothing is in range to shoot yet. Get closer next turn."
 msgstr "Noch ist nichts in Schussreichweite. Komm nächsten Zug näher heran."
 
-#: src/ui/WhatNow.tsx:190
+#: src/ui/WhatNow.tsx:204
 #, fuzzy
 msgid "You can: {actions}."
 msgstr "Du kannst: {actions}."
 
-#: src/ui/WhatNow.tsx:193
+#: src/ui/WhatNow.tsx:207
 #, fuzzy
 msgid "{action} ({n} unit)"
 msgid_plural "{action} ({n} units)"
 msgstr[0] "{action} ({n} Einheit)"
 msgstr[1] "{action} ({n} Einheiten)"
 
-#: src/ui/WhatNow.tsx:200
+#: src/ui/WhatNow.tsx:214
 #, fuzzy
 msgid "Tap one of your units to see its buttons."
 msgstr "Tippe auf eine deiner Einheiten, um ihre Schaltflächen zu sehen."
 
-#: src/ui/WhatNow.tsx:201
+#: src/ui/WhatNow.tsx:215
 #, fuzzy
 msgid "Click one of your units to see its buttons."
 msgstr "Klick eine deiner Einheiten an, um ihre Buttons zu sehen."
 
-#: src/ui/WhatNow.tsx:204
+#: src/ui/WhatNow.tsx:218
 #, fuzzy
 msgid "Nothing to do this phase."
 msgstr "In dieser Phase gibt es nichts zu tun."
 
-#: src/ui/WhatNow.tsx:208
+#: src/ui/WhatNow.tsx:222
 #, fuzzy
 msgid "A unit's go ends when it shoots or fights, or press End activation after a move. Pass when you have nothing left."
 msgstr "Der Zug einer Einheit endet, wenn sie schießt oder kämpft, oder drücke nach einer Bewegung Aktivierung beenden. Passe, wenn du nichts mehr hast."
 
-#: src/ui/WhatNow.tsx:211
+#: src/ui/WhatNow.tsx:225
 #, fuzzy
 msgid "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
 msgstr "Wenn eine Einheit gehandelt hat, drück oben auf Aktivierung beenden; wenn du nichts mehr übrig hast, auf Passen."
 
-#: src/ui/WhatNow.tsx:218
+#: src/ui/WhatNow.tsx:232
 #, fuzzy
 msgid "Mission · {name}: {summary}"
 msgstr "Mission · {name}: {summary}"
 
-#: src/ui/WhatNow.tsx:224
+#: src/ui/WhatNow.tsx:238
 #, fuzzy
 msgid "Your turn · {phase}"
 msgstr "Du bist dran · {phase}"
 
-#: src/ui/WhatNow.tsx:241
+#: src/ui/WhatNow.tsx:255
 #, fuzzy
 msgid "{unit} · {weapon} takes {faces}"
 msgstr "{unit} · {weapon} nimmt {faces}"
 
-#: src/ui/WhatNow.tsx:246
+#: src/ui/WhatNow.tsx:260
 #, fuzzy
 msgid "(placed: {n})"
 msgstr "(gelegt: {n})"
 
-#: src/ui/WhatNow.tsx:278
+#: src/ui/WhatNow.tsx:292
 #, fuzzy
 msgid "{name} is playing {unit}…"
 msgstr "{name} spielt {unit}…"
 
-#: src/ui/WhatNow.tsx:279
+#: src/ui/WhatNow.tsx:293
 #, fuzzy
 msgid "{name} is taking its turn…"
 msgstr "{name} macht seinen Zug…"
 
-#: src/ui/WhatNow.tsx:285
+#: src/ui/WhatNow.tsx:299
 #, fuzzy
 msgid "A ring marks its unit and a line shows where it went."
 msgstr "Ein Ring markiert seine Einheit, eine Linie zeigt, wohin sie ging."
 
-#: src/ui/WhatNow.tsx:329
+#: src/ui/WhatNow.tsx:343
 #, fuzzy
 msgid "What can I do now?"
 msgstr "Was kann ich jetzt tun?"
 
-#: src/ui/WhatNow.tsx:368
+#: src/ui/WhatNow.tsx:382
 #, fuzzy
 msgid "Tap"
 msgstr "Tippe auf"
 
-#: src/ui/WhatNow.tsx:368
+#: src/ui/WhatNow.tsx:382
 #, fuzzy
 msgid "Press"
 msgstr "Drück"
 
-#: src/ui/WhatNow.tsx:368
+#: src/ui/WhatNow.tsx:382
 #, fuzzy
 msgid "for all the controls."
 msgstr "für alle Steuerelemente."
@@ -11765,13 +11775,13 @@ msgid "{phase}: every unit has fought"
 msgstr "{phase}: jede Einheit hat gekämpft"
 
 #: src/ui/WhatNow.tsx:89
-#: src/ui/WhatNow.tsx:212
+#: src/ui/WhatNow.tsx:226
 #, fuzzy
 msgid "When you're done, press ▶ at the top for the next phase."
 msgstr "Wenn du fertig bist, drück oben ▶ für die nächste Phase."
 
 #: src/ui/WhatNow.tsx:90
-#: src/ui/WhatNow.tsx:114
+#: src/ui/WhatNow.tsx:128
 #, fuzzy
 msgid "Waiting for {side}. You can look around, measure (M) and talk in the chat."
 msgstr "Warte auf {side}. Du kannst dich umsehen, messen (M) und im Chat schreiben."

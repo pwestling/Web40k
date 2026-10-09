@@ -5283,3 +5283,7 @@ button.teach-button:hover {
   align-items: center;
   max-width: min(560px, calc(100vw - 32px));
 }
+/* The better-move banner sits where the coach card starts: the card moves down under it (PX feel pass e). */
+body:has(.panel.better-move) .panel.whatnow {
+  top: calc(var(--below-bar, 64px) + 64px);
+}

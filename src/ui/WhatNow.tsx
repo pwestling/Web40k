@@ -10,7 +10,7 @@ import { gameModule, systemModule } from "../systems";
 import { useHelp } from "./help";
 import { useCoach } from "../teach/store";
 import { waitsOn } from "../teach/coach";
-import { characterName, useSolo } from "../bot/solo";
+import { characterName, soloPlays, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { useSandbox } from "../sandbox/runtime";
 import { battleOver } from "./StatsScreen";
@@ -95,13 +95,27 @@ function whatNow(
       units: formatList(order.eligible.map((id) => game.units[id]?.name ?? id)),
     };
     const first = !Object.values(game.units).some((u) => u.status?.fought);
-    const yours = hotseat || picker.id === me;
+    // Against the computer, the computer's pick isn't yours to make; "Your pick", never "You's pick" (PX f).
+    const yours = hotseat ? !soloPlays(game, picker.id) : picker.id === me;
+    const you =
+      yours &&
+      (!hotseat ||
+        soloPlays(
+          game,
+          Object.keys(game.players).find((id) => id !== picker.id),
+        ));
     return {
-      head: t("{phase} · {player}'s pick", { phase, player: p.player }),
+      head: you
+        ? t("{phase} · your pick", { phase })
+        : t("{phase} · {player}'s pick", { phase, player: p.player }),
       lines: [
-        first
-          ? t("{player} picks first: {units}, then you alternate.", p)
-          : t("{player}'s pick: {units}. The sides alternate until every unit has fought.", p),
+        you
+          ? first
+            ? t("You pick first: {units}, then you alternate.", p)
+            : t("Your pick: {units}. The sides alternate until every unit has fought.", p)
+          : first
+            ? t("{player} picks first: {units}, then you alternate.", p)
+            : t("{player}'s pick: {units}. The sides alternate until every unit has fought.", p),
         yours
           ? t("Click the unit, then Pile in, Fight and Consolidate on its card.")
           : t("Waiting for {player} to pick.", p),

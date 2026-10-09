@@ -18,9 +18,9 @@ const vp = (n: number) => formatNumber(Math.abs(n), { maximumFractionDigits: 0 }
 const seatOfUnit = (state: GameState, id: string) => state.players[state.units[id]?.owner ?? ""]?.seat;
 const unitName = unitLabel;
 
-/** "Line Troopers: Advance, going for the East lantern", "Focused Fire on Bastion Walker". */
-export function moveText(state: GameState, move: BotMove | null): string {
-  if (!move) return t("moving on to the next phase");
+/** A decision in two parts: the unit, and what it did ("going for the East lantern"). */
+export function movePhrase(state: GameState, move: BotMove | null): { unit: string; what: string } {
+  if (!move) return { unit: "", what: t("moving on to the next phase") };
   const i = move.intent;
   const why = explain(state, move)?.text;
   if (i.type === "player/action") {
@@ -30,12 +30,15 @@ export function moveText(state: GameState, move: BotMove | null): string {
       playerActions(state, move.as).find((o) => o.def.id === i.action)?.def.name ??
       i.action;
     const target = unitName(state, i.targetId);
-    if (!target) return t("used {action}", { action: gameText(name) });
+    if (!target) return { unit: "", what: t("used {action}", { action: gameText(name) }) };
     // "used Focused Fire on their Lance Team": a stratagem, not a shooting target (UX 426). "Their" says whose.
     const own = i.targetId && seatOfUnit(state, i.targetId) === state.players[move.as]?.seat;
-    return own
-      ? t("used {action} on their {unit}", { action: gameText(name), unit: state.units[i.targetId!]!.name })
-      : t("used {action} on the enemy {unit}", { action: gameText(name), unit: target });
+    return {
+      unit: "",
+      what: own
+        ? t("used {action} on their {unit}", { action: gameText(name), unit: state.units[i.targetId!]!.name })
+        : t("used {action} on the enemy {unit}", { action: gameText(name), unit: target }),
+    };
   }
   if (i.type === "action/take") {
     const unit = unitName(state, i.unitId) ?? "";
@@ -43,18 +46,24 @@ export function moveText(state: GameState, move: BotMove | null): string {
     const action = gameText(def?.name ?? i.action);
     const weapon = i.weapon ? state.units[i.unitId]?.sheet?.weapons?.[i.weapon]?.name : undefined;
     const what = why ?? (weapon ? t("{action} with {weapon}", { action, weapon }) : action);
-    return why && !i.targetId ? t("{unit}: {action}, {why}", { unit, action, why }) : `${unit}: ${what}`;
+    return { unit, what: why && !i.targetId ? t("{action}, {why}", { action, why }) : what };
   }
   if (i.type === "script/start") {
     const unit = unitName(state, typeof i.args?.unit === "string" ? i.args.unit : undefined) ?? "";
     const name = gameModule(state.system)?.actions?.find((a) => a.id === i.procedure)?.name ?? i.procedure;
-    return `${unit}: ${why ?? gameText(name)}`;
+    return { unit, what: why ?? gameText(name) };
   }
   if (i.type === "models/move") {
     const unit = unitName(state, i.moves[0] ? state.models[i.moves[0].id]?.unitId : undefined) ?? "";
-    return `${unit}: ${why ?? t("moving")}`;
+    return { unit, what: why ?? t("moving") };
   }
-  return why ?? i.type;
+  return { unit: "", what: why ?? i.type };
+}
+
+/** "Line Troopers: Advance, going for the East lantern", "used Focused Fire on their Lance Team". */
+export function moveText(state: GameState, move: BotMove | null): string {
+  const { unit, what } = movePhrase(state, move);
+  return unit ? `${unit}: ${what}` : what;
 }
 
 /**
@@ -90,14 +99,14 @@ function kindOf(d: Decision): Kind {
 }
 
 /**
- * Three things to take from the game, for one side, most telling first:
- * where its choices cost most, how its dice ran, its best and worst calls,
- * phases left with something still worth doing.
+ * What to take from the game, for one side (PX feel pass a): first what went
+ * well (its best call, or how many of its choices matched the best on offer),
+ * then at most two things to try next game, then how the dice ran if there's
+ * room. Encouraging, not a scolding.
  */
 export function takeaways(review: GameReview, states: (seq: number) => GameState, seat: number): string[] {
   const army = review.scale;
   const mine = review.decisions.filter((d) => d.seat === seat);
-  const out: { weight: number; text: string }[] = [];
   const cost: Record<Kind, { loss: number; n: number; costly: number }> = {
     move: { loss: 0, n: 0, costly: 0 },
     attack: { loss: 0, n: 0, costly: 0 },
@@ -111,106 +120,97 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
     c.n++;
     if (d.loss >= 0.02 * army) c.costly++;
   }
-  const worstKind = (Object.keys(cost) as Kind[]).sort((a, b) => cost[b].loss - cost[a].loss)[0]!;
-  const w = cost[worstKind];
-  if (w.loss >= 0.1 * army && w.costly) {
-    const text =
-      worstKind === "move"
-        ? tn(
-            w.costly,
-            "Movement cost you most: {n} move gave up about {vp} VP. Before moving, look at where the enemy can shoot next turn.",
-            "Movement cost you most: {n} moves gave up about {vp} VP between them. Before moving, look at where the enemy can shoot next turn.",
-            { vp: vp(w.loss) },
-          )
-        : worstKind === "attack"
-          ? tn(
-              w.costly,
-              "Your targets cost you most: {n} attack gave up about {vp} VP. Finish off a unit you've hurt before starting on a fresh one.",
-              "Your targets cost you most: {n} attacks gave up about {vp} VP between them. Finish off a unit you've hurt before starting on a fresh one.",
-              { vp: vp(w.loss) },
-            )
-          : worstKind === "stratagem"
-            ? t("Your stratagems cost about {vp} VP: save them for the attack that needs them.", {
-                vp: vp(w.loss),
-              })
-            : t("Your choices gave up about {vp} VP over the game.", { vp: vp(w.loss) });
-    out.push({ weight: w.loss, text });
-  }
-  const missed = mine.filter((d) => !d.played);
-  if (missed.length) {
-    const lost = missed.reduce((a, d) => a + d.loss, 0);
-    out.push({
-      weight: lost,
-      text: tn(
-        missed.length,
-        "You ended {n} phase with something still worth doing (about {vp} VP). Check every unit before pressing ▶.",
-        "You ended {n} phases with something still worth doing (about {vp} VP). Check every unit before pressing ▶.",
-        { vp: vp(lost) },
-      ),
-    });
-  }
-  const luck = review.totals[seat]?.luck ?? 0;
-  if (Math.abs(luck) >= 0.08 * army)
-    out.push({
-      weight: Math.abs(luck) * 0.8,
-      text:
-        luck > 0
-          ? t("Your dice ran hot: about {vp} VP above the average. Don't count on that next time.", {
-              vp: vp(luck),
-            })
-          : t("Your dice ran cold: about {vp} VP below the average. The choices matter more than that.", {
-              vp: vp(luck),
-            }),
-    });
-  const strong = review.marks
-    .filter((m) => m.kind === "strong" && review.decisions[m.decision]!.seat === seat)
-    .sort((a, b) => b.size - a.size)[0];
+  // The lead: the best call, else how often the side matched the best on offer.
+  const ofSide = (kind: Mark["kind"]) =>
+    review.marks
+      .filter((m) => m.kind === kind && review.decisions[m.decision]!.seat === seat)
+      .sort((a, b) => b.size - a.size)[0];
+  const strong = ofSide("strong");
+  const judged = mine.filter((d) => d.played).length;
+  const clean = mine.filter((d) => d.played && d.loss < 0.02 * army).length;
+  let lead: string | null = null;
   if (strong) {
     const d = review.decisions[strong.decision]!;
-    out.push({
-      weight: strong.size * 0.9,
-      text: t(
-        "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer.",
-        {
-          move: moveText(states(d.seq), d.played),
-          round: d.round,
-          n: winShare(review, strong),
-        },
+    lead = t(
+      "Your best call: {move} in round {round}, about {n}% more chance to win than anything else on offer.",
+      {
+        move: moveText(states(d.seq), d.played),
+        round: d.round,
+        n: winShare(review, strong),
+      },
+    );
+  } else if (judged)
+    lead = t("{clean} of your {n} choices were as good as the best on offer.", { clean, n: judged });
+  // Up to two things to try next game, the costliest first.
+  const tips: { weight: number; text: string }[] = [];
+  const worstKind = (["move", "attack", "stratagem"] as Kind[]).sort(
+    (a, b) => cost[b].loss - cost[a].loss,
+  )[0]!;
+  const w = cost[worstKind];
+  if (w.loss >= 0.1 * army && w.costly)
+    tips.push({
+      weight: w.loss,
+      text:
+        worstKind === "move"
+          ? tn(
+              w.costly,
+              "Next game, before a move, look at where the enemy can shoot next turn ({n} move gave up about {vp} VP).",
+              "Next game, before a move, look at where the enemy can shoot next turn ({n} moves gave up about {vp} VP).",
+              { vp: vp(w.loss) },
+            )
+          : worstKind === "attack"
+            ? tn(
+                w.costly,
+                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack gave up about {vp} VP).",
+                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks gave up about {vp} VP).",
+                { vp: vp(w.loss) },
+              )
+            : t("Next game, keep stratagems for the attack that needs them (about {vp} VP went on them).", {
+                vp: vp(w.loss),
+              }),
+    });
+  const missed = mine.filter((d) => !d.played);
+  if (missed.length)
+    tips.push({
+      weight: missed.reduce((a, d) => a + d.loss, 0),
+      text: tn(
+        missed.length,
+        "Next game, check every unit before pressing ▶ ({n} phase ended with something still worth doing).",
+        "Next game, check every unit before pressing ▶ ({n} phases ended with something still worth doing).",
       ),
     });
-  }
-  const costly = review.marks
-    .filter((m) => m.kind === "costly" && review.decisions[m.decision]!.seat === seat)
-    .sort((a, b) => b.size - a.size)[0];
+  const costly = ofSide("costly");
   if (costly) {
     const d = review.decisions[costly.decision]!;
     const st = states(d.seq);
-    out.push({
+    tips.push({
       weight: costly.size * 0.7,
-      text: t(
-        "The costliest call: {move} in round {round}. {better} was worth about {n}% more chance to win.",
-        {
-          move: moveText(st, d.played),
-          round: d.round,
-          better: capital(moveText(st, d.best)),
-          n: winShare(review, costly),
-        },
-      ),
+      text: t("One to replay: {move} in round {round}. {better} was worth about {n}% more chance to win.", {
+        move: moveText(st, d.played),
+        round: d.round,
+        better: capital(moveText(st, d.best)),
+        n: winShare(review, costly),
+      }),
     });
   }
-  if (out.length < 3) {
-    const judged = mine.filter((d) => d.played).length;
-    const clean = mine.filter((d) => d.played && d.loss < 0.02 * army).length;
-    if (judged)
-      out.push({
-        weight: 0,
-        text: t("{clean} of your {n} choices were as good as the best on offer.", { clean, n: judged }),
-      });
-  }
-  return out
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, 3)
-    .map((x) => x.text);
+  const out = [
+    ...(lead ? [lead] : []),
+    ...tips
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 2)
+      .map((x) => x.text),
+  ];
+  // The dice, last and kindly, when there's room.
+  const luck = review.totals[seat]?.luck ?? 0;
+  if (out.length < 3 && Math.abs(luck) >= 0.08 * army)
+    out.push(
+      luck > 0
+        ? t("The dice were kind to you: about {vp} VP above the average.", { vp: vp(luck) })
+        : t("The dice were against you: about {vp} VP below the average. That part wasn't up to you.", {
+            vp: vp(luck),
+          }),
+    );
+  return out;
 }
 
 export const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

@@ -567,6 +567,8 @@ describe("40k gaps (#57): Indirect Fire", () => {
     const lobbed = suggestAttack(hidden, "mine", "gun", "theirs")!;
     expect(lobbed.indirect).toBe(true);
     expect(lobbed.notes).toContain("Out of sight: Indirect Fire (−1 to hit, target in cover)");
+    // Said once: no separate cover or Indirect Fire lines (PX re-check of #58).
+    expect(lobbed.notes.filter((n) => /cover|indirect/i.test(n))).toHaveLength(1);
     const plain = suggestAttack(wall(goTo(setup(), "shooting", 0)), "mine", "gun", "theirs")!;
     expect(plain.indirect).toBeUndefined();
     expect(plain.notes).toContain("No target model is visible");

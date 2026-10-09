@@ -9,7 +9,7 @@ import { branchGame } from "../ui/Branch";
 import { explain } from "../bot/explain";
 import { loadNotes, putNote, deviceId, type NoteMark } from "../replay/notes";
 import { startReview, useReviewRun } from "./run";
-import { capital, moveText, takeaways, winShare } from "./words";
+import { capital, movePhrase, moveText, takeaways, winShare } from "./words";
 import type { Decision, GameReview, Mark } from "./analyse";
 
 /**
@@ -139,8 +139,15 @@ function Review({
   // The biggest turning points, in the order they happened.
   const turning = useMemo(
     () =>
+      // At most three from any one round, so the list spreads over the game (PX feel pass e).
       [...folded]
         .sort((a, b) => Math.abs(b.size) - Math.abs(a.size))
+        .filter(
+          (m, _, all) =>
+            all
+              .filter((o) => review.decisions[o.decision]!.round === review.decisions[m.decision]!.round)
+              .indexOf(m) < 3,
+        )
         .slice(0, 8)
         .sort((a, b) => a.decision - b.decision || a.kind.localeCompare(b.kind)),
     [folded],
@@ -398,7 +405,12 @@ function TurningPoint({
   pick: () => void;
 }) {
   const played = capital(moveText(state, d.played));
-  const better = d.best ? moveText(state, d.best) : null;
+  // The unit named once: "Field Marshal: closing on Pyre Speaker. Better: a Normal move…" (PX feel pass d).
+  const sameUnit =
+    !!d.best &&
+    movePhrase(state, d.best).unit !== "" &&
+    movePhrase(state, d.best).unit === movePhrase(state, d.played).unit;
+  const better = d.best ? (sameUnit ? movePhrase(state, d.best).what : moveText(state, d.best)) : null;
   const n = winShare(review, mark);
   const line =
     mark.kind === "costly"
