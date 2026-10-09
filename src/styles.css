@@ -330,6 +330,18 @@ label.file.button.small {
   margin: 0;
   font-size: 0.9rem;
 }
+/* Folded on a tablet once the phase's first action is in: one line, tapped to open (PX touch pass). */
+.panel.whatnow.folded {
+  width: auto;
+  max-width: min(440px, calc(100vw - 32px));
+  flex-direction: row;
+  align-items: center;
+  font: inherit;
+  font-size: 0.9rem;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
 /* Teaching mode's coach card (ui/Coach.tsx) */
 .panel.coach {
   z-index: 19;
@@ -5072,6 +5084,10 @@ button.teach-button:hover {
 
 /* Tablets (#60): every control at least 44 px for a finger, from 641 px up (phones have their own sheet). */
 @media (pointer: coarse) and (min-width: 641px) {
+  /* A sideways flick puts the card away (ui/swipe.ts); the page keeps vertical scrolling. */
+  .panel.unitcard {
+    touch-action: pan-y;
+  }
   /* The scrub bar's moment marks: a finger-sized target around each glyph. */
   .replaybar .highlight {
     min-width: 44px;

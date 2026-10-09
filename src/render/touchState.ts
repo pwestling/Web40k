@@ -16,8 +16,6 @@ export const useTouch = create<{
   menu: { x: number; y: number; at: { x: number; y: number }; unitId?: string } | null;
   /** A two-finger twist on a unit: the turn so far (radians, screen clockwise), shown by the fingers. */
   twist: { unitId: string; angle: number; x: number; y: number } | null;
-  /** The unit the first finger came down on (a second finger then twists it). */
-  downOn: string | null;
 }>(() => ({
   boxMode: false,
   oneModel: false,
@@ -25,7 +23,6 @@ export const useTouch = create<{
   picked: [],
   menu: null,
   twist: null,
-  downOn: null,
 }));
 
 /** How long a finger stays still before it counts as a long press (ms). */

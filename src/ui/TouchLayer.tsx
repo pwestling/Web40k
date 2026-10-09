@@ -107,10 +107,10 @@ function TouchMenu() {
           <>
             <div className="row">
               <button role="menuitem" onClick={run(() => rotateUnit(unit.id, -1))}>
-                {t("Turn ↺")}
+                {t("Turn {n}° left", { n: 15 })} ↺
               </button>
               <button role="menuitem" onClick={run(() => rotateUnit(unit.id, 1))}>
-                {t("Turn ↻")}
+                {t("Turn {n}° right", { n: 15 })} ↻
               </button>
             </div>
             <button

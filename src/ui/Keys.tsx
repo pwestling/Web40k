@@ -39,6 +39,7 @@ const gestures = (): [string, string][] => [
   [t("Hold and let go"), t("More: turn, ping, look from here, views")],
   [t("Select several"), t("Draw a box on the table, then drag one unit to move them all")],
   [t("A stylus on the table"), t("Draw a line everyone sees")],
+  [t("Flick the unit card right"), t("Put it away (tap a unit to bring it back)")],
 ];
 
 /** The "?" sheet (front door): every control in one place. */

@@ -107,16 +107,11 @@ export function ReplayBar() {
   // A label is about 24 px wide: label every round, every 2nd, 3rd... so they never touch.
   const every = Number.isFinite(closest) ? Math.max(1, Math.ceil(26 / Math.max(1, closest))) : 1;
   const phase = [...marks].reverse().find((m) => m.seq <= pos);
-  // The latest action in the current phase, or that the phase has just begun.
+  // The latest action in the current phase; none yet, the phase on its own says it (UX 68: "The battle is over phase began").
   const latest = [...log]
     .reverse()
     .find((l) => l.kind === "line" && l.seq <= pos && l.seq > (phase?.seq ?? -1) && !l.undone);
-  const now =
-    latest?.kind === "line"
-      ? latest.text
-      : phase
-        ? t("{phase} phase began", { phase: phase.text.split(" · ").at(-1) })
-        : undefined;
+  const now = latest?.kind === "line" ? latest.text : undefined;
 
   useEffect(() => {
     if (!playing) return;

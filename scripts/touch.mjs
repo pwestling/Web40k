@@ -65,7 +65,7 @@ export async function touch(page) {
       await sleep(80);
     },
     /** Two fingers around `c`: spread from `d0` to `d1` px apart, turning from `a0` to `a1` radians, moving the centre by `pan`. */
-    async two(c, { d0 = 120, d1 = 120, a0 = 0, a1 = 0, pan = { x: 0, y: 0 }, steps = 14 } = {}) {
+    async two(c, { d0 = 120, d1 = 120, a0 = 0, a1 = 0, pan = { x: 0, y: 0 }, steps = 14, stagger = 0 } = {}) {
       const at = (k) => {
         const d = (d0 + (d1 - d0) * k) / 2;
         const a = a0 + (a1 - a0) * k;
@@ -76,6 +76,11 @@ export async function touch(page) {
           { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d },
         ];
       };
+      // `stagger` ms: the first finger lands that long before the second, as real fingers do.
+      if (stagger) {
+        await send("touchStart", at(0).slice(0, 1));
+        await sleep(stagger);
+      }
       await send("touchStart", at(0));
       for (let i = 1; i <= steps; i++) {
         await send("touchMove", at(i / steps));

@@ -1,3 +1,4 @@
+import { swipeAway } from "./swipe";
 import { CampaignUnitLine } from "../campaign/CampaignUI";
 import { focusSoon } from "./focusSoon";
 import { UnitWarnings } from "./TableWarnings";
@@ -230,7 +231,12 @@ export function UnitCard() {
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
   return (
-    <div className="panel unitcard" tabIndex={-1} aria-label={t("Selected unit")}>
+    <div
+      className="panel unitcard"
+      tabIndex={-1}
+      aria-label={t("Selected unit")}
+      {...swipeAway(() => useStore.getState().select(null))}
+    >
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
           <span className="side-shape" aria-hidden="true">

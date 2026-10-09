@@ -24,6 +24,8 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
   // A roster just read: one line to check before the game starts (UX 408).
   const [picked, setPicked] = useState<ImportedRoster | null>(null);
   const [kept, setKept] = useState<SavedArmy | null>(null);
+  // The part of its sample army the computer fields to match yours, once asked (PX re-check of #56: it waits for Start).
+  const [cut, setCut] = useState<ImportedRoster | null>(null);
   useEffect(() => {
     void load();
   }, [load]);
@@ -74,13 +76,14 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
       put(army);
       setKept(army);
     };
-    const start = (cut?: ImportedRoster) =>
+    const start = () =>
       startSolo(system, level, {
         ...(kept ? { roster: kept.roster, shelf: kept } : { roster: picked }),
         ...(cut ? { theirs: cut } : {}),
       });
     // About 2 to 1 either way is said in words, not left to the numbers (PX re-check of #56).
-    const ratio = pts && theirs ? theirs / pts : 1;
+    const fielded = cut ? pointsOf(cut) : theirs;
+    const ratio = pts && fielded ? fielded / pts : 1;
     const times = Math.round(Math.max(ratio, 1 / ratio));
     const lopsided =
       ratio >= 1.8
@@ -92,7 +95,7 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
             ? t("Your army is about twice the computer's.")
             : t("Your army is about {n} times the computer's.", { n: times })
           : null;
-    const canMatch = !!module && ratio > 1.25;
+    const canMatch = !!module && !cut && ratio > 1.25;
     return (
       <div className="how-hard your-army" role="group" aria-label={t("Your army")}>
         <strong className="small">{t("Your army")}</strong>
@@ -105,7 +108,7 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
             ...(picked.points && pts && picked.points !== pts
               ? [t("the list itself says {n} pts", { n: picked.points })]
               : []),
-            ...(theirs ? [t("the computer's is {n} pts", { n: theirs })] : []),
+            ...(fielded ? [t("the computer's is {n} pts", { n: fielded })] : []),
           ].join(" · ")}
         </p>
         {lopsided && <p className="warn small">{lopsided}</p>}
@@ -116,15 +119,20 @@ export function YourArmy({ system, level, onBack }: { system: string; level: Lev
           <button
             className="small"
             title={t("The computer fields part of its sample army, about as many points as yours")}
-            onClick={() => start(matchPoints(module!.sample(1), pts))}
+            onClick={() => setCut(matchPoints(module!.sample(1), pts))}
           >
             {t("Match my points")}
+          </button>
+        )}
+        {cut && (
+          <button className="small" onClick={() => setCut(null)}>
+            {t("Use its whole army")}
           </button>
         )}
         <button className="small" disabled={!!kept} onClick={keep}>
           {kept ? t("Saved to your shelf") : t("Save to shelf")}
         </button>
-        <button className="quiet small" title={t("Back")} onClick={() => setPicked(null)}>
+        <button className="quiet small" title={t("Back")} onClick={() => (setPicked(null), setCut(null))}>
           ←
         </button>
       </div>

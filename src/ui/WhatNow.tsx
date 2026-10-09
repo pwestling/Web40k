@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
@@ -302,6 +303,12 @@ export function WhatNow() {
   const ready = useSandbox((s) => s.app?.ready);
   // A rule's question (Overcharge?) sits where this card does, and is what to do now (PX item 4).
   const asking = !!game.script?.waiting;
+  // On a tablet the card folds to its first line once the phase's first action is in, giving the table back
+  // (PX touch pass: with the unit card it left the table under half the screen); a tap opens it again.
+  const phaseKey = `${game.turn.round}|${game.turn.activeSeat}|${game.turn.phase}`;
+  const events = useStore((s) => s.record.events.length);
+  const [fold, setFold] = useState({ key: phaseKey, at: events, open: false });
+  if (fold.key !== phaseKey) setFold({ key: phaseKey, at: events, open: false });
   if (spectator || scrub !== null || coaching || asking) return null;
   if (!open)
     return (
@@ -312,6 +319,12 @@ export function WhatNow() {
   // The computer's go (UX 347): say so, in one line, and nothing to press.
   const computer = computerGo(game);
   const { head, lines, units } = computer ?? whatNow(game, me, hotseat, ready);
+  if (touch() && !computer && fold.key === phaseKey && events > fold.at && !fold.open)
+    return (
+      <button className="panel whatnow folded" onClick={() => setFold({ ...fold, open: true })}>
+        <strong>{head}</strong> <span aria-hidden>▾</span>
+      </button>
+    );
   return (
     <div className="panel whatnow">
       <div className="row spread">

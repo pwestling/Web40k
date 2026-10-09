@@ -315,6 +315,19 @@ export function WatchEffects() {
   }, [shownSeq, game, record]);
   const last = useRef(initial);
   const [effects, setEffects] = useState<Effect[]>([]);
+  // A result over a unit goes once its moment is over, even if nothing new comes to replace it (PX re-check
+  // of #56: a "16 hits" from one attack still floated over its target through the next).
+  useEffect(() => {
+    const bursts = effects.filter((e) => e.kind === "burst");
+    if (!bursts.length) return;
+    const end = Math.min(...bursts.map((e) => e.start)) + EFFECT_MS + 200;
+    const timer = setTimeout(
+      () =>
+        setEffects((old) => old.filter((e) => e.kind !== "burst" || performance.now() - e.start < EFFECT_MS)),
+      Math.max(0, end - performance.now()),
+    );
+    return () => clearTimeout(timer);
+  }, [effects]);
   // Models still toppling or sliding stay out of the pile until they get there.
   const [arriving, setArriving] = useState<ReadonlySet<string>>(new Set());
   const focus = useRef<Focus | null>(null);
@@ -460,6 +473,9 @@ export function WatchEffects() {
       }
     } else if (n) nudge.current = null;
     if (!director || !controls || followed.active || showcasing()) return;
+    // An attack or action still resolving (its dice in the tray, or the next step's roll to come) isn't quiet:
+    // the camera stays on it (PX re-check of #56: it pulled out to the table for the save roll).
+    if (useHold.getState().busy || game.attack || game.procedure) lastAction.current = performance.now();
     if (!focus.current && !overview.current && performance.now() - lastAction.current > OVERVIEW_AFTER_MS) {
       overview.current = true;
       focus.current = { x: 0, y: 0, z: 0, span: null };

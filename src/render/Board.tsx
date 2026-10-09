@@ -636,9 +636,20 @@ function Scene() {
       // The controls, off for that drag, take this finger now (this runs before they see it): a pinch, not nothing.
       if (controls) controls.enabled = true;
       const s = useStore.getState();
-      const unitId = useTouch.getState().downOn;
-      const unit = unitId ? s.game.units[unitId] : undefined;
-      if (unit && unitId === s.selected && s.scrub === null && s.view !== "eye" && canControl(unit.owner)) {
+      const unit = s.selected ? s.game.units[s.selected] : undefined;
+      // The selected unit under either finger or between them: the twist turns it (PX touch pass: a twist over
+      // a small squad has both fingers on it, or straddles it).
+      const rect = el.getBoundingClientRect();
+      const fingers = [...two(), centre()];
+      const under =
+        !!unit &&
+        aliveModels(s.game, unit).some((m) => {
+          const v = new Vector3(m.position.x, m.z ?? 0, m.position.y).project(camera);
+          const x = rect.left + ((v.x + 1) / 2) * rect.width;
+          const y = rect.top + ((1 - v.y) / 2) * rect.height;
+          return fingers.some((f) => Math.hypot(f.x - x, f.y - y) < 48);
+        });
+      if (unit && under && s.scrub === null && s.view !== "eye" && canControl(unit.owner)) {
         twist = { unit: true, a0: angle(), az0: 0 };
         if (controls) controls.enabled = false;
         useTouch.setState({ twist: { unitId: unit.id, angle: 0, ...centre() } });
@@ -801,8 +812,10 @@ function Scene() {
     });
 
   const onModelDown = (m: Model, shift: boolean, e?: PointerEvent) => {
+    // A second finger is a pinch or twist, never a drag of the model it lands on (PX touch pass).
+    if (e?.pointerType === "touch" && touchCount.current > 1) return;
     if (e?.pointerType === "touch") {
-      useTouch.setState({ downOn: m.unitId ?? null, menu: null });
+      useTouch.setState({ menu: null });
       pressedModel.current = m.id;
     }
     if (tool) {
@@ -1148,7 +1161,8 @@ function Scene() {
               return;
             }
             if (e.nativeEvent.pointerType === "touch") {
-              useTouch.setState({ menu: null, downOn: null });
+              if (touchCount.current > 1) return;
+              useTouch.setState({ menu: null });
               if (useTouch.getState().boxMode) {
                 e.stopPropagation();
                 const from = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };

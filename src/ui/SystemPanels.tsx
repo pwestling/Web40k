@@ -1,3 +1,4 @@
+import { swipeAway } from "./swipe";
 import { UnitWarnings } from "./TableWarnings";
 import { RulesText } from "./RulesText";
 import { playerShape } from "./sides";
@@ -168,7 +169,12 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
     charged !== null ? t("Charged {distance}", { distance: lengthText(system, charged) }) : null;
 
   return (
-    <div className="panel unitcard" tabIndex={-1} aria-label={t("Selected unit")}>
+    <div
+      className="panel unitcard"
+      tabIndex={-1}
+      aria-label={t("Selected unit")}
+      {...swipeAway(() => useStore.getState().select(null))}
+    >
       <div className="row spread">
         <h2 style={{ color: owner?.color }}>
           <span className="side-shape" aria-hidden="true">

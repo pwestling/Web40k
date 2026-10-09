@@ -53,10 +53,18 @@ export function stopMoment(): void {
  */
 export function playMoment(m: Moment, done?: () => void): void {
   const token = ++playing;
-  const later = (ms: number, f: () => void) =>
-    setTimeout(() => {
-      if (token === playing) f();
-    }, ms);
+  // Each wait counts from when the last one was due, not from when a busy page got round to it, so late
+  // timers don't add up: the cut runs as long as its estimate (UX 415: 15 s said, 21.9 s recorded).
+  let due = performance.now();
+  const later = (ms: number, f: () => void) => {
+    due = Math.max(due + ms, performance.now() - 250);
+    setTimeout(
+      () => {
+        if (token === playing) f();
+      },
+      Math.max(0, due - performance.now()),
+    );
+  };
   if (!playable(m)) {
     if (done) later(CARD_MS, done);
     return;
@@ -197,10 +205,18 @@ export function condensedLength(beats: Beat[]): number {
 /** Play the condensed cut on the table, then `done`. */
 export function playCondensed(beats: Beat[], done: () => void): void {
   const token = ++playing;
-  const later = (ms: number, f: () => void) =>
-    setTimeout(() => {
-      if (token === playing) f();
-    }, ms);
+  // Each wait counts from when the last one was due, not from when a busy page got round to it, so late
+  // timers don't add up: the cut runs as long as its estimate (UX 415: 15 s said, 21.9 s recorded).
+  let due = performance.now();
+  const later = (ms: number, f: () => void) => {
+    due = Math.max(due + ms, performance.now() - 250);
+    setTimeout(
+      () => {
+        if (token === playing) f();
+      },
+      Math.max(0, due - performance.now()),
+    );
+  };
   const step = (i: number) => {
     const b = beats[i];
     if (!b) {

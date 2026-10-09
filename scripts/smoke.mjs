@@ -530,6 +530,14 @@ const checks = {
       .waitFor();
     await page.getByRole("button", { name: "Save to shelf" }).click();
     await page.getByRole("button", { name: "Match my points" }).click();
+    // It says what the computer now fields and leaves Start to the player (PX re-check of #56).
+    await page
+      .locator(".army-check")
+      .getByText(/the computer's is [1-3]\d\d pts/)
+      .waitFor();
+    if (await page.getByText(/The computer's army is about/).count())
+      throw new Error("still lopsided after matching");
+    await page.getByRole("button", { name: "Start", exact: true }).click();
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -762,7 +770,15 @@ const checks = {
     await sleep(1000);
     if ((await phase()) !== "Movement") throw new Error(`▶ went to ${await phase()}, not Movement`);
     const mover = await tapOwnUnit(page, t);
-    await touchMove(page, t, mover, { x: 0, y: -40 });
+    // Two fingers twisted on the selected unit turn it (PX touch pass): its models move, so the card's move counts.
+    const moved = async () =>
+      Number((await page.locator(".unitcard").first().innerText()).match(/Moved ([\d.]+)/)?.[1] ?? NaN);
+    if ((await moved()) !== 0) throw new Error("the unit had moved before the twist");
+    await t.two({ x: mover.x, y: mover.y }, { d0: 50, d1: 50, a0: 0, a1: 0.6, stagger: 60 });
+    await sleep(1500);
+    if (!((await moved()) > 0)) throw new Error("a two-finger twist on the selected unit didn't turn it");
+    // Turned, its models stand elsewhere: find one again to drag.
+    await touchMove(page, t, await tapOwnUnit(page, t), { x: 0, y: -40 });
     await next.tap();
     await sleep(1500);
     await page
