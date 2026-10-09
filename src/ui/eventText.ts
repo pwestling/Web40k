@@ -8,6 +8,7 @@ import { findAction } from "../core/content/player";
 import { systemModule } from "../systems";
 import { formatList, t, tn } from "../i18n";
 import { describePackageChange } from "./packageChange";
+import { chargeNeeded } from "../systems/wh40k/charge";
 
 /**
  * One line of the game log for each kind of event: what happened, in words,
@@ -189,14 +190,20 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
       const prefix = unitId && !label?.startsWith(unitName(unitId)) ? `${unitName(unitId)} ` : "";
       const what = label ? `${prefix}${label}` : `${results.length}D${sides}`;
       // A charge says what it was declared against (UX 396).
-      if (event.roll.targets?.length && results.length > 1)
-        return t("{name} rolled {what} at {targets}: {results} (= {total})", {
+      if (event.roll.targets?.length && results.length > 1 && unitId) {
+        const line = t("{name} rolled {what} at {targets}: {results} (= {total})", {
           name: roller,
           what,
           targets: formatList(event.roll.targets.map(unitName)),
           results: results.join(" "),
           total: String(total),
         });
+        // With its outcome (UX 411): made or not, from the gaps as it was rolled.
+        const needed = chargeNeeded(before, unitId, event.roll.targets);
+        return total >= needed
+          ? t('{line} · made, up to {n}"', { line, n: total })
+          : t("{line} · fails (needed {n})", { line, n: needed });
+      }
       if (faces)
         return t("{name} rolled {what}: {results}", {
           name: roller,

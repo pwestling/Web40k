@@ -171,3 +171,17 @@ describe("dice picks", () => {
     ]);
   });
 });
+
+describe("setting up names (UX 409, 410)", () => {
+  it("shows a player renamed before the battle by their new name on the join line", () => {
+    const log = buildLog(
+      record([
+        join("a", "", 0),
+        join("b", "", 1),
+        ["b", { type: "player/rename", player: "b", name: "The Warden" }],
+      ]),
+    );
+    const lines = log.flatMap((i) => (i.kind === "line" ? [i.text] : []));
+    expect(lines).toEqual(["Player 1 joined", "The Warden joined"]);
+  });
+});

@@ -276,7 +276,7 @@ const checks = {
     await page.getByRole("button", { name: "Charge (2D6)" }).click();
     await page
       .locator(".charge-declare")
-      .getByText(/Further than 12"|Roll charge/)
+      .getByText(/no charge possible|Roll charge/)
       .first()
       .waitFor();
     // Status chips only show (UX 399): the ⋯ beside them marks one, on purpose.

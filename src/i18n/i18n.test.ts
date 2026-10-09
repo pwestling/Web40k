@@ -51,3 +51,12 @@ describe("translations", () => {
     expect(entries.find((e) => e.id === "Start battle")?.fuzzy).toBe(true);
   });
 });
+
+describe("possessives", () => {
+  it("gives a name ending in s the apostrophe alone", () => {
+    expect(t("Undo {unit}'s activation", { unit: "Shieldwall Spears" })).toBe(
+      "Undo Shieldwall Spears' activation",
+    );
+    expect(t("Undo {unit}'s activation", { unit: "Bog Hulk" })).toBe("Undo Bog Hulk's activation");
+  });
+});

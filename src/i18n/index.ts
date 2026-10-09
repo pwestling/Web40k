@@ -89,6 +89,11 @@ type Params = Record<string, string | number | null | undefined>;
 
 function fill(text: string, params?: Params): string {
   if (!params) return text;
+  // "Spears'", not "Spears's": a plural name takes the apostrophe alone (UX 65).
+  text = text.replace(/\{(\w+)\}'s\b/g, (all, name: string) => {
+    const v = params[name];
+    return typeof v === "string" && /s$/i.test(v) ? `{${name}}'` : all;
+  });
   return text.replace(/\{(\w+)\}/g, (all, name: string) => {
     const v = params[name];
     return v === undefined || v === null ? all : typeof v === "number" ? formatNumber(v) : v;

@@ -269,6 +269,12 @@ function label(id: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** A step's name on its Roll button: "saves" when there are several dice to roll (UX 65). */
+function stepName(id: string, dice: number): string {
+  const name = label(id).toLowerCase();
+  return dice > 1 && /^(save|hit|wound)$/.test(name) ? `${name}s` : name;
+}
+
 function describePlan(plan: StepPlan | undefined): string | null {
   if (!plan) return null;
   if (plan.kind === "pool")
@@ -400,7 +406,7 @@ export function ProcedurePanel() {
         <div className="row">
           {next && !run.pending && !botRolls && (
             <RollButton className="primary" intent={{ type: "procedure/roll" }} as={roller}>
-              {t("Roll {step}", { step: label(next.id).toLowerCase() })}
+              {t("Roll {step}", { step: stepName(next.id, run.tokens.length) })}
               {yours && <SelfRollCountdown />}
             </RollButton>
           )}

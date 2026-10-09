@@ -69,6 +69,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     (Extract<LogItem, { kind: "line" }> & { unitId: string; verb: string; inches: number }) | null = null;
   // Setting up the table ("Game: …", "Table set up") can happen several times before the battle: only the latest shows.
   const setup: Record<string, Extract<LogItem, { kind: "line" }>> = {};
+  // "Player 2 joined", renamed before the battle: the join line takes the name (UX 410).
+  const joined: Record<string, Extract<LogItem, { kind: "line" }>> = {};
   // Back-to-back drags of one unit by one player (arrow-key nudges, say) add up on one line (UX 180).
   // Measured from where the first one started, as the unit card measures moves (UX 200).
   let dragLine:
@@ -169,7 +171,9 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       }
       const who = playerName(state.players[logged.by]) ?? t("Someone");
       const { units, pts: total } = deployLine;
-      const params = { name: who, army: army ?? t("an army"), pts: String(total) };
+      // The force's own name, not its catalogue path ("Imperium - Adeptus Astartes - Space Marines", UX 410).
+      const force = army?.split(/\s+-\s+/).at(-1);
+      const params = { name: who, army: force ?? t("an army"), pts: String(total) };
       deployLine.text =
         units === 1 && !army
           ? t("{name} deployed {unit}", { name: who, unit: event.unit.name })
@@ -340,6 +344,20 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       const line = { kind: "line" as const, key, seq: logged.seq, text, undone: false };
       setup[event.type] = line;
       items.push(line);
+      continue;
+    }
+    if (event.type === "player/join" && !skipped && text) {
+      const line = { kind: "line" as const, key, seq: logged.seq, text, undone: false };
+      joined[event.player.id] = line;
+      items.push(line);
+      continue;
+    }
+    if (event.type === "player/rename" && !skipped && !state.turn.round && joined[event.player]) {
+      joined[event.player]!.text = describe(
+        { ...logged, event: { type: "player/join", player: { ...state.players[event.player]! } } },
+        before,
+        state,
+      );
       continue;
     }
     if (event.type === "player/dice" && !skipped && text) {

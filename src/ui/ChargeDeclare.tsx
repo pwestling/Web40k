@@ -4,9 +4,7 @@ import { actionTargets, unitActions } from "../core/content/play";
 import { formatList, t } from "../i18n";
 import { RollButton } from "../companion/RealDice";
 import { useGame } from "./hooks";
-
-/** Inches the charge roll must reach: into Engagement Range (1") of every target. */
-const ENGAGEMENT = 1;
+import { chargeNeeded } from "../systems/wh40k/charge";
 
 /**
  * "Charge (2D6)" (UX 396): which unit(s) first, each enemy with its distance
@@ -31,14 +29,7 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
     targets,
   });
   const names = (ids: string[]) => formatList(ids.map((id) => game.units[id]?.name ?? "?"));
-  const needed = (ids: string[]) =>
-    Math.max(
-      0,
-      ...ids.map((id) => {
-        const other = game.units[id];
-        return other ? Math.ceil(Math.max(0, unitGap(game, unit, other) - ENGAGEMENT)) : 0;
-      }),
-    );
+  const needed = (ids: string[]) => chargeNeeded(game, unit.id, ids);
 
   if (picking) {
     const targets = actionTargets(game, unit.id, "charge");
@@ -50,32 +41,49 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
         {own && !own.ok && own.why && own.why !== "Not allowed now" && (
           <p className="warn small">{own.why}</p>
         )}
-        {targets.map((x) => {
-          const other = game.units[x.unitId];
-          if (!other) return null;
-          const gap = unitGap(game, unit, other);
-          const on = picking.includes(x.unitId);
-          return x.ok ? (
-            <button
-              key={x.unitId}
-              className={on ? "small on" : "small"}
-              aria-pressed={on}
-              onClick={() =>
-                setPicking(on ? picking.filter((id) => id !== x.unitId) : [...picking, x.unitId])
-              }
-            >
-              {other.name} <span className="muted small">{`${gap.toFixed(1)}"`}</span>
-            </button>
-          ) : (
-            <span key={x.unitId} className="muted small">
-              {other.name} {`${gap.toFixed(1)}"`}
-              {x.why ? `: ${x.why}` : ""}
-            </span>
+        {/* Nothing in reach: one line, the list folded under it (UX 412). */}
+        {(() => {
+          const list = targets.map((x) => {
+            const other = game.units[x.unitId];
+            if (!other) return null;
+            const gap = unitGap(game, unit, other);
+            const on = picking.includes(x.unitId);
+            return x.ok ? (
+              <button
+                key={x.unitId}
+                className={on ? "small on" : "small"}
+                aria-pressed={on}
+                onClick={() =>
+                  setPicking(on ? picking.filter((id) => id !== x.unitId) : [...picking, x.unitId])
+                }
+              >
+                {other.name} <span className="muted small">{`${gap.toFixed(1)}"`}</span>
+              </button>
+            ) : (
+              <span key={x.unitId} className="muted small">
+                {other.name} {`${gap.toFixed(1)}"`}
+                {x.why ? `: ${x.why}` : ""}
+              </span>
+            );
+          });
+          if (targets.some((x) => x.ok)) return list;
+          const gaps = targets.flatMap((x) => {
+            const other = game.units[x.unitId];
+            return other ? [unitGap(game, unit, other)] : [];
+          });
+          if (!gaps.length)
+            return <p className="warn small">{t("No enemy unit can be charged from here.")}</p>;
+          return (
+            <details className="charge-out-of-reach">
+              <summary className="warn small">
+                {t('Nearest enemy {distance}" away: no charge possible', {
+                  distance: Math.min(...gaps).toFixed(1),
+                })}
+              </summary>
+              {list}
+            </details>
           );
-        })}
-        {!targets.some((x) => x.ok) && (
-          <p className="warn small">{t("No enemy unit can be charged from here.")}</p>
-        )}
+        })()}
         <div className="row">
           {picking.length > 0 && (
             <RollButton
