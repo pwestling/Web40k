@@ -591,7 +591,7 @@ msgstr ""
 
 #: src/broadcast/BroadcastControls.tsx:11
 #: src/opentables/OpenTables.tsx:206
-#: src/ui/ReplayBar.tsx:268
+#: src/ui/ReplayBar.tsx:296
 msgid "Live"
 msgstr ""
 
@@ -1408,7 +1408,7 @@ msgid "Copy invite link"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:141
-#: src/ui/ReplayBar.tsx:286
+#: src/ui/ReplayBar.tsx:176
 #: src/ui/StatsScreen.tsx:78
 msgid "Share…"
 msgstr ""
@@ -1693,6 +1693,7 @@ msgstr ""
 #: src/companion/TableAttack.tsx:95
 #: src/opentables/OpenTables.tsx:421
 #: src/opentables/OpenTables.tsx:421
+#: src/ui/ReplayBar.tsx:303
 msgid "More"
 msgstr ""
 
@@ -2500,7 +2501,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:590
+#: src/ui/Lobby.tsx:605
 msgid "Not now"
 msgstr ""
 
@@ -2545,11 +2546,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
+#: src/ui/Lobby.tsx:453
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:486
+#: src/ui/Lobby.tsx:452
 msgid "1 vs 1"
 msgstr ""
 
@@ -2875,7 +2877,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:415
-#: src/ui/Lobby.tsx:459
+#: src/ui/Lobby.tsx:481
 msgid "Join"
 msgstr ""
 
@@ -3265,7 +3267,7 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:117
 #: src/replay/chapters.ts:53
-#: src/ui/ReplayBar.tsx:268
+#: src/ui/ReplayBar.tsx:296
 msgid "Setup"
 msgstr ""
 
@@ -3512,7 +3514,7 @@ msgstr ""
 
 #: src/share/SharePanel.tsx:299
 #: src/share/SharePanel.tsx:301
-#: src/ui/ReplayBar.tsx:277
+#: src/ui/ReplayBar.tsx:167
 msgid "Share the battle"
 msgstr ""
 
@@ -5753,7 +5755,7 @@ msgid "Edit terrain"
 msgstr ""
 
 #: src/ui/Hud.tsx:239
-#: src/ui/ReplayBar.tsx:292
+#: src/ui/ReplayBar.tsx:180
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
@@ -5831,7 +5833,7 @@ msgid "Rejoin as {name}"
 msgstr ""
 
 #: src/ui/Hud.tsx:462
-#: src/ui/Lobby.tsx:462
+#: src/ui/Lobby.tsx:484
 msgid "Watch"
 msgstr ""
 
@@ -6068,7 +6070,7 @@ msgstr ""
 
 #: src/ui/Lobby.tsx:329
 #: src/ui/Lobby.tsx:342
-#: src/ui/Lobby.tsx:466
+#: src/ui/Lobby.tsx:488
 msgid "At a real table"
 msgstr ""
 
@@ -6112,97 +6114,101 @@ msgstr ""
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:445
+#: src/ui/Lobby.tsx:447
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:447
+#: src/ui/Lobby.tsx:449
+msgid "Players"
+msgstr ""
+
+#: src/ui/Lobby.tsx:452
+msgid "Two players"
+msgstr ""
+
+#: src/ui/Lobby.tsx:453
+msgid "Four players in two teams; teams share CP and VP"
+msgstr ""
+
+#: src/ui/Lobby.tsx:469
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:449
+#: src/ui/Lobby.tsx:471
 #: src/ui/Room.tsx:97
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:452
+#: src/ui/Lobby.tsx:474
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:456
+#: src/ui/Lobby.tsx:478
 msgid "Paste a room code or invite link to join."
 msgstr ""
 
-#: src/ui/Lobby.tsx:468
+#: src/ui/Lobby.tsx:490
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:473
+#: src/ui/Lobby.tsx:495
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:476
+#: src/ui/Lobby.tsx:498
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:478
+#: src/ui/Lobby.tsx:500
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:482
+#: src/ui/Lobby.tsx:504
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:484
-msgid "Players"
-msgstr ""
-
-#: src/ui/Lobby.tsx:487
-msgid "2 vs 2 (teams share CP and VP)"
-msgstr ""
-
-#: src/ui/Lobby.tsx:496
+#: src/ui/Lobby.tsx:511
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:506
+#: src/ui/Lobby.tsx:521
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:523
+#: src/ui/Lobby.tsx:538
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:526
+#: src/ui/Lobby.tsx:541
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:529
+#: src/ui/Lobby.tsx:544
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:539
+#: src/ui/Lobby.tsx:554
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:544
+#: src/ui/Lobby.tsx:559
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:572
+#: src/ui/Lobby.tsx:587
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:573
+#: src/ui/Lobby.tsx:588
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:574
+#: src/ui/Lobby.tsx:589
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:577
-#: src/ui/Lobby.tsx:578
+#: src/ui/Lobby.tsx:592
+#: src/ui/Lobby.tsx:593
 msgid "How hard?"
 msgstr ""
 
@@ -7297,46 +7303,50 @@ msgstr ""
 msgid "{phase} phase began"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:169
-msgid "Replay: back a phase"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:173
-msgid "Replay: forward a phase"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:197
-msgid "R{round}"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:208
-#: src/ui/ReplayBar.tsx:221
-#: src/ui/ReplayBar.tsx:234
-#: src/ui/ReplayBar.tsx:260
-msgid "Replay: {what}"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:246
-msgid "A note"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:247
-msgid "Replay: note, {text}"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:290
-msgid "Back to live"
-msgstr ""
-
-#: src/ui/ReplayBar.tsx:293
+#: src/ui/ReplayBar.tsx:181
 msgid "Review with notes"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:304
+#: src/ui/ReplayBar.tsx:197
+msgid "Replay: back a phase"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:201
+msgid "Replay: forward a phase"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:225
+msgid "R{round}"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:236
+#: src/ui/ReplayBar.tsx:249
+#: src/ui/ReplayBar.tsx:262
+#: src/ui/ReplayBar.tsx:288
+msgid "Replay: {what}"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:274
+msgid "A note"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:275
+msgid "Replay: note, {text}"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:299
+msgid "Back to live"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:303
+msgid "What if, Share, Review"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:319
 msgid "Leave"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:304
+#: src/ui/ReplayBar.tsx:319
 msgid "Close replay"
 msgstr ""
 

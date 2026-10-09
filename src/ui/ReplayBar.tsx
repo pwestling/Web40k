@@ -155,6 +155,34 @@ export function ReplayBar() {
   };
   const captioned = role === "spectator" || scrub !== null;
 
+  const extras = (
+    <>
+      {/* What if: a new game from the point on the track (UX: roadmap #14). */}
+      {/* Live, it branches from now (UX 138); not for a viewer held back by the delay (UX 146). */}
+      {/* Neither is a watcher's (PX): not on the replay page, nor for a spectator at someone's game. */}
+      {last > record.initial.seq && !delaying() && !watching && <BranchButton seq={pos} />}
+      {/* Share the battle (#46): a page, a clip, pictures. In a replay, or once the game is over. */}
+      {(!session || over) && last > record.initial.seq && !watching && (
+        <button
+          title={t("Share the battle")}
+          onClick={() => {
+            if (useShare.getState().open) useShare.setState({ open: false });
+            else {
+              useStore.getState().set({ stats: false });
+              openShare();
+            }
+          }}
+        >
+          {t("Share…")}
+        </button>
+      )}
+      {scrub !== null && session && over && (
+        <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
+          {t("Review with notes")}
+        </button>
+      )}
+    </>
+  );
   return (
     <>
       {captioned && (phase || now) && (
@@ -267,31 +295,18 @@ export function ReplayBar() {
         <span className="muted where">
           {scrub === null ? t("Live") : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? t("Setup"))}
         </span>
-        {/* What if: a new game from the point on the track (UX: roadmap #14). */}
-        {/* Live, it branches from now (UX 138); not for a viewer held back by the delay (UX 146). */}
-        {/* Neither is a watcher's (PX): not on the replay page, nor for a spectator at someone's game. */}
-        {last > record.initial.seq && !delaying() && !watching && <BranchButton seq={pos} />}
-        {/* Share the battle (#46): a page, a clip, pictures. In a replay, or once the game is over. */}
-        {(!session || over) && last > record.initial.seq && !watching && (
-          <button
-            title={t("Share the battle")}
-            onClick={() => {
-              if (useShare.getState().open) useShare.setState({ open: false });
-              else {
-                useStore.getState().set({ stats: false });
-                openShare();
-              }
-            }}
-          >
-            {t("Share…")}
-          </button>
-        )}
         <BackToOriginal />
         {scrub !== null && session && <button onClick={() => setScrub(null)}>{t("Back to live")}</button>}
-        {scrub !== null && session && over && (
-          <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
-            {t("Review with notes")}
-          </button>
+        {/* After the game the extras fold into ⋯, so the bar stays one line (UX 407). */}
+        {session && over ? (
+          <details className="menu replay-more">
+            <summary aria-label={t("More")} title={t("What if, Share, Review")}>
+              ⋯
+            </summary>
+            <div className="menu-items">{extras}</div>
+          </details>
+        ) : (
+          extras
         )}
         {!session && !VIEWER && (
           <button

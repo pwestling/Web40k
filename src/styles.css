@@ -4982,3 +4982,17 @@ button.teach-button:hover {
   text-align: left;
   white-space: nowrap;
 }
+/* The replay bar's buttons stay on one line; its ⋯ opens upwards (UX 407). */
+.replaybar button {
+  white-space: nowrap;
+}
+.replaybar .replay-more {
+  position: relative;
+}
+.replaybar .replay-more .menu-items {
+  bottom: 100%;
+}
+.replaybar .replay-more .menu-items button {
+  width: 100%;
+  text-align: left;
+}

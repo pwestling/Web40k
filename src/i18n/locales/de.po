@@ -712,7 +712,7 @@ msgstr "Eine saubere Ansicht des Spielfelds fürs Streaming (OBS-Browserquelle),
 
 #: src/broadcast/BroadcastControls.tsx:11
 #: src/opentables/OpenTables.tsx:206
-#: src/ui/ReplayBar.tsx:268
+#: src/ui/ReplayBar.tsx:296
 #, fuzzy
 msgid "Live"
 msgstr "Live"
@@ -1716,7 +1716,7 @@ msgid "Copy invite link"
 msgstr "Einladungslink kopieren"
 
 #: src/companion/CompanionScreen.tsx:141
-#: src/ui/ReplayBar.tsx:286
+#: src/ui/ReplayBar.tsx:176
 #: src/ui/StatsScreen.tsx:78
 #, fuzzy
 msgid "Share…"
@@ -2064,6 +2064,7 @@ msgstr "{n} von {all}"
 #: src/companion/TableAttack.tsx:95
 #: src/opentables/OpenTables.tsx:421
 #: src/opentables/OpenTables.tsx:421
+#: src/ui/ReplayBar.tsx:303
 #, fuzzy
 msgid "More"
 msgstr "Mehr"
@@ -3040,7 +3041,7 @@ msgid "Join the game"
 msgstr "Spiel beitreten"
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:590
+#: src/ui/Lobby.tsx:605
 #, fuzzy
 msgid "Not now"
 msgstr "Nicht jetzt"
@@ -3096,12 +3097,13 @@ msgid "Remove this mail game from this device?"
 msgstr "Dieses Mail-Spiel von diesem Gerät entfernen?"
 
 #: src/mail/MailLobby.tsx:210
+#: src/ui/Lobby.tsx:453
 #, fuzzy
 msgid "2 vs 2"
 msgstr "2 gegen 2"
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:486
+#: src/ui/Lobby.tsx:452
 #, fuzzy
 msgid "1 vs 1"
 msgstr "1 gegen 1"
@@ -3504,7 +3506,7 @@ msgid "Your table"
 msgstr "Dein Tisch"
 
 #: src/opentables/OpenTables.tsx:415
-#: src/ui/Lobby.tsx:459
+#: src/ui/Lobby.tsx:481
 #, fuzzy
 msgid "Join"
 msgstr "Beitreten"
@@ -3985,7 +3987,7 @@ msgstr "{chapter}:"
 
 #: src/replay/NotesPanel.tsx:117
 #: src/replay/chapters.ts:53
-#: src/ui/ReplayBar.tsx:268
+#: src/ui/ReplayBar.tsx:296
 #, fuzzy
 msgid "Setup"
 msgstr "Aufbau"
@@ -4286,7 +4288,7 @@ msgstr "Eine Runde"
 
 #: src/share/SharePanel.tsx:299
 #: src/share/SharePanel.tsx:301
-#: src/ui/ReplayBar.tsx:277
+#: src/ui/ReplayBar.tsx:167
 #, fuzzy
 msgid "Share the battle"
 msgstr "Die Schlacht teilen"
@@ -7048,7 +7050,7 @@ msgid "Edit terrain"
 msgstr "Gelände bearbeiten"
 
 #: src/ui/Hud.tsx:239
-#: src/ui/ReplayBar.tsx:292
+#: src/ui/ReplayBar.tsx:180
 #, fuzzy
 msgid "Open this game as a replay to add notes and marks"
 msgstr "Dieses Spiel als Wiederholung öffnen, um Notizen und Markierungen hinzuzufügen"
@@ -7145,7 +7147,7 @@ msgid "Rejoin as {name}"
 msgstr "Als {name} wieder beitreten"
 
 #: src/ui/Hud.tsx:462
-#: src/ui/Lobby.tsx:462
+#: src/ui/Lobby.tsx:484
 #, fuzzy
 msgid "Watch"
 msgstr "Zuschauen"
@@ -7439,7 +7441,7 @@ msgstr "Gedruckte oder echte Modelle auf deinem Tisch: dieses Handy führt Karte
 
 #: src/ui/Lobby.tsx:329
 #: src/ui/Lobby.tsx:342
-#: src/ui/Lobby.tsx:466
+#: src/ui/Lobby.tsx:488
 #, fuzzy
 msgid "At a real table"
 msgstr "Am echten Spieltisch"
@@ -7494,119 +7496,124 @@ msgstr "Spiele, die andere eingestellt haben. Tritt einem bei oder stell deins e
 msgid "Player 1 or 2, by seat"
 msgstr "Spieler 1 oder 2, nach Platz"
 
-#: src/ui/Lobby.tsx:445
+#: src/ui/Lobby.tsx:447
 #, fuzzy
 msgid "Host a game"
 msgstr "Spiel hosten"
 
-#: src/ui/Lobby.tsx:447
+#: src/ui/Lobby.tsx:449
+#, fuzzy
+msgid "Players"
+msgstr "Spieler"
+
+#: src/ui/Lobby.tsx:452
+#, fuzzy
+msgid "Two players"
+msgstr "Zwei Spieler"
+
+#: src/ui/Lobby.tsx:453
+#, fuzzy
+msgid "Four players in two teams; teams share CP and VP"
+msgstr "Vier Spieler in zwei Teams; Teams teilen sich CP und VP"
+
+#: src/ui/Lobby.tsx:469
 #, fuzzy
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr "Du bekommst einen Link zum Verschicken; wer ihn öffnet, kommt an deinen Tisch."
 
-#: src/ui/Lobby.tsx:449
+#: src/ui/Lobby.tsx:471
 #: src/ui/Room.tsx:97
 #, fuzzy
 msgid "Room"
 msgstr "Raum"
 
-#: src/ui/Lobby.tsx:452
+#: src/ui/Lobby.tsx:474
 #, fuzzy
 msgid "a room code or invite link"
 msgstr "ein Raumcode oder Einladungslink"
 
-#: src/ui/Lobby.tsx:456
+#: src/ui/Lobby.tsx:478
 #, fuzzy
 msgid "Paste a room code or invite link to join."
 msgstr "Füge einen Raumcode oder Einladungslink ein, um beizutreten."
 
-#: src/ui/Lobby.tsx:468
+#: src/ui/Lobby.tsx:490
 #, fuzzy
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr "Spielst du mit deinen eigenen Modellen? Open Battle verwaltet Einheitenkarten, Wunden, CP, VP und Mission und rechnet jeden Angriff aus. Würfle am Bildschirm oder wirf deine eigenen Würfel und gib die Ergebnisse ein."
 
-#: src/ui/Lobby.tsx:473
+#: src/ui/Lobby.tsx:495
 #, fuzzy
 msgid "One phone for both of us"
 msgstr "Ein Handy für uns beide"
 
-#: src/ui/Lobby.tsx:476
+#: src/ui/Lobby.tsx:498
 #, fuzzy
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr "Du bekommst einen Link zum Verschicken; die andere Person öffnet ihn auf ihrem Handy"
 
-#: src/ui/Lobby.tsx:478
+#: src/ui/Lobby.tsx:500
 #, fuzzy
 msgid "A phone each"
 msgstr "Jeder ein Handy"
 
-#: src/ui/Lobby.tsx:482
+#: src/ui/Lobby.tsx:504
 #, fuzzy
 msgid "More ways to play"
 msgstr "Weitere Spielmöglichkeiten"
 
-#: src/ui/Lobby.tsx:484
-#, fuzzy
-msgid "Players"
-msgstr "Spieler"
-
-#: src/ui/Lobby.tsx:487
-#, fuzzy
-msgid "2 vs 2 (teams share CP and VP)"
-msgstr "2 gegen 2 (Teams teilen CP und VP)"
-
-#: src/ui/Lobby.tsx:496
+#: src/ui/Lobby.tsx:511
 #, fuzzy
 msgid "Same browser (play between two tabs, no network)"
 msgstr "Gleicher Browser (zwischen zwei Tabs spielen, ohne Netzwerk)"
 
-#: src/ui/Lobby.tsx:506
+#: src/ui/Lobby.tsx:521
 #, fuzzy
 msgid "Set up a game on this screen (hotseat)"
 msgstr "Spiel an diesem Bildschirm einrichten (Hotseat)"
 
-#: src/ui/Lobby.tsx:523
+#: src/ui/Lobby.tsx:538
 #, fuzzy
 msgid "Figure library: your models, packs and storage"
 msgstr "Figurenbibliothek: deine Modelle, Pakete und Speicher"
 
-#: src/ui/Lobby.tsx:526
+#: src/ui/Lobby.tsx:541
 #, fuzzy
 msgid "Module workshop: write your own game system"
 msgstr "Modulwerkstatt: schreib dein eigenes Spielsystem"
 
-#: src/ui/Lobby.tsx:529
+#: src/ui/Lobby.tsx:544
 #, fuzzy
 msgid "Open a replay file"
 msgstr "Wiederholungsdatei öffnen"
 
-#: src/ui/Lobby.tsx:539
+#: src/ui/Lobby.tsx:554
 #, fuzzy
 msgid "No account: games run between your browsers."
 msgstr "Kein Konto nötig: Spiele laufen direkt zwischen euren Browsern."
 
-#: src/ui/Lobby.tsx:544
+#: src/ui/Lobby.tsx:559
 #, fuzzy
 msgid "Source code"
 msgstr "Quellcode"
 
-#: src/ui/Lobby.tsx:572
+#: src/ui/Lobby.tsx:587
 #, fuzzy
 msgid "plays loosely; good for a first game"
 msgstr "spielt locker; gut für ein erstes Spiel"
 
-#: src/ui/Lobby.tsx:573
+#: src/ui/Lobby.tsx:588
 #, fuzzy
 msgid "plays to win"
 msgstr "spielt auf Sieg"
 
-#: src/ui/Lobby.tsx:574
+#: src/ui/Lobby.tsx:589
 #, fuzzy
 msgid "thinks harder about every move"
 msgstr "denkt über jeden Zug länger nach"
 
-#: src/ui/Lobby.tsx:577
-#: src/ui/Lobby.tsx:578
+#: src/ui/Lobby.tsx:592
+#: src/ui/Lobby.tsx:593
 #, fuzzy
 msgid "How hard?"
 msgstr "Wie schwer?"
@@ -8964,55 +8971,60 @@ msgstr "Plänkler"
 msgid "{phase} phase began"
 msgstr "{phase}phase begonnen"
 
-#: src/ui/ReplayBar.tsx:169
-#, fuzzy
-msgid "Replay: back a phase"
-msgstr "Wiederholung: eine Phase zurück"
-
-#: src/ui/ReplayBar.tsx:173
-#, fuzzy
-msgid "Replay: forward a phase"
-msgstr "Wiederholung: eine Phase vor"
-
-#: src/ui/ReplayBar.tsx:197
-#, fuzzy
-msgid "R{round}"
-msgstr "R{round}"
-
-#: src/ui/ReplayBar.tsx:208
-#: src/ui/ReplayBar.tsx:221
-#: src/ui/ReplayBar.tsx:234
-#: src/ui/ReplayBar.tsx:260
-#, fuzzy
-msgid "Replay: {what}"
-msgstr "Wiederholung: {what}"
-
-#: src/ui/ReplayBar.tsx:246
-#, fuzzy
-msgid "A note"
-msgstr "Eine Notiz"
-
-#: src/ui/ReplayBar.tsx:247
-#, fuzzy
-msgid "Replay: note, {text}"
-msgstr "Wiederholung: Notiz, {text}"
-
-#: src/ui/ReplayBar.tsx:290
-#, fuzzy
-msgid "Back to live"
-msgstr "Zurück zum Live-Spiel"
-
-#: src/ui/ReplayBar.tsx:293
+#: src/ui/ReplayBar.tsx:181
 #, fuzzy
 msgid "Review with notes"
 msgstr "Mit Notizen durchgehen"
 
-#: src/ui/ReplayBar.tsx:304
+#: src/ui/ReplayBar.tsx:197
+#, fuzzy
+msgid "Replay: back a phase"
+msgstr "Wiederholung: eine Phase zurück"
+
+#: src/ui/ReplayBar.tsx:201
+#, fuzzy
+msgid "Replay: forward a phase"
+msgstr "Wiederholung: eine Phase vor"
+
+#: src/ui/ReplayBar.tsx:225
+#, fuzzy
+msgid "R{round}"
+msgstr "R{round}"
+
+#: src/ui/ReplayBar.tsx:236
+#: src/ui/ReplayBar.tsx:249
+#: src/ui/ReplayBar.tsx:262
+#: src/ui/ReplayBar.tsx:288
+#, fuzzy
+msgid "Replay: {what}"
+msgstr "Wiederholung: {what}"
+
+#: src/ui/ReplayBar.tsx:274
+#, fuzzy
+msgid "A note"
+msgstr "Eine Notiz"
+
+#: src/ui/ReplayBar.tsx:275
+#, fuzzy
+msgid "Replay: note, {text}"
+msgstr "Wiederholung: Notiz, {text}"
+
+#: src/ui/ReplayBar.tsx:299
+#, fuzzy
+msgid "Back to live"
+msgstr "Zurück zum Live-Spiel"
+
+#: src/ui/ReplayBar.tsx:303
+#, fuzzy
+msgid "What if, Share, Review"
+msgstr "Was wäre, wenn, Teilen, Durchgehen"
+
+#: src/ui/ReplayBar.tsx:319
 #, fuzzy
 msgid "Leave"
 msgstr "Verlassen"
 
-#: src/ui/ReplayBar.tsx:304
+#: src/ui/ReplayBar.tsx:319
 #, fuzzy
 msgid "Close replay"
 msgstr "Wiederholung schließen"

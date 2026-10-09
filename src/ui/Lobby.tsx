@@ -441,9 +441,31 @@ export function Lobby() {
               ))}
             </select>
           </label>
-          <button className="primary" onClick={() => host()}>
-            {t("Host a game")}
-          </button>
+          {/* The table's size beside the button it changes (UX 406). */}
+          <div className="row">
+            <button className="primary" onClick={() => host()}>
+              {t("Host a game")}
+            </button>
+            <div className="segmented" role="radiogroup" aria-label={t("Players")}>
+              {(
+                [
+                  [1, t("1 vs 1"), t("Two players")],
+                  [2, t("2 vs 2"), t("Four players in two teams; teams share CP and VP")],
+                ] as const
+              ).map(([n, label, about]) => (
+                <button
+                  key={n}
+                  role="radio"
+                  aria-checked={teamSize === n}
+                  className={teamSize === n ? "on" : ""}
+                  title={about}
+                  onClick={() => setTeamSize(n)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
           <label>
             {t("Room")}{" "}
@@ -480,13 +502,6 @@ export function Lobby() {
           </div>
           <details className="fold">
             <summary>{t("More ways to play")}</summary>
-            <label>
-              {t("Players")}{" "}
-              <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value))}>
-                <option value={1}>{t("1 vs 1")}</option>
-                <option value={2}>{t("2 vs 2 (teams share CP and VP)")}</option>
-              </select>
-            </label>
             <label className="check">
               <input
                 type="checkbox"
