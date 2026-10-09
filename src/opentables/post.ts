@@ -36,8 +36,22 @@ export interface TablePost {
   tags?: TableTag[];
   /** A live game's room code, or a mail game's invite code. */
   join: string;
+  /** Watchers welcome: once the seats fill it stays up under Live now (#64). */
+  watch?: boolean;
+  /** A game under way that can be watched: its round, score and how many watch (#64). */
+  live?: LiveInfo;
   /** When the post goes away on its own (epoch ms). */
   expires: number;
+}
+
+/** A game in progress on the board's Live now (#64). */
+export interface LiveInfo {
+  round: number;
+  /** The game's last round, or 0 when it has none. */
+  rounds: number;
+  /** "12–9", as the host's scoreboard has it. */
+  score: string;
+  watching: number;
 }
 
 /** A post as read off the board. */
@@ -60,7 +74,7 @@ export const LIVE_HOURS = [1, 2, 3, 4] as const;
 export const MAIL_TTL_MS = 2 * 24 * 3600_000;
 const MAX_LIVE_MS = 4 * 3600_000 + 60_000;
 
-export const LIMITS = { name: 32, game: 64, size: 40, note: 140 };
+export const LIMITS = { name: 32, game: 64, size: 40, note: 140, score: 40 };
 
 const ROOM = /^[A-Za-z0-9_-]{4,64}$/;
 const MAIL = /^[A-Za-z0-9_-]{10,800}$/;
@@ -90,7 +104,10 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
   const expires = typeof r.expires === "number" && Number.isFinite(r.expires) ? r.expires : 0;
   if (expires <= now || expires > now + (kind === "live" ? MAX_LIVE_MS : MAIL_TTL_MS + 60_000)) return null;
   const seats = typeof r.seats === "number" && Number.isInteger(r.seats) ? r.seats : 0;
-  if (seats < 1 || seats > 7) return null;
+  const watch = kind === "live" && r.watch === true;
+  const live = watch ? readLive(r.live) : null;
+  // A full table is on the board only as a game to watch (#64).
+  if (seats < (live ? 0 : 1) || seats > 7) return null;
   const start = typeof r.start === "number" && Number.isFinite(r.start) ? r.start : null;
   const lang = typeof r.lang === "string" && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(r.lang) ? r.lang : "und";
   return {
@@ -110,8 +127,27 @@ export function readPost(raw: unknown, now = Date.now()): TablePost | null {
       : {}),
     join,
     expires,
+    ...(watch ? { watch } : {}),
+    ...(live ? { live } : {}),
   };
 }
+
+/** A post's game-in-progress line, checked like the rest. */
+function readLive(v: unknown): LiveInfo | null {
+  if (!v || typeof v !== "object") return null;
+  const r = v as Record<string, unknown>;
+  const int = (x: unknown, max: number) =>
+    typeof x === "number" && Number.isInteger(x) && x >= 0 && x <= max ? x : null;
+  const round = int(r.round, 99);
+  const rounds = int(r.rounds, 99);
+  const watching = int(r.watching, 9999);
+  const score = line(r.score, LIMITS.score);
+  if (round === null || rounds === null || watching === null || score === null) return null;
+  return { round, rounds, score, watching };
+}
+
+/** A post that is a game to watch, not seats to fill. */
+export const isLiveGame = (p: TablePost): boolean => !!p.live && p.seats === 0;
 
 /** Whether a post read earlier is still up. */
 export function isUp(p: SeenPost, now = Date.now()): boolean {

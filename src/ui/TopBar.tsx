@@ -11,7 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
 import { poolUsed } from "../core/content/player";
-import { formatList, t, gameText } from "../i18n";
+import { formatList, t, tn, gameText } from "../i18n";
+import { useWatching } from "../opentables/live";
 import { useCanControl, useJoining, useStore } from "../store";
 import { characterName, levelName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
@@ -218,6 +219,7 @@ export function TopBar() {
             ◀
           </button>
         )}
+        <WatchingChip />
         <div className="phase">
           {deploying ? (
             <>
@@ -603,6 +605,18 @@ function Counter({
           ✓
         </button>
       )}
+    </span>
+  );
+}
+
+/** "3 watching": the players see when their game has an audience (#64). */
+function WatchingChip() {
+  const watching = useWatching();
+  const role = useStore((s) => s.role);
+  if (!watching || role === "spectator") return null;
+  return (
+    <span className="watching-chip small" title={t("People watching this game, running a little behind it")}>
+      <span aria-hidden>👁</span> {tn(watching, "{n} watching", "{n} watching")}
     </span>
   );
 }

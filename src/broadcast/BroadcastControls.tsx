@@ -1,3 +1,4 @@
+import { NET_PARAMS } from "../net/config";
 import { useMemo, useState } from "react";
 import { momentsOf } from "../core/moments";
 import { useStore } from "../store";
@@ -142,11 +143,28 @@ export function BroadcastBadge() {
   const caster = currentCaster(casters);
   const now = useNow();
   const fresh = caster && now - caster.at < CASTER_FRESH_MS;
-  if (!fresh && !delay) return null;
+  if (!fresh && !delay && !FROM_TABLES) return null;
   return (
     <div className="broadcast-badge">
       {fresh && <span style={{ borderColor: caster.color }}>🎙 {withoutWatching(caster.name)}</span>}
       {delay > 0 && <span className="muted">{delayLabel(delay)}</span>}
+      {/* Watching from Live now (#64): a way back to the board. */}
+      {FROM_TABLES && (
+        <button className="small" onClick={backToTables}>
+          {t("Leave")}
+        </button>
+      )}
     </div>
   );
+}
+
+/** This view was opened from Open tables' Live now. */
+const FROM_TABLES =
+  typeof location !== "undefined" && new URLSearchParams(location.search).get("from") === "tables";
+
+function backToTables(): void {
+  const q = new URLSearchParams({ tables: "1" });
+  const here = new URLSearchParams(location.search);
+  for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
+  window.location.assign(`${location.pathname}?${q}`);
 }

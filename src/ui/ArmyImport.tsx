@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { displayName, playerName } from "../i18n/names";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
@@ -263,230 +264,236 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
         <SaveToShelf key={p.id} owner={p.id} name={players.length > 1 ? p.name : null} />
       ))}
       {owner && <DicePicker key={owner} player={owner} />}
-      {roster && (
-        <div className="modal-backdrop">
-          <div className="panel modal">
-            <h2>
-              {roster.name} <span className="muted">{pointsLine(roster)}</span>
-            </h2>
-            {roster.warnings.map((w) => (
-              <p key={w} className="warn">
-                {w}
-              </p>
-            ))}
-            {open.length > 0 && (
-              <p className="row wrap">
-                <span className="small">
-                  {tn(
-                    open.length,
-                    "Your figure library has figures that fit {n} unit.",
-                    "Your figure library has figures that fit {n} units.",
-                  )}
-                </span>
-                <button
-                  className="small"
-                  onClick={() => {
-                    const next = { ...figs };
-                    for (const i of open) next[i] = suggested[i]![0]!.id;
-                    setFigs(next);
-                  }}
-                >
-                  {t("Use them")}
-                </button>
-              </p>
-            )}
-            {Object.values(figs).some(Boolean) && open.length === 0 && (
-              <p className="row wrap small">
-                <span className="muted">{t("Picked figures go on when the army is deployed.")}</span>
-                <button className="quiet small" onClick={() => setFigs({})}>
-                  {t("Clear the figures")}
-                </button>
-              </p>
-            )}
-            <table className="import-units">
-              <thead>
-                <tr>
-                  <th>{t("Unit")}</th>
-                  <th>{t("Pts")}</th>
-                  {ranked && <th>{t("Troop type")}</th>}
-                  <th>{t("Models")}</th>
-                  <th>{t("Base")}</th>
-                  {ranked && <th title={t("Models in the front rank")}>{t("Frontage")}</th>}
-                  {library.length > 0 && <th>{t("Figure")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {roster.units.map((u, i) => (
-                  <Fragment key={i}>
-                    <tr>
-                      <td>
-                        {u.name}
-                        {details(u) && <div className="muted small">{details(u)}</div>}
-                        {importedWizard(u) > 0 && (
-                          <div className="muted small">
-                            {t("Level {level} wizard:", { level: importedWizard(u) })}{" "}
-                            {u.sheet.spells?.length
-                              ? u.sheet.spells.map((sp) => sp.name).join(", ")
-                              : t("no spells yet")}
-                          </div>
-                        )}
-                      </td>
-                      <td>{u.sheet.points ?? "–"}</td>
-                      {ranked && <td className="small">{troopType(u)}</td>}
-                      <td>{u.models.length}</td>
-                      <td>
-                        <select
-                          value={baseKey(u.base)}
-                          onChange={(e) => {
-                            const units = roster.units.slice();
-                            units[i] = { ...u, base: JSON.parse(e.target.value) as BaseShape };
-                            setRoster({ ...roster, units });
-                          }}
-                        >
-                          {!BASES.some((b) => baseKey(b.base) === baseKey(u.base)) && (
-                            <option value={baseKey(u.base)}>{baseLabel(u.base)}</option>
-                          )}
-                          {BASES.map((b) => (
-                            <option key={b.label} value={baseKey(b.base)}>
-                              {b.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      {ranked && (
+      {/* On the page itself: inside the side panel, the table talk dock sat over its buttons. */}
+      {roster &&
+        createPortal(
+          <div className="modal-backdrop">
+            <div className="panel modal">
+              <h2>
+                {roster.name} <span className="muted">{pointsLine(roster)}</span>
+              </h2>
+              {roster.warnings.map((w) => (
+                <p key={w} className="warn">
+                  {w}
+                </p>
+              ))}
+              {open.length > 0 && (
+                <p className="row wrap">
+                  <span className="small">
+                    {tn(
+                      open.length,
+                      "Your figure library has figures that fit {n} unit.",
+                      "Your figure library has figures that fit {n} units.",
+                    )}
+                  </span>
+                  <button
+                    className="small"
+                    onClick={() => {
+                      const next = { ...figs };
+                      for (const i of open) next[i] = suggested[i]![0]!.id;
+                      setFigs(next);
+                    }}
+                  >
+                    {t("Use them")}
+                  </button>
+                </p>
+              )}
+              {Object.values(figs).some(Boolean) && open.length === 0 && (
+                <p className="row wrap small">
+                  <span className="muted">{t("Picked figures go on when the army is deployed.")}</span>
+                  <button className="quiet small" onClick={() => setFigs({})}>
+                    {t("Clear the figures")}
+                  </button>
+                </p>
+              )}
+              <table className="import-units">
+                <thead>
+                  <tr>
+                    <th>{t("Unit")}</th>
+                    <th>{t("Pts")}</th>
+                    {ranked && <th>{t("Troop type")}</th>}
+                    <th>{t("Models")}</th>
+                    <th>{t("Base")}</th>
+                    {ranked && <th title={t("Models in the front rank")}>{t("Frontage")}</th>}
+                    {library.length > 0 && <th>{t("Figure")}</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {roster.units.map((u, i) => (
+                    <Fragment key={i}>
+                      <tr>
                         <td>
-                          {u.models.length === 1 ? (
-                            <span className="muted small">{t("single")}</span>
-                          ) : (
-                            <>
-                              <input
-                                type="number" // i18n-ignore: an input type
-                                className="frontage" // i18n-ignore: a class name
-                                aria-label={t("{unit} frontage", { unit: u.name })}
-                                min={1}
-                                max={u.models.length}
-                                disabled={skirmish(i, u)}
-                                value={frontage(i, u.models.length)}
-                                onChange={(e) =>
-                                  setFiles({
-                                    ...files,
-                                    [i]: Math.max(1, Math.min(u.models.length, Number(e.target.value) || 1)),
-                                  })
-                                }
-                              />
-                              <label
-                                className="small"
-                                title={t("Deploy as a loose spread instead of a block")}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={skirmish(i, u)}
-                                  onChange={(e) => setLoose({ ...loose, [i]: e.target.checked })}
-                                />{" "}
-                                {t("Skirmish")}
-                              </label>
-                            </>
+                          {u.name}
+                          {details(u) && <div className="muted small">{details(u)}</div>}
+                          {importedWizard(u) > 0 && (
+                            <div className="muted small">
+                              {t("Level {level} wizard:", { level: importedWizard(u) })}{" "}
+                              {u.sheet.spells?.length
+                                ? u.sheet.spells.map((sp) => sp.name).join(", ")
+                                : t("no spells yet")}
+                            </div>
                           )}
                         </td>
-                      )}
-                      {library.length > 0 && (
-                        <td className="figure-pick">
-                          {dressed(i) && !figs[i] ? (
-                            <span className="muted small">{t("From your shelf")}</span>
-                          ) : (
-                            <select
-                              aria-label={t("{unit} figure", { unit: u.name })}
-                              value={figs[i] ?? ""}
-                              onChange={(e) => setFigs({ ...figs, [i]: e.target.value })}
-                            >
-                              <option value="">
-                                {suggested[i]?.length
-                                  ? t("Suggested: {name}", { name: suggested[i]![0]!.name })
-                                  : t("Stand-ins")}
+                        <td>{u.sheet.points ?? "–"}</td>
+                        {ranked && <td className="small">{troopType(u)}</td>}
+                        <td>{u.models.length}</td>
+                        <td>
+                          <select
+                            value={baseKey(u.base)}
+                            onChange={(e) => {
+                              const units = roster.units.slice();
+                              units[i] = { ...u, base: JSON.parse(e.target.value) as BaseShape };
+                              setRoster({ ...roster, units });
+                            }}
+                          >
+                            {!BASES.some((b) => baseKey(b.base) === baseKey(u.base)) && (
+                              <option value={baseKey(u.base)}>{baseLabel(u.base)}</option>
+                            )}
+                            {BASES.map((b) => (
+                              <option key={b.label} value={baseKey(b.base)}>
+                                {b.label}
                               </option>
-                              {suggested[i]?.length ? (
-                                <optgroup label={t("Fits this unit")}>
-                                  {suggested[i]!.map((f) => (
+                            ))}
+                          </select>
+                        </td>
+                        {ranked && (
+                          <td>
+                            {u.models.length === 1 ? (
+                              <span className="muted small">{t("single")}</span>
+                            ) : (
+                              <>
+                                <input
+                                  type="number" // i18n-ignore: an input type
+                                  className="frontage" // i18n-ignore: a class name
+                                  aria-label={t("{unit} frontage", { unit: u.name })}
+                                  min={1}
+                                  max={u.models.length}
+                                  disabled={skirmish(i, u)}
+                                  value={frontage(i, u.models.length)}
+                                  onChange={(e) =>
+                                    setFiles({
+                                      ...files,
+                                      [i]: Math.max(
+                                        1,
+                                        Math.min(u.models.length, Number(e.target.value) || 1),
+                                      ),
+                                    })
+                                  }
+                                />
+                                <label
+                                  className="small"
+                                  title={t("Deploy as a loose spread instead of a block")}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={skirmish(i, u)}
+                                    onChange={(e) => setLoose({ ...loose, [i]: e.target.checked })}
+                                  />{" "}
+                                  {t("Skirmish")}
+                                </label>
+                              </>
+                            )}
+                          </td>
+                        )}
+                        {library.length > 0 && (
+                          <td className="figure-pick">
+                            {dressed(i) && !figs[i] ? (
+                              <span className="muted small">{t("From your shelf")}</span>
+                            ) : (
+                              <select
+                                aria-label={t("{unit} figure", { unit: u.name })}
+                                value={figs[i] ?? ""}
+                                onChange={(e) => setFigs({ ...figs, [i]: e.target.value })}
+                              >
+                                <option value="">
+                                  {suggested[i]?.length
+                                    ? t("Suggested: {name}", { name: suggested[i]![0]!.name })
+                                    : t("Stand-ins")}
+                                </option>
+                                {suggested[i]?.length ? (
+                                  <optgroup label={t("Fits this unit")}>
+                                    {suggested[i]!.map((f) => (
+                                      <option key={f.id} value={f.id}>
+                                        {f.name}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ) : null}
+                                <optgroup label={t("Your figures")}>
+                                  {library.map((f) => (
                                     <option key={f.id} value={f.id}>
                                       {f.name}
                                     </option>
                                   ))}
                                 </optgroup>
-                              ) : null}
-                              <optgroup label={t("Your figures")}>
-                                {library.map((f) => (
-                                  <option key={f.id} value={f.id}>
-                                    {f.name}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            </select>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-                    {u.missing && u.missing.length > 0 && (
-                      <tr className="missing-stats">
-                        <td colSpan={(ranked ? 6 : 4) + (library.length > 0 ? 1 : 0)}>
-                          <span className="warn small">{t("Not in the list, fill in:")} </span>
-                          {u.missing.map((k) => (
-                            <label key={k} className="stat-input">
-                              {k}{" "}
-                              <input
-                                aria-label={`${u.name} ${k}`}
-                                className={k === "Troop" ? "" : "frontage"}
-                                // i18n-ignore: a troop type as the game's rules write it
-                                placeholder={k === "Troop" ? "Regular Infantry" : ""}
-                                value={u.models[0]?.profile.chars[k] ?? ""}
-                                onChange={(e) => setStat(i, k, e.target.value)}
-                              />
-                            </label>
-                          ))}
-                        </td>
+                              </select>
+                            )}
+                          </td>
+                        )}
                       </tr>
-                    )}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-            {/* At a real table the models are on it already: their bases aren't the app's to guess (PX). */}
-            {!game.settings.companion && (
-              <p className="muted">
-                {ranked
-                  ? t("Bases are a guess from each unit's troop type; check them against your models.")
-                  : t("Bases are a guess from keywords and wounds; check them against your models.")}
-              </p>
-            )}
-            <ImportAutomation roster={roster} setRoster={setRoster} />
-            {ranked && wizards > 0 && (
-              <div className="row wrap">
-                <label
-                  className="file button"
-                  title={t("A spell list file: names, casting values, ranges and kinds")}
-                >
-                  {t("Add spells from a list")}
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={(e) => e.target.files?.[0] && void loadSpells(e.target.files[0])}
-                  />
-                </label>
-                {spellNote.map((n) => (
-                  <span key={n} className="muted small">
-                    {n}
-                  </span>
-                ))}
+                      {u.missing && u.missing.length > 0 && (
+                        <tr className="missing-stats">
+                          <td colSpan={(ranked ? 6 : 4) + (library.length > 0 ? 1 : 0)}>
+                            <span className="warn small">{t("Not in the list, fill in:")} </span>
+                            {u.missing.map((k) => (
+                              <label key={k} className="stat-input">
+                                {k}{" "}
+                                <input
+                                  aria-label={`${u.name} ${k}`}
+                                  className={k === "Troop" ? "" : "frontage"}
+                                  // i18n-ignore: a troop type as the game's rules write it
+                                  placeholder={k === "Troop" ? "Regular Infantry" : ""}
+                                  value={u.models[0]?.profile.chars[k] ?? ""}
+                                  onChange={(e) => setStat(i, k, e.target.value)}
+                                />
+                              </label>
+                            ))}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+              {/* At a real table the models are on it already: their bases aren't the app's to guess (PX). */}
+              {!game.settings.companion && (
+                <p className="muted">
+                  {ranked
+                    ? t("Bases are a guess from each unit's troop type; check them against your models.")
+                    : t("Bases are a guess from keywords and wounds; check them against your models.")}
+                </p>
+              )}
+              <ImportAutomation roster={roster} setRoster={setRoster} />
+              {ranked && wizards > 0 && (
+                <div className="row wrap">
+                  <label
+                    className="file button"
+                    title={t("A spell list file: names, casting values, ranges and kinds")}
+                  >
+                    {t("Add spells from a list")}
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={(e) => e.target.files?.[0] && void loadSpells(e.target.files[0])}
+                    />
+                  </label>
+                  {spellNote.map((n) => (
+                    <span key={n} className="muted small">
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="row modal-actions">
+                <button className="primary" disabled={!roster.units.length} onClick={deploy}>
+                  {t("Deploy for {name}", { name: playerName(players.find((p) => p.id === owner)) })}
+                </button>
+                <button onClick={cancel}>{t("Cancel")}</button>
               </div>
-            )}
-            <div className="row modal-actions">
-              <button className="primary" disabled={!roster.units.length} onClick={deploy}>
-                {t("Deploy for {name}", { name: playerName(players.find((p) => p.id === owner)) })}
-              </button>
-              <button onClick={cancel}>{t("Cancel")}</button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

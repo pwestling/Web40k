@@ -10,6 +10,8 @@ import { useMail } from "../mail/store";
 import { inviteCode } from "../mail/mailbox";
 import { myName, say, setMyName } from "../talk/talk";
 import { knock } from "../ui/sound";
+import { liveInfo, useWatching } from "./live";
+import { NET_PARAMS } from "../net/config";
 import {
   blockPoster,
   board,
@@ -28,6 +30,7 @@ import {
 } from "./board";
 import {
   HEARTBEAT_MS,
+  isLiveGame,
   LIMITS,
   LIVE_HOURS,
   MAIL_TTL_MS,
@@ -148,7 +151,12 @@ export function OpenTablesBoard({
   const shown = useMemo(() => shownPosts(posts, prefs), [posts, prefs]);
   const games = [...new Map(shown.map((p) => [p.system, p.game])).entries()];
   const langs = [...new Set(shown.map((p) => p.lang))];
+  // Games under way, to watch (#64): above the tables looking for players.
+  const liveNow = shown
+    .filter((p) => isLiveGame(p) && (!game || p.system === game) && (!lang || p.lang === lang))
+    .sort((a, b) => (b.live?.watching ?? 0) - (a.live?.watching ?? 0) || b.at - a.at);
   const list = shown
+    .filter((p) => !isLiveGame(p))
     .filter(
       (p) =>
         (!game || p.system === game) &&
@@ -250,6 +258,18 @@ export function OpenTablesBoard({
             </button>
           </p>
         )}
+        {liveNow.length > 0 && (
+          <section className="live-now" aria-label={t("Live now")}>
+            <h3>
+              <span className="dot live" aria-hidden /> {t("Live now")}
+            </h3>
+            <ul className="table-posts">
+              {liveNow.map((p) => (
+                <LiveGameCard key={`${p.key}:${p.id}`} post={p} onWatch={() => watchGame(p)} />
+              ))}
+            </ul>
+          </section>
+        )}
         <p className="muted small" role="status">
           {!status.loaded
             ? t("Looking at the board…")
@@ -257,7 +277,7 @@ export function OpenTablesBoard({
               ? t("Couldn't reach the board. Check your connection; it tries again on its own.")
               : list.length
                 ? tn(list.length, "{n} open table", "{n} open tables")
-                : shown.length
+                : shown.some((p) => !isLiveGame(p))
                   ? t("No open tables match. Try Any in the filters.")
                   : t("No open tables right now. Put yours up and others will find it.")}
         </p>
@@ -284,6 +304,52 @@ export function OpenTablesBoard({
       </div>
     </div>,
     document.body,
+  );
+}
+
+/**
+ * Watch a game from Live now (#64): into its room as a spectator, in the
+ * broadcast view, running behind the game so secrets and table talk stay safe.
+ */
+function watchGame(p: SeenPost): void {
+  const q = new URLSearchParams({
+    room: p.join,
+    view: "broadcast",
+    delay: String(WATCH_DELAY),
+    from: "tables",
+  });
+  const here = new URLSearchParams(location.search);
+  for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
+  window.location.assign(`${location.pathname}?${q}`);
+}
+
+/** Seconds a watcher from Live now runs behind the game. */
+const WATCH_DELAY = 30;
+
+function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }) {
+  const live = post.live!;
+  const details = [
+    post.game,
+    live.rounds
+      ? t("round {n} of {of}", { n: live.round, of: live.rounds })
+      : t("round {n}", { n: live.round }),
+    live.score,
+    tn(live.watching, "{n} watching", "{n} watching"),
+  ].filter(Boolean);
+  return (
+    <li className="table-post live-game">
+      <div className="row spread">
+        <strong className="table-lead">{t("{name}'s table", { name: displayName(post.name) })}</strong>
+        <span className="small muted when">{freshness(post)}</span>
+      </div>
+      <div className="small muted">{details.join(" · ")}</div>
+      {post.note && <p className="small table-note">“{post.note}”</p>}
+      <div className="row">
+        <button className="primary" onClick={onWatch}>
+          {t("Watch")}
+        </button>
+      </div>
+    </li>
   );
 }
 
@@ -465,6 +531,8 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   const [note, setNote] = useState("");
   const [hours, setHours] = useState(3);
   const [tags, setTags] = useState<TableTag[]>([]);
+  // Public tables welcome watchers unless the host says not (#64).
+  const [watch, setWatch] = useState(true);
   const [busy, setBusy] = useState(false);
   const self = game.players[session?.selfId ?? ""];
   // Ask for the name here: a post from "Player 1" can't be told apart (UX 382).
@@ -492,11 +560,17 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
               ? mine.why === "busy"
                 ? t("Too many tables from this network right now; try again in a few minutes.")
                 : t("The board didn't take your post. Check your connection and try again.")
-              : tn(
-                  mine.post.seats,
-                  "Listed on Open tables · {n} seat open",
-                  "Listed on Open tables · {n} seats open",
-                )}
+              : mine.post.live && mine.post.seats === 0
+                ? tn(
+                    mine.post.live.watching,
+                    "Live now on Open tables · {n} watching",
+                    "Live now on Open tables · {n} watching",
+                  )
+                : tn(
+                    mine.post.seats,
+                    "Listed on Open tables · {n} seat open",
+                    "Listed on Open tables · {n} seats open",
+                  )}
         </span>
         <button className="small" onClick={() => void takeDown()}>
           {mine.state === "failed" ? t("Close") : t("Take it down")}
@@ -541,6 +615,7 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
       seats: Math.max(1, seats),
       note: note.trim(),
       ...(tags.length ? { tags } : {}),
+      ...(kind === "live" && watch ? { watch: true } : {}),
       join,
       expires: now + (kind === "live" ? hours * 3600_000 : MAIL_TTL_MS),
     });
@@ -616,6 +691,12 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
           {t("We'll talk over voice")}
         </label>
       )}
+      {kind === "live" && (
+        <label className="check">
+          <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} />
+          {t("Allow watchers: once your seats fill, it shows under Live now")}
+        </label>
+      )}
       <label>
         {t("Note")}{" "}
         <input
@@ -651,7 +732,11 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
       ) : null}
       <p className="muted small">
         {kind === "live"
-          ? t("It comes down when your seats fill, when you leave the game, or after that time.")
+          ? watch
+            ? t(
+                "Once your seats fill it moves to Live now, and comes down when the game ends, when you leave, or after that time.",
+              )
+            : t("It comes down when your seats fill, when you leave the game, or after that time.")
           : t("It comes down when someone takes the game, or after two days.")}
       </p>
       <div className="row">
@@ -687,18 +772,30 @@ export function MyTableKeeper() {
   const live = mine?.post.kind === "live";
   const seats = live ? openSeats(game, record) : 0;
 
+  const watching = useWatching();
+  const now =
+    live && mine?.post.watch && (seats <= 0 || game.turn.round > 0) ? liveInfo(game, watching) : null;
+  const over = game.turn.round > (Number(systemOf(game).turn.rounds) || Infinity);
+  const nowKey = now ? JSON.stringify(now) : "";
+
   useEffect(() => {
     if (!mine || mine.state === "failed") return;
     if (live) {
       // Not this table any more (another room, or no longer its host).
       if (roomId !== mine.post.join || (role && role !== "host")) return void takeDown();
+      // Watchers welcome: a full table stays up under Live now with its round and score, until the end (#64).
+      if (now && !over) {
+        if (mine.state === "up" && (mine.post.seats !== 0 || JSON.stringify(mine.post.live) !== nowKey))
+          void updateTable({ seats: 0, live: now });
+        return;
+      }
       if (seats <= 0 || game.turn.round > 0) return void takeDown();
       if (mine.state === "up" && seats !== mine.post.seats) void updateTable({ seats });
     } else if (mail) {
       // Someone took the mail game: their first file has come.
       if (mail.theirKey && mail.box && inviteCode(mail.box) === mine.post.join) void takeDown();
     }
-  }, [mine, live, roomId, role, seats, game.turn.round, mail]);
+  }, [mine, live, roomId, role, seats, game.turn.round, mail, nowKey, over]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (live && roomId === useOpenTables.getState().mine?.post.join) void resumeTable();

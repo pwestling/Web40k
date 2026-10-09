@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { nostrBoard, signEvent, verifyEvent, REPORTS_TO_HIDE } from "./nostr";
 import { shownPosts } from "./board";
-import { ALIVE_MS, isUp, readPost, tagsOf, type SeenPost, type TablePost } from "./post";
+import { ALIVE_MS, isLiveGame, isUp, readPost, tagsOf, type SeenPost, type TablePost } from "./post";
 
 const hour = 3600_000;
 const post = (over: Partial<TablePost> = {}): TablePost => ({
@@ -205,5 +205,26 @@ describe("Open tables (#50)", () => {
     // Blocking goes by key: names like "Player 1" repeat (UX 382).
     expect(shownPosts([a, b], { ...s, blockedKeys: ["k2"] })).toEqual([a]);
     expect(shownPosts([a, b], { ...s, hidden: ["k1:a1b2c3d4e5f60718"] })).toEqual([b]);
+  });
+});
+
+describe("Live now (#64)", () => {
+  const live = { round: 2, rounds: 5, score: "12–9", watching: 3 };
+  it("keeps a full table that welcomes watchers, with its round and score", () => {
+    const read = readPost(post({ seats: 0, watch: true, live }));
+    expect(read).toMatchObject({ seats: 0, watch: true, live });
+    expect(isLiveGame(read!)).toBe(true);
+  });
+  it("drops a full table without watchers, or with a bad game line", () => {
+    expect(readPost(post({ seats: 0 }))).toBeNull();
+    expect(readPost(post({ seats: 0, live }))).toBeNull();
+    expect(readPost(post({ seats: 0, watch: true, live: { ...live, round: -1 } }))).toBeNull();
+    expect(
+      readPost(post({ seats: 0, watch: true, live: { ...live, score: 7 as unknown as string } })),
+    ).toBeNull();
+    expect(readPost(post({ kind: "mail", seats: 0, watch: true, live }))).toBeNull();
+  });
+  it("leaves an open table on the open list while it has seats", () => {
+    expect(isLiveGame(readPost(post({ watch: true }))!)).toBe(false);
   });
 });
