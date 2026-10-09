@@ -83,6 +83,44 @@ describe("army shelf", () => {
     expect(next.units["p1-xyz-0"]!.sheet!.abilities.find((a) => a.name === ability)?.auto?.taught).toBe(true);
   });
 
+  it("keeps taught heals that bring models back, and objective conditions (#63)", () => {
+    let s = createInitialState();
+    s = play(s, { type: "game/system", system: "forty-k-11" }, "p1");
+    s = play(s, { type: "player/join", player: { id: "p1", name: "A", color: "#3b82f6", seat: 0 } }, "p1");
+    const roster = sampleRoster(0);
+    for (const i of spawnIntents(s, "p1", roster.units, "p1-abc", roster.name)) s = play(s, i, "p1");
+    const system = getSystem("forty-k-11");
+    const autos = [
+      teach(
+        {
+          when: { kind: "phase", phase: "command", at: "end" },
+          who: { kind: "self" },
+          what: [{ kind: "heal", amount: "D3", revive: true }],
+        },
+        system,
+      )!,
+      teach(
+        {
+          when: { kind: "attacks" },
+          who: { kind: "self" },
+          what: [{ kind: "reroll", roll: "hit", which: "ones" }],
+          onObjective: "controls",
+        },
+        system,
+      )!,
+    ];
+    autos.forEach((auto, i) => {
+      const unit = s.units[`p1-abc-${i}`]!;
+      s = play(
+        s,
+        { type: "unit/automate", id: unit.id, ability: unit.sheet!.abilities[0]!.name, auto },
+        "p1",
+      );
+    });
+    const army = readArmy(JSON.parse(JSON.stringify(armyFromGame(s, "p1", { roster, prefix: "p1-abc" }))))!;
+    autos.forEach((auto, i) => expect(army.roster.units[i]!.sheet.abilities[0]?.auto).toEqual(auto));
+  });
+
   it("refuses a colour that isn't a hex colour", () => {
     let s = createInitialState();
     s = play(s, { type: "player/join", player: { id: "p1", name: "A", color: "#3b82f6", seat: 0 } }, "p1");

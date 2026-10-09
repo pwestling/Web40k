@@ -118,7 +118,17 @@ export type GeoQuery =
    * Of `to`'s models that `from` can see, the share (0 to 1) in cover as the
    * "cover" query has it, for graded cover (The Old World's partial and full).
    */
-  | { kind: "coverShare"; from: Ref; to: Ref };
+  | { kind: "coverShare"; from: Ref; to: Ref }
+  /**
+   * Whether some model of `subject` is within `range` of an objective marker,
+   * base edge to the marker's edge across the table. `range` defaults to the
+   * constant "objectiveRange" (else 3), the marker's width in mm to the
+   * constant "objectiveMarkerMm" (else a point). With `controls`, only a
+   * marker its side controls counts: the side whose models in range have the
+   * highest total of that characteristic (e.g. "OC"; 1 a model without it),
+   * none on a tie.
+   */
+  | { kind: "objective"; subject: Ref; range?: number; controls?: Id };
 
 // ---------------------------------------------------------------------------
 // Effects: "when <event>, if <condition>, do <actions>"
@@ -200,6 +210,12 @@ export type EffectAction =
   | { do: "spendResource"; resource: Id; amount: Expr; player?: "owner" | "opponent" }
   /** Damage that bypasses the normal test chain (e.g. mortal wounds). */
   | { do: "inflictDamage"; target: Ref; amount: Expr; kind?: Id }
+  /**
+   * The unit `target` names regains `amount` wounds, one at a time, each by
+   * its most hurt model. With `revive`, once none is hurt, a destroyed model
+   * comes back where it fell with one wound and the next wounds heal it.
+   */
+  | { do: "heal"; target: Ref; amount: Expr; revive?: boolean }
   /** Roll a die per wound lost and ignore it on `atLeast` or more (feel no pain). */
   | { do: "ignoreDamage"; atLeast: Expr }
   /** Roll and branch on the result: "on a 1, ...; on a 2-5, ...". */

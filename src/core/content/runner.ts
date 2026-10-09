@@ -1,5 +1,6 @@
 import { die as rollDie } from "../dice";
-import type { GameState } from "../types";
+import type { GameState, Model } from "../types";
+import { regainWounds } from "../units";
 import { bool, evaluate, matchesEvent, num, resolve, type EvalContext } from "./expr";
 import {
   diceTerm,
@@ -157,6 +158,8 @@ export interface StepRecord {
 /** A change to the table, applied by the reducer when the step's event lands. */
 export type Outcome =
   | { kind: "wounds"; modelId: string; lost: number }
+  /** The model's wounds lost become `woundsLost`, and it is back on the table if it was destroyed. */
+  | { kind: "restore"; modelId: string; woundsLost: number }
   | { kind: "status"; unitId: string; status: Id; value: boolean }
   | { kind: "resource"; player: string; resource: Id; delta: number }
   /** Every model of the unit is removed (a red box on a damage chart). */
@@ -513,6 +516,15 @@ function ctxFor(
   };
 }
 
+/** An effect's condition, with "ruleOwner" set; one that can't be answered here doesn't hold. */
+function holds(expr: Expr, ctx: EvalContext, owner: string | undefined): boolean {
+  try {
+    return bool(expr, { ...ctx, scope: { ...ctx.scope, ruleOwner: owner ?? null } });
+  } catch {
+    return false;
+  }
+}
+
 function firing(env: RunEnv, live: Live[], event: string, payload: object, scope: Record<string, unknown>) {
   return live.filter((l) => {
     const ctx = ctxFor(env, scope, l.param);
@@ -795,6 +807,8 @@ function planStep(env: RunEnv, run: ProcedureRun, step: Step, scope: Record<stri
       const victimRole = allocUnitRole(env, run);
       for (const l of live) {
         if (l.effect.when.event !== "always" || l.owner !== victimRole) continue;
+        if (l.effect.if !== undefined && !holds(l.effect.if, ctxFor(env, b.scope, l.param), l.owner))
+          continue;
         for (const a of l.effect.do)
           if (a.do === "ignoreDamage") {
             const v = num(a.atLeast, ctxFor(env, b.scope, l.param));
@@ -1322,6 +1336,9 @@ function doActions(env: RunEnv, run: ProcedureRun, actions: EffectAction[], ctx:
       case "inflictDamage":
         out.push(...inflict(env, resolve(a.target, ctx), num(a.amount, ctx), a.kind));
         break;
+      case "heal":
+        out.push(...heal(env, resolve(a.target, ctx), num(a.amount, ctx), !!a.revive));
+        break;
       default:
         out.push({ kind: "reminder", text: a.do });
     }
@@ -1366,6 +1383,32 @@ function inflict(env: RunEnv, target: unknown, amount: number, kind?: Id): Outco
     out.push({
       kind: "note",
       text: `${total} ${kind === "mortal" ? "mortal " : ""}wound${total === 1 ? "" : "s"} to ${unit?.name ?? "the unit"}`,
+    });
+  return out;
+}
+
+/** Wounds the unit a view names regains (`{ do: "heal" }`), as restore outcomes. */
+function heal(env: RunEnv, target: unknown, amount: number, revive: boolean): Outcome[] {
+  const { state, system } = env;
+  const view = (Array.isArray(target) ? target[0] : target) as {
+    kind?: string;
+    id?: string;
+    unitId?: string;
+  };
+  const unit = state.units[(view?.kind === "unit" ? view.id : view?.unitId) ?? ""];
+  if (!unit) return [];
+  const models = unit.modelIds.flatMap((id) => (state.models[id] ? [state.models[id]!] : []));
+  const w = (m: Model) => Number(readCharacteristics(system, "model", m.profile?.chars).W ?? 1) || 1;
+  const r = regainWounds(models, amount, w, revive);
+  const out: Outcome[] = r.changed.map((m) => ({
+    kind: "restore",
+    modelId: m.id,
+    woundsLost: m.woundsLost ?? 0,
+  }));
+  if (r.healed)
+    out.push({
+      kind: "note",
+      text: `${unit.name}: ${r.healed} wound${r.healed === 1 ? "" : "s"} regained${r.revived ? `, ${r.revived} model${r.revived === 1 ? "" : "s"} back` : ""}`,
     });
   return out;
 }
@@ -1477,6 +1520,9 @@ export function applyOutcomes(
         ...models,
         [m.id]: { ...m, woundsLost, destroyed: m.destroyed || woundsLost >= maxWounds(m.id) },
       };
+    } else if (o.kind === "restore") {
+      const m = models[o.modelId];
+      if (m) models = { ...models, [m.id]: { ...m, woundsLost: o.woundsLost, destroyed: false } };
     } else if (o.kind === "status") {
       const u = units[o.unitId];
       if (!u) continue;

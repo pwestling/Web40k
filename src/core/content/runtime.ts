@@ -743,8 +743,50 @@ export function tableGeometry(state: GameState, system?: GameSystem): NonNullabl
       if (!a.length || !b.length) return 0;
       return (Math.max(...a.map((m) => m.z ?? 0)) - Math.min(...b.map((m) => m.z ?? 0))) / scale;
     }
+    if (query.kind === "objective") return nearObjective(state, system, query, resolve(query.subject, ctx));
     throw new Error(`Geometry query "${(query as { kind: string }).kind}" is not supported`);
   };
+}
+
+/** The "objective" query: some model of the subject in range of a marker (its side controls). */
+function nearObjective(
+  state: GameState,
+  system: GameSystem | undefined,
+  query: Extract<GeoQuery, { kind: "objective" }>,
+  subject: unknown,
+): boolean {
+  const mine = modelsOf(subject, state);
+  if (!mine.length) return false;
+  const c = system?.constants ?? {};
+  const range = (query.range ?? c.objectiveRange ?? 3) * inchesPerUnit(system);
+  const marker = (o: { position: Model["position"] }) =>
+    ({
+      position: o.position,
+      facing: 0,
+      base: { shape: "round", diameterMm: c.objectiveMarkerMm ?? 0 },
+    }) as Model;
+  const near = (m: Model, o: Model) => baseToBaseDistance(m, o) <= range + 1e-6;
+  const owner = mine[0]!.owner;
+  return state.objectives.some((o) => {
+    const at = marker(o);
+    if (!mine.some((m) => near(m, at))) return false;
+    if (!query.controls || !system) return true;
+    // Each side's total of the characteristic over its models in range (statuses applied).
+    let ours = 0;
+    const theirs: Record<string, number> = {};
+    for (const unit of Object.values(state.units))
+      for (const m of unitView(state, system, unit).models) {
+        const model = state.models[m.id];
+        if (!model || !near(model, at)) continue;
+        const v = typeof m[query.controls] === "number" ? (m[query.controls] as number) : 1;
+        if (!opposed(state, owner, m.owner)) ours += v;
+        else {
+          const side = String(state.players[m.owner]?.seat ?? m.owner);
+          theirs[side] = (theirs[side] ?? 0) + v;
+        }
+      }
+    return ours > 0 && Object.values(theirs).every((v) => v < ours);
+  });
 }
 
 /**

@@ -60,7 +60,9 @@ function partText(p: AutoPart): string {
     case "gain":
       return t("gain {amount} {resource}", { amount: p.amount, resource: p.resource });
     case "heal":
-      return t("its most hurt model regains up to {amount} wounds", { amount: p.amount });
+      return p.revive
+        ? t("it regains {amount} wounds, bringing back destroyed models", { amount: p.amount })
+        : t("its most hurt model regains up to {amount} wounds", { amount: p.amount });
   }
 }
 
@@ -82,6 +84,12 @@ export function describeAuto(auto: AbilityAuto, system: GameSystem): string {
           }),
     );
   if (auto.oncePerBattle) scope.push(t("Once per battle, for one phase"));
+  if (auto.onObjective)
+    scope.push(
+      auto.onObjective === "controls"
+        ? t("While on an objective it controls")
+        : t("While within range of an objective"),
+    );
   if (auto.trigger) {
     const phase = schedule(system).find((s) => s.id === auto.trigger!.phase)?.name ?? auto.trigger.phase;
     const turn = auto.trigger.anyTurn ? t("each") : t("your");
@@ -106,21 +114,24 @@ export function triggeredLines(state: GameState): string[] {
         resource: tr.gained.resource,
       });
     const wounds = tr.healed?.wounds ?? 0;
-    return tr.healed?.roll !== undefined
-      ? tn(
-          wounds,
-          "{unit}'s {ability}: rolled {roll}, {n} wound regained",
-          "{unit}'s {ability}: rolled {roll}, {n} wounds regained",
-          {
+    const back = tr.healed?.revived ? `, ${tn(tr.healed.revived, "{n} model back", "{n} models back")}` : "";
+    return (
+      (tr.healed?.roll !== undefined
+        ? tn(
+            wounds,
+            "{unit}'s {ability}: rolled {roll}, {n} wound regained",
+            "{unit}'s {ability}: rolled {roll}, {n} wounds regained",
+            {
+              unit,
+              ability: tr.ability,
+              roll: tr.healed.roll,
+            },
+          )
+        : tn(wounds, "{unit}'s {ability}: {n} wound regained", "{unit}'s {ability}: {n} wounds regained", {
             unit,
             ability: tr.ability,
-            roll: tr.healed.roll,
-          },
-        )
-      : tn(wounds, "{unit}'s {ability}: {n} wound regained", "{unit}'s {ability}: {n} wounds regained", {
-          unit,
-          ability: tr.ability,
-        });
+          })) + back
+    );
   });
 }
 

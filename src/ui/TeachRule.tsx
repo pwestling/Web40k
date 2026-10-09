@@ -208,6 +208,7 @@ export function TeachRule({
                     what: now ? what : [],
                     who: who.kind === "aura" ? { kind: "self" } : who,
                     oncePerBattle: false,
+                    onObjective: undefined,
                   });
               }}
             >
@@ -268,6 +269,20 @@ export function TeachRule({
               <option value="charged">{t("after it charged")}</option>
               <option value="stationary">{t("if it stayed still")}</option>
             </select>
+            {!stratagem && (
+              <select
+                value={teaching.onObjective ?? ""}
+                aria-label={t("Objective")}
+                onChange={(e) => {
+                  const v = e.target.value as "within" | "controls" | "";
+                  set({ onObjective: v || undefined });
+                }}
+              >
+                <option value="">{t("anywhere")}</option>
+                <option value="within">{t("while within range of an objective")}</option>
+                <option value="controls">{t("while on an objective it controls")}</option>
+              </select>
+            )}
             <label className="small">
               {t("against")}{" "}
               <input
@@ -499,13 +514,23 @@ function WhatRow({ what, onChange }: { what: TeachWhat; onChange: (w: TeachWhat 
       break;
     case "heal":
       body = (
-        <select value={what.amount} onChange={(e) => onChange({ ...what, amount: e.target.value })}>
-          {["1", "2", "3", "D3", "D6"].map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
+        <>
+          <select value={what.amount} onChange={(e) => onChange({ ...what, amount: e.target.value })}>
+            {["1", "2", "3", "D3", "D6"].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          <label className="small">
+            <input
+              type="checkbox"
+              checked={!!what.revive}
+              onChange={(e) => onChange({ ...what, revive: e.target.checked })}
+            />{" "}
+            {t("across the unit, bringing back destroyed models")}
+          </label>
+        </>
       );
       break;
   }

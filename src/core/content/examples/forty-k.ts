@@ -1185,5 +1185,6 @@ export const fortyK: GameSystem = {
       do: [{ do: "modifyRoll", by: 1 }],
     },
   ],
-  constants: { engagementRange: 2 },
+  // Objective range and marker size, for "objective" queries (wh40k/rules.ts keeps the same numbers for control).
+  constants: { engagementRange: 2, objectiveRange: 3, objectiveMarkerMm: 40 },
 };

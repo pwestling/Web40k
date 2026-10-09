@@ -99,15 +99,16 @@ export type AutoPart =
   /** An invulnerable save of x+ (#53): the better of it and the model's own. */
   | { kind: "invuln"; x: number }
   | { kind: "gain"; resource: string; amount: number }
-  | { kind: "heal"; amount: string };
+  /** Wounds regained: by its most hurt model, or with `revive` across the unit, bringing back destroyed models. */
+  | { kind: "heal"; amount: string; revive?: boolean };
 
 /** An automated ability that ran at the start or end of a phase. */
 export interface Triggered {
   unitId: string;
   ability: string;
   gained?: { resource: string; amount: number };
-  /** Wounds regained, and the roll when it was a dice amount. */
-  healed?: { wounds: number; roll?: number };
+  /** Wounds regained, the roll when it was a dice amount, and destroyed models brought back. */
+  healed?: { wounds: number; roll?: number; revived?: number };
 }
 
 export interface AbilityAuto {
@@ -123,6 +124,12 @@ export interface AbilityAuto {
   aura?: { range: number; side: "friendly" | "enemy"; keyword?: string };
   /** Used by the player from the unit card; then runs until the end of the phase. */
   oncePerBattle?: boolean;
+  /**
+   * Only while the unit it applies to is within range of an objective marker
+   * ("within"), or of one its side controls ("controls"). Already folded into
+   * `effects`; kept so the rule reads back and describes itself.
+   */
+  onObjective?: "within" | "controls";
   /** At the start of a phase of its owner's turn (or each turn with `anyTurn`). */
   trigger?: {
     phase: string;
@@ -131,6 +138,8 @@ export interface AbilityAuto {
     gain?: { resource: string; amount: number };
     /** Wounds one model regains: a number or dice text such as "D3". */
     heal?: string;
+    /** The heal is spread over the unit and brings back destroyed models (see regainWounds). */
+    revive?: boolean;
   };
 }
 

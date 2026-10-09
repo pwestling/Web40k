@@ -3,6 +3,7 @@ import type { GameState, Model, PlayerId, Triggered, Unit } from "../types";
 import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
 import { systemConstants } from "./gameSize";
 import { getSystem } from "./systems";
+import { regainWounds } from "../units";
 
 /**
  * The turn structure, from GameSystem.turn. A round is flattened into a
@@ -451,12 +452,13 @@ function runTriggers(
         out.push({ unitId: unit.id, ability: a.name, gained: tr.gain });
       }
       if (tr.heal) {
-        // The most hurt model regains them.
+        // The most hurt model regains them; with `revive`, the unit does, and its destroyed models come back.
         const hurt = alive
           .map((m) => next.models[m.id]!)
           .filter((m) => (m.woundsLost ?? 0) > 0)
           .sort((x, y) => (y.woundsLost ?? 0) - (x.woundsLost ?? 0))[0];
-        if (!hurt) continue;
+        const dead = tr.revive && unit.modelIds.some((id) => next.models[id]?.destroyed);
+        if (!hurt && !dead) continue;
         let roll: number | undefined;
         let amount = Number(tr.heal);
         if (!Number.isFinite(amount)) {
@@ -469,6 +471,22 @@ function runTriggers(
           roll = Array.from({ length: d.count }, () => die(rng, d.sides)).reduce((x, y) => x + y, d.bonus);
           amount = roll;
         }
+        if (tr.revive) {
+          const models = unit.modelIds.flatMap((id) => (next.models[id] ? [next.models[id]!] : []));
+          const w = (m: Model) => Math.max(1, Number.parseInt(m.profile?.chars.W ?? "1", 10) || 1);
+          const r = regainWounds(models, amount, w, true);
+          next = {
+            ...next,
+            models: { ...next.models, ...Object.fromEntries(r.changed.map((m) => [m.id, m])) },
+          };
+          out.push({
+            unitId: unit.id,
+            ability: a.name,
+            healed: { wounds: r.healed, revived: r.revived, ...(roll !== undefined ? { roll } : {}) },
+          });
+          continue;
+        }
+        if (!hurt) continue;
         const wounds = Math.min(amount, hurt.woundsLost ?? 0);
         next = {
           ...next,

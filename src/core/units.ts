@@ -30,3 +30,34 @@ export function centreAbove(models: Model[]): { x: number; y: number; z: number 
     z: Math.max(0, ...models.map((m) => (m.z ?? 0) + modelHeight(m))),
   };
 }
+
+/**
+ * Wounds a unit regains, one at a time: each goes to its most hurt standing
+ * model. With `revive`, once none is hurt, a destroyed model comes back where
+ * it fell with one wound, and the wounds after that heal it. Returns the
+ * models that changed, the wounds regained and the models brought back.
+ */
+export function regainWounds(
+  models: Model[],
+  amount: number,
+  maxWounds: (m: Model) => number,
+  revive = false,
+): { changed: Model[]; healed: number; revived: number } {
+  const now = new Map(models.map((m) => [m.id, m]));
+  let healed = 0;
+  let revived = 0;
+  for (let n = Math.max(0, Math.floor(amount)); n > 0; n--) {
+    const hurt = [...now.values()]
+      .filter((m) => !m.destroyed && (m.woundsLost ?? 0) > 0)
+      .sort((a, b) => (b.woundsLost ?? 0) - (a.woundsLost ?? 0))[0];
+    if (hurt) now.set(hurt.id, { ...hurt, woundsLost: (hurt.woundsLost ?? 0) - 1 });
+    else {
+      const dead = revive ? [...now.values()].find((m) => m.destroyed) : undefined;
+      if (!dead) break;
+      now.set(dead.id, { ...dead, destroyed: false, woundsLost: maxWounds(dead) - 1 });
+      revived++;
+    }
+    healed++;
+  }
+  return { changed: models.flatMap((m) => (now.get(m.id) !== m ? [now.get(m.id)!] : [])), healed, revived };
+}

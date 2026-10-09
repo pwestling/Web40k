@@ -1,5 +1,5 @@
 import type { AbilityAuto, AutoPart } from "../../core";
-import type { GameSystem } from "../../core/content/schema";
+import type { Effect, Expr, GameSystem } from "../../core/content/schema";
 import { compile } from "./recognize";
 
 /**
@@ -39,7 +39,8 @@ export type TeachWhat =
   /** Its weapons' Attacks, Strength or Damage up by `by`; AP improved by `by`. */
   | { kind: "stat"; stat: "A" | "S" | "AP" | "D"; by: number }
   | { kind: "gain"; amount: number }
-  | { kind: "heal"; amount: string };
+  /** Wounds back at a phase's start or end; `revive` spreads them over the unit and brings back destroyed models. */
+  | { kind: "heal"; amount: string; revive?: boolean };
 
 export interface Teaching {
   when: TeachWhen;
@@ -47,6 +48,18 @@ export interface Teaching {
   what: TeachWhat[];
   /** Used once per battle from the unit card, then runs until the end of that phase. */
   oncePerBattle?: boolean;
+  /** Only while the unit is within range of an objective marker, or of one its side controls. */
+  onObjective?: "within" | "controls";
+}
+
+/** The condition `onObjective` adds: the unit whose rule it is (attacking or attacked) is in range. */
+function objectiveIf(on: "within" | "controls"): Expr {
+  const near = (role: string): Expr => ({
+    query: { kind: "objective", subject: role, ...(on === "controls" ? { controls: "OC" } : {}) },
+  });
+  return {
+    any: ["attacker", "target"].map((role) => ({ all: [{ is: "ruleOwner", value: role }, near(role)] })),
+  };
 }
 
 /** Effects that only make sense at a phase's start or end. */
@@ -96,15 +109,22 @@ export function teach(teaching: Teaching, system: GameSystem): AbilityAuto | nul
   let trigger: AbilityAuto["trigger"];
   if (when.kind === "phase") {
     // At a phase's start or end: CP or wounds back, nothing that waits for an attack.
-    if (what.some((w) => !AT_PHASE.has(w.kind)) || teaching.oncePerBattle || who.kind === "aura") return null;
+    if (
+      what.some((w) => !AT_PHASE.has(w.kind)) ||
+      teaching.oncePerBattle ||
+      teaching.onObjective ||
+      who.kind === "aura"
+    )
+      return null;
     trigger = { phase: when.phase, at: when.at, ...(when.anyTurn ? { anyTurn: true } : {}) };
     for (const w of what) {
       if (w.kind === "gain" && w.amount > 0) {
         parts.push({ kind: "gain", resource: "CP", amount: w.amount });
         trigger.gain = { resource: "CP", amount: w.amount };
       } else if (w.kind === "heal" && /^(d3|d6|\d+)$/i.test(w.amount)) {
-        parts.push({ kind: "heal", amount: w.amount.toUpperCase() });
+        parts.push({ kind: "heal", amount: w.amount.toUpperCase(), ...(w.revive ? { revive: true } : {}) });
         trigger.heal = w.amount.toUpperCase();
+        if (w.revive) trigger.revive = true;
       } else return null;
     }
   } else {
@@ -115,9 +135,14 @@ export function teach(teaching: Teaching, system: GameSystem): AbilityAuto | nul
       parts.push(p);
     }
   }
-  const effects = compile(parts, system);
-  if (!effects) return null;
+  const compiled = compile(parts, system);
+  if (!compiled) return null;
+  const on = teaching.onObjective;
+  const effects = on
+    ? compiled.map((e): Effect => ({ ...e, if: e.if ? { all: [e.if, objectiveIf(on)] } : objectiveIf(on) }))
+    : compiled;
   const auto: AbilityAuto = { parts, effects, taught: true };
+  if (on) auto.onObjective = on;
   if (trigger) auto.trigger = trigger;
   if (teaching.oncePerBattle) auto.oncePerBattle = true;
   if (who.kind === "leading") auto.whileLeading = true;
@@ -152,7 +177,7 @@ export function teachingOf(auto: AbilityAuto): Teaching {
         p.kind === "gain"
           ? [{ kind: "gain", amount: p.amount }]
           : p.kind === "heal"
-            ? [{ kind: "heal", amount: p.amount }]
+            ? [{ kind: "heal", amount: p.amount, ...(p.revive ? { revive: true } : {}) }]
             : [],
       ),
     };
@@ -175,5 +200,11 @@ export function teachingOf(auto: AbilityAuto): Teaching {
     if (p.roll) return [{ kind: "modify", roll: p.roll, by: p.by ?? 0 }];
     return [];
   });
-  return { when, who, what, ...(auto.oncePerBattle ? { oncePerBattle: true } : {}) };
+  return {
+    when,
+    who,
+    what,
+    ...(auto.oncePerBattle ? { oncePerBattle: true } : {}),
+    ...(auto.onObjective ? { onObjective: auto.onObjective } : {}),
+  };
 }

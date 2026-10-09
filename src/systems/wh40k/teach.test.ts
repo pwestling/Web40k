@@ -9,6 +9,7 @@ import {
 } from "../../core";
 import { getSystem } from "../../core/content/systems";
 import { teach, teachingOf, type Teaching } from "./teach";
+import { describeAuto, triggeredLines } from "../../ui/autoText";
 
 const system = getSystem("forty-k-11");
 
@@ -206,5 +207,80 @@ describe("teaching a rule (#53)", () => {
     expect(p.spec.damage).toBe("2");
     expect(p.spec.save).toBe(4);
     expect(p.spec.fnp).toBe(5);
+  });
+
+  it("brings destroyed models back at the end of a phase (heal across the unit)", () => {
+    let s = setup();
+    const mend: Teaching = {
+      when: { kind: "phase", phase: "command", at: "end" },
+      who: self,
+      what: [{ kind: "heal", amount: "3", revive: true }],
+    };
+    const auto = teach(mend, system)!;
+    expect(auto.trigger).toMatchObject({ phase: "command", at: "end", heal: "3", revive: true });
+    expect(describeAuto(auto, system)).toContain("bringing back destroyed models");
+    expect(teachingOf(auto)).toEqual(mend);
+    s = taught(s, "shooters", mend);
+    // One model slain (on the casualty pile), the other a wound down.
+    s = {
+      ...s,
+      models: {
+        ...s.models,
+        shooters1: { ...s.models.shooters1!, woundsLost: 3, destroyed: true },
+        shooters2: { ...s.models.shooters2!, woundsLost: 1 },
+      },
+    };
+    s = applyEvent(applyEvent(s, { type: "turn/next", seed: 1 }), { type: "turn/next", seed: 1 });
+    // 3 wounds: one heals shooters2, one brings shooters1 back with 1 wound, one more heals it.
+    expect(s.models.shooters2?.woundsLost).toBe(0);
+    expect(s.models.shooters1).toMatchObject({ destroyed: false, woundsLost: 1 });
+    expect(s.triggered).toEqual([
+      { unitId: "shooters", ability: "Old Rule", healed: { wounds: 3, revived: 1 } },
+    ]);
+    expect(triggeredLines(s)[0]).toContain("1 model back");
+  });
+
+  it("works only on an objective, or one its side controls", () => {
+    const within: Teaching = {
+      when: { kind: "attacks", weapon: "ranged" },
+      who: self,
+      what: [{ kind: "reroll", roll: "hit", which: "failed" }],
+      onObjective: "within",
+    };
+    const auto = teach(within, system)!;
+    expect(auto.onObjective).toBe("within");
+    expect(describeAuto(auto, system)).toContain("While within range of an objective");
+    expect(teachingOf(auto)).toEqual(within);
+    // Not with a phase trigger.
+    expect(
+      teach(
+        {
+          when: { kind: "phase", phase: "command", at: "end" },
+          who: self,
+          what: [{ kind: "heal", amount: "1" }],
+          onObjective: "within",
+        },
+        system,
+      ),
+    ).toBeNull();
+
+    let s = taught(setup(), "shooters", within);
+    s = taught(s, "targets", {
+      when: attacks,
+      who: self,
+      what: [{ kind: "fnp", x: 5 }],
+      onObjective: "controls",
+    });
+    const rerolls = (st: GameState) => previewAttack(st, "shooters", "gun", "targets")!.spec.rerollHits;
+    const fnp = (st: GameState) => previewAttack(st, "shooters", "gun", "targets")!.spec.fnp;
+    expect(rerolls(s)).not.toBe("failed");
+    // A marker beside the shooters (x 0 and 1.5): in range.
+    s = { ...s, objectives: [{ id: "o", position: { x: 0, y: 3 } }] };
+    expect(rerolls(s)).toBe("failed");
+    expect(fnp(s)).toBeFalsy();
+    // A marker by the targets (x 12 and 13.5), which they hold alone.
+    s = { ...s, objectives: [{ id: "o", position: { x: 12, y: 3 } }] };
+    expect(rerolls(s)).not.toBe("failed");
+    expect(fnp(s)).toBe(5);
   });
 });

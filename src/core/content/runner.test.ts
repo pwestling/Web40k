@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, type Model, type Unit } from "../index";
 import { fortyK } from "./examples/forty-k";
 import { advance, applyOutcomes, previewRun, respond, startRun, type RunEnv, type TestPlan } from "./runner";
-import { bindRules, parseDiceSum, readCharacteristics, unitView, formatDice } from "./runtime";
+import { bindRules, parseDiceSum, readCharacteristics, tableGeometry, unitView, formatDice } from "./runtime";
+import { regainWounds } from "../units";
 import type { GameSystem } from "./schema";
 import { evaluate } from "./expr";
 
@@ -433,6 +434,100 @@ describe("procedure runner: other dice mechanics", () => {
     let passed = startRun(env(dice()), "battleShockTest", { unit: { unit: "u" } });
     passed = advance(env(dice(4, 5)), passed);
     expect(passed.outcomes).toEqual([]);
+  });
+});
+
+describe("regaining wounds (#63)", () => {
+  // An invented ability: a do step that heals D3 across the unit and brings models back.
+  const mending: GameSystem = {
+    ...fortyK,
+    procedures: [
+      ...fortyK.procedures,
+      {
+        id: "mend",
+        name: "Mend",
+        params: ["unit"],
+        steps: [
+          {
+            kind: "do",
+            id: "mend",
+            do: [{ do: "heal", target: "unit", amount: { dice: "D3" }, revive: true }],
+          },
+        ],
+      },
+    ],
+  };
+  const hurt = () => {
+    let s = createInitialState();
+    s = applyEvent(s, {
+      type: "unit/add",
+      unit: { id: "u", owner: "p1", name: "U", modelIds: [], formation: { kind: "skirmish" } },
+      models: [0, 1, 2].map((i) => fig(`m${i}`, "p1", i, 0, { W: "2" })),
+    });
+    // m0 lost a wound; m1 was slain and lies on the casualty pile; m2 is whole.
+    return {
+      ...s,
+      models: {
+        ...s.models,
+        m0: { ...s.models.m0!, woundsLost: 1 },
+        m1: { ...s.models.m1!, woundsLost: 2, destroyed: true },
+      },
+    };
+  };
+
+  it("heals the most hurt model first, then brings destroyed models back (do: heal)", () => {
+    const s = hurt();
+    const env = (rng: () => number): RunEnv => ({ system: mending, state: s, rng });
+    // A 3: one wound to m0, then m1 comes back with one wound and regains the other.
+    let run = startRun(env(dice([3, 3])), "mend", { unit: { unit: "u" } });
+    if (!run.done) run = advance(env(dice()), run);
+    expect(run.done).toBe(true);
+    expect(run.outcomes.filter((o) => o.kind === "restore")).toEqual([
+      { kind: "restore", modelId: "m0", woundsLost: 0 },
+      { kind: "restore", modelId: "m1", woundsLost: 0 },
+    ]);
+    const after = applyOutcomes(s, run.outcomes, () => 2);
+    expect(after.models.m1).toMatchObject({ destroyed: false, woundsLost: 0 });
+    expect(after.models.m0?.woundsLost).toBe(0);
+    expect(unitView(after, mending, after.units.u!).models).toHaveLength(3);
+  });
+
+  it("only heals standing models without revive, and stops when none is hurt", () => {
+    const s = hurt();
+    const heal = (revive: boolean) => regainWounds(Object.values(s.models), 3, () => 2, revive);
+    expect(heal(false)).toMatchObject({ healed: 1, revived: 0 });
+    expect(heal(true)).toMatchObject({ healed: 3, revived: 1 });
+  });
+});
+
+describe("the objective query (#63)", () => {
+  const near = (s: ReturnType<typeof createInitialState>, unit: string, controls?: string) =>
+    evaluate(
+      { query: { kind: "objective", subject: "u", ...(controls ? { controls } : {}) } },
+      { scope: { u: unitView(s, fortyK, s.units[unit]!) }, geometry: tableGeometry(s, fortyK) },
+    );
+
+  it("is true within range of a marker, and with controls only when its side holds it", () => {
+    let s = table({}, { OC: "1" }, { OC: "1" });
+    for (const [id, seat] of [
+      ["p1", 0],
+      ["p2", 1],
+    ] as const)
+      s = applyEvent(s, { type: "player/join", player: { id, name: id, color: "#fff", seat } });
+    // a0/a1 at y 0, t0/t1 at y 20. A 40mm marker 3.5" away: in range (3" from its edge).
+    s = { ...s, objectives: [{ id: "o", position: { x: 0, y: 3.5 } }] };
+    expect(near(s, "a")).toBe(true);
+    expect(near(s, "t")).toBe(false);
+    expect(near(s, "a", "OC")).toBe(true);
+    // One enemy model joins it: 2 OC against 1, still held. Both enemies: a tie, held by no one.
+    s = applyEvent(s, { type: "models/move", moves: [{ id: "t0", to: { x: 0, y: 6 } }] });
+    expect(near(s, "a", "OC")).toBe(true);
+    expect(near(s, "t", "OC")).toBe(false);
+    s = applyEvent(s, { type: "models/move", moves: [{ id: "t1", to: { x: 1, y: 6 } }] });
+    expect(near(s, "a", "OC")).toBe(false);
+    expect(near(s, "a")).toBe(true);
+    s = { ...s, objectives: [{ id: "o", position: { x: 0, y: -10 } }] };
+    expect(near(s, "a")).toBe(false);
   });
 });
 
