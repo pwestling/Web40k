@@ -17,4 +17,8 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 
 ## Known gaps that need engine work
 
-- Plain activations (`startActivation`) don't refuse a unit already activated this round; `script/start` now checks a code action's `available` (Rift Lanterns).
+The eleven listed after #55 were closed in #57. Still open (each matrix's own notes say more):
+
+- FSD Selective Fire: a sight query that leaves enemy bases out (a reminder for now).
+- FSD reactions that answer a reaction (chains): one reaction per action is offered.
+- 40k: a charge must end engaged with every declared target; waits on the declared targets from the charge picker (UX 396).

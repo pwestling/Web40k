@@ -101,4 +101,4 @@ Since fixed in the core (#57): a move whose path crosses a `blocksMovement` cate
 warnings (core/content/moves.ts); the module's end-of-move wreck check went, and the version went to 1.3.2
 (`RULES.md`, `rulebook.json` and the gallery row's version and fingerprint updated).
 
-- **Plain activations, `startActivation` (core turn.ts).** It doesn't refuse a unit that already has `status.activated` this round. **`script/start` (core actions.ts)** doesn't recheck the action's `available`. The module now refuses both through `available`, which the UI and bots use, but a raw intent can still bypass it in any package game.
+Also fixed in the core (#57): `startActivation` no longer starts a second go for a unit already activated this round (A > "moving a unit that already went this round doesn't start a second activation"), and a raw `script/start` is refused when the action's `available` says no, unless forced (A > "refuses a raw script/start for an action the module says isn't available, unless forced").

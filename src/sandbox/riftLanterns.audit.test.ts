@@ -486,6 +486,35 @@ describe("Rift Lanterns: raw intents (#57)", () => {
   });
 });
 
+describe("Rift Lanterns: once a round (#57)", () => {
+  it("moving a unit that already went this round doesn't start a second activation", async () => {
+    const { loaded, play, state } = await sandbox();
+    for (const i of spawnIntents(state(), "p1", loaded.armies[0]!.units.slice(1, 3), "p1", "a"))
+      play(i, "p1");
+    for (const i of spawnIntents(state(), "p2", loaded.armies[1]!.units.slice(1, 3), "p2", "b"))
+      play(i, "p2");
+    play({ type: "turn/next" }, "p1");
+    const nudge = (unitId: string, by: string) => {
+      const id = state().units[unitId]!.modelIds[0]!;
+      const at = state().models[id]!.position;
+      play({ type: "models/move", moves: [{ id, to: { x: at.x + 0.5, y: at.y } }] }, by);
+    };
+    const side = (seat: number) =>
+      Object.values(state().units).filter((u) => state().players[u.owner]?.seat === seat);
+    const first = side(state().turn.activeSeat)[0]!;
+    nudge(first.id, first.owner);
+    expect(state().units[first.id]!.status?.acting).toBe(true);
+    play({ type: "turn/endActivation" }, first.owner);
+    const other = side(state().turn.activeSeat)[0]!;
+    nudge(other.id, other.owner);
+    play({ type: "turn/endActivation" }, other.owner);
+    // The first side's go again: its unit that already went moves, but doesn't act again.
+    nudge(first.id, first.owner);
+    expect(state().units[first.id]!.status?.acting).toBeFalsy();
+    expect(state().units[first.id]!.status?.activated).toBe(true);
+  });
+});
+
 describe("Rift Lanterns: moving (Table warnings)", () => {
   it("flags a move past the unit's Move, and a move into or through a wreck", async () => {
     const { loaded, play, state } = await sandbox();

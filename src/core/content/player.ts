@@ -328,10 +328,11 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
         });
     for (const ability of manualAbilities(system, unit)) {
       if (!damagedFits(state, unit, ability)) continue;
-      const fits = timingsOf(system, ability).some((t) =>
-        (t.on
-          ? !t.attack && (!t.phase || t.phase === phase) && atMoment(unit, t.on)
-          : t.phase === phase && sideFits(t.side)) && holdsFor(state, unit, t.if),
+      const fits = timingsOf(system, ability).some(
+        (t) =>
+          (t.on
+            ? !t.attack && (!t.phase || t.phase === phase) && atMoment(unit, t.on)
+            : t.phase === phase && sideFits(t.side)) && holdsFor(state, unit, t.if),
       );
       if (fits)
         out.push({

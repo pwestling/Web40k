@@ -540,6 +540,8 @@ export function plainActivations(state: GameState): boolean {
 export function startActivation(state: GameState, unitId: string): GameState {
   const unit = state.units[unitId];
   if (!unit || unit.status?.acting || !plainActivations(state)) return state;
+  // Once a round: moving a unit that already went is just a move (the app warns), not a new go.
+  if (unit.status?.activated) return state;
   if (state.players[unit.owner]?.seat !== state.turn.activeSeat) return state;
   // Someone else already acting: their activation goes on (the app warns).
   if (Object.values(state.units).some((u) => u.status?.acting)) return state;
