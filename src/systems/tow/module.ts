@@ -1,6 +1,8 @@
 import { TOW_MISSIONS } from "./missions";
 import type { GameModule } from "../../sdk";
-import { heavyLossesProcedure, inCombatFn, marchedNoShot, towActions } from "./combat";
+import { heavyLossesProcedure } from "./breaks";
+import { inCombatFn, marchedNoShot } from "./combatKit";
+import { towActions } from "./combat";
 import { towReminders } from "./reminders";
 import { magicActions } from "./magic";
 import { characterActions } from "./characters";

@@ -2,7 +2,8 @@ import { baseSizeInches } from "../../core";
 import { inFootprint, segmentCrossesFootprint2D } from "../../core/terrain";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView, Warning } from "../../sdk";
-import { alive, casualties } from "./combat";
+import { alive } from "./combatKit";
+import { casualties } from "./wounds";
 import { hasRule } from "./specialRules";
 
 /** Iron Shod Wheels: difficult terrain is dangerous to it, and a 1 costs D3 Wounds. */

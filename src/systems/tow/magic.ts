@@ -2,7 +2,9 @@ import { unitGap } from "../../core/manoeuvre";
 import { opposed } from "../../core/teams";
 import type { GameState, Spell, SpellKind, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
-import { alive, casualties, charNum, heavyLosses, unitOf, woundAndSave } from "./combat";
+import { alive, charNum, unitOf } from "./combatKit";
+import { casualties, woundAndSave } from "./wounds";
+import { heavyLosses } from "./breaks";
 import { ruleNumber, wizardLevel } from "./specialRules";
 
 /**

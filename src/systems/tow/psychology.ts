@@ -1,5 +1,5 @@
 import type { CodeProcedure, Command, Ctx, TurnHooks } from "../../sdk";
-import { alive, leadershipTest } from "./combat";
+import { alive, leadershipTest } from "./combatKit";
 import { expireSpells } from "./magic";
 import { hasRule, immune, isGeneral, stupid } from "./specialRules";
 import type { GameState, Unit } from "../../core/types";

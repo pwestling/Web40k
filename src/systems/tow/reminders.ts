@@ -1,4 +1,4 @@
-import { alive, inCombat } from "./combat";
+import { alive, inCombat } from "./combatKit";
 import { frenzied, hasRule, randomMovement } from "./specialRules";
 import type { Unit } from "../../core/types";
 import { opposed } from "../../core/teams";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, type BaseShape, type GameState } from "../../core";
 import { formBlock, inArc } from "../../core/regiment";
-import { combatArc } from "./combat";
+import { combatArc } from "./combatKit";
 import { block, setup, toPhase, unitNamed, type Table } from "./testing";
 
 /**

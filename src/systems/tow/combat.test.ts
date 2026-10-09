@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, type GameEvent, type GameState } from "../../core";
 import { buildLog } from "../../ui/gameLog";
 import { gameView } from "../../core/script";
-import { combatHit, supportingAttacks, toWound, towActions } from "./combat";
+import { combatHit, toWound } from "./combatKit";
+import { supportingAttacks } from "./wounds";
+import { towActions } from "./combat";
 import { block, setup, standing, toPhase, unitNamed } from "./testing";
 
 describe("The Old World combat as code", () => {
