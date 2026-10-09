@@ -288,6 +288,46 @@ const checks = {
   },
 
   /**
+   * Unit cards fit (#56, UX 400): in each generic system's demo, no stats table is wider than the
+   * card (FSD's Systems and Conquest's specials go on rows of their own).
+   */
+  async "card-widths"() {
+    const { page, context } = await device();
+    for (const demo of ["Full Spectrum Dominance", "Conquest", "Rank and flank"]) {
+      await lobby(page);
+      await page.locator(".demos .demo", { hasText: demo }).locator(".try").click();
+      await page
+        .locator(".topbar")
+        .getByText(/Round 1|Deploy/)
+        .first()
+        .waitFor({ timeout: 20000 });
+      await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, {
+        timeout: 30000,
+      });
+      await page.keyboard.press("Escape");
+      await page
+        .locator("canvas")
+        .first()
+        .click({ position: { x: 5, y: 5 } });
+      for (let i = 0; i < 8; i++) {
+        await page.keyboard.press("]");
+        await page.waitForTimeout(150);
+        const over = await page.evaluate(() => {
+          const card = document.querySelector(".panel.unitcard");
+          if (!card) return null;
+          const wide = [...card.querySelectorAll("table")].find((t) => t.scrollWidth > card.clientWidth);
+          return wide
+            ? `${card.querySelector("h2")?.textContent}: ${wide.scrollWidth} > ${card.clientWidth}`
+            : null;
+        });
+        if (over) throw new Error(`${demo}: ${over}`);
+      }
+    }
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
+  /**
    * Hotseat (#56, UX 394/395): the first mission is preset, choosing None warns at Start battle with
    * a Pick one, and a reload in the middle goes straight back into the game, not to the lobby.
    */

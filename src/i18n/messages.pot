@@ -507,7 +507,7 @@ msgstr[1] ""
 #: src/bot/YourArmy.tsx:133
 #: src/printplay/RulesPage.tsx:177
 #: src/ui/Showcase.tsx:53
-#: src/ui/SystemPanels.tsx:162
+#: src/ui/SystemPanels.tsx:183
 msgid "{points} pts"
 msgstr ""
 
@@ -1652,7 +1652,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:55
 #: src/ui/AttackPanel.tsx:92
-#: src/ui/SystemPanels.tsx:311
+#: src/ui/SystemPanels.tsx:362
 msgid "Weapon"
 msgstr ""
 
@@ -2149,7 +2149,7 @@ msgid "Figure"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:372
-#: src/ui/SystemPanels.tsx:356
+#: src/ui/SystemPanels.tsx:407
 msgid "{height}\" tall"
 msgstr ""
 
@@ -3238,7 +3238,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:148
-#: src/ui/SystemPanels.tsx:508
+#: src/ui/SystemPanels.tsx:559
 msgid "{n} action"
 msgid_plural "{n} actions"
 msgstr[0] ""
@@ -3941,7 +3941,7 @@ msgstr ""
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
-#: src/ui/SystemPanels.tsx:378
+#: src/ui/SystemPanels.tsx:429
 #: src/ui/TeachRule.tsx:518
 #: src/ui/TeachRule.tsx:519
 msgid "Remove"
@@ -5531,7 +5531,7 @@ msgid "+1 to save"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:37
-#: src/ui/SystemPanels.tsx:255
+#: src/ui/SystemPanels.tsx:276
 #: src/ui/UnitCard.tsx:402
 msgid "Line of sight"
 msgstr ""
@@ -6941,7 +6941,7 @@ msgid "{unit}'s {weapon} is prepared: check whether {actor} is within its range 
 msgstr ""
 
 #: src/ui/ProcedurePanels.tsx:520
-#: src/ui/SystemPanels.tsx:570
+#: src/ui/SystemPanels.tsx:621
 msgid "Finish reaction"
 msgstr ""
 
@@ -7660,186 +7660,186 @@ msgstr ""
 msgid "Mark {status}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:147
+#: src/ui/SystemPanels.tsx:101
+msgid "Abilities"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:108
+msgid "Spent: {items}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:117
+msgid "(spent)"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:168
 msgid "Charged {distance}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:150
+#: src/ui/SystemPanels.tsx:171
 #: src/ui/UnitCard.tsx:232
 msgid "Selected unit"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:161
+#: src/ui/SystemPanels.tsx:182
 msgid "{alive}/{n} model"
 msgid_plural "{alive}/{n} bases"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:191
+#: src/ui/SystemPanels.tsx:212
 msgid "Click to end this spell"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:192
+#: src/ui/SystemPanels.tsx:213
 msgid "Click when the token is used or lost"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:200
+#: src/ui/SystemPanels.tsx:221
 msgid "{weapon} prepared"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:205
+#: src/ui/SystemPanels.tsx:226
 msgid "In reserve"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:207
+#: src/ui/SystemPanels.tsx:228
 msgid "Interacting"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:226
+#: src/ui/SystemPanels.tsx:247
 msgid "Undo activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:227
+#: src/ui/SystemPanels.tsx:248
 msgid "Undo {unit}'s activation? It can go again this round; the log says so."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:241
+#: src/ui/SystemPanels.tsx:262
 msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:257
+#: src/ui/SystemPanels.tsx:278
 #: src/ui/UnitCard.tsx:404
 msgid "Model's eye view"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:260
+#: src/ui/SystemPanels.tsx:281
 #: src/ui/UnitCard.tsx:315
 msgid "Rotate left (Q)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:263
+#: src/ui/SystemPanels.tsx:284
 #: src/ui/UnitCard.tsx:318
 msgid "Rotate right (E)"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:290
+#: src/ui/SystemPanels.tsx:314
 msgid "{value} on the card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:348
+#: src/ui/SystemPanels.tsx:399
 msgid "Bases"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:355
+#: src/ui/SystemPanels.tsx:406
 msgid "removed"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:378
+#: src/ui/SystemPanels.tsx:429
 msgid "Return"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:445
+#: src/ui/SystemPanels.tsx:496
 msgid "Waiting for {name} to react"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:45
-msgid "uses {faces}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:45
-msgid "a {face}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:460
+#: src/ui/SystemPanels.tsx:511
 msgid "Reacting: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:464
+#: src/ui/SystemPanels.tsx:515
 msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:479
+#: src/ui/SystemPanels.tsx:530
 #: src/ui/TopBar.tsx:307
 msgid "End this activation; the other player goes next"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:485
+#: src/ui/SystemPanels.tsx:536
 #: src/ui/TopBar.tsx:314
 msgid "End activation"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:498
+#: src/ui/SystemPanels.tsx:549
 msgid "Costs {cost}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:521
+#: src/ui/SystemPanels.tsx:572
 msgid "Hover a greyed-out action for its reason."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:527
+#: src/ui/SystemPanels.tsx:578
 msgid "Also activate up to {n} unit:"
 msgid_plural "Also activate up to {n} units:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/SystemPanels.tsx:562
+#: src/ui/SystemPanels.tsx:613
 msgid "with {n}"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:591
+#: src/ui/SystemPanels.tsx:642
 msgid "Put a token on it: its effects last while the token stays"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:632
+#: src/ui/SystemPanels.tsx:66
+msgid "uses {faces}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:66
+msgid "a {face}"
+msgstr ""
+
+#: src/ui/SystemPanels.tsx:683
 msgid "Placed on its AD slots: spent when it's used"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:633
+#: src/ui/SystemPanels.tsx:684
 msgid "On card:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:644
+#: src/ui/SystemPanels.tsx:695
 msgid "Place:"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:649
+#: src/ui/SystemPanels.tsx:700
 msgid "Put a {face} from your Ready dice on this card"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:664
+#: src/ui/SystemPanels.tsx:715
 msgid "Discard"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:696
+#: src/ui/SystemPanels.tsx:747
 msgid "Paying with this die; click again for the lowest that fits"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:697
+#: src/ui/SystemPanels.tsx:748
 msgid "Pay with this die"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:717
+#: src/ui/SystemPanels.tsx:768
 msgid "Has had its go this round."
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:721
+#: src/ui/SystemPanels.tsx:772
 msgid "It moved on the table and does nothing else: its go is over"
 msgstr ""
 
-#: src/ui/SystemPanels.tsx:724
+#: src/ui/SystemPanels.tsx:775
 msgid "Moved only: end its go"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:80
-msgid "Abilities"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:87
-msgid "Spent: {items}"
-msgstr ""
-
-#: src/ui/SystemPanels.tsx:96
-msgid "(spent)"
 msgstr ""
 
 #: src/ui/TableWarnings.tsx:111

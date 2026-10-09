@@ -40,6 +40,27 @@ import { lengthText } from "./distance";
 const header = (c: { id: string; name: string; short?: string }) =>
   c.short ?? (/^[A-Z][A-Za-z]{0,3}$/.test(c.id) ? c.id : c.name);
 
+/** Stat columns to a row on a unit card, so it fits 400 px (UX 400). */
+const STAT_COLUMNS = 7;
+/** A numbered group of characteristics, "System 2 Defense": shown as a row of its own. */
+const GROUPED = /^(.+? \d+) \S/;
+
+function statRows<C extends { id: string; name: string }>(chars: C[]): C[][] {
+  const plain = chars.filter((c) => !GROUPED.test(c.name));
+  const rows: C[][] = [];
+  for (let i = 0; i < plain.length; i += STAT_COLUMNS) rows.push(plain.slice(i, i + STAT_COLUMNS));
+  return rows;
+}
+
+function statGroups<C extends { id: string; name: string }>(chars: C[]): { name: string; chars: C[] }[] {
+  const groups = new Map<string, C[]>();
+  for (const c of chars) {
+    const g = GROUPED.exec(c.name)?.[1];
+    if (g) groups.set(g, [...(groups.get(g) ?? []), c]);
+  }
+  return [...groups.entries()].map(([name, cs]) => ({ name, chars: cs }));
+}
+
 /** "uses a 4 and a 6": the dice-pool faces an action pays with. */
 export const usesFaces = (faces: (string | number)[]) =>
   t("uses {faces}", { faces: formatList(faces.map((f) => t("a {face}", { face: String(f) }))) });
@@ -268,34 +289,64 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         </div>
       )}
 
-      <table className="stats">
-        <thead>
-          <tr>
-            {chars.map((c) => (
-              <th key={c.id} title={c.name}>
-                {header(c)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {chars.map((c) => {
-              const v = view[c.id];
-              const changed = v !== raw[c.id];
-              return (
-                <td
-                  key={c.id}
-                  className={changed ? "warn" : ""}
-                  title={changed ? t("{value} on the card", { value: String(raw[c.id]) }) : undefined}
-                >
-                  {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
-                </td>
-              );
-            })}
-          </tr>
-        </tbody>
-      </table>
+      {/* Never wider than the card (UX 400): at most STAT_COLUMNS to a row, and numbered groups
+          (FSD's System 1-4) as rows of their own, only those the unit has. */}
+      {statRows(chars).map((row, i) => (
+        <table key={i} className="stats">
+          <thead>
+            <tr>
+              {row.map((c) => (
+                <th key={c.id} title={c.name}>
+                  {header(c)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {row.map((c) => {
+                const v = view[c.id];
+                const changed = v !== raw[c.id];
+                return (
+                  <td
+                    key={c.id}
+                    className={changed ? "warn" : ""}
+                    title={changed ? t("{value} on the card", { value: String(raw[c.id]) }) : undefined}
+                  >
+                    {changed ? String(v ?? "–") : shown(c, v, first?.profile?.chars)}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      ))}
+      {statGroups(chars).map((g) => {
+        // Only the groups this unit's card fills in (defaults don't count).
+        const has = g.chars.some((c) => rosterText(c, first?.profile?.chars) !== undefined);
+        return has ? (
+          <table key={g.name} className="stats group">
+            <thead>
+              <tr>
+                <th className="group-name">{g.name}</th>
+                {g.chars.map((c) => (
+                  <th key={c.id} title={c.name}>
+                    {c.name.slice(g.name.length + 1)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td />
+                {g.chars.map((c) => (
+                  <td key={c.id}>{shown(c, view[c.id], first?.profile?.chars)}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        ) : null;
+      })}
       {texts.map((c) =>
         view[c.id] ? (
           <p key={c.id} className="small">

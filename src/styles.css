@@ -4973,3 +4973,12 @@ button.teach-button:hover {
 .charge-outcome {
   flex-basis: 100%;
 }
+
+/* Stats never wider than the card (UX 400): rows of at most seven, numbered groups on rows of their own. */
+.panel.unitcard table.stats + table.stats {
+  margin-top: 4px;
+}
+.panel.unitcard table.stats.group th.group-name {
+  text-align: left;
+  white-space: nowrap;
+}
