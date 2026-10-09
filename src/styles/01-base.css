@@ -1,0 +1,152 @@
+/* Base: colours, type, buttons, panels and focus. */
+
+:root {
+  /* --below-bar: where the top bar ends, kept up to date by TopBar (it wraps with wide dice pools). */
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  /* --text-scale: the player's text size (src/ui/textSize.ts). Every other size is in rem. */
+  font-size: calc(14px * var(--text-scale, 1));
+}
+/* Keyboard play (#25): always show where focus is. */
+:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #111318;
+  color: #e5e7eb;
+  overflow: hidden;
+}
+/* Nothing past the screen's edge (name plates beyond the table) may widen a phone's page (UX 152). */
+#root {
+  position: fixed;
+  inset: 0;
+  overflow: clip;
+  contain: paint;
+}
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+  background: #1f2430;
+  border: 1px solid #39404f;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+button {
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: #2a3140;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+button.primary {
+  background: #2563eb;
+  border-color: #3b82f6;
+}
+button.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+button.danger {
+  border-color: #b91c1c;
+  color: #fca5a5;
+}
+button.on {
+  background: #a16207;
+}
+button.small {
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+button.link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #93c5fd;
+  text-decoration: underline;
+}
+hr {
+  border: none;
+  border-top: 1px solid #2d3340;
+  width: 100%;
+}
+.panel {
+  z-index: 20;
+  position: absolute;
+  padding: 10px 12px;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+.muted {
+  color: #9ca3af;
+  margin: 0;
+}
+.small {
+  font-size: 0.85rem;
+}
+.warn {
+  color: #fbbf24;
+  margin: 0;
+}
+h1,
+h2 {
+  margin: 0;
+}
+h2 {
+  font-size: 1.1rem;
+}
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.row.wrap {
+  flex-wrap: wrap;
+}
+.row.spread {
+  justify-content: space-between;
+}
+.row input[type="number"] {
+  width: 3.5em;
+}
+label.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+label.file input {
+  display: none;
+}
+label.file {
+  cursor: pointer;
+  color: #93c5fd;
+}
+label.file.button {
+  color: inherit;
+  background: #1f2430;
+  border: 1px solid #39404f;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+label.file.button.small {
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+.figures .figure {
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}

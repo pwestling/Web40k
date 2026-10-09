@@ -1,0 +1,166 @@
+/* Online events and photo standees. */
+
+/* #67 online events. */
+.panel.modal.event-page {
+  width: min(680px, calc(100vw - 32px));
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.event-page h3 {
+  margin: 14px 0 4px;
+  font-size: 0.95rem;
+}
+.event-page .event-state {
+  margin: 4px 0 8px;
+}
+.event-page li.me,
+.standings tr.me td {
+  background: rgb(245 197 66 / 10%);
+}
+.event-page .pairings li {
+  padding: 4px 0;
+  border-bottom: 1px solid #262b36;
+}
+.event-page .table-no {
+  display: inline-block;
+  min-width: 4.5em;
+  color: #9aa3b2;
+}
+.event-page .hand-entry {
+  margin-left: 6px;
+}
+.event-page .hand-entry input[type="number"] {
+  width: 4.5em;
+}
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.standings th,
+.standings td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid #262b36;
+}
+.standings tr.dropped td {
+  color: #8b93a3;
+}
+.run-event {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.run-event input[type="number"] {
+  width: 6em;
+}
+.events-section {
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #2d3340;
+  border-radius: 10px;
+}
+.events-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.events-section .event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid #262b36;
+}
+.event-seat {
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #f5c542;
+  background: rgb(17 19 24 / 94%);
+}
+.event-seat ul {
+  margin: 4px 0 0;
+}
+.event-seat li.good {
+  color: #4ade80;
+}
+.event-seat li.warn {
+  color: #fbbf24;
+}
+.event-seat li.muted {
+  color: #9aa3b2;
+}
+.live-game.event-table .event-line {
+  color: #f5c542;
+}
+@media (pointer: coarse) {
+  .event-page button,
+  .run-event button,
+  .events-section button {
+    min-height: 44px;
+  }
+}
+/* #68: photo standees. */
+.standee-maker {
+  width: min(560px, 94vw);
+  max-height: 92vh;
+  overflow: auto;
+}
+/* Name and Use stay in reach on a phone (UX 468). */
+.standee-maker .maker-footer {
+  position: sticky;
+  bottom: -10px;
+  padding: 8px 0;
+  background: rgb(17 19 24);
+  border-top: 1px solid #2d3340;
+}
+.cutout-editor .canvas-wrap {
+  position: relative;
+  width: fit-content;
+  margin: 8px auto;
+}
+.cutout-editor .brush-ring {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px solid #f87171;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 50%);
+}
+.cutout-editor .brush-ring.keep {
+  border-color: #4ade80;
+}
+.standee-maker .photo-buttons {
+  gap: 6px;
+  align-items: center;
+}
+.cutout-editor canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 52vh;
+  touch-action: none;
+  cursor: none;
+  border-radius: 6px;
+}
+/* A margin beside the photo to scroll by on a phone, where the photo itself paints (UX 468). */
+@media (pointer: coarse) {
+  .cutout-editor canvas {
+    max-width: 78vw;
+    max-height: 46vh;
+  }
+}
+.cutout-editor canvas.checker {
+  background: repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e37 0% 50%) 50% / 16px 16px;
+}
+.events-section .event-card.away {
+  opacity: 0.55;
+}
+.event-page .confirm {
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 6px 0;
+}
+.standee-maker .slider-ends {
+  display: block;
+}

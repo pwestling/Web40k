@@ -1,0 +1,599 @@
+/* Playing: watch mode, stratagems, regiments, AD dice, the room, packages, abilities, scripts and stats. */
+
+/* Watch mode: replay highlights, dice pop-ups and round cards. */
+.replaybar .highlight {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  padding: 0 3px;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: 4px;
+  background: #1f2430;
+  border: 1px solid #3a4150;
+}
+.replaybar .highlight.wiped {
+  color: #f87171;
+}
+.replaybar .highlight.charge {
+  color: #fbbf24;
+}
+.replaybar .highlight.swing {
+  color: #a3e635;
+}
+.burst {
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #fde68a;
+  background: rgb(17 19 24 / 85%);
+  border: 1px solid #fbbf24;
+  animation: burst 1.6s ease-out forwards;
+}
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(6px) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-16px);
+  }
+}
+.round-card {
+  z-index: 25;
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 280px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgb(17 19 24 / 95%);
+  border: 1px solid #3a4150;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.round-card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.round-card .row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 12px;
+  border-left: 3px solid;
+  padding-left: 8px;
+}
+.round-card .row .muted {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+}
+
+/* Stratagems and ability reminders (PlayPanel). */
+.play {
+  right: 12px;
+  bottom: 60px;
+  width: 400px;
+  max-height: 34vh;
+  overflow-y: auto;
+  gap: 6px;
+  z-index: 19;
+}
+.play.collapsed {
+  width: auto;
+}
+.play:not(.collapsed) ~ .panels > .unitcard,
+.play:not(.collapsed) ~ .panels > .attack {
+  max-height: calc(66vh - 136px);
+}
+.play .stratagems {
+  border-top: 1px solid #2d3340;
+  padding-top: 4px;
+}
+.play .stratagems p {
+  margin: 2px 0;
+}
+.play .stratagem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0;
+}
+.play .stratagem.row {
+  flex-direction: row;
+  align-items: center;
+}
+.play input[type="number"] {
+  width: 3em;
+}
+.reminders {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+.reminders li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.reminders li.applied {
+  opacity: 0.6;
+}
+.reminders details p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+.wound-order .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.core-abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+/* Regiment blocks: the manoeuvre panel and arc labels. */
+.regiment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+  padding-top: 6px;
+  border-top: 1px solid #2d3340;
+}
+.regiment h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.regiment p {
+  margin: 0;
+}
+.regiment .row {
+  align-items: center;
+  flex-wrap: wrap;
+}
+input.frontage {
+  width: 4em;
+}
+.small {
+  font-size: 0.8rem;
+}
+.arc-label {
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: #e5e7eb;
+  text-shadow: 0 1px 2px #000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+/* Dice placed on a weapon's AD slots (FSD). */
+.slot-dice {
+  margin-top: 2px;
+}
+.slot-dice .die.placed {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4em;
+  margin-right: 2px;
+  font-size: 0.85em;
+  background: #fde68a;
+  color: #111;
+  border: 1px solid #b45309;
+}
+.slot-dice .actions {
+  display: inline;
+}
+/* Paying with a picked die (generic unit card and fire setup). */
+.actions button.die,
+.panel.attack button.die {
+  padding: 0;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.actions button.die.hover,
+.panel.attack button.die.hover {
+  box-shadow: 0 0 0 2px #60a5fa;
+}
+.actions button.die.on,
+.panel.attack button.die.on {
+  background: #f59e0b;
+  border-color: #b45309;
+}
+.net-banner {
+  z-index: 30;
+  position: absolute;
+  /* Inside the top bar: just under it, however it wraps. */
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #78350f;
+  border: 1px solid #f59e0b;
+  color: #fef3c7;
+  font-size: 0.9rem;
+}
+
+/* Room card and deployment tray */
+.room {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.room .people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.room .people .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.deploy-tray {
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deploy-tray .tray {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.regiment .charge {
+  border-top: 1px solid #3f3f46;
+  margin-top: 6px;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.regiment .charge h4 {
+  margin: 0;
+}
+.templates .template-list {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.template-label {
+  white-space: nowrap;
+  padding: 2px 6px;
+  background: rgb(0 0 0 / 65%);
+  border-radius: 4px;
+  font-size: 0.786rem;
+  color: #f4f4f5;
+  pointer-events: none;
+}
+.net-banner.desync {
+  background: #7f1d1d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar .ask {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.857rem;
+}
+
+/* Rules packages */
+.fp {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8em;
+  color: #a1a1aa;
+}
+.packages .package-list {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.packages .menu,
+.game-packages .menu {
+  position: relative;
+}
+.menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0 6px;
+}
+.menu .menu-items {
+  position: absolute;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+}
+.package-details code {
+  word-break: break-all;
+}
+.game-packages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+label.file.button {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  cursor: pointer;
+}
+label.file.button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+label.file.button input {
+  display: none;
+}
+.package-card {
+  top: 110px;
+  z-index: 32;
+  max-width: min(520px, calc(100vw - 32px));
+}
+.package-card .package-need {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}
+.package-card .progress {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.package-card .progress .bar {
+  display: block;
+  height: 4px;
+  background: #22c55e;
+  border-radius: 2px;
+}
+.topbar > .net-banner {
+  position: static;
+  transform: none;
+  flex-basis: 100%;
+  justify-content: center;
+  background: #78350f;
+  border-color: #f59e0b;
+}
+.topbar > .net-banner.desync {
+  background: #7f1d1d;
+}
+.package-card .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-left: none;
+  padding-left: 0;
+}
+/* Abilities that play themselves (#38). */
+.auto-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.4rem 0;
+}
+.auto-list li {
+  margin-bottom: 0.35rem;
+}
+.auto-list li .small {
+  margin-left: 1.6rem;
+}
+.ability-line p,
+.rule-text {
+  margin: 0.3rem 0;
+}
+.import-units .missing-stats td {
+  padding-bottom: 6px;
+}
+.import-units .stat-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 6px;
+}
+.replaybar .highlight.rules {
+  color: #60a5fa;
+}
+.log .phase.rules {
+  text-transform: none;
+  color: #93c5fd;
+}
+/* A rule written as code waiting on a player's choice (ScriptPanel). */
+.panel.script {
+  top: var(--below-bar, 96px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100vw - 32px));
+  border-color: #f59e0b;
+}
+.panel.script .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.code-actions .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.odds {
+  color: #93c5fd;
+}
+p.odds {
+  margin: 4px 0;
+  font-weight: 600;
+}
+/* After-game stats (StatsScreen). */
+.stats-screen {
+  z-index: 30;
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #111318;
+  border: 1px solid #3a4150;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stats-screen .head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.stats-screen .head button {
+  margin-left: auto;
+}
+.stats-screen h4 {
+  margin: 0 0 6px;
+  font-size: 0.857rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+.stats-screen .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.stats-screen .legend-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.points-chart {
+  width: 100%;
+  height: auto;
+}
+.points-chart .axis {
+  stroke: #4b5563;
+  stroke-width: 1;
+}
+.points-chart text {
+  font-size: 0.786rem;
+  text-anchor: middle;
+}
+.points-chart .value {
+  fill: #e5e7eb;
+}
+.points-chart .tick {
+  fill: #9ca3af;
+}
+.stats-screen .luck {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.929rem;
+}
+.stats-table th,
+.stats-table td {
+  padding: 2px 6px;
+  text-align: right;
+}
+.stats-table th:first-child,
+.stats-table td:first-child {
+  text-align: left;
+}
+.stats-table th {
+  color: #9ca3af;
+  font-weight: 500;
+}
+.stats-table .up {
+  color: #86efac;
+}
+.stats-table .down {
+  color: #fca5a5;
+}
+.round-card .swing-line {
+  font-size: 0.929rem;
+  color: #93c5fd;
+}
+/* Long package names wrap; the fingerprint stays whole on its line (UX 82). */
+.game-packages label.check {
+  flex-wrap: wrap;
+  align-items: baseline;
+  row-gap: 0;
+  line-height: 1.35;
+}
+.game-packages .fp {
+  white-space: nowrap;
+}
+/* The army import dialog has a column per check (points, troop type, base, frontage). */
+.modal:has(.import-units) {
+  width: min(760px, calc(100vw - 32px));
+}
+.import-units select {
+  max-width: 150px;
+}
+.import-units td label.small {
+  display: block;
+  white-space: nowrap;
+}

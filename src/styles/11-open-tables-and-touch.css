@@ -1,0 +1,572 @@
+/* Open tables, Teach it, small UX fixes, and touch play on tablets. */
+
+/* Open tables (#50): the public board of games, and posting one. */
+.lobby .find-opponent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+}
+@media (min-width: 1100px) {
+  .lobby .find-opponent {
+    display: none;
+  }
+}
+.lobby .open-tables-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.modal.open-tables {
+  position: fixed;
+  width: min(640px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.open-tables h2 {
+  margin: 0;
+}
+.table-filters select {
+  flex: 1 1 130px;
+  min-height: 36px;
+}
+.table-posts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-post {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  background: #171a21;
+}
+.table-post strong {
+  color: #fbbf24;
+}
+.table-post .when {
+  white-space: nowrap;
+}
+.table-post .table-note {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.table-post .row {
+  align-items: center;
+}
+.post-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+}
+.post-table p {
+  margin: 0;
+}
+.post-table input:not([type="checkbox"]),
+.post-table select {
+  max-width: 100%;
+}
+/* The card leads with the person (PX); Join is a real button, the rest behind ⋯ (UX 384). */
+.table-post .table-lead {
+  color: #f3f4f6;
+  font-size: 1.02rem;
+}
+.table-tags {
+  gap: 4px;
+}
+.table-tag {
+  font-size: 0.78rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid #3b4252;
+  color: #cbd5e1;
+}
+.table-tag.new {
+  border-color: #16a34a;
+  color: #86efac;
+}
+.table-tag.competitive {
+  border-color: #b45309;
+  color: #fcd34d;
+}
+.table-post button.join {
+  min-height: 44px;
+  min-width: 96px;
+  font-weight: 600;
+}
+.post-more {
+  position: relative;
+}
+.post-more summary {
+  list-style: none;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 1.2rem;
+}
+.post-more summary::-webkit-details-marker {
+  display: none;
+}
+.post-more[open] summary {
+  background: #232834;
+}
+.post-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 170px;
+  padding: 4px;
+  background: #111318;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  z-index: 2;
+}
+.post-menu button {
+  text-align: left;
+  min-height: 36px;
+}
+.join-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.join-table p {
+  margin: 0;
+}
+.table-gone {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(251 191 36 / 12%);
+  color: #fde68a;
+}
+.post-table .post-tags {
+  gap: 4px 12px;
+}
+.post-table button.primary[type="submit"] {
+  min-height: 44px;
+  flex: 1;
+}
+/* The host's table, listed: a chip with a real button (UX 386). */
+.my-table {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #16a34a;
+  background: rgb(22 163 74 / 12%);
+  color: #86efac;
+}
+.my-table.failed {
+  border-color: #b45309;
+  background: rgb(180 83 9 / 12%);
+  color: #fcd34d;
+  border-radius: 8px;
+}
+.my-table .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+/* Someone sat down from Open tables: a hello to send in one tap (PX). */
+.arrival {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #16a34a;
+  background: rgb(17 19 24 / 96%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
+}
+@media (max-width: 600px) {
+  /* On a phone the board is its own screen (UX 383). */
+  .modal.open-tables {
+    inset: 0;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}
+.mailbar .post-table {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+  background: #111318;
+}
+
+/* Teach it this rule (#53) */
+.teach-rule {
+  position: fixed;
+}
+.teach-rule fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  border: 1px solid #2d3340;
+  border-radius: 6px;
+  margin: 8px 0;
+  padding: 6px 10px 10px;
+}
+.teach-rule fieldset > .row,
+.teach-rule fieldset > [role="group"] {
+  width: 100%;
+}
+.teach-rule .teach-what {
+  gap: 8px;
+  align-items: center;
+}
+.teach-rule .teach-preview {
+  min-height: 1.4em;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 4%);
+}
+/* "⚙ Teach it": a small outlined button that reads as tappable (UX 389). */
+button.teach-button {
+  white-space: nowrap;
+  border: 1px solid #3b82f6;
+  background: transparent;
+  color: #93c5fd;
+}
+button.teach-button:hover {
+  background: rgb(59 130 246 / 15%);
+}
+.teach-rule .teach-quote {
+  border-left: 3px solid #3b4252;
+  padding: 2px 10px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+.teach-rule .teach-quote summary {
+  cursor: pointer;
+}
+.rules-bullets {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.kw {
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+}
+@media (pointer: coarse) {
+  /* Fingers, not a mouse (UX 389). */
+  .teach-rule button,
+  .teach-rule select,
+  .teach-rule input:not([type="checkbox"]),
+  button.teach-button {
+    min-height: 44px;
+  }
+  .teach-rule input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+  .teach-rule .row.spread > button.quiet:only-child,
+  .teach-rule h2 + button {
+    min-width: 44px;
+  }
+}
+.teach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+/* Resume first in the lobby (UX 395). */
+.lobby .resume-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+/* The computer rolls your saves for you if you don't (UX 404): a ring that empties on the button. */
+.self-roll-note {
+  font-weight: normal;
+  opacity: 0.85;
+}
+.self-roll-ring {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-left: 6px;
+  vertical-align: -0.1em;
+  border-radius: 50%;
+  background: conic-gradient(currentColor var(--self-roll, 100%), transparent 0);
+  animation-name: self-roll-empty;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@property --self-roll {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@keyframes self-roll-empty {
+  from {
+    --self-roll: 100%;
+  }
+  to {
+    --self-roll: 0%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .self-roll-ring {
+    animation: none;
+  }
+}
+.rolls-mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Shoot everything at… (UX 398): the weapons that can fire, ticked, and those that can't. */
+.panel.attack .volley {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+.panel.attack .volley > button {
+  align-self: flex-start;
+}
+.move-note {
+  margin: 4px 0;
+}
+
+/* Charge (2D6) asks for its targets first (UX 396). */
+.charge-declare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  flex-basis: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line, #334155);
+  border-radius: 6px;
+}
+.charge-declare > strong,
+.charge-declare > p,
+.charge-declare > .row {
+  flex-basis: 100%;
+  margin: 0;
+}
+.charge-outcome {
+  flex-basis: 100%;
+}
+
+/* Stats never wider than the card (UX 400): rows of at most seven, numbered groups on rows of their own. */
+.panel.unitcard table.stats + table.stats {
+  margin-top: 4px;
+}
+.panel.unitcard table.stats.group th.group-name {
+  text-align: left;
+  white-space: nowrap;
+}
+/* The replay bar's buttons stay on one line; its ⋯ opens upwards (UX 407). */
+.replaybar button {
+  white-space: nowrap;
+}
+.replaybar .replay-more {
+  position: relative;
+}
+.replaybar .replay-more .menu-items {
+  bottom: 100%;
+}
+.replaybar .replay-more .menu-items button {
+  width: 100%;
+  text-align: left;
+}
+
+/* Touch play (#60): the Select several box, a twist's turn, a long press's menu, and the touch toggles. */
+.touch-box {
+  position: fixed;
+  z-index: 30;
+  border: 2px dashed #93c5fd;
+  background: rgb(147 197 253 / 12%);
+  pointer-events: none;
+}
+.touch-twist {
+  position: fixed;
+  z-index: 31;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 88%);
+  border: 1px solid #93c5fd;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.touch-menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.touch-menu {
+  position: fixed;
+  z-index: 41;
+  width: 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  background: #171a21;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+}
+.touch-menu button {
+  min-height: 44px;
+  text-align: left;
+}
+.touch-menu .row button {
+  flex: 1;
+}
+.touch-menu p {
+  margin: 0;
+}
+.touch-tools {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 84px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: rgb(17 19 24 / 92%);
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+}
+.touch-tools button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Tablets (#60): every control at least 44 px for a finger, from 641 px up (phones have their own sheet). */
+@media (pointer: coarse) and (min-width: 641px) {
+  /* A sideways flick puts the card away (ui/swipe.ts); the page keeps vertical scrolling. */
+  .panel.unitcard {
+    touch-action: pan-y;
+  }
+  /* The scrub bar's moment marks: a finger-sized target around each glyph. */
+  .replaybar .highlight {
+    min-width: 44px;
+  }
+  button,
+  select,
+  summary,
+  label.file,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]) {
+    min-height: 44px;
+  }
+  button {
+    min-width: 44px;
+  }
+  button,
+  label.file {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  /* Still a list item, so it keeps its ▶. */
+  summary {
+    min-width: 44px;
+    padding-block: 10px;
+    box-sizing: border-box;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+  }
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input[type="range"] {
+    height: 44px;
+  }
+  .topbar .counter button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .topbar > * {
+    padding: 2px 6px;
+  }
+  .unitcard,
+  .attack {
+    width: min(400px, 46vw);
+  }
+  /* The reactions wrap rather than run under the replay bar, and wait behind 💬 until the chat opens. */
+  .panel.talk .row {
+    flex-wrap: wrap;
+  }
+  .panel.talk.collapsed .talk-reactions-row {
+    display: none;
+  }
+}
+/* A tablet held upright, or a small one: the replay bar takes the bottom row, the talk dock sits above it. */
+@media (pointer: coarse) and (min-width: 641px) and (max-width: 1100px) {
+  .replaybar {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+    min-width: 0;
+  }
+  .talk-dock {
+    bottom: 76px;
+  }
+  .touch-tools {
+    bottom: 140px;
+  }
+}

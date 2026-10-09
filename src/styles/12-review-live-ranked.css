@@ -1,0 +1,355 @@
+/* Game review, Live now and ranked games. */
+
+/* Game review (#61) on the stats sheet. */
+.game-review {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.game-review progress {
+  width: 100%;
+}
+.review-chart {
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.review-chart .line {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.review-chart .mid {
+  stroke: #6b7280;
+  stroke-dasharray: 3 3;
+}
+.review-chart .round {
+  stroke: #2f3542;
+}
+.review-chart .cross {
+  stroke: #9ca3af;
+}
+.review-chart .tick {
+  fill: #9ca3af;
+  font-size: 0.714rem;
+}
+.review-chart .mark {
+  stroke: #111318;
+  stroke-width: 2;
+}
+.review-chart .mark-hit {
+  cursor: pointer;
+}
+.review-chart .tick.end {
+  fill: #e5e7eb;
+  font-weight: 600;
+}
+.ready-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  vertical-align: middle;
+}
+.game-review .chart-read {
+  margin: 0;
+  min-height: 1.3em;
+}
+.game-review ol.turning {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.game-review ol.turning li {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #2f3542;
+}
+.game-review ol.turning li.on {
+  border-color: #60a5fa;
+}
+.game-review ol.turning .tp-head,
+.game-review ol.turning .tp-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.game-review .kind {
+  font-size: 0.786rem;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #1f2937;
+}
+.game-review .kind.costly,
+.game-review .kind.missed,
+.game-review .kind.down {
+  color: #fca5a5;
+}
+.game-review .kind.strong,
+.game-review .kind.dice {
+  color: #86efac;
+}
+.game-review .takeaways {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.game-review .takeaways ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.panel.better-move {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: min(560px, calc(100vw - 32px));
+}
+/* The better-move banner sits where the coach card starts: the card moves down under it (PX feel pass e). */
+body:has(.panel.better-move) .panel.whatnow {
+  top: calc(var(--below-bar, 64px) + 64px);
+}
+
+/* Finger-sized controls on touch screens (UX 436, 440): the score steppers, the replay bar, table
+   talk, the folded Menu and stratagem buttons, and What now's Hide. */
+@media (pointer: coarse) {
+  .counter.open button,
+  button.counter,
+  .replaybar button,
+  .panel.talk button,
+  .panel.hud.collapsed button,
+  .panel.play.collapsed button,
+  .panel.whatnow .row.spread button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .replaybar input[type="range"] {
+    min-height: 44px;
+  }
+  /* The eight reactions share a phone's width rather than run off its edge. */
+  .panel.talk .talk-reactions-row button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Live now (#64, PX): the red dot, the front door's strip, and a watcher's badge row. */
+.dot.live {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 25%);
+  vertical-align: middle;
+}
+.live-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+  padding: 6px 10px;
+  border: 1px solid #3a2a2e;
+  border-radius: 8px;
+  background: rgb(239 68 68 / 8%);
+}
+.broadcast-badge {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100vw - 24px);
+}
+.broadcast-badge .watcher-invite {
+  display: flex;
+  gap: 6px;
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+.stats-screen .watcher-invite.end {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+/* A phone watcher (UX 443): the badge on its own row under the scores, the caption stacked under
+   it, both clear of the dice tray at the bottom. */
+@media (max-width: 640px) {
+  body.broadcast .broadcast-badge {
+    top: 104px;
+    left: 8px;
+    right: 8px;
+    justify-content: center;
+  }
+  body.broadcast .broadcast-badge .watcher-invite {
+    flex-basis: auto;
+    justify-content: center;
+  }
+  body.broadcast .caption {
+    top: 190px;
+    bottom: auto;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+/* Ranked games and player cards (#65). */
+.watching-chip,
+.ranked-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid #3a4152;
+  white-space: nowrap;
+}
+.ranked-chip {
+  border-color: #b8913a;
+  color: #f5c542;
+}
+.ranked-line {
+  margin: 2px 0;
+}
+.ranked-offer p {
+  margin: 0 0 6px;
+}
+.ranked-sign {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid #b8913a;
+  border-radius: 8px;
+  background: rgb(245 197 66 / 7%);
+}
+.ranked-sign.good {
+  border-color: #3f8f5a;
+  background: rgb(63 143 90 / 10%);
+}
+.ranked-sign .row {
+  margin-top: 6px;
+}
+.panel.modal.player-card {
+  width: min(560px, calc(100vw - 32px));
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.player-card h3 {
+  margin: 14px 0 4px;
+  font-size: 0.95rem;
+}
+.player-card .card-face {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 3px solid;
+  border-radius: 12px;
+}
+.player-card ul.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.player-card ul.plain li {
+  margin: 3px 0;
+}
+.ladder {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ladder th,
+.ladder td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid #262b36;
+}
+.ladder tr.me td {
+  background: rgb(245 197 66 / 10%);
+}
+@media (pointer: coarse) {
+  .player-card button,
+  .player-card input,
+  .player-card label.button {
+    min-height: 44px;
+  }
+}
+/* UX 453: the player card as a chip in the lobby's header. */
+.lobby-settings .card-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  max-width: 14em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-chip .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 40%);
+}
+@media (pointer: coarse) {
+  .lobby-settings .card-chip {
+    min-height: 44px;
+  }
+}
+/* PX ranked 4 and 5: the "?" and key tags stay quiet. */
+.ladder .provisional {
+  color: #9aa3b2;
+  cursor: help;
+  margin-left: 1px;
+}
+.ladder .key-tag {
+  color: #8b93a3;
+  font-size: 0.75rem;
+}
+.ranked-sign .rating-move {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 6px 0 2px;
+}
+.ranked-sign .wins-back {
+  margin: 0 0 2px;
+  color: #9fd8a8;
+}
+.ranked-sign .decline-why {
+  margin-top: 6px;
+}
+/* UX 455: while a ranked score is being fixed, the VP − and + show where. */
+@keyframes vp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(245 197 66 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(245 197 66 / 55%);
+  }
+}
+.fixing-score .topbar .counter[data-label="VP"] button {
+  animation: vp-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fixing-score .topbar .counter[data-label="VP"] button {
+    animation: none;
+    outline: 2px solid rgb(245 197 66);
+  }
+}

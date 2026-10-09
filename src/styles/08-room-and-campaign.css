@@ -1,0 +1,800 @@
+/* Voice, loading, the playtest kit, warnings, the shelf, campaign book, tables, clocks, replays, figures, offline and language. */
+
+/* The joiner's name prompt (Hud.tsx): the field takes the width, its button goes under it. */
+.name-card .row {
+  flex-wrap: wrap;
+}
+.name-card input {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+/* Voice at the table: 🎙 in the talk bar's row, the rest in a pop-over above it (UX 166). */
+.voice-controls {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+}
+.voice-controls .mic {
+  user-select: none;
+  touch-action: none;
+}
+.voice-controls .mic.on {
+  border-color: #4b5563;
+}
+.voice-controls .mic.live {
+  background: #b45309;
+  border-color: #f59e0b;
+}
+.voice-controls .voice-more {
+  padding: 0 4px;
+  font-size: 0.8rem;
+}
+.panel.voice-pop {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: -44px;
+  width: 280px;
+  gap: 6px;
+  z-index: 30;
+}
+.panel.voice-pop .close {
+  align-self: flex-end;
+  margin-bottom: -6px;
+}
+.panel.voice-pop select {
+  font-size: 0.8rem;
+}
+.voice-people {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+.voice-people li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.voice-people .name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voice-people input[type="range"] {
+  width: 80px;
+}
+.voice-people .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.speaking,
+.topbar .player strong.speaking {
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px #22c55e,
+    0 0 10px rgb(34 197 94 / 60%);
+  transition: box-shadow 0.12s;
+}
+.voice-people li.speaking {
+  box-shadow: none;
+}
+.voice-people li.speaking .dot {
+  box-shadow: 0 0 0 3px #22c55e;
+}
+.topbar .player strong {
+  padding: 0 3px;
+}
+.on-air {
+  z-index: 25;
+  position: absolute;
+  top: calc(var(--below-bar, 64px) + 6px);
+  right: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 85%);
+  border: 1px solid #22c55e;
+  font-weight: 600;
+}
+/* While the table's code loads after the front door (App.tsx). */
+.loading-table {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted, #9aa3ad);
+}
+.showcase-card .skip {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+.sound-menu {
+  min-width: 250px;
+}
+.sound-menu .volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sound-menu .volume input {
+  flex: 1;
+}
+.sound-menu .dice-picker {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #2d3340;
+}
+/* Room for 🎙 in the talk bar's row (UX 166). */
+.panel.talk > .row:first-child > button,
+.panel.talk .voice-controls button {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.panel.talk > .row:first-child {
+  gap: 3px;
+}
+
+/* Playtest kit: the crash screen (src/ui/Crash.tsx). */
+.panel.crash {
+  z-index: 60;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  gap: 8px;
+  border-color: #f59e0b;
+}
+.panel.crash h2,
+.panel.crash p {
+  margin: 0;
+}
+.panel.crash pre {
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.panel.report-banner {
+  top: calc(var(--below-bar, 64px) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  gap: 4px;
+  border-color: #f59e0b;
+}
+/* The lobby's connection check (src/ui/NetCheck.tsx). */
+.net-check {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.net-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-left: 3px solid #6b7280;
+  border-radius: 4px;
+  background: #1f2430;
+}
+.net-verdict.good {
+  border-color: #22c55e;
+}
+.net-verdict.turn {
+  border-color: #f59e0b;
+}
+.net-verdict.bad {
+  border-color: #ef4444;
+}
+/* The optional post-game feedback (src/ui/Feedback.tsx). */
+.feedback label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.feedback textarea {
+  font: inherit;
+  color: inherit;
+  background: #1f2430;
+  border: 1px solid #374151;
+  border-radius: 4px;
+}
+.feedback .on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.feedback h4 .muted {
+  font-weight: normal;
+}
+/* Where a downloaded report or feedback file went (src/ui/SavedNote.tsx). */
+.saved-note {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+.saved-note code {
+  overflow-wrap: anywhere;
+}
+/* The saved-file toast (UX 173). */
+.panel.saved-toast {
+  z-index: 60;
+  position: fixed;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+  background: #1b1f27;
+  border: 1px solid #3b4252;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 50%);
+}
+.panel.saved-toast .saved-note {
+  margin: 0;
+  flex: 1;
+}
+/* A guest still looking for the host (src/ui/Room.tsx). */
+.still-looking {
+  margin-top: 6px;
+  color: #e5e7eb;
+}
+.still-looking p {
+  margin: 0 0 4px;
+}
+
+/* Table warnings (src/ui/TableWarnings.tsx). */
+.topbar > .warnings-button {
+  color: #e5e7eb;
+  cursor: pointer;
+}
+.topbar > .warnings-button.has {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.topbar > .warnings-button.on {
+  background: #3a2a0c;
+}
+.panel.table-warnings {
+  z-index: 25;
+  background: #15181f;
+  position: absolute;
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: 50vh;
+  overflow: auto;
+  box-sizing: border-box;
+}
+/* Beside the unit card (about 400px wide on the right), on screens wide enough for both. */
+@media (min-width: 1100px) {
+  .panel.table-warnings.beside-card {
+    right: 424px;
+  }
+}
+.table-warnings h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.table-warnings ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-warnings li {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}
+.table-warnings li.info {
+  border-color: #6b7280;
+}
+.unit-warnings {
+  margin: 4px 0;
+}
+.table-warnings li > .link {
+  text-align: left;
+}
+
+/* A side's shape next to its colour (src/ui/sides.ts, #25). */
+.side-shape {
+  font-size: 0.85em;
+}
+
+/* Read by screen readers, not shown (src/ui/Announcer.tsx). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The army shelf (src/ui/ArmyImport.tsx, #27). */
+.shelf ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shelf li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Campaign book (24a). */
+.campaign .warn-box {
+  border: 1px solid #b45309;
+  background: rgb(120 53 15 / 35%);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.campaign .warn-box p {
+  margin: 0 0 6px;
+}
+.campaign-armies {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+.campaign-unit {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d6c48a;
+}
+.campaign-book {
+  position: fixed;
+  z-index: 60;
+  inset: max(var(--below-bar, 64px), 5vh) max(16px, calc(50vw - 420px)) 5vh;
+  background: rgb(17 19 24 / 97%);
+  border: 1px solid #2d3340;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-book .title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  min-width: 0;
+  flex: 1;
+}
+.campaign-book .title:hover,
+.campaign-book .title:focus {
+  border-color: #39404f;
+}
+.campaign-book .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.campaign-book .body {
+  overflow: auto;
+  flex: 1;
+}
+.campaign-book table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.campaign-book th,
+.campaign-book td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid #262b36;
+}
+.campaign-units input {
+  width: 100%;
+  min-width: 3.5rem;
+  box-sizing: border-box;
+}
+.campaign-games,
+.campaign-map {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.campaign-map li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.campaign-map li span {
+  flex: 1;
+}
+.campaign-book textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.shelf-select {
+  max-width: 100%;
+}
+
+/* Table library (#28). */
+.table-picker {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.table-picker .col,
+.table-shelf .col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.table-picker select {
+  max-width: 100%;
+}
+.table-thumb {
+  flex: none;
+  border: 1px solid #2d3340;
+  border-radius: 3px;
+}
+.table-shelf ul.tables {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.table-shelf li {
+  display: flex;
+  gap: 8px;
+}
+.table-shelf li.other {
+  opacity: 0.6;
+}
+.edit-aids {
+  align-items: center;
+}
+.sight-legend {
+  position: static;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  padding: 0;
+  background: none;
+}
+.sight-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 1.4em;
+  height: 1em;
+  margin-right: 6px;
+  vertical-align: -2px;
+  border-radius: 3px;
+}
+.sight-legend .seen-by::before {
+  background: var(--c);
+}
+.sight-legend .seen-both::before {
+  background: #4b5a3a;
+  border: 1px solid #777;
+}
+.sight-legend .seen-none::before {
+  background: #0a0a0e;
+  border: 1px solid #555;
+}
+
+/* Chess clocks (#29). */
+.side-clock {
+  font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+.side-clock.running {
+  opacity: 1;
+  background: rgb(255 255 255 / 12%);
+  font-weight: 600;
+}
+.side-clock.out {
+  color: #fca5a5;
+  opacity: 1;
+}
+.side-clock button {
+  font-size: 0.75rem;
+  padding: 0 4px;
+  margin-left: 2px;
+}
+.topbar .clock-bar {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+.clock-bar .time-call {
+  color: #fde047;
+}
+
+/* A terrain piece's name over the table: a label, not a readout (UX 215). */
+.ruler.terrain-label {
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
+}
+
+/* Event night (#29): setup, standings and rounds in the campaign book. */
+.event-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.event-setup fieldset {
+  border: 1px solid #2d3340;
+  border-radius: 6px;
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.event-setup input[aria-label="Add a player"] {
+  max-width: 14em;
+}
+.event-round h4 {
+  margin: 12px 0 4px;
+}
+.event-round ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.event-round .hand-result {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 6px;
+}
+.event-round .hand-result input {
+  width: 4em;
+}
+.event-line p {
+  margin: 4px 0;
+}
+
+/* Annotated replays (#30): notes, chapters and watching together. */
+.panel.replay-notes {
+  position: absolute;
+  right: 12px;
+  bottom: 76px;
+  width: 320px;
+  max-height: 46vh;
+  overflow: auto;
+  z-index: 19;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.replay-notes .tabs {
+  display: flex;
+  gap: 4px;
+}
+.notes-open {
+  position: absolute;
+  right: 12px;
+  bottom: 76px;
+  z-index: 19;
+}
+.replay-notes .note {
+  border-left: 3px solid;
+  padding: 2px 0 2px 8px;
+}
+.replay-notes .note p {
+  margin: 2px 0;
+  white-space: pre-wrap;
+}
+.replay-notes .note-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.replay-notes .note-draft textarea {
+  width: 100%;
+  resize: vertical;
+}
+.replay-notes ol {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.replay-notes li.on {
+  background: rgb(255 255 255 / 6%);
+  border-radius: 4px;
+}
+.replay-notes .link {
+  text-align: left;
+}
+.replay-notes .review-bar p,
+.replay-notes .watch-together p {
+  margin: 0 0 4px;
+}
+.replaybar .highlight.note {
+  color: #fde047;
+}
+.note-caption {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 18;
+  max-width: min(640px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.note-caption p {
+  margin: 0;
+  padding: 8px 12px;
+  background: rgb(17 19 24 / 88%);
+  border-left: 4px solid;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  white-space: pre-wrap;
+}
+
+/* Figure library (#33) */
+.modal.figure-library {
+  width: min(760px, calc(100vw - 32px));
+  background: #111827;
+  /* Pinned at the top, not centred: a row appearing (tag chips) mustn't move the close button from
+     under a click (UX 240). */
+  top: 6vh;
+  transform: translateX(-50%);
+  max-height: 88vh;
+}
+.figure-library .tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.figure-library .tabs .on,
+.tag-filter .chip.on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.tag-filter .chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+.figure-grid {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+.figure-card {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px;
+  border: 1px solid #374151;
+  border-radius: 6px;
+}
+.figure-card.picked {
+  border-color: #f59e0b;
+}
+.figure-card .thumb {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  background: #111827;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.figure-card .thumb input {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  margin: 0;
+}
+.figure-card .no-thumb {
+  font-size: 2rem;
+  color: #6b7280;
+}
+.figure-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.figure-info input {
+  width: 100%;
+}
+.figure-info .figure-name {
+  font-weight: 600;
+}
+.storage-meter {
+  width: 100%;
+}
+.storage-list {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+.storage-list td {
+  padding: 2px 4px;
+  border-top: 1px solid #1f2937;
+}
+.storage-list .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.import-units .figure-pick select {
+  max-width: 180px;
+}
+
+/* Mail invite link: the joiner's name first (UX 236). */
+.invite-name {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+}
+
+/* Offline and updates (#34) */
+.update-toast {
+  align-items: center;
+  gap: 8px;
+  border-left: 3px solid #38bdf8;
+  padding-left: 8px;
+  margin: 8px 0;
+}
+.update-toast span {
+  flex: 1;
+}
+.offline-note {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+}
+
+/* Language (#35) */
+.language-picker {
+  gap: 8px;
+  align-items: center;
+}

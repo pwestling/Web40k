@@ -1,0 +1,355 @@
+/* The table companion and phone-sized targets. */
+
+/* Table companion (#37): real models on a real table, the phone as the game's book-keeper */
+.companion {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #111318;
+  padding: 8px 12px calc(64px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.companion > *,
+.companion-main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.companion-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* A dialog in the companion scrolls inside the screen (dvh: under the phone's browser bars). */
+.companion .modal-backdrop {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.companion .panel.modal {
+  max-height: none !important;
+  overflow: visible;
+}
+.companion .topbar,
+.companion .panel {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0;
+}
+.companion .topbar {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+/* The Log tab is the whole screen: no desktop scroll box inside it. */
+.companion-main > .log {
+  max-height: none;
+}
+.companion button {
+  min-height: 36px;
+}
+.companion .back {
+  align-self: flex-start;
+}
+.companion-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: rgb(17 19 24 / 96%);
+  border-top: 1px solid #2d3340;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+.companion-tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 160px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.companion-tabs button.on {
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+.companion-units section {
+  margin-bottom: 12px;
+}
+.companion-units h2 {
+  font-size: 1rem;
+  margin: 8px 0;
+}
+.companion .tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.companion .tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  padding: 10px;
+}
+.companion .tile.dead {
+  opacity: 0.5;
+}
+.companion .tile .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.companion-tabs .own-dice {
+  flex: 0 1 auto;
+  max-width: 96px;
+  font-size: 0.75rem;
+  line-height: 1.15;
+  white-space: normal;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+.row:has(> .dice-entry) {
+  flex-wrap: wrap;
+}
+.dice-entry {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+}
+.dice-entry p {
+  margin: 0;
+}
+.dice-entry .faces {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.dice-entry .face {
+  min-height: 48px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.told-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: #e5e7eb;
+  color: #111;
+  font-weight: 700;
+}
+.table-attack .targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.table-attack .targets button.on,
+.table-attack .toggle button.on,
+.table-attack .targets button.on:hover:not(:disabled),
+.table-attack .toggle button.on:hover:not(:disabled) {
+  /* A filled answer, so the picked one reads at a glance even after a tap leaves hover on (UX 298). */
+  background: #1d4ed8;
+  border-color: #60a5fa;
+  color: #fff;
+}
+.table-attack .answers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.table-attack .toggle span,
+.table-attack .stepper span {
+  flex: 1;
+}
+.table-attack .stepper strong {
+  min-width: 4em;
+  text-align: center;
+}
+
+/* UX 253-254: long translations on a phone */
+.language-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.language-picker label {
+  gap: 8px;
+  align-items: center;
+}
+.lobby select {
+  max-width: 100%;
+  min-width: 0;
+}
+.lobby label {
+  max-width: 100%;
+}
+.text-size {
+  flex-wrap: wrap;
+}
+.text-size button {
+  white-space: nowrap;
+}
+
+/* UX 273-274: phone-sized targets and a compact header in the companion */
+.companion button,
+.companion select,
+.companion input:not([type="checkbox"]) {
+  min-height: 44px;
+}
+.companion button {
+  min-width: 44px;
+}
+.companion input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+}
+.companion .topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.companion .topbar > .player {
+  padding: 2px 8px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.companion .topbar > .turn {
+  padding: 2px 4px;
+}
+.companion .topbar > .help-key,
+.companion .topbar > .sound-toggle {
+  display: none;
+}
+.companion .topbar .counter button {
+  padding: 0 8px;
+}
+.companion .invite .invite-link {
+  word-break: break-all;
+  font-size: 0.8rem;
+}
+.dice-entry .face-count {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dice-entry .face-count .row {
+  gap: 2px;
+}
+.dice-entry .face-count input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  box-sizing: border-box;
+}
+.companion .dice-entry .face-count button.small {
+  min-width: 32px;
+  padding: 0;
+}
+
+/* What's new (#39) */
+.whats-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.whats-new .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #60a5fa;
+}
+.whats-new-list ul {
+  padding-left: 1.2em;
+}
+.whats-new-list li {
+  margin: 4px 0;
+}
+.stratagem button.die {
+  padding: 0;
+  margin: 0 1px;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.stratagem .die.on {
+  background: #f59e0b;
+  color: #111;
+}
+
+/* Phones: a dialog's Deploy/Cancel row would run under the replay bar, so the bar steps aside (UX 378). */
+body:has(.modal-backdrop) .replaybar {
+  display: none;
+}
+/* Phones: the stratagem paste box spans the sheet, with a finger-sized Add (UX 377). */
+@media (max-width: 700px) {
+  .add-stratagem textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .add-stratagem button.primary {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
+/* A dialog's own buttons stay in view while its body scrolls. */
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 8px 0;
+  background: rgb(17 19 24);
+  z-index: 1;
+}
+
+/* Fingers on the start page (UX 300): every control at least 44px tall, as in the companion. */
+@media (pointer: coarse) {
+  .lobby button,
+  .lobby select,
+  .lobby input:not([type="checkbox"]):not([type="file"]),
+  .lobby summary,
+  .lobby a,
+  .lobby label.file {
+    min-height: 44px;
+  }
+  .lobby button,
+  .lobby a,
+  .lobby summary,
+  .lobby label.file {
+    display: inline-flex;
+    align-items: center;
+  }
+  .lobby .demo .row button {
+    padding: 0 12px;
+  }
+  .lobby .own-army {
+    display: flex;
+  }
+  .lobby-settings .text-size button {
+    min-width: 44px;
+  }
+}

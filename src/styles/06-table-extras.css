@@ -1,0 +1,351 @@
+/* Table talk, casualty piles, the charge stamp, package panels, secrets, broadcast, What if and moments. */
+
+/* Table talk (src/talk): tools, reactions and chat, bottom left */
+.talk-dock {
+  z-index: 20;
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.talk-dock .panel.talk {
+  position: static;
+  gap: 6px;
+  padding: 8px 10px;
+}
+.panel.talk .row {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.panel.talk button {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.panel.talk .talk-toggle {
+  margin-left: auto;
+}
+.talk-reactions-row {
+  justify-content: space-between;
+}
+.panel.talk .talk-reactions-row button {
+  font-size: 1.05rem;
+  padding: 0 2px;
+}
+.talk-chat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.panel.talk form input {
+  flex: 1;
+  min-width: 0;
+}
+.talk-toasts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.talk-toasts li {
+  pointer-events: auto;
+  cursor: pointer;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  animation: talk-toast 15s ease forwards;
+}
+@keyframes talk-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  3%,
+  85% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.talk-floats {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  overflow: hidden;
+}
+.talk-float {
+  position: absolute;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  animation: talk-rise 3s ease-out forwards;
+}
+.talk-float .emoji {
+  font-size: 3rem;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 60%));
+}
+.talk-float .who {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-shadow: 0 1px 3px #000;
+}
+@keyframes talk-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.15);
+  }
+  20% {
+    transform: translate(-50%, -10px) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -240px) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talk-float {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}
+.talk-label span {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: 6px;
+  background: rgb(17 19 24 / 85%);
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* The rules-package sandbox stopped a package (src/sandbox). */
+.panel.sandbox-notice {
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 420px;
+  border: 1px solid #b45309;
+}
+
+/* A player's casualty pile beside the table (render/Casualties.tsx) */
+.ruler.casualty-pile {
+  pointer-events: auto;
+  font-size: 0.8rem;
+  /* A label, not a readout (UX 194). */
+  font-family: inherit;
+  background: rgb(17 19 24 / 80%);
+  border: 1px solid #2d3340;
+}
+.ruler.casualty-pile button {
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  text-decoration: none;
+}
+.ruler.casualty-pile button::after {
+  content: " ▾";
+  opacity: 0.6;
+}
+.ruler.casualty-pile ul {
+  margin: 4px 0 0;
+  padding: 0 0 0 1em;
+  text-align: left;
+}
+
+/* The charge stamp over a unit that struck home (PX-3c) */
+.charge-stamp {
+  padding: 2px 10px;
+  border: 3px solid #b45309;
+  border-radius: 6px;
+  color: #fde68a;
+  background: rgb(127 29 29 / 85%);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: charge-stamp 2.6s ease-out both;
+}
+/* Moved further than the roll: noted, not cheered (UX 128). */
+.charge-stamp.over {
+  border-color: #d97706;
+  color: #fde68a;
+  background: rgb(120 53 15 / 85%);
+  font-weight: 600;
+  text-transform: none;
+}
+.charge-stamp.short {
+  border-color: #71717a;
+  color: #e4e4e7;
+  background: rgb(39 39 42 / 85%);
+  font-weight: 600;
+}
+@keyframes charge-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.3) rotate(-8deg);
+  }
+  8% {
+    opacity: 1;
+    transform: scale(1) rotate(-4deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1) rotate(-4deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) rotate(-4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .charge-stamp {
+    animation-name: none;
+  }
+}
+
+/* A package game's own panel, described by the package (src/ui/PackagePanel.tsx). */
+.panel.package-panel {
+  top: 96px;
+  left: 330px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Hidden objectives, kept on their owner's device until revealed (src/ui/SecretObjectives.tsx). */
+.secret-objectives .stack-player {
+  margin-top: 6px;
+}
+.secret-objectives .objective-list {
+  margin: 2px 0 4px;
+  padding-left: 1.2em;
+}
+.secret-objectives input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Broadcast mode (roadmap #13): the spectator's controls, and the clean streaming view. */
+.broadcast-controls select {
+  max-width: 9rem;
+}
+body.broadcast .topbar button,
+body.broadcast .topbar .overflow,
+body.broadcast .topbar .sound-toggle,
+body.broadcast .replaybar {
+  display: none;
+}
+body.broadcast .caption {
+  bottom: 24px;
+  font-size: 1.05rem;
+}
+.broadcast-badge {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  /* Over the units' name plates (LABEL_Z tops out at 9; UX 448). */
+  z-index: 12;
+}
+.broadcast-badge span {
+  padding: 4px 10px;
+  border: 2px solid #475569;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 85%);
+  font-weight: 600;
+}
+
+/* "What if…" on the replay bar: start a new game from this point (src/ui/Branch.tsx). */
+.branch-button {
+  position: relative;
+}
+.branch-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+}
+.replay-title .branched {
+  display: block;
+}
+
+/* Moments of the game (PX-4): the lower third over the table. */
+.moment-card {
+  position: fixed;
+  left: 50%;
+  bottom: 112px;
+  transform: translateX(-50%);
+  z-index: 30;
+  min-width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 10px 18px 12px;
+  border-left: 6px solid #b45309;
+  border-radius: 8px;
+  background: rgb(15 23 42 / 92%);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 45%);
+  animation: moment-in 0.45s ease-out both;
+}
+.moment-card .title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.moment-card .line {
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+.moment-card .foot {
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.moment-card .row {
+  margin-top: 8px;
+}
+@keyframes moment-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moment-card {
+    animation: none;
+  }
+}
+.replaybar .highlight.moment {
+  color: #fbbf24;
+}

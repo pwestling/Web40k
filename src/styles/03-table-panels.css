@@ -1,0 +1,579 @@
+/* Around the table: left panel, top bar, unit card, attack panel, import, replay bar, labels, terrain and sight. */
+
+/* Left panel */
+.hud {
+  top: var(--below-bar, 64px);
+  left: 12px;
+  width: 300px;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+}
+.hud.collapsed {
+  width: auto;
+}
+.log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  max-height: 260px;
+  /* A few lines of it at least, however big the text: the menu scrolls instead (UX 183). */
+  min-height: min(7rem, 25vh);
+  overflow-y: auto;
+}
+/* Four buttons at the battle's end wrapped word by word in a narrow panel (dogfood). */
+.hud-foot > * {
+  white-space: nowrap;
+}
+.log li {
+  padding: 2px 0;
+}
+.log .phase {
+  margin-top: 6px;
+  padding: 2px 0;
+  border-bottom: 1px solid #374151;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.log .detail {
+  margin: 1px 0 2px 10px;
+  padding: 0 0 0 8px;
+  list-style: none;
+  border-left: 2px solid #374151;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+.log .detail li {
+  padding: 0;
+}
+.log .undone {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Top bar */
+.topbar {
+  z-index: 20;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  /* left: 50% would cap it at half the screen and wrap the last button (UX 113). */
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.topbar > * {
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  padding: 4px 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.topbar .player {
+  border-left-width: 4px;
+}
+.topbar .player.active {
+  box-shadow: 0 0 0 1px currentcolor;
+}
+.topbar .counter {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+.topbar .counter button {
+  padding: 0 5px;
+}
+.topbar .phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.phases {
+  display: flex;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+.phases .current {
+  color: #fde047;
+  font-weight: 600;
+}
+
+/* Unit card */
+.unitcard {
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: 400px;
+  /* Clear of the stratagems button below it, at any text size (UX 183). */
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
+  overflow-y: auto;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chip {
+  font-size: 0.75rem;
+  padding: 1px 7px;
+  border-radius: 10px;
+  border: 1px solid #39404f;
+  color: #9ca3af;
+  background: transparent;
+}
+.chip.on {
+  background: #1e3a8a;
+  color: #e5e7eb;
+  border-color: #3b82f6;
+}
+table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+th,
+td {
+  padding: 2px 4px;
+  text-align: left;
+}
+th {
+  color: #9ca3af;
+  font-weight: 500;
+  border-bottom: 1px solid #2d3340;
+}
+tr.kw td {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  padding-top: 0;
+}
+tr.muted td {
+  color: #6b7280;
+}
+details summary {
+  cursor: pointer;
+  color: #93c5fd;
+}
+details p {
+  font-size: 0.85rem;
+  margin: 6px 0;
+}
+.models {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85rem;
+}
+.models li {
+  display: grid;
+  grid-template-columns: 1fr 60px auto;
+  gap: 6px;
+  align-items: center;
+}
+.models li.dead span:first-child {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+/* Attack panel */
+.attack {
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: 400px;
+  max-height: calc(100vh - var(--below-bar, 64px) - 60px - 3.5rem);
+  overflow-y: auto;
+}
+.attack .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px 12px;
+}
+.attack .grid input[type="number"] {
+  width: 3em;
+}
+.notes {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.85rem;
+  color: #fcd34d;
+}
+.stage {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 4px 8px;
+  align-items: start;
+}
+.stage .label {
+  color: #9ca3af;
+}
+.stage .result {
+  grid-column: 2;
+}
+.dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: #374151;
+  color: #9ca3af;
+}
+.die.ok {
+  background: #166534;
+  color: #ecfdf5;
+  /* A ring as well as the colour, for colour-blind players (#25). */
+  box-shadow: inset 0 0 0 2px #bbf7d0;
+}
+.die.crit {
+  background: #ca8a04;
+  color: #111;
+}
+.die sup {
+  font-size: 0.6rem;
+}
+
+/* Import modal */
+/* A sheet over the table reads on its own: nothing shows through (UX 375). */
+.panel.modal {
+  background: rgb(17 19 24);
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
+  z-index: 50;
+}
+.modal {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: 80vh;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  z-index: 51;
+}
+
+/* Replay bar */
+.replaybar {
+  z-index: 20;
+  position: absolute;
+  bottom: 10px;
+  left: max(50%, 540px);
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+  border-radius: 8px;
+  padding: 4px 10px;
+  /* Centred and clear of the talk dock on the left (300px + margins). */
+  width: min(720px, calc(100vw - 660px));
+  min-width: 420px;
+  box-sizing: border-box;
+}
+.replaybar .track {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.replaybar input[type="range"] {
+  flex: 1;
+  padding: 0;
+}
+.replaybar .tick {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 6px;
+  background: #6b7280;
+  pointer-events: none;
+}
+.replaybar .tick.round {
+  top: -7px;
+  width: 3px;
+  height: 14px;
+  background: #e5e7eb;
+}
+.replaybar .tick .label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: #d1d5db;
+}
+.replaybar .where {
+  min-width: 9em;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.caption {
+  z-index: 20;
+  position: absolute;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  /* Clear of the dice tray in the right-hand column (UX 101). */
+  max-width: min(720px, max(300px, calc(100vw - 880px)));
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+}
+.caption .when {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.plate {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border-left: 3px solid;
+  background: rgb(17 19 24 / 80%);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Labels drawn over the table */
+.ruler,
+.wounds {
+  padding: 2px 6px;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ruler.over {
+  background: rgb(185 28 28 / 85%);
+}
+/* Within half an inch of the limit (PX-3e): amber, pulsing. */
+.ruler.near {
+  background: rgb(180 83 9 / 90%);
+  animation: ruler-near 0.6s ease-in-out infinite alternate;
+}
+@keyframes ruler-near {
+  to {
+    transform: scale(1.08);
+  }
+}
+/* A charge roll that only just makes it, or only just misses (PX-3e). */
+.charge .tense {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: #fde68a;
+  background: rgb(180 83 9 / 90%);
+  animation: ruler-near 0.6s ease-in-out infinite alternate;
+}
+.chip.charged {
+  border-color: #b45309;
+  color: #fde68a;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ruler.near,
+  .charge .tense {
+    animation: none;
+  }
+}
+.wounds {
+  font-size: 0.7rem;
+  padding: 0 4px;
+}
+
+@media (max-width: 900px) {
+  .hud,
+  .unitcard,
+  .attack {
+    width: calc(50vw - 18px);
+  }
+}
+
+/* Terrain editor */
+.terrainpanel {
+  top: var(--below-bar, 64px);
+  right: 12px;
+  width: 360px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+.terrainpanel label:not(.check):not(.file) {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.selected-terrain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #a16207;
+  border-radius: 6px;
+}
+.eye-exit {
+  z-index: 20;
+  position: absolute;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.overflow {
+  position: relative;
+}
+.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: #9ca3af;
+}
+.overflow .menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+/* Line of sight */
+.sightlabel {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(17, 24, 39, 0.85);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sightlabel.full,
+.legend .full {
+  color: #4ade80;
+}
+.sightlabel.partial,
+.legend .partial {
+  color: #facc15;
+}
+.sightlabel.none,
+.legend .none {
+  color: #f87171;
+}
+.legend {
+  z-index: 20;
+  position: absolute;
+  bottom: 64px;
+  left: 12px;
+  display: flex;
+  gap: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.85);
+  font-size: 0.8rem;
+}
+.legend span:not(.muted)::before {
+  content: "● ";
+}
+.settings label {
+  display: block;
+  margin: 4px 0;
+}
+.plate .sightlabel {
+  padding: 0;
+  background: none;
+}
+.settings[open] {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.terrain-legend {
+  bottom: 96px;
+}
+.terrain-legend .open {
+  color: #e5e7eb;
+}
+.terrain-legend .obscuring {
+  color: #facc15;
+}
+.terrain-legend .blocking {
+  color: #f87171;
+}
+
+/* Dice pools in the top bar (activation dice) */
+.topbar .pool button.die {
+  padding: 0;
+  margin: 0 1px;
+  background: #e5e7eb;
+  color: #111;
+  border: 1px solid #9ca3af;
+}
+.topbar .pool button.die.on {
+  background: #f59e0b;
+  border-color: #b45309;
+}
+
+/* Game system panels: actions, plans and the reaction prompt */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0;
+}
+.actions .cost {
+  opacity: 0.75;
+  font-size: 0.8em;
+}
+.command {
+  border-left: 2px solid #3b82f6;
+  padding-left: 8px;
+}
+.plan {
+  margin: 6px 0;
+  padding-left: 1.2em;
+  font-size: 0.85rem;
+}
+.plan .label {
+  color: #9ca3af;
+}
+.reaction {
+  top: 136px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100vw - 32px));
+  border-color: #f59e0b;
+  /* A choice waiting on a player: above the table's name labels and the What now card (dogfood). */
+  z-index: 20;
+}

@@ -1,0 +1,375 @@
+/* Phone sheets, the end reel, missions, players' own dice and the army showcase. */
+
+/* Phones (UX 17): the menu, unit card, attack and stratagems become one bottom sheet at a time. */
+@media (max-width: 700px) {
+  .topbar {
+    top: 4px;
+    gap: 4px;
+    font-size: 0.8rem;
+  }
+  .topbar > * {
+    padding: 2px 6px;
+    gap: 4px;
+  }
+  .hud:not(.collapsed),
+  .unitcard,
+  .attack,
+  .terrainpanel,
+  .play:not(.collapsed) {
+    position: fixed;
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 68px;
+    width: auto;
+    max-height: 45vh;
+    /* Opaque: name plates on the table mustn't show through (UX 164). */
+    background: #111318;
+    overflow-y: auto;
+  }
+  .hud.collapsed,
+  .play.collapsed {
+    position: fixed;
+    top: auto;
+    bottom: 68px;
+  }
+  .hud.collapsed {
+    left: 8px;
+  }
+  .play.collapsed {
+    left: auto;
+    right: 8px;
+  }
+  .talk-dock {
+    left: 8px;
+    right: 8px;
+    bottom: 120px;
+    width: auto;
+  }
+  body:has(.unitcard, .attack, .terrainpanel) :is(.hud, .play),
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed))
+    .talk-dock
+    > :not(.talk-toasts),
+  body:has(.hud:not(.collapsed)) .play {
+    display: none;
+  }
+  /* With the chat hidden under a panel, what's said still shows, over everything at the top (PX). */
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed)) .talk-dock {
+    z-index: 60;
+  }
+  body:has(.unitcard, .attack, .terrainpanel, .hud:not(.collapsed), .play:not(.collapsed)) .talk-toasts {
+    position: fixed;
+    top: calc(var(--below-bar, 64px) + 6px);
+    left: 8px;
+    right: 8px;
+    z-index: 60;
+  }
+  .replaybar {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    transform: none;
+    width: auto;
+  }
+  .caption {
+    max-width: calc(100vw - 16px);
+  }
+  /* Everything on the replay bar fits, What if… included (UX 152). */
+  .replaybar {
+    gap: 4px;
+    min-width: 0;
+  }
+  .replaybar .track,
+  .replaybar input[type="range"] {
+    min-width: 0;
+  }
+  .replaybar .where {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Below the phase bar, which wraps to two rows here (UX 153). */
+  .panel.whatnow,
+  .whatnow-toggle {
+    top: var(--below-bar, 126px);
+  }
+  .panel.whatnow {
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+}
+
+/* The end-of-game reel: a clean stage under the moment cards (PX-4 tuning). */
+body.reeling
+  :is(.hud, .unitcard, .attack, .play, .terrainpanel, .caption, .replaybar, .talk-dock, .broadcast-controls) {
+  display: none;
+}
+
+/* Missions: the picker at setup, and scores waiting on a player (src/ui/Missions.tsx). */
+.mission-picker p {
+  margin: 2px 0 6px;
+}
+/* Top right, clear of the round card that opens top centre at the same moment. */
+.panel.score-panel {
+  top: calc(var(--below-bar, 64px) + 6px);
+  right: 16px;
+  max-width: min(400px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 4;
+}
+.score-panel .score-item input {
+  width: 4em;
+}
+.result-table td,
+.result-table th {
+  padding: 2px 8px;
+  text-align: right;
+}
+.result-table td:first-child,
+.result-table th:first-child {
+  text-align: left;
+}
+/* The stream's end: the stats card on its own, without the caption under it (UX 143). */
+body.broadcast:has(.stats-screen) .caption {
+  display: none;
+}
+
+/* Players' own dice (PX-5b): finishes. Crit glint, fail dimming and the legend glow sit on top of any of them. */
+:is(.dice-tray, .dice-try) .die.finish-translucent .body {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--c) 55%, #fff3),
+    color-mix(in srgb, var(--c) 60%, transparent) 55%,
+    color-mix(in srgb, var(--c) 80%, #0006)
+  );
+}
+:is(.dice-tray, .dice-try) .die.finish-translucent:not(.crit, .tray-legend) .body {
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.28) color-mix(in srgb, var(--c) 60%, #fff),
+    inset 0 2px 0 #fff6;
+}
+/* The pips on the far side, faintly through the body. */
+:is(.dice-tray, .dice-try) .die.finish-translucent .pip:not(.on) {
+  visibility: visible;
+  opacity: 0.14;
+  transform: scale(0.8);
+}
+:is(.dice-tray, .dice-try) .die.finish-marbled .body {
+  background:
+    radial-gradient(circle at 30% 25%, #fff3, transparent 45%),
+    var(--marble, none) center / 160% 160%,
+    var(--c);
+  background-blend-mode: normal, overlay, normal;
+}
+:is(.dice-tray, .dice-try) .die.finish-metallic .body {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--c) 60%, #fff) 0%,
+    var(--c) 30%,
+    color-mix(in srgb, var(--c) 60%, #000) 55%,
+    color-mix(in srgb, var(--c) 85%, #fff) 80%,
+    color-mix(in srgb, var(--c) 70%, #000) 100%
+  );
+}
+:is(.dice-tray, .dice-try) .die.finish-metallic .body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(110deg, transparent 35%, #fff9 50%, transparent 65%) 0 0 / 300% 100% no-repeat;
+  animation: die-sheen 1.1s linear infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+@keyframes die-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.dice-tray, .dice-try) .die.finish-metallic .body::before {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
+/* The dice picker beside the army (PX-5b), with three dice to try. */
+.dice-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dice-picker .custom {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dice-picker input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+.dice-try {
+  position: relative;
+  height: 54px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 40%, #2c5a46, #173528);
+  overflow: hidden;
+  cursor: pointer;
+}
+.dice-try .die {
+  position: absolute;
+  top: 10px;
+  width: var(--s);
+  height: var(--s);
+}
+.dice-try .die .body {
+  position: absolute;
+  inset: 0;
+  border-radius: 20%;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 15%;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--c) 100%, #fff 18%),
+    var(--c) 55%,
+    color-mix(in srgb, var(--c) 70%, #000)
+  );
+  box-shadow:
+    inset 0 -3px 0 #0005,
+    inset 0 2px 0 #fff4;
+}
+.dice-try .die .shadow {
+  display: none;
+}
+.dice-try .die .pip {
+  width: 70%;
+  height: 70%;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--p, #10141a);
+  visibility: hidden;
+}
+.dice-try .die .pip.on {
+  visibility: visible;
+}
+/* At picker size the far side's pips read as a 9-grid: fainter there. */
+.dice-try .die.finish-translucent .pip:not(.on) {
+  opacity: 0.06;
+}
+.dice-try .die.rolling {
+  animation: die-try 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes die-try {
+  from {
+    transform: translate(-90px, -6px) rotate(-540deg);
+  }
+  70% {
+    transform: translate(4px, 2px) rotate(12deg);
+  }
+  to {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dice-try .die.rolling {
+    animation: none;
+  }
+}
+
+/* The army showcase at battle start (PX-5a): a clean stage, a title card per army, then "Round 1". */
+body.showcase
+  :is(
+    .hud,
+    .mailbar,
+    .unitcard,
+    .attack,
+    .play,
+    .terrainpanel,
+    .caption,
+    .replaybar,
+    .talk-dock,
+    .broadcast-controls,
+    .plate,
+    .round-card
+  ) {
+  display: none;
+}
+.showcase-card {
+  position: fixed;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  z-index: 30;
+  min-width: min(480px, calc(100vw - 32px));
+  padding: 14px 24px;
+  background: rgb(10 12 16 / 82%);
+  border-left: 6px solid;
+  border-radius: 8px;
+  animation: showcase-in 0.7s ease-out both;
+  pointer-events: none;
+}
+.showcase-card .title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.showcase-card .line {
+  font-size: 1.1rem;
+  color: #d1d5db;
+}
+@keyframes showcase-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.showcase-round {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  z-index: 30;
+  padding: 6px 28px;
+  border: 4px solid #b45309;
+  border-radius: 8px;
+  color: #fde68a;
+  background: rgb(127 29 29 / 85%);
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: showcase-stamp 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes showcase-stamp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.2);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .showcase-card,
+  .showcase-round {
+    animation: none;
+  }
+  .showcase-round {
+    transform: translate(-50%, -50%);
+  }
+}

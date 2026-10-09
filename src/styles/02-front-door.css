@@ -1,0 +1,303 @@
+/* The front door: lobby, help, play by mail, lessons and the coach. */
+
+/* Lobby */
+.lobby {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.lobby h1 {
+  margin: 0;
+}
+.lobby-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.lobby-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+}
+.lobby-settings .text-size button {
+  padding: 2px 6px;
+}
+.lobby-settings .language-picker select {
+  font-size: 0.8rem;
+}
+.lobby-cols,
+.lobby-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lobby-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  border-top: 1px solid #2d3340;
+  padding-top: 8px;
+}
+@media (min-width: 1000px) {
+  .lobby {
+    width: min(960px, calc(100vw - 64px));
+  }
+  .lobby-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
+.lobby .pitch {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: #e5e7eb;
+}
+.lobby h2 {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+.lobby h2 + p {
+  margin: 0;
+}
+.lobby .demos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.lobby .demo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  text-align: left;
+  border-color: #4b5563;
+}
+.lobby .demo {
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+}
+/* A card asking How hard? / Your army takes the whole row, so the card beside it doesn't stretch into an empty box (PX re-check of #56). */
+.lobby .demo:has(.how-hard) {
+  grid-column: 1 / -1;
+}
+.lobby .demo .row {
+  margin-top: auto;
+  padding-top: 6px;
+}
+.lobby .own-army {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+  border-color: #f59e0b;
+}
+.lobby .own-army strong {
+  color: #fbbf24;
+}
+.lobby .demo strong {
+  color: #fbbf24;
+}
+.lobby details.fold {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lobby details.fold[open] > :not(summary) {
+  margin-top: 6px;
+}
+@media (max-width: 420px) {
+  .lobby .demos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Front door help: the "What can I do now?" hint, the controls sheet and the army guides */
+.whatnow-toggle {
+  z-index: 19;
+  position: absolute;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+/* Play by mail: whose move it is, Send and Open their file (src/mail/MailBar.tsx). */
+.panel.mailbar {
+  z-index: 18;
+  /* Just above the replay bar, between the talk dock (left) and the play panels (right). */
+  bottom: 58px;
+  left: 324px;
+  width: clamp(300px, calc(100vw - 324px - 440px), 560px);
+  gap: 6px;
+  border-color: #a78bfa;
+}
+.panel.mailbar .mail-passed {
+  display: block;
+  margin-top: 2px;
+}
+@media (max-width: 900px) {
+  .panel.mailbar {
+    left: 8px;
+    width: calc(100vw - 16px);
+  }
+}
+.panel.mailbar ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.mail-games {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.panel.whatnow {
+  z-index: 19;
+  top: var(--below-bar, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 32px));
+  gap: 4px;
+  border-color: #f59e0b;
+}
+.panel.whatnow p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+/* Folded on a tablet once the phase's first action is in: one line, tapped to open (PX touch pass). */
+.panel.whatnow.folded {
+  width: auto;
+  max-width: min(440px, calc(100vw - 32px));
+  flex-direction: row;
+  align-items: center;
+  font: inherit;
+  font-size: 0.9rem;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+/* Teaching mode's coach card (ui/Coach.tsx) */
+.panel.coach {
+  z-index: 19;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 32px));
+  gap: 6px;
+  border-color: #22c55e;
+}
+.panel.coach p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.panel.coach .coach-said {
+  color: #86efac;
+  font-weight: 600;
+}
+.panel.coach .coach-title {
+  font-size: 1.15rem;
+}
+.panel.coach .coach-ticks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted, #9ca3af);
+}
+.panel.coach .coach-ticks .ok {
+  color: #86efac;
+}
+/* In a lesson the left panel keeps only its title, Undo and the log (PX review). */
+body.lesson .panel.hud > :not(:first-child):not(.log):not(.undo-row) {
+  display: none;
+}
+/* The control a lesson step names (ui/Coach.tsx). */
+button.coach-pulse {
+  animation: coach-pulse 1.6s ease-in-out infinite;
+}
+@keyframes coach-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.coach-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8);
+  }
+}
+.keys-sheet table {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.keys-sheet td {
+  padding: 3px 8px 3px 0;
+  vertical-align: top;
+}
+.keys-sheet td:first-child {
+  white-space: nowrap;
+}
+kbd {
+  padding: 1px 5px;
+  border: 1px solid #4b5563;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #1f2937;
+  font-family: inherit;
+  font-size: 0.85em;
+}
+.guide h3 {
+  margin: 10px 0 2px;
+  font-size: 0.95rem;
+}
+.guide ol {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.4;
+}
+.guide .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.guide .tabs .on {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+body.showcase .coach,
+body.showcase .whatnow,
+body.showcase .whatnow-toggle,
+body.reeling .whatnow,
+body.reeling .whatnow-toggle {
+  display: none;
+}
+.lobby label:not(.check):not(.file) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}

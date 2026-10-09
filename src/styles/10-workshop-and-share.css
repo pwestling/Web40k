@@ -1,0 +1,749 @@
+/* The module workshop, Rift Lanterns, Play the computer, sharing and the rules page. */
+
+/* Module workshop (#41): the whole screen at the front door; over a test table, a drawer at the side
+   that folds to a tab, so the table stays playable beside the code. */
+.workshop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: #111318;
+  padding: 8px 12px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+.workshop.over-table {
+  left: auto;
+  top: var(--below-bar, 56px);
+  width: min(640px, 48vw);
+  border-left: 1px solid #39404f;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 40%);
+}
+/* Over a table the drawer is narrow: the panes go under the code. */
+.workshop.over-table .workshop-body {
+  flex-direction: column;
+}
+.workshop.over-table .workshop-side {
+  flex: 0 0 auto;
+  max-height: 38%;
+}
+.workshop-head,
+.workshop-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workshop-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.workshop .spacer {
+  flex: 1;
+}
+.workshop button.primary {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.workshop-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+}
+.workshop-code {
+  flex: 3;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workshop-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #39404f;
+  border-radius: 6px;
+}
+.workshop-editor .cm-editor {
+  height: 100%;
+  font-size: 0.95rem;
+}
+.workshop-side {
+  flex: 2;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workshop-side .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.workshop-side .tabs [aria-selected="true"] {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.workshop-side p,
+.workshop-side h3 {
+  margin: 4px 0;
+}
+.workshop-side h3 {
+  font-size: 1rem;
+}
+.workshop-side label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+}
+.workshop .hint {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+.workshop-note {
+  margin: 0;
+  color: #fde68a;
+}
+.workshop-problems {
+  margin: 0;
+  padding: 6px 10px;
+  list-style: none;
+  background: rgb(127 29 29 / 35%);
+  border-radius: 6px;
+}
+.workshop-log {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+.workshop-log li {
+  padding: 2px 0;
+  border-bottom: 1px solid #1f2430;
+}
+.workshop-soak li.ok::before {
+  content: "✓ ";
+  color: #4ade80;
+}
+.workshop-soak li.bad::before {
+  content: "✗ ";
+  color: #f87171;
+}
+.workshop-soak ul {
+  padding-left: 0;
+  list-style: none;
+}
+.workshop-sdk pre {
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  background: #0b0d12;
+  padding: 8px;
+  border-radius: 6px;
+}
+.workshop-start {
+  max-width: 760px;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+.workshop-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.workshop-template {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+}
+.workshop-link {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workshop-link label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+.workshop-tab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  z-index: 45;
+  writing-mode: vertical-rl;
+  padding: 10px 4px;
+  border-radius: 6px 0 0 6px;
+}
+/* A narrow screen stacks the code over the side panes; over a table it takes the whole screen below the
+   bar, and "Table" folds it away to play (UX 316): a switch, not a five-line editor. */
+@media (max-width: 800px) {
+  .workshop-body {
+    flex-direction: column;
+  }
+  .workshop.over-table {
+    width: 100vw;
+    border-left: 0;
+  }
+  .workshop-tab {
+    top: auto;
+    bottom: 12px;
+    writing-mode: horizontal-tb;
+    padding: 10px 16px;
+    border-radius: 6px;
+    right: 12px;
+  }
+}
+@media (pointer: coarse) {
+  .workshop button,
+  .workshop select,
+  .workshop input,
+  .workshop-tab {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+.workshop-note.bad,
+.workshop-table .bad {
+  color: #fca5a5;
+}
+.workshop .cm-problem-line {
+  background: rgb(220 38 38 / 25%);
+}
+.workshop-ref {
+  margin: 0;
+}
+.workshop-ref > div {
+  padding: 3px 0;
+  border-bottom: 1px solid #1f2430;
+}
+.workshop-ref dt code {
+  color: #fbbf24;
+}
+.workshop-ref dd {
+  margin: 0 0 0 12px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+/* Our own game (#42): the one card on the front door that needs nothing brought. */
+.lobby .demo.ours {
+  margin: 8px 0 4px;
+  border-color: #8a6bb8;
+  background: linear-gradient(135deg, rgb(138 107 184 / 18%), rgb(201 164 76 / 10%));
+}
+.lobby .demo.ours .row {
+  align-items: center;
+  gap: 10px;
+}
+
+/* The workshop's type checker (#43): a type and the SDK's comment, on hover and beside completions. */
+.cm-type-hover {
+  max-width: 34rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+.cm-type-hover code {
+  display: block;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8em;
+  color: var(--muted, #aab);
+}
+.cm-type-hover p {
+  margin: 0 0 0.35rem;
+  white-space: pre-wrap;
+}
+
+/* The workshop's Check (#43): one verdict, a line per part. */
+.workshop-check {
+  margin: 0.25rem 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border, #445);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.workshop-check.ok {
+  border-color: #3c8f5a;
+}
+.workshop-check.bad {
+  border-color: #c0504d;
+}
+.workshop-check ul {
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.workshop-check li.bad {
+  color: #f0a0a0;
+}
+.workshop-check li.skip {
+  opacity: 0.7;
+}
+
+/* Fingers at the table (UX 327): the top bar's controls at least 44px, as in the companion and the workshop.
+   The score counters' − and + stay small: they are corrections, and full size would wrap the bar to three rows. */
+@media (pointer: coarse) {
+  .topbar button:not(.counter button),
+  .topbar select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .topbar button:not(.counter button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* A table warning's check name, as a label ahead of the sentence (UX 331). */
+.check-label {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
+  opacity: 0.8;
+  margin-right: 2px;
+}
+
+/* Play the computer (#45): "How hard?" in the game's card (UX 350). */
+.lobby .how-hard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Share the battle (#46): the panel over the replay bar, and the pill while a clip records. */
+.panel.share-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 76px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--below-bar, 64px) - 96px);
+  overflow-y: auto;
+  z-index: 25;
+  display: grid;
+  gap: 10px;
+}
+.share-panel section {
+  display: grid;
+  gap: 6px;
+}
+.share-panel h4 {
+  margin: 0;
+}
+.share-panel p {
+  margin: 0;
+}
+.share-options {
+  display: grid;
+  gap: 2px;
+}
+/* The whole row is the radio's (or checkbox's) tap target (UX 340). */
+.share-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.share-options label select {
+  margin-left: 6px;
+}
+.share-download {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+/* The stats sheet's Share… sits before its close button. */
+.stats-screen .head button:not(.quiet) {
+  margin-left: auto;
+}
+/* On a phone: an opaque full-width sheet over everything else, with 44 px rows (UX 340, 341). */
+@media (max-width: 640px), (pointer: coarse) {
+  .panel.share-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 88vh;
+    z-index: 70;
+    background: #15171d;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -12px 40px rgb(0 0 0 / 55%);
+  }
+  .share-panel button,
+  .share-options label {
+    min-height: 44px;
+  }
+  .share-options input[type="radio"],
+  .share-options input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+}
+/* While a clip records (dogfood: a merge had left this rule half another one's, a full-width bar over the top bar). */
+.recording-pill {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgb(17 19 24 / 92%);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+}
+.recording-pill .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: rec-blink 1s steps(2) infinite;
+}
+@keyframes rec-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recording-pill .dot {
+    animation: none;
+  }
+}
+.lobby .how-hard button {
+  width: 100%;
+  text-align: left;
+  min-height: 36px;
+}
+.lobby .how-hard .quiet {
+  width: auto;
+  align-self: flex-end;
+  min-height: 0;
+}
+.replay-start {
+  margin-top: 6px;
+  gap: 8px;
+}
+.replay-start .primary {
+  font-size: 1.05em;
+  padding: 8px 14px;
+}
+/* A round's card has the top centre while it shows; the hint waits under it (UX 345). */
+body:has(.round-card:not(.replay-title):not(.package-card)) .whatnow {
+  visibility: hidden;
+}
+
+/* Rift Lanterns' rules page (#47): the rulebook made from the module, to read, with Print and play. */
+.rules-page {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  background: rgb(8 9 12 / 82%);
+  padding: 24px 16px calc(48px + env(safe-area-inset-bottom));
+}
+.rules-sheet {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #f6f1e7;
+  color: #1d1f24;
+  border-radius: 10px;
+  padding: 24px 28px 32px;
+  line-height: 1.5;
+  text-align: left;
+}
+/* The title and ✕ stay in reach however far down the page (UX 360). */
+.rules-sheet header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: -24px -28px 0;
+  padding: 16px 28px 8px;
+  background: #f6f1e7;
+  border-bottom: 1px solid #e3d9c4;
+}
+.rules-sheet header .close {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.3rem;
+  color: #1d1f24;
+  background: #ebe2cf;
+  border: 1px solid #d9cdb4;
+  border-radius: 8px;
+}
+/* A light second button on the cream page, not dark on dark (UX 357). */
+.rules-sheet .print-row button:not(.primary),
+.rules-sheet .play-row button:not(.primary) {
+  color: #1d1f24;
+  background: #fffaf0;
+  border: 1px solid #c9bb9c;
+}
+.rules-sheet .print-row button,
+.rules-sheet .play-row button {
+  min-height: 40px;
+}
+/* The sheet's dark ink would carry into the blue buttons: white on blue, as everywhere else (UX 364). */
+.rules-sheet button.primary {
+  color: #fff;
+}
+.rules-sheet .play-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 2px solid #d9cdb4;
+}
+.rules-page:focus {
+  outline: none;
+}
+.rules-sheet h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+.rules-sheet strong {
+  color: inherit;
+}
+.rules-sheet h2 {
+  margin: 1.6em 0 0.4em;
+  font-size: 1.3rem;
+  color: #1d1f24;
+  text-transform: none;
+  letter-spacing: normal;
+  border-bottom: 2px solid #d9cdb4;
+  padding-bottom: 2px;
+}
+.rules-sheet h3 {
+  margin: 0 0 4px;
+}
+.rules-sheet .muted {
+  color: #5d6068;
+}
+.rules-sheet .print-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 10px 12px;
+  background: #ebe2cf;
+  border-radius: 8px;
+}
+.rules-sheet .intro {
+  font-size: 1.1rem;
+}
+.rules-sheet .warband {
+  border-left: 4px solid;
+  padding: 4px 0 4px 12px;
+  margin: 16px 0;
+}
+.rules-sheet .units {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+}
+.rules-sheet .unit > div {
+  min-width: 0;
+  flex: 1;
+}
+.rules-sheet .unit {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #fffaf0;
+  border-radius: 6px;
+  padding: 6px;
+}
+.rules-sheet .figure {
+  width: 56px;
+  min-height: 56px;
+  object-fit: contain;
+  flex: none;
+}
+.rules-sheet table.stats {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+.rules-sheet table.stats th,
+.rules-sheet table.stats td {
+  border: 1px solid #d9cdb4;
+  padding: 1px 2px;
+  text-align: center;
+  color: #1d1f24;
+  background: transparent;
+  font-size: 0.8rem;
+}
+.rules-sheet .map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+.rules-sheet .quickref {
+  background: #ebe2cf;
+  border-radius: 8px;
+  padding: 2px 16px 8px;
+}
+@media (max-width: 640px) {
+  .rules-page {
+    padding: 0;
+  }
+  .rules-sheet {
+    border-radius: 0;
+    padding: 16px;
+  }
+  .rules-sheet header {
+    margin: -16px -16px 0;
+    padding: 10px 16px 6px;
+  }
+  .rules-sheet .play-row button {
+    flex: 1 1 100%;
+  }
+}
+/* The replay page's start card has the screen: the caption waits until it closes (UX 354). */
+body:has(.replay-title) .caption {
+  display: none;
+}
+/* Not one of the card's player rows (they are rows too). */
+.round-card .row.replay-start {
+  display: flex;
+  border-left: 0;
+  padding-left: 0;
+}
+/* On a phone, the two ways in are full width, one above the other (UX 354), and the caption sits above Menu and Notes (UX 344). */
+@media (max-width: 640px) {
+  .round-card .row.replay-start {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .replay-start button {
+    width: 100%;
+  }
+  .caption {
+    bottom: 112px;
+  }
+}
+/* Share's clip shape (UX 353): its own labelled row, three segments. */
+.share-shape {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.segmented {
+  display: inline-flex;
+  border: 1px solid #3a4150;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.segmented button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 4px 12px;
+}
+.segmented button + button {
+  border-left: 1px solid #3a4150;
+}
+.segmented button.on {
+  background: #2563eb;
+  color: #fff;
+}
+@media (max-width: 640px), (pointer: coarse) {
+  .segmented button {
+    min-height: 44px;
+    flex: 1;
+  }
+  .share-shape .segmented {
+    flex: 1;
+  }
+}
+/* At a real table: the players' answers, one a row, box first (UX 359). */
+.code-action .told {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 2px;
+}
+.code-action .told label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 36px;
+  padding: 6px 4px;
+  border-radius: 6px;
+}
+.code-action .told label.need {
+  background: rgb(245 158 11 / 8%);
+}
+.code-action .told input {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin: 0;
+}
+/* The companion's units list: whose go it is (UX 363). */
+.companion-units section.going {
+  border-left: 3px solid currentColor;
+  padding-left: 8px;
+}
+.companion-units .go-now {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: #111318;
+  background: #fbbf24;
+  vertical-align: middle;
+}
+/* While a square or tall clip records, the caption stacks: round line above the event (UX 356). */
+body.clip-narrow .caption {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 420px;
+}
+/* On the companion, a rule's question sits in the page, not floating over it. */
+.companion .panel.script {
+  position: static;
+  transform: none;
+  max-width: none;
+  margin: 8px 0;
+  border-width: 2px;
+}
+.companion .panel.script .chips button {
+  min-height: 44px;
+  flex: 1;
+}
+.rules-sheet .map.hero {
+  margin: 12px 0 4px;
+}
+/* The model under the pointer: a name, so it reads like the name plates, not a ruler readout (PX solo 4). */
+.ruler.model-hover {
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: rgb(17 19 24 / 90%);
+  border: 1px solid #2d3340;
+}
