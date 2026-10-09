@@ -579,6 +579,12 @@ export interface GameSettings {
    * The Old World). Missing means models see all around.
    */
   visionArc?: number;
+  /**
+   * A model ends each move facing the way it moved (FSD: the last 1 DU
+   * segment sets the facing; a drag is one straight segment). Setting up,
+   * deploying and reserves aside. Missing means facing is turned by hand.
+   */
+  faceMove?: boolean;
   /** Players per side (2 for a 2v2). Missing means one each. */
   teamSize?: number;
   /** The game's size in points, for systems whose numbers follow it (GameSystem.gameSize). */

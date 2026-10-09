@@ -1,4 +1,4 @@
-import type { AbilityTiming, Effect, Expr, GameSystem, RuleDef } from "../schema";
+import type { AbilityTiming, Effect, Expr, GameSystem, RuleDef, RuleReminder } from "../schema";
 
 /**
  * Full Spectrum Dominance (free rulebook v1.7.1 by Pantalone & Valsecchi),
@@ -52,6 +52,13 @@ const ref = (r: string): Expr => ({ ref: r });
 
 const distance: Expr = { query: { kind: "distance", from: "attacker", to: "target", measure: "centre" } };
 const weaponHas = (keyword: string): Expr => ({ hasKeyword: "weapon", keyword });
+/** `from` sees `to` with the weapon in scope: a Selective Fire weapon ignores units for sight, so only terrain blocks it. */
+const sees = (from: string, to: string): Expr => ({
+  any: [
+    { query: { kind: "visible", from, to } },
+    { all: [weaponHas("SELECTIVE FIRE"), { query: { kind: "visible", from, to, models: false } }] },
+  ],
+});
 /** Bases touching: edge to edge within a hair (positions are placed by hand). */
 const baseContact: Expr = {
   cmp: "<=",
@@ -73,7 +80,7 @@ const baseCanShoot: Expr = {
       a: { query: { kind: "distance", from: "base", to: "target", measure: "centre" } },
       b: ref("weapon.minRange"),
     },
-    { query: { kind: "visible", from: "base", to: "target" } },
+    sees("base", "target"),
   ],
 };
 /** The weapon sits on system line n and that system is damaged. */
@@ -196,7 +203,6 @@ const weaponRules: RuleDef[] = [
   weaponReminder("surgical", "Surgical", "^surgical$"),
   weaponReminder("suppress", "Suppress", "^suppress$"),
   weaponReminder("passThrough", "Pass Through", "^pass[- ]through$"),
-  weaponReminder("selectiveFire", "Selective Fire", "^selective fire$"),
   // Not after moving is automated; this is for not moving after it fired.
   weaponReminder("heavy", "Heavy", "^heavy$"),
 ];
@@ -290,7 +296,23 @@ const abilityTimings: AbilityTiming[] = [
     match: unitTraits(["fast", "slow", "agile", "tracked", "side movement", "jump", "flying", "charger"]),
   },
   { on: "reaction", match: unitTraits(["reactive", "unwavering"]) },
+  // A Character card behind the unit's (an ability named "Character: ..."): its abilities while the unit is activated.
+  { on: "activation", match: "^character\\b" },
+  // Abilities that re-roll a Ready AD or roll a Spent one: when the dice are rolled, before pre-assigning.
+  { phase: "preassign", side: "either", match: "\\b(ready|spent) (ADs?|activation dic?e)\\b" },
   { phase: "scoring", side: "either", match: unitTraits(["blunt", "flying", "mounted"]) },
+];
+
+/** Core rules the players apply by hand, reminded for the units they concern. Our own words. */
+const ruleReminders: RuleReminder[] = [
+  {
+    id: "behemothTurning",
+    name: "Behemoth turning",
+    text: "Turns at most 45° before each 1 DU segment of a move (other units turn freely)",
+    phase: "activations",
+    on: "activation",
+    if: isBehemoth("self"),
+  },
 ];
 
 export const fsd: GameSystem = {
@@ -308,6 +330,8 @@ export const fsd: GameSystem = {
     los: "footprint",
     modelsBlock: true,
     visionArc: 0,
+    // The last segment of a move sets the facing.
+    faceMove: true,
     blockers: { enemiesOnly: true, tall: ["VEHICLE", "MECH", "BEHEMOTH"] },
   },
   dice: [
@@ -543,6 +567,9 @@ export const fsd: GameSystem = {
   ],
   rules: weaponRules,
   abilityTimings,
+  ruleReminders,
+  deploymentHint:
+    "Starting with the player whose best Command among their units is lowest, take turns placing one unit in your deploy area; units not placed start in Reserve. Agree on raised ground, fighting through terrain, strongpoints, occupiable buildings and smoke before the game (on a tiled battlefield, on each tile). If the scenario offers modifiers, players may bid ADs from their Pool in secret: the winner picks one and plays with that many fewer ADs",
   procedures: [
     {
       id: "attack",
@@ -590,7 +617,7 @@ export const fsd: GameSystem = {
                 if: {
                   all: [
                     weaponHas("INDIRECT FIRE"),
-                    { not: { query: { kind: "visible", from: "attacker", to: "target" } } },
+                    { not: sees("attacker", "target") },
                   ],
                 },
                 then: 1,
@@ -716,12 +743,7 @@ export const fsd: GameSystem = {
           // Closest base first, and only bases the attacker sees: hits beyond them are lost
           // (fire at a unit out of sight altogether, Indirect Fire, takes the closest).
           order: { query: { kind: "distance", from: "attacker", to: "model", measure: "centre" } },
-          only: {
-            any: [
-              { query: { kind: "visible", from: "attacker", to: "model" } },
-              { not: { query: { kind: "visible", from: "attacker", to: "target" } } },
-            ],
-          },
+          only: { any: [sees("attacker", "model"), { not: sees("attacker", "target") }] },
         },
         { kind: "damage", id: "damage", if: { not: { has: "target.Chart" } }, amount: 1, spillover: false },
       ],
@@ -734,6 +756,7 @@ export const fsd: GameSystem = {
       name: "Activate",
       by: "unit",
       side: "active",
+      hint: "A Character's abilities (its card behind the unit's) are used during the activation, each once a round, even while pinned, and don't count toward the two actions",
       // A behemoth's Systems and Attachments activate with its Core, two actions each.
       activates: { op: "*", args: [2, { op: "+", args: [1, ref("self.Parts")] }] },
       // Once a round; a behemoth whose System reacted earlier can still activate its Core.
@@ -855,7 +878,7 @@ export const fsd: GameSystem = {
       forWeapons: { not: prepared },
       // In sight, or out of sight with Indirect Fire (+1 Defense, in the hit roll); in the weapon's arc.
       target: {
-        filter: { any: [{ query: { kind: "visible", from: "self", to: "it" } }, weaponHas("INDIRECT FIRE")] },
+        filter: { any: [sees("self", "it"), weaponHas("INDIRECT FIRE")] },
         notWhen: [{ if: outsideArcOf("self", "it"), why: "Outside the weapon's arc of fire" }],
       },
       limit: { count: 1, per: "round", perUnit: true },
@@ -882,7 +905,14 @@ export const fsd: GameSystem = {
       do: [dropInteract],
     },
     // Interacting counts as prepared: lost on taking any other action, or at a new round.
-    { id: "interact", name: "Interact", by: "unit", if: notPinned, sets: ["interacting"] },
+    {
+      id: "interact",
+      name: "Interact",
+      by: "unit",
+      if: notPinned,
+      sets: ["interacting"],
+      hint: "Retrieve: interacting with an objective nobody disputes takes it off the table. Extract: the unit carries it and scores on reaching a deploy area at the end of its activation; if destroyed, it drops where its last base fell",
+    },
     {
       // Instead of activating a unit, a player may use a support card from
       // their own cards: they name it and spend its ADs (the effect is played
@@ -932,7 +962,7 @@ export const fsd: GameSystem = {
         id: "preassign",
         name: "Pre-assign ADs",
         placeDice: true,
-        hint: "Reinforcement waves due this round join the Reserve (mark them in reserve)",
+        hint: "Reinforcement waves due this round join the Reserve (mark them in reserve); each wave keeps within the points the scenario gives it. Abilities that re-roll a Ready AD or roll a Spent one are used now",
       },
       {
         kind: "alternate",

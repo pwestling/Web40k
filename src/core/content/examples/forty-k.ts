@@ -452,6 +452,8 @@ const abilityTimings: AbilityTiming[] = [
   { phase: "command", side: "inactive", match: "opponent.s command phase" },
   { phase: "command", side: "active", match: "your command phase" },
   { phase: "command", side: "either", match: "command phase" },
+  // An objective that stays yours after your units leave it ("sticky"): checked in your Command phase.
+  { phase: "command", side: "active", match: "remains? under your control" },
   { phase: "movement", side: "inactive", match: "opponent.s movement phase" },
   { phase: "movement", side: "active", match: "your movement phase|remains? stationary" },
   {
@@ -507,6 +509,16 @@ const ruleReminders: RuleReminder[] = [
     phase: "movement",
     side: "active",
     if: kw("self", "TRANSPORT"),
+  },
+  {
+    // The engine can't check it: the targets declared in the charge picker (UX 396) stay in the
+    // player's own screen, not in the game record. So it is a reminder after the charge move.
+    id: "chargeTargets",
+    name: "Charge targets",
+    text: "The charge move ends in Engagement Range of every unit it declared as a target, and of no other enemy unit; else it fails.",
+    phase: "charge",
+    side: "active",
+    if: { hasFlag: "self", flag: "charged" },
   },
   {
     id: "aircraft",

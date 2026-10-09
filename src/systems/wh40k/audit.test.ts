@@ -670,3 +670,27 @@ describe("the computer and the fight order (PX #57)", () => {
     expect(other.move(createRecord(theirs), theirs, { seat: 1, player: "p2" })).toBeNull();
   });
 });
+
+describe("40k last missing rows (#58)", () => {
+  it("after a charge move, reminds the charging unit to end engaged with its declared targets only", () => {
+    const names = (st: GameState) => abilityReminders(st).map((r) => `${r.unitId}:${r.ability.name}`);
+    const s = goTo(setup(), "charge", 0);
+    expect(names(s)).not.toContain("mine:Charge targets");
+    const charged = setStatus(s, "mine", { charged: true });
+    expect(names(charged)).toContain("mine:Charge targets");
+    // Only in its own Charge phase.
+    expect(names(goTo(charged, "fight", 0))).not.toContain("mine:Charge targets");
+  });
+
+  it("reminds of an ability that keeps an objective under your control in your Command phase", () => {
+    const sticky = {
+      name: "Dig In",
+      text: "An objective you control remains under your control until the enemy takes it.",
+    };
+    const names = (st: GameState) => abilityReminders(st).map((r) => `${r.unitId}:${r.ability.name}`);
+    const s = setup({ abilities: [sticky] });
+    expect(names(goTo(s, "command", 0))).toContain("mine:Dig In");
+    expect(names(goTo(s, "command", 1))).not.toContain("mine:Dig In");
+    expect(names(goTo(s, "movement", 0))).not.toContain("mine:Dig In");
+  });
+});

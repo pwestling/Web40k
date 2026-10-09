@@ -1,5 +1,6 @@
 import type { BaseShape } from "../../core";
 import type { ImportedRoster, ImportedUnit } from "../wh40k/roster";
+import { standOf } from "./stands";
 
 /**
  * Two invented Conquest-style armies of stands. Names and numbers are made
@@ -22,16 +23,20 @@ type Stats = Record<"M" | "V" | "C" | "A" | "W" | "R" | "D", number> & {
   Class: "Light" | "Medium" | "Heavy";
 };
 
-const chars = (s: Stats): Record<string, string> =>
-  Object.fromEntries(Object.entries(s).map(([k, v]) => [k, k === "Range" ? `${v}"` : String(v)]));
+/** The profile as printed, with the stand's Size from its type. */
+const chars = (s: Stats): Record<string, string> => ({
+  ...Object.fromEntries(Object.entries(s).map(([k, v]) => [k, k === "Range" ? `${v}"` : String(v)])),
+  Size: String(standOf(s.Type).size),
+});
 
-/** A regiment of `stands`, three wide (or fewer), the command stand first so it leads the front rank. */
+/** A regiment of `stands`, three wide (or fewer), the command stand in the centre of the front rank. */
 function regiment(
   name: string,
   stands: number,
   stats: Stats,
   points: number,
   rules: string[] = [],
+  keywords: string[] = [],
 ): ImportedUnit {
   const base =
     stats.Type === "Infantry" || stats.Type === "Character"
@@ -39,8 +44,9 @@ function regiment(
       : stats.Type === "Monster"
         ? MONSTER
         : CAVALRY;
+  const command = Math.floor((Math.min(3, stands) - 1) / 2);
   const models = Array.from({ length: stands }, (_, i) => ({
-    profile: { name: i === 0 && stands > 1 ? `${name} command` : name, chars: chars(stats) },
+    profile: { name: i === command && stands > 1 ? `${name} command` : name, chars: chars(stats) },
     weapons: [],
   }));
   return {
@@ -50,7 +56,7 @@ function regiment(
     sheet: {
       weapons: {},
       abilities: rules.map((rule) => ({ name: rule, text: "" })),
-      keywords: [stats.Type, stats.Class],
+      keywords: [stats.Type, stats.Class, ...keywords],
       points,
     },
     models,
@@ -85,6 +91,8 @@ function ironmarch(): ImportedRoster {
       1,
       { M: 5, V: 1, C: 4, A: 5, W: 5, R: 4, D: 3, Type: "Character", Class: "Medium" },
       90,
+      [],
+      ["Warlord"],
     ),
     regiment(
       "Iron Riders",
@@ -124,6 +132,8 @@ function ashen(): ImportedRoster {
       1,
       { M: 5, V: 0, C: 3, A: 4, W: 5, R: 4, D: 2, E: 1, Type: "Character", Class: "Medium" },
       80,
+      [],
+      ["Warlord"],
     ),
     regiment(
       "Ossuary Colossus",

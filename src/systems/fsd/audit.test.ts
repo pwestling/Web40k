@@ -14,7 +14,7 @@ import { previewRun, type TestPlan } from "../../core/content/runner";
 import { fsd } from "../../core/content/examples/fsd";
 import { systemConstants } from "../../core/content/gameSize";
 import { terrainMoveWarning, terrainOnMove } from "../../core/content/moves";
-import { schedule } from "../../core/content/turn";
+import { phaseHint, schedule } from "../../core/content/turn";
 import { tableWarnings } from "../../ui/warnings";
 import { gameView } from "../../core/script";
 import { modelSight } from "../../core/los";
@@ -1040,5 +1040,135 @@ describe("FSD rules audit: engine gaps (#57)", () => {
     if (s.pending) s = play(s, { type: "reaction/pass" }, "p2");
     expect(ids(s)).not.toContain("overlap");
     expect(ids(place(s, tank, 0.5, 0.5))).toContain("overlap");
+  });
+});
+
+describe("FSD rules audit: the last missing rows (#58)", () => {
+  /** One base of the unit at (x, y), the others taken off. */
+  const put = (s: GameState, unitId: string, x: number, y: number) => {
+    let next = s;
+    s.units[unitId]!.modelIds.forEach((id, i) => {
+      next = i
+        ? applyEvent(next, { type: "model/remove", id })
+        : applyEvent(next, { type: "model/move", id, to: { x, y }, facing: 0 });
+    });
+    return next;
+  };
+
+  it("Selective Fire ignores units for sight: a target hidden by a base can be shot, one behind terrain can't", () => {
+    let s = setup();
+    const raiders = unitNamed(s, "Raider Gang", "p2").id;
+    const rifles = unitNamed(s, "Rifle Squad", "p1").id;
+    const command = unitNamed(s, "Command Team", "p1").id;
+    s = put(s, raiders, 0, -8);
+    s = put(s, rifles, 0, -3);
+    s = put(s, command, 0, 8);
+    const pick = (t: GameState) =>
+      actionTargets(t, raiders, "fire", "carbines").find((x) => x.unitId === command)!;
+    // The rifle squad's base hides the command team.
+    expect(pick(s).ok).toBe(false);
+    // Per Base: no base sees it, so no dice.
+    expect(attackDice(s, raiders, "carbines", command)).toBe("0");
+    const selective = editWeapon(s, raiders, "carbines", { keywords: ["Per Base", "Selective Fire"] });
+    expect(pick(selective).ok).toBe(true);
+    expect(attackDice(selective, raiders, "carbines", command)).toBe("1");
+    // Beyond its 3 DU range: Defense 4, +1.
+    expect(hitTarget(selective, raiders, "carbines", command)).toBe(5);
+    // Terrain still blocks it.
+    const ruin = { ...selective, terrain: [makePiece("Ruin", "r", { x: 0, y: 2.5 }, 0, "blocking")] };
+    expect(pick(ruin).ok).toBe(false);
+  });
+
+  it("a move sets the facing: each base ends looking the way it went, not while setting up", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    s = place(s, tank, 0, 6, 0);
+    const id = s.units[tank]!.modelIds[0]!;
+    const drag = (t: GameState, dx: number, dy: number, extra = {}) =>
+      applyEvent(t, {
+        type: "models/move",
+        moves: [{ id, to: { x: t.models[id]!.position.x + dx, y: t.models[id]!.position.y + dy } }],
+        ...extra,
+      });
+    // Setting up: facing stays.
+    expect(drag(s, 3, 0).models[id]!.facing).toBe(0);
+    s = toActivations(s);
+    const moved = drag(s, 3, 0);
+    expect(moved.models[id]!.facing).toBeCloseTo(Math.PI / 2);
+    // Then backwards along -y: it ends facing -y.
+    expect(Math.abs(drag(moved, 0, -3).models[id]!.facing)).toBeCloseTo(Math.PI);
+    // A move pulled back to its limit keeps the facing it had.
+    expect(drag(moved, -1, 0, { snap: 6 }).models[id]!.facing).toBeCloseTo(Math.PI / 2);
+  });
+
+  it("setting up: who places first, terrain to agree on, tiled tables and bidding are shown before the first round", () => {
+    let s = setup();
+    expect(s.turn.round).toBe(0);
+    expect(phaseHint(s)).toMatch(/lowest/);
+    expect(phaseHint(s)).toMatch(/smoke/);
+    expect(phaseHint(s)).toMatch(/tiled/);
+    expect(phaseHint(s)).toMatch(/bid ADs/);
+    s = toActivations(s);
+    expect(phaseHint(s)).toBe(currentSlot(s)?.hint);
+    expect(phaseHint(s) ?? "").not.toMatch(/lowest/);
+  });
+
+  it("abilities that re-roll a Ready AD or roll a Spent one show when the dice are rolled, with wave points", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    const u = s.units[tank]!;
+    s = {
+      ...s,
+      units: {
+        ...s.units,
+        [tank]: {
+          ...u,
+          sheet: {
+            ...u.sheet!,
+            abilities: [{ name: "Field Mechanic", text: "Once a round, re-roll a Ready AD." }],
+          },
+        },
+      },
+    };
+    const now = (t: GameState) => abilityReminders(t).map((r) => r.ability.name);
+    expect(now(s)).toEqual([]);
+    for (let i = 0; i < 4 && currentSlot(s)?.id !== "preassign"; i++)
+      s = play(s, { type: "turn/next" }, "p1");
+    expect(currentSlot(s)?.id).toBe("preassign");
+    expect(now(s)).toContain("Field Mechanic");
+    expect(phaseHint(s)).toMatch(/points the scenario gives it/);
+    expect(phaseHint(s)).toMatch(/Ready AD/);
+  });
+
+  it("a Character's abilities show while its unit is activated; two on one unit are flagged", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1").id;
+    s = editUnit(s, tank, { abilities: ["Character: Ace Driver"] });
+    const now = (t: GameState) => abilityReminders(t).map((r) => r.ability.name);
+    s = toActivations(s);
+    expect(now(s)).not.toContain("Character: Ace Driver");
+    s = play(s, { type: "action/take", unitId: tank, action: "activate" }, "p1");
+    expect(now(s)).toContain("Character: Ace Driver");
+    expect(fsd.actions.find((a) => a.id === "activate")?.hint).toMatch(/Character/);
+    const ids = (t: GameState) => fsdChecks(gameView(t, "fsd-1.7")).map((w) => w.id);
+    expect(ids(s)).not.toContain("character");
+    expect(ids(editUnit(s, tank, { abilities: ["Character: Ace Driver", "Character: Spotter"] }))).toContain(
+      "character",
+    );
+  });
+
+  it("reminds a behemoth's Core of its 45° turns while it is activated, and no one else", () => {
+    let s = setup(fsdBehemothSample);
+    const hauler = unitNamed(s, "Siege Hauler", "p1").id;
+    const now = (t: GameState) => abilityReminders(t).map((r) => `${r.unitId}:${r.ability.name}`);
+    s = toActivations(s);
+    expect(now(s)).not.toContain(`${hauler}:Behemoth turning`);
+    s = play(s, { type: "action/take", unitId: hauler, action: "activate" }, "p1");
+    expect(now(s)).toContain(`${hauler}:Behemoth turning`);
+    expect(now(s).filter((r) => r.endsWith(":Behemoth turning"))).toHaveLength(1);
+  });
+
+  it("Interact says how retrieved and extracted objectives work", () => {
+    expect(fsd.actions.find((a) => a.id === "interact")?.hint).toMatch(/Retrieve.*Extract/);
   });
 });

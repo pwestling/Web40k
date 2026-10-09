@@ -10,6 +10,8 @@ import { moraleProcedures } from "./morale";
 import { leavingCommand } from "./leaving";
 import { marchWarnings } from "./march";
 import { reinforceProcedures } from "./reinforce";
+import { importConquestList } from "./roster";
+import { seizeTheField, standWarnings } from "./stands";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
 
@@ -22,19 +24,21 @@ export const conquestModule: GameModule<SystemModule> = {
   procedures: { ...conquestProcedures, ...moraleProcedures, ...reinforceProcedures },
   functions: { ...conquestFunctions, ...chargeFunctions },
   hooks: chargeHooks,
-  checks: marchWarnings,
+  checks: (view) => [...marchWarnings(view), ...standWarnings(view)],
   actions: characterActions,
   // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.
   bot: { threat: 0 },
   app: {
     sample: conquestSample,
+    // Lists shared as text, characteristics filled in on import (roster.ts).
+    importRoster: importConquestList,
     layout: (t) => conquestLayout(t.width, t.depth),
     templateCategory: CONQUEST_CATEGORIES,
     rankRules: () => ({ width: 2, maxBonus: 0 }),
     chargeRoll: { count: 1, sides: 6, keep: "sum" },
     // The panel (and the lesson code it reaches) loads with the game screen, not the front door.
     panel: lazy(() => import("./CommandPanel").then((m) => ({ default: m.CommandPanel }))),
-    missions: [holdTheField()],
+    missions: [holdTheField(), seizeTheField()],
     leaving: leavingCommand,
   },
 };

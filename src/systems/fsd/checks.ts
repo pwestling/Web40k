@@ -31,7 +31,8 @@ import { aliveModels, unitMoved } from "../wh40k/rules";
  *  - A multi-base unit out of coherence while not moving (it lost a base): it
  *    is pinned, and must move back within 1 DU before any special action.
  *  - A move can't end with a base overlapping another.
- *  - List building: an army over the game's points, or two copies of a Unique unit.
+ *  - List building: an army over the game's points, two copies of a Unique unit, or a
+ *    unit with more than one Character.
  */
 export function fsdChecks(view: GameView): Warning[] {
   const state = view.state;
@@ -109,6 +110,9 @@ function listChecks(state: GameState): Warning[] {
       });
     const seen = new Set<string>();
     for (const u of units) {
+      // One Character card per unit (an ability named "Character: ...").
+      if ((u.sheet?.abilities ?? []).filter((a) => /^character\b/i.test(a.name.trim())).length > 1)
+        out.push({ id: "character", unitId: u.id, message: `${u.name} has more than one Character` });
       if (!(u.sheet?.abilities ?? []).some((a) => /^unique\b/i.test(a.name.trim()))) continue;
       if (seen.has(u.name))
         out.push({ id: "unique", unitId: u.id, message: `${u.name} is Unique: only one may be fielded` });

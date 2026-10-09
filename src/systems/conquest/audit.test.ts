@@ -20,6 +20,8 @@ import { conquestLayout } from "./layout";
 import { arrivalTarget } from "./reinforce";
 import { conquestSample } from "./sample";
 import { conquest } from "./system";
+import { parseConquestList } from "./roster";
+import { seizers, seizeTheField, standOf, standWarnings } from "./stands";
 
 /** Rules audit (#55): the automations in docs/rules-coverage/conquest.md not covered in conquest.test.ts. */
 
@@ -416,9 +418,9 @@ describe("Conquest rules audit", () => {
     const lost = ids.filter((id) => s.models[id]?.destroyed).length;
     expect(lost).toBeGreaterThan(0);
     expect(lost).toBeLessThan(ids.length);
-    // The last stands of the block go first; the command stand (the first) stays.
+    // The last stands of the block go first; the command stand stays.
     expect(ids.slice(ids.length - lost).every((id) => s.models[id]?.destroyed)).toBe(true);
-    expect(s.models[ids[0]!]?.destroyed).toBeFalsy();
+    expect(s.models[ids[1]!]?.destroyed).toBeFalsy();
   });
 
   it("removes the named command stand last, after any other stand", () => {
@@ -427,9 +429,9 @@ describe("Conquest rules audit", () => {
       const g = guardInContact((st, guard, thralls) => {
         st = withChars(st, guard, { A: "6", C: "4" });
         st = withChars(st, thralls, { D: "0", E: "0", R: "0" });
-        // A stand unlike the rest (a character's, say) and the command stand, named so.
+        // A stand unlike the rest (a character's, say) and the command stand (the centre of the front rank), named so.
         const ids = st.units[thralls]!.modelIds;
-        const m = st.models[ids[1]!]!;
+        const m = st.models[ids[0]!]!;
         return {
           ...st,
           models: { ...st.models, [m.id]: { ...m, profile: { ...m.profile!, name: "Bone banner" } } },
@@ -437,14 +439,14 @@ describe("Conquest rules audit", () => {
       });
       let s = g.s;
       const ids = s.units[g.thralls]!.modelIds;
-      expect(s.models[ids[0]!]?.profile?.name).toMatch(/command/);
+      expect(s.models[ids[1]!]?.profile?.name).toMatch(/command/);
       s = attack(s, g.guard, "clash", g.thralls, "p1", seed);
       s = play(s, { type: "procedure/clear" }, "p1");
       const dead = ids.filter((id) => s.models[id]?.destroyed).length;
       if (dead !== ids.length - 1) continue;
       // Everything else is gone, the odd stand too: only the command stand stands.
-      expect(s.models[ids[1]!]?.destroyed).toBe(true);
-      expect(s.models[ids[0]!]?.destroyed).toBeFalsy();
+      expect(s.models[ids[0]!]?.destroyed).toBe(true);
+      expect(s.models[ids[1]!]?.destroyed).toBeFalsy();
       seen = true;
     }
     expect(seen).toBe(true);
@@ -498,5 +500,116 @@ describe("Conquest rules audit", () => {
       ["auto", "auto", 4],
       ["auto", "auto", "auto"],
     ]);
+  });
+});
+
+describe("Conquest rules audit: the last missing rows (#58)", () => {
+  const ids = (s: GameState) => standWarnings(gameView(s, "conquest-hand")).map((w) => w.id);
+  const withKeywords = (s: GameState, id: string, keywords: string[]): GameState => ({
+    ...s,
+    units: { ...s.units, [id]: { ...s.units[id]!, sheet: { ...s.units[id]!.sheet!, keywords } } },
+  });
+
+  it("gives each stand its models and Size by type: infantry 4 and 1, cavalry 1 and 2, monsters 1 and 3", () => {
+    expect(standOf("Infantry")).toEqual({ models: 4, size: 1 });
+    expect(standOf("Cavalry")).toEqual({ models: 1, size: 2 });
+    expect(standOf("Brute")).toEqual({ models: 1, size: 2 });
+    expect(standOf("Monster")).toEqual({ models: 1, size: 3 });
+    const s = setup();
+    const size = (name: string) => s.models[unitNamed(s, name).modelIds[0]!]!.profile?.chars.Size;
+    expect([size("Shieldwall Spears"), size("Iron Riders"), size("Ossuary Colossus")]).toEqual([
+      "1",
+      "2",
+      "3",
+    ]);
+  });
+
+  it("flags a command stand out of the centre of the front rank", () => {
+    let s = setup();
+    const spears = unitNamed(s, "Shieldwall Spears");
+    const order = spears.modelIds;
+    expect(s.models[order[1]!]!.profile?.name).toMatch(/command/);
+    expect(ids(s)).not.toContain("commandStand");
+    // The command stand swapped into the second rank.
+    const swapped = [order[0]!, order[3]!, order[2]!, order[1]!, ...order.slice(4)];
+    s = { ...s, units: { ...s.units, [spears.id]: { ...spears, modelIds: swapped } } };
+    expect(ids(s)).toContain("commandStand");
+  });
+
+  it("flags an army without exactly one Warlord, or characters leading fewer than 1 or more than 4 regiments", () => {
+    let s = setup();
+    expect(ids(s)).not.toContain("warlord");
+    expect(ids(s)).not.toContain("regimentsPerCharacter");
+    const marshal = unitNamed(s, "Marshal of the March").id;
+    expect(ids(withKeywords(s, marshal, ["Character", "Medium"]))).toContain("warlord");
+    // Four characters and one regiment.
+    for (const name of ["Shieldwall Spears", "Ironmarch Crossbows", "Warden Guard"])
+      s = withKeywords(s, unitNamed(s, name).id, ["Character", "Medium"]);
+    expect(ids(s)).toContain("regimentsPerCharacter");
+  });
+
+  it("seizes an objective zone by seize value (Light 0, Medium and Heavy 1, Monster 3), then stands", () => {
+    let s = setup();
+    s = { ...s, objectives: [{ id: "o", position: { x: 0, y: 0 } }] };
+    const move = (t: GameState, name: string, x: number, y: number) => {
+      const u = unitNamed(t, name);
+      return applyEvent(t, {
+        type: "models/move",
+        moves: u.modelIds.map((id, i) => ({
+          id,
+          to: { x: x + (i % 3) * 1.6, y: y + Math.floor(i / 3) * 1.6 },
+        })),
+      });
+    };
+    const reserve = (t: GameState) => {
+      for (const u of Object.values(t.units))
+        t = { ...t, units: { ...t.units, [u.id]: { ...u, status: { ...u.status, reserves: true } } } };
+      return t;
+    };
+    const field = (t: GameState, ...names: string[]) => {
+      for (const n of names) {
+        const u = unitNamed(t, n);
+        t = { ...t, units: { ...t.units, [u.id]: { ...u, status: { ...u.status, reserves: false } } } };
+      }
+      return t;
+    };
+    s = reserve(s);
+    // Light stands alone seize nothing.
+    let t = field(move(s, "Thrall Host", -2, 1), "Thrall Host");
+    expect(seizers(t, 6).o).toBeNull();
+    // Medium infantry seize it from them.
+    t = field(move(t, "Shieldwall Spears", -2, -4), "Shieldwall Spears");
+    expect(seizers(t, 6).o).toBe(0);
+    // The monster (3) against three Medium stands (3), the spears having more stands.
+    t = field(move(t, "Ossuary Colossus", 3, 2), "Ossuary Colossus");
+    expect(seizers(t, 6).o).toBe(0);
+    // Out of the zone (6"), a stand doesn't count.
+    t = move(t, "Shieldwall Spears", -2, -12);
+    expect(seizers(t, 6).o).toBe(1);
+    expect(seizeTheField().scoring[0]!.suggest(t, 1)).toMatchObject({ vp: 1 });
+  });
+
+  it("reads a list shared as text: characters, regiments with their stands, points and options; profiles to fill in", () => {
+    const r = parseConquestList(
+      [
+        "Border Host",
+        "== Captain Vey [100]: Warhorn",
+        "* Pikemen (4) [150]: Officer, Standard",
+        "* Archers (3) [120]",
+      ].join("\n"),
+    );
+    expect(r.name).toBe("Border Host");
+    expect(r.points).toBe(370);
+    expect(r.units.map((u) => [u.name, u.models.length, u.sheet.points])).toEqual([
+      ["Captain Vey", 1, 100],
+      ["Pikemen", 4, 150],
+      ["Archers", 3, 120],
+    ]);
+    expect(r.units[0]!.sheet.keywords).toEqual(["Character"]);
+    expect(r.units[1]!.sheet.abilities.map((a) => a.name)).toEqual(["Officer", "Standard"]);
+    expect(r.units[1]!.missing).toEqual(["M", "V", "C", "A", "W", "R", "D", "Type", "Class"]);
+    // The command stand in the centre of a three-wide front rank.
+    expect(r.units[1]!.models[1]!.profile.name).toBe("Pikemen command");
+    expect(() => parseConquestList("just some notes")).toThrow(/no Conquest list lines/);
   });
 });

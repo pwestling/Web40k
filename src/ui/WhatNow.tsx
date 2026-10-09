@@ -3,7 +3,7 @@ import { touch } from "./touch";
 import { opposed, sideName, type GameState, type Unit } from "../core";
 import { aliveModels, unitDistance, weaponReach } from "../systems/wh40k/rules";
 import { actingUnits, placedKey, unitActions, weaponSlots } from "../core/content/play";
-import { currentSlot, phaseName, plainActivations, turnView } from "../core/content/turn";
+import { currentSlot, phaseHint, phaseName, plainActivations, turnView } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { useStore } from "../store";
 import { gameModule, systemModule } from "../systems";
@@ -346,10 +346,8 @@ export function WhatNow() {
           ✕
         </button>
       </div>
-      {/* The phase's own reminder, from the rules data (FSD's scoring). */}
-      {!computer && game.turn.round > 0 && currentSlot(game)?.hint && (
-        <p className="muted">{gameText(currentSlot(game)!.hint!)}</p>
-      )}
+      {/* The phase's own reminder, from the rules data (FSD's scoring, its setup). */}
+      {!computer && phaseHint(game) && <p className="muted">{gameText(phaseHint(game)!)}</p>}
       {lines.map((l) => (
         <p key={l}>{l}</p>
       ))}

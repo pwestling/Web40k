@@ -318,7 +318,11 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
       state.turn.round === 0 || !side || side === "either" || (side === "active") === active;
     // The system's own rules that matter for this unit now (a Transport, a unit in reserves).
     for (const r of system.ruleReminders ?? [])
-      if (r.phase === phase && sideFits(r.side) && holdsFor(state, unit, r.if))
+      if (
+        r.phase === phase &&
+        (r.on ? atMoment(unit, r.on) : sideFits(r.side)) &&
+        holdsFor(state, unit, r.if)
+      )
         out.push({
           unitId: unit.id,
           owner: unit.owner,

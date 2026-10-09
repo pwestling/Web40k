@@ -435,6 +435,8 @@ export const conquest: GameSystem = {
     { id: "Shield", name: "Shield", of: "model", type: "number", default: 0 },
     { id: "Type", name: "Type", of: "model", type: "text" },
     { id: "Class", name: "Class", of: "model", type: "text" },
+    // A stand's Size, from its type (stands.ts:`standOf`).
+    { id: "Size", name: "Size", of: "model", type: "number" },
   ],
   weaponKinds: [],
   unitShape: { kind: "ranked", minFiles: 1, manoeuvres: ["wheel", "reform", "turn", "march"] },

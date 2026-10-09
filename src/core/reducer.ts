@@ -26,6 +26,7 @@ import {
 } from "./content/turn";
 import { transformPositions } from "./formation";
 import { baseSizeInches } from "./geometry";
+import { facingOf } from "./manoeuvre";
 import { applyEventRef } from "./script";
 import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } from "./types";
 
@@ -72,9 +73,15 @@ function reduce(state: GameState, event: GameEvent): GameState {
       }));
     case "models/move": {
       const models = { ...state.models };
+      // Facing follows the move where the game says so (settings.faceMove), once the battle is on.
+      const face = !!state.settings.faceMove && !event.setup && !event.snap && state.turn.round > 0;
       for (const { id, to, z } of event.moves) {
         const m = models[id];
-        if (m) models[id] = { ...m, position: to, ...(z === undefined ? {} : { z }) };
+        if (!m) continue;
+        const d = { x: to.x - m.position.x, y: to.y - m.position.y };
+        const turns = face && Math.hypot(d.x, d.y) > 0.01 && !state.units[m.unitId ?? ""]?.status?.reserves;
+        const facing = turns ? facingOf(d) : m.facing;
+        models[id] = { ...m, position: to, facing, ...(z === undefined ? {} : { z }) };
       }
       // Moving a unit is how its activation starts in a game of plain activations (UX 324).
       const unit = event.setup ? undefined : state.models[event.moves[0]?.id ?? ""]?.unitId;

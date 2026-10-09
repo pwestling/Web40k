@@ -214,7 +214,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
             {busy ? t("Reading…") : t("Import a list")}
             <input
               type="file"
-              accept=".ros,.rosz,.json,.xml"
+              accept=".ros,.rosz,.json,.xml,.txt"
               onChange={(e) => e.target.files?.[0] && load(e.target.files[0])}
             />
           </label>

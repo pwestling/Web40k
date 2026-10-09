@@ -95,7 +95,8 @@ export type GeoQuery =
       axis?: "horizontal" | "vertical" | "3d";
     }
   /** Line of sight; "fully" means every part facing the observer is visible. */
-  | { kind: "visible"; from: Ref; to: Ref; fully?: boolean }
+  /** `models: false`: only terrain blocks, models don't (FSD Selective Fire ignores units for sight). */
+  | { kind: "visible"; from: Ref; to: Ref; fully?: boolean; models?: boolean }
   /** Whether `to` lies in one of `from`'s arcs (front, flank, rear...). */
   | { kind: "inArc"; from: Ref; to: Ref; arc: Id }
   /**
@@ -789,6 +790,12 @@ export interface GameSystem {
    * Strategic Reserves). Shown with the ability reminders.
    */
   ruleReminders?: RuleReminder[];
+  /**
+   * A reminder shown while the armies are set up (before the first round),
+   * in the system author's own words, like a phase's `hint` (FSD: who places
+   * first, terrain to agree on).
+   */
+  deploymentHint?: string;
   /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
   settings?: Record<string, unknown>;
 }
@@ -826,6 +833,8 @@ export interface RuleReminder {
   side?: "active" | "inactive" | "either";
   /** For the units where this holds ("self" is the unit). */
   if?: Expr;
+  /** Finer than the phase, as `AbilityTiming.on`: only for the unit activated, moving or reacting. */
+  on?: AbilityTiming["on"];
 }
 
 // ---------------------------------------------------------------------------

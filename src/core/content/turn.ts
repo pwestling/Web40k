@@ -130,6 +130,11 @@ export function phaseName(state: GameState): string | undefined {
   return currentSlot(state)?.name;
 }
 
+/** The reminder for now: the phase's `hint`, or while the armies are set up the system's `deploymentHint`. */
+export function phaseHint(state: GameState): string | undefined {
+  return state.turn.round === 0 ? systemOf(state).deploymentHint : currentSlot(state)?.hint;
+}
+
 /** What the turn bar shows: the phases of the current player turn (or round), and which is current. */
 export function turnView(state: GameState): { phases: string[]; current: number; alternating: boolean } {
   const slots = schedule(systemOf(state));
