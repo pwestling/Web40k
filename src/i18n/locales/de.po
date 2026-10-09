@@ -5252,8 +5252,8 @@ msgstr "{name} aus deiner Sammlung entfernen?"
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:437
-#: src/ui/TeachRule.tsx:518
-#: src/ui/TeachRule.tsx:519
+#: src/ui/TeachRule.tsx:543
+#: src/ui/TeachRule.tsx:544
 #, fuzzy
 msgid "Remove"
 msgstr "Entfernen"
@@ -5873,14 +5873,14 @@ msgid "no re-roll"
 msgstr "kein Wiederholungswurf"
 
 #: src/ui/AttackPanel.tsx:273
-#: src/ui/autoText.ts:145
-#: src/ui/autoText.ts:194
+#: src/ui/autoText.ts:156
+#: src/ui/autoText.ts:205
 #, fuzzy
 msgid "re-roll 1s"
 msgstr "1er wiederholen"
 
 #: src/ui/AttackPanel.tsx:274
-#: src/ui/autoText.ts:146
+#: src/ui/autoText.ts:157
 #, fuzzy
 msgid "re-roll fails"
 msgstr "Fehlwürfe wiederholen"
@@ -5931,7 +5931,7 @@ msgid "More options"
 msgstr "Weitere Optionen"
 
 #: src/ui/AttackPanel.tsx:327
-#: src/ui/TeachRule.tsx:473
+#: src/ui/TeachRule.tsx:488
 #, fuzzy
 msgid "Attacks"
 msgstr "Attacken"
@@ -5982,7 +5982,7 @@ msgstr "keine"
 
 #: src/ui/AttackPanel.tsx:369
 #: src/ui/AttackPanel.tsx:622
-#: src/ui/TeachRule.tsx:476
+#: src/ui/TeachRule.tsx:491
 #, fuzzy
 msgid "Damage"
 msgstr "Schaden"
@@ -6359,7 +6359,7 @@ msgid "Change"
 msgstr "Ändern"
 
 #: src/ui/AutoAbilities.tsx:577
-#: src/ui/TeachRule.tsx:386
+#: src/ui/TeachRule.tsx:401
 #, fuzzy
 msgid "Stop automating"
 msgstr "Nicht mehr automatisieren"
@@ -10475,71 +10475,65 @@ msgstr "(jede Phase)"
 msgid "When"
 msgstr "Wann"
 
-#: src/ui/TeachRule.tsx:214
+#: src/ui/TeachRule.tsx:215
 #, fuzzy
 msgid "When it attacks or is attacked"
 msgstr "Wenn sie angreift oder angegriffen wird"
 
-#: src/ui/TeachRule.tsx:215
+#: src/ui/TeachRule.tsx:216
 #, fuzzy
 msgid "At the start of a phase"
 msgstr "Zu Beginn einer Phase"
 
-#: src/ui/TeachRule.tsx:216
+#: src/ui/TeachRule.tsx:217
 #, fuzzy
 msgid "At the end of a phase"
 msgstr "Am Ende einer Phase"
 
-#: src/ui/TeachRule.tsx:237
+#: src/ui/TeachRule.tsx:238
 #, fuzzy
 msgid "in your turn"
 msgstr "in deinem Zug"
 
-#: src/ui/TeachRule.tsx:238
+#: src/ui/TeachRule.tsx:239
 #, fuzzy
 msgid "in each player's turn"
 msgstr "im Zug jedes Spielers"
 
-#: src/ui/TeachRule.tsx:246
+#: src/ui/TeachRule.tsx:247
 #, fuzzy
 msgid "Which attacks"
 msgstr "Welche Attacken"
 
-#: src/ui/TeachRule.tsx:246
+#: src/ui/TeachRule.tsx:247
 #, fuzzy
 msgid "Only"
 msgstr "Nur"
 
-#: src/ui/TeachRule.tsx:255
+#: src/ui/TeachRule.tsx:256
 #, fuzzy
 msgid "any attacks"
 msgstr "alle Attacken"
 
-#: src/ui/TeachRule.tsx:256
+#: src/ui/TeachRule.tsx:257
 #, fuzzy
 msgid "ranged attacks"
 msgstr "Fernkampfattacken"
 
-#: src/ui/TeachRule.tsx:257
+#: src/ui/TeachRule.tsx:258
 #, fuzzy
 msgid "melee attacks"
 msgstr "Nahkampfattacken"
 
-#: src/ui/TeachRule.tsx:267
+#: src/ui/TeachRule.tsx:268
 #, fuzzy
 msgid "always"
 msgstr "immer"
 
-#: src/ui/TeachRule.tsx:268
+#: src/ui/TeachRule.tsx:269
 #, fuzzy
 msgid "after it charged"
 msgstr "nachdem sie angegriffen hat"
-
-#: src/ui/TeachRule.tsx:269
-#: src/ui/autoText.ts:46
-#, fuzzy
-msgid "if it stayed still"
-msgstr "wenn sie stehen blieb"
 
 #: src/ui/TeachRule.tsx:27
 #: src/ui/TopBar.tsx:499
@@ -10547,155 +10541,171 @@ msgstr "wenn sie stehen blieb"
 msgid "Re-roll"
 msgstr "Neu würfeln"
 
-#: src/ui/TeachRule.tsx:272
+#: src/ui/TeachRule.tsx:270
+#: src/ui/autoText.ts:46
 #, fuzzy
-msgid "against"
-msgstr "gegen"
+msgid "if it stayed still"
+msgstr "wenn sie stehen blieb"
 
 #: src/ui/TeachRule.tsx:275
 #, fuzzy
-msgid "any unit, or a keyword"
-msgstr "jede Einheit oder ein Schlüsselwort"
+msgid "Objective"
+msgstr "Missionsziel"
 
 #: src/ui/TeachRule.tsx:28
 #, fuzzy
 msgid "+1 or −1 to its rolls"
 msgstr "+1 oder −1 auf ihre Würfe"
 
-#: src/ui/TeachRule.tsx:288
+#: src/ui/TeachRule.tsx:281
 #, fuzzy
-msgid "Who"
-msgstr "Wer"
+msgid "anywhere"
+msgstr "überall"
+
+#: src/ui/TeachRule.tsx:282
+#, fuzzy
+msgid "while within range of an objective"
+msgstr "in Reichweite eines Missionsziels"
+
+#: src/ui/TeachRule.tsx:283
+#, fuzzy
+msgid "while on an objective it controls"
+msgstr "auf einem Missionsziel, das sie kontrolliert"
+
+#: src/ui/TeachRule.tsx:287
+#, fuzzy
+msgid "against"
+msgstr "gegen"
+
+#: src/ui/TeachRule.tsx:290
+#, fuzzy
+msgid "any unit, or a keyword"
+msgstr "jede Einheit oder ein Schlüsselwort"
 
 #: src/ui/TeachRule.tsx:303
 #, fuzzy
-msgid "This unit"
-msgstr "Diese Einheit"
-
-#: src/ui/TeachRule.tsx:304
-#, fuzzy
-msgid "The unit it leads, while leading"
-msgstr "Die Einheit, die sie anführt"
-
-#: src/ui/TeachRule.tsx:305
-#, fuzzy
-msgid "Units within range"
-msgstr "Einheiten in Reichweite"
+msgid "Who"
+msgstr "Wer"
 
 #: src/ui/TeachRule.tsx:31
 #, fuzzy
 msgid "+1 or −1 to attacks against it"
 msgstr "+1 oder −1 auf Attacken gegen sie"
 
-#: src/ui/TeachRule.tsx:313
+#: src/ui/TeachRule.tsx:318
+#, fuzzy
+msgid "This unit"
+msgstr "Diese Einheit"
+
+#: src/ui/TeachRule.tsx:319
+#, fuzzy
+msgid "The unit it leads, while leading"
+msgstr "Die Einheit, die sie anführt"
+
+#: src/ui/TeachRule.tsx:320
+#, fuzzy
+msgid "Units within range"
+msgstr "Einheiten in Reichweite"
+
+#: src/ui/TeachRule.tsx:328
 #, fuzzy
 msgid "friendly"
 msgstr "befreundete"
 
-#: src/ui/TeachRule.tsx:314
+#: src/ui/TeachRule.tsx:329
 #, fuzzy
 msgid "enemy"
 msgstr "feindliche"
 
-#: src/ui/TeachRule.tsx:317
+#: src/ui/TeachRule.tsx:332
 #, fuzzy
 msgid "within"
 msgstr "innerhalb von"
-
-#: src/ui/TeachRule.tsx:329
-#, fuzzy
-msgid "keyword (optional)"
-msgstr "Schlüsselwort (optional)"
 
 #: src/ui/TeachRule.tsx:34
 #, fuzzy
 msgid "+1 to its saves"
 msgstr "+1 auf ihre Rettungswürfe"
 
-#: src/ui/TeachRule.tsx:342
+#: src/ui/TeachRule.tsx:344
 #, fuzzy
-msgid "What"
-msgstr "Was"
-
-#: src/ui/TeachRule.tsx:348
-#, fuzzy
-msgid "Add an effect"
-msgstr "Effekt hinzufügen"
+msgid "keyword (optional)"
+msgstr "Schlüsselwort (optional)"
 
 #: src/ui/TeachRule.tsx:35
 #, fuzzy
 msgid "Invulnerable save"
 msgstr "Rettungswurf (unmodifiziert)"
 
-#: src/ui/TeachRule.tsx:354
+#: src/ui/TeachRule.tsx:357
 #, fuzzy
-msgid "Add another effect…"
-msgstr "Weiteren Effekt hinzufügen…"
-
-#: src/ui/TeachRule.tsx:354
-#, fuzzy
-msgid "Add an effect…"
-msgstr "Effekt hinzufügen…"
+msgid "What"
+msgstr "Was"
 
 #: src/ui/TeachRule.tsx:36
 #, fuzzy
 msgid "Feel No Pain"
 msgstr "Feel No Pain"
 
+#: src/ui/TeachRule.tsx:363
+#, fuzzy
+msgid "Add an effect"
+msgstr "Effekt hinzufügen"
+
+#: src/ui/TeachRule.tsx:369
+#, fuzzy
+msgid "Add another effect…"
+msgstr "Weiteren Effekt hinzufügen…"
+
+#: src/ui/TeachRule.tsx:369
+#, fuzzy
+msgid "Add an effect…"
+msgstr "Effekt hinzufügen…"
+
 #: src/ui/TeachRule.tsx:37
 #, fuzzy
 msgid "+X to a weapon stat"
 msgstr "+X auf einen Waffenwert"
-
-#: src/ui/TeachRule.tsx:370
-#, fuzzy
-msgid "Once per battle: you switch it on from the unit card, for one phase"
-msgstr "Einmal pro Schlacht: du schaltest sie auf der Einheitenkarte für eine Phase ein"
-
-#: src/ui/TeachRule.tsx:378
-#, fuzzy
-msgid "Those don't fit together; check the numbers."
-msgstr "Das passt nicht zusammen; prüfe die Zahlen."
 
 #: src/ui/TeachRule.tsx:38
 #, fuzzy
 msgid "Gain CP"
 msgstr "CP erhalten"
 
-#: src/ui/TeachRule.tsx:380
+#: src/ui/TeachRule.tsx:385
 #, fuzzy
-msgid "Add what it does, and the rule shows here."
-msgstr "Füge hinzu, was sie bewirkt, dann erscheint die Regel hier."
+msgid "Once per battle: you switch it on from the unit card, for one phase"
+msgstr "Einmal pro Schlacht: du schaltest sie auf der Einheitenkarte für eine Phase ein"
 
 #: src/ui/TeachRule.tsx:39
 #, fuzzy
 msgid "Heal wounds"
 msgstr "Lebenspunkte heilen"
 
-#: src/ui/TeachRule.tsx:392
+#: src/ui/TeachRule.tsx:393
+#, fuzzy
+msgid "Those don't fit together; check the numbers."
+msgstr "Das passt nicht zusammen; prüfe die Zahlen."
+
+#: src/ui/TeachRule.tsx:395
+#, fuzzy
+msgid "Add what it does, and the rule shows here."
+msgstr "Füge hinzu, was sie bewirkt, dann erscheint die Regel hier."
+
+#: src/ui/TeachRule.tsx:407
 #, fuzzy
 msgid "Save the rule"
 msgstr "Regel speichern"
 
-#: src/ui/TeachRule.tsx:412
+#: src/ui/TeachRule.tsx:427
 #, fuzzy
 msgid "to hit"
 msgstr "auf Treffer"
 
-#: src/ui/TeachRule.tsx:413
+#: src/ui/TeachRule.tsx:428
 #, fuzzy
 msgid "to wound"
 msgstr "auf Verwunden"
-
-#: src/ui/TeachRule.tsx:434
-#, fuzzy
-msgid "rolls of 1"
-msgstr "Würfe von 1"
-
-#: src/ui/TeachRule.tsx:435
-#, fuzzy
-msgid "failed rolls"
-msgstr "misslungene Würfe"
 
 #: src/ui/TeachRule.tsx:44
 #, fuzzy
@@ -10712,20 +10722,35 @@ msgstr "Verwundungswürfe"
 msgid "Damage rolls"
 msgstr "Schadenswürfe"
 
-#: src/ui/TeachRule.tsx:460
+#: src/ui/TeachRule.tsx:449
+#, fuzzy
+msgid "rolls of 1"
+msgstr "Würfe von 1"
+
+#: src/ui/TeachRule.tsx:450
+#, fuzzy
+msgid "failed rolls"
+msgstr "misslungene Würfe"
+
+#: src/ui/TeachRule.tsx:475
 #, fuzzy
 msgid "+1 to its saving throws"
 msgstr "+1 auf ihre Schutzwürfe"
 
-#: src/ui/TeachRule.tsx:474
+#: src/ui/TeachRule.tsx:489
 #, fuzzy
 msgid "Strength"
 msgstr "Stärke"
 
-#: src/ui/TeachRule.tsx:475
+#: src/ui/TeachRule.tsx:490
 #, fuzzy
 msgid "AP (improved)"
 msgstr "DS (verbessert)"
+
+#: src/ui/TeachRule.tsx:531
+#, fuzzy
+msgid "across the unit, bringing back destroyed models"
+msgstr "über die ganze Einheit, vernichtete Modelle kehren zurück"
 
 #: src/ui/TeachRule.tsx:98
 #, fuzzy
@@ -11926,49 +11951,56 @@ msgstr "Was ist neu"
 msgid "The full list of changes"
 msgstr "Alle Änderungen"
 
-#: src/ui/autoText.ts:102
+#: src/ui/autoText.ts:110
 #, fuzzy
 msgid "{unit}'s {ability}: +{amount} {resource}"
 msgstr "{ability} von {unit}: +{amount} {resource}"
 
-#: src/ui/autoText.ts:110
+#: src/ui/autoText.ts:117
+#, fuzzy
+msgid "{n} model back"
+msgid_plural "{n} models back"
+msgstr[0] "{n} Modell zurück"
+msgstr[1] "{n} Modelle zurück"
+
+#: src/ui/autoText.ts:120
 #, fuzzy
 msgid "{unit}'s {ability}: rolled {roll}, {n} wound regained"
 msgid_plural "{unit}'s {ability}: rolled {roll}, {n} wounds regained"
 msgstr[0] "{ability} von {unit}: {roll} gewürfelt, {n} Lebenspunkt zurück"
 msgstr[1] "{ability} von {unit}: {roll} gewürfelt, {n} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:120
+#: src/ui/autoText.ts:130
 #, fuzzy
 msgid "{unit}'s {ability}: {n} wound regained"
 msgid_plural "{unit}'s {ability}: {n} wounds regained"
 msgstr[0] "{ability} von {unit}: {n} Lebenspunkt zurück"
 msgstr[1] "{ability} von {unit}: {n} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:143
-#, fuzzy
-msgid "{by} to {roll}"
-msgstr "{by} auf {roll}"
-
-#: src/ui/autoText.ts:144
-#, fuzzy
-msgid "{roll} target {by}"
-msgstr "{roll}-Zielwert {by}"
-
-#: src/ui/autoText.ts:147
-#, fuzzy
-msgid "re-roll {faces}s"
-msgstr "{faces}en neu würfeln"
-
-#: src/ui/autoText.ts:148
-#, fuzzy
-msgid "criticals on {n}+"
-msgstr "kritisch bei {n}+"
-
 #: src/ui/autoText.ts:15
 #, fuzzy
 msgid "Its ranged attacks"
 msgstr "Ihre Fernkampfattacken"
+
+#: src/ui/autoText.ts:154
+#, fuzzy
+msgid "{by} to {roll}"
+msgstr "{by} auf {roll}"
+
+#: src/ui/autoText.ts:155
+#, fuzzy
+msgid "{roll} target {by}"
+msgstr "{roll}-Zielwert {by}"
+
+#: src/ui/autoText.ts:158
+#, fuzzy
+msgid "re-roll {faces}s"
+msgstr "{faces}en neu würfeln"
+
+#: src/ui/autoText.ts:159
+#, fuzzy
+msgid "criticals on {n}+"
+msgstr "kritisch bei {n}+"
 
 #: src/ui/autoText.ts:17
 #, fuzzy
@@ -11980,15 +12012,15 @@ msgstr "Ihre Nahkampfattacken"
 msgid "Its attacks"
 msgstr "Ihre Attacken"
 
-#: src/ui/autoText.ts:196
-#, fuzzy
-msgid "re-roll"
-msgstr "neu würfeln"
-
 #: src/ui/autoText.ts:20
 #, fuzzy
 msgid "Ranged attacks against it"
 msgstr "Fernkampfattacken gegen sie"
+
+#: src/ui/autoText.ts:207
+#, fuzzy
+msgid "re-roll"
+msgstr "neu würfeln"
 
 #: src/ui/autoText.ts:22
 #, fuzzy
@@ -12075,71 +12107,86 @@ msgstr "ein unmodifizierter Rettungswurf von {x}+"
 msgid "gain {amount} {resource}"
 msgstr "{amount} {resource} erhalten"
 
-#: src/ui/autoText.ts:63
+#: src/ui/autoText.ts:64
+#, fuzzy
+msgid "it regains {amount} wounds, bringing back destroyed models"
+msgstr "sie erhält {amount} Lebenspunkte zurück, vernichtete Modelle kehren zurück"
+
+#: src/ui/autoText.ts:65
 #, fuzzy
 msgid "its most hurt model regains up to {amount} wounds"
 msgstr "ihr am stärksten verwundetes Modell erhält bis zu {amount} Lebenspunkte zurück"
 
-#: src/ui/autoText.ts:71
+#: src/ui/autoText.ts:73
 #, fuzzy
 msgid "While leading a unit"
 msgstr "Solange sie eine Einheit anführt"
 
-#: src/ui/autoText.ts:75
+#: src/ui/autoText.ts:77
 #, fuzzy
 msgid "Enemy {keyword}units within {range}\""
 msgstr "Feindliche {keyword}Einheiten innerhalb von {range}\""
 
-#: src/ui/autoText.ts:79
+#: src/ui/autoText.ts:81
 #, fuzzy
 msgid "Friendly {keyword}units within {range}\""
 msgstr "Befreundete {keyword}Einheiten innerhalb von {range}\""
 
-#: src/ui/autoText.ts:84
+#: src/ui/autoText.ts:86
 #, fuzzy
 msgid "Once per battle, for one phase"
 msgstr "Einmal pro Schlacht, für eine Phase"
 
-#: src/ui/autoText.ts:87
-#, fuzzy
-msgid "each"
-msgstr "jeder"
-
-#: src/ui/autoText.ts:87
-#, fuzzy
-msgid "your"
-msgstr "deiner"
-
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:134
+#: src/ui/autoText.ts:145
 #, fuzzy
 msgid "hit"
 msgstr "Treffer"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:136
+#: src/ui/autoText.ts:147
 #, fuzzy
 msgid "wound"
 msgstr "Verwundungs"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:138
+#: src/ui/autoText.ts:149
 #, fuzzy
 msgid "save"
 msgstr "Rettungswurf"
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:140
+#: src/ui/autoText.ts:151
 #, fuzzy
 msgid "damage"
 msgstr "Schaden"
 
 #: src/ui/autoText.ts:90
 #, fuzzy
+msgid "While on an objective it controls"
+msgstr "Auf einem Missionsziel, das sie kontrolliert"
+
+#: src/ui/autoText.ts:91
+#, fuzzy
+msgid "While within range of an objective"
+msgstr "In Reichweite eines Missionsziels"
+
+#: src/ui/autoText.ts:95
+#, fuzzy
+msgid "each"
+msgstr "jeder"
+
+#: src/ui/autoText.ts:95
+#, fuzzy
+msgid "your"
+msgstr "deiner"
+
+#: src/ui/autoText.ts:98
+#, fuzzy
 msgid "At the end of {turn} {phase} phase"
 msgstr "Am Ende {turn} Phase {phase}"
 
-#: src/ui/autoText.ts:91
+#: src/ui/autoText.ts:99
 #, fuzzy
 msgid "At the start of {turn} {phase} phase"
 msgstr "Zu Beginn {turn} Phase {phase}"

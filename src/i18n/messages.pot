@@ -4295,8 +4295,8 @@ msgstr ""
 #: src/ui/ArmyImport.tsx:563
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:437
-#: src/ui/TeachRule.tsx:518
-#: src/ui/TeachRule.tsx:519
+#: src/ui/TeachRule.tsx:543
+#: src/ui/TeachRule.tsx:544
 msgid "Remove"
 msgstr ""
 
@@ -4801,13 +4801,13 @@ msgid "no re-roll"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:273
-#: src/ui/autoText.ts:145
-#: src/ui/autoText.ts:194
+#: src/ui/autoText.ts:156
+#: src/ui/autoText.ts:205
 msgid "re-roll 1s"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:274
-#: src/ui/autoText.ts:146
+#: src/ui/autoText.ts:157
 msgid "re-roll fails"
 msgstr ""
 
@@ -4848,7 +4848,7 @@ msgid "More options"
 msgstr ""
 
 #: src/ui/AttackPanel.tsx:327
-#: src/ui/TeachRule.tsx:473
+#: src/ui/TeachRule.tsx:488
 msgid "Attacks"
 msgstr ""
 
@@ -4890,7 +4890,7 @@ msgstr ""
 
 #: src/ui/AttackPanel.tsx:369
 #: src/ui/AttackPanel.tsx:622
-#: src/ui/TeachRule.tsx:476
+#: src/ui/TeachRule.tsx:491
 msgid "Damage"
 msgstr ""
 
@@ -5200,7 +5200,7 @@ msgid "Change"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:577
-#: src/ui/TeachRule.tsx:386
+#: src/ui/TeachRule.tsx:401
 msgid "Stop automating"
 msgstr ""
 
@@ -8519,57 +8519,52 @@ msgstr ""
 msgid "When"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:214
+#: src/ui/TeachRule.tsx:215
 msgid "When it attacks or is attacked"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:215
+#: src/ui/TeachRule.tsx:216
 msgid "At the start of a phase"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:216
+#: src/ui/TeachRule.tsx:217
 msgid "At the end of a phase"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:237
+#: src/ui/TeachRule.tsx:238
 msgid "in your turn"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:238
+#: src/ui/TeachRule.tsx:239
 msgid "in each player's turn"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:246
+#: src/ui/TeachRule.tsx:247
 msgid "Which attacks"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:246
+#: src/ui/TeachRule.tsx:247
 msgid "Only"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:255
+#: src/ui/TeachRule.tsx:256
 msgid "any attacks"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:256
+#: src/ui/TeachRule.tsx:257
 msgid "ranged attacks"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:257
+#: src/ui/TeachRule.tsx:258
 msgid "melee attacks"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:267
+#: src/ui/TeachRule.tsx:268
 msgid "always"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:268
-msgid "after it charged"
-msgstr ""
-
 #: src/ui/TeachRule.tsx:269
-#: src/ui/autoText.ts:46
-msgid "if it stayed still"
+msgid "after it charged"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:27
@@ -8577,124 +8572,137 @@ msgstr ""
 msgid "Re-roll"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:272
-msgid "against"
+#: src/ui/TeachRule.tsx:270
+#: src/ui/autoText.ts:46
+msgid "if it stayed still"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:275
-msgid "any unit, or a keyword"
+msgid "Objective"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:28
 msgid "+1 or −1 to its rolls"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:288
-msgid "Who"
+#: src/ui/TeachRule.tsx:281
+msgid "anywhere"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:282
+msgid "while within range of an objective"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:283
+msgid "while on an objective it controls"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:287
+msgid "against"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:290
+msgid "any unit, or a keyword"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:303
-msgid "This unit"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:304
-msgid "The unit it leads, while leading"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:305
-msgid "Units within range"
+msgid "Who"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:31
 msgid "+1 or −1 to attacks against it"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:313
+#: src/ui/TeachRule.tsx:318
+msgid "This unit"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:319
+msgid "The unit it leads, while leading"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:320
+msgid "Units within range"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:328
 msgid "friendly"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:314
+#: src/ui/TeachRule.tsx:329
 msgid "enemy"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:317
+#: src/ui/TeachRule.tsx:332
 msgid "within"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:329
-msgid "keyword (optional)"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:34
 msgid "+1 to its saves"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:342
-msgid "What"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:348
-msgid "Add an effect"
+#: src/ui/TeachRule.tsx:344
+msgid "keyword (optional)"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:35
 msgid "Invulnerable save"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:354
-msgid "Add another effect…"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:354
-msgid "Add an effect…"
+#: src/ui/TeachRule.tsx:357
+msgid "What"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:36
 msgid "Feel No Pain"
 msgstr ""
 
+#: src/ui/TeachRule.tsx:363
+msgid "Add an effect"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:369
+msgid "Add another effect…"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:369
+msgid "Add an effect…"
+msgstr ""
+
 #: src/ui/TeachRule.tsx:37
 msgid "+X to a weapon stat"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:370
-msgid "Once per battle: you switch it on from the unit card, for one phase"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:378
-msgid "Those don't fit together; check the numbers."
 msgstr ""
 
 #: src/ui/TeachRule.tsx:38
 msgid "Gain CP"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:380
-msgid "Add what it does, and the rule shows here."
+#: src/ui/TeachRule.tsx:385
+msgid "Once per battle: you switch it on from the unit card, for one phase"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:39
 msgid "Heal wounds"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:392
+#: src/ui/TeachRule.tsx:393
+msgid "Those don't fit together; check the numbers."
+msgstr ""
+
+#: src/ui/TeachRule.tsx:395
+msgid "Add what it does, and the rule shows here."
+msgstr ""
+
+#: src/ui/TeachRule.tsx:407
 msgid "Save the rule"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:412
+#: src/ui/TeachRule.tsx:427
 msgid "to hit"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:413
+#: src/ui/TeachRule.tsx:428
 msgid "to wound"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:434
-msgid "rolls of 1"
-msgstr ""
-
-#: src/ui/TeachRule.tsx:435
-msgid "failed rolls"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:44
@@ -8709,16 +8717,28 @@ msgstr ""
 msgid "Damage rolls"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:460
-msgid "+1 to its saving throws"
+#: src/ui/TeachRule.tsx:449
+msgid "rolls of 1"
 msgstr ""
 
-#: src/ui/TeachRule.tsx:474
-msgid "Strength"
+#: src/ui/TeachRule.tsx:450
+msgid "failed rolls"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:475
+msgid "+1 to its saving throws"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:489
+msgid "Strength"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:490
 msgid "AP (improved)"
+msgstr ""
+
+#: src/ui/TeachRule.tsx:531
+msgid "across the unit, bringing back destroyed models"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:98
@@ -9685,40 +9705,46 @@ msgstr ""
 msgid "The full list of changes"
 msgstr ""
 
-#: src/ui/autoText.ts:102
+#: src/ui/autoText.ts:110
 msgid "{unit}'s {ability}: +{amount} {resource}"
 msgstr ""
 
-#: src/ui/autoText.ts:110
+#: src/ui/autoText.ts:117
+msgid "{n} model back"
+msgid_plural "{n} models back"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui/autoText.ts:120
 msgid "{unit}'s {ability}: rolled {roll}, {n} wound regained"
 msgid_plural "{unit}'s {ability}: rolled {roll}, {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:120
+#: src/ui/autoText.ts:130
 msgid "{unit}'s {ability}: {n} wound regained"
 msgid_plural "{unit}'s {ability}: {n} wounds regained"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/autoText.ts:143
+#: src/ui/autoText.ts:15
+msgid "Its ranged attacks"
+msgstr ""
+
+#: src/ui/autoText.ts:154
 msgid "{by} to {roll}"
 msgstr ""
 
-#: src/ui/autoText.ts:144
+#: src/ui/autoText.ts:155
 msgid "{roll} target {by}"
 msgstr ""
 
-#: src/ui/autoText.ts:147
+#: src/ui/autoText.ts:158
 msgid "re-roll {faces}s"
 msgstr ""
 
-#: src/ui/autoText.ts:148
+#: src/ui/autoText.ts:159
 msgid "criticals on {n}+"
-msgstr ""
-
-#: src/ui/autoText.ts:15
-msgid "Its ranged attacks"
 msgstr ""
 
 #: src/ui/autoText.ts:17
@@ -9729,12 +9755,12 @@ msgstr ""
 msgid "Its attacks"
 msgstr ""
 
-#: src/ui/autoText.ts:196
-msgid "re-roll"
-msgstr ""
-
 #: src/ui/autoText.ts:20
 msgid "Ranged attacks against it"
+msgstr ""
+
+#: src/ui/autoText.ts:207
+msgid "re-roll"
 msgstr ""
 
 #: src/ui/autoText.ts:22
@@ -9805,59 +9831,71 @@ msgstr ""
 msgid "gain {amount} {resource}"
 msgstr ""
 
-#: src/ui/autoText.ts:63
+#: src/ui/autoText.ts:64
+msgid "it regains {amount} wounds, bringing back destroyed models"
+msgstr ""
+
+#: src/ui/autoText.ts:65
 msgid "its most hurt model regains up to {amount} wounds"
 msgstr ""
 
-#: src/ui/autoText.ts:71
+#: src/ui/autoText.ts:73
 msgid "While leading a unit"
 msgstr ""
 
-#: src/ui/autoText.ts:75
+#: src/ui/autoText.ts:77
 msgid "Enemy {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:79
+#: src/ui/autoText.ts:81
 msgid "Friendly {keyword}units within {range}\""
 msgstr ""
 
-#: src/ui/autoText.ts:84
+#: src/ui/autoText.ts:86
 msgid "Once per battle, for one phase"
 msgstr ""
 
-#: src/ui/autoText.ts:87
-msgid "each"
-msgstr ""
-
-#: src/ui/autoText.ts:87
-msgid "your"
-msgstr ""
-
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:134
+#: src/ui/autoText.ts:145
 msgid "hit"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:136
+#: src/ui/autoText.ts:147
 msgid "wound"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:138
+#: src/ui/autoText.ts:149
 msgid "save"
 msgstr ""
 
 #: src/ui/autoText.ts:9
-#: src/ui/autoText.ts:140
+#: src/ui/autoText.ts:151
 msgid "damage"
 msgstr ""
 
 #: src/ui/autoText.ts:90
-msgid "At the end of {turn} {phase} phase"
+msgid "While on an objective it controls"
 msgstr ""
 
 #: src/ui/autoText.ts:91
+msgid "While within range of an objective"
+msgstr ""
+
+#: src/ui/autoText.ts:95
+msgid "each"
+msgstr ""
+
+#: src/ui/autoText.ts:95
+msgid "your"
+msgstr ""
+
+#: src/ui/autoText.ts:98
+msgid "At the end of {turn} {phase} phase"
+msgstr ""
+
+#: src/ui/autoText.ts:99
 msgid "At the start of {turn} {phase} phase"
 msgstr ""
 

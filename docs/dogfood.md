@@ -249,6 +249,6 @@ UX 71 and 72 and the PX feel pass on Game review landed alongside (a28840e, 350c
 
 ### Sent on
 
-- **Rules engine:** Teach it can't express Reanimation Protocols (no regain-wounds effect) or Implacable's objective condition. Sharp's shooting marks favour the Pyre Speaker strongly (evaluator, #63).
+- **Rules engine:** Teach it can't express Reanimation Protocols (no regain-wounds effect) or Implacable's objective condition (fixed in #63: a heal that brings models back, and an objective condition). Sharp's shooting marks favour the Pyre Speaker strongly (evaluator, #63).
 - **UX:** Charge (2D6) is enabled and counted in What now with no enemy within 12″. Shoot everything offers only out-of-range targets. "Feel No Pain: damage" shows beside "Feel no pain 5+". A model climbing a crate adds the climb to the logged move. A drag on a unit beside the selected one can grab the neighbour; picking could prefer the selected unit. Phone touch targets under 36 px: VP −/+ (19×16), the replay bar and the table-talk row. Resume says "hotseat" for a game against the computer.
 - **PX:** a Hazardous die in the tray, as a feel idea.
