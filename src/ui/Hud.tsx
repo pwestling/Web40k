@@ -168,8 +168,10 @@ export function Hud() {
       </div>
       <GameSettings />
 
-      {role === "client" && !amSeated && seated.length >= 2 * (liveGame.settings.teamSize ?? 1) && (
+      {role === "client" && !amSeated && seated.length >= 2 * (liveGame.settings.teamSize ?? 1) ? (
         <RejoinCard seated={seated} />
+      ) : (
+        role === "client" && !amSeated && round === 0 && <EarlyNameCard />
       )}
 
       {/* During the battle, setup tools and the dice tray fold away to keep the panel slim. */}
@@ -375,6 +377,43 @@ export function NameCard({ player }: { player: Player }) {
         <input
           value={name}
           placeholder={t("Your name")}
+          autoFocus
+          onChange={(e) => setName(e.target.value)}
+        />
+        <button className="primary" disabled={!name.trim()}>
+          {t("Use this name")}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * While a joining player waits for a seat (rules packages, a slow connection), the name is asked
+ * at once (UX 403): it's kept on this device, and NameCard uses it the moment they sit down.
+ */
+function EarlyNameCard() {
+  const [stored, setStored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
+  const [name, setName] = useState("");
+  if (stored)
+    return <p className="muted claim">{t("Connecting to the table as {name}…", { name: stored })}</p>;
+  return (
+    <form
+      className="claim name-card"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const n = name.trim();
+        if (!n) return;
+        localStorage.setItem("open-battle:name", n);
+        setStored(n);
+      }}
+    >
+      <p className="muted">{t("Connecting to the table… What should the others call you?")}</p>
+      <div className="row">
+        <input
+          value={name}
+          placeholder={t("Your name")}
+          aria-label={t("Your name")}
           autoFocus
           onChange={(e) => setName(e.target.value)}
         />

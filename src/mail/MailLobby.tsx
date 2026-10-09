@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import type { MailFile } from "./file";
-import { readInviteHash, type Box } from "./mailbox";
+import { fetchFiles, readInviteHash, type Box } from "./mailbox";
+import { stateAt } from "../core";
+import { unbundleReplay } from "../ui/replayFile";
+import { gameTitle } from "../ui/systemLabels";
+import { presetMission } from "../ui/demo";
 import {
   arrivals,
   forgetMailGame,
@@ -36,6 +40,14 @@ export function MailLobby({
   // An invite link waits for the joiner's name (UX 236), prefilled with this browser's last one.
   const [invite, setInvite] = useState<Box | null>(null);
   const [joinName, setJoinName] = useState(name);
+  // Who invites you to what, read from the invitation in the mailbox (UX 405).
+  const [about, setAbout] = useState<{ id: string; text: string } | null>(null);
+  useEffect(() => {
+    if (!invite) return;
+    let live = true;
+    void inviteText(invite).then((text) => live && text && setAbout({ id: invite.id, text }));
+    return () => void (live = false);
+  }, [invite]);
   const run = (f: () => Promise<unknown>) => {
     setBusy(true);
     void f().finally(() => setBusy(false));
@@ -80,7 +92,9 @@ export function MailLobby({
               join();
             }}
           >
-            <strong>{t("You've been invited to a game by mail")}</strong>
+            <strong>
+              {(about?.id === invite.id && about.text) || t("You've been invited to a game by mail")}
+            </strong>
             <label className="row">
               {t("Your name, for your opponent")}{" "}
               <input
@@ -116,6 +130,8 @@ export function MailLobby({
             onClick={() =>
               run(async () => {
                 await startMailGame(name, system);
+                // The game's first mission, as every other way in starts with (UX 394).
+                presetMission();
                 onStarted();
               })
             }
@@ -183,4 +199,20 @@ export function MailLobby({
       </details>
     </>
   );
+}
+
+/** "Ana invites you to Sci-fi battle (1 vs 1, Crossfire)", from the invitation in the mailbox, or null. */
+async function inviteText(box: Box): Promise<string | null> {
+  try {
+    const file = (await fetchFiles(box, 0))?.find((f) => f.index === 1);
+    if (!file?.record) return null;
+    const s = stateAt(await unbundleReplay(file.record));
+    const size = (s.settings.teamSize ?? 1) > 1 ? t("2 vs 2") : t("1 vs 1");
+    const p = { name: file.name, game: gameTitle(s), size, mission: s.mission?.name ?? "" };
+    return s.mission
+      ? t("{name} invites you to {game} ({size}, {mission})", p)
+      : t("{name} invites you to {game} ({size})", p);
+  } catch {
+    return null;
+  }
 }

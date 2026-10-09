@@ -16,6 +16,7 @@ import { useCanControl, useJoining, useStore } from "../store";
 import { characterName, levelName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
+import { useMail } from "../mail/store";
 
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
@@ -49,6 +50,11 @@ export function TopBar() {
   const seats = sides(game);
   const deploying = game.turn.round === 0;
   const mode = useStore((s) => s.mode);
+  // A mail game: the one who made it starts the battle, once they have the other side's file (UX 402).
+  const mail = useMail((s) => s.game);
+  const seatedByMail = useStore((s) => s.mail !== null);
+  const mailGuest = deploying && seatedByMail && !!mail && mail.me !== "p1";
+  const host = mail ? Object.entries(mail.names).find(([p]) => p !== mail.me)?.[1] || t("your opponent") : "";
   // Voice at the table: a ring on whoever is talking.
   const speaking = useVoice((s) => s.speaking);
   // Whoever presses Start is ready by doing so; only the others are named.
@@ -326,7 +332,14 @@ export function TopBar() {
               {t("Pass")}
             </button>
           ))}
-        {myTurn && !over && !(view.alternating && !deploying) && (
+        {mailGuest && (
+          <span className="muted small">
+            {mail.segment
+              ? t("Deploy, then Send to {name}", { name: host })
+              : t("Waiting for {name} to start", { name: host })}
+          </span>
+        )}
+        {myTurn && !over && !mailGuest && !(view.alternating && !deploying) && (
           <button
             className={view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}
             title={

@@ -452,8 +452,13 @@ const checks = {
     await host.page.getByRole("button", { name: "Host a game", exact: true }).click();
     await host.page.locator(".room").waitFor();
     await guest.page.goto(host.page.url());
+    // The name is asked at once, while the table connects (UX 403), and used once seated.
+    await guest.page.getByText(/What should the others call you/).waitFor({ timeout: 10_000 });
+    await guest.page.getByPlaceholder("Your name").fill("Ben");
+    await guest.page.getByRole("button", { name: "Use this name" }).click();
     await host.page.locator(".room").getByText("connected").waitFor({ timeout: 30_000 });
     await guest.page.locator(".topbar .player").nth(1).waitFor();
+    await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 15_000 });
     await host.context.close();
     await guest.context.close();
     return [...host.page.errors, ...guest.page.errors];

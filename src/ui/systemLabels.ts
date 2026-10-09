@@ -1,3 +1,5 @@
+import { DEFAULT_SYSTEM, type GameState } from "../core";
+import { getSystem } from "../core/content/systems";
 import { t } from "../i18n";
 
 /**
@@ -57,4 +59,16 @@ export function systemLabel(id: string | undefined, name: string): string {
 /** A game's name for players: "(draft)" marks a system still being built inside the app, not for a post or a list. */
 export function plainSystemName(name: string): string {
   return name.replace(/\s*\(draft\)\s*$/i, "");
+}
+
+/** The game a state is of, by its name on screen (a package game not loaded yet: its id). */
+export function gameTitle(state: GameState): string {
+  const id = state.system ?? DEFAULT_SYSTEM;
+  let name = id;
+  try {
+    name = plainSystemName(getSystem(id).name);
+  } catch {
+    // A package game that isn't loaded yet: its id will do.
+  }
+  return systemLabel(id, name);
 }

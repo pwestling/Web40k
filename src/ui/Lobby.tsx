@@ -25,9 +25,8 @@ import { openLibrary } from "../figures/open";
 import { openWorkshop } from "../workshop/open";
 import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/UpdateToast";
 import { PackageLibrary, refOf } from "./Packages";
-import { FRONT, plainSystemName, systemLabel } from "./systemLabels";
+import { FRONT, gameTitle, systemLabel } from "./systemLabels";
 import { stateAt } from "../core/log";
-import { getSystem } from "../core/content/systems";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Play by mail loads after the front door; it sits below the fold. */
@@ -99,14 +98,7 @@ export function Lobby() {
     if (!saved) return null;
     try {
       const s = stateAt(saved.record);
-      const id = s.system ?? DEFAULT_SYSTEM;
-      let name = id;
-      try {
-        name = plainSystemName(getSystem(id).name);
-      } catch {
-        // A package game that isn't loaded yet: its id will do.
-      }
-      return { game: systemLabel(id, name), round: s.turn.round };
+      return { game: gameTitle(s), round: s.turn.round };
     } catch {
       return null;
     }
