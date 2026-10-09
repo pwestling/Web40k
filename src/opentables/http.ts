@@ -9,6 +9,8 @@ import type { BoardBackend, BoardStatus } from "./board";
  */
 
 const POLL_MS = 20_000;
+/** Ranked results change slowly: a look a minute. */
+const RESULTS_POLL_MS = 60_000;
 
 /** The board answered no: 429 is too many tables from this network. */
 class BoardRefused extends Error {
@@ -58,6 +60,28 @@ export function httpBoard(url: string, key: string, token: (id: string) => strin
       };
       void look();
       const timer = setInterval(() => void look(), POLL_MS);
+      return () => {
+        stopped = true;
+        clearInterval(timer);
+      };
+    },
+    publishResult: (r) => post("/results", r),
+    watchResults(onResults) {
+      let stopped = false;
+      const look = async () => {
+        try {
+          const res = await fetch(`${url}/results`, {
+            cache: "no-store",
+            signal: AbortSignal.timeout(10_000),
+          });
+          const body = res.ok ? ((await res.json()) as { results?: unknown[] }) : null;
+          if (!stopped && Array.isArray(body?.results)) onResults(body.results);
+        } catch {
+          // Offline, or an older board: what this browser already has still counts.
+        }
+      };
+      void look();
+      const timer = setInterval(() => void look(), RESULTS_POLL_MS);
       return () => {
         stopped = true;
         clearInterval(timer);

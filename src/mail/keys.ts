@@ -9,7 +9,7 @@ const KEY = "open-battle:mail-identity";
 const ALG = { name: "ECDSA", namedCurve: "P-256" } as const;
 const SIGN = { name: "ECDSA", hash: "SHA-256" } as const;
 
-interface Identity {
+export interface Identity {
   publicKey: JsonWebKey;
   privateKey: JsonWebKey;
 }
@@ -36,6 +36,19 @@ export async function identity(): Promise<Identity> {
     // As above.
   }
   return cached;
+}
+
+/**
+ * Use another device's identity (a player card brought over, #65): its key
+ * replaces this device's, for mail games and ranked games alike.
+ */
+export function setIdentity(id: Identity): void {
+  cached = { publicKey: id.publicKey, privateKey: id.privateKey };
+  try {
+    localStorage.setItem(KEY, JSON.stringify(cached));
+  } catch {
+    // A private window: for this session only.
+  }
 }
 
 /** A short, stable name for a public key, to compare at a glance. */

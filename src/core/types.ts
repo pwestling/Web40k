@@ -1,6 +1,7 @@
 import type { BranchInfo } from "./branch";
 import type { Effect } from "./content/schema";
 import type { Secrets } from "./secrets";
+import type { RankedState } from "./ranked";
 
 /**
  * Core game-state types. Everything in `src/core` is pure TypeScript with no
@@ -533,6 +534,8 @@ export interface GameState {
   scores?: ScoreEntry[];
   /** The campaign book this game is played for (src/campaign), and which shelf army each player brought. */
   campaign?: CampaignRef;
+  /** A ranked game (#65): the players' keys, the result and their signatures (core/ranked.ts). */
+  ranked?: RankedState;
   /** Table options the players agreed on. */
   settings: GameSettings;
 }

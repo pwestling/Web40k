@@ -137,6 +137,18 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
             },
           );
     }
+    case "ranked/card":
+      return event.key
+        ? t("{name} plays this game ranked", { name: playerName(game.players[event.player]) ?? who })
+        : t("{name} plays this game unranked", { name: playerName(game.players[event.player]) ?? who });
+    case "ranked/result":
+      return t("The result is up for signing");
+    case "ranked/sign":
+      return event.sig
+        ? t("{name} signed the result", { name: playerName(game.players[event.player]) ?? who })
+        : t("{name} didn't sign the result: it won't count", {
+            name: playerName(game.players[event.player]) ?? who,
+          });
     case "player/color":
       // Before the battle it's setting up (an army brings its colour, UX 335), not news.
       if (game.turn.round === 0) return "";

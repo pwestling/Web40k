@@ -1,3 +1,4 @@
+import { RankedChip } from "../ranked/RankedGame";
 import { displayName, playerName } from "../i18n/names";
 import { ClockBar, SideClock } from "./Clocks";
 import { useVoice } from "../voice/voice";
@@ -223,6 +224,7 @@ export function TopBar() {
           </button>
         )}
         <WatchingChip />
+        <RankedChip />
         <div className="phase">
           {deploying ? (
             <>

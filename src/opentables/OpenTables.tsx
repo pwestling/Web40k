@@ -1,3 +1,8 @@
+import { openLadder } from "../player/open";
+import { myKey, signAsMe, signedBy } from "../player/card";
+import { useRating } from "../ranked/store";
+import { PROVISIONAL, type Rating } from "../ranked/ratings";
+import { playRanked } from "../ranked/RankedGame";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { systemOf, type GameState } from "../core";
@@ -35,6 +40,7 @@ import {
   LIVE_HOURS,
   MAIL_TTL_MS,
   newPostId,
+  postProof,
   TABLE_TAGS,
   tagsOf,
   type SeenPost,
@@ -188,6 +194,9 @@ export function OpenTablesBoard({
       >
         <div className="row spread">
           <h2>{t("Open tables")}</h2>
+          <button className="small" onClick={() => openLadder()}>
+            {t("Ladder")}
+          </button>
           <button className="quiet" title={t("Close")} onClick={onClose}>
             ✕
           </button>
@@ -393,6 +402,7 @@ function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }
     <li className="table-post live-game">
       <strong className="table-lead">{lead}</strong>
       <div className="small muted">{details.join(" · ")}</div>
+      {live.keys && <LiveRatings post={post} keys={live.keys} />}
       {post.note && <p className="small table-note">“{post.note}”</p>}
       <div className="row">
         <button className="primary" onClick={onWatch}>
@@ -400,6 +410,46 @@ function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }
         </button>
       </div>
     </li>
+  );
+}
+
+/** A player's standing, as a card shows it: "1516 (12 games)", or new to the ladder. */
+function standing(r: Rating | null): string {
+  if (!r) return t("new to the ladder");
+  return r.games < PROVISIONAL
+    ? tn(r.games, "{rating}? ({n} game)", "{rating}? ({n} games)", { rating: r.rating })
+    : tn(r.games, "{rating} ({n} game)", "{rating} ({n} games)", { rating: r.rating });
+}
+
+/** A ranked table (#65): ranked, and the poster's rating once their key's signature on the post checks out. */
+function RankedLine({ post }: { post: SeenPost }) {
+  const [proven, setProven] = useState(false);
+  useEffect(() => {
+    let live = true;
+    if (post.player && post.proof)
+      void signedBy(postProof(post.id), post.proof, post.player).then((ok) => live && setProven(ok));
+    return () => {
+      live = false;
+    };
+  }, [post.id, post.player, post.proof]);
+  const rating = useRating(proven ? post.player : undefined, post.system);
+  return (
+    <div className="small ranked-line">
+      <span className="ranked-chip small">{t("Ranked")}</span>{" "}
+      {proven ? t("{name}: {standing}", { name: displayName(post.name), standing: standing(rating) }) : null}
+    </div>
+  );
+}
+
+/** Each side's rating in a ranked game on Live now (#65). */
+function LiveRatings({ post, keys }: { post: SeenPost; keys: string[] }) {
+  const a = useRating(keys[0], post.system);
+  const b = useRating(keys[1], post.system);
+  return (
+    <div className="small ranked-line">
+      <span className="ranked-chip small">{t("Ranked")}</span>{" "}
+      {t("{a} vs {b}", { a: standing(a), b: standing(b) })}
+    </div>
   );
 }
 
@@ -472,6 +522,7 @@ function TablePostCard({
         </div>
       )}
       <div className="small muted">{details.join(" · ")}</div>
+      {post.ranked && <RankedLine post={post} />}
       {post.note && <p className="small table-note">“{post.note}”</p>}
       {reporting ? (
         <div className="row wrap" role="group" aria-label={t("Report this table")}>
@@ -590,6 +641,9 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   const [tags, setTags] = useState<TableTag[]>([]);
   // Public tables welcome watchers unless the host says not (#64).
   const [watch, setWatch] = useState(true);
+  // Ranked (#65): opt-in, one against one.
+  const [ranked, setRanked] = useState(false);
+  const oneOnOne = useStore((s) => (s.game.settings.teamSize ?? 1) === 1);
   const [busy, setBusy] = useState(false);
   const self = game.players[session?.selfId ?? ""];
   // Ask for the name here: a post from "Player 1" can't be told apart (UX 382).
@@ -659,8 +713,15 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
             ? new Date(at).getTime()
             : null
           : now + Number(when) * 60_000;
+    const id = newPostId();
+    // A ranked table shows the poster's rating: their key, and its signature on this post.
+    const rank =
+      kind === "live" && ranked && oneOnOne
+        ? { ranked: true, player: await myKey(), proof: await signAsMe(postProof(id)) }
+        : {};
     const ok = await postTable({
-      id: newPostId(),
+      ...rank,
+      id,
       name: name.slice(0, LIMITS.name),
       system,
       game: gameName.slice(0, LIMITS.game),
@@ -677,6 +738,7 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
       expires: now + (kind === "live" ? hours * 3600_000 : MAIL_TTL_MS),
     });
     setBusy(false);
+    if (ok && rank.ranked) void playRanked();
     if (ok) setOpen(false);
   };
   return (
@@ -752,6 +814,12 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
         <label className="check">
           <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} />
           {t("Allow watchers: once your seats fill, it shows under Live now")}
+        </label>
+      )}
+      {kind === "live" && oneOnOne && (
+        <label className="check">
+          <input type="checkbox" checked={ranked} onChange={(e) => setRanked(e.target.checked)} />
+          {t("Ranked: at the end you both sign the result, and it counts on the ladder")}
         </label>
       )}
       <label>

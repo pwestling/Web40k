@@ -284,6 +284,20 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = state.players[event.player];
       return p ? { ...state, players: { ...state.players, [p.id]: { ...p, name: event.name } } } : state;
     }
+    case "ranked/card": {
+      const ranked = state.ranked ?? { keys: {}, sigs: {} };
+      const { [event.player]: _old, ...keys } = ranked.keys;
+      return {
+        ...state,
+        ranked: { ...ranked, keys: event.key ? { ...keys, [event.player]: event.key } : keys },
+      };
+    }
+    case "ranked/result":
+      return state.ranked ? { ...state, ranked: { ...state.ranked, result: event.result, sigs: {} } } : state;
+    case "ranked/sign":
+      return state.ranked
+        ? { ...state, ranked: { ...state.ranked, sigs: { ...state.ranked.sigs, [event.player]: event.sig } } }
+        : state;
     case "player/color": {
       const p = state.players[event.player];
       return p ? { ...state, players: { ...state.players, [p.id]: { ...p, color: event.color } } } : state;

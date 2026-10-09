@@ -25,8 +25,12 @@ const params = () => new URLSearchParams(typeof location === "undefined" ? "" : 
 
 export const EXHIBITION = params().get("exhibition") === "1";
 
-/** How long a finished game stays on the table before the next one. */
-const LINGER_MS = 45_000;
+/**
+ * How long a finished game stays on the table before the next one: the
+ * watchers' delay, the end reel, then a pause on Battle over (PX: watchers
+ * lost the ending when the table moved on at 45 s).
+ */
+const LINGER_MS = (30 + 60 + 45) * 1000;
 const NEXT_KEY = "open-battle:exhibition-next";
 
 function rotation(): string[] {

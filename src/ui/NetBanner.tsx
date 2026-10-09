@@ -1,3 +1,4 @@
+import { rankedOver } from "../core/ranked";
 import { saveJson } from "./files";
 import { displayName, playerName } from "../i18n/names";
 import { useMemo } from "react";
@@ -29,6 +30,8 @@ export function NetBanner() {
     return items.at(-1)?.text ?? null;
   }, [desyncSeq, record]);
   if (!net || mode === "hotseat" || (joining && !net.desync)) return null;
+  // A watcher whose game has ended: the host going is the table packing up (PX).
+  if (net.migrating && net.role === "spectator" && rankedOver(useStore.getState().game)) return null;
   if (net.migrating)
     return <div className="net-banner">{t("Host disconnected: waiting for it, or for a new host…")}</div>;
   if (net.desync) {

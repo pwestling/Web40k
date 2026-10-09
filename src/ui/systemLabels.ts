@@ -75,3 +75,6 @@ export function gameTitle(state: GameState): string {
     name = state.packages?.packages.find((p) => p.id === id)?.name ?? state.packages?.packages[0]?.name ?? id;
   return systemLabel(id, name);
 }
+
+/** A game system's name for players, from its id alone (a ladder, a ranked result: #65). */
+export const systemTitle = (id: string): string => gameTitle({ system: id } as GameState);
