@@ -7,6 +7,7 @@ import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
 import { openLibrary } from "../figures/open";
 import { t } from "../i18n";
+import { usePhotoAsk } from "../standees/ask";
 
 const StandeeMaker = lazy(() =>
   import("../standees/StandeeMaker").then((m) => ({ default: m.StandeeMaker })),
@@ -70,7 +71,14 @@ function FigureRow({
   editable: boolean;
 }) {
   const { assets, status, dressUnit } = useAssets();
-  const [photo, setPhoto] = useState(false);
+  // Asked from the army panel (UX 471): open the maker for this unit.
+  const asked = usePhotoAsk((s) => s.unit === unit.id);
+  const [picked, setPhoto] = useState(false);
+  const photo = picked || (asked && editable);
+  const closePhoto = () => {
+    setPhoto(false);
+    usePhotoAsk.setState({ unit: null });
+  };
   const figure = models.find((m) => m.figure)?.figure;
   const asset = figure && assets[figure.asset];
   const message = status[unit.id];
@@ -108,22 +116,16 @@ function FigureRow({
       )}
       {editable && models[0] && (
         <button
-          className="small"
+          className={figure ? "small" : "small primary"}
           title={t("Photograph your painted miniature and stand it on its base")}
           onClick={() => setPhoto(true)}
         >
-          📷 {t("Photo…")}
+          📷 {figure ? t("Photo…") : t("Photograph it…")}
         </button>
       )}
       {photo && models[0] && (
         <Suspense fallback={null}>
-          <StandeeMaker
-            unit={unit}
-            keys={keys}
-            label={label}
-            base={models[0].base}
-            onClose={() => setPhoto(false)}
-          />
+          <StandeeMaker unit={unit} keys={keys} label={label} base={models[0].base} onClose={closePhoto} />
         </Suspense>
       )}
       {editable && <FromLibrary unit={unit} label={label} keys={keys} current={figure?.asset} />}

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useAssets } from "../assets/store";
 import type { BaseShape, Unit } from "../core";
 import { t } from "../i18n";
-import { autoMask, baseTop, baseWidth, bounds, brush, type Mask } from "./cutout";
+import { autoMask, baseTop, baseWidth, bounds, cutInside, stroke, type Mask } from "./cutout";
 import { standeeBytes, STANDEE_EXTENSION } from "./file";
 
 /**
@@ -16,10 +16,34 @@ import { standeeBytes, STANDEE_EXTENSION } from "./file";
 /** Photos are worked at most this many pixels on their long side: plenty for a 512 px texture, quick to cut out. */
 const WORK = 720;
 
+/**
+ * One photo being cut out: the automatic cut, the player's brushing over it
+ * (1 keep, -1 cut, 0 as the automatic cut has it), and what they make
+ * together. Brushing survives a change to the backdrop (UX 464); each stroke
+ * can be undone (UX 465).
+ */
 interface Side {
   img: ImageData;
+  auto: Mask;
+  edits: Int8Array;
   mask: Mask;
-  tolerance: number | undefined;
+  adjust: number;
+  history: Int8Array[];
+}
+
+/** Undo steps kept per photo. */
+const UNDO = 30;
+
+function combine(auto: Mask, edits: Int8Array): Mask {
+  const mask = new Uint8Array(auto.length);
+  for (let i = 0; i < auto.length; i++) mask[i] = edits[i]! > 0 ? 255 : edits[i]! < 0 ? 0 : auto[i]!;
+  return mask;
+}
+
+function fresh(img: ImageData): Side {
+  const auto = autoMask(img);
+  const edits = new Int8Array(auto.length);
+  return { img, auto, edits, mask: combine(auto, edits), adjust: 0, history: [] };
 }
 
 /** The base's frontage in millimetres: what the photo's base is scaled to. */
@@ -90,19 +114,33 @@ export function StandeeMaker({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const dressUnit = useAssets((s) => s.dressUnit);
+  // A photo and its edits aren't thrown away without asking (UX 466).
+  const close = () => {
+    if (front && !confirm(t("Throw away this photo and your edits?"))) return;
+    onClose();
+  };
+  const closeRef = useRef(close);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
-  }, [onClose]);
+    closeRef.current = close;
+  });
+  useEffect(() => {
+    // Escape closes this dialog only, not the unit card behind it.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      closeRef.current();
+    };
+    addEventListener("keydown", onKey, true);
+    return () => removeEventListener("keydown", onKey, true);
+  }, []);
 
   const take = async (file: File | undefined, which: "front" | "back") => {
     if (!file) return;
     setError("");
     try {
       const img = await readPhoto(file);
-      const side = { img, mask: autoMask(img), tolerance: undefined };
-      (which === "front" ? setFront : setBack)(side);
+      (which === "front" ? setFront : setBack)(fresh(img));
       setEditing(which);
     } catch {
       setError(t("That photo couldn't be read. Try a JPEG or PNG."));
@@ -150,7 +188,7 @@ export function StandeeMaker({
   const current = editing === "front" ? front : back;
   const setCurrent = editing === "front" ? setFront : setBack;
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={close}>
       <div
         className="panel modal standee-maker"
         role="dialog"
@@ -159,7 +197,7 @@ export function StandeeMaker({
       >
         <div className="row spread">
           <h3>{t("Photo standee for {name}", { name: label })}</h3>
-          <button className="quiet" title={t("Close")} aria-label={t("Close")} onClick={onClose}>
+          <button className="quiet" title={t("Close")} aria-label={t("Close")} onClick={close}>
             ✕
           </button>
         </div>
@@ -167,7 +205,12 @@ export function StandeeMaker({
           {t(
             "Stand the painted miniature on a plain sheet of paper and photograph it from the front, at its eye level, base and all. The app cuts it out and scales it to its base; one photo dresses every {name}.",
             { name: label },
-          )}
+          )}{" "}
+          <strong>
+            {t(
+              "Use a sheet that stands out from the paint: white for dark armies, dark or coloured for pale ones.",
+            )}
+          </strong>
         </p>
         <div className="row wrap">
           <PhotoButtons
@@ -198,9 +241,16 @@ export function StandeeMaker({
           </div>
         )}
         {current && <CutoutEditor side={current} onChange={setCurrent} />}
+        {current && cutInside(current.auto, current.img.width, current.img.height) > 0.2 && (
+          <p className="warn small">
+            {t(
+              "A lot inside the miniature was cut: its paint may be close to the sheet's colour. A darker or coloured sheet will cut it out better, or paint it back with Keep.",
+            )}
+          </p>
+        )}
         {error && <p className="warn small">{error}</p>}
         {front && (
-          <div className="row wrap">
+          <div className="row wrap maker-footer">
             <label className="small">
               {t("Name")} <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
             </label>
@@ -249,15 +299,20 @@ function PhotoButtons({
   );
 }
 
-/** The photo with what's cut faded out; a brush to keep or cut, and how much counts as backdrop. */
+/** The photo with what's cut faded out; a brush to keep or cut, undo, and how much counts as backdrop. */
 function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [keep, setKeep] = useState(false);
   const [size, setSize] = useState(() => Math.round(Math.max(side.img.width, side.img.height) * 0.025));
-  const painting = useRef(false);
-  const { img, mask } = side;
+  const [ring, setRing] = useState<{ x: number; y: number; d: number } | null>(null);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const live = useRef(side);
+  useEffect(() => {
+    live.current = side;
+  }, [side]);
+  const { img } = side;
 
-  const draw = () => {
+  const draw = (mask: Mask) => {
     const c = canvas.current;
     if (!c) return;
     const g = c.getContext("2d")!;
@@ -277,40 +332,108 @@ function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => v
         out.data[o + 3] = 50;
       }
     }
-    g.clearRect(0, 0, c.width, c.height);
     g.putImageData(out, 0, 0);
   };
-  useEffect(draw);
+  useEffect(() => draw(side.mask));
 
+  const undo = () => {
+    const s = live.current;
+    const edits = s.history.at(-1);
+    if (!edits) return;
+    onChange({ ...s, edits, mask: combine(s.auto, edits), history: s.history.slice(0, -1) });
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  });
+
+  const at = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const r = canvas.current!.getBoundingClientRect();
+    return {
+      x: ((e.clientX - r.left) / r.width) * img.width,
+      y: ((e.clientY - r.top) / r.height) * img.height,
+      scale: r.width / img.width,
+      r,
+    };
+  };
   const paint = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = canvas.current!;
-    const r = c.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * img.width;
-    const y = ((e.clientY - r.top) / r.height) * img.height;
-    brush(mask, img.width, img.height, x, y, size, keep);
-    draw();
+    const s = live.current;
+    const p = at(e);
+    const value = keep ? 1 : -1;
+    const r2 = size * size;
+    // Joined along the stroke, however fast the pointer moves (UX 469).
+    stroke(
+      (x, y) => {
+        for (
+          let yy = Math.max(0, Math.floor(y - size));
+          yy <= Math.min(img.height - 1, Math.ceil(y + size));
+          yy++
+        )
+          for (
+            let xx = Math.max(0, Math.floor(x - size));
+            xx <= Math.min(img.width - 1, Math.ceil(x + size));
+            xx++
+          )
+            if ((xx - x) ** 2 + (yy - y) ** 2 <= r2) {
+              const i = yy * img.width + xx;
+              s.edits[i] = value;
+              s.mask[i] = value > 0 ? 255 : 0;
+            }
+      },
+      last.current,
+      p,
+      size,
+    );
+    last.current = p;
+    draw(s.mask);
+  };
+  // The brush's size, round the pointer (UX 470).
+  const showRing = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const p = at(e);
+    const box = canvas.current!.parentElement!.getBoundingClientRect();
+    setRing({ x: e.clientX - box.left, y: e.clientY - box.top, d: size * 2 * p.scale });
   };
 
-  const tolerance = side.tolerance ?? 0;
   return (
     <div className="cutout-editor">
-      <canvas
-        ref={canvas}
-        width={img.width}
-        height={img.height}
-        className="checker"
-        aria-label={t("The cut-out: paint to keep or cut")}
-        onPointerDown={(e) => {
-          painting.current = true;
-          e.currentTarget.setPointerCapture(e.pointerId);
-          paint(e);
-        }}
-        onPointerMove={(e) => painting.current && paint(e)}
-        onPointerUp={() => {
-          painting.current = false;
-          onChange({ ...side });
-        }}
-      />
+      <div className="canvas-wrap" onPointerLeave={() => setRing(null)}>
+        <canvas
+          ref={canvas}
+          width={img.width}
+          height={img.height}
+          className="checker"
+          aria-label={t("The cut-out: paint to keep or cut")}
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            const s = live.current;
+            // Each stroke can be undone.
+            s.history = [...s.history.slice(-(UNDO - 1)), s.edits.slice()];
+            last.current = null;
+            paint(e);
+          }}
+          onPointerMove={(e) => {
+            showRing(e);
+            if (last.current) paint(e);
+          }}
+          onPointerUp={() => {
+            if (!last.current) return;
+            last.current = null;
+            onChange({ ...live.current });
+          }}
+        />
+        {ring && (
+          <span
+            className={keep ? "brush-ring keep" : "brush-ring"}
+            style={{ left: ring.x - ring.d / 2, top: ring.y - ring.d / 2, width: ring.d, height: ring.d }}
+          />
+        )}
+      </div>
       <div className="row wrap small">
         <span className="row" role="group" aria-label={t("Brush")}>
           <button className={keep ? "on" : ""} aria-pressed={keep} onClick={() => setKeep(true)}>
@@ -320,6 +443,9 @@ function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => v
             {t("Cut")}
           </button>
         </span>
+        <button disabled={!side.history.length} title={t("Undo the last stroke (Ctrl+Z)")} onClick={undo}>
+          {t("Undo")}
+        </button>
         <label>
           {t("Brush size")}{" "}
           <input
@@ -337,18 +463,17 @@ function CutoutEditor({ side, onChange }: { side: Side; onChange: (s: Side) => v
             min={-60}
             max={60}
             step={10}
-            value={tolerance}
+            value={side.adjust}
             title={t("Move right if bits of the backdrop are left, left if bits of the miniature are cut")}
             onChange={(e) => {
-              const v = Number(e.target.value);
-              onChange({ img, mask: autoMask(img, v ? { adjust: v } : {}), tolerance: v || undefined });
+              // A new automatic cut under the brushing, which stays (UX 464).
+              const adjust = Number(e.target.value);
+              const auto = autoMask(img, adjust ? { adjust } : {});
+              onChange({ ...side, auto, adjust, mask: combine(auto, side.edits) });
             }}
           />
         </label>
-        <button
-          className="quiet"
-          onClick={() => onChange({ img, mask: autoMask(img), tolerance: undefined })}
-        >
+        <button className="quiet" onClick={() => onChange(fresh(img))}>
           {t("Start again")}
         </button>
       </div>

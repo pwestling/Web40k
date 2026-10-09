@@ -325,3 +325,37 @@ export function baseTop(mask: Mask, w: number, box: Box, basePx: number): number
   // Never more than a third of the miniature: a wide model isn't all base.
   return Math.max(top, box.y + Math.round(box.height * 0.67));
 }
+
+/**
+ * The share of the miniature cut away inside its outline: cut pixels walled
+ * in by kept ones. A lot means pale paint on pale paper (UX 467).
+ */
+export function cutInside(mask: Mask, w: number, h: number): number {
+  const n = w * h;
+  let kept = 0;
+  for (let i = 0; i < n; i++) if (mask[i]) kept++;
+  if (!kept) return 0;
+  let inside = 0;
+  for (const hole of components(n, w, h, (i) => mask[i] === 0)) {
+    const open = hole.some((i) => {
+      const x = i % w;
+      const y = (i - x) / w;
+      return x === 0 || y === 0 || x === w - 1 || y === h - 1;
+    });
+    if (!open) inside += hole.length;
+  }
+  return inside / kept;
+}
+
+/** Paint a stroke from one point to the next: stamps close enough to join (UX 469). */
+export function stroke(
+  paint: (x: number, y: number) => void,
+  from: { x: number; y: number } | null,
+  to: { x: number; y: number },
+  radius: number,
+): void {
+  if (!from) return paint(to.x, to.y);
+  const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / Math.max(1, radius / 2)));
+  for (let k = 1; k <= steps; k++)
+    paint(from.x + ((to.x - from.x) * k) / steps, from.y + ((to.y - from.y) * k) / steps);
+}

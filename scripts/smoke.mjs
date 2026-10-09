@@ -999,7 +999,7 @@ const checks = {
       const figures = card.locator("details.figures");
       if ((await figures.getAttribute("open")) === null) await figures.locator("> summary").click();
       await card
-        .getByRole("button", { name: /Photo…/ })
+        .getByRole("button", { name: /Photo…|Photograph it…/ })
         .first()
         .click();
       const maker = page.locator(".standee-maker");

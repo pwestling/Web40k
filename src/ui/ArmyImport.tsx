@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { photographNext, undressed } from "../standees/ask";
 import { displayName, playerName } from "../i18n/names";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
@@ -263,6 +264,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       {players.map((p) => (
         <SaveToShelf key={p.id} owner={p.id} name={players.length > 1 ? p.name : null} />
       ))}
+      {owner && <PhotoFigures owner={owner} />}
       {owner && <DicePicker key={owner} player={owner} />}
       {/* On the page itself: inside the side panel, the table talk dock sat over its buttons. */}
       {roster &&
@@ -641,6 +643,25 @@ function SaveToShelf({ owner, name }: { owner: PlayerId; name: string | null }) 
             : t("Save army to your shelf")}
       </button>
     </div>
+  );
+}
+
+/** Your painted army on the table (#68, UX 471): photograph the units still in their stand-ins, one after another. */
+function PhotoFigures({ owner }: { owner: PlayerId }) {
+  const game = useStore((s) => s.game);
+  const left = useMemo(() => undressed(game, owner).length, [game, owner]);
+  if (!left) return null;
+  return (
+    <p className="row wrap small">
+      <button
+        className="small"
+        title={t("Photograph your painted miniature and stand it on its base")}
+        onClick={() => photographNext(owner)}
+      >
+        📷 {t("Photograph your painted figures")}
+      </button>
+      <span className="muted">{tn(left, "{n} unit in its stand-in", "{n} units in their stand-ins")}</span>
+    </p>
   );
 }
 

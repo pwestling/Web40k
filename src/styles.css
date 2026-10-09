@@ -5623,6 +5623,31 @@ body:has(.panel.better-move) .panel.whatnow {
 /* #68: photo standees. */
 .standee-maker {
   width: min(560px, 94vw);
+  max-height: 92vh;
+  overflow: auto;
+}
+/* Name and Use stay in reach on a phone (UX 468). */
+.standee-maker .maker-footer {
+  position: sticky;
+  bottom: -10px;
+  padding: 8px 0;
+  background: rgb(17 19 24);
+  border-top: 1px solid #2d3340;
+}
+.cutout-editor .canvas-wrap {
+  position: relative;
+  width: fit-content;
+  margin: 8px auto;
+}
+.cutout-editor .brush-ring {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px solid #f87171;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 50%);
+}
+.cutout-editor .brush-ring.keep {
+  border-color: #4ade80;
 }
 .standee-maker .photo-buttons {
   gap: 6px;
@@ -5632,10 +5657,16 @@ body:has(.panel.better-move) .panel.whatnow {
   display: block;
   max-width: 100%;
   max-height: 52vh;
-  margin: 8px auto;
   touch-action: none;
-  cursor: crosshair;
+  cursor: none;
   border-radius: 6px;
+}
+/* A margin beside the photo to scroll by on a phone, where the photo itself paints (UX 468). */
+@media (pointer: coarse) {
+  .cutout-editor canvas {
+    max-width: 78vw;
+    max-height: 46vh;
+  }
 }
 .cutout-editor canvas.checker {
   background: repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e37 0% 50%) 50% / 16px 16px;

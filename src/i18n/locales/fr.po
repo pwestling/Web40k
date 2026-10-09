@@ -610,7 +610,7 @@ msgstr "Ranger sur l'étagère"
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
 #: src/ranked/RankedGame.tsx:459
-#: src/standees/StandeeMaker.tsx:195
+#: src/standees/StandeeMaker.tsx:238
 #: src/ui/RegimentPanel.tsx:274
 #, fuzzy
 msgid "Back"
@@ -1121,7 +1121,7 @@ msgstr "Livre de campagne : {book}"
 
 #: src/campaign/CampaignUI.tsx:546
 #: src/tables/TableLibrary.tsx:220
-#: src/ui/ArmyImport.tsx:564
+#: src/ui/ArmyImport.tsx:566
 #: src/workshop/Workshop.tsx:322
 #, fuzzy
 msgid "Export"
@@ -1280,7 +1280,7 @@ msgstr "3 pour une victoire, 1 pour un nul"
 
 #: src/campaign/CampaignUI.tsx:616
 #: src/campaign/EventTab.tsx:272
-#: src/ui/ArmyImport.tsx:313
+#: src/ui/ArmyImport.tsx:315
 #, fuzzy
 msgid "Pts"
 msgstr "Pts"
@@ -1363,7 +1363,7 @@ msgid "Edit"
 msgstr "Modifier"
 
 #: src/campaign/CampaignUI.tsx:736
-#: src/ui/ArmyImport.tsx:312
+#: src/ui/ArmyImport.tsx:314
 #: src/ui/StatsScreen.tsx:159
 #, fuzzy
 msgid "Unit"
@@ -2005,7 +2005,7 @@ msgid "Use these dice"
 msgstr "Utiliser ces dés"
 
 #: src/companion/RealDice.tsx:237
-#: src/standees/StandeeMaker.tsx:352
+#: src/standees/StandeeMaker.tsx:477
 #, fuzzy
 msgid "Start again"
 msgstr "Recommencer"
@@ -2683,7 +2683,7 @@ msgstr "Rondes suisses sans serveur : ton navigateur publie l'événement et app
 #: src/events/EventsUI.tsx:223
 #: src/figures/FigureLibrary.tsx:364
 #: src/player/PlayerCard.tsx:127
-#: src/standees/StandeeMaker.tsx:205
+#: src/standees/StandeeMaker.tsx:255
 #: src/ui/PlayPanel.tsx:257
 #: src/ui/TeachRule.tsx:120
 #, fuzzy
@@ -3172,7 +3172,7 @@ msgid "Pick for a pack"
 msgstr "Choisir pour un pack"
 
 #: src/figures/FigureLibrary.tsx:371
-#: src/ui/ArmyImport.tsx:318
+#: src/ui/ArmyImport.tsx:320
 #, fuzzy
 msgid "Figure"
 msgstr "Figurine"
@@ -3319,7 +3319,7 @@ msgstr "Bibliothèque de figurines"
 #: src/figures/FigureLibrary.tsx:94
 #: src/figures/FigureLibrary.tsx:158
 #: src/figures/FigureLibrary.tsx:202
-#: src/ui/FigurePicker.tsx:33
+#: src/ui/FigurePicker.tsx:34
 #, fuzzy
 msgid "Figures"
 msgstr "Figurines"
@@ -6010,109 +6010,135 @@ msgstr "Bataille terminée"
 msgid "Making the replay page needs a connection."
 msgstr "Créer la page de rediffusion nécessite une connexion."
 
-#: src/standees/StandeeMaker.tsx:108
+#: src/standees/StandeeMaker.tsx:119
+#, fuzzy
+msgid "Throw away this photo and your edits?"
+msgstr "Jeter cette photo et tes retouches ?"
+
+#: src/standees/StandeeMaker.tsx:146
 #, fuzzy
 msgid "That photo couldn't be read. Try a JPEG or PNG."
 msgstr "Impossible de lire cette photo. Essaie un JPEG ou un PNG."
 
-#: src/standees/StandeeMaker.tsx:115
-#: src/standees/StandeeMaker.tsx:125
+#: src/standees/StandeeMaker.tsx:153
+#: src/standees/StandeeMaker.tsx:163
 #, fuzzy
 msgid "Nothing is left of the miniature: paint it back with Keep."
 msgstr "Il ne reste rien de la figurine : repeins-la avec Garder."
 
-#: src/standees/StandeeMaker.tsx:157
-#: src/standees/StandeeMaker.tsx:161
+#: src/standees/StandeeMaker.tsx:195
+#: src/standees/StandeeMaker.tsx:199
 #, fuzzy
 msgid "Photo standee for {name}"
 msgstr "Silhouette photo pour {name}"
 
-#: src/standees/StandeeMaker.tsx:167
+#: src/standees/StandeeMaker.tsx:205
 #, fuzzy
 msgid "Stand the painted miniature on a plain sheet of paper and photograph it from the front, at its eye level, base and all. The app cuts it out and scales it to its base; one photo dresses every {name}."
 msgstr "Pose la figurine peinte sur une feuille de papier unie et photographie-la de face, à hauteur de ses yeux, socle compris. L'appli la détoure et la met à l'échelle de son socle ; une photo habille tous les {name}."
 
-#: src/standees/StandeeMaker.tsx:174
+#: src/standees/StandeeMaker.tsx:210
+#, fuzzy
+msgid "Use a sheet that stands out from the paint: white for dark armies, dark or coloured for pale ones."
+msgstr "Prends une feuille qui tranche avec la peinture : blanche pour les armées sombres, foncée ou colorée pour les claires."
+
+#: src/standees/StandeeMaker.tsx:217
 #, fuzzy
 msgid "Retake the front"
 msgstr "Reprendre l'avant"
 
-#: src/standees/StandeeMaker.tsx:174
+#: src/standees/StandeeMaker.tsx:217
 #, fuzzy
 msgid "Front photo"
 msgstr "Photo de face"
 
-#: src/standees/StandeeMaker.tsx:179
+#: src/standees/StandeeMaker.tsx:222
 #, fuzzy
 msgid "Retake the back"
 msgstr "Reprendre l'arrière"
 
-#: src/standees/StandeeMaker.tsx:179
+#: src/standees/StandeeMaker.tsx:222
 #, fuzzy
 msgid "Back photo (optional)"
 msgstr "Photo de dos (facultatif)"
 
-#: src/standees/StandeeMaker.tsx:195
+#: src/standees/StandeeMaker.tsx:238
 #, fuzzy
 msgid "Front"
 msgstr "Avant"
 
-#: src/standees/StandeeMaker.tsx:209
+#: src/standees/StandeeMaker.tsx:246
+#, fuzzy
+msgid "A lot inside the miniature was cut: its paint may be close to the sheet's colour. A darker or coloured sheet will cut it out better, or paint it back with Keep."
+msgstr "Beaucoup de la figurine a été découpé : sa peinture est sans doute proche de la couleur de la feuille. Une feuille plus foncée ou colorée la découpera mieux, ou repeins-la avec Garder."
+
+#: src/standees/StandeeMaker.tsx:259
 #, fuzzy
 msgid "Stand it on the table's base (cut the photo's base off)"
 msgstr "La poser sur le socle de la table (couper le socle de la photo)"
 
-#: src/standees/StandeeMaker.tsx:212
+#: src/standees/StandeeMaker.tsx:262
 #, fuzzy
 msgid "Standing it up…"
 msgstr "Mise en place…"
 
-#: src/standees/StandeeMaker.tsx:212
+#: src/standees/StandeeMaker.tsx:262
 #, fuzzy
 msgid "Use for {name}"
 msgstr "Utiliser pour {name}"
 
-#: src/standees/StandeeMaker.tsx:241
+#: src/standees/StandeeMaker.tsx:291
 #, fuzzy
 msgid "Take a photo"
 msgstr "Prendre une photo"
 
-#: src/standees/StandeeMaker.tsx:245
+#: src/standees/StandeeMaker.tsx:295
 #, fuzzy
 msgid "Choose a photo…"
 msgstr "Choisir une photo…"
 
-#: src/standees/StandeeMaker.tsx:302
+#: src/standees/StandeeMaker.tsx:411
 #, fuzzy
 msgid "The cut-out: paint to keep or cut"
 msgstr "Le détourage : peins pour garder ou couper"
 
-#: src/standees/StandeeMaker.tsx:315
+#: src/standees/StandeeMaker.tsx:438
 #, fuzzy
 msgid "Brush"
 msgstr "Pinceau"
 
-#: src/standees/StandeeMaker.tsx:317
+#: src/standees/StandeeMaker.tsx:440
 #, fuzzy
 msgid "Keep"
 msgstr "Garder"
 
-#: src/standees/StandeeMaker.tsx:320
+#: src/standees/StandeeMaker.tsx:443
 #, fuzzy
 msgid "Cut"
 msgstr "Couper"
 
-#: src/standees/StandeeMaker.tsx:324
+#: src/standees/StandeeMaker.tsx:446
+#, fuzzy
+msgid "Undo the last stroke (Ctrl+Z)"
+msgstr "Annuler le dernier trait (Ctrl+Z)"
+
+#: src/standees/StandeeMaker.tsx:447
+#: src/ui/Hud.tsx:311
+#, fuzzy
+msgid "Undo"
+msgstr "Annuler"
+
+#: src/standees/StandeeMaker.tsx:450
 #, fuzzy
 msgid "Brush size"
 msgstr "Taille du pinceau"
 
-#: src/standees/StandeeMaker.tsx:334
+#: src/standees/StandeeMaker.tsx:460
 #, fuzzy
 msgid "Backdrop"
 msgstr "Fond"
 
-#: src/standees/StandeeMaker.tsx:341
+#: src/standees/StandeeMaker.tsx:467
 #, fuzzy
 msgid "Move right if bits of the backdrop are left, left if bits of the miniature are cut"
 msgstr "Vers la droite s'il reste des bouts du fond, vers la gauche si des bouts de la figurine sont coupés"
@@ -6430,7 +6456,7 @@ msgid "Save table"
 msgstr "Enregistrer la table"
 
 #: src/tables/TableLibrary.tsx:19
-#: src/ui/ArmyImport.tsx:559
+#: src/ui/ArmyImport.tsx:561
 #, fuzzy
 msgid "another game"
 msgstr "un autre jeu"
@@ -6470,7 +6496,7 @@ msgid "Take {name} out of your library?"
 msgstr "Retirer {name} de ta bibliothèque ?"
 
 #: src/tables/TableLibrary.tsx:228
-#: src/ui/ArmyImport.tsx:570
+#: src/ui/ArmyImport.tsx:572
 #: src/ui/Packages.tsx:233
 #: src/ui/SystemPanels.tsx:437
 #: src/ui/TeachRule.tsx:543
@@ -6669,8 +6695,8 @@ msgid "Your list stays with you: it goes to the people in your game and nowhere 
 msgstr "Ta liste reste à toi : elle va aux joueurs de ta partie et nulle part ailleurs. Open Battle ne fournit aucune armée hormis ses exemples inventés."
 
 #: src/ui/ArmyGuide.tsx:80
-#: src/ui/ArmyImport.tsx:422
-#: src/ui/FigurePicker.tsx:205
+#: src/ui/ArmyImport.tsx:424
+#: src/ui/FigurePicker.tsx:207
 #, fuzzy
 msgid "Your figures"
 msgstr "Tes figurines"
@@ -6715,300 +6741,318 @@ msgstr "Un paquet de règles ajoute un jeu, ou des {army} et des règles à un j
 msgid "units"
 msgstr "unités"
 
-#: src/ui/ArmyImport.tsx:183
+#: src/ui/ArmyImport.tsx:184
 #, fuzzy
 msgid "{count} spells read for {n} wizard."
 msgid_plural "{count} spells read for {n} wizards."
 msgstr[0] "{count} sorts lus pour {n} sorcier."
 msgstr[1] "{count} sorts lus pour {n} sorciers."
 
-#: src/ui/ArmyImport.tsx:199
+#: src/ui/ArmyImport.tsx:200
 #, fuzzy
 msgid "Army for"
 msgstr "Armée pour"
 
-#: src/ui/ArmyImport.tsx:211
+#: src/ui/ArmyImport.tsx:212
 #, fuzzy
 msgid "Armies can be added once this game's rules package is running."
 msgstr "Les armées peuvent être ajoutées une fois le paquet de règles de cette partie lancé."
 
-#: src/ui/ArmyImport.tsx:215
+#: src/ui/ArmyImport.tsx:216
 #, fuzzy
 msgid "Reading…"
 msgstr "Lecture…"
 
-#: src/ui/ArmyImport.tsx:215
+#: src/ui/ArmyImport.tsx:216
 #, fuzzy
 msgid "Import a list"
 msgstr "Importer une liste"
 
-#: src/ui/ArmyImport.tsx:225
-#: src/ui/ArmyImport.tsx:248
+#: src/ui/ArmyImport.tsx:226
+#: src/ui/ArmyImport.tsx:249
 #, fuzzy
 msgid "Sample army"
 msgstr "Armée d'exemple"
 
-#: src/ui/ArmyImport.tsx:234
+#: src/ui/ArmyImport.tsx:235
 #, fuzzy
 msgid "Sample army…"
 msgstr "Armée d'exemple…"
 
-#: src/ui/ArmyImport.tsx:25
-#: src/ui/ArmyImport.tsx:679
+#: src/ui/ArmyImport.tsx:26
+#: src/ui/ArmyImport.tsx:700
 #, fuzzy
 msgid "{d}mm round"
 msgstr "{d} mm rond"
 
-#: src/ui/ArmyImport.tsx:283
+#: src/ui/ArmyImport.tsx:285
 #, fuzzy
 msgid "Your figure library has figures that fit {n} unit."
 msgid_plural "Your figure library has figures that fit {n} units."
 msgstr[0] "Ta bibliothèque de figurines a des figurines adaptées à {n} unité."
 msgstr[1] "Ta bibliothèque de figurines a des figurines adaptées à {n} unités."
 
-#: src/ui/ArmyImport.tsx:297
+#: src/ui/ArmyImport.tsx:299
 #, fuzzy
 msgid "Use them"
 msgstr "Les utiliser"
 
-#: src/ui/ArmyImport.tsx:303
+#: src/ui/ArmyImport.tsx:305
 #, fuzzy
 msgid "Picked figures go on when the army is deployed."
 msgstr "Les figurines choisies sont appliquées au déploiement de l'armée."
 
-#: src/ui/ArmyImport.tsx:305
+#: src/ui/ArmyImport.tsx:307
 #, fuzzy
 msgid "Clear the figures"
 msgstr "Retirer les figurines"
 
-#: src/ui/ArmyImport.tsx:314
+#: src/ui/ArmyImport.tsx:316
 #, fuzzy
 msgid "Troop type"
 msgstr "Type de troupe"
 
-#: src/ui/ArmyImport.tsx:315
+#: src/ui/ArmyImport.tsx:317
 #: src/ui/TemplateTools.tsx:89
 #, fuzzy
 msgid "Models"
 msgstr "Figurines"
 
-#: src/ui/ArmyImport.tsx:316
+#: src/ui/ArmyImport.tsx:318
 #, fuzzy
 msgid "Base"
 msgstr "Socle"
 
-#: src/ui/ArmyImport.tsx:317
+#: src/ui/ArmyImport.tsx:319
 #, fuzzy
 msgid "Models in the front rank"
 msgstr "Figurines au premier rang"
 
-#: src/ui/ArmyImport.tsx:317
+#: src/ui/ArmyImport.tsx:319
 #: src/ui/RegimentPanel.tsx:95
 #: src/ui/RegimentPanel.tsx:336
 #, fuzzy
 msgid "Frontage"
 msgstr "Front"
 
-#: src/ui/ArmyImport.tsx:330
+#: src/ui/ArmyImport.tsx:332
 #, fuzzy
 msgid "Level {level} wizard:"
 msgstr "Sorcier de niveau {level} :"
 
-#: src/ui/ArmyImport.tsx:333
+#: src/ui/ArmyImport.tsx:335
 #, fuzzy
 msgid "no spells yet"
 msgstr "pas encore de sorts"
 
-#: src/ui/ArmyImport.tsx:36
-#: src/ui/ArmyImport.tsx:681
-#, fuzzy
-msgid "{w}×{d}mm oval"
-msgstr "{w}×{d} mm ovale"
-
-#: src/ui/ArmyImport.tsx:362
+#: src/ui/ArmyImport.tsx:364
 #, fuzzy
 msgid "single"
 msgstr "seul"
 
-#: src/ui/ArmyImport.tsx:368
+#: src/ui/ArmyImport.tsx:37
+#: src/ui/ArmyImport.tsx:702
+#, fuzzy
+msgid "{w}×{d}mm oval"
+msgstr "{w}×{d} mm ovale"
+
+#: src/ui/ArmyImport.tsx:370
 #, fuzzy
 msgid "{unit} frontage"
 msgstr "Front de {unit}"
 
-#: src/ui/ArmyImport.tsx:385
+#: src/ui/ArmyImport.tsx:387
 #, fuzzy
 msgid "Deploy as a loose spread instead of a block"
 msgstr "Déployer en ordre dispersé plutôt qu'en bloc"
 
-#: src/ui/ArmyImport.tsx:392
+#: src/ui/ArmyImport.tsx:394
 #: src/ui/RegimentPanel.tsx:26
 #: src/workshop/Workshop.tsx:50
 #, fuzzy
 msgid "Skirmish"
 msgstr "Tirailleurs"
 
-#: src/ui/ArmyImport.tsx:401
-#: src/ui/ArmyImport.tsx:514
+#: src/ui/ArmyImport.tsx:403
+#: src/ui/ArmyImport.tsx:516
 #, fuzzy
 msgid "From your shelf"
 msgstr "De ton étagère"
 
-#: src/ui/ArmyImport.tsx:404
+#: src/ui/ArmyImport.tsx:406
 #, fuzzy
 msgid "{unit} figure"
 msgstr "Figurine pour {unit}"
 
-#: src/ui/ArmyImport.tsx:410
+#: src/ui/ArmyImport.tsx:412
 #, fuzzy
 msgid "Suggested: {name}"
 msgstr "Suggestion : {name}"
 
-#: src/ui/ArmyImport.tsx:411
+#: src/ui/ArmyImport.tsx:413
 #, fuzzy
 msgid "Stand-ins"
 msgstr "Figurines génériques"
 
-#: src/ui/ArmyImport.tsx:414
-#: src/ui/FigurePicker.tsx:197
+#: src/ui/ArmyImport.tsx:416
+#: src/ui/FigurePicker.tsx:199
 #, fuzzy
 msgid "Fits this unit"
 msgstr "Adaptées à cette unité"
 
-#: src/ui/ArmyImport.tsx:437
+#: src/ui/ArmyImport.tsx:439
 #, fuzzy
 msgid "Not in the list, fill in:"
 msgstr "Absent de la liste, à remplir :"
 
-#: src/ui/ArmyImport.tsx:462
+#: src/ui/ArmyImport.tsx:464
 #, fuzzy
 msgid "Bases are a guess from each unit's troop type; check them against your models."
 msgstr "Les socles sont devinés d'après le type de troupe de chaque unité ; compare-les à tes figurines."
 
-#: src/ui/ArmyImport.tsx:463
+#: src/ui/ArmyImport.tsx:465
 #, fuzzy
 msgid "Bases are a guess from keywords and wounds; check them against your models."
 msgstr "Les socles sont devinés d'après les mots-clés et les PV ; compare-les à tes figurines."
 
-#: src/ui/ArmyImport.tsx:471
+#: src/ui/ArmyImport.tsx:473
 #, fuzzy
 msgid "A spell list file: names, casting values, ranges and kinds"
 msgstr "Un fichier de liste de sorts : noms, valeurs de lancement, portées et types"
 
-#: src/ui/ArmyImport.tsx:473
+#: src/ui/ArmyImport.tsx:475
 #, fuzzy
 msgid "Add spells from a list"
 msgstr "Ajouter des sorts depuis une liste"
 
-#: src/ui/ArmyImport.tsx:489
+#: src/ui/ArmyImport.tsx:491
 #, fuzzy
 msgid "Deploy for {name}"
 msgstr "Déployer pour {name}"
 
-#: src/ui/ArmyImport.tsx:51
+#: src/ui/ArmyImport.tsx:52
 #, fuzzy
 msgid "{w}mm square"
 msgstr "{w} mm carré"
 
-#: src/ui/ArmyImport.tsx:51
-#: src/ui/ArmyImport.tsx:682
+#: src/ui/ArmyImport.tsx:52
+#: src/ui/ArmyImport.tsx:703
 #, fuzzy
 msgid "{w}×{d}mm"
 msgstr "{w}×{d} mm"
 
-#: src/ui/ArmyImport.tsx:522
+#: src/ui/ArmyImport.tsx:524
 #, fuzzy
 msgid "From your shelf…"
 msgstr "De ton étagère…"
 
-#: src/ui/ArmyImport.tsx:544
+#: src/ui/ArmyImport.tsx:546
 #, fuzzy
 msgid "Your army shelf ({count})"
 msgstr "Ton étagère d'armées ({count})"
 
-#: src/ui/ArmyImport.tsx:544
+#: src/ui/ArmyImport.tsx:546
 #, fuzzy
 msgid "Your army shelf"
 msgstr "Ton étagère d'armées"
 
-#: src/ui/ArmyImport.tsx:547
+#: src/ui/ArmyImport.tsx:549
 #, fuzzy
 msgid "Armies saved on this device. Save one after deploying it; pass one on as a file, figures included."
 msgstr "Armées enregistrées sur cet appareil. Enregistres-en une après l'avoir déployée ; transmets-en une sous forme de fichier, figurines comprises."
 
-#: src/ui/ArmyImport.tsx:568
+#: src/ui/ArmyImport.tsx:570
 #, fuzzy
 msgid "Take {name} off your shelf?"
 msgstr "Retirer {name} de ton étagère ?"
 
-#: src/ui/ArmyImport.tsx:577
+#: src/ui/ArmyImport.tsx:579
 #, fuzzy
 msgid "Open an army file"
 msgstr "Ouvrir un fichier d'armée"
 
-#: src/ui/ArmyImport.tsx:585
+#: src/ui/ArmyImport.tsx:587
 #, fuzzy
 msgid "{name} is on your shelf."
 msgstr "{name} est sur ton étagère."
 
-#: src/ui/ArmyImport.tsx:59
+#: src/ui/ArmyImport.tsx:60
 #, fuzzy
 msgid "{w}×{d}mm hull"
 msgstr "coque {w}×{d} mm"
 
-#: src/ui/ArmyImport.tsx:607
+#: src/ui/ArmyImport.tsx:609
 #, fuzzy
 msgid "{n} unit · saved {when}"
 msgid_plural "{n} units · saved {when}"
 msgstr[0] "{n} unité · enregistrée {when}"
 msgstr[1] "{n} unités · enregistrée {when}"
 
-#: src/ui/ArmyImport.tsx:622
+#: src/ui/ArmyImport.tsx:624
 #, fuzzy
 msgid "{name}'s army is on your shelf as it is now."
 msgstr "L'armée de {name} est sur ton étagère telle qu'elle est maintenant."
 
-#: src/ui/ArmyImport.tsx:623
+#: src/ui/ArmyImport.tsx:625
 #, fuzzy
 msgid "This army is on your shelf as it is now."
 msgstr "Cette armée est sur ton étagère telle qu'elle est maintenant."
 
-#: src/ui/ArmyImport.tsx:630
+#: src/ui/ArmyImport.tsx:632
 #, fuzzy
 msgid "Keep this army on this device for later games, with its unit names, figures, dice and colour"
 msgstr "Garder cette armée sur cet appareil pour de futures parties, avec ses noms d'unités, figurines, dés et couleur"
 
-#: src/ui/ArmyImport.tsx:637
+#: src/ui/ArmyImport.tsx:639
 #, fuzzy
 msgid "Update {name}'s army on your shelf"
 msgstr "Mettre à jour l'armée de {name} sur ton étagère"
 
-#: src/ui/ArmyImport.tsx:638
+#: src/ui/ArmyImport.tsx:640
 #, fuzzy
 msgid "Update it on your shelf"
 msgstr "La mettre à jour sur ton étagère"
 
-#: src/ui/ArmyImport.tsx:640
+#: src/ui/ArmyImport.tsx:642
 #, fuzzy
 msgid "Save {name}'s army to your shelf"
 msgstr "Enregistrer l'armée de {name} sur ton étagère"
 
-#: src/ui/ArmyImport.tsx:641
+#: src/ui/ArmyImport.tsx:643
 #, fuzzy
 msgid "Save army to your shelf"
 msgstr "Enregistrer l'armée sur ton étagère"
 
-#: src/ui/ArmyImport.tsx:665
+#: src/ui/ArmyImport.tsx:658
+#: src/ui/FigurePicker.tsx:120
+#, fuzzy
+msgid "Photograph your painted miniature and stand it on its base"
+msgstr "Photographie ta figurine peinte et pose-la sur son socle"
+
+#: src/ui/ArmyImport.tsx:661
+#, fuzzy
+msgid "Photograph your painted figures"
+msgstr "Photographie tes figurines peintes"
+
+#: src/ui/ArmyImport.tsx:663
+#, fuzzy
+msgid "{n} unit in its stand-in"
+msgid_plural "{n} units in their stand-ins"
+msgstr[0] "{n} unité avec sa figurine provisoire"
+msgstr[1] "{n} unités avec leur figurine provisoire"
+
+#: src/ui/ArmyImport.tsx:686
 #, fuzzy
 msgid "on {mount}"
 msgstr "sur {mount}"
 
-#: src/ui/ArmyImport.tsx:671
-#: src/ui/ArmyImport.tsx:674
+#: src/ui/ArmyImport.tsx:692
+#: src/ui/ArmyImport.tsx:695
 #, fuzzy
 msgid "({points} pts)"
 msgstr "({points} pts)"
 
-#: src/ui/ArmyImport.tsx:673
+#: src/ui/ArmyImport.tsx:694
 #, fuzzy
 msgid "({points} pts; units {units})"
 msgstr "({points} pts ; unités {units})"
@@ -8389,90 +8433,90 @@ msgstr "sur 5"
 msgid "Saved ✓"
 msgstr "Enregistré ✓"
 
-#: src/ui/FigurePicker.tsx:112
-#, fuzzy
-msgid "Photograph your painted miniature and stand it on its base"
-msgstr "Photographie ta figurine peinte et pose-la sur son socle"
-
-#: src/ui/FigurePicker.tsx:115
-#, fuzzy
-msgid "Photo…"
-msgstr "Photo…"
-
-#: src/ui/FigurePicker.tsx:134
-#, fuzzy
-msgid "Turn the figure 90°"
-msgstr "Tourner la figurine de 90°"
-
-#: src/ui/FigurePicker.tsx:141
-#, fuzzy
-msgid "Smaller"
-msgstr "Plus petite"
-
-#: src/ui/FigurePicker.tsx:148
-#, fuzzy
-msgid "Bigger"
-msgstr "Plus grande"
-
-#: src/ui/FigurePicker.tsx:153
-#, fuzzy
-msgid "Back to the stand-in"
-msgstr "Revenir au substitut"
-
-#: src/ui/FigurePicker.tsx:187
-#, fuzzy
-msgid "Figure from the library for {name}"
-msgstr "Figurine de la bibliothèque pour {name}"
-
-#: src/ui/FigurePicker.tsx:195
-#, fuzzy
-msgid "From the library…"
-msgstr "Depuis la bibliothèque…"
-
-#: src/ui/FigurePicker.tsx:205
-#, fuzzy
-msgid "Everything else"
-msgstr "Tout le reste"
-
-#: src/ui/FigurePicker.tsx:212
-#, fuzzy
-msgid "Open the figure library…"
-msgstr "Ouvrir la bibliothèque de figurines…"
-
-#: src/ui/FigurePicker.tsx:36
-#, fuzzy
-msgid "Everyone in the game sees uploaded figures. You can also drop a model file onto the unit."
-msgstr "Tout le monde dans la partie voit les figurines importées. Tu peux aussi déposer un fichier 3D sur l'unité."
-
-#: src/ui/FigurePicker.tsx:42
-#, fuzzy
-msgid "Use for every model in this unit"
-msgstr "Utiliser pour chaque figurine de cette unité"
-
-#: src/ui/FigurePicker.tsx:82
-#, fuzzy
-msgid "Fetching {name}…"
-msgstr "Récupération de {name}…"
-
-#: src/ui/FigurePicker.tsx:89
-#, fuzzy
-msgid "{name}: {triangles} triangles, drawn at {levels} depending on distance"
-msgstr "{name} : {triangles} triangles, affiché en {levels} selon la distance"
-
-#: src/ui/FigurePicker.tsx:94
+#: src/ui/FigurePicker.tsx:102
 #, fuzzy
 msgid "Model file: {extensions}"
 msgstr "Fichier 3D : {extensions}"
 
-#: src/ui/FigurePicker.tsx:97
+#: src/ui/FigurePicker.tsx:105
 #, fuzzy
 msgid "Replace…"
 msgstr "Remplacer…"
 
-#: src/ui/FigurePicker.tsx:97
+#: src/ui/FigurePicker.tsx:105
 #, fuzzy
 msgid "Upload…"
 msgstr "Importer…"
+
+#: src/ui/FigurePicker.tsx:123
+#, fuzzy
+msgid "Photo…"
+msgstr "Photo…"
+
+#: src/ui/FigurePicker.tsx:123
+#, fuzzy
+msgid "Photograph it…"
+msgstr "La photographier…"
+
+#: src/ui/FigurePicker.tsx:136
+#, fuzzy
+msgid "Turn the figure 90°"
+msgstr "Tourner la figurine de 90°"
+
+#: src/ui/FigurePicker.tsx:143
+#, fuzzy
+msgid "Smaller"
+msgstr "Plus petite"
+
+#: src/ui/FigurePicker.tsx:150
+#, fuzzy
+msgid "Bigger"
+msgstr "Plus grande"
+
+#: src/ui/FigurePicker.tsx:155
+#, fuzzy
+msgid "Back to the stand-in"
+msgstr "Revenir au substitut"
+
+#: src/ui/FigurePicker.tsx:189
+#, fuzzy
+msgid "Figure from the library for {name}"
+msgstr "Figurine de la bibliothèque pour {name}"
+
+#: src/ui/FigurePicker.tsx:197
+#, fuzzy
+msgid "From the library…"
+msgstr "Depuis la bibliothèque…"
+
+#: src/ui/FigurePicker.tsx:207
+#, fuzzy
+msgid "Everything else"
+msgstr "Tout le reste"
+
+#: src/ui/FigurePicker.tsx:214
+#, fuzzy
+msgid "Open the figure library…"
+msgstr "Ouvrir la bibliothèque de figurines…"
+
+#: src/ui/FigurePicker.tsx:37
+#, fuzzy
+msgid "Everyone in the game sees uploaded figures. You can also drop a model file onto the unit."
+msgstr "Tout le monde dans la partie voit les figurines importées. Tu peux aussi déposer un fichier 3D sur l'unité."
+
+#: src/ui/FigurePicker.tsx:43
+#, fuzzy
+msgid "Use for every model in this unit"
+msgstr "Utiliser pour chaque figurine de cette unité"
+
+#: src/ui/FigurePicker.tsx:90
+#, fuzzy
+msgid "Fetching {name}…"
+msgstr "Récupération de {name}…"
+
+#: src/ui/FigurePicker.tsx:97
+#, fuzzy
+msgid "{name}: {triangles} triangles, drawn at {levels} depending on distance"
+msgstr "{name} : {triangles} triangles, affiché en {levels} selon la distance"
 
 #: src/ui/GameSettings.tsx:104
 #, fuzzy
@@ -8735,11 +8779,6 @@ msgstr "Annuler {what}"
 #, fuzzy
 msgid "Take back your last action"
 msgstr "Annuler ta dernière action"
-
-#: src/ui/Hud.tsx:311
-#, fuzzy
-msgid "Undo"
-msgstr "Annuler"
 
 #: src/ui/Hud.tsx:366
 #, fuzzy
