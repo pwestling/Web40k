@@ -159,7 +159,7 @@ export default function RulesPage({
         ))}
 
         <section>
-          {/* The game's own word for its armies (Rulebook.words), in its own language like the rest. */}
+          {/* The game's own word for its armies (Rulebook.words), in its own language like the rest. i18n-ignore */}
           <h2>{doc.words ? `The ${doc.words.armies}` : t("The warbands")}</h2>
           {doc.armies.map((a) => (
             <div key={a.name} className="warband" style={{ borderColor: a.color }}>
