@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { GameRecord, GameState } from "../core";
 import { createLoopbackNetwork } from "./loopback";
 import { Session } from "./session";
@@ -60,6 +60,43 @@ describe("Session", () => {
       [4, "client", "undo"],
     ]);
     expect(c.seen.state?.models.m1?.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("holds a watcher's events back on the host, so its copy never runs ahead of the delay", async () => {
+    vi.useFakeTimers();
+    try {
+      let now = 1_000_000;
+      const net = createLoopbackNetwork();
+      const h = peer();
+      const s = peer();
+      const c = peer();
+      const host = new Session({
+        transport: net.connect("host"),
+        role: "host",
+        onChange: h.onChange,
+        now: () => now,
+      });
+      host.setSpectatorFloor(30_000);
+      const roll = () => host.dispatch({ type: "dice/roll", count: 1, sides: 6 });
+      roll();
+      now += 40_000;
+      roll();
+      new Session({ transport: net.connect("client"), role: "client", onChange: c.onChange });
+      new Session({ transport: net.connect("spec"), role: "spectator", onChange: s.onChange });
+      await vi.advanceTimersByTimeAsync(10);
+      // The first roll is old enough; the second, 0 s old, isn't sent yet.
+      expect(s.seen.record?.events.map((e) => e.seq)).toEqual([1]);
+      expect(c.seen.record?.events.map((e) => e.seq)).toEqual([1, 2]);
+      roll();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(s.seen.record?.events.map((e) => e.seq)).toEqual([1]);
+      now += 31_000;
+      await vi.advanceTimersByTimeAsync(300);
+      expect(s.seen.record?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
+      expect(c.seen.record?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("passes side-channel messages between any peers, outside the log", async () => {

@@ -8,6 +8,7 @@ import { momentsOf } from "../core/moments";
 import { playMoment } from "../broadcast/Moments";
 import { useReel } from "../broadcast/reel";
 import { BROADCAST } from "../broadcast/broadcast";
+import { WatcherInvite } from "../broadcast/BroadcastControls";
 import { FeedbackCard } from "./Feedback";
 import { ReviewPanel, reviewable } from "../review/ReviewPanel";
 import { Result } from "./Missions";
@@ -89,6 +90,8 @@ export function StatsScreen() {
       </div>
 
       <Result />
+      {/* Watching from Live now: the end of the game asks them to play (PX). */}
+      {BROADCAST && <WatcherInvite end />}
       <BestMoment />
       {!BROADCAST && <FeedbackCard />}
       {!BROADCAST && afterwards && reviewable(game) && <ReviewPanel watching={watching} close={close} />}

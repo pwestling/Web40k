@@ -52,6 +52,12 @@ export interface LiveInfo {
   /** "12–9", as the host's scoreboard has it. */
   score: string;
   watching: number;
+  /** Who plays, a line per side: "Ana", "Ben & Cy" (UX 444). */
+  sides?: string[];
+  /** When the battle began (epoch ms), for "started 3 min ago". */
+  since?: number;
+  /** The computer plays both sides (the exhibition table). */
+  computer?: boolean;
 }
 
 /** A post as read off the board. */
@@ -67,8 +73,10 @@ export interface SeenPost extends TablePost {
  * ALIVE_MS has gone. Short, so a closed page's table leaves the board within
  * minutes even when its last word never arrived (PX: ghost tables).
  */
-export const HEARTBEAT_MS = 60_000;
+export const HEARTBEAT_MS = 30_000;
 export const ALIVE_MS = 3 * 60_000;
+/** A game on Live now whose host stopped refreshing it this long ago has gone (UX 441). */
+const LIVE_ALIVE_MS = 90_000;
 /** The longest a post stays up. */
 export const LIVE_HOURS = [1, 2, 3, 4] as const;
 export const MAIL_TTL_MS = 2 * 24 * 3600_000;
@@ -143,7 +151,25 @@ function readLive(v: unknown): LiveInfo | null {
   const watching = int(r.watching, 9999);
   const score = line(r.score, LIMITS.score);
   if (round === null || rounds === null || watching === null || score === null) return null;
-  return { round, rounds, score, watching };
+  const sides = Array.isArray(r.sides)
+    ? r.sides
+        .slice(0, 4)
+        .map((x) => line(x, LIMITS.name * 2))
+        .filter((x): x is string => !!x)
+    : [];
+  const since =
+    typeof r.since === "number" && Number.isFinite(r.since) && r.since > 0 && r.since <= Date.now() + 60_000
+      ? r.since
+      : null;
+  return {
+    round,
+    rounds,
+    score,
+    watching,
+    ...(sides.length >= 2 ? { sides } : {}),
+    ...(since !== null ? { since } : {}),
+    ...(r.computer === true ? { computer: true } : {}),
+  };
 }
 
 /** A post that is a game to watch, not seats to fill. */
@@ -151,7 +177,7 @@ export const isLiveGame = (p: TablePost): boolean => !!p.live && p.seats === 0;
 
 /** Whether a post read earlier is still up. */
 export function isUp(p: SeenPost, now = Date.now()): boolean {
-  return p.expires > now && (p.kind === "mail" || now - p.at < ALIVE_MS);
+  return p.expires > now && (p.kind === "mail" || now - p.at < (isLiveGame(p) ? LIVE_ALIVE_MS : ALIVE_MS));
 }
 
 /** The badges a post shows: the ones its host ticked, and the same ones said in its note. */

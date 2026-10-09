@@ -639,7 +639,7 @@ const checks = {
     await live.getByRole("button", { name: "Watch" }).click();
     await watcher.page
       .locator(".broadcast-badge")
-      .getByText(/behind/)
+      .getByText(/^\d+ s behind$/)
       .waitFor({ timeout: 30_000 });
     await host.page
       .locator(".watching-chip")

@@ -38,6 +38,7 @@ import {
   TABLE_TAGS,
   tagsOf,
   type SeenPost,
+  type TablePost,
   type TableKind,
   type TableTag,
 } from "./post";
@@ -248,11 +249,13 @@ export function OpenTablesBoard({
         </div>
         {prefs.gone && (
           <p className="table-gone" role="status">
-            {tn(
-              list.length,
-              "That table has gone: its host has left. {n} other is open.",
-              "That table has gone: its host has left. {n} others are open.",
-            )}{" "}
+            {prefs.gone === "game"
+              ? t("That game has ended or its host left.")
+              : tn(
+                  list.length,
+                  "That table has gone: its host has left. {n} other is open.",
+                  "That table has gone: its host has left. {n} others are open.",
+                )}{" "}
             <button className="link small" onClick={() => useOpenTables.setState({ gone: false })}>
               {t("OK")}
             </button>
@@ -308,6 +311,45 @@ export function OpenTablesBoard({
 }
 
 /**
+ * The front door's "● Live now" strip (PX): the busiest game under way, one
+ * tap from watching, so people see the table is alive before opening the board.
+ */
+export function LiveStrip({ onMore }: { onMore: () => void }) {
+  const [posts, setPosts] = useState<SeenPost[]>([]);
+  const prefs = useOpenTables();
+  useEffect(() => {
+    let stop: (() => void) | null = null;
+    let live = true;
+    void board().then((b) => {
+      if (b && live) stop = b.watch(setPosts, () => {});
+    });
+    return () => {
+      live = false;
+      stop?.();
+    };
+  }, []);
+  const games = shownPosts(posts, prefs)
+    .filter(isLiveGame)
+    .sort((a, b) => (b.live?.watching ?? 0) - (a.live?.watching ?? 0) || b.at - a.at);
+  const top = games[0];
+  if (!top?.live) return null;
+  return (
+    <div className="live-strip" role="status">
+      <span className="dot live" aria-hidden />{" "}
+      {t("Live now: {game}, round {n}", { game: top.game, n: top.live.round })}{" "}
+      <button className="small primary" onClick={() => watchGame(top)}>
+        {t("Watch")}
+      </button>
+      {games.length > 1 && (
+        <button className="link small" onClick={onMore}>
+          {tn(games.length - 1, "{n} more", "{n} more")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
  * Watch a game from Live now (#64): into its room as a spectator, in the
  * broadcast view, running behind the game so secrets and table talk stay safe.
  */
@@ -317,6 +359,7 @@ function watchGame(p: SeenPost): void {
     view: "broadcast",
     delay: String(WATCH_DELAY),
     from: "tables",
+    ...(p.live?.computer ? { cpu: "1" } : {}),
   });
   const here = new URLSearchParams(location.search);
   for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
@@ -328,20 +371,27 @@ const WATCH_DELAY = 30;
 
 function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }) {
   const live = post.live!;
+  const [a, b] = live.sides ?? [];
+  // Who plays whom, not whose seat (UX 444).
+  const lead =
+    a && b
+      ? live.computer
+        ? t("Computer vs computer: {a} vs {b}", { a: displayName(a), b: displayName(b) })
+        : t("{a} vs {b}", { a: displayName(a), b: displayName(b) })
+      : t("{name}'s table", { name: displayName(post.name) });
   const details = [
     post.game,
     live.rounds
       ? t("round {n} of {of}", { n: live.round, of: live.rounds })
       : t("round {n}", { n: live.round }),
     live.score,
-    tn(live.watching, "{n} watching", "{n} watching"),
+    started(live.since),
+    // "0 watching" says nothing (PX).
+    live.watching ? tn(live.watching, "{n} watching", "{n} watching") : "",
   ].filter(Boolean);
   return (
     <li className="table-post live-game">
-      <div className="row spread">
-        <strong className="table-lead">{t("{name}'s table", { name: displayName(post.name) })}</strong>
-        <span className="small muted when">{freshness(post)}</span>
-      </div>
+      <strong className="table-lead">{lead}</strong>
       <div className="small muted">{details.join(" · ")}</div>
       {post.note && <p className="small table-note">“{post.note}”</p>}
       <div className="row">
@@ -351,6 +401,13 @@ function LiveGameCard({ post, onWatch }: { post: SeenPost; onWatch: () => void }
       </div>
     </li>
   );
+}
+
+/** "started 3 min ago", for a game under way (UX 444). */
+function started(since: number | undefined, now = Date.now()): string {
+  if (!since) return "";
+  const minutes = Math.max(0, Math.floor((now - since) / 60_000));
+  return minutes < 1 ? t("started just now") : tn(minutes, "started {n} min ago", "started {n} min ago");
 }
 
 /** How fresh a post is: its host here now, or when it was last seen. */
@@ -757,6 +814,9 @@ export function PostTable({ kind, join, seats }: { kind: TableKind; join: string
   );
 }
 
+/** When this post's game went live: kept from the post, else now. */
+const sinceOf = (post: TablePost, now = Date.now()) => post.live?.since ?? now;
+
 /**
  * Keeps this browser's post true to its table while the game is open: the
  * seats left, down when they fill or the player leaves, back up after a
@@ -773,8 +833,16 @@ export function MyTableKeeper() {
   const seats = live ? openSeats(game, record) : 0;
 
   const watching = useWatching();
+  const exhibition = useStore((s) => s.exhibition);
   const now =
-    live && mine?.post.watch && (seats <= 0 || game.turn.round > 0) ? liveInfo(game, watching) : null;
+    live && mine?.post.watch && (seats <= 0 || game.turn.round > 0)
+      ? {
+          ...liveInfo(game, watching),
+          // Since it went live, for "started 3 min ago" (UX 444).
+          since: sinceOf(mine.post),
+          ...(exhibition ? { computer: true } : {}),
+        }
+      : null;
   const over = game.turn.round > (Number(systemOf(game).turn.rounds) || Infinity);
   const nowKey = now ? JSON.stringify(now) : "";
 
@@ -800,6 +868,13 @@ export function MyTableKeeper() {
   useEffect(() => {
     if (live && roomId === useOpenTables.getState().mine?.post.join) void resumeTable();
   }, [live, roomId]);
+
+  // A public game's watchers all run behind it, sent late by this host, so no watcher can read ahead.
+  const session = useStore((s) => s.session);
+  const floor = live && mine?.post.watch && mine.state !== "failed" ? WATCH_DELAY * 1000 : 0;
+  useEffect(() => {
+    session?.setSpectatorFloor(floor);
+  }, [session, floor]);
 
   useEffect(() => {
     window.addEventListener("pagehide", pageClosing);

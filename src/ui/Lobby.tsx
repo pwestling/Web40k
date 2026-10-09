@@ -40,6 +40,8 @@ const RulesPage = lazy(() => import("../printplay/RulesPage"));
 const OpenTablesBoard = lazy(() =>
   import("../opentables/OpenTables").then((m) => ({ default: m.OpenTablesBoard })),
 );
+/** Live now on the front door (PX): read once the lobby has settled. */
+const LiveStrip = lazy(() => import("../opentables/OpenTables").then((m) => ({ default: m.LiveStrip })));
 
 /** Run `then` once the game's session exists: at once, or when an online start has loaded WebRTC. */
 function whenStarted(then: () => void): void {
@@ -65,12 +67,25 @@ export function Lobby() {
   const [guide, setGuide] = useState(false);
   const [rules, setRules] = useState(params.get("rules") === "rift-lanterns");
   const [tables, setTables] = useState(() => {
-    // Back from a table whose host had gone: the board says so.
-    if (params.get("tables") === "gone") useOpenTables.setState({ gone: true });
-    return params.get("tables") === "1" || params.get("tables") === "gone";
+    // Back from a table whose host had gone, or a game that ended under a watcher: the board says so.
+    if (params.get("tables") === "gone") useOpenTables.setState({ gone: "table" });
+    if (params.get("tables") === "ended")
+      useOpenTables.setState({ gone: "game", ended: params.get("ended") ?? null });
+    return ["1", "gone", "ended"].includes(params.get("tables") ?? "");
   });
   // Play the computer (#45): the game whose card asks "How hard?" (UX 350).
-  const [asking, setAsking] = useState<string | null>(null);
+  // The front door's Live now strip waits for the page to settle, and only where Open tables is on.
+  const [liveStrip, setLiveStrip] = useState(false);
+  useEffect(() => {
+    if (!boardOn() || EXHIBITION) return;
+    const timer = setTimeout(() => setLiveStrip(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+  // `?play=<game>`: a watcher's "Play this yourself" (PX) lands on that game's "How hard?".
+  const [asking, setAsking] = useState<string | null>(() => {
+    const play = params.get("play") ?? "";
+    return FRONT[play] || play === RIFT_LANTERNS ? play : null;
+  });
   // Built-in games, then whole games from trusted rules packages (their code runs in the sandbox).
   const library = useLibrary((s) => s.packages);
   useEffect(() => {
@@ -268,6 +283,11 @@ export function Lobby() {
       <p className="pitch">
         {t("Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count.")}
       </p>
+      {liveStrip && (
+        <Suspense fallback={null}>
+          <LiveStrip onMore={() => setTables(true)} />
+        </Suspense>
+      )}
       <WhatsNew />
       <UpdateToast />
       <OfflineNote />

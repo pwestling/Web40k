@@ -5,7 +5,7 @@ import { NET_PARAMS } from "../net/config";
 import { postTable } from "../opentables/board";
 import { liveInfo } from "../opentables/live";
 import { newPostId } from "../opentables/post";
-import { characterName, levelName, useSolo } from "../bot/solo";
+import { characterName, useSolo } from "../bot/solo";
 import { useStore } from "../store";
 import { deploySamples } from "../teach/setup";
 import { presetMission } from "../ui/demo";
@@ -13,7 +13,8 @@ import { FRONT } from "../ui/systemLabels";
 
 /**
  * The exhibition table (#64): so Live now is never empty, a screen opened at
- * `?exhibition=1` hosts the computer playing itself, Sharp against Sharp, in
+ * `?exhibition=1` hosts the computer playing itself, Steady against Steady (Sharp
+ * left long silences while it thought, PX), in
  * a room on Open tables that anyone can watch. When a game ends it stays up a
  * while, then the next game system takes the table. Opening that link is the
  * volunteer's choice to post; nothing else posts on its own.
@@ -62,23 +63,16 @@ export function startExhibition(): void {
       return;
     }
     const { dispatch } = useStore.getState();
-    // Two characters, both at their sharpest.
+    // Two characters by name only: the post says how they play (PX 6).
     const names = [characterName("sharp"), characterName("steady")];
     for (const p of Object.values(game.players))
       if (p.seat !== undefined)
-        dispatch(
-          {
-            type: "player/rename",
-            player: p.id,
-            name: t("{name} ({level})", { name: names[p.seat] ?? names[0]!, level: levelName("sharp") }),
-          },
-          p.id,
-        );
+        dispatch({ type: "player/rename", player: p.id, name: names[p.seat] ?? names[0]! }, p.id);
     presetMission();
     deploySamples(() => useStore.getState().game, dispatch, crypto.randomUUID().slice(0, 6));
     dispatch({ type: "turn/next" });
     useSolo.setState({
-      level: "sharp",
+      level: "steady",
       seat: 0,
       both: true,
       session,
@@ -108,11 +102,11 @@ function post(system: string, roomId: string): Promise<boolean> {
     kind: "live",
     voice: false,
     seats: 0,
-    note: t("The computer plays itself, Sharp against Sharp. A new game starts when this one ends."),
+    note: t("The computer plays itself, Steady against Steady. A new game starts when this one ends."),
     join: roomId,
     expires: now + 4 * 3600_000,
     watch: true,
-    live: liveInfo(useStore.getState().game, 0),
+    live: { ...liveInfo(useStore.getState().game, 0), since: now, computer: true },
   });
 }
 

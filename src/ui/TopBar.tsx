@@ -152,7 +152,8 @@ export function TopBar() {
                 style={{ color: p.color }}
               >
                 {i > 0 && <span className="muted"> & </span>}
-                {solo && p.seat === solo.seat ? (
+                {/* An exhibition's two sides carry their own names (UX 447). */}
+                {solo && !solo.both && p.seat === solo.seat ? (
                   // The computer by name, its level in small type (PX 4).
                   <>
                     {characterName(solo.level!)} <small className="muted">{levelName(solo.level!)}</small>
@@ -206,7 +207,9 @@ export function TopBar() {
       <div className="turn">
         {computerGo && (
           <span className="muted computer-go">
-            {t("{name} is playing…", { name: characterName(solo.level!) })}
+            {t("{name} is playing…", {
+              name: solo!.both ? displayName(activeSide[0]?.name ?? "") : characterName(solo.level!),
+            })}
           </span>
         )}
         {live && solo?.paused && (

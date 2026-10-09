@@ -33,6 +33,8 @@ export interface NetStatus {
    * checksums differ); `count` is how many times it has happened this game.
    */
   desync: { seq: number; count: number; host: number; mine: number } | null;
+  /** A spectator: how far behind the game the host sends it events (ms), 0 for live. */
+  hostDelay?: number;
 }
 
 /** Checkpoints kept for comparing against the host's checksums. */
@@ -81,6 +83,8 @@ interface SessionOptions {
   onIntent?: (intent: Intent, by: string) => void;
   /** A host showing a finished record (a review room, replay/review.ts): it takes no intents at all. */
   frozen?: boolean;
+  /** A spectator: how far behind the game it watches (ms); the host holds the events back. */
+  delay?: number;
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
@@ -147,6 +151,17 @@ export class Session {
   private desyncs = 0;
   /** Recent checksums, the host's and this peer's, for a problem report. */
   private readonly checkLog: { seq: number; host?: number; mine?: number }[] = [];
+  /**
+   * Host: spectators watching behind the game, and the last event each was sent. Their events
+   * are held back here, never sent early, so a watcher's own copy can't run ahead of its view.
+   */
+  private readonly behind = new Map<string, { ms: number; sent: number }>();
+  private behindTimer: ReturnType<typeof setInterval> | null = null;
+  /** Host: every spectator watches at least this far behind (a public game on Live now). */
+  private spectatorFloorMs = 0;
+  /** Spectator: how far behind it asked to watch; the host's answer is `hostDelay`. */
+  private readonly delay: number;
+  private hostDelay = 0;
 
   constructor({
     transport,
@@ -161,7 +176,9 @@ export class Session {
     ready,
     onIntent,
     frozen,
+    delay,
   }: SessionOptions) {
+    this.delay = Math.max(0, Math.round(delay ?? 0));
     this.onIntent = onIntent;
     this.frozen = !!frozen;
     this.isReady = ready ?? (() => true);
@@ -188,6 +205,7 @@ export class Session {
 
     transport.onPeerLeave((peerId) => {
       this.peers.delete(peerId);
+      this.behind.delete(peerId);
       if (peerId === this.hostId && this.role !== "host") {
         this.hostId = null;
         this.startMigration();
@@ -222,6 +240,7 @@ export class Session {
       peers: [...this.peers.keys()],
       migrating: this.migrating,
       desync: this.desync,
+      hostDelay: this.hostDelay,
     };
   }
 
@@ -321,7 +340,19 @@ export class Session {
     switch (message.t) {
       case "hello":
         this.peers.set(from, { role: message.role, seq: message.seq });
-        if (this.role === "host") this.catchUp(from, message.seq, message.tail);
+        if (this.role !== "host") return;
+        if (message.role === "spectator") {
+          const ms = Math.min(600_000, Math.max(this.spectatorFloorMs, Number(message.delay) || 0));
+          if (ms > 0) return this.catchUpBehind(from, ms, message.seq, message.tail);
+          this.behind.delete(from);
+        }
+        this.catchUp(from, message.seq, message.tail);
+        return;
+      case "delay":
+        if (this.role === "spectator" && from === this.hostId && Number.isFinite(message.ms)) {
+          this.hostDelay = Math.max(0, message.ms);
+          this.notify();
+        }
         return;
       case "sync":
         this.peers.set(from, { role: message.role, seq: message.seq, ready: message.ready !== false });
@@ -379,7 +410,56 @@ export class Session {
 
   private hello(): NetMessage {
     const seq = lastSeq(this.record);
-    return { t: "hello", seq, tail: tailOf(this.record, seq), role: this.role };
+    return {
+      t: "hello",
+      seq,
+      tail: tailOf(this.record, seq),
+      role: this.role,
+      ...(this.role === "spectator" && this.delay ? { delay: this.delay } : {}),
+    };
+  }
+
+  /**
+   * A spectator watching `ms` behind: the game as it stood then (what it lacks of it), then
+   * each later event once it is that old. The checksums don't go: they'd say what's ahead.
+   */
+  private catchUpBehind(to: string, ms: number, seq?: number, tail?: string): void {
+    this.transport.send({ t: "delay", ms }, to);
+    const cut = this.now() - ms;
+    const due = this.record.events.filter((e) => e.at <= cut);
+    const last = due.at(-1)?.seq ?? this.record.initial.seq;
+    if (seq !== undefined && seq > 0 && seq <= last && tailOf(this.record, seq) === tail)
+      this.transport.send({ t: "events", events: due.filter((e) => e.seq > seq) }, to);
+    else this.transport.send({ t: "record", record: { ...this.record, events: due } }, to);
+    this.behind.set(to, { ms, sent: Math.max(last, seq !== undefined && seq <= last ? seq : last) });
+    this.behindTimer ??= setInterval(() => this.sendBehind(), 250);
+  }
+
+  /** Host: watchers of this game run at least `ms` behind it from now on (0: as they ask). */
+  setSpectatorFloor(ms: number): void {
+    this.spectatorFloorMs = Math.max(0, ms);
+  }
+
+  /** A peer that doesn't get events as they happen: a watcher behind, or anyone not known as a player yet. */
+  private heldBack(peer: string): boolean {
+    return this.behind.has(peer) || (this.spectatorFloorMs > 0 && this.peers.get(peer)?.role !== "client");
+  }
+
+  /** Send each watcher behind the game the events that have come of age for it. */
+  private sendBehind(): void {
+    if (this.role !== "host" || !this.behind.size) {
+      if (this.behindTimer) clearInterval(this.behindTimer);
+      this.behindTimer = null;
+      if (this.role !== "host") this.behind.clear();
+      return;
+    }
+    const now = this.now();
+    for (const [peer, b] of this.behind) {
+      const events = this.record.events.filter((e) => e.seq > b.sent && e.at <= now - b.ms);
+      if (!events.length) continue;
+      b.sent = events.at(-1)!.seq;
+      this.transport.send({ t: "events", events }, peer);
+    }
   }
 
   private greet(peerId: string): void {
@@ -535,11 +615,14 @@ export class Session {
     this.append(logged);
     const hash = due !== null ? this.checksumAt(due) : undefined;
     if (hash !== undefined) this.logCheck({ seq: due!, host: hash });
-    this.transport.send({
+    const message: NetMessage = {
       t: "event",
       logged,
       ...(hash !== undefined ? { check: { seq: due!, hash } } : {}),
-    });
+    };
+    // Watchers behind the game get it later (sendBehind); everyone else now.
+    if (!this.behind.size && !this.spectatorFloorMs) this.transport.send(message);
+    else for (const peer of this.peers.keys()) if (!this.heldBack(peer)) this.transport.send(message, peer);
     for (const intent of hookIntents(before, this.state, logged.event)) this.hooks.push([intent, logged.by]);
     this.runHooks();
   }

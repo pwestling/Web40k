@@ -38,5 +38,10 @@ export function liveInfo(game: GameState, watching: number): LiveInfo {
       .map((seat) => vp(seat))
       .join("–"),
     watching: Math.min(9999, watching),
+    sides: sides(game).map((seat) =>
+      sidePlayers(game, seat)
+        .map((p) => p.name.slice(0, 32))
+        .join(" & "),
+    ),
   };
 }

@@ -5310,3 +5310,66 @@ body:has(.panel.better-move) .panel.whatnow {
     min-width: 0;
   }
 }
+
+/* Live now (#64, PX): the red dot, the front door's strip, and a watcher's badge row. */
+.dot.live {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 25%);
+  vertical-align: middle;
+}
+.live-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+  padding: 6px 10px;
+  border: 1px solid #3a2a2e;
+  border-radius: 8px;
+  background: rgb(239 68 68 / 8%);
+}
+.broadcast-badge {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100vw - 24px);
+}
+.broadcast-badge .watcher-invite {
+  display: flex;
+  gap: 6px;
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+.stats-screen .watcher-invite.end {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+/* A phone watcher (UX 443): the badge on its own row under the scores, the caption stacked under
+   it, both clear of the dice tray at the bottom. */
+@media (max-width: 640px) {
+  body.broadcast .broadcast-badge {
+    top: 104px;
+    left: 8px;
+    right: 8px;
+    justify-content: center;
+  }
+  body.broadcast .broadcast-badge .watcher-invite {
+    flex-basis: auto;
+    justify-content: center;
+  }
+  body.broadcast .caption {
+    top: 190px;
+    bottom: auto;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}

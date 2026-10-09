@@ -55,7 +55,10 @@ export function delayedSeq(seqs: number[], seen: ReadonlyMap<number, number>, de
  */
 export function useSpectatorDelay(): void {
   const spectator = useStore((s) => s.role === "spectator");
-  const delay = useBroadcast((s) => s.delay);
+  const asked = useBroadcast((s) => s.delay);
+  // The host already sends this screen its events late (UX/PX: Live now): hold back only the rest.
+  const held = useStore((s) => (s.net?.hostDelay ?? 0) / 1000);
+  const delay = Math.max(0, asked - held);
   useEffect(() => {
     if (!spectator) return;
     let first = true;

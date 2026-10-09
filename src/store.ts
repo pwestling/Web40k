@@ -177,6 +177,13 @@ interface Store {
   exhibition: boolean;
 }
 
+/** The delay a watcher asked for in the page's link (?delay=, seconds; see broadcast/broadcast.ts). */
+function spectatorDelayMs(): number {
+  if (typeof location === "undefined") return 0;
+  const s = Number(new URLSearchParams(location.search).get("delay"));
+  return Number.isFinite(s) && s > 0 ? Math.min(600, s) * 1000 : 0;
+}
+
 const SAVE_KEY = "open-battle:last-game";
 
 export interface SavedGame {
@@ -271,6 +278,12 @@ const HOTSEAT_PLAYERS: Player[] = [
   { id: "p2", name: "Player 2", color: COLORS[1]!, seat: 1 },
 ];
 
+/**
+ * A seat played from the host's own screen (a hotseat side, or the computer's in an exhibition):
+ * no peer of its own, so never "reconnecting" (UX 442).
+ */
+export const screenSeat = (id: string): boolean => HOTSEAT_PLAYERS.some((p) => p.id === id);
+
 export const useStore = create<Store>((set, get) => ({
   game: createInitialState(),
   record: createRecord(),
@@ -342,6 +355,8 @@ export const useStore = create<Store>((set, get) => ({
       resumed,
       ...(rng ? { rng } : {}),
       ...(onIntent ? { onIntent } : {}),
+      // A watcher behind the game (?delay=, useBroadcast): the host holds its events back that long.
+      ...(role === "spectator" ? { delay: spectatorDelayMs() } : {}),
       // A peer missing one of the game's rules packages can't host it.
       frozen: review,
       ready: (state) =>

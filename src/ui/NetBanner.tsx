@@ -3,7 +3,7 @@ import { displayName, playerName } from "../i18n/names";
 import { useMemo } from "react";
 import type { GameRecord } from "../core";
 import { formatList, t } from "../i18n";
-import { useJoining, useStore } from "../store";
+import { screenSeat, useJoining, useStore } from "../store";
 import { untakenSeat } from "./Branch";
 import { buildLog } from "./gameLog";
 
@@ -52,7 +52,7 @@ export function NetBanner() {
     );
   }
   const gone = Object.values(players).filter(
-    (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id),
+    (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id) && !screenSeat(p.id),
   );
   // A review room watches a finished game: its players aren't expected back (UX 233).
   if (!gone.length || useStore.getState().review) return null;

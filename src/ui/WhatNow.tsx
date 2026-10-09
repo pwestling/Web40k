@@ -286,11 +286,15 @@ function computerGo(
   // The same moment the top bar says so (UX 355 minor): its side has the go, or the game waits on it.
   if (battleOver(game) || (game.turn.activeSeat !== solo.seat && !waitsOn(game, solo.seat))) return null;
   const acting = actingUnits(game).find((u) => game.players[u.owner]?.seat === solo.seat);
+  // An exhibition's sides each go by their own name (UX 447).
+  const who = solo.both
+    ? (Object.values(game.players).find((p) => p.seat === solo.seat)?.name ?? characterName(solo.level))
+    : characterName(solo.level);
   return {
     // By name (PX 4): "The Warden of Ash is playing Thorn Slingers…".
     head: acting
-      ? t("{name} is playing {unit}…", { name: characterName(solo.level), unit: acting.name })
-      : t("{name} is taking its turn…", { name: characterName(solo.level) }),
+      ? t("{name} is playing {unit}…", { name: who, unit: acting.name })
+      : t("{name} is taking its turn…", { name: who }),
     // One line on a phone, so the table stays in view (UX 348).
     lines: [
       ...(solo.why ? [solo.why] : []),

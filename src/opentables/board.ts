@@ -112,8 +112,10 @@ interface OpenTablesState {
   listed: string | null;
   /** The table this browser joined from the board, to come back if its host has gone. */
   joined: SeenPost | null;
-  /** A table joined from the board had gone: the board says so when it opens again. */
-  gone: boolean;
+  /** A table joined from the board had gone, or a game watched from Live now ended: the board says so. */
+  gone: false | "table" | "game";
+  /** The room of a watched game whose host left (UX 441): its card stays off this board. */
+  ended: string | null;
 }
 
 export const useOpenTables = create<OpenTablesState>(() => ({
@@ -126,6 +128,7 @@ export const useOpenTables = create<OpenTablesState>(() => ({
   listed: null,
   joined: null,
   gone: false,
+  ended: null,
 }));
 
 useOpenTables.subscribe((s, prev) => {
@@ -146,6 +149,7 @@ export function shownPosts(posts: SeenPost[], s = useOpenTables.getState(), now 
     (p) =>
       // A live table its host stopped refreshing has gone, whatever the relay still holds (PX: ghost tables).
       isUp(p, now) &&
+      p.join !== s.ended &&
       !off.has(postKey(p)) &&
       !s.blockedKeys.includes(p.key) &&
       !names.has(p.name.toLowerCase()),
@@ -166,7 +170,7 @@ export function tableGone(): void {
   const p = useOpenTables.getState().joined;
   if (!p) return;
   hidePost(p);
-  useOpenTables.setState({ joined: null, gone: true });
+  useOpenTables.setState({ joined: null, gone: "table" });
 }
 
 export function unblockAll(): void {

@@ -198,7 +198,8 @@ describe("Open tables (#50)", () => {
       reported: [],
       listed: null,
       joined: null,
-      gone: false,
+      gone: false as const,
+      ended: null,
     };
     expect(shownPosts([a, b], s)).toHaveLength(2);
     expect(shownPosts([a, b], { ...s, blockedNames: ["spammer"] })).toEqual([a]);

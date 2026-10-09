@@ -13,7 +13,16 @@ export type NetMessage =
    * A non-host greeting a peer: what log it already holds (`seq`, and `tail`
    * to check it is the same log), so the host sends only what is missing.
    */
-  | { t: "hello"; seq?: number; tail?: string; role?: "host" | "client" | "spectator" }
+  | {
+      t: "hello";
+      seq?: number;
+      tail?: string;
+      role?: "host" | "client" | "spectator";
+      /** A spectator's delay (ms): the host holds events back that long before sending them (UX/PX: Live now). */
+      delay?: number;
+    }
+  /** The host to a spectator: it sends this one events `ms` after they happen. */
+  | { t: "delay"; ms: number }
   | { t: "intent"; intent: Intent }
   /** `check`: the host's state checksum after an earlier event, riding along with this one. */
   | { t: "event"; logged: LoggedEvent; check?: Check }
