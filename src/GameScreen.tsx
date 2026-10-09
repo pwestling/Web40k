@@ -205,6 +205,9 @@ function BroadcastView() {
       <StatsScreen />
       <VoiceRoom />
       <OnAir />
+      {/* A package game's rules, so a watcher's table folds as the players' does. */}
+      <PackageCards />
+      <SandboxNotice />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { displayName, playerName } from "../i18n/names";
 import { readLessonPackage } from "../teach/lesson";
+import { installRiftLanterns, RIFT_LANTERNS } from "../games/riftLanterns";
 import { systemLabel } from "./systemLabels";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -426,6 +427,11 @@ export function PackageCards() {
     return last?.type === "game/packages" ? last : undefined;
   }, [isReplay, record]);
   const packages = isReplay ? replayPackages : game.packages;
+  // Our own game ships with the app: a table playing it needn't ask anyone for it (watchers from Live now).
+  const ours = packages?.system.id === RIFT_LANTERNS;
+  useEffect(() => {
+    if (ours) void installRiftLanterns();
+  }, [ours]);
   if (!loaded) return null;
   return (
     <>

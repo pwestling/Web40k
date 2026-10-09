@@ -826,6 +826,7 @@ const checks = {
       await page.getByRole("button", { name: /Open tables: find/ }).click();
     };
     const [ana] = ds;
+    const watcher = await device();
     step("run the event");
     await board(ana.page);
     await ana.page.locator(".events-section").getByRole("button", { name: "Run an event" }).click();
@@ -911,6 +912,15 @@ const checks = {
           .waitFor({ timeout: 20_000 });
         await d.page.keyboard.press("Escape");
       }
+      // Round 1: someone watches a top table from Live now, behind the game.
+      if (round === 1) {
+        step("watch from Live now");
+        await board(watcher.page);
+        const live = watcher.page.locator(".live-game", { hasText: "Smoke Cup" }).first();
+        await live.waitFor({ timeout: 45_000 });
+        await live.getByRole("button", { name: "Watch" }).click();
+        await watcher.page.locator(".broadcast-badge").waitFor({ timeout: 30_000 });
+      }
       // Each table's first side scores a point, then everyone passes to the end.
       for (const d of ds) {
         const plus = d.page.locator(".topbar .player").first().getByRole("button", { name: "+" });
@@ -946,6 +956,12 @@ const checks = {
           .getByRole("button", { name: /^Sign: / })
           .click({ timeout: 30_000 });
       for (const d of ds) await d.page.locator(".ranked-sign.good").first().waitFor({ timeout: 30_000 });
+      // The watcher saw the end, on the same table as the players: the game's rules package loaded for it too.
+      if (round === 1) {
+        await watcher.page.locator(".topbar").getByText("Battle over").waitFor({ timeout: 30_000 });
+        if (await watcher.page.locator(".net-banner.desync").count())
+          throw new Error("the watcher's table doesn't match the game it watched");
+      }
     }
     step("final standings");
     // Back on the event: every browser works out the same final standings.
@@ -960,8 +976,8 @@ const checks = {
     if (new Set(tables.map(strip)).size !== 1)
       throw new Error(`the standings differ: ${JSON.stringify(tables)}`);
     if (!/\t6\t2–0–0\t/.test(tables[0])) throw new Error(`no one won both: ${JSON.stringify(tables[0])}`);
-    for (const d of ds) await d.context.close();
-    return ds.flatMap((d) => d.page.errors);
+    for (const d of [...ds, watcher]) await d.context.close();
+    return [...ds, watcher].flatMap((d) => d.page.errors);
   },
 
   // #68: three miniatures photographed (drawn here as JPEGs of a painted figure on paper), two on a
