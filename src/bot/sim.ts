@@ -67,11 +67,12 @@ export class Sim {
     let next = { ...applyEvent(state, event), seq: state.seq + 1 };
     local.set(next.seq, next);
     // What the game's charge hook does about a charge roll or move (Conquest: a short charge
-    // ends the activation, one that lands inspires), as the host would run it.
-    if (CHARGE_EVENTS.has(event.type))
+    // ends the activation, one that lands inspires), as the host would run it. One that waits
+    // on a player (TOW's charge reactions) is left out, as before.
+    if (CHARGE_EVENTS.has(event.type) && !next.script)
       for (const hook of hookIntents(state, next, event)) {
-        if (next.script) break;
-        next = this.step(next, hook, by, rng, local) ?? next;
+        const after = this.step(next, hook, by, rng, local);
+        if (after && !after.script) next = after;
       }
     return next;
   }
