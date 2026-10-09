@@ -190,19 +190,22 @@ function Review({
       )}
       <h4>{t("Takeaways")}</h4>
       <div className="takeaways">
-        {review.seats.map((seat) => (
-          <div key={seat}>
-            <div className="who">
-              <span className="swatch" style={{ background: color(seat) }} />
-              <strong>{sideName(seat)}</strong>
+        {/* Against the computer only your own takeaways: its "your best call" was addressed to nobody (dogfood round 2). */}
+        {review.seats
+          .filter((seat, _, all) => !all.some((o) => sideName(o) === t("You")) || sideName(seat) === t("You"))
+          .map((seat) => (
+            <div key={seat}>
+              <div className="who">
+                <span className="swatch" style={{ background: color(seat) }} />
+                <strong>{sideName(seat)}</strong>
+              </div>
+              <ul>
+                {takeaways(review, at, seat).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
             </div>
-            <ul>
-              {takeaways(review, at, seat).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+          ))}
       </div>
     </section>
   );
@@ -416,11 +419,17 @@ function TurningPoint({
     mark.kind === "costly"
       ? t("{played}. Better: {better}, about {n}% more chance to win.", { played, better: better ?? "", n })
       : mark.kind === "missed"
-        ? t("Ended the turn without {better}, about {n}% chance to win left behind.", {
-            // "Spark Drones going for the Middle lantern" (UX 430).
-            better: (d.best && movePhrase(state, d.best).doing) || (better ?? "").replace(": ", " "),
-            n,
-          })
+        ? d.best && !movePhrase(state, d.best).doing && movePhrase(state, d.best).unit
+          ? // "Ended the turn without Field Marshal Normal move…" didn't read (dogfood round 2).
+            t("{unit} still had something to do ({what}), about {n}% chance to win left behind.", {
+              unit: movePhrase(state, d.best).unit,
+              what: movePhrase(state, d.best).what,
+              n,
+            })
+          : t("Ended the turn without {better}, about {n}% chance to win left behind.", {
+              better: (d.best && movePhrase(state, d.best).doing) || (better ?? ""),
+              n,
+            })
         : mark.kind === "strong"
           ? t("{played}: about {n}% more chance to win than the next best choice.", { played, n })
           : mark.size > 0

@@ -3,7 +3,7 @@ import { playerActions } from "../core/content/player";
 import { systemOf } from "../core/content/turn";
 import { explain, unitLabel } from "../bot/explain";
 import { gameModule } from "../systems";
-import { formatNumber, gameText, t, tn } from "../i18n";
+import { gameText, t, tn } from "../i18n";
 import type { BotMove } from "../soak/bot";
 import type { Decision, GameReview, Mark } from "./analyse";
 
@@ -12,8 +12,6 @@ import type { Decision, GameReview, Mark } from "./analyse";
  * three plain takeaways per side. Sizes are in victory points, rounded, as
  * the evaluator's scale is roughly that.
  */
-
-const vp = (n: number) => formatNumber(Math.abs(n), { maximumFractionDigits: 0 });
 
 const seatOfUnit = (state: GameState, id: string) => state.players[state.units[id]?.owner ?? ""]?.seat;
 const unitName = unitLabel;
@@ -169,20 +167,16 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
         worstKind === "move"
           ? tn(
               w.costly,
-              "Next game, before a move, look at where the enemy can shoot next turn ({n} move gave up about {vp} VP).",
-              "Next game, before a move, look at where the enemy can shoot next turn ({n} moves gave up about {vp} VP).",
-              { vp: vp(w.loss) },
+              "Next game, before a move, look at where the enemy can shoot next turn ({n} move could have done better).",
+              "Next game, before a move, look at where the enemy can shoot next turn ({n} moves could have done better).",
             )
           : worstKind === "attack"
             ? tn(
                 w.costly,
-                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack gave up about {vp} VP).",
-                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks gave up about {vp} VP).",
-                { vp: vp(w.loss) },
+                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attack could have done better).",
+                "Next game, finish off a unit you've hurt before starting on a fresh one ({n} attacks could have done better).",
               )
-            : t("Next game, keep stratagems for the attack that needs them (about {vp} VP went on them).", {
-                vp: vp(w.loss),
-              }),
+            : t("Next game, keep stratagems for the attack that needs them."),
     });
   const missed = mine.filter((d) => !d.played);
   if (missed.length)
@@ -220,10 +214,8 @@ export function takeaways(review: GameReview, states: (seq: number) => GameState
   if (out.length < 3 && Math.abs(luck) >= 0.08 * army)
     out.push(
       luck > 0
-        ? t("The dice were kind to you: about {vp} VP above the average.", { vp: vp(luck) })
-        : t("The dice were against you: about {vp} VP below the average. That part wasn't up to you.", {
-            vp: vp(luck),
-          }),
+        ? t("The dice were kind to you this game.")
+        : t("The dice were against you this game. That part wasn't up to you."),
     );
   return out;
 }

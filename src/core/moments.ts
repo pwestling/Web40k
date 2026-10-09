@@ -327,7 +327,8 @@ function momentCandidates(record: GameRecord): Moment[] {
       end: k.seq,
       round: Math.max(1, state.turn.round),
       when: "The whole game",
-      title: `${p.name}'s most valuable unit`,
+      // "You's" reads wrong against the computer, where your side is called You (dogfood round 2).
+      title: p.name === "You" ? "Your most valuable unit" : `${p.name}'s most valuable unit`,
       line: `${nameOf(state, unit)} destroyed ${[
         ...(k.units.size ? [`${k.units.size} unit${k.units.size === 1 ? "" : "s"}`] : []),
         ...(k.pts ? [`${Math.round(k.pts)} pts`] : []),
