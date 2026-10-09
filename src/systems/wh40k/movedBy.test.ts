@@ -54,3 +54,25 @@ describe("how far a unit moved this turn (UX 397)", () => {
     expect(s.units.mine!.status?.movedBy).toBeUndefined();
   });
 });
+
+describe("a charge's declared targets (UX 396, #57)", () => {
+  it("ride on the roll, replace the last ones, and clear at the unit's next turn", () => {
+    let s = goTo(setup(), "charge", 0);
+    const roll = (targets: string[]): Intent => ({
+      type: "dice/roll",
+      count: 2,
+      sides: 6,
+      label: "charge",
+      unitId: "mine",
+      targets,
+    });
+    s = play(s, roll(["a", "b"]), "p1");
+    expect(s.units.mine!.status).toMatchObject({ charge: 8, "chargeAt.a": true, "chargeAt.b": true });
+    s = play(s, roll(["c"]), "p1");
+    expect(Object.keys(s.units.mine!.status ?? {}).filter((k) => k.startsWith("chargeAt."))).toEqual([
+      "chargeAt.c",
+    ]);
+    s = goTo(s, "command", 0);
+    expect(s.units.mine!.status?.["chargeAt.c"]).toBeUndefined();
+  });
+});

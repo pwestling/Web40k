@@ -95,6 +95,8 @@ export type Intent =
       unitId?: UnitId;
       /** Named faces for a special die; `sides` is then their number. */
       faces?: string[];
+      /** A charge roll: the units it was declared against (UX 396). */
+      targets?: UnitId[];
     }
   /** `source`: the starter or library table it came from, so every player's picker can name it. */
   | { type: "layout/set"; layout: Layout; source?: TableSource }
@@ -505,6 +507,7 @@ export function resolveIntent(
       if (intent.faces?.length === sides) roll.faces = intent.faces;
       if (intent.label) roll.label = intent.label;
       if (intent.unitId) roll.unitId = intent.unitId;
+      if (intent.targets?.length) roll.targets = intent.targets.slice(0, 20);
       return { type: "dice/roll", roll };
     }
     case "player/join":

@@ -6,7 +6,7 @@ import { systemLabel } from "./systemLabels";
 import { sideName, rulerLength, systemOf, type GameState, type LoggedEvent } from "../core";
 import { findAction } from "../core/content/player";
 import { systemModule } from "../systems";
-import { t, tn } from "../i18n";
+import { formatList, t, tn } from "../i18n";
 import { describePackageChange } from "./packageChange";
 
 /**
@@ -188,6 +188,15 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
       // The game's own label for the roll (a unit's name before it), else dice like "2D6".
       const prefix = unitId && !label?.startsWith(unitName(unitId)) ? `${unitName(unitId)} ` : "";
       const what = label ? `${prefix}${label}` : `${results.length}D${sides}`;
+      // A charge says what it was declared against (UX 396).
+      if (event.roll.targets?.length && results.length > 1)
+        return t("{name} rolled {what} at {targets}: {results} (= {total})", {
+          name: roller,
+          what,
+          targets: formatList(event.roll.targets.map(unitName)),
+          results: results.join(" "),
+          total: String(total),
+        });
       if (faces)
         return t("{name} rolled {what}: {results}", {
           name: roller,

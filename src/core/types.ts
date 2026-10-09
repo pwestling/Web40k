@@ -341,6 +341,8 @@ export interface DiceRoll {
   need?: number;
   /** Named faces (a scatter or artillery die): each result is a 1-based index into these. */
   faces?: string[];
+  /** A charge roll's declared targets; the unit keeps them as `chargeAt.<id>` flags until its turn ends. */
+  targets?: UnitId[];
 }
 
 /**

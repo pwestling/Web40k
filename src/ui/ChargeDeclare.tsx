@@ -1,14 +1,9 @@
 import { useState } from "react";
-import { create } from "zustand";
 import { unitGap, type Intent, type Unit } from "../core";
 import { actionTargets, unitActions } from "../core/content/play";
 import { formatList, t } from "../i18n";
 import { RollButton } from "../companion/RealDice";
-import { useStore } from "../store";
 import { useGame } from "./hooks";
-
-/** Each unit's declared charge: its targets, and the record's length when the roll was made. */
-const useChargeDeclare = create<Record<string, { targets: string[]; seq: number }>>(() => ({}));
 
 /** Inches the charge roll must reach: into Engagement Range (1") of every target. */
 const ENGAGEMENT = 1;
@@ -22,10 +17,19 @@ const ENGAGEMENT = 1;
 export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: boolean; as: string }) {
   const game = useGame();
   const [picking, setPicking] = useState<string[] | null>(null);
-  const declared = useChargeDeclare((s) => s[unit.id]);
-  const seq = useStore((s) => s.game.seq);
   const roll = typeof unit.status?.charge === "number" ? unit.status.charge : null;
-  const intent: Intent = { type: "dice/roll", count: 2, sides: 6, label: "charge", unitId: unit.id };
+  // The units the roll was declared against, kept on the unit by the roll itself (so every peer sees them).
+  const declared = Object.keys(unit.status ?? {})
+    .filter((k) => k.startsWith("chargeAt.") && unit.status![k])
+    .map((k) => k.slice("chargeAt.".length));
+  const intent = (targets: string[]): Intent => ({
+    type: "dice/roll",
+    count: 2,
+    sides: 6,
+    label: "charge",
+    unitId: unit.id,
+    targets,
+  });
   const names = (ids: string[]) => formatList(ids.map((id) => game.units[id]?.name ?? "?"));
   const needed = (ids: string[]) =>
     Math.max(
@@ -76,12 +80,9 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
           {picking.length > 0 && (
             <RollButton
               className="primary"
-              intent={intent}
+              intent={intent(picking)}
               as={as}
-              onRolled={() => {
-                useChargeDeclare.setState({ [unit.id]: { targets: picking, seq: seq + 1 } });
-                setPicking(null);
-              }}
+              onRolled={() => setPicking(null)}
             >
               {t("Roll charge (2D6): {n} needed", { n: needed(picking) })}
             </RollButton>
@@ -94,13 +95,13 @@ export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: bool
     );
   }
   // The outcome of the charge this unit declared, once its roll is in.
-  const landed = declared && roll !== null && declared.seq <= seq ? roll >= needed(declared.targets) : null;
+  const landed = declared.length && roll !== null ? roll >= needed(declared) : null;
   const outcome =
-    landed === null || !declared
+    landed === null
       ? null
       : landed
-        ? t('Charge made: move up to {n}" into {units}', { n: roll!, units: names(declared.targets) })
-        : t("Charge fails: needed {n}", { n: needed(declared.targets) });
+        ? t('Charge made: move up to {n}" into {units}', { n: roll!, units: names(declared) })
+        : t("Charge fails: needed {n}", { n: needed(declared) });
   return (
     <>
       <button

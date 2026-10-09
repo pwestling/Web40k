@@ -225,7 +225,17 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const { label, unitId, results } = event.roll;
       if (!unitId) return state;
       const total = results.reduce((a, b) => a + b, 0);
-      if (label === "advance" || label === "charge")
+      if (label === "charge") {
+        // The units it declared the charge against, for the move checks (UX 396).
+        return updateUnit(state, unitId, (u) => {
+          const status = Object.fromEntries(
+            Object.entries(u.status ?? {}).filter(([k]) => !k.startsWith("chargeAt.")),
+          );
+          for (const id of event.roll.targets ?? []) status[`chargeAt.${id}`] = true;
+          return { ...u, status: { ...status, charge: total } };
+        });
+      }
+      if (label === "advance")
         return updateUnit(state, unitId, (u) => ({ ...u, status: { ...u.status, [label]: total } }));
       if (label === "battleshock")
         return updateUnit(state, unitId, (u) => {

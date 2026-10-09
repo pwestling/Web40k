@@ -789,6 +789,7 @@ export const fortyK: GameSystem = {
         "fought",
         "advance",
         "charge",
+        "chargeAt.*",
         "battleShocked",
       ],
     },
