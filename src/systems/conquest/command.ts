@@ -72,15 +72,23 @@ const ENGAGED_RANGE = 1;
  * Combat Rally, Combat Reform, Withdraw); the others only when not engaged.
  */
 const engagedFn: PureFn = (view: GameView, unitId: unknown) => {
-  const unit = view.state.units[String(unitId)];
-  if (!alive(view.state, unit)) return false;
-  return Object.values(view.state.units).some(
+  const state = view.state;
+  const unit = state.units[String(unitId)];
+  if (!alive(state, unit)) return false;
+  // Asked by every action's eligibility: kept while the models and units stay the same (the bot asks it a lot).
+  let memo = engagedMemo.get(state.models);
+  if (!memo || memo.units !== state.units)
+    engagedMemo.set(state.models, (memo = { units: state.units, engaged: new Map() }));
+  const known = memo.engaged.get(unit!.id);
+  if (known !== undefined) return known;
+  const engaged = Object.values(state.units).some(
     (u) =>
-      u.owner !== unit!.owner &&
-      alive(view.state, u) &&
-      view.distance(unit!.id, u.id) <= ENGAGED_RANGE + 1e-4,
+      u.owner !== unit!.owner && alive(state, u) && view.distance(unit!.id, u.id) <= ENGAGED_RANGE + 1e-4,
   );
+  memo.engaged.set(unit!.id, engaged);
+  return engaged;
 };
+const engagedMemo = new WeakMap<object, { units: unknown; engaged: Map<string, boolean> }>();
 
 /**
  * Whether a stand is its regiment's command stand, by name: a profile named

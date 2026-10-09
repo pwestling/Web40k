@@ -27,7 +27,7 @@ export const conquestModule: GameModule<SystemModule> = {
   checks: (view) => [...marchWarnings(view), ...standWarnings(view)],
   actions: characterActions,
   // Measured over 128 mirrored games: Sharp beats Steady more often here without fearing reach.
-  bot: { threat: 0 },
+  bot: { threat: 0, faceMoves: true, sharp: { projectLater: 0.7 } },
   app: {
     sample: conquestSample,
     // Lists shared as text, characteristics filled in on import (roster.ts).

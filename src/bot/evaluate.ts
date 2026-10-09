@@ -1,6 +1,7 @@
 import type { GameState, Model, Unit } from "../core";
 import { maxWounds, woundsRemaining } from "../core/attack";
 import { systemOf } from "../core/content/turn";
+import { inchesPerUnit } from "../core/content/runtime";
 import type { BotTuning, Mission } from "../sdk";
 
 export type { BotTuning } from "../sdk";
@@ -74,6 +75,11 @@ const inches = (s: string | undefined) => {
  * shooting stat, like Rift Lanterns).
  */
 export function rangeOf(state: GameState, u: Unit): number {
+  return rangeIn(state, u) * inchesPerUnit(systemOf(state));
+}
+
+/** The longest range, in the system's own unit (FSD: DU). */
+function rangeIn(state: GameState, u: Unit): number {
   let r = 0;
   for (const w of Object.values(u.sheet?.weapons ?? {})) {
     if (w.kind === "melee") continue;

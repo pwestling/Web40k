@@ -10,6 +10,10 @@ import {
   type Rng,
 } from "../core";
 import { nextRoller } from "../core/rolls";
+import { hookIntents } from "../core/script";
+
+/** Events a game's charge hook (TurnHooks.charge) answers: a charge roll, a charge move. */
+const CHARGE_EVENTS = new Set(["dice/roll", "models/move", "unit/move"]);
 
 /**
  * Trying moves out without playing them (#45): the host's own resolver run
@@ -60,8 +64,15 @@ export class Sim {
       return null;
     }
     if (!event) return null;
-    const next = { ...applyEvent(state, event), seq: state.seq + 1 };
+    let next = { ...applyEvent(state, event), seq: state.seq + 1 };
     local.set(next.seq, next);
+    // What the game's charge hook does about a charge roll or move (Conquest: a short charge
+    // ends the activation, one that lands inspires), as the host would run it.
+    if (CHARGE_EVENTS.has(event.type))
+      for (const hook of hookIntents(state, next, event)) {
+        if (next.script) break;
+        next = this.step(next, hook, by, rng, local) ?? next;
+      }
     return next;
   }
 

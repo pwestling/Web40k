@@ -63,6 +63,12 @@ export interface BotTuning {
    * whole turn, greedily ("turn", the default), or only their guns ("shots").
    */
   planReply?: "turn" | "shots";
+  /** Sharp's own weights for this game, over its defaults (Conquest: it looks further ahead at the mission). */
+  sharp?: Partial<
+    Record<"projectNext" | "projectLater" | "approach" | "contest" | "engage" | "threat" | "finish", number>
+  >;
+  /** Regiments turn to face where they march, or end facing the nearest enemy (Conquest: charges go at the front arc). */
+  faceMoves?: boolean;
 }
 
 /** What a package's default export holds: additions to one or more systems. */

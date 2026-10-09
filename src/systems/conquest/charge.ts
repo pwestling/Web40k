@@ -20,8 +20,19 @@ function chargeableBy(view: GameView, charger: Unit, target: Unit): boolean {
   if (target.owner === charger.owner || !onTable(view.state, target)) return false;
   // At a real table the positions aren't the table's: leave it to the players.
   if (view.atTable) return true;
-  return inArc(view.state, charger, target) === "front" && view.visible(charger.id, target.id);
+  // Kept while the models, units and terrain stay the same (every eligibility check asks; the bot a lot).
+  const state = view.state;
+  let memo = chargeMemo.get(state.models);
+  if (!memo || memo.units !== state.units || memo.terrain !== state.terrain)
+    chargeMemo.set(state.models, (memo = { units: state.units, terrain: state.terrain, seen: new Map() }));
+  const key = `${charger.id}>${target.id}`;
+  const known = memo.seen.get(key);
+  if (known !== undefined) return known;
+  const ok = inArc(state, charger, target) === "front" && view.visible(charger.id, target.id);
+  memo.seen.set(key, ok);
+  return ok;
 }
+const chargeMemo = new WeakMap<object, { units: unknown; terrain: unknown; seen: Map<string, boolean> }>();
 
 /** The enemies a regiment may charge now: in its front arc and in sight. */
 function chargeTargets(view: GameView, unitId: string): Unit[] {

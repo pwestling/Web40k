@@ -265,6 +265,7 @@ export async function playMatch(
       send(move.intent, move.as);
       await settle();
       if (move.then && !host.current.script?.waiting && legal(host.log, host.current, move.then)) {
+        if (TRACE) console.log(`  then ${JSON.stringify(move.then.intent).slice(0, 140)}`);
         send(move.then.intent, move.then.as);
         await settle();
       }

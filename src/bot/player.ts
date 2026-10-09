@@ -1,21 +1,31 @@
-import { aliveModels } from "../core/units";
+import { aliveModels, isAlive } from "../core/units";
+import { maxWounds } from "../core/attack";
+import { closeDoor, facingOf, unitCentre, unitGap } from "../core/manoeuvre";
+import { blockFrame, isBlock } from "../core/regiment";
+import { transformPositions } from "../core/formation";
+import { terrainOnMove } from "../core/content/moves";
+import { inchesPerUnit } from "../core/content/runtime";
+import type { ActionDef } from "../core/content/schema";
 import {
   sidePlayers,
   type GameRecord,
   type GameState,
   type Intent,
   type PlayerId,
+  type ArmyStratagem,
+  type AutoPart,
   type Rng,
   type Unit,
 } from "../core";
 import { opposed } from "../core/teams";
+import { actingUnits, actionTargets, placeablePool, unitActions } from "../core/content/play";
+import { armyStratagem, playerActions } from "../core/content/player";
+import { fightOrder } from "../systems/wh40k/fight";
 import { fightPick } from "./fightPick";
-import { actingUnits, actionTargets, unitActions } from "../core/content/play";
-import { playerActions } from "../core/content/player";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { seededRng } from "../sandbox/protocol";
-import { gameModule } from "../systems";
+import { gameModule, systemModule } from "../systems";
 import type { CodeAction } from "../sdk";
 import {
   chargeMove,
@@ -82,6 +92,12 @@ interface BotOptions {
   replyTurn?: boolean;
   /** Reviewing a game (#61): goes of the rest of the turn per move judged. */
   planPasses?: number;
+  /** Passes of the dice for playing activations out, in games of activations with actions (0: off). */
+  deepen?: number;
+  /** Passes of the dice for each activation and the enemy's answer, in plain activations. */
+  replyPasses?: number;
+  /** Conquest's command stack: units nearest the enemy first or last (Sharp: last, so they answer the enemy's moves); shuffled if unset. */
+  stackOrder?: "near" | "far";
 }
 
 /** The module's tuning for the bot, if it has any. */
@@ -220,6 +236,10 @@ interface Candidate {
   activates?: boolean;
   /** A faction stratagem on one of ours (#49): judged by that unit's best action after it, less its cost. */
   boost?: { unit: string; cp: number };
+  /** A Hazardous weapon (40k): judged with its expected harm to its own bearers, not one roll of it. */
+  hazard?: { unit: string; weapon: string };
+  /** A charge rolled and moved by hand (Conquest): judged as landing or falling short, by the odds. */
+  charge?: { unit: string; target: string };
 }
 
 /** Sharp's time to plan each decision of a whole turn (#51), and the goes and steps it plays out. */
@@ -232,6 +252,8 @@ const now = () => (globalThis.performance ?? Date).now();
 
 /** What a command point is worth, as a share of a whole army's worth in VP. */
 const CP_WORTH = 0.01;
+/** Times it lets the other player make their pick in the fight order before fighting on. */
+const FIGHT_WAITS = 3;
 
 const DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.BOT_DBG;
 class Thinker implements Policy, Analyst {
@@ -248,6 +270,11 @@ class Thinker implements Policy, Analyst {
   /** The planner's last step: the enemy's whole turn (true) or only their guns. */
   private readonly replyTurn: boolean;
   private readonly planPasses: number;
+  /** Sharp, in games of activations with actions: passes of the dice for playing activations out (0: off). */
+  private readonly deepen: number;
+  /** Sharp, in plain activations: passes of the dice for each activation and the enemy's answer. */
+  private readonly replyPasses: number;
+  private readonly stackOrder?: "near" | "far";
   private readonly weigh: BotContext;
 
   constructor(
@@ -267,7 +294,11 @@ class Thinker implements Policy, Analyst {
       seat,
       {
         ...(sharp ? SHARP : STEADY),
+        // Taking turns at moving units, Sharp's dice-averaged look at the enemy's answer already
+        // weighs finishing units off; the bonus for it on top played worse (#58).
+        ...(sharp && plainGame(start) ? { finish: 0 } : {}),
         ...(tuning?.threat !== undefined ? { threat: tuning.threat } : {}),
+        ...(sharp ? tuning?.sharp : {}),
         ...opts.weights,
       },
       missionOf(start),
@@ -281,6 +312,9 @@ class Thinker implements Policy, Analyst {
     this.planWidth = opts.planWidth ?? 5;
     this.replyTurn = opts.replyTurn ?? tuning?.planReply !== "shots";
     this.planPasses = opts.planPasses ?? 3;
+    this.deepen = opts.deepen ?? (sharp ? 2 : 0);
+    this.replyPasses = opts.replyPasses ?? 3;
+    this.stackOrder = opts.stackOrder ?? (sharp ? "far" : undefined);
     this.weigh = { ...ctx, weighing: true };
   }
 
@@ -419,6 +453,9 @@ class Thinker implements Policy, Analyst {
     const mine = new Set(sidePlayers(state, this.seat).map((p) => p.id));
     const waiting = waitingOn(record, state, this.weigh);
     if (waiting) {
+      // An enemy attack on one of ours: a stratagem that protects it, if it's worth its CP.
+      const guard = this.guard(record, state, mine);
+      if (guard) return guard;
       const options = dedupe(waiting.moves.filter((m) => mine.has(m.as) && legal(record, state, m)));
       // Not ours to answer (or nothing to choose between): the first that the rules take.
       if (
@@ -435,24 +472,26 @@ class Thinker implements Policy, Analyst {
       );
     }
     // Secret orders (Conquest's command stack) are locked in whoever's turn it is.
-    for (const m of offTurnMoves(state, this.ctx, [...mine])) if (legal(record, state, m)) return m;
-    // The Fight phase goes by the fight order: its pick, even in the player's turn, and never out of turn (PX #57).
-    const fights = fightPick(state, mine);
-    if (fights && !fights.ours) return null;
-    if (state.turn.activeSeat !== this.seat && !fights) return null;
+    for (const m of offTurnMoves(state, this.ctx, [...mine]))
+      if (legal(record, state, m)) return this.stacked(state, m);
     const phase = phaseKey(state);
     if (this.done.phase !== phase) this.done = { phase, keys: new Set(), decisions: 0 };
+    // The 40k Fight phase in the enemy's turn: our picks in the fight order are ours to make.
+    if (state.turn.activeSeat !== this.seat) return this.theirFight(record, state, mine);
     this.done.decisions++;
     // Drawing the next command card (Conquest): there's nothing to weigh.
     for (const m of commandStack(state, this.ctx, [...mine]))
       if (m.kind === "draw" && legal(record, state, m)) return m;
     const onward = this.onward(record, state, mine);
     if (this.done.decisions > 120) return onward;
-    const candidates = this.candidates(state, mine).filter(
-      (c) =>
-        (!c.key || !this.done.keys.has(c.key)) &&
-        (!fights || (c.move.intent.type === "action/take" && fights.units.includes(c.move.intent.unitId))),
-    );
+    let candidates = this.candidates(state, mine).filter((c) => !c.key || !this.done.keys.has(c.key));
+    // Fights in the 40k fight order: Fights First first, then turn about, the other player first.
+    const order = fightOrder(state);
+    if (order) {
+      const fights = inOrder(state, order, candidates, mine);
+      if (fights === "wait" && this.yielded(state)) return null;
+      if (fights !== "wait") candidates = fights;
+    }
     const legalOnes = candidates.filter((c) => legal(record, state, c.move));
     const pick = this.best(state, legalOnes, onward, mine);
     if (!pick) return null;
@@ -460,6 +499,91 @@ class Thinker implements Policy, Analyst {
     if (chosen?.key) this.done.keys.add(chosen.key);
     noteTaken(this.ctx, state, pick);
     return pick;
+  }
+
+  /** Calls in a row, at one table, that it let the other player pick a fight first. */
+  private waited = { seq: -1, n: 0 };
+
+  /**
+   * Whether to let the other player make their pick in the fight order: a
+   * few times at one table, then it fights on (the order is advice, and an
+   * opponent who doesn't pick mustn't stall the game).
+   */
+  private yielded(state: GameState): boolean {
+    this.waited =
+      state.seq === this.waited.seq ? { seq: state.seq, n: this.waited.n + 1 } : { seq: state.seq, n: 1 };
+    return this.waited.n <= FIGHT_WAITS;
+  }
+
+  /** In the enemy's turn: our picks in the 40k fight order (each fight it is in is fought). */
+  private theirFight(record: GameRecord, state: GameState, mine: Set<PlayerId>): BotMove | null {
+    const order = fightOrder(state);
+    if (!order) return null;
+    const fights = inOrder(state, order, this.candidates(state, mine), mine);
+    if (fights === "wait") return null;
+    const options = fights.filter(
+      (c) => c.must && (!c.key || !this.done.keys.has(c.key)) && legal(record, state, c.move),
+    );
+    if (!options.length) return null;
+    const pick = this.best(state, options, null);
+    const chosen = options.find((c) => c.move === pick);
+    if (chosen?.key) this.done.keys.add(chosen.key);
+    return pick;
+  }
+
+  /**
+   * A stratagem for one of ours under attack (taught with #53 or read from
+   * the roster): one whose rule works on attacks against it (a better save,
+   * an invulnerable save, Feel No Pain, harder to hit or wound), used before
+   * the dice fall when the attack's expected harm, with it and without it on
+   * the same dice, differs by more than its CP are worth. Asked once an attack.
+   */
+  private guard(record: GameRecord, state: GameState, mine: Set<PlayerId>): BotMove | null {
+    const proc = state.procedure;
+    const target = proc?.targetId ? state.units[proc.targetId] : undefined;
+    if (!proc || proc.run.done || !target || !mine.has(target.owner)) return null;
+    const mark = `${state.turn.round}:${state.turn.phase}:${proc.unitId}:${proc.action}:${proc.weapon ?? ""}:${target.id}`;
+    if (this.guarded.has(mark)) return null;
+    this.guarded.add(mark);
+    const options: { move: BotMove; cost: number }[] = [];
+    for (const p of mine)
+      for (const o of playerActions(state, p)) {
+        const strat = armyStratagem(state, o.def.id);
+        if (!o.ok || !strat?.auto || !o.targets?.includes(target.id) || !shields(strat.auto.parts)) continue;
+        const move: BotMove = {
+          intent: { type: "player/action", action: o.def.id, targetId: target.id },
+          as: p,
+          kind: `stratagem:${o.def.id}`,
+        };
+        if (legal(record, state, move)) options.push({ move, cost: this.cpCost(strat, o.payment) });
+      }
+    if (!options.length) return null;
+    // Each option and doing nothing meet the same dice.
+    const seeds = Array.from({ length: this.tries * 2 }, () => Math.floor(this.rng() * 2 ** 31));
+    const after = (s: GameState | null) => {
+      if (!s) return -Infinity;
+      let v = 0;
+      for (const seed of seeds) v += evaluate(this.sim.settle(s, seededRng(seed), new Map()), this.judge);
+      return v / seeds.length;
+    };
+    let best: BotMove | null = null;
+    let top = after(state);
+    for (const o of options) {
+      const used = this.sim.step(state, o.move.intent, o.move.as, this.rng, new Map());
+      const v = after(used) - o.cost;
+      if (v > top) [best, top] = [o.move, v];
+    }
+    return best;
+  }
+
+  /** Attacks it guarded against already (or chose not to). */
+  private readonly guarded = new Set<string>();
+
+  /** What a stratagem's CP are worth to the judge; one a turn or a battle is kept for a bigger moment. */
+  private cpCost(strat: ArmyStratagem | undefined, payment: { resource: string; amount?: number }[]): number {
+    const scarce = strat?.once === "battle" ? 3 : strat?.once === "turn" ? 1.5 : 1;
+    const cp = payment.reduce((n, x) => n + (x.resource === "CP" ? (x.amount ?? 0) : 0), 0);
+    return scarce * cp * CP_WORTH * this.judge.armyVp;
   }
 
   /** Moving the game on: the end of an activation, then of the phase. */
@@ -517,18 +641,35 @@ class Thinker implements Policy, Analyst {
       const planned = this.planned(state, scored, must.length ? null : fallback, mine);
       if (planned !== undefined) return planned;
     }
-    // Sharp, taking turns at activating units: the few best activations, each played out and
-    // judged after the enemy's best answer with one of theirs.
-    const acts = scored.filter(({ c }) => c.activates);
-    if (DBG) console.log("acts", acts.length, scored.length, plainActivations(state), this.beam);
+    // Sharp, taking turns at activating units: the few best ways to start a unit's go (moving, or
+    // acting where it stands), each played out and judged after the enemy's best answer with one
+    // of theirs, over a few passes that give every option the same dice.
+    const between = plainActivations(state) && !actingUnits(state).length;
+    const acts = scored.filter(({ c }) => c.activates || (between && !c.boost));
     if (this.beam && mine && acts.length > 1 && plainActivations(state)) {
-      let pick: Candidate | null = null;
-      let best = -Infinity;
-      for (const { c } of acts.sort((a, b) => b.score - a.score).slice(0, this.beam)) {
-        const v = this.replied(state, c, mine);
-        if (v !== null && v > best) [pick, best] = [c, v];
+      const top = acts.sort((a, b) => b.score - a.score).slice(0, this.beam);
+      const sums = top.map(() => 0);
+      const own = this.rng;
+      for (let pass = 0; pass < this.replyPasses; pass++) {
+        const seed = Math.floor(own() * 2 ** 31);
+        top.forEach(({ c }, i) => {
+          this.rng = seededRng(seed);
+          sums[i] = sums[i]! + (this.replied(state, c, mine) ?? -Infinity);
+        });
       }
-      if (pick) return pick.move;
+      this.rng = own;
+      let pick = top[0]!.c;
+      let best = -Infinity;
+      top.forEach(({ c }, i) => {
+        if (sums[i]! > best) [pick, best] = [c, sums[i]!];
+      });
+      return pick.move;
+    }
+    // Sharp, in a game of activations with actions (Conquest, FSD): the few best, each with the
+    // rest of the unit's activation played out and the enemy's next activation answering it.
+    if (this.beam && mine && this.deepen && actionActivations(state)) {
+      const picked = this.activationPlan(state, scored, must.length ? null : fallback, mine);
+      if (picked !== undefined) return picked;
     }
     // Sharp, moving: the few best moves (and staying put), each judged after the enemy's guns
     // answer it, so it doesn't walk into the open for a step nearer an objective.
@@ -768,6 +909,101 @@ class Thinker implements Policy, Analyst {
   }
 
   /**
+   * In a game of activations with actions: the few best options now (and
+   * moving on), each played on to the end of the unit's activation, then
+   * the enemy's activation that leaves us worst off; every option meets the
+   * same dice on a pass. Undefined when there is nothing to choose between.
+   */
+  private activationPlan(
+    state: GameState,
+    scored: { c: Candidate; score: number }[],
+    fallback: BotMove | null,
+    mine: Set<PlayerId>,
+  ): BotMove | null | undefined {
+    // Moving on first (it's quick), then the best first, so time running out drops the least likely.
+    let options: { move: BotMove; sum: number }[] = [
+      ...(fallback ? [{ move: fallback, sum: 0 }] : []),
+      ...scored
+        .filter(({ c }) => !c.boost)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, this.beam)
+        .map(({ c }) => ({ move: c.move, sum: 0 })),
+    ];
+    if (options.length < 2) return undefined;
+    const own = this.rng;
+    // While the plan's time lasts: the first pass keeps the options it got to; a later pass cut short counts for none.
+    const deadline = now() + PLAN_MS;
+    for (let pass = 0; pass < this.deepen; pass++) {
+      if (pass && now() > deadline) break;
+      const seed = Math.floor(own() * 2 ** 31);
+      const got: number[] = [];
+      for (const o of options) {
+        if (got.length > 1 && now() > deadline + PLAN_GRACE_MS) break;
+        this.rng = seededRng(seed);
+        const s = this.play(state, o.move);
+        got.push(s ? this.answeredActivation(this.finished(s, mine, 1), mine) : -Infinity);
+      }
+      if (pass && got.length < options.length) break;
+      options = options.slice(0, got.length);
+      got.forEach((v, i) => (options[i]!.sum += v));
+    }
+    this.rng = own;
+    // Moving on only when it's strictly better.
+    let best = options[fallback ? 1 : 0]!;
+    for (const o of options) if (o.sum > best.sum) best = o;
+    return best.move;
+  }
+
+  /** The command stack in the order asked for: the same cards, sorted by how near each unit is to the enemy. */
+  private stacked(state: GameState, m: BotMove): BotMove {
+    const i = m.intent as { secrets?: { key: string; commitment: string }[] };
+    if (!this.stackOrder || !i.secrets) return m;
+    const gap = (id: string): number => {
+      const u = state.units[id];
+      let best = Infinity;
+      if (u)
+        for (const e of Object.values(state.units))
+          if (e.owner !== u.owner && isAlive(state, e)) best = Math.min(best, unitGap(state, u, e));
+      return best;
+    };
+    const cards = i.secrets.map((c) => ({ c, gap: gap(String(this.ctx.kept.get(c.commitment)?.value)) }));
+    const sign = this.stackOrder === "far" ? -1 : 1;
+    const sorted = [...cards].sort((a, b) => sign * (a.gap - b.gap));
+    return {
+      ...m,
+      intent: {
+        ...m.intent,
+        secrets: i.secrets.map((c, n) => ({ key: c.key, commitment: sorted[n]!.c.commitment })),
+      },
+    } as BotMove;
+  }
+
+  /** A side's acting unit's activation played to its end: its best next action while one helps, then ending it. */
+  private finished(s: GameState, side: Set<PlayerId>, sign: 1 | -1): GameState {
+    for (let i = 0; i < 4 && actingUnits(s).some((u) => side.has(u.owner)); i++) {
+      const next = this.followed(s, side, sign);
+      if (next === s) break;
+      s = next;
+    }
+    return this.ended(s, side);
+  }
+
+  /** The table judged after the enemy's activation that leaves us worst off, if it's theirs to activate now. */
+  private answeredActivation(s: GameState, mine: Set<PlayerId>): number {
+    let worst = evaluate(s, this.judge);
+    const enemy = s.turn.activeSeat;
+    if (enemy === this.seat) return worst;
+    const theirs = new Set(sidePlayers(s, enemy).map((p) => p.id));
+    if ([...theirs].some((p) => mine.has(p))) return worst;
+    for (const e of this.candidates(s, theirs)) {
+      if (!e.activates) continue;
+      const t = this.play(s, e.move);
+      if (t) worst = Math.min(worst, evaluate(this.followed(t, theirs, -1), this.judge));
+    }
+    return worst;
+  }
+
+  /**
    * An activation played out (its best follow-up, then the end of it), then
    * the enemy's activation that leaves us worst off: two plies, for taking
    * turns at activating units.
@@ -780,8 +1016,10 @@ class Thinker implements Policy, Analyst {
     if (enemy === this.seat) return evaluate(s2, this.judge);
     const theirs = new Set(sidePlayers(s2, enemy).map((p) => p.id));
     let worst = evaluate(s2, this.judge);
+    // Their go: moving, or (between activations) acting where they stand.
+    const between = !actingUnits(s2).length;
     for (const e of this.candidates(s2, theirs)) {
-      if (!e.activates) continue;
+      if (!e.activates && !(between && !e.boost)) continue;
       const s3 = this.play(s2, e.move);
       if (!s3) continue;
       worst = Math.min(worst, evaluate(this.followed(s3, theirs, -1), this.judge));
@@ -832,15 +1070,82 @@ class Thinker implements Policy, Analyst {
 
   /** The table after a candidate, judged: the average over `tries` goes (null if the host would refuse it). */
   private scoreOf(state: GameState, c: Candidate, tries: number): number | null {
+    if (c.charge) return this.charged(state, c);
     let total = 0;
     let n = 0;
+    let risk: number | null = null;
     for (let i = 0; i < tries; i++) {
-      const s = this.play(state, c.move);
+      let s = this.play(state, c.move);
       if (!s) break;
+      // Hazardous: the bearers' own roll comes out of the picture, and its expected harm goes in.
+      if (c.hazard) {
+        s = unhurt(s, state, c.hazard.unit);
+        risk ??= this.hazardRisk(s, c.hazard.unit, c.hazard.weapon);
+        total -= risk;
+      }
       total += evaluate(s, this.judge);
       n++;
     }
     return n ? total / n : null;
+  }
+
+  /**
+   * What a Hazardous weapon's roll is expected to cost the unit that used it
+   * (the 40k rule: on a 1 or 2 of a D6 a bearer takes a mortal wound, three
+   * for a Character or Monster), in the judge's terms.
+   */
+  private hazardRisk(s: GameState, unitId: string, weapon: string): number {
+    const u = s.units[unitId];
+    if (!u) return 0;
+    const kw = (u.sheet?.keywords ?? []).map((k) => k.toUpperCase());
+    const wounds = kw.includes("CHARACTER") || kw.includes("MONSTER") ? 3 : 1;
+    const bearer =
+      aliveModels(s, u).find((m) => !m.weapons || m.weapons.includes(weapon)) ?? aliveModels(s, u)[0];
+    if (!bearer) return 0;
+    const hurt = wounded(s, bearer.id, wounds);
+    return (2 / 6) * (evaluate(s, this.judge) - evaluate(hurt, this.judge));
+  }
+
+  /**
+   * A charge rolled by hand (Conquest): declared, then judged both ways, as
+   * it lands (rolled high enough, lined up against the target, Inspired) and
+   * as it falls short (the activation over), each by its odds on the die.
+   */
+  private charged(state: GameState, c: Candidate): number | null {
+    const local = new Map<number, GameState>();
+    const take = this.sim.step(state, c.move.intent, c.move.as, this.rng, local);
+    const roll = c.move.then?.intent;
+    if (!take || !c.charge || roll?.type !== "dice/roll") return null;
+    const s1 = this.sim.settle(take, this.rng, local);
+    const u = s1.units[c.charge.unit];
+    const e = s1.units[c.charge.target];
+    const door = u && e ? closeDoor(s1, u, e) : null;
+    const sides = roll.sides;
+    if (!u || !door || roll.count !== 1) return evaluate(s1, this.judge);
+    // The lowest face that reaches.
+    const need = Math.max(1, Math.ceil(unitGap(s1, u, e!) - marchOf(s1, u) - 0.05));
+    const p = Math.max(0, Math.min(1, (sides - need + 1) / sides));
+    const rolled = (face: number) => {
+      const r = this.sim.step(s1, roll, c.move.as, () => (face - 0.5) / sides, new Map(local));
+      return r ? this.sim.settle(r, this.rng, local) : null;
+    };
+    let score = 0;
+    if (p > 0) {
+      const hit = rolled(sides);
+      const unit = hit?.units[u.id];
+      const move = hit && unit ? landing(hit, unit) : null;
+      const landed = hit && move ? this.play(hit, move) : hit;
+      if (!landed) return null;
+      // What landing is for: the fight it starts (Impact, a Clash) with the actions left.
+      const side = new Set(sidePlayers(landed, this.seat).map((x) => x.id));
+      score += p * evaluate(this.followed(landed, side, 1), this.judge);
+    }
+    if (p < 1) {
+      const miss = rolled(Math.min(need - 1, sides));
+      if (!miss) return null;
+      score += (1 - p) * evaluate(miss, this.judge);
+    }
+    return score;
   }
 
   /** A move and what follows it on a copy of the table. */
@@ -892,29 +1197,52 @@ class Thinker implements Policy, Analyst {
     const out: Candidate[] = [];
     for (const u of units) {
       let moveAction = false;
+      // A charge rolled that reaches: the move into contact comes next.
+      const land = landing(state, u);
+      if (land) out.push({ move: land, key: `${u.id}:landing`, tries: 1, must: true });
       for (const o of unitActions(state, u.id)) {
         if (o.def.reactTo) continue;
         if (pointless(state, u, o.def.id)) continue;
         if (o.def.procedure) {
           const weapons = Object.keys(u.sheet?.weapons ?? {});
-          const targets = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
-          for (const weapon of weapons.length ? weapons : [undefined])
-            for (const t of targets) {
-              if (weapon && (!reaches(state, u, weapon, t.unitId) || wrongKind(u, weapon, o.def.id)))
-                continue;
+          // Targets that hang on the weapon (40k and FSD Indirect Fire, FSD arcs of fire) are asked per weapon.
+          const shared = weaponTargets(o.def) ? null : targetsOf(state, u.id, o.def.id).filter((t) => t.ok);
+          for (const weapon of weapons.length ? weapons : [undefined]) {
+            if (weapon && wrongKind(u, weapon, o.def.id)) continue;
+            const targets = (shared ?? targetsOf(state, u.id, o.def.id, weapon).filter((t) => t.ok)).filter(
+              (t) => !weapon || reaches(state, u, weapon, t.unitId),
+            );
+            let repeat = 1;
+            const usable = targets.filter((t) => {
               const req = { ...(weapon ? { weapon } : {}), targetId: t.unitId };
-              if (!unitActions(state, u.id, req).find((x) => x.def.id === o.def.id)?.ok) continue;
+              const opt = unitActions(state, u.id, req).find((x) => x.def.id === o.def.id);
+              if (opt?.repeat) repeat = opt.repeat;
+              return !!opt?.ok;
+            });
+            const hazardous = !!weapon && hasKeyword(u, weapon, "hazardous");
+            for (const [first, ...more] of aims(
+              usable.map((t) => t.unitId),
+              repeat,
+            ))
               out.push({
                 move: {
-                  intent: { type: "action/take", unitId: u.id, action: o.def.id, ...req },
+                  intent: {
+                    type: "action/take",
+                    unitId: u.id,
+                    action: o.def.id,
+                    ...(weapon ? { weapon } : {}),
+                    targetId: first!,
+                    ...(more.length ? { more } : {}),
+                  },
                   as: u.owner,
                   kind: `action:${o.def.id}`,
                 },
                 key: `${u.id}:${o.def.id}:${weapon ?? ""}`,
                 tries: this.tries,
                 must: fighting && /fight|melee|strike/i.test(o.def.id),
+                ...(hazardous ? { hazard: { unit: u.id, weapon: weapon! } } : {}),
               });
-            }
+          }
           continue;
         }
         if (!o.ok) continue;
@@ -931,18 +1259,42 @@ class Thinker implements Policy, Analyst {
         };
         const key = takenKey(state, u.id, o.def.id);
         if (o.def.move?.kind === "charge" || (o.move === undefined && /charge/i.test(o.def.id))) {
-          const inches = o.move ?? 6 + 2 + Math.floor(this.rng() * 6);
-          for (const e of enemiesWithin(state, u, 12))
+          // Only the enemies the rules let it charge (40k within 12", Conquest in the front arc and in sight).
+          const targets = o.def.target
+            ? targetsOf(state, u.id, o.def.id)
+                .filter((t) => t.ok)
+                .slice(0, 3)
+                .flatMap((t) => state.units[t.unitId] ?? [])
+            : enemiesWithin(state, u, 12);
+          const roll = o.move === undefined ? handCharge(state, u) : null;
+          for (const e of targets) {
+            const declared: BotMove = {
+              ...take,
+              intent: { ...take.intent, ...(o.def.target ? { targetId: e.id } : {}) } as Intent,
+            };
+            // Rolled and moved by hand (Conquest): roll the charge now; the move follows if it reaches.
+            if (roll) {
+              out.push({
+                move: { ...declared, then: { intent: roll, as: u.owner, kind: "roll" } },
+                key,
+                tries: 1,
+                charge: { unit: u.id, target: e.id },
+              });
+              continue;
+            }
+            const inches = o.move ?? 6 + 2 + Math.floor(this.rng() * 6);
             out.push({
-              move: { ...take, then: chargeMove(state, u, this.ctx, Math.max(1, inches), e.id) },
+              move: { ...declared, then: chargeMove(state, u, this.ctx, Math.max(1, inches), e.id) },
               key,
               tries: this.tries,
             });
+          }
           continue;
         }
         if (o.move !== undefined) {
           moveAction = true;
-          for (const then of destinations(state, u, Math.max(1, o.move)))
+          // The move is in the system's unit (FSD: DU of 3").
+          for (const then of destinations(state, u, Math.max(1, o.move) * inchesPerUnit(systemOf(state))))
             out.push({ move: { ...take, then }, key, tries: 1 });
           continue;
         }
@@ -1002,10 +1354,11 @@ class Thinker implements Policy, Analyst {
           });
       }
     // Dice placed on cards ahead of time (FSD): as the soak bot places them.
-    for (const m of freeMoves(state, { ...this.ctx, rng: () => 0.1 })) {
-      if (m.kind !== "place") break;
-      if (mine.has(m.as)) out.push({ move: m, key: `place:${JSON.stringify(m.intent)}`, tries: 1 });
-    }
+    if (placeablePool(systemOf(state)))
+      for (const m of freeMoves(state, { ...this.ctx, rng: () => 0.1 })) {
+        if (m.kind !== "place") break;
+        if (mine.has(m.as)) out.push({ move: m, key: `place:${JSON.stringify(m.intent)}`, tries: 1 });
+      }
     return out;
   }
 
@@ -1156,8 +1509,10 @@ const num = (s: string | undefined) => {
 /** How far a unit moves by hand: the module's say, else its Move characteristic, else 6". */
 function moveInches(state: GameState, u: Unit, tuning?: BotTuning): number {
   if (tuning?.moveInches) return tuning.moveInches(state, u);
-  const m = aliveModels(state, u)[0];
-  return num(m?.profile?.chars.M) ?? 6;
+  const c = aliveModels(state, u)[0]?.profile?.chars;
+  // In the system's unit (FSD's Move is in DU of 3").
+  const move = num(c?.M) ?? num(c?.Move);
+  return move === undefined ? 6 : move * inchesPerUnit(systemOf(state));
 }
 
 /** The furthest a unit can hurt from (its longest shot, else 1"), plus a move. */
@@ -1168,9 +1523,12 @@ function reachOf(state: GameState, u: Unit, tuning?: BotTuning): number {
 /**
  * Where a unit might move this turn: towards each objective (stopping on
  * it), towards the nearest enemy (stopping short), and back from it. The
- * unit moves as a block, staying on the table.
+ * unit moves as a block, staying on the table, and around terrain it can't
+ * cross (or short of it), less what terrain on the way costs it. A regiment
+ * in a game that wants it (BotTuning.faceMoves) turns to face where it goes,
+ * or ends facing the nearest enemy.
  */
-function destinations(state: GameState, u: Unit, inches: number): BotMove[] {
+export function destinations(state: GameState, u: Unit, inches: number): BotMove[] {
   const ms = aliveModels(state, u);
   if (!ms.length) return [];
   const c = centreOf(state, u);
@@ -1190,26 +1548,290 @@ function destinations(state: GameState, u: Unit, inches: number): BotMove[] {
   if (foes[1]) goals.push({ ...foes[1], stop: 3 });
   const hx = state.table.width / 2 - 1.5;
   const hy = state.table.depth / 2 - 1.5;
+  const frame = tuningOf(state.system)?.faceMoves ? blockFrame(state, u) : null;
+  const pivot = frame ? unitCentre(state, u) : c;
+  const ground = terrainCheck(state, u);
   const out: BotMove[] = [];
   for (const g of goals) {
     const dist = Math.hypot(g.x - c.x, g.y - c.y);
     const d = Math.max(0, Math.min(inches, dist - g.stop));
     if (d < 0.5) continue;
-    let dx = ((g.x - c.x) / dist) * d;
-    let dy = ((g.y - c.y) / dist) * d;
-    // Keep every model on the table.
-    for (const m of ms) {
-      dx = Math.max(-hx - m.position.x, Math.min(hx - m.position.x, dx));
-      dy = Math.max(-hy - m.position.y, Math.min(hy - m.position.y, dy));
+    const turnTo = (dir: { x: number; y: number }) => (frame ? facingOf(dir) - frame.facing : 0);
+    // The move along a heading, kept on the table, as where each model ends up.
+    const along = (angle: number, len: number) => {
+      const dir = rotateBy({ x: (g.x - c.x) / dist, y: (g.y - c.y) / dist }, angle);
+      let dx = dir.x * len;
+      let dy = dir.y * len;
+      const turn = turnTo(dir);
+      const at = transformPositions(
+        ms.map((m) => m.position),
+        pivot,
+        turn,
+        { x: 0, y: 0 },
+      );
+      for (const p of at) {
+        dx = Math.max(-hx - p.x, Math.min(hx - p.x, dx));
+        dy = Math.max(-hy - p.y, Math.min(hy - p.y, dy));
+      }
+      return { dx, dy, turn, to: at.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
+    };
+    // Straight there; else around what blocks the way, or short of it.
+    let step: ReturnType<typeof along> | null = null;
+    let near = Infinity;
+    for (const [angle, f] of [
+      [0, 1],
+      [0.6, 1],
+      [-0.6, 1],
+      [1.2, 1],
+      [-1.2, 1],
+      [0, 0.66],
+      [0, 0.33],
+    ] as const) {
+      let s = along(angle, d * f);
+      let fit = ground(s.to);
+      if (fit === null) continue;
+      // Terrain on the way costs movement: what's left of the move, if this went further.
+      if (fit > 0 && d * f > inches - fit) {
+        s = along(angle, Math.max(Math.min(1, inches), inches - fit));
+        fit = ground(s.to);
+        if (fit === null) continue;
+      }
+      const left = Math.hypot(g.x - c.x - s.dx, g.y - c.y - s.dy);
+      if (left < near - 0.25) [step, near] = [s, left];
+      if (angle === 0 && f === 1) break;
     }
-    out.push({
+    if (!step) continue;
+    if (!frame) {
+      out.push({
+        intent: {
+          type: "models/move",
+          moves: ms.map((m, i) => ({ id: m.id, to: step.to[i]! })),
+        } as Intent,
+        as: u.owner,
+        kind: "move",
+      });
+      continue;
+    }
+    const block = (turn: number): BotMove => ({
       intent: {
-        type: "models/move",
-        moves: ms.map((m) => ({ id: m.id, to: { x: m.position.x + dx, y: m.position.y + dy } })),
+        type: "unit/move",
+        id: u.id,
+        pivot,
+        turn,
+        delta: { x: step.dx, y: step.dy },
+        how: "forward",
+        distance: Math.hypot(step.dx, step.dy),
       } as Intent,
       as: u.owner,
       kind: "move",
     });
+    out.push(block(step.turn));
+    // Ending facing the nearest enemy, so it's in the front arc for a charge.
+    const at = { x: pivot.x + step.dx, y: pivot.y + step.dy };
+    if (foes[0] && Math.hypot(foes[0].x - at.x, foes[0].y - at.y) > 0.5)
+      out.push(block(turnTo({ x: foes[0].x - at.x, y: foes[0].y - at.y })));
   }
   return out;
 }
+
+/** A direction turned by `angle` radians. */
+function rotateBy(v: { x: number; y: number }, angle: number) {
+  const [c, s] = [Math.cos(angle), Math.sin(angle)];
+  return { x: v.x * c - v.y * s, y: v.x * s + v.y * c };
+}
+
+/**
+ * How terrain treats a move of this unit to where its models would end up
+ * (TerrainCategoryDef.movement, the core "terrain" path check): null when it
+ * runs into terrain the unit can't cross, else the inches the worst piece on
+ * the way costs it (0 for none).
+ */
+function terrainCheck(state: GameState, u: Unit): (to: { x: number; y: number }[]) => number | null {
+  const system = systemOf(state);
+  const matters = (system.terrain ?? []).some((t) => t.blocksMovement || t.slows || t.movement?.length);
+  if (!matters || !state.terrain.length) return () => 0;
+  const ms = aliveModels(state, u);
+  const per = inchesPerUnit(system);
+  return (to) => {
+    const models = { ...state.models };
+    ms.forEach((m, i) => (models[m.id] = { ...m, phaseStart: m.position, position: to[i]! }));
+    const { blocked, slowed } = terrainOnMove({ ...state, models }, system, u);
+    return blocked.length ? null : (slowed?.by ?? 0) * per;
+  };
+}
+
+/** Whether an action's targets hang on the weapon used (its filter or reasons read "weapon"). */
+const byWeapon = new WeakMap<object, boolean>();
+function weaponTargets(def: ActionDef): boolean {
+  let v = byWeapon.get(def);
+  if (v === undefined) {
+    v = /"weapon[."]/.test(JSON.stringify(def.target ?? {}));
+    byWeapon.set(def, v);
+  }
+  return v;
+}
+
+/** A weapon keyword (any case), e.g. "Hazardous". */
+function hasKeyword(u: Unit, weapon: string, keyword: string): boolean {
+  const k = keyword.toLowerCase();
+  return (u.sheet?.weapons[weapon]?.keywords ?? []).some((w) => w.trim().toLowerCase() === k);
+}
+
+/**
+ * Where a multiple attack (ActionDef.repeat) could go: every way of sharing
+ * `n` attacks among the three nearest targets (all at one, split two ways,
+ * one each), first target first. One attack: each target alone.
+ */
+function aims(targets: string[], n: number): string[][] {
+  if (n <= 1) return targets.map((t) => [t]);
+  const near = targets.slice(0, 3);
+  const out: string[][] = [];
+  const grow = (from: number, picked: string[]) => {
+    if (picked.length === n) return void out.push(picked);
+    for (let i = from; i < near.length; i++) grow(i, [...picked, near[i]!]);
+  };
+  grow(0, []);
+  return out;
+}
+
+/**
+ * A charge the player rolls and moves by hand (a regiment game whose module
+ * names its charge roll, Conquest): the roll to make for it, labelled so
+ * the unit remembers it and the game's charge hook answers it. Null otherwise.
+ */
+function handCharge(state: GameState, u: Unit): Intent | null {
+  const dice = systemModule(state.system ?? "").chargeRoll;
+  if (!dice || !isBlock(u)) return null;
+  return { type: "dice/roll", count: dice.count, sides: dice.sides, label: "charge", unitId: u.id };
+}
+
+/** A unit's March (its M), in inches. */
+function marchOf(state: GameState, u: Unit): number {
+  return num(aliveModels(state, u)[0]?.profile?.chars.M) ?? 0;
+}
+
+/**
+ * The charge move a regiment has rolled for and not made yet: lined up
+ * against the nearest enemy it may charge that the roll plus its March
+ * reaches, as "close the door" would; null if none does (a short charge,
+ * which the game's charge hook ends the activation for).
+ */
+function landing(state: GameState, u: Unit): BotMove | null {
+  const roll = u.status?.charge;
+  if (!u.status?.charged || typeof roll !== "number") return null;
+  const short = state.modules?.[state.system ?? ""]?.[`short:${u.id}`];
+  if (short === state.turn.round) return null;
+  const reach = roll + marchOf(state, u);
+  let best: { move: BotMove; d: number } | null = null;
+  for (const t of targetsOf(state, u.id, "charge")) {
+    const e = state.units[t.unitId];
+    if (!t.ok || !e) continue;
+    // Reached as the game's charge hook measures it: the gap between the units.
+    const gap = unitGap(state, u, e);
+    const door = closeDoor(state, u, e);
+    if (!door || door.distance < 0.05 || gap > reach + 0.05) continue;
+    if (best && best.d <= gap) continue;
+    best = {
+      move: { intent: { ...door.move, how: "charge" } as Intent, as: u.owner, kind: "charge" },
+      d: gap,
+    };
+  }
+  return best?.move ?? null;
+}
+
+/** The table with a unit's models as they were before (its wounds and losses undone). */
+function unhurt(s: GameState, before: GameState, unitId: string): GameState {
+  const ids = before.units[unitId]?.modelIds ?? [];
+  const models = { ...s.models };
+  for (const id of ids) {
+    const was = before.models[id];
+    const now = models[id];
+    if (was && now) models[id] = { ...now, woundsLost: was.woundsLost, destroyed: was.destroyed };
+  }
+  return { ...s, models };
+}
+
+/** The table with a model taking `n` wounds. */
+function wounded(s: GameState, modelId: string, n: number): GameState {
+  const m = s.models[modelId];
+  if (!m) return s;
+  const lost = Math.min(maxWounds(m), (m.woundsLost ?? 0) + n);
+  return {
+    ...s,
+    models: {
+      ...s.models,
+      [modelId]: { ...m, woundsLost: lost, destroyed: lost >= maxWounds(m) || m.destroyed },
+    },
+  };
+}
+
+/** A stratagem rule that works on attacks against its unit. */
+function shields(parts: AutoPart[]): boolean {
+  return parts.some(
+    (p) => p.kind === "invuln" || p.kind === "fnp" || (p.kind === "attack" && p.side === "targeted"),
+  );
+}
+
+/**
+ * The candidates the 40k fight order allows now: fights by our units whose
+ * pick it is (Fights First first), and more fights by a unit already
+ * fighting (its other weapons); everything that isn't a fight stays. "wait"
+ * when it's the other player's pick and we have nothing else to fight with.
+ */
+function inOrder(
+  state: GameState,
+  order: NonNullable<ReturnType<typeof fightOrder>>,
+  candidates: Candidate[],
+  mine: Set<PlayerId>,
+): Candidate[] | "wait" {
+  const fight = (c: Candidate) =>
+    c.move.intent.type === "action/take" && /fight|melee/i.test(c.move.intent.action)
+      ? c.move.intent.unitId
+      : null;
+  const ours = !!order.picker && mine.has(order.picker);
+  const allowed = (id: string) => (ours && order.eligible.includes(id)) || !!state.units[id]?.status?.fought;
+  const fights = candidates.filter((c) => fight(c) !== null);
+  // Finish the unit fighting now before picking another.
+  const going = fights.filter((c) => state.units[fight(c)!]?.status?.fought);
+  const ok = going.length ? going : fights.filter((c) => allowed(fight(c)!));
+  if (!ok.length && order.picker && !mine.has(order.picker)) return "wait";
+  return [...candidates.filter((c) => fight(c) === null), ...ok];
+}
+
+/** A game of plain activations (units take turns moving and acting, with no activation actions). */
+function plainGame(start: GameState): boolean {
+  const system = systemOf(start);
+  return (
+    schedule(system).some((s) => s.kind === "alternate") &&
+    !system.actions.some((a) => a.activates !== undefined)
+  );
+}
+
+/** Taking turns at activations whose units then take actions (Conquest, FSD), not plain activations. */
+function actionActivations(state: GameState): boolean {
+  return currentSlot(state)?.kind === "alternate" && !plainActivations(state);
+}
+
+/**
+ * A unit's targets for an action (core actionTargets), kept while the
+ * models and units stay the same: the bot asks for them over and over on
+ * each table it tries out.
+ */
+function targetsOf(
+  state: GameState,
+  unitId: string,
+  action: string,
+  weapon?: string,
+): ReturnType<typeof actionTargets> {
+  let memo = targetMemo.get(state.models);
+  if (!memo || memo.units !== state.units || memo.terrain !== state.terrain)
+    targetMemo.set(state.models, (memo = { units: state.units, terrain: state.terrain, targets: new Map() }));
+  const key = `${state.turn.round}:${state.turn.phase}:${state.turn.activeSeat}:${unitId}:${action}:${weapon ?? ""}`;
+  let got = memo.targets.get(key);
+  if (!got) memo.targets.set(key, (got = actionTargets(state, unitId, action, weapon)));
+  return got;
+}
+const targetMemo = new WeakMap<
+  object,
+  { units: unknown; terrain: unknown; targets: Map<string, ReturnType<typeof actionTargets>> }
+>();
