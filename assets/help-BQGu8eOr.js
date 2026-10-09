@@ -1,1 +1,0 @@
-import{g as e}from"./systemLabels-Brd0vo34.js";var t=e(()=>({hint:!1,keys:!1}));export{t};
