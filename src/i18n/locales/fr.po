@@ -542,7 +542,7 @@ msgstr "Lancer mes sauvegardes à ma place"
 #: src/bot/YourArmy.tsx:101
 #: src/bot/YourArmy.tsx:142
 #: src/bot/YourArmy.tsx:144
-#: src/ui/AutoAbilities.tsx:321
+#: src/ui/AutoAbilities.tsx:325
 #, fuzzy
 msgid "Your army"
 msgstr "Ton armée"
@@ -1760,7 +1760,7 @@ msgstr "Ajouter un joueur"
 
 #: src/campaign/EventTab.tsx:98
 #: src/companion/RealDice.tsx:271
-#: src/ui/AutoAbilities.tsx:152
+#: src/ui/AutoAbilities.tsx:156
 #, fuzzy
 msgid "Add"
 msgstr "Ajouter"
@@ -2396,121 +2396,133 @@ msgctxt "game"
 msgid "Shoot"
 msgstr "Tirer"
 
-#: src/core/content/examples/fsd.ts:753
-#, fuzzy
-msgctxt "game"
-msgid "Activate"
-msgstr "Activer"
-
-#: src/core/content/examples/fsd.ts:756
-#, fuzzy
-msgctxt "game"
-msgid "A Character's abilities (its card behind the unit's) are used during the activation, each once a round, even while pinned, and don't count toward the two actions"
-msgstr "Les capacités d'un personnage (sa carte derrière celle de l'unité) s'utilisent pendant l'activation, chacune une fois par round, même clouée, et ne comptent pas dans les deux actions"
-
-#: src/core/content/examples/fsd.ts:797
-#, fuzzy
-msgctxt "game"
-msgid "React"
-msgstr "Réagir"
-
-#: src/core/content/examples/fsd.ts:837
+#: src/core/content/examples/fsd.ts:1002
 #, fuzzy
 msgctxt "game"
 msgid "To a move, pick the point on its path where the reaction happens. A reaction may set off another (a chain), all landing together; a unit may also deploy from reserve as a reaction"
 msgstr "Pour un mouvement, choisis le point du trajet où la réaction a lieu. Une réaction peut en déclencher une autre (une chaîne), toutes résolues ensemble ; une unité peut aussi se déployer depuis la réserve en réaction"
 
-#: src/core/content/examples/fsd.ts:842
+#: src/core/content/examples/fsd.ts:1007
 #, fuzzy
 msgctxt "game"
 msgid "Unpin"
 msgstr "Se dégager"
 
-#: src/core/content/examples/fsd.ts:850
+#: src/core/content/examples/fsd.ts:1015
 #: src/core/content/examples/rank-and-flank.ts:169
 #, fuzzy
 msgctxt "game"
 msgid "Move"
 msgstr "Déplacement"
 
-#: src/core/content/examples/fsd.ts:872
+#: src/core/content/examples/fsd.ts:1052
 #, fuzzy
 msgctxt "game"
 msgid "Fire"
 msgstr "Feu"
 
-#: src/core/content/examples/fsd.ts:893
+#: src/core/content/examples/fsd.ts:1076
 #, fuzzy
 msgctxt "game"
 msgid "Prepare"
 msgstr "Préparer"
 
-#: src/core/content/examples/fsd.ts:898
+#: src/core/content/examples/fsd.ts:1081
 #, fuzzy
 msgctxt "game"
 msgid "Its effect lasts while the token stays; clear the token when the action is used or its trigger comes"
 msgstr "Son effet dure tant que le jeton reste ; retire-le quand l'action est utilisée ou que son déclencheur arrive"
 
-#: src/core/content/examples/fsd.ts:907
+#: src/core/content/examples/fsd.ts:1090
 #, fuzzy
 msgctxt "game"
 msgid "Interact"
 msgstr "Interagir"
 
-#: src/core/content/examples/fsd.ts:911
+#: src/core/content/examples/fsd.ts:1094
 #, fuzzy
 msgctxt "game"
 msgid "Retrieve: interacting with an objective nobody disputes takes it off the table. Extract: the unit carries it and scores on reaching a deploy area at the end of its activation; if destroyed, it drops where its last base fell"
 msgstr "Récupérer : interagir avec un objectif que personne ne conteste le retire de la table. Extraire : l'unité le porte et marque en atteignant une zone de déploiement à la fin de son activation ; si elle est détruite, il tombe là où son dernier socle est tombé"
 
-#: src/core/content/examples/fsd.ts:918
+#: src/core/content/examples/fsd.ts:1101
 #, fuzzy
 msgctxt "game"
 msgid "Support card"
 msgstr "Carte de soutien"
 
-#: src/core/content/examples/fsd.ts:924
+#: src/core/content/examples/fsd.ts:1107
 #, fuzzy
 msgctxt "game"
 msgid "Each card once a round; Single Use cards are discarded. A card's attack from a unit doesn't activate it or allow reactions, and the target keeps its cover and range bonuses"
 msgstr "Chaque carte une fois par round ; les cartes à usage unique sont défaussées. L'attaque d'une carte depuis une unité ne l'active pas et ne permet pas de réaction, et la cible garde ses bonus de couvert et de portée"
 
-#: src/core/content/examples/fsd.ts:932
+#: src/core/content/examples/fsd.ts:1115
 #, fuzzy
 msgctxt "game"
 msgid "Deploy"
 msgstr "Déployer"
 
-#: src/core/content/examples/fsd.ts:936
+#: src/core/content/examples/fsd.ts:1120
 #, fuzzy
 msgctxt "game"
 msgid "Disembarking from a transport is deploying too: place the bases as close to it as possible"
 msgstr "Débarquer d'un transport est aussi un déploiement : place les socles aussi près que possible de lui"
 
-#: src/core/content/examples/fsd.ts:960
+#: src/core/content/examples/fsd.ts:1144
 #, fuzzy
 msgctxt "game"
 msgid "Pre-assign ADs"
 msgstr "Préassigner les DA"
 
-#: src/core/content/examples/fsd.ts:973
+#: src/core/content/examples/fsd.ts:1157
 #: examples/lessons/fsd.js:19
 #, fuzzy
 msgctxt "game"
 msgid "Activations"
 msgstr "Activations"
 
-#: src/core/content/examples/fsd.ts:981
+#: src/core/content/examples/fsd.ts:1175
 #, fuzzy
 msgctxt "game"
 msgid "Scoring"
 msgstr "Décompte"
 
-#: src/core/content/examples/fsd.ts:985
+#: src/core/content/examples/fsd.ts:1179
 #, fuzzy
 msgctxt "game"
 msgid "Cleanup"
 msgstr "Nettoyage"
+
+#: src/core/content/examples/fsd.ts:899
+#, fuzzy
+msgctxt "game"
+msgid "Activate"
+msgstr "Activer"
+
+#: src/core/content/examples/fsd.ts:902
+#, fuzzy
+msgctxt "game"
+msgid "A Character's abilities (its card behind the unit's) are used during the activation, each once a round, even while pinned, and don't count toward the two actions"
+msgstr "Les capacités d'un personnage (sa carte derrière celle de l'unité) s'utilisent pendant l'activation, chacune une fois par round, même clouée, et ne comptent pas dans les deux actions"
+
+#: src/core/content/examples/fsd.ts:946
+#, fuzzy
+msgctxt "game"
+msgid "Activate (no AD)"
+msgstr "Activer (sans AD)"
+
+#: src/core/content/examples/fsd.ts:949
+#, fuzzy
+msgctxt "game"
+msgid "Lone Wolf or Disciplined: no AD spent; Disciplined takes one action this way, and neither commands"
+msgstr "Loup solitaire ou Discipliné : aucun AD dépensé ; Discipliné fait ainsi une action, et aucun ne commande"
+
+#: src/core/content/examples/fsd.ts:958
+#, fuzzy
+msgctxt "game"
+msgid "React"
+msgstr "Réagir"
 
 #: src/core/content/examples/rank-and-flank.ts:160
 #, fuzzy
@@ -6721,133 +6733,140 @@ msgstr "Défenseur : clique sur une figurine pour la placer en premier."
 msgid "out of sight"
 msgstr "hors de vue"
 
-#: src/ui/AutoAbilities.tsx:119
+#: src/ui/AutoAbilities.tsx:123
 #, fuzzy
 msgid "Paste its name, then its When, Target and Effect."
 msgstr "Colle son nom, puis Quand, Cible et Effet."
 
-#: src/ui/AutoAbilities.tsx:124
+#: src/ui/AutoAbilities.tsx:128
 #, fuzzy
 msgid "Added {name} ({cp} CP)"
 msgstr "{name} ajouté ({cp} CP)"
 
-#: src/ui/AutoAbilities.tsx:132
+#: src/ui/AutoAbilities.tsx:136
 #, fuzzy
 msgid "Add a stratagem"
 msgstr "Ajouter un stratagème"
 
-#: src/ui/AutoAbilities.tsx:134
+#: src/ui/AutoAbilities.tsx:138
 #, fuzzy
 msgid "Lists don't carry stratagems. Paste one from your book: its name on the first line, then When, Target and Effect. It stays on your device and the table's."
 msgstr "Les listes ne contiennent pas de stratagèmes. Colles-en un depuis ton livre : son nom sur la première ligne, puis Quand, Cible et Effet. Il reste sur ton appareil et à la table."
 
-#: src/ui/AutoAbilities.tsx:141
+#: src/ui/AutoAbilities.tsx:145
 #, fuzzy
 msgid "Stratagem text"
 msgstr "Texte du stratagème"
 
-#: src/ui/AutoAbilities.tsx:142
+#: src/ui/AutoAbilities.tsx:146
 #, fuzzy
 msgid "Name (1CP)\nWHEN: …\nTARGET: …\nEFFECT: …"
 msgstr "Nom (1CP)\nQUAND : …\nCIBLE : …\nEFFET : …"
 
-#: src/ui/AutoAbilities.tsx:254
+#: src/ui/AutoAbilities.tsx:258
 #, fuzzy
 msgid "{name} ({cp} CP)"
 msgstr "{name} ({cp} CP)"
 
-#: src/ui/AutoAbilities.tsx:327
+#: src/ui/AutoAbilities.tsx:331
 #, fuzzy
 msgid "Detachment {name}: {done} of {n} rule automated"
 msgid_plural "Detachment {name}: {done} of {n} rules automated"
 msgstr[0] "Détachement {name} : {done} règle sur {n} automatisée"
 msgstr[1] "Détachement {name} : {done} règles sur {n} automatisées"
 
-#: src/ui/AutoAbilities.tsx:338
+#: src/ui/AutoAbilities.tsx:342
 #, fuzzy
 msgid "No stratagems in this list: add your detachment's below."
 msgstr "Aucun stratagème dans cette liste : ajoute ceux de ton détachement ci-dessous."
 
-#: src/ui/AutoAbilities.tsx:344
+#: src/ui/AutoAbilities.tsx:348
 #, fuzzy
 msgid "{n} stratagem in your play panel"
 msgid_plural "{n} stratagems in your play panel"
 msgstr[0] "{n} stratagème dans ton panneau de jeu"
 msgstr[1] "{n} stratagèmes dans ton panneau de jeu"
 
-#: src/ui/AutoAbilities.tsx:362
-#: src/ui/AutoAbilities.tsx:498
-#: src/ui/AutoAbilities.tsx:587
+#: src/ui/AutoAbilities.tsx:366
+#: src/ui/AutoAbilities.tsx:505
+#: src/ui/AutoAbilities.tsx:604
 #, fuzzy
 msgid "Automate this?"
 msgstr "Automatiser ?"
 
-#: src/ui/AutoAbilities.tsx:374
-#: src/ui/AutoAbilities.tsx:506
+#: src/ui/AutoAbilities.tsx:378
+#: src/ui/AutoAbilities.tsx:513
 #, fuzzy
 msgid "Automate all suggested"
 msgstr "Automatiser toutes les suggestions"
 
-#: src/ui/AutoAbilities.tsx:409
+#: src/ui/AutoAbilities.tsx:413
 #, fuzzy
 msgid "The app reminds you of this one; play it yourself, or teach it:"
 msgid_plural "The app reminds you of these; play them yourself, or teach them:"
 msgstr[0] "L'app vous la rappelle ; jouez-la vous-même ou apprenez-la-lui :"
 msgstr[1] "L'app vous les rappelle ; jouez-les vous-même ou apprenez-les-lui :"
 
-#: src/ui/AutoAbilities.tsx:464
+#: src/ui/AutoAbilities.tsx:471
 #, fuzzy
 msgid "{done} of {n} ability automated"
 msgid_plural "{done} of {n} abilities automated"
 msgstr[0] "{done} aptitude sur {n} automatisée"
 msgstr[1] "{done} aptitudes sur {n} automatisées"
 
-#: src/ui/AutoAbilities.tsx:472
+#: src/ui/AutoAbilities.tsx:479
 #, fuzzy
 msgid "{n} more can be, if you confirm it"
 msgid_plural "{n} more can be, if you confirm them"
 msgstr[0] "{n} de plus possible si tu la confirmes"
 msgstr[1] "{n} de plus possibles si tu les confirmes"
 
-#: src/ui/AutoAbilities.tsx:478
+#: src/ui/AutoAbilities.tsx:485
 #, fuzzy
 msgid "Abilities the app can play for you"
 msgstr "Aptitudes que l'appli peut jouer pour toi"
 
-#: src/ui/AutoAbilities.tsx:480
+#: src/ui/AutoAbilities.tsx:487
 #, fuzzy
 msgid "Read from your list's text. Check each rule against the ability before you tick it; the rest stay reminders."
 msgstr "Lu dans le texte de ta liste. Vérifie chaque règle avant de la cocher ; le reste reste en rappel."
 
-#: src/ui/AutoAbilities.tsx:569
+#: src/ui/AutoAbilities.tsx:523
+#, fuzzy
+msgid "The app reminds you of this one; play it yourself: {names}"
+msgid_plural "The app reminds you of these; play them yourself: {names}"
+msgstr[0] "L'appli te le rappelle ; joue-la toi-même : {names}"
+msgstr[1] "L'appli te les rappelle ; joue-les toi-même : {names}"
+
+#: src/ui/AutoAbilities.tsx:586
 #, fuzzy
 msgid "Taught:"
 msgstr "Appris :"
 
-#: src/ui/AutoAbilities.tsx:569
+#: src/ui/AutoAbilities.tsx:586
 #, fuzzy
 msgid "Automated:"
 msgstr "Automatisé :"
 
-#: src/ui/AutoAbilities.tsx:574
+#: src/ui/AutoAbilities.tsx:591
 #: src/ui/PlayPanel.tsx:437
 #: src/ui/PlayPanel.tsx:486
 #, fuzzy
 msgid "Change"
 msgstr "Modifier"
 
-#: src/ui/AutoAbilities.tsx:577
+#: src/ui/AutoAbilities.tsx:594
 #: src/ui/TeachRule.tsx:401
 #, fuzzy
 msgid "Stop automating"
 msgstr "Ne plus automatiser"
 
-#: src/ui/AutoAbilities.tsx:593
+#: src/ui/AutoAbilities.tsx:610
 #, fuzzy
 msgid "Not quite?"
 msgstr "Pas tout à fait ?"
 
-#: src/ui/AutoAbilities.tsx:596
+#: src/ui/AutoAbilities.tsx:613
 #: src/ui/PlayPanel.tsx:397
 #: src/ui/PlayPanel.tsx:483
 #: src/ui/TeachRule.tsx:94
@@ -6855,7 +6874,7 @@ msgstr "Pas tout à fait ?"
 msgid "Teach it this rule"
 msgstr "Apprenez-lui cette règle"
 
-#: src/ui/AutoAbilities.tsx:599
+#: src/ui/AutoAbilities.tsx:616
 #: src/ui/PlayPanel.tsx:400
 #: src/ui/PlayPanel.tsx:437
 #: src/ui/PlayPanel.tsx:486
@@ -6863,22 +6882,22 @@ msgstr "Apprenez-lui cette règle"
 msgid "Teach it"
 msgstr "Apprendre"
 
-#: src/ui/AutoAbilities.tsx:636
+#: src/ui/AutoAbilities.tsx:653
 #, fuzzy
 msgid "{ability}: on until the end of the phase"
 msgstr "{ability} : active jusqu'à la fin de la phase"
 
-#: src/ui/AutoAbilities.tsx:642
+#: src/ui/AutoAbilities.tsx:659
 #, fuzzy
 msgid "Once per battle; it lasts until the end of the phase"
 msgstr "Une fois par bataille ; dure jusqu'à la fin de la phase"
 
-#: src/ui/AutoAbilities.tsx:645
+#: src/ui/AutoAbilities.tsx:662
 #, fuzzy
 msgid "Use {ability}"
 msgstr "Utiliser {ability}"
 
-#: src/ui/AutoAbilities.tsx:650
+#: src/ui/AutoAbilities.tsx:667
 #, fuzzy
 msgid "{ability} used"
 msgstr "{ability} utilisée"
