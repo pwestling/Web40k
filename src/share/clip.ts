@@ -5,6 +5,7 @@ import { displayName } from "../i18n/names";
 import { useStore } from "../store";
 import { audioOut } from "../ui/sound";
 import { voiceStreams } from "../voice/voice";
+import { runningVp } from "../ui/highlights";
 import { everyFrame, tableCanvas } from "./capture";
 import { paintOverlays } from "./paint";
 import { withDuration } from "./webmDuration";
@@ -234,7 +235,7 @@ function drawScore(ctx: CanvasRenderingContext2D, width: number, band: number) {
   const rows = sides(game).map((seat) => ({
     name: displayName(sideName(game, seat)),
     color: sidePlayers(game, seat)[0]?.color ?? "#999",
-    vp: game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0,
+    vp: runningVp(useStore.getState().record, game, seat),
   }));
   if (rows.length < 2 || band < 160) return;
   const unit = width / 1080;

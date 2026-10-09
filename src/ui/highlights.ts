@@ -171,6 +171,25 @@ export function readGame(
   return { highlights, rounds };
 }
 
+/**
+ * A side's VP as the round cards count them at `state` (seq `seq`): what it holds now, plus scores for
+ * rounds already over that are confirmed later (UX 414: a tall clip's header said 3 VP under a round card
+ * saying 6). The same total the cards and the end card reach, at every point of a replay.
+ */
+export function runningVp(record: GameRecord, state: GameState, seat: number): number {
+  const players = sidePlayers(state, seat).map((p) => p.id);
+  const now = players.reduce((a, id) => a + vpOf(state, id), 0);
+  // Each score counts once, as the reducer takes it.
+  const seen = new Set((state.scores ?? []).map((s) => s.key));
+  let later = 0;
+  for (const { seq, event } of record.events)
+    if (seq > state.seq && event.type === "score/confirm" && !seen.has(event.key)) {
+      seen.add(event.key);
+      if (event.seat === seat && event.round < state.turn.round) later += event.vp ?? 0;
+    }
+  return now + later;
+}
+
 function vpOf(state: GameState, player: string): number {
   const own = state.resources[player] ?? {};
   return Object.entries(own)

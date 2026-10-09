@@ -126,6 +126,14 @@ describe("collapseEmpty", () => {
       "Round 2 · Ann · Movement",
     ]);
   });
+  it("says nothing of an empty turn before anything has happened in the battle", () => {
+    const out = collapseEmpty([
+      h("1", "Round 1 · Bo · Activation"),
+      h("2", "Round 1 · Ann · Activation"),
+      l("3", "Ann moved Troopers"),
+    ]).map((i) => i.text);
+    expect(out).toEqual(["Round 1 · Ann · Activation", "Ann moved Troopers"]);
+  });
 });
 
 describe("lossText", () => {

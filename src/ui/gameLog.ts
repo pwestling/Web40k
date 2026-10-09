@@ -595,6 +595,10 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
   let run: Extract<LogItem, { kind: "header" }>[] = [];
   // The turn of the last header shown: its later empty phases just drop.
   let shownTurn = "";
+  // Something has happened in the battle: before that, a turn with nothing in it says nothing (UX review 67:
+  // the FSD lesson's log opened on "Round 1 · Player 2: no actions").
+  let played = false;
+  let inBattle = false;
   const flush = () => {
     if (!run.length) return;
     const last = run.at(-1)!;
@@ -604,18 +608,20 @@ export function collapseEmpty(log: LogItem[]): LogItem[] {
       const turn = turnOf(run[i]!);
       let j = i;
       while (j + 1 < run.length && turnOf(run[j + 1]!) === turn) j++;
-      if (turn !== lastTurn && turn !== shownTurn)
+      if (played && turn !== lastTurn && turn !== shownTurn)
         out.push({ kind: "header", key: run[i]!.key, text: t("{turn}: no actions", { turn }) });
       i = j + 1;
     }
     out.push(last);
     shownTurn = lastTurn;
+    inBattle = (last.round ?? 0) > 0 || /^Round \d/.test(last.text);
     run = [];
   };
   for (const item of log) {
     if (item.kind === "header" && !item.rules) run.push(item);
     else {
       flush();
+      if (inBattle && item.kind !== "header") played = true;
       out.push(item);
     }
   }

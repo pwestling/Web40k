@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyEvent, createInitialState, createRecord, type GameEvent, type GameRecord } from "../core";
-import { readGame } from "./highlights";
+import { readGame, runningVp } from "./highlights";
+import { stateAt } from "../core/log";
 
 function record(events: GameEvent[]): GameRecord {
   return { ...createRecord(), events: events.map((event, i) => ({ seq: i + 1, by: "a", at: 0, event })) };
@@ -92,5 +93,25 @@ describe("readGame", () => {
     expect(rounds[0]!.round).toBe(1);
     expect(ann).toMatchObject({ name: "Ann", vp: 5, vpGained: 5, modelsLost: 0 });
     expect(bo).toMatchObject({ name: "Bo", modelsLost: 2, unitsLost: ["Squad v"] });
+  });
+
+  it("gives a clip's header the round card's VP when a round's score is confirmed after it ends (UX 414)", () => {
+    const start = [...setup, ...advanceTo(setup, 1)];
+    const mid: GameEvent[] = [{ type: "resource/adjust", player: "a", resource: "VP", delta: 3 }];
+    const next = advanceTo([...start, ...mid], 2);
+    const confirm: GameEvent = {
+      type: "score/confirm",
+      key: "r1",
+      seat: 0,
+      round: 1,
+      vp: 3,
+      why: "Lantern",
+      by: "a",
+    };
+    const rec = record([...start, ...mid, ...next, confirm]);
+    const card = readGame(rec).rounds[0]!;
+    expect(card.players[0]!.vp).toBe(6);
+    expect(runningVp(rec, stateAt(rec, card.seq), 0)).toBe(6);
+    expect(runningVp(rec, stateAt(rec, rec.events.at(-1)!.seq), 0)).toBe(6);
   });
 });
