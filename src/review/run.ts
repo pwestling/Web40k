@@ -25,8 +25,15 @@ interface ReviewRun {
 export const useReviewRun = create<ReviewRun>(() => ({ of: null, status: "idle", done: 0, review: null }));
 
 let workers: Worker[] = [];
-/** Workers side by side, each with a share of the decisions: a review is a minute or two of thinking. */
+/** Workers side by side: a review is a minute or two of thinking. */
 const WORKERS = Math.max(1, Math.min(6, (globalThis.navigator?.hardwareConcurrency ?? 2) - 1));
+/**
+ * The decisions are split into this many shares, whatever the device, and
+ * each worker takes the next share as it finishes one: a few costly decisions
+ * (the closer looks) no longer leave one worker finishing long after the rest,
+ * and a review comes out the same on every device.
+ */
+export const SHARES = 12;
 
 const sameGame = (record: GameRecord) => {
   const of = useReviewRun.getState().of;
@@ -64,7 +71,7 @@ export function startReview(record: GameRecord): void {
     void inSandboxes(record, packages, finish);
     return;
   }
-  const n = WORKERS;
+  const n = Math.min(WORKERS, SHARES);
   try {
     workers = Array.from(
       { length: n },
@@ -74,31 +81,39 @@ export function startReview(record: GameRecord): void {
     stopWorkers();
   }
   if (workers.length) {
-    const done = new Array<number>(n).fill(0);
-    const parts: (GameReview | null)[] = new Array(n).fill(null);
-    workers.forEach((w, k) => {
+    const parts: (GameReview | null)[] = new Array(SHARES).fill(null);
+    const progress = new Array<number>(SHARES).fill(0);
+    let next = 0;
+    const give = (w: Worker) => {
+      if (next >= SHARES) return;
+      const k = next++;
       w.onmessage = (e: MessageEvent<FromReview>) => {
         const m = e.data;
         if (m.t === "progress") {
-          done[k] = m.done;
-          finish({ done: done.reduce((a, b) => a + b, 0) / n });
+          progress[k] = m.done;
+          finish({ done: progress.reduce((a, b) => a + b, 0) / SHARES });
         } else if (m.t === "done") {
           parts[k] = m.review;
+          progress[k] = 1;
+          finish({ done: progress.reduce((a, b) => a + b, 0) / SHARES });
           if (parts.every(Boolean)) {
             stopWorkers();
             finish({ status: "done", done: 1, review: mergeReviews(parts as GameReview[]) });
-          }
+          } else give(w);
         } else {
           stopWorkers();
           finish({ status: "error", error: m.error });
         }
       };
+      w.postMessage({ t: "review", record, part: [k, SHARES] } satisfies ToReview);
+    };
+    for (const w of workers) {
       w.onerror = () => {
         stopWorkers();
         finish({ status: "error", error: "The review didn't start" });
       };
-      w.postMessage({ t: "review", record, part: [k, n] } satisfies ToReview);
-    });
+      give(w);
+    }
     return;
   }
   reviewGame(record, { onProgress: (done) => finish({ done }), cancelled: () => !still() }).then(
@@ -135,19 +150,24 @@ async function inSandboxes(
   packages: { hash: string; source: string }[],
   finish: (r: Partial<ReviewRun>) => void,
 ): Promise<void> {
-  const n = WORKERS;
+  const n = Math.min(WORKERS, SHARES);
   let done = 0;
   try {
     const source = (await import("virtual:sandbox-worker")).default;
     const started = await Promise.all(Array.from({ length: n }, () => Sandbox.start(source, () => {})));
     boxes = started;
-    const parts = await Promise.all(
-      started.map(async (box, k) => {
+    const parts: GameReview[] = [];
+    let next = 0;
+    await Promise.all(
+      started.map(async (box) => {
         const loaded = await box.call<Loaded>({ t: "load", packages }, STARTUP_MS);
         if (loaded.errors.length) throw new Error(loaded.errors[0]!.error);
-        const part = await box.call<GameReview>({ t: "review", record, part: [k, n] }, SHARE_MS);
-        finish({ done: ++done / (n + 1) });
-        return part;
+        // Each sandbox takes the next share as it finishes one (see SHARES).
+        while (next < SHARES) {
+          const k = next++;
+          parts[k] = await box.call<GameReview>({ t: "review", record, part: [k, SHARES] }, SHARE_MS);
+          finish({ done: ++done / (SHARES + 1) });
+        }
       }),
     );
     finish({ status: "done", done: 1, review: mergeReviews(parts) });
