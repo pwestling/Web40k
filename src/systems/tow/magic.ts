@@ -3,7 +3,7 @@ import { opposed } from "../../core/teams";
 import type { GameState, Spell, SpellKind, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { alive, casualties, charNum, heavyLosses, unitOf, woundAndSave } from "./combat";
-import { wizardLevel } from "./specialRules";
+import { ruleNumber, wizardLevel } from "./specialRules";
 
 /**
  * Rank-and-flank magic (roadmap #32): a wizard casts in the phase its spell's
@@ -271,19 +271,24 @@ const castSpell: CodeProcedure = function* (ctx, args) {
   yield ctx.note(
     `${caster.name} casts ${spell.name} ${target.id === caster.id ? "on itself" : `at ${target.name}`}: 2D6 + ${level} against casting value ${spell.cv}`,
   );
+  // Magic Resistance (-X): an enemy spell at the unit casts at -X (#66).
+  const resist = opposed(ctx.view.state, caster.owner, target.owner)
+    ? ruleNumber(target, /^magic resistance\b/i)
+    : 0;
+  if (resist) yield ctx.note(`${target.name} has Magic Resistance: -${resist} to the casting roll`);
   const r = (yield ctx.roll("2d6", `cast ${spell.name}`, caster.id)) as Roll;
-  const total = r.total + level;
+  const total = r.total + level - resist;
   const double1 = r.rolls.every((x) => x === 1);
   const irresistible = r.rolls.every((x) => x === 6);
   if (double1 || (!irresistible && total < spell.cv)) {
     yield ctx.note(
-      `${spell.name} fails (${double1 ? "a double 1" : `${r.total} + ${level} = ${total}, short of ${spell.cv}`})`,
+      `${spell.name} fails (${double1 ? "a double 1" : `${r.total} + ${level}${resist ? ` - ${resist}` : ""} = ${total}, short of ${spell.cv}`})`,
     );
     return;
   }
   if (irresistible) yield ctx.note(`A double 6: ${spell.name} is cast with irresistible force`);
   else {
-    yield ctx.note(`${spell.name} is cast (${r.total} + ${level} = ${total})`);
+    yield ctx.note(`${spell.name} is cast (${r.total} + ${level}${resist ? ` - ${resist}` : ""} = ${total})`);
     if (yield* dispel(ctx, caster, spell, total)) return;
   }
   yield* effect(ctx, caster, unitOf(ctx.view, target.id), spell, total);

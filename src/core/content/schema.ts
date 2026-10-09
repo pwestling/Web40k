@@ -283,6 +283,12 @@ export interface RuleDef {
   /** What it attaches to, for validation and UI grouping. */
   appliesTo?: ("weapon" | "model" | "unit" | "army")[];
   effects: Effect[];
+  /**
+   * "code": the game module's own code plays this rule (found by the same
+   * name), so an ability that binds to it counts as automated even with no
+   * effects here.
+   */
+  played?: "code";
   /** Player-supplied description shown in the UI. Never shipped in the repo. */
   text?: string;
 }

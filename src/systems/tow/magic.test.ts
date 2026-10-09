@@ -17,6 +17,18 @@ function rule(t: Table, unitId: string, name: string) {
   t.states.set(t.s.seq, t.s);
 }
 
+/** Make a unit's models count for more Unit Strength each. */
+function bigger(t: Table, unitId: string, us: number) {
+  const models = { ...t.s.models };
+  for (const id of t.s.units[unitId]!.modelIds)
+    models[id] = {
+      ...models[id]!,
+      profile: { ...models[id]!.profile!, chars: { ...models[id]!.profile!.chars, US: String(us) } },
+    };
+  t.s = { ...t.s, models };
+  t.states.set(t.s.seq, t.s);
+}
+
 const rolls = (t: Table, label: RegExp) =>
   t.events.flatMap((e) =>
     e.type === "script/step"
@@ -152,12 +164,28 @@ describe("Old World magic", () => {
 });
 
 describe("Old World psychology", () => {
-  it("Fear: a test to charge a Fear-causing enemy; failing it stops the charge for the turn", () => {
+  it("Fear: a test to charge a Fear-causing enemy with the higher Unit Strength; failing it stops the charge for the turn", () => {
     const seen = { afraid: 0, brave: 0 };
     for (let seed = 1; seed < 40; seed++) {
       const { t, spears } = setup();
       const brutes = unitNamed(t.s, "Tusk Brutes").id;
       block(t, brutes, 8, 3, Math.PI);
+      // Not afraid of a smaller unit: the Brutes' 18 against the Spears' 25.
+      if (seed === 1) {
+        const before = t.events.length;
+        t.play(
+          {
+            type: "script/start",
+            force: true,
+            procedure: "chargeReaction",
+            args: { unit: spears, target: brutes },
+          },
+          "p1",
+        );
+        expect(t.events.slice(before).some((e) => JSON.stringify(e).includes("Fear test"))).toBe(false);
+        continue;
+      }
+      bigger(t, brutes, 5);
       toPhase(t, "movement");
       t.play(
         { type: "script/start", procedure: "chargeReaction", args: { unit: spears, target: brutes } },
@@ -180,7 +208,7 @@ describe("Old World psychology", () => {
     expect(seen.afraid && seen.brave).toBeTruthy();
   });
 
-  it("Fear in combat: a failed test means hitting only on 6s", () => {
+  it("Fear in combat: a failed test means -1 to hit", () => {
     for (let seed = 1; seed < 40; seed++) {
       const { t, spears, warband } = setup();
       rule(t, warband, "Fear");
@@ -191,7 +219,7 @@ describe("Old World psychology", () => {
         seed,
       );
       if (!/afraid of Reaver Warband/.test(t.notes().join(" "))) continue;
-      expect(rolls(t, /afraid: 6s only/).length).toBe(1);
+      expect(rolls(t, /afraid: -1 to hit/).length).toBe(1);
       return;
     }
     throw new Error("never afraid");
@@ -241,11 +269,13 @@ describe("Old World psychology", () => {
     expect(panic.available(view(t.s), { player: "p1", unitId: spears })).toBe("Immune to Psychology");
   });
 
-  it("Frenzy adds an Attack; Hatred re-rolls misses the first time it fights a foe", () => {
+  it("Frenzy adds an Attack in a turn it charged; Hatred re-rolls misses the first time it fights a foe", () => {
     const { t, spears, warband } = setup();
     rule(t, spears, "Frenzy");
     rule(t, spears, "Hatred (all enemies)");
     toPhase(t, "combat");
+    t.s = { ...t.s, units: { ...t.s.units, [spears]: { ...t.s.units[spears]!, status: { charged: true } } } };
+    t.states.set(t.s.seq, t.s);
     t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 3);
     if (t.s.script?.waiting) t.play({ type: "script/answer", answer: "restrain" }, t.s.script.waiting.player);
     const hit = rolls(t, /^to hit .*Frenzy/)[0]!;

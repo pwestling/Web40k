@@ -3,6 +3,12 @@ import { inFootprint, segmentCrossesFootprint2D } from "../../core/terrain";
 import type { GameState, Unit } from "../../core/types";
 import type { CodeAction, CodeProcedure, GameView, Warning } from "../../sdk";
 import { alive, casualties } from "./combat";
+import { hasRule } from "./specialRules";
+
+/** Iron Shod Wheels: difficult terrain is dangerous to it, and a 1 costs D3 Wounds. */
+const ironShod = (u: Unit) => hasRule(u, /^iron shod wheels\b/i);
+/** Move Through Cover: 1s on Dangerous terrain tests are re-rolled. */
+const throughCover = (u: Unit) => hasRule(u, /^move through cover\b/i);
 
 /**
  * Dangerous terrain (tow.whfb.app, checked 2026-10-08): each model that
@@ -15,7 +21,9 @@ import { alive, casualties } from "./combat";
 
 /** One test per model per dangerous feature it crossed this phase. */
 export function dangerousTests(state: GameState, u: Unit): number {
-  const pieces = state.terrain.filter((p) => p.category === "dangerous");
+  const pieces = state.terrain.filter(
+    (p) => p.category === "dangerous" || (p.category === "difficult" && ironShod(u)),
+  );
   if (!pieces.length) return 0;
   let tests = 0;
   for (const m of alive(state, u)) {
@@ -42,11 +50,27 @@ const dangerous: CodeProcedure = function* (ctx, args) {
   if (!n) return;
   yield ctx.set(`dangerous:${u.id}`, mark(ctx.view));
   const r = (yield ctx.roll(`${n}d6`, "Dangerous terrain test", u.id, 2)) as { rolls: number[] };
-  const ones = r.rolls.filter((x) => x === 1).length;
-  if (ones) yield* casualties(ctx, u, ones);
+  let ones = r.rolls.filter((x) => x === 1).length;
+  if (ones && throughCover(u)) {
+    const again = (yield ctx.roll(
+      `${ones}d6`,
+      "Dangerous terrain re-roll (Move Through Cover)",
+      u.id,
+      2,
+    )) as {
+      rolls: number[];
+    };
+    ones = again.rolls.filter((x) => x === 1).length;
+  }
+  let lost = ones;
+  if (ones && ironShod(u)) {
+    const d3 = (yield ctx.roll(`${ones}d3`, "Iron Shod Wheels: Wounds lost", u.id)) as { total: number };
+    lost = d3.total;
+  }
+  if (lost) yield* casualties(ctx, u, lost);
   yield ctx.note(
     ones
-      ? `${u.name} takes ${n} Dangerous terrain ${n === 1 ? "test" : "tests"}: ${ones} ${ones === 1 ? "Wound" : "Wounds"} lost`
+      ? `${u.name} takes ${n} Dangerous terrain ${n === 1 ? "test" : "tests"}: ${lost} ${lost === 1 ? "Wound" : "Wounds"} lost`
       : `${u.name} takes ${n} Dangerous terrain ${n === 1 ? "test" : "tests"} and comes through unharmed`,
   );
 };

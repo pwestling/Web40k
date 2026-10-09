@@ -13,7 +13,7 @@ import { towLayout, TOW_CATEGORIES } from "./layout";
 import { towSample } from "./sample";
 import { oldWorld } from "./system";
 import { TOW_DICE, TOW_TEMPLATES } from "./templates";
-import { importTowRoster } from "./roster";
+import { importTowRoster, MOUNT_GROUP, SPELL_GROUP } from "./roster";
 import { towRanks } from "./troops";
 
 /** Rank and flank in the style of The Old World. Combat, reactions, break tests, psychology and magic come as code procedures. */
@@ -33,6 +33,8 @@ export const towModule: GameModule<SystemModule> = {
   app: {
     sample: towSample,
     importRoster: importTowRoster,
+    // A mount's or crew's profile and a wizard's spells are listed with the unit's rules, but aren't ones.
+    profileGroups: [MOUNT_GROUP, SPELL_GROUP],
     layout: (t) => towLayout(t.width, t.depth),
     templateCategory: TOW_CATEGORIES,
     rankRules: towRanks,

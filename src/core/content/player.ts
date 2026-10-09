@@ -244,8 +244,8 @@ export function isAutomated(system: GameSystem, ability: Ability): boolean {
   if (ability.auto) return true;
   const text = `${ability.name} ${ability.text}`.trim();
   const refs = [...bindRules(system.rules, [text], "unit"), ...bindRules(system.rules, [text], "model")];
-  return lookupRules(system, refs).some((b) =>
-    b.def.effects.some((e) => e.do.some((a) => a.do !== "manual")),
+  return lookupRules(system, refs).some(
+    (b) => b.def.played === "code" || b.def.effects.some((e) => e.do.some((a) => a.do !== "manual")),
   );
 }
 

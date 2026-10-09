@@ -1,4 +1,5 @@
 import type { Effect, Expr, GameSystem, Procedure, RuleDef } from "../../core/content";
+import { universalRules } from "./universalRules";
 
 const ref = (r: string): Expr => ({ ref: r });
 
@@ -7,6 +8,14 @@ const strength: Expr = {
   if: { cmp: ">", a: ref("weapon.wS"), b: 0 },
   then: ref("weapon.wS"),
   else: ref("attacker.S"),
+};
+
+/** Poisoned Attacks: the weapon's, or the shooter's own rule. */
+const poisoned: Expr = {
+  any: [
+    { hasRule: "weapon", rule: "poisonedAttacks" },
+    { hasRule: "attacker", rule: "poisonedAttacks" },
+  ],
 };
 
 /**
@@ -64,11 +73,34 @@ const shooting: Procedure = {
       kind: "test",
       id: "wound",
       compare: "atLeast",
+      // Poisoned Attacks: a natural 6 to hit (the input die) wounds 2 more easily.
       target: {
         op: "min",
         args: [
           6,
-          { op: "max", args: [2, { op: "-", args: [{ op: "+", args: [4, ref("target.T")] }, strength] }] },
+          {
+            op: "max",
+            args: [
+              2,
+              {
+                op: "-",
+                args: [
+                  { op: "+", args: [4, ref("target.T")] },
+                  {
+                    op: "+",
+                    args: [
+                      strength,
+                      {
+                        if: { all: [poisoned, { cmp: ">=", a: ref("input.value"), b: 6 }] },
+                        then: 2,
+                        else: 0,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       impossibleIf: { cmp: ">=", a: { op: "-", args: [ref("target.T"), strength] }, b: 4 },
@@ -107,7 +139,23 @@ const shooting: Procedure = {
       id: "regeneration",
       compare: "atLeast",
       target: ref("target.regen"),
-      impossibleIf: { not: { cmp: ">", a: ref("target.regen"), b: 0 } },
+      // Flaming Attacks: a Flammable target gets no regeneration save.
+      impossibleIf: {
+        any: [
+          { not: { cmp: ">", a: ref("target.regen"), b: 0 } },
+          {
+            all: [
+              {
+                any: [
+                  { hasRule: "weapon", rule: "flamingAttacks" },
+                  { hasRule: "attacker", rule: "flamingAttacks" },
+                ],
+              },
+              { hasRule: "target", rule: "flammable" },
+            ],
+          },
+        ],
+      },
       alwaysFail: [1],
       roller: "defender",
       passOn: "failures",
@@ -125,11 +173,15 @@ const shooting: Procedure = {
       ],
     },
     { kind: "allocate", id: "casualties", chooser: "defender", formation: "rearRankFirst" },
-    { kind: "damage", id: "damage", amount: 1, spillover: false },
+    // Multiple Wounds (X): each unsaved wound costs X (weapon.mw, rolled per wound), none spilling over.
+    { kind: "damage", id: "damage", amount: ref("weapon.mw"), spillover: false },
   ],
 };
 
 const beforeHit: Effect["when"] = { event: "step.before", where: { is: "event.step", value: "hit" } };
+
+/** Large Targets get no cover. */
+const notLarge: Expr = { not: { hasRule: "target", rule: "largeTarget" } };
 
 /** To-hit penalties; each raises the score needed by one (unverified). */
 const shootingModifiers: Effect[] = [
@@ -156,6 +208,7 @@ const shootingModifiers: Effect[] = [
     when: beforeHit,
     if: {
       all: [
+        notLarge,
         { cmp: ">", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0 },
         { cmp: "<=", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0.5 },
       ],
@@ -165,7 +218,12 @@ const shootingModifiers: Effect[] = [
   {
     id: "Full cover",
     when: beforeHit,
-    if: { cmp: ">", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0.5 },
+    if: {
+      all: [
+        notLarge,
+        { cmp: ">", a: { query: { kind: "coverShare", from: "attacker", to: "target" } }, b: 0.5 },
+      ],
+    },
     do: [{ do: "modifyTarget", by: 2 }],
   },
 ];
@@ -176,7 +234,9 @@ const shootingModifiers: Effect[] = [
  * paraphrase, from general knowledge of the game (unverified):
  *  - Multiple Shots (X): each model fires X shots, at -1 to hit;
  *  - Armour Bane (X): a natural 6 to wound worsens the armour save by X more
- *    (the shooting procedure's armour step; combat.ts in close combat).
+ *    (the shooting procedure's armour step; combat.ts in close combat);
+ *  - Multiple Wounds (X): each unsaved wound costs X Wounds (the damage step;
+ *    combat.ts in close combat).
  */
 const weaponRules: RuleDef[] = [
   {
@@ -191,6 +251,19 @@ const weaponRules: RuleDef[] = [
         do: [{ do: "setCharacteristic", target: "self", characteristic: "shots", to: ref("param.x") }],
       },
       { when: beforeHit, do: [{ do: "modifyTarget", by: 1 }] },
+    ],
+  },
+  {
+    id: "multipleWounds",
+    name: "Multiple Wounds",
+    match: "^multiple wounds\\s*\\(\\s*(?<x>\\d*d?\\d+(?:\\s*\\+\\s*\\d+)?)\\s*\\)",
+    params: [{ id: "x", type: "dice", default: 1 }],
+    appliesTo: ["weapon"],
+    effects: [
+      {
+        when: { event: "always" },
+        do: [{ do: "setCharacteristic", target: "self", characteristic: "mw", to: ref("param.x") }],
+      },
     ],
   },
   {
@@ -282,6 +355,8 @@ export const oldWorld: GameSystem = {
     // Set by weapon special rules (weaponRules below): shots per model, and Armour Bane's X.
     { id: "shots", name: "Shots", of: "weapon", type: "number", default: 1 },
     { id: "bane", name: "Armour Bane", of: "weapon", type: "number", default: 0 },
+    // Multiple Wounds (X): the Wounds each unsaved wound costs.
+    { id: "mw", name: "Multiple Wounds", of: "weapon", type: "dice", default: 1 },
   ],
   weaponKinds: ["missile", "combat"],
   unitShape: { kind: "ranked", minFiles: 1, manoeuvres: ["wheel", "reform", "turn", "march"] },
@@ -311,16 +386,38 @@ export const oldWorld: GameSystem = {
     { id: "open", name: "Open ground" },
     // -1 Movement (at least 1) for a unit moving through it (tow.whfb.app, checked 2026-10-08);
     // dangerous terrain slows like difficult terrain.
-    { id: "difficult", name: "Difficult terrain", slows: 1 },
-    { id: "dangerous", name: "Dangerous terrain", slows: 1 },
+    // Move Through Cover: not slowed (#66). Iron Shod Wheels: linear obstacles are impassable.
+    {
+      id: "difficult",
+      name: "Difficult terrain",
+      slows: 1,
+      movement: [{ keywords: ["Move Through Cover"] }],
+    },
+    {
+      id: "dangerous",
+      name: "Dangerous terrain",
+      slows: 1,
+      movement: [{ keywords: ["Move Through Cover"] }],
+    },
     { id: "impassable", name: "Impassable", blocksMovement: true, blocksSight: true },
-    { id: "lowObstacle", name: "Low linear obstacle", cover: true },
-    { id: "highObstacle", name: "High linear obstacle", cover: true, blocksSight: true },
+    {
+      id: "lowObstacle",
+      name: "Low linear obstacle",
+      cover: true,
+      movement: [{ keywords: ["Iron Shod Wheels"], blocks: true }],
+    },
+    {
+      id: "highObstacle",
+      name: "High linear obstacle",
+      cover: true,
+      blocksSight: true,
+      movement: [{ keywords: ["Iron Shod Wheels"], blocks: true }],
+    },
     { id: "woods", name: "Woods", cover: true },
     { id: "hill", name: "Hill" },
     { id: "building", name: "Building", cover: true, blocksSight: true },
   ],
-  rules: weaponRules,
+  rules: [...weaponRules, ...universalRules],
   // The Strategy phase's Command sub-phase: imported abilities that say they are used then
   // come up in the Strategy phase with a button to mark them used (psychology.ts notes the step).
   abilityTimings: [{ match: "command sub-phase|command phase", phase: "strategy", side: "active" }],
