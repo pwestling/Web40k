@@ -1,5 +1,11 @@
 import { die } from "../dice";
-import { baseOutline, baseSizeInches, baseToBaseDistance, distance as centreDistance } from "../geometry";
+import {
+  baseOutline,
+  baseSizeInches,
+  baseToBaseDistance,
+  basesWithin,
+  distance as centreDistance,
+} from "../geometry";
 import { modelSight } from "../los";
 import { inArc as blockArc } from "../regiment";
 import {
@@ -114,8 +120,33 @@ function parseValue(text: string | number | null | undefined, type: Characterist
   return m ? Number(m[0]) : null;
 }
 
-/** Characteristics of one kind (model or weapon) by system id, defaults filled in. */
+/**
+ * Characteristics already read, by system, kind and profile: the bot and the
+ * game review build views of the same profiles hundreds of thousands of times
+ * (perf/results.md, #63). Shared: read them, don't change them.
+ */
+const charsRead = new WeakMap<GameSystem, Map<string, WeakMap<object, Record<string, Value>>>>();
+const NO_CHARS = {};
+
+/** Characteristics of one kind (model or weapon) by system id, defaults filled in. Shared: don't change it. */
 export function readCharacteristics(
+  system: GameSystem,
+  of: CharacteristicDef["of"],
+  chars: Record<string, string> | undefined,
+): Record<string, Value> {
+  let byKind = charsRead.get(system);
+  if (!byKind) charsRead.set(system, (byKind = new Map()));
+  let byChars = byKind.get(of);
+  if (!byChars) byKind.set(of, (byChars = new WeakMap()));
+  const key = chars ?? NO_CHARS;
+  const known = byChars.get(key);
+  if (known) return known;
+  const out = readFresh(system, of, chars);
+  byChars.set(key, out);
+  return out;
+}
+
+function readFresh(
   system: GameSystem,
   of: CharacteristicDef["of"],
   chars: Record<string, string> | undefined,
@@ -161,7 +192,21 @@ export function pattern(source: string): RegExp {
  * Bind imported text (weapon keywords, or ability "name text") to the rules
  * whose `match` pattern fits. Only rules that apply to `kind` are tried.
  */
+const bound = new WeakMap<RuleDef[], Map<string, RuleRef[]>>();
+
 export function bindRules(rules: RuleDef[], texts: string[], kind: "weapon" | "model" | "unit"): RuleRef[] {
+  // The same rules against the same texts bind the same way: views are rebuilt for every table the bot tries.
+  let byText = bound.get(rules);
+  if (!byText) bound.set(rules, (byText = new Map()));
+  const key = `${kind}\u0000${texts.join("\u0000")}`;
+  const known = byText.get(key);
+  if (known) return [...known];
+  const out = bindFresh(rules, texts, kind);
+  byText.set(key, out);
+  return [...out];
+}
+
+function bindFresh(rules: RuleDef[], texts: string[], kind: "weapon" | "model" | "unit"): RuleRef[] {
   const out: RuleRef[] = [];
   for (const rule of rules) {
     if (!rule.match) continue;
@@ -236,7 +281,7 @@ export function modelView(
   opts: ViewOptions = {},
 ): ModelView {
   const unit = model.unitId ? state.units[model.unitId] : undefined;
-  const rules = [...system.rules, ...(opts.rules ?? [])];
+  const rules = opts.rules?.length ? [...system.rules, ...opts.rules] : system.rules;
   const flags = unitFlags(unit);
   const view: ModelView = {
     ...readCharacteristics(system, "model", model.profile?.chars),
@@ -370,7 +415,7 @@ function makeUnitView(state: GameState, system: GameSystem, unit: Unit, opts: Vi
   });
   const common = commonLoadout(models.map((m) => state.models[m.id]));
   for (const m of models) m.special = loadoutKey(state.models[m.id]) === common ? 0 : 1;
-  const rules = [...system.rules, ...(opts.rules ?? [])];
+  const rules = opts.rules?.length ? [...system.rules, ...opts.rules] : system.rules;
   const flags = unitFlags(unit);
   // Read from the commonest profile (most games use the majority's Toughness), else the first model.
   const first = majority(state, models);
@@ -411,7 +456,7 @@ export function weaponView(
   weapon: WeaponProfile,
   opts: ViewOptions = {},
 ): WeaponView {
-  const rules = [...system.rules, ...(opts.rules ?? [])];
+  const rules = opts.rules?.length ? [...system.rules, ...opts.rules] : system.rules;
   const bearers = unit.modelIds.flatMap((id) => {
     const m = state.models[id];
     if (!m || m.destroyed) return [];
@@ -765,7 +810,7 @@ function nearObjective(
       facing: 0,
       base: { shape: "round", diameterMm: c.objectiveMarkerMm ?? 0 },
     }) as Model;
-  const near = (m: Model, o: Model) => baseToBaseDistance(m, o) <= range + 1e-6;
+  const near = (m: Model, o: Model) => basesWithin(m, o, range + 1e-6);
   const owner = mine[0]!.owner;
   return state.objectives.some((o) => {
     const at = marker(o);

@@ -11,6 +11,7 @@ import { aliveModels } from "../../core/units";
 import {
   baseSizeInches,
   baseToBaseDistance,
+  basesWithin,
   inFootprint,
   modelDistance,
   modelSight,
@@ -422,17 +423,25 @@ export function engagedWith(state: GameState, unit: Unit): string[] {
       const theirs = aliveModels(state, u);
       return mine.some((m) =>
         theirs.some(
-          (t) =>
-            baseToBaseDistance(m, t) <= ENGAGEMENT_RANGE + 1e-6 && verticalGap(m, t) <= VERTICAL_TOLERANCE,
+          (t) => basesWithin(m, t, ENGAGEMENT_RANGE + 1e-6) && verticalGap(m, t) <= VERTICAL_TOLERANCE,
         ),
       );
     })
     .map((u) => u.id);
 }
 
-export function objectiveControl(
-  state: GameState,
-): { id: string; oc: Record<string, number>; controller: string | null }[] {
+type Control = { id: string; oc: Record<string, number>; controller: string | null }[];
+/** Control worked out per table: the bot and the game review score the same table more than once. Shared: don't change it. */
+const controlled = new WeakMap<GameState, Control>();
+
+export function objectiveControl(state: GameState): Control {
+  let known = controlled.get(state);
+  if (!known) controlled.set(state, (known = controlOf(state)));
+  return known;
+}
+
+function controlOf(state: GameState): Control {
+  const models = Object.values(state.models);
   const markerRadius = OBJECTIVE_MARKER_MM / 25.4 / 2;
   // Teammates' OC adds up: a side's total goes to its first player.
   const lead = (id: string) => {
@@ -441,7 +450,7 @@ export function objectiveControl(
   };
   return state.objectives.map((o) => {
     const oc: Record<string, number> = {};
-    for (const m of Object.values(state.models)) {
+    for (const m of models) {
       if (m.destroyed || !m.unitId) continue;
       const unit = state.units[m.unitId];
       const r = m.base.shape === "round" ? m.base.diameterMm / 25.4 / 2 : 0;

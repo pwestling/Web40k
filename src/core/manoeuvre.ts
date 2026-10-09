@@ -210,6 +210,20 @@ export function pursue(state: GameState, pursuer: Unit, quarry: Unit, inches: nu
 
 /** Closest base-to-base gap between two units' standing models (0 when touching). */
 export function unitGap(state: GameState, a: Unit, b: Unit): number {
+  // Asked again and again of the same table by the bot and the game review (perf/results.md, #63).
+  let known = gapsOn.get(state);
+  if (!known) gapsOn.set(state, (known = new Map()));
+  const key = `${a.id}\u0000${b.id}`;
+  const was = known.get(key);
+  if (was && was.a === a && was.b === b) return was.gap;
+  const gap = measureGap(state, a, b);
+  known.set(key, { a, b, gap });
+  return gap;
+}
+
+const gapsOn = new WeakMap<GameState, Map<string, { a: Unit; b: Unit; gap: number }>>();
+
+function measureGap(state: GameState, a: Unit, b: Unit): number {
   let best = Infinity;
   const bs = blockModels(state, b);
   const outlines = new Map<Model, Vec2[]>();

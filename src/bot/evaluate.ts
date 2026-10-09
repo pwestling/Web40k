@@ -56,11 +56,14 @@ export const SHARP: Weights = {
   finish: 0.35,
 };
 
-const standing = (state: GameState, u: Unit): Model[] =>
-  u.modelIds.flatMap((id) => {
+const standing = (state: GameState, u: Unit): Model[] => {
+  const out: Model[] = [];
+  for (const id of u.modelIds) {
     const m = state.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
+    if (m && !m.destroyed) out.push(m);
+  }
+  return out;
+};
 
 const seatOf = (state: GameState, u: Unit) => state.players[u.owner]?.seat;
 

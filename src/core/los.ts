@@ -76,10 +76,36 @@ function bodyPoints(m: Model): Vec3[] {
   return pts;
 }
 
+/** A model's bands and how far from its axis a line can pass through them, kept per model. */
+function volumeOf(m: Model): { bands: ReturnType<typeof bandsOf>; reach: number } {
+  const was = volumes.get(m);
+  if (was && was.base === m.base && was.from === m.bands && was.height === m.height) return was;
+  const bands = bandsOf(m);
+  const v = {
+    base: m.base,
+    from: m.bands,
+    height: m.height,
+    bands,
+    reach: Math.max(...bands.map((x) => Math.min(x.rx, x.ry))) * 0.8,
+  };
+  volumes.set(m, v);
+  return v;
+}
+
+const volumes = new WeakMap<
+  Model,
+  {
+    base: Model["base"];
+    from: Model["bands"];
+    height: Model["height"];
+    bands: ReturnType<typeof bandsOf>;
+    reach: number;
+  }
+>();
+
 /** Whether a line passes through a model's volume (approximated as an upright cylinder). */
 function lineHitsModel(a: Vec3, b: Vec3, m: Model): boolean {
-  const bands = bandsOf(m);
-  const reach = Math.max(...bands.map((x) => Math.min(x.rx, x.ry))) * 0.8;
+  const { bands, reach } = volumeOf(m);
   const dist = segmentPointDistance2D(a, b, m.position);
   if (dist > reach) return false;
   // Height of the line where it passes closest to the model's axis.
@@ -166,6 +192,88 @@ function canBlock(state: GameState, observer: Model, target: Model, m: Model): b
   return true;
 }
 
+/**
+ * The terrain piece (or null) on each line from the observer's eyes to the
+ * target's body points, body point by body point. The same two models standing
+ * where they stood see past the same terrain: the bot and the game review ask
+ * again for every table they try (perf/results.md, #63), so it is kept, by
+ * terrain and by where and how big the two models are.
+ */
+function terrainLines(state: GameState, observer: Model, target: Model, eyes: Vec3[], body: Vec3[]) {
+  let known = sightLines.get(state.terrain);
+  if (!known || known.size > 10_000) sightLines.set(state.terrain, (known = new Map()));
+  const key = `${state.settings.los ?? "true"}|${shapeKey(observer)}|${shapeKey(target)}`;
+  let lines = known.get(key);
+  if (!lines) {
+    lines = body.flatMap((p) => eyes.map((e) => lineBlockedBy(state, e, p, observer, target)));
+    known.set(key, lines);
+  }
+  return lines;
+}
+
+const sightLines = new WeakMap<TerrainPiece[], Map<string, (TerrainPiece | null)[]>>();
+const bandIds = new WeakMap<object, number>();
+let nextBands = 1;
+
+/** What a model's eye and body points are made from: where it stands, its height, base and bands. */
+function shapeKey(m: Model): string {
+  const was = shapeKeys.get(m);
+  if (
+    was &&
+    was.x === m.position.x &&
+    was.y === m.position.y &&
+    was.z === m.z &&
+    was.base === m.base &&
+    was.bands === m.bands &&
+    was.height === m.height
+  )
+    return was.key;
+  const key = makeShapeKey(m);
+  shapeKeys.set(m, {
+    x: m.position.x,
+    y: m.position.y,
+    z: m.z,
+    base: m.base,
+    bands: m.bands,
+    height: m.height,
+    key,
+  });
+  return key;
+}
+
+const shapeKeys = new WeakMap<
+  Model,
+  {
+    x: number;
+    y: number;
+    z: Model["z"];
+    base: Model["base"];
+    bands: Model["bands"];
+    height: Model["height"];
+    key: string;
+  }
+>();
+
+function makeShapeKey(m: Model): string {
+  let bands = 0;
+  if (m.bands?.length) {
+    bands = bandIds.get(m.bands) ?? 0;
+    if (!bands) bandIds.set(m.bands, (bands = nextBands++));
+  }
+  const b = m.base;
+  const size = b.shape === "round" ? `${b.diameterMm}` : `${b.widthMm}x${b.depthMm}`;
+  return `${m.position.x},${m.position.y},${m.z ?? 0},${modelHeight(m)},${b.shape}${size},${bands}`;
+}
+
+/** The models still on the table, in the table's order, kept per set of models (sight asks for every pair). */
+function standingModels(state: GameState): Model[] {
+  let list = standingIn.get(state.models);
+  if (!list) standingIn.set(state.models, (list = Object.values(state.models).filter((m) => !m.destroyed)));
+  return list;
+}
+
+const standingIn = new WeakMap<object, Model[]>();
+
 export function modelSight(
   state: GameState,
   observer: Model,
@@ -178,25 +286,40 @@ export function modelSight(
   if (state.settings.los === "footprint") return footprintSight(state, observer, target, options);
   const eyes = eyePoints(observer);
   const body = bodyPoints(target);
+  // Only models near the line between the two can be in the way: none outside its box grown by that much.
+  const o = observer.position;
+  const t = target.position;
+  const [x0, x1, y0, y1] = [
+    Math.min(o.x, t.x) - 4,
+    Math.max(o.x, t.x) + 4,
+    Math.min(o.y, t.y) - 4,
+    Math.max(o.y, t.y) + 4,
+  ];
   const blockers =
     options.modelsBlock === false
       ? []
-      : Object.values(state.models).filter(
+      : standingModels(state).filter(
           (m) =>
-            !m.destroyed &&
+            m.position.x >= x0 &&
+            m.position.x <= x1 &&
+            m.position.y >= y0 &&
+            m.position.y <= y1 &&
             m.id !== observer.id &&
             m.id !== target.id &&
             !options.ignore?.has(m.id) &&
-            canBlock(state, observer, target, m) &&
             // Only models near the line between the two can be in the way.
-            segmentPointDistance2D(observer.position, target.position, m.position) < 4,
+            segmentPointDistance2D(observer.position, target.position, m.position) < 4 &&
+            canBlock(state, observer, target, m),
         );
+  const terrain = terrainLines(state, observer, target, eyes, body);
   const obscured = new Set<TerrainPiece>();
   let seen = 0;
-  for (const p of body) {
+  for (let i = 0; i < body.length; i++) {
+    const p = body[i]!;
     let clear = false;
-    for (const e of eyes) {
-      const piece = lineBlockedBy(state, e, p, observer, target);
+    for (let j = 0; j < eyes.length; j++) {
+      const e = eyes[j]!;
+      const piece = terrain[i * eyes.length + j]!;
       if (piece) {
         obscured.add(piece);
         continue;

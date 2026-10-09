@@ -10,10 +10,12 @@ import type { GameState, Model, Unit } from "./types";
 /** A unit's models that aren't destroyed. */
 export function aliveModels(state: GameState, unit: Unit | undefined): Model[] {
   if (!unit) return [];
-  return unit.modelIds.flatMap((id) => {
+  const out: Model[] = [];
+  for (const id of unit.modelIds) {
     const m = state.models[id];
-    return m && !m.destroyed ? [m] : [];
-  });
+    if (m && !m.destroyed) out.push(m);
+  }
+  return out;
 }
 
 /** Whether any of a unit's models are left. */
