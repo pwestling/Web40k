@@ -1,5 +1,5 @@
 import { alive, inCombat } from "./combat";
-import { frenzied, hasRule } from "./specialRules";
+import { frenzied, hasRule, randomMovement } from "./specialRules";
 import type { Unit } from "../../core/types";
 import { opposed } from "../../core/teams";
 import { unitGap } from "../../core/manoeuvre";
@@ -68,6 +68,14 @@ export function towReminders(view: GameView): Warning[] {
           severity: "info",
           message: `${u.name} has Swiftstride: a charge reaches 3" further, and it may add D6 to its charge roll (by hand); its flee and pursuit rolls add it already`,
         });
+      const random = randomMovement(state, u);
+      if (random && !u.status?.fleeing && !inCombat(view, u.id))
+        out.push({
+          id: "towRandomMovement",
+          unitId: u.id,
+          severity: "info",
+          message: `${u.name} moves at random (M ${random.text}): roll it each time it moves, and roll it to charge (it is the charge's whole reach)`,
+        });
       if (u.status?.fleeing)
         out.push({
           id: "towCompulsoryFlee",
@@ -84,7 +92,9 @@ export function towReminders(view: GameView): Warning[] {
         });
       else if (frenzied(u) && !u.status?.charged && !u.status?.marching && !inCombat(view, u.id)) {
         const m = Number((view.unit(u.id) as Record<string, unknown> | undefined)?.M) || 0;
-        const reach = m + MAX_CHARGE_ROLL;
+        // A random Movement reaches as far as its dice can roll, with no charge roll on top.
+        const random = randomMovement(state, u);
+        const reach = random ? random.count * random.sides + random.bonus : m + MAX_CHARGE_ROLL;
         const prey = Object.values(state.units).some(
           (e) =>
             opposed(state, e.owner, u.owner) &&

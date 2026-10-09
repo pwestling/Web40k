@@ -73,7 +73,7 @@ export function rollsIn(before: GameState, after: GameState, events: GameEvent[]
       id: `${seq}:dice:${i}`,
       // The score needed is in the title, unless the game's label already says it (PX: "Hits on 5+ (cover)").
       title:
-        (roll.label ? cap(roll.label) : `${roll.results.length}D${roll.sides}`) +
+        (roll.label ? upFirst(roll.label) : `${roll.results.length}D${roll.sides}`) +
         (roll.need && !roll.label?.includes(`${roll.need}+`) ? ` ${roll.need}+` : ""),
       sides: roll.sides,
       dice: roll.results.map((v) =>
@@ -198,6 +198,9 @@ function ownerOf(state: GameState, ref: RoleRef | undefined): PlayerId | undefin
   return state.models[ref.model]?.owner;
 }
 
+/** A game's own roll label, capitalised as it is written ("To hit re-roll (Hatred)" keeps its hyphen). */
+const upFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** A step id as a title: "to_hit" or "to-hit" reads "To hit". */
 const cap = (s: string) => {
   const t = s.replace(/[-_]/g, " ");
   return t.charAt(0).toUpperCase() + t.slice(1);

@@ -144,4 +144,13 @@ describe("rollsIn", () => {
     });
     expect(rollsIn(s, s, [event, { type: "undo", seq: 3 }], 8)).toEqual([]);
   });
+
+  it("keeps a game's own roll label as written: a hyphen stays (PX #66 'To hit re-roll')", () => {
+    const s = table();
+    const event = {
+      type: "dice/roll",
+      roll: { by: "p1", sides: 6, results: [2], label: "to hit re-roll (Hatred)" },
+    } as GameEvent;
+    expect(rollsIn(s, s, [event], 7)[0]!.title).toBe("To hit re-roll (Hatred)");
+  });
 });

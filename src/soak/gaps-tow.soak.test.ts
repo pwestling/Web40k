@@ -30,8 +30,8 @@ const watch = (s: GameState, events: GameEvent[]): string[] => {
     if (/ left /.test(n)) tags.push("character left");
     if (/ models: a Panic test$/.test(n)) tags.push("Panic from losses");
     if (/ uses .+ \(one use: now spent\)$/.test(n)) tags.push("magic item spent");
-    if (/strikes \d+ Killing Blows?/.test(n)) tags.push("Killing Blow");
-    if (/\d+ Stomp Attacks, hitting automatically/.test(n)) tags.push("Stomp Attacks");
+    if (/Killing Blow slays .+ outright/.test(n)) tags.push("Killing Blow");
+    if (/\d+ Stomp Attacks?, hitting automatically/.test(n)) tags.push("Stomp Attacks");
   }
   // Armour Bane in close combat: the wounds from natural 6s save apart, on a worse roll.
   for (const e of steps)

@@ -8,7 +8,8 @@ import { gameView } from "../../core/script";
 import { joinBar } from "./characters";
 import { magicActions } from "./magic";
 import { formationWarning, towReminders } from "./reminders";
-import { hatesFoe } from "./specialRules";
+import { hatesFoe, racesOf, randomMovement } from "./specialRules";
+import { chargeReach, moveBudget } from "../../ui/regiment";
 import { oldWorld } from "./system";
 import { towRanks } from "./troops";
 import { block, setup, toPhase, unitNamed, type Table } from "./testing";
@@ -149,7 +150,11 @@ describe("Old World universal special rules (#66)", () => {
       const sixes = wound.results.filter((x) => x === 6).length;
       if (!sixes) continue;
       seen++;
-      expect(t.notes().join(" ")).toMatch(new RegExp(`strikes ${sixes} Killing Blows?`));
+      expect(t.notes().join(" ")).toMatch(
+        sixes === 1
+          ? /Marchwarden Spears: a 6 to wound, Killing Blow slays a model outright, no armour or regeneration save/
+          : new RegExp(`${sixes} sixes to wound, Killing Blow slays ${sixes} models outright, no armour`),
+      );
       // Only the other wounds get an armour save.
       const armour = rolls(t, /^armour save$/, warband)[0];
       expect(armour?.results.length ?? 0).toBe(successes(wound) - sixes);
@@ -191,7 +196,7 @@ describe("Old World universal special rules (#66)", () => {
       block(t, hulk, 0.8, 1, Math.PI);
       toPhase(t, "combat");
       fight(t, spears, hulk, seed);
-      if (!/Monster Slaying Blow/.test(t.notes().join(" "))) continue;
+      if (!/Monster Slayer slays .* outright/.test(t.notes().join(" "))) continue;
       const m = t.s.models[t.s.units[hulk]!.modelIds[0]!]!;
       expect(m.destroyed).toBe(true);
       return;
@@ -403,6 +408,191 @@ describe("Old World universal special rules (#66)", () => {
     expect(hatesFoe(u(spears, "Hatred (Orcs & Goblins)"), foe)).toBe(false);
     expect(hatesFoe(u(spears, "Hatred (all enemies)"), foe)).toBe(true);
     expect(hatesFoe(u(spears, "Hatred"), foe)).toBe(true);
+  });
+
+  it("Hatred (X) knows each army by its race: a faction keyword names the race the rule names (PX #66)", () => {
+    const { t, spears, warband } = setup();
+    const u = (id: string, ...names: string[]) => ({
+      ...t.s.units[id]!,
+      sheet: { ...t.s.units[id]!.sheet!, abilities: names.map((name) => ({ name, text: "" })) },
+    });
+    const of = (keywords: string[], name = "Hammer Guard", abilities: string[] = []) => ({
+      ...t.s.units[warband]!,
+      name,
+      sheet: {
+        ...t.s.units[warband]!.sheet!,
+        keywords,
+        abilities: abilities.map((n) => ({ name: n, text: "" })),
+      },
+    });
+    // No "Dwarf" in the unit's name: its army is the Dwarfs all the same.
+    const holds = of(["Faction: Dwarfen Mountain Holds"]);
+    expect(hatesFoe(u(spears, "Hatred (Dwarfs)"), holds)).toBe(true);
+    expect(hatesFoe(u(spears, "Hatred (High Elves)"), holds)).toBe(false);
+    // A variant list keeps its army's race; "Beastman" and "Beastmen" are one race.
+    expect(hatesFoe(u(spears, "Hatred (Beastman Brayherds)"), of(["Faction: Beastmen Brayherds"]))).toBe(
+      true,
+    );
+    expect(
+      hatesFoe(
+        u(spears, "Hatred (Warriors of Chaos & Daemonic models)"),
+        of(["Faction: Warriors of Chaos - Wolves of the Sea"]),
+      ),
+    ).toBe(true);
+    expect(
+      hatesFoe(u(spears, "Hatred (Warriors of Chaos & Daemonic models)"), of(["Faction: Daemons of Chaos"])),
+    ).toBe(true);
+    // Dark Elves hate High Elves, not each other.
+    expect(hatesFoe(u(spears, "Hatred (High Elves)"), of(["Faction: Dark Elves"]))).toBe(false);
+    // One daemon god's servants hate another's, by the model's rule.
+    const khorne = of(["Faction: Daemons of Chaos"], "Blood Hounds", ["Daemon of Khorne"]);
+    expect(hatesFoe(u(spears, "Hatred (Daemons of Khorne)"), khorne)).toBe(true);
+    expect(hatesFoe(u(spears, "Hatred (Daemons of Slaanesh)"), khorne)).toBe(false);
+    // Every army of the game has a race to be named by.
+    for (const army of [
+      "Beastmen Brayherds",
+      "Chaos Dwarfs",
+      "Daemons of Chaos",
+      "Dark Elves",
+      "Dwarfen Mountain Holds",
+      "Grand Cathay",
+      "High Elf Realms",
+      "Kingdom of Bretonnia",
+      "Lizardmen",
+      "Ogre Kingdoms",
+      "Orc and Goblin Tribes",
+      "Skaven",
+      "The Empire of Man",
+      "Tomb Kings of Khemri",
+      "Vampire Counts",
+      "Warriors of Chaos",
+      "Wood Elf Realms",
+    ])
+      expect(racesOf(of([`Faction: ${army}`])), army).not.toEqual([]);
+  });
+
+  it("Hatred (Dwarfs) in combat against a Dwarf army's unit: the note and the to-hit re-roll (PX #66)", () => {
+    for (let seed = 1; seed < 20; seed++) {
+      const { t, spears, warband } = setup();
+      rule(t, spears, "Hatred (Dwarfs)");
+      const w = t.s.units[warband]!;
+      t.s = {
+        ...t.s,
+        units: {
+          ...t.s.units,
+          [warband]: { ...w, sheet: { ...w.sheet!, keywords: ["Faction: Dwarfen Mountain Holds"] } },
+        },
+      };
+      t.states.set(t.s.seq, t.s);
+      toPhase(t, "combat");
+      fight(t, spears, warband, seed);
+      expect(t.notes()).toContain(
+        "Marchwarden Spears hates Reaver Warband: it re-rolls missed hits this round",
+      );
+      if (!rolls(t, /^to hit re-roll \(Hatred\)$/, spears).length) continue;
+      return;
+    }
+    throw new Error("never re-rolled a miss");
+  });
+
+  it("Frenzy is named in the log when it adds its Attack, on the charge only (PX #66)", () => {
+    const { t, spears, warband } = setup();
+    rule(t, spears, "Frenzy");
+    charged(t, spears, warband);
+    fight(t, spears, warband, 1);
+    expect(t.notes()).toContain("Marchwarden Spears: Frenzy, +1 Attack each on the charge");
+    const other = setup();
+    rule(other.t, other.spears, "Frenzy");
+    toPhase(other.t, "combat");
+    fight(other.t, other.spears, other.warband, 1);
+    expect(other.t.notes().join(" ")).not.toMatch(/Frenzy, \+1 Attack/);
+  });
+
+  it("Press of Battle only when a second rank is there to fight: not a lone model or a single rank (PX #66)", () => {
+    // One rank of six: no second rank, no label, six attacks.
+    const { t, spears, warband } = setup();
+    rule(t, warband, "Press of Battle");
+    const n = t.s.units[warband]!.modelIds.length;
+    block(t, warband, 0.8, n, Math.PI);
+    toPhase(t, "combat");
+    fight(t, spears, warband, 2);
+    expect(rolls(t, /Press of Battle/, warband)).toEqual([]);
+    // A lone monster.
+    const c = setup();
+    const hulk = unitNamed(c.t.s, "Bog Hulk").id;
+    rule(c.t, hulk, "Press of Battle");
+    block(c.t, hulk, 0.8, 1, Math.PI);
+    toPhase(c.t, "combat");
+    fight(c.t, c.spears, hulk, 2);
+    expect(rolls(c.t, /Press of Battle/, hulk)).toEqual([]);
+    expect(rolls(c.t, /^to hit/, hulk)[0]!.results.length).toBe(4);
+  });
+
+  it("log grammar: one unit fights, 1 Stomp Attack, 1 wound, Stubborn falls back once (PX #66)", () => {
+    const { t, spears } = setup();
+    const hulk = unitNamed(t.s, "Bog Hulk").id;
+    rule(t, hulk, "Stomp Attacks (1)");
+    block(t, hulk, 0.8, 1, Math.PI);
+    toPhase(t, "combat");
+    fight(t, spears, hulk, 4);
+    expect(t.notes()[0]).toBe("Marchwarden Spears fights Bog Hulk and Reaver Warband");
+    expect(t.notes().join(" ")).toMatch(/Bog Hulk: 1 Stomp Attack, hitting automatically/);
+    // Combat results: "1 wound", never "1 wounds".
+    let one = 0;
+    let stubborn = 0;
+    for (let seed = 1; seed < 40; seed++) {
+      const c = setup();
+      rule(c.t, c.warband, "Stubborn");
+      chars(c.t, c.spears, { A: "2", S: "4" });
+      toPhase(c.t, "combat");
+      fight(c.t, c.spears, c.warband, seed);
+      const notes = c.t.notes();
+      const result = notes.find((n) => n.startsWith("Combat result:")) ?? "";
+      expect(result).not.toMatch(/\b1 wounds\b/);
+      if (/\(1 wound\b/.test(result)) one++;
+      const line = notes.find((n) => /is Stubborn/.test(n));
+      if (line) {
+        stubborn++;
+        expect(line).toMatch(
+          /^Reaver Warband is Stubborn \(its first break test\) and falls back in good order \d+"/,
+        );
+        expect(line.match(/falls back in good order/g)!.length).toBe(1);
+      }
+    }
+    expect(one).toBeGreaterThan(0);
+    expect(stubborn).toBeGreaterThan(0);
+  });
+
+  it("Random Movement: a Movement of 2D6+1 is rolled, not read as M 2; the charge rolls it as its whole reach (PX #66)", () => {
+    const { t } = setup();
+    const hulk = unitNamed(t.s, "Bog Hulk").id;
+    chars(t, hulk, { M: "2D6+1" });
+    const u = t.s.units[hulk]!;
+    expect(randomMovement(t.s, u)).toMatchObject({ count: 2, sides: 6, bonus: 1, text: "2D6+1" });
+    const budget = moveBudget(t.s, u);
+    expect(budget.move).toBeNull();
+    expect(budget.march).toBeNull();
+    // A charge roll of 7 on the 2D6 reaches 8", with no Movement added on top.
+    expect(chargeReach(budget, 7)).toBe(8);
+    // A plain Movement still adds to the charge roll.
+    const spears = moveBudget(t.s, unitNamed(t.s, "Marchwarden Spears"));
+    expect(spears.random).toBeNull();
+    expect(chargeReach(spears, 4)).toBe(4 + spears.move!);
+    // The Movement phase reminds the player to roll it.
+    const hulkOwner = u.owner;
+    for (let i = 0; i < 20; i++) {
+      if (
+        t.s.turn.round > 0 &&
+        currentSlot(t.s)?.id === "movement" &&
+        t.s.players[hulkOwner]!.seat === t.s.turn.activeSeat
+      )
+        break;
+      t.play({ type: "turn/next" }, "p1");
+    }
+    const warn = towReminders(view(t.s)).find((w) => w.id === "towRandomMovement" && w.unitId === hulk);
+    expect(warn?.message).toMatch(
+      /Bog Hulk moves at random \(M 2D6\+1\): roll it each time it moves, and roll it to charge/,
+    );
   });
 
   it("Warband: its rank bonus on its Leadership, up to 10", () => {

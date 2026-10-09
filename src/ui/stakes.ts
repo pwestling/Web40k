@@ -35,7 +35,13 @@ export function stakesOf(roll: TrayRoll, before: GameState, after: GameState): S
     const gap = unitGap(before, unit, target);
     const ranked = systemModule(before.system).chargeRoll;
     let reach: number, chance: number, need: number;
-    if (ranked) {
+    const random = ranked ? moveBudget(before, unit).random : null;
+    if (random) {
+      // Random Movement: the Movement dice are the whole reach.
+      need = gap - random.bonus;
+      reach = total + random.bonus;
+      chance = atLeastSum(n, roll.sides, need);
+    } else if (ranked) {
       // Rank and flank: the highest die (or the total) plus the unit's move.
       const move = moveBudget(before, unit).move ?? 0;
       const die = ranked.keep === "highest" ? Math.max(...values) : total;

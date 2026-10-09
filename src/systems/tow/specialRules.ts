@@ -1,4 +1,5 @@
 import type { GameState, Unit } from "../../core/types";
+import { parseDice, type DiceExpr } from "../../core/dice";
 
 /**
  * Special rules a regiment has, by name only: the roster's special rules and
@@ -25,15 +26,60 @@ const stemWord = (w: string) =>
     .replace(/(?<=[^s])s$/, "");
 
 /**
+ * The races a rule naming its foes ("Hatred (Dwarfs)") calls each army by,
+ * from the army's faction keyword as the list builder writes it ("Faction:
+ * Dwarfen Mountain Holds", or a variant list "Faction: Warriors of Chaos -
+ * Wolves of the Sea"). Army names only: the 17 armies of the game.
+ */
+const FACTION_RACES: [RegExp, string][] = [
+  [/^beastmen br[ae]yherds/i, "Beastmen Beastman Brayherds Breyherds"],
+  [/^chaos dwarfs/i, "Chaos Dwarfs"],
+  [/^daemons of chaos/i, "Daemons Daemonic models"],
+  [/^dark elves/i, "Dark Elves"],
+  [/^dwarfen mountain holds/i, "Dwarfs"],
+  [/^grand cathay/i, "Cathay Cathayans"],
+  [/^high elf realms/i, "High Elves"],
+  [/^(kingdom of )?bretonnia/i, "Bretonnians"],
+  [/^lizardmen/i, "Lizardmen"],
+  [/^ogre kingdoms/i, "Ogres"],
+  [/^orc (and|&) goblin tribes/i, "Orcs Goblins"],
+  [/^skaven/i, "Skaven"],
+  [/^(the )?empire of man/i, "Empire"],
+  [/^tomb kings/i, "Tomb Kings"],
+  [/^vampire counts/i, "Vampire Counts"],
+  [/^warriors of chaos/i, "Warriors of Chaos"],
+  [/^wood elf realms/i, "Wood Elves"],
+];
+
+/** The races a unit's faction keyword names it by, for rules that name their foes. */
+export function racesOf(u: Unit): string[] {
+  return (u.sheet?.keywords ?? []).flatMap((k) => {
+    const army = /^faction:\s*(.+)$/i.exec(k.trim())?.[1] ?? k.trim();
+    return FACTION_RACES.filter(([re]) => re.test(army)).map(([, races]) => races);
+  });
+}
+
+/**
  * Whether `u` hates `foe`: "Hatred" or "Hatred (all enemies)" hates everyone;
- * "Hatred (High Elves)" or "Hatred (Orcs & Goblins)" only a foe whose name or
- * keywords (its faction) carry those words.
+ * "Hatred (High Elves)" or "Hatred (Orcs & Goblins)" only a foe whose name,
+ * keywords or army (its faction keyword, as `racesOf` names its race) carry
+ * those words. "Daemonic models" are a daemon army's, or any with a Daemonic
+ * rule; "Daemons of Khorne" a model with the rule "Daemon of Khorne".
  */
 export function hatesFoe(u: Unit, foe: Unit): boolean {
   const all = names(u).filter((n) => /\bhatred\b/i.test(n));
   if (!all.length) return false;
+  const daemonic = (foe.sheet?.abilities ?? []).map((a) => a.name).filter((n) => /^daemon(ic)?\b/i.test(n));
   const theirs = new Set(
-    [foe.name, ...(foe.sheet?.keywords ?? [])].flatMap((t) => t.split(/[^\p{L}]+/u)).map(stemWord),
+    [
+      foe.name,
+      ...(foe.sheet?.keywords ?? []),
+      ...racesOf(foe),
+      ...daemonic,
+      ...(daemonic.length ? ["Daemonic models"] : []),
+    ]
+      .flatMap((t) => t.split(/[^\p{L}]+/u))
+      .map(stemWord),
   );
   return all.some((n) => {
     const who = /\(([^)]*)\)/.exec(n)?.[1]?.trim();
@@ -58,6 +104,24 @@ export function ruleNumber(u: Unit, re: RegExp): number {
     best = Math.max(best, m ? Number(m[1]) : 1);
   }
   return best;
+}
+
+/**
+ * Random Movement: a Movement written as dice ("2D6+1", "3D6") is rolled each
+ * time the unit moves or charges, and is never a fixed number of inches.
+ * The dice, from its first model standing, or null for a plain Movement.
+ */
+export function randomMovement(state: GameState, u: Unit): (DiceExpr & { text: string }) | null {
+  const m = (u.modelIds.map((id) => state.models[id]).find((x) => x && !x.destroyed)?.profile?.chars.M ?? "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+  if (!/^\d*D\d/.test(m)) return null;
+  try {
+    const d = parseDice(m);
+    return d.sides ? { ...d, text: m } : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A unit's troop type, from its first model standing ("Heavy Infantry"), or "". */

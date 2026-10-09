@@ -238,7 +238,7 @@ describe("The Old World combat as code", () => {
       state = applyEvent(state, event);
     });
     const log = buildLog(record as never);
-    const item = log.find((l) => l.kind === "line" && l.text === "Marchwarden Spears fight Reaver Warband");
+    const item = log.find((l) => l.kind === "line" && l.text === "Marchwarden Spears fights Reaver Warband");
     expect(item && item.kind === "line" && item.detail?.length).toBeGreaterThan(3);
     const lines = item && item.kind === "line" ? item.detail!.join("\n") : "";
     expect(lines).toMatch(/to hit (\(\d+ supporting\) )?\d\+: \d+ of \d+/);
@@ -340,7 +340,7 @@ describe("The Old World combat as code", () => {
     t.play({ type: "script/start", procedure: "combat", args: { unit: spears, target: warband } }, "p1", 5);
     finish(t, 5);
     const notes = t.notes();
-    expect(notes).toContain("Marchwarden Spears fight Reaver Warband and Tusk Brutes");
+    expect(notes).toContain("Marchwarden Spears fights Reaver Warband and Tusk Brutes");
     expect(
       notes.some(
         (n) =>

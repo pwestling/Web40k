@@ -11,6 +11,7 @@ import {
   type Vec2,
 } from "../core";
 import { inFootprint, segmentCrossesFootprint2D } from "../core/terrain";
+import { parseDice, type DiceExpr } from "../core/dice";
 import { systemModule } from "../systems";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { opposed } from "../core/teams";
@@ -88,6 +89,25 @@ export interface MoveBudget {
   manoeuvreLimit: number;
   /** Movement lost to terrain this move (The Old World's difficult terrain), and the piece's name. */
   slowed: { by: number; piece: string } | null;
+  /** A Movement written as dice ("2D6+1": The Old World's Random Movement): `move` is then null. */
+  random: DiceExpr | null;
+}
+
+/** A unit's Movement when it is written as dice ("2D6+1", "3D6"): rolled for each move and charge, never a fixed number. */
+function randomMove(game: GameState, unit: Unit): DiceExpr | null {
+  const m = (aliveModels(game, unit)[0]?.profile?.chars.M ?? "").trim();
+  if (!/^\d*\s*d\s*\d/i.test(m)) return null;
+  try {
+    const d = parseDice(m.replace(/\s+/g, ""));
+    return d.sides ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A charge's reach from its roll: the dice of a random Movement plus its bonus, or the charge dice plus Movement. */
+export function chargeReach(budget: Pick<MoveBudget, "move" | "random">, die: number): number {
+  return budget.random ? die + budget.random.bonus : die + (budget.move ?? 0);
 }
 
 /** The terrain the unit's move this phase touches that slows it most (its category's `slows`). */
@@ -114,7 +134,9 @@ function slowingTerrain(game: GameState, unit: Unit): { by: number; piece: strin
 /** A unit's move and march, and how near the closest enemy (not fleeing) is. */
 export function moveBudget(game: GameState, unit: Unit): MoveBudget {
   const mine = aliveModels(game, unit);
-  const m = Number.parseFloat(mine[0]?.profile?.chars.M ?? "");
+  const random = randomMove(game, unit);
+  // "2D6+1" isn't a Movement of 2: it is rolled (Random Movement).
+  const m = random ? Number.NaN : Number.parseFloat(mine[0]?.profile?.chars.M ?? "");
   const slowed = slowingTerrain(game, unit);
   const move = Number.isFinite(m) ? (slowed ? Math.max(1, m - slowed.by) : m) : null;
   const nearestEnemy = Math.min(
@@ -134,6 +156,7 @@ export function moveBudget(game: GameState, unit: Unit): MoveBudget {
     slow: constant(game, "slowMoveCost", 1),
     manoeuvreLimit: constant(game, "manoeuvresPerMove", 0),
     slowed,
+    random,
   };
 }
 

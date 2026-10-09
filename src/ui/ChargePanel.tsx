@@ -16,7 +16,7 @@ import {
 import { useCanControl, useStore } from "../store";
 import { gameModule, systemModule } from "../systems";
 import { useGame } from "./hooks";
-import { moveBudget } from "./regiment";
+import { chargeReach, moveBudget } from "./regiment";
 import { opposed } from "../core/teams";
 import { t, tc } from "../i18n";
 
@@ -46,11 +46,19 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const canControl = useCanControl();
   const mine = canControl(unit.owner) && scrub === null;
   const mod = systemModule(game.system);
-  const move = moveBudget(game, unit).move ?? 0;
-  const chargeDice = mod.chargeRoll ?? { count: 2, sides: 6, keep: "highest" as const };
+  const budget = moveBudget(game, unit);
+  const move = budget.move ?? 0;
+  // Random Movement ("2D6+1"): the charge rolls the unit's Movement dice, and they are its whole reach.
+  const random = budget.random;
+  const chargeDice = random
+    ? { count: random.count, sides: random.sides, keep: "sum" as const }
+    : (mod.chargeRoll ?? { count: 2, sides: 6, keep: "highest" as const });
   const fleeDice = mod.fleeDice ?? "2D6";
   // Within reach: what a charge (or a long flight or pursuit) could cover.
-  const reach = Math.max(move + chargeDice.sides * (chargeDice.keep === "sum" ? chargeDice.count : 1), 12);
+  const reach = Math.max(
+    chargeReach(budget, chargeDice.sides * (chargeDice.keep === "sum" ? chargeDice.count : 1)),
+    12,
+  );
   // Base to base, as Declare charge measures it.
   const enemies = useMemo(
     () =>
@@ -88,7 +96,7 @@ export function ChargePanel({ unit }: { unit: Unit }) {
   const fleeing = unit.status?.fleeing === true;
   const as = unit.owner;
   const chargeDie = charge ? (chargeDice.keep === "highest" ? charge.keep : charge.total) : 0;
-  const chargeRange = charge ? chargeDie + move : null;
+  const chargeRange = charge ? chargeReach(budget, chargeDie) : null;
   const short = !!door && chargeRange !== null && door.distance > chargeRange + 0.05;
   // Within half an inch either way, the roll against the distance gets tense (PX-3e).
   const tense = !!door && chargeRange !== null && Math.abs(door.distance - chargeRange) <= 0.5;
@@ -170,12 +178,18 @@ export function ChargePanel({ unit }: { unit: Unit }) {
           )}
           {chargeRange !== null && (
             <span className={`${short ? "warn" : "muted small"}${tense ? " tense" : ""}`}>
-              {t("needs {distance} of {range} ({roll} + M {move})", {
-                distance: inchText(door.distance),
-                range: inchText(chargeRange),
-                roll: chargeDie,
-                move,
-              })}
+              {random
+                ? t("needs {distance} of {range} (random movement {dice})", {
+                    distance: inchText(door.distance),
+                    range: inchText(chargeRange),
+                    dice: `${random.count}D${random.sides}${random.bonus ? `+${random.bonus}` : ""}`,
+                  })
+                : t("needs {distance} of {range} ({roll} + M {move})", {
+                    distance: inchText(door.distance),
+                    range: inchText(chargeRange),
+                    roll: chargeDie,
+                    move,
+                  })}
               {short ? ` · ${t("too short")}` : ` · ${t("reaches")} ✓`}
             </span>
           )}

@@ -1,5 +1,5 @@
 import { awayFrom, fleeMove, unitCentre, unitGap } from "../../core/manoeuvre";
-import { blockModels, inArc, rankCount } from "../../core/regiment";
+import { arcOf, blockCentre, blockFrame, blockModels, inArc, rankCount, type Arc } from "../../core/regiment";
 import type { GameState, Model, Unit, WeaponProfile } from "../../core/types";
 import type { CodeAction, CodeProcedure, Command, Ctx, GameView } from "../../sdk";
 import { towRanks } from "./troops";
@@ -13,6 +13,7 @@ import {
   hasBattleStandard,
   hasRule,
   hatesFoe,
+  randomMovement,
   immune,
   isGeneral,
   ruleNumber,
@@ -74,6 +75,12 @@ export const charNum = (m: Model | undefined, k: string, d = 0) => {
 function stat(view: GameView, u: Unit, id: string, d = 0): number {
   const v = (view.unit(u.id) as Record<string, unknown> | undefined)?.[id];
   return typeof v === "number" ? v : d;
+}
+
+/** A unit's Movement in inches; a random Movement ("2D6+1") counts as its average roll. */
+function moveOf(view: GameView, u: Unit): number {
+  const r = randomMovement(view.state, u);
+  return r ? r.count * ((r.sides + 1) / 2) + r.bonus : stat(view, u, "M");
 }
 
 /** How far the General's Leadership and the Battle Standard's re-roll reach. */
@@ -190,6 +197,12 @@ export function toWound(s: number, t: number): number | null {
   return Math.min(6, Math.max(2, 4 + t - s));
 }
 
+/**
+ * A count with its noun, for the log ("1 wound", "3 wounds"). Log notes are
+ * part of the game record every player replays, so they stay in English
+ * rather than going through the viewer's tn().
+ */
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 const count = (r: Roll, target: number) => r.rolls.filter((x) => x !== 1 && x >= target).length;
 /** To hit: a natural 6 always hits, a natural 1 always misses. */
 const hitsOf = (r: Roll, target: number) => r.rolls.filter((x) => x === 6 || (x !== 1 && x >= target)).length;
@@ -298,10 +311,14 @@ export function* woundAndSave(
     ((blow.killingBlow && isInfantryOrCavalry(troop)) || (blow.monsterSlayer && isMonster(troop)));
   // A slaying blow: no armour or regeneration save, and the model falls if the ward fails.
   let slain = slaying ? sixes : 0;
-  if (slain)
+  if (slain) {
+    const rule = blow.killingBlow && isInfantryOrCavalry(troop) ? "Killing Blow" : "Monster Slayer";
+    const sixesText = slain === 1 ? "a 6 to wound" : `${slain} sixes to wound`;
+    const victims = target ? (target.profile?.name ?? def.name) : slain === 1 ? "a model" : `${slain} models`;
     yield ctx.note(
-      `${atk.name} strikes ${slain} ${blow.killingBlow && isInfantryOrCavalry(troop) ? "Killing" : "Monster Slaying"} ${slain === 1 ? "Blow" : "Blows"}`,
+      `${atk.name}: ${sixesText}, ${rule} slays ${victims} outright, no armour or regeneration save`,
     );
+  }
   let left = wounds.length - slain;
   // Armour Bane: the wounds from natural 6s save on a worse armour roll, rolled apart.
   const baned = !slaying && bane > 0 ? sixes : 0;
@@ -486,11 +503,11 @@ export function supportingAttacks(
   if (!hasRule(atk, /fight in extra rank/i) && !weapons.some((w) => (w.keywords ?? []).some(extraRank)))
     return 0;
   // Not into the enemy's flank or rear.
-  if ((inArc(state, def, atk) ?? "front") !== "front") return 0;
+  if ((combatArc(state, def, atk) ?? "front") !== "front") return 0;
   const models = alive(state, atk).length;
   const files = Math.min(atk.formation.files, models);
   // The rank behind a front (or rear) fighting rank; the file beside a flank one.
-  const side = inArc(state, atk, def);
+  const side = combatArc(state, atk, def);
   if (side === "left" || side === "right") return files > 1 ? Math.ceil(models / files) : 0;
   return Math.max(0, Math.min(files, models - files * depth));
 }
@@ -508,6 +525,35 @@ function strikeOrder(u: Unit, initiative: number): number {
   if (first && !last) return 10;
   if (last && !first) return 1;
   return initiative;
+}
+
+/**
+ * The side of `target` that `from` fights in a combat: the arc its front lies
+ * in (inArc), except that a unit facing the target head on (within 45
+ * degrees) whose body stands in the target's front arc fights the front. A
+ * big base (a chariot, a monster) whose front edge reaches past the target's
+ * front corner, or that was pushed into the block by hand, has its front
+ * point in a flank or rear arc while it plainly faces the front (PX #66).
+ */
+export function combatArc(state: GameState, target: Unit, from: Unit): Arc | null {
+  const arc = inArc(state, target, from);
+  const frame = blockFrame(state, target);
+  if (!frame || arc === "front" || !arc) return arc;
+  const own = blockFrame(state, from);
+  const ms = alive(state, from);
+  if (!ms.length) return arc;
+  const facing = own?.facing ?? ms[0]!.facing;
+  const turn = Math.abs(
+    Math.atan2(Math.sin(facing - frame.facing - Math.PI), Math.cos(facing - frame.facing - Math.PI)),
+  );
+  if (turn > Math.PI / 4) return arc;
+  const centre = own
+    ? blockCentre(own)
+    : {
+        x: ms.reduce((t, m) => t + m.position.x, 0) / ms.length,
+        y: ms.reduce((t, m) => t + m.position.y, 0) / ms.length,
+      };
+  return arcOf(frame, centre) === "front" ? "front" : arc;
 }
 
 /** Charged this turn, moving 3" or more (Furious Charge, Impact Hits). */
@@ -556,7 +602,8 @@ function* strike(
   if (!models || !alive(state, def).length) return { n: 0, slain: [] };
   const files = atk.formation.kind === "ranked" ? Math.min(atk.formation.files, models) : models;
   // Press of Battle: two ranks fight, and the supporting rank is the one behind them.
-  const depth = pressOfBattle(state, atk) ? 2 : 1;
+  // Only when there is a second rank to fight (not a lone model or a single rank).
+  const depth = pressOfBattle(state, atk) && models > files ? 2 : 1;
   const fighting = Math.min(models, files * depth);
   const support = supportingAttacks(view, atk, def, depth);
   // Frenzy and Furious Charge: +1 Attack in a turn it charged.
@@ -1042,7 +1089,7 @@ const combat: CodeProcedure = function* (ctx, args) {
   const sideOf = new Map<string, 0 | 1>();
   sides.forEach((side, i) => side.forEach((u) => sideOf.set(u.id, i as 0 | 1)));
   const names = (side: Unit[]) => side.map((u) => u.name).join(" and ");
-  yield ctx.note(`${names(sides[0])} fight ${names(sides[1])}`);
+  yield ctx.note(`${names(sides[0])} ${sides[0].length === 1 ? "fights" : "fight"} ${names(sides[1])}`);
   // Who each unit fights: the named pair each other, the rest whoever they touch.
   const foes = new Map<string, Unit>();
   for (const [i, side] of sides.entries())
@@ -1074,6 +1121,9 @@ const combat: CodeProcedure = function* (ctx, args) {
       yield ctx.set(key, true);
       yield ctx.note(`${u.name} hates ${foe.name}: it re-rolls missed hits this round`);
     }
+    // Frenzy is a beat of its own, not only a to-hit label.
+    if (frenzied(u) && u.status?.charged === true)
+      yield ctx.note(`${u.name}: Frenzy, +1 Attack each on the charge`);
     how.set(u.id, h);
   }
   const caused = new Map<string, number>(all.map((u) => [u.id, 0]));
@@ -1114,7 +1164,7 @@ const combat: CodeProcedure = function* (ctx, args) {
           ? 2
           : 0;
       yield ctx.note(
-        `${atk.name}: ${hits} ${why}, hitting automatically at Strength ${stat(ctx.view, atk, "S")}`,
+        `${atk.name}: ${hits === 1 ? `1 ${why.replace(/s$/, "")}` : `${hits} ${why}`}, hitting automatically at Strength ${stat(ctx.view, atk, "S")}`,
       );
       const n = yield* woundAndSave(ctx, atk, def, hits, stat(ctx.view, atk, "S"), ap);
       caused.set(u.id, (caused.get(u.id) ?? 0) + n);
@@ -1151,7 +1201,7 @@ const combat: CodeProcedure = function* (ctx, args) {
       s += n;
       parts.push(why);
     };
-    if (s) parts.push(`${s} wounds`);
+    if (s) parts.push(plural(s, "wound"));
     // The best rank bonus on the side; the other bonuses once each.
     const rb = Math.max(0, ...now.map((u) => rankBonus(state, u)));
     if (rb) add(rb, `ranks +${rb}`);
@@ -1162,7 +1212,7 @@ const combat: CodeProcedure = function* (ctx, args) {
     const foe = (u: Unit) => unitOf(ctx.view, foes.get(u.id)!.id);
     if (now.some((u) => frontHeight(state, u) > frontHeight(state, foe(u)) + HIGH_GROUND))
       add(1, "high ground +1");
-    const arcs = now.map((u) => inArc(state, foe(u), u));
+    const arcs = now.map((u) => combatArc(state, foe(u), u));
     if (arcs.includes("rear")) add(2, "rear +2");
     else if (arcs.includes("left") || arcs.includes("right")) add(1, "flank +1");
     if (now.some((u) => massed(u) && strength(u) > strength(foe(u)))) add(1, "massed infantry +1");
@@ -1190,9 +1240,10 @@ const combat: CodeProcedure = function* (ctx, args) {
       side.some((u) =>
         alive(ctx.view.state, unitOf(ctx.view, u.id)).some((m) => MUSICIAN.test(m.profile?.name ?? "")),
       );
-    const tune = music(sides[0]) !== music(sides[1]) ? names(music(sides[0]) ? sides[0] : sides[1]) : "";
+    const band = music(sides[0]) !== music(sides[1]) ? (music(sides[0]) ? sides[0] : sides[1]) : [];
+    const tune = band.length ? `${names(band)} ${band.length === 1 ? "has" : "have"} a musician` : "";
     yield ctx.note(
-      `The combat is a draw${tune ? ` (${tune} has a musician: check its rule for drawn combats, by hand)` : ""}`,
+      `The combat is a draw${tune ? ` (${tune}: check its rule for drawn combats, by hand)` : ""}`,
     );
     for (const u of wiped) yield* panicNear(ctx, u, "was destroyed", all);
     return;
@@ -1255,7 +1306,7 @@ function* breakTest(
   }
   if (stubborn(lost) && !lost.status?.stubbornUsed) {
     yield ctx.emit({ type: "unit/status", id: lost.id, key: "stubbornUsed", value: true });
-    yield* fallBack(ctx, lost, won, "is Stubborn: its first break test, it falls back in good order");
+    yield* fallBack(ctx, lost, won, "is Stubborn (its first break test)");
     return "falls back";
   }
   // Break test: 2D6 against Leadership. Over it on the natural roll: break and flee. Within it
@@ -1446,7 +1497,7 @@ const chargeReaction: CodeProcedure = function* (ctx, args) {
     Object.values(target.sheet?.weapons ?? {}).some((w) => w.kind === "ranged") &&
     !target.status?.fleeing &&
     !inCombat(ctx.view, target.id) &&
-    distance >= stat(ctx.view, charger, "M");
+    distance >= moveOf(ctx.view, charger);
   const now = ctx.view.state.turn;
   // Charging something frightening takes nerve: a failed Fear test and the charge isn't made.
   if (frightens(ctx.view.state, target, charger)) {
