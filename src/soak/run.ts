@@ -75,8 +75,12 @@ export interface SoakOptions {
    * A scenario's probe: after each move, tags for what it's looking for on the
    * host's table (e.g. "damage re-rolled"). The report counts them, so a
    * scenario can check a closed rules gap really came up and stays fixed.
+   * `before` is the host's table as the move was chosen (an action's targets,
+   * the fight order or a unit's status as it was).
    */
-  watch?: (s: GameState, events: GameEvent[]) => string[];
+  watch?: (s: GameState, events: GameEvent[], before: GameState) => string[];
+  /** Game settings the host sets before the armies go down (FSD's game size in `points`). */
+  settings?: Partial<GameState["settings"]>;
 }
 
 export interface SoakReport {
@@ -232,6 +236,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
     as("h", { type: "player/join", player: { id: "h", name: "Host", color: COLORS[0]!, seat: 0 } });
     if (teamSize > 1) as("h", { type: "settings/set", settings: { teamSize } });
     as("h", { type: "game/system", system });
+    if (opts.settings) as("h", { type: "settings/set", settings: opts.settings });
     as("h", { type: "layout/set", layout: mod.layout(host0.current.table) });
     const mission = mod.missions?.[0];
     if (mission) {
@@ -436,7 +441,7 @@ export async function soak(opts: SoakOptions): Promise<SoakReport> {
           .host()!
           .log.events.filter((e) => e.seq > before)
           .map((e) => e.event);
-        for (const tag of new Set(opts.watch(s, fresh))) seen[tag] = (seen[tag] ?? 0) + 1;
+        for (const tag of new Set(opts.watch(s, fresh, state))) seen[tag] = (seen[tag] ?? 0) + 1;
       }
       lockstep(steps % 25 === 0, steps % 250 === 0);
     }

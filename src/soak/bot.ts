@@ -1,5 +1,6 @@
 import { isAlive } from "../core/units";
 import {
+  closeDoor,
   commitmentOf,
   resolveLogged,
   undoneSeqs,
@@ -26,7 +27,7 @@ import { playerActions } from "../core/content/player";
 import { currentSlot, plainActivations, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { pendingScores } from "../missions/scoring";
-import { gameModule } from "../systems";
+import { gameModule, systemModule } from "../systems";
 import { cardKey, nextCard, stackOf } from "../systems/conquest/command";
 import type { CodeAction } from "../sdk";
 import { undoGroup } from "../ui/gameLog";
@@ -82,6 +83,8 @@ export interface BotContext {
   moved?: { phase: string; units: Set<string> };
   /** Units a tidy bot has moved this round in a whole-game package (once each, like a player). */
   went?: { round: number; units: Set<string> };
+  /** A charge rolled by hand (Conquest), to move into contact once the roll reaches. */
+  charging?: { unitId: string; targetId: string; round: number };
   /** Tidy mode: the unit actions taken this phase ("unit:action"), each taken once. */
   taken?: { phase: string; keys: Set<string> };
   /**
@@ -367,6 +370,10 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     }
   }
 
+  // A charge rolled by hand (Conquest) goes into contact with its target unless the roll fell short.
+  const charge = chargeIntoContact(state, ctx);
+  if (charge) yield charge;
+
   // The units' actions, unit by unit (acting units only, mid-activation).
   let anyAction = false;
   const actions = function* (): Generator<BotMove> {
@@ -441,40 +448,82 @@ export function* unitMoves(state: GameState, u: Unit, ctx: BotContext): Generato
     if (o.def.sets?.includes("advanced") && givesUpShots(u) && (ctx.tidy || ctx.rng() < 0.75)) continue;
     if (o.def.procedure) {
       const weapons = Object.keys(u.sheet?.weapons ?? {});
-      const targets = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
-      for (const weapon of shuffle(ctx.rng, weapons.length ? weapons : [undefined]).slice(0, 3))
-        for (const t of shuffle(ctx.rng, targets).slice(0, 2)) {
+      const anyWeapon = actionTargets(state, u.id, o.def.id).filter((t) => t.ok);
+      const seen = new Set(anyWeapon.map((t) => t.unitId));
+      for (const weapon of shuffle(ctx.rng, weapons.length ? weapons : [undefined]).slice(0, 3)) {
+        // Now and then the weapon's own targets (#57): an arc of fire leaves some out, Indirect Fire
+        // reaches unseen ones. Not always, as it costs a look per weapon; the action checks the weapon anyway.
+        const own = weapon && ctx.rng() < 0.3;
+        const targets = shuffle(
+          ctx.rng,
+          own ? actionTargets(state, u.id, o.def.id, weapon).filter((t) => t.ok) : anyWeapon,
+        );
+        // Now and then a target only this weapon may pick (one out of sight) goes first.
+        if (ctx.rng() < 0.5) targets.sort((a, b) => Number(seen.has(a.unitId)) - Number(seen.has(b.unitId)));
+        for (const t of targets.slice(0, 2)) {
           // A tidy bot doesn't make attacks that can't reach (no dice to roll).
           if (ctx.tidy && weapon && (!reaches(state, u, weapon, t.unitId) || wrongKind(u, weapon, o.def.id)))
             continue;
           const req = { ...(weapon ? { weapon } : {}), targetId: t.unitId };
-          if (unitActions(state, u.id, req).find((x) => x.def.id === o.def.id)?.ok)
-            yield {
-              intent: { type: "action/take", unitId: u.id, action: o.def.id, ...req },
-              as: u.owner,
-              kind: `action:${o.def.id}`,
-            };
+          const option = unitActions(state, u.id, req).find((x) => x.def.id === o.def.id);
+          if (!option?.ok) continue;
+          // A multiple attack (FSD x2): mostly other targets for the other attacks, now and then all at one.
+          const others = targets.filter((x) => x.unitId !== t.unitId).map((x) => x.unitId);
+          const more = option.repeat && ctx.rng() < 0.7 ? others.slice(0, option.repeat - 1) : [];
+          yield {
+            intent: {
+              type: "action/take",
+              unitId: u.id,
+              action: o.def.id,
+              ...req,
+              ...(more.length ? { more } : {}),
+            },
+            as: u.owner,
+            kind: `action:${o.def.id}`,
+          };
         }
+      }
       continue;
     }
     if (!o.ok) continue;
     const withUnits = o.commands ? shuffle(ctx.rng, o.commands.candidates).slice(0, o.commands.count) : [];
+    // An action at a target (a charge, #57) names one it may pick: 40k's within 12", Conquest's in the front arc and seen.
+    const targetId = o.def.target
+      ? pick(
+          ctx.rng,
+          actionTargets(state, u.id, o.def.id).filter((t) => t.ok),
+        )?.unitId
+      : undefined;
     const take: BotMove = {
       intent: {
         type: "action/take",
         unitId: u.id,
         action: o.def.id,
+        ...(targetId ? { targetId } : {}),
         ...(withUnits.length ? { with: withUnits } : {}),
       },
       as: u.owner,
       kind: `action:${o.def.id}`,
     };
-    // A charge goes at the nearest enemy, into contact if it reaches (so fights happen, #40).
+    // A charge goes at its target (or the nearest enemy), into contact if it reaches (so fights happen, #40).
     const go = (inches: number) =>
-      o.def.move?.kind === "charge" ? chargeMove(state, u, ctx, inches) : moveUnit(state, u, ctx, inches);
-    // A charge the player moves by hand (Conquest): D6 + March or so, at the nearest enemy.
+      o.def.move?.kind === "charge"
+        ? chargeMove(state, u, ctx, inches, targetId)
+        : moveUnit(state, u, ctx, inches);
+    // A charge the player moves by hand (Conquest): the charge roll, then (once it reaches) into contact.
     if (o.move === undefined && /charge/i.test(o.def.id)) {
-      yield { ...take, then: chargeMove(state, u, ctx, 6 + 2 + Math.floor(ctx.rng() * 6)) };
+      const dice = systemModule(state.system).chargeRoll;
+      if (dice && targetId) {
+        ctx.charging = { unitId: u.id, targetId, round: state.turn.round };
+        const roll: Intent = {
+          type: "dice/roll",
+          count: dice.count,
+          sides: dice.sides,
+          label: "charge roll",
+          unitId: u.id,
+        };
+        yield { ...take, then: { intent: roll, as: u.owner, kind: "chargeRoll" } };
+      } else yield { ...take, then: chargeMove(state, u, ctx, 6 + 2 + Math.floor(ctx.rng() * 6), targetId) };
       continue;
     }
     // A tidy bot moves the unit as part of its move action; the fuzzer may or may not get round to it.
@@ -530,6 +579,24 @@ function* codeMoves(state: GameState, ctx: BotContext, units: Unit[], only?: Reg
       yield /charge/i.test(r.id) && target ? { ...move, then: chargeMove(state, u, ctx, 24, target) } : move;
     }
   }
+}
+
+/**
+ * The charge move after a charge roll that reaches (Conquest's charge outcome
+ * hook says when it doesn't, `short:<unit>`): into contact with the target,
+ * lined up flush, as the charge panel moves it.
+ */
+function chargeIntoContact(state: GameState, ctx: BotContext): BotMove | null {
+  const c = ctx.charging;
+  if (!c || c.round !== state.turn.round) return null;
+  const u = state.units[c.unitId];
+  const target = state.units[c.targetId];
+  const keys = state.modules?.[state.system ?? ""] ?? {};
+  if (!u?.status?.acting || !target || !isAlive(state, target)) return null;
+  if (keys[`short:${u.id}`] === c.round || keys[`landed:${u.id}`] === c.round) return null;
+  const door = closeDoor(state, u, target);
+  if (!door || door.distance < 0.05) return null;
+  return { intent: { ...door.move, how: "charge" } as Intent, as: u.owner, kind: "chargeMove" };
 }
 
 /** Whether an enemy unit is already touching another unit (in a fight). */

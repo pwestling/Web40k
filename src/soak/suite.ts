@@ -1,6 +1,8 @@
 import { expect, it } from "vitest";
 import "../systems";
 import secondWind from "../../examples/packages/second-wind.js?raw";
+import type { GameEvent, GameState } from "../core";
+import { tableWarnings } from "../ui/warnings";
 import { soak, type SoakOptions } from "./run";
 
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
@@ -39,7 +41,10 @@ export function soakSuite(system: string, teamSize: 1 | 2 = 1): void {
 export function scenarioSuite(
   name: string,
   system: string,
-  options: Pick<SoakOptions, "automate" | "watch" | "armies" | "closeIn" | "lineUp"> & {
+  options: Pick<
+    SoakOptions,
+    "automate" | "watch" | "armies" | "closeIn" | "lineUp" | "settings" | "systemPkg" | "maxSteps"
+  > & {
     /** At least this many games, whatever SOAK_SEEDS says (rules that come up less often). */
     minSeeds?: number;
   },
@@ -67,4 +72,72 @@ export function scenarioSuite(
     expect(tags.filter((t) => !seen[t])).toEqual([]);
     expect(never.filter((t) => seen[t])).toEqual([]);
   });
+}
+
+type Roster = ReturnType<NonNullable<SoakOptions["armies"]>>;
+
+type Weapon = Roster["units"][number]["sheet"]["weapons"][string];
+
+/**
+ * Changes to a sample unit, by name: more keywords or abilities, weapons'
+ * keywords or characteristics by weapon name, weapons to add, and every
+ * model's characteristics (an armour save).
+ */
+interface UnitEdit {
+  keywords?: string[];
+  chars?: Record<string, string>;
+  abilities?: string[];
+  weapons?: Record<string, { keywords?: string[]; chars?: Record<string, string> }>;
+  add?: Weapon[];
+}
+
+/**
+ * A sample army with rules added for a scenario (invented, like the samples):
+ * a Hazardous weapon, a Transport, a weapon firing twice. Units not named stay as they are.
+ */
+export function withRules(roster: Roster, edits: Record<string, UnitEdit>): Roster {
+  return {
+    ...roster,
+    units: roster.units.map((u) => {
+      const e = edits[u.name];
+      if (!e) return u;
+      const weapons = Object.fromEntries([
+        ...Object.entries(u.sheet.weapons).map(([id, w]) => {
+          const we = e.weapons?.[w.name];
+          return [
+            id,
+            we
+              ? {
+                  ...w,
+                  keywords: [...w.keywords, ...(we.keywords ?? [])],
+                  chars: { ...w.chars, ...we.chars },
+                }
+              : w,
+          ];
+        }),
+        ...(e.add ?? []).map((w) => [w.id, w]),
+      ]);
+      return {
+        ...u,
+        sheet: {
+          ...u.sheet,
+          keywords: [...u.sheet.keywords, ...(e.keywords ?? [])],
+          abilities: [...u.sheet.abilities, ...(e.abilities ?? []).map((name) => ({ name, text: name }))],
+          weapons,
+        },
+        models: e.chars
+          ? u.models.map((m) => ({
+              ...m,
+              profile: { ...m.profile, chars: { ...m.profile.chars, ...e.chars } },
+            }))
+          : u.models,
+      };
+    }),
+  };
+}
+
+/** The Table warnings (src/ui/warnings.ts) after a move, by check id: none when nothing moved. */
+export function moveWarnings(state: GameState, events: GameEvent[]): string[] {
+  if (!events.some((e) => e.type === "models/move" || e.type === "unit/move")) return [];
+  return tableWarnings(state).map((w) => `warning ${w.checkId}`);
 }
