@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useAssets } from "../assets/store";
 import type { AssetKind } from "../assets/types";
 import { t, tn } from "../i18n";
-import { useFigures } from "./library";
-import { downloadUrl, indexFolder, scanSave, type TtsFolder, type TtsScan } from "./tts";
+import { importTtsModel } from "../tts/bring";
+import { TtsWholeTable } from "../tts/TtsWholeTable";
+import { indexFolder, scanSave, type TtsFolder, type TtsScan } from "./tts";
 
 /**
  * Figures from Tabletop Simulator: open a save or a workshop mod, and every
@@ -16,6 +16,7 @@ import { downloadUrl, indexFolder, scanSave, type TtsFolder, type TtsScan } from
 export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
   const [folder, setFolder] = useState<TtsFolder | null>(null);
   const [scan, setScan] = useState<TtsScan | null>(null);
+  const [save, setSave] = useState<unknown>(null);
   const [skip, setSkip] = useState<Set<string>>(new Set());
   const [kinds, setKinds] = useState<Record<string, AssetKind>>({});
   const [error, setError] = useState<string | null>(null);
@@ -47,8 +48,10 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
   const openSave = async (file: File) => {
     setError(null);
     try {
-      const next = scanSave(JSON.parse(await file.text()));
+      const json: unknown = JSON.parse(await file.text());
+      const next = scanSave(json);
       setScan(next);
+      setSave(json);
       setSkip(new Set());
       setKinds({});
       if (!next.models.length) setError(t("That save has no custom models in it."));
@@ -65,36 +68,12 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
     let added = 0;
     let missing = 0;
     let failed = 0;
-    const { importFile } = useAssets.getState();
     for (const [i, m] of chosen.entries()) {
       setProgress(t("Importing {n} of {total}: {name}", { n: i + 1, total: chosen.length, name: m.name }));
-      const mesh = folder?.find(m.mesh, "model") ?? (await download(m.mesh));
-      if (!mesh) {
-        missing++;
-        continue;
-      }
-      const texture = m.diffuse
-        ? (folder?.find(m.diffuse, "image") ?? (await download(m.diffuse)))
-        : undefined;
-      const asset = await importFile(
-        new File([mesh], `${m.name}.obj`),
-        `library:tts:${m.key}`,
-        kinds[m.key] ?? m.kind,
-        { ...(texture ? { texture } : {}), unitScale: m.scale },
-      );
-      if (!asset) {
-        failed++;
-        continue;
-      }
-      added++;
-      // TTS's own names let army units find the figure by name; no picture matching needed.
-      const { entries, patch } = useFigures.getState();
-      const entry = entries[asset.id];
-      patch(asset.id, {
-        tags: [...new Set([...(entry?.tags ?? []), "tts", scan.title.toLowerCase()])],
-        units: [...new Set([...(entry?.units ?? []), ...m.names])].slice(0, 40),
-        ...(m.description && !entry?.description ? { description: m.description } : {}),
-      });
+      const r = await importTtsModel({ ...m, kind: kinds[m.key] ?? m.kind }, folder, scan.title);
+      if (r === "missing") missing++;
+      else if (r === "failed") failed++;
+      else added++;
     }
     setProgress(null);
     const parts = [
@@ -230,18 +209,9 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
             </button>
           </div>
           {progress && <p className="muted small">{progress}</p>}
+          <TtsWholeTable save={save} folder={folder} busy={!!progress} onDone={onDone} />
         </>
       )}
     </div>
   );
-}
-
-/** A file from the web, if its host lets this page have it. */
-async function download(url: string): Promise<Blob | undefined> {
-  try {
-    const r = await fetch(downloadUrl(url));
-    return r.ok ? await r.blob() : undefined;
-  } catch {
-    return undefined;
-  }
 }

@@ -36,13 +36,23 @@ export interface TtsScan {
   bundles: number;
 }
 
-interface TtsObject {
+export interface TtsObject {
   Name?: string;
   Nickname?: string;
   Description?: string;
   Locked?: boolean;
   Tags?: string[];
-  Transform?: { scaleX?: number; scaleY?: number; scaleZ?: number };
+  Transform?: {
+    posX?: number;
+    posY?: number;
+    posZ?: number;
+    rotX?: number;
+    rotY?: number;
+    rotZ?: number;
+    scaleX?: number;
+    scaleY?: number;
+    scaleZ?: number;
+  };
   CustomMesh?: { MeshURL?: string; DiffuseURL?: string; TypeIndex?: number };
   ContainedObjects?: TtsObject[];
   ChildObjects?: TtsObject[];
@@ -54,31 +64,53 @@ const TERRAIN_WORDS =
 /** CustomMesh.TypeIndex for a board. */
 const BOARD = 4;
 
-export function scanSave(json: unknown): TtsScan {
+/** A custom model's files and size, and the key the same model goes by everywhere in a save. */
+export function customOf(
+  o: TtsObject,
+): { key: string; mesh: string; diffuse?: string; scale: number } | null {
+  const mesh = o.CustomMesh?.MeshURL?.trim();
+  if (!mesh) return null;
+  const diffuse = o.CustomMesh?.DiffuseURL?.trim() || undefined;
+  const t = o.Transform ?? {};
+  const scale = round((Math.abs(t.scaleX ?? 1) + Math.abs(t.scaleY ?? 1) + Math.abs(t.scaleZ ?? 1)) / 3) || 1;
+  return { key: `${mesh}|${diffuse ?? ""}|${scale}`, mesh, ...(diffuse ? { diffuse } : {}), scale };
+}
+
+/** A guess the player can change: locked objects, boards and terrain words are terrain. */
+export function looksLikeTerrain(o: TtsObject): boolean {
+  return (
+    o.CustomMesh?.TypeIndex === BOARD ||
+    !!o.Locked ||
+    TERRAIN_WORDS.test(cleanText(o.Nickname)) ||
+    (o.Tags ?? []).some((tag) => TERRAIN_WORDS.test(tag))
+  );
+}
+
+/** A save's objects, or an error saying it isn't one. */
+export function saveObjects(json: unknown): { title: string; objects: TtsObject[] } {
   const save = (json ?? {}) as { SaveName?: string; GameMode?: string; ObjectStates?: TtsObject[] };
   if (!Array.isArray(save.ObjectStates))
     throw new Error("This isn't a Tabletop Simulator save: it has no objects.");
+  return {
+    title: cleanText(save.SaveName) || cleanText(save.GameMode) || "Tabletop Simulator save",
+    objects: save.ObjectStates,
+  };
+}
+
+export function scanSave(json: unknown): TtsScan {
+  const save = saveObjects(json);
   const found = new Map<string, TtsModel & { tally: Map<string, number> }>();
   let bundles = 0;
   const visit = (o: TtsObject, bag?: string) => {
     if (!o || typeof o !== "object") return;
     if (o.Name === "Custom_AssetBundle") bundles++;
     const nickname = cleanText(o.Nickname);
-    const mesh = o.CustomMesh?.MeshURL?.trim();
-    if (mesh) {
-      const diffuse = o.CustomMesh?.DiffuseURL?.trim() || undefined;
-      const t = o.Transform ?? {};
-      const scale =
-        round((Math.abs(t.scaleX ?? 1) + Math.abs(t.scaleY ?? 1) + Math.abs(t.scaleZ ?? 1)) / 3) || 1;
-      const key = `${mesh}|${diffuse ?? ""}|${scale}`;
+    const custom = customOf(o);
+    if (custom) {
+      const { key, mesh, diffuse, scale } = custom;
       let m = found.get(key);
       if (m) m.count++;
       else {
-        const terrain =
-          o.CustomMesh?.TypeIndex === BOARD ||
-          !!o.Locked ||
-          TERRAIN_WORDS.test(nickname) ||
-          (o.Tags ?? []).some((tag) => TERRAIN_WORDS.test(tag));
         m = {
           key,
           name: "",
@@ -87,7 +119,7 @@ export function scanSave(json: unknown): TtsScan {
           diffuse,
           scale,
           count: 1,
-          kind: terrain ? "terrain" : "miniature",
+          kind: looksLikeTerrain(o) ? "terrain" : "miniature",
           tally: new Map(),
         };
         found.set(key, m);
@@ -103,20 +135,20 @@ export function scanSave(json: unknown): TtsScan {
     for (const c of o.ChildObjects ?? []) visit(c, bag);
     for (const s of Object.values(o.States ?? {})) visit(s, bag);
   };
-  for (const o of save.ObjectStates) visit(o);
+  for (const o of save.objects) visit(o);
   const models = [...found.values()].map(({ tally, ...m }) => {
     const names = [...tally.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
     return { ...m, names, name: names[0] ?? fileStem(m.mesh) ?? "TTS model" };
   });
   return {
-    title: cleanText(save.SaveName) || cleanText(save.GameMode) || "Tabletop Simulator save",
+    title: save.title,
     models: models.sort((a, b) => a.name.localeCompare(b.name)),
     bundles,
   };
 }
 
 const MAX_DESCRIPTION = 400;
-const GENERIC_BAG = /^(bag|infinite bag|deck|box|container)$/i;
+export const GENERIC_BAG = /^(bag|infinite bag|deck|box|container)$/i;
 
 /**
  * TTS text without its markup: BBCode and colours ("[b]", "[ff0000]", "[-]")

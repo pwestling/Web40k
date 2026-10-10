@@ -120,7 +120,7 @@ function Figures() {
   const [packName, setPackName] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tts, setTts] = useState(false);
+  const [tts, setTts] = useState(() => !!useLibraryOpen.getState().tts);
 
   const all = Object.values(entries).sort((a, b) => a.name.localeCompare(b.name));
   const tags = [...new Set(all.flatMap((e) => e.tags))].sort();

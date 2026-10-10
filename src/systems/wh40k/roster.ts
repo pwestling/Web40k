@@ -36,6 +36,8 @@ export interface ImportedModel {
   look?: StandInLook;
   /** Its height in inches, for line of sight; from the base when missing. */
   height?: number;
+  /** Where it stood on the table it came from (a TTS save, #73): deployed there, on the deploying side. */
+  at?: { x: number; y: number; facing: number };
 }
 
 export interface ImportedUnit {

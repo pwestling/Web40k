@@ -1633,6 +1633,121 @@ const checks = {
     return page.errors;
   },
 
+  async "tts-table"() {
+    const { page, context } = await device();
+    // A box OBJ: `w` × `h` × `d`, its footprint centred `dx` along x from the file's origin.
+    const box = (w, h, d, dx = 0) => {
+      const v = [];
+      for (const y of [0, h])
+        for (const z of [-d / 2, d / 2]) for (const x of [-w / 2, w / 2]) v.push(`v ${x + dx} ${y} ${z}`);
+      const f = ["1 2 4 3", "5 7 8 6", "1 5 6 2", "3 4 8 7", "1 3 7 5", "2 6 8 4"].map((q) => `f ${q}`);
+      return [...v, ...f].join("\n") + "\n";
+    };
+    const meshes = {
+      "https://example.com/boy.obj": box(1.2, 1.6, 1.2),
+      "https://example.com/marine.obj": box(1.25, 1.8, 1.25),
+      "https://example.com/ruin.obj": box(6, 4, 1, 2),
+    };
+    await context.route("https://example.com/**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/plain",
+        headers: { "access-control-allow-origin": "*" },
+        body: meshes[route.request().url()] ?? "",
+      }),
+    );
+    const fig = (nickname, x, z, rotY, mesh) => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: mesh, TypeIndex: 1 },
+    });
+    const save = {
+      SaveName: "Smoke Table",
+      ObjectStates: [
+        fig("Ork Boy", -10, -15, 0, "https://example.com/boy.obj"),
+        fig("Ork Boy", -8, -15, 0, "https://example.com/boy.obj"),
+        fig("Intercessor", 4, 15, 180, "https://example.com/marine.obj"),
+        fig("Intercessor", 6, 15, 180, "https://example.com/marine.obj"),
+        { ...fig("Ruined wall", 0, 0, 90, "https://example.com/ruin.obj"), Locked: true },
+      ],
+    };
+    const path = join(files, "tts-save.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await page.locator(".tts-import").waitFor();
+    await page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    const whole = page.locator(".tts-table");
+    if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-1.png") });
+    await whole.getByText("1 piece of terrain, 2 units on the table, 2 armies").waitFor();
+    await whole.getByRole("button", { name: "Open it as a game" }).click();
+    await page.locator(".topbar").waitFor({ timeout: 30_000 });
+    // The production build keeps its state to itself: read what was saved to the table library and shelf.
+    const got = await page.waitForFunction(
+      async () => {
+        const all = (db, store) =>
+          new Promise((resolve) => {
+            const req = indexedDB.open(db);
+            req.onsuccess = () => {
+              try {
+                const q = req.result.transaction(store).objectStore(store).getAll();
+                q.onsuccess = () => resolve(q.result);
+                q.onerror = () => resolve([]);
+              } catch {
+                resolve([]);
+              }
+            };
+            req.onerror = () => resolve([]);
+          });
+        const tables = await all("open-battle-tables", "tables");
+        const armies = await all("open-battle-shelf", "armies");
+        const tb = tables.find((x) => x.name === "Smoke Table");
+        if (!tb || armies.length < 2) return null;
+        return {
+          terrain: tb.layout.terrain.map((p) => [
+            p.name,
+            Math.round(p.position.x * 10) / 10,
+            Math.round(p.position.y * 10) / 10,
+          ]),
+          models: armies
+            .flatMap((a) =>
+              a.roster.units.flatMap((u) =>
+                u.models.map((m) => [m.profile.name, m.at.x, m.at.y, Math.round(m.at.facing * 100) / 100]),
+              ),
+            )
+            .sort(),
+          table: tb.name,
+        };
+      },
+      null,
+      { timeout: 30_000 },
+    );
+    const { terrain, models, table } = await got.jsonValue();
+    const want = JSON.stringify({
+      terrain: [["Ruined wall", 0, -2]],
+      models: [
+        ["Intercessor", 4, -15, 0],
+        ["Intercessor", 6, -15, 0],
+        ["Ork Boy", -10, 15, 3.14],
+        ["Ork Boy", -8, 15, 3.14],
+      ],
+      table: "Smoke Table",
+    });
+    if (JSON.stringify({ terrain, models, table }) !== want)
+      throw new Error(`table came in as ${JSON.stringify({ terrain, models, table })}`);
+    // And the game opened on it, both armies on the table in their figures.
+    await page.locator("option:checked", { hasText: "Smoke Table" }).first().waitFor({ state: "attached" });
+    await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor();
+    await page.locator(".plate", { hasText: "Intercessor" }).first().waitFor();
+    if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-2.png") });
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

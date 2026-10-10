@@ -25,6 +25,7 @@ export interface SpawnableUnit {
     base?: BaseShape;
     look?: StandInLook;
     height?: number;
+    at?: { x: number; y: number; facing: number };
   }[];
   base: BaseShape;
   /** Deploy as a ranked block this many models wide (rank-and-flank games). */
@@ -75,10 +76,47 @@ export function spawnIntents(
       return { x: m.position.x, y: m.position.y, r: Math.max(s.width, s.depth) / 2 };
     });
 
+  // Models that bring where they stood (a TTS table, #73) stand there, turned through the centre
+  // when the army stood on the other side's half.
+  const stood = units.flatMap((u) => (u.files ? [] : u.models.flatMap((m) => (m.at ? [m.at] : []))));
+  const flip = stood.length > 0 && sign * stood.reduce((s, a) => s + a.y, 0) < 0;
+  const standing = (at: { x: number; y: number; facing: number }) =>
+    flip
+      ? { position: { x: -at.x, y: -at.y }, facing: at.facing + Math.PI }
+      : { position: { x: at.x, y: at.y }, facing: at.facing };
+
   return units.map((u, ui) => {
     // Spread across the zone: each unit looks first at its own share of the width.
     const where: Where = { hx, hy, sign, zone, prefer: (share.index + (ui + 0.5) / units.length) / share.of };
     if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, where, army);
+    if (u.models.length && u.models.every((m) => m.at)) {
+      const unitId = `${idPrefix}-${ui}`;
+      const models: Model[] = u.models.map((m, i) => ({
+        id: `${unitId}-${i}`,
+        owner,
+        label: m.profile.name,
+        ...standing(m.at!),
+        base: m.base ?? u.base,
+        profile: m.profile,
+        weapons: m.weapons,
+        ...(m.look ? { look: m.look } : {}),
+        ...(m.height ? { height: m.height } : {}),
+      }));
+      for (const m of models) {
+        const s = baseSizeInches(m.base);
+        taken.push({ x: m.position.x, y: m.position.y, r: Math.max(s.width, s.depth) / 2 });
+      }
+      const unit: Unit = {
+        id: unitId,
+        owner,
+        name: u.name,
+        modelIds: [],
+        formation: { kind: "skirmish" },
+        sheet: u.sheet,
+        ...(army ? { army } : {}),
+      };
+      return { type: "unit/add", unit, models } satisfies Intent;
+    }
     const size = baseSizeInches(u.base);
     const step = Math.max(size.width, size.depth) + GAP;
     const perRow = Math.max(1, Math.min(u.models.length, 5));
