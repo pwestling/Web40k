@@ -448,27 +448,27 @@ msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 msgid "Setting up the table…"
 msgstr "Installation de la table…"
 
-#: src/GameScreen.tsx:336
+#: src/GameScreen.tsx:338
 #, fuzzy
 msgid "Fully visible"
 msgstr "Entièrement visible"
 
-#: src/GameScreen.tsx:337
+#: src/GameScreen.tsx:339
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Partiellement visible ou à couvert"
 
-#: src/GameScreen.tsx:338
+#: src/GameScreen.tsx:340
 #, fuzzy
 msgid "Hidden"
 msgstr "Caché"
 
-#: src/GameScreen.tsx:339
+#: src/GameScreen.tsx:341
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:346
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -477,17 +477,17 @@ msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 msgid "Open"
 msgstr "Dégagé"
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:347
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Gênant : couvert"
 
-#: src/GameScreen.tsx:346
+#: src/GameScreen.tsx:348
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Bloquant : pas de vue"
 
-#: src/GameScreen.tsx:351
+#: src/GameScreen.tsx:353
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Quitter la vue de la figurine (Esc)"
@@ -2696,7 +2696,7 @@ msgstr "Rondes suisses sans serveur : ton navigateur publie l'événement et app
 #: src/figures/FigureLibrary.tsx:383
 #: src/player/PlayerCard.tsx:127
 #: src/standees/StandeeMaker.tsx:254
-#: src/ui/PlayPanel.tsx:269
+#: src/ui/PlayPanel.tsx:273
 #: src/ui/TeachRule.tsx:120
 #, fuzzy
 msgid "Name"
@@ -5271,42 +5271,42 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] "signe {signed} résultat sur {n}"
 msgstr[1] "signe {signed} résultats sur {n}"
 
-#: src/render/Board.tsx:1136
+#: src/render/Board.tsx:1150
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label} : tenue par {player}"
 
-#: src/render/Board.tsx:1138
+#: src/render/Board.tsx:1152
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label} : contestée"
 
-#: src/render/Board.tsx:1139
+#: src/render/Board.tsx:1153
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label} : tenue par personne"
 
-#: src/render/Board.tsx:1200
+#: src/render/Board.tsx:1214
 #, fuzzy
 msgid "Not visible"
 msgstr "Non visible"
 
-#: src/render/Board.tsx:1202
+#: src/render/Board.tsx:1216
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} visibles · {cover} à couvert"
 
-#: src/render/Board.tsx:1207
+#: src/render/Board.tsx:1221
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} visibles"
 
-#: src/render/Board.tsx:1677
+#: src/render/Board.tsx:1695
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Mouvement {inches}\""
 
-#: src/render/Board.tsx:356
+#: src/render/Board.tsx:370
 #, fuzzy
 msgid "The table"
 msgstr "La table"
@@ -5673,7 +5673,7 @@ msgstr "Chapitres"
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:115
-#: src/ui/PlayPanel.tsx:80
+#: src/ui/PlayPanel.tsx:84
 #: src/ui/TableWarnings.tsx:99
 #: src/ui/WhatNow.tsx:416
 #, fuzzy
@@ -5686,7 +5686,7 @@ msgid "Hide notes and chapters"
 msgstr "Masquer les notes et chapitres"
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:55
+#: src/ui/PlayPanel.tsx:59
 #: src/ui/TerrainPanel.tsx:353
 #: src/ui/TopBar.tsx:231
 #: src/ui/WhatNow.tsx:46
@@ -7188,8 +7188,8 @@ msgid "This table is for another game"
 msgstr "Cette table est pour un autre jeu"
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:227
-#: src/ui/PlayPanel.tsx:306
+#: src/ui/PlayPanel.tsx:231
+#: src/ui/PlayPanel.tsx:310
 #, fuzzy
 msgid "Use"
 msgstr "Utiliser"
@@ -8616,8 +8616,8 @@ msgid "Automated:"
 msgstr "Automatisé :"
 
 #: src/ui/AutoAbilities.tsx:604
-#: src/ui/PlayPanel.tsx:449
-#: src/ui/PlayPanel.tsx:498
+#: src/ui/PlayPanel.tsx:453
+#: src/ui/PlayPanel.tsx:502
 #, fuzzy
 msgid "Change"
 msgstr "Modifier"
@@ -8634,17 +8634,17 @@ msgid "Not quite?"
 msgstr "Pas tout à fait ?"
 
 #: src/ui/AutoAbilities.tsx:626
-#: src/ui/PlayPanel.tsx:409
-#: src/ui/PlayPanel.tsx:495
+#: src/ui/PlayPanel.tsx:413
+#: src/ui/PlayPanel.tsx:499
 #: src/ui/TeachRule.tsx:94
 #, fuzzy
 msgid "Teach it this rule"
 msgstr "Apprenez-lui cette règle"
 
 #: src/ui/AutoAbilities.tsx:629
-#: src/ui/PlayPanel.tsx:412
-#: src/ui/PlayPanel.tsx:449
-#: src/ui/PlayPanel.tsx:498
+#: src/ui/PlayPanel.tsx:416
+#: src/ui/PlayPanel.tsx:453
+#: src/ui/PlayPanel.tsx:502
 #, fuzzy
 msgid "Teach it"
 msgstr "Apprendre"
@@ -9468,7 +9468,7 @@ msgid "on this army"
 msgstr "dans cette armée"
 
 #: src/ui/FactionPacks.tsx:119
-#: src/ui/PlayPanel.tsx:403
+#: src/ui/PlayPanel.tsx:407
 #, fuzzy
 msgid "Apply"
 msgstr "Appliquer"
@@ -11555,185 +11555,188 @@ msgstr "En attente de {names}"
 msgid "Load package…"
 msgstr "Charger un paquet…"
 
-#: src/ui/PlayPanel.tsx:114
+#: src/ui/PlayPanel.tsx:118
 #: src/ui/TeachRule.tsx:133
 #, fuzzy
 msgid "CP"
 msgstr "CP"
 
-#: src/ui/PlayPanel.tsx:115
+#: src/ui/PlayPanel.tsx:119
 #, fuzzy
 msgid "Other stratagem…"
 msgstr "Autre stratagème…"
 
-#: src/ui/PlayPanel.tsx:127
+#: src/ui/PlayPanel.tsx:131
 #, fuzzy
 msgid "No core stratagems fit this moment."
 msgstr "Aucun stratagème de base ne convient à ce moment."
 
-#: src/ui/PlayPanel.tsx:143
+#: src/ui/PlayPanel.tsx:147
 #, fuzzy
 msgid "No {cards} in this phase."
 msgstr "Pas de {cards} dans cette phase."
 
-#: src/ui/PlayPanel.tsx:151
+#: src/ui/PlayPanel.tsx:155
 #, fuzzy
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] "{n} inutilisable maintenant"
 msgstr[1] "{n} inutilisables maintenant"
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:169
 #, fuzzy
 msgid "⋯ Something not listed?"
 msgstr "⋯ Quelque chose n'est pas listé ?"
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:184
 #, fuzzy
 msgid "can react: {stratagems}"
 msgstr "peut réagir : {stratagems}"
 
-#: src/ui/PlayPanel.tsx:181
+#: src/ui/PlayPanel.tsx:185
 #, fuzzy
 msgid "nothing to react with"
 msgstr "rien pour réagir"
 
-#: src/ui/PlayPanel.tsx:182
+#: src/ui/PlayPanel.tsx:186
 #, fuzzy
 msgid "({cp} CP)"
 msgstr "({cp} CP)"
 
-#: src/ui/PlayPanel.tsx:192
+#: src/ui/PlayPanel.tsx:196
 #, fuzzy
 msgid "0 CP left"
 msgstr "Plus de CP"
 
-#: src/ui/PlayPanel.tsx:192
+#: src/ui/PlayPanel.tsx:196
+#: src/ui/StratagemHand.tsx:250
+#: src/ui/StratagemHand.tsx:250
+#: src/ui/StratagemHand.tsx:254
 #, fuzzy
 msgid "{cp} CP"
 msgstr "{cp} CP"
 
-#: src/ui/PlayPanel.tsx:221
+#: src/ui/PlayPanel.tsx:225
 #, fuzzy
 msgid "Pick a unit first"
 msgstr "Choisis d'abord une unité"
 
-#: src/ui/PlayPanel.tsx:234
+#: src/ui/PlayPanel.tsx:238
 #, fuzzy
 msgid "On which unit…"
 msgstr "Sur quelle unité…"
 
-#: src/ui/PlayPanel.tsx:279
+#: src/ui/PlayPanel.tsx:283
 #: src/ui/TeachRule.tsx:125
 #, fuzzy
 msgid "Cost"
 msgstr "Coût"
 
-#: src/ui/PlayPanel.tsx:295
+#: src/ui/PlayPanel.tsx:299
 #, fuzzy
 msgid "Not enough {resource}"
 msgstr "Pas assez de {resource}"
 
-#: src/ui/PlayPanel.tsx:297
+#: src/ui/PlayPanel.tsx:301
 #, fuzzy
 msgid "Name it first"
 msgstr "Nommez-le d'abord"
 
-#: src/ui/PlayPanel.tsx:310
+#: src/ui/PlayPanel.tsx:314
 #, fuzzy
 msgid "Dice to spend"
 msgstr "Dés à dépenser"
 
-#: src/ui/PlayPanel.tsx:313
+#: src/ui/PlayPanel.tsx:317
 #, fuzzy
 msgid "Spends these {resource}:"
 msgstr "Dépense ces {resource} :"
 
-#: src/ui/PlayPanel.tsx:314
+#: src/ui/PlayPanel.tsx:318
 #, fuzzy
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr "Choisis les {resource} à dépenser, sinon les plus bas partent :"
 
-#: src/ui/PlayPanel.tsx:380
+#: src/ui/PlayPanel.tsx:384
 #, fuzzy
 msgid "{unit} and {n} other unit"
 msgid_plural "{unit} and {n} other units"
 msgstr[0] "{unit} et {n} autre unité"
 msgstr[1] "{unit} et {n} autres unités"
 
-#: src/ui/PlayPanel.tsx:383
+#: src/ui/PlayPanel.tsx:387
 #, fuzzy
 msgid " and "
 msgstr " et "
 
-#: src/ui/PlayPanel.tsx:396
+#: src/ui/PlayPanel.tsx:400
 #, fuzzy
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr "Le marquer comme résolu à la main ; il apparaît dans le journal"
 
-#: src/ui/PlayPanel.tsx:446
+#: src/ui/PlayPanel.tsx:450
 #, fuzzy
 msgid "Teach the app what this stratagem does"
 msgstr "Apprenez à l'app ce que fait ce stratagème"
 
-#: src/ui/PlayPanel.tsx:446
+#: src/ui/PlayPanel.tsx:450
 #, fuzzy
 msgid "A stratagem your list didn't bring"
 msgstr "Un stratagème que votre liste n'a pas apporté"
 
-#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:453
 #: src/ui/TeachRule.tsx:98
 #, fuzzy
 msgid "Teach a stratagem"
 msgstr "Apprendre un stratagème"
 
-#: src/ui/PlayPanel.tsx:480
+#: src/ui/PlayPanel.tsx:484
 #, fuzzy
 msgid "{n} army rule"
 msgid_plural "{n} army rules"
 msgstr[0] "{n} règle d'armée"
 msgstr[1] "{n} règles d'armée"
 
-#: src/ui/PlayPanel.tsx:488
+#: src/ui/PlayPanel.tsx:492
 #, fuzzy
 msgid "The app plays it"
 msgstr "L'app la joue"
 
-#: src/ui/PlayPanel.tsx:490
+#: src/ui/PlayPanel.tsx:494
 #, fuzzy
 msgid "A reminder; you play it"
 msgstr "Un rappel ; vous la jouez vous-même"
 
-#: src/ui/PlayPanel.tsx:66
+#: src/ui/PlayPanel.tsx:70
 #, fuzzy
 msgid "{phase}: {cards}"
 msgstr "{phase} : {cards}"
 
-#: src/ui/PlayPanel.tsx:67
+#: src/ui/PlayPanel.tsx:71
 #, fuzzy
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] "{phase} : {n} stratagème"
 msgstr[1] "{phase} : {n} stratagèmes"
 
-#: src/ui/PlayPanel.tsx:68
+#: src/ui/PlayPanel.tsx:72
 #, fuzzy
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] "{n} aptitude"
 msgstr[1] "{n} aptitudes"
 
-#: src/ui/PlayPanel.tsx:77
+#: src/ui/PlayPanel.tsx:81
 #, fuzzy
 msgid "{phase}: {cards} and abilities"
 msgstr "{phase} : {cards} et capacités"
 
-#: src/ui/PlayPanel.tsx:78
+#: src/ui/PlayPanel.tsx:82
 #, fuzzy
 msgid "{phase}: stratagems and abilities"
 msgstr "{phase} : stratagèmes et aptitudes"
 
-#: src/ui/PlayPanel.tsx:87
+#: src/ui/PlayPanel.tsx:91
 #, fuzzy
 msgid "No abilities flagged for this phase."
 msgstr "Aucune aptitude signalée pour cette phase."
@@ -12812,6 +12815,67 @@ msgstr "Retirer {status}"
 #, fuzzy
 msgid "Mark {status}"
 msgstr "Marquer {status}"
+
+#: src/ui/StratagemHand.tsx:260
+#, fuzzy
+msgid "Stratagems · {n} ready"
+msgstr "Stratagèmes · {n} prêts"
+
+#: src/ui/StratagemHand.tsx:261
+#, fuzzy
+msgid "Stratagems · {n} ready later"
+msgstr "Stratagèmes · {n} prêts plus tard"
+
+#: src/ui/StratagemHand.tsx:264
+#, fuzzy
+msgid "Stratagems"
+msgstr "Stratagèmes"
+
+#: src/ui/StratagemHand.tsx:316
+#, fuzzy
+msgid "used"
+msgstr "utilisé"
+
+#: src/ui/StratagemHand.tsx:336
+#, fuzzy
+msgid "Pick a unit for {name} (Esc to cancel)"
+msgstr "Choisis une unité pour {name} (Échap pour annuler)"
+
+#: src/ui/StratagemHand.tsx:423
+#, fuzzy
+msgid "{n} CP"
+msgstr "{n} CP"
+
+#: src/ui/StratagemHand.tsx:448
+#, fuzzy
+msgid "{who} on {unit}"
+msgstr "{who} sur {unit}"
+
+#: src/ui/StratagemHand.tsx:66
+#, fuzzy
+msgid "Drop it on a unit"
+msgstr "Pose-la sur une unité"
+
+#: src/ui/StratagemHand.tsx:69
+#, fuzzy
+msgid "{name} can't go on {unit}"
+msgstr "{name} ne peut pas aller sur {unit}"
+
+#: src/ui/StratagemHand.tsx:71
+#, fuzzy
+msgid "Play on {unit} · {cost}"
+msgstr "Jouer sur {unit} · {cost}"
+
+#: src/ui/StratagemHand.tsx:73
+#, fuzzy
+msgid "Drop it on the table"
+msgstr "Pose-la sur la table"
+
+#: src/ui/StratagemHand.tsx:75
+#: src/ui/StratagemHand.tsx:346
+#, fuzzy
+msgid "Play {name} · {cost}"
+msgstr "Jouer {name} · {cost}"
 
 #: src/ui/SystemPanels.tsx:103
 #, fuzzy

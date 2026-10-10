@@ -284,6 +284,24 @@ export function thunk(n = 1, dull = false) {
   }
 }
 
+/** A command point spent: a soft clink (PX stratagem hand). */
+export function coin() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  tone(a, t, { freq: 2300, to: 2100, dur: 0.04, gain: 0.05, type: "triangle" });
+  tone(a, t + 0.012, { freq: 3400, dur: 0.03, gain: 0.025 });
+}
+
+/** A card turned face up: a crisp flip, for the opponent's stratagem (PX stratagem hand). */
+export function flip() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  burst(a, t, { freq: 4200, q: 0.8, dur: 0.05, gain: 0.07, type: "highpass" });
+  burst(a, t + 0.025, { freq: 2600, q: 2, dur: 0.02, gain: 0.05 });
+}
+
 /** A charge striking home: the low thump with a short crack on top. */
 export function clash() {
   const a = audio();

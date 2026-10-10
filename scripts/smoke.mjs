@@ -2373,6 +2373,45 @@ const checks = {
     return page.errors;
   },
 
+  // The stratagem hand (UX 499): a card dragged onto the table is played, and lands.
+  async "stratagem-hand"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const card = page.locator(".stratagem-hand .hand-card.ready", { hasText: "Re-roll" }).first();
+    await card.waitFor({ timeout: 10000 });
+    const pips = await page.locator(".stratagem-hand .cp-pips .pip").count();
+    await card.hover();
+    if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "hand.png") });
+    const from = await card.boundingBox();
+    const box = await page.locator("canvas").first().boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + 20);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++)
+      await page.mouse.move(
+        from.x + from.width / 2 + ((box.x + box.width * 0.3 - from.x) * i) / 8,
+        from.y + 20 + ((box.y + box.height * 0.45 - from.y) * i) / 8,
+      );
+    await page.locator(".hand-ghost .hand-tag.ok").waitFor({ timeout: 5000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "hand-drag.png") });
+    await page.mouse.up();
+    await page.locator(".hand-reveal.mine").waitFor({ timeout: 5000 });
+    await page.waitForFunction(
+      (n) => document.querySelectorAll(".stratagem-hand .cp-pips .pip").length === n - 1,
+      pips,
+      { timeout: 5000 },
+    );
+    // Nothing left to play: the fan folds to a strip; opened, the card is still there, greyed with its clip.
+    await page.locator(".stratagem-hand .hand-strip").hover();
+    await page.locator(".stratagem-hand .hand-card.used", { hasText: "Re-roll" }).waitFor({ timeout: 5000 });
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

@@ -329,3 +329,316 @@ canvas:focus-visible {
 body.verb-ok canvas {
   cursor: crosshair;
 }
+
+/* Stratagems as a hand of cards (UX 499, PX stratagem-hand.md): a low fan along the bottom edge. */
+.stratagem-hand {
+  --hand-speed: 1;
+  position: fixed;
+  z-index: 18;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+.stratagem-hand > * {
+  pointer-events: auto;
+}
+.stratagem-hand .cp-pips {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.stratagem-hand .pip {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fde68a, #d97706 70%, #92400e);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 50%);
+}
+.stratagem-hand .hand-strip {
+  margin-bottom: 8px;
+  padding: 4px 12px;
+  border-radius: 14px 14px 4px 4px;
+  font-size: 0.85rem;
+  border-color: #2d3340;
+  background: rgb(17 20 27 / 88%);
+}
+.stratagem-hand .fan {
+  display: flex;
+  align-items: flex-end;
+  height: 112px;
+  padding: 0 30px;
+}
+.hand-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 112px;
+  height: 150px;
+  margin: 0 -14px;
+  padding: 8px 9px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.78rem;
+  color: #e5e7eb;
+  background: linear-gradient(170deg, #262c38, #171b23);
+  border: 1px solid #3a4150;
+  border-top: 3px solid var(--side, #888);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 45%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+  transform-origin: 50% 120%;
+  transform: translateY(68px) rotate(calc(var(--i, 0) * 4deg));
+  transition:
+    transform calc(120ms * var(--hand-speed)) ease-out,
+    filter calc(120ms * var(--hand-speed)),
+    box-shadow calc(120ms * var(--hand-speed));
+}
+.hand-card.ready {
+  transform: translateY(56px) rotate(calc(var(--i, 0) * 4deg));
+  box-shadow:
+    0 4px 12px rgb(0 0 0 / 45%),
+    0 0 0 1px color-mix(in srgb, var(--side, #888) 60%, transparent);
+}
+.hand-card.down {
+  filter: saturate(0.2) brightness(0.7);
+  cursor: help;
+}
+.hand-card .cost {
+  font-weight: 700;
+  color: #fbbf24;
+}
+.hand-card .name {
+  font-size: 0.85rem;
+  line-height: 1.15;
+}
+.hand-card .hint,
+.hand-card .why {
+  color: #9ca3af;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+.hand-card .why {
+  color: #fca5a5;
+}
+.hand-card .clip {
+  position: absolute;
+  top: 6px;
+  right: -18px;
+  padding: 1px 20px;
+  transform: rotate(35deg);
+  background: #6b7280;
+  color: #111;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+/* Hovered, focused or picked: it rises out of the fan, bigger, and the others lean aside. */
+.stratagem-hand .fan:hover .hand-card:not(:hover, :focus-visible, .picked) {
+  transform: translateY(72px) rotate(calc(var(--i, 0) * 6deg));
+}
+.hand-card:hover,
+.hand-card:focus-visible,
+.hand-card.picked {
+  z-index: 2;
+  height: auto;
+  min-height: 150px;
+  transform: translateY(-36px) scale(1.5);
+  transition-duration: calc(120ms * var(--hand-speed));
+  filter: none;
+}
+.hand-card:not(:hover, :focus-visible, .picked) {
+  transition-duration: calc(80ms * var(--hand-speed));
+}
+.hand-card.picked {
+  outline: 2px solid var(--side, #888);
+}
+.stratagem-hand .hand-stack {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  margin-left: 26px;
+  padding: 6px 8px;
+  font-weight: 700;
+}
+.stratagem-hand .hand-ask,
+.stratagem-hand .hand-note {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  align-items: center;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 6px 10px;
+  border: 1px solid #3a4150;
+  border-radius: 8px;
+  background: rgb(17 20 27 / 94%);
+  font-size: 0.85rem;
+}
+.stratagem-hand .hand-note {
+  bottom: 160px;
+  border-color: #7f1d1d;
+}
+.stratagem-hand.holding .fan {
+  opacity: 0.6;
+}
+/* The card in the hand, following the pointer: tilted, its label underneath. */
+.hand-ghost {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  transform: translate(-50%, -60%) rotate(-4deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.hand-ghost .hand-card {
+  height: 110px;
+  margin: 0;
+  transform: none;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 55%);
+  transition: transform calc(120ms * var(--hand-speed));
+}
+.hand-ghost.over .hand-card {
+  transform: scale(0.7);
+}
+.hand-tag {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgb(17 20 27 / 92%);
+  border: 1px solid #7f1d1d;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.hand-tag.ok {
+  border-color: var(--side, #888);
+}
+/* A card someone played: face down from the far edge, then flipped (yours just lands). */
+.hand-reveals {
+  --hand-speed: 1;
+  position: fixed;
+  z-index: 21;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  pointer-events: none;
+  perspective: 600px;
+}
+.hand-reveal {
+  position: relative;
+  width: 150px;
+  height: 104px;
+  transform-style: preserve-3d;
+}
+.hand-reveal .face,
+.hand-reveal .back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 50%);
+}
+.hand-reveal .face {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  background: linear-gradient(170deg, #262c38, #171b23);
+  border: 1px solid #3a4150;
+  border-top: 3px solid var(--side, #888);
+  font-size: 0.8rem;
+}
+.hand-reveal .face .cost {
+  color: #fbbf24;
+  font-weight: 700;
+}
+.hand-reveal .back {
+  transform: rotateY(180deg);
+  background: repeating-linear-gradient(45deg, #1f2937 0 6px, #111827 6px 12px);
+  border: 2px solid var(--side, #888);
+}
+.hand-reveal.theirs {
+  animation:
+    hand-fly calc(250ms * var(--hand-speed)) ease-out both,
+    hand-flip calc(150ms * var(--hand-speed)) ease-in calc(250ms * var(--hand-speed)) both;
+}
+.hand-reveal.mine {
+  animation: hand-land calc(180ms * var(--hand-speed)) ease-out both;
+}
+@keyframes hand-fly {
+  from {
+    translate: 0 -40vh;
+    rotate: y 180deg;
+  }
+  to {
+    translate: 0 0;
+    rotate: y 180deg;
+  }
+}
+@keyframes hand-flip {
+  from {
+    rotate: y 180deg;
+  }
+  to {
+    rotate: y 0deg;
+  }
+}
+@keyframes hand-land {
+  from {
+    translate: 0 40vh;
+    scale: 0.6;
+  }
+  to {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand-card,
+  .hand-ghost .hand-card {
+    transition: none;
+  }
+  .hand-ghost {
+    transform: translate(-50%, -60%);
+  }
+  .hand-reveal.theirs,
+  .hand-reveal.mine {
+    animation: hand-fade 150ms ease-out both;
+  }
+}
+@keyframes hand-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (max-width: 640px) {
+  .hand-card:hover,
+  .hand-card:focus-visible,
+  .hand-card.picked {
+    transform: translateY(-20px) scale(1.25);
+  }
+}
+/* The replay handle steps aside for the stratagem hand. */
+@media (min-width: 900px) {
+  body.has-hand .replaybar.tucked {
+    left: calc(50% + 330px);
+  }
+}

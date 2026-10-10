@@ -2,6 +2,7 @@ import { displayName } from "../i18n/names";
 import { RulesText } from "./RulesText";
 import { useState } from "react";
 import { narrow } from "./narrow";
+import { useHandShown } from "./StratagemHand";
 import { touch } from "./touch";
 import type { Player } from "../core";
 import {
@@ -46,7 +47,10 @@ export function PlayPanel() {
   const usable = stratagems
     ? players.reduce((n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length, 0)
     : 0;
-  const open = choice?.context === context ? choice.open : !busy && !narrow() && !touch() && usable > 0;
+  // With the hand of cards along the bottom (UX 499) the panel is the long way round: closed until asked.
+  const hand = useHandShown();
+  const open =
+    choice?.context === context ? choice.open : !busy && !narrow() && !touch() && !hand && usable > 0;
   const setOpen = (o: boolean) => setChoice({ context, open: o });
   // Players' own tool: not for spectators or replays.
   if (role === "spectator" || scrub !== null) return null;

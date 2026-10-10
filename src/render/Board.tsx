@@ -13,6 +13,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
 import { doTableVerb, tableVerb } from "../ui/tableVerbs";
+import { tablePick, useHandTargets } from "../ui/tablePick";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
 import type { GameState } from "../core";
 import {
@@ -108,12 +109,36 @@ export function Board() {
   );
 }
 
-/** Drop a model file onto a unit on the table to give the whole unit that figure. */
+/**
+ * Drop a model file onto a unit on the table to give the whole unit that figure;
+ * also tells the page what's under a screen point (`tablePick`, for the stratagem hand).
+ */
 function FigureDrop() {
   const { gl, camera, scene } = useThree();
   useEffect(() => {
     const el = gl.domElement;
     const ray = new Raycaster();
+    const modelAt = (x: number, y: number): string | null => {
+      const rect = el.getBoundingClientRect();
+      ray.setFromCamera(
+        new Vector2(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1),
+        camera,
+      );
+      for (const hit of ray.intersectObjects(scene.children, true)) {
+        // Model meshes are instanced: userData.modelIds maps instanceId to the model.
+        const ids = hit.object.userData.modelIds as string[] | undefined;
+        const modelId = ids && hit.instanceId !== undefined ? ids[hit.instanceId] : undefined;
+        if (modelId) return modelId;
+      }
+      return null;
+    };
+    const onCanvas = (x: number, y: number) => document.elementFromPoint(x, y) === el;
+    tablePick.unitAt = (x, y) => {
+      if (!onCanvas(x, y)) return null;
+      const id = modelAt(x, y);
+      return (id && useStore.getState().game.models[id]?.unitId) || null;
+    };
+    tablePick.onTable = onCanvas;
     const over = (e: DragEvent) => {
       if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
     };
@@ -121,31 +146,20 @@ function FigureDrop() {
       const file = e.dataTransfer?.files[0];
       if (!file) return;
       e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      ray.setFromCamera(
-        new Vector2(
-          ((e.clientX - rect.left) / rect.width) * 2 - 1,
-          -((e.clientY - rect.top) / rect.height) * 2 + 1,
-        ),
-        camera,
-      );
-      for (const hit of ray.intersectObjects(scene.children, true)) {
-        // Model meshes are instanced: userData.modelIds maps instanceId to the model.
-        const ids = hit.object.userData.modelIds as string[] | undefined;
-        const modelId = ids && hit.instanceId !== undefined ? ids[hit.instanceId] : undefined;
-        if (!modelId) continue;
-        const { game, select } = useStore.getState();
-        const model = game.models[modelId];
-        const unit = model?.unitId ? game.units[model.unitId] : undefined;
-        const models = unit ? unit.modelIds.flatMap((id) => game.models[id] ?? []) : model ? [model] : [];
-        if (unit) select(unit.id);
-        if (unit) void useAssets.getState().dressUnit(unit.id, unitKeys(models), file);
-        return;
-      }
+      const modelId = modelAt(e.clientX, e.clientY);
+      if (!modelId) return;
+      const { game, select } = useStore.getState();
+      const model = game.models[modelId];
+      const unit = model?.unitId ? game.units[model.unitId] : undefined;
+      const models = unit ? unit.modelIds.flatMap((id) => game.models[id] ?? []) : model ? [model] : [];
+      if (unit) select(unit.id);
+      if (unit) void useAssets.getState().dressUnit(unit.id, unitKeys(models), file);
     };
     el.addEventListener("dragover", over);
     el.addEventListener("drop", drop);
     return () => {
+      tablePick.unitAt = () => null;
+      tablePick.onTable = () => false;
       el.removeEventListener("dragover", over);
       el.removeEventListener("drop", drop);
     };
@@ -1293,6 +1307,7 @@ function Scene() {
 
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
+  const handTargets = useHandTargets((s) => s.ids);
 
   // Every model on the table as drawn this frame (dragged ones where they're held).
   const modelDraws = useMemo(
@@ -1315,7 +1330,9 @@ function Scene() {
             // The stand-in is as tall as the model's line-of-sight height.
             height: figure ?? Math.max(0.3, modelHeight(model) - 0.2),
             dressed: figure !== undefined,
-            targetable: !!draft?.picking && model.unitId !== draft.attackerId,
+            targetable:
+              (!!draft?.picking && model.unitId !== draft.attackerId) ||
+              (!!model.unitId && !!handTargets?.includes(model.unitId)),
           },
         ];
       }),
@@ -1331,6 +1348,7 @@ function Scene() {
       positions,
       shownZ,
       heights,
+      handTargets,
       draft,
     ],
   );

@@ -39,6 +39,7 @@ import { PackagePanel } from "./ui/PackagePanel";
 import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
+import { StratagemHand } from "./ui/StratagemHand";
 import { TableTag } from "./ui/TableTag";
 import { useTableTalk } from "./talk/talk";
 import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
@@ -308,6 +309,7 @@ export function GameScreen({ started }: { started: boolean }) {
           {/* Nobody to talk to in hotseat or against the computer (UX 83). */}
           {!editing && !VIEWER && !hotseat && <TalkPanel />}
           {!VIEWER && <TableTag />}
+          {!editing && !VIEWER && <StratagemHand />}
           {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
           <Moments />

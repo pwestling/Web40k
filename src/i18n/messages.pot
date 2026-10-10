@@ -374,23 +374,23 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:336
+#: src/GameScreen.tsx:338
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:337
+#: src/GameScreen.tsx:339
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:338
+#: src/GameScreen.tsx:340
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:339
+#: src/GameScreen.tsx:341
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:346
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -398,15 +398,15 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:347
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:346
+#: src/GameScreen.tsx:348
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:351
+#: src/GameScreen.tsx:353
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -2225,7 +2225,7 @@ msgstr ""
 #: src/figures/FigureLibrary.tsx:383
 #: src/player/PlayerCard.tsx:127
 #: src/standees/StandeeMaker.tsx:254
-#: src/ui/PlayPanel.tsx:269
+#: src/ui/PlayPanel.tsx:273
 #: src/ui/TeachRule.tsx:120
 msgid "Name"
 msgstr ""
@@ -4321,35 +4321,35 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1136
+#: src/render/Board.tsx:1150
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1138
+#: src/render/Board.tsx:1152
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1139
+#: src/render/Board.tsx:1153
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1200
+#: src/render/Board.tsx:1214
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1202
+#: src/render/Board.tsx:1216
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1207
+#: src/render/Board.tsx:1221
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1677
+#: src/render/Board.tsx:1695
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:356
+#: src/render/Board.tsx:370
 msgid "The table"
 msgstr ""
 
@@ -4648,7 +4648,7 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:115
-#: src/ui/PlayPanel.tsx:80
+#: src/ui/PlayPanel.tsx:84
 #: src/ui/TableWarnings.tsx:99
 #: src/ui/WhatNow.tsx:416
 msgid "Hide"
@@ -4659,7 +4659,7 @@ msgid "Hide notes and chapters"
 msgstr ""
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:55
+#: src/ui/PlayPanel.tsx:59
 #: src/ui/TerrainPanel.tsx:353
 #: src/ui/TopBar.tsx:231
 #: src/ui/WhatNow.tsx:46
@@ -5876,8 +5876,8 @@ msgid "This table is for another game"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:227
-#: src/ui/PlayPanel.tsx:306
+#: src/ui/PlayPanel.tsx:231
+#: src/ui/PlayPanel.tsx:310
 msgid "Use"
 msgstr ""
 
@@ -7046,8 +7046,8 @@ msgid "Automated:"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:604
-#: src/ui/PlayPanel.tsx:449
-#: src/ui/PlayPanel.tsx:498
+#: src/ui/PlayPanel.tsx:453
+#: src/ui/PlayPanel.tsx:502
 msgid "Change"
 msgstr ""
 
@@ -7061,16 +7061,16 @@ msgid "Not quite?"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:626
-#: src/ui/PlayPanel.tsx:409
-#: src/ui/PlayPanel.tsx:495
+#: src/ui/PlayPanel.tsx:413
+#: src/ui/PlayPanel.tsx:499
 #: src/ui/TeachRule.tsx:94
 msgid "Teach it this rule"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:629
-#: src/ui/PlayPanel.tsx:412
-#: src/ui/PlayPanel.tsx:449
-#: src/ui/PlayPanel.tsx:498
+#: src/ui/PlayPanel.tsx:416
+#: src/ui/PlayPanel.tsx:453
+#: src/ui/PlayPanel.tsx:502
 msgid "Teach it"
 msgstr ""
 
@@ -7736,7 +7736,7 @@ msgid "on this army"
 msgstr ""
 
 #: src/ui/FactionPacks.tsx:119
-#: src/ui/PlayPanel.tsx:403
+#: src/ui/PlayPanel.tsx:407
 msgid "Apply"
 msgstr ""
 
@@ -9425,152 +9425,155 @@ msgstr ""
 msgid "Load package…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:114
+#: src/ui/PlayPanel.tsx:118
 #: src/ui/TeachRule.tsx:133
 msgid "CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:115
+#: src/ui/PlayPanel.tsx:119
 msgid "Other stratagem…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:127
+#: src/ui/PlayPanel.tsx:131
 msgid "No core stratagems fit this moment."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:143
+#: src/ui/PlayPanel.tsx:147
 msgid "No {cards} in this phase."
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:151
+#: src/ui/PlayPanel.tsx:155
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:165
+#: src/ui/PlayPanel.tsx:169
 msgid "⋯ Something not listed?"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:184
 msgid "can react: {stratagems}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:181
+#: src/ui/PlayPanel.tsx:185
 msgid "nothing to react with"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:182
+#: src/ui/PlayPanel.tsx:186
 msgid "({cp} CP)"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:192
+#: src/ui/PlayPanel.tsx:196
 msgid "0 CP left"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:192
+#: src/ui/PlayPanel.tsx:196
+#: src/ui/StratagemHand.tsx:250
+#: src/ui/StratagemHand.tsx:250
+#: src/ui/StratagemHand.tsx:254
 msgid "{cp} CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:221
+#: src/ui/PlayPanel.tsx:225
 msgid "Pick a unit first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:234
+#: src/ui/PlayPanel.tsx:238
 msgid "On which unit…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:279
+#: src/ui/PlayPanel.tsx:283
 #: src/ui/TeachRule.tsx:125
 msgid "Cost"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:295
+#: src/ui/PlayPanel.tsx:299
 msgid "Not enough {resource}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:297
+#: src/ui/PlayPanel.tsx:301
 msgid "Name it first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:310
+#: src/ui/PlayPanel.tsx:314
 msgid "Dice to spend"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:313
+#: src/ui/PlayPanel.tsx:317
 msgid "Spends these {resource}:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:314
+#: src/ui/PlayPanel.tsx:318
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:380
+#: src/ui/PlayPanel.tsx:384
 msgid "{unit} and {n} other unit"
 msgid_plural "{unit} and {n} other units"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:383
+#: src/ui/PlayPanel.tsx:387
 msgid " and "
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:396
+#: src/ui/PlayPanel.tsx:400
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:446
+#: src/ui/PlayPanel.tsx:450
 msgid "Teach the app what this stratagem does"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:446
+#: src/ui/PlayPanel.tsx:450
 msgid "A stratagem your list didn't bring"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:453
 #: src/ui/TeachRule.tsx:98
 msgid "Teach a stratagem"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:480
+#: src/ui/PlayPanel.tsx:484
 msgid "{n} army rule"
 msgid_plural "{n} army rules"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:488
+#: src/ui/PlayPanel.tsx:492
 msgid "The app plays it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:490
+#: src/ui/PlayPanel.tsx:494
 msgid "A reminder; you play it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:66
+#: src/ui/PlayPanel.tsx:70
 msgid "{phase}: {cards}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:67
+#: src/ui/PlayPanel.tsx:71
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:68
+#: src/ui/PlayPanel.tsx:72
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:77
+#: src/ui/PlayPanel.tsx:81
 msgid "{phase}: {cards} and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:78
+#: src/ui/PlayPanel.tsx:82
 msgid "{phase}: stratagems and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:87
+#: src/ui/PlayPanel.tsx:91
 msgid "No abilities flagged for this phase."
 msgstr ""
 
@@ -10440,6 +10443,55 @@ msgstr ""
 
 #: src/ui/StatusMenu.tsx:46
 msgid "Mark {status}"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:260
+msgid "Stratagems · {n} ready"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:261
+msgid "Stratagems · {n} ready later"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:264
+msgid "Stratagems"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:316
+msgid "used"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:336
+msgid "Pick a unit for {name} (Esc to cancel)"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:423
+msgid "{n} CP"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:448
+msgid "{who} on {unit}"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:66
+msgid "Drop it on a unit"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:69
+msgid "{name} can't go on {unit}"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:71
+msgid "Play on {unit} · {cost}"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:73
+msgid "Drop it on the table"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:75
+#: src/ui/StratagemHand.tsx:346
+msgid "Play {name} · {cost}"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:103
