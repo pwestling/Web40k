@@ -121,6 +121,11 @@ export interface AbilityAuto {
   whileLeading?: boolean;
   /** Built by the player with "Teach it this rule" (#53), not read from the text. */
   taught?: boolean;
+  /**
+   * Supplied by a faction pack (#76), by the pack's name: keyed to the rule's
+   * name, not read from its text. With no `effects`, the pack's code plays it.
+   */
+  pack?: string;
   /** Given to other units within range instead of this one. */
   aura?: { range: number; side: "friendly" | "enemy"; keyword?: string };
   /** Used by the player from the unit card; then runs until the end of the phase. */
@@ -171,6 +176,8 @@ export interface ArmyStratagem {
   text: string;
   /** What it does to the target until the end of the phase, once the player confirms it (#38's recognizer). */
   auto?: AbilityAuto;
+  /** Added by a faction pack (#76), by the pack's name: the roster didn't list it. */
+  pack?: string;
 }
 
 /** Army-wide rules from the player's roster (#49), shared with the table when they deploy. */
@@ -181,6 +188,15 @@ export interface Army {
   /** The detachment's rules and the army rules; confirmed ones apply to every unit of the army. */
   rules: Ability[];
   stratagems: ArmyStratagem[];
+  /** Faction packs applied to it (#76), pinned by hash, so every player can see which bytes made its rules. */
+  packs?: ArmyPack[];
+}
+
+/** A faction pack as an army names it (#76): the package, where it was loaded from, and whether it has code. */
+export interface ArmyPack extends PackageRef {
+  url?: string;
+  /** Its code must run in the game (it joins the game's packages). */
+  code?: boolean;
 }
 
 /**

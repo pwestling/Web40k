@@ -28,6 +28,8 @@ import { conquestSample } from "../systems/conquest/sample";
 import { botPolicy, type Level } from "./player";
 import { destinations, moveInches } from "./moves";
 import type { BotMove } from "../soak/bot";
+import { applyPack, readFactionPack, type ReadPack } from "../packages/faction";
+import cinderCourt from "../../examples/faction-packs/cinder-court.js?raw";
 
 /**
  * The computer opponent plays the rules #57 added (#58): small tables set up
@@ -300,6 +302,27 @@ describe("the computer opponent plays #57's rules (#58)", () => {
     expect(m?.intent).toMatchObject({
       type: "player/action",
       action: "army:p1:steady-aim",
+      targetId: "mine",
+    });
+  });
+
+  it("spends CP on a faction pack's stratagem (#76) the same way, before its unit shoots", () => {
+    let s = forty({ weapons: [gun([], { A: "10", BS: "5+" })] });
+    const { pack } = readFactionPack(cinderCourt) as ReadPack;
+    const ref = { id: "example.cinder-court", name: "Cinder Court", version: "1.0.0", hash: "cc", bytes: 1 };
+    const listed = {
+      name: "Mine",
+      units: [],
+      army: { detachment: "Cinder Court", rules: [], stratagems: [] },
+      warnings: [],
+    };
+    const army = applyPack(listed, pack, ref, systemOf(s)).roster.army!;
+    s = applyEvent(s, { type: "player/army", player: "p1", army });
+    s = goTo(s, "shooting", 0);
+    s = applyEvent(s, { type: "resource/adjust", player: "p1", resource: "CP", delta: 3 });
+    expect(decide(s, 0, "steady", { tries: 8 })?.intent).toMatchObject({
+      type: "player/action",
+      action: "army:p1:banked-embers",
       targetId: "mine",
     });
   });

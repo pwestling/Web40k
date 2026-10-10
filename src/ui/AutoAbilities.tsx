@@ -18,6 +18,7 @@ import {
   type ImportedRoster,
 } from "../systems/wh40k/roster";
 import { recognizeArmyRule, recognizeStratagem } from "../systems/wh40k/recognize";
+import { packAutomated } from "../packages/faction";
 
 /**
  * Abilities that play themselves (#38): the rule read from an ability's text,
@@ -338,6 +339,12 @@ function ArmyAutomation({
             },
           )}
         </strong>
+        {packAutomated(roster).army > 0 && (
+          <span className="muted">
+            {" "}
+            · {tn(packAutomated(roster).army, "{n} by a faction pack", "{n} by faction packs")}
+          </span>
+        )}
         {army.stratagems.length === 0 && (
           <span className="muted"> · {t("No stratagems in this list: add your detachment's below.")}</span>
         )}
@@ -472,6 +479,12 @@ function Coverage({
             done: read.automated,
           })}
         </strong>
+        {packAutomated(roster).units > 0 && (
+          <span className="muted">
+            {" "}
+            · {tn(packAutomated(roster).units, "{n} by a faction pack", "{n} by faction packs")}
+          </span>
+        )}
         {waiting.length > 0 && (
           <span className="muted">
             {" "}
