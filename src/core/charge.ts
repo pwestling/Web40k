@@ -1,3 +1,4 @@
+import { movedSoFar } from "./path";
 import { aliveModels, centreAbove } from "./units";
 import { opposed } from "./teams";
 import { baseSizeInches } from "./geometry";
@@ -35,9 +36,10 @@ export function chargeFor(
       return null;
     if (!event.moves.every((m) => before.models[m.id]?.unitId === id)) return null;
     unitId = id;
+    // Along its legs, round whatever was in the way (core/path.ts).
     for (const m of event.moves) {
-      const from = before.models[m.id]?.phaseStart ?? before.models[m.id]?.position;
-      if (from) distance = Math.max(distance, Math.hypot(m.to.x - from.x, m.to.y - from.y));
+      const moved = after.models[m.id];
+      if (moved) distance = Math.max(distance, movedSoFar(moved));
     }
   }
   if (!unitId) return null;

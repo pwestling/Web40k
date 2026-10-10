@@ -166,24 +166,31 @@ export function MoveLabel({
   unitId,
   positions,
   heights,
+  via,
+  legs = 0,
   at,
 }: {
   game: GameState;
   unitId: string;
   positions: Record<string, Vec2>;
   heights: Record<string, number>;
+  /** Each model's corners on this drag (core/path.ts). */
+  via?: Record<string, Vec2[]>;
+  /** Corners turned on this drag, to say the move is in legs. */
+  legs?: number;
   at: Vec2;
 }) {
   const unit = game.units[unitId]!;
-  const moved = unitMoved(aliveModels(game, unit), positions, heights);
-  const blocked = blockedMoves(game, unit, positions);
+  const moved = unitMoved(aliveModels(game, unit), positions, heights, via);
+  const blocked = blockedMoves(game, unit, positions, via);
   const allowed = moveAllowance(game, unit);
   const deploying = game.turn.round === 0;
   const over = !deploying && allowed !== null && moved > allowed + 0.05;
   // Within half an inch of the limit, the label gets tense (PX-3e).
   const near = !deploying && !over && allowed !== null && moved >= allowed - 0.5;
   useTapeTicks(near ? moved : null);
-  const base = deploying ? `${moved.toFixed(1)}"` : `${moved.toFixed(1)}" / ${allowed ?? "?"}"`;
+  const measured = deploying ? `${moved.toFixed(1)}"` : `${moved.toFixed(1)}" / ${allowed ?? "?"}"`;
+  const base = legs ? t("{distance} in {n} legs", { distance: measured, n: legs + 1 }) : measured;
   const text = blocked.length
     ? t("{distance} · through {terrain}", {
         distance: base,

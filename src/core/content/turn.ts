@@ -4,6 +4,7 @@ import type { EffectAction, Expr, GameSystem, Id, Segment } from "./schema";
 import { systemConstants } from "./gameSize";
 import { getSystem } from "./systems";
 import { regainWounds } from "../units";
+import { movedSoFar } from "../path";
 
 /**
  * The turn structure, from GameSystem.turn. A round is flattened into a
@@ -281,9 +282,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
         0,
         ...u.modelIds.map((id) => {
           const m = state.models[id];
-          return m?.phaseStart && !m.destroyed
-            ? Math.hypot(m.position.x - m.phaseStart.x, m.position.y - m.phaseStart.y)
-            : 0;
+          return m?.phaseStart && !m.destroyed ? movedSoFar(m) : 0;
         }),
       );
       const went = !!u.status?.arrived || far > 0.05;
@@ -296,7 +295,7 @@ function stepTurn(state: GameState, dir: 1 | -1, seed: number): GameState {
     state = { ...state, units };
   }
   const models: Record<string, Model> = {};
-  for (const [id, m] of Object.entries(state.models))
+  for (const [id, { phaseVia: _v, ...m }] of Object.entries(state.models))
     models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };
   // Moves are measured from here, so move allowances and activations start afresh.
   let next: GameState = clearFlags(

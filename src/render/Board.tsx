@@ -12,6 +12,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
+import { MAX_CORNERS, movedSoFar } from "../core/path";
+import type { GameState } from "../core";
 import {
   baseSizeInches,
   modelHeight,
@@ -293,6 +295,8 @@ type Drag = {
       starts: Record<string, Vec2>;
       startZ: Record<string, number>;
       unitId?: string;
+      /** Corners turned on this drag (Space, right-click, a second finger), where the pointer was. */
+      corners: Vec2[];
     }
   | { kind: "terrain" | "objective"; id: string; start: Vec2 }
   /** `held`: started by a long press (#60); let go without moving, it opens the press's menu instead. */
@@ -417,18 +421,24 @@ function Scene() {
         const unit = game.units[d.unitId];
         const limit = unit ? moveAllowance(game, unit) : null;
         if (limit !== null) {
-          const dx = to.x - d.grab.x;
-          const dy = to.y - d.grab.y;
+          // From the last corner turned, if any: the legs before it stand.
+          const base = d.corners.at(-1) ?? d.grab;
+          const dx = to.x - base.x;
+          const dy = to.y - base.y;
           const s = clampFraction(
             game,
             d.ids,
             (id, k) => {
-              const p = { x: d.starts[id]!.x + dx * k, y: d.starts[id]!.y + dy * k };
+              const p = {
+                x: d.starts[id]!.x + base.x - d.grab.x + dx * k,
+                y: d.starts[id]!.y + base.y - d.grab.y + dy * k,
+              };
               return { ...p, z: settleZ(game.terrain, p, d.startZ[id] ?? 0) };
             },
             limit,
+            (id) => dragVia(game, d, id),
           );
-          to = { x: d.grab.x + dx * s, y: d.grab.y + dy * s };
+          to = { x: base.x + dx * s, y: base.y + dy * s };
         }
       }
       // A regiment block drags straight ahead or back; Shift moves it freely.
@@ -498,8 +508,9 @@ function Scene() {
         // How far it has come this phase, as the move label measures it.
         const far = Math.max(
           ...d.ids.map((id) => {
-            const from = game.models[id]?.phaseStart ?? d.starts[id]!;
-            return Math.hypot(d.starts[id]!.x + dx - from.x, d.starts[id]!.y + dy - from.y);
+            const m = game.models[id];
+            const to = { x: d.starts[id]!.x + dx, y: d.starts[id]!.y + dy };
+            return m ? movedSoFar(m, to, dragVia(game, d, id)) : 0;
           }),
         );
         setDown(
@@ -553,7 +564,12 @@ function Scene() {
           type: "models/move",
           moves: d.ids.map((id) => {
             const to = { x: d.starts[id]!.x + dx, y: d.starts[id]!.y + dy };
-            return { id, to, z: settleZ(terrain, to, d.startZ[id] ?? 0) };
+            // The corners it went round on this drag (core/path.ts).
+            const via = d.corners.map((c) => ({
+              x: d.starts[id]!.x + c.x - d.grab.x,
+              y: d.starts[id]!.y + c.y - d.grab.y,
+            }));
+            return { id, to, z: settleZ(terrain, to, d.startZ[id] ?? 0), ...(via.length ? { via } : {}) };
           }),
         });
       } else if (d.kind === "terrain") {
@@ -570,6 +586,30 @@ function Scene() {
         );
       } else dispatch({ type: "objective/move", id: d.id, to: { x: d.start.x + dx, y: d.start.y + dy } });
     };
+    // Turning a corner mid-drag (Porter, multi-leg moves): Space, a right-click, or a second finger's tap. The
+    // move goes on from there and is measured along its legs. Not for a regiment block, which wheels instead.
+    const corner = () => {
+      const d = dragRef.current;
+      if (d?.kind !== "models" || !d.moved) return false;
+      if (d.unitId && isBlock(useStore.getState().game.units[d.unitId])) return false;
+      const last = d.corners.at(-1) ?? d.grab;
+      if (Math.hypot(d.to.x - last.x, d.to.y - last.y) < 0.25) return true;
+      setDrag((dragRef.current = { ...d, corners: [...d.corners, d.to].slice(-MAX_CORNERS) }));
+      return true;
+    };
+    const press = (e: PointerEvent) => {
+      if ((e.button === 2 || (e.pointerType === "touch" && !e.isPrimary)) && corner()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && corner()) e.preventDefault();
+    };
+    const menu = (e: Event) => dragRef.current?.kind === "models" && e.preventDefault();
+    window.addEventListener("pointerdown", press, { capture: true });
+    window.addEventListener("keydown", key);
+    window.addEventListener("contextmenu", menu);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", drop);
     // On a slow device the pointer can move, or even lift, before these listeners are in (#60: a drag on a
@@ -578,6 +618,9 @@ function Scene() {
     if (r.move && r.move.timeStamp > r.down) move(r.move);
     if (r.up && r.up.timeStamp > r.down) drop();
     return () => {
+      window.removeEventListener("pointerdown", press, { capture: true });
+      window.removeEventListener("keydown", key);
+      window.removeEventListener("contextmenu", menu);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", drop);
     };
@@ -817,6 +860,13 @@ function Scene() {
       }
     return [p, h];
   }, [game.models, game.terrain, drag]);
+  // The corners of the drag under way, for each dragged model (core/path.ts).
+  const vias = useMemo(() => {
+    const v: Record<string, Vec2[]> = {};
+    if (drag?.kind === "models" && drag.corners.length)
+      for (const id of drag.ids) v[id] = dragVia(game, drag, id);
+    return v;
+  }, [game, drag]);
   // What is drawn: the same, but eased between moves (watch mode).
   const trailColor = useCallback(
     (id: string) => {
@@ -969,6 +1019,7 @@ function Scene() {
       ids,
       starts,
       startZ,
+      corners: [],
       grab: m.position,
       to: m.position,
       moved: false,
@@ -1467,13 +1518,23 @@ function Scene() {
         aliveModels(game, selectedUnit).map((m) => {
           const p = positions[m.id]!;
           const s = m.phaseStart;
+          const via = [...(m.phaseVia ?? []), ...(vias[m.id] ?? [])];
           if (
             !s ||
-            Math.hypot(p.x - s.x, p.y - s.y) + Math.abs((heights[m.id] ?? 0) - (m.phaseStartZ ?? 0)) < 0.05
+            (!via.length &&
+              Math.hypot(p.x - s.x, p.y - s.y) + Math.abs((heights[m.id] ?? 0) - (m.phaseStartZ ?? 0)) < 0.05)
           )
             return null;
           return (
-            <Ghost key={m.id} from={s} fromZ={m.phaseStartZ ?? 0} to={p} toZ={heights[m.id] ?? 0} model={m} />
+            <Ghost
+              key={m.id}
+              from={s}
+              fromZ={m.phaseStartZ ?? 0}
+              via={via}
+              to={p}
+              toZ={heights[m.id] ?? 0}
+              model={m}
+            />
           );
         })}
 
@@ -1577,7 +1638,15 @@ function Scene() {
         <BlockMoveLabel game={game} unit={dragUnit} grab={drag.grab} at={drag.to} />
       )}
       {drag?.moved && dragUnit && !isBlock(dragUnit) && (
-        <MoveLabel game={game} unitId={dragUnit.id} positions={positions} heights={heights} at={drag.to} />
+        <MoveLabel
+          game={game}
+          unitId={dragUnit.id}
+          positions={positions}
+          heights={heights}
+          via={vias}
+          legs={drag.kind === "models" ? drag.corners.length : 0}
+          at={drag.to}
+        />
       )}
       {drag?.moved && drag.kind === "models" && !dragUnit && (
         <SimpleLabel
@@ -1647,4 +1716,23 @@ function toSegment(p: Vec2, a: Vec2, b: Vec2): number {
   const k =
     dx || dy ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy))) : 0;
   return Math.hypot(p.x - (a.x + dx * k), p.y - (a.y + dy * k));
+}
+
+/**
+ * A dragged model's corners so far, for measuring (core/path.ts): where it
+ * stood when picked up, if it had already moved this phase, then the
+ * drag's own corners. (The event sends only the drag's; the reducer adds
+ * the first.)
+ */
+function dragVia(game: GameState, d: Extract<Drag, { kind: "models" }>, id: string): Vec2[] {
+  if (!d.corners.length) return [];
+  const m = game.models[id];
+  const s = d.starts[id];
+  if (!m || !s) return [];
+  const start = m.phaseStart ?? m.position;
+  const before = Math.hypot(m.position.x - start.x, m.position.y - start.y) > 0.05 || !!m.phaseVia?.length;
+  return [
+    ...(before ? [s] : []),
+    ...d.corners.map((c) => ({ x: s.x + c.x - d.grab.x, y: s.y + c.y - d.grab.y })),
+  ];
 }

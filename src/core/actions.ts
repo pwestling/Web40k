@@ -507,8 +507,13 @@ export interface UnitForm {
 /** Several models placed at once, e.g. a squad dragged together. */
 export interface ModelsMove {
   type: "models/move";
-  /** `z` is the height of the base; omitted means unchanged. */
-  moves: { id: ModelId; to: Vec2; z?: number }[];
+  /**
+   * `z` is the height of the base; omitted means unchanged. `via` are the
+   * corners this move went round on its way (core/path.ts), added to the
+   * model's legs this phase; `path` instead replaces all its corners (a move
+   * pulled back along its legs).
+   */
+  moves: { id: ModelId; to: Vec2; z?: number; via?: Vec2[]; path?: Vec2[] }[];
   /** Set when this pulls an over-long move back to its limit, for the log. */
   snap?: number;
   /** Setting the table up (a lesson placing its units), not a move: the log leaves it out. */

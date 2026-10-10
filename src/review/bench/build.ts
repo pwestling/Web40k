@@ -142,7 +142,8 @@ class Table {
       const was = models[m]!;
       const to = { x: was.position.x + x - cx, y: was.position.y + y - cy };
       // Where it stood at the phase's start moves too: it was placed, it hasn't moved.
-      models[m] = { ...was, position: to, ...(was.phaseStart ? { phaseStart: to } : {}) };
+      const { phaseVia: _v, ...rest } = was;
+      models[m] = { ...rest, position: to, ...(was.phaseStart ? { phaseStart: to } : {}) };
     }
     this.s = { ...this.s, models };
     return this;

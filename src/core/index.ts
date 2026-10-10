@@ -28,6 +28,7 @@ export * from "./rolls";
 export * from "./rare";
 export * from "./secrets";
 export * from "./cards";
+export * from "./path";
 export * from "./branch";
 export * from "./teams";
 export * from "./clock";

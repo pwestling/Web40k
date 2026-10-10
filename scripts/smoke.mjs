@@ -430,6 +430,74 @@ const checks = {
    * The 40k unit card (#56): in Shooting, "Shoot everything at…" lists each weapon against the
    * target (UX 398); in Charge, "Charge (2D6)" asks which unit first, with the rules' reasons (UX 396).
    */
+  /** Porter: a move in legs, round a ruin. Space mid-drag turns a corner; the ruler counts the legs. */
+  async "move-legs"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    await page.locator('.topbar button[title="Next phase"]').click();
+    const anyway = page.locator(".topbar .ask button.primary");
+    if (await anyway.count()) await anyway.click();
+    await page.keyboard.press("]");
+    await sleep(1500);
+    // The selected unit's plate: the one named as the card is.
+    const name = (await page.locator(".unitcard").first().innerText()).split("\n")[0].trim();
+    const unit = await page.locator(".plate [data-unit]").evaluateAll((els, name) => {
+      const sel = els.find((e) => e.textContent.includes(name)) ?? els[0];
+      const r = sel.getBoundingClientRect();
+      return { id: sel.dataset.unit, x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, name);
+    const label = page.locator(".ruler", { hasText: '"' });
+    let dragging = false;
+    for (const dy of [18, 28, 38, 48, 10, 60]) {
+      await page.mouse.move(unit.x, unit.y + dy);
+      await page.mouse.down();
+      await page.mouse.move(unit.x + 40, unit.y + dy, { steps: 6 });
+      await sleep(200);
+      if (await label.count()) {
+        dragging = true;
+        await page.keyboard.press("Space");
+        await page.mouse.move(unit.x + 40, unit.y + dy - 40, { steps: 6 });
+        await sleep(200);
+        const text = await label.first().textContent();
+        if (!/in 2 legs/.test(text)) throw new Error(`the move label says "${text}", not 2 legs`);
+        await page.mouse.up();
+        break;
+      }
+      await page.mouse.up();
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("]");
+    }
+    if (!dragging) {
+      if (process.env.SMOKE_SHOTS)
+        await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "move-legs.png") });
+      throw new Error(`no model of ${JSON.stringify(unit)} could be dragged`);
+    }
+    await sleep(800);
+    const moved = Number(
+      (await page.locator(".unitcard").first().innerText()).match(/Moved ([\d.]+)/)?.[1] ?? NaN,
+    );
+    if (!(moved > 0)) throw new Error(`the card says Moved ${moved}`);
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "move-legs.png") });
+    // Too far: pulled back along its legs, it has moved exactly its limit.
+    const snap = page.getByRole("button", { name: /^Snap back to/ });
+    if (await snap.count()) {
+      const limit = Number((await snap.textContent()).match(/([\d.]+)/)[1]);
+      await snap.click();
+      await sleep(800);
+      const after = Number(
+        (await page.locator(".unitcard").first().innerText()).match(/Moved ([\d.]+)/)?.[1],
+      );
+      if (Math.abs(after - limit) > 0.15) throw new Error(`snapped back to ${after}", not ${limit}"`);
+    }
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
+  },
+
   async "card-actions"() {
     const { page, context } = await device();
     await lobby(page);

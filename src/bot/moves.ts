@@ -344,7 +344,10 @@ function terrainCheck(state: GameState, u: Unit): (to: { x: number; y: number }[
   const per = inchesPerUnit(system);
   return (to) => {
     const models = { ...state.models };
-    ms.forEach((m, i) => (models[m.id] = { ...m, phaseStart: m.position, position: to[i]! }));
+    ms.forEach((m, i) => {
+      const { phaseVia: _v, ...rest } = m;
+      models[m.id] = { ...rest, phaseStart: m.position, position: to[i]! };
+    });
     const { blocked, slowed } = terrainOnMove({ ...state, models }, system, u);
     return blocked.length ? null : (slowed?.by ?? 0) * per;
   };

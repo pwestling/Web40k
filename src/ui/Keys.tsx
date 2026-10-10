@@ -14,6 +14,10 @@ const keys = (): [string, string][] => [
   [t("Tab"), t("Move between buttons; Enter or Space presses one")],
   [t("Drag a unit"), t("Move it; the ruler shows how far against its limit")],
   [t("Alt + drag"), t("Move a unit, stopping at its limit")],
+  [
+    t("Space or right-click while dragging"),
+    t("Turn a corner (round a ruin, say): the move goes on from there, measured along its legs"),
+  ],
   [t("Shift + drag"), t("Move a regiment block freely, not just straight ahead")],
   ["Q / E", t("Turn the selected unit (or terrain piece while editing)")],
   ["R / F", t("Move the selected unit up or down a floor")],
@@ -50,6 +54,7 @@ const gestures = (): [string, string][] => [
   [t("Two fingers"), t("Pinch to zoom, twist to turn the camera")],
   [t("Two fingers on the selected unit"), t("Twist to turn it (a regiment block wheels)")],
   [t("Hold, then drag"), t("Measure")],
+  [t("A second finger's tap while dragging"), t("Turn a corner: the move is measured along its legs")],
   [t("Hold and let go"), t("More: turn, ping, look from here, views")],
   [t("Select several"), t("Draw a box on the table, then drag one unit to move them all")],
   [t("A stylus on the table"), t("Draw a line everyone sees")],

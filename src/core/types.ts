@@ -275,6 +275,11 @@ export interface Model {
   /** Height of the base above the table, in inches (standing on a terrain floor). */
   z?: number;
   phaseStartZ?: number;
+  /**
+   * The corners of its move this phase, between `phaseStart` and where it
+   * stands: a move round a ruin in legs (core/path.ts). Measured along them.
+   */
+  phaseVia?: Vec2[];
   /** Height of the miniature in inches, for line of sight. Defaults from the base size. */
   height?: number;
   /**

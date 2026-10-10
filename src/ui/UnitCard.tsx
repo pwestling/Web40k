@@ -1,3 +1,5 @@
+import { alongPath, legsOf, movePath, pathLength } from "../core/path";
+import type { Vec2 } from "../core";
 import { NoStats } from "../tts/NoStats";
 import { swipeAway } from "./swipe";
 import { CampaignUnitLine } from "../campaign/CampaignUI";
@@ -23,7 +25,6 @@ import {
   blockedMoves,
   carriers,
   engagedWith,
-  clampFraction,
   mainWeapon,
   moveAllowance,
   unitDistance,
@@ -131,20 +132,45 @@ function snapToLimit(unitId: string, limit: number) {
   const unit = game.units[unitId];
   if (!unit) return;
   const models = aliveModels(game, unit);
+  // Back along each model's legs (core/path.ts), the same share of the way for all, so the unit keeps its shape.
+  const paths = new Map(models.map((m) => [m.id, movePath(m)]));
   const at = (id: string, k: number) => {
     const m = game.models[id]!;
-    const from = m.phaseStart ?? m.position;
-    const p = { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k };
-    return { ...p, z: settleZ(game.terrain, p, m.phaseStartZ ?? 0) };
+    const path = paths.get(id)!;
+    const d = pathLength(path) * k;
+    const p = alongPath(path, d);
+    // The corners passed before that point stay; the rest are left behind.
+    let walked = 0;
+    const kept: Vec2[] = [];
+    for (const [a, b] of legsOf(path).slice(0, -1)) {
+      walked += Math.hypot(b.x - a.x, b.y - a.y);
+      if (walked < d) kept.push(b);
+    }
+    return { p, kept, z: settleZ(game.terrain, p, m.phaseStartZ ?? 0), d };
   };
+  const fits = (k: number) =>
+    models.every((m) => {
+      const { z, d } = at(m.id, k);
+      return d + Math.abs(z - (m.phaseStartZ ?? 0)) <= limit + 1e-6;
+    });
+  let k = 1;
+  if (!fits(1)) {
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 30; i++) {
+      const mid = (lo + hi) / 2;
+      if (fits(mid)) lo = mid;
+      else hi = mid;
+    }
+    k = lo;
+  }
   const ids = models.map((m) => m.id);
-  const k = clampFraction(game, ids, at, limit);
   dispatch(
     {
       type: "models/move",
       moves: ids.map((id) => {
-        const { z, ...to } = at(id, k);
-        return { id, to, z };
+        const { p, z, kept } = at(id, k);
+        return { id, to: p, z, path: kept };
       }),
       snap: limit,
     },

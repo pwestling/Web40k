@@ -1718,8 +1718,8 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
-#: src/ui/UnitCard.tsx:289
-#: src/ui/UnitCard.tsx:588
+#: src/ui/UnitCard.tsx:315
+#: src/ui/UnitCard.tsx:614
 msgid "Fight"
 msgstr ""
 
@@ -4318,35 +4318,35 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1023
+#: src/render/Board.tsx:1074
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1025
+#: src/render/Board.tsx:1076
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1026
+#: src/render/Board.tsx:1077
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1087
+#: src/render/Board.tsx:1138
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1089
+#: src/render/Board.tsx:1140
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1094
+#: src/render/Board.tsx:1145
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1554
+#: src/render/Board.tsx:1615
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:351
+#: src/render/Board.tsx:355
 msgid "The table"
 msgstr ""
 
@@ -4446,7 +4446,11 @@ msgstr ""
 msgid " · out by {inches}\""
 msgstr ""
 
-#: src/render/boardLabels.tsx:188
+#: src/render/boardLabels.tsx:193
+msgid "{distance} in {n} legs"
+msgstr ""
+
+#: src/render/boardLabels.tsx:195
 msgid "{distance} · through {terrain}"
 msgstr ""
 
@@ -4500,8 +4504,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:186
-#: src/ui/Keys.tsx:29
-#: src/ui/Keys.tsx:40
+#: src/ui/Keys.tsx:33
+#: src/ui/Keys.tsx:44
 #: src/ui/TerrainPanel.tsx:342
 #: src/workshop/Workshop.tsx:297
 msgid "Delete"
@@ -8010,7 +8014,7 @@ msgstr ""
 
 #: src/ui/GameSettings.tsx:40
 #: src/ui/SystemPanels.tsx:352
-#: src/ui/UnitCard.tsx:411
+#: src/ui/UnitCard.tsx:437
 msgid "Line of sight"
 msgstr ""
 
@@ -8090,7 +8094,7 @@ msgid "Top-down view"
 msgstr ""
 
 #: src/ui/Hud.tsx:141
-#: src/ui/Keys.tsx:26
+#: src/ui/Keys.tsx:30
 msgid "Home"
 msgstr ""
 
@@ -8240,20 +8244,12 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:100
+#: src/ui/Keys.tsx:105
 msgid "Coming from Tabletop Simulator?"
 msgstr ""
 
 #: src/ui/Keys.tsx:11
 msgid "Select your previous or next unit (Shift: the other side's)"
-msgstr ""
-
-#: src/ui/Keys.tsx:115
-msgid "TTS controls (just on this device)"
-msgstr ""
-
-#: src/ui/Keys.tsx:119
-msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
 msgstr ""
 
 #: src/ui/Keys.tsx:12
@@ -8262,6 +8258,14 @@ msgstr ""
 
 #: src/ui/Keys.tsx:12
 msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:120
+msgid "TTS controls (just on this device)"
+msgstr ""
+
+#: src/ui/Keys.tsx:124
+msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
 msgstr ""
 
 #: src/ui/Keys.tsx:13
@@ -8277,8 +8281,8 @@ msgid "Move between buttons; Enter or Space presses one"
 msgstr ""
 
 #: src/ui/Keys.tsx:15
-#: src/ui/Keys.tsx:37
-#: src/ui/Keys.tsx:48
+#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:52
 msgid "Drag a unit"
 msgstr ""
 
@@ -8294,198 +8298,214 @@ msgstr ""
 msgid "Move a unit, stopping at its limit"
 msgstr ""
 
-#: src/ui/Keys.tsx:17
-msgid "Shift + drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:17
-msgid "Move a regiment block freely, not just straight ahead"
-msgstr ""
-
 #: src/ui/Keys.tsx:18
-msgid "Turn the selected unit (or terrain piece while editing)"
+msgid "Space or right-click while dragging"
 msgstr ""
 
 #: src/ui/Keys.tsx:19
+msgid "Turn a corner (round a ruin, say): the move goes on from there, measured along its legs"
+msgstr ""
+
+#: src/ui/Keys.tsx:21
+msgid "Shift + drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:21
+msgid "Move a regiment block freely, not just straight ahead"
+msgstr ""
+
+#: src/ui/Keys.tsx:22
+msgid "Turn the selected unit (or terrain piece while editing)"
+msgstr ""
+
+#: src/ui/Keys.tsx:23
 msgid "Move the selected unit up or down a floor"
 msgstr ""
 
-#: src/ui/Keys.tsx:20
+#: src/ui/Keys.tsx:24
 msgid "Measure: then drag across the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:21
+#: src/ui/Keys.tsx:25
 msgid "Alt + click"
 msgstr ""
 
-#: src/ui/Keys.tsx:21
+#: src/ui/Keys.tsx:25
 msgid "Ping a spot for everyone"
 msgstr ""
 
-#: src/ui/Keys.tsx:22
+#: src/ui/Keys.tsx:26
 msgid "Hold V"
 msgstr ""
 
-#: src/ui/Keys.tsx:22
+#: src/ui/Keys.tsx:26
 msgid "Talk, once your mic is on (Voice, bottom left)"
 msgstr ""
 
-#: src/ui/Keys.tsx:23
+#: src/ui/Keys.tsx:27
 msgid "Left drag on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:23
+#: src/ui/Keys.tsx:27
 msgid "Turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:24
+#: src/ui/Keys.tsx:28
 msgid "Right drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:24
-#: src/ui/Keys.tsx:49
+#: src/ui/Keys.tsx:28
+#: src/ui/Keys.tsx:53
 msgid "Slide the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:25
+#: src/ui/Keys.tsx:29
 msgid "Wheel"
 msgstr ""
 
-#: src/ui/Keys.tsx:25
+#: src/ui/Keys.tsx:29
 msgid "Zoom"
 msgstr ""
 
-#: src/ui/Keys.tsx:26
+#: src/ui/Keys.tsx:30
 msgid "Reset the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:27
+#: src/ui/Keys.tsx:31
 msgid "Esc"
 msgstr ""
 
-#: src/ui/Keys.tsx:27
+#: src/ui/Keys.tsx:31
 msgid "Clear: selection, ruler, pen"
 msgstr ""
 
-#: src/ui/Keys.tsx:30
+#: src/ui/Keys.tsx:34
 msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
 msgstr ""
 
-#: src/ui/Keys.tsx:32
+#: src/ui/Keys.tsx:36
 msgid "This sheet"
 msgstr ""
 
-#: src/ui/Keys.tsx:37
+#: src/ui/Keys.tsx:41
 msgid "Moves the whole unit; Shift + drag moves just the one model"
 msgstr ""
 
-#: src/ui/Keys.tsx:38
+#: src/ui/Keys.tsx:42
 msgid "Turn, as in Tabletop Simulator"
 msgstr ""
 
-#: src/ui/Keys.tsx:39
+#: src/ui/Keys.tsx:43
 msgid "Measure (with TTS controls, hold Tab)"
 msgstr ""
 
-#: src/ui/Keys.tsx:40
+#: src/ui/Keys.tsx:44
 msgid "Remove the model under the pointer as a casualty"
 msgstr ""
 
-#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:45
 msgid "Drop a model off the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:45
 msgid "Remove it as a casualty (asking first)"
 msgstr ""
 
-#: src/ui/Keys.tsx:42
+#: src/ui/Keys.tsx:46
 msgid "Camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:42
+#: src/ui/Keys.tsx:46
 msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
 msgstr ""
 
-#: src/ui/Keys.tsx:47
+#: src/ui/Keys.tsx:51
 msgid "Tap a unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:47
+#: src/ui/Keys.tsx:51
 msgid "Select it: its card shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:48
+#: src/ui/Keys.tsx:52
 msgid "Move it (hold the table for one model at a time)"
 msgstr ""
 
-#: src/ui/Keys.tsx:49
+#: src/ui/Keys.tsx:53
 msgid "One finger on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:50
+#: src/ui/Keys.tsx:54
 msgid "Two fingers"
 msgstr ""
 
-#: src/ui/Keys.tsx:50
+#: src/ui/Keys.tsx:54
 msgid "Pinch to zoom, twist to turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:51
+#: src/ui/Keys.tsx:55
 msgid "Two fingers on the selected unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:51
+#: src/ui/Keys.tsx:55
 msgid "Twist to turn it (a regiment block wheels)"
 msgstr ""
 
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:56
 msgid "Hold, then drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:56
 msgid "Measure"
 msgstr ""
 
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:57
+msgid "A second finger's tap while dragging"
+msgstr ""
+
+#: src/ui/Keys.tsx:57
+msgid "Turn a corner: the move is measured along its legs"
+msgstr ""
+
+#: src/ui/Keys.tsx:58
 msgid "Hold and let go"
 msgstr ""
 
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:58
 msgid "More: turn, ping, look from here, views"
 msgstr ""
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:59
 #: src/ui/TouchLayer.tsx:149
 msgid "Select several"
 msgstr ""
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:59
 msgid "Draw a box on the table, then drag one unit to move them all"
 msgstr ""
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:60
 msgid "A stylus on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:60
 msgid "Draw a line everyone sees"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:61
 msgid "Flick the unit card right"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:61
 msgid "Put it away (tap a unit to bring it back)"
 msgstr ""
 
-#: src/ui/Keys.tsx:75
-#: src/ui/Keys.tsx:79
+#: src/ui/Keys.tsx:80
+#: src/ui/Keys.tsx:84
 msgid "Controls"
 msgstr ""
 
-#: src/ui/Keys.tsx:82
+#: src/ui/Keys.tsx:87
 #: src/ui/TeachRule.tsx:99
 msgid "Close (Esc)"
 msgstr ""
@@ -10278,7 +10298,7 @@ msgid "Charged {distance}"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:176
-#: src/ui/UnitCard.tsx:238
+#: src/ui/UnitCard.tsx:264
 msgid "Selected unit"
 msgstr ""
 
@@ -10325,17 +10345,17 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:354
-#: src/ui/UnitCard.tsx:413
+#: src/ui/UnitCard.tsx:439
 msgid "Model's eye view"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:357
-#: src/ui/UnitCard.tsx:323
+#: src/ui/UnitCard.tsx:349
 msgid "Rotate left (Q)"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:360
-#: src/ui/UnitCard.tsx:326
+#: src/ui/UnitCard.tsx:352
 msgid "Rotate right (E)"
 msgstr ""
 
@@ -11338,191 +11358,191 @@ msgstr ""
 msgid "Dragging moves one model at a time"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:193
+#: src/ui/UnitCard.tsx:219
 msgid "Fell back this turn: it can't shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:196
+#: src/ui/UnitCard.tsx:222
 msgid "Advanced {n}\" this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:197
+#: src/ui/UnitCard.tsx:223
 msgid "Advanced this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:201
+#: src/ui/UnitCard.tsx:227
 msgid "Moved {n}\" this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:202
+#: src/ui/UnitCard.tsx:228
 msgid "Moved this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:204
+#: src/ui/UnitCard.tsx:230
 msgid "Moved {n}\" this turn"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:207
+#: src/ui/UnitCard.tsx:233
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:251
+#: src/ui/UnitCard.tsx:277
 msgid "{title}, round {round}: {line}. Click to replay it."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:256
+#: src/ui/UnitCard.tsx:282
 msgid "Replay: {title}, round {round}"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:266
+#: src/ui/UnitCard.tsx:292
 msgid "{player} · {alive}/{all} models"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:289
-#: src/ui/UnitCard.tsx:588
+#: src/ui/UnitCard.tsx:315
+#: src/ui/UnitCard.tsx:614
 msgid "Shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:301
+#: src/ui/UnitCard.tsx:327
 msgid "Shoot everything at…"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:305
+#: src/ui/UnitCard.tsx:331
 msgid "Advance (D6)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:309
+#: src/ui/UnitCard.tsx:335
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:313
+#: src/ui/UnitCard.tsx:339
 msgid "Up a floor (R)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:314
-#: src/ui/UnitCard.tsx:317
+#: src/ui/UnitCard.tsx:340
+#: src/ui/UnitCard.tsx:343
 msgid "Floor"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:316
+#: src/ui/UnitCard.tsx:342
 msgid "Down a floor (F)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:335
+#: src/ui/UnitCard.tsx:361
 msgid "Clear advance"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:350
+#: src/ui/UnitCard.tsx:376
 msgid "Advanced +{n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:353
+#: src/ui/UnitCard.tsx:379
 msgid "Charge roll {n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:357
+#: src/ui/UnitCard.tsx:383
 msgid "Charged {distance}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:402
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:384
+#: src/ui/UnitCard.tsx:410
 msgid "Snap back to {allowed}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:389
+#: src/ui/UnitCard.tsx:415
 msgid "Moved through {terrain}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:396
+#: src/ui/UnitCard.tsx:422
 msgid "Engaged with {units}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:416
+#: src/ui/UnitCard.tsx:442
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:419
+#: src/ui/UnitCard.tsx:445
 msgid "Ranges"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:423
+#: src/ui/UnitCard.tsx:449
 msgid "Longest range"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:434
+#: src/ui/UnitCard.tsx:460
 msgid "On a floor {height}\" up"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:471
+#: src/ui/UnitCard.tsx:497
 msgid "Ranged"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:471
-#: src/ui/UnitCard.tsx:573
+#: src/ui/UnitCard.tsx:497
+#: src/ui/UnitCard.tsx:599
 msgid "Melee"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:50
+#: src/ui/UnitCard.tsx:51
 #: src/ui/eventText.ts:532
 msgid "Moved"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:502
-msgid "Abilities ({n})"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:51
+#: src/ui/UnitCard.tsx:52
 #: src/ui/eventText.ts:533
 msgid "Fell back"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:515
-msgid "Models and wounds"
+#: src/ui/UnitCard.tsx:528
+msgid "Abilities ({n})"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:52
+#: src/ui/UnitCard.tsx:53
 #: src/ui/eventText.ts:534
 msgid "Shot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:523
-msgid "Model height for line of sight"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:53
+#: src/ui/UnitCard.tsx:54
 #: src/ui/eventText.ts:535
 msgid "Charged"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:54
+#: src/ui/UnitCard.tsx:541
+msgid "Models and wounds"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:549
+msgid "Model height for line of sight"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:55
 #: src/ui/eventText.ts:536
 msgid "Fought"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:544
-msgid "Remove {unit} from the game?"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:548
-msgid "Remove unit"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:55
+#: src/ui/UnitCard.tsx:56
 msgid "Battle-shocked"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:611
+#: src/ui/UnitCard.tsx:570
+msgid "Remove {unit} from the game?"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:574
+msgid "Remove unit"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:637
 msgid "{left}/{max} W"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:621
+#: src/ui/UnitCard.tsx:647
 msgid "Revive"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:621
+#: src/ui/UnitCard.tsx:647
 msgid "Slay"
 msgstr ""
 

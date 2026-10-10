@@ -1,4 +1,4 @@
-import type { GameState, Vec2 } from "../../core";
+import { movedSoFar, type GameState, type Vec2 } from "../../core";
 
 /**
  * How far along a drag (0 to 1) the models can go without any of them moving
@@ -12,15 +12,16 @@ export function clampFraction(
   ids: string[],
   target: (id: string, s: number) => Vec2 & { z?: number },
   limit: number,
+  /** Corners of the move under way, after the model's own (core/path.ts). */
+  via: (id: string) => Vec2[] = () => [],
 ): number {
   const fits = (s: number) =>
     ids.every((id) => {
       const m = game.models[id];
       if (!m) return true;
-      const from = m.phaseStart ?? m.position;
       const p = target(id, s);
       const climb = Math.abs((p.z ?? m.z ?? 0) - (m.phaseStartZ ?? 0));
-      return Math.hypot(p.x - from.x, p.y - from.y) + climb <= limit + 1e-6;
+      return movedSoFar(m, p, via(id)) + climb <= limit + 1e-6;
     });
   if (fits(1)) return 1;
   let lo = 0;

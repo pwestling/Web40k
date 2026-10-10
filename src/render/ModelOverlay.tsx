@@ -37,22 +37,30 @@ export function Ring({
 export function Ghost({
   from,
   fromZ,
+  via = [],
   to,
   toZ,
   model,
 }: {
   from: Vec2;
   fromZ: number;
+  /** Corners of a move in legs (core/path.ts), drawn at the start's height. */
+  via?: Vec2[];
   to: Vec2;
   toZ: number;
   model: Model;
 }) {
   const { width, depth } = baseSizeInches(model.base);
   const r = Math.max(width, depth) / 2;
-  const line = useMemo(
-    () => new Float32Array([from.x, fromZ + 0.06, from.y, to.x, toZ + 0.06, to.y]),
-    [from, fromZ, to, toZ],
-  );
+  const line = useMemo(() => {
+    const pts = [[from.x, fromZ, from.y], ...via.map((p) => [p.x, fromZ, p.y]), [to.x, toZ, to.y]];
+    const out: number[] = [];
+    for (let i = 1; i < pts.length; i++) {
+      const [a, b] = [pts[i - 1]!, pts[i]!];
+      out.push(a[0]!, a[1]! + 0.06, a[2]!, b[0]!, b[1]! + 0.06, b[2]!);
+    }
+    return new Float32Array(out);
+  }, [from, fromZ, via, to, toZ]);
   return (
     <>
       <mesh rotation-x={-Math.PI / 2} position={[from.x, fromZ + 0.05, from.y]} raycast={() => null}>
@@ -65,6 +73,12 @@ export function Ghost({
         </bufferGeometry>
         <lineBasicMaterial color="#e5e7eb" transparent opacity={0.6} />
       </lineSegments>
+      {via.map((p, i) => (
+        <mesh key={i} rotation-x={-Math.PI / 2} position={[p.x, fromZ + 0.06, p.y]} raycast={() => null}>
+          <circleGeometry args={[0.12, 12]} />
+          <meshBasicMaterial color="#e5e7eb" transparent opacity={0.8} />
+        </mesh>
+      ))}
     </>
   );
 }

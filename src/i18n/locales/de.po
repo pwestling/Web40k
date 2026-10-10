@@ -2091,8 +2091,8 @@ msgstr "Angriff ansagen"
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
-#: src/ui/UnitCard.tsx:289
-#: src/ui/UnitCard.tsx:588
+#: src/ui/UnitCard.tsx:315
+#: src/ui/UnitCard.tsx:614
 #, fuzzy
 msgid "Fight"
 msgstr "Nahkampf"
@@ -5266,42 +5266,42 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] "unterschreibt {signed} von {n} Ergebnis"
 msgstr[1] "unterschreibt {signed} von {n} Ergebnissen"
 
-#: src/render/Board.tsx:1023
+#: src/render/Board.tsx:1074
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label}: gehalten von {player}"
 
-#: src/render/Board.tsx:1025
+#: src/render/Board.tsx:1076
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label}: umkämpft"
 
-#: src/render/Board.tsx:1026
+#: src/render/Board.tsx:1077
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label}: von niemandem gehalten"
 
-#: src/render/Board.tsx:1087
+#: src/render/Board.tsx:1138
 #, fuzzy
 msgid "Not visible"
 msgstr "Nicht sichtbar"
 
-#: src/render/Board.tsx:1089
+#: src/render/Board.tsx:1140
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} sichtbar · {cover} in Deckung"
 
-#: src/render/Board.tsx:1094
+#: src/render/Board.tsx:1145
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} sichtbar"
 
-#: src/render/Board.tsx:1554
+#: src/render/Board.tsx:1615
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Bewegung {inches}\""
 
-#: src/render/Board.tsx:351
+#: src/render/Board.tsx:355
 #, fuzzy
 msgid "The table"
 msgstr "Der Tisch"
@@ -5425,7 +5425,12 @@ msgstr " · {inches}\" Luft"
 msgid " · out by {inches}\""
 msgstr " · {inches}\" zu weit"
 
-#: src/render/boardLabels.tsx:188
+#: src/render/boardLabels.tsx:193
+#, fuzzy
+msgid "{distance} in {n} legs"
+msgstr "{distance} in {n} Etappen"
+
+#: src/render/boardLabels.tsx:195
 #, fuzzy
 msgid "{distance} · through {terrain}"
 msgstr "{distance} · durch {terrain}"
@@ -5490,8 +5495,8 @@ msgstr[0] "{n} Markierung auf dem Tisch"
 msgstr[1] "{n} Markierungen auf dem Tisch"
 
 #: src/replay/NotesPanel.tsx:186
-#: src/ui/Keys.tsx:29
-#: src/ui/Keys.tsx:40
+#: src/ui/Keys.tsx:33
+#: src/ui/Keys.tsx:44
 #: src/ui/TerrainPanel.tsx:342
 #: src/workshop/Workshop.tsx:297
 #, fuzzy
@@ -9750,7 +9755,7 @@ msgstr "+1 auf Schutzwurf"
 
 #: src/ui/GameSettings.tsx:40
 #: src/ui/SystemPanels.tsx:352
-#: src/ui/UnitCard.tsx:411
+#: src/ui/UnitCard.tsx:437
 #, fuzzy
 msgid "Line of sight"
 msgstr "Sichtlinie"
@@ -9849,7 +9854,7 @@ msgid "Top-down view"
 msgstr "Draufsicht"
 
 #: src/ui/Hud.tsx:141
-#: src/ui/Keys.tsx:26
+#: src/ui/Keys.tsx:30
 #, fuzzy
 msgid "Home"
 msgstr "Home"
@@ -10035,7 +10040,7 @@ msgstr "Einheit anklicken"
 msgid "Select it: its card on the right shows what it can do"
 msgstr "Auswählen: ihre Karte rechts zeigt, was sie kann"
 
-#: src/ui/Keys.tsx:100
+#: src/ui/Keys.tsx:105
 #, fuzzy
 msgid "Coming from Tabletop Simulator?"
 msgstr "Kommst du von Tabletop Simulator?"
@@ -10044,16 +10049,6 @@ msgstr "Kommst du von Tabletop Simulator?"
 #, fuzzy
 msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr "Vorherige oder nächste eigene Einheit wählen (Umschalt: die der Gegenseite)"
-
-#: src/ui/Keys.tsx:115
-#, fuzzy
-msgid "TTS controls (just on this device)"
-msgstr "TTS-Steuerung (nur auf diesem Gerät)"
-
-#: src/ui/Keys.tsx:119
-#, fuzzy
-msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
-msgstr "Das ▶ oben bringt das Spiel voran. Alles lässt sich im linken Bereich rückgängig machen."
 
 #: src/ui/Keys.tsx:12
 #, fuzzy
@@ -10064,6 +10059,16 @@ msgstr "Pfeiltasten"
 #, fuzzy
 msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
 msgstr "Ausgewählte Einheit 1\" bewegen (Shift: ¼\"), oben ist von der Kamera weg"
+
+#: src/ui/Keys.tsx:120
+#, fuzzy
+msgid "TTS controls (just on this device)"
+msgstr "TTS-Steuerung (nur auf diesem Gerät)"
+
+#: src/ui/Keys.tsx:124
+#, fuzzy
+msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
+msgstr "Das ▶ oben bringt das Spiel voran. Alles lässt sich im linken Bereich rückgängig machen."
 
 #: src/ui/Keys.tsx:13
 #, fuzzy
@@ -10081,8 +10086,8 @@ msgid "Move between buttons; Enter or Space presses one"
 msgstr "Zwischen Schaltflächen wechseln; Enter oder Leertaste drückt sie"
 
 #: src/ui/Keys.tsx:15
-#: src/ui/Keys.tsx:37
-#: src/ui/Keys.tsx:48
+#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:52
 #, fuzzy
 msgid "Drag a unit"
 msgstr "Einheit ziehen"
@@ -10102,245 +10107,265 @@ msgstr "Alt + Ziehen"
 msgid "Move a unit, stopping at its limit"
 msgstr "Einheit bewegen, stoppt an ihrem Limit"
 
-#: src/ui/Keys.tsx:17
+#: src/ui/Keys.tsx:18
+#, fuzzy
+msgid "Space or right-click while dragging"
+msgstr "Leertaste oder Rechtsklick beim Ziehen"
+
+#: src/ui/Keys.tsx:19
+#, fuzzy
+msgid "Turn a corner (round a ruin, say): the move goes on from there, measured along its legs"
+msgstr "Um eine Ecke gehen (etwa um eine Ruine): Die Bewegung geht von dort weiter und wird entlang ihrer Etappen gemessen"
+
+#: src/ui/Keys.tsx:21
 #, fuzzy
 msgid "Shift + drag"
 msgstr "Umschalt + Ziehen"
 
-#: src/ui/Keys.tsx:17
+#: src/ui/Keys.tsx:21
 #, fuzzy
 msgid "Move a regiment block freely, not just straight ahead"
 msgstr "Regimentsblock frei bewegen, nicht nur geradeaus"
 
-#: src/ui/Keys.tsx:18
+#: src/ui/Keys.tsx:22
 #, fuzzy
 msgid "Turn the selected unit (or terrain piece while editing)"
 msgstr "Ausgewählte Einheit drehen (oder Geländestück beim Bearbeiten)"
 
-#: src/ui/Keys.tsx:19
+#: src/ui/Keys.tsx:23
 #, fuzzy
 msgid "Move the selected unit up or down a floor"
 msgstr "Ausgewählte Einheit eine Etage hoch oder runter bewegen"
 
-#: src/ui/Keys.tsx:20
+#: src/ui/Keys.tsx:24
 #, fuzzy
 msgid "Measure: then drag across the table"
 msgstr "Messen: dann über den Tisch ziehen"
 
-#: src/ui/Keys.tsx:21
+#: src/ui/Keys.tsx:25
 #, fuzzy
 msgid "Alt + click"
 msgstr "Alt + Klick"
 
-#: src/ui/Keys.tsx:21
+#: src/ui/Keys.tsx:25
 #, fuzzy
 msgid "Ping a spot for everyone"
 msgstr "Eine Stelle für alle markieren"
 
-#: src/ui/Keys.tsx:22
+#: src/ui/Keys.tsx:26
 #, fuzzy
 msgid "Hold V"
 msgstr "V halten"
 
-#: src/ui/Keys.tsx:22
+#: src/ui/Keys.tsx:26
 #, fuzzy
 msgid "Talk, once your mic is on (Voice, bottom left)"
 msgstr "Sprechen, sobald dein Mikro an ist (Sprache, unten links)"
 
-#: src/ui/Keys.tsx:23
+#: src/ui/Keys.tsx:27
 #, fuzzy
 msgid "Left drag on the table"
 msgstr "Linksziehen auf dem Tisch"
 
-#: src/ui/Keys.tsx:23
+#: src/ui/Keys.tsx:27
 #, fuzzy
 msgid "Turn the camera"
 msgstr "Kamera drehen"
 
-#: src/ui/Keys.tsx:24
+#: src/ui/Keys.tsx:28
 #, fuzzy
 msgid "Right drag"
 msgstr "Rechtsziehen"
 
-#: src/ui/Keys.tsx:24
-#: src/ui/Keys.tsx:49
+#: src/ui/Keys.tsx:28
+#: src/ui/Keys.tsx:53
 #, fuzzy
 msgid "Slide the camera"
 msgstr "Kamera verschieben"
 
-#: src/ui/Keys.tsx:25
+#: src/ui/Keys.tsx:29
 #, fuzzy
 msgid "Wheel"
 msgstr "Mausrad"
 
-#: src/ui/Keys.tsx:25
+#: src/ui/Keys.tsx:29
 #, fuzzy
 msgid "Zoom"
 msgstr "Zoom"
 
-#: src/ui/Keys.tsx:26
+#: src/ui/Keys.tsx:30
 #, fuzzy
 msgid "Reset the camera"
 msgstr "Kamera zurücksetzen"
 
-#: src/ui/Keys.tsx:27
+#: src/ui/Keys.tsx:31
 #, fuzzy
 msgid "Esc"
 msgstr "Esc"
 
-#: src/ui/Keys.tsx:27
+#: src/ui/Keys.tsx:31
 #, fuzzy
 msgid "Clear: selection, ruler, pen"
 msgstr "Leeren: Auswahl, Maßband, Stift"
 
-#: src/ui/Keys.tsx:30
+#: src/ui/Keys.tsx:34
 #, fuzzy
 msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
 msgstr "Das Modell unter dem Zeiger als Verlust entfernen, nach Rückfrage (beim Bearbeiten: das Geländestück)"
 
-#: src/ui/Keys.tsx:32
+#: src/ui/Keys.tsx:36
 #, fuzzy
 msgid "This sheet"
 msgstr "Diese Übersicht"
 
-#: src/ui/Keys.tsx:37
+#: src/ui/Keys.tsx:41
 #, fuzzy
 msgid "Moves the whole unit; Shift + drag moves just the one model"
 msgstr "Bewegt die ganze Einheit; Shift + Ziehen bewegt nur das eine Modell"
 
-#: src/ui/Keys.tsx:38
+#: src/ui/Keys.tsx:42
 #, fuzzy
 msgid "Turn, as in Tabletop Simulator"
 msgstr "Drehen, wie in Tabletop Simulator"
 
-#: src/ui/Keys.tsx:39
+#: src/ui/Keys.tsx:43
 #, fuzzy
 msgid "Measure (with TTS controls, hold Tab)"
 msgstr "Messen (mit TTS-Steuerung: Tab halten)"
 
-#: src/ui/Keys.tsx:40
+#: src/ui/Keys.tsx:44
 #, fuzzy
 msgid "Remove the model under the pointer as a casualty"
 msgstr "Das Modell unter dem Zeiger als Verlust entfernen"
 
-#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:45
 #, fuzzy
 msgid "Drop a model off the table"
 msgstr "Ein Modell neben dem Tisch ablegen"
 
-#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:45
 #, fuzzy
 msgid "Remove it as a casualty (asking first)"
 msgstr "Es als Verlust entfernen (nach Rückfrage)"
 
-#: src/ui/Keys.tsx:42
+#: src/ui/Keys.tsx:46
 #, fuzzy
 msgid "Camera"
 msgstr "Kamera"
 
-#: src/ui/Keys.tsx:42
+#: src/ui/Keys.tsx:46
 #, fuzzy
 msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
 msgstr "Mit TTS-Steuerung: Ziehen mit rechts dreht, WASD verschiebt, Ziehen mit links wählt mit einem Rahmen"
 
-#: src/ui/Keys.tsx:47
+#: src/ui/Keys.tsx:51
 #, fuzzy
 msgid "Tap a unit"
 msgstr "Eine Einheit antippen"
 
-#: src/ui/Keys.tsx:47
+#: src/ui/Keys.tsx:51
 #, fuzzy
 msgid "Select it: its card shows what it can do"
 msgstr "Wählt sie aus: ihre Karte zeigt, was sie kann"
 
-#: src/ui/Keys.tsx:48
+#: src/ui/Keys.tsx:52
 #, fuzzy
 msgid "Move it (hold the table for one model at a time)"
 msgstr "Bewegt sie (halte den Tisch gedrückt, um ein Modell nach dem anderen zu bewegen)"
 
-#: src/ui/Keys.tsx:49
+#: src/ui/Keys.tsx:53
 #, fuzzy
 msgid "One finger on the table"
 msgstr "Ein Finger auf dem Tisch"
 
-#: src/ui/Keys.tsx:50
+#: src/ui/Keys.tsx:54
 #, fuzzy
 msgid "Two fingers"
 msgstr "Zwei Finger"
 
-#: src/ui/Keys.tsx:50
+#: src/ui/Keys.tsx:54
 #, fuzzy
 msgid "Pinch to zoom, twist to turn the camera"
 msgstr "Zusammenziehen zum Zoomen, drehen, um die Kamera zu drehen"
 
-#: src/ui/Keys.tsx:51
+#: src/ui/Keys.tsx:55
 #, fuzzy
 msgid "Two fingers on the selected unit"
 msgstr "Zwei Finger auf der gewählten Einheit"
 
-#: src/ui/Keys.tsx:51
+#: src/ui/Keys.tsx:55
 #, fuzzy
 msgid "Twist to turn it (a regiment block wheels)"
 msgstr "Drehen, um sie zu drehen (ein Regimentsblock schwenkt)"
 
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:56
 #, fuzzy
 msgid "Hold, then drag"
 msgstr "Halten, dann ziehen"
 
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:56
 #, fuzzy
 msgid "Measure"
 msgstr "Messen"
 
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:57
+#, fuzzy
+msgid "A second finger's tap while dragging"
+msgstr "Tippen mit einem zweiten Finger beim Ziehen"
+
+#: src/ui/Keys.tsx:57
+#, fuzzy
+msgid "Turn a corner: the move is measured along its legs"
+msgstr "Um eine Ecke gehen: Die Bewegung wird entlang ihrer Etappen gemessen"
+
+#: src/ui/Keys.tsx:58
 #, fuzzy
 msgid "Hold and let go"
 msgstr "Halten und loslassen"
 
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:58
 #, fuzzy
 msgid "More: turn, ping, look from here, views"
 msgstr "Mehr: drehen, anpingen, von hier schauen, Ansichten"
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:59
 #: src/ui/TouchLayer.tsx:149
 #, fuzzy
 msgid "Select several"
 msgstr "Mehrere auswählen"
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:59
 #, fuzzy
 msgid "Draw a box on the table, then drag one unit to move them all"
 msgstr "Zieh einen Rahmen auf dem Tisch, dann zieh eine Einheit, um alle zu bewegen"
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:60
 #, fuzzy
 msgid "A stylus on the table"
 msgstr "Ein Stift auf dem Tisch"
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:60
 #, fuzzy
 msgid "Draw a line everyone sees"
 msgstr "Eine Linie zeichnen, die alle sehen"
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:61
 #, fuzzy
 msgid "Flick the unit card right"
 msgstr "Die Einheitenkarte nach rechts wischen"
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:61
 #, fuzzy
 msgid "Put it away (tap a unit to bring it back)"
 msgstr "Legt sie weg (tippe auf eine Einheit, um sie zurückzuholen)"
 
-#: src/ui/Keys.tsx:75
-#: src/ui/Keys.tsx:79
+#: src/ui/Keys.tsx:80
+#: src/ui/Keys.tsx:84
 #, fuzzy
 msgid "Controls"
 msgstr "Steuerung"
 
-#: src/ui/Keys.tsx:82
+#: src/ui/Keys.tsx:87
 #: src/ui/TeachRule.tsx:99
 #, fuzzy
 msgid "Close (Esc)"
@@ -12559,7 +12584,7 @@ msgid "Charged {distance}"
 msgstr "Angriffsbewegung {distance}"
 
 #: src/ui/SystemPanels.tsx:176
-#: src/ui/UnitCard.tsx:238
+#: src/ui/UnitCard.tsx:264
 #, fuzzy
 msgid "Selected unit"
 msgstr "Gewählte Einheit"
@@ -12617,19 +12642,19 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr "{distance} von {allowance} in dieser Runde bewegt."
 
 #: src/ui/SystemPanels.tsx:354
-#: src/ui/UnitCard.tsx:413
+#: src/ui/UnitCard.tsx:439
 #, fuzzy
 msgid "Model's eye view"
 msgstr "Modellperspektive"
 
 #: src/ui/SystemPanels.tsx:357
-#: src/ui/UnitCard.tsx:323
+#: src/ui/UnitCard.tsx:349
 #, fuzzy
 msgid "Rotate left (Q)"
 msgstr "Nach links drehen (Q)"
 
 #: src/ui/SystemPanels.tsx:360
-#: src/ui/UnitCard.tsx:326
+#: src/ui/UnitCard.tsx:352
 #, fuzzy
 msgid "Rotate right (E)"
 msgstr "Nach rechts drehen (E)"
@@ -13879,235 +13904,235 @@ msgstr "Zieh auf dem Tisch einen Rahmen um deine Einheiten"
 msgid "Dragging moves one model at a time"
 msgstr "Ziehen bewegt ein Modell nach dem anderen"
 
-#: src/ui/UnitCard.tsx:193
+#: src/ui/UnitCard.tsx:219
 #, fuzzy
 msgid "Fell back this turn: it can't shoot"
 msgstr "Diesen Zug zurückgefallen: kann nicht schießen"
 
-#: src/ui/UnitCard.tsx:196
+#: src/ui/UnitCard.tsx:222
 #, fuzzy
 msgid "Advanced {n}\" this turn: Assault weapons only"
 msgstr "Diesen Zug {n}\" vorgerückt: nur Sturmwaffen"
 
-#: src/ui/UnitCard.tsx:197
+#: src/ui/UnitCard.tsx:223
 #, fuzzy
 msgid "Advanced this turn: Assault weapons only"
 msgstr "Diesen Zug vorgerückt: nur Sturmwaffen"
 
-#: src/ui/UnitCard.tsx:201
+#: src/ui/UnitCard.tsx:227
 #, fuzzy
 msgid "Moved {n}\" this turn: no Heavy +1 to hit"
 msgstr "Diesen Zug {n}\" bewegt: kein +1 zum Treffen für Schwer"
 
-#: src/ui/UnitCard.tsx:202
+#: src/ui/UnitCard.tsx:228
 #, fuzzy
 msgid "Moved this turn: no Heavy +1 to hit"
 msgstr "Diesen Zug bewegt: kein +1 zum Treffen für Schwer"
 
-#: src/ui/UnitCard.tsx:204
+#: src/ui/UnitCard.tsx:230
 #, fuzzy
 msgid "Moved {n}\" this turn"
 msgstr "Diesen Zug {n}\" bewegt"
 
-#: src/ui/UnitCard.tsx:207
+#: src/ui/UnitCard.tsx:233
 #, fuzzy
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr "Diesen Zug stehen geblieben: Schwer +1 zum Treffen"
 
-#: src/ui/UnitCard.tsx:251
+#: src/ui/UnitCard.tsx:277
 #, fuzzy
 msgid "{title}, round {round}: {line}. Click to replay it."
 msgstr "{title}, Runde {round}: {line}. Klicken zum Wiederholen."
 
-#: src/ui/UnitCard.tsx:256
+#: src/ui/UnitCard.tsx:282
 #, fuzzy
 msgid "Replay: {title}, round {round}"
 msgstr "Wiederholung: {title}, Runde {round}"
 
-#: src/ui/UnitCard.tsx:266
+#: src/ui/UnitCard.tsx:292
 #, fuzzy
 msgid "{player} · {alive}/{all} models"
 msgstr "{player} · {alive}/{all} Modelle"
 
-#: src/ui/UnitCard.tsx:289
-#: src/ui/UnitCard.tsx:588
+#: src/ui/UnitCard.tsx:315
+#: src/ui/UnitCard.tsx:614
 #, fuzzy
 msgid "Shoot"
 msgstr "Schießen"
 
-#: src/ui/UnitCard.tsx:301
+#: src/ui/UnitCard.tsx:327
 #, fuzzy
 msgid "Shoot everything at…"
 msgstr "Mit allem schießen auf …"
 
-#: src/ui/UnitCard.tsx:305
+#: src/ui/UnitCard.tsx:331
 #, fuzzy
 msgid "Advance (D6)"
 msgstr "Vorrücken (D6)"
 
-#: src/ui/UnitCard.tsx:309
+#: src/ui/UnitCard.tsx:335
 #, fuzzy
 msgid "Battle-shock test"
 msgstr "Moraltest"
 
-#: src/ui/UnitCard.tsx:313
+#: src/ui/UnitCard.tsx:339
 #, fuzzy
 msgid "Up a floor (R)"
 msgstr "Ein Stockwerk hoch (R)"
 
-#: src/ui/UnitCard.tsx:314
-#: src/ui/UnitCard.tsx:317
+#: src/ui/UnitCard.tsx:340
+#: src/ui/UnitCard.tsx:343
 #, fuzzy
 msgid "Floor"
 msgstr "Stockwerk"
 
-#: src/ui/UnitCard.tsx:316
+#: src/ui/UnitCard.tsx:342
 #, fuzzy
 msgid "Down a floor (F)"
 msgstr "Ein Stockwerk runter (F)"
 
-#: src/ui/UnitCard.tsx:335
+#: src/ui/UnitCard.tsx:361
 #, fuzzy
 msgid "Clear advance"
 msgstr "Vorrücken zurücksetzen"
 
-#: src/ui/UnitCard.tsx:350
+#: src/ui/UnitCard.tsx:376
 #, fuzzy
 msgid "Advanced +{n}\""
 msgstr "Vorgerückt +{n}\""
 
-#: src/ui/UnitCard.tsx:353
+#: src/ui/UnitCard.tsx:379
 #, fuzzy
 msgid "Charge roll {n}\""
 msgstr "Angriffswurf {n}\""
 
-#: src/ui/UnitCard.tsx:357
+#: src/ui/UnitCard.tsx:383
 #, fuzzy
 msgid "Charged {distance}\""
 msgstr "Angriffsbewegung {distance}\""
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:402
 #, fuzzy
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr "{moved}\" von {allowed}\" in dieser Phase bewegt."
 
-#: src/ui/UnitCard.tsx:384
+#: src/ui/UnitCard.tsx:410
 #, fuzzy
 msgid "Snap back to {allowed}\""
 msgstr "Auf {allowed}\" zurücksetzen"
 
-#: src/ui/UnitCard.tsx:389
+#: src/ui/UnitCard.tsx:415
 #, fuzzy
 msgid "Moved through {terrain}."
 msgstr "Durch {terrain} bewegt."
 
-#: src/ui/UnitCard.tsx:396
+#: src/ui/UnitCard.tsx:422
 #, fuzzy
 msgid "Engaged with {units}."
 msgstr "Im Nahkampf mit {units}."
 
-#: src/ui/UnitCard.tsx:416
+#: src/ui/UnitCard.tsx:442
 #, fuzzy
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr "Bewegung (blau) und längste Waffenreichweite (gelb) um jedes Modell"
 
-#: src/ui/UnitCard.tsx:419
+#: src/ui/UnitCard.tsx:445
 #, fuzzy
 msgid "Ranges"
 msgstr "Reichweiten"
 
-#: src/ui/UnitCard.tsx:423
+#: src/ui/UnitCard.tsx:449
 #, fuzzy
 msgid "Longest range"
 msgstr "Längste Reichweite"
 
-#: src/ui/UnitCard.tsx:434
+#: src/ui/UnitCard.tsx:460
 #, fuzzy
 msgid "On a floor {height}\" up"
 msgstr "Auf einem Stockwerk {height}\" hoch"
 
-#: src/ui/UnitCard.tsx:471
+#: src/ui/UnitCard.tsx:497
 #, fuzzy
 msgid "Ranged"
 msgstr "Fernkampf"
 
-#: src/ui/UnitCard.tsx:471
-#: src/ui/UnitCard.tsx:573
+#: src/ui/UnitCard.tsx:497
+#: src/ui/UnitCard.tsx:599
 #, fuzzy
 msgid "Melee"
 msgstr "Nahkampf"
 
-#: src/ui/UnitCard.tsx:50
+#: src/ui/UnitCard.tsx:51
 #: src/ui/eventText.ts:532
 #, fuzzy
 msgid "Moved"
 msgstr "Bewegt"
 
-#: src/ui/UnitCard.tsx:502
-#, fuzzy
-msgid "Abilities ({n})"
-msgstr "Fähigkeiten ({n})"
-
-#: src/ui/UnitCard.tsx:51
+#: src/ui/UnitCard.tsx:52
 #: src/ui/eventText.ts:533
 #, fuzzy
 msgid "Fell back"
 msgstr "Zurückgefallen"
 
-#: src/ui/UnitCard.tsx:515
+#: src/ui/UnitCard.tsx:528
 #, fuzzy
-msgid "Models and wounds"
-msgstr "Modelle und Lebenspunkte"
+msgid "Abilities ({n})"
+msgstr "Fähigkeiten ({n})"
 
-#: src/ui/UnitCard.tsx:52
+#: src/ui/UnitCard.tsx:53
 #: src/ui/eventText.ts:534
 #, fuzzy
 msgid "Shot"
 msgstr "Geschossen"
 
-#: src/ui/UnitCard.tsx:523
-#, fuzzy
-msgid "Model height for line of sight"
-msgstr "Modellhöhe für die Sichtlinie"
-
-#: src/ui/UnitCard.tsx:53
+#: src/ui/UnitCard.tsx:54
 #: src/ui/eventText.ts:535
 #, fuzzy
 msgid "Charged"
 msgstr "Angriffsbewegung durchgeführt"
 
-#: src/ui/UnitCard.tsx:54
+#: src/ui/UnitCard.tsx:541
+#, fuzzy
+msgid "Models and wounds"
+msgstr "Modelle und Lebenspunkte"
+
+#: src/ui/UnitCard.tsx:549
+#, fuzzy
+msgid "Model height for line of sight"
+msgstr "Modellhöhe für die Sichtlinie"
+
+#: src/ui/UnitCard.tsx:55
 #: src/ui/eventText.ts:536
 #, fuzzy
 msgid "Fought"
 msgstr "Hat gekämpft"
 
-#: src/ui/UnitCard.tsx:544
-#, fuzzy
-msgid "Remove {unit} from the game?"
-msgstr "{unit} aus dem Spiel entfernen?"
-
-#: src/ui/UnitCard.tsx:548
-#, fuzzy
-msgid "Remove unit"
-msgstr "Einheit entfernen"
-
-#: src/ui/UnitCard.tsx:55
+#: src/ui/UnitCard.tsx:56
 #, fuzzy
 msgid "Battle-shocked"
 msgstr "Kampfschock"
 
-#: src/ui/UnitCard.tsx:611
+#: src/ui/UnitCard.tsx:570
+#, fuzzy
+msgid "Remove {unit} from the game?"
+msgstr "{unit} aus dem Spiel entfernen?"
+
+#: src/ui/UnitCard.tsx:574
+#, fuzzy
+msgid "Remove unit"
+msgstr "Einheit entfernen"
+
+#: src/ui/UnitCard.tsx:637
 #, fuzzy
 msgid "{left}/{max} W"
 msgstr "{left}/{max} W"
 
-#: src/ui/UnitCard.tsx:621
+#: src/ui/UnitCard.tsx:647
 #, fuzzy
 msgid "Revive"
 msgstr "Wiederbeleben"
 
-#: src/ui/UnitCard.tsx:621
+#: src/ui/UnitCard.tsx:647
 #, fuzzy
 msgid "Slay"
 msgstr "Ausschalten"

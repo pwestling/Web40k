@@ -1,3 +1,4 @@
+import { alongPath, movePath, pathLength } from "../../core/path";
 import type { GameView, Warning } from "../../sdk";
 import { opposed } from "../../core/teams";
 import { currentSlot } from "../../core/content/turn";
@@ -29,17 +30,13 @@ function movedThroughEnemies(state: GameState, unit: Unit): number {
     .filter((u) => opposed(state, u.owner, unit.owner))
     .flatMap((u) => aliveModels(state, u));
   return aliveModels(state, unit).filter((m) => {
-    const from = m.phaseStart;
-    if (!from) return false;
-    const length = Math.hypot(m.position.x - from.x, m.position.y - from.y);
+    if (!m.phaseStart) return false;
+    const path = movePath(m);
+    const length = pathLength(path);
     if (length < 0.05) return false;
     const steps = Math.ceil(length / 0.25);
     for (let i = 1; i <= steps; i++) {
-      const k = i / steps;
-      const at = {
-        ...m,
-        position: { x: from.x + (m.position.x - from.x) * k, y: from.y + (m.position.y - from.y) * k },
-      };
+      const at = { ...m, position: alongPath(path, (length * i) / steps) };
       if (enemies.some((e) => baseToBaseDistance(at, e) < 0.01)) return true;
     }
     return false;

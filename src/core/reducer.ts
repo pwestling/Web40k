@@ -1,6 +1,7 @@
 import type { GameEvent } from "./actions";
 import { revealMatches } from "./secrets";
 import { cleanDecks, pileOf, type CardPile } from "./cards";
+import { cleanCorners, MAX_CORNERS } from "./path";
 import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
 import {
@@ -79,13 +80,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const models = { ...state.models };
       // Facing follows the move where the game says so (settings.faceMove), once the battle is on.
       const face = !!state.settings.faceMove && !event.setup && !event.snap && state.turn.round > 0;
-      for (const { id, to, z } of event.moves) {
+      for (const { id, to, z, via, path } of event.moves) {
         const m = models[id];
         if (!m) continue;
-        const d = { x: to.x - m.position.x, y: to.y - m.position.y };
+        const corners = cornersAfter(m, to, via, path);
+        const last = corners.at(-1) ?? m.position;
+        const d = { x: to.x - last.x, y: to.y - last.y };
         const turns = face && Math.hypot(d.x, d.y) > 0.01 && !state.units[m.unitId ?? ""]?.status?.reserves;
         const facing = turns ? facingOf(d) : m.facing;
-        models[id] = { ...m, position: to, facing, ...(z === undefined ? {} : { z }) };
+        const { phaseVia: _v, ...rest } = m;
+        models[id] = {
+          ...rest,
+          position: to,
+          facing,
+          ...(z === undefined ? {} : { z }),
+          ...(corners.length ? { phaseVia: corners } : {}),
+        };
       }
       // Moving a unit is how its activation starts in a game of plain activations (UX 324).
       const unit = event.setup ? undefined : state.models[event.moves[0]?.id ?? ""]?.unitId;
@@ -650,7 +660,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       if (!event.reserve)
         for (const id of next.units[event.id]?.modelIds ?? [])
           if (models[id]) {
-            const { phaseStart: _p, ...m } = models[id]!;
+            const { phaseStart: _p, phaseVia: _v, ...m } = models[id]!;
             models[id] = m;
           }
       return { ...next, models };
@@ -660,8 +670,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       if (!unit) return state;
       const models = { ...state.models };
       for (const id of unit.modelIds)
-        if (models[id])
-          models[id] = { ...models[id]!, phaseStart: models[id]!.position, phaseStartZ: models[id]!.z ?? 0 };
+        if (models[id]) {
+          const { phaseVia: _v, ...m } = models[id]!;
+          models[id] = { ...m, phaseStart: m.position, phaseStartZ: m.z ?? 0 };
+        }
       return updateUnit({ ...state, models }, event.id, (u) => ({
         ...u,
         status: { ...u.status, allowance: event.inches, [event.flag]: true },
@@ -830,4 +842,19 @@ applyEventRef.fn = applyEvent;
 /** A named table, marked as changed once its terrain is edited. */
 function changedSource(state: GameState): GameState["tableSource"] {
   return state.tableSource ? { ...state.tableSource, changed: true } : state.tableSource;
+}
+
+/**
+ * A model's corners after a move (core/path.ts): `path` replaces them; `via`
+ * adds to them, with where it stood as a corner too when it had already
+ * moved this phase. Back where it started, it has no corners.
+ */
+function cornersAfter(m: Model, to: Vec2, via: unknown, path: unknown): Vec2[] {
+  const start = m.phaseStart ?? m.position;
+  if (Math.hypot(to.x - start.x, to.y - start.y) < 0.05 && !cleanCorners(via).length) return [];
+  if (path !== undefined) return cleanCorners(path);
+  const more = cleanCorners(via);
+  if (!more.length) return m.phaseVia ?? [];
+  const moved = Math.hypot(m.position.x - start.x, m.position.y - start.y) > 0.05 || !!m.phaseVia?.length;
+  return [...(m.phaseVia ?? []), ...(moved ? [m.position] : []), ...more].slice(-MAX_CORNERS);
 }

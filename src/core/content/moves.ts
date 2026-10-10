@@ -1,4 +1,5 @@
 import { inFootprint, segmentCrossesFootprint2D } from "../terrain";
+import { legsOf, movedSoFar, movePath, pathLength } from "../path";
 import type { GameState, TerrainPiece, Unit } from "../types";
 import { inchesPerUnit } from "./runtime";
 import type { GameSystem, TerrainCategoryDef } from "./schema";
@@ -43,16 +44,19 @@ export function terrainOnMove(state: GameState, system: GameSystem, unit: Unit):
   for (const id of unit.modelIds) {
     const m = state.models[id];
     if (!m || m.destroyed) continue;
-    const from = m.phaseStart ?? m.position;
-    const to = m.position;
-    if (Math.hypot(to.x - from.x, to.y - from.y) < 0.05) continue;
+    const path = movePath(m);
+    const from = path[0]!;
+    if (pathLength(path) < 0.05) continue;
     for (const p of state.terrain) {
       const c = categories.get(p.category);
       if (!c) continue;
       const rule = moveRule(c, unit);
       if (!rule.blocks && !rule.slows) continue;
       const startIn = inFootprint(p, from);
-      const through = inFootprint(p, to) || segmentCrossesFootprint2D(p, from, to);
+      // Leg by leg: a move round a piece in legs (core/path.ts) doesn't go through it.
+      const through =
+        path.slice(1).some((q) => inFootprint(p, q)) ||
+        legsOf(path).some(([a, b]) => segmentCrossesFootprint2D(p, a, b));
       if (rule.blocks && !startIn && through && !out.blocked.includes(p)) out.blocked.push(p);
       else if (rule.slows > (out.slowed?.by ?? 0) && (startIn || through))
         out.slowed = { by: rule.slows, piece: p };
@@ -76,8 +80,7 @@ export function terrainMoveWarning(state: GameState, system: GameSystem, unit: U
   for (const id of unit.modelIds) {
     const m = state.models[id];
     if (!m || m.destroyed) continue;
-    const from = m.phaseStart ?? m.position;
-    moved = Math.max(moved, Math.hypot(m.position.x - from.x, m.position.y - from.y));
+    moved = Math.max(moved, movedSoFar(m));
   }
   // Never below one unit of movement (FSD: at least 1 DU).
   const left = Math.max(

@@ -1,3 +1,4 @@
+import { legsOf, movePath, movedSoFar, pathLength } from "../../core/path";
 import { aliveModels } from "../../core/units";
 /**
  * 40k mechanics as code, for the first playable slice. These read the
@@ -351,21 +352,29 @@ function categoryRule(category: TerrainCategory) {
   return CATEGORY_RULES[category as keyof typeof CATEGORY_RULES] ?? CATEGORY_RULES.exposed;
 }
 
-/** Terrain a straight move from the phase start would pass through that the unit can't. */
-export function blockedMoves(state: GameState, unit: Unit, positions?: Record<string, Vec2>): TerrainPiece[] {
+/** Terrain the move from the phase start, leg by leg (core/path.ts), passes through that the unit can't. */
+export function blockedMoves(
+  state: GameState,
+  unit: Unit,
+  positions?: Record<string, Vec2>,
+  via?: Record<string, Vec2[]>,
+): TerrainPiece[] {
   const kw = unit.sheet?.keywords ?? [];
   if (hasKeyword(kw, "Fly")) return [];
   const throughWalls = hasKeyword(kw, "Infantry") || hasKeyword(kw, "Beast") || hasKeyword(kw, "Swarm");
   const hit = new Set<TerrainPiece>();
   for (const m of aliveModels(state, unit)) {
-    const from = m.phaseStart ?? m.position;
     const to = positions?.[m.id] ?? m.position;
-    if (Math.hypot(to.x - from.x, to.y - from.y) < 0.05) continue;
+    const path = movePath(m, to, via?.[m.id]);
+    if (pathLength(path) < 0.05) continue;
     for (const p of state.terrain) {
       const rule = categoryRule(p.category);
-      if (rule.impassable && (inFootprint(p, to) || moveCrossesWall([p], from, to, m.phaseStartZ ?? 0)))
-        hit.add(p);
-      else if (!throughWalls && sweepCrossesWall(p, m, from, to)) hit.add(p);
+      for (const [a, b] of legsOf(path)) {
+        if (Math.hypot(b.x - a.x, b.y - a.y) < 0.01) continue;
+        if (rule.impassable && (inFootprint(p, b) || moveCrossesWall([p], a, b, m.phaseStartZ ?? 0)))
+          hit.add(p);
+        else if (!throughWalls && sweepCrossesWall(p, m, a, b)) hit.add(p);
+      }
     }
   }
   return [...hit];
@@ -473,14 +482,15 @@ export function unitMoved(
   models: Model[],
   positions?: Record<string, Vec2>,
   heights?: Record<string, number>,
+  via?: Record<string, Vec2[]>,
 ): number {
   let best = 0;
   for (const m of models) {
     const p = positions?.[m.id] ?? m.position;
     const z = heights?.[m.id] ?? m.z ?? 0;
-    const from = m.phaseStart ?? m.position;
     const climb = Math.abs(z - (m.phaseStartZ ?? 0));
-    best = Math.max(best, Math.hypot(p.x - from.x, p.y - from.y) + climb);
+    // Along its legs, when it went round something (core/path.ts).
+    best = Math.max(best, movedSoFar(m, p, via?.[m.id]) + climb);
   }
   return best;
 }
