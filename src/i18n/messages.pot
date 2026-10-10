@@ -923,7 +923,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:546
 #: src/tables/TableLibrary.tsx:220
-#: src/ui/ArmyImport.tsx:632
+#: src/ui/ArmyImport.tsx:634
 #: src/workshop/Workshop.tsx:329
 msgid "Export"
 msgstr ""
@@ -1056,7 +1056,7 @@ msgstr ""
 
 #: src/campaign/CampaignUI.tsx:616
 #: src/campaign/EventTab.tsx:272
-#: src/ui/ArmyImport.tsx:372
+#: src/ui/ArmyImport.tsx:374
 msgid "Pts"
 msgstr ""
 
@@ -1125,7 +1125,7 @@ msgid "Edit"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:736
-#: src/ui/ArmyImport.tsx:371
+#: src/ui/ArmyImport.tsx:373
 #: src/ui/StatsScreen.tsx:162
 msgid "Unit"
 msgstr ""
@@ -2632,7 +2632,7 @@ msgstr ""
 
 #: src/figures/FigureLibrary.tsx:390
 #: src/figures/TtsImport.tsx:204
-#: src/ui/ArmyImport.tsx:377
+#: src/ui/ArmyImport.tsx:379
 msgid "Figure"
 msgstr ""
 
@@ -5496,7 +5496,7 @@ msgid "Save table"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:19
-#: src/ui/ArmyImport.tsx:627
+#: src/ui/ArmyImport.tsx:629
 msgid "another game"
 msgstr ""
 
@@ -5529,7 +5529,7 @@ msgid "Take {name} out of your library?"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:228
-#: src/ui/ArmyImport.tsx:638
+#: src/ui/ArmyImport.tsx:640
 #: src/ui/Packages.tsx:234
 #: src/ui/SystemPanels.tsx:437
 #: src/ui/TeachRule.tsx:543
@@ -5625,6 +5625,32 @@ msgstr ""
 msgid "Spectator {n}"
 msgstr ""
 
+#: src/tts/ListMerge.tsx:28
+msgid "No units found in that list."
+msgstr ""
+
+#: src/tts/ListMerge.tsx:33
+msgid "{n} unit takes its stats from the list."
+msgid_plural "{n} units take their stats from the list."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tts/ListMerge.tsx:38
+msgid "Not in the list: {names}."
+msgstr ""
+
+#: src/tts/ListMerge.tsx:40
+msgid "Added from the list: {names}."
+msgstr ""
+
+#: src/tts/ListMerge.tsx:50
+msgid "No points here. Your list file can bring the stats, points and detachment; the models stay."
+msgstr ""
+
+#: src/tts/ListMerge.tsx:53
+msgid "Take stats from a list…"
+msgstr ""
+
 #: src/ui/ArmyGuide.tsx:10
 msgid "Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in."
 msgstr ""
@@ -5691,7 +5717,7 @@ msgid "Your list stays with you: it goes to the people in your game and nowhere 
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:80
-#: src/ui/ArmyImport.tsx:490
+#: src/ui/ArmyImport.tsx:492
 #: src/ui/FigurePicker.tsx:207
 msgid "Your figures"
 msgstr ""
@@ -5729,280 +5755,280 @@ msgstr ""
 msgid "units"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:192
+#: src/ui/ArmyImport.tsx:193
 msgid "{count} spells read for {n} wizard."
 msgid_plural "{count} spells read for {n} wizards."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:208
+#: src/ui/ArmyImport.tsx:209
 msgid "Army for"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:220
+#: src/ui/ArmyImport.tsx:221
 msgid "Armies can be added once this game's rules package is running."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:224
+#: src/ui/ArmyImport.tsx:225
 msgid "Reading…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:224
+#: src/ui/ArmyImport.tsx:225
 msgid "Import a list"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:234
-#: src/ui/ArmyImport.tsx:257
+#: src/ui/ArmyImport.tsx:235
+#: src/ui/ArmyImport.tsx:258
 msgid "Sample army"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:243
+#: src/ui/ArmyImport.tsx:244
 msgid "Sample army…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:298
+#: src/ui/ArmyImport.tsx:300
 msgid "Your figure library has figures that fit {n} unit."
 msgid_plural "Your figure library has figures that fit {n} units."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:30
-#: src/ui/ArmyImport.tsx:769
+#: src/ui/ArmyImport.tsx:31
+#: src/ui/ArmyImport.tsx:771
 msgid "{d}mm round"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:312
+#: src/ui/ArmyImport.tsx:314
 msgid "Use them"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:321
+#: src/ui/ArmyImport.tsx:323
 msgid "Use your own OpenAI key to match library figures to units from a photo of your army"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:326
+#: src/ui/ArmyImport.tsx:328
 msgid "Match figures from a photo…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:331
+#: src/ui/ArmyImport.tsx:333
 msgid "Loading…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:362
+#: src/ui/ArmyImport.tsx:364
 msgid "Picked figures go on when the army is deployed."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:364
+#: src/ui/ArmyImport.tsx:366
 msgid "Clear the figures"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:373
+#: src/ui/ArmyImport.tsx:375
 msgid "Troop type"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:374
+#: src/ui/ArmyImport.tsx:376
 #: src/ui/TemplateTools.tsx:89
 msgid "Models"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:375
+#: src/ui/ArmyImport.tsx:377
 msgid "Base"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:376
+#: src/ui/ArmyImport.tsx:378
 msgid "Models in the front rank"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:376
+#: src/ui/ArmyImport.tsx:378
 #: src/ui/RegimentPanel.tsx:95
 #: src/ui/RegimentPanel.tsx:336
 msgid "Frontage"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:389
+#: src/ui/ArmyImport.tsx:391
 msgid "Level {level} wizard:"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:392
+#: src/ui/ArmyImport.tsx:394
 msgid "no spells yet"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:41
-#: src/ui/ArmyImport.tsx:771
+#: src/ui/ArmyImport.tsx:42
+#: src/ui/ArmyImport.tsx:773
 msgid "{w}×{d}mm oval"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:421
+#: src/ui/ArmyImport.tsx:423
 msgid "single"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:427
+#: src/ui/ArmyImport.tsx:429
 msgid "{unit} frontage"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:444
+#: src/ui/ArmyImport.tsx:446
 msgid "Deploy as a loose spread instead of a block"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:451
+#: src/ui/ArmyImport.tsx:453
 #: src/ui/RegimentPanel.tsx:26
 #: src/workshop/Workshop.tsx:51
 msgid "Skirmish"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:460
-#: src/ui/ArmyImport.tsx:582
+#: src/ui/ArmyImport.tsx:462
+#: src/ui/ArmyImport.tsx:584
 msgid "From your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:463
+#: src/ui/ArmyImport.tsx:465
 msgid "{unit} figure"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:467
+#: src/ui/ArmyImport.tsx:469
 msgid "From the photo ({sure}% sure): {why}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:478
+#: src/ui/ArmyImport.tsx:480
 msgid "Suggested: {name}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:479
+#: src/ui/ArmyImport.tsx:481
 msgid "Stand-ins"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:482
+#: src/ui/ArmyImport.tsx:484
 #: src/ui/FigurePicker.tsx:199
 msgid "Fits this unit"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:505
+#: src/ui/ArmyImport.tsx:507
 msgid "Not in the list, fill in:"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:530
+#: src/ui/ArmyImport.tsx:532
 msgid "Bases are a guess from each unit's troop type; check them against your models."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:531
+#: src/ui/ArmyImport.tsx:533
 msgid "Bases are a guess from keywords and wounds; check them against your models."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:539
+#: src/ui/ArmyImport.tsx:541
 msgid "A spell list file: names, casting values, ranges and kinds"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:541
+#: src/ui/ArmyImport.tsx:543
 msgid "Add spells from a list"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:557
+#: src/ui/ArmyImport.tsx:559
 msgid "Deploy for {name}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:56
+#: src/ui/ArmyImport.tsx:57
 msgid "{w}mm square"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:56
-#: src/ui/ArmyImport.tsx:772
+#: src/ui/ArmyImport.tsx:57
+#: src/ui/ArmyImport.tsx:774
 msgid "{w}×{d}mm"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:590
+#: src/ui/ArmyImport.tsx:592
 msgid "From your shelf…"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:612
+#: src/ui/ArmyImport.tsx:614
 msgid "Your army shelf ({count})"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:612
+#: src/ui/ArmyImport.tsx:614
 msgid "Your army shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:615
+#: src/ui/ArmyImport.tsx:617
 msgid "Armies saved on this device. Save one after deploying it; pass one on as a file, figures included."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:636
+#: src/ui/ArmyImport.tsx:638
 msgid "Take {name} off your shelf?"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:64
-msgid "{w}×{d}mm hull"
-msgstr ""
-
-#: src/ui/ArmyImport.tsx:645
+#: src/ui/ArmyImport.tsx:647
 msgid "Open an army file"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:653
+#: src/ui/ArmyImport.tsx:65
+msgid "{w}×{d}mm hull"
+msgstr ""
+
+#: src/ui/ArmyImport.tsx:655
 msgid "{name} is on your shelf."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:675
+#: src/ui/ArmyImport.tsx:677
 msgid "{n} unit · saved {when}"
 msgid_plural "{n} units · saved {when}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:690
+#: src/ui/ArmyImport.tsx:692
 msgid "{name}'s army is on your shelf as it is now."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:691
+#: src/ui/ArmyImport.tsx:693
 msgid "This army is on your shelf as it is now."
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:698
+#: src/ui/ArmyImport.tsx:700
 msgid "Keep this army on this device for later games, with its unit names, figures, dice and colour"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:705
+#: src/ui/ArmyImport.tsx:707
 msgid "Update {name}'s army on your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:706
+#: src/ui/ArmyImport.tsx:708
 msgid "Update it on your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:708
+#: src/ui/ArmyImport.tsx:710
 msgid "Save {name}'s army to your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:709
+#: src/ui/ArmyImport.tsx:711
 msgid "Save army to your shelf"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:724
+#: src/ui/ArmyImport.tsx:726
 #: src/ui/FigurePicker.tsx:120
 msgid "Photograph your painted miniature and stand it on its base"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:729
+#: src/ui/ArmyImport.tsx:731
 msgid "Photograph {name}'s painted figures"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:730
+#: src/ui/ArmyImport.tsx:732
 msgid "Photograph your painted figures"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:732
+#: src/ui/ArmyImport.tsx:734
 msgid "{n} unit in its stand-in"
 msgid_plural "{n} units in their stand-ins"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/ArmyImport.tsx:755
+#: src/ui/ArmyImport.tsx:757
 msgid "on {mount}"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:761
-#: src/ui/ArmyImport.tsx:764
+#: src/ui/ArmyImport.tsx:763
+#: src/ui/ArmyImport.tsx:766
 msgid "({points} pts)"
 msgstr ""
 
-#: src/ui/ArmyImport.tsx:763
+#: src/ui/ArmyImport.tsx:765
 msgid "({points} pts; units {units})"
 msgstr ""
 
