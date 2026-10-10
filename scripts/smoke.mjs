@@ -1799,13 +1799,92 @@ const checks = {
     await sides.getByRole("button", { name: "Swap sides" }).click();
     if (!/Player 1:.*Intercessor/.test(await line(0))) throw new Error("Swap sides didn't swap");
     await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
-    await page.getByText("Broken Thing couldn't be downloaded or read").waitFor({ timeout: 30_000 });
-    await page.keyboard.press("Escape");
+    // The library closes on the game, and what it couldn't bring is said there (UX 478).
+    await page
+      .locator(".tts-note", { hasText: "Broken Thing couldn't be downloaded or read" })
+      .waitFor({ timeout: 30_000 });
+    if (await page.locator(".tts-import").isVisible())
+      throw new Error("the figure library stayed open over the game");
+    await page.locator(".tts-note").getByRole("button", { name: "Close" }).click();
     await page.locator(".plate", { hasText: "Broken Thing" }).first().waitFor({ timeout: 30_000 });
     await page.locator(".plate", { hasText: "Intercessor" }).first().waitFor();
     // Player 1 (blue, the swapped Marines) stand where TTS had them, on the right.
     await page.keyboard.press("]");
     await page.locator(".panel.unitcard .no-stats").waitFor();
+    await context.close();
+    return page.errors;
+  },
+
+  async "tts-board-turn"() {
+    // UX 477: a board long along TTS z, armies on its short edges. The table turns; the armies keep their places.
+    const { page, context } = await device();
+    const box = (w, h, d) => {
+      const v = [];
+      for (const y of [0, h])
+        for (const z of [-d / 2, d / 2]) for (const x of [-w / 2, w / 2]) v.push(`v ${x} ${y} ${z}`);
+      const f = ["1 2 4 3", "5 7 8 6", "1 5 6 2", "3 4 8 7", "1 3 7 5", "2 6 8 4"].map((q) => `f ${q}`);
+      return [...v, ...f].join("\n") + "\n";
+    };
+    const meshes = {
+      "https://example.com/board.obj": box(44, 0.2, 60),
+      "https://example.com/fig.obj": box(1, 1.5, 1),
+    };
+    await context.route("https://example.com/**", (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { "access-control-allow-origin": "*" },
+        body: meshes[route.request().url()] ?? "",
+      }),
+    );
+    const fig = (nickname, x, z, rotY) => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: "https://example.com/fig.obj", TypeIndex: 1 },
+    });
+    const save = {
+      SaveName: "Long Board",
+      ObjectStates: [
+        {
+          Name: "Custom_Model",
+          Nickname: "Board",
+          Locked: true,
+          Transform: { posX: 0, posY: 0, posZ: 0, rotY: 0, scaleX: 1, scaleY: 1, scaleZ: 1 },
+          CustomMesh: { MeshURL: "https://example.com/board.obj", TypeIndex: 4 },
+        },
+        // Both off centre along the long edges, as tt5 had them: Ember Kin wholly on one half.
+        ...[0, 1, 2, 3, 4].map((i) => fig("Ember Kin", -8 + i * 1.5, -20, 0)),
+        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Ork Boy", -6 + i * 1.5, 20, 180)),
+      ],
+    };
+    const path = join(files, "tts-board.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
+    await page.locator(".plate", { hasText: "Ember Kin" }).first().waitFor({ timeout: 30_000 });
+    await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor();
+    await page.waitForTimeout(500);
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-board.png") });
+    // Each army stays together on its own short edge: on screen, one wholly left of the other.
+    const xs = async (name) =>
+      page.locator(".plate", { hasText: name }).evaluateAll((els) =>
+        els.map((e) => {
+          const r = e.getBoundingClientRect();
+          return r.x + r.width / 2;
+        }),
+      );
+    const ember = await xs("Ember Kin");
+    const orks = await xs("Ork Boy");
+    const apart = Math.max(...ember) + 40 < Math.min(...orks) || Math.max(...orks) + 40 < Math.min(...ember);
+    if (!apart)
+      throw new Error(`armies overlap: Ember ${ember.map(Math.round)}, Orks ${orks.map(Math.round)}`);
+    if (await page.getByText("Engaged").count()) throw new Error("units start the game engaged");
     await context.close();
     return page.errors;
   },

@@ -112,6 +112,10 @@ describe("a whole TTS table (#73)", () => {
     const m = turned!.type === "unit/add" ? turned!.models[0]! : null;
     expect([m!.position.x, m!.position.y]).toEqual([10, -15]);
     expect(m!.facing).toBeCloseTo(2 * Math.PI);
+    // A table opened as a game keeps every place, whichever seat (UX 477).
+    const [kept] = spawnIntents(state, "p2", orks.roster.units, "p2-k", undefined, true);
+    const k = kept!.type === "unit/add" ? kept!.models[0]! : null;
+    expect([k!.position.x, k!.position.y]).toEqual([-10, 15]);
   });
 
   it("splits armies on the short edges by where they stand, and bags join the army beside them (UX 473, 474)", () => {

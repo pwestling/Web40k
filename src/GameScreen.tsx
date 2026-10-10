@@ -4,6 +4,7 @@ import { NoteCaption, NotesPanel } from "./replay/NotesPanel";
 import { cameraForward, focusOn } from "./render/focus";
 import { aliveModels } from "./systems/wh40k/rules";
 import { TableWarningsPanel } from "./ui/TableWarnings";
+import { TtsNote } from "./tts/TtsNote";
 import { Announcer } from "./ui/Announcer";
 import { ClockKeeper } from "./ui/Clocks";
 import { CampaignBookDialog, CampaignKeeper } from "./campaign/CampaignUI";
@@ -284,6 +285,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <ReplayBar />
           <ReportBanner />
           <TableWarningsPanel />
+          <TtsNote />
           <RoundCard />
           <ReplayTitle />
           {!editing && <NotesPanel />}

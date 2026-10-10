@@ -374,38 +374,38 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:318
+#: src/GameScreen.tsx:320
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:319
+#: src/GameScreen.tsx:321
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:321
+#: src/GameScreen.tsx:323
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:326
+#: src/GameScreen.tsx:328
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:387
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:327
+#: src/GameScreen.tsx:329
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:328
+#: src/GameScreen.tsx:330
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:333
+#: src/GameScreen.tsx:335
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -1594,7 +1594,7 @@ msgstr ""
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:310
-#: src/tts/TtsWholeTable.tsx:149
+#: src/tts/TtsWholeTable.tsx:145
 #: src/ui/Lobby.tsx:571
 msgid "Game"
 msgstr ""
@@ -5666,101 +5666,101 @@ msgstr ""
 msgid "No stats yet. Take them from your army list; every model stays where it stands."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:105
+#: src/tts/TtsWholeTable.tsx:101
 msgid "The whole table"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:108
+#: src/tts/TtsWholeTable.tsx:104
 msgid "{n} piece of terrain"
 msgid_plural "{n} pieces of terrain"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:109
+#: src/tts/TtsWholeTable.tsx:105
 msgid "{n} unit on the table"
 msgid_plural "{n} units on the table"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:111
+#: src/tts/TtsWholeTable.tsx:107
 msgid "{n} still in a bag"
 msgid_plural "{n} still in bags"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:113
+#: src/tts/TtsWholeTable.tsx:109
 msgid "{n} army"
 msgid_plural "{n} armies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:116
+#: src/tts/TtsWholeTable.tsx:112
 msgid "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:124
+#: src/tts/TtsWholeTable.tsx:120
 msgid "Player 1:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:124
+#: src/tts/TtsWholeTable.tsx:120
 msgid "Player 2:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:130
+#: src/tts/TtsWholeTable.tsx:126
 msgid "Move to Player 2"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:130
+#: src/tts/TtsWholeTable.tsx:126
 msgid "Move to Player 1"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:133
+#: src/tts/TtsWholeTable.tsx:129
 msgid "{name} (in a bag)"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:138
+#: src/tts/TtsWholeTable.tsx:134
 msgid "the game's sample army"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:143
+#: src/tts/TtsWholeTable.tsx:139
 msgid "Swap sides"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:159
+#: src/tts/TtsWholeTable.tsx:155
 msgid "Open it as a game"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:162
+#: src/tts/TtsWholeTable.tsx:158
 msgid "Save the table and armies"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:64
+#: src/tts/TtsWholeTable.tsx:61
 msgid "Saved {save} to your tables with {n} piece of terrain"
 msgid_plural "Saved {save} to your tables with {n} pieces of terrain"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:70
+#: src/tts/TtsWholeTable.tsx:67
 msgid "and {n} army to your shelf."
 msgid_plural "and {n} armies to your shelf."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:75
+#: src/tts/TtsWholeTable.tsx:72
 msgid "{names} and {n} more"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:81
+#: src/tts/TtsWholeTable.tsx:78
 msgid "{names} couldn't be downloaded or read: a figure stands in on a plain base, terrain is left out."
 msgid_plural "{names} couldn't be downloaded or read: figures stand in on plain bases, terrain is left out."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:89
+#: src/tts/TtsWholeTable.tsx:86
 msgid "Pick your TTS folder after loading the save in TTS once, and they come from there."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:93
+#: src/tts/TtsWholeTable.tsx:90
 msgid "{n} thing stood off this game's table."
 msgid_plural "{n} things stood off this game's table."
 msgstr[0] ""

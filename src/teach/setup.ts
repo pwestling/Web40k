@@ -29,6 +29,8 @@ export function deploySamples(
   tag: string,
   /** Other armies than the sides' samples, by seat (a pick of factions). */
   armies?: [ImportedRoster, ImportedRoster],
+  /** Models that come with a place stand there as given (a TTS table, UX 477). */
+  keepPlaces = false,
 ): void {
   const game = get();
   const system = game.system ?? DEFAULT_SYSTEM;
@@ -42,7 +44,7 @@ export function deploySamples(
           files: u.files ?? Math.min(u.models.length, u.models.length >= 10 ? 5 : u.models.length),
         }))
       : roster.units;
-    for (const intent of spawnIntents(get(), owner, units, `${owner}-${tag}`, roster.name))
+    for (const intent of spawnIntents(get(), owner, units, `${owner}-${tag}`, roster.name, keepPlaces))
       send(intent, owner);
     const color = armyColor(get(), owner, roster.color);
     if (color) send(color, owner);

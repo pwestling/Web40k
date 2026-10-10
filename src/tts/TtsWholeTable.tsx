@@ -89,12 +89,11 @@ export function TtsWholeTable({
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
       );
-    onDone(parts.join(" "));
     if (play) {
-      // The game opens behind the library; with something to tell the player, the note stays up until they close it.
-      if (!brought.lost.length && !brought.off) closeLibrary();
-      openTtsGame(brought);
-    }
+      // The table must be touchable at once (UX 478): the library closes and anything to tell goes on the game.
+      closeLibrary();
+      openTtsGame(brought, brought.lost.length || brought.off ? parts.join(" ") : "");
+    } else onDone(parts.join(" "));
   };
 
   return (

@@ -61,6 +61,8 @@ export function spawnIntents(
   units: SpawnableUnit[],
   idPrefix: string,
   army?: string,
+  /** Models with `at` stand exactly there, never turned: a TTS table opened as a game, whose armies are already placed (UX 477). */
+  keepPlaces = false,
 ): Intent[] {
   const seat = state.players[owner]?.seat ?? 0;
   const sign = seat === 0 ? 1 : -1;
@@ -78,9 +80,9 @@ export function spawnIntents(
 
   // Models that bring where they stood (a TTS table, #73) stand there, turned through the centre
   // when the whole army stood on the other side's half. An army along a short edge spans both halves
-  // and stays where it was (UX 473).
+  // and stays where it was (UX 473). A table opened as a game keeps every place (UX 477).
   const stood = units.flatMap((u) => (u.files ? [] : u.models.flatMap((m) => (m.at ? [m.at] : []))));
-  const flip = stood.length > 0 && stood.every((a) => sign * a.y < 0);
+  const flip = !keepPlaces && stood.length > 0 && stood.every((a) => sign * a.y < 0);
   const standing = (at: { x: number; y: number; facing: number }) =>
     flip
       ? { position: { x: -at.x, y: -at.y }, facing: at.facing + Math.PI }

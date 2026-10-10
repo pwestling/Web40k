@@ -210,3 +210,21 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* What a TTS table opened as a game couldn't bring (UX 478). */
+.tts-note {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #a16207;
+  background: rgb(17 19 24 / 96%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
+}

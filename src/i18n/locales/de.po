@@ -448,27 +448,27 @@ msgstr "Sie haben standgehalten. Ein Nahkampf kann sich bis in den nächsten Spi
 msgid "Setting up the table…"
 msgstr "Der Tisch wird aufgebaut …"
 
-#: src/GameScreen.tsx:318
+#: src/GameScreen.tsx:320
 #, fuzzy
 msgid "Fully visible"
 msgstr "Voll sichtbar"
 
-#: src/GameScreen.tsx:319
+#: src/GameScreen.tsx:321
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Teilweise sichtbar oder in Deckung"
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 #, fuzzy
 msgid "Hidden"
 msgstr "Verborgen"
 
-#: src/GameScreen.tsx:321
+#: src/GameScreen.tsx:323
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 
-#: src/GameScreen.tsx:326
+#: src/GameScreen.tsx:328
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:387
@@ -476,17 +476,17 @@ msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 msgid "Open"
 msgstr "Offen"
 
-#: src/GameScreen.tsx:327
+#: src/GameScreen.tsx:329
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Verdeckend: Deckung"
 
-#: src/GameScreen.tsx:328
+#: src/GameScreen.tsx:330
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Blockierend: keine Sicht"
 
-#: src/GameScreen.tsx:333
+#: src/GameScreen.tsx:335
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Modellperspektive verlassen (Esc)"
@@ -1939,7 +1939,7 @@ msgstr "Protokoll"
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:310
-#: src/tts/TtsWholeTable.tsx:149
+#: src/tts/TtsWholeTable.tsx:145
 #: src/ui/Lobby.tsx:571
 #, fuzzy
 msgid "Game"
@@ -6929,121 +6929,121 @@ msgstr "Diese Einheit hat noch keine Werte: Ihre Würfe musst du selbst ausrechn
 msgid "No stats yet. Take them from your army list; every model stays where it stands."
 msgstr "Noch keine Werte. Übernimm sie aus deiner Armeeliste; jedes Modell bleibt, wo es steht."
 
-#: src/tts/TtsWholeTable.tsx:105
+#: src/tts/TtsWholeTable.tsx:101
 #, fuzzy
 msgid "The whole table"
 msgstr "Der ganze Tisch"
 
-#: src/tts/TtsWholeTable.tsx:108
+#: src/tts/TtsWholeTable.tsx:104
 #, fuzzy
 msgid "{n} piece of terrain"
 msgid_plural "{n} pieces of terrain"
 msgstr[0] "{n} Geländestück"
 msgstr[1] "{n} Geländestücke"
 
-#: src/tts/TtsWholeTable.tsx:109
+#: src/tts/TtsWholeTable.tsx:105
 #, fuzzy
 msgid "{n} unit on the table"
 msgid_plural "{n} units on the table"
 msgstr[0] "{n} Einheit auf dem Tisch"
 msgstr[1] "{n} Einheiten auf dem Tisch"
 
-#: src/tts/TtsWholeTable.tsx:111
+#: src/tts/TtsWholeTable.tsx:107
 #, fuzzy
 msgid "{n} still in a bag"
 msgid_plural "{n} still in bags"
 msgstr[0] "{n} noch im Beutel"
 msgstr[1] "{n} noch in Beuteln"
 
-#: src/tts/TtsWholeTable.tsx:113
+#: src/tts/TtsWholeTable.tsx:109
 #, fuzzy
 msgid "{n} army"
 msgid_plural "{n} armies"
 msgstr[0] "{n} Armee"
 msgstr[1] "{n} Armeen"
 
-#: src/tts/TtsWholeTable.tsx:116
+#: src/tts/TtsWholeTable.tsx:112
 #, fuzzy
 msgid "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in."
 msgstr "Gelände und Armeen kommen dort an, wo sie in TTS stehen. Werte kommen aus den Beschreibungen der Modelle, wo sie lesbar sind; alles andere trägst du ein."
 
-#: src/tts/TtsWholeTable.tsx:124
+#: src/tts/TtsWholeTable.tsx:120
 #, fuzzy
 msgid "Player 1:"
 msgstr "Spieler 1:"
 
-#: src/tts/TtsWholeTable.tsx:124
+#: src/tts/TtsWholeTable.tsx:120
 #, fuzzy
 msgid "Player 2:"
 msgstr "Spieler 2:"
 
-#: src/tts/TtsWholeTable.tsx:130
+#: src/tts/TtsWholeTable.tsx:126
 #, fuzzy
 msgid "Move to Player 2"
 msgstr "Zu Spieler 2 verschieben"
 
-#: src/tts/TtsWholeTable.tsx:130
+#: src/tts/TtsWholeTable.tsx:126
 #, fuzzy
 msgid "Move to Player 1"
 msgstr "Zu Spieler 1 verschieben"
 
-#: src/tts/TtsWholeTable.tsx:133
+#: src/tts/TtsWholeTable.tsx:129
 #, fuzzy
 msgid "{name} (in a bag)"
 msgstr "{name} (im Beutel)"
 
-#: src/tts/TtsWholeTable.tsx:138
+#: src/tts/TtsWholeTable.tsx:134
 #, fuzzy
 msgid "the game's sample army"
 msgstr "die Beispielarmee des Spiels"
 
-#: src/tts/TtsWholeTable.tsx:143
+#: src/tts/TtsWholeTable.tsx:139
 #, fuzzy
 msgid "Swap sides"
 msgstr "Seiten tauschen"
 
-#: src/tts/TtsWholeTable.tsx:159
+#: src/tts/TtsWholeTable.tsx:155
 #, fuzzy
 msgid "Open it as a game"
 msgstr "Als Spiel öffnen"
 
-#: src/tts/TtsWholeTable.tsx:162
+#: src/tts/TtsWholeTable.tsx:158
 #, fuzzy
 msgid "Save the table and armies"
 msgstr "Tisch und Armeen speichern"
 
-#: src/tts/TtsWholeTable.tsx:64
+#: src/tts/TtsWholeTable.tsx:61
 #, fuzzy
 msgid "Saved {save} to your tables with {n} piece of terrain"
 msgid_plural "Saved {save} to your tables with {n} pieces of terrain"
 msgstr[0] "{save} mit {n} Geländestück bei deinen Tischen gespeichert"
 msgstr[1] "{save} mit {n} Geländestücken bei deinen Tischen gespeichert"
 
-#: src/tts/TtsWholeTable.tsx:70
+#: src/tts/TtsWholeTable.tsx:67
 #, fuzzy
 msgid "and {n} army to your shelf."
 msgid_plural "and {n} armies to your shelf."
 msgstr[0] "und {n} Armee in deinem Regal."
 msgstr[1] "und {n} Armeen in deinem Regal."
 
-#: src/tts/TtsWholeTable.tsx:75
+#: src/tts/TtsWholeTable.tsx:72
 #, fuzzy
 msgid "{names} and {n} more"
 msgstr "{names} und {n} weitere"
 
-#: src/tts/TtsWholeTable.tsx:81
+#: src/tts/TtsWholeTable.tsx:78
 #, fuzzy
 msgid "{names} couldn't be downloaded or read: a figure stands in on a plain base, terrain is left out."
 msgid_plural "{names} couldn't be downloaded or read: figures stand in on plain bases, terrain is left out."
 msgstr[0] "{names} konnte nicht heruntergeladen oder gelesen werden: Eine Figur steht als Platzhalter auf einer schlichten Base, Gelände bleibt weg."
 msgstr[1] "{names} konnten nicht heruntergeladen oder gelesen werden: Figuren stehen als Platzhalter auf schlichten Bases, Gelände bleibt weg."
 
-#: src/tts/TtsWholeTable.tsx:89
+#: src/tts/TtsWholeTable.tsx:86
 #, fuzzy
 msgid "Pick your TTS folder after loading the save in TTS once, and they come from there."
 msgstr "Lade den Spielstand einmal in TTS und wähle dann deinen TTS-Ordner, dann kommen sie von dort."
 
-#: src/tts/TtsWholeTable.tsx:93
+#: src/tts/TtsWholeTable.tsx:90
 #, fuzzy
 msgid "{n} thing stood off this game's table."
 msgid_plural "{n} things stood off this game's table."

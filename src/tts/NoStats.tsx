@@ -74,7 +74,7 @@ async function restat(owner: PlayerId, file: File): Promise<string> {
   for (const id of Object.keys(game.units))
     if (id.startsWith(`${deployed.prefix}-`)) dispatch({ type: "unit/remove", id }, owner);
   const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
-  for (const intent of spawnIntents(useStore.getState().game, owner, roster.units, prefix, roster.name))
+  for (const intent of spawnIntents(useStore.getState().game, owner, roster.units, prefix, roster.name, true))
     dispatch(intent, owner);
   if (roster.army) dispatch({ type: "player/army", army: roster.army }, owner);
   // Each model keeps the figure it wore: grouped by the profile it has now.
