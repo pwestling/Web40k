@@ -24,7 +24,12 @@ import { STANDEE_EXTENSION } from "../standees/file";
  * colours, are baked into an atlas of `atlasSide` pixels (paint.ts); other
  * material properties are dropped. Uses no DOM, so it runs in a worker.
  */
-export async function parseModelFile(name: string, bytes: ArrayBuffer, atlasSide = 512): Promise<RawModel> {
+export async function parseModelFile(
+  name: string,
+  bytes: ArrayBuffer,
+  atlasSide = 512,
+  texture?: ArrayBuffer,
+): Promise<RawModel> {
   const ext = name.toLowerCase().slice(name.lastIndexOf("."));
   switch (ext) {
     case ".stl":
@@ -34,8 +39,18 @@ export async function parseModelFile(name: string, bytes: ArrayBuffer, atlasSide
       const parts = partsOf(new Mesh(new PLYLoader().parse(bytes)));
       return zUpToYUp(merge(parts, bakePaint(parts, [], atlasSide)));
     }
-    case ".obj":
-      return merge(partsOf(new OBJLoader().parse(new TextDecoder().decode(bytes))));
+    case ".obj": {
+      const parts = partsOf(new OBJLoader().parse(new TextDecoder().decode(bytes)));
+      // An OBJ has no image of its own; one given alongside it (a Tabletop Simulator diffuse) paints every part.
+      const image = texture && (await decodeImage(new Uint8Array(texture), ""));
+      if (!image) return merge(parts);
+      for (const part of parts) {
+        part.material = 0;
+        // OBJ uvs have v up; paint takes glTF's v down.
+        if (part.uvs) for (let i = 1; i < part.uvs.length; i += 2) part.uvs[i] = 1 - part.uvs[i]!;
+      }
+      return merge(parts, bakePaint(parts, [{ factor: [1, 1, 1, 1], image }], atlasSide));
+    }
     case ".glb":
     case ".gltf": {
       const { json, buffer } = readGltf(bytes);
@@ -239,6 +254,16 @@ function dataUri(uri: string | undefined): Uint8Array | undefined {
   return out;
 }
 
+async function decodeImage(data: Uint8Array, type: string): Promise<ImageBitmap | undefined> {
+  if (typeof createImageBitmap === "undefined") return undefined;
+  try {
+    return await createImageBitmap(new Blob([data as BlobPart], { type }));
+  } catch {
+    // A format this browser can't decode (KTX2, say): the part keeps its colour.
+    return undefined;
+  }
+}
+
 /** Each glTF material's base colour factor and decoded base colour image. */
 async function gltfMaterials(
   json: Json,
@@ -266,12 +291,7 @@ async function gltfMaterials(
             if (buf) data = buf.subarray(bv.byteOffset ?? 0, (bv.byteOffset ?? 0) + bv.byteLength);
           } else data = dataUri(image.uri);
           if (!data) return undefined;
-          try {
-            return await createImageBitmap(new Blob([data as BlobPart], { type: image.mimeType ?? "" }));
-          } catch {
-            // A format this browser can't decode (KTX2, say): the part keeps its colour.
-            return undefined;
-          }
+          return decodeImage(data, image.mimeType ?? "");
         })(),
       );
     return decoded.get(i)!;

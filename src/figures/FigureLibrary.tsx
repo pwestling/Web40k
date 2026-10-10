@@ -12,6 +12,7 @@ import { useFigures, type FigureEntry } from "./library";
 import { closeLibrary, useLibraryOpen } from "./open";
 import { makePack, openPack, packFileName, shortHash, type PackResult } from "./pack";
 import { makeThumb, releaseThumbs } from "./thumb";
+import { TtsImport } from "./TtsImport";
 import { unused, usage, type Usage } from "./usage";
 
 const mb = (bytes: number) =>
@@ -119,6 +120,7 @@ function Figures() {
   const [packName, setPackName] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tts, setTts] = useState(false);
 
   const all = Object.values(entries).sort((a, b) => a.name.localeCompare(b.name));
   const tags = [...new Set(all.flatMap((e) => e.tags))].sort();
@@ -250,7 +252,18 @@ function Figures() {
             }}
           />
         </label>
+        <button className={tts ? "on" : "quiet"} aria-expanded={tts} onClick={() => setTts(!tts)}>
+          {t("From Tabletop Simulator…")}
+        </button>
       </div>
+      {tts && (
+        <TtsImport
+          onDone={(line) => {
+            setNote(line);
+            void drawThumbs();
+          }}
+        />
+      )}
       {adding.map(([key, text]) => (
         <p key={key} className="muted small">
           {text}
@@ -341,6 +354,12 @@ function FigureCard({
   const { patch, remove } = useFigures.getState();
   const [name, setName] = useState(entry.name);
   const [tags, setTags] = useState(entry.tags.join(", "));
+  // Tags an import adds after the card is up (Tabletop Simulator's "tts") show at once.
+  const [shownTags, setShownTags] = useState(entry.tags);
+  if (shownTags !== entry.tags) {
+    setShownTags(entry.tags);
+    setTags(entry.tags.join(", "));
+  }
   const where = [
     u?.armies.length ? t("Armies: {names}", { names: u.armies.join(", ") }) : "",
     u?.tables.length ? t("Tables: {names}", { names: u.tables.join(", ") }) : "",

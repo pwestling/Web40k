@@ -24,10 +24,21 @@ interface AssetStore {
   /** Imports in progress or failed, by unit id. */
   status: Record<string, string>;
   /** Simplify a file (or fetch it from this browser's cache). Null if it failed; `status` says why. */
-  importFile(file: File, statusKey: string, kind?: AssetKind): Promise<ModelAsset | null>;
+  importFile(
+    file: File,
+    statusKey: string,
+    kind?: AssetKind,
+    extra?: ImportExtra,
+  ): Promise<ModelAsset | null>;
   /** Import a file and give it to the models in `keys` of a unit, for everyone in the game. */
   dressUnit(unitId: UnitId, keys: string[], file: File): Promise<void>;
   addAsset(asset: ModelAsset): void;
+}
+
+/** What a source beyond the file itself says: an OBJ's diffuse image, its size in inches (TTS). */
+export interface ImportExtra {
+  texture?: Blob;
+  unitScale?: number;
 }
 
 let worker: Worker | null = null;
@@ -54,7 +65,7 @@ function runImport(request: ImportRequest): Promise<ImportResponse> {
           worker?.terminate();
           worker = null;
         };
-        worker.postMessage(request, [request.bytes]);
+        worker.postMessage(request, request.texture ? [request.bytes, request.texture] : [request.bytes]);
       }),
   );
   queue = job.then(() => undefined);
@@ -70,7 +81,7 @@ export const useAssets = create<AssetStore>((set, get) => ({
   assets: {},
   status: {},
 
-  async importFile(file, statusKey, kind = "miniature") {
+  async importFile(file, statusKey, kind = "miniature", extra) {
     const setStatus = (text: string | null) =>
       set((s) => {
         const status = { ...s.status };
@@ -80,11 +91,29 @@ export const useAssets = create<AssetStore>((set, get) => ({
       });
     setStatus(`Reading ${file.name}…`);
     const bytes = await file.arrayBuffer();
-    const id = await hash(bytes);
+    const texture = await extra?.texture?.arrayBuffer();
+    // The image and size change the model, so they're part of its id.
+    const id =
+      texture || extra?.unitScale
+        ? await hash(
+            await new Blob([
+              bytes,
+              texture ?? new ArrayBuffer(0),
+              `|${extra?.unitScale ?? ""}`,
+            ]).arrayBuffer(),
+          )
+        : await hash(bytes);
     let asset = get().assets[id] ?? (await getCached(id));
     if (!asset) {
       setStatus(`Simplifying ${file.name} (${(file.size / 1e6).toFixed(1)} MB)…`);
-      const result = await runImport({ id, name: file.name, kind, bytes });
+      const result = await runImport({
+        id,
+        name: file.name,
+        kind,
+        bytes,
+        ...(texture ? { texture } : {}),
+        ...(extra?.unitScale ? { unitScale: extra.unitScale } : {}),
+      });
       if (!result.ok) {
         setStatus(`Couldn't import ${file.name}: ${result.error}`);
         return null;

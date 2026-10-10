@@ -8,17 +8,21 @@ export interface ImportRequest {
   name: string;
   kind: AssetKind;
   bytes: ArrayBuffer;
+  /** A diffuse image for an OBJ, which has none of its own. */
+  texture?: ArrayBuffer;
+  /** Inches per source unit, when the source says (a Tabletop Simulator object's scale). */
+  unitScale?: number;
 }
 
 export type ImportResponse = { ok: true; asset: ModelAsset } | { ok: false; error: string };
 
 /** Parsing and simplifying a big sculpt takes seconds; it never runs on the render thread. */
 self.onmessage = async (e: MessageEvent<ImportRequest>) => {
-  const { id, name, kind, bytes } = e.data;
+  const { id, name, kind, bytes, texture, unitScale } = e.data;
   try {
     await ready;
-    const raw = await parseModelFile(name, bytes, BUDGETS[kind].texture.side);
-    const asset = await processModel(raw, { id, name, kind });
+    const raw = await parseModelFile(name, bytes, BUDGETS[kind].texture.side, texture);
+    const asset = await processModel(raw, { id, name, kind, ...(unitScale ? { unitScale } : {}) });
     (self as DedicatedWorkerGlobalScope).postMessage(
       { ok: true, asset } satisfies ImportResponse,
       assetBuffers(asset),
