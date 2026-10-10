@@ -142,7 +142,7 @@ export function scanSave(json: unknown): TtsScan {
       const description = cleanText(o.Description).slice(0, MAX_DESCRIPTION);
       if (description && !m.description) m.description = description;
     }
-    // A bag's name is usually the unit its models make up ("Intercessor Squad").
+    // A bag's name is usually the unit its models make up ("Warden Squad").
     const holder = nickname && !GENERIC_BAG.test(nickname) ? nickname : bag;
     for (const c of o.ContainedObjects ?? []) visit(c, holder);
     for (const c of o.ChildObjects ?? []) visit(c, bag);

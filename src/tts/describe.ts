@@ -199,7 +199,7 @@ function weaponHeader(line: string): { keys: string[]; kind?: Kind } | null {
   return { keys, ...(kind ? { kind } : {}) };
 }
 
-/** "Bolt rifle 24" A2 BS3+ S4 AP-1 D1 [Assault]", with colons or bars or not. */
+/** "Pulse rifle 24" A2 BS3+ S4 AP-1 D1 [Assault]", with colons or bars or not. */
 function labelledWeapon(line: string, hint: Kind | undefined): Omit<WeaponProfile, "id"> | null {
   const label = (k: string) =>
     new RegExp(

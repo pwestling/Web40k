@@ -195,7 +195,7 @@ function vanguardLegion(): ImportedRoster {
         chars: stats('8"', "9", "2+", "10", "7+", "4"),
         count: 1,
         weapons: [
-          ranged("Twin Autobolter", '36"', "4", "3+", "6", "-1", "2", ["Twin-linked"]),
+          ranged("Twin Autocarbine", '36"', "4", "3+", "6", "-1", "2", ["Twin-linked"]),
           melee("Hydraulic Claw", "4", "3+", "12", "-2", "3"),
         ],
       },

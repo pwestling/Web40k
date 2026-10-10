@@ -18,24 +18,24 @@ const entry = (name: string, extra: Partial<FigureEntry> = {}): FigureEntry => (
 
 describe("figure library", () => {
   it("reads names as words, without plurals or file noise", () => {
-    expect(words("Intercessor_Squad_v2_presupported")).toEqual(["intercessor"]);
-    expect(words("Boyz with Choppas")).toEqual(["boyz", "choppa"]);
+    expect(words("Warden_Squad_v2_presupported")).toEqual(["warden"]);
+    expect(words("Raiders with Cleavers")).toEqual(["raider", "cleaver"]);
   });
 
   it("suggests a figure that dressed the unit before, then figures named like it", () => {
     const library = [
-      entry("Space marine sergeant"),
-      entry("intercessors body A", { tags: ["marines"] }),
-      entry("my favourite mini", { units: ["Intercessor Squad"] }),
-      entry("Gretchin"),
-      entry("Intercessor ruin", { kind: "terrain" }),
+      entry("Iron sergeant"),
+      entry("wardens body A", { tags: ["wardens"] }),
+      entry("my favourite mini", { units: ["Warden Squad"] }),
+      entry("Gutter runts"),
+      entry("Warden ruin", { kind: "terrain" }),
     ];
-    expect(fit(library[2]!, "intercessor squad")).toBe(1);
-    expect(suggestions(library, "Intercessor Squad").map((e) => e.name)).toEqual([
+    expect(fit(library[2]!, "warden squad")).toBe(1);
+    expect(suggestions(library, "Warden Squad").map((e) => e.name)).toEqual([
       "my favourite mini",
-      "intercessors body A",
+      "wardens body A",
     ]);
-    expect(suggestions(library, "Ork Boyz")).toEqual([]);
+    expect(suggestions(library, "Scrap Brutes")).toEqual([]);
   });
 
   it("hashes a pack the same whatever order its figures are in", async () => {

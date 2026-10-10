@@ -341,7 +341,7 @@ export function autoActive(unit: Unit, a: Ability): boolean {
   return true;
 }
 
-/** A unit has every keyword in a phrase such as "Adeptus Astartes Infantry". */
+/** A unit has every keyword in a phrase such as "Iron Wardens Infantry". */
 export function hasKeywordPhrase(unit: Unit, phrase: string): boolean {
   let rest = ` ${phrase.toLowerCase().replace(/\s+/g, " ")} `;
   const kws = [...(unit.sheet?.keywords ?? [])]

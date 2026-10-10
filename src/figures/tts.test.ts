@@ -13,14 +13,14 @@ const model = (extra: Record<string, unknown>) => ({
 describe("Tabletop Simulator saves", () => {
   it("finds every custom model, in bags and states, once per mesh, image and size", () => {
     const scan = scanSave({
-      SaveName: "Orks vs Marines",
+      SaveName: "Scrappers vs Wardens",
       ObjectStates: [
-        model({ Nickname: "Ork Boy" }),
-        model({ Nickname: "Ork Boy" }),
+        model({ Nickname: "Scrap Brute" }),
+        model({ Nickname: "Scrap Brute" }),
         {
           Name: "Bag",
           ContainedObjects: [
-            model({ Nickname: "Ork Boy" }),
+            model({ Nickname: "Scrap Brute" }),
             model({ Nickname: "Big Boy", Transform: { scaleX: 1, scaleY: 1, scaleZ: 1 } }),
           ],
         },
@@ -29,44 +29,44 @@ describe("Tabletop Simulator saves", () => {
           Locked: true,
           CustomMesh: { MeshURL: "https://example.com/models/ruin_a.obj" },
           States: {
-            "2": model({ Nickname: "Ork Nob", CustomMesh: { MeshURL: "https://example.com/nob.obj" } }),
+            "2": model({ Nickname: "Scrap Boss", CustomMesh: { MeshURL: "https://example.com/boss.obj" } }),
           },
         }),
         { Name: "Custom_AssetBundle" },
         { Name: "Card" },
       ],
     });
-    expect(scan.title).toBe("Orks vs Marines");
+    expect(scan.title).toBe("Scrappers vs Wardens");
     expect(scan.bundles).toBe(1);
     expect(scan.models.map((m) => [m.name, m.count, m.scale, m.kind])).toEqual([
       ["Big Boy", 1, 1, "miniature"],
-      ["Ork Boy", 3, 0.5, "miniature"],
-      ["Ork Nob", 1, 0.5, "miniature"],
       ["Ruined wall", 1, 0.5, "terrain"],
+      ["Scrap Boss", 1, 0.5, "miniature"],
+      ["Scrap Brute", 3, 0.5, "miniature"],
     ]);
     expect(() => scanSave({ hello: 1 })).toThrow();
   });
 
   it("keeps TTS's names, bags and descriptions, so army units find the figure by name", () => {
-    expect(cleanText("[b][56f442]Intercessor[-][/b] 2/2")).toBe("Intercessor");
+    expect(cleanText("[b][56f442]Warden[-][/b] 2/2")).toBe("Warden");
     const scan = scanSave({
       ObjectStates: [
         {
           Name: "Bag",
-          Nickname: "[b]Intercessor Squad[/b]",
+          Nickname: "[b]Warden Squad[/b]",
           ContainedObjects: [
-            model({ Nickname: "Intercessor 2/2", Description: "[i]Bolt rifle[/i]" }),
-            model({ Nickname: "Intercessor 2/2" }),
-            model({ Nickname: "Intercessor Sergeant" }),
+            model({ Nickname: "Warden 2/2", Description: "[i]Pulse rifle[/i]" }),
+            model({ Nickname: "Warden 2/2" }),
+            model({ Nickname: "Warden Sergeant" }),
           ],
         },
       ],
     });
     const [m] = scan.models;
     expect(scan.models).toHaveLength(1);
-    expect(m!.name).toBe("Intercessor");
-    expect(m!.names).toEqual(["Intercessor", "Intercessor Squad", "Intercessor Sergeant"]);
-    expect(m!.description).toBe("Bolt rifle");
+    expect(m!.name).toBe("Warden");
+    expect(m!.names).toEqual(["Warden", "Warden Squad", "Warden Sergeant"]);
+    expect(m!.description).toBe("Pulse rifle");
     const entry = {
       id: "x",
       name: m!.name,
@@ -78,7 +78,7 @@ describe("Tabletop Simulator saves", () => {
       height: 1,
       addedAt: 0,
     };
-    expect(fit(entry, "Intercessor Squad")).toBe(1);
+    expect(fit(entry, "Warden Squad")).toBe(1);
   });
 
   it("finds TTS's cached copies by the URL, under either Steam host", () => {

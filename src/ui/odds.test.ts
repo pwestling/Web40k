@@ -90,7 +90,7 @@ function simulate(state: GameState, s: AttackSpec, runs: number, seed: number) {
 
 describe("attack odds against the runner", () => {
   const cases: [string, GameState, Partial<AttackSpec>][] = [
-    ["bolters at W1", table(10, "1"), {}],
+    ["rifles at W1", table(10, "1"), {}],
     [
       "re-rolls, modifiers and D3 at W3",
       table(5, "3", [2]),

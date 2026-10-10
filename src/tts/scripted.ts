@@ -9,7 +9,7 @@ import { luaTable } from "./lua";
  * `local unitData = { unitName, keywords, abilities, models = { profiles },
  * weapons, woundTrack, … }`. That is the list itself, exact where the
  * description is formatted text, so it is read first. Which weapons each
- * model carries is only in its description ("2x Bolt rifle"), so those
+ * model carries is only in its description ("2x Pulse rifle"), so those
  * lines pick from the unit's weapons.
  */
 
@@ -53,7 +53,7 @@ export function scriptUnit(script: string): YsUnit | null {
   };
 }
 
-/** The weapons a model's description lists, by name: "Bolt rifle", "2x Bolt rifle". */
+/** The weapons a model's description lists, by name: "Pulse rifle", "2x Pulse rifle". */
 function carried(description: string, weapon: (name: string) => string | undefined): string[] {
   const out: string[] = [];
   for (const line of descriptionLines(description)) {

@@ -9,11 +9,11 @@ const request: PreparedRequest = {
   model: "gpt-test",
   photos: ["data:image/jpeg;base64,AAAA"],
   units: [
-    { index: 0, name: "Intercessor Squad", models: 5 },
+    { index: 0, name: "Warden Squad", models: 5 },
     { index: 2, name: "Captain", models: 1 },
   ],
   figures: [
-    { id: "aaa", name: "marine body", tags: [], thumb: "data:image/webp;base64,BBBB" },
+    { id: "aaa", name: "warden body", tags: [], thumb: "data:image/webp;base64,BBBB" },
     { id: "bbb", name: "captain", tags: ["hq"] },
   ],
 };
@@ -86,9 +86,14 @@ describe("photo matching with OpenAI", () => {
       height: 1,
       addedAt,
     });
-    const library = [e("ruin wall", 9), e("gretchin", 5), e("captain in gravis", 1), e("ork boy", 3)];
+    const library = [
+      e("ruin wall", 9),
+      e("scrap runts", 5),
+      e("captain in heavy plate", 1),
+      e("scrap brute", 3),
+    ];
     expect(figuresFor(library, ["Captain"], 2).map((f) => f.name)).toEqual([
-      "captain in gravis",
+      "captain in heavy plate",
       "ruin wall",
     ]);
   });

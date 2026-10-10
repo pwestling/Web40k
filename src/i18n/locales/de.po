@@ -3115,9 +3115,8 @@ msgid "Pack name"
 msgstr "Paketname"
 
 #: src/figures/FigureLibrary.tsx:300
-#, fuzzy
-msgid "Pack name, e.g. our club's Orks"
-msgstr "Paketname, z. B. die Orks unseres Clubs"
+msgid "Pack name, e.g. our club's Scrappers"
+msgstr ""
 
 #: src/figures/FigureLibrary.tsx:306
 #, fuzzy
@@ -3220,9 +3219,8 @@ msgid "Tags"
 msgstr "Tags"
 
 #: src/figures/FigureLibrary.tsx:397
-#, fuzzy
-msgid "Tags, e.g. orks, painted"
-msgstr "Tags, z. B. orks, bemalt"
+msgid "Tags, e.g. scrappers, painted"
+msgstr ""
 
 #: src/figures/FigureLibrary.tsx:417
 #, fuzzy

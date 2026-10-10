@@ -16,24 +16,24 @@ const fig = (nickname: string, x: number, z: number, rotY = 0, mesh = "https://e
 const SAVE = {
   SaveName: "Kill Team night",
   ObjectStates: [
-    // Two Boyz mobs far apart on the near (TTS −z, our +y) half, and a Nob with one of them.
-    fig("Ork Boy", -10, -15),
-    fig("Ork Boy", -9, -15),
-    fig("Ork Boy", -8, -15),
-    fig("Ork Nob", -7, -15, 0, "https://example.com/nob.obj"),
-    fig("Ork Boy", 10, -15),
-    fig("Ork Boy", 11, -15),
-    // Marines on the far half, facing the Orks.
-    fig("Intercessor", 0, 15, 180),
-    fig("Intercessor", 1, 15, 180),
+    // Two Brutes mobs far apart on the near (TTS −z, our +y) half, and a Boss with one of them.
+    fig("Scrap Brute", -10, -15),
+    fig("Scrap Brute", -9, -15),
+    fig("Scrap Brute", -8, -15),
+    fig("Scrap Boss", -7, -15, 0, "https://example.com/boss.obj"),
+    fig("Scrap Brute", 10, -15),
+    fig("Scrap Brute", 11, -15),
+    // Wardens on the far half, facing the Scrappers.
+    fig("Warden", 0, 15, 180),
+    fig("Warden", 1, 15, 180),
     // A ruin, locked in place.
     { ...fig("Ruined wall", 5, 0, 90, "https://example.com/ruin.obj"), Locked: true },
     // A bag of reserves on the far side.
     {
       Name: "Bag",
-      Nickname: "Assault Intercessors",
+      Nickname: "Assault Wardens",
       Transform: { posX: 30, posZ: 20 },
-      ContainedObjects: [fig("Assault Intercessor", 0, 0), fig("Assault Intercessor", 0, 0)],
+      ContainedObjects: [fig("Assault Warden", 0, 0), fig("Assault Warden", 0, 0)],
     },
   ],
 };
@@ -45,16 +45,16 @@ describe("a whole TTS table (#73)", () => {
     expect(table.terrain.map((t) => [t.nickname, t.pose.x, t.pose.y])).toEqual([["Ruined wall", 5, 0]]);
     const units = table.units.map((u) => [u.name, u.side, u.models.length, u.placed]);
     expect(units).toEqual([
-      ["Ork Boy", 0, 3, true],
-      ["Ork Nob", 0, 1, true],
-      ["Ork Boy", 0, 2, true],
-      ["Intercessor", 1, 2, true],
-      ["Assault Intercessors", 1, 2, false],
+      ["Scrap Brute", 0, 3, true],
+      ["Scrap Boss", 0, 1, true],
+      ["Scrap Brute", 0, 2, true],
+      ["Warden", 1, 2, true],
+      ["Assault Wardens", 1, 2, false],
     ]);
-    // TTS z becomes −y; TTS yaw 180 faces the Marines towards +y (our facing 0).
-    const marine = table.units[3]!.models[0]!.pose;
-    expect(marine.y).toBe(-15);
-    expect(marine.facing).toBeCloseTo(0);
+    // TTS z becomes −y; TTS yaw 180 faces the Wardens towards +y (our facing 0).
+    const warden = table.units[3]!.models[0]!.pose;
+    expect(warden.y).toBe(-15);
+    expect(warden.facing).toBeCloseTo(0);
     expect(table.units[0]!.models[0]!.pose.facing).toBeCloseTo(Math.PI);
   });
 
@@ -89,18 +89,18 @@ describe("a whole TTS table (#73)", () => {
       [0, 3],
       [1, 2],
     ]);
-    const orks = armies[0]!;
-    expect(orks.roster.units[0]!.missing).toContain("M");
-    expect(orks.roster.units[0]!.base).toEqual({ shape: "round", diameterMm: 32 });
-    expect(orks.figures[1]!["Ork Nob"]!.figure.asset).toBe("https://example.com/nob.obj");
+    const scrappers = armies[0]!;
+    expect(scrappers.roster.units[0]!.missing).toContain("M");
+    expect(scrappers.roster.units[0]!.base).toEqual({ shape: "round", diameterMm: 32 });
+    expect(scrappers.figures[1]!["Scrap Boss"]!.figure.asset).toBe("https://example.com/boss.obj");
 
     const state = createInitialState();
     state.players = {
       p1: { id: "p1", name: "A", color: "#c33", seat: 0 },
       p2: { id: "p2", name: "B", color: "#33c", seat: 1 },
     } as unknown as typeof state.players;
-    // The Orks stood on seat 0's half: as they were.
-    const [first] = spawnIntents(state, "p1", orks.roster.units, "p1-t");
+    // The Scrappers stood on seat 0's half: as they were.
+    const [first] = spawnIntents(state, "p1", scrappers.roster.units, "p1-t");
     const boys = first!.type === "unit/add" ? first!.models : [];
     expect(boys.map((m) => [m.position.x, m.position.y])).toEqual([
       [-10, 15],
@@ -108,12 +108,12 @@ describe("a whole TTS table (#73)", () => {
       [-8, 15],
     ]);
     // The same army deployed by seat 1 turns through the centre onto its own half.
-    const [turned] = spawnIntents(state, "p2", orks.roster.units, "p2-t");
+    const [turned] = spawnIntents(state, "p2", scrappers.roster.units, "p2-t");
     const m = turned!.type === "unit/add" ? turned!.models[0]! : null;
     expect([m!.position.x, m!.position.y]).toEqual([10, -15]);
     expect(m!.facing).toBeCloseTo(2 * Math.PI);
     // A table opened as a game keeps every place, whichever seat (UX 477).
-    const [kept] = spawnIntents(state, "p2", orks.roster.units, "p2-k", undefined, true);
+    const [kept] = spawnIntents(state, "p2", scrappers.roster.units, "p2-k", undefined, true);
     const k = kept!.type === "unit/add" ? kept!.models[0]! : null;
     expect([k!.position.x, k!.position.y]).toEqual([-10, 15]);
   });
@@ -123,18 +123,18 @@ describe("a whole TTS table (#73)", () => {
       ObjectStates: [
         fig("Ember Kin", -26, -5),
         fig("Pyre Warden", -24, 6),
-        fig("Ork Boy", 25, 0),
-        fig("Ork Boy", 26, 1),
+        fig("Scrap Brute", 25, 0),
+        fig("Scrap Brute", 26, 1),
         {
           Name: "Bag",
           Nickname: "Reserves",
           Transform: { posX: 28, posZ: 18 },
-          ContainedObjects: [fig("Ork Boy", 0, 0)],
+          ContainedObjects: [fig("Scrap Brute", 0, 0)],
         },
       ],
     });
     const sides = Object.fromEntries(table.units.map((u) => [u.name, u.side]));
-    expect(sides).toEqual({ "Ember Kin": 0, "Pyre Warden": 0, "Ork Boy": 1, Reserves: 1 });
+    expect(sides).toEqual({ "Ember Kin": 0, "Pyre Warden": 0, "Scrap Brute": 1, Reserves: 1 });
     // Turning the table turns the bag with it, and nobody changes army.
     const turned = turnTable(table, Math.PI / 2);
     expect(turned.units.map((u) => u.side)).toEqual(table.units.map((u) => u.side));
@@ -206,17 +206,20 @@ describe("what a TTS veteran laid out on purpose (PX TTS 3)", () => {
         { ...fig("Warden Captain", -4, -14), Description: "Abilities: Leader" },
         // A sergeant of another squad far away stays apart.
         fig("Warden Sergeant", 20, -15),
-        fig("Intercessor", 0, 15, 180),
+        fig("Warden", 0, 15, 180),
       ],
     });
     const names = table.units.map((u) => `${u.name} ${u.models.length}`).sort();
-    expect(names).toEqual(["Intercessor 1", "Warden 5", "Warden Captain 1", "Warden Sergeant 1"]);
+    expect(names).toEqual(["Warden 1", "Warden 5", "Warden Captain 1", "Warden Sergeant 1"]);
     expect(table.units.find((u) => u.name === "Warden")!.models[0]!.nickname).toBe("Warden Sergeant");
   });
 
   it("names the asset bundles it can't bring", () => {
     const table = scanTable({
-      ObjectStates: [fig("Ork Boy", 0, -15), { Name: "Custom_AssetBundle", Nickname: "Objective marker" }],
+      ObjectStates: [
+        fig("Scrap Brute", 0, -15),
+        { Name: "Custom_AssetBundle", Nickname: "Objective marker" },
+      ],
     });
     expect(table.bundles).toEqual(["Objective marker"]);
   });
@@ -224,8 +227,8 @@ describe("what a TTS veteran laid out on purpose (PX TTS 3)", () => {
   it("sends a unit still in its bag into reserves", async () => {
     const save = scanTable(SAVE);
     const assets = new Map<string, TtsAsset>();
-    const [, marines] = ttsArmies(save, assets, DEFAULT_SYSTEM, () => "army");
-    const bagged = marines!.roster.units.find((u) => u.name === "Assault Intercessors")!;
+    const [, wardens] = ttsArmies(save, assets, DEFAULT_SYSTEM, () => "army");
+    const bagged = wardens!.roster.units.find((u) => u.name === "Assault Wardens")!;
     expect(bagged.reserve).toBe(true);
     const state = createInitialState();
     state.players = {

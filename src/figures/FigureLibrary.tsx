@@ -297,7 +297,7 @@ function Figures() {
           <div className="row wrap pack-row">
             <input
               aria-label={t("Pack name")}
-              placeholder={t("Pack name, e.g. our club's Orks")}
+              placeholder={t("Pack name, e.g. our club's Scrappers")}
               value={packName}
               onChange={(e) => setPackName(e.target.value)}
             />
@@ -394,7 +394,7 @@ function FigureCard({
         <input
           className="small"
           aria-label={t("Tags")}
-          placeholder={t("Tags, e.g. orks, painted")}
+          placeholder={t("Tags, e.g. scrappers, painted")}
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}

@@ -1651,7 +1651,7 @@ const checks = {
     };
     const meshes = {
       "https://example.com/boy.obj": box(1.2, 1.6, 1.2),
-      "https://example.com/marine.obj": box(1.25, 1.8, 1.25),
+      "https://example.com/warden.obj": box(1.25, 1.8, 1.25),
       "https://example.com/ruin.obj": box(6, 4, 1, 2),
     };
     await context.route("https://example.com/**", (route) =>
@@ -1671,10 +1671,10 @@ const checks = {
     const save = {
       SaveName: "Smoke Table",
       ObjectStates: [
-        fig("Ork Boy", -10, -15, 0, "https://example.com/boy.obj"),
-        fig("Ork Boy", -8, -15, 0, "https://example.com/boy.obj"),
-        fig("Intercessor", 4, 15, 180, "https://example.com/marine.obj"),
-        fig("Intercessor", 6, 15, 180, "https://example.com/marine.obj"),
+        fig("Scrap Brute", -10, -15, 0, "https://example.com/boy.obj"),
+        fig("Scrap Brute", -8, -15, 0, "https://example.com/boy.obj"),
+        fig("Warden", 4, 15, 180, "https://example.com/warden.obj"),
+        fig("Warden", 6, 15, 180, "https://example.com/warden.obj"),
         { ...fig("Ruined wall", 0, 0, 90, "https://example.com/ruin.obj"), Locked: true },
       ],
     };
@@ -1736,10 +1736,10 @@ const checks = {
     const want = JSON.stringify({
       terrain: [["Ruined wall", 0, -2]],
       models: [
-        ["Intercessor", 4, -15, 0],
-        ["Intercessor", 6, -15, 0],
-        ["Ork Boy", -10, 15, 3.14],
-        ["Ork Boy", -8, 15, 3.14],
+        ["Warden", 4, -15, 0],
+        ["Warden", 6, -15, 0],
+        ["Scrap Brute", -10, 15, 3.14],
+        ["Scrap Brute", -8, 15, 3.14],
       ],
       table: "Smoke Table",
     });
@@ -1747,8 +1747,8 @@ const checks = {
       throw new Error(`table came in as ${JSON.stringify({ terrain, models, table })}`);
     // And the game opened on it, both armies on the table in their figures.
     await page.locator("option:checked", { hasText: "Smoke Table" }).first().waitFor({ state: "attached" });
-    await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor();
-    await page.locator(".plate", { hasText: "Intercessor" }).first().waitFor();
+    await page.locator(".plate", { hasText: "Scrap Brute" }).first().waitFor();
+    await page.locator(".plate", { hasText: "Warden" }).first().waitFor();
     if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-2.png") });
     await context.close();
     return page.errors;
@@ -1772,11 +1772,11 @@ const checks = {
     const save = {
       SaveName: "Hammer and Anvil",
       ObjectStates: [
-        fig("Ork Boy", -26, -1),
-        fig("Ork Boy", -26, 1),
+        fig("Scrap Brute", -26, -1),
+        fig("Scrap Brute", -26, 1),
         fig("Broken Thing", -24, 6, "https://example.com/gone.obj"),
-        fig("Intercessor", 26, 0),
-        fig("Intercessor", 26, 2),
+        fig("Warden", 26, 0),
+        fig("Warden", 26, 2),
         {
           Name: "Bag",
           Nickname: "Reserves",
@@ -1798,12 +1798,12 @@ const checks = {
     await sides.waitFor();
     const before = [await line(0), await line(1)];
     if (
-      !/Player 1:.*Ork Boy.*Broken Thing/.test(before[0]) ||
-      !/Player 2:.*Intercessor.*Reserves \(in a bag\)/.test(before[1])
+      !/Player 1:.*Scrap Brute.*Broken Thing/.test(before[0]) ||
+      !/Player 2:.*Warden.*Reserves \(in a bag\)/.test(before[1])
     )
       throw new Error(`split as ${before.join(" | ")}`);
     await sides.getByRole("button", { name: "Swap sides" }).click();
-    if (!/Player 1:.*Intercessor/.test(await line(0))) throw new Error("Swap sides didn't swap");
+    if (!/Player 1:.*Warden/.test(await line(0))) throw new Error("Swap sides didn't swap");
     await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
     // The library closes on the game, and what it couldn't bring is said there (UX 478).
     await page
@@ -1813,8 +1813,8 @@ const checks = {
       throw new Error("the figure library stayed open over the game");
     await page.locator(".tts-note").getByRole("button", { name: "Close" }).click();
     await page.locator(".plate", { hasText: "Broken Thing" }).first().waitFor({ timeout: 30_000 });
-    await page.locator(".plate", { hasText: "Intercessor" }).first().waitFor();
-    // Player 1 (blue, the swapped Marines) stand where TTS had them, on the right.
+    await page.locator(".plate", { hasText: "Warden" }).first().waitFor();
+    // Player 1 (blue, the swapped Wardens) stand where TTS had them, on the right.
     await page.keyboard.press("]");
     await page.locator(".panel.unitcard .no-stats").waitFor();
     await context.close();
@@ -1932,7 +1932,7 @@ const checks = {
         },
         // Both off centre along the long edges, as tt5 had them: Ember Kin wholly on one half.
         ...[0, 1, 2, 3, 4].map((i) => fig("Ember Kin", -8 + i * 1.5, -20, 0)),
-        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Ork Boy", -6 + i * 1.5, 20, 180)),
+        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Scrap Brute", -6 + i * 1.5, 20, 180)),
       ],
     };
     const path = join(files, "tts-board.json");
@@ -1945,7 +1945,7 @@ const checks = {
       .setInputFiles(path);
     await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
     await page.locator(".plate", { hasText: "Ember Kin" }).first().waitFor({ timeout: 30_000 });
-    await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor();
+    await page.locator(".plate", { hasText: "Scrap Brute" }).first().waitFor();
     await page.waitForTimeout(500);
     if (process.env.SMOKE_SHOTS)
       await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-board.png") });
@@ -1958,10 +1958,13 @@ const checks = {
         }),
       );
     const ember = await xs("Ember Kin");
-    const orks = await xs("Ork Boy");
-    const apart = Math.max(...ember) + 40 < Math.min(...orks) || Math.max(...orks) + 40 < Math.min(...ember);
+    const scrappers = await xs("Scrap Brute");
+    const apart =
+      Math.max(...ember) + 40 < Math.min(...scrappers) || Math.max(...scrappers) + 40 < Math.min(...ember);
     if (!apart)
-      throw new Error(`armies overlap: Ember ${ember.map(Math.round)}, Orks ${orks.map(Math.round)}`);
+      throw new Error(
+        `armies overlap: Ember ${ember.map(Math.round)}, Scrappers ${scrappers.map(Math.round)}`,
+      );
     if (await page.getByText("Engaged").count()) throw new Error("units start the game engaged");
     await context.close();
     return page.errors;
@@ -2025,7 +2028,7 @@ const checks = {
       SaveName: "Mission Pack",
       ObjectStates: [
         ...[0, 1, 2].map((i) => fig("Ember Kin", -2 + i * 1.5, -18)),
-        ...[0, 1, 2].map((i) => fig("Ork Boy", -2 + i * 1.5, 18)),
+        ...[0, 1, 2].map((i) => fig("Scrap Brute", -2 + i * 1.5, 18)),
         deck,
         { Name: "Bag", Nickname: "Player 2 cards", ContainedObjects: [deck] },
       ],
@@ -2110,7 +2113,7 @@ const checks = {
           CustomMesh: { MeshURL: "https://example.com/board.obj", TypeIndex: 4 },
         },
         ...[0, 1, 2, 3, 4].map((i) => fig("Ember Kin", -8 + i * 1.5, -20, 0)),
-        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Ork Boy", -6 + i * 1.5, 20, 180)),
+        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Scrap Brute", -6 + i * 1.5, 20, 180)),
       ],
     };
     const path = join(files, "tts-online.json");
@@ -2132,7 +2135,7 @@ const checks = {
     // 479: both armies are on Ana's shelf for this game, named after their units (483).
     const shelf = host.page.locator('select[aria-label="From your shelf"] option');
     await shelf.filter({ hasText: "Ember Kin (Club Night)" }).first().waitFor({ state: "attached" });
-    await shelf.filter({ hasText: "Ork Boy (Club Night)" }).first().waitFor({ state: "attached" });
+    await shelf.filter({ hasText: "Scrap Brute (Club Night)" }).first().waitFor({ state: "attached" });
     const p1 = (await host.page.locator(".plate").first().textContent()) ?? "";
     await guest.page.goto(link);
     const offer = guest.page.locator(".brought-offer");
@@ -2140,7 +2143,7 @@ const checks = {
     await offer.getByRole("button", { name: "Use this army" }).click();
     for (const { page } of [host, guest]) {
       await page.locator(".plate", { hasText: "Ember Kin" }).first().waitFor({ timeout: 30_000 });
-      await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor({ timeout: 30_000 });
+      await page.locator(".plate", { hasText: "Scrap Brute" }).first().waitFor({ timeout: 30_000 });
     }
     await host.page.waitForTimeout(500);
     if (process.env.SMOKE_SHOTS) {
@@ -2157,7 +2160,7 @@ const checks = {
           }),
         );
       const a = await xs("Ember Kin");
-      const b = await xs("Ork Boy");
+      const b = await xs("Scrap Brute");
       if (!(Math.max(...a) + 40 < Math.min(...b) || Math.max(...b) + 40 < Math.min(...a)))
         throw new Error(`armies overlap: ${a.map(Math.round)} / ${b.map(Math.round)} (Player 1 had ${p1})`);
     }

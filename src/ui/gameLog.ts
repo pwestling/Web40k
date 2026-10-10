@@ -173,7 +173,7 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
       }
       const who = playerName(state.players[logged.by]) ?? t("Someone");
       const { units, pts: total } = deployLine;
-      // The force's own name, not its catalogue path ("Imperium - Adeptus Astartes - Space Marines", UX 410).
+      // The force's own name, not its catalogue path ("Hegemony - Iron Wardens - Wardens", UX 410).
       const force = army?.split(/\s+-\s+/).at(-1);
       const params = { name: who, army: force ?? t("an army"), pts: String(total) };
       deployLine.text =

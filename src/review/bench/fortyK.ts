@@ -10,7 +10,7 @@ import type { BenchItem, BenchSet } from "./judge";
 const SYSTEM = "forty-k-11";
 const RIFLE = "pattern-rifle-ranged";
 const LANCE = "arc-lance-ranged";
-const BOLTER = "twin-autobolter-ranged";
+const CARBINE = "twin-autocarbine-ranged";
 
 /** Seat 0's own turn, round 2, at the start of the phase named, laid out by `lay`. */
 const table = (phase: string, lay: Parameters<typeof scene>[3]) =>
@@ -73,8 +73,8 @@ export const fortyKBench: BenchSet = {
         const s = t.s;
         return {
           p: positionOf(record, s, 0),
-          better: act(s, id("Bastion Walker"), "shoot", id("Cinder Colossus"), BOLTER),
-          worse: act(s, id("Bastion Walker"), "shoot", id("Pyre Speaker"), BOLTER),
+          better: act(s, id("Bastion Walker"), "shoot", id("Cinder Colossus"), CARBINE),
+          worse: act(s, id("Bastion Walker"), "shoot", id("Pyre Speaker"), CARBINE),
         };
       },
     ),

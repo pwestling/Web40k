@@ -13,7 +13,7 @@ We play whole games in the browser the way a player would. This log records what
 
 ### 40k over two browsers, with voice
 
-Ana (Space Marines, Gladius) hosted and Ben (Necrons, Awakened Dynasty) joined from the invite link.
+Ana and Ben each imported a real sci-fi roster from the public BSData catalogues; Ana hosted and Ben joined from the invite link.
 
 **What worked**
 
@@ -27,7 +27,7 @@ Ana (Space Marines, Gladius) hosted and Ben (Necrons, Awakened Dynasty) joined f
 
 **Fixed in this pass**
 
-- The Command phase listed the same army rule once per unit: "Oath of Moment" five times, and "Reanimation Protocols" five times. It now shows one line, "Ancient in Terminator Armor and 4 other units: Oath of Moment", and Apply marks all of them.
+- The Command phase listed the same army rule once per unit: each side's army rule appeared five times. It now shows one line, "<first unit> and 4 other units: <army rule>", and Apply marks all of them.
 - "1 hit, 1 critical" read like two hits. It now reads "1 hit (1 critical)".
 - Every attack by a fresh Ballistus Dreadnought reminded us of "Damaged: 1-4 Wounds Remaining". That reminder now only shows once a model is down to that many wounds.
 - After firing the lascannon, the shoot panel opened on the lascannon again, and nothing stopped it from firing twice. The panel now opens on a weapon the unit hasn't used this phase, and marks used ones "· used this phase". This is a warning only, so a player can still override it.
@@ -122,7 +122,7 @@ Cora started a mail game, picked the Crossfire mission, deployed and sent the in
 
 ### Open tables, a starter table, the army shelf and clocks
 
-Ana hosted, picked the starter table "Close quarters" and the Crossfire mission, set a 45-minute chess clock, imported an Orks roster from `.bsdata/`, saved it to her shelf ("Your army shelf (1)") and posted the table. Ben opened Open tables from the lobby, saw "Ana is waiting for an opponent · New players welcome · Sci-fi battle · 460 points", joined and deployed. The post came down when the seats filled. After Start battle, Ana's clock ran down while Ben's held at 45:00 on both screens.
+Ana hosted, picked the starter table "Close quarters" and the Crossfire mission, set a 45-minute chess clock, imported a roster from `.bsdata/`, saved it to her shelf ("Your army shelf (1)") and posted the table. Ben opened Open tables from the lobby, saw "Ana is waiting for an opponent · New players welcome · Sci-fi battle · 460 points", joined and deployed. The post came down when the seats filled. After Start battle, Ana's clock ran down while Ben's held at 45:00 on both screens.
 
 **Fixed in this pass**
 
@@ -211,7 +211,7 @@ The 40k charge's declared targets are kept on the unit as `chargeAt.<id>` flags 
 | Rift Lanterns vs Sharp                      | Mouse         | Lost 4–6               | Review ran in the sandbox workers (package game)  |
 | 40k sample armies vs Sharp, #58 build       | Mouse         | Lost 35–55             | 5 rounds; #57/#58 rules live                      |
 | Rift Lanterns vs Steady                     | iPad touch    | Won 9–5                | Review started with the menu folded (UX 432)      |
-| 40k Necron roster vs Steady, #53 teach      | Mouse         | (setup)                | Imported, matched points, taught a rule           |
+| Sci-fi roster vs Steady, #53 teach          | Mouse         | (setup)                | Imported, matched points, taught a rule           |
 | Rift Lanterns vs Steady                     | Phone touch   | Lost 0–9, then won 6–5 | The first game was lost to the camera bugs below  |
 | 40k, posted on Open tables, joined by phone | Mouse + phone | (opening)              | Post, find, join, ready, deploy and a synced move |
 
