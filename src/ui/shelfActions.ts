@@ -1,11 +1,12 @@
 import { safeFileName, saveJson } from "./files";
 import { create } from "zustand";
-import type { PlayerId } from "../core";
+import { DEFAULT_SYSTEM, type GameState, type Intent, type PlayerId } from "../core";
 import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import {
   armyAssets,
+  ARMY_FORMAT,
   armyFromGame,
   readArmy,
   useShelf,
@@ -14,8 +15,9 @@ import {
 } from "../packages/shelf";
 import { t } from "../i18n";
 import { useStore } from "../store";
-import type { ImportedRoster } from "../systems/wh40k/roster";
-import { toYellowscribe } from "../systems/wh40k/yellowscribe";
+import { isYellowscribe, toYellowscribe } from "../systems/wh40k/yellowscribe";
+import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
+import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 
 /** What each player deployed in this game, so it can go on the shelf (and from which shelf entry). */
 export const useDeployed = create<
@@ -27,9 +29,65 @@ export function saveToShelf(owner: PlayerId): string | null {
   const deployed = useDeployed.getState()[owner];
   if (!deployed) return null;
   const army = armyFromGame(useStore.getState().game, owner, deployed, deployed.shelfId);
+  // Where it came from stays with it (UX 480).
+  const was = deployed.shelfId ? useShelf.getState().armies[deployed.shelfId] : undefined;
+  if (was?.from) army.from = was.from;
   useShelf.getState().put(army);
   useDeployed.setState({ [owner]: { ...deployed, shelfId: army.id } });
   return army.id;
+}
+
+/**
+ * A shelf army's units for a player (UX 480). On the table it was brought on
+ * from TTS, every model stands where it stood, turned through the centre for
+ * a player on the other side; on any other table it has no places and
+ * deploys in its zone like any list.
+ */
+export function unitsToDeploy(
+  army: SavedArmy,
+  game: GameState,
+  owner: PlayerId,
+): { units: ImportedRoster["units"]; keepPlaces: boolean } {
+  const units = army.roster.units;
+  if (!units.some((u) => u.models.some((m) => m.at))) return { units, keepPlaces: false };
+  const home = !!army.from && game.tableSource?.key === `table:${army.from.table}`;
+  const side = (game.players[owner]?.seat ?? 0) === 0 ? 0 : 1;
+  const turn = home && side !== army.from!.side;
+  return {
+    keepPlaces: home,
+    units: units.map((u) => ({
+      ...u,
+      models: u.models.map(({ at, ...m }) =>
+        !home || !at
+          ? m
+          : { ...m, at: turn ? { x: -at.x, y: -at.y, facing: (at.facing + Math.PI) % (2 * Math.PI) } : at },
+      ),
+    })),
+  };
+}
+
+/**
+ * Put a shelf army on the table for a player, as the army panel would: its
+ * places on its own table, its rules, colour and dice, and its figures. The
+ * host sends for a guest with `dispatch` (an army brought for them, UX 481).
+ */
+export function deployShelfArmy(
+  army: SavedArmy,
+  owner: PlayerId,
+  dispatch: (intent: Intent, as: PlayerId) => void = (intent, as) => useStore.getState().dispatch(intent, as),
+): void {
+  const { game } = useStore.getState();
+  const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
+  const { units, keepPlaces } = unitsToDeploy(army, game, owner);
+  for (const intent of spawnIntents(game, owner, units, prefix, army.roster.name, keepPlaces))
+    dispatch(intent, owner);
+  if (army.roster.army) dispatch({ type: "player/army", army: army.roster.army }, owner);
+  if (!army.color) {
+    const color = armyColor(game, owner, army.roster.color);
+    if (color) dispatch(color, owner);
+  }
+  useDeployed.setState({ [owner]: { roster: { ...army.roster, units }, prefix, shelfId: army.id } });
+  void dressFromShelf(army, owner, prefix, dispatch);
 }
 
 /** A figure asset, from this page or this device's cache. */
@@ -45,8 +103,13 @@ async function asset(id: string) {
  * After a shelf army's units are deployed: dress them in their figures, and
  * give the player their dice and colour (unless another player has it).
  */
-export async function dressFromShelf(army: SavedArmy, owner: PlayerId, prefix: string): Promise<void> {
-  const { dispatch, game } = useStore.getState();
+export async function dressFromShelf(
+  army: SavedArmy,
+  owner: PlayerId,
+  prefix: string,
+  dispatch: (intent: Intent, as: PlayerId) => void = (intent, as) => useStore.getState().dispatch(intent, as),
+): Promise<void> {
+  const { game } = useStore.getState();
   if (army.dice !== undefined) dispatch({ type: "player/dice", player: owner, dice: army.dice }, owner);
   const taken = Object.values(game.players).some((p) => p.id !== owner && p.color === army.color);
   if (army.color && !taken && game.players[owner]?.color !== army.color)
@@ -61,9 +124,7 @@ export async function dressFromShelf(army: SavedArmy, owner: PlayerId, prefix: s
       const figure = JSON.parse(json) as SavedArmy["figures"][number][string]["figure"];
       const found = await asset(figure.asset);
       if (!found) continue;
-      useStore
-        .getState()
-        .dispatch({ type: "unit/figure", id: unitId, keys, figure, bands: found.figure?.bands }, owner);
+      dispatch({ type: "unit/figure", id: unitId, keys, figure, bands: found.figure?.bands }, owner);
     }
   }
 }
@@ -92,6 +153,22 @@ export async function importArmyFile(file: File): Promise<SavedArmy | string> {
     data = JSON.parse(await file.text());
   } catch {
     return t("That file isn't an Open Battle army.");
+  }
+  // Yellowscribe army data, which TTS players carry about, goes on the shelf as the list it is (UX 488).
+  if (isYellowscribe(data)) {
+    const roster = await parseRosterFile(file.name, new TextEncoder().encode(JSON.stringify(data)));
+    if (!roster.units.length) return roster.warnings.join(" ") || t("No units found in that list.");
+    const army: SavedArmy = {
+      format: ARMY_FORMAT,
+      id: crypto.randomUUID(),
+      name: roster.name,
+      system: DEFAULT_SYSTEM,
+      savedAt: Date.now(),
+      roster,
+      figures: {},
+    };
+    useShelf.getState().put(army);
+    return army;
   }
   const army = readArmy(data);
   if (!army) return t("That file isn't an Open Battle army.");

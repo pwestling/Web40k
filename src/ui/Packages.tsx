@@ -253,7 +253,9 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
                   ? t("Game system")
                   : pkg.manifest.kind === "lesson"
                     ? t("Lessons")
-                    : t("Extension"),
+                    : pkg.manifest.kind === "faction"
+                      ? t("Faction pack")
+                      : t("Extension"),
               games: pkg.manifest.systems.join(", ") || t("any game"),
               api: String(pkg.manifest.api),
               size: formatBytes(pkg.bytes),

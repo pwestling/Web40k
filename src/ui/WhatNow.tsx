@@ -46,7 +46,7 @@ function whatNow(
       head: t("Deployment"),
       lines: [
         t("Drag your units into your deployment zone, the shaded strip on your side."),
-        t("No army yet? In the left panel, press Sample army, or Import army list for your own."),
+        t("No army yet? In the left panel, press Sample army, or Import a list for your own."),
         t("When both armies are down, press Start battle ▶ at the top."),
       ],
     };

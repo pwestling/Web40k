@@ -4,7 +4,7 @@ import { formatDate, t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import { listSystems } from "../core/content";
 import { useLibrary } from "../packages/library";
-import { useShelf } from "../packages/shelf";
+import { shelfSystem, useShelf } from "../packages/shelf";
 import { myKey, useCard } from "../player/card";
 import { useResultsOften } from "../ranked/store";
 import { systemModule } from "../systems";
@@ -529,7 +529,7 @@ function Entries({ doc, entries, me }: { doc: EventDoc; entries: EntryDoc[]; me:
   const mine = useMemo(
     () =>
       Object.values(armies)
-        .filter((a) => a.system === doc.system)
+        .filter((a) => a.system === shelfSystem(doc.system))
         .sort((a, b) => b.savedAt - a.savedAt),
     [armies, doc.system],
   );

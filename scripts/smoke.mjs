@@ -1889,6 +1889,102 @@ const checks = {
     return page.errors;
   },
 
+  async "tts-online"() {
+    // UX 479–483: a TTS save played online. Player 1's army stands where it stood, the guest is offered theirs,
+    // and both armies sit on their own short edges for both players.
+    const host = await device();
+    const guest = await device();
+    const box = (w, h, d) => {
+      const v = [];
+      for (const y of [0, h])
+        for (const z of [-d / 2, d / 2]) for (const x of [-w / 2, w / 2]) v.push(`v ${x} ${y} ${z}`);
+      const f = ["1 2 4 3", "5 7 8 6", "1 5 6 2", "3 4 8 7", "1 3 7 5", "2 6 8 4"].map((q) => `f ${q}`);
+      return [...v, ...f].join("\n") + "\n";
+    };
+    const meshes = {
+      "https://example.com/board.obj": box(44, 0.2, 60),
+      "https://example.com/fig.obj": box(1, 1.5, 1),
+    };
+    await host.context.route("https://example.com/**", (route) =>
+      route.fulfill({
+        status: 200,
+        headers: { "access-control-allow-origin": "*" },
+        body: meshes[route.request().url()] ?? "",
+      }),
+    );
+    const fig = (nickname, x, z, rotY) => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: "https://example.com/fig.obj", TypeIndex: 1 },
+    });
+    const save = {
+      SaveName: "Club Night",
+      ObjectStates: [
+        {
+          Name: "Custom_Model",
+          Nickname: "Board",
+          Locked: true,
+          Transform: { posX: 0, posY: 0, posZ: 0, rotY: 0, scaleX: 1, scaleY: 1, scaleZ: 1 },
+          CustomMesh: { MeshURL: "https://example.com/board.obj", TypeIndex: 4 },
+        },
+        ...[0, 1, 2, 3, 4].map((i) => fig("Ember Kin", -8 + i * 1.5, -20, 0)),
+        ...[0, 1, 2, 3, 4, 5].map((i) => fig("Ork Boy", -6 + i * 1.5, 20, 180)),
+      ],
+    };
+    const path = join(files, "tts-online.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(host.page, `?${SIGNAL}`);
+    await host.page.locator(".lobby input").first().fill("Ana");
+    await host.page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await host.page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    await host.page
+      .locator(".tts-table")
+      .getByRole("button", { name: "Play it online with a friend" })
+      .click();
+    await host.page.locator(".tts-note", { hasText: "invite link" }).waitFor({ timeout: 30_000 });
+    const link = host.page.url();
+    if (!link.includes("room=")) throw new Error(`no room in ${link}`);
+    // 479: both armies are on Ana's shelf for this game, named after their units (483).
+    const shelf = host.page.locator('select[aria-label="From your shelf"] option');
+    await shelf.filter({ hasText: "Ember Kin (Club Night)" }).first().waitFor({ state: "attached" });
+    await shelf.filter({ hasText: "Ork Boy (Club Night)" }).first().waitFor({ state: "attached" });
+    const p1 = (await host.page.locator(".plate").first().textContent()) ?? "";
+    await guest.page.goto(link);
+    const offer = guest.page.locator(".brought-offer");
+    await offer.waitFor({ timeout: 30_000 });
+    await offer.getByRole("button", { name: "Use this army" }).click();
+    for (const { page } of [host, guest]) {
+      await page.locator(".plate", { hasText: "Ember Kin" }).first().waitFor({ timeout: 30_000 });
+      await page.locator(".plate", { hasText: "Ork Boy" }).first().waitFor({ timeout: 30_000 });
+    }
+    await host.page.waitForTimeout(500);
+    if (process.env.SMOKE_SHOTS) {
+      await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-online-host.png") });
+      await guest.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-online-guest.png") });
+    }
+    // 480: on each screen, one army wholly on one side of the other.
+    for (const { page } of [host, guest]) {
+      const xs = async (name) =>
+        page.locator(".plate", { hasText: name }).evaluateAll((els) =>
+          els.map((e) => {
+            const r = e.getBoundingClientRect();
+            return r.x + r.width / 2;
+          }),
+        );
+      const a = await xs("Ember Kin");
+      const b = await xs("Ork Boy");
+      if (!(Math.max(...a) + 40 < Math.min(...b) || Math.max(...b) + 40 < Math.min(...a)))
+        throw new Error(`armies overlap: ${a.map(Math.round)} / ${b.map(Math.round)} (Player 1 had ${p1})`);
+    }
+    await host.context.close();
+    await guest.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

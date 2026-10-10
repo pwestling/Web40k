@@ -228,3 +228,22 @@
   background: rgb(17 19 24 / 96%);
   box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
 }
+
+/* An army the host brought for this player from a TTS table (UX 481). */
+.brought-offer {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #16a34a;
+  background: rgb(17 19 24 / 96%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
+}

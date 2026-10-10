@@ -5,7 +5,9 @@ import { closeLibrary } from "../figures/open";
 import type { TtsFolder } from "../figures/tts";
 import { t, tn } from "../i18n";
 import { bringTable, type BroughtTable } from "./bring";
+import { hostTtsOnline } from "./online";
 import { openTtsGame } from "./open";
+import { readScriptedUnit } from "./scripted";
 import { scanTable } from "./table";
 
 /**
@@ -17,12 +19,10 @@ export function TtsWholeTable({
   save,
   folder,
   busy,
-  onDone,
 }: {
   save: unknown;
   folder: TtsFolder | null;
   busy: boolean;
-  onDone: (note: string) => void;
 }) {
   const scan = useMemo(() => {
     try {
@@ -37,6 +37,13 @@ export function TtsWholeTable({
   // A new save mounts a new component (TtsImport keys it), so these start fresh.
   const [swapped, setSwapped] = useState(false);
   const [moved, setMoved] = useState<Set<number>>(new Set());
+  // What's saved already (UX 484): the next step plays it without importing again.
+  const [saved, setSaved] = useState<{ brought: BroughtTable; note: string } | null>(null);
+  // A Yellowscribe unit goes by the name in its script, as the game will call it (UX 490).
+  const names = useMemo(
+    () => scan?.units.map((u) => readScriptedUnit(u.models)?.name || u.name) ?? [],
+    [scan],
+  );
   if (!scan) return null;
   const placed = scan.units.filter((u) => u.placed);
   if (!scan.terrain.length && !scan.units.length) return null;
@@ -48,9 +55,18 @@ export function TtsWholeTable({
     if (next.has(i)) next.delete(i);
     else next.add(i);
     setMoved(next);
+    setSaved(null);
   };
 
-  const bring = async (play: boolean) => {
+  const play = (how: "here" | "online", brought: BroughtTable, note: string) => {
+    // The table must be touchable at once (UX 478): the library closes and anything to tell goes on the game.
+    closeLibrary();
+    if (how === "here") openTtsGame(brought, note);
+    else void hostTtsOnline(brought, note);
+  };
+
+  const bring = async (how: "here" | "online" | "save") => {
+    if (saved && how !== "save") return play(how, saved.brought, saved.note);
     let brought: BroughtTable;
     try {
       brought = await bringTable(chosen, system, folder, setProgress);
@@ -89,11 +105,9 @@ export function TtsWholeTable({
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
       );
-    if (play) {
-      // The table must be touchable at once (UX 478): the library closes and anything to tell goes on the game.
-      closeLibrary();
-      openTtsGame(brought, brought.lost.length || brought.off ? parts.join(" ") : "");
-    } else onDone(parts.join(" "));
+    const note = brought.lost.length || brought.off ? parts.slice(2).join(" ") : "";
+    if (how === "save") setSaved({ brought, note: parts.join(" ") });
+    else play(how, brought, note);
   };
 
   return (
@@ -126,7 +140,7 @@ export function TtsWholeTable({
                     title={side === 0 ? t("Move to Player 2") : t("Move to Player 1")}
                     onClick={() => move(i)}
                   >
-                    {u.placed ? u.name : t("{name} (in a bag)", { name: u.name })} ⇄
+                    {u.placed ? names[i] : t("{name} (in a bag)", { name: names[i] })} ⇄
                   </button>
                 ) : null,
               )}
@@ -135,7 +149,13 @@ export function TtsWholeTable({
               )}
             </div>
           ))}
-          <button className="small" onClick={() => setSwapped(!swapped)}>
+          <button
+            className="small"
+            onClick={() => {
+              setSwapped(!swapped);
+              setSaved(null);
+            }}
+          >
             {t("Swap sides")}
           </button>
         </div>
@@ -143,7 +163,13 @@ export function TtsWholeTable({
       <div className="row wrap">
         <label>
           {t("Game")}{" "}
-          <select value={system} onChange={(e) => setSystem(e.target.value)}>
+          <select
+            value={system}
+            onChange={(e) => {
+              setSystem(e.target.value);
+              setSaved(null);
+            }}
+          >
             {listSystems().map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -151,14 +177,27 @@ export function TtsWholeTable({
             ))}
           </select>
         </label>
-        <button disabled={busy || !!progress} onClick={() => void bring(true)}>
+        <button className="primary" disabled={busy || !!progress} onClick={() => void bring("online")}>
+          {t("Play it online with a friend")}
+        </button>
+        <button disabled={busy || !!progress} onClick={() => void bring("here")}>
           {t("Open it as a game")}
         </button>
-        <button className="quiet" disabled={busy || !!progress} onClick={() => void bring(false)}>
-          {t("Save the table and armies")}
-        </button>
+        {!saved && (
+          <button className="quiet" disabled={busy || !!progress} onClick={() => void bring("save")}>
+            {t("Save the table and armies")}
+          </button>
+        )}
       </div>
       {progress && <p className="muted small">{progress}</p>}
+      {saved && (
+        <p className="small tts-saved" role="status">
+          {saved.note}{" "}
+          {t(
+            "They're in the table library and on your army shelf: play it online or here, or pick them when you host.",
+          )}
+        </p>
+      )}
     </div>
   );
 }

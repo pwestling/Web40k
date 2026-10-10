@@ -357,7 +357,8 @@ export class Session {
       message.t.startsWith("package/") ||
       message.t.startsWith("campaign/") ||
       message.t.startsWith("talk") ||
-      message.t.startsWith("review/")
+      message.t.startsWith("review/") ||
+      message.t.startsWith("army/")
     ) {
       for (const l of this.side.values()) l.onSide(message as SideMessage, from);
       return;

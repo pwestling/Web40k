@@ -10,6 +10,7 @@ import {
   exportYellowscribe,
   importArmyFile,
   saveToShelf,
+  unitsToDeploy,
   useDeployed,
 } from "./shelfActions";
 import { dressFromLibrary } from "../figures/actions";
@@ -29,6 +30,8 @@ import { formatDate, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { DicePicker } from "./DicePicker";
 import { ImportAutomation } from "./AutoAbilities";
+import { FactionPacks, PackChecks, packsToGame } from "./FactionPacks";
+import { withPinnedPacks } from "../packages/packPins";
 import { ListMerge } from "../tts/ListMerge";
 import { addSpells, importedWizard, parseSpellList } from "../systems/tow/spells";
 
@@ -127,7 +130,9 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       setFromShelf(null);
       const r = await read(file.name, new Uint8Array(await file.arrayBuffer()));
       // The detachment's rules and stratagems the app can read start ticked (UX 370): untick to play one by hand.
-      setRoster(r.army ? { ...r, army: automateArmy(r.army, systemOf(game)) } : r);
+      const ticked = r.army ? { ...r, army: automateArmy(r.army, systemOf(game)) } : r;
+      // The faction packs this device pinned play the rules they know by name (#76).
+      setRoster(withPinnedPacks(ticked, game.system ?? DEFAULT_SYSTEM, systemOf(game)));
     } finally {
       setBusy(false);
     }
@@ -136,14 +141,21 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const deploy = () => {
     if (!roster) return;
     const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
+    // A TTS army on its own table stands where it stood; anywhere else it deploys in its zone (UX 480).
+    const placed = fromShelf
+      ? unitsToDeploy({ ...fromShelf, roster }, game, owner)
+      : { units: roster.units, keepPlaces: false };
     const units = ranked
-      ? roster.units.map((u, i) =>
+      ? placed.units.map((u, i) =>
           skirmish(i, u) ? { ...u, files: undefined } : { ...u, files: frontage(i, u.models.length) },
         )
-      : roster.units;
-    for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+      : placed.units;
+    for (const intent of spawnIntents(game, owner, units, prefix, roster.name, placed.keepPlaces))
+      dispatch(intent, owner);
     // The detachment's rules and stratagems (#49): the text is the player's, shared with the table like their units.
     if (roster.army) dispatch({ type: "player/army", army: roster.army }, owner);
+    // A faction pack's code runs in the game, like any rules package's (#76).
+    packsToGame(roster.army?.packs);
     const color = fromShelf ? null : armyColor(game, owner, roster.color);
     if (color) dispatch(color, owner);
     useDeployed.setState({ [owner]: { roster: { ...roster, units }, prefix, shelfId: fromShelf?.id } });
@@ -245,7 +257,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 const army = systemModule(game.system).armies?.[Number(e.target.value)];
                 if (!army) return;
                 setFromShelf(null);
-                setRoster(army);
+                setRoster(withPinnedPacks(army, game.system ?? DEFAULT_SYSTEM, systemOf(game)));
               }}
             >
               <option value="">{t("Sample army…")}</option>
@@ -269,14 +281,15 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       )}
       {!(game.system && isPlaceholder(game.system)) && (
         <ShelfSelect
-          system={game.system ?? ""}
+          system={game.system ?? DEFAULT_SYSTEM}
           onPick={(army) => {
             setFromShelf(army);
-            setRoster(army.roster);
+            setRoster(withPinnedPacks(army.roster, game.system ?? DEFAULT_SYSTEM, systemOf(game)));
           }}
         />
       )}
-      <ShelfManager system={game.system ?? ""} />
+      <ShelfManager system={game.system ?? DEFAULT_SYSTEM} />
+      <PackChecks />
       {players.map((p) => (
         <SaveToShelf key={p.id} owner={p.id} name={players.length > 1 ? p.name : null} />
       ))}
@@ -540,6 +553,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                     : t("Bases are a guess from keywords and wounds; check them against your models.")}
                 </p>
               )}
+              <FactionPacks roster={roster} setRoster={setRoster} />
               <ImportAutomation roster={roster} setRoster={setRoster} />
               {ranked && wizards > 0 && (
                 <div className="row wrap">

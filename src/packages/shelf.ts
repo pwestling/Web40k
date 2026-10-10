@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { stableJson } from "../core/secrets";
-import type { DiceSet, GameState, ModelFigure, PlayerId } from "../core";
+import { DEFAULT_SYSTEM, type DiceSet, type GameState, type ModelFigure, type PlayerId } from "../core";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 
 /**
@@ -30,6 +30,11 @@ export interface SavedArmy {
   figures: Record<number, Record<string, ShelfFigure>>;
   dice?: DiceSet | null;
   color?: string;
+  /**
+   * Brought from a TTS table (#73): the saved table it stood on and its side there (0: the +y or +x edge). On that
+   * table its models stand where they stood (shelfActions unitsToDeploy); elsewhere it deploys in its zone.
+   */
+  from?: { table: string; side: 0 | 1 };
 }
 
 /** An army as a file: the army plus its figures' processed assets (base64, by id). */
@@ -92,7 +97,10 @@ export const useShelf = create<Shelf>((set, get) => ({
     const armies = await all();
     set((s) => ({
       loaded: true,
-      armies: { ...Object.fromEntries(armies.map((a) => [a.id, a])), ...s.armies },
+      armies: {
+        ...Object.fromEntries(armies.map((a) => [a.id, { ...a, system: shelfSystem(a.system) }])),
+        ...s.armies,
+      },
     }));
   },
   put(army) {
@@ -107,6 +115,12 @@ export const useShelf = create<Shelf>((set, get) => ({
     void write((store) => store.delete(id));
   },
 }));
+
+/**
+ * The system a shelf army is for. Armies saved from a game on the default
+ * system once went down as "" (UX 479): they are the default's.
+ */
+export const shelfSystem = (system: string | undefined): string => system || DEFAULT_SYSTEM;
 
 /** The index of a spawned unit in its roster, from its id (`<prefix>-<index>`, see spawnIntents). */
 const indexOf = (unitId: string, prefix: string): number | null => {
@@ -152,7 +166,7 @@ export function armyFromGame(
     format: ARMY_FORMAT,
     id,
     name: deployed.roster.name,
-    system: game.system ?? "",
+    system: game.system ?? DEFAULT_SYSTEM,
     savedAt: Date.now(),
     // The army's rules as played, stratagems pasted at the table included (UX 371).
     roster: { ...deployed.roster, units, ...(game.armies?.[owner] ? { army: game.armies[owner] } : {}) },
@@ -185,6 +199,7 @@ export function readArmy(data: unknown): SavedArmy | null {
   const { attachments: _a, ...army } = a as ArmyFile;
   return {
     ...army,
+    system: shelfSystem(army.system),
     figures: army.figures ?? {},
     id: typeof army.id === "string" ? army.id : crypto.randomUUID(),
   };

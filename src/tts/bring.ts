@@ -6,10 +6,11 @@ import { useFigures } from "../figures/library";
 import { t } from "../i18n";
 import { ARMY_FORMAT, useShelf, type SavedArmy } from "../packages/shelf";
 import { systemModule } from "../systems";
-import { makePiece } from "../systems/wh40k/layout";
+import { makePiece, zones } from "../systems/wh40k/layout";
 import { TABLE_FORMAT, useTables, type SavedTable } from "../tables/library";
 import { meshShape } from "../tables/meshShape";
 import { ttsArmies, type TtsAsset } from "./armies";
+import { readScriptedUnit } from "./scripted";
 import {
   armyMiddle,
   bakeObj,
@@ -80,6 +81,23 @@ async function download(url: string): Promise<Blob | undefined> {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * A TTS army's name from what's in it (UX 483): its first units, then the
+ * save, e.g. "Ember Kin, Pyre Warden (Club Night Table)".
+ */
+function armyName(table: TtsTable, side: 0 | 1, save: string): string {
+  const names = [
+    ...new Set(
+      table.units.filter((u) => u.side === side).map((u) => readScriptedUnit(u.models)?.name || u.name),
+    ),
+  ];
+  const shown =
+    names.length > 3
+      ? t("{names} and {n} more", { names: names.slice(0, 2).join(", "), n: names.length - 2 })
+      : names.join(", ");
+  return t("{army} ({save})", { army: shown, save });
 }
 
 /** A table mat: a board model or anything this wide and this flat. Its size, not a piece of terrain. */
@@ -172,14 +190,12 @@ export async function bringTable(
     return reach("y") > size.depth / 2 + 1 && reach("x") <= size.depth / 2;
   })();
   const fitted = turned ? turnTable(scan, Math.PI / 2) : scan;
-  // Player 1 sits on the +y edge: when the two armies face each other across y the wrong way round, the table turns
-  // round to bring them there, terrain and all (UX 473).
+  // Player 1 sits on the +y edge, or the +x short edge when the armies face each other along the table: the wrong
+  // way round, the table turns round to bring them there, terrain and all (UX 473, 480).
   const m0 = armyMiddle(fitted, 0);
   const m1 = armyMiddle(fitted, 1);
-  const table =
-    m0 && m1 && Math.abs(m0.y - m1.y) > Math.abs(m0.x - m1.x) && m0.y < m1.y
-      ? turnTable(fitted, Math.PI)
-      : fitted;
+  const across = !!m0 && !!m1 && Math.abs(m0.x - m1.x) > Math.abs(m0.y - m1.y);
+  const table = m0 && m1 && (across ? m0.x < m1.x : m0.y < m1.y) ? turnTable(fitted, Math.PI) : fitted;
 
   const mod = systemModule(system);
   const base = mod.layout(size);
@@ -200,10 +216,14 @@ export async function bringTable(
     system,
     savedAt: Date.now(),
     table: { width: size.width, depth: size.depth },
-    layout: { terrain, zones: base.zones, objectives: base.objectives },
+    // Armies along the short edges deploy there (UX 480): a game on this table keeps the zones they stood in.
+    layout: {
+      terrain,
+      zones: across && base.zones.length === 2 ? zones("short", size.width, size.depth) : base.zones,
+      objectives: base.objectives,
+    },
   };
-  const sideName = (side: 0 | 1) =>
-    side === 0 ? t("{save}: near side", { save: scan.title }) : t("{save}: far side", { save: scan.title });
+  const sideName = (side: 0 | 1) => armyName(table, side, scan.title);
   const armies = ttsArmies(table, got, system, sideName).map((a) => ({
     side: a.side,
     army: {
@@ -214,6 +234,7 @@ export async function bringTable(
       savedAt: Date.now(),
       roster: a.roster,
       figures: a.figures,
+      from: { table: saved.id, side: a.side },
     } satisfies SavedArmy,
   }));
   for (const u of table.units)

@@ -4,6 +4,8 @@ A rules package adds rules to a game system that Open Battle already knows. For 
 
 For a complete working package, see [`examples/packages/second-wind.js`](../examples/packages/second-wind.js). It adds one invented rule to the Old World system.
 
+A **faction pack** is a package that adds rules to armies by their names (abilities, detachments, enhancements, stratagems), loaded from a link in the army import: see [faction-packs.md](faction-packs.md).
+
 **Never put Games Workshop text, art, stats or points in a package you publish.** Write the rule in your own words and let players enter the numbers. The same rule applies to this repository.
 
 ## The file

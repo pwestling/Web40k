@@ -11,7 +11,8 @@ import { playRanked } from "../ranked/RankedGame";
 import { useStore } from "../store";
 import { useDeployed } from "../ui/shelfActions";
 import { armyHash } from "./event";
-import { backToEvent, deployShelfArmy, registeredArmy } from "./play";
+import { deployShelfArmy } from "../ui/shelfActions";
+import { backToEvent, registeredArmy } from "./play";
 import { useEventDocs } from "./store";
 
 /** Top tables an event shows on Live now (#67). */

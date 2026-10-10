@@ -26,12 +26,13 @@ export function openTtsGame(brought: BroughtTable, note = ""): void {
       if (tries++ < 40) setTimeout(() => void go(), 50);
       return;
     }
-    await applyLayout(brought.table.layout, { key: `table:${brought.table.id}`, name: brought.table.name });
+    // The mission first: the save's table keeps its own zones (short edges, UX 480).
     presetMission();
+    await applyLayout(brought.table.layout, { key: `table:${brought.table.id}`, name: brought.table.name });
     const get = () => useStore.getState().game;
     const { dispatch } = useStore.getState();
     const tag = crypto.randomUUID().slice(0, 6);
-    useTtsNote.setState({ note, tag });
+    useTtsNote.setState({ note, table: brought.table.id });
     const bySide = (side: 0 | 1) => brought.armies.find((a) => a.side === side)?.army;
     deploySamples(
       get,

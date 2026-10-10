@@ -451,3 +451,6 @@ export interface Rulebook {
   /** The starter map's colour for each of the game's terrain categories, over the built-in ones. */
   terrainColors?: Record<string, string>;
 }
+
+/** A faction pack's data (#76, docs/faction-packs.md): `export const faction: FactionPack = { ... }`. */
+export type { FactionPack, PackDetachment, PackRule, PackStratagem } from "../packages/factionFormat";

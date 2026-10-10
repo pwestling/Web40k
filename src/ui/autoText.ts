@@ -68,7 +68,10 @@ function partText(p: AutoPart): string {
 
 /** The rule in a sentence or two, e.g. "While leading: Its attacks: re-roll hit rolls of 1." */
 export function describeAuto(auto: AbilityAuto, system: GameSystem): string {
-  const body = auto.parts.map(partText).join("; ");
+  // A faction pack's rule with no parts to word is played by its effects or its code (#76).
+  const body =
+    auto.parts.map(partText).join("; ") ||
+    (auto.pack ? t("Played by the {pack} pack", { pack: auto.pack }) : "");
   const scope: string[] = [];
   if (auto.whileLeading) scope.push(t("While leading a unit"));
   if (auto.aura)
