@@ -195,6 +195,12 @@ describe("ratings with no server (#65)", () => {
     expect(ladder([counts(A, B, 4, 4, 1)], RL, OPEN).map((r) => r.rating)).toEqual([START, START]);
   });
 
+  it("puts the winner first when new players' ratings are held level", () => {
+    // B beat A; neither is established, so both stay at the start.
+    const [first, second] = ladder([counts(B, A, 10, 2, 1)], RL);
+    expect([first!.key, first!.rating, second!.rating]).toEqual([B, START, START]);
+  });
+
   it("says how one game moved each player (PX ranked 2)", () => {
     const first = counts(A, B, 10, 2, 1, 1);
     const second = counts(B, A, 3, 1, 2 * 24 * 3600_000, 2);

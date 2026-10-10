@@ -814,13 +814,14 @@ const checks = {
         .click({ timeout: 20_000 });
     for (const { page } of [host, guest])
       await page.locator(".ranked-sign.good").first().waitFor({ timeout: 20_000 });
-    // The winner sees the climb, the loser the cost and what wins it back (PX ranked 2).
+    // Two new players: it counts, but neither rating moves until the opponent has five games against
+    // three players (the farming bar, c03d469).
     await host.page
-      .locator(".ranked-sign .rating-move", { hasText: "1,516 (+16)" })
+      .locator(".ranked-sign", { hasText: /doesn't move your rating yet: Ben is new/ })
       .first()
       .waitFor({ timeout: 20_000 });
     await guest.page
-      .locator(".ranked-sign", { hasText: /1,484 \(−16\).*A win against Ana wins back 17/s })
+      .locator(".ranked-sign", { hasText: /doesn't move your rating yet: Ana is new/ })
       .first()
       .waitFor({ timeout: 20_000 });
     const ladders = [];
@@ -832,7 +833,8 @@ const checks = {
       ladders.push(await table.innerText());
     }
     if (ladders[0] !== ladders[1]) throw new Error(`the ladders differ: ${JSON.stringify(ladders)}`);
-    if (!/1\tAna\b.*\t1,516\?/.test(ladders[0]))
+    // Ana tops it on her win, both still at the starting rating.
+    if (!/1\tAna\b.*\t1,500\?\t1\t1–0–0/.test(ladders[0]))
       throw new Error(`unexpected ladder: ${JSON.stringify(ladders[0])}`);
     for (const d of [host, guest]) await d.context.close();
     return [...host.page.errors, ...guest.page.errors];
@@ -1850,11 +1852,12 @@ const checks = {
     const { terrain, models, table } = await got.jsonValue();
     const want = JSON.stringify({
       terrain: [["Ruined wall", 0, -2]],
+      // Sorted as the check sorts them, by name first.
       models: [
-        ["Warden", 4, -15, 0],
-        ["Warden", 6, -15, 0],
         ["Scrap Brute", -10, 15, 3.14],
         ["Scrap Brute", -8, 15, 3.14],
+        ["Warden", 4, -15, 0],
+        ["Warden", 6, -15, 0],
       ],
       table: "Smoke Table",
     });

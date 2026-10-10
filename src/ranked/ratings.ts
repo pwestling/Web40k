@@ -209,11 +209,17 @@ function fold(
   return by;
 }
 
-/** One ladder (ladderKey), best first. */
+/** One ladder (ladderKey), best first; on equal ratings (new players' are held), the better record first. */
 export function ladder(results: SignedResult[], on: string, bar: Bar = BAR): Rating[] {
   return [...fold(results, on, bar).values()]
     .map((r) => ({ ...r, rating: Math.round(r.rating) }))
-    .sort((x, y) => y.rating - x.rating || y.games - x.games || (x.key < y.key ? -1 : 1));
+    .sort(
+      (x, y) =>
+        y.rating - x.rating ||
+        y.wins - y.losses - (x.wins - x.losses) ||
+        y.games - x.games ||
+        (x.key < y.key ? -1 : 1),
+    );
 }
 
 /** What one game did to a player's rating (PX ranked 2): before, after, and the opponent's after. */
