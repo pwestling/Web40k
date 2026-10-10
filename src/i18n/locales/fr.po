@@ -2092,8 +2092,8 @@ msgstr "Déclarer l'attaque"
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
-#: src/ui/UnitCard.tsx:315
-#: src/ui/UnitCard.tsx:614
+#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:680
 #, fuzzy
 msgid "Fight"
 msgstr "Combattre"
@@ -2694,7 +2694,7 @@ msgstr "Rondes suisses sans serveur : ton navigateur publie l'événement et app
 #: src/figures/FigureLibrary.tsx:383
 #: src/player/PlayerCard.tsx:127
 #: src/standees/StandeeMaker.tsx:254
-#: src/ui/PlayPanel.tsx:257
+#: src/ui/PlayPanel.tsx:269
 #: src/ui/TeachRule.tsx:120
 #, fuzzy
 msgid "Name"
@@ -5671,9 +5671,9 @@ msgstr "Chapitres"
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:115
-#: src/ui/PlayPanel.tsx:79
+#: src/ui/PlayPanel.tsx:80
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:404
+#: src/ui/WhatNow.tsx:416
 #, fuzzy
 msgid "Hide"
 msgstr "Masquer"
@@ -5684,7 +5684,7 @@ msgid "Hide notes and chapters"
 msgstr "Masquer les notes et chapitres"
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:50
+#: src/ui/PlayPanel.tsx:55
 #: src/ui/TerrainPanel.tsx:353
 #: src/ui/TopBar.tsx:231
 #: src/ui/WhatNow.tsx:46
@@ -7160,8 +7160,8 @@ msgid "This table is for another game"
 msgstr "Cette table est pour un autre jeu"
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:215
-#: src/ui/PlayPanel.tsx:294
+#: src/ui/PlayPanel.tsx:227
+#: src/ui/PlayPanel.tsx:306
 #, fuzzy
 msgid "Use"
 msgstr "Utiliser"
@@ -8588,8 +8588,8 @@ msgid "Automated:"
 msgstr "Automatisé :"
 
 #: src/ui/AutoAbilities.tsx:604
-#: src/ui/PlayPanel.tsx:437
-#: src/ui/PlayPanel.tsx:486
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:498
 #, fuzzy
 msgid "Change"
 msgstr "Modifier"
@@ -8606,17 +8606,17 @@ msgid "Not quite?"
 msgstr "Pas tout à fait ?"
 
 #: src/ui/AutoAbilities.tsx:626
-#: src/ui/PlayPanel.tsx:397
-#: src/ui/PlayPanel.tsx:483
+#: src/ui/PlayPanel.tsx:409
+#: src/ui/PlayPanel.tsx:495
 #: src/ui/TeachRule.tsx:94
 #, fuzzy
 msgid "Teach it this rule"
 msgstr "Apprenez-lui cette règle"
 
 #: src/ui/AutoAbilities.tsx:629
-#: src/ui/PlayPanel.tsx:400
-#: src/ui/PlayPanel.tsx:437
-#: src/ui/PlayPanel.tsx:486
+#: src/ui/PlayPanel.tsx:412
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:498
 #, fuzzy
 msgid "Teach it"
 msgstr "Apprendre"
@@ -9202,7 +9202,7 @@ msgstr "Refaire cette étape"
 
 #: src/ui/Coach.tsx:210
 #: src/ui/TopBar.tsx:342
-#: src/ui/WhatNow.tsx:386
+#: src/ui/WhatNow.tsx:398
 #, fuzzy
 msgid "Next phase"
 msgstr "Phase suivante"
@@ -9440,7 +9440,7 @@ msgid "on this army"
 msgstr "dans cette armée"
 
 #: src/ui/FactionPacks.tsx:119
-#: src/ui/PlayPanel.tsx:391
+#: src/ui/PlayPanel.tsx:403
 #, fuzzy
 msgid "Apply"
 msgstr "Appliquer"
@@ -9829,7 +9829,7 @@ msgstr "+1 à la sauvegarde"
 
 #: src/ui/GameSettings.tsx:41
 #: src/ui/SystemPanels.tsx:352
-#: src/ui/UnitCard.tsx:437
+#: src/ui/UnitCard.tsx:486
 #, fuzzy
 msgid "Line of sight"
 msgstr "Ligne de vue"
@@ -11479,180 +11479,185 @@ msgstr "En attente de {names}"
 msgid "Load package…"
 msgstr "Charger un paquet…"
 
-#: src/ui/PlayPanel.tsx:110
-#, fuzzy
-msgid "No core stratagems fit this moment."
-msgstr "Aucun stratagème de base ne convient à ce moment."
-
-#: src/ui/PlayPanel.tsx:126
-#, fuzzy
-msgid "No {cards} in this phase."
-msgstr "Pas de {cards} dans cette phase."
-
-#: src/ui/PlayPanel.tsx:133
+#: src/ui/PlayPanel.tsx:114
 #: src/ui/TeachRule.tsx:133
 #, fuzzy
 msgid "CP"
 msgstr "CP"
 
-#: src/ui/PlayPanel.tsx:134
+#: src/ui/PlayPanel.tsx:115
 #, fuzzy
 msgid "Other stratagem…"
 msgstr "Autre stratagème…"
 
-#: src/ui/PlayPanel.tsx:146
+#: src/ui/PlayPanel.tsx:127
+#, fuzzy
+msgid "No core stratagems fit this moment."
+msgstr "Aucun stratagème de base ne convient à ce moment."
+
+#: src/ui/PlayPanel.tsx:143
+#, fuzzy
+msgid "No {cards} in this phase."
+msgstr "Pas de {cards} dans cette phase."
+
+#: src/ui/PlayPanel.tsx:151
 #, fuzzy
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] "{n} inutilisable maintenant"
 msgstr[1] "{n} inutilisables maintenant"
 
-#: src/ui/PlayPanel.tsx:168
+#: src/ui/PlayPanel.tsx:165
+#, fuzzy
+msgid "⋯ Something not listed?"
+msgstr "⋯ Quelque chose n'est pas listé ?"
+
+#: src/ui/PlayPanel.tsx:180
 #, fuzzy
 msgid "can react: {stratagems}"
 msgstr "peut réagir : {stratagems}"
 
-#: src/ui/PlayPanel.tsx:169
+#: src/ui/PlayPanel.tsx:181
 #, fuzzy
 msgid "nothing to react with"
 msgstr "rien pour réagir"
 
-#: src/ui/PlayPanel.tsx:170
+#: src/ui/PlayPanel.tsx:182
 #, fuzzy
 msgid "({cp} CP)"
 msgstr "({cp} CP)"
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:192
 #, fuzzy
 msgid "0 CP left"
 msgstr "Plus de CP"
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:192
 #, fuzzy
 msgid "{cp} CP"
 msgstr "{cp} CP"
 
-#: src/ui/PlayPanel.tsx:209
+#: src/ui/PlayPanel.tsx:221
 #, fuzzy
 msgid "Pick a unit first"
 msgstr "Choisis d'abord une unité"
 
-#: src/ui/PlayPanel.tsx:222
+#: src/ui/PlayPanel.tsx:234
 #, fuzzy
 msgid "On which unit…"
 msgstr "Sur quelle unité…"
 
-#: src/ui/PlayPanel.tsx:267
+#: src/ui/PlayPanel.tsx:279
 #: src/ui/TeachRule.tsx:125
 #, fuzzy
 msgid "Cost"
 msgstr "Coût"
 
-#: src/ui/PlayPanel.tsx:283
+#: src/ui/PlayPanel.tsx:295
 #, fuzzy
 msgid "Not enough {resource}"
 msgstr "Pas assez de {resource}"
 
-#: src/ui/PlayPanel.tsx:285
+#: src/ui/PlayPanel.tsx:297
 #, fuzzy
 msgid "Name it first"
 msgstr "Nommez-le d'abord"
 
-#: src/ui/PlayPanel.tsx:298
+#: src/ui/PlayPanel.tsx:310
 #, fuzzy
 msgid "Dice to spend"
 msgstr "Dés à dépenser"
 
-#: src/ui/PlayPanel.tsx:301
+#: src/ui/PlayPanel.tsx:313
 #, fuzzy
 msgid "Spends these {resource}:"
 msgstr "Dépense ces {resource} :"
 
-#: src/ui/PlayPanel.tsx:302
+#: src/ui/PlayPanel.tsx:314
 #, fuzzy
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr "Choisis les {resource} à dépenser, sinon les plus bas partent :"
 
-#: src/ui/PlayPanel.tsx:368
+#: src/ui/PlayPanel.tsx:380
 #, fuzzy
 msgid "{unit} and {n} other unit"
 msgid_plural "{unit} and {n} other units"
 msgstr[0] "{unit} et {n} autre unité"
 msgstr[1] "{unit} et {n} autres unités"
 
-#: src/ui/PlayPanel.tsx:371
+#: src/ui/PlayPanel.tsx:383
 #, fuzzy
 msgid " and "
 msgstr " et "
 
-#: src/ui/PlayPanel.tsx:384
+#: src/ui/PlayPanel.tsx:396
 #, fuzzy
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr "Le marquer comme résolu à la main ; il apparaît dans le journal"
 
-#: src/ui/PlayPanel.tsx:434
+#: src/ui/PlayPanel.tsx:446
 #, fuzzy
 msgid "Teach the app what this stratagem does"
 msgstr "Apprenez à l'app ce que fait ce stratagème"
 
-#: src/ui/PlayPanel.tsx:434
+#: src/ui/PlayPanel.tsx:446
 #, fuzzy
 msgid "A stratagem your list didn't bring"
 msgstr "Un stratagème que votre liste n'a pas apporté"
 
-#: src/ui/PlayPanel.tsx:437
+#: src/ui/PlayPanel.tsx:449
 #: src/ui/TeachRule.tsx:98
 #, fuzzy
 msgid "Teach a stratagem"
 msgstr "Apprendre un stratagème"
 
-#: src/ui/PlayPanel.tsx:468
+#: src/ui/PlayPanel.tsx:480
 #, fuzzy
 msgid "{n} army rule"
 msgid_plural "{n} army rules"
 msgstr[0] "{n} règle d'armée"
 msgstr[1] "{n} règles d'armée"
 
-#: src/ui/PlayPanel.tsx:476
+#: src/ui/PlayPanel.tsx:488
 #, fuzzy
 msgid "The app plays it"
 msgstr "L'app la joue"
 
-#: src/ui/PlayPanel.tsx:478
+#: src/ui/PlayPanel.tsx:490
 #, fuzzy
 msgid "A reminder; you play it"
 msgstr "Un rappel ; vous la jouez vous-même"
 
-#: src/ui/PlayPanel.tsx:65
+#: src/ui/PlayPanel.tsx:66
 #, fuzzy
 msgid "{phase}: {cards}"
 msgstr "{phase} : {cards}"
 
-#: src/ui/PlayPanel.tsx:66
+#: src/ui/PlayPanel.tsx:67
 #, fuzzy
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] "{phase} : {n} stratagème"
 msgstr[1] "{phase} : {n} stratagèmes"
 
-#: src/ui/PlayPanel.tsx:67
+#: src/ui/PlayPanel.tsx:68
 #, fuzzy
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] "{n} aptitude"
 msgstr[1] "{n} aptitudes"
 
-#: src/ui/PlayPanel.tsx:76
+#: src/ui/PlayPanel.tsx:77
 #, fuzzy
 msgid "{phase}: {cards} and abilities"
 msgstr "{phase} : {cards} et capacités"
 
-#: src/ui/PlayPanel.tsx:77
+#: src/ui/PlayPanel.tsx:78
 #, fuzzy
 msgid "{phase}: stratagems and abilities"
 msgstr "{phase} : stratagèmes et aptitudes"
 
-#: src/ui/PlayPanel.tsx:86
+#: src/ui/PlayPanel.tsx:87
 #, fuzzy
 msgid "No abilities flagged for this phase."
 msgstr "Aucune aptitude signalée pour cette phase."
@@ -12753,7 +12758,7 @@ msgid "Charged {distance}"
 msgstr "Charge de {distance}"
 
 #: src/ui/SystemPanels.tsx:176
-#: src/ui/UnitCard.tsx:264
+#: src/ui/UnitCard.tsx:329
 #, fuzzy
 msgid "Selected unit"
 msgstr "Unité sélectionnée"
@@ -12811,19 +12816,19 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr "{distance} sur {allowance} parcourus ce round."
 
 #: src/ui/SystemPanels.tsx:354
-#: src/ui/UnitCard.tsx:439
+#: src/ui/UnitCard.tsx:488
 #, fuzzy
 msgid "Model's eye view"
 msgstr "Vue de la figurine"
 
 #: src/ui/SystemPanels.tsx:357
-#: src/ui/UnitCard.tsx:349
+#: src/ui/UnitCard.tsx:402
 #, fuzzy
 msgid "Rotate left (Q)"
 msgstr "Tourner à gauche (Q)"
 
 #: src/ui/SystemPanels.tsx:360
-#: src/ui/UnitCard.tsx:352
+#: src/ui/UnitCard.tsx:405
 #, fuzzy
 msgid "Rotate right (E)"
 msgstr "Tourner à droite (E)"
@@ -14096,421 +14101,436 @@ msgstr "Trace un cadre sur la table autour de tes unités"
 msgid "Dragging moves one model at a time"
 msgstr "Faire glisser déplace un modèle à la fois"
 
-#: src/ui/UnitCard.tsx:219
+#: src/ui/UnitCard.tsx:225
 #, fuzzy
 msgid "Fell back this turn: it can't shoot"
 msgstr "S'est replié ce tour : ne peut pas tirer"
 
-#: src/ui/UnitCard.tsx:222
+#: src/ui/UnitCard.tsx:228
 #, fuzzy
 msgid "Advanced {n}\" this turn: Assault weapons only"
 msgstr "A avancé de {n}\" ce tour : armes d'assaut seulement"
 
-#: src/ui/UnitCard.tsx:223
+#: src/ui/UnitCard.tsx:229
 #, fuzzy
 msgid "Advanced this turn: Assault weapons only"
 msgstr "A avancé ce tour : armes d'assaut seulement"
 
-#: src/ui/UnitCard.tsx:227
+#: src/ui/UnitCard.tsx:233
 #, fuzzy
 msgid "Moved {n}\" this turn: no Heavy +1 to hit"
 msgstr "S'est déplacé de {n}\" ce tour : pas de +1 pour toucher avec Lourde"
 
-#: src/ui/UnitCard.tsx:228
+#: src/ui/UnitCard.tsx:234
 #, fuzzy
 msgid "Moved this turn: no Heavy +1 to hit"
 msgstr "S'est déplacé ce tour : pas de +1 pour toucher avec Lourde"
 
-#: src/ui/UnitCard.tsx:230
+#: src/ui/UnitCard.tsx:236
 #, fuzzy
 msgid "Moved {n}\" this turn"
 msgstr "S'est déplacé de {n}\" ce tour"
 
-#: src/ui/UnitCard.tsx:233
+#: src/ui/UnitCard.tsx:239
 #, fuzzy
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr "Immobile ce tour : Lourde +1 pour toucher"
 
-#: src/ui/UnitCard.tsx:277
-#, fuzzy
-msgid "{title}, round {round}: {line}. Click to replay it."
-msgstr "{title}, round {round} : {line}. Clique pour le revoir."
-
-#: src/ui/UnitCard.tsx:282
-#, fuzzy
-msgid "Replay: {title}, round {round}"
-msgstr "Revoir : {title}, round {round}"
-
-#: src/ui/UnitCard.tsx:292
-#, fuzzy
-msgid "{player} · {alive}/{all} models"
-msgstr "{player} · {alive}/{all} figurines"
-
-#: src/ui/UnitCard.tsx:315
-#: src/ui/UnitCard.tsx:614
+#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:680
 #, fuzzy
 msgid "Shoot"
 msgstr "Tirer"
 
-#: src/ui/UnitCard.tsx:327
+#: src/ui/UnitCard.tsx:298
 #, fuzzy
 msgid "Shoot everything at…"
 msgstr "Tirer avec tout sur…"
 
-#: src/ui/UnitCard.tsx:331
+#: src/ui/UnitCard.tsx:305
 #, fuzzy
 msgid "Advance (D6)"
 msgstr "Avancer (D6)"
 
-#: src/ui/UnitCard.tsx:335
+#: src/ui/UnitCard.tsx:313
 #, fuzzy
 msgid "Battle-shock test"
 msgstr "Test de moral"
 
-#: src/ui/UnitCard.tsx:339
+#: src/ui/UnitCard.tsx:342
+#, fuzzy
+msgid "{title}, round {round}: {line}. Click to replay it."
+msgstr "{title}, round {round} : {line}. Clique pour le revoir."
+
+#: src/ui/UnitCard.tsx:347
+#, fuzzy
+msgid "Replay: {title}, round {round}"
+msgstr "Revoir : {title}, round {round}"
+
+#: src/ui/UnitCard.tsx:357
+#, fuzzy
+msgid "{player} · {alive}/{all} models"
+msgstr "{player} · {alive}/{all} figurines"
+
+#: src/ui/UnitCard.tsx:374
 #, fuzzy
 msgid "Up a floor (R)"
 msgstr "Monter d'un étage (R)"
 
-#: src/ui/UnitCard.tsx:340
-#: src/ui/UnitCard.tsx:343
+#: src/ui/UnitCard.tsx:375
+#: src/ui/UnitCard.tsx:378
 #, fuzzy
 msgid "Floor"
 msgstr "Étage"
 
-#: src/ui/UnitCard.tsx:342
+#: src/ui/UnitCard.tsx:377
 #, fuzzy
 msgid "Down a floor (F)"
 msgstr "Descendre d'un étage (F)"
 
-#: src/ui/UnitCard.tsx:361
+#: src/ui/UnitCard.tsx:386
 #, fuzzy
 msgid "Clear advance"
 msgstr "Annuler l'avance"
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:390
+#, fuzzy
+msgid "Fewer actions"
+msgstr "Moins d'actions"
+
+#: src/ui/UnitCard.tsx:390
+#, fuzzy
+msgid "⋯ Other actions"
+msgstr "⋯ Autres actions"
+
+#: src/ui/UnitCard.tsx:396
+#, fuzzy
+msgid "Out of phase:"
+msgstr "Hors phase :"
+
+#: src/ui/UnitCard.tsx:408
+#, fuzzy
+msgid "Q / E turn it"
+msgstr "Q / E pour la tourner"
+
+#: src/ui/UnitCard.tsx:423
 #, fuzzy
 msgid "Advanced +{n}\""
 msgstr "Avancée +{n}\""
 
-#: src/ui/UnitCard.tsx:379
+#: src/ui/UnitCard.tsx:426
 #, fuzzy
 msgid "Charge roll {n}\""
 msgstr "Jet de charge {n}\""
 
-#: src/ui/UnitCard.tsx:383
+#: src/ui/UnitCard.tsx:430
 #, fuzzy
 msgid "Charged {distance}\""
 msgstr "A chargé de {distance}\""
 
-#: src/ui/UnitCard.tsx:402
+#: src/ui/UnitCard.tsx:449
 #, fuzzy
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr "{moved}\" sur {allowed}\" parcourus cette phase."
 
-#: src/ui/UnitCard.tsx:410
+#: src/ui/UnitCard.tsx:457
 #, fuzzy
 msgid "Snap back to {allowed}\""
 msgstr "Revenir à {allowed}\""
 
-#: src/ui/UnitCard.tsx:415
+#: src/ui/UnitCard.tsx:462
 #, fuzzy
 msgid "Moved through {terrain}."
 msgstr "A traversé {terrain}."
 
-#: src/ui/UnitCard.tsx:422
+#: src/ui/UnitCard.tsx:469
 #, fuzzy
 msgid "Engaged with {units}."
 msgstr "Engagée avec {units}."
 
-#: src/ui/UnitCard.tsx:442
+#: src/ui/UnitCard.tsx:491
 #, fuzzy
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr "Mouvement (bleu) et plus longue portée d'arme (jaune) autour de chaque figurine"
 
-#: src/ui/UnitCard.tsx:445
+#: src/ui/UnitCard.tsx:494
 #, fuzzy
 msgid "Ranges"
 msgstr "Portées"
 
-#: src/ui/UnitCard.tsx:449
+#: src/ui/UnitCard.tsx:501
 #, fuzzy
 msgid "Longest range"
 msgstr "Plus longue portée"
 
-#: src/ui/UnitCard.tsx:460
+#: src/ui/UnitCard.tsx:514
 #, fuzzy
 msgid "On a floor {height}\" up"
 msgstr "Sur un étage à {height}\" de haut"
 
-#: src/ui/UnitCard.tsx:497
-#, fuzzy
-msgid "Ranged"
-msgstr "Tir"
-
-#: src/ui/UnitCard.tsx:497
-#: src/ui/UnitCard.tsx:599
-#, fuzzy
-msgid "Melee"
-msgstr "Mêlée"
-
-#: src/ui/UnitCard.tsx:51
+#: src/ui/UnitCard.tsx:53
 #: src/ui/eventText.ts:532
 #, fuzzy
 msgid "Moved"
 msgstr "A bougé"
 
-#: src/ui/UnitCard.tsx:52
+#: src/ui/UnitCard.tsx:54
 #: src/ui/eventText.ts:533
 #, fuzzy
 msgid "Fell back"
 msgstr "S'est repliée"
 
-#: src/ui/UnitCard.tsx:528
-#, fuzzy
-msgid "Abilities ({n})"
-msgstr "Aptitudes ({n})"
-
-#: src/ui/UnitCard.tsx:53
+#: src/ui/UnitCard.tsx:55
 #: src/ui/eventText.ts:534
 #, fuzzy
 msgid "Shot"
 msgstr "A tiré"
 
-#: src/ui/UnitCard.tsx:54
+#: src/ui/UnitCard.tsx:551
+#, fuzzy
+msgid "Ranged"
+msgstr "Tir"
+
+#: src/ui/UnitCard.tsx:551
+#: src/ui/UnitCard.tsx:664
+#, fuzzy
+msgid "Melee"
+msgstr "Mêlée"
+
+#: src/ui/UnitCard.tsx:56
 #: src/ui/eventText.ts:535
 #, fuzzy
 msgid "Charged"
 msgstr "A chargé"
 
-#: src/ui/UnitCard.tsx:541
-#, fuzzy
-msgid "Models and wounds"
-msgstr "Figurines et points de vie"
-
-#: src/ui/UnitCard.tsx:549
-#, fuzzy
-msgid "Model height for line of sight"
-msgstr "Hauteur de la figurine pour la ligne de vue"
-
-#: src/ui/UnitCard.tsx:55
+#: src/ui/UnitCard.tsx:57
 #: src/ui/eventText.ts:536
 #, fuzzy
 msgid "Fought"
 msgstr "A combattu"
 
-#: src/ui/UnitCard.tsx:56
+#: src/ui/UnitCard.tsx:576
+#, fuzzy
+msgid "Not the Shooting phase (it still works)"
+msgstr "Ce n'est pas la phase de tir (ça marche quand même)"
+
+#: src/ui/UnitCard.tsx:577
+#, fuzzy
+msgid "Not the Fight phase (it still works)"
+msgstr "Ce n'est pas la phase de combat (ça marche quand même)"
+
+#: src/ui/UnitCard.tsx:58
 #, fuzzy
 msgid "Battle-shocked"
 msgstr "Ébranlée"
 
-#: src/ui/UnitCard.tsx:570
+#: src/ui/UnitCard.tsx:590
+#, fuzzy
+msgid "Abilities ({n})"
+msgstr "Aptitudes ({n})"
+
+#: src/ui/UnitCard.tsx:603
+#, fuzzy
+msgid "Models and wounds"
+msgstr "Figurines et points de vie"
+
+#: src/ui/UnitCard.tsx:611
+#, fuzzy
+msgid "Model height for line of sight"
+msgstr "Hauteur de la figurine pour la ligne de vue"
+
+#: src/ui/UnitCard.tsx:632
 #, fuzzy
 msgid "Remove {unit} from the game?"
 msgstr "Retirer {unit} de la partie ?"
 
-#: src/ui/UnitCard.tsx:574
+#: src/ui/UnitCard.tsx:636
 #, fuzzy
 msgid "Remove unit"
 msgstr "Retirer l’unité"
 
-#: src/ui/UnitCard.tsx:637
+#: src/ui/UnitCard.tsx:703
 #, fuzzy
 msgid "{left}/{max} W"
 msgstr "{left}/{max} W"
 
-#: src/ui/UnitCard.tsx:647
+#: src/ui/UnitCard.tsx:713
 #, fuzzy
 msgid "Revive"
 msgstr "Ranimer"
 
-#: src/ui/UnitCard.tsx:647
+#: src/ui/UnitCard.tsx:713
 #, fuzzy
 msgid "Slay"
 msgstr "Éliminer"
 
-#: src/ui/WhatNow.tsx:109
+#: src/ui/WhatNow.tsx:111
 #, fuzzy
 msgid "{phase} · your pick"
 msgstr "{phase} · à toi de choisir"
 
-#: src/ui/WhatNow.tsx:110
+#: src/ui/WhatNow.tsx:112
 #, fuzzy
 msgid "{phase} · {player}'s pick"
 msgstr "{phase} · au choix de {player}"
 
-#: src/ui/WhatNow.tsx:114
+#: src/ui/WhatNow.tsx:116
 #, fuzzy
 msgid "You pick first: {units}, then you alternate."
 msgstr "Tu choisis en premier : {units}, puis vous alternez."
 
-#: src/ui/WhatNow.tsx:115
+#: src/ui/WhatNow.tsx:117
 #, fuzzy
 msgid "Your pick: {units}. The sides alternate until every unit has fought."
 msgstr "À toi de choisir : {units}. Les camps alternent jusqu'à ce que chaque unité ait combattu."
 
-#: src/ui/WhatNow.tsx:117
+#: src/ui/WhatNow.tsx:119
 #, fuzzy
 msgid "{player} picks first: {units}, then you alternate."
 msgstr "{player} choisit en premier : {units}, puis vous alternez."
 
-#: src/ui/WhatNow.tsx:118
+#: src/ui/WhatNow.tsx:120
 #, fuzzy
 msgid "{player}'s pick: {units}. The sides alternate until every unit has fought."
 msgstr "Au choix de {player} : {units}. Les camps alternent jusqu'à ce que chaque unité ait combattu."
 
-#: src/ui/WhatNow.tsx:120
+#: src/ui/WhatNow.tsx:122
 #, fuzzy
 msgid "Click the unit, then Pile in, Fight and Consolidate on its card."
 msgstr "Clique sur l'unité, puis Engagement, Combat et Consolidation sur sa carte."
 
-#: src/ui/WhatNow.tsx:121
+#: src/ui/WhatNow.tsx:123
 #, fuzzy
 msgid "Waiting for {player} to pick."
 msgstr "En attente du choix de {player}."
 
-#: src/ui/WhatNow.tsx:127
-#: src/ui/WhatNow.tsx:239
+#: src/ui/WhatNow.tsx:129
+#: src/ui/WhatNow.tsx:251
 #, fuzzy
 msgid "{side}'s turn · {phase}"
 msgstr "Tour de {side} · {phase}"
 
-#: src/ui/WhatNow.tsx:175
+#: src/ui/WhatNow.tsx:177
 #, fuzzy
 msgid "Put your command cards in the order you'll play them, then press Lock in stack."
 msgstr "Placez vos cartes de commandement dans l'ordre où vous les jouerez, puis appuyez sur Verrouiller la pile."
 
-#: src/ui/WhatNow.tsx:187
+#: src/ui/WhatNow.tsx:189
 #, fuzzy
 msgid "Draw your top command card (Command stack, bottom right) to see which regiment acts."
 msgstr "Piochez votre carte de commandement du dessus (pile de commandement, en bas à droite) pour voir quel régiment agit."
 
-#: src/ui/WhatNow.tsx:190
+#: src/ui/WhatNow.tsx:192
 #, fuzzy
 msgid "{unit} is taking its go: shoot or fight with it, or press End activation."
 msgstr "{unit} agit : tirez ou combattez avec, ou appuyez sur Terminer l'activation."
 
-#: src/ui/WhatNow.tsx:192
+#: src/ui/WhatNow.tsx:194
 #, fuzzy
 msgid "All your units have had their go this round: press Pass."
 msgstr "Toutes vos unités ont agi ce round : appuyez sur Passer."
 
-#: src/ui/WhatNow.tsx:196
+#: src/ui/WhatNow.tsx:198
 #, fuzzy
 msgid "Drag a unit to move it. The ruler shows how far it has gone against its limit."
 msgstr "Fais glisser une unité pour la déplacer. La règle indique la distance parcourue par rapport à sa limite."
 
-#: src/ui/WhatNow.tsx:198
+#: src/ui/WhatNow.tsx:200
 #, fuzzy
 msgid "No unit is close enough to charge: press ▶ to move on."
 msgstr "Aucune unité n’est assez proche pour charger : appuie sur ▶ pour continuer."
 
-#: src/ui/WhatNow.tsx:200
+#: src/ui/WhatNow.tsx:202
 #, fuzzy
 msgid "Nothing is in reach to attack yet: move closer first."
 msgstr "Rien n'est encore à portée d'attaque : rapproche-toi d'abord."
 
-#: src/ui/WhatNow.tsx:201
+#: src/ui/WhatNow.tsx:203
 #, fuzzy
 msgid "Nothing is in range to shoot yet. Get closer next turn."
 msgstr "Rien n’est encore à portée de tir. Rapproche-toi au prochain tour."
 
-#: src/ui/WhatNow.tsx:204
+#: src/ui/WhatNow.tsx:206
 #, fuzzy
 msgid "You can: {actions}."
 msgstr "Tu peux : {actions}."
 
-#: src/ui/WhatNow.tsx:207
+#: src/ui/WhatNow.tsx:209
 #, fuzzy
 msgid "{action} ({n} unit)"
 msgid_plural "{action} ({n} units)"
 msgstr[0] "{action} ({n} unité)"
 msgstr[1] "{action} ({n} unités)"
 
-#: src/ui/WhatNow.tsx:214
+#: src/ui/WhatNow.tsx:216
 #, fuzzy
 msgid "Tap one of your units to see its buttons."
 msgstr "Touche une de tes unités pour voir ses boutons."
 
-#: src/ui/WhatNow.tsx:215
+#: src/ui/WhatNow.tsx:217
 #, fuzzy
 msgid "Click one of your units to see its buttons."
 msgstr "Clique sur une de tes unités pour voir ses boutons."
 
-#: src/ui/WhatNow.tsx:219
+#: src/ui/WhatNow.tsx:222
 #, fuzzy
 msgid "Nothing to do this phase."
 msgstr "Rien à faire pendant cette phase."
 
-#: src/ui/WhatNow.tsx:223
+#: src/ui/WhatNow.tsx:226
 #, fuzzy
 msgid "A unit's go ends when it shoots or fights, or press End activation after a move; Hold on its card keeps it where it is. Pass when you have nothing left."
 msgstr "Le tour d'une unité se termine quand elle tire ou combat, ou appuie sur Terminer l'activation après un mouvement ; Tenir sur sa carte la laisse où elle est. Passe quand tu n'as plus rien."
 
-#: src/ui/WhatNow.tsx:226
+#: src/ui/WhatNow.tsx:229
 #, fuzzy
 msgid "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
 msgstr "Quand une unité a agi, appuie sur Terminer l’activation en haut ; quand il ne te reste rien, sur Passer."
 
-#: src/ui/WhatNow.tsx:233
+#: src/ui/WhatNow.tsx:245
 #, fuzzy
 msgid "Mission · {name}: {summary}"
 msgstr "Mission · {name} : {summary}"
 
-#: src/ui/WhatNow.tsx:239
+#: src/ui/WhatNow.tsx:251
 #, fuzzy
 msgid "Your turn · {phase}"
 msgstr "À toi · {phase}"
 
-#: src/ui/WhatNow.tsx:257
+#: src/ui/WhatNow.tsx:269
 #, fuzzy
 msgid "{unit} · {weapon} takes {faces}"
 msgstr "{unit} · {weapon} prend {faces}"
 
-#: src/ui/WhatNow.tsx:262
+#: src/ui/WhatNow.tsx:274
 #, fuzzy
 msgid "(placed: {n})"
 msgstr "(placés : {n})"
 
-#: src/ui/WhatNow.tsx:298
+#: src/ui/WhatNow.tsx:310
 #, fuzzy
 msgid "{name} is playing {unit}…"
 msgstr "{name} joue {unit}…"
 
-#: src/ui/WhatNow.tsx:299
+#: src/ui/WhatNow.tsx:311
 #, fuzzy
 msgid "{name} is taking its turn…"
 msgstr "{name} joue son tour…"
 
-#: src/ui/WhatNow.tsx:305
+#: src/ui/WhatNow.tsx:317
 #, fuzzy
 msgid "A ring marks its unit and a line shows where it went."
 msgstr "Un anneau marque son unité et une ligne montre où elle est allée."
 
-#: src/ui/WhatNow.tsx:367
+#: src/ui/WhatNow.tsx:379
 #, fuzzy
 msgid "What can I do now?"
 msgstr "Que puis-je faire maintenant ?"
 
-#: src/ui/WhatNow.tsx:385
+#: src/ui/WhatNow.tsx:397
 #, fuzzy
 msgid "Nothing to do"
 msgstr "Rien à faire"
-
-#: src/ui/WhatNow.tsx:425
-#, fuzzy
-msgid "Tap"
-msgstr "Touche"
-
-#: src/ui/WhatNow.tsx:425
-#, fuzzy
-msgid "Press"
-msgstr "Appuie sur"
-
-#: src/ui/WhatNow.tsx:425
-#, fuzzy
-msgid "for all the controls."
-msgstr "pour voir toutes les commandes."
 
 #: src/ui/WhatNow.tsx:43
 #: src/ui/gameLog.ts:105
@@ -14523,6 +14543,21 @@ msgstr "La bataille est terminée"
 #, fuzzy
 msgid "The stats screen shows how it went."
 msgstr "L’écran des statistiques montre comment ça s’est passé."
+
+#: src/ui/WhatNow.tsx:437
+#, fuzzy
+msgid "Tap"
+msgstr "Touche"
+
+#: src/ui/WhatNow.tsx:437
+#, fuzzy
+msgid "Press"
+msgstr "Appuie sur"
+
+#: src/ui/WhatNow.tsx:437
+#, fuzzy
+msgid "for all the controls."
+msgstr "pour voir toutes les commandes."
 
 #: src/ui/WhatNow.tsx:48
 #, fuzzy
@@ -14590,13 +14625,13 @@ msgid "{phase}: every unit has fought"
 msgstr "{phase} : chaque unité a combattu"
 
 #: src/ui/WhatNow.tsx:89
-#: src/ui/WhatNow.tsx:227
+#: src/ui/WhatNow.tsx:230
 #, fuzzy
 msgid "When you're done, press ▶ at the top for the next phase."
 msgstr "Quand tu as fini, appuie sur ▶ en haut pour passer à la phase suivante."
 
 #: src/ui/WhatNow.tsx:90
-#: src/ui/WhatNow.tsx:128
+#: src/ui/WhatNow.tsx:130
 #, fuzzy
 msgid "Waiting for {side}. You can look around, measure (M) and talk in the chat."
 msgstr "En attente de {side}. Tu peux regarder autour, mesurer (M) et discuter dans le chat."

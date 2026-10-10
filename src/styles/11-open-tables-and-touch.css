@@ -268,6 +268,19 @@ button.teach-button {
 button.teach-button:hover {
   background: rgb(59 130 246 / 15%);
 }
+/* In the stratagem panel each rule's "Teach it" shows on hover or focus (UX 83); touch keeps them. */
+@media (pointer: fine) {
+  .panel.play .stratagem button.teach-button,
+  .panel.play li button.teach-button {
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .panel.play .stratagem:hover button.teach-button,
+  .panel.play li:hover button.teach-button,
+  .panel.play button.teach-button:focus-visible {
+    opacity: 1;
+  }
+}
 .teach-rule .teach-quote {
   border-left: 3px solid #3b4252;
   padding: 2px 10px;

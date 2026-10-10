@@ -39,7 +39,7 @@ const gapMemo = new WeakMap<object, { units: unknown; gaps: Map<string, number> 
  * Below half-strength: fewer than half its starting models left standing, or,
  * for a unit of one model, fewer than half its starting wounds left.
  */
-function belowHalf(view: { state: GameState }, unitId: unknown): boolean {
+export function belowHalf(view: { state: GameState }, unitId: unknown): boolean {
   const state = view.state;
   const unit = state.units[String(unitId)];
   if (!unit) return false;

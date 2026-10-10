@@ -1719,8 +1719,8 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
-#: src/ui/UnitCard.tsx:315
-#: src/ui/UnitCard.tsx:614
+#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:680
 msgid "Fight"
 msgstr ""
 
@@ -2223,7 +2223,7 @@ msgstr ""
 #: src/figures/FigureLibrary.tsx:383
 #: src/player/PlayerCard.tsx:127
 #: src/standees/StandeeMaker.tsx:254
-#: src/ui/PlayPanel.tsx:257
+#: src/ui/PlayPanel.tsx:269
 #: src/ui/TeachRule.tsx:120
 msgid "Name"
 msgstr ""
@@ -4646,9 +4646,9 @@ msgstr ""
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
 #: src/ui/Hud.tsx:115
-#: src/ui/PlayPanel.tsx:79
+#: src/ui/PlayPanel.tsx:80
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:404
+#: src/ui/WhatNow.tsx:416
 msgid "Hide"
 msgstr ""
 
@@ -4657,7 +4657,7 @@ msgid "Hide notes and chapters"
 msgstr ""
 
 #: src/replay/chapters.ts:45
-#: src/ui/PlayPanel.tsx:50
+#: src/ui/PlayPanel.tsx:55
 #: src/ui/TerrainPanel.tsx:353
 #: src/ui/TopBar.tsx:231
 #: src/ui/WhatNow.tsx:46
@@ -5853,8 +5853,8 @@ msgid "This table is for another game"
 msgstr ""
 
 #: src/tables/TableLibrary.tsx:217
-#: src/ui/PlayPanel.tsx:215
-#: src/ui/PlayPanel.tsx:294
+#: src/ui/PlayPanel.tsx:227
+#: src/ui/PlayPanel.tsx:306
 msgid "Use"
 msgstr ""
 
@@ -7023,8 +7023,8 @@ msgid "Automated:"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:604
-#: src/ui/PlayPanel.tsx:437
-#: src/ui/PlayPanel.tsx:486
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:498
 msgid "Change"
 msgstr ""
 
@@ -7038,16 +7038,16 @@ msgid "Not quite?"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:626
-#: src/ui/PlayPanel.tsx:397
-#: src/ui/PlayPanel.tsx:483
+#: src/ui/PlayPanel.tsx:409
+#: src/ui/PlayPanel.tsx:495
 #: src/ui/TeachRule.tsx:94
 msgid "Teach it this rule"
 msgstr ""
 
 #: src/ui/AutoAbilities.tsx:629
-#: src/ui/PlayPanel.tsx:400
-#: src/ui/PlayPanel.tsx:437
-#: src/ui/PlayPanel.tsx:486
+#: src/ui/PlayPanel.tsx:412
+#: src/ui/PlayPanel.tsx:449
+#: src/ui/PlayPanel.tsx:498
 msgid "Teach it"
 msgstr ""
 
@@ -7521,7 +7521,7 @@ msgstr ""
 
 #: src/ui/Coach.tsx:210
 #: src/ui/TopBar.tsx:342
-#: src/ui/WhatNow.tsx:386
+#: src/ui/WhatNow.tsx:398
 msgid "Next phase"
 msgstr ""
 
@@ -7713,7 +7713,7 @@ msgid "on this army"
 msgstr ""
 
 #: src/ui/FactionPacks.tsx:119
-#: src/ui/PlayPanel.tsx:391
+#: src/ui/PlayPanel.tsx:403
 msgid "Apply"
 msgstr ""
 
@@ -8029,7 +8029,7 @@ msgstr ""
 
 #: src/ui/GameSettings.tsx:41
 #: src/ui/SystemPanels.tsx:352
-#: src/ui/UnitCard.tsx:437
+#: src/ui/UnitCard.tsx:486
 msgid "Line of sight"
 msgstr ""
 
@@ -9363,148 +9363,152 @@ msgstr ""
 msgid "Load package…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:110
-msgid "No core stratagems fit this moment."
-msgstr ""
-
-#: src/ui/PlayPanel.tsx:126
-msgid "No {cards} in this phase."
-msgstr ""
-
-#: src/ui/PlayPanel.tsx:133
+#: src/ui/PlayPanel.tsx:114
 #: src/ui/TeachRule.tsx:133
 msgid "CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:134
+#: src/ui/PlayPanel.tsx:115
 msgid "Other stratagem…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:146
+#: src/ui/PlayPanel.tsx:127
+msgid "No core stratagems fit this moment."
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:143
+msgid "No {cards} in this phase."
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:151
 msgid "{n} not usable now"
 msgid_plural "{n} not usable now"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:168
+#: src/ui/PlayPanel.tsx:165
+msgid "⋯ Something not listed?"
+msgstr ""
+
+#: src/ui/PlayPanel.tsx:180
 msgid "can react: {stratagems}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:169
+#: src/ui/PlayPanel.tsx:181
 msgid "nothing to react with"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:170
+#: src/ui/PlayPanel.tsx:182
 msgid "({cp} CP)"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:192
 msgid "0 CP left"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:180
+#: src/ui/PlayPanel.tsx:192
 msgid "{cp} CP"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:209
+#: src/ui/PlayPanel.tsx:221
 msgid "Pick a unit first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:222
+#: src/ui/PlayPanel.tsx:234
 msgid "On which unit…"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:267
+#: src/ui/PlayPanel.tsx:279
 #: src/ui/TeachRule.tsx:125
 msgid "Cost"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:283
+#: src/ui/PlayPanel.tsx:295
 msgid "Not enough {resource}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:285
+#: src/ui/PlayPanel.tsx:297
 msgid "Name it first"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:298
+#: src/ui/PlayPanel.tsx:310
 msgid "Dice to spend"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:301
+#: src/ui/PlayPanel.tsx:313
 msgid "Spends these {resource}:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:302
+#: src/ui/PlayPanel.tsx:314
 msgid "Pick the {resource} to spend, or the lowest go:"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:368
+#: src/ui/PlayPanel.tsx:380
 msgid "{unit} and {n} other unit"
 msgid_plural "{unit} and {n} other units"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:371
+#: src/ui/PlayPanel.tsx:383
 msgid " and "
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:384
+#: src/ui/PlayPanel.tsx:396
 msgid "Mark it resolved by hand; it shows in the log"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:434
+#: src/ui/PlayPanel.tsx:446
 msgid "Teach the app what this stratagem does"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:434
+#: src/ui/PlayPanel.tsx:446
 msgid "A stratagem your list didn't bring"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:437
+#: src/ui/PlayPanel.tsx:449
 #: src/ui/TeachRule.tsx:98
 msgid "Teach a stratagem"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:468
+#: src/ui/PlayPanel.tsx:480
 msgid "{n} army rule"
 msgid_plural "{n} army rules"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:476
+#: src/ui/PlayPanel.tsx:488
 msgid "The app plays it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:478
+#: src/ui/PlayPanel.tsx:490
 msgid "A reminder; you play it"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:65
+#: src/ui/PlayPanel.tsx:66
 msgid "{phase}: {cards}"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:66
+#: src/ui/PlayPanel.tsx:67
 msgid "{phase}: {n} stratagem"
 msgid_plural "{phase}: {n} stratagems"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:67
+#: src/ui/PlayPanel.tsx:68
 msgid "{n} ability"
 msgid_plural "{n} abilities"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/PlayPanel.tsx:76
+#: src/ui/PlayPanel.tsx:77
 msgid "{phase}: {cards} and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:77
+#: src/ui/PlayPanel.tsx:78
 msgid "{phase}: stratagems and abilities"
 msgstr ""
 
-#: src/ui/PlayPanel.tsx:86
+#: src/ui/PlayPanel.tsx:87
 msgid "No abilities flagged for this phase."
 msgstr ""
 
@@ -10393,7 +10397,7 @@ msgid "Charged {distance}"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:176
-#: src/ui/UnitCard.tsx:264
+#: src/ui/UnitCard.tsx:329
 msgid "Selected unit"
 msgstr ""
 
@@ -10440,17 +10444,17 @@ msgid "Moved {distance} of {allowance} this round."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:354
-#: src/ui/UnitCard.tsx:439
+#: src/ui/UnitCard.tsx:488
 msgid "Model's eye view"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:357
-#: src/ui/UnitCard.tsx:349
+#: src/ui/UnitCard.tsx:402
 msgid "Rotate left (Q)"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:360
-#: src/ui/UnitCard.tsx:352
+#: src/ui/UnitCard.tsx:405
 msgid "Rotate right (E)"
 msgstr ""
 
@@ -11472,339 +11476,351 @@ msgstr ""
 msgid "Dragging moves one model at a time"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:219
+#: src/ui/UnitCard.tsx:225
 msgid "Fell back this turn: it can't shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:222
+#: src/ui/UnitCard.tsx:228
 msgid "Advanced {n}\" this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:223
+#: src/ui/UnitCard.tsx:229
 msgid "Advanced this turn: Assault weapons only"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:227
+#: src/ui/UnitCard.tsx:233
 msgid "Moved {n}\" this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:228
+#: src/ui/UnitCard.tsx:234
 msgid "Moved this turn: no Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:230
+#: src/ui/UnitCard.tsx:236
 msgid "Moved {n}\" this turn"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:233
+#: src/ui/UnitCard.tsx:239
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:277
-msgid "{title}, round {round}: {line}. Click to replay it."
-msgstr ""
-
-#: src/ui/UnitCard.tsx:282
-msgid "Replay: {title}, round {round}"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:292
-msgid "{player} · {alive}/{all} models"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:315
-#: src/ui/UnitCard.tsx:614
+#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:680
 msgid "Shoot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:327
+#: src/ui/UnitCard.tsx:298
 msgid "Shoot everything at…"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:331
+#: src/ui/UnitCard.tsx:305
 msgid "Advance (D6)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:335
+#: src/ui/UnitCard.tsx:313
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:339
+#: src/ui/UnitCard.tsx:342
+msgid "{title}, round {round}: {line}. Click to replay it."
+msgstr ""
+
+#: src/ui/UnitCard.tsx:347
+msgid "Replay: {title}, round {round}"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:357
+msgid "{player} · {alive}/{all} models"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:374
 msgid "Up a floor (R)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:340
-#: src/ui/UnitCard.tsx:343
+#: src/ui/UnitCard.tsx:375
+#: src/ui/UnitCard.tsx:378
 msgid "Floor"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:342
+#: src/ui/UnitCard.tsx:377
 msgid "Down a floor (F)"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:361
+#: src/ui/UnitCard.tsx:386
 msgid "Clear advance"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:376
+#: src/ui/UnitCard.tsx:390
+msgid "Fewer actions"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:390
+msgid "⋯ Other actions"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:396
+msgid "Out of phase:"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:408
+msgid "Q / E turn it"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:423
 msgid "Advanced +{n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:379
+#: src/ui/UnitCard.tsx:426
 msgid "Charge roll {n}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:383
+#: src/ui/UnitCard.tsx:430
 msgid "Charged {distance}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:402
+#: src/ui/UnitCard.tsx:449
 msgid "Moved {moved}\" of {allowed}\" this phase."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:410
+#: src/ui/UnitCard.tsx:457
 msgid "Snap back to {allowed}\""
 msgstr ""
 
-#: src/ui/UnitCard.tsx:415
+#: src/ui/UnitCard.tsx:462
 msgid "Moved through {terrain}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:422
+#: src/ui/UnitCard.tsx:469
 msgid "Engaged with {units}."
 msgstr ""
 
-#: src/ui/UnitCard.tsx:442
+#: src/ui/UnitCard.tsx:491
 msgid "Move (blue) and longest weapon range (yellow) around each model"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:445
+#: src/ui/UnitCard.tsx:494
 msgid "Ranges"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:449
+#: src/ui/UnitCard.tsx:501
 msgid "Longest range"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:460
+#: src/ui/UnitCard.tsx:514
 msgid "On a floor {height}\" up"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:497
-msgid "Ranged"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:497
-#: src/ui/UnitCard.tsx:599
-msgid "Melee"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:51
+#: src/ui/UnitCard.tsx:53
 #: src/ui/eventText.ts:532
 msgid "Moved"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:52
+#: src/ui/UnitCard.tsx:54
 #: src/ui/eventText.ts:533
 msgid "Fell back"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:528
-msgid "Abilities ({n})"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:53
+#: src/ui/UnitCard.tsx:55
 #: src/ui/eventText.ts:534
 msgid "Shot"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:54
+#: src/ui/UnitCard.tsx:551
+msgid "Ranged"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:551
+#: src/ui/UnitCard.tsx:664
+msgid "Melee"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:56
 #: src/ui/eventText.ts:535
 msgid "Charged"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:541
-msgid "Models and wounds"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:549
-msgid "Model height for line of sight"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:55
+#: src/ui/UnitCard.tsx:57
 #: src/ui/eventText.ts:536
 msgid "Fought"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:56
+#: src/ui/UnitCard.tsx:576
+msgid "Not the Shooting phase (it still works)"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:577
+msgid "Not the Fight phase (it still works)"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:58
 msgid "Battle-shocked"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:570
+#: src/ui/UnitCard.tsx:590
+msgid "Abilities ({n})"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:603
+msgid "Models and wounds"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:611
+msgid "Model height for line of sight"
+msgstr ""
+
+#: src/ui/UnitCard.tsx:632
 msgid "Remove {unit} from the game?"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:574
+#: src/ui/UnitCard.tsx:636
 msgid "Remove unit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:637
+#: src/ui/UnitCard.tsx:703
 msgid "{left}/{max} W"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:647
+#: src/ui/UnitCard.tsx:713
 msgid "Revive"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:647
+#: src/ui/UnitCard.tsx:713
 msgid "Slay"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:109
+#: src/ui/WhatNow.tsx:111
 msgid "{phase} · your pick"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:110
+#: src/ui/WhatNow.tsx:112
 msgid "{phase} · {player}'s pick"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:114
+#: src/ui/WhatNow.tsx:116
 msgid "You pick first: {units}, then you alternate."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:115
+#: src/ui/WhatNow.tsx:117
 msgid "Your pick: {units}. The sides alternate until every unit has fought."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:117
+#: src/ui/WhatNow.tsx:119
 msgid "{player} picks first: {units}, then you alternate."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:118
+#: src/ui/WhatNow.tsx:120
 msgid "{player}'s pick: {units}. The sides alternate until every unit has fought."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:120
+#: src/ui/WhatNow.tsx:122
 msgid "Click the unit, then Pile in, Fight and Consolidate on its card."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:121
+#: src/ui/WhatNow.tsx:123
 msgid "Waiting for {player} to pick."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:127
-#: src/ui/WhatNow.tsx:239
+#: src/ui/WhatNow.tsx:129
+#: src/ui/WhatNow.tsx:251
 msgid "{side}'s turn · {phase}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:175
+#: src/ui/WhatNow.tsx:177
 msgid "Put your command cards in the order you'll play them, then press Lock in stack."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:187
+#: src/ui/WhatNow.tsx:189
 msgid "Draw your top command card (Command stack, bottom right) to see which regiment acts."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:190
+#: src/ui/WhatNow.tsx:192
 msgid "{unit} is taking its go: shoot or fight with it, or press End activation."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:192
+#: src/ui/WhatNow.tsx:194
 msgid "All your units have had their go this round: press Pass."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:196
+#: src/ui/WhatNow.tsx:198
 msgid "Drag a unit to move it. The ruler shows how far it has gone against its limit."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:198
+#: src/ui/WhatNow.tsx:200
 msgid "No unit is close enough to charge: press ▶ to move on."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:200
+#: src/ui/WhatNow.tsx:202
 msgid "Nothing is in reach to attack yet: move closer first."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:201
+#: src/ui/WhatNow.tsx:203
 msgid "Nothing is in range to shoot yet. Get closer next turn."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:204
+#: src/ui/WhatNow.tsx:206
 msgid "You can: {actions}."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:207
+#: src/ui/WhatNow.tsx:209
 msgid "{action} ({n} unit)"
 msgid_plural "{action} ({n} units)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/WhatNow.tsx:214
+#: src/ui/WhatNow.tsx:216
 msgid "Tap one of your units to see its buttons."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:215
+#: src/ui/WhatNow.tsx:217
 msgid "Click one of your units to see its buttons."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:219
+#: src/ui/WhatNow.tsx:222
 msgid "Nothing to do this phase."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:223
+#: src/ui/WhatNow.tsx:226
 msgid "A unit's go ends when it shoots or fights, or press End activation after a move; Hold on its card keeps it where it is. Pass when you have nothing left."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:226
+#: src/ui/WhatNow.tsx:229
 msgid "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:233
+#: src/ui/WhatNow.tsx:245
 msgid "Mission · {name}: {summary}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:239
+#: src/ui/WhatNow.tsx:251
 msgid "Your turn · {phase}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:257
+#: src/ui/WhatNow.tsx:269
 msgid "{unit} · {weapon} takes {faces}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:262
+#: src/ui/WhatNow.tsx:274
 msgid "(placed: {n})"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:298
+#: src/ui/WhatNow.tsx:310
 msgid "{name} is playing {unit}…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:299
+#: src/ui/WhatNow.tsx:311
 msgid "{name} is taking its turn…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:305
+#: src/ui/WhatNow.tsx:317
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:367
+#: src/ui/WhatNow.tsx:379
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:385
+#: src/ui/WhatNow.tsx:397
 msgid "Nothing to do"
-msgstr ""
-
-#: src/ui/WhatNow.tsx:425
-msgid "Tap"
-msgstr ""
-
-#: src/ui/WhatNow.tsx:425
-msgid "Press"
-msgstr ""
-
-#: src/ui/WhatNow.tsx:425
-msgid "for all the controls."
 msgstr ""
 
 #: src/ui/WhatNow.tsx:43
@@ -11815,6 +11831,18 @@ msgstr ""
 
 #: src/ui/WhatNow.tsx:43
 msgid "The stats screen shows how it went."
+msgstr ""
+
+#: src/ui/WhatNow.tsx:437
+msgid "Tap"
+msgstr ""
+
+#: src/ui/WhatNow.tsx:437
+msgid "Press"
+msgstr ""
+
+#: src/ui/WhatNow.tsx:437
+msgid "for all the controls."
 msgstr ""
 
 #: src/ui/WhatNow.tsx:48
@@ -11870,12 +11898,12 @@ msgid "{phase}: every unit has fought"
 msgstr ""
 
 #: src/ui/WhatNow.tsx:89
-#: src/ui/WhatNow.tsx:227
+#: src/ui/WhatNow.tsx:230
 msgid "When you're done, press ▶ at the top for the next phase."
 msgstr ""
 
 #: src/ui/WhatNow.tsx:90
-#: src/ui/WhatNow.tsx:128
+#: src/ui/WhatNow.tsx:130
 msgid "Waiting for {side}. You can look around, measure (M) and talk in the chat."
 msgstr ""
 

@@ -35,27 +35,28 @@ export function PlayPanel() {
   const context = `${selected ?? ""}|${busy}`;
   const [choice, setChoice] = useState<{ context: string; open: boolean } | null>(null);
   // On a phone it opens only when asked (UX 17), and on a tablet too: open, it covers a corner of the table (UX 418).
-  const open = choice?.context === context ? choice.open : !busy && !narrow() && !touch();
-  const setOpen = (o: boolean) => setChoice({ context, open: o });
   const system = systemOf(game);
   const reminders = abilityReminders(game);
   const stratagems = system.actions.some((a) => a.by === "player");
+  // Open by itself only when a side here has a stratagem it can use now (UX 83);
+  // otherwise its one-line chip says what there is.
+  const players = Object.values(game.players)
+    .filter((p) => p.seat !== undefined && canControl(p.id))
+    .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
+  const usable = stratagems
+    ? players.reduce((n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length, 0)
+    : 0;
+  const open = choice?.context === context ? choice.open : !busy && !narrow() && !touch() && usable > 0;
+  const setOpen = (o: boolean) => setChoice({ context, open: o });
   // Players' own tool: not for spectators or replays.
   if (role === "spectator" || scrub !== null) return null;
   if (!stratagems && !system.abilityTimings) return null;
   if (game.turn.round === 0 && !reminders.length) return null;
-  const players = Object.values(game.players)
-    .filter((p) => p.seat !== undefined && canControl(p.id))
-    .sort((a, b) => Number(b.seat === game.turn.activeSeat) - Number(a.seat === game.turn.activeSeat));
   const phase = game.turn.round === 0 ? t("Deployment") : gameText(phaseName(game) ?? "");
   // Systems with only a custom player action (FSD's support cards) are named for it.
   const core = system.actions.some((a) => a.by === "player" && !a.custom);
   const customName = system.actions.find((a) => a.by === "player" && a.custom)?.name;
   const cards = !core && customName ? `${customName.toLowerCase()}s` : null;
-  const usable = players.reduce(
-    (n, p) => n + playerActions(game, p.id).filter((o) => o.ok && !o.def.custom).length,
-    0,
-  );
 
   if (!open)
     return (
@@ -92,6 +93,7 @@ export function PlayPanel() {
 function PlayerStratagems({ player, brief }: { player: Player; brief: boolean }) {
   const game = useGame();
   const { dispatch } = useStore();
+  const canControl = useCanControl();
   const options = playerActions(game, player.id);
   const usable = options.filter((o) => o.ok && !o.def.custom);
   const custom = options.find((o) => o.def.custom);
@@ -105,6 +107,21 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
     payWith?.kind === "dicePool"
       ? (game.pools?.[player.id]?.[payWith.id]?.length ?? 0)
       : (game.resources[player.id]?.[payWith?.id ?? "CP"] ?? 0);
+  const teachable = !!systemModule(game.system).recognizeAbility && canControl(player.id);
+  const otherOne = custom?.ok && (
+    <CustomStratagem
+      cp={have}
+      unit={payWith?.short ?? payWith?.name ?? t("CP")}
+      placeholder={core ? t("Other stratagem…") : `${custom.def.name}…`}
+      {...(payWith?.kind === "dicePool" ? { faces: game.pools?.[player.id]?.[payWith.id] ?? [] } : {})}
+      onUse={(label, cost, dice) =>
+        dispatch(
+          { type: "player/action", action: custom.def.id, label, cost, ...(dice ? { dice } : {}) },
+          player.id,
+        )
+      }
+    />
+  );
   const list = (
     <>
       {core && usable.length === 0 && <p className="muted">{t("No core stratagems fit this moment.")}</p>}
@@ -127,20 +144,8 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
         </p>
       )}
       {custom?.ok && custom.def.hint && <p className="muted small">{gameText(custom.def.hint)}</p>}
-      {custom?.ok && (
-        <CustomStratagem
-          cp={have}
-          unit={payWith?.short ?? payWith?.name ?? t("CP")}
-          placeholder={core ? t("Other stratagem…") : `${custom.def.name}…`}
-          {...(payWith?.kind === "dicePool" ? { faces: game.pools?.[player.id]?.[payWith.id] ?? [] } : {})}
-          onUse={(label, cost, dice) =>
-            dispatch(
-              { type: "player/action", action: custom.def.id, label, cost, ...(dice ? { dice } : {}) },
-              player.id,
-            )
-          }
-        />
-      )}
+      {/* Support cards are the whole panel in a system without core stratagems; "Other stratagem" is rare. */}
+      {custom?.ok && !core && otherOne}
       {others.length > 0 && (
         <details>
           <summary className="muted">{tn(others.length, "{n} not usable now", "{n} not usable now")}</summary>
@@ -154,7 +159,14 @@ function PlayerStratagems({ player, brief }: { player: Player; brief: boolean })
           </ul>
         </details>
       )}
-      <TeachStratagem player={player.id} id={null} />
+      {/* A stratagem the list didn't bring: one click further in (UX 83). */}
+      {core && (custom?.ok || teachable) && (
+        <details className="unlisted">
+          <summary className="muted">{t("⋯ Something not listed?")}</summary>
+          {custom?.ok && otherOne}
+          <TeachStratagem player={player.id} id={null} />
+        </details>
+      )}
       <ArmyRules player={player.id} />
     </>
   );

@@ -1,3 +1,5 @@
+import { Fragment, useState, type ReactNode } from "react";
+import { belowHalf } from "../systems/wh40k/module";
 import { alongPath, legsOf, movePath, pathLength } from "../core/path";
 import type { Vec2 } from "../core";
 import { NoStats } from "../tts/NoStats";
@@ -178,6 +180,9 @@ function snapToLimit(unitId: string, limit: number) {
   );
 }
 
+/** The 40k phases the unit card puts actions in (UX 83). */
+const PHASES = ["Command", "Movement", "Shooting", "Charge", "Fight"];
+
 export function UnitCard() {
   const game = useGame();
   const { selected, select, dispatch, setDraft, scrub, losFrom, ranges, rangeWeapon, set } = useStore();
@@ -185,6 +190,7 @@ export function UnitCard() {
   const unit = selected ? game.units[selected] : undefined;
   const stars = useRareStars(selected);
   const charged = useCharged(selected ?? "");
+  const [more, setMore] = useState(false);
   if (!unit) return null;
   // Systems without panels of their own get the card built from their data.
   if (!systemModule(game.system).dedicatedUi)
@@ -257,6 +263,65 @@ export function UnitCard() {
   const flag = (key: string, value: boolean) =>
     dispatch({ type: "unit/status", id: unit.id, key, value: value || null }, as);
 
+  // Each action and the phase it belongs to; in deployment or a phase the card
+  // doesn't know, the phase rule steps aside only for known 40k phases.
+  const due = phase === "Command" && belowHalf({ state: game }, unit.id);
+  const known = game.turn.round === 0 || PHASES.includes(phase ?? "");
+  const actions: [string, string | null, ReactNode][] = [];
+  for (const kind of ["ranged", "melee"] as const) {
+    const weaponId = mainWeapon(game, unit, kind);
+    if (weaponId)
+      actions.push([
+        kind,
+        kind === "ranged" ? "Shooting" : "Fight",
+        <button
+          className={phase === (kind === "ranged" ? "Shooting" : "Fight") ? "primary" : ""}
+          onClick={() => {
+            setDraft({ attackerId: unit.id, kind, weaponId, picking: true });
+            focusSoon(".panel.attack select.attack-target");
+          }}
+        >
+          {kind === "ranged" ? t("Shoot") : t("Fight")}
+        </button>,
+      ]);
+  }
+  if (mainWeapon(game, unit, "ranged"))
+    actions.push([
+      "all",
+      "Shooting",
+      <button
+        onClick={() => {
+          setDraft({ attackerId: unit.id, kind: "ranged", picking: true, all: true });
+          focusSoon(".panel.attack select.attack-target");
+        }}
+      >
+        {t("Shoot everything at…")}
+      </button>,
+    ]);
+  actions.push([
+    "advance",
+    "Movement",
+    <RollButton className={phase === "Movement" ? "primary" : ""} intent={roll("advance", 1)} as={as}>
+      {t("Advance (D6)")}
+    </RollButton>,
+  ]);
+  actions.push(["charge", "Charge", <ChargeDeclare unit={unit} primary={phase === "Charge"} as={as} />]);
+  actions.push([
+    "battleshock",
+    due ? phase! : "Battle-shock",
+    <RollButton className={due ? "primary" : ""} intent={roll("battleshock", 2)} as={as}>
+      {t("Battle-shock test")}
+    </RollButton>,
+  ]);
+  // A charge already rolled stays on the card to finish, whatever the phase.
+  const now = (a: (typeof actions)[number]) =>
+    !known || a[1] === phase || (a[0] === "charge" && typeof status.charge === "number");
+  const primary = actions.filter(now).map(([key, , button]) => [key, button] as const);
+  const others = actions.filter((a) => !now(a)).map(([key, , button]) => [key, button] as const);
+  // Line of sight, eye view and ranges: where they matter, else under ⋯ (or while one is on).
+  const look =
+    !known || phase === "Shooting" || phase === "Charge" || more || losFrom === unit.id || ranges === unit.id;
+
   return (
     <div
       className="panel unitcard"
@@ -298,42 +363,12 @@ export function UnitCard() {
       </p>
       <CampaignUnitLine unitId={unit.id} />
       {/* The unit's actions come first, so they're the first Tab stops in the card (UX 182). */}
+      {/* This phase's actions are the buttons; the rest are one click away under ⋯ (UX 83). */}
       {mine && (
         <div className="row wrap">
-          {(["ranged", "melee"] as const).map((kind) => {
-            const weaponId = mainWeapon(game, unit, kind);
-            return (
-              weaponId && (
-                <button
-                  key={kind}
-                  className={phase === (kind === "ranged" ? "Shooting" : "Fight") ? "primary" : ""}
-                  onClick={() => {
-                    setDraft({ attackerId: unit.id, kind, weaponId, picking: true });
-                    focusSoon(".panel.attack select.attack-target");
-                  }}
-                >
-                  {kind === "ranged" ? t("Shoot") : t("Fight")}
-                </button>
-              )
-            );
-          })}
-          {mainWeapon(game, unit, "ranged") && (
-            <button
-              onClick={() => {
-                setDraft({ attackerId: unit.id, kind: "ranged", picking: true, all: true });
-                focusSoon(".panel.attack select.attack-target");
-              }}
-            >
-              {t("Shoot everything at…")}
-            </button>
-          )}
-          <RollButton className={phase === "Movement" ? "primary" : ""} intent={roll("advance", 1)} as={as}>
-            {t("Advance (D6)")}
-          </RollButton>
-          <ChargeDeclare unit={unit} primary={phase === "Charge"} as={as} />
-          <RollButton intent={roll("battleshock", 2)} as={as}>
-            {t("Battle-shock test")}
-          </RollButton>
+          {primary.map(([key, button]) => (
+            <Fragment key={key}>{button}</Fragment>
+          ))}
           {onFloors && !companion && (
             <>
               <button title={t("Up a floor (R)")} onClick={() => climbUnit(unit.id, 1)}>
@@ -344,6 +379,24 @@ export function UnitCard() {
               </button>
             </>
           )}
+          {status.advance !== undefined && (
+            <button
+              onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "advance", value: null }, as)}
+            >
+              {t("Clear advance")}
+            </button>
+          )}
+          <button className="quiet other-actions" aria-expanded={more} onClick={() => setMore(!more)}>
+            {more ? t("Fewer actions") : t("⋯ Other actions")}
+          </button>
+        </div>
+      )}
+      {mine && more && (
+        <div className="row wrap other-actions-row">
+          {others.length > 0 && <span className="muted small">{t("Out of phase:")}</span>}
+          {others.map(([key, button]) => (
+            <Fragment key={key}>{button}</Fragment>
+          ))}
           {!companion && (
             <>
               <button title={t("Rotate left (Q)")} onClick={() => rotateUnit(unit.id, -1)}>
@@ -352,14 +405,8 @@ export function UnitCard() {
               <button title={t("Rotate right (E)")} onClick={() => rotateUnit(unit.id, 1)}>
                 ⟳
               </button>
+              <span className="muted small">{t("Q / E turn it")}</span>
             </>
-          )}
-          {status.advance !== undefined && (
-            <button
-              onClick={() => dispatch({ type: "unit/status", id: unit.id, key: "advance", value: null }, as)}
-            >
-              {t("Clear advance")}
-            </button>
           )}
         </div>
       )}
@@ -428,33 +475,40 @@ export function UnitCard() {
       <UnitWarnings unitId={unit.id} skip={["moveDistance"]} />
       <FightOrderNote unitId={unit.id} />
 
-      {!companion && (
+      {!companion && (look || elevation > 0) && (
         <div className="row wrap">
-          <button
-            className={losFrom === unit.id ? "on" : ""}
-            onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
-          >
-            {t("Line of sight")}
-          </button>
-          <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
-          <button
-            className={ranges === unit.id ? "on" : ""}
-            title={t("Move (blue) and longest weapon range (yellow) around each model")}
-            onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
-          >
-            {t("Ranges")}
-          </button>
-          {ranges === unit.id && (
-            <select value={rangeWeapon ?? ""} onChange={(e) => set({ rangeWeapon: e.target.value || null })}>
-              <option value="">{t("Longest range")}</option>
-              {weapons
-                .filter((w) => w.kind === "ranged")
-                .map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} {w.chars.RANGE}
-                  </option>
-                ))}
-            </select>
+          {look && (
+            <>
+              <button
+                className={losFrom === unit.id ? "on" : ""}
+                onClick={() => set({ losFrom: losFrom === unit.id ? null : unit.id })}
+              >
+                {t("Line of sight")}
+              </button>
+              <button onClick={() => eyeView(unit.id)}>{t("Model's eye view")}</button>
+              <button
+                className={ranges === unit.id ? "on" : ""}
+                title={t("Move (blue) and longest weapon range (yellow) around each model")}
+                onClick={() => set({ ranges: ranges === unit.id ? null : unit.id, rangeWeapon: null })}
+              >
+                {t("Ranges")}
+              </button>
+              {ranges === unit.id && (
+                <select
+                  value={rangeWeapon ?? ""}
+                  onChange={(e) => set({ rangeWeapon: e.target.value || null })}
+                >
+                  <option value="">{t("Longest range")}</option>
+                  {weapons
+                    .filter((w) => w.kind === "ranged")
+                    .map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} {w.chars.RANGE}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </>
           )}
           {elevation > 0 && (
             <span className="muted">{t('On a floor {height}" up', { height: elevation.toFixed(1) })}</span>
@@ -515,6 +569,14 @@ export function UnitCard() {
                   weapon={w}
                   count={carriers(game, unit, w.id).length}
                   canUse={mine}
+                  {...(known && phase !== (kind === "ranged" ? "Shooting" : "Fight")
+                    ? {
+                        outOfPhase:
+                          kind === "ranged"
+                            ? t("Not the Shooting phase (it still works)")
+                            : t("Not the Fight phase (it still works)"),
+                      }
+                    : {})}
                   onUse={() => setDraft({ attackerId: unit.id, kind, weaponId: w.id, picking: true })}
                 />
               ))}
@@ -583,11 +645,14 @@ function WeaponRow({
   weapon,
   count,
   canUse,
+  outOfPhase,
   onUse,
 }: {
   weapon: WeaponProfile;
   count: number;
   canUse: boolean;
+  /** Why it isn't this weapon's moment: the button greys, and still works (rules are advisory). */
+  outOfPhase?: string;
   onUse: () => void;
 }) {
   const c = weapon.chars;
@@ -605,7 +670,8 @@ function WeaponRow({
         <td>
           {canUse && count > 0 && (
             <button
-              className="small"
+              className={outOfPhase ? "small quiet" : "small"}
+              title={outOfPhase}
               onClick={() => {
                 onUse();
                 focusSoon(".panel.attack select.attack-target");

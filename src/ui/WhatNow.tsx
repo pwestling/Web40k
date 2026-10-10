@@ -89,6 +89,8 @@ function whatNow(
             ? t("When you're done, press ▶ at the top for the next phase.")
             : t("Waiting for {side}. You can look around, measure (M) and talk in the chat.", { side: who }),
         ],
+        // Nothing left to do but move on (UX 496).
+        empty: mine,
       };
     const p = {
       player: displayName(picker.name),
@@ -214,9 +216,10 @@ function whatNow(
         ? t("Tap one of your units to see its buttons.")
         : t("Click one of your units to see its buttons."),
     );
-  const empty =
-    !can.size && !/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation && !ordering;
-  if (empty) lines.push(t("Nothing to do this phase."));
+  // A Charge phase with nothing in reach is as empty as any (UX 496): its own line says so.
+  const noCharge = /charge/i.test(raw) && !can.size;
+  const empty = !can.size && !/move/i.test(raw) && !outOfRange && !activation && !ordering;
+  if (empty && !noCharge) lines.push(t("Nothing to do this phase."));
   lines.push(
     activation
       ? plain
@@ -227,8 +230,17 @@ function whatNow(
       : t("When you're done, press ▶ at the top for the next phase."),
   );
   // The mission's rule, where a player looks for what to do (UX 325).
+  // The mission's rule where it scores, once a turn (UX 496): in the phase that scores it,
+  // or, for a mission scored at the end of a round or the game, in the turn's first phase.
   const mission = systemModule(game.system).missions?.find((m) => m.id === game.mission?.id);
-  if (mission?.summary)
+  const slotId = currentSlot(game)?.id;
+  const byPhase = mission?.scoring?.filter((x) => "phaseEnd" in x.at) ?? [];
+  const missionNow = byPhase.length
+    ? byPhase.some(
+        (x) => "phaseEnd" in x.at && x.at.phaseEnd === slotId && game.turn.round >= (x.at.fromRound ?? 1),
+      )
+    : game.turn.phase === 0;
+  if (mission?.summary && missionNow)
     lines.push(
       t("Mission · {name}: {summary}", { name: gameText(mission.name), summary: gameText(mission.summary) }),
     );
@@ -238,7 +250,7 @@ function whatNow(
   return {
     head: yours ? t("Your turn · {phase}", { phase }) : t("{side}'s turn · {phase}", { side: who, phase }),
     lines,
-    empty: empty && !mission?.summary,
+    empty: empty && !(mission?.summary && missionNow),
   };
 }
 
