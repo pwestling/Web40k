@@ -1,8 +1,29 @@
 # Sharing files by link
 
 Players share what they make (figure packs, tables, armies, standees and
-replays) by putting the file anywhere that serves it over https and passing on
-the link. The project hosts, lists and links none of these files.
+replays) between their browsers as torrents, or by putting the file anywhere
+that serves it over https and passing on the link. The project hosts, lists
+and links none of these files.
+
+- **Share from this device:** on the front door, _Open or share a file by link_,
+  then _Share a file from this device_ with a file saved from Open Battle. The
+  tab seeds it over WebRTC (WebTorrent) and hands a copy to the site's seed
+  nodes, and you get a share link with the magnet in it. Anyone who opens the
+  link fetches it from the players who have it, or from a seed node, and seeds
+  it on while their tab is open.
+- **Private:** tick _Private_ and the file is encrypted (AES-GCM) before it
+  leaves the device. The key is only in the share link's `#key=` fragment,
+  which browsers never send to a server; trackers and seed nodes hold opaque
+  bytes. Anyone with the whole link can open it, so share it like a password.
+- **Seed nodes:** `server/seeder.mjs` (in the self-host kit at `/seed`, see
+  [self-host.md](self-host.md)). It keeps files under their SHA-256 and serves
+  them as the torrent's web seed. A magnet alone can't start from a web seed,
+  so a browser that finds no players within a few seconds fetches the seed
+  node's copy directly, checks its hash, and seeds it on. Without a seed node a
+  link works only while someone who has the file keeps a tab open.
+- **Settings:** trackers come from `?trackers=`, the site's `config.json` or
+  `VITE_TRACKERS` (public WebTorrent trackers by default); seed nodes from
+  `?seeders=`, `config.json` or `VITE_SEEDERS` (none by default).
 
 - **Open a link:** on the front door, _Open or share a file by link_. The app
   fetches the file, shows what it is, its size and its SHA-256, and opens it
@@ -20,4 +41,14 @@ the link. The project hosts, lists and links none of these files.
 Rules packages and faction packs have their own links and consent: see
 [packages.md](packages.md) and [faction-packs.md](faction-packs.md).
 
-Code: `src/share/links.ts` and `src/share/OpenLink.tsx`.
+Code: `src/share/links.ts`, `src/share/torrent.ts`, `src/share/OpenLink.tsx`
+and `server/seeder.mjs`. `node scripts/share-smoke.mjs` (after `pnpm build`)
+has two browsers share through a local tracker and seed node.
+
+## Takedowns
+
+A seed node operator sets `SEED_CONTACT` (shown at `/seed/info`) and
+`SEED_ADMIN_TOKEN`, and drops a file with
+`curl -X DELETE -H "Authorization: Bearer $TOKEN" https://<site>/seed/blob/<sha256>`.
+The hash is then blocked, so the same bytes can't be posted again. The hash is
+in the magnet link's `ws=` address.

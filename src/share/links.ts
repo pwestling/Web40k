@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import { sha256 } from "../packages/manifest";
 import { rawLink } from "../packages/packPins";
 import { isYellowscribe } from "../systems/wh40k/yellowscribe";
+import { decrypt, fetchMagnet, isEncrypted, magnetHash, splitKey } from "./torrent";
 
 /**
  * Open a shared file from a link. A player puts a figure pack, table, army,
@@ -80,7 +81,12 @@ function pin(url: string, p: SharedPin): void {
 
 /** A file fetched from a link, waiting for the player's yes. */
 export interface SharedOffer {
+  /** The link it is remembered by (a magnet link by its torrent). */
   url: string;
+  /** Where it came from, for the question. */
+  shown: string;
+  /** It was encrypted, and the link's key opened it. */
+  private: boolean;
   kind: SharedKind;
   name: string;
   hash: string;
@@ -94,28 +100,60 @@ export interface SharedOffer {
 function nameOf(kind: SharedKind, data: Record<string, unknown>, url: string): string {
   const name = typeof data.name === "string" ? data.name.trim() : "";
   if (name) return name.slice(0, 80);
-  const file = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "");
-  return file || kindLabel(kind);
+  try {
+    const u = new URL(url);
+    const file = u.searchParams.get("dn") ?? decodeURIComponent(u.pathname.split("/").pop() ?? "");
+    return file.slice(0, 80) || kindLabel(kind);
+  } catch {
+    return kindLabel(kind);
+  }
 }
 
 /** Fetch a shared file and read what it is, opening nothing. */
 export async function fetchShared(
   url: string,
   fetcher: (url: string) => Promise<Response> = (u) => fetch(u),
+  onProgress?: (done: number, peers: number) => void,
 ): Promise<SharedOffer | { error: string }> {
-  const link = rawLink(url);
-  if (!/^https:\/\/[^\s/]+\//i.test(link)) return { error: t("Use an https:// link to the file.") };
-  let res: Response;
-  try {
-    res = await fetcher(link);
-  } catch {
-    return { error: t("Couldn't fetch that link (it may not allow other sites to read it).") };
+  const { link: bare, key } = splitKey(url.trim());
+  const magnet = bare.startsWith("magnet:");
+  const link = magnet ? bare : rawLink(bare);
+  let bytes: Uint8Array;
+  if (magnet) {
+    if (!magnetHash(link)) return { error: t("That magnet link has no torrent in it.") };
+    const got = await fetchMagnet(link, MAX_SHARED_BYTES, onProgress);
+    if ("error" in got)
+      return {
+        error:
+          got.error === "too-big"
+            ? t("That file is too big to open from a link.")
+            : got.error === "timeout"
+              ? t("Nobody is sharing that file right now, and no seed node has it.")
+              : t("That torrent couldn't be fetched."),
+      };
+    bytes = got;
+  } else {
+    if (!/^https:\/\/[^\s/]+\//i.test(link)) return { error: t("Use an https:// link to the file.") };
+    let res: Response;
+    try {
+      res = await fetcher(link);
+    } catch {
+      return { error: t("Couldn't fetch that link (it may not allow other sites to read it).") };
+    }
+    if (!res.ok) return { error: t("That link answered {status}.", { status: res.status }) };
+    if (Number(res.headers.get("content-length")) > MAX_SHARED_BYTES)
+      return { error: t("That file is too big to open from a link.") };
+    bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.byteLength > MAX_SHARED_BYTES) return { error: t("That file is too big to open from a link.") };
   }
-  if (!res.ok) return { error: t("That link answered {status}.", { status: res.status }) };
-  if (Number(res.headers.get("content-length")) > MAX_SHARED_BYTES)
-    return { error: t("That file is too big to open from a link.") };
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  if (bytes.byteLength > MAX_SHARED_BYTES) return { error: t("That file is too big to open from a link.") };
+  const sealed = isEncrypted(bytes);
+  if (sealed) {
+    if (!key)
+      return { error: t("That file is private: open it with the whole share link, which carries its key.") };
+    const open = await decrypt(bytes, key);
+    if (!open) return { error: t("That key doesn't open this file.") };
+    bytes = open;
+  }
   let data: unknown;
   try {
     data = JSON.parse(new TextDecoder().decode(bytes));
@@ -125,15 +163,18 @@ export async function fetchShared(
   const kind = sharedKind(data);
   if (!kind) return { error: t("That link isn't an Open Battle file.") };
   const hash = await sha256(bytes);
-  const before = useSharedPins.getState().pins[link];
+  const pinKey = magnet ? `magnet:${magnetHash(link)}` : link;
+  const before = useSharedPins.getState().pins[pinKey];
   const status = !before ? "new" : before.hash === hash ? "same" : "changed";
   return {
-    url: link,
+    url: pinKey,
+    shown: magnet ? t("a torrent") : link,
     kind,
     name: nameOf(kind, data as Record<string, unknown>, link),
     hash,
     bytes,
     status,
+    private: sealed,
     ...(status === "changed" ? { was: before!.name } : {}),
   };
 }
@@ -193,18 +234,25 @@ export async function openShared(offer: SharedOffer): Promise<string> {
   return line;
 }
 
-/** The app link that offers a hosted file to whoever opens it. */
-export function shareLink(fileUrl: string, here: { origin: string; pathname: string } = location): string {
-  return `${here.origin}${here.pathname}?open=${encodeURIComponent(rawLink(fileUrl))}`;
+/** The app link that offers a hosted file or torrent to whoever opens it; a private file's key rides in the #fragment. */
+export function shareLink(
+  fileUrl: string,
+  key?: string,
+  here: { origin: string; pathname: string } = location,
+): string {
+  const link = fileUrl.startsWith("magnet:") ? fileUrl : rawLink(fileUrl);
+  return `${here.origin}${here.pathname}?open=${encodeURIComponent(link)}${key ? `#key=${key}` : ""}`;
 }
 
-/** A link from the page's `?open=` (a share link), taken off the address so a reload doesn't ask again. */
+/** A link from the page's `?open=` (a share link) with its #key=, taken off the address so a reload doesn't ask again. */
 export const useOpenLink = create<{ link: string | null }>(() => {
   if (typeof location === "undefined") return { link: null };
   const here = new URL(location.href);
   const link = here.searchParams.get("open");
   if (link === null) return { link: null };
   here.searchParams.delete("open");
+  const key = here.hash.startsWith("#key=") ? here.hash.slice(1) : "";
+  if (key) here.hash = "";
   history.replaceState(history.state, "", here);
-  return { link: /^https:\/\//.test(link) ? link : null };
+  return { link: /^(https:\/\/|magnet:)/.test(link) ? `${link}${key ? `#${key}` : ""}` : null };
 });

@@ -471,7 +471,7 @@ msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 #: src/GameScreen.tsx:340
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
-#: src/share/OpenLink.tsx:67
+#: src/share/OpenLink.tsx:126
 #: src/workshop/Workshop.tsx:387
 #, fuzzy
 msgid "Open"
@@ -3593,7 +3593,7 @@ msgid "Bring the models from a Tabletop Simulator save or workshop mod into your
 msgstr "Importe les figurines d'une sauvegarde ou d'un mod workshop Tabletop Simulator dans ta bibliothèque. Choisis ton dossier Tabletop Simulator (Documents, My Games) pour que les fichiers déjà téléchargés par TTS soient lus depuis ton ordinateur ; avec seulement une sauvegarde, chaque figurine est téléchargée si son hébergeur le permet."
 
 #: src/figures/pack.ts:103
-#: src/share/links.ts:43
+#: src/share/links.ts:44
 #, fuzzy
 msgid "Figure pack"
 msgstr "Pack de figurines"
@@ -4687,14 +4687,14 @@ msgid "Use an https:// link to the pack's file."
 msgstr "Utilise un lien https:// vers le fichier du pack."
 
 #: src/packages/packPins.ts:85
-#: src/share/links.ts:112
+#: src/share/links.ts:141
 #: src/workshop/Workshop.tsx:414
 #, fuzzy
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr "Impossible de récupérer ce lien (il n'autorise peut-être pas d'autres sites à le lire)."
 
 #: src/packages/packPins.ts:87
-#: src/share/links.ts:114
+#: src/share/links.ts:143
 #: src/workshop/Workshop.tsx:416
 #, fuzzy
 msgid "That link answered {status}."
@@ -6054,76 +6054,127 @@ msgstr "{unit} – {what}"
 msgid "{unit}'s {what}"
 msgstr "{unit} – {what}"
 
-#: src/share/OpenLink.tsx:10
-msgid "{n} MB"
-msgstr ""
-
-#: src/share/OpenLink.tsx:110
-msgid "Open a shared file"
-msgstr ""
-
-#: src/share/OpenLink.tsx:118
-#: src/ui/FactionPacks.tsx:262
-#, fuzzy
-msgid "From {url}"
-msgstr "Depuis {url}"
-
-#: src/share/OpenLink.tsx:125
-msgid "This link held a different file when you last opened it ({was})."
-msgstr ""
-
-#: src/share/OpenLink.tsx:128
-msgid "You opened this same file before."
-msgstr ""
-
-#: src/share/OpenLink.tsx:131
-msgid "Rules packages inside a replay stay off until you say yes to them, as with packages from a player."
-msgstr ""
-
-#: src/share/OpenLink.tsx:134
-#: src/ui/FactionPacks.tsx:293
-#, fuzzy
-msgid "It is data only: nothing in it runs."
-msgstr "Il ne contient que des données : rien ne s'y exécute."
-
-#: src/share/OpenLink.tsx:138
-msgid "Open it"
-msgstr ""
-
-#: src/share/OpenLink.tsx:46
+#: src/share/OpenLink.tsx:104
 msgid "Open or share a file by link"
 msgstr ""
 
-#: src/share/OpenLink.tsx:48
-msgid "Figure packs, tables, armies, standees and replays can live anywhere that serves files: GitHub Pages, Codeberg, a cloud drive or your own site. Open Battle hosts none of them."
+#: src/share/OpenLink.tsx:106
+msgid "Figure packs, tables, armies, standees and replays travel between players' browsers, and can live anywhere that serves files. Open Battle hosts and lists none of them."
 msgstr ""
 
-#: src/share/OpenLink.tsx:62
+#: src/share/OpenLink.tsx:121
 msgid "Link to an Open Battle file"
 msgstr ""
 
-#: src/share/OpenLink.tsx:67
+#: src/share/OpenLink.tsx:126
 #: src/ui/FactionPacks.tsx:170
 #, fuzzy
 msgid "Fetching…"
 msgstr "Récupération…"
 
-#: src/share/OpenLink.tsx:71
-msgid "Put a file online yourself? Paste its link to get a share link:"
+#: src/share/OpenLink.tsx:131
+msgid "Share a file from this device"
 msgstr ""
 
-#: src/share/OpenLink.tsx:75
-msgid "Where your file is"
+#: src/share/OpenLink.tsx:144
+msgid "Private: encrypt it, with the key only in the link"
 msgstr ""
 
-#: src/share/OpenLink.tsx:84
+#: src/share/OpenLink.tsx:151
+#: src/share/OpenLink.tsx:172
 #: src/ui/Packages.tsx:246
 #, fuzzy
 msgid "Copy"
 msgstr "Copier"
 
-#: src/share/OpenLink.tsx:9
+#: src/share/OpenLink.tsx:158
+msgid "Put a file online yourself? Paste its link to get a share link:"
+msgstr ""
+
+#: src/share/OpenLink.tsx:163
+msgid "Where your file is"
+msgstr ""
+
+#: src/share/OpenLink.tsx:179
+msgid "This tab is sharing {n} file"
+msgid_plural "This tab is sharing {n} files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/share/OpenLink.tsx:18
 msgid "{n} KB"
+msgstr ""
+
+#: src/share/OpenLink.tsx:180
+msgid "{n} player connected"
+msgid_plural "{n} players connected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/share/OpenLink.tsx:19
+msgid "{n} MB"
+msgstr ""
+
+#: src/share/OpenLink.tsx:204
+msgid "Open a shared file"
+msgstr ""
+
+#: src/share/OpenLink.tsx:212
+#: src/ui/FactionPacks.tsx:262
+#, fuzzy
+msgid "From {url}"
+msgstr "Depuis {url}"
+
+#: src/share/OpenLink.tsx:219
+msgid "This link held a different file when you last opened it ({was})."
+msgstr ""
+
+#: src/share/OpenLink.tsx:223
+msgid "It was shared privately: only people with this link can open it."
+msgstr ""
+
+#: src/share/OpenLink.tsx:225
+msgid "You opened this same file before."
+msgstr ""
+
+#: src/share/OpenLink.tsx:228
+msgid "Rules packages inside a replay stay off until you say yes to them, as with packages from a player."
+msgstr ""
+
+#: src/share/OpenLink.tsx:231
+#: src/ui/FactionPacks.tsx:293
+#, fuzzy
+msgid "It is data only: nothing in it runs."
+msgstr "Il ne contient que des données : rien ne s'y exécute."
+
+#: src/share/OpenLink.tsx:235
+msgid "Open it"
+msgstr ""
+
+#: src/share/OpenLink.tsx:38
+msgid "Fetching from {n} players and seeds: {pct}%"
+msgstr ""
+
+#: src/share/OpenLink.tsx:41
+msgid "Looking for the file…"
+msgstr ""
+
+#: src/share/OpenLink.tsx:77
+msgid "Share a file saved from Open Battle: a figure pack, table, army, standee or replay."
+msgstr ""
+
+#: src/share/OpenLink.tsx:84
+msgid "A seed node keeps a copy, so the link works after you close this tab."
+msgid_plural "{n} seed nodes keep a copy, so the link works after you close this tab."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/share/OpenLink.tsx:89
+msgid "No seed node keeps a copy here: the link works while this tab, or someone who opened it, stays open."
+msgstr ""
+
+#: src/share/OpenLink.tsx:94
+msgid "That file couldn't be shared."
 msgstr ""
 
 #: src/share/SharePanel.tsx:161
@@ -6412,62 +6463,87 @@ msgstr "Ce qui s'est passé"
 msgid "Battle over"
 msgstr "Bataille terminée"
 
-#: src/share/links.ts:107
-msgid "Use an https:// link to the file."
+#: src/share/links.ts:123
+msgid "That magnet link has no torrent in it."
 msgstr ""
 
-#: src/share/links.ts:116
-#: src/share/links.ts:118
+#: src/share/links.ts:129
+#: src/share/links.ts:145
+#: src/share/links.ts:147
 msgid "That file is too big to open from a link."
 msgstr ""
 
-#: src/share/links.ts:123
-#: src/share/links.ts:126
+#: src/share/links.ts:131
+msgid "Nobody is sharing that file right now, and no seed node has it."
+msgstr ""
+
+#: src/share/links.ts:132
+msgid "That torrent couldn't be fetched."
+msgstr ""
+
+#: src/share/links.ts:136
+msgid "Use an https:// link to the file."
+msgstr ""
+
+#: src/share/links.ts:152
+msgid "That file is private: open it with the whole share link, which carries its key."
+msgstr ""
+
+#: src/share/links.ts:154
+msgid "That key doesn't open this file."
+msgstr ""
+
+#: src/share/links.ts:161
+#: src/share/links.ts:164
 msgid "That link isn't an Open Battle file."
 msgstr ""
 
-#: src/share/links.ts:151
+#: src/share/links.ts:171
+msgid "a torrent"
+msgstr ""
+
+#: src/share/links.ts:192
 msgid "{name}: {added} new, {already} already here."
 msgstr ""
 
-#: src/share/links.ts:162
+#: src/share/links.ts:203
 #: src/tables/TableLibrary.tsx:244
 #, fuzzy
 msgid "{name} is in your table library."
 msgstr "{name} est dans ta bibliothèque de tables."
 
-#: src/share/links.ts:169
+#: src/share/links.ts:210
 msgid "{name} is on your army shelf."
 msgstr ""
 
-#: src/share/links.ts:178
+#: src/share/links.ts:219
 msgid "That standee couldn't be read."
 msgstr ""
 
-#: src/share/links.ts:179
+#: src/share/links.ts:220
 msgid "{name} is in your figure library."
 msgstr ""
 
-#: src/share/links.ts:188
+#: src/share/links.ts:229
 msgid "Replay opened."
 msgstr ""
 
-#: src/share/links.ts:44
+#: src/share/links.ts:45
 #: src/tables/TableLibrary.tsx:99
 #: src/workshop/Workshop.tsx:271
 #, fuzzy
 msgid "Table"
 msgstr "Table"
 
-#: src/share/links.ts:45
+#: src/share/links.ts:46
 msgid "Army"
 msgstr ""
 
-#: src/share/links.ts:46
+#: src/share/links.ts:47
 msgid "Standee"
 msgstr ""
 
-#: src/share/links.ts:47
+#: src/share/links.ts:48
 msgid "Replay"
 msgstr ""
 

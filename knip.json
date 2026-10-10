@@ -11,6 +11,6 @@
     "games/**/*.js"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs", "server/**/*.mjs"],
-  "ignore": ["src/sandbox/virtual.d.ts"],
+  "ignore": ["src/sandbox/virtual.d.ts", "src/share/webtorrent.d.ts"],
   "ignoreExportsUsedInFile": false
 }

@@ -22,6 +22,7 @@
     "soak": "SOAK=1 vitest run",
     "relay": "node server/relay.mjs",
     "mailbox": "node server/mailbox.mjs",
+    "seeder": "node server/seeder.mjs",
     "perf": "node scripts/perf.mjs",
     "perf:load": "node scripts/load.mjs",
     "soak:browser": "node scripts/soak-browser.mjs",
@@ -53,6 +54,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "three": "^0.186.1",
+    "webtorrent": "^2.8.5",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -62,6 +64,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "bittorrent-tracker": "11.2.3",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",

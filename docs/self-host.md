@@ -93,6 +93,7 @@ browser ──https──▶ Caddy ── /              the app (static files)
                          ├─ /config.json  ─▶ relay (signalling URL + TURN login)
                          ├─ /health.json  ─▶ relay (server-side health)
                          ├─ /mailbox      ─▶ mailbox (play-by-mail turns, web push)
+                         ├─ /seed         ─▶ seeder (shared files, torrent web seeds)
                          └─ /health          the health page
 browser ◀──udp/tcp 3478──▶ coturn (host network)
 ```
@@ -112,6 +113,14 @@ memory (`server/board.mjs`, at `/relay/board`) and the app reads it from there, 
 Nostr relays the hosted app uses. A post has only what its player typed: a display name, the game, its
 size and time, language, live or by mail, and whether voice is on. Posts come down when the seats fill,
 when the host leaves, or after their time, and three reports from different addresses hide one.
+
+The **seed node** (`server/seeder.mjs`, at `/seed`) keeps the figure packs, tables, armies and replays
+your players share, so a share link keeps working after its sharer closes the tab. It holds files by
+their SHA-256 and knows nothing about them; private shares reach it encrypted. Files nobody has fetched
+for 30 days (`SEED_TTL_DAYS`) are forgotten, and the least recently fetched go first when it reaches
+`SEED_MAX_TOTAL_GB`. Anyone who can reach your site can post to it (60 files an hour per address), so
+set `SEED_CONTACT` for takedown notices and `SEED_ADMIN_TOKEN` to drop files; see
+[sharing-files.md](sharing-files.md#takedowns). `SEEDER_URL=off` keeps the app from using it.
 
 coturn uses the host's network, so it sees players' real addresses and its relay ports need no mapping.
 It refuses to relay to private and loopback addresses, so nobody can use it to reach machines on your
@@ -163,6 +172,8 @@ The pieces are ordinary:
 - Route `/relay`, `/config.json` and `/health.json` to the relay, as `deploy/Caddyfile` does.
 - `node server/mailbox.mjs` runs the mailbox (no dependencies). Route `/mailbox` to it and set
   `MAILBOX_URL=on` for the relay, or point the app at it with `?mailbox=` or `VITE_MAILBOX_URL`.
+- `node server/seeder.mjs` runs the seed node (no dependencies). Route `/seed` to it and set
+  `SEEDER_URL=on` for the relay, or point the app at it with `?seeders=` or `VITE_SEEDERS`.
 - Run coturn with the options in `deploy/coturn.sh`.
 
 Without `VITE_SITE_CONFIG`, the app takes the same settings from the page address instead:

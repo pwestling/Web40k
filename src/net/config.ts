@@ -24,6 +24,11 @@
  *   ?openTables=1&board=https://battle.example.com/relay/board
  *                  turn it on with a given board (server/board.mjs), e.g. for
  *                  smoke tests against a local relay (BOARD_ORIGIN there)
+ *   ?trackers=wss://tracker.example        VITE_TRACKERS
+ *                  WebTorrent trackers for shared files (default: public ones)
+ *   ?seeders=https://battle.example.com/seed
+ *                  seed nodes that keep shared files (server/seeder.mjs)
+ *                                          VITE_SEEDERS
  *
  * Open tables posts to the public Nostr relays. A self-hosted site (or a page
  * pointed at a private relay with ?signal=) has it off unless its config.json
@@ -43,12 +48,19 @@ export interface NetConfig {
   openTables: boolean;
   /** A self-hosted site's board (server/board.mjs); without it the board is on Nostr. */
   board?: string;
+  /** WebTorrent trackers for shared files (src/share/torrent.ts); public ones by default. */
+  trackers: string[];
+  /** Seed nodes (server/seeder.mjs) that keep a copy of what's shared; none by default. */
+  seeders: string[];
 }
 
 /** What a site's config.json may say, beyond the relays. */
 interface SiteConfig extends Partial<Omit<NetConfig, "openTables">> {
   openTables?: boolean;
 }
+
+/** Public WebTorrent trackers: they only introduce browsers, like the signalling relays. */
+const PUBLIC_TRACKERS = ["wss://tracker.openwebtorrent.com", "wss://tracker.webtorrent.dev"];
 
 const list = (v: string | null | undefined) =>
   (v ?? "")
@@ -81,6 +93,8 @@ export async function loadSiteConfig(
       ...(typeof body.mailbox === "string" && body.mailbox ? { mailbox: body.mailbox } : {}),
       ...(body.openTables === true ? { openTables: true } : {}),
       ...(typeof body.board === "string" && /^https?:\/\//.test(body.board) ? { board: body.board } : {}),
+      ...(Array.isArray(body.trackers) && body.trackers.length ? { trackers: body.trackers } : {}),
+      ...(Array.isArray(body.seeders) && body.seeders.length ? { seeders: body.seeders } : {}),
     };
   } catch {
     // An unreachable or malformed config.json is the same as none.
@@ -156,6 +170,11 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
     ...(q.get("forceTurn") === "1" ? { forceTurn: true } : {}),
     ...(mailbox ? { mailbox } : {}),
     openTables,
+    trackers:
+      fromUrl("trackers") ??
+      site.trackers ??
+      (list(env.VITE_TRACKERS).length ? list(env.VITE_TRACKERS) : PUBLIC_TRACKERS),
+    seeders: fromUrl("seeders") ?? site.seeders ?? list(env.VITE_SEEDERS),
     ...(openTables && (q.get("board") ?? (selfHosted ? site.board : undefined))
       ? { board: q.get("board") ?? site.board }
       : {}),

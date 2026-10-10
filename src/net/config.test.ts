@@ -6,12 +6,14 @@ describe("netConfig", () => {
 
   it("uses the site's config.json when the URL says nothing", () => {
     const turn = [{ urls: ["turn:battle.example:3478"], username: "1:x", credential: "c" }];
-    setSiteConfig({ signal: ["wss://battle.example/relay"], turn });
+    setSiteConfig({ signal: ["wss://battle.example/relay"], turn, seeders: ["https://battle.example/seed"] });
     expect(netConfig("")).toEqual({
       signal: ["wss://battle.example/relay"],
       nostr: [],
       turn,
       openTables: false,
+      trackers: ["wss://tracker.openwebtorrent.com", "wss://tracker.webtorrent.dev"],
+      seeders: ["https://battle.example/seed"],
     });
   });
 

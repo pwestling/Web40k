@@ -14,7 +14,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-    depends_on: [relay, mailbox]
+    depends_on: [relay, mailbox, seeder]
 
   # Where browsers find each other, and where they get TURN logins.
   relay:
@@ -25,6 +25,7 @@ services:
       TURN_URLS: ${TURN_URLS:-turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp}
       TURN_CHECK: host.docker.internal:3478
       MAILBOX_URL: "on"
+      SEEDER_URL: ${SEEDER_URL:-on}
       OPEN_TABLES: ${OPEN_TABLES:-off}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -41,6 +42,21 @@ services:
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@${DOMAIN}}
     volumes:
       - mailbox_data:/data
+
+  # Seed node: keeps the figure packs, tables, armies and replays players share
+  # and serves them to whoever opens the link later. Set SEED_CONTACT for
+  # takedown notices and SEED_ADMIN_TOKEN to drop files; SEEDER_URL=off hides it.
+  seeder:
+    build: { context: ., target: seeder }
+    restart: unless-stopped
+    environment:
+      MAX_FILE_MB: ${SEED_MAX_FILE_MB:-96}
+      MAX_TOTAL_GB: ${SEED_MAX_TOTAL_GB:-20}
+      TTL_DAYS: ${SEED_TTL_DAYS:-30}
+      CONTACT: ${SEED_CONTACT:-}
+      ADMIN_TOKEN: ${SEED_ADMIN_TOKEN:-}
+    volumes:
+      - seed_data:/data
 
   # TURN: relays game traffic for players whose networks block a direct link.
   # Host networking, so it sees real addresses and its relay ports need no mapping.
@@ -62,3 +78,4 @@ volumes:
   caddy_data:
   caddy_config:
   mailbox_data:
+  seed_data:

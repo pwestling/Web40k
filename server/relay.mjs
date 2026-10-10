@@ -29,6 +29,8 @@
 //   TURN_TTL      lifetime of a TURN login in seconds (86400)
 //   MAILBOX_URL   the play-by-mail mailbox (server/mailbox.mjs) to tell the app
 //                 about; "on" means <the site>/mailbox, as the compose file runs it
+//   SEEDER_URL    a seed node (server/seeder.mjs) that keeps shared files; "on"
+//                 means <the site>/seed, as the compose file runs it
 //   OPEN_TABLES   "on" turns on Open tables, a public board of games looking for
 //                 players, kept here (server/board.mjs, at /relay/board). Off by
 //                 default: a self-hosted site doesn't show the board otherwise
@@ -118,6 +120,13 @@ function mailboxUrl(req) {
   return base ? new URL("/mailbox", base).toString() : null;
 }
 
+function seederUrl(req) {
+  if (!env.SEEDER_URL || env.SEEDER_URL === "off") return null;
+  if (env.SEEDER_URL !== "on") return env.SEEDER_URL;
+  const base = siteUrl(req);
+  return base ? new URL("/seed", base).toString() : null;
+}
+
 function boardUrl(req) {
   const base = siteUrl(req);
   return board && base ? new URL("/relay/board", base).toString() : null;
@@ -126,11 +135,13 @@ function boardUrl(req) {
 function siteConfig(req) {
   const signal = signalUrl(req);
   const mailbox = mailboxUrl(req);
+  const seeder = seederUrl(req);
   const tables = boardUrl(req);
   return {
     signal: signal ? [signal] : [],
     turn: turnUrls.length && env.TURN_SECRET ? [turnLogin()] : [],
     ...(mailbox ? { mailbox } : {}),
+    ...(seeder ? { seeders: [seeder] } : {}),
     ...(tables ? { openTables: true, board: tables } : {}),
   };
 }

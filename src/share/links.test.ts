@@ -62,9 +62,43 @@ describe("shared files by link", () => {
 
   it("makes a share link that carries the file's raw address", () => {
     const here = { origin: "https://play.example", pathname: "/app/" };
-    expect(shareLink("https://github.com/someone/files/blob/main/ridge.table.json", here)).toBe(
+    expect(shareLink("https://github.com/someone/files/blob/main/ridge.table.json", undefined, here)).toBe(
       "https://play.example/app/?open=" +
         encodeURIComponent("https://raw.githubusercontent.com/someone/files/main/ridge.table.json"),
     );
+  });
+});
+
+describe("private shared files", () => {
+  it("encrypts with a key that only opens its own file", async () => {
+    const { encrypt, decrypt, isEncrypted } = await import("./torrent");
+    const plain = new TextEncoder().encode(table("Hidden ridge"));
+    const a = await encrypt(plain);
+    const b = await encrypt(plain);
+    expect(isEncrypted(a.payload)).toBe(true);
+    expect(new TextDecoder().decode(a.payload)).not.toContain("Hidden ridge");
+    expect(await decrypt(a.payload, a.key)).toEqual(plain);
+    expect(await decrypt(a.payload, b.key)).toBeNull();
+  });
+
+  it("opens a private file only with the key from the link's fragment", async () => {
+    const { encrypt } = await import("./torrent");
+    const { payload, key } = await encrypt(new TextEncoder().encode(table("Hidden ridge")));
+    const serve = async () => new Response(payload as BodyInit) as unknown as Response;
+    const link = "https://files.example/blob/abc";
+    expect(await fetchShared(link, serve)).toEqual({ error: expect.stringContaining("private") });
+    const offer = await fetchShared(`${link}#key=${key}`, serve);
+    expect(offer).toMatchObject({ kind: "table", name: "Hidden ridge", private: true, url: link });
+  });
+
+  it("puts a private file's key in the share link's fragment, never its query", async () => {
+    const here = { origin: "https://play.example", pathname: "/" };
+    const magnet = "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=x.obx";
+    const link = shareLink(magnet, "k".repeat(43), here);
+    expect(new URL(link).hash).toBe(`#key=${"k".repeat(43)}`);
+    expect(new URL(link).searchParams.get("open")).toBe(magnet);
+    const { magnetHash, splitKey } = await import("./torrent");
+    expect(magnetHash(magnet)).toBe("0123456789abcdef0123456789abcdef01234567");
+    expect(splitKey(`${magnet}#key=${"k".repeat(43)}`)).toEqual({ link: magnet, key: "k".repeat(43) });
   });
 });

@@ -39,3 +39,14 @@ USER node
 ENV DATA_DIR=/data
 EXPOSE 8790
 CMD ["node", "mailbox.mjs"]
+
+# The seed node: keeps shared files and serves them as torrent web seeds.
+# Plain Node, no dependencies. Files live in /data.
+FROM node:22-alpine AS seeder
+WORKDIR /seeder
+COPY server/seeder.mjs .
+RUN mkdir /data && chown node /data
+USER node
+ENV DATA_DIR=/data
+EXPOSE 8791
+CMD ["node", "seeder.mjs"]
