@@ -3777,7 +3777,7 @@ msgid "{game}: the rules"
 msgstr ""
 
 #: src/printplay/RulesPage.tsx:126
-#: src/ui/WhatsNew.tsx:77
+#: src/ui/WhatsNew.tsx:81
 msgid "Version {version}"
 msgstr ""
 
@@ -10727,59 +10727,75 @@ msgid "Waiting for {side}. You can look around, measure (M) and talk in the chat
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:13
-msgid "Rift Lanterns, our own skirmish game: play now, nothing to import, or print it and play at a real table."
+msgid "Rift Lanterns and Brinewatch, our own skirmish games: play now, nothing to import, or print Rift Lanterns and play at a real table."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:16
-msgid "Four games built in, each with a demo and a guided first game against the computer."
+msgid "Play the computer at Steady or Sharp, with your own army or a sample one."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:17
-msgid "Play online 1v1 or 2v2, with table talk and voice, or watch a game as it streams."
+msgid "Photograph your painted figures and play with them on the table."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:18
-msgid "Table companion: play on your real table with real models, and roll your own dice."
+msgid "Open tables, Live now, online events and ranked games."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:19
-msgid "Play by mail, chess clocks, event nights and a shared campaign book."
+msgid "Game review: the computer goes over your game and shows the better moves."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:20
-msgid "Replays with notes, What if branches and review rooms for going over a game together."
+msgid "Four games built in, each with a demo and a guided first game against the computer."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:21
-msgid "Share the battle: a replay page that opens anywhere, clips with the dice in frame, and cards to post."
+msgid "Play online 1v1 or 2v2, with table talk and voice, or watch a game as it streams."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:22
+msgid "Table companion: play on your real table with real models, and roll your own dice."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:23
+msgid "Play by mail, chess clocks, event nights and a shared campaign book."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:24
-msgid "Your own armies, figures, terrain and rules packages, and a workshop to write a whole game in."
+msgid "Replays with notes, What if branches and review rooms for going over a game together."
 msgstr ""
 
 #: src/ui/WhatsNew.tsx:25
+msgid "Share the battle: a replay page that opens anywhere, clips with the dice in frame, and cards to post."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:28
+msgid "Your own armies, figures, terrain and rules packages, and a workshop to write a whole game in."
+msgstr ""
+
+#: src/ui/WhatsNew.tsx:29
 msgid "German and French, keyboard play, colour-blind sides and a screen-reader announcer."
 msgstr ""
 
-#: src/ui/WhatsNew.tsx:26
+#: src/ui/WhatsNew.tsx:30
 msgid "Install it and play offline."
 msgstr ""
 
-#: src/ui/WhatsNew.tsx:58
+#: src/ui/WhatsNew.tsx:62
 msgid "What's new in {version}"
 msgstr ""
 
-#: src/ui/WhatsNew.tsx:59
+#: src/ui/WhatsNew.tsx:63
 msgid "not read yet"
 msgstr ""
 
-#: src/ui/WhatsNew.tsx:66
 #: src/ui/WhatsNew.tsx:70
+#: src/ui/WhatsNew.tsx:74
 msgid "What's new"
 msgstr ""
 
-#: src/ui/WhatsNew.tsx:86
+#: src/ui/WhatsNew.tsx:90
 msgid "The full list of changes"
 msgstr ""
 

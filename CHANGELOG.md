@@ -2,9 +2,9 @@
 
 What changed in each release of Open Battle. The in-app **What's new** on the start page shows the highlights; this file has the whole list.
 
-## 0.1.0 (2026-10-08)
+## 0.1.0 (2026-10-10)
 
-The first release: a complete tabletop for miniatures wargames in the browser, peer to peer, with four games built in.
+The first release: a complete tabletop for miniatures wargames in the browser, peer to peer, with four game systems and two games of our own built in.
 
 ### Play
 
@@ -13,12 +13,21 @@ The first release: a complete tabletop for miniatures wargames in the browser, p
 - **A 3D table with a top-down view.** Drag units with live distance, coherency and engagement range; ranked blocks wheel, reform, turn and march.
 - **True and abstract line of sight.** Traced from each model's eyes against terrain and models, or with stand-in heights for games that use them. Cover, hidden units and higher ground come from the same check.
 - **Attack automation.** Pick a weapon and a target; the panel works out who is in range and what to roll, and every number can be changed. Abilities that play themselves for the sci-fi game's common rules.
+- **Brinewatch, our second game.** A CC BY skirmish game of action points, climbing and close quarters, written as a workshop package and played with Play now like Rift Lanterns.
+- **Play the computer.** Steady and Sharp opponents that try each move on a copy of the table with the dice rolled; Sharp plans whole turns and weighs the enemy's answer. Bring your own army or a sample one, in every built-in game.
+- **Real rosters beyond the sci-fi game.** Old World, Conquest and Full Spectrum Dominance rosters import, and their universal special rules play themselves. Faction rules (detachment, enhancements, stratagems) come from the roster.
+- **Teach it this rule.** A no-code rule builder for abilities the app doesn't know yet, kept with the army on the shelf.
+- **Your painted army on the table.** Photograph your figures with a phone; the app cuts them out and stands them on the table as photo standees, shared with your opponent.
+- **Tablet touch play.** Drag, rotate, measure and pick on a touch screen.
 - **Advisory rules.** The app measures, rolls and reminds, and the table warnings panel lists every check, but nothing is ever blocked. Undo takes back a whole action.
 - **Missions and secrets.** Missions with suggested scores a player confirms; secret objectives and hidden orders committed on their owner's device and revealed with proof they weren't changed.
 
 ### Together
 
 - **Online, 1v1 or 2v2.** Host a room and send the link. Others join, watch, or take over as host. Teams of two share CP and VP.
+- **Open tables and Live now.** A public board of games looking for players, and any public game to watch as it happens.
+- **Online events.** Swiss rounds with no server: the organiser's browser pairs the rounds, and players sign their results.
+- **Player cards and ranked games.** A card with your record, and ranked games both players sign.
 - **Table talk and voice.** Pings, arrows, areas, chat and reactions, plus push-to-talk or open-mic voice over the same peer connections.
 - **Table companion.** Play on a real table with real models: the phone keeps the game, takes your own dice ("A phone each" or "One phone for both of us"), and asks what it can't see, such as models in range and cover.
 - **Play by mail.** A game across days with signed turn files, commit-reveal dice and an optional mailbox on the self-host kit.
@@ -29,6 +38,7 @@ The first release: a complete tabletop for miniatures wargames in the browser, p
 ### After the game
 
 - **Replays and "What if".** Scrub back through any game, download it as a replay file, or branch a new game from any moment.
+- **Game review.** The computer goes over a finished game, scores each decision, and shows the better move with how sure it is.
 - **Annotated replays.** Notes and marks on moments, chapters, and review rooms where a coach leads and others follow.
 - **Battle stats.** Dice luck, the biggest swing of each round, and calls for the rolls of a lifetime.
 - **Share the battle.** Download a replay as one web page that opens in any browser, even offline; record a clip of the highlights reel or any stretch with the dice in frame; save end-of-game and round cards sized for posting.

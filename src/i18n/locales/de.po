@@ -4603,7 +4603,7 @@ msgid "{game}: the rules"
 msgstr "{game}: die Regeln"
 
 #: src/printplay/RulesPage.tsx:126
-#: src/ui/WhatsNew.tsx:77
+#: src/ui/WhatsNew.tsx:81
 #, fuzzy
 msgid "Version {version}"
 msgstr "Version {version}"
@@ -13200,71 +13200,91 @@ msgstr "Warte auf {side}. Du kannst dich umsehen, messen (M) und im Chat schreib
 
 #: src/ui/WhatsNew.tsx:13
 #, fuzzy
-msgid "Rift Lanterns, our own skirmish game: play now, nothing to import, or print it and play at a real table."
-msgstr "Rift Lanterns, unser eigenes Skirmish-Spiel: sofort spielen, nichts zu importieren, oder ausdrucken und am echten Tisch spielen."
+msgid "Rift Lanterns and Brinewatch, our own skirmish games: play now, nothing to import, or print Rift Lanterns and play at a real table."
+msgstr "Rift Lanterns und Brinewatch, unsere eigenen Skirmish-Spiele: sofort spielen, nichts zu importieren, oder Rift Lanterns ausdrucken und an einem echten Tisch spielen."
 
 #: src/ui/WhatsNew.tsx:16
+#, fuzzy
+msgid "Play the computer at Steady or Sharp, with your own army or a sample one."
+msgstr "Spiele gegen den Computer auf Solide oder Scharf, mit deiner eigenen Armee oder einer Beispielarmee."
+
+#: src/ui/WhatsNew.tsx:17
+#, fuzzy
+msgid "Photograph your painted figures and play with them on the table."
+msgstr "Fotografiere deine bemalten Figuren und spiele mit ihnen auf dem Tisch."
+
+#: src/ui/WhatsNew.tsx:18
+#, fuzzy
+msgid "Open tables, Live now, online events and ranked games."
+msgstr "Offene Tische, Jetzt live, Online-Events und gewertete Spiele."
+
+#: src/ui/WhatsNew.tsx:19
+#, fuzzy
+msgid "Game review: the computer goes over your game and shows the better moves."
+msgstr "Spielanalyse: Der Computer geht dein Spiel durch und zeigt die besseren Züge."
+
+#: src/ui/WhatsNew.tsx:20
 #, fuzzy
 msgid "Four games built in, each with a demo and a guided first game against the computer."
 msgstr "Vier eingebaute Spiele, jedes mit einer Demo und einer geführten ersten Partie gegen den Computer."
 
-#: src/ui/WhatsNew.tsx:17
+#: src/ui/WhatsNew.tsx:21
 #, fuzzy
 msgid "Play online 1v1 or 2v2, with table talk and voice, or watch a game as it streams."
 msgstr "Online spielen, 1 gegen 1 oder 2 gegen 2, mit Tischgesprächen und Sprache, oder einem Spiel im Stream zusehen."
 
-#: src/ui/WhatsNew.tsx:18
+#: src/ui/WhatsNew.tsx:22
 #, fuzzy
 msgid "Table companion: play on your real table with real models, and roll your own dice."
 msgstr "Tischbegleiter: spiel auf deinem echten Tisch mit echten Modellen und würfle mit deinen eigenen Würfeln."
 
-#: src/ui/WhatsNew.tsx:19
+#: src/ui/WhatsNew.tsx:23
 #, fuzzy
 msgid "Play by mail, chess clocks, event nights and a shared campaign book."
 msgstr "Spiel per Post, Schachuhren, Turnierabende und ein gemeinsames Kampagnenbuch."
 
-#: src/ui/WhatsNew.tsx:20
+#: src/ui/WhatsNew.tsx:24
 #, fuzzy
 msgid "Replays with notes, What if branches and review rooms for going over a game together."
 msgstr "Wiederholungen mit Notizen, Was-wäre-wenn-Abzweigungen und Besprechungsräume, um ein Spiel gemeinsam durchzugehen."
 
-#: src/ui/WhatsNew.tsx:21
+#: src/ui/WhatsNew.tsx:25
 #, fuzzy
 msgid "Share the battle: a replay page that opens anywhere, clips with the dice in frame, and cards to post."
 msgstr "Die Schlacht teilen: eine Wiederholungsseite, die sich überall öffnet, Clips mit den Würfeln im Bild und Karten zum Posten."
 
-#: src/ui/WhatsNew.tsx:24
+#: src/ui/WhatsNew.tsx:28
 #, fuzzy
 msgid "Your own armies, figures, terrain and rules packages, and a workshop to write a whole game in."
 msgstr "Deine eigenen Armeen, Figuren, Gelände und Regelpakete, und eine Werkstatt, um ein ganzes Spiel zu schreiben."
 
-#: src/ui/WhatsNew.tsx:25
+#: src/ui/WhatsNew.tsx:29
 #, fuzzy
 msgid "German and French, keyboard play, colour-blind sides and a screen-reader announcer."
 msgstr "Deutsch und Französisch, Spielen mit der Tastatur, farbenblindtaugliche Seiten und Ansagen für Screenreader."
 
-#: src/ui/WhatsNew.tsx:26
+#: src/ui/WhatsNew.tsx:30
 #, fuzzy
 msgid "Install it and play offline."
 msgstr "Installieren und offline spielen."
 
-#: src/ui/WhatsNew.tsx:58
+#: src/ui/WhatsNew.tsx:62
 #, fuzzy
 msgid "What's new in {version}"
 msgstr "Neu in {version}"
 
-#: src/ui/WhatsNew.tsx:59
+#: src/ui/WhatsNew.tsx:63
 #, fuzzy
 msgid "not read yet"
 msgstr "noch nicht gelesen"
 
-#: src/ui/WhatsNew.tsx:66
 #: src/ui/WhatsNew.tsx:70
+#: src/ui/WhatsNew.tsx:74
 #, fuzzy
 msgid "What's new"
 msgstr "Was ist neu"
 
-#: src/ui/WhatsNew.tsx:86
+#: src/ui/WhatsNew.tsx:90
 #, fuzzy
 msgid "The full list of changes"
 msgstr "Alle Änderungen"
