@@ -8,11 +8,15 @@
 //   POST /board/withdraw   {id, token}: take it down
 //   POST /board/report     {id, why}: three reports from different addresses hide it
 //   GET  /board/results    ranked results (#65), signed by both players
-//   POST /board/results    {result, sigs, declined?}: one more; the app checks the signatures
+//   POST /board/results    {result, sigs, declined?}: one more, kept only if its signatures hold
+//                          (the board never judges what a result says: the app does)
 //   GET  /board/events     online events (#67): each organiser's event and each player's entry
 //   POST /board/events     {doc, sig}: the newest of each (kind, event, author) is kept; the app checks the signatures
 //
 // The app checks every post again as it reads it (src/opentables/post.ts).
+//
+// Every path also answers under /v1 (/v1/board, /v1/board/results, ...): the
+// protocol in docs/board-protocol.md, open to any client that speaks it.
 
 const MAX_POSTS = 300;
 // A club or a shop shares one address: room for its tables, not for a flood.
@@ -79,6 +83,7 @@ export function createBoard(options = {}) {
 
   /** Answer a board request; false when it isn't one. */
   async function handle(req, res, path, from) {
+    if (path === "/v1/board" || path.startsWith("/v1/board/")) path = path.slice(3);
     if (path !== "/board" && !path.startsWith("/board/")) return false;
     const json = (body, status = 200) => {
       res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
@@ -117,6 +122,7 @@ export function createBoard(options = {}) {
     if (path === "/board/results") {
       if (!resultLooksRight(body)) return (json({ error: "result" }, 400), true);
       if (results.has(body.result.replay)) return (json({ ok: true }), true);
+      if (!(await signaturesHold(body))) return (json({ error: "signature" }, 400), true);
       const hour = (sent.get(from) ?? []).filter((t) => now() - t < 3600_000);
       if (hour.length >= RESULTS_PER_HOUR) return (json({ error: "too many" }, 429), true);
       if (results.size >= MAX_RESULTS) return (json({ error: "full" }, 503), true);
@@ -184,6 +190,50 @@ function resultLooksRight(r) {
         typeof r.sigs[1 - r.declined.seat] === "string" &&
         r.sigs[1 - r.declined.seat].length <= 200
       : r.sigs.every((x) => typeof x === "string" && x.length <= 200))
+  );
+}
+
+/**
+ * Both players' signatures on a result (or the signer's, and the decliner's
+ * on their refusal), as src/ranked/verify.ts checks them. The result travels
+ * in its canonical spelling (src/core/ranked.ts canonResult), so its JSON is
+ * the text signed. Keys are P-256 public keys, "x.y" in base64url.
+ */
+export async function signaturesHold(r) {
+  const canon = JSON.stringify(r.result);
+  const players = r.result.players;
+  if (!Array.isArray(players) || players.length !== 2) return false;
+  const check = async (text, sig, key) => {
+    if (typeof key !== "string" || typeof sig !== "string") return false;
+    const [x, y] = key.split(".");
+    try {
+      const k = await crypto.subtle.importKey(
+        "jwk",
+        { kty: "EC", crv: "P-256", x, y, ext: true },
+        { name: "ECDSA", namedCurve: "P-256" },
+        false,
+        ["verify"],
+      );
+      return await crypto.subtle.verify(
+        { name: "ECDSA", hash: "SHA-256" },
+        k,
+        Buffer.from(sig, "base64"),
+        new TextEncoder().encode(text),
+      );
+    } catch {
+      return false;
+    }
+  };
+  const signed = `open-battle-result:${canon}`;
+  if (r.declined) {
+    const d = r.declined;
+    return (
+      (await check(signed, r.sigs[1 - d.seat], players[1 - d.seat]?.key)) &&
+      (await check(`open-battle-decline:${d.why}:${canon}`, d.sig, players[d.seat]?.key))
+    );
+  }
+  return (
+    (await check(signed, r.sigs[0], players[0]?.key)) && (await check(signed, r.sigs[1], players[1]?.key))
   );
 }
 

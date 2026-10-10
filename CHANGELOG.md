@@ -4,9 +4,12 @@ What changed in each release of Open Battle. The in-app **What's new** on the st
 
 ## Unreleased
 
-- **Ladders keep house rules apart.** A ranked result now records the rules it was played under (the app build and every rules package, by hash), and both players sign them. A game with house rules counts on a ladder of its own, named after the packages; plain games keep the plain ladder. See [docs/compatibility.md](docs/compatibility.md).
-- **Different versions at one table.** Players' apps now say which version they run when they meet, and a banner names both when they differ.
-- **For contributors.** [GOVERNANCE.md](GOVERNANCE.md), a code of conduct, a security policy, a pull request template, [docs/compatibility.md](docs/compatibility.md), and [CLAUDE.md](CLAUDE.md) with Claude Code skills for writing packages and modules, checking for publisher IP and verifying a change.
+- **Ladders keep different rules apart.** A ranked result now records the rules it was played under (the app build and every rules package, by hash), and both players check and sign them. Named seasons in `rulesets.json` share a ladder; any other rules, a house rule or a modded copy of a game, get a ladder of their own. See [docs/compatibility.md](docs/compatibility.md).
+- **Shared dice in ranked games.** No one device decides a roll: the host commits to a secret seed, the opponent adds one, and each round's dice are checked once the host's seed is shown. A result whose dice don't check out can't be signed.
+- **No farming the ladder.** A rating moves only against an opponent who has played five games against three different players.
+- **Different versions at one table.** Players' apps say which version they run when they meet, and a banner names both when they differ. A player whose version can't share the table is kept out of the game rather than shown a table that drifts.
+- **The board checks signatures.** A self-hosted board keeps a ranked result only if both signatures hold, and answers under `/v1`. Its protocol is in [docs/board-protocol.md](docs/board-protocol.md).
+- **For contributors.** [GOVERNANCE.md](GOVERNANCE.md), a code of conduct, a security policy, a pull request template, [docs/compatibility.md](docs/compatibility.md), and [CLAUDE.md](CLAUDE.md) with Claude Code skills for writing packages and modules, checking for publisher IP, verifying a change and drafting a proposal, and a Proposal issue form.
 
 ## 0.1.0 (2026-10-10)
 

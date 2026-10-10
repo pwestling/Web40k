@@ -97,8 +97,8 @@ The file is a replay with extra details: the app build, the rules packages in us
 
 ## Working with Claude Code
 
-[CLAUDE.md](CLAUDE.md) gives Claude Code the project's rules, and `.claude/skills/` has guided workflows it picks up on its own: `rules-package` (write a package), `system-module` (add or change a built-in game), `ip-check` (look for publisher IP before committing) and `verify-change` (run the right checks before pushing). They work as plain checklists for people too.
+[CLAUDE.md](CLAUDE.md) gives Claude Code the project's rules, and `.claude/skills/` has guided workflows it picks up on its own: `rules-package` (write a package), `system-module` (add or change a built-in game), `ip-check` (look for publisher IP before committing), `verify-change` (run the right checks before pushing) and `propose-change` (draft a proposal issue when a change needs one). They work as plain checklists for people too.
 
 ## Pull requests
 
-Keep pull requests focused, say what you changed and how you tested it, and include a screenshot for UI changes. By contributing you agree that your work is released under the [MIT License](LICENSE).
+Keep pull requests focused, say what you changed and how you tested it, and include a screenshot for UI changes. By contributing you agree that your work is released under the [MIT License](LICENSE) (or CC BY 4.0 for our games' rules and art); there is no CLA or sign-off to add. See [GOVERNANCE.md](GOVERNANCE.md#contributions). Changes to the protocol, the module API, ranked results, rulesets or the board protocol start with a **Proposal** issue.

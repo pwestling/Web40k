@@ -19,7 +19,7 @@ Open Battle ships mechanics, never a publisher's content. Players import their o
 ## How
 
 - Read the whole diff (`git diff main...HEAD`) or file, not a sample.
-- Grep for likely hits: `git diff main...HEAD | grep -niE "space marine|astartes|necron|ork|eldar|aeldari|tyranid|t'au|tau empire|chaos|imperium|stratagem|warhammer|games workshop|codex|bolter|lasgun|old world|empire of man"` (expect false positives; judge each one).
+- Grep for likely hits: `git diff main...HEAD | grep -niwE "space marines?|astartes|necrons?|orks?|eldar|aeldari|tyranids?|t'au|tau empire|chaos|imperium|stratagems?|warhammer|games workshop|codex|bolters?|lasguns?|old world|empire of man"` (`-w` matches whole words, so "work" and "fork" don't hit; expect some false positives anyway and judge each one). The engine's own words for 11th-edition mechanics, such as `stratagem` in `src/systems/wh40k`, are mechanics and fine.
 - For each hit, say whether it is a mechanic (fine), an invented name (fine) or publisher content (remove it).
 
 ## Report

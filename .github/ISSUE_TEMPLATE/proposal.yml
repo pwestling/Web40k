@@ -1,0 +1,40 @@
+name: Proposal
+description: A change to the protocol, the module API, ranked results, rulesets, the board protocol or governance (GOVERNANCE.md).
+title: "Proposal: "
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some changes affect every player, saved game or package author, so they're written down first and left open for at least seven days. See [GOVERNANCE.md](https://github.com/pwestling/web40k/blob/main/GOVERNANCE.md#changes-that-need-a-proposal) and [docs/compatibility.md](https://github.com/pwestling/web40k/blob/main/docs/compatibility.md).
+  - type: dropdown
+    id: area
+    attributes:
+      label: What does it change?
+      multiple: true
+      options:
+        - Network protocol or event shapes (PROTOCOL)
+        - Module API (MODULE_API)
+        - What a ranked result records or signs, or how ratings work
+        - A standard ruleset (rulesets.json)
+        - The board protocol (docs/board-protocol.md)
+        - Licence, governance or code of conduct
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What changes, and why
+    validations:
+      required: true
+  - type: textarea
+    id: existing
+    attributes:
+      label: What happens to existing games, packages, results and forks
+      description: Saved games and replays, published packages, ranked results already signed, and builds that don't have the change yet.
+    validations:
+      required: true
+  - type: textarea
+    id: pr
+    attributes:
+      label: Pull request or branch (if there is one)

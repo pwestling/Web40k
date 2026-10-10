@@ -17,21 +17,34 @@ Peers tell each other their protocol and build when they meet (`hello` and `host
 
 ## Ranked games and ladders
 
-A ranked result (`RankedResult` in `src/core/ranked.ts`) records `rules`: the app build that set the game's packages and every package the game ran, by id, version and hash, with the game's own package marked `game`. Both players sign it along with the score.
+A ranked result (`RankedResult` in `src/core/ranked.ts`) records `rules`: the build that wrote it and every package the game ran, by id, version and hash, with the game's own package marked `game`. Both players sign it along with the score, and each signer first checks:
+
+- the build is their own, so a signed result means both ran it;
+- every package is in their own library, and it is the game itself exactly when the file's own manifest says `kind: "system"` (the host can't relabel house rules as the game);
+- the shared dice of every round rolled the same on their device (below).
 
 Ratings are worked out on each device, one ladder at a time (`ladderKey` in `src/ranked/ratings.ts`):
 
-- A game with no house rules counts on its system's plain ladder, named after the game.
-- A game with house rules counts on a ladder of its own: the system plus the sorted hashes of the added packages. Two groups who play the same house rules share a ladder without asking anyone. The ladder is named after the game and the packages ("Rift Lanterns with Battle Scars 1.0.0").
-- Results from before rulesets record no `rules` and count on the plain ladder.
+- **Named rulesets.** [`rulesets.json`](../rulesets.json) names seasons: a system, the app versions and the sets of package hashes that play as it. A result that matches counts on that season's ladder. A change that plays the same (a typo, a label) adds its hash to the season; a balance change starts a new season with a new id, so old ratings are never rewritten. A test fails when a game shipped in `games/` changes without an entry, so nobody forgets.
+- **Everything else** counts on a ladder named by its exact rules: the system, the app version (the build before `+`) and the hash of every package. A buffed copy of a game, a house rule, a fork's build (`0.1.0-<name>`) or a new release each get their own ladder, so nothing changes a rating on another's.
+- **Results from before rulesets** record no `rules` and keep to a ladder of their own. Current clients never write one: the host refuses a result that doesn't match what its build would write, and a signer refuses one that doesn't match theirs. Only two players running old builds together could still make one.
 
-So a mod can never quietly change someone's rating on the plain ladder, and a community's house rules get a ladder for free.
+**The farming bar.** Keys cost nothing to make, so a player's rating moves only against an opponent who has played five counted games against three different keys. Games against newer keys still count towards that bar. The same two keys count at most three games a day.
 
-### What ranked doesn't check yet
+## Shared dice
 
-- **Builds.** The plain ladder of a built-in game mixes app builds. Balance changes to built-in systems are listed in `CHANGELOG.md`. A future `rulesets.json` will name the standard rulesets the public board highlights, and a balance change will start a new season rather than rewrite ratings.
-- **Dice.** The host's device rolls. Signing stops a player from inventing a result, but a modified host could weight its dice. Commit-reveal dice (as play by mail uses) for ranked games are planned.
-- **Overrides.** Rules are advisory, so players can edit any roll or wound. Every edit is in the replay; listing them in what both sign is planned.
+In a ranked game no one device decides a roll (`src/core/sharedDice.ts`, `src/ranked/dice.ts`):
+
+1. The host commits to a secret seed (its SHA-256) in the log.
+2. The other ranked player answers with a seed of their own, in the clear.
+3. Each event's dice come from both seeds and the event's number, and the log keeps the intent each event came from.
+4. When a battle round ends, the host reveals its seed and commits to the next. The other player rolls the round's events again from the log and checks they come out the same. A result whose dice don't check out can't be signed.
+
+A rules package's event is checked by the seed its sandbox was given; running the package again to check its output is still to do. A host that leaves or reloads starts a new commitment, and the stretch it never revealed is counted as unchecked.
+
+What's left: once both seeds are in, the host knows the round's dice, so a modified host could see a roll coming and choose its moves. Answering each roll with a fresh seed from the other player would close that, at the cost of a message per roll.
+
+**Overrides.** Rules are advisory, so players can still edit any roll or wound. Every edit is in the replay; listing them in what both sign is planned.
 
 ## Promises for package authors
 
@@ -42,13 +55,13 @@ So a mod can never quietly change someone's rating on the plain ladder, and a co
 
 ## Promises for forks
 
-The code is MIT; fork freely. A fork that keeps `PROTOCOL` unchanged and plays by it can join Open Battle tables and post ranked results, which carry its build. A fork that changes the protocol must change `PROTOCOL`, so players see a clear "can't play together" message instead of a table that drifts. See [GOVERNANCE.md](../GOVERNANCE.md#the-open-battle-name) for when a fork should use its own name.
+The code is MIT; fork freely. A fork marks its version with a prerelease tag (`0.1.0-<name>` in `package.json`), so its build string names it and its ranked games keep to their own ladders. If it keeps `PROTOCOL` unchanged and plays by it, it can join Open Battle tables and post to the board ([board-protocol.md](board-protocol.md)). A fork that changes the protocol must change `PROTOCOL`, so players see a clear "can't play together" message instead of a table that drifts. See [GOVERNANCE.md](../GOVERNANCE.md#the-open-battle-name) for when a fork should use its own name.
 
 ## Shared servers
 
 Every server the app talks to is open source and lives in this repository (`server/`): the signalling relay, the open tables and ranked results board, and the play-by-mail mailbox. Anyone can run their own with the [self-host kit](self-host.md).
 
-They serve modded clients too. The board stores any result that is shaped right and signed, whatever build or packages it came from; it never decides what counts. Each client sorts results into ladders by the rules they record, so a modded client's games land on their own ladder and never change ratings on the plain one. A future server feature must keep both properties: open source here, and open to any client that speaks the protocol.
+They serve modded clients too. The board stores any result whose two signatures hold, whatever build or packages it came from; it never decides what counts. Its protocol is written down in [board-protocol.md](board-protocol.md). Each client sorts results into ladders by the rules they record, so a modded client's games land on their own ladder and never change ratings on the plain one. A future server feature must keep both properties: open source here, and open to any client that speaks the protocol.
 
 ## Changing any of this
 

@@ -29,4 +29,4 @@ pnpm format && pnpm lint && pnpm typecheck && pnpm test
 
 ## Skills
 
-`.claude/skills/` has guided workflows: `rules-package`, `system-module`, `ip-check` and `verify-change`.
+`.claude/skills/` has guided workflows: `rules-package`, `system-module`, `ip-check`, `verify-change` and `propose-change`.

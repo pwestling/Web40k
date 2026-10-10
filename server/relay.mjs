@@ -173,7 +173,7 @@ const server = createServer(async (req, res) => {
   const from = String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "")
     .split(",")[0]
     .trim();
-  if (board && env.BOARD_ORIGIN && path.startsWith("/board")) {
+  if (board && env.BOARD_ORIGIN && (path.startsWith("/board") || path.startsWith("/v1/board"))) {
     res.setHeader("access-control-allow-origin", env.BOARD_ORIGIN);
     res.setHeader("access-control-allow-headers", "content-type");
     res.setHeader("access-control-allow-methods", "GET, POST");

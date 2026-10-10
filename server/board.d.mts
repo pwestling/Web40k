@@ -12,3 +12,6 @@ export interface Board {
 }
 
 export function createBoard(options?: { now?: () => number }): Board;
+
+/** Whether a ranked result's signatures hold (both players', or the signer's and the decliner's). */
+export function signaturesHold(r: unknown): Promise<boolean>;
