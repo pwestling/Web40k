@@ -1,4 +1,5 @@
 import { ScriptPanel } from "../ui/ScriptPanel";
+import { CardDecks } from "../ui/Cards";
 import { useEffect, useRef, useState, Suspense } from "react";
 import { sideName, sidePlayers, sides, type GameState, type Unit } from "../core";
 import { t, tn } from "../i18n";
@@ -261,6 +262,7 @@ function MissionTab({ before }: { before: boolean }) {
       {before && mine.length > 0 && <MissionPicker />}
       <ScorePanel inline />
       <SecretMissions players={mine} />
+      <CardDecks players={mine} />
       <SecretObjectives players={mine} />
     </div>
   );

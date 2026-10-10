@@ -1,4 +1,6 @@
 import type { BaseShape } from "../core";
+import type { CardDeck } from "../core/cards";
+import { scanDecks } from "./decks";
 import {
   cleanText,
   customOf,
@@ -65,6 +67,8 @@ export interface TtsTable {
   units: TtsUnit[];
   /** Names of the Unity asset bundles on the table ("" when unnamed): only Unity can read them. */
   bundles?: string[];
+  /** Its card decks: mission cards and the like (#75). */
+  decks?: CardDeck[];
 }
 
 /** Models of a name this close (edge to edge, roughly) belong to one unit. */
@@ -160,11 +164,13 @@ export function scanTable(json: unknown): TtsTable {
       named.push({ name: name || "Unit", side: 0, models: group, placed: true });
   placed.push(...withSergeants(named));
   const all = splitSides([...placed, ...units]);
+  const decks = scanDecks(objects);
   // Each army's units across the table, so they keep an order players recognise; bags last.
   return {
     title,
     terrain,
     ...(bundles.length ? { bundles } : {}),
+    ...(decks.length ? { decks } : {}),
     units: all.sort((a, b) => +!a.placed - +!b.placed || a.side - b.side || whereIs(a).x - whereIs(b).x),
   };
 }

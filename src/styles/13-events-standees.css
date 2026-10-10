@@ -256,3 +256,51 @@ canvas:focus-visible {
   outline: 2px solid var(--accent, #60a5fa);
   outline-offset: -2px;
 }
+
+/* Card decks (#75): the player's own card pictures, in a hand under each deck. */
+.card-decks .deck {
+  margin: 6px 0 10px;
+}
+.card-decks .deck-player {
+  margin: 4px 0;
+}
+.card-decks .hand {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.card-decks .hand li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 92px;
+}
+.card-decks .hand li.shown .card-pic {
+  outline: 2px solid var(--accent, #60a5fa);
+}
+.card-pic {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #0006;
+  border-radius: 5px;
+  background-color: #222;
+  background-repeat: no-repeat;
+  cursor: zoom-in;
+}
+.card-pic.blank {
+  cursor: default;
+}
+.card-big {
+  width: min(420px, 90vw);
+  margin: auto;
+  text-align: center;
+}
+.card-big .card-pic {
+  cursor: default;
+  max-height: 80vh;
+}

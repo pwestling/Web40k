@@ -1,4 +1,5 @@
 import { RankedOffer, RankedSign } from "../ranked/RankedGame";
+import { CardDecks } from "./Cards";
 import { saveJson } from "./files";
 import { characterName, levelName, useSolo } from "../bot/solo";
 import { displayName } from "../i18n/names";
@@ -234,6 +235,7 @@ export function Hud() {
         ))}
       <SecretObjectives players={mine} />
       <SecretMissions players={mine} />
+      <CardDecks players={mine} />
       {!(mine.length > 0 && round === 0) && <CampaignFold />}
 
       {role !== "spectator" && (

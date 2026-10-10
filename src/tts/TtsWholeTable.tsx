@@ -56,7 +56,8 @@ export function TtsWholeTable({
       )
     : "";
   const placed = scan.units.filter((u) => u.placed);
-  if (!scan.terrain.length && !scan.units.length) return null;
+  const decks = scan.decks ?? [];
+  if (!scan.terrain.length && !scan.units.length && !decks.length) return null;
   const sideOf = (i: number): 0 | 1 => (scan.units[i]!.side ^ +swapped ^ +moved.has(i)) as 0 | 1;
   const chosen = { ...scan, units: scan.units.map((u, i) => ({ ...u, side: sideOf(i) })) };
   const sides = new Set(chosen.units.map((u) => u.side)).size;
@@ -112,6 +113,14 @@ export function TtsWholeTable({
         parts.push(t("Pick your TTS folder after loading the save in TTS once, and they come from there."));
     }
     if (bundle) parts.push(bundle);
+    if (decks.length)
+      parts.push(
+        tn(
+          decks.length,
+          "Its deck of cards comes with the table: Cards, on the left, once a game is on it.",
+          "Its {n} decks of cards come with the table: Cards, on the left, once a game is on it.",
+        ),
+      );
     if (brought.off)
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
@@ -132,6 +141,7 @@ export function TtsWholeTable({
             ? [tn(scan.units.length - placed.length, "{n} still in a bag", "{n} still in bags")]
             : []),
           tn(sides, "{n} army", "{n} armies"),
+          ...(decks.length ? [tn(decks.length, "{n} deck of cards", "{n} decks of cards")] : []),
         ].join(", ")}
         . {bundle && `${bundle} `}
         {t(

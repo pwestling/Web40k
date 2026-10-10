@@ -59,6 +59,16 @@ export interface TtsObject {
   CustomMesh?: { MeshURL?: string; DiffuseURL?: string; TypeIndex?: number };
   ContainedObjects?: TtsObject[];
   ChildObjects?: TtsObject[];
+  /** Cards (#75): the sheets a deck's or card's faces are cut from, by sheet number. */
+  CustomDeck?: Record<
+    string,
+    { FaceURL?: string; BackURL?: string; NumWidth?: number; NumHeight?: number; UniqueBack?: boolean }
+  >;
+  /** A card's sheet number × 100 + its cell. */
+  CardID?: number;
+  /** A deck's cards, top first, when its ContainedObjects aren't written out. */
+  DeckIDs?: number[];
+  SidewaysCard?: boolean;
   States?: Record<string, TtsObject>;
 }
 

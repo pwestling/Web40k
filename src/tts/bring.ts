@@ -222,6 +222,7 @@ export async function bringTable(
       terrain,
       zones: across && base.zones.length === 2 ? zones("short", size.width, size.depth) : base.zones,
       objectives: base.objectives,
+      ...(scan.decks?.length ? { decks: scan.decks } : {}),
     },
   };
   const sideName = (side: 0 | 1) => armyName(table, side, scan.title);

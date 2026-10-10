@@ -1,5 +1,6 @@
 import type { GameEvent } from "./actions";
 import { revealMatches } from "./secrets";
+import { cleanDecks, pileOf, type CardPile } from "./cards";
 import { shareSideResources, sidePlayers } from "./teams";
 import { applyDamage } from "./attack";
 import {
@@ -261,8 +262,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ...state,
         ...event.layout,
         terrain: event.layout.terrain.map(upgradePiece),
+        // A table with decks brings them (#75); one without leaves the game's as they are.
+        ...(event.layout.decks ? { decks: cleanDecks(event.layout.decks) } : {}),
         tableSource: event.source ?? null,
       };
+    case "deck/discard":
+    case "deck/shuffle": {
+      const pile = pileOf(state, event.player, event.deck);
+      const next: CardPile =
+        event.type === "deck/discard"
+          ? { ...pile, discarded: [...pile.discarded, event.key] }
+          : { discarded: [], returned: [...pile.returned, ...pile.discarded] };
+      const mine = { ...state.cardPiles?.[event.player], [event.deck]: next };
+      return { ...state, cardPiles: { ...state.cardPiles, [event.player]: mine } };
+    }
+    case "deck/remove":
+      return { ...state, decks: state.decks?.filter((d) => d.id !== event.id) };
     case "terrain/add":
     case "terrain/update":
       return {

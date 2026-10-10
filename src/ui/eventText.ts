@@ -647,6 +647,8 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     }
     case "secret/commit": {
       const n = event.secrets.length;
+      const deck = deckOfKey(game, event.secrets[0]?.key ?? "");
+      if (deck) return t("{name} drew a card from {deck}", { name: nameOf(event.player), deck: deck.name });
       const p = { name: nameOf(event.player), secret: event.label ?? t("a secret") };
       return n > 1
         ? t("{name} locked in {secret}: {n} cards, face down", { ...p, n })
@@ -655,6 +657,13 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     case "secret/reveal": {
       // A unit id reads as its name ("drew Warden Guard"); anything else as written.
       const v = event.value;
+      const deck = deckOfKey(game, event.key);
+      if (deck)
+        return t("{name} showed {card} from {deck}", {
+          name: nameOf(event.player),
+          card: deck.cards.find((c) => c.id === v)?.name ?? String(v),
+          deck: deck.name,
+        });
       const card = event.key.startsWith("mission:")
         ? systemModule(game.system)
             .missions?.find((m) => m.id === game.mission?.id)
@@ -671,6 +680,25 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
         ? t("{name} revealed {secret}: {shown}", p)
         : t("{name} revealed {secret}: {shown} (didn't match what was locked in)", p);
     }
+    case "deck/discard": {
+      const deck = game.decks?.find((d) => d.id === event.deck);
+      const shown = game.secrets?.[event.player]?.[event.key]?.revealed?.value;
+      const card = deck?.cards.find((c) => c.id === shown);
+      const p = { name: nameOf(event.player), deck: deck?.name ?? "", card: card?.name ?? "" };
+      return card
+        ? t("{name} discarded {card} ({deck})", p)
+        : t("{name} discarded a card from {deck}, face down", p);
+    }
+    case "deck/shuffle":
+      return t("{name} shuffled their discards back into {deck}", {
+        name: nameOf(event.player),
+        deck: game.decks?.find((d) => d.id === event.deck)?.name ?? "",
+      });
+    case "deck/remove":
+      return t("{name} put the {deck} deck away", {
+        name: nameOf(by),
+        deck: before.decks?.find((d) => d.id === event.id)?.name ?? "",
+      });
     case "game/system":
       return t("Game: {system}", { system: systemLabel(game.system, systemOf(game).name) });
     case "player/action": {
@@ -786,4 +814,10 @@ function lostDice(before: GameState, after: GameState, unitId: string): number[]
     }
   }
   return out;
+}
+
+/** The deck a card's secret key draws from (core/cards.ts). */
+function deckOfKey(game: GameState, key: string) {
+  const id = key.startsWith("deck:") ? key.split(":")[1] : undefined;
+  return id ? game.decks?.find((d) => d.id === id) : undefined;
 }

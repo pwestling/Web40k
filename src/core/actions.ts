@@ -14,6 +14,7 @@ import {
 } from "./ranked";
 import type { BranchEvent } from "./branch";
 import { isCommitment, revealMatches, secretOf } from "./secrets";
+import { deckPrefix, inHand, type CardDeck } from "./cards";
 import { opposed } from "./teams";
 import {
   applyAction,
@@ -74,6 +75,8 @@ export interface Layout {
   terrain: TerrainPiece[];
   objectives: Objective[];
   zones: Zone[];
+  /** The table's card decks (core/cards.ts): a TTS save's mission cards (#75). */
+  decks?: CardDeck[];
 }
 
 /**
@@ -281,6 +284,12 @@ export type Intent =
     }
   /** Reveal a committed secret: every peer checks the value and salt against the commitment. */
   | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
+  /** A card drawn from a deck (core/cards.ts) goes to the discard pile, face up or not. */
+  | { type: "deck/discard"; deck: string; key: string }
+  /** The player's discards from a deck go back in it. */
+  | { type: "deck/shuffle"; deck: string }
+  /** Put a deck away: off the table for everyone. */
+  | { type: "deck/remove"; id: string }
   /** Start a special move now (scouts): moves are measured from here, up to `inches`. */
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   | { type: "undo"; seq: number; also?: number[] }
@@ -449,6 +458,9 @@ export type GameEvent =
     }
   /** Reveal a committed secret: every peer checks the value and salt against the commitment. */
   | { type: "secret/reveal"; player: PlayerId; key: string; value: unknown; salt: string; label?: string }
+  | { type: "deck/discard"; player: PlayerId; deck: string; key: string }
+  | { type: "deck/shuffle"; player: PlayerId; deck: string }
+  | { type: "deck/remove"; id: string }
   | { type: "unit/specialMove"; id: UnitId; inches: number; flag: string }
   /**
    * Takes back an earlier event (and `also` these, taken back with it: a
@@ -931,6 +943,19 @@ export function resolveIntent(
       }
       return intent;
     }
+    case "deck/discard": {
+      if (!state?.decks?.some((d) => d.id === intent.deck) || !intent.key.startsWith(deckPrefix(intent.deck)))
+        return null;
+      if (!inHand(state, from, intent.deck).some(([k]) => k === intent.key)) return null;
+      return { ...intent, player: from };
+    }
+    case "deck/shuffle":
+      if (!state?.decks?.some((d) => d.id === intent.deck) || !state.players[from]) return null;
+      return { ...intent, player: from };
+    case "deck/remove":
+      return state?.players[from]?.seat !== undefined && state.decks?.some((d) => d.id === intent.id)
+        ? intent
+        : null;
     case "secret/reveal":
       if (!state || intent.player !== from) return null;
       return revealMatches(secretOf(state, from, intent.key), intent.value, intent.salt) ? intent : null;

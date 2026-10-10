@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { GameState, Layout, TerrainPiece, Zone } from "../core";
 import { idbStore } from "../packages/idb";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
+import { cleanDecks } from "../core/cards";
 import { t, tn } from "../i18n";
 
 /**
@@ -69,7 +70,12 @@ export function tableFromGame(game: GameState, name: string, id: string = crypto
     system: game.system ?? DEFAULT_SYSTEM,
     savedAt: Date.now(),
     table: { width: game.table.width, depth: game.table.depth },
-    layout: { terrain: game.terrain, objectives: game.objectives, zones: game.zones },
+    layout: {
+      terrain: game.terrain,
+      objectives: game.objectives,
+      zones: game.zones,
+      ...(game.decks?.length ? { decks: game.decks } : {}),
+    },
   };
 }
 
@@ -129,6 +135,7 @@ export function readTable(data: unknown): SavedTable | null {
       terrain: layout.terrain as TerrainPiece[],
       objectives: Array.isArray(layout.objectives) ? layout.objectives : [],
       zones: Array.isArray(layout.zones) ? layout.zones : [],
+      ...(Array.isArray(layout.decks) ? { decks: cleanDecks(layout.decks) } : {}),
     },
   };
 }

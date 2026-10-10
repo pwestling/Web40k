@@ -1967,6 +1967,109 @@ const checks = {
     return page.errors;
   },
 
+  async "tts-cards"() {
+    // #75: a save's mission deck comes with its table; a player draws, shows, discards and shuffles back.
+    const { page, context } = await device();
+    const box = (w, h, d) => {
+      const v = [];
+      for (const y of [0, h])
+        for (const z of [-d / 2, d / 2]) for (const x of [-w / 2, w / 2]) v.push(`v ${x} ${y} ${z}`);
+      const f = ["1 2 4 3", "5 7 8 6", "1 5 6 2", "3 4 8 7", "1 3 7 5", "2 6 8 4"].map((q) => `f ${q}`);
+      return [...v, ...f].join("\n") + "\n";
+    };
+    // Three cards side by side on one sheet, each 63 × 88.
+    const cells = ["#c33", "#3c3", "#33c"]
+      .map((c, i) => `<rect x="${i * 63}" y="0" width="63" height="88" fill="${c}"/>`)
+      .join("");
+    const served = {
+      "https://example.com/fig.obj": ["text/plain", box(1, 1.5, 1)],
+      "https://example.com/cards.svg": [
+        "image/svg+xml",
+        `<svg xmlns="http://www.w3.org/2000/svg" width="189" height="88">${cells}</svg>`,
+      ],
+    };
+    await context.route("https://example.com/**", (route) => {
+      const [type, body] = served[route.request().url()] ?? ["text/plain", ""];
+      return route.fulfill({
+        status: 200,
+        headers: { "access-control-allow-origin": "*", "content-type": type },
+        body,
+      });
+    });
+    const fig = (nickname, x, z) => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY: 0, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: "https://example.com/fig.obj", TypeIndex: 1 },
+    });
+    const sheet = {
+      7: {
+        FaceURL: "https://example.com/cards.svg",
+        BackURL: "https://example.com/cards.svg",
+        NumWidth: 3,
+        NumHeight: 1,
+      },
+    };
+    const deck = {
+      Name: "Deck",
+      Nickname: "Secondary Missions",
+      CustomDeck: sheet,
+      ContainedObjects: ["Assassination", "Engage", "Area Denial"].map((n, i) => ({
+        Name: "Card",
+        Nickname: n,
+        CardID: 700 + i,
+        CustomDeck: sheet,
+      })),
+    };
+    const save = {
+      SaveName: "Mission Pack",
+      ObjectStates: [
+        ...[0, 1, 2].map((i) => fig("Ember Kin", -2 + i * 1.5, -18)),
+        ...[0, 1, 2].map((i) => fig("Ork Boy", -2 + i * 1.5, 18)),
+        deck,
+        { Name: "Bag", Nickname: "Player 2 cards", ContainedObjects: [deck] },
+      ],
+    };
+    const path = join(files, "tts-cards.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    await page.locator(".tts-table", { hasText: "1 deck of cards" }).waitFor();
+    await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
+    const cards = page.locator(".card-decks");
+    await cards.waitFor({ timeout: 30_000 });
+    await cards.locator("summary").click();
+    await cards.getByText("Secondary Missions").waitFor();
+    await cards.getByText("3 left to draw").first().waitFor();
+    await cards.getByRole("button", { name: "Draw a card" }).first().click();
+    const hand = cards.locator(".hand li");
+    await hand.first().waitFor();
+    if ((await hand.count()) !== 1) throw new Error(`${await hand.count()} cards in hand after one draw`);
+    const bg = await hand
+      .first()
+      .locator(".card-pic")
+      .evaluate((e) => getComputedStyle(e).backgroundImage);
+    if (!bg.includes("cards.svg")) throw new Error(`the card shows ${bg}, not its sheet`);
+    await cards.getByText("2 left to draw").first().waitFor();
+    await hand.first().locator(".card-pic").click();
+    await page.locator(".card-big").waitFor();
+    await page.locator(".modal-backdrop").click({ position: { x: 5, y: 5 } });
+    await hand.first().getByRole("button", { name: "Show" }).click();
+    await cards.locator(".hand li.shown").waitFor();
+    await hand.first().getByRole("button", { name: "Discard" }).click();
+    await cards.getByText("1 discarded").first().waitFor();
+    await cards.getByRole("button", { name: "Shuffle discards back" }).first().click();
+    await cards.getByText("3 left to draw").first().waitFor();
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-cards.png") });
+    await context.close();
+    return page.errors;
+  },
+
   async "tts-online"() {
     // UX 479–483: a TTS save played online. Player 1's army stands where it stood, the guest is offered theirs,
     // and both armies sit on their own short edges for both players.

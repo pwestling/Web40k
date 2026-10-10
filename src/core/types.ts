@@ -2,6 +2,7 @@ import type { SharedDice } from "./sharedDice";
 import type { BranchInfo } from "./branch";
 import type { Effect } from "./content/schema";
 import type { Secrets } from "./secrets";
+import type { CardDeck, CardPile } from "./cards";
 import type { RankedState } from "./ranked";
 
 /**
@@ -543,6 +544,9 @@ export interface GameState {
   modules?: Record<string, Record<string, unknown>>;
   /** Players' committed secrets (core/secrets.ts): commitments, and values once revealed. */
   secrets?: Secrets;
+  /** The table's card decks (core/cards.ts, #75), and each player's discards from them. */
+  decks?: CardDeck[];
+  cardPiles?: Record<PlayerId, Record<string, CardPile>>;
   /** This game branched from another one's history (core/branch.ts). */
   branch?: BranchInfo;
   /** The mission chosen at setup (SystemModule.missions; see src/sdk Mission). */
