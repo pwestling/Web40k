@@ -1,1 +1,0 @@
-var e=`.standee`;function t(e){return new TextEncoder().encode(JSON.stringify({format:`open-battle/standee@1`,...e}))}export{t as n,e as t};
