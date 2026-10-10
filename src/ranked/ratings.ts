@@ -46,8 +46,7 @@ const order = (x: SignedResult, y: SignedResult) =>
   (x.result.replay < y.result.replay ? -1 : x.result.replay > y.result.replay ? 1 : 0);
 
 /** The rules packages a result added to its game: what puts it on a ladder of its own. */
-const houseRules = (r: RankedResult): RankedPackage[] =>
-  (r.rules?.packages ?? []).filter((p) => !p.game);
+const houseRules = (r: RankedResult): RankedPackage[] => (r.rules?.packages ?? []).filter((p) => !p.game);
 
 /**
  * The ladder a result counts on: its system, then the hashes of any house
