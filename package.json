@@ -47,6 +47,7 @@
     "@react-three/fiber": "^9.8.1",
     "@trystero-p2p/nostr": "^0.26.0",
     "@trystero-p2p/ws-relay": "0.26.0",
+    "aws4fetch": "1.0.20",
     "codemirror": "^6.0.2",
     "fast-xml-parser": "^5.11.2",
     "fflate": "^0.8.3",

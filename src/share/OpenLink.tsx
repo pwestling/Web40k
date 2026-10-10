@@ -12,6 +12,7 @@ import {
   type SharedOffer,
 } from "./links";
 import { useSeeding } from "./torrent";
+import { bucketReady, setBucket, useBucket, type Bucket } from "./bucket";
 
 const size = (bytes: number) =>
   bytes < 1024 * 1024
@@ -29,6 +30,8 @@ export function OpenLink() {
   const [url, setUrl] = useState("");
   const [hosted, setHosted] = useState("");
   const [secret, setSecret] = useState(false);
+  const bucket = useBucket((s) => s.bucket);
+  const [toBucket, setToBucket] = useState(true);
   const [shared, setShared] = useState<{ link: string; line: string } | null>(null);
   const [offer, setOffer] = useState<SharedOffer | null>(null);
   const [note, setNote] = useState("");
@@ -77,18 +80,30 @@ export function OpenLink() {
           t("Share a file saved from Open Battle: a figure pack, table, army, standee or replay."),
         );
       const { shareFile } = await import("./torrent");
-      const s = await shareFile(bytes, file.name, { encrypt: secret });
+      const mine = toBucket && bucketReady(bucket) ? bucket : undefined;
+      const s = await shareFile(bytes, file.name, {
+        encrypt: secret,
+        ...(mine ? { bucket: mine } : {}),
+      });
+      const kept = s.bucket && "url" in s.bucket;
       setShared({
         link: shareLink(s.magnet, s.key),
-        line: s.kept
-          ? tn(
-              s.kept,
-              "A seed node keeps a copy, so the link works after you close this tab.",
-              "{n} seed nodes keep a copy, so the link works after you close this tab.",
-            )
-          : t(
-              "No seed node keeps a copy here: the link works while this tab, or someone who opened it, stays open.",
-            ),
+        line:
+          s.bucket && "error" in s.bucket
+            ? t("Your bucket didn't take it ({error}): check its keys and CORS settings.", {
+                error: s.bucket.error,
+              })
+            : kept
+              ? t("Your bucket keeps a copy, so the link works after you close this tab.")
+              : s.kept
+                ? tn(
+                    s.kept,
+                    "A seed node keeps a copy, so the link works after you close this tab.",
+                    "{n} seed nodes keep a copy, so the link works after you close this tab.",
+                  )
+                : t(
+                    "No seed node keeps a copy here: the link works while this tab, or someone who opened it, stays open.",
+                  ),
       });
     } catch {
       setNote(t("That file couldn't be shared."));
@@ -144,6 +159,13 @@ export function OpenLink() {
           {t("Private: encrypt it, with the key only in the link")}
         </label>
       </div>
+      {bucketReady(bucket) && (
+        <label className="small">
+          <input type="checkbox" checked={toBucket} onChange={(e) => setToBucket(e.target.checked)} />{" "}
+          {t("Also keep a copy in my bucket")}
+        </label>
+      )}
+      <BucketSettings bucket={bucket} />
       {shared && (
         <p className="small">
           <code className="share-link">{shared.link}</code>{" "}
@@ -239,5 +261,62 @@ function SharedConsent({ offer, onYes, onNo }: { offer: SharedOffer; onYes: () =
       </div>
     </div>,
     document.body,
+  );
+}
+
+const EMPTY: Bucket = {
+  endpoint: "",
+  bucket: "",
+  region: "auto",
+  accessKeyId: "",
+  secretAccessKey: "",
+  publicUrl: "",
+};
+
+/** The player's own S3-compatible bucket: the keys stay on this device and sign uploads here. */
+function BucketSettings({ bucket }: { bucket: Bucket | null }) {
+  const [draft, setDraft] = useState<Bucket>(bucket ?? EMPTY);
+  const field = (key: keyof Bucket, label: string, type = "text") => (
+    <label className="small">
+      {label}
+      <input
+        type={type}
+        autoComplete="off"
+        value={draft[key]}
+        onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
+      />
+    </label>
+  );
+  return (
+    <details className="fold bucket">
+      <summary>{t("Your own storage bucket (R2, S3, B2, MinIO)")}</summary>
+      <p className="muted small">
+        {t(
+          "Shared files are uploaded to your bucket too, and it becomes one of their sources. The keys stay on this device and sign each upload here; use keys that can only write to this bucket. The bucket must allow PUT from this site (CORS) and be readable at its public address.",
+        )}
+      </p>
+      {field("endpoint", t("S3 endpoint (https://…)"))}
+      {field("bucket", t("Bucket"))}
+      {field("region", t("Region (auto for R2)"))}
+      {field("accessKeyId", t("Access key ID"))}
+      {field("secretAccessKey", t("Secret access key"), "password")}
+      {field("publicUrl", t("Public address of the bucket (https://…)"))}
+      <div className="row">
+        <button className="small" disabled={!bucketReady(draft)} onClick={() => setBucket(draft)}>
+          {bucket ? t("Save changes") : t("Use this bucket")}
+        </button>
+        {bucket && (
+          <button
+            className="small"
+            onClick={() => {
+              setBucket(null);
+              setDraft(EMPTY);
+            }}
+          >
+            {t("Forget this bucket")}
+          </button>
+        )}
+      </div>
+    </details>
   );
 }

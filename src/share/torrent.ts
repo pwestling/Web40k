@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { netConfig } from "../net/config";
 import { sha256 } from "../packages/manifest";
+import type { Bucket } from "./bucket";
 
 /**
  * Shared files as torrents between browsers (WebTorrent, over WebRTC like
@@ -147,6 +148,8 @@ interface Shared {
   key?: string;
   /** Seed nodes that took a copy. */
   kept: number;
+  /** The player's own bucket took a copy (or the error it gave, when it was asked to). */
+  bucket?: { url: string } | { error: string };
 }
 
 /** Hand a copy to the seed nodes; the ones that kept it are the torrent's web seeds. */
@@ -167,14 +170,19 @@ async function keep(payload: Uint8Array, seeders: string[], put = fetch): Promis
 export async function shareFile(
   bytes: Uint8Array,
   name: string,
-  opts: { encrypt?: boolean } = {},
+  opts: { encrypt?: boolean; bucket?: Bucket } = {},
 ): Promise<Shared> {
   const { trackers, seeders } = netConfig();
   const sealed = opts.encrypt ? await encrypt(bytes) : null;
   const payload = sealed?.payload ?? bytes;
   // A private file's name would say what it is: it goes by its hash instead.
   const fileName = sealed ? `${(await sha256(payload)).slice(0, 16)}.obx` : name;
-  const urlList = await keep(payload, seeders);
+  const sha = await sha256(payload);
+  const [nodes, bucket] = await Promise.all([
+    keep(payload, seeders),
+    opts.bucket ? import("./bucket").then((b) => b.upload(opts.bucket!, payload, sha)) : undefined,
+  ]);
+  const urlList = bucket && "url" in bucket ? [...nodes, bucket.url] : nodes;
   const c = await wt();
   const torrent = await new Promise<WtTorrent>((done, fail) => {
     try {
@@ -188,14 +196,19 @@ export async function shareFile(
     }
   });
   watch(torrent);
-  return { magnet: torrent.magnetURI, ...(sealed ? { key: sealed.key } : {}), kept: urlList.length };
+  return {
+    magnet: torrent.magnetURI,
+    ...(sealed ? { key: sealed.key } : {}),
+    kept: nodes.length,
+    ...(bucket ? { bucket } : {}),
+  };
 }
 
-/** The seed-node copies a magnet names (ws=), each named by its SHA-256. */
+/** The copies a magnet names (ws=: seed nodes, players' buckets), each named by its SHA-256. */
 function webSeeds(magnet: string): { url: string; sha: string }[] {
   const q = new URLSearchParams(magnet.replace(/^magnet:\?/, ""));
   return q.getAll("ws").flatMap((url) => {
-    const sha = /\/blob\/([0-9a-f]{64})$/.exec(url)?.[1];
+    const sha = /\/([0-9a-f]{64})$/.exec(url)?.[1];
     return sha && /^https?:\/\//.test(url) ? [{ url, sha }] : [];
   });
 }

@@ -41,9 +41,38 @@ and links none of these files.
 Rules packages and faction packs have their own links and consent: see
 [packages.md](packages.md) and [faction-packs.md](faction-packs.md).
 
-Code: `src/share/links.ts`, `src/share/torrent.ts`, `src/share/OpenLink.tsx`
+Code: `src/share/links.ts`, `src/share/torrent.ts`, `src/share/bucket.ts`, `src/share/OpenLink.tsx`
 and `server/seeder.mjs`. `node scripts/share-smoke.mjs` (after `pnpm build`)
 has two browsers share through a local tracker and seed node.
+
+## Your own bucket
+
+A player can keep their shared files in their own S3-compatible bucket
+(Cloudflare R2, Amazon S3, Backblaze B2, MinIO): _Your own storage bucket_
+under the share button. Each shared file is uploaded to
+`<bucket>/open-battle/<sha256>` and its public address becomes one of the
+torrent's web seeds, so the player's own storage keeps their links alive. The
+keys stay in that browser's localStorage and sign each upload there (AWS
+Signature V4 via `aws4fetch`); nothing else ever sees them. Use an API token
+that can only write to that one bucket.
+
+On R2: make a bucket, turn on its public `r2.dev` address (or a custom
+domain), create an API token with _Object Read & Write_ on that bucket, and
+add a CORS policy so the app's pages may upload:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://pwestling.github.io", "https://your-site.example"],
+    "AllowedMethods": ["PUT", "GET"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["content-length"]
+  }
+]
+```
+
+The endpoint is `https://<account id>.r2.cloudflarestorage.com` with region
+`auto`. Other providers work the same way with their own endpoint and region.
 
 ## Takedowns
 
