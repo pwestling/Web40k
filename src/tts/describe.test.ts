@@ -44,6 +44,26 @@ Damaged: 1-4 wounds remaining, subtract 1 from its Hit rolls.
 Keywords: Vehicle, Ashen Host`;
 
 describe("reading TTS descriptions", () => {
+  it("automates abilities whose name ends in a closing colour tag (PX TTS veteran review)", () => {
+    const desc = `[56f442]M T SV W LD OC[-]
+6" 4 3+ 2 6+ 2[-][-]
+[dc61ed]Abilities[-]
+[dc61ed]Vow of Tin:[/dc61ed] Each time a model in this unit makes an attack, re-roll a Hit roll of 1.
+[dc61ed]Pewter Will:[-] While this model is leading a unit, models in that unit have a 4+ invulnerable save.`;
+    expect(readDescription(desc, []).abilities[0]?.text).toBe(
+      "Each time a model in this unit makes an attack, re-roll a Hit roll of 1.",
+    );
+    const unit = unitFromTts({
+      system: "forty-k-11",
+      name: "Tinmen",
+      models: [{ nickname: "Tinman", description: desc }],
+    });
+    expect(unit?.sheet?.abilities?.map((a) => [a.name, !!a.auto])).toEqual([
+      ["Vow of Tin", true],
+      ["Pewter Will", true],
+    ]);
+  });
+
   it("strips BBCode but keeps weapon keywords in brackets", () => {
     expect(descriptionLines("[b]Ember[/b] [ff0000]18”[-] [Assault, Heavy]\r\n\r\n[sup]x[/sup]")).toEqual([
       'Ember 18" [Assault, Heavy]',

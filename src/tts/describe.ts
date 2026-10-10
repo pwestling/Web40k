@@ -28,7 +28,7 @@ export interface TtsProfile {
 // ---------------------------------------------------------------------------
 
 /** BBCode TTS draws: [b] [/i] [sup], colours [ff0000] [ff0000cc], and [-]. Weapon keywords in [brackets] stay. */
-const BBCODE = /\[(?:\/?(?:b|i|u|s|sub|sup|url(?:=[^\]]*)?)|[0-9a-f]{6}(?:[0-9a-f]{2})?|-)\]/gi;
+const BBCODE = /\[(?:\/?(?:b|i|u|s|sub|sup|url(?:=[^\]]*)?)|\/?[0-9a-f]{6}(?:[0-9a-f]{2})?|-)\]/gi;
 
 /** The description as plain lines: markup gone, quotes and dashes made plain. */
 export function descriptionLines(raw: string): string[] {
