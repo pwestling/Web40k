@@ -22,6 +22,7 @@ import { formatDate, t, tn } from "../i18n";
 import { useStore } from "../store";
 import { DicePicker } from "./DicePicker";
 import { ImportAutomation } from "./AutoAbilities";
+import { ListMerge } from "../tts/ListMerge";
 import { addSpells, importedWizard, parseSpellList } from "../systems/tow/spells";
 
 /** Common base sizes, so a player can fix a guessed base in one click. */
@@ -292,6 +293,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                   {w}
                 </p>
               ))}
+              {!fromShelf && <ListMerge roster={roster} setRoster={setRoster} />}
               {open.length > 0 && (
                 <p className="row wrap">
                   <span className="small">
