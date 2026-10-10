@@ -12,6 +12,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
+import { doTableVerb, tableVerb } from "../ui/tableVerbs";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
 import type { GameState } from "../core";
 import {
@@ -825,6 +826,50 @@ function Scene() {
     };
   }, [gl, controls, camera]);
 
+  // A mouse right-click that doesn't move (UX 84): the menu a touch hold opens, at the pointer, on the unit
+  // under it. A right-drag still swings or slides the camera, and mid-move a right-click turns a corner.
+  useEffect(() => {
+    const el = gl.domElement;
+    let down: { x: number; y: number } | null = null;
+    const press = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" && e.button === 2) down = { x: e.clientX, y: e.clientY };
+    };
+    const release = (e: PointerEvent) => {
+      if (e.pointerType === "touch" || e.button !== 2 || !down) return;
+      const d = down;
+      down = null;
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4 || dragRef.current) return;
+      const s = useStore.getState();
+      if (s.scrub !== null && !s.review) return;
+      const rect = el.getBoundingClientRect();
+      const ray = new Raycaster();
+      ray.setFromCamera(
+        new Vector2(((d.x - rect.left) / rect.width) * 2 - 1, -((d.y - rect.top) / rect.height) * 2 + 1),
+        camera,
+      );
+      const hit = new Vector3();
+      if (!ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), hit)) return;
+      const model = pointerModel.id ? s.game.models[pointerModel.id] : undefined;
+      useTouch.setState({
+        menu: {
+          x: d.x,
+          y: d.y,
+          at: model ? model.position : { x: hit.x, y: hit.z },
+          ...(model?.unitId ? { unitId: model.unitId } : {}),
+        },
+      });
+    };
+    const menu = (e: MouseEvent) => e.preventDefault();
+    el.addEventListener("pointerdown", press, { capture: true });
+    window.addEventListener("pointerup", release);
+    el.addEventListener("contextmenu", menu);
+    return () => {
+      el.removeEventListener("pointerdown", press, { capture: true });
+      window.removeEventListener("pointerup", release);
+      el.removeEventListener("contextmenu", menu);
+    };
+  }, [gl, camera]);
+
   // Terrain and objectives as shown: a dragged piece follows the pointer.
   const terrain = useMemo(() => {
     if (drag?.kind !== "terrain") return game.terrain;
@@ -987,6 +1032,23 @@ function Scene() {
       const attacker = game.units[draft.attackerId];
       if (attacker && opposed(game, m.owner, attacker.owner)) {
         setDraft({ ...draft, targetId: m.unitId });
+        return;
+      }
+    }
+    // One of your units picked and an enemy clicked: the phase's verb on it (UX 84); Shift does it anyway.
+    // Not by touch yet: a tap there picks the enemy, as before (two taps with a tag is to come).
+    if (
+      !draft &&
+      live &&
+      e?.pointerType !== "touch" &&
+      selected &&
+      m.unitId &&
+      game.units[selected] &&
+      canControl(game.units[selected]!.owner)
+    ) {
+      const verb = tableVerb(game, selected, m.unitId);
+      if (verb && (verb.ok || shift)) {
+        doTableVerb(verb, selected, m.unitId);
         return;
       }
     }

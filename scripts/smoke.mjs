@@ -128,6 +128,13 @@ async function device(options = {}) {
   return { context, page };
 }
 
+/** A sample game's "Try (both sides)", from its card's ⋯ where Learn leads (UX 83). */
+async function tryDemo(page, card, tap = false) {
+  const go = (l) => (tap ? l.tap() : l.click());
+  if (!(await card.locator(".try").isVisible())) await go(card.getByRole("button", { name: "⋯" }));
+  await go(card.locator(".try"));
+}
+
 async function lobby(page, query = "") {
   await page.goto(BASE + query);
   await page.locator(".lobby").waitFor();
@@ -271,16 +278,19 @@ const checks = {
   async "try-it-now"() {
     const { page, context } = await device();
     await lobby(page);
-    const demos = await page.locator(".demos .try").count();
+    const demos = await page
+      .locator(".demos .demo")
+      .filter({ has: page.locator(".solo") })
+      .count();
     if (demos < 4) throw new Error(`only ${demos} games to try`);
     for (let i = 0; i < demos; i++) {
       await lobby(page);
       const card = page
         .locator(".demos .demo")
-        .filter({ has: page.locator(".try") })
+        .filter({ has: page.locator(".solo") })
         .nth(i);
       const name = await card.locator("strong").textContent();
-      await card.locator(".try").click();
+      await tryDemo(page, card);
       await page.locator(".topbar").waitFor();
       await page.locator("canvas").first().waitFor();
       await page.waitForTimeout(1500);
@@ -326,6 +336,7 @@ const checks = {
   async workshop() {
     const { page, context } = await device();
     await lobby(page);
+    await page.locator("summary", { hasText: "More ways to play" }).click();
     await page.getByRole("button", { name: /Module workshop/ }).click();
     await page.getByRole("button", { name: /Skirmish/ }).click();
     await page.locator(".cm-editor").waitFor();
@@ -402,7 +413,7 @@ const checks = {
   async "clip-options"() {
     const { page, context } = await device();
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -418,7 +429,7 @@ const checks = {
     const path = join(files, "clip.json");
     await (await download).saveAs(path);
     await lobby(page);
-    await page.locator("label.file", { hasText: "Open a replay file" }).locator("input").setInputFiles(path);
+    await page.locator("label.file", { hasText: "Open a file…" }).locator("input").setInputFiles(path);
     await page.getByRole("button", { name: "Share…" }).click();
     const cut = page.locator(".share-options label", { hasText: "The whole battle, cut down" });
     const about = Number((await cut.innerText()).match(/about (\d+) s/)?.[1]);
@@ -436,7 +447,7 @@ const checks = {
   async "move-legs"() {
     const { page, context } = await device();
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -503,7 +514,7 @@ const checks = {
   async "card-actions"() {
     const { page, context } = await device();
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -548,7 +559,7 @@ const checks = {
     const { page, context } = await device();
     for (const demo of ["Full Spectrum Dominance", "Conquest", "Rank and flank"]) {
       await lobby(page);
-      await page.locator(".demos .demo", { hasText: demo }).locator(".try").click();
+      await tryDemo(page, page.locator(".demos .demo", { hasText: demo }));
       await page
         .locator(".topbar")
         .getByText(/Round 1|Deploy/)
@@ -607,7 +618,7 @@ const checks = {
     await page.locator(".ask").getByText("No mission").waitFor();
     await page.getByRole("button", { name: "Pick one" }).click();
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForTimeout(1500);
     await page.reload();
@@ -892,6 +903,8 @@ const checks = {
         .getByRole("button", { name: /^Deploy for/ })
         .first()
         .click();
+      // Once every side has an army, adding and saving armies fold under "Armies" (UX 83).
+      await d.page.locator(".panel.hud summary", { hasText: "Armies" }).click();
       await d.page.getByRole("button", { name: "Save army to your shelf" }).click();
       await d.page.getByText("This army is on your shelf as it is now.").waitFor();
     }
@@ -1295,6 +1308,7 @@ const checks = {
       return b;
     };
     await lobby(page);
+    await page.locator("summary", { hasText: "More ways to play" }).click();
     await page.getByRole("button", { name: /^Figure library/ }).click();
     await page
       .locator('input[type="file"][multiple]')
@@ -1307,7 +1321,7 @@ const checks = {
       ]);
     await page.getByText("mini beta").first().waitFor({ timeout: 30_000 });
     await page.keyboard.press("Escape");
-    await page.locator("summary", { hasText: "More ways to play" }).click();
+    // "More ways to play" is still open from the Figure library (UX 83).
     await page.getByRole("button", { name: /hotseat/ }).click();
     await page.getByRole("button", { name: "Sample army" }).click();
     const modal = page.locator(".modal");
@@ -1468,7 +1482,7 @@ const checks = {
       hasTouch: true,
     });
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").tap();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }), true);
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -1560,10 +1574,7 @@ const checks = {
       throw new Error("the Rift Lanterns game didn't finish");
 
     await lobby(page);
-    await page
-      .locator(".demos .demo", { hasText: "Sci-fi battle" })
-      .getByRole("button", { name: "Try (both sides)" })
-      .tap();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }), true);
     // The 3D view first (where most play happens): a twist must work there (PX re-check of #60).
     await touchTable(page, t, false);
     const next = page.locator(".topbar .turn button", { hasText: "▶" });
@@ -1658,7 +1669,7 @@ const checks = {
     if (!existsSync(path)) throw new Error("no replay saved (the hotseat check makes it)");
     const { page, context } = await device();
     await lobby(page);
-    await page.locator("label.file", { hasText: "Open a replay file" }).locator("input").setInputFiles(path);
+    await page.locator("label.file", { hasText: "Open a file…" }).locator("input").setInputFiles(path);
     await page.locator(".replaybar").waitFor();
     await context.close();
     return page.errors;
@@ -1693,7 +1704,13 @@ const checks = {
     await page.reload();
     await page.locator(".lobby").waitFor();
     await page.getByText("You're offline").first().waitFor();
-    await page.locator(".demos .try").first().click();
+    await tryDemo(
+      page,
+      page
+        .locator(".demos .demo")
+        .filter({ has: page.locator(".solo") })
+        .first(),
+    );
     await page.locator(".topbar").waitFor();
     await context.close();
     return page.errors;
@@ -1901,7 +1918,7 @@ const checks = {
   async "tts-controls"() {
     const { page, context } = await device();
     await lobby(page);
-    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
@@ -2242,11 +2259,129 @@ const checks = {
     return [...host.page.errors, ...guest.page.errors];
   },
 
+  /**
+   * UX 83, declutter: the controls on the first screen stay within budget (lobby 35, battle 45, a unit
+   * picked 70), counted as the UX review counts them: visible, on screen, not faded out, not in a closed
+   * fold. The review aimed the lobby at 30; its six game cards take 18 of them.
+   */
+  async declutter() {
+    const { page, context } = await device({ viewport: { width: 1400, height: 900 } });
+    const count = () =>
+      page.evaluate(() =>
+        [
+          ...document.querySelectorAll(
+            "button, select, input:not([type=hidden]), summary, a[href], label.file",
+          ),
+        ]
+          .filter((e) => {
+            const r = e.getBoundingClientRect();
+            if (!(r.width > 0 && r.height > 0 && r.y < innerHeight && r.bottom > 0)) return false;
+            if (e.closest("[inert]")) return false;
+            // Inside a closed fold: only its summary shows.
+            const from = e.tagName === "SUMMARY" ? e.parentElement?.parentElement : e;
+            if (from?.closest("details:not([open])")) return false;
+            for (let x = e; x; x = x.parentElement) {
+              const s = getComputedStyle(x);
+              if (s.visibility === "hidden" || s.display === "none" || Number(s.opacity) < 0.05) return false;
+            }
+            return true;
+          })
+          .map((e) =>
+            (e.innerText || e.getAttribute("aria-label") || e.title || e.tagName)
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 30),
+          ),
+      );
+    const check = async (where, most) => {
+      const seen = await count();
+      console.log(`  ${where}: ${seen.length} controls (at most ${most})`);
+      if (seen.length > most)
+        throw new Error(
+          `${where}: ${seen.length} controls on the first screen (at most ${most}): ${seen.join(" · ")}`,
+        );
+    };
+    await lobby(page);
+    await page.waitForTimeout(1000);
+    await check("lobby", 35);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").waitFor();
+    for (let i = 0; i < 60 && (await page.evaluate(() => document.body.classList.contains("showcase"))); i++)
+      await page.waitForTimeout(500);
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(400);
+    }
+    await page.waitForTimeout(1000);
+    await check("battle", 45);
+    // "]": the next of your units (the ? sheet).
+    await page.keyboard.press("]");
+    await page.locator(".panel.unitcard").waitFor();
+    await page.waitForTimeout(500);
+    await check("unit picked", 70);
+    await context.close();
+    return page.errors;
+  },
+
+  /**
+   * UX 84: with a unit picked in the Shooting phase, an enemy under the pointer gets a tag saying what a
+   * click does, and the click sets up the attack on it; a still right-click opens the unit's menu.
+   */
+  async "table-verbs"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    await page
+      .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+      .first()
+      .click();
+    // Command, Movement, then Shooting.
+    for (let i = 0; i < 2; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    }
+    const box = await page.locator("canvas").first().boundingBox();
+    // Each of your units in turn, sweeping the table for an enemy the tag offers to shoot.
+    let found = null;
+    for (let u = 0; u < 6 && !found; u++) {
+      await page.keyboard.press("]");
+      await page.waitForTimeout(300);
+      // The far side is the top half of the top-down view.
+      for (let y = 0.1; y < 0.55 && !found; y += 0.04)
+        for (let x = 0.1; x < 0.95 && !found; x += 0.03) {
+          await page.mouse.move(box.x + box.width * x, box.y + box.height * y);
+          if (await page.locator(".table-tag.ok").count()) found = { x, y };
+        }
+    }
+    if (!found) throw new Error("no enemy offered a shot from the table");
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "table-tag.png") });
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.locator(".panel.attack").waitFor({ timeout: 5000 });
+    await page.keyboard.press("Escape");
+    await page.mouse.click(box.x + box.width * found.x, box.y + box.height * found.y, { button: "right" });
+    await page.locator(".touch-menu").waitFor({ timeout: 5000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "unit-menu.png") });
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);
+    await page.getByRole("button", { name: "Aa ▾" }).click();
     await page.locator(".language-picker select").selectOption("de");
     await page.getByRole("heading", { name: "Wähle ein Spiel" }).waitFor();
+    // The page redraws in the new language, closing the menu.
+    if (!(await page.locator(".language-picker select").isVisible()))
+      await page.getByRole("button", { name: "Aa ▾" }).click();
     await page.locator(".language-picker select").selectOption("fr");
     await page.getByRole("heading", { name: "Choisis un jeu" }).waitFor();
     await context.close();

@@ -324,3 +324,28 @@ body.reeling .whatnow-toggle {
   align-items: center;
   gap: 8px;
 }
+
+/* Lobby declutter (UX 83): Aa ▾, each card's ⋯, the host options. */
+.lobby .pop-menu.small > button {
+  padding: 0 8px;
+  font-size: 0.85rem;
+}
+.lobby .pop-menu .menu {
+  z-index: 30;
+  min-width: 180px;
+}
+.lobby-aa .menu {
+  gap: 8px;
+  min-width: 220px;
+}
+.host-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.host-options[open] {
+  flex-wrap: wrap;
+}
+.host-options summary {
+  cursor: pointer;
+}

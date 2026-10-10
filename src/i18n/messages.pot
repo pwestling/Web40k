@@ -374,23 +374,23 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:334
+#: src/GameScreen.tsx:336
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:335
+#: src/GameScreen.tsx:337
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:336
+#: src/GameScreen.tsx:338
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:337
+#: src/GameScreen.tsx:339
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:342
+#: src/GameScreen.tsx:344
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -398,15 +398,15 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:343
+#: src/GameScreen.tsx:345
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:346
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:349
+#: src/GameScreen.tsx:351
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -1597,7 +1597,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:311
 #: src/tts/TtsWholeTable.tsx:186
-#: src/ui/Lobby.tsx:595
+#: src/ui/Lobby.tsx:609
 msgid "Game"
 msgstr ""
 
@@ -1719,8 +1719,10 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
+#: src/ui/TouchLayer.tsx:200
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
+#: src/ui/tableVerbs.ts:112
 msgid "Fight"
 msgstr ""
 
@@ -2162,7 +2164,7 @@ msgid "Event round {n} of {of} · Table {table}"
 msgstr ""
 
 #: src/events/EventSeat.tsx:117
-#: src/ui/Lobby.tsx:363
+#: src/ui/Lobby.tsx:356
 msgid "Event round {n} · Table {table}"
 msgstr ""
 
@@ -2400,7 +2402,7 @@ msgid "Checking your shelf…"
 msgstr ""
 
 #: src/events/EventsUI.tsx:609
-#: src/ui/Keys.tsx:13
+#: src/ui/Keys.tsx:21
 msgid "Enter"
 msgstr ""
 
@@ -2959,7 +2961,7 @@ msgid "Bring the models from a Tabletop Simulator save or workshop mod into your
 msgstr ""
 
 #: src/figures/pack.ts:103
-#: src/share/links.ts:44
+#: src/share/links.ts:46
 msgid "Figure pack"
 msgstr ""
 
@@ -3169,7 +3171,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:779
+#: src/ui/Lobby.tsx:796
 msgid "Not now"
 msgstr ""
 
@@ -3214,12 +3216,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:613
+#: src/ui/Lobby.tsx:631
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:612
+#: src/ui/Lobby.tsx:630
 msgid "1 vs 1"
 msgstr ""
 
@@ -3510,7 +3512,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:357
 #: src/opentables/OpenTables.tsx:425
 #: src/ui/Hud.tsx:552
-#: src/ui/Lobby.tsx:654
+#: src/ui/Lobby.tsx:675
 msgid "Watch"
 msgstr ""
 
@@ -3690,7 +3692,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:615
-#: src/ui/Lobby.tsx:651
+#: src/ui/Lobby.tsx:673
 msgid "Join"
 msgstr ""
 
@@ -3851,13 +3853,13 @@ msgid "Use an https:// link to the pack's file."
 msgstr ""
 
 #: src/packages/packPins.ts:85
-#: src/share/links.ts:141
+#: src/share/links.ts:143
 #: src/workshop/Workshop.tsx:414
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr ""
 
 #: src/packages/packPins.ts:87
-#: src/share/links.ts:143
+#: src/share/links.ts:145
 #: src/workshop/Workshop.tsx:416
 msgid "That link answered {status}."
 msgstr ""
@@ -3989,7 +3991,7 @@ msgstr ""
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
 #: src/player/PlayerCard.tsx:303
-#: src/ui/Lobby.tsx:798
+#: src/ui/Lobby.tsx:815
 msgid "Your player card"
 msgstr ""
 
@@ -4319,35 +4321,35 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1074
+#: src/render/Board.tsx:1136
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1076
+#: src/render/Board.tsx:1138
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1077
+#: src/render/Board.tsx:1139
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1138
+#: src/render/Board.tsx:1200
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1140
+#: src/render/Board.tsx:1202
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1145
+#: src/render/Board.tsx:1207
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1615
+#: src/render/Board.tsx:1677
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:355
+#: src/render/Board.tsx:356
 msgid "The table"
 msgstr ""
 
@@ -4505,8 +4507,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:186
-#: src/ui/Keys.tsx:33
-#: src/ui/Keys.tsx:44
+#: src/ui/Keys.tsx:41
+#: src/ui/Keys.tsx:52
 #: src/ui/TerrainPanel.tsx:342
 #: src/workshop/Workshop.tsx:297
 msgid "Delete"
@@ -4965,6 +4967,27 @@ msgstr ""
 msgid "{unit}'s {what}"
 msgstr ""
 
+#: src/share/OpenFile.tsx:24
+msgid "That's a Tabletop Simulator save: open it with the button above."
+msgstr ""
+
+#: src/share/OpenFile.tsx:25
+msgid "That isn't a file Open Battle saves."
+msgstr ""
+
+#: src/share/OpenFile.tsx:28
+#: src/share/links.ts:187
+msgid "That file couldn't be opened."
+msgstr ""
+
+#: src/share/OpenFile.tsx:34
+msgid "A replay, army, Yellowscribe list, table, figure pack or standee saved from Open Battle"
+msgstr ""
+
+#: src/share/OpenFile.tsx:36
+msgid "Open a file…"
+msgstr ""
+
 #: src/share/OpenLink.tsx:104
 msgid "No seed node keeps a copy here: the link works while this tab, or someone who opened it, stays open."
 msgstr ""
@@ -5372,85 +5395,85 @@ msgstr ""
 msgid "Battle over"
 msgstr ""
 
-#: src/share/links.ts:123
+#: src/share/links.ts:125
 msgid "That magnet link has no torrent in it."
 msgstr ""
 
-#: src/share/links.ts:129
-#: src/share/links.ts:145
+#: src/share/links.ts:131
 #: src/share/links.ts:147
+#: src/share/links.ts:149
 msgid "That file is too big to open from a link."
 msgstr ""
 
-#: src/share/links.ts:131
+#: src/share/links.ts:133
 msgid "Nobody is sharing that file right now, and no seed node has it."
 msgstr ""
 
-#: src/share/links.ts:132
+#: src/share/links.ts:134
 msgid "That torrent couldn't be fetched."
 msgstr ""
 
-#: src/share/links.ts:136
+#: src/share/links.ts:138
 msgid "Use an https:// link to the file."
 msgstr ""
 
-#: src/share/links.ts:152
+#: src/share/links.ts:154
 msgid "That file is private: open it with the whole share link, which carries its key."
 msgstr ""
 
-#: src/share/links.ts:154
+#: src/share/links.ts:156
 msgid "That key doesn't open this file."
 msgstr ""
 
-#: src/share/links.ts:161
-#: src/share/links.ts:164
+#: src/share/links.ts:163
+#: src/share/links.ts:166
 msgid "That link isn't an Open Battle file."
 msgstr ""
 
-#: src/share/links.ts:171
+#: src/share/links.ts:173
 msgid "a torrent"
 msgstr ""
 
-#: src/share/links.ts:192
+#: src/share/links.ts:206
 msgid "{name}: {added} new, {already} already here."
 msgstr ""
 
-#: src/share/links.ts:203
+#: src/share/links.ts:217
 #: src/tables/TableLibrary.tsx:244
 msgid "{name} is in your table library."
 msgstr ""
 
-#: src/share/links.ts:210
+#: src/share/links.ts:224
 msgid "{name} is on your army shelf."
 msgstr ""
 
-#: src/share/links.ts:219
+#: src/share/links.ts:233
 msgid "That standee couldn't be read."
 msgstr ""
 
-#: src/share/links.ts:220
+#: src/share/links.ts:234
 msgid "{name} is in your figure library."
 msgstr ""
 
-#: src/share/links.ts:229
+#: src/share/links.ts:250
 msgid "Replay opened."
 msgstr ""
 
-#: src/share/links.ts:45
+#: src/share/links.ts:47
 #: src/tables/TableLibrary.tsx:99
 #: src/workshop/Workshop.tsx:271
 msgid "Table"
 msgstr ""
 
-#: src/share/links.ts:46
+#: src/share/links.ts:48
 msgid "Army"
 msgstr ""
 
-#: src/share/links.ts:47
+#: src/share/links.ts:49
 msgid "Standee"
 msgstr ""
 
-#: src/share/links.ts:48
+#: src/share/links.ts:50
 msgid "Replay"
 msgstr ""
 
@@ -6866,7 +6889,7 @@ msgstr ""
 #: src/ui/ProcedurePanels.tsx:421
 #: src/ui/TerrainPanel.tsx:163
 #: src/ui/TopBar.tsx:614
-#: src/ui/TouchLayer.tsx:73
+#: src/ui/TouchLayer.tsx:80
 msgid "Done"
 msgstr ""
 
@@ -7173,44 +7196,44 @@ msgstr ""
 msgid "Cards"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:103
+#: src/ui/ChargeDeclare.tsx:111
 msgid "No enemy unit can be charged from here."
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:107
+#: src/ui/ChargeDeclare.tsx:115
 msgid "Nearest enemy {distance}\" away: no charge possible"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:123
+#: src/ui/ChargeDeclare.tsx:131
 msgid "Roll charge (2D6): {n} needed"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:139
+#: src/ui/ChargeDeclare.tsx:147
 msgid "Charge made: move up to {n}\" into {units}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:140
+#: src/ui/ChargeDeclare.tsx:148
 msgid "Charge fails: needed {n}"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:151
-#: src/ui/ChargeDeclare.tsx:161
+#: src/ui/ChargeDeclare.tsx:159
+#: src/ui/ChargeDeclare.tsx:169
 msgid "Already in combat: it can't charge"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:159
+#: src/ui/ChargeDeclare.tsx:167
 msgid "Charge: no enemy within 12\""
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:159
+#: src/ui/ChargeDeclare.tsx:167
 msgid "Charge (2D6)"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:43
+#: src/ui/ChargeDeclare.tsx:51
 msgid "Charge which unit(s)?"
 msgstr ""
 
-#: src/ui/ChargeDeclare.tsx:76
+#: src/ui/ChargeDeclare.tsx:84
 msgid "Charge anyway?"
 msgstr ""
 
@@ -8009,7 +8032,7 @@ msgid "The battle has started. Change this rule for both players?"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:29
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:62
 msgid "Game settings"
 msgstr ""
 
@@ -8095,12 +8118,12 @@ msgid "Spectating."
 msgstr ""
 
 #: src/ui/Hud.tsx:143
-#: src/ui/TouchLayer.tsx:152
+#: src/ui/TouchLayer.tsx:160
 msgid "3D view"
 msgstr ""
 
 #: src/ui/Hud.tsx:143
-#: src/ui/TouchLayer.tsx:152
+#: src/ui/TouchLayer.tsx:160
 msgid "Top-down view"
 msgstr ""
 
@@ -8121,17 +8144,17 @@ msgid "Clear ruler"
 msgstr ""
 
 #: src/ui/Hud.tsx:163
-#: src/ui/Keys.tsx:51
+#: src/ui/Keys.tsx:59
 msgid "View ▾"
 msgstr ""
 
 #: src/ui/Hud.tsx:164
-#: src/ui/Keys.tsx:30
+#: src/ui/Keys.tsx:38
 msgid "Home"
 msgstr ""
 
 #: src/ui/Hud.tsx:165
-#: src/ui/TouchLayer.tsx:155
+#: src/ui/TouchLayer.tsx:163
 msgid "Reset view"
 msgstr ""
 
@@ -8158,7 +8181,7 @@ msgstr ""
 
 #: src/ui/Hud.tsx:220
 #: src/ui/Hud.tsx:232
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:61
 msgid "Armies"
 msgstr ""
 
@@ -8176,7 +8199,7 @@ msgid "Leave this game? The others can't go on without you."
 msgstr ""
 
 #: src/ui/Hud.tsx:314
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:60
 msgid "⋯ Game"
 msgstr ""
 
@@ -8266,12 +8289,18 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:11
-msgid "Select your previous or next unit (Shift: the other side's)"
+#: src/ui/Keys.tsx:100
+#: src/ui/Keys.tsx:104
+msgid "Controls"
 msgstr ""
 
-#: src/ui/Keys.tsx:117
-msgid "Where things are"
+#: src/ui/Keys.tsx:107
+#: src/ui/TeachRule.tsx:99
+msgid "Close (Esc)"
+msgstr ""
+
+#: src/ui/Keys.tsx:11
+msgid "Select your previous or next unit (Shift: the other side's)"
 msgstr ""
 
 #: src/ui/Keys.tsx:12
@@ -8282,573 +8311,606 @@ msgstr ""
 msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:13
-msgid "Go from the table into the selected unit's card"
+#: src/ui/Keys.tsx:125
+msgid "Where things are"
 msgstr ""
 
-#: src/ui/Keys.tsx:130
+#: src/ui/Keys.tsx:138
 msgid "Coming from Tabletop Simulator?"
 msgstr ""
 
 #: src/ui/Keys.tsx:14
-msgid "Tab"
+msgid "Click an enemy"
 msgstr ""
 
-#: src/ui/Keys.tsx:14
-msgid "Move between buttons; Enter or Space presses one"
+#: src/ui/Keys.tsx:15
+msgid "With your unit picked: shoot, charge or fight it, as the phase says (the tag by the pointer says what)"
 msgstr ""
 
-#: src/ui/Keys.tsx:145
+#: src/ui/Keys.tsx:153
 msgid "TTS controls (just on this device)"
 msgstr ""
 
-#: src/ui/Keys.tsx:149
+#: src/ui/Keys.tsx:157
 msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
 msgstr ""
 
-#: src/ui/Keys.tsx:15
-#: src/ui/Keys.tsx:41
-#: src/ui/Keys.tsx:64
-msgid "Drag a unit"
-msgstr ""
-
-#: src/ui/Keys.tsx:15
-msgid "Move it; the ruler shows how far against its limit"
-msgstr ""
-
-#: src/ui/Keys.tsx:16
-msgid "Alt + drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:16
-msgid "Move a unit, stopping at its limit"
-msgstr ""
-
-#: src/ui/Keys.tsx:18
-msgid "Space or right-click while dragging"
+#: src/ui/Keys.tsx:19
+msgid "Shift + click an enemy"
 msgstr ""
 
 #: src/ui/Keys.tsx:19
-msgid "Turn a corner (round a ruin, say): the move goes on from there, measured along its legs"
+msgid "Do it anyway, out of range or out of phase"
+msgstr ""
+
+#: src/ui/Keys.tsx:20
+msgid "Right-click a unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:20
+msgid "Its actions, this phase's first; on a spot: ping, views"
 msgstr ""
 
 #: src/ui/Keys.tsx:21
-msgid "Shift + drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:21
-msgid "Move a regiment block freely, not just straight ahead"
+msgid "Go from the table into the selected unit's card"
 msgstr ""
 
 #: src/ui/Keys.tsx:22
-msgid "Turn the selected unit (or terrain piece while editing)"
+msgid "Tab"
+msgstr ""
+
+#: src/ui/Keys.tsx:22
+msgid "Move between buttons; Enter or Space presses one"
 msgstr ""
 
 #: src/ui/Keys.tsx:23
-msgid "Move the selected unit up or down a floor"
+#: src/ui/Keys.tsx:49
+#: src/ui/Keys.tsx:72
+msgid "Drag a unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:23
+msgid "Move it; the ruler shows how far against its limit"
 msgstr ""
 
 #: src/ui/Keys.tsx:24
-msgid "Measure: then drag across the table"
+msgid "Alt + drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:25
-msgid "Alt + click"
-msgstr ""
-
-#: src/ui/Keys.tsx:25
-msgid "Ping a spot for everyone"
+#: src/ui/Keys.tsx:24
+msgid "Move a unit, stopping at its limit"
 msgstr ""
 
 #: src/ui/Keys.tsx:26
-msgid "Hold V"
-msgstr ""
-
-#: src/ui/Keys.tsx:26
-msgid "Talk, once your mic is on (Voice, bottom left)"
+msgid "Space or right-click while dragging"
 msgstr ""
 
 #: src/ui/Keys.tsx:27
-msgid "Left drag on the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:27
-msgid "Turn the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:28
-msgid "Right drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:28
-#: src/ui/Keys.tsx:65
-msgid "Slide the camera"
+msgid "Turn a corner (round a ruin, say): the move goes on from there, measured along its legs"
 msgstr ""
 
 #: src/ui/Keys.tsx:29
-msgid "Wheel"
+msgid "Shift + drag"
 msgstr ""
 
 #: src/ui/Keys.tsx:29
-msgid "Zoom"
+msgid "Move a regiment block freely, not just straight ahead"
 msgstr ""
 
 #: src/ui/Keys.tsx:30
-msgid "Reset the camera"
+msgid "Turn the selected unit (or terrain piece while editing)"
 msgstr ""
 
 #: src/ui/Keys.tsx:31
-msgid "Esc"
+msgid "Move the selected unit up or down a floor"
 msgstr ""
 
-#: src/ui/Keys.tsx:31
-msgid "Clear: selection, ruler, pen"
+#: src/ui/Keys.tsx:32
+msgid "Measure: then drag across the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:33
+msgid "Alt + click"
+msgstr ""
+
+#: src/ui/Keys.tsx:33
+msgid "Ping a spot for everyone"
 msgstr ""
 
 #: src/ui/Keys.tsx:34
-msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
+msgid "Hold V"
+msgstr ""
+
+#: src/ui/Keys.tsx:34
+msgid "Talk, once your mic is on (Voice, bottom left)"
+msgstr ""
+
+#: src/ui/Keys.tsx:35
+msgid "Left drag on the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:35
+msgid "Turn the camera"
 msgstr ""
 
 #: src/ui/Keys.tsx:36
-msgid "This sheet"
+msgid "Right drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:41
-msgid "Moves the whole unit; Shift + drag moves just the one model"
+#: src/ui/Keys.tsx:36
+#: src/ui/Keys.tsx:73
+msgid "Slide the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:37
+msgid "Wheel"
+msgstr ""
+
+#: src/ui/Keys.tsx:37
+msgid "Zoom"
+msgstr ""
+
+#: src/ui/Keys.tsx:38
+msgid "Reset the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:39
+msgid "Esc"
+msgstr ""
+
+#: src/ui/Keys.tsx:39
+msgid "Clear: selection, ruler, pen"
 msgstr ""
 
 #: src/ui/Keys.tsx:42
-msgid "Turn, as in Tabletop Simulator"
-msgstr ""
-
-#: src/ui/Keys.tsx:43
-msgid "Measure (with TTS controls, hold Tab)"
+msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
 msgstr ""
 
 #: src/ui/Keys.tsx:44
-msgid "Remove the model under the pointer as a casualty"
+msgid "This sheet"
 msgstr ""
 
-#: src/ui/Keys.tsx:45
-msgid "Drop a model off the table"
+#: src/ui/Keys.tsx:49
+msgid "Moves the whole unit; Shift + drag moves just the one model"
 msgstr ""
 
-#: src/ui/Keys.tsx:45
-msgid "Remove it as a casualty (asking first)"
-msgstr ""
-
-#: src/ui/Keys.tsx:46
-msgid "Camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:46
-msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
+#: src/ui/Keys.tsx:50
+msgid "Turn, as in Tabletop Simulator"
 msgstr ""
 
 #: src/ui/Keys.tsx:51
-msgid "Left panel: Reset view, Unit names, X-ray terrain, Follow action"
+msgid "Measure (with TTS controls, hold Tab)"
 msgstr ""
 
 #: src/ui/Keys.tsx:52
-msgid "Left panel, top: Download replay, Copy invite link, Report a problem, Leave game"
+msgid "Remove the model under the pointer as a casualty"
 msgstr ""
 
 #: src/ui/Keys.tsx:53
-msgid "Left panel, in battle: add an army, the army shelf, photograph figures"
+msgid "Drop a model off the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:53
+msgid "Remove it as a casualty (asking first)"
 msgstr ""
 
 #: src/ui/Keys.tsx:54
+msgid "Camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:54
+msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
+msgstr ""
+
+#: src/ui/Keys.tsx:59
+msgid "Left panel: Reset view, Unit names, X-ray terrain, Follow action"
+msgstr ""
+
+#: src/ui/Keys.tsx:60
+msgid "Left panel, top: Download replay, Copy invite link, Report a problem, Leave game"
+msgstr ""
+
+#: src/ui/Keys.tsx:61
+msgid "Left panel, in battle: add an army, the army shelf, photograph figures"
+msgstr ""
+
+#: src/ui/Keys.tsx:62
 msgid "Left panel: Unlock terrain (in battle), the campaign book"
 msgstr ""
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:63
 msgid "Top bar: sound, voice and Fast dice"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:64
 msgid "✏ Draw ▾ · 😀"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:64
 msgid "Talk bar, online: arrows, areas and reactions"
 msgstr ""
 
-#: src/ui/Keys.tsx:57
+#: src/ui/Keys.tsx:65
 #: src/ui/ReplayBar.tsx:202
 msgid "⟲ Replay"
 msgstr ""
 
-#: src/ui/Keys.tsx:57
+#: src/ui/Keys.tsx:65
 msgid "Bottom: look back over the game so far"
 msgstr ""
 
-#: src/ui/Keys.tsx:58
+#: src/ui/Keys.tsx:66
 msgid "VP / CP"
 msgstr ""
 
-#: src/ui/Keys.tsx:58
+#: src/ui/Keys.tsx:66
 msgid "Point at a score to change it with − and +"
 msgstr ""
 
-#: src/ui/Keys.tsx:63
+#: src/ui/Keys.tsx:71
 msgid "Tap a unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:63
+#: src/ui/Keys.tsx:71
 msgid "Select it: its card shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:64
+#: src/ui/Keys.tsx:72
 msgid "Move it (hold the table for one model at a time)"
 msgstr ""
 
-#: src/ui/Keys.tsx:65
+#: src/ui/Keys.tsx:73
 msgid "One finger on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:66
+#: src/ui/Keys.tsx:74
 msgid "Two fingers"
 msgstr ""
 
-#: src/ui/Keys.tsx:66
+#: src/ui/Keys.tsx:74
 msgid "Pinch to zoom, twist to turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:67
+#: src/ui/Keys.tsx:75
 msgid "Two fingers on the selected unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:67
+#: src/ui/Keys.tsx:75
 msgid "Twist to turn it (a regiment block wheels)"
 msgstr ""
 
-#: src/ui/Keys.tsx:68
+#: src/ui/Keys.tsx:76
 msgid "Hold, then drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:68
+#: src/ui/Keys.tsx:76
 msgid "Measure"
 msgstr ""
 
-#: src/ui/Keys.tsx:69
+#: src/ui/Keys.tsx:77
 msgid "A second finger's tap while dragging"
 msgstr ""
 
-#: src/ui/Keys.tsx:69
+#: src/ui/Keys.tsx:77
 msgid "Turn a corner: the move is measured along its legs"
 msgstr ""
 
-#: src/ui/Keys.tsx:70
+#: src/ui/Keys.tsx:78
 msgid "Hold and let go"
 msgstr ""
 
-#: src/ui/Keys.tsx:70
+#: src/ui/Keys.tsx:78
 msgid "More: turn, ping, look from here, views"
 msgstr ""
 
-#: src/ui/Keys.tsx:71
-#: src/ui/TouchLayer.tsx:149
+#: src/ui/Keys.tsx:79
+#: src/ui/TouchLayer.tsx:157
 msgid "Select several"
 msgstr ""
 
-#: src/ui/Keys.tsx:71
+#: src/ui/Keys.tsx:79
 msgid "Draw a box on the table, then drag one unit to move them all"
 msgstr ""
 
-#: src/ui/Keys.tsx:72
+#: src/ui/Keys.tsx:80
 msgid "A stylus on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:72
+#: src/ui/Keys.tsx:80
 msgid "Draw a line everyone sees"
 msgstr ""
 
-#: src/ui/Keys.tsx:73
+#: src/ui/Keys.tsx:81
 msgid "Flick the unit card right"
 msgstr ""
 
-#: src/ui/Keys.tsx:73
+#: src/ui/Keys.tsx:81
 msgid "Put it away (tap a unit to bring it back)"
 msgstr ""
 
-#: src/ui/Keys.tsx:92
-#: src/ui/Keys.tsx:96
-msgid "Controls"
-msgstr ""
-
-#: src/ui/Keys.tsx:99
-#: src/ui/TeachRule.tsx:99
-msgid "Close (Esc)"
-msgstr ""
-
-#: src/ui/Lobby.tsx:142
+#: src/ui/Lobby.tsx:144
 #: src/workshop/Workshop.tsx:709
 msgid "{name} {version}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:287
-msgid "That is not an Open Battle replay file."
+#: src/ui/Lobby.tsx:328
+msgid "Aa ▾"
 msgstr ""
 
-#: src/ui/Lobby.tsx:342
+#: src/ui/Lobby.tsx:328
+msgid "Text size and language"
+msgstr ""
+
+#: src/ui/Lobby.tsx:335
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:361
+#: src/ui/Lobby.tsx:354
 msgid "{event}: back to the event"
 msgstr ""
 
-#: src/ui/Lobby.tsx:372
+#: src/ui/Lobby.tsx:365
 msgid "Back to {game}: Battle over"
 msgstr ""
 
-#: src/ui/Lobby.tsx:374
+#: src/ui/Lobby.tsx:367
 msgid "Resume: {game}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:376
+#: src/ui/Lobby.tsx:369
 msgid "Resume: {game}, round {n}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:377
+#: src/ui/Lobby.tsx:370
 msgid "Resume: {game}, deploying"
 msgstr ""
 
-#: src/ui/Lobby.tsx:378
+#: src/ui/Lobby.tsx:371
 msgid "Resume last game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:381
+#: src/ui/Lobby.tsx:374
 msgid "{mode}, {n} event, saved {date}"
 msgid_plural "{mode}, {n} events, saved {date}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:387
+#: src/ui/Lobby.tsx:380
 msgid "Against the computer ({level})"
 msgstr ""
 
-#: src/ui/Lobby.tsx:388
+#: src/ui/Lobby.tsx:381
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:388
+#: src/ui/Lobby.tsx:381
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:388
+#: src/ui/Lobby.tsx:381
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:405
+#: src/ui/Lobby.tsx:398
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:407
+#: src/ui/Lobby.tsx:400
 msgid "From New Recruit, BattleScribe, Yellowscribe or a Tabletop Simulator save, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:415
+#: src/ui/Lobby.tsx:408
 msgid "Find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:416
+#: src/ui/Lobby.tsx:409
 msgid "Join a game someone has put up on Open tables."
 msgstr ""
 
-#: src/ui/Lobby.tsx:424
+#: src/ui/Lobby.tsx:417
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:430
-#: src/ui/Lobby.tsx:453
-#: src/ui/Lobby.tsx:473
-#: src/ui/Lobby.tsx:497
+#: src/ui/Lobby.tsx:423
+#: src/ui/Lobby.tsx:445
+#: src/ui/Lobby.tsx:465
+#: src/ui/Lobby.tsx:488
 msgid "Play now (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:433
-#: src/ui/Lobby.tsx:454
-#: src/ui/Lobby.tsx:476
-#: src/ui/Lobby.tsx:501
-#: src/ui/Lobby.tsx:543
+#: src/ui/Lobby.tsx:426
+#: src/ui/Lobby.tsx:446
+#: src/ui/Lobby.tsx:468
+#: src/ui/Lobby.tsx:492
+#: src/ui/Lobby.tsx:535
 msgid "Play the computer"
 msgstr ""
 
-#: src/ui/Lobby.tsx:437
-#: src/ui/Lobby.tsx:480
+#: src/ui/Lobby.tsx:428
+#: src/ui/Lobby.tsx:470
+#: src/ui/Lobby.tsx:539
+msgid "More for this game"
+msgstr ""
+
+#: src/ui/Lobby.tsx:430
+#: src/ui/Lobby.tsx:472
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr ""
 
-#: src/ui/Lobby.tsx:442
-#: src/ui/Lobby.tsx:455
-#: src/ui/Lobby.tsx:485
-#: src/ui/Lobby.tsx:502
-#: src/ui/Lobby.tsx:658
+#: src/ui/Lobby.tsx:435
+#: src/ui/Lobby.tsx:447
+#: src/ui/Lobby.tsx:477
+#: src/ui/Lobby.tsx:493
+#: src/ui/Lobby.tsx:681
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:445
-#: src/ui/Lobby.tsx:488
+#: src/ui/Lobby.tsx:437
+#: src/ui/Lobby.tsx:479
 msgid "Rules, print and play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:467
+#: src/ui/Lobby.tsx:459
 msgid "Our own skirmish game, free to share (CC BY). Crews of five to ten climb a drowned town's towers at low tide: two actions a go, guards and hidden lurkers. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:509
+#: src/ui/Lobby.tsx:500
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:511
+#: src/ui/Lobby.tsx:502
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:516
+#: src/ui/Lobby.tsx:507
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:533
+#: src/ui/Lobby.tsx:525
 msgid "Learn (guided)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:538
+#: src/ui/Lobby.tsx:530
+#: src/ui/Lobby.tsx:542
 msgid "Try (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:553
+#: src/ui/Lobby.tsx:564
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:558
+#: src/ui/Lobby.tsx:569
 msgid "Open tables: find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:560
+#: src/ui/Lobby.tsx:571
 msgid "Games other players have put up. Join one, or post your own."
 msgstr ""
 
-#: src/ui/Lobby.tsx:586
+#: src/ui/Lobby.tsx:599
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:607
+#: src/ui/Lobby.tsx:621
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:609
+#: src/ui/Lobby.tsx:625
+msgid "Options: 2 vs 2"
+msgstr ""
+
+#: src/ui/Lobby.tsx:625
+msgid "Options"
+msgstr ""
+
+#: src/ui/Lobby.tsx:627
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:612
+#: src/ui/Lobby.tsx:630
 msgid "Two players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:613
+#: src/ui/Lobby.tsx:631
 msgid "Four players in two teams; teams share CP and VP"
 msgstr ""
 
-#: src/ui/Lobby.tsx:629
+#: src/ui/Lobby.tsx:648
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:632
+#: src/ui/Lobby.tsx:651
 msgid "Host on this site's server"
 msgstr ""
 
-#: src/ui/Lobby.tsx:635
+#: src/ui/Lobby.tsx:654
 msgid "The server couldn't host it: {reason}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:636
+#: src/ui/Lobby.tsx:655
 msgid "The game runs on the server, not in a browser, so nobody's tab has to stay open."
 msgstr ""
 
-#: src/ui/Lobby.tsx:641
+#: src/ui/Lobby.tsx:661
+msgid "Have an invite? Paste it here"
+msgstr ""
+
+#: src/ui/Lobby.tsx:664
+msgid "a room code or invite link"
+msgstr ""
+
+#: src/ui/Lobby.tsx:665
 #: src/ui/Room.tsx:114
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:644
-msgid "a room code or invite link"
-msgstr ""
-
-#: src/ui/Lobby.tsx:648
-msgid "Paste a room code or invite link to join."
-msgstr ""
-
-#: src/ui/Lobby.tsx:660
+#: src/ui/Lobby.tsx:683
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:665
+#: src/ui/Lobby.tsx:688
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:668
+#: src/ui/Lobby.tsx:691
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:670
+#: src/ui/Lobby.tsx:693
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:674
+#: src/ui/Lobby.tsx:697
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:681
+#: src/ui/Lobby.tsx:704
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:691
+#: src/ui/Lobby.tsx:714
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:708
+#: src/ui/Lobby.tsx:728
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:711
-msgid "Open a Tabletop Simulator save as a game"
-msgstr ""
-
-#: src/ui/Lobby.tsx:714
+#: src/ui/Lobby.tsx:731
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:717
-msgid "Open a replay file"
+#: src/ui/Lobby.tsx:738
+msgid "Open a Tabletop Simulator save as a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:728
+#: src/ui/Lobby.tsx:745
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:733
+#: src/ui/Lobby.tsx:750
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:761
+#: src/ui/Lobby.tsx:778
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:762
+#: src/ui/Lobby.tsx:779
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:763
+#: src/ui/Lobby.tsx:780
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:766
-#: src/ui/Lobby.tsx:767
+#: src/ui/Lobby.tsx:783
+#: src/ui/Lobby.tsx:784
 msgid "How hard?"
 msgstr ""
 
-#: src/ui/Lobby.tsx:794
-#: src/ui/Lobby.tsx:795
+#: src/ui/Lobby.tsx:811
+#: src/ui/Lobby.tsx:812
 msgid "Your player card: name, colours, ranked games"
 msgstr ""
 
@@ -10574,6 +10636,26 @@ msgstr ""
 msgid "Moved only: end its go"
 msgstr ""
 
+#: src/ui/TableTag.tsx:50
+msgid "Click to do it"
+msgstr ""
+
+#: src/ui/TableTag.tsx:51
+msgid "Click: its card · Shift+click: {verb} anyway"
+msgstr ""
+
+#: src/ui/TableTag.tsx:52
+msgid "shoot"
+msgstr ""
+
+#: src/ui/TableTag.tsx:52
+msgid "charge"
+msgstr ""
+
+#: src/ui/TableTag.tsx:52
+msgid "fight"
+msgstr ""
+
 #: src/ui/TableWarnings.tsx:111
 msgid "Warnings for this unit"
 msgstr ""
@@ -11417,62 +11499,112 @@ msgstr ""
 msgid "{name} isn't ready yet"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:103
-#: src/ui/TouchLayer.tsx:106
+#: src/ui/TouchLayer.tsx:110
+#: src/ui/TouchLayer.tsx:113
 msgid "This spot"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:122
+#: src/ui/TouchLayer.tsx:130
 msgid "Move one model at a time"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:134
+#: src/ui/TouchLayer.tsx:142
 msgid "Look from here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:143
+#: src/ui/TouchLayer.tsx:151
 msgid "Ping this unit"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:143
+#: src/ui/TouchLayer.tsx:151
 msgid "Ping here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:157
+#: src/ui/TouchLayer.tsx:165
 msgid "Hold, then drag, to measure."
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:47
-msgid "Twist to turn"
+#: src/ui/TouchLayer.tsx:198
+msgid "{verb}: {unit}"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:50
-msgid "Wheel {n}° right"
+#: src/ui/TouchLayer.tsx:199
+msgid "{verb} anyway ({why})"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:51
-msgid "Wheel {n}° left"
+#: src/ui/TouchLayer.tsx:200
+#: src/ui/UnitCard.tsx:284
+#: src/ui/UnitCard.tsx:680
+#: src/ui/tableVerbs.ts:81
+msgid "Shoot"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:53
-#: src/ui/TouchLayer.tsx:114
-msgid "Turn {n}° right"
+#: src/ui/TouchLayer.tsx:200
+#: src/ui/tableVerbs.ts:99
+msgid "Charge"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:227
+msgid "Shoot…"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:233
+#: src/ui/UnitCard.tsx:305
+msgid "Advance (D6)"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:241
+msgid "Then click the enemy to charge"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:247
+msgid "Charge…"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:254
+msgid "Fight…"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:260
+#: src/ui/UnitCard.tsx:313
+msgid "Battle-shock test"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:269
+msgid "Out of phase ▸"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:54
-#: src/ui/TouchLayer.tsx:111
+msgid "Twist to turn"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:57
+msgid "Wheel {n}° right"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:58
+msgid "Wheel {n}° left"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:60
+#: src/ui/TouchLayer.tsx:122
+msgid "Turn {n}° right"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:61
+#: src/ui/TouchLayer.tsx:119
 msgid "Turn {n}° left"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:64
+#: src/ui/TouchLayer.tsx:71
 msgid "{n} units picked: drag one to move them all"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:66
+#: src/ui/TouchLayer.tsx:73
 msgid "Draw a box on the table around your units"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:67
+#: src/ui/TouchLayer.tsx:74
 msgid "Dragging moves one model at a time"
 msgstr ""
 
@@ -11504,21 +11636,8 @@ msgstr ""
 msgid "Stood still this turn: Heavy +1 to hit"
 msgstr ""
 
-#: src/ui/UnitCard.tsx:284
-#: src/ui/UnitCard.tsx:680
-msgid "Shoot"
-msgstr ""
-
 #: src/ui/UnitCard.tsx:298
 msgid "Shoot everything at…"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:305
-msgid "Advance (D6)"
-msgstr ""
-
-#: src/ui/UnitCard.tsx:313
-msgid "Battle-shock test"
 msgstr ""
 
 #: src/ui/UnitCard.tsx:342
@@ -13351,6 +13470,42 @@ msgstr ""
 
 #: src/ui/systemLabels.ts:47
 msgid "Regiments by hand, a card stack for activations, clash and volley."
+msgstr ""
+
+#: src/ui/tableVerbs.ts:101
+msgid "{distance} away"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:102
+msgid "needs {n}+"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:102
+msgid "already in reach"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:112
+msgid "Not in engagement range: {distance}"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:67
+msgid "Out of range: {distance} (its longest reach is {reach})"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:81
+msgid "Not in sight"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:86
+msgid "{n} of {all} models seen"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:88
+msgid "in cover"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:99
+msgid "Too far to charge"
 msgstr ""
 
 #: src/ui/textSize.ts:6

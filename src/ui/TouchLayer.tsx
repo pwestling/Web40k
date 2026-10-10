@@ -1,4 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
+import type { Intent } from "../core";
+import { phaseName } from "../core/content/turn";
+import { systemModule } from "../systems";
+import { belowHalf } from "../systems/wh40k/module";
+import { mainWeapon } from "../systems/wh40k/rules";
+import { RollButton } from "../companion/RealDice";
+import { doTableVerb, tableVerb } from "./tableVerbs";
 import { t } from "../i18n";
 import { talkOrNote } from "../replay/notes";
 import { snapTurn } from "../render/touchTurn";
@@ -104,6 +111,7 @@ function TouchMenu() {
         style={{ left, top }}
       >
         <strong className="small">{unit ? unit.name : t("This spot")}</strong>
+        {unit && <UnitVerbs unitId={unit.id} close={close} />}
         {unit && mine && (
           <>
             <div className="row">
@@ -156,6 +164,111 @@ function TouchMenu() {
         </button>
         <p className="muted small">{t("Hold, then drag, to measure.")}</p>
       </div>
+    </>
+  );
+}
+
+/**
+ * The unit's verbs at the unit (UX 84, proposal 3): this phase's first, the rest under "Out of phase";
+ * on an enemy, what your picked unit can do to it. The same menu opens on a right-click or a long press.
+ */
+function UnitVerbs({ unitId, close }: { unitId: string; close: () => void }) {
+  const game = useGame();
+  const canControl = useCanControl();
+  const { selected, select, setDraft, scrub } = useStore();
+  const unit = game.units[unitId];
+  if (!unit || scrub !== null || !systemModule(game.system).dedicatedUi || game.turn.round === 0) return null;
+  const as = unit.owner;
+  // Your picked unit and this one on opposite sides: what it does to this one, in reach or anyway.
+  const verb =
+    selected && selected !== unitId && canControl(game.units[selected]?.owner ?? "")
+      ? tableVerb(game, selected, unitId)
+      : null;
+  const onIt = verb && selected && (
+    <button
+      role="menuitem"
+      className={verb.ok ? "primary" : ""}
+      title={verb.facts.join(" · ")}
+      onClick={() => {
+        doTableVerb(verb, selected, unitId);
+        close();
+      }}
+    >
+      {verb.ok
+        ? t("{verb}: {unit}", { verb: verb.line, unit: game.units[selected]!.name })
+        : t("{verb} anyway ({why})", {
+            verb: { shoot: t("Shoot"), charge: t("Charge"), fight: t("Fight") }[verb.verb],
+            why: verb.line,
+          })}
+    </button>
+  );
+  // Hotseat controls both sides: with one of yours picked, the other side offers what it does to them.
+  if (!canControl(as) || onIt) return onIt || null;
+  const phase = phaseName(game);
+  const roll = (label: string, count: number): Intent => ({
+    type: "dice/roll",
+    count,
+    sides: 6,
+    label,
+    unitId,
+  });
+  const pick =
+    (kind: "ranged" | "melee", all = false) =>
+    () => {
+      select(unitId);
+      setDraft({ attackerId: unitId, kind, picking: true, ...(all ? { all: true } : {}) });
+      close();
+    };
+  const verbs: [string, ReactNode][] = [];
+  if (mainWeapon(game, unit, "ranged"))
+    verbs.push([
+      "Shooting",
+      <button key="shoot" role="menuitem" onClick={pick("ranged", true)}>
+        {t("Shoot…")}
+      </button>,
+    ]);
+  verbs.push([
+    "Movement",
+    <RollButton key="advance" intent={roll("advance", 1)} as={as} onRolled={close}>
+      {t("Advance (D6)")}
+    </RollButton>,
+  ]);
+  verbs.push([
+    "Charge",
+    <button
+      key="charge"
+      role="menuitem"
+      title={t("Then click the enemy to charge")}
+      onClick={() => {
+        select(unitId);
+        close();
+      }}
+    >
+      {t("Charge…")}
+    </button>,
+  ]);
+  if (mainWeapon(game, unit, "melee"))
+    verbs.push([
+      "Fight",
+      <button key="fight" role="menuitem" onClick={pick("melee")}>
+        {t("Fight…")}
+      </button>,
+    ]);
+  verbs.push([
+    belowHalf({ state: game }, unitId) ? "Command" : "",
+    <RollButton key="shock" intent={roll("battleshock", 2)} as={as} onRolled={close}>
+      {t("Battle-shock test")}
+    </RollButton>,
+  ]);
+  const now = verbs.filter(([p]) => p === phase);
+  const later = verbs.filter(([p]) => p !== phase);
+  return (
+    <>
+      {now.map(([, b]) => b)}
+      <details className="out-of-phase">
+        <summary className="muted small">{t("Out of phase ▸")}</summary>
+        {later.map(([, b]) => b)}
+      </details>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { useChargeAsk } from "./tableVerbs";
 import { useState } from "react";
 import { unitGap, type Intent, type Unit } from "../core";
 import { actionTargets, unitActions } from "../core/content/play";
@@ -15,7 +16,14 @@ import { chargeNeeded } from "../systems/wh40k/charge";
  */
 export function ChargeDeclare({ unit, primary, as }: { unit: Unit; primary: boolean; as: string }) {
   const game = useGame();
-  const [picking, setPicking] = useState<string[] | null>(null);
+  const [picked, setPicked] = useState<string[] | null>(null);
+  // A charge declared by clicking an enemy on the table (UX 84) opens here with that target.
+  const asked = useChargeAsk((s) => (s.ask?.unitId === unit.id ? s.ask.targets : null));
+  const picking = picked ?? asked;
+  const setPicking = (p: string[] | null) => {
+    if (asked) useChargeAsk.setState({ ask: null });
+    setPicked(p);
+  };
   // Nothing in reach, and the player pressed Charge anyway: every enemy is pickable (advisory rules, UX 434).
   const [anyway, setAnyway] = useState(false);
   const roll = typeof unit.status?.charge === "number" ? unit.status.charge : null;

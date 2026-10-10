@@ -10,6 +10,14 @@ const keys = (): [string, string][] => [
   [t("Click a unit"), t("Select it: its card on the right shows what it can do")],
   ["[ / ]", t("Select your previous or next unit (Shift: the other side's)")],
   [t("Arrow keys"), t('Move the selected unit 1" (Shift: ¼"), up being away from the camera')],
+  [
+    t("Click an enemy"),
+    t(
+      "With your unit picked: shoot, charge or fight it, as the phase says (the tag by the pointer says what)",
+    ),
+  ],
+  [t("Shift + click an enemy"), t("Do it anyway, out of range or out of phase")],
+  [t("Right-click a unit"), t("Its actions, this phase's first; on a spot: ping, views")],
   [t("Enter"), t("Go from the table into the selected unit's card")],
   [t("Tab"), t("Move between buttons; Enter or Space presses one")],
   [t("Drag a unit"), t("Move it; the ruler shows how far against its limit")],

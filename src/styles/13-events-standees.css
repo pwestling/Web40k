@@ -304,3 +304,28 @@ canvas:focus-visible {
   cursor: default;
   max-height: 80vh;
 }
+
+/* Acting on the table (UX 84): the tag by the pointer over an enemy, and a crosshair when a click acts. */
+.table-tag {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 280px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgb(17 19 24 / 94%);
+  border: 1px solid #2d3340;
+  font-size: 0.9rem;
+}
+.table-tag.ok {
+  border-color: #f59e0b;
+}
+.table-tag.no strong {
+  color: #fca5a5;
+}
+body.verb-ok canvas {
+  cursor: crosshair;
+}

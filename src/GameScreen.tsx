@@ -39,6 +39,7 @@ import { PackagePanel } from "./ui/PackagePanel";
 import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
+import { TableTag } from "./ui/TableTag";
 import { useTableTalk } from "./talk/talk";
 import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
 import { useHotseatMark } from "./ui/resumeHotseat";
@@ -306,6 +307,7 @@ export function GameScreen({ started }: { started: boolean }) {
           {/* A replay page has no one to ping or react to (UX 344, PX share 7). */}
           {/* Nobody to talk to in hotseat or against the computer (UX 83). */}
           {!editing && !VIEWER && !hotseat && <TalkPanel />}
+          {!VIEWER && <TableTag />}
           {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
           <Moments />

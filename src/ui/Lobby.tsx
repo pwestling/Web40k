@@ -2,8 +2,6 @@ import { openPlayerCard } from "../player/open";
 import { useCard } from "../player/card";
 import { systemOf } from "../core/content/turn";
 import { isPlaceholder } from "../core/content/systems";
-import type { ReplayFile } from "./replayFile";
-import { useOpenReport, type ReportFile } from "./report";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
@@ -45,6 +43,8 @@ import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, gameTitle, systemLabel } from "./systemLabels";
 import { stateAt } from "../core/log";
 import { OpenLink } from "../share/OpenLink";
+import { OpenFile } from "../share/OpenFile";
+import { PopMenu } from "./PopMenu";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Play by mail loads after the front door; it sits below the fold. */
@@ -82,9 +82,11 @@ function whenStarted(then: () => void): void {
 let autoJoined = false;
 
 export function Lobby() {
-  const { start, openReplay } = useStore();
+  const { start } = useStore();
   const params = new URLSearchParams(location.search);
-  const [name, setName] = useState(() => localStorage.getItem("open-battle:name") ?? "");
+  const [name, setName] = useState(
+    () => localStorage.getItem("open-battle:name") || useCard.getState().name.trim(),
+  );
   // A name given on the player card fills this in at once, unless the player typed another (UX 449).
   const cardName = useCard((c) => c.name.trim());
   const [lastCard, setLastCard] = useState(cardName);
@@ -282,18 +284,6 @@ export function Lobby() {
     else start({ role: back.role, mode: m, roomId, name: who });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadReplay = async (file: File) => {
-    const data = JSON.parse(await file.text()) as ReplayFile;
-    if (data.format !== "open-battle/record@1") return alert(t("That is not an Open Battle replay file."));
-    openReplay(await (await import("./replayFile")).unbundleReplay(data));
-    // A problem report opens at the moment it was made (src/ui/report.ts).
-    const report = (data as Partial<ReportFile>).report;
-    if (report && Number.isFinite(report.seq)) {
-      useOpenReport.setState({ report });
-      useStore.getState().setScrub(report.seq);
-    }
-  };
-
   const demos = listSystems().filter((s) => FRONT[s.id]);
   // The built-in lessons, then any lesson packages loaded on this device (data only: nothing to trust).
   const lessons = lessonPackages([
@@ -334,8 +324,11 @@ export function Lobby() {
         {/* Settings out of the way, but in sight (UX 285). */}
         <div className="lobby-settings">
           <CardChip />
-          <TextSizePicker />
-          <LanguagePicker />
+          {/* Set once, so one small menu (UX 83). */}
+          <PopMenu label={t("Aa ▾")} title={t("Text size and language")} side="right" className="lobby-aa">
+            <TextSizePicker />
+            <LanguagePicker />
+          </PopMenu>
         </div>
       </div>
       <p className="pitch">
@@ -432,18 +425,17 @@ export function Lobby() {
               <button className="small solo" onClick={() => setAsking(RIFT_LANTERNS)}>
                 {t("Play the computer")}
               </button>
-              <button
-                className="small"
-                title={t(
-                  "Printed or real models on your table: this phone keeps the cards, rolls and scores",
-                )}
-                onClick={() => void playRiftAtTable()}
-              >
-                {t("At a real table")}
-              </button>
-              <button className="small" onClick={() => setRules(true)}>
-                {t("Rules, print and play")}
-              </button>
+              <PopMenu label="⋯" title={t("More for this game")} className="small">
+                <button
+                  title={t(
+                    "Printed or real models on your table: this phone keeps the cards, rolls and scores",
+                  )}
+                  onClick={() => void playRiftAtTable()}
+                >
+                  {t("At a real table")}
+                </button>
+                <button onClick={() => setRules(true)}>{t("Rules, print and play")}</button>
+              </PopMenu>
             </div>
             {rules && (
               <Suspense fallback={null}>
@@ -475,18 +467,17 @@ export function Lobby() {
               <button className="small solo" onClick={() => setAsking(BRINEWATCH)}>
                 {t("Play the computer")}
               </button>
-              <button
-                className="small"
-                title={t(
-                  "Printed or real models on your table: this phone keeps the cards, rolls and scores",
-                )}
-                onClick={() => void playOwnAtTable(BRINEWATCH)}
-              >
-                {t("At a real table")}
-              </button>
-              <button className="small" onClick={() => setBrineRules(true)}>
-                {t("Rules, print and play")}
-              </button>
+              <PopMenu label="⋯" title={t("More for this game")} className="small">
+                <button
+                  title={t(
+                    "Printed or real models on your table: this phone keeps the cards, rolls and scores",
+                  )}
+                  onClick={() => void playOwnAtTable(BRINEWATCH)}
+                >
+                  {t("At a real table")}
+                </button>
+                <button onClick={() => setBrineRules(true)}>{t("Rules, print and play")}</button>
+              </PopMenu>
             </div>
             {brineRules && (
               <Suspense fallback={null}>
@@ -522,19 +513,20 @@ export function Lobby() {
               <div key={g.id} className="demo">
                 <strong>{g.title}</strong>
                 <span className="muted small">{g.blurb}</span>
+                {/* One main button and Play the computer; the rest one click in (UX 83). */}
                 <div className="row wrap">
-                  {g.lessons.map((l, i) => (
+                  {g.lessons.slice(0, 1).map((l) => (
                     <button
                       key={l.id}
-                      className={i === 0 ? "primary small learn" : "small learn"}
+                      className="primary small learn"
                       title={gameText(l.summary)}
                       onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
                     >
-                      {i === 0 ? t("Learn (guided)") : gameText(l.title)}
+                      {t("Learn (guided)")}
                     </button>
                   ))}
-                  {g.demo && (
-                    <button className="small try" onClick={() => startDemo(g.id)}>
+                  {g.demo && !g.lessons.length && (
+                    <button className="primary small try" onClick={() => startDemo(g.id)}>
                       {t("Try (both sides)")}
                     </button>
                   )}
@@ -542,6 +534,25 @@ export function Lobby() {
                     <button className="small solo" onClick={() => setAsking(g.id)}>
                       {t("Play the computer")}
                     </button>
+                  )}
+                  {(g.lessons.length > 1 || (g.demo && g.lessons.length > 0)) && (
+                    <PopMenu label="⋯" title={t("More for this game")} className="small">
+                      {g.demo && g.lessons.length > 0 && (
+                        <button className="try" onClick={() => startDemo(g.id)}>
+                          {t("Try (both sides)")}
+                        </button>
+                      )}
+                      {g.lessons.slice(1).map((l) => (
+                        <button
+                          key={l.id}
+                          className="learn"
+                          title={gameText(l.summary)}
+                          onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+                        >
+                          {gameText(l.title)}
+                        </button>
+                      ))}
+                    </PopMenu>
                   )}
                 </div>
                 {asking === g.id && <HowHard system={g.id} onCancel={() => setAsking(null)} />}
@@ -579,18 +590,21 @@ export function Lobby() {
               )}
             </>
           )}
-          <label>
-            {t("Your name")}{" "}
-            <input
-              value={name}
-              placeholder={t("Player 1 or 2, by seat")}
-              onChange={(e) => {
-                setName(e.target.value);
-                // Kept as typed, so Open tables and mail invites offer it too (dogfood).
-                if (e.target.value.trim()) localStorage.setItem("open-battle:name", e.target.value.trim());
-              }}
-            />
-          </label>
+          {/* The player card's name is used as it is (UX 83); the field shows without one, or another typed. */}
+          {(!cardName || (name.trim() !== "" && name.trim() !== cardName)) && (
+            <label>
+              {t("Your name")}{" "}
+              <input
+                value={name}
+                placeholder={t("Player 1 or 2, by seat")}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  // Kept as typed, so Open tables and mail invites offer it too (dogfood).
+                  if (e.target.value.trim()) localStorage.setItem("open-battle:name", e.target.value.trim());
+                }}
+              />
+            </label>
+          )}
           <label>
             {t("Game")}{" "}
             <select value={system} onChange={(e) => setSystem(e.target.value)}>
@@ -602,29 +616,34 @@ export function Lobby() {
             </select>
           </label>
           {/* The table's size beside the button it changes (UX 406). */}
-          <div className="row">
+          <div className="row wrap">
             <button className="primary" onClick={() => host()}>
               {t("Host a game")}
             </button>
-            <div className="segmented" role="radiogroup" aria-label={t("Players")}>
-              {(
-                [
-                  [1, t("1 vs 1"), t("Two players")],
-                  [2, t("2 vs 2"), t("Four players in two teams; teams share CP and VP")],
-                ] as const
-              ).map(([n, label, about]) => (
-                <button
-                  key={n}
-                  role="radio"
-                  aria-checked={teamSize === n}
-                  className={teamSize === n ? "on" : ""}
-                  title={about}
-                  onClick={() => setTeamSize(n)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <details className="host-options">
+              <summary className="muted small">
+                {teamSize === 2 ? t("Options: 2 vs 2") : t("Options")}
+              </summary>
+              <div className="segmented" role="radiogroup" aria-label={t("Players")}>
+                {(
+                  [
+                    [1, t("1 vs 1"), t("Two players")],
+                    [2, t("2 vs 2"), t("Four players in two teams; teams share CP and VP")],
+                  ] as const
+                ).map(([n, label, about]) => (
+                  <button
+                    key={n}
+                    role="radio"
+                    aria-checked={teamSize === n}
+                    className={teamSize === n ? "on" : ""}
+                    title={about}
+                    onClick={() => setTeamSize(n)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </details>
           </div>
           <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
           {hostServer && builtIn && (
@@ -637,24 +656,28 @@ export function Lobby() {
               </p>
             </>
           )}
+          {/* Most guests open the link itself; Join and Watch show once something is pasted (UX 83). */}
           <label>
-            {t("Room")}{" "}
+            {t("Have an invite? Paste it here")}{" "}
             <input
               value={room}
               placeholder={t("a room code or invite link")}
+              aria-label={t("Room")}
               onChange={(e) => setRoom(roomFrom(e.target.value))}
             />
           </label>
-          {!room && <p className="muted small">{t("Paste a room code or invite link to join.")}</p>}
-          <div className="row">
-            <button disabled={!room} onClick={() => join("client")}>
-              {t("Join")}
-            </button>
-            <button disabled={!room} onClick={() => join("spectator")}>
-              {t("Watch")}
-            </button>
-          </div>
-          <NetCheck />
+          {room && (
+            <>
+              <div className="row">
+                <button className="primary" onClick={() => join("client")}>
+                  {t("Join")}
+                </button>
+                <button onClick={() => join("spectator")}>{t("Watch")}</button>
+              </div>
+              {/* The connection check is for joining; it's in Report a problem too (UX 83). */}
+              <NetCheck />
+            </>
+          )}
           <h2>{t("At a real table")}</h2>
           <p className="muted small">
             {t(
@@ -691,36 +714,30 @@ export function Lobby() {
               {t("Set up a game on this screen (hotseat)")}
             </button>
             <PackageLibrary system={system} onPick={setSystem} />
+            <Suspense fallback={null}>
+              <MailLobby
+                name={name}
+                system={system}
+                onStarted={() => {
+                  remember();
+                  namePackage();
+                }}
+              />
+            </Suspense>
+            <button className="link" onClick={() => openLibrary()}>
+              {t("Figure library: your models, packs and storage")}
+            </button>
+            <button className="link" onClick={openWorkshop}>
+              {t("Module workshop: write your own game system")}
+            </button>
           </details>
-          <Suspense fallback={null}>
-            <MailLobby
-              name={name}
-              system={system}
-              onStarted={() => {
-                remember();
-                namePackage();
-              }}
-            />
-          </Suspense>
           <InstallLink />
           <hr />
-          <button className="link" onClick={() => openLibrary()}>
-            {t("Figure library: your models, packs and storage")}
-          </button>
+          {/* New, and Porter's focus: kept in sight for now (UX 83). */}
           <button className="tts-entry" onClick={openTts}>
             {t("Open a Tabletop Simulator save as a game")}
           </button>
-          <button className="link" onClick={openWorkshop}>
-            {t("Module workshop: write your own game system")}
-          </button>
-          <label className="file">
-            {t("Open a replay file")}
-            <input
-              type="file"
-              accept=".json,application/json"
-              onChange={(e) => e.target.files?.[0] && loadReplay(e.target.files[0])}
-            />
-          </label>
+          <OpenFile />
           <OpenLink />
         </div>
       </div>

@@ -1,3 +1,5 @@
+import type { ReplayFile } from "../ui/replayFile";
+import type { ReportFile } from "../ui/report";
 import { create } from "zustand";
 import { t } from "../i18n";
 import { sha256 } from "../packages/manifest";
@@ -181,10 +183,22 @@ export async function fetchShared(
 
 /** The player said yes: open the file where its kind goes, and remember the link. Returns a line to show. */
 export async function openShared(offer: SharedOffer): Promise<string> {
-  const text = () => new TextDecoder().decode(offer.bytes);
-  const file = (ext: string) => new File([offer.bytes as BlobPart], `${offer.name}${ext}`);
-  let line: string;
-  switch (offer.kind) {
+  const line = await openBytes(offer.kind, offer.name, offer.bytes);
+  if (line === null) return t("That file couldn't be opened.");
+  pin(offer.url, { hash: offer.hash, kind: offer.kind, name: offer.name, at: Date.now() });
+  return line;
+}
+
+/**
+ * Open a file of a kind Open Battle knows, from a link or from this device
+ * (the lobby's "Open a file…", UX 83): the line saying where it went, or an
+ * error line. Null only for a kind with nothing to open it.
+ */
+export async function openBytes(kind: SharedKind, name: string, bytes: Uint8Array): Promise<string | null> {
+  const text = () => new TextDecoder().decode(bytes);
+  const file = (ext: string) => new File([bytes as BlobPart], `${name}${ext}`);
+  let line: string | null = null;
+  switch (kind) {
     case "figures": {
       const { openPack } = await import("../figures/pack");
       const r = await openPack(text());
@@ -215,9 +229,9 @@ export async function openShared(offer: SharedOffer): Promise<string> {
       const { STANDEE_EXTENSION } = await import("../standees/file");
       const asset = await useAssets
         .getState()
-        .importFile(file(STANDEE_EXTENSION), `library:${offer.name}`, "miniature");
+        .importFile(file(STANDEE_EXTENSION), `library:${name}`, "miniature");
       if (!asset) return t("That standee couldn't be read.");
-      line = t("{name} is in your figure library.", { name: offer.name });
+      line = t("{name} is in your figure library.", { name });
       break;
     }
     case "replay": {
@@ -225,12 +239,18 @@ export async function openShared(offer: SharedOffer): Promise<string> {
         import("../ui/replayFile"),
         import("../store"),
       ]);
-      useStore.getState().openReplay(await unbundleReplay(JSON.parse(text())));
+      const data = JSON.parse(text()) as ReplayFile & Partial<ReportFile>;
+      useStore.getState().openReplay(await unbundleReplay(data));
+      // A problem report opens at the moment it was made (src/ui/report.ts).
+      if (data.report && Number.isFinite(data.report.seq)) {
+        const { useOpenReport } = await import("../ui/report");
+        useOpenReport.setState({ report: data.report });
+        useStore.getState().setScrub(data.report.seq);
+      }
       line = t("Replay opened.");
       break;
     }
   }
-  pin(offer.url, { hash: offer.hash, kind: offer.kind, name: offer.name, at: Date.now() });
   return line;
 }
 
