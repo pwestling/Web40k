@@ -18,7 +18,7 @@ import {
   type PackOffer,
 } from "../packages/packPins";
 import { playerName } from "../i18n/names";
-import { useStore } from "../store";
+import { hostPowers, useStore } from "../store";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import { refOf } from "./Packages";
 import { t, tn } from "../i18n";
@@ -313,10 +313,10 @@ function PackConsent({
 export function packsToGame(packs: ArmyPack[] | undefined): void {
   const lib = useLibrary.getState().packages;
   const have = (packs ?? []).flatMap((p) => (p.code && lib[p.hash]?.trusted ? [lib[p.hash]!] : []));
-  const { game, role, mode, dispatch } = useStore.getState();
+  const { game, dispatch } = useStore.getState();
   const on = game.packages?.packages ?? [];
   if (!have.length || have.every((p) => on.some((r) => r.hash === p.hash))) return;
-  if (role === "host" || mode === "hotseat") turnOnRules(game, have);
+  if (hostPowers(useStore.getState())) turnOnRules(game, have);
   else
     dispatch({
       type: "packages/propose",

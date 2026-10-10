@@ -10,7 +10,7 @@ import {
   type Clocks,
 } from "../core";
 import { t, tn } from "../i18n";
-import { useStore } from "../store";
+import { hostPowers, useHostPowers, useStore } from "../store";
 import { useGame } from "./hooks";
 
 /** The clocks as the log has them, and "now" a second at a time while they run. */
@@ -36,13 +36,13 @@ export function SideClock({ seat }: { seat: number }) {
   const clock = useClocks();
   const dispatch = useStore((s) => s.dispatch);
   const live = useStore((s) => s.scrub === null && s.role !== "spectator");
-  const role = useStore((s) => s.net?.role);
+  const powers = useHostPowers();
   const mode = useStore((s) => s.mode);
   if (!clock) return null;
   const { c, settings, now } = clock;
   const left = timeLeft(c, settings, seat, now);
   const running = c.running === seat && !c.paused;
-  const host = mode === "hotseat" || mode === "local" || role === "host";
+  const host = mode === "local" || powers;
   return (
     <span
       className={`side-clock${running ? " running" : ""}${left <= 0 ? " out" : ""}`}
@@ -83,7 +83,7 @@ export function ClockBar() {
   const clock = useClocks();
   const dispatch = useStore((s) => s.dispatch);
   const live = useStore((s) => s.scrub === null && s.role !== "spectator");
-  const host = useStore((s) => s.mode === "hotseat" || s.mode === "local" || s.net?.role === "host");
+  const host = useStore((s) => s.mode === "local" || hostPowers(s));
   if (!clock) return null;
   const { c, settings, now } = clock;
   const call = timeCall(c, settings, now);
@@ -188,7 +188,7 @@ export function ClockKeeper() {
  */
 function ClockCaller() {
   const clock = useClocks();
-  const host = useStore((s) => s.mode === "hotseat" || s.mode === "local" || s.net?.role === "host");
+  const host = useStore((s) => s.mode === "local" || hostPowers(s));
   const live = useStore((s) => s.scrub === null && !s.review);
   const dispatch = useStore((s) => s.dispatch);
   const sent = useRef(new Set<string>());

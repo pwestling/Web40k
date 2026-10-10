@@ -31,6 +31,11 @@
 		reverse_proxy seeder:8791
 	}
 
+	# The host server: players open games on it (server/host.mjs).
+	handle /host/* {
+		reverse_proxy host:8792
+	}
+
 	handle /health {
 		rewrite * /health.html
 		file_server {

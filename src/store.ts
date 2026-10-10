@@ -19,6 +19,8 @@ import {
 import { broadcastTransport } from "./net/broadcast";
 import { createLoopbackNetwork } from "./net/loopback";
 import { Session, type NetStatus, type Role } from "./net/session";
+import { netConfig } from "./net/config";
+import { wakeServed } from "./net/served";
 import type { trysteroTransport as TrysteroTransport } from "./net/trystero";
 import { systemModule } from "./systems";
 import { replayIntro } from "./ui/highlights";
@@ -125,6 +127,8 @@ interface Store {
   rangeWeapon: string | null;
   /** Connection state: who is host, who is connected, whether the room is choosing a new host. */
   net: NetStatus | null;
+  /** The room's host is the site's host server (server/host.mjs), not a player: see hostPowers. */
+  served: boolean;
   /** Rules packages (hashes) this player chose to play without in this room. */
   packagesWaived: Record<string, true>;
   /** Try to take a seat again (after the player has sorted out the game's rules packages). */
@@ -311,6 +315,7 @@ export const useStore = create<Store>((set, get) => ({
   stats: null,
   moment: null,
   net: null,
+  served: false,
   packagesWaived: {},
   seatAgain: null,
   mail: null,
@@ -400,6 +405,7 @@ export const useStore = create<Store>((set, get) => ({
       game: session.current,
       record: session.log,
       net: session.status,
+      served: false,
       selected: null,
       draft: null,
       review,
@@ -415,6 +421,13 @@ export const useStore = create<Store>((set, get) => ({
       mail: null,
       exhibition: !!options.exhibition && role === "host",
     });
+    // A room on the site's host server: bring the server back if it left the room while it stood empty.
+    const hostServer =
+      mode === "online" && roomId && role !== "host" && !review ? netConfig().hostServer : undefined;
+    if (hostServer)
+      void wakeServed(hostServer, roomId!).then((served) => {
+        if (served && get().session === session) set({ served });
+      });
 
     /**
      * Once there is a host and a game: take back our old seat (a reload or a
@@ -525,6 +538,34 @@ export const useStore = create<Store>((set, get) => ({
     } else session.dispatch(intent);
   },
 }));
+
+/**
+ * Whether this browser makes the host's choices for the table (rules packages,
+ * clocks, campaign rules, posting to Open tables): the host, a screen that
+ * plays every side, or, when the site's host server hosts the room, the
+ * table's chair: the first seated player still here.
+ */
+export function hostPowers(s: Pick<Store, "mode" | "net" | "role" | "served" | "game" | "session">): boolean {
+  if (s.mode === "hotseat") return true;
+  if (s.net ? s.net.role === "host" : s.role === "host") return true;
+  if (!serverHost(s) || !s.session || s.role === "spectator") return false;
+  const here = new Set([s.session.selfId, ...(s.net?.peers ?? [])]);
+  const chair = Object.values(s.game.players).find((p) => p.seat !== undefined && here.has(p.id));
+  return chair?.id === s.session.selfId;
+}
+
+/**
+ * The site's host server's peer id, while it hosts this room. Null once it has
+ * handed the room to a player (a game with rules packages: src/hostServer).
+ */
+export function serverHost(s: Pick<Store, "served" | "net" | "game">): string | null {
+  const id = s.served ? s.net?.hostId : null;
+  return id && !s.game.players[id] ? id : null;
+}
+
+export function useHostPowers(): boolean {
+  return useStore(hostPowers);
+}
 
 /** Who this browser plays as, for permissions. Hotseat controls everything. */
 /** A player who has joined a room but isn't seated yet (sorting out rules packages, or still connecting). */

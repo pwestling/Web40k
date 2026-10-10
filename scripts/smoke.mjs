@@ -2247,6 +2247,70 @@ const checks = {
     await context.close();
     return page.errors;
   },
+
+  /**
+   * The host server (server/host.mjs): Ana opens a room on it, Ben joins by the link, both put an army
+   * down, and the game carries on on the server after Ana's browser closes; the server keeps it on disk.
+   */
+  async "host-server"() {
+    const HOST = 8797;
+    const data = mkdtempSync(join(tmpdir(), "open-battle-host-"));
+    execFileSync("pnpm", ["build:host"], { stdio: "ignore" });
+    const hostd = spawn("node", ["server/host.mjs"], {
+      stdio: "pipe",
+      detached: true,
+      env: { ...process.env, PORT: String(HOST), SIGNAL_URL: `ws://localhost:${RELAY}`, DATA_DIR: data },
+    });
+    await started(hostd, String(HOST));
+    try {
+      const q = `?${SIGNAL}&hostServer=${encodeURIComponent(`http://localhost:${HOST}`)}`;
+      const ana = await device();
+      const ben = await device();
+      await lobby(ana.page, q);
+      await ana.page.locator(".lobby label", { hasText: "Your name" }).locator("input").fill("Ana");
+      await ana.page.getByRole("button", { name: "Host on this site's server" }).click();
+      await ana.page
+        .locator(".room", { hasText: "hosted by this site's server" })
+        .waitFor({ timeout: 30_000 });
+      await ana.page.locator(".room .people li", { hasText: "Ana" }).waitFor({ timeout: 30_000 });
+      const invite = ana.page.url();
+      await ben.page.goto(BASE);
+      await ben.page.evaluate(() => localStorage.setItem("open-battle:name", "Ben"));
+      await ben.page.goto(invite);
+      for (const { page } of [ana, ben])
+        await page.locator(".room .people li", { hasText: "Ben" }).waitFor({ timeout: 30_000 });
+      // Each puts a sample army down: the server resolves both players' moves.
+      for (const { page } of [ana, ben]) {
+        const pick = page.locator('.panel.hud select[aria-label="Sample army"]');
+        if (await pick.count()) await pick.selectOption({ index: 1 });
+        else
+          await page.locator(".panel.hud").getByRole("button", { name: "Sample army", exact: true }).click();
+        const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+        await deploy.click({ timeout: 15_000 });
+        await deploy.waitFor({ state: "detached" });
+      }
+      const room = new URL(invite).searchParams.get("room");
+      await ana.context.close();
+      // Ana's gone, and the server still hosts: Ben's table says so, and it isn't choosing a new host.
+      await sleep(3000);
+      await ben.page.locator(".room", { hasText: "hosted by this site's server" }).waitFor({ timeout: 5000 });
+      const info = await (await fetch(`http://localhost:${HOST}/rooms/${room}`)).json();
+      if (!info.hosted) throw new Error("the server doesn't host the room");
+      await ben.context.close();
+      process.kill(-hostd.pid, "SIGTERM");
+      await sleep(1000);
+      const kept = JSON.parse(readFileSync(join(data, `${room}.json`), "utf8"));
+      const by = new Set(kept.events.map((e) => e.by));
+      if (by.size < 2) throw new Error(`the kept game has events from ${by.size} player(s)`);
+      return [...ana.page.errors, ...ben.page.errors];
+    } finally {
+      try {
+        process.kill(-hostd.pid);
+      } catch {
+        // Already stopped.
+      }
+    }
+  },
 };
 
 let failed = 0;

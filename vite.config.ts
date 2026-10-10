@@ -10,7 +10,7 @@ import { build as viteBuild, defineConfig, type Plugin, type Rollup } from "vite
 import pkg from "./package.json" with { type: "json" };
 
 // The app build peers compare in game/packages: version + commit.
-function build(): string {
+export function build(): string {
   try {
     return `${pkg.version}+${execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
       .toString()

@@ -31,6 +31,8 @@
 //                 about; "on" means <the site>/mailbox, as the compose file runs it
 //   SEEDER_URL    a seed node (server/seeder.mjs) that keeps shared files; "on"
 //                 means <the site>/seed, as the compose file runs it
+//   HOST_URL      a host server (server/host.mjs) players can open games on;
+//                 "on" means <the site>/host, as the compose file runs it
 //   OPEN_TABLES   "on" turns on Open tables, a public board of games looking for
 //                 players, kept here (server/board.mjs, at /relay/board). Off by
 //                 default: a self-hosted site doesn't show the board otherwise
@@ -127,6 +129,13 @@ function seederUrl(req) {
   return base ? new URL("/seed", base).toString() : null;
 }
 
+function hostUrl(req) {
+  if (!env.HOST_URL || env.HOST_URL === "off") return null;
+  if (env.HOST_URL !== "on") return env.HOST_URL;
+  const base = siteUrl(req);
+  return base ? new URL("/host", base).toString() : null;
+}
+
 function boardUrl(req) {
   const base = siteUrl(req);
   return board && base ? new URL("/relay/board", base).toString() : null;
@@ -137,11 +146,13 @@ function siteConfig(req) {
   const mailbox = mailboxUrl(req);
   const seeder = seederUrl(req);
   const tables = boardUrl(req);
+  const host = hostUrl(req);
   return {
     signal: signal ? [signal] : [],
     turn: turnUrls.length && env.TURN_SECRET ? [turnLogin()] : [],
     ...(mailbox ? { mailbox } : {}),
     ...(seeder ? { seeders: [seeder] } : {}),
+    ...(host ? { hostServer: host } : {}),
     ...(tables ? { openTables: true, board: tables } : {}),
   };
 }

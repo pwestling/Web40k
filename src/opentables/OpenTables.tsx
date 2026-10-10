@@ -11,7 +11,7 @@ import { formatDate, formatNumber, language, t, tn } from "../i18n";
 import { displayName } from "../i18n/names";
 import { untakenSeat } from "../ui/Branch";
 import { gameTitle, plainSystemName } from "../ui/systemLabels";
-import { useStore } from "../store";
+import { useHostPowers, useStore } from "../store";
 import { useMail } from "../mail/store";
 import { inviteCode } from "../mail/mailbox";
 import { myName, say, setMyName } from "../talk/talk";
@@ -923,6 +923,8 @@ export function MyTableKeeper() {
   const mine = useOpenTables((s) => s.mine);
   const roomId = useStore((s) => s.roomId);
   const role = useStore((s) => s.net?.role);
+  // The table's chair keeps a room on the host server posted (store.ts hostPowers).
+  const chair = useHostPowers();
   const game = useStore((s) => s.game);
   const record = useStore((s) => s.record);
   const mail = useMail((s) => s.game);
@@ -947,7 +949,7 @@ export function MyTableKeeper() {
     if (!mine || mine.state === "failed") return;
     if (live) {
       // Not this table any more (another room, or no longer its host).
-      if (roomId !== mine.post.join || (role && role !== "host")) return void takeDown();
+      if (roomId !== mine.post.join || (role && !chair)) return void takeDown();
       // Watchers welcome: a full table stays up under Live now with its round and score, until the end (#64).
       if (now && !over) {
         if (mine.state === "up" && (mine.post.seats !== 0 || JSON.stringify(mine.post.live) !== nowKey))

@@ -1,7 +1,7 @@
 import { sides, sidePlayers, type GameState } from "../core";
 import { systemOf } from "../core/content/turn";
 import { rankedReady, rankedSeats } from "../core/ranked";
-import { useStore } from "../store";
+import { serverHost, useStore } from "../store";
 import type { LiveInfo } from "./post";
 
 /**
@@ -18,7 +18,9 @@ function watcherCount(s = useStore.getState()): number {
       .filter((p) => p.seat !== undefined)
       .map((p) => p.id),
   );
-  const peers = net?.peers ?? [];
+  // The site's host server is in the room as its host, but nobody is watching through it.
+  const server = serverHost(s);
+  const peers = (net?.peers ?? []).filter((id) => id !== server);
   return peers.filter((id) => !seated.has(id)).length + (net?.role === "spectator" ? 1 : 0);
 }
 

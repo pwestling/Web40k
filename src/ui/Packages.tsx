@@ -9,7 +9,7 @@ import { listSystems } from "../core/content";
 import { fingerprint, formatBytes } from "../packages/manifest";
 import { MAX_PEER_BYTES, packagesFor, useLibrary, type StoredPackage } from "../packages/library";
 import { requestPackage, transferPercent, usePackageSharing, useTransfers } from "../packages/share";
-import { useCanControl, useStore } from "../store";
+import { useCanControl, useHostPowers, useStore } from "../store";
 import { APP_BUILD } from "../version";
 import { describePackageChange } from "./packageChange";
 import { useGame } from "./hooks";
@@ -278,7 +278,8 @@ function PackageRow({ pkg }: { pkg: StoredPackage }) {
 export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const game = useGame();
   const system = game.system ?? DEFAULT_SYSTEM;
-  const { dispatch, role, mode } = useStore();
+  const { dispatch, mode } = useStore();
+  const powers = useHostPowers();
   const packages = useLibrary((s) => s.packages);
   const [all, setAll] = useState(false);
   useEffect(() => void useLibrary.getState().load(), []);
@@ -286,7 +287,7 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const [draft, setDraft] = useState<PackageRef[] | null>(null);
   const chosen = draft ?? using;
   const started = game.turn.round > 0;
-  const canChoose = editable && (role === "host" || mode === "hotseat");
+  const canChoose = editable && powers;
   // Lessons aren't rules: they start from Learn to play, never inside a game.
   const options = packagesFor(packages, all ? undefined : system).filter((p) => p.manifest.kind !== "lesson");
   const names = listSystems().find((s) => s.id === system)?.name ?? system;
@@ -416,11 +417,10 @@ export function PackageCards() {
   const game = useStore((s) => s.game);
   const role = useStore((s) => s.role);
   const session = useStore((s) => s.session);
-  const net = useStore((s) => s.net);
   const loaded = useLibrary((s) => s.loaded);
   const record = useStore((s) => s.record);
   const isReplay = !session && role === "spectator";
-  const isHost = net?.role === "host" || (!net && role === "host");
+  const isHost = useHostPowers();
   useApplyAgreed(isHost);
   useSeatAndReport();
   // A replay's table is computed from its log as it plays; the rules it used are named in that log.

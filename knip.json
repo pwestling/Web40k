@@ -5,6 +5,7 @@
     "src/sdk/index.ts",
     "src/sandbox/worker.ts",
     "src/workshop/soakWorker.ts",
+    "src/hostServer/index.ts",
     "scripts/*.mjs",
     "server/*.mjs",
     "examples/**/*.js",

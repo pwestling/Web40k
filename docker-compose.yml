@@ -14,7 +14,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-    depends_on: [relay, mailbox, seeder]
+    depends_on: [relay, mailbox, seeder, host]
 
   # Where browsers find each other, and where they get TURN logins.
   relay:
@@ -27,6 +27,7 @@ services:
       MAILBOX_URL: "on"
       SEEDER_URL: ${SEEDER_URL:-on}
       OPEN_TABLES: ${OPEN_TABLES:-off}
+      HOST_URL: ${HOST_URL:-on}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -58,6 +59,25 @@ services:
     volumes:
       - seed_data:/data
 
+  # Host server: hosts games itself, so no player's browser has to. It meets
+  # players on the relay and reaches them through TURN like any player would.
+  # HOST_URL=off hides it from the app.
+  host:
+    build: { context: ., target: host }
+    restart: unless-stopped
+    environment:
+      SIGNAL_URL: ws://relay:8787
+      TURN_URLS: turn:host.docker.internal:3478?transport=udp,turn:host.docker.internal:3478?transport=tcp
+      TURN_SECRET: ${TURN_SECRET}
+      MAX_ROOMS: ${HOST_MAX_ROOMS:-50}
+      IDLE_HOURS: ${HOST_IDLE_HOURS:-6}
+      KEEP_DAYS: ${HOST_KEEP_DAYS:-30}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - host_data:/data
+    depends_on: [relay]
+
   # TURN: relays game traffic for players whose networks block a direct link.
   # Host networking, so it sees real addresses and its relay ports need no mapping.
   turn:
@@ -79,3 +99,4 @@ volumes:
   caddy_config:
   mailbox_data:
   seed_data:
+  host_data:

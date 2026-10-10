@@ -3,7 +3,7 @@ import { joinRoom as joinWsRelay, selfId as wsSelfId } from "@trystero-p2p/ws-re
 import { netConfig, type NetConfig } from "./config";
 import type { NetMessage, Transport } from "./transport";
 
-const APP_ID = "open-battle-dev";
+export const APP_ID = "open-battle-dev";
 
 /**
  * WebRTC transport. Trystero finds peers through a signalling relay (public

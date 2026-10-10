@@ -7,7 +7,8 @@ import { useOpenReport, type ReportFile } from "./report";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { DEFAULT_SYSTEM } from "../core";
 import { listSystems } from "../core/content";
-import { NET_PARAMS } from "../net/config";
+import { NET_PARAMS, netConfig } from "../net/config";
+import { openServed } from "../net/served";
 import { boardOn, useOpenTables } from "../opentables/board";
 import { BROADCAST } from "../broadcast/broadcast";
 import { EXHIBITION, startExhibition } from "../broadcast/exhibition";
@@ -203,6 +204,26 @@ export function Lobby() {
       if (teamSize > 1) useStore.getState().dispatch({ type: "settings/set", settings: { teamSize } });
       if (companion) useStore.getState().dispatch({ type: "settings/set", settings: { companion: true } });
     });
+  };
+  /**
+   * The site's host server hosts the game instead of this browser (server/host.mjs). It runs the
+   * built-in games; this browser joins like a guest, and as the first seated player makes the host's choices.
+   */
+  const hostServer = sameBrowser ? undefined : netConfig().hostServer;
+  const builtIn = !fromPackages.some((p) => p.manifest.systems[0] === system);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const hostOnServer = async () => {
+    if (!hostServer) return;
+    remember();
+    const roomId = room || crypto.randomUUID().slice(0, 8);
+    setServerError(null);
+    try {
+      await openServed(hostServer, { room: roomId, system, ...(teamSize > 1 ? { teamSize } : {}) });
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : String(e));
+      return;
+    }
+    join("client", roomId);
   };
   /** Real models on a real table (#37): this screen keeps the cards, dice and score. */
   const companionHere = () => {
@@ -606,6 +627,16 @@ export function Lobby() {
             </div>
           </div>
           <p className="muted small">{t("You get a link to send; whoever opens it joins your table.")}</p>
+          {hostServer && builtIn && (
+            <>
+              <button onClick={() => void hostOnServer()}>{t("Host on this site's server")}</button>
+              <p className="muted small">
+                {serverError
+                  ? t("The server couldn't host it: {reason}", { reason: serverError })
+                  : t("The game runs on the server, not in a browser, so nobody's tab has to stay open.")}
+              </p>
+            </>
+          )}
           <label>
             {t("Room")}{" "}
             <input

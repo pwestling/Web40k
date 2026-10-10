@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { DEFAULT_SYSTEM, type GamePackages, type GameState, type PackageRef } from "../core";
 import { useLibrary, type StoredPackage } from "../packages/library";
-import { useStore } from "../store";
+import { hostPowers, useHostPowers, useStore } from "../store";
 import { refOf } from "../ui/Packages";
 import { APP_BUILD } from "../version";
 import type { CampaignBook } from "./book";
@@ -34,8 +34,8 @@ export function rulesOff(
  * hotseat), else as a proposal for the other players to agree to.
  */
 export function turnOnRules(game: GameState, packages: StoredPackage[]): void {
-  const { dispatch, mode, role } = useStore.getState();
-  if (!packages.length || (role !== "host" && mode !== "hotseat")) return;
+  const { dispatch, mode } = useStore.getState();
+  if (!packages.length || !hostPowers(useStore.getState())) return;
   const on = game.packages?.packages ?? [];
   const next = [...on.filter((p) => !packages.some((x) => x.manifest.id === p.id)), ...packages.map(refOf)];
   if (game.turn.round > 0 && mode !== "hotseat") {
@@ -57,14 +57,13 @@ export function turnOnRules(game: GameState, packages: StoredPackage[]): void {
 /** "Scar Test plays with Battle Scars", and a way to turn them on here. */
 export function CampaignRulesLine({ book, game }: { book: CampaignBook; game: GameState }) {
   const library = useLibrary((s) => s.packages);
-  const { role, mode } = useStore();
+  const choose = useHostPowers();
   useEffect(() => void useLibrary.getState().load(), []);
   const rules = book.rules ?? [];
   if (!rules.length) return null;
   const off = rulesOff(book, game, library);
   const have = off.flatMap((o) => (o.stored ? [o.stored] : []));
   const missing = off.filter((o) => !o.stored);
-  const choose = role === "host" || mode === "hotseat";
   return (
     <p className="muted small">
       {t("{book} plays with {rules}.", { book: book.name, rules: rules.map((r) => r.name).join(", ") })}

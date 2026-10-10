@@ -1,2 +1,6 @@
 patchedDependencies:
   "@react-three/drei": patches/@react-three__drei.patch
+
+# The host server's WebRTC (server/host.mjs) fetches its prebuilt native library on install.
+onlyBuiltDependencies:
+  - node-datachannel
