@@ -77,6 +77,8 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     (Extract<LogItem, { kind: "line" }> & { by: string; unitId: string; from: GameState }) | null = null;
   // Browsing dice sets is one line: the last pick, not every one tried (PX-5 review).
   const dicePick: { player: string; line: LogItem | null } = { player: "", line: null };
+  // Dressing an army in its figures before the battle is one line per player, each unit a detail (PX TTS 3).
+  let figureLine: (Extract<LogItem, { kind: "line" }> & { by: string; units: Set<string> }) | null = null;
   // A game from a package names it; until it runs here, the log says so by that name, not the raw id.
   const packaged = [...record.events]
     .reverse()
@@ -358,6 +360,30 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
         before,
         state,
       );
+      continue;
+    }
+    if (event.type === "unit/figure" && !skipped && text && !state.turn.round) {
+      if (figureLine && items.at(-1) === figureLine && figureLine.by === logged.by) {
+        figureLine.units.add(event.id);
+        figureLine.detail = [...(figureLine.detail ?? [figureLine.text]), text];
+        figureLine.text = tn(
+          figureLine.units.size,
+          "{name} dressed {n} unit in its figures",
+          "{name} dressed {n} units in their figures",
+          { name: playerName(state.players[logged.by]) ?? t("Someone") },
+        );
+      } else {
+        figureLine = {
+          kind: "line",
+          key,
+          seq: logged.seq,
+          text,
+          undone: false,
+          by: logged.by,
+          units: new Set([event.id]),
+        };
+        items.push(figureLine);
+      }
       continue;
     }
     if (event.type === "player/dice" && !skipped && text) {

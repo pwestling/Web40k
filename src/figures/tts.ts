@@ -1,4 +1,5 @@
 import type { AssetKind } from "../assets/types";
+import { t } from "../i18n";
 
 /**
  * Tabletop Simulator saves and mods as a source of figures. A TTS save is
@@ -140,7 +141,11 @@ export function scanSave(json: unknown): TtsScan {
   for (const o of save.objects) visit(o);
   const models = [...found.values()].map(({ tally, ...m }) => {
     const names = [...tally.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
-    return { ...m, names, name: names[0] ?? fileStem(m.mesh) ?? "TTS model" };
+    return {
+      ...m,
+      names,
+      name: names[0] ?? fileStem(m.mesh) ?? (m.kind === "terrain" ? t("Unnamed terrain") : t("TTS model")),
+    };
   });
   return {
     title: save.title,
@@ -170,8 +175,8 @@ const round = (x: number) => Math.round(x * 1000) / 1000;
 function fileStem(url: string): string | undefined {
   const last = url.split(/[?#]/)[0]!.split("/").filter(Boolean).pop() ?? "";
   const stem = decodeURIComponent(last.replace(/\.[a-z0-9]+$/i, ""));
-  // Steam Cloud names are hex hashes, not names.
-  return /^[0-9A-F]{16,}$/i.test(stem) || !/[a-z]/i.test(stem) ? undefined : stem.replace(/[_-]+/g, " ");
+  // Steam Cloud names are hex hashes, not names, whole or cut short (PX TTS 3).
+  return /^[0-9A-F]{6,}$/i.test(stem) || !/[a-z]/i.test(stem) ? undefined : stem.replace(/[_-]+/g, " ");
 }
 
 /** The name TTS gives a URL's copy in its Mods folder, less the extension. */

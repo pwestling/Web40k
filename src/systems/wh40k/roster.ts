@@ -51,6 +51,8 @@ export interface ImportedUnit {
   missing?: string[];
   /** A suggested frontage for a ranked block (rank-and-flank sample armies). */
   files?: number;
+  /** Starts in reserves, off the table (a TTS unit still in its bag). */
+  reserve?: boolean;
 }
 
 export interface ImportedRoster {

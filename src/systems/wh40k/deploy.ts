@@ -30,6 +30,8 @@ export interface SpawnableUnit {
   base: BaseShape;
   /** Deploy as a ranked block this many models wide (rank-and-flank games). */
   files?: number;
+  /** Put into reserves once added (ImportedUnit.reserve). */
+  reserve?: boolean;
 }
 
 /**
@@ -88,7 +90,7 @@ export function spawnIntents(
       ? { position: { x: -at.x, y: -at.y }, facing: at.facing + Math.PI }
       : { position: { x: at.x, y: at.y }, facing: at.facing };
 
-  return units.map((u, ui) => {
+  const adds: Intent[] = units.map((u, ui) => {
     // Spread across the zone: each unit looks first at its own share of the width.
     const where: Where = { hx, hy, sign, zone, prefer: (share.index + (ui + 0.5) / units.length) / share.of };
     if (u.files) return blockIntent(u, u.files, owner, seat, `${idPrefix}-${ui}`, taken, where, army);
@@ -157,6 +159,12 @@ export function spawnIntents(
     };
     return { type: "unit/add", unit, models } satisfies Intent;
   });
+  // A unit that starts off the table (a TTS unit still in its bag, PX TTS 3) goes into reserves once it's added.
+  return adds.flatMap((intent, ui) =>
+    units[ui]!.reserve
+      ? [intent, { type: "unit/reserve", id: `${idPrefix}-${ui}`, reserve: true } satisfies Intent]
+      : [intent],
+  );
 }
 
 /**

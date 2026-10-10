@@ -63,6 +63,8 @@ export interface TtsTable {
   title: string;
   terrain: TtsThing[];
   units: TtsUnit[];
+  /** Names of the Unity asset bundles on the table ("" when unnamed): only Unity can read them. */
+  bundles?: string[];
 }
 
 /** Models of a name this close (edge to edge, roughly) belong to one unit. */
@@ -110,8 +112,10 @@ export function scanTable(json: unknown): TtsTable {
   const terrain: TtsThing[] = [];
   const loose: TtsThing[] = [];
   const units: TtsUnit[] = [];
+  const bundles: string[] = [];
   for (const o of objects) {
     if (!o || typeof o !== "object") continue;
+    if (o.Name === "Custom_AssetBundle") bundles.push(cleanText(o.Nickname));
     const t = thing(o);
     if (t) {
       if (!looksLikeTerrain(o)) loose.push(t);
@@ -150,14 +154,17 @@ export function scanTable(json: unknown): TtsTable {
       models: group,
       placed: true,
     });
+  const named: TtsUnit[] = [];
   for (const [name, all] of byName)
     for (const group of clusters(all))
-      placed.push({ name: name || "Unit", side: 0, models: group, placed: true });
+      named.push({ name: name || "Unit", side: 0, models: group, placed: true });
+  placed.push(...withSergeants(named));
   const all = splitSides([...placed, ...units]);
   // Each army's units across the table, so they keep an order players recognise; bags last.
   return {
     title,
     terrain,
+    ...(bundles.length ? { bundles } : {}),
     units: all.sort((a, b) => +!a.placed - +!b.placed || a.side - b.side || whereIs(a).x - whereIs(b).x),
   };
 }
@@ -219,6 +226,45 @@ function splitSides(units: TtsUnit[]): TtsUnit[] {
 }
 
 /** Single-linkage groups: models within SAME_UNIT of one another, chained. */
+/** A sergeant this close (centre to centre) to the squad named like it stands in it. */
+const IN_SQUAD = 3;
+
+/**
+ * A squad's sergeant and champion, named apart in TTS ("Warden Sergeant" by
+ * nine "Warden"), go back into the squad they stand in (PX TTS 3): a group
+ * of one or two whose name starts with the squad's (plurals aside), in
+ * coherency with it. Characters and leaders stay their own units, to lead
+ * a squad by choice.
+ */
+function withSergeants(groups: TtsUnit[]): TtsUnit[] {
+  const words = (n: string) =>
+    n
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean)
+      .map((w) => w.replace(/s$/, ""));
+  const leads = (u: TtsUnit) => u.models.some((m) => /\b(leader|character)\b/i.test(m.description));
+  const out = [...groups];
+  for (const small of groups) {
+    if (small.models.length > 2 || leads(small)) continue;
+    const mine = words(small.name);
+    const squad = out
+      .filter((g) => g !== small && g.models.length > small.models.length)
+      .find((g) => {
+        const theirs = words(g.name);
+        if (!theirs.length || theirs.length >= mine.length || !theirs.every((w, i) => mine[i] === w))
+          return false;
+        return small.models.some((a) =>
+          g.models.some((b) => Math.hypot(a.pose.x - b.pose.x, a.pose.y - b.pose.y) <= IN_SQUAD),
+        );
+      });
+    if (!squad) continue;
+    squad.models = [...small.models, ...squad.models];
+    out.splice(out.indexOf(small), 1);
+  }
+  return out;
+}
+
 function clusters(models: TtsThing[]): TtsThing[][] {
   const left = [...models];
   const out: TtsThing[][] = [];

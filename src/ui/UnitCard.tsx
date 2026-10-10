@@ -34,7 +34,7 @@ import { systemModule } from "../systems";
 import { RegimentPanel } from "./RegimentPanel";
 import { SystemUnitCard } from "./SystemPanels";
 import { currentSlot, systemOf } from "../core/content/turn";
-import { AttachSelect, CoreAbilities } from "./CoreAbilities";
+import { AttachSelect, CoreAbilities, StandingWith } from "./CoreAbilities";
 import { FigurePicker } from "./FigurePicker";
 import { AbilityLine, OncePerBattle } from "./AutoAbilities";
 import { replayRoll, useGame, useRareStars } from "./hooks";
@@ -535,6 +535,7 @@ export function UnitCard() {
             "
           </label>
         )}
+        {mine && <StandingWith unit={unit} />}
         {mine && <AttachSelect unit={unit} />}
         {mine && (
           <button

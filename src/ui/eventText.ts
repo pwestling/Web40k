@@ -360,7 +360,8 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
           ? t("{name} gave {unit} the figure {figure}", {
               name: who,
               unit: unitName(event.id),
-              figure: event.figure.name,
+              // The file's name without its type: "Warden Sergeant", not "Warden Sergeant.obj" (PX TTS 3).
+              figure: event.figure.name.replace(/\.(obj|stl|glb|gltf|ply|3mf|fbx)$/i, ""),
             })
           : t("{name} took the figure off {unit}", { name: who, unit: unitName(event.id) });
     case "unit/height":

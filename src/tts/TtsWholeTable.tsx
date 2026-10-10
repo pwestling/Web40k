@@ -45,6 +45,16 @@ export function TtsWholeTable({
     [scan],
   );
   if (!scan) return null;
+  // What can't come across at all, said up front and on the game (PX TTS 3).
+  const bundles = scan.bundles ?? [];
+  const bundle = bundles.length
+    ? tn(
+        bundles.length,
+        "{n} piece ({names}) is a Unity asset bundle and can't come across.",
+        "{n} pieces ({names}) are Unity asset bundles and can't come across.",
+        { names: bundles.map((b) => b || t("unnamed")).join(", ") },
+      )
+    : "";
   const placed = scan.units.filter((u) => u.placed);
   if (!scan.terrain.length && !scan.units.length) return null;
   const sideOf = (i: number): 0 | 1 => (scan.units[i]!.side ^ +swapped ^ +moved.has(i)) as 0 | 1;
@@ -101,11 +111,12 @@ export function TtsWholeTable({
       if (brought.missing && !folder)
         parts.push(t("Pick your TTS folder after loading the save in TTS once, and they come from there."));
     }
+    if (bundle) parts.push(bundle);
     if (brought.off)
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
       );
-    const note = brought.lost.length || brought.off ? parts.slice(2).join(" ") : "";
+    const note = brought.lost.length || brought.off || bundle ? parts.slice(2).join(" ") : "";
     if (how === "save") setSaved({ brought, note: parts.join(" ") });
     else play(how, brought, note);
   };
@@ -122,7 +133,7 @@ export function TtsWholeTable({
             : []),
           tn(sides, "{n} army", "{n} armies"),
         ].join(", ")}
-        .{" "}
+        . {bundle && `${bundle} `}
         {t(
           "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in.",
         )}

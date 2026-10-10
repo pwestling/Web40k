@@ -69,6 +69,8 @@ export function ttsArmies(
         sheet: read?.sheet ?? { weapons: {}, abilities: [], keywords: [] },
         models,
         base: models[0]!.base!,
+        // Still in its bag in TTS: off the table, as Deep Strike and reserves are (PX TTS 3).
+        ...(u.placed ? {} : { reserve: true }),
         ...(read ? (read.missing?.length ? { missing: read.missing } : {}) : { missing: blank }),
       };
       const index = roster.units.length;

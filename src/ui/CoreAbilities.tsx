@@ -151,3 +151,39 @@ export function AttachSelect({ unit }: { unit: Unit }) {
     </select>
   );
 }
+
+/** How near (edge to edge) a leader stands to the unit it was set up to lead. */
+const STANDING_WITH = 2;
+
+/**
+ * A leader set up standing with a unit (a TTS table, PX TTS 3): before the
+ * battle, one button to lead the unit it stands with, the one its Leader
+ * ability names first. Nothing when it stands with none.
+ */
+export function StandingWith({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  if (game.turn.round > 0) return null;
+  const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
+  if (!isLeader(unit)) return null;
+  const names = leaderOf(unit).map((n) => n.toLowerCase());
+  const mine = aliveModels(game, unit);
+  const near = Object.values(game.units)
+    .filter((u) => u.owner === unit.owner && u.id !== unit.id && !isLeader(u) && !u.status?.reserves)
+    .map((u) => ({ u, d: unitDistance(mine, aliveModels(game, u)) }))
+    .filter((x) => x.d <= STANDING_WITH)
+    .sort(
+      (a, b) =>
+        Number(names.some((n) => b.u.name.toLowerCase().startsWith(n))) -
+          Number(names.some((n) => a.u.name.toLowerCase().startsWith(n))) || a.d - b.d,
+    )[0]?.u;
+  if (!near) return null;
+  return (
+    <button
+      className="small"
+      onClick={() => dispatch({ type: "unit/attach", id: unit.id, to: near.id }, unit.owner)}
+    >
+      {t("Lead {unit}, which it stands with", { unit: near.name })}
+    </button>
+  );
+}

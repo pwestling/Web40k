@@ -132,7 +132,7 @@ export async function bringTable(
     else
       wanted.set(th.key, {
         key: th.key,
-        name: th.nickname || unit || t("TTS model"),
+        name: th.nickname || unit || (kind === "terrain" ? t("Unnamed terrain") : t("TTS model")),
         mesh: th.mesh,
         ...(th.diffuse ? { diffuse: th.diffuse } : {}),
         scale: th.scale,
@@ -207,7 +207,8 @@ export async function bringTable(
     const at = placeOnTable(th.pose, a.centre, th.scale);
     if (Math.abs(at.x) > size.width / 2 || Math.abs(at.y) > size.depth / 2) off++;
     const piece = makePiece("Ruin", `t-tts-${i}`, { x: at.x, y: at.y }, at.facing, category);
-    return [{ ...piece, name: th.nickname || a.name, ...meshShape(a.asset, 1) }];
+    // A piece TTS never named isn't called by a fragment of its Steam address (PX TTS 3).
+    return [{ ...piece, name: th.nickname || t("Unnamed terrain"), ...meshShape(a.asset, 1) }];
   });
   const saved: SavedTable = {
     format: TABLE_FORMAT,

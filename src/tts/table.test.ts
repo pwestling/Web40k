@@ -196,3 +196,42 @@ describe("tilted and stretched terrain from TTS", () => {
     expect(table.terrain[1]!.bake).toHaveLength(9);
   });
 });
+
+describe("what a TTS veteran laid out on purpose (PX TTS 3)", () => {
+  it("puts a sergeant back in the squad it stands in, but leaves a leader to lead by choice", () => {
+    const table = scanTable({
+      ObjectStates: [
+        fig("Warden Sergeant", -6, -15),
+        ...[0, 1, 2, 3].map((i) => fig("Warden", -5 + i, -15)),
+        { ...fig("Warden Captain", -4, -14), Description: "Abilities: Leader" },
+        // A sergeant of another squad far away stays apart.
+        fig("Warden Sergeant", 20, -15),
+        fig("Intercessor", 0, 15, 180),
+      ],
+    });
+    const names = table.units.map((u) => `${u.name} ${u.models.length}`).sort();
+    expect(names).toEqual(["Intercessor 1", "Warden 5", "Warden Captain 1", "Warden Sergeant 1"]);
+    expect(table.units.find((u) => u.name === "Warden")!.models[0]!.nickname).toBe("Warden Sergeant");
+  });
+
+  it("names the asset bundles it can't bring", () => {
+    const table = scanTable({
+      ObjectStates: [fig("Ork Boy", 0, -15), { Name: "Custom_AssetBundle", Nickname: "Objective marker" }],
+    });
+    expect(table.bundles).toEqual(["Objective marker"]);
+  });
+
+  it("sends a unit still in its bag into reserves", async () => {
+    const save = scanTable(SAVE);
+    const assets = new Map<string, TtsAsset>();
+    const [, marines] = ttsArmies(save, assets, DEFAULT_SYSTEM, () => "army");
+    const bagged = marines!.roster.units.find((u) => u.name === "Assault Intercessors")!;
+    expect(bagged.reserve).toBe(true);
+    const state = createInitialState();
+    state.players = {
+      p2: { id: "p2", name: "B", color: "#33c", seat: 1 },
+    } as unknown as typeof state.players;
+    const intents = spawnIntents(state, "p2", [bagged], "p2-r");
+    expect(intents.map((i) => i.type)).toEqual(["unit/add", "unit/reserve"]);
+  });
+});
