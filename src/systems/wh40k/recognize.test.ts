@@ -10,7 +10,7 @@ import {
   type GameState,
   type Model,
 } from "../../core";
-import { manualAbilities } from "../../core/content/player";
+import { isAutomated, manualAbilities } from "../../core/content/player";
 import { getSystem } from "../../core/content/systems";
 import { coverage, recognize } from "./recognize";
 import { sampleRoster } from "./sample";
@@ -23,6 +23,14 @@ const read = (text: string) => recognize({ name: "Test", text }, system);
 
 // Invented wording in the shapes imported datasheets use; no real rules text.
 describe("reading ability text", () => {
+  it("leaves Leader a reminder, not automatic: attaching is done by hand (PX)", () => {
+    const leader = {
+      name: "Leader",
+      text: "This model can be attached to the following units: Tin Wardens.",
+    };
+    expect(isAutomated(system, leader)).toBe(false);
+  });
+
   it("reads an invulnerable save given to a unit, also while leading", () => {
     expect(read("Models in this unit have a 5+ invulnerable save.")?.parts).toEqual([
       { kind: "invuln", x: 5 },
