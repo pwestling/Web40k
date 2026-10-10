@@ -40,6 +40,12 @@ export interface TtsThing {
   pose: TtsPose;
   /** A TTS board model (CustomMesh type 4): a table mat when it's big and flat. */
   board?: boolean;
+  /** Its LuaScript, when it has one: Yellowscribe's leader models carry the unit's data there (#75). */
+  script?: string;
+  /** The unit Yellowscribe tagged it with ("uuid:…"): the models of one unit share it. */
+  unit?: string;
+  /** Terrain only: its tilt and uneven stretch, baked into the OBJ's vertices (bakeOf). */
+  bake?: number[];
 }
 
 export interface TtsUnit {
@@ -79,12 +85,15 @@ const round = (x: number) => Math.round(x * 1000) / 1000 || 0;
 function thing(o: TtsObject): TtsThing | null {
   const custom = customOf(o);
   if (!custom) return null;
+  const unitTag = o.Tags?.find((t) => t.startsWith("uuid:"));
   return {
     ...custom,
     nickname: cleanText(o.Nickname),
     description: (o.Description ?? "").trim(),
     pose: poseOf(o),
     ...(o.CustomMesh?.TypeIndex === 4 ? { board: true } : {}),
+    ...(o.LuaScript?.trim() ? { script: o.LuaScript } : {}),
+    ...(unitTag ? { unit: unitTag.slice(5) } : {}),
   };
 }
 
@@ -105,7 +114,12 @@ export function scanTable(json: unknown): TtsTable {
     if (!o || typeof o !== "object") continue;
     const t = thing(o);
     if (t) {
-      (looksLikeTerrain(o) ? terrain : loose).push(t);
+      if (!looksLikeTerrain(o)) loose.push(t);
+      else {
+        // A tilted or stretched piece is its own model: the same mesh baked another way.
+        const bake = bakeOf(o, t.scale);
+        terrain.push(bake ? { ...t, bake, key: `${t.key}|${bake.join(",")}` } : t);
+      }
       continue;
     }
     // A bag on the table: its figures are a unit not deployed yet, on the side the bag sits.
@@ -122,9 +136,20 @@ export function scanTable(json: unknown): TtsTable {
     });
   }
   // Figures standing on the table: by name, then into groups standing together.
+  // Models Yellowscribe tagged with one unit are that unit, whatever their names (#75).
   const byName = new Map<string, TtsThing[]>();
-  for (const t of loose) byName.set(t.nickname, [...(byName.get(t.nickname) ?? []), t]);
+  const tagged = new Map<string, TtsThing[]>();
+  for (const t of loose)
+    if (t.unit) tagged.set(t.unit, [...(tagged.get(t.unit) ?? []), t]);
+    else byName.set(t.nickname, [...(byName.get(t.nickname) ?? []), t]);
   const placed: TtsUnit[] = [];
+  for (const group of tagged.values())
+    placed.push({
+      name: (group.find((m) => m.script) ?? group[0]!).nickname || "Unit",
+      side: 0,
+      models: group,
+      placed: true,
+    });
   for (const [name, all] of byName)
     for (const group of clusters(all))
       placed.push({ name: name || "Unit", side: 0, models: group, placed: true });
@@ -224,6 +249,47 @@ export function placeOnTable(pose: TtsPose, centre: [number, number, number], sc
   const s = Math.sin(pose.facing);
   // A turn about the up axis, as the board draws a facing (rotation-y): x' = x cos + z sin, z' = −x sin + z cos.
   return { x: round(pose.x + cx * c + cz * s), y: round(pose.y - cx * s + cz * c), facing: pose.facing };
+}
+
+/**
+ * A terrain piece's tilt and uneven stretch in TTS as a row-major 3×3 matrix
+ * for its OBJ's vertices, or undefined when it stands upright and evenly
+ * scaled. Unity turns about z, then x, then y; the yaw stays the piece's
+ * facing, so only x and z are baked, inside the mirroring TTS gives OBJs
+ * as it loads them (N = diag(−1, 1, 1)): B = N·Rx·Rz·S·N, with S the stretch
+ * left over once `scale` (the even part) is taken out.
+ */
+export function bakeOf(o: TtsObject, scale: number): number[] | undefined {
+  const t = o.Transform ?? {};
+  const deg = (v: number | undefined) => ((((v ?? 0) % 360) + 540) % 360) - 180;
+  const ax = deg(t.rotX);
+  const az = deg(t.rotZ);
+  const stretch = [t.scaleX, t.scaleY, t.scaleZ].map((v) => Math.abs(v ?? 1) / scale);
+  if (Math.abs(ax) < 1 && Math.abs(az) < 1 && stretch.every((v) => Math.abs(v - 1) < 0.02)) return undefined;
+  const [cx, sx] = [Math.cos((ax * Math.PI) / 180), Math.sin((ax * Math.PI) / 180)];
+  const [cz, sz] = [Math.cos((az * Math.PI) / 180), Math.sin((az * Math.PI) / 180)];
+  // Rx·Rz
+  const r = [
+    [cz, -sz, 0],
+    [cx * sz, cx * cz, -sx],
+    [sx * sz, sx * cz, cx],
+  ];
+  // ·S, then N on both sides: an entry changes sign when exactly one of its row and column is x.
+  return r.flatMap((row, i) =>
+    row.map((v, j) => Math.round(v * stretch[j]! * ((i === 0) !== (j === 0) ? -1 : 1) * 1e4) / 1e4 || 0),
+  );
+}
+
+/** An OBJ with every vertex put through a row-major 3×3 matrix (bakeOf). */
+export function bakeObj(text: string, m: number[]): string {
+  return text.replace(/^v\s+(\S+)\s+(\S+)\s+(\S+)/gm, (line, a: string, b: string, c: string) => {
+    const v = [Number(a), Number(b), Number(c)];
+    if (!v.every(Number.isFinite)) return line;
+    const out = [0, 1, 2].map(
+      (i) => +(m[i * 3]! * v[0]! + m[i * 3 + 1]! * v[1]! + m[i * 3 + 2]! * v[2]!).toFixed(5),
+    );
+    return `v ${out.join(" ")}`;
+  });
 }
 
 /** The middle of an OBJ's footprint and its lowest point, read from its vertices. */

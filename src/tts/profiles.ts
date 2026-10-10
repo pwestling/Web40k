@@ -3,6 +3,7 @@ import { getSystem } from "../core/content/systems";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
 import { systemModule } from "../systems";
 import type { ImportedUnit } from "../systems/wh40k/roster";
+import { readScriptedUnit } from "./scripted";
 import { readTtsUnit } from "./unit";
 
 /**
@@ -11,16 +12,17 @@ import { readTtsUnit } from "./unit";
  * model's raw Description (BBCode and all; see describe.ts). Abilities the
  * system's reader understands come back with `auto` (#38); the rest stay
  * reminders the player can teach (#53). Models come back in the order given,
- * one per input model. Null when no description reads as a profile.
+ * one per input model. A model's `script` (its LuaScript) is read first: the
+ * unit data Yellowscribe writes there is the list itself (#75, scripted.ts);
+ * without it, the descriptions. Null when neither reads as a profile.
  */
 export function unitFromTts(input: {
   system: string;
   name: string;
-  models: { nickname: string; description: string }[];
+  models: { nickname: string; description: string; script?: string }[];
 }): Partial<Pick<ImportedUnit, "name" | "sheet" | "models" | "missing">> | null {
-  const read = readTtsUnit(input.name, input.models);
-  if (!read) return null;
-  const { unit } = read;
+  const unit = readScriptedUnit(input.models) ?? readTtsUnit(input.name, input.models)?.unit;
+  if (!unit) return null;
   const recognize = systemModule(input.system).recognizeAbility;
   if (recognize) {
     const system = getSystem(input.system || DEFAULT_SYSTEM);

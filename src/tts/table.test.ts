@@ -3,7 +3,7 @@ import { createInitialState } from "../core";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { ttsArmies, type TtsAsset } from "./armies";
-import { armyMiddle, baseFor, objCentre, placeOnTable, scanTable, turnTable } from "./table";
+import { armyMiddle, bakeObj, bakeOf, baseFor, objCentre, placeOnTable, scanTable, turnTable } from "./table";
 
 const fig = (nickname: string, x: number, z: number, rotY = 0, mesh = "https://example.com/boy.obj") => ({
   Name: "Custom_Model",
@@ -152,5 +152,47 @@ describe("a whole TTS table (#73)", () => {
     expect(model.base).toEqual({ shape: "round", diameterMm: 32 });
     expect([model.at!.x, model.at!.y]).toEqual([0, 10]);
     expect(army!.figures[0]).toEqual({});
+  });
+});
+
+describe("tilted and stretched terrain from TTS", () => {
+  const obj = (rot: { rotX?: number; rotZ?: number }, scale = [1, 1, 1]) => ({
+    Name: "Custom_Model",
+    Nickname: "Plank",
+    Locked: true,
+    Transform: { posX: 0, posZ: 0, rotY: 0, ...rot, scaleX: scale[0], scaleY: scale[1], scaleZ: scale[2] },
+    CustomMesh: { MeshURL: "https://example.com/plank.obj", TypeIndex: 1 },
+  });
+  const apply = (m: number[], v: [number, number, number]) =>
+    [0, 1, 2].map((i) => +(m[i * 3]! * v[0] + m[i * 3 + 1]! * v[1] + m[i * 3 + 2]! * v[2]).toFixed(3));
+
+  it("leaves upright, evenly scaled pieces alone (TTS's rounding noise too)", () => {
+    expect(bakeOf(obj({ rotX: 359.6, rotZ: 0.3 }), 1)).toBeUndefined();
+    expect(bakeOf(obj({}, [2, 2, 2]), 2)).toBeUndefined();
+  });
+
+  it("stands a plank tipped on its end upright, as TTS shows it", () => {
+    // Tipped 90° about x: the OBJ's length along z now points up (or down: the pipeline stands it on the table).
+    const m = bakeOf(obj({ rotX: 90 }), 1)!;
+    expect(Math.abs(apply(m, [0, 0, 3])[1]!)).toBeCloseTo(3);
+    expect(apply(m, [1, 0, 0])).toEqual([1, 0, 0]);
+    const baked = bakeObj("v 0 0 3\nv 1 0 0\nf 1 2 1\n", m).split("\n");
+    expect(baked[0]).toMatch(/^v 0 -?3 0$/);
+    expect(baked[2]).toBe("f 1 2 1");
+  });
+
+  it("tilts about z against the OBJ's mirrored x, and keeps uneven stretch", () => {
+    // TTS's x is the OBJ's −x, so a turn raising TTS's +x lowers the OBJ's +x.
+    const m = bakeOf(obj({ rotZ: 30 }), 1)!;
+    expect(apply(m, [1, 0, 0])).toEqual([0.866, -0.5, 0]);
+    const s = bakeOf(obj({}, [2, 1, 1]), 4 / 3)!;
+    expect(apply(s, [1, 1, 1])).toEqual([1.5, 0.75, 0.75]);
+  });
+
+  it("makes a tilted copy of a piece its own model", () => {
+    const table = scanTable({ ObjectStates: [obj({}), obj({ rotX: 30 })] });
+    expect(table.terrain).toHaveLength(2);
+    expect(table.terrain[0]!.key).not.toBe(table.terrain[1]!.key);
+    expect(table.terrain[1]!.bake).toHaveLength(9);
   });
 });

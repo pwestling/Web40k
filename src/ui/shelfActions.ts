@@ -15,6 +15,7 @@ import {
 import { t } from "../i18n";
 import { useStore } from "../store";
 import type { ImportedRoster } from "../systems/wh40k/roster";
+import { toYellowscribe } from "../systems/wh40k/yellowscribe";
 
 /** What each player deployed in this game, so it can go on the shelf (and from which shelf entry). */
 export const useDeployed = create<
@@ -77,6 +78,11 @@ export async function exportArmy(army: SavedArmy): Promise<string> {
   }
   const file: ArmyFile = { ...army, attachments: { assets } };
   return saveJson(safeFileName(army.name, "army", ".army.json"), file);
+}
+
+/** Download a 40k army as Yellowscribe army data (#75), for TTS army tools; returns the file name. */
+export function exportYellowscribe(army: SavedArmy): string {
+  return saveJson(safeFileName(army.name, "army", ".yellowscribe.json"), toYellowscribe(army.roster));
 }
 
 /** Read an army file onto the shelf; its figures go into this device's cache. */

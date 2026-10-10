@@ -8,6 +8,7 @@ const LISTS: Record<string, () => string[]> = {
   "forty-k-11": () => [
     t("Build your list in New Recruit or BattleScribe."),
     t("Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in."),
+    t("Yellowscribe army data (the JSON TTS army tools use) reads in too."),
     t("In a game, before the battle starts, press Import army list in the left panel and pick the file."),
     t("Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy."),
   ],

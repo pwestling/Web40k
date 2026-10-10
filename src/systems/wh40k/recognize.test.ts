@@ -23,6 +23,15 @@ const read = (text: string) => recognize({ name: "Test", text }, system);
 
 // Invented wording in the shapes imported datasheets use; no real rules text.
 describe("reading ability text", () => {
+  it("reads an invulnerable save given to a unit, also while leading", () => {
+    expect(read("Models in this unit have a 5+ invulnerable save.")?.parts).toEqual([
+      { kind: "invuln", x: 5 },
+    ]);
+    const led = read("While this model is leading a unit, models in that unit have a 4+ invulnerable save.");
+    expect(led?.parts).toEqual([{ kind: "invuln", x: 4 }]);
+    expect(led?.whileLeading).toBe(true);
+  });
+
   it("reads re-rolls and modifiers for a unit's own attacks", () => {
     expect(read("Each time a model in this unit makes an attack, re-roll a Hit roll of 1.")?.parts).toEqual([
       { kind: "attack", side: "making", roll: "hit", reroll: "ones" },

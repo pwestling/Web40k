@@ -4,7 +4,14 @@ import { displayName, playerName } from "../i18n/names";
 import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
 import { SavedNote } from "./SavedNote";
-import { dressFromShelf, exportArmy, importArmyFile, saveToShelf, useDeployed } from "./shelfActions";
+import {
+  dressFromShelf,
+  exportArmy,
+  exportYellowscribe,
+  importArmyFile,
+  saveToShelf,
+  useDeployed,
+} from "./shelfActions";
 import { dressFromLibrary } from "../figures/actions";
 import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
@@ -12,7 +19,7 @@ import type { Assignment } from "../figures/vision/types";
 
 // The photo matcher (its key form, worker and thumbnails) loads only when asked for.
 const PhotoMatch = lazy(() => import("../figures/PhotoMatch"));
-import { systemOf, type BaseShape, type PlayerId } from "../core";
+import { DEFAULT_SYSTEM, systemOf, type BaseShape, type PlayerId } from "../core";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { automateArmy } from "../systems/wh40k/recognize";
@@ -70,7 +77,7 @@ const bases = (): { label: string; base: BaseShape }[] => [
 const baseKey = (b: BaseShape) => JSON.stringify(b);
 
 /**
- * Load a roster file (BattleScribe / New Recruit .ros, .rosz or .json) or a
+ * Load a roster file (BattleScribe / New Recruit .ros, .rosz or .json, or Yellowscribe army data) or a
  * sample army, check the guessed bases, then deploy it for a player.
  */
 export function ArmyImport({ players }: { players: { id: PlayerId; name: string; seat?: number }[] }) {
@@ -633,6 +640,21 @@ function ShelfManager({ system }: { system: string }) {
                 <button className="small" onClick={() => void exportArmy(a).then((f) => setExported(f))}>
                   {t("Export")}
                 </button>
+                {a.system === DEFAULT_SYSTEM && (
+                  <button
+                    className="quiet small"
+                    title={t("Yellowscribe army data, for Tabletop Simulator army tools")}
+                    onClick={() =>
+                      setNote(
+                        t("Saved {file}: Yellowscribe army data for TTS tools.", {
+                          file: exportYellowscribe(a),
+                        }),
+                      )
+                    }
+                  >
+                    {t("Export for Yellowscribe / TTS")}
+                  </button>
+                )}
                 <button
                   className="quiet small"
                   onClick={() => confirm(t("Take {name} off your shelf?", { name: a.name })) && remove(a.id)}

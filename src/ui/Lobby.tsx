@@ -382,7 +382,9 @@ export function Lobby() {
           <button className="own-army" onClick={() => setGuide(true)}>
             <strong>{t("Play your own army: import a list")}</strong>
             <span className="muted small">
-              {t("From New Recruit or BattleScribe, with your own figures if you have them.")}
+              {t(
+                "From New Recruit, BattleScribe, Yellowscribe or a Tabletop Simulator save, with your own figures if you have them.",
+              )}
             </span>
           </button>
           {/* On a narrow screen the board is screens down, under Play with friends: a way in up here (UX 383). */}

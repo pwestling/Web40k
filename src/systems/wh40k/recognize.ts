@@ -166,7 +166,13 @@ function readFnp(text: string): AutoPart[] | null {
     /^(?:models in (?:this|that) unit|this model|this unit) (?:has|have) (?:the |a )?feel no pain (\d)\+(?: ability)?$/.exec(
       text,
     );
-  return m ? [{ kind: "fnp", x: Number(m[1]) }] : null;
+  if (m) return [{ kind: "fnp", x: Number(m[1]) }];
+  // "Models in that unit have a 4+ invulnerable save" (a leader's gift, PX TTS veteran review).
+  const inv =
+    /^(?:models in (?:this|that) unit|this model|this unit) (?:has|have) an? (\d)\+ invulnerable save$/.exec(
+      text,
+    );
+  return inv ? [{ kind: "invuln", x: Number(inv[1]) }] : null;
 }
 
 interface Trigger {

@@ -1,6 +1,7 @@
 /**
  * Army list import for 40k: BattleScribe / New Recruit roster XML (`.ros`),
- * zipped rosters (`.rosz`) and New Recruit JSON exports.
+ * zipped rosters (`.rosz`), New Recruit JSON exports and Yellowscribe army
+ * data (yellowscribe.ts).
  *
  * Both formats describe the same tree (roster > forces > selections, each
  * selection carrying profiles, rules, categories, costs and child
@@ -19,6 +20,7 @@ import type {
   UnitSheet,
   WeaponProfile,
 } from "../../core";
+import { readYellowscribe } from "./yellowscribe";
 
 export type { Ability, Characteristics, UnitSheet, WeaponProfile };
 
@@ -278,6 +280,11 @@ export function parseRosterText(input: string, extract: RosterExtractor = extrac
   const warnings: string[] = [];
   // trim() also strips a leading byte-order mark.
   const src = input.trim();
+  // Yellowscribe army data (#75), told by its shape.
+  if (src.startsWith("{") && extract === extractUnits) {
+    const ys = readYellowscribe(tryJson(src), suggestBase);
+    if (ys) return ys;
+  }
   let roster: RRoster | undefined;
   if (src.startsWith("<")) roster = parseXml(src, warnings);
   else if (src.startsWith("{") || src.startsWith("[")) roster = parseJson(src, warnings);
@@ -338,6 +345,14 @@ export async function parseRosterFile(
   const result = parseRosterText(textContent, extract);
   result.warnings.unshift(...pre);
   return result;
+}
+
+function tryJson(src: string): unknown {
+  try {
+    return JSON.parse(src);
+  } catch {
+    return undefined;
+  }
 }
 
 function decode(bytes: Uint8Array): string {

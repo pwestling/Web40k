@@ -77,7 +77,7 @@ export interface ModelAsset {
   kind: AssetKind;
   /** Render levels, most detailed first. */
   lods: MeshData[];
-  /** Coarse mesh, the source of `hull` (y up, like the render levels). */
+  /** Coarse mesh (y up, like the render levels); terrain made before pipeline 4 took its `hull` from it. */
   proxy: MeshData;
   /** Miniatures: height and sight bands relative to the figure's feet (see sightBands). */
   figure?: FigureProxy;
@@ -95,7 +95,7 @@ export interface ModelAsset {
 }
 
 /** Bump when the pipeline's output changes so cached assets are rebuilt. */
-export const PIPELINE_VERSION = 3;
+export const PIPELINE_VERSION = 4;
 
 /** An asset's buffers, once each (levels can share one when a mesh was already under budget), for transfer. */
 export function assetBuffers(asset: ModelAsset): ArrayBuffer[] {
