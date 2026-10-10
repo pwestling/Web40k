@@ -50,19 +50,19 @@ describe("asset pipeline", () => {
 });
 
 describe("rules proxies", () => {
-  it("gives miniatures sight bands and terrain boxes plus a hull", () => {
+  it("gives miniatures sight bands and terrain boxes to stand on and to block sight", () => {
     const mini = processMesh(synthMiniature(50_000), { id: "m", name: "mini", kind: "miniature" });
     expect(mini.figure?.height).toBeCloseTo(mini.bounds.max[1], 1);
     expect(mini.solids).toBeUndefined();
 
-    const ruin = processMesh(synthMiniature(200_000, 25.4 * 4), { id: "t", name: "rock", kind: "terrain" });
-    expect(ruin.solids!.length).toBeGreaterThan(0);
-    expect(ruin.solids!.length).toBeLessThanOrEqual(32);
-    expect(ruin.hull!.length % 9).toBe(0);
-    expect(ruin.hull!.length / 9).toBeLessThanOrEqual(BUDGETS.terrain.proxy);
-    // Hull is z up: its top is the rock's height.
-    const zs = ruin.hull!.filter((_, i) => i % 3 === 2);
-    expect(Math.max(...zs)).toBeCloseTo(ruin.bounds.max[1], 0);
+    const rock = processMesh(synthMiniature(200_000, 25.4 * 4), { id: "t", name: "rock", kind: "terrain" });
+    const sight = rock.solids!.filter((b) => b.kind === "wall");
+    expect(sight.length).toBeGreaterThan(0);
+    expect(sight.length).toBeLessThanOrEqual(160);
+    expect(rock.solids!.some((b) => b.kind !== "wall")).toBe(true);
+    // No hull: sight comes from the boxes. Their top is the rock's height.
+    expect(rock.hull).toBeUndefined();
+    expect(Math.max(...sight.map((b) => b.z + b.h))).toBeCloseTo(rock.bounds.max[1], 0);
   });
 });
 

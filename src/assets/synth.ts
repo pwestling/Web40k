@@ -56,3 +56,59 @@ export function synthMiniature(triangles: number, units = 25.4, painted = false)
     }
   return { positions, indices, uvs, colors };
 }
+
+/** Closed axis-aligned boxes (min corner x, y, z and size w, h, d), y up, in one mesh. */
+export function synthBoxes(list: [number, number, number, number, number, number][]): MeshData {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  for (const [x, y, z, w, h, d] of list) {
+    const o = positions.length / 3;
+    for (let i = 0; i < 8; i++) positions.push(x + (i & 1 ? w : 0), y + (i & 2 ? h : 0), z + (i & 4 ? d : 0));
+    // prettier-ignore
+    indices.push(0,2,1, 1,2,3, 4,5,6, 5,7,6, 0,1,4, 1,5,4, 2,6,3, 3,6,7, 0,4,2, 2,4,6, 1,3,5, 3,7,5);
+    for (let i = indices.length - 36; i < indices.length; i++) indices[i]! += o;
+  }
+  return { positions: new Float32Array(positions), indices: new Uint32Array(indices) };
+}
+
+/**
+ * A two-storey ruin in inches, the kind a TTS table is full of: a 10" × 6"
+ * rubble-strewn base, an L of 0.4" walls with window holes, and an upper
+ * floor at 3" over the back half. `rubble` small chunks lie on the floors.
+ */
+export function synthRuin(rubble = 120): MeshData {
+  const parts: [number, number, number, number, number, number][] = [[0, 0, 0, 10, 0.25, 6]];
+  // The back wall (z 5.6 to 6), 7" tall, windows 1.5" square at x 2–3.5 and 6.5–8 on each storey.
+  const T = 0.4;
+  const wall = (x0: number, x1: number, y0: number, y1: number) =>
+    parts.push([x0, y0, 6 - T, x1 - x0, y1 - y0, T]);
+  for (const [y0, y1] of [
+    [0.25, 1],
+    [2.5, 4],
+    [5.5, 7],
+  ] as const)
+    wall(0, 10, y0, y1);
+  for (const [y0, y1] of [
+    [1, 2.5],
+    [4, 5.5],
+  ] as const) {
+    wall(0, 2, y0, y1);
+    wall(3.5, 6.5, y0, y1);
+    wall(8, 10, y0, y1);
+  }
+  // The side wall (x 0 to 0.4), 5" tall, broken off towards the front.
+  parts.push([0, 0.25, 0, T, 2, 6 - T], [0, 2.25, 2, T, 2.75, 4 - T]);
+  // The upper floor over the back half.
+  parts.push([T, 3, 3, 10 - T, 0.25, 3 - T]);
+  // Rubble: a fixed scatter, so tests are repeatable.
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < rubble; i++) {
+    const s = 0.1 + rnd() * 0.25;
+    const upper = i % 3 === 0;
+    const x = 0.5 + rnd() * 9;
+    const z = upper ? 3.1 + rnd() * 2.3 : 0.2 + rnd() * 5.2;
+    parts.push([x, upper ? 3.25 : 0.25, z, s, s * 0.7, s]);
+  }
+  return synthBoxes(parts);
+}

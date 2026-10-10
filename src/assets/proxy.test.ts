@@ -1,21 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { boxProxy, figureProxy } from "./proxy";
-import { synthMiniature } from "./synth";
-import type { MeshData } from "./types";
-
-/** Closed boxes (min corner, size), y up, merged into one mesh. */
-function boxes(list: [number, number, number, number, number, number][]): MeshData {
-  const positions: number[] = [];
-  const indices: number[] = [];
-  for (const [x, y, z, w, h, d] of list) {
-    const o = positions.length / 3;
-    for (let i = 0; i < 8; i++) positions.push(x + (i & 1 ? w : 0), y + (i & 2 ? h : 0), z + (i & 4 ? d : 0));
-    // prettier-ignore
-    indices.push(0,2,1, 1,2,3, 4,5,6, 5,7,6, 0,1,4, 1,5,4, 2,6,3, 3,6,7, 0,4,2, 2,4,6, 1,3,5, 3,7,5);
-    for (let i = indices.length - 36; i < indices.length; i++) indices[i]! += o;
-  }
-  return { positions: new Float32Array(positions), indices: new Uint32Array(indices) };
-}
+import type { TerrainPiece } from "../core";
+import { levelsAt, settleZ, sightBlockedBy } from "../core/terrain";
+import { figureProxy, terrainProxy, type Box } from "./proxy";
+import { synthBoxes, synthMiniature, synthRuin } from "./synth";
 
 describe("figure proxy", () => {
   it("gives the figure's height and a few radius bands", () => {
@@ -30,34 +17,71 @@ describe("figure proxy", () => {
   });
 });
 
-describe("box proxy", () => {
-  it("rebuilds a ruin's walls and floor from its mesh", () => {
-    // A 6" x 4" floor slab with two 3" walls on it, in y-up mesh space.
-    const ruin = boxes([
-      [-3, 0, -2, 6, 0.25, 4],
-      [-3, 0.25, -2, 0.5, 3, 4],
-      [-3, 0.25, -2, 6, 3, 0.5],
-    ]);
-    const proxy = boxProxy(ruin);
-    expect(proxy.length).toBeLessThanOrEqual(32);
-    const volume = proxy.reduce((v, b) => v + b.w * b.d * b.h, 0);
-    const real = 6 * 0.25 * 4 + 0.5 * 3 * 4 + 6 * 3 * 0.5 - 0.5 * 3 * 0.5;
-    expect(volume).toBeGreaterThan(real * 0.8);
-    expect(volume).toBeLessThan(real * 1.6);
-    expect(Math.max(...proxy.map((b) => b.z + b.h))).toBeCloseTo(3.25, 0);
-    expect(proxy.some((b) => b.kind === "floor")).toBe(true);
-    expect(proxy.some((b) => b.kind === "wall")).toBe(true);
+describe("terrain proxy", () => {
+  // The ruin centred on its footprint as the pipeline leaves it: x −5..5, forward −3..3 (back wall at 2.6..3).
+  const ruin = (rubble: number) => {
+    const m = synthRuin(rubble);
+    for (let i = 0; i < m.positions.length; i += 3) {
+      m.positions[i]! -= 5;
+      m.positions[i + 2]! -= 3;
+    }
+    return terrainProxy(m);
+  };
+  const piece = (solids: Box[]) =>
+    ({
+      id: "t",
+      name: "t",
+      position: { x: 0, y: 0 },
+      facing: 0,
+      width: 10,
+      depth: 6,
+      solids,
+    }) as TerrainPiece;
+
+  it("finds the floors a model can stand on, levelled across rubble, and not the wall tops", () => {
+    const p = piece(ruin(120));
+    expect(levelsAt([p], { x: 0, y: 1.5 })).toEqual([0, 0.25, 3.25]);
+    expect(levelsAt([p], { x: 0, y: -1.5 })).toEqual([0, 0.25]);
+    expect(levelsAt([p], { x: 0, y: 2.8 })).toEqual([0]);
+    expect(settleZ([p], { x: 0, y: 1.5 }, 3.3)).toBe(3.25);
   });
 
-  it("fills closed shapes rather than leaving a hollow shell", () => {
-    const proxy = boxProxy(boxes([[0, 0, 0, 4, 2, 4]]));
-    expect(proxy).toHaveLength(1);
-    expect(proxy[0]).toMatchObject({ w: 4, d: 4, h: 2, z: 0, x: 2, y: 2 });
+  it("keeps windows open to sight and walls shut, rubble or not", () => {
+    for (const rubble of [0, 400]) {
+      const p = [piece(ruin(rubble))];
+      const across = (x: number, z: number) => !!sightBlockedBy(p, { x, y: -2.9, z }, { x, y: 5, z });
+      expect(across(-2.25, 1.75)).toBe(false);
+      expect(across(2.25, 4.75)).toBe(false);
+      expect(across(-2.9, 1.1)).toBe(false);
+      expect(across(0, 1.75)).toBe(true);
+      expect(across(-3.1, 4.75)).toBe(true);
+    }
   });
 
-  it("stays under the box limit for a detailed mesh", () => {
-    const proxy = boxProxy(synthMiniature(20_000, 4));
-    expect(proxy.length).toBeLessThanOrEqual(32);
+  it("makes a crate a block to stand on, so a model put inside steps up", () => {
+    const boxes = terrainProxy(synthBoxes([[-1, 0, -1, 2, 2, 2]]));
+    const p = piece(boxes);
+    expect(levelsAt([p], { x: 0, y: 0 })).toEqual([0, 2]);
+    expect(settleZ([p], { x: 0, y: 0 }, 0)).toBe(2);
+    expect(sightBlockedBy([p], { x: -3, y: 0, z: 1 }, { x: 3, y: 0, z: 1 })).not.toBeNull();
+  });
+
+  it("climbs a slope in steps", () => {
+    // A wedge 8" long rising to 2".
+    const positions = new Float32Array([-4, 0, -2, 4, 0, -2, 4, 2, -2, -4, 0, 2, 4, 0, 2, 4, 2, 2]);
+    // prettier-ignore
+    const indices = new Uint32Array([0,2,1, 3,4,5, 0,1,4, 0,4,3, 1,2,5, 1,5,4, 0,3,5, 0,5,2]);
+    const p = piece(terrainProxy({ positions, indices }));
+    const at = (x: number) => levelsAt([p], { x, y: 0 }).at(-1)!;
+    expect(at(-3)).toBeLessThan(at(0));
+    expect(at(0)).toBeLessThan(at(3));
+    expect(at(3)).toBeGreaterThan(1.4);
+  });
+
+  it("stays within its box limits for a detailed mesh", () => {
+    const proxy = terrainProxy(synthMiniature(20_000, 4));
+    expect(proxy.filter((b) => b.kind === "wall").length).toBeLessThanOrEqual(160);
+    expect(proxy.filter((b) => b.kind !== "wall").length).toBeLessThanOrEqual(64);
     expect(proxy.length).toBeGreaterThan(0);
   });
 });

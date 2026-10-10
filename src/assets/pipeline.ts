@@ -2,7 +2,7 @@ import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
 import { shareLevels } from "./levels";
 import { encodeTexture } from "./paint";
 import type { RawModel } from "./parse";
-import { boxProxy, figureProxy, hullTris } from "./proxy";
+import { figureProxy, terrainProxy } from "./proxy";
 import { BUDGETS, type AssetKind, type AssetStats, type MeshData, type ModelAsset } from "./types";
 
 interface ProcessOptions {
@@ -89,10 +89,8 @@ export function processMesh(raw: MeshData, options: ProcessOptions): ModelAsset 
     stats,
   };
   if (options.kind === "miniature") asset.figure = figureProxy(lods[0]!);
-  else {
-    asset.solids = boxProxy(lods[1] ?? lods[0]!);
-    asset.hull = hullTris(proxy);
-  }
+  // Terrain's sight and footing come from boxes built from the full mesh (no hull: a simplified one leaks).
+  else asset.solids = terrainProxy(lods[0]!);
   stats.ms = Math.round(performance.now() - start);
   // A small model's proxy can come out the same as its coarsest level: keep one copy, as a peer's decode does.
   return shareLevels(asset);

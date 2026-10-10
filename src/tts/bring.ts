@@ -10,7 +10,15 @@ import { makePiece } from "../systems/wh40k/layout";
 import { TABLE_FORMAT, useTables, type SavedTable } from "../tables/library";
 import { meshShape } from "../tables/meshShape";
 import { ttsArmies, type TtsAsset } from "./armies";
-import { armyMiddle, objCentre, placeOnTable, turnTable, type TtsTable, type TtsThing } from "./table";
+import {
+  armyMiddle,
+  bakeObj,
+  objCentre,
+  placeOnTable,
+  turnTable,
+  type TtsTable,
+  type TtsThing,
+} from "./table";
 
 /**
  * Bring a TTS table over (#73): its models into the figure library (as #71
@@ -29,6 +37,8 @@ interface TtsModelIn {
   /** Names army units know it by, for the library's matching. */
   names: string[];
   description?: string;
+  /** Terrain's tilt and stretch from TTS, baked into its vertices (table.ts bakeOf). */
+  bake?: number[];
 }
 
 type ImportOutcome = { asset: ModelAsset; centre: [number, number, number] } | "missing" | "failed";
@@ -42,10 +52,11 @@ export async function importTtsModel(
   const mesh = folder?.find(m.mesh, "model") ?? (await download(m.mesh));
   if (!mesh) return "missing";
   const texture = m.diffuse ? (folder?.find(m.diffuse, "image") ?? (await download(m.diffuse))) : undefined;
-  const centre = objCentre(await mesh.text());
+  const text = m.bake ? bakeObj(await mesh.text(), m.bake) : await mesh.text();
+  const centre = objCentre(text);
   const asset = await useAssets
     .getState()
-    .importFile(new File([mesh], `${m.name}.obj`), `library:tts:${m.key}`, m.kind, {
+    .importFile(new File([m.bake ? text : mesh], `${m.name}.obj`), `library:tts:${m.key}`, m.kind, {
       ...(texture ? { texture } : {}),
       unitScale: m.scale,
     });
@@ -110,6 +121,7 @@ export async function bringTable(
         kind,
         names,
         ...(th.description ? { description: th.description.slice(0, 400) } : {}),
+        ...(kind === "terrain" && th.bake ? { bake: th.bake } : {}),
       });
   };
   for (const th of scan.terrain) add(th, "terrain");

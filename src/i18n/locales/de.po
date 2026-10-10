@@ -3562,7 +3562,7 @@ msgid "That save has no custom models in it."
 msgstr "Dieser Spielstand enthält keine eigenen Modelle."
 
 #: src/figures/TtsImport.tsx:72
-#: src/tts/bring.ts:123
+#: src/tts/bring.ts:135
 #, fuzzy
 msgid "Importing {n} of {total}: {name}"
 msgstr "Importiere {n} von {total}: {name}"
@@ -7050,17 +7050,17 @@ msgid_plural "{n} things stood off this game's table."
 msgstr[0] "{n} Objekt stand außerhalb des Tisches dieses Spiels."
 msgstr[1] "{n} Objekte standen außerhalb des Tisches dieses Spiels."
 
-#: src/tts/bring.ts:106
+#: src/tts/bring.ts:117
 #, fuzzy
 msgid "TTS model"
 msgstr "TTS-Modell"
 
-#: src/tts/bring.ts:194
+#: src/tts/bring.ts:206
 #, fuzzy
 msgid "{save}: near side"
 msgstr "{save}: nahe Seite"
 
-#: src/tts/bring.ts:194
+#: src/tts/bring.ts:206
 #, fuzzy
 msgid "{save}: far side"
 msgstr "{save}: ferne Seite"

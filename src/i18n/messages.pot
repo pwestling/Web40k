@@ -2930,7 +2930,7 @@ msgid "That save has no custom models in it."
 msgstr ""
 
 #: src/figures/TtsImport.tsx:72
-#: src/tts/bring.ts:123
+#: src/tts/bring.ts:135
 msgid "Importing {n} of {total}: {name}"
 msgstr ""
 
@@ -5766,15 +5766,15 @@ msgid_plural "{n} things stood off this game's table."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/bring.ts:106
+#: src/tts/bring.ts:117
 msgid "TTS model"
 msgstr ""
 
-#: src/tts/bring.ts:194
+#: src/tts/bring.ts:206
 msgid "{save}: near side"
 msgstr ""
 
-#: src/tts/bring.ts:194
+#: src/tts/bring.ts:206
 msgid "{save}: far side"
 msgstr ""
 
