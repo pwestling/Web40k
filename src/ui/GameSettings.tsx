@@ -5,6 +5,7 @@ import { systemOf } from "../core/content/turn";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 import { GamePackagesSettings } from "./Packages";
+import { CampaignFold } from "../campaign/CampaignUI";
 import { setTtsControls, useTtsControls } from "./ttsControls";
 
 /** Rule options for this game. Set during deployment; shown read-only once the battle starts. */
@@ -115,6 +116,9 @@ export function GameSettings() {
             : t("Other units' models don't block line of sight.")}
         </p>
       )}
+      {editable && game.turn.round > 0 && <UnlockTerrain />}
+      {/* Starting a campaign is rare: its fold shows in the panel once one is attached (UX 83). */}
+      {!game.campaign && <CampaignFold />}
       <TtsControlsRow />
     </details>
   );
@@ -135,5 +139,25 @@ function TtsControlsRow() {
         )}
       </p>
     </>
+  );
+}
+
+/** Changing the terrain once the battle is on (UX 83: moved here from the panel's top row). */
+function UnlockTerrain() {
+  const editing = useStore((s) => s.editing);
+  return (
+    <button
+      className={editing ? "on" : ""}
+      onClick={() => {
+        if (
+          !editing &&
+          !confirm(t("The battle has started. Unlock the terrain? Every change shows in the log."))
+        )
+          return;
+        useStore.getState().set({ editing: !editing, selectedTerrain: null });
+      }}
+    >
+      {editing ? t("Done editing") : t("Unlock terrain")}
+    </button>
   );
 }

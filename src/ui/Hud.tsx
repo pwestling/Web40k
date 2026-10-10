@@ -7,7 +7,6 @@ import { VIEWER } from "../viewer/flag";
 import { ReportButton } from "./SavedNote";
 import { CampaignFold } from "../campaign/CampaignUI";
 import { TablePicker } from "../tables/TableLibrary";
-import { useSound } from "./sound";
 import { useHold } from "./hold";
 import { bundleReplay } from "./replayFile";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -18,9 +17,12 @@ import { t } from "../i18n";
 import { loadRoom, useCanControl, useStore } from "../store";
 import { ArmyImport, PhotoFigures } from "./ArmyImport";
 import { GameSettings } from "./GameSettings";
+import { PopMenu } from "./PopMenu";
+import { NET_PARAMS } from "../net/config";
+import { useCard } from "../player/card";
 import { MissionPicker, SecretMissions } from "./Missions";
 import { SecretObjectives } from "./SecretObjectives";
-import { DeployTray, RoomCard } from "./Room";
+import { copyInvite, DeployTray, RoomCard, useRoomWaiting } from "./Room";
 import { TemplateTools } from "./TemplateTools";
 import { battleOver } from "./StatsScreen";
 import { reviewThisGame } from "../replay/review";
@@ -60,7 +62,6 @@ export function Hud() {
   const statsClosed = useStore((s) => s.stats === false);
   // The table on screen (a replay's scrub point), which decides whether stats are showing.
   const shown = useGame();
-  const fastDice = useSound((s) => s.fast);
   const [count, setCount] = useState(2);
   const [sides, setSides] = useState(6);
   // On a phone the menu folds away once the battle starts, so the table shows (UX 17).
@@ -109,7 +110,10 @@ export function Hud() {
       <div className="row spread">
         {/* i18n-ignore */}
         <strong>Open Battle</strong>
-        <button onClick={() => setCollapsed(true)}>{t("Hide")}</button>
+        <span className="row">
+          <GameMenu record={record} />
+          <button onClick={() => setCollapsed(true)}>{t("Hide")}</button>
+        </span>
       </div>
       {eventGame && (
         <Suspense fallback={null}>
@@ -138,9 +142,6 @@ export function Hud() {
         <button onClick={() => setView(view === "top" ? "3d" : "top")}>
           {view === "top" ? t("3D view") : t("Top-down view")}
         </button>
-        <button onClick={resetView} title={t("Home")}>
-          {t("Reset view")}
-        </button>
         {role !== "spectator" && (
           <button
             className={measuring ? "on" : ""}
@@ -158,41 +159,36 @@ export function Hud() {
             {t("Clear ruler")}
           </button>
         )}
-        <button className={plates ? "on" : ""} onClick={() => set({ plates: !plates })}>
-          {t("Unit names")}
-        </button>
-        <button className={xray ? "on" : ""} onClick={() => set({ xray: !xray })}>
-          {t("X-ray terrain")}
-        </button>
-        <button
-          className={fastDice ? "on" : ""}
-          title={t("Shorter dice rolls in the tray")}
-          onClick={useSound.getState().toggleFast}
-        >
-          {t("Fast dice")}
-        </button>
-        <button
-          className={director ? "on" : ""}
-          title={t("Camera follows the action: moves, shots and charges")}
-          onClick={() => set({ director: !director })}
-        >
-          {t("Follow action")}
-        </button>
-        {role !== "spectator" && (
+        {/* The view's less used switches, ticked when on (UX 83). Fast dice is under 🔊. */}
+        <PopMenu label={t("View ▾")} className="view-menu">
+          <button onClick={resetView} title={t("Home")}>
+            {t("Reset view")}
+          </button>
+          <button role="menuitemcheckbox" aria-checked={plates} onClick={() => set({ plates: !plates })}>
+            {plates ? "✓ " : ""}
+            {t("Unit names")}
+          </button>
+          <button role="menuitemcheckbox" aria-checked={xray} onClick={() => set({ xray: !xray })}>
+            {xray ? "✓ " : ""}
+            {t("X-ray terrain")}
+          </button>
+          <button
+            role="menuitemcheckbox"
+            aria-checked={director}
+            title={t("Camera follows the action: moves, shots and charges")}
+            onClick={() => set({ director: !director })}
+          >
+            {director ? "✓ " : ""}
+            {t("Follow action")}
+          </button>
+        </PopMenu>
+        {/* Terrain is set up before the battle; afterwards unlocking it is in Game settings (UX 83). */}
+        {role !== "spectator" && (round === 0 || editing) && (
           <button
             className={editing ? "on" : ""}
-            onClick={() => {
-              // Terrain is locked once the battle starts; changing it then takes a confirm.
-              if (
-                !editing &&
-                liveGame.turn.round > 0 &&
-                !confirm(t("The battle has started. Unlock the terrain? Every change shows in the log."))
-              )
-                return;
-              set({ editing: !editing, selectedTerrain: null });
-            }}
+            onClick={() => set({ editing: !editing, selectedTerrain: null })}
           >
-            {editing ? t("Done editing") : liveGame.turn.round > 0 ? t("Unlock terrain") : t("Edit terrain")}
+            {editing ? t("Done editing") : t("Edit terrain")}
           </button>
         )}
       </div>
@@ -215,28 +211,36 @@ export function Hud() {
             )}
             <TablePicker />
             <MissionPicker />
-            {/* Near the top before the battle, where a host sets the game up (UX 203). */}
-            <CampaignFold />
-            <ArmyImport players={mine} />
+            {/* Near the top before the battle, where a host sets the game up (UX 203); without a campaign
+                attached it waits in Game settings (UX 83). */}
+            {liveGame.campaign && <CampaignFold />}
+            {/* Open while a side still has no army; once every side has one it folds away (UX 83). */}
+            {mine.every((p) => Object.values(liveGame.units).some((u) => u.owner === p.id)) ? (
+              <details className="fold">
+                <summary>{t("Armies")}</summary>
+                <ArmyImport players={mine} />
+              </details>
+            ) : (
+              <ArmyImport players={mine} />
+            )}
             <DeployTray players={mine} />
           </>
         ) : (
-          <>
-            {/* Photographing the army needn't wait for setup: a game against the computer starts at once (dogfood). */}
+          // Photographing the army needn't wait for setup (a game against the computer starts at once,
+          // dogfood), but in battle it and adding an army sit in one fold (UX 83).
+          <details className="fold">
+            <summary>{t("Armies")}</summary>
             {role !== "spectator" &&
               mine.map((p) => (
                 <PhotoFigures key={p.id} owner={p.id} name={mine.length > 1 ? p.name : null} />
               ))}
-            <details className="fold">
-              <summary>{t("Add an army")}</summary>
-              <ArmyImport players={mine} />
-            </details>
-          </>
+            <ArmyImport players={mine} />
+          </details>
         ))}
       <SecretObjectives players={mine} />
       <SecretMissions players={mine} />
       <CardDecks players={mine} />
-      {!(mine.length > 0 && round === 0) && <CampaignFold />}
+      {!(mine.length > 0 && round === 0) && liveGame.campaign && <CampaignFold />}
 
       {role !== "spectator" && (
         <div className="row undo-row">
@@ -266,19 +270,63 @@ export function Hud() {
       )}
       <TemplateTools />
       <GameLog />
-      <div className="row wrap hud-foot">
-        {/* Stats are for after the battle (and replays), not a player aid mid-game. */}
-        {(battleOver(shown) || !session) && <StatsButton over={battleOver(shown)} />}
-        <button onClick={() => void downloadReplay(record)}>{t("Download replay")}</button>
-        {/* Notes go on a replay: the game just played becomes one (UX 231). */}
-        {session && battleOver(shown) && (
-          <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
-            {t("Replay with notes")}
-          </button>
-        )}
-        <ReportButton />
-      </div>
+      {/* After the battle (and in replays) its stats and notes are the next thing to do. */}
+      {(battleOver(shown) || !session) && (
+        <div className="row wrap hud-foot">
+          <StatsButton over={battleOver(shown)} />
+          {/* Notes go on a replay: the game just played becomes one (UX 231). */}
+          {session && battleOver(shown) && (
+            <button title={t("Open this game as a replay to add notes and marks")} onClick={reviewThisGame}>
+              {t("Replay with notes")}
+            </button>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * "⋯ Game" (UX 83): the game's own less used actions, out of the way:
+ * download the replay, report a problem, the invite once everyone is in,
+ * and leaving for the lobby.
+ */
+function GameMenu({ record }: { record: GameRecord }) {
+  const { roomId, mode, net, session } = useStore();
+  const waiting = useRoomWaiting();
+  const over = battleOver(useStore.getState().game);
+  const online = !!roomId && mode !== "hotseat";
+  const leave = () => {
+    // A hotseat game is kept and offered again from the lobby; an online one goes on without you.
+    if (
+      online &&
+      net?.role !== "spectator" &&
+      !over &&
+      !confirm(t("Leave this game? The others can't go on without you."))
+    )
+      return;
+    const q = new URLSearchParams();
+    const here = new URLSearchParams(location.search);
+    for (const k of NET_PARAMS) if (here.get(k)) q.set(k, here.get(k)!);
+    location.assign(q.size ? `${location.pathname}?${q}` : location.pathname);
+  };
+  return (
+    <PopMenu label={t("⋯ Game")} title={t("Download the replay, report a problem, leave")} side="right">
+      <button role="menuitem" onClick={() => void downloadReplay(record)}>
+        {t("Download replay")}
+      </button>
+      {online && !waiting && (
+        <button role="menuitem" onClick={copyInvite}>
+          {t("Copy invite link")}
+        </button>
+      )}
+      <ReportButton className="" />
+      {session && (
+        <button role="menuitem" onClick={leave}>
+          {t("Leave game")}
+        </button>
+      )}
+    </PopMenu>
   );
 }
 
@@ -387,7 +435,10 @@ let nameDraft = "";
  */
 export function NameCard({ player }: { player: Player }) {
   const { dispatch } = useStore();
-  const [stored] = useState(() => localStorage.getItem("open-battle:name") ?? "");
+  // The player card's name first (UX 83), then a name this device gave before.
+  const [stored] = useState(
+    () => useCard.getState().name.trim() || (localStorage.getItem("open-battle:name") ?? ""),
+  );
   const [name, setName] = useState(() => nameDraft);
   const unnamed = /^Player \d+$/.test(player.name);
   // A name this device already gave (the lobby, Open tables) is used, not asked again (PX).

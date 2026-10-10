@@ -193,6 +193,29 @@
   cursor: pointer;
   white-space: nowrap;
 }
+/* An empty phase from round 3 (PX): one quiet line, its ▶ pulsing once. */
+.panel.whatnow.quiet {
+  width: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-color: #2d3340;
+  font-size: 0.9rem;
+}
+.pulse-once {
+  animation: pulse-once 1.4s ease-in-out 1;
+}
+@keyframes pulse-once {
+  50% {
+    box-shadow: 0 0 0 5px rgb(37 99 235 / 45%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-once {
+    animation: none;
+  }
+}
 /* Teaching mode's coach card (ui/Coach.tsx) */
 .panel.coach {
   z-index: 19;

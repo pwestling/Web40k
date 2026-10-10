@@ -28,6 +28,15 @@
 .panel.talk .talk-toggle {
   margin-left: auto;
 }
+/* The talk bar's menus (✏ Draw, 😀) open upwards: it sits at the bottom of the screen. */
+.panel.talk .pop-menu .menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+  z-index: 30;
+}
+.panel.talk .pop-menu.on > button {
+  background: #a16207;
+}
 .talk-reactions-row {
   justify-content: space-between;
 }

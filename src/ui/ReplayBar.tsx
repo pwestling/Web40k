@@ -149,6 +149,10 @@ export function ReplayBar() {
     setScrub(to >= last && session ? null : to);
   };
   const captioned = role === "spectator" || scrub !== null;
+  // During live play the bar tucks into a small handle until it's wanted (UX 83);
+  // in full in replays, after the game, for watchers and while looking back.
+  const [opened, setOpened] = useState(false);
+  const tucked = !!session && !over && !watching && scrub === null && !playing && !opened;
 
   const extras = (
     <>
@@ -188,133 +192,152 @@ export function ReplayBar() {
       )}
       <SharePanel />
       <RecordingPill />
-      <div className="replaybar">
-        <button title={t("Replay: back a phase")} onClick={() => jump(-1)}>
-          ⏮
-        </button>
-        <button onClick={play}>{playing ? "⏸" : "▶"}</button>
-        <button title={t("Replay: forward a phase")} onClick={() => jump(1)}>
-          ⏭
-        </button>
-        <div className="track" ref={track}>
-          <input
-            type="range"
-            min={first}
-            max={last}
-            value={pos}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setScrub(v >= last && session ? null : v);
-            }}
-          />
-          {last > 0 &&
-            marks.map((m) => (
-              // Every round keeps its tick; only every `every`th is labelled when they'd crowd.
-              <span
-                key={m.seq}
-                className={`tick ${m.round ? "round" : ""}`}
-                style={{ left: at(m.seq) }}
-                title={m.text}
-              >
-                {m.round && roundMarks.indexOf(m) % every === 0 && (
-                  <span className="label">{t("R{round}", { round: m.round })}</span>
-                )}
-              </span>
-            ))}
-          {last > 0 &&
-            highlights.map((h) => (
-              <button
-                key={`${h.seq}-${h.text}`}
-                className={`highlight ${h.kind}`}
-                style={{ left: at(h.seq) }}
-                title={h.text}
-                aria-label={t("Replay: {what}", { what: h.text })}
-                onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
-              >
-                {ICONS[h.kind]}
-              </button>
-            ))}
-          {last > 0 &&
-            moments.map((m) => (
-              <button
-                key={`rare-${m.seq}`}
-                className="highlight rare"
-                style={{ left: at(m.seq) }}
-                title={`${m.title}: ${m.line}`}
-                aria-label={t("Replay: {what}", { what: m.title })}
-                onClick={() => replayRoll(m.seq)}
-              >
-                ★
-              </button>
-            ))}
-          {last > 0 &&
-            stories.map((m) => (
-              <button
-                key={`moment-${m.kind}-${m.seq}`}
-                className="highlight moment"
-                style={{ left: at(m.seq) }}
-                title={`${m.title}: ${m.line}`}
-                aria-label={t("Replay: {what}", { what: m.title })}
-                onClick={() => playMoment(m)}
-              >
-                ❖
-              </button>
-            ))}
-          {last > 0 &&
-            noted.map((seq) => (
-              <button
-                key={`note-${seq}`}
-                className="highlight note"
-                style={{ left: at(seq) }}
-                title={notes.find((n) => n.seq === seq)?.text || t("A note")}
-                aria-label={t("Replay: note, {text}", { text: notes.find((n) => n.seq === seq)?.text ?? "" })}
-                onClick={() => setScrub(seq)}
-              >
-                ✎
-              </button>
-            ))}
-          {last > 0 &&
-            rulesChanges.map((r) => (
-              <button
-                key={`rules-${r.seq}`}
-                className="highlight rules"
-                style={{ left: at(r.seq) }}
-                title={r.text}
-                aria-label={t("Replay: {what}", { what: r.text })}
-                onClick={() => setScrub(r.seq >= last && session ? null : r.seq)}
-              >
-                ◆
-              </button>
-            ))}
-        </div>
-        <span className="muted where">
-          {scrub === null ? t("Live") : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? t("Setup"))}
-        </span>
-        <BackToOriginal />
-        {scrub !== null && session && <button onClick={() => setScrub(null)}>{t("Back to live")}</button>}
-        {/* After the game the extras fold into ⋯, so the bar stays one line (UX 407). */}
-        {session && over ? (
-          <details className="menu replay-more">
-            <summary aria-label={t("More")} title={t("What if, Share, Review")}>
-              ⋯
-            </summary>
-            <div className="menu-items">{extras}</div>
-          </details>
-        ) : (
-          extras
-        )}
-        {!session && !VIEWER && (
+      {tucked ? (
+        <div className="replaybar tucked">
           <button
-            onClick={() => {
-              // Leaving a review room drops its link, so a reload doesn't join it again.
-              if (review) history.replaceState(null, "", location.pathname);
-              location.reload();
-            }}
+            title={t("Look back over the game so far")}
+            onMouseEnter={() => setOpened(true)}
+            onClick={() => setOpened(true)}
           >
-            {review ? t("Leave") : t("Close replay")}
+            {t("⟲ Replay")}
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div
+          className="replaybar"
+          onMouseLeave={() => {
+            if (useStore.getState().scrub === null) setOpened(false);
+          }}
+        >
+          <button title={t("Replay: back a phase")} onClick={() => jump(-1)}>
+            ⏮
+          </button>
+          <button onClick={play}>{playing ? "⏸" : "▶"}</button>
+          <button title={t("Replay: forward a phase")} onClick={() => jump(1)}>
+            ⏭
+          </button>
+          <div className="track" ref={track}>
+            <input
+              type="range"
+              min={first}
+              max={last}
+              value={pos}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setScrub(v >= last && session ? null : v);
+              }}
+            />
+            {last > 0 &&
+              marks.map((m) => (
+                // Every round keeps its tick; only every `every`th is labelled when they'd crowd.
+                <span
+                  key={m.seq}
+                  className={`tick ${m.round ? "round" : ""}`}
+                  style={{ left: at(m.seq) }}
+                  title={m.text}
+                >
+                  {m.round && roundMarks.indexOf(m) % every === 0 && (
+                    <span className="label">{t("R{round}", { round: m.round })}</span>
+                  )}
+                </span>
+              ))}
+            {last > 0 &&
+              highlights.map((h) => (
+                <button
+                  key={`${h.seq}-${h.text}`}
+                  className={`highlight ${h.kind}`}
+                  style={{ left: at(h.seq) }}
+                  title={h.text}
+                  aria-label={t("Replay: {what}", { what: h.text })}
+                  onClick={() => setScrub(h.seq >= last && session ? null : h.seq)}
+                >
+                  {ICONS[h.kind]}
+                </button>
+              ))}
+            {last > 0 &&
+              moments.map((m) => (
+                <button
+                  key={`rare-${m.seq}`}
+                  className="highlight rare"
+                  style={{ left: at(m.seq) }}
+                  title={`${m.title}: ${m.line}`}
+                  aria-label={t("Replay: {what}", { what: m.title })}
+                  onClick={() => replayRoll(m.seq)}
+                >
+                  ★
+                </button>
+              ))}
+            {last > 0 &&
+              stories.map((m) => (
+                <button
+                  key={`moment-${m.kind}-${m.seq}`}
+                  className="highlight moment"
+                  style={{ left: at(m.seq) }}
+                  title={`${m.title}: ${m.line}`}
+                  aria-label={t("Replay: {what}", { what: m.title })}
+                  onClick={() => playMoment(m)}
+                >
+                  ❖
+                </button>
+              ))}
+            {last > 0 &&
+              noted.map((seq) => (
+                <button
+                  key={`note-${seq}`}
+                  className="highlight note"
+                  style={{ left: at(seq) }}
+                  title={notes.find((n) => n.seq === seq)?.text || t("A note")}
+                  aria-label={t("Replay: note, {text}", {
+                    text: notes.find((n) => n.seq === seq)?.text ?? "",
+                  })}
+                  onClick={() => setScrub(seq)}
+                >
+                  ✎
+                </button>
+              ))}
+            {last > 0 &&
+              rulesChanges.map((r) => (
+                <button
+                  key={`rules-${r.seq}`}
+                  className="highlight rules"
+                  style={{ left: at(r.seq) }}
+                  title={r.text}
+                  aria-label={t("Replay: {what}", { what: r.text })}
+                  onClick={() => setScrub(r.seq >= last && session ? null : r.seq)}
+                >
+                  ◆
+                </button>
+              ))}
+          </div>
+          <span className="muted where">
+            {scrub === null ? t("Live") : (phase?.text.replace(/ · [^·]+ · /, " · ") ?? t("Setup"))}
+          </span>
+          <BackToOriginal />
+          {scrub !== null && session && <button onClick={() => setScrub(null)}>{t("Back to live")}</button>}
+          {/* After the game the extras fold into ⋯, so the bar stays one line (UX 407). */}
+          {session && over ? (
+            <details className="menu replay-more">
+              <summary aria-label={t("More")} title={t("What if, Share, Review")}>
+                ⋯
+              </summary>
+              <div className="menu-items">{extras}</div>
+            </details>
+          ) : (
+            extras
+          )}
+          {!session && !VIEWER && (
+            <button
+              onClick={() => {
+                // Leaving a review room drops its link, so a reload doesn't join it again.
+                if (review) history.replaceState(null, "", location.pathname);
+                location.reload();
+              }}
+            >
+              {review ? t("Leave") : t("Close replay")}
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

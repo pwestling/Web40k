@@ -374,23 +374,23 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:332
+#: src/GameScreen.tsx:334
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:333
+#: src/GameScreen.tsx:335
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:334
+#: src/GameScreen.tsx:336
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:335
+#: src/GameScreen.tsx:337
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:340
+#: src/GameScreen.tsx:342
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -398,15 +398,15 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:341
+#: src/GameScreen.tsx:343
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:342
+#: src/GameScreen.tsx:344
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:347
+#: src/GameScreen.tsx:349
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -625,7 +625,7 @@ msgstr ""
 #: src/review/ReviewPanel.tsx:204
 #: src/review/ReviewPanel.tsx:204
 #: src/share/cards.ts:292
-#: src/ui/Missions.tsx:364
+#: src/ui/Missions.tsx:374
 msgid "You"
 msgstr ""
 
@@ -644,7 +644,7 @@ msgstr ""
 
 #: src/broadcast/BroadcastControls.tsx:13
 #: src/opentables/OpenTables.tsx:230
-#: src/ui/ReplayBar.tsx:291
+#: src/ui/ReplayBar.tsx:313
 msgid "Live"
 msgstr ""
 
@@ -669,7 +669,7 @@ msgid "{name} is thinking…"
 msgstr ""
 
 #: src/broadcast/BroadcastControls.tsx:170
-#: src/ui/ReplayBar.tsx:314
+#: src/ui/ReplayBar.tsx:336
 msgid "Leave"
 msgstr ""
 
@@ -1039,7 +1039,7 @@ msgstr ""
 #: src/campaign/EventTab.tsx:270
 #: src/events/EventsUI.tsx:391
 #: src/ui/Missions.tsx:146
-#: src/ui/Missions.tsx:392
+#: src/ui/Missions.tsx:402
 msgid "VP"
 msgstr ""
 
@@ -1076,7 +1076,7 @@ msgid "{players} won"
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:664
-#: src/ui/Missions.tsx:372
+#: src/ui/Missions.tsx:382
 msgid "{scores} VP"
 msgstr ""
 
@@ -1116,7 +1116,8 @@ msgid "Kills, games and wounds fill in after each game. Honours, scars and XP ar
 msgstr ""
 
 #: src/campaign/CampaignUI.tsx:727
-#: src/ui/Hud.tsx:195
+#: src/ui/GameSettings.tsx:160
+#: src/ui/Hud.tsx:191
 msgid "Done editing"
 msgstr ""
 
@@ -1489,19 +1490,20 @@ msgid "Send them this link to open on their phone:"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:138
-#: src/ui/Room.tsx:111
+#: src/ui/Room.tsx:126
 msgid "Copied ✓"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:138
 #: src/mail/MailBar.tsx:236
+#: src/ui/Hud.tsx:320
 #: src/ui/NetBanner.tsx:75
-#: src/ui/Room.tsx:111
+#: src/ui/Room.tsx:126
 msgid "Copy invite link"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:142
-#: src/ui/ReplayBar.tsx:171
+#: src/ui/ReplayBar.tsx:175
 #: src/ui/StatsScreen.tsx:84
 msgid "Share…"
 msgstr ""
@@ -1519,7 +1521,6 @@ msgid "No army yet."
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:197
-#: src/ui/Hud.tsx:231
 msgid "Add an army"
 msgstr ""
 
@@ -1554,7 +1555,7 @@ msgid "Number of dice"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:297
-#: src/ui/Hud.tsx:258
+#: src/ui/Hud.tsx:262
 msgid "D"
 msgstr ""
 
@@ -1563,18 +1564,18 @@ msgid "Sides"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:303
-#: src/ui/Hud.tsx:264
+#: src/ui/Hud.tsx:268
 #: src/ui/StatsScreen.tsx:218
 msgid "Roll"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:310
-#: src/ui/Hud.tsx:511
+#: src/ui/Hud.tsx:562
 msgid "Stats"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:312
-#: src/ui/Hud.tsx:272
+#: src/ui/Hud.tsx:316
 msgid "Download replay"
 msgstr ""
 
@@ -1790,7 +1791,7 @@ msgstr ""
 #: src/companion/TableAttack.tsx:95
 #: src/opentables/OpenTables.tsx:621
 #: src/opentables/OpenTables.tsx:621
-#: src/ui/ReplayBar.tsx:298
+#: src/ui/ReplayBar.tsx:320
 msgid "More"
 msgstr ""
 
@@ -3159,7 +3160,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:788
 #: src/player/PlayerCard.tsx:131
 #: src/replay/NotesPanel.tsx:252
-#: src/ui/Hud.tsx:418
+#: src/ui/Hud.tsx:469
 msgid "Your name"
 msgstr ""
 
@@ -3508,7 +3509,7 @@ msgstr ""
 
 #: src/opentables/OpenTables.tsx:357
 #: src/opentables/OpenTables.tsx:425
-#: src/ui/Hud.tsx:501
+#: src/ui/Hud.tsx:552
 #: src/ui/Lobby.tsx:654
 msgid "Watch"
 msgstr ""
@@ -3536,7 +3537,7 @@ msgid "round {n}"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:406
-#: src/ui/Room.tsx:185
+#: src/ui/Room.tsx:199
 #: src/ui/TopBar.tsx:629
 msgid "{n} watching"
 msgid_plural "{n} watching"
@@ -4468,7 +4469,7 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:117
 #: src/replay/chapters.ts:53
-#: src/ui/ReplayBar.tsx:291
+#: src/ui/ReplayBar.tsx:313
 msgid "Setup"
 msgstr ""
 
@@ -4516,12 +4517,12 @@ msgid "A viewer"
 msgstr ""
 
 #: src/replay/NotesPanel.tsx:196
-#: src/ui/TalkPanel.tsx:14
+#: src/ui/TalkPanel.tsx:15
 msgid "↗ Arrow"
 msgstr ""
 
 #: src/replay/NotesPanel.tsx:197
-#: src/ui/TalkPanel.tsx:15
+#: src/ui/TalkPanel.tsx:16
 msgid "◯ Area"
 msgstr ""
 
@@ -4617,8 +4618,8 @@ msgid "Copy the invite link"
 msgstr ""
 
 #: src/replay/NotesPanel.tsx:362
-#: src/ui/TalkPanel.tsx:82
-#: src/ui/TalkPanel.tsx:128
+#: src/ui/TalkPanel.tsx:104
+#: src/ui/TalkPanel.tsx:150
 msgid "{name}:"
 msgstr ""
 
@@ -4644,10 +4645,10 @@ msgstr ""
 
 #: src/replay/NotesPanel.tsx:77
 #: src/systems/conquest/CommandPanel.tsx:59
-#: src/ui/Hud.tsx:112
+#: src/ui/Hud.tsx:115
 #: src/ui/PlayPanel.tsx:79
 #: src/ui/TableWarnings.tsx:99
-#: src/ui/WhatNow.tsx:365
+#: src/ui/WhatNow.tsx:404
 msgid "Hide"
 msgstr ""
 
@@ -4719,7 +4720,7 @@ msgstr ""
 
 #: src/review/ReviewPanel.tsx:316
 #: src/review/ReviewPanel.tsx:322
-#: src/ui/Missions.tsx:394
+#: src/ui/Missions.tsx:404
 msgid "R{n}"
 msgstr ""
 
@@ -5183,7 +5184,7 @@ msgstr ""
 
 #: src/share/SharePanel.tsx:304
 #: src/share/SharePanel.tsx:306
-#: src/ui/ReplayBar.tsx:162
+#: src/ui/ReplayBar.tsx:166
 msgid "Share the battle"
 msgstr ""
 
@@ -5544,7 +5545,7 @@ msgid "Undo the last stroke (Ctrl+Z)"
 msgstr ""
 
 #: src/standees/StandeeMaker.tsx:446
-#: src/ui/Hud.tsx:320
+#: src/ui/Hud.tsx:368
 msgid "Undo"
 msgstr ""
 
@@ -5721,7 +5722,7 @@ msgstr ""
 
 #: src/systems/conquest/CommandPanel.tsx:88
 #: src/ui/Cards.tsx:164
-#: src/ui/Missions.tsx:245
+#: src/ui/Missions.tsx:255
 #: src/ui/SecretObjectives.tsx:68
 msgid "{n} face down"
 msgstr ""
@@ -7141,7 +7142,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/ui/Cards.tsx:182
-#: src/ui/Missions.tsx:267
+#: src/ui/Missions.tsx:277
 msgid "(drawn on another device)"
 msgstr ""
 
@@ -7155,7 +7156,7 @@ msgid "Last discarded: {card}"
 msgstr ""
 
 #: src/ui/Cards.tsx:210
-#: src/ui/Missions.tsx:318
+#: src/ui/Missions.tsx:328
 msgid "Draw a card"
 msgstr ""
 
@@ -7520,6 +7521,7 @@ msgstr ""
 
 #: src/ui/Coach.tsx:210
 #: src/ui/TopBar.tsx:342
+#: src/ui/WhatNow.tsx:386
 msgid "Next phase"
 msgstr ""
 
@@ -7662,7 +7664,7 @@ msgid "{name}'s dice"
 msgstr ""
 
 #: src/ui/DicePicker.tsx:59
-#: src/ui/Hud.tsx:245
+#: src/ui/Hud.tsx:249
 #: src/ui/StatsScreen.tsx:219
 msgid "Dice"
 msgstr ""
@@ -7954,285 +7956,305 @@ msgstr ""
 msgid "{name}: {triangles} triangles, drawn at {levels} depending on distance"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:105
+#: src/ui/GameSettings.tsx:100
+msgid "Other units' models block line of sight"
+msgstr ""
+
+#: src/ui/GameSettings.tsx:106
 msgid "Stand-in heights line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:107
+#: src/ui/GameSettings.tsx:108
 msgid "Footprint line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:108
+#: src/ui/GameSettings.tsx:109
 msgid "True line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:109
+#: src/ui/GameSettings.tsx:110
 msgid "Cover: {cover}."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:111
+#: src/ui/GameSettings.tsx:112
 msgid "Models see in a {degrees}° front arc."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:114
+#: src/ui/GameSettings.tsx:115
 msgid "Other units' models block line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:115
+#: src/ui/GameSettings.tsx:116
 msgid "Other units' models don't block line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:130
+#: src/ui/GameSettings.tsx:134
 msgid "TTS controls"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:133
+#: src/ui/GameSettings.tsx:137
 msgid "Just on this device. Left drag on the table picks units with a box, right drag turns the camera, WASD slides it and holding Tab measures."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:22
+#: src/ui/GameSettings.tsx:154
+msgid "The battle has started. Unlock the terrain? Every change shows in the log."
+msgstr ""
+
+#: src/ui/GameSettings.tsx:160
+msgid "Unlock terrain"
+msgstr ""
+
+#: src/ui/GameSettings.tsx:23
 msgid "The battle has started. Change this rule for both players?"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:28
+#: src/ui/GameSettings.tsx:29
+#: src/ui/Keys.tsx:54
 msgid "Game settings"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:33
+#: src/ui/GameSettings.tsx:34
 msgid "Cover"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:35
-#: src/ui/GameSettings.tsx:109
+#: src/ui/GameSettings.tsx:36
+#: src/ui/GameSettings.tsx:110
 msgid "Ballistic Skill 1 worse"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:36
-#: src/ui/GameSettings.tsx:109
+#: src/ui/GameSettings.tsx:37
+#: src/ui/GameSettings.tsx:110
 msgid "+1 to save"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:40
+#: src/ui/GameSettings.tsx:41
 #: src/ui/SystemPanels.tsx:352
 #: src/ui/UnitCard.tsx:437
 msgid "Line of sight"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:45
+#: src/ui/GameSettings.tsx:46
 msgid "True line of sight"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:46
+#: src/ui/GameSettings.tsx:47
 msgid "Stand-in heights"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:47
+#: src/ui/GameSettings.tsx:48
 msgid "Footprints, no height"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:52
+#: src/ui/GameSettings.tsx:53
 msgid "Heights don't count. Sight runs from the centre of a model's base to any part of the target's base. Each terrain piece is open, obscuring (gives cover) or blocking; set it in the terrain editor."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:59
+#: src/ui/GameSettings.tsx:60
 msgid "Each terrain piece counts as a block of its stand-in height, and models see each other if the line between their tops clears it. Set heights in the terrain editor; X-ray shows them."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:65
+#: src/ui/GameSettings.tsx:66
 msgid "Models see"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:71
+#: src/ui/GameSettings.tsx:72
 msgid "All around"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:72
 #: src/ui/GameSettings.tsx:73
+#: src/ui/GameSettings.tsx:74
 msgid "In a {degrees}° front arc"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:79
+#: src/ui/GameSettings.tsx:80
 msgid "Game size (points)"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:99
-msgid "Other units' models block line of sight"
-msgstr ""
-
-#: src/ui/Hud.tsx:101
+#: src/ui/Hud.tsx:102
 msgid "☰ Menu"
 msgstr ""
 
-#: src/ui/Hud.tsx:123
+#: src/ui/Hud.tsx:127
 msgid "Lesson: the computer plays the other side."
 msgstr ""
 
-#: src/ui/Hud.tsx:125
+#: src/ui/Hud.tsx:129
 msgid "You play the near side; {name} plays the far side ({level})."
 msgstr ""
 
-#: src/ui/Hud.tsx:130
+#: src/ui/Hud.tsx:134
 msgid "Play by mail: you play your side; send your file when you're done."
 msgstr ""
 
-#: src/ui/Hud.tsx:131
+#: src/ui/Hud.tsx:135
 msgid "Hotseat: you control both sides."
 msgstr ""
 
-#: src/ui/Hud.tsx:134
+#: src/ui/Hud.tsx:138
 msgid "Spectating."
 msgstr ""
 
-#: src/ui/Hud.tsx:139
+#: src/ui/Hud.tsx:143
 #: src/ui/TouchLayer.tsx:152
 msgid "3D view"
 msgstr ""
 
-#: src/ui/Hud.tsx:139
+#: src/ui/Hud.tsx:143
 #: src/ui/TouchLayer.tsx:152
 msgid "Top-down view"
 msgstr ""
 
-#: src/ui/Hud.tsx:141
+#: src/ui/Hud.tsx:148
+msgid "Drag between models or points to measure; both players see it (M)"
+msgstr ""
+
+#: src/ui/Hud.tsx:151
+msgid "Ruler"
+msgstr ""
+
+#: src/ui/Hud.tsx:156
+msgid "Clear the ruler (Esc)"
+msgstr ""
+
+#: src/ui/Hud.tsx:159
+msgid "Clear ruler"
+msgstr ""
+
+#: src/ui/Hud.tsx:163
+#: src/ui/Keys.tsx:51
+msgid "View ▾"
+msgstr ""
+
+#: src/ui/Hud.tsx:164
 #: src/ui/Keys.tsx:30
 msgid "Home"
 msgstr ""
 
-#: src/ui/Hud.tsx:142
+#: src/ui/Hud.tsx:165
 #: src/ui/TouchLayer.tsx:155
 msgid "Reset view"
 msgstr ""
 
-#: src/ui/Hud.tsx:147
-msgid "Drag between models or points to measure; both players see it (M)"
-msgstr ""
-
-#: src/ui/Hud.tsx:150
-msgid "Ruler"
-msgstr ""
-
-#: src/ui/Hud.tsx:155
-msgid "Clear the ruler (Esc)"
-msgstr ""
-
-#: src/ui/Hud.tsx:158
-msgid "Clear ruler"
-msgstr ""
-
-#: src/ui/Hud.tsx:162
+#: src/ui/Hud.tsx:169
 msgid "Unit names"
 msgstr ""
 
-#: src/ui/Hud.tsx:165
+#: src/ui/Hud.tsx:173
 msgid "X-ray terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:169
-msgid "Shorter dice rolls in the tray"
-msgstr ""
-
-#: src/ui/Hud.tsx:172
-#: src/ui/TopBar.tsx:575
-msgid "Fast dice"
-msgstr ""
-
-#: src/ui/Hud.tsx:176
+#: src/ui/Hud.tsx:178
 msgid "Camera follows the action: moves, shots and charges"
 msgstr ""
 
-#: src/ui/Hud.tsx:179
+#: src/ui/Hud.tsx:182
 msgid "Follow action"
 msgstr ""
 
-#: src/ui/Hud.tsx:189
-msgid "The battle has started. Unlock the terrain? Every change shows in the log."
-msgstr ""
-
-#: src/ui/Hud.tsx:195
-msgid "Unlock terrain"
-msgstr ""
-
-#: src/ui/Hud.tsx:195
+#: src/ui/Hud.tsx:191
 #: src/ui/TerrainPanel.tsx:162
 msgid "Edit terrain"
 msgstr ""
 
-#: src/ui/Hud.tsx:275
-#: src/ui/ReplayBar.tsx:175
+#: src/ui/Hud.tsx:220
+#: src/ui/Hud.tsx:232
+#: src/ui/Keys.tsx:53
+msgid "Armies"
+msgstr ""
+
+#: src/ui/Hud.tsx:279
+#: src/ui/ReplayBar.tsx:179
 msgid "Open this game as a replay to add notes and marks"
 msgstr ""
 
-#: src/ui/Hud.tsx:276
+#: src/ui/Hud.tsx:280
 msgid "Replay with notes"
 msgstr ""
 
-#: src/ui/Hud.tsx:307
+#: src/ui/Hud.tsx:305
+msgid "Leave this game? The others can't go on without you."
+msgstr ""
+
+#: src/ui/Hud.tsx:314
+#: src/ui/Keys.tsx:52
+msgid "⋯ Game"
+msgstr ""
+
+#: src/ui/Hud.tsx:314
+msgid "Download the replay, report a problem, leave"
+msgstr ""
+
+#: src/ui/Hud.tsx:326
+msgid "Leave game"
+msgstr ""
+
+#: src/ui/Hud.tsx:355
 msgid "Take back {what}"
 msgstr ""
 
-#: src/ui/Hud.tsx:308
+#: src/ui/Hud.tsx:356
 msgid "Take back your last action"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "three"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "four"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "five"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "six"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "seven"
 msgstr ""
 
-#: src/ui/Hud.tsx:375
+#: src/ui/Hud.tsx:423
 msgid "eight"
 msgstr ""
 
-#: src/ui/Hud.tsx:378
+#: src/ui/Hud.tsx:426
 msgid "Both players are here."
 msgstr ""
 
-#: src/ui/Hud.tsx:379
+#: src/ui/Hud.tsx:427
 msgid "All {count} seats are taken."
 msgstr ""
 
-#: src/ui/Hud.tsx:413
+#: src/ui/Hud.tsx:464
 msgid "You're {name}. What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:423
-#: src/ui/Hud.tsx:460
+#: src/ui/Hud.tsx:474
+#: src/ui/Hud.tsx:511
 msgid "Use this name"
 msgstr ""
 
-#: src/ui/Hud.tsx:438
+#: src/ui/Hud.tsx:489
 msgid "Connecting to the table as {name}…"
 msgstr ""
 
-#: src/ui/Hud.tsx:450
+#: src/ui/Hud.tsx:501
 msgid "Connecting to the table… What should the others call you?"
 msgstr ""
 
-#: src/ui/Hud.tsx:487
+#: src/ui/Hud.tsx:538
 msgid "This game is already under way. Rejoining?"
 msgstr ""
 
-#: src/ui/Hud.tsx:494
+#: src/ui/Hud.tsx:545
 msgid "Rejoin as {name}"
 msgstr ""
 
-#: src/ui/Hud.tsx:523
-#: src/ui/Hud.tsx:523
+#: src/ui/Hud.tsx:574
+#: src/ui/Hud.tsx:574
 msgid "Review ready"
 msgstr ""
 
@@ -8244,12 +8266,12 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:105
-msgid "Coming from Tabletop Simulator?"
-msgstr ""
-
 #: src/ui/Keys.tsx:11
 msgid "Select your previous or next unit (Shift: the other side's)"
+msgstr ""
+
+#: src/ui/Keys.tsx:117
+msgid "Where things are"
 msgstr ""
 
 #: src/ui/Keys.tsx:12
@@ -8260,16 +8282,12 @@ msgstr ""
 msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:120
-msgid "TTS controls (just on this device)"
-msgstr ""
-
-#: src/ui/Keys.tsx:124
-msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
-msgstr ""
-
 #: src/ui/Keys.tsx:13
 msgid "Go from the table into the selected unit's card"
+msgstr ""
+
+#: src/ui/Keys.tsx:130
+msgid "Coming from Tabletop Simulator?"
 msgstr ""
 
 #: src/ui/Keys.tsx:14
@@ -8280,9 +8298,17 @@ msgstr ""
 msgid "Move between buttons; Enter or Space presses one"
 msgstr ""
 
+#: src/ui/Keys.tsx:145
+msgid "TTS controls (just on this device)"
+msgstr ""
+
+#: src/ui/Keys.tsx:149
+msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
+msgstr ""
+
 #: src/ui/Keys.tsx:15
 #: src/ui/Keys.tsx:41
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:64
 msgid "Drag a unit"
 msgstr ""
 
@@ -8355,7 +8381,7 @@ msgid "Right drag"
 msgstr ""
 
 #: src/ui/Keys.tsx:28
-#: src/ui/Keys.tsx:53
+#: src/ui/Keys.tsx:65
 msgid "Slide the camera"
 msgstr ""
 
@@ -8420,92 +8446,137 @@ msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a 
 msgstr ""
 
 #: src/ui/Keys.tsx:51
-msgid "Tap a unit"
-msgstr ""
-
-#: src/ui/Keys.tsx:51
-msgid "Select it: its card shows what it can do"
+msgid "Left panel: Reset view, Unit names, X-ray terrain, Follow action"
 msgstr ""
 
 #: src/ui/Keys.tsx:52
-msgid "Move it (hold the table for one model at a time)"
+msgid "Left panel, top: Download replay, Copy invite link, Report a problem, Leave game"
 msgstr ""
 
 #: src/ui/Keys.tsx:53
+msgid "Left panel, in battle: add an army, the army shelf, photograph figures"
+msgstr ""
+
+#: src/ui/Keys.tsx:54
+msgid "Left panel: Unlock terrain (in battle), the campaign book"
+msgstr ""
+
+#: src/ui/Keys.tsx:55
+msgid "Top bar: sound, voice and Fast dice"
+msgstr ""
+
+#: src/ui/Keys.tsx:56
+msgid "✏ Draw ▾ · 😀"
+msgstr ""
+
+#: src/ui/Keys.tsx:56
+msgid "Talk bar, online: arrows, areas and reactions"
+msgstr ""
+
+#: src/ui/Keys.tsx:57
+#: src/ui/ReplayBar.tsx:202
+msgid "⟲ Replay"
+msgstr ""
+
+#: src/ui/Keys.tsx:57
+msgid "Bottom: look back over the game so far"
+msgstr ""
+
+#: src/ui/Keys.tsx:58
+msgid "VP / CP"
+msgstr ""
+
+#: src/ui/Keys.tsx:58
+msgid "Point at a score to change it with − and +"
+msgstr ""
+
+#: src/ui/Keys.tsx:63
+msgid "Tap a unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:63
+msgid "Select it: its card shows what it can do"
+msgstr ""
+
+#: src/ui/Keys.tsx:64
+msgid "Move it (hold the table for one model at a time)"
+msgstr ""
+
+#: src/ui/Keys.tsx:65
 msgid "One finger on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:66
 msgid "Two fingers"
 msgstr ""
 
-#: src/ui/Keys.tsx:54
+#: src/ui/Keys.tsx:66
 msgid "Pinch to zoom, twist to turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:67
 msgid "Two fingers on the selected unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:55
+#: src/ui/Keys.tsx:67
 msgid "Twist to turn it (a regiment block wheels)"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:68
 msgid "Hold, then drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:56
+#: src/ui/Keys.tsx:68
 msgid "Measure"
 msgstr ""
 
-#: src/ui/Keys.tsx:57
+#: src/ui/Keys.tsx:69
 msgid "A second finger's tap while dragging"
 msgstr ""
 
-#: src/ui/Keys.tsx:57
+#: src/ui/Keys.tsx:69
 msgid "Turn a corner: the move is measured along its legs"
 msgstr ""
 
-#: src/ui/Keys.tsx:58
+#: src/ui/Keys.tsx:70
 msgid "Hold and let go"
 msgstr ""
 
-#: src/ui/Keys.tsx:58
+#: src/ui/Keys.tsx:70
 msgid "More: turn, ping, look from here, views"
 msgstr ""
 
-#: src/ui/Keys.tsx:59
+#: src/ui/Keys.tsx:71
 #: src/ui/TouchLayer.tsx:149
 msgid "Select several"
 msgstr ""
 
-#: src/ui/Keys.tsx:59
+#: src/ui/Keys.tsx:71
 msgid "Draw a box on the table, then drag one unit to move them all"
 msgstr ""
 
-#: src/ui/Keys.tsx:60
+#: src/ui/Keys.tsx:72
 msgid "A stylus on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:60
+#: src/ui/Keys.tsx:72
 msgid "Draw a line everyone sees"
 msgstr ""
 
-#: src/ui/Keys.tsx:61
+#: src/ui/Keys.tsx:73
 msgid "Flick the unit card right"
 msgstr ""
 
-#: src/ui/Keys.tsx:61
+#: src/ui/Keys.tsx:73
 msgid "Put it away (tap a unit to bring it back)"
 msgstr ""
 
-#: src/ui/Keys.tsx:80
-#: src/ui/Keys.tsx:84
+#: src/ui/Keys.tsx:92
+#: src/ui/Keys.tsx:96
 msgid "Controls"
 msgstr ""
 
-#: src/ui/Keys.tsx:87
+#: src/ui/Keys.tsx:99
 #: src/ui/TeachRule.tsx:99
 msgid "Close (Esc)"
 msgstr ""
@@ -8695,7 +8766,7 @@ msgid "The game runs on the server, not in a browser, so nobody's tab has to sta
 msgstr ""
 
 #: src/ui/Lobby.tsx:641
-#: src/ui/Room.tsx:100
+#: src/ui/Room.tsx:114
 msgid "Room"
 msgstr ""
 
@@ -8792,7 +8863,7 @@ msgstr ""
 
 #: src/ui/Missions.tsx:135
 #: src/ui/Missions.tsx:150
-#: src/ui/Missions.tsx:275
+#: src/ui/Missions.tsx:285
 #: src/ui/ProcedurePanels.tsx:387
 #: src/ui/TopBar.tsx:326
 msgid "Pass"
@@ -8814,57 +8885,61 @@ msgstr ""
 msgid "Waiting for {side} to score it"
 msgstr ""
 
-#: src/ui/Missions.tsx:218
+#: src/ui/Missions.tsx:226
 msgid "Secret missions"
 msgstr ""
 
-#: src/ui/Missions.tsx:273
-msgid "Score {n} VP"
+#: src/ui/Missions.tsx:227
+msgid "a card to draw"
 msgstr ""
 
 #: src/ui/Missions.tsx:283
+msgid "Score {n} VP"
+msgstr ""
+
+#: src/ui/Missions.tsx:293
 msgid "passed"
 msgstr ""
 
-#: src/ui/Missions.tsx:284
+#: src/ui/Missions.tsx:294
 msgid "scored {n} VP"
 msgstr ""
 
-#: src/ui/Missions.tsx:286
+#: src/ui/Missions.tsx:296
 msgid "revealed, waiting for {player} to score it"
 msgstr ""
 
-#: src/ui/Missions.tsx:289
+#: src/ui/Missions.tsx:299
 msgid "not scored"
 msgstr ""
 
-#: src/ui/Missions.tsx:310
+#: src/ui/Missions.tsx:320
 msgid "Reveal to score"
 msgstr ""
 
-#: src/ui/Missions.tsx:354
+#: src/ui/Missions.tsx:364
 msgid "Result"
 msgstr ""
 
-#: src/ui/Missions.tsx:365
+#: src/ui/Missions.tsx:375
 msgid "You win"
 msgstr ""
 
-#: src/ui/Missions.tsx:366
+#: src/ui/Missions.tsx:376
 msgid "{side} wins"
 msgstr ""
 
-#: src/ui/Missions.tsx:369
+#: src/ui/Missions.tsx:379
 msgid "A draw"
 msgstr ""
 
-#: src/ui/Missions.tsx:383
+#: src/ui/Missions.tsx:393
 msgid "{n} score left unconfirmed"
 msgid_plural "{n} scores left unconfirmed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Missions.tsx:396
+#: src/ui/Missions.tsx:406
 msgid "Total"
 msgstr ""
 
@@ -9862,155 +9937,175 @@ msgstr ""
 msgid "Skirmishing"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:176
+#: src/ui/ReplayBar.tsx:180
 msgid "Review with notes"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:192
+#: src/ui/ReplayBar.tsx:198
+msgid "Look back over the game so far"
+msgstr ""
+
+#: src/ui/ReplayBar.tsx:212
 msgid "Replay: back a phase"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:196
+#: src/ui/ReplayBar.tsx:216
 msgid "Replay: forward a phase"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:220
+#: src/ui/ReplayBar.tsx:240
 msgid "R{round}"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:231
-#: src/ui/ReplayBar.tsx:244
-#: src/ui/ReplayBar.tsx:257
-#: src/ui/ReplayBar.tsx:283
+#: src/ui/ReplayBar.tsx:251
+#: src/ui/ReplayBar.tsx:264
+#: src/ui/ReplayBar.tsx:277
+#: src/ui/ReplayBar.tsx:305
 msgid "Replay: {what}"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:269
+#: src/ui/ReplayBar.tsx:289
 msgid "A note"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:270
+#: src/ui/ReplayBar.tsx:290
 msgid "Replay: note, {text}"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:294
+#: src/ui/ReplayBar.tsx:316
 msgid "Back to live"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:298
+#: src/ui/ReplayBar.tsx:320
 msgid "What if, Share, Review"
 msgstr ""
 
-#: src/ui/ReplayBar.tsx:314
+#: src/ui/ReplayBar.tsx:336
 msgid "Close replay"
 msgstr ""
 
-#: src/ui/Room.tsx:101
+#: src/ui/Room.tsx:104
+msgid "you"
+msgstr ""
+
+#: src/ui/Room.tsx:106
+msgid "connected"
+msgstr ""
+
+#: src/ui/Room.tsx:108
+msgid "waiting for someone to take this seat"
+msgstr ""
+
+#: src/ui/Room.tsx:109
+msgid "reconnecting…"
+msgstr ""
+
+#: src/ui/Room.tsx:115
 msgid "(this browser)"
 msgstr ""
 
-#: src/ui/Room.tsx:102
+#: src/ui/Room.tsx:116
 msgid "hosted by this site's server"
 msgstr ""
 
-#: src/ui/Room.tsx:124
+#: src/ui/Room.tsx:138
 msgid "A replay, watched together. {names} played it."
 msgstr ""
 
-#: src/ui/Room.tsx:136
+#: src/ui/Room.tsx:150
 msgid "host"
 msgstr ""
 
-#: src/ui/Room.tsx:137
+#: src/ui/Room.tsx:151
 msgid "ready"
 msgstr ""
 
-#: src/ui/Room.tsx:138
+#: src/ui/Room.tsx:152
 msgid "getting rules…"
 msgstr ""
 
-#: src/ui/Room.tsx:143
+#: src/ui/Room.tsx:157
 msgid "Playing without {rules}: their table may disagree"
 msgstr ""
 
-#: src/ui/Room.tsx:148
+#: src/ui/Room.tsx:162
 msgid "some of the game's rules"
 msgstr ""
 
-#: src/ui/Room.tsx:152
+#: src/ui/Room.tsx:166
 msgid "⚠ different rules"
 msgstr ""
 
-#: src/ui/Room.tsx:161
+#: src/ui/Room.tsx:175
 msgid "Joining {name}'s game…"
 msgstr ""
 
-#: src/ui/Room.tsx:162
+#: src/ui/Room.tsx:176
 msgid "Joining the host's game…"
 msgstr ""
 
-#: src/ui/Room.tsx:163
+#: src/ui/Room.tsx:177
 msgid "Looking for the game's host…"
 msgstr ""
 
-#: src/ui/Room.tsx:165
+#: src/ui/Room.tsx:179
 msgid "Back to the lobby"
 msgstr ""
 
-#: src/ui/Room.tsx:170
+#: src/ui/Room.tsx:184
 msgid "Waiting for an opponent to join…"
 msgstr ""
 
-#: src/ui/Room.tsx:174
+#: src/ui/Room.tsx:188
 msgid "Someone joining is getting the rules…"
 msgid_plural "{n} people joining are getting the rules…"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:184
+#: src/ui/Room.tsx:198
 msgid "{n} watching (you included)"
 msgid_plural "{n} watching (you included)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:218
+#: src/ui/Room.tsx:232
 msgid "{name}: {n} to place"
 msgid_plural "{name}: {n} to place"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:221
+#: src/ui/Room.tsx:235
 msgid "{name}: All placed"
 msgstr ""
 
-#: src/ui/Room.tsx:223
+#: src/ui/Room.tsx:237
 msgid "{n} to place"
 msgid_plural "{n} to place"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:224
+#: src/ui/Room.tsx:238
 msgid "All placed"
 msgstr ""
 
-#: src/ui/Room.tsx:226
+#: src/ui/Room.tsx:240
 msgid "Tell the other player you've finished deploying"
 msgstr ""
 
-#: src/ui/Room.tsx:234
+#: src/ui/Room.tsx:248
 #: src/ui/TopBar.tsx:498
 msgid "Ready"
 msgstr ""
 
-#: src/ui/Room.tsx:245
+#: src/ui/Room.tsx:259
 msgid "outside your zone"
 msgstr ""
 
-#: src/ui/Room.tsx:245
+#: src/ui/Room.tsx:259
 msgid "not placed yet"
 msgstr ""
 
-#: src/ui/Room.tsx:252
+#: src/ui/Room.tsx:266
 msgid "{n} unit in reserve"
 msgid_plural "{n} units in reserve"
 msgstr[0] ""
@@ -10018,22 +10113,6 @@ msgstr[1] ""
 
 #: src/ui/Room.tsx:45
 msgid "Still looking. The host may have closed their page, or the link is from an old game. If the host is there, your connection may be the problem:"
-msgstr ""
-
-#: src/ui/Room.tsx:90
-msgid "you"
-msgstr ""
-
-#: src/ui/Room.tsx:92
-msgid "connected"
-msgstr ""
-
-#: src/ui/Room.tsx:94
-msgid "waiting for someone to take this seat"
-msgstr ""
-
-#: src/ui/Room.tsx:95
-msgid "reconnecting…"
 msgstr ""
 
 #: src/ui/RoundCard.tsx:113
@@ -10528,56 +10607,71 @@ msgstr ""
 msgid "Hide it on this screen"
 msgstr ""
 
-#: src/ui/TalkPanel.tsx:103
-msgid "Send"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:11
-msgid "📍 Ping"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:12
-msgid "Click a spot or a unit to ping it (or Alt-click any time)"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:134
-msgid "pinged {unit}"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:135
-msgid "pinged a spot"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:14
-msgid "Drag on the table to draw an arrow"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:15
-msgid "Drag out from a centre to mark an area"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:54
-msgid "Clear: wipe your arrows and areas"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:58
-msgid "Chat"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:67
-msgid "React"
-msgstr ""
-
-#: src/ui/TalkPanel.tsx:78
+#: src/ui/TalkPanel.tsx:100
 msgid "Messages here aren't part of the game log."
 msgstr ""
 
-#: src/ui/TalkPanel.tsx:97
+#: src/ui/TalkPanel.tsx:119
 msgid "Say something…"
 msgstr ""
 
-#: src/ui/TalkPanel.tsx:98
+#: src/ui/TalkPanel.tsx:12
+#: src/ui/TalkPanel.tsx:51
+msgid "📍 Ping"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:120
 msgid "Chat message"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:125
+msgid "Send"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:13
+#: src/ui/TalkPanel.tsx:48
+msgid "Click a spot or a unit to ping it (or Alt-click any time)"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:15
+msgid "Drag on the table to draw an arrow"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:156
+msgid "pinged {unit}"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:157
+msgid "pinged a spot"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:16
+msgid "Drag out from a centre to mark an area"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:55
+msgid "✏ Draw ▾"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:56
+msgid "Draw arrows and areas on the table"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:73
+msgid "Clear: wipe your arrows and areas"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:74
+msgid "🧹 Clear my drawings"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:77
+#: src/ui/TalkPanel.tsx:83
+msgid "React"
+msgstr ""
+
+#: src/ui/TalkPanel.tsx:92
+msgid "Chat"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:105
@@ -11279,6 +11373,10 @@ msgstr ""
 msgid "Table ambience"
 msgstr ""
 
+#: src/ui/TopBar.tsx:575
+msgid "Fast dice"
+msgstr ""
+
 #: src/ui/TopBar.tsx:602
 msgid "Change {label}"
 msgstr ""
@@ -11595,7 +11693,7 @@ msgid "Waiting for {player} to pick."
 msgstr ""
 
 #: src/ui/WhatNow.tsx:127
-#: src/ui/WhatNow.tsx:238
+#: src/ui/WhatNow.tsx:239
 msgid "{side}'s turn · {phase}"
 msgstr ""
 
@@ -11649,59 +11747,63 @@ msgstr ""
 msgid "Click one of your units to see its buttons."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:218
+#: src/ui/WhatNow.tsx:219
 msgid "Nothing to do this phase."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:222
+#: src/ui/WhatNow.tsx:223
 msgid "A unit's go ends when it shoots or fights, or press End activation after a move; Hold on its card keeps it where it is. Pass when you have nothing left."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:225
+#: src/ui/WhatNow.tsx:226
 msgid "When a unit has acted, press End activation at the top; when you have nothing left, Pass."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:232
+#: src/ui/WhatNow.tsx:233
 msgid "Mission · {name}: {summary}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:238
+#: src/ui/WhatNow.tsx:239
 msgid "Your turn · {phase}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:255
+#: src/ui/WhatNow.tsx:257
 msgid "{unit} · {weapon} takes {faces}"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:260
+#: src/ui/WhatNow.tsx:262
 msgid "(placed: {n})"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:296
+#: src/ui/WhatNow.tsx:298
 msgid "{name} is playing {unit}…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:297
+#: src/ui/WhatNow.tsx:299
 msgid "{name} is taking its turn…"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:303
+#: src/ui/WhatNow.tsx:305
 msgid "A ring marks its unit and a line shows where it went."
 msgstr ""
 
-#: src/ui/WhatNow.tsx:347
+#: src/ui/WhatNow.tsx:367
 msgid "What can I do now?"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:386
+#: src/ui/WhatNow.tsx:385
+msgid "Nothing to do"
+msgstr ""
+
+#: src/ui/WhatNow.tsx:425
 msgid "Tap"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:386
+#: src/ui/WhatNow.tsx:425
 msgid "Press"
 msgstr ""
 
-#: src/ui/WhatNow.tsx:386
+#: src/ui/WhatNow.tsx:425
 msgid "for all the controls."
 msgstr ""
 
@@ -11768,7 +11870,7 @@ msgid "{phase}: every unit has fought"
 msgstr ""
 
 #: src/ui/WhatNow.tsx:89
-#: src/ui/WhatNow.tsx:226
+#: src/ui/WhatNow.tsx:227
 msgid "When you're done, press ▶ at the top for the next phase."
 msgstr ""
 

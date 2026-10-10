@@ -46,6 +46,18 @@ const fromTts = (): [string, string][] => [
   [t("Camera"), t("With TTS controls: right drag turns, WASD slides, left drag picks with a box")],
 ];
 
+/** Where the less used controls live, now that they're folded away (UX 83). */
+const where = (): [string, string][] => [
+  [t("View ▾"), t("Left panel: Reset view, Unit names, X-ray terrain, Follow action")],
+  [t("⋯ Game"), t("Left panel, top: Download replay, Copy invite link, Report a problem, Leave game")],
+  [t("Armies"), t("Left panel, in battle: add an army, the army shelf, photograph figures")],
+  [t("Game settings"), t("Left panel: Unlock terrain (in battle), the campaign book")],
+  ["🔊", t("Top bar: sound, voice and Fast dice")],
+  [t("✏ Draw ▾ · 😀"), t("Talk bar, online: arrows, areas and reactions")],
+  [t("⟲ Replay"), t("Bottom: look back over the game so far")],
+  [t("VP / CP"), t("Point at a score to change it with − and +")],
+];
+
 /** The same for fingers (#60): a tablet or phone gets these first. */
 const gestures = (): [string, string][] => [
   [t("Tap a unit"), t("Select it: its card shows what it can do")],
@@ -93,6 +105,19 @@ export function KeysSheet() {
         <table>
           <tbody>
             {(touch() ? [...gestures(), ...keys()] : keys()).map(([k, what]) => (
+              <tr key={k}>
+                <td>
+                  <kbd>{k}</kbd>
+                </td>
+                <td>{what}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <h3>{t("Where things are")}</h3>
+        <table className="where-things-are">
+          <tbody>
+            {where().map(([k, what]) => (
               <tr key={k}>
                 <td>
                   <kbd>{k}</kbd>

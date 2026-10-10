@@ -94,6 +94,18 @@
 .topbar .counter button {
   padding: 0 5px;
 }
+/* −/+ are corrections: they show on hover or focus (UX 83). Touch taps the counter open instead. */
+@media (pointer: fine) {
+  .topbar .counter button {
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .topbar .counter:hover button,
+  .topbar .counter:focus-within button,
+  .fixing-score .topbar .counter[data-label="VP"] button {
+    opacity: 1;
+  }
+}
 .topbar .phase {
   display: flex;
   flex-direction: column;
@@ -293,6 +305,13 @@ details p {
   width: min(720px, calc(100vw - 660px));
   min-width: 420px;
   box-sizing: border-box;
+}
+/* Live play: just a handle, the bar opens on hover or a click (UX 83). */
+.replaybar.tucked {
+  width: auto;
+  min-width: 0;
+  padding: 2px 4px;
+  left: 50%;
 }
 .replaybar .track {
   position: relative;
@@ -518,6 +537,8 @@ details p {
 .settings[open] {
   max-height: 260px;
   overflow-y: auto;
+  /* A full panel would otherwise squash it to nothing (it scrolls inside instead). */
+  flex-shrink: 0;
 }
 .terrain-legend {
   bottom: 96px;
@@ -576,4 +597,14 @@ details p {
   border-color: #f59e0b;
   /* A choice waiting on a player: above the table's name labels and the What now card (dogfood). */
   z-index: 20;
+}
+
+/* A PopMenu that opens rightwards from its button's left edge (UX 83). */
+.overflow .menu.menu-left {
+  left: 0;
+  right: auto;
+  min-width: 180px;
+}
+.pop-menu .menu button {
+  text-align: left;
 }

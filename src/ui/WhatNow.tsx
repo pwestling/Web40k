@@ -32,7 +32,7 @@ function whatNow(
   hotseat: boolean,
   /** A package game's code actions ready now, by unit (worked out in its sandbox). */
   ready: Record<string, string[]> = {},
-): { head: string; lines: string[]; units?: { id: string; text: string }[] } {
+): { head: string; lines: string[]; units?: { id: string; text: string }[]; empty?: boolean } {
   const raw = phaseName(game) ?? "";
   // Shown in this device's language (UX 277); the checks below read the English name.
   const phase = gameText(raw);
@@ -214,8 +214,9 @@ function whatNow(
         ? t("Tap one of your units to see its buttons.")
         : t("Click one of your units to see its buttons."),
     );
-  else if (!/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation && !ordering)
-    lines.push(t("Nothing to do this phase."));
+  const empty =
+    !can.size && !/move/i.test(raw) && !/charge/i.test(raw) && !outOfRange && !activation && !ordering;
+  if (empty) lines.push(t("Nothing to do this phase."));
   lines.push(
     activation
       ? plain
@@ -237,6 +238,7 @@ function whatNow(
   return {
     head: yours ? t("Your turn · {phase}", { phase }) : t("{side}'s turn · {phase}", { side: who, phase }),
     lines,
+    empty: empty && !mission?.summary,
   };
 }
 
@@ -305,6 +307,15 @@ function computerGo(
   };
 }
 
+/**
+ * Phases the player has already seen empty, per game: by phase name, the
+ * turn it was first seen in (PX: the full card shows that first time).
+ */
+const seenEmpty = new WeakMap<object, Map<string, string>>();
+
+/** The phase's ▶ in the top bar, pressed for the player (it keeps its own advisory checks). */
+const nextPhase = () => document.querySelector<HTMLButtonElement>(".topbar .next-phase")?.click();
+
 /** The coach has folded on this screen: it starts folded from then on. */
 const foldedOnce = { done: false };
 
@@ -340,16 +351,44 @@ export function WhatNow() {
   if (fold.key !== phaseKey) setFold({ key: phaseKey, at: events, open: false });
   // The stats sheet open at Battle over is what to look at: the card would cover its header (UX 429).
   const statsOpen = useStore((s) => s.stats ?? battleOver(game));
+  const initial = useStore((s) => s.record.initial);
+  // "What can I do now?" pressed in this phase: the whole card, even for an empty phase.
+  const [asked, setAsked] = useState<string | null>(null);
   if (spectator || scrub !== null || coaching || asking || (battleOver(game) && statsOpen)) return null;
   if (!open)
     return (
-      <button className="whatnow-toggle" onClick={() => useHelp.setState({ hint: true })}>
+      <button
+        className="whatnow-toggle"
+        onClick={() => {
+          setAsked(phaseKey);
+          useHelp.setState({ hint: true });
+        }}
+      >
         {t("What can I do now?")}
       </button>
     );
   // The computer's go (UX 347): say so, in one line, and nothing to press.
   const computer = computerGo(game);
-  const { head, lines, units } = computer ?? whatNow(game, me, hotseat, ready);
+  const { head, lines, units, empty } = computer
+    ? { ...computer, empty: false }
+    : whatNow(game, me, hotseat, ready);
+  // From round 3 a phase with nothing to do is one quiet line (PX): not the first time
+  // that phase is empty in the game, not with a reminder to read, not when asked for. Never skipped for them.
+  if (empty && !computer) {
+    const seen = seenEmpty.get(initial) ?? new Map<string, string>();
+    seenEmpty.set(initial, seen);
+    const raw = phaseName(game) ?? "";
+    if (!seen.has(raw)) seen.set(raw, phaseKey);
+    if (game.turn.round >= 3 && seen.get(raw) !== phaseKey && !phaseHint(game) && asked !== phaseKey)
+      return (
+        <div className="panel whatnow quiet" role="status">
+          <span className="muted">{t("Nothing to do")}</span> ·{" "}
+          <button className="primary pulse-once" title={t("Next phase")} onClick={nextPhase}>
+            ▶
+          </button>
+        </div>
+      );
+  }
   if (touch() && !computer && fold.key === phaseKey && (events > fold.at || foldedOnce.done) && !fold.open) {
     return (
       <button className="panel whatnow folded" onClick={() => setFold({ ...fold, open: true })}>

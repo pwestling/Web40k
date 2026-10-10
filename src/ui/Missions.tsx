@@ -213,9 +213,19 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
   const deck = mission.deck;
   const pendingCard = (k: string) => pending.find((x) => x.key === k);
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
+  // Folded to one line unless one of this device's players has a draw or a score due (UX 83).
+  const canDraw = (id: string) => {
+    const cards = secretsWithPrefix(game, id, "mission:");
+    return cards.filter(([, e]) => !e.revealed).length < (mission.hand ?? 1) && cards.length < deck.length;
+  };
+  const due = live && !over && players.some((p) => canDraw(p.id));
+  const toScore = players.some((p) => pending.some((x) => x.key.startsWith(`card:${p.id}:`)));
   return (
-    <details className="fold secret-objectives" open>
-      <summary>{t("Secret missions")}</summary>
+    <details className="fold secret-objectives" open={due || toScore}>
+      <summary>
+        {t("Secret missions")}
+        {due && <span className="muted small"> · {t("a card to draw")}</span>}
+      </summary>
       {seated.map((p) => {
         const cards = secretsWithPrefix(game, p.id, "mission:");
         const mine = players.some((m) => m.id === p.id);

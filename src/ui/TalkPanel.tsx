@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
 import { clearMine, MAX_CHAT, REACTIONS, say, useTableTalk, useTalk, type Said } from "../talk/talk";
 import { t } from "../i18n";
+import { PopMenu } from "./PopMenu";
 
 const TOOLS = () =>
   [
@@ -33,6 +34,7 @@ export function TalkPanel() {
     setText("");
   };
   const setOpen = (o: boolean) => useTalk.setState(o ? { open: true, unread: 0 } : { open: false });
+  const drawing = tool === "arrow" || tool === "area";
   const pick = (id: ReturnType<typeof TOOLS>[number]["id"]) =>
     useTalk.setState({ tool: tool === id ? null : id });
 
@@ -41,35 +43,55 @@ export function TalkPanel() {
       <ChatToasts chatOpen={open} />
       <div className={`panel talk${open ? "" : " collapsed"}`}>
         <div className="row wrap">
-          {TOOLS().map((x) => (
-            <button
-              key={x.id}
-              className={tool === x.id ? "on" : ""}
-              title={x.title}
-              onClick={() => pick(x.id)}
-            >
-              {x.label}
-            </button>
-          ))}
-          <button className="quiet" title={t("Clear: wipe your arrows and areas")} onClick={clearMine}>
-            🧹
+          <button
+            className={tool === "ping" ? "on" : ""}
+            title={t("Click a spot or a unit to ping it (or Alt-click any time)")}
+            onClick={() => pick("ping")}
+          >
+            {t("📍 Ping")}
           </button>
+          {/* Drawing and the reactions are one click further in (UX 83). */}
+          <PopMenu
+            label={drawing ? `${TOOLS().find((x) => x.id === tool)!.label} ▾` : t("✏ Draw ▾")}
+            title={t("Draw arrows and areas on the table")}
+            className={drawing ? "on" : ""}
+            side="left"
+          >
+            {TOOLS()
+              .filter((x) => x.id !== "ping")
+              .map((x) => (
+                <button
+                  key={x.id}
+                  role="menuitem"
+                  className={tool === x.id ? "on" : ""}
+                  title={x.title}
+                  onClick={() => pick(x.id)}
+                >
+                  {x.label}
+                </button>
+              ))}
+            <button role="menuitem" title={t("Clear: wipe your arrows and areas")} onClick={clearMine}>
+              {t("🧹 Clear my drawings")}
+            </button>
+          </PopMenu>
+          <PopMenu label="😀" title={t("React")} side="left">
+            <div className="row talk-reactions-row">
+              {REACTIONS.map((e) => (
+                <button
+                  key={e}
+                  className="quiet"
+                  title={t("React")}
+                  onClick={() => say({ kind: "react", emoji: e })}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </PopMenu>
           <VoiceButton />
           <button className="quiet talk-toggle" onClick={() => setOpen(!open)} title={t("Chat")}>
             💬{unread > 0 ? ` ${unread}` : ""}
           </button>
-        </div>
-        <div className="row talk-reactions-row">
-          {REACTIONS.map((e) => (
-            <button
-              key={e}
-              className="quiet"
-              title={t("React")}
-              onClick={() => say({ kind: "react", emoji: e })}
-            >
-              {e}
-            </button>
-          ))}
         </div>
         {open && (
           <>

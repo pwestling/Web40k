@@ -228,6 +228,7 @@ export function GameScreen({ started }: { started: boolean }) {
   useSpectatorDelay();
   useHotseatMark();
   const editing = useStore((s) => s.editing);
+  const hotseat = useStore((s) => s.mode === "hotseat");
   const holding = useHold((s) => s.held !== null);
   const SystemPanel = systemModule(useStore((s) => s.game.system)).panel;
   // The attack flow takes the unit card's place on the right, keeping the table clear.
@@ -303,7 +304,8 @@ export function GameScreen({ started }: { started: boolean }) {
           <NoteCaption />
           <DiceTray />
           {/* A replay page has no one to ping or react to (UX 344, PX share 7). */}
-          {!editing && !VIEWER && <TalkPanel />}
+          {/* Nobody to talk to in hotseat or against the computer (UX 83). */}
+          {!editing && !VIEWER && !hotseat && <TalkPanel />}
           {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
           <Moments />

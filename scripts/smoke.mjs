@@ -388,7 +388,8 @@ const checks = {
     await page.locator(".topbar").getByText("Round 1").waitFor();
     // A replay of this game, for the replay check.
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download replay" }).click();
+    await page.getByRole("button", { name: "⋯ Game" }).click();
+    await page.getByRole("menuitem", { name: "Download replay" }).click();
     await (await download).saveAs(join(files, "replay.json"));
     await context.close();
     return page.errors;
@@ -412,7 +413,8 @@ const checks = {
       await page.waitForTimeout(150);
     }
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download replay" }).click();
+    await page.getByRole("button", { name: "⋯ Game" }).click();
+    await page.getByRole("menuitem", { name: "Download replay" }).click();
     const path = join(files, "clip.json");
     await (await download).saveAs(path);
     await lobby(page);
@@ -690,7 +692,8 @@ const checks = {
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download replay" }).click();
+    await page.getByRole("button", { name: "⋯ Game" }).click();
+    await page.getByRole("menuitem", { name: "Download replay" }).click();
     const path = join(files, "solo.json");
     await (await download).saveAs(path);
     const events = eventsIn(JSON.parse(readFileSync(path, "utf8")));
@@ -1655,7 +1658,7 @@ const checks = {
     if (!existsSync(path)) throw new Error("no replay saved (the hotseat check makes it)");
     const { page, context } = await device();
     await lobby(page);
-    await page.locator('input[type="file"]').last().setInputFiles(path);
+    await page.locator("label.file", { hasText: "Open a replay file" }).locator("input").setInputFiles(path);
     await page.locator(".replaybar").waitFor();
     await context.close();
     return page.errors;
@@ -1666,6 +1669,8 @@ const checks = {
     await lobby(page);
     await page.locator("summary", { hasText: "More ways to play" }).click();
     await page.getByRole("button", { name: /hotseat/ }).click();
+    // Starting a campaign lives in Game settings until one is attached (UX 83).
+    await page.locator("details.settings > summary").click();
     await page.locator("details.campaign summary").click();
     await page.getByRole("button", { name: "New campaign book" }).click();
     await page.getByPlaceholder("Campaign name").fill("Smoke League");

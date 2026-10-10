@@ -51,8 +51,22 @@ function StillLooking() {
   );
 }
 
+/** Whether an online room still has a seat nobody has taken (the invite matters then). */
+export function useRoomWaiting(): boolean {
+  const { roomId, mode, net, session, game, record } = useStore();
+  if (!roomId || mode === "hotseat") return false;
+  const peers = net?.peers ?? [];
+  const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
+  return (
+    seated.length < 2 ||
+    seated.some((p) => !peers.includes(p.id) && p.id !== session?.selfId && untakenSeat(record, p.id))
+  );
+}
+
+export const copyInvite = () => void navigator.clipboard?.writeText(location.href);
+
 /**
- * The room: a big invite button, and who is here: each player (connected,
+ * The room: a big invite button while a seat is empty (then it moves to "⋯ Game"), and who is here: each player (connected,
  * you, or reconnecting), who is host, and how many are watching.
  */
 export function RoomCard() {
@@ -101,15 +115,17 @@ export function RoomCard() {
           {mode === "local" ? ` ${t("(this browser)")}` : ""}
           {server ? ` · ${t("hosted by this site's server")}` : ""}
         </span>
-        <button
-          className={waiting && !joining && !copied ? "primary" : copied ? "on" : ""}
-          onClick={() => {
-            void navigator.clipboard?.writeText(location.href);
-            setCopied(true);
-          }}
-        >
-          {copied ? t("Copied ✓") : t("Copy invite link")}
-        </button>
+        {(waiting || copied) && (
+          <button
+            className={waiting && !joining && !copied ? "primary" : copied ? "on" : ""}
+            onClick={() => {
+              copyInvite();
+              setCopied(true);
+            }}
+          >
+            {copied ? t("Copied ✓") : t("Copy invite link")}
+          </button>
+        )}
       </div>
       <RulesLine />
       {/* Open tables (#50): the host may put a waiting table on the public board. */}

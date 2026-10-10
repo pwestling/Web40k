@@ -335,7 +335,7 @@ export function TopBar() {
         )}
         {myTurn && !over && !mailGuest && !(view.alternating && !deploying) && (
           <button
-            className={view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}
+            className={`next-phase ${view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}`}
             title={
               notReady.length
                 ? t("Waiting for {names} to be ready", { names: formatList(notReady) })
