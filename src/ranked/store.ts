@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { create } from "zustand";
-import { tn } from "../i18n";
 import { board } from "../opentables/board";
 import type { PlayerKey } from "../core/ranked";
-import { ladder, ratingMove, type Rating, type RatingMove } from "./ratings";
+import { ladder, ladderRules, ladderSystem, ratingMove, type Rating, type RatingMove } from "./ratings";
+import { systemTitle } from "../ui/systemLabels";
+import { t, tn } from "../i18n";
 import { checkDeclined, checkSigned, type DeclinedResult, type SignedResult } from "./verify";
 
 /**
@@ -131,7 +132,15 @@ export function useRankedResults(): Record<string, SignedResult> {
   return useResults((s) => s.results);
 }
 
-/** One system's ladder, from every result this browser has. */
+/** A ladder's name: its game, and the house rules it plays with if any ("Rift Lanterns with Battle Scars 1.0.0"). */
+export function ladderTitle(results: SignedResult[], key: string): string {
+  const game = systemTitle(ladderSystem(key));
+  const rules = ladderRules(results, key);
+  if (!rules.length) return game;
+  return t("{game} with {rules}", { game, rules: rules.map((p) => `${p.name} ${p.version}`).join(", ") });
+}
+
+/** One ladder's ratings (ratings.ts ladderKey), from every result this browser has. */
 export function useLadder(system: string): Rating[] {
   const results = useRankedResults();
   return useMemo(() => ladder(Object.values(results), system), [results, system]);

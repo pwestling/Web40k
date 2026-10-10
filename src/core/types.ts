@@ -721,6 +721,8 @@ export interface PackageRef {
   author?: string;
   hash: string;
   bytes: number;
+  /** "system": the package is a whole game, not rules added to one (ranked ladders tell them apart). */
+  kind?: "system";
 }
 
 export interface GamePackages {

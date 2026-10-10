@@ -2,6 +2,12 @@
 
 What changed in each release of Open Battle. The in-app **What's new** on the start page shows the highlights; this file has the whole list.
 
+## Unreleased
+
+- **Ladders keep house rules apart.** A ranked result now records the rules it was played under (the app build and every rules package, by hash), and both players sign them. A game with house rules counts on a ladder of its own, named after the packages; plain games keep the plain ladder. See [docs/compatibility.md](docs/compatibility.md).
+- **Different versions at one table.** Players' apps now say which version they run when they meet, and a banner names both when they differ.
+- **For contributors.** [GOVERNANCE.md](GOVERNANCE.md), a code of conduct, a security policy, a pull request template, [docs/compatibility.md](docs/compatibility.md), and [CLAUDE.md](CLAUDE.md) with Claude Code skills for writing packages and modules, checking for publisher IP and verifying a change.
+
 ## 0.1.0 (2026-10-10)
 
 The first release: a complete tabletop for miniatures wargames in the browser, peer to peer, with four game systems and two games of our own built in.

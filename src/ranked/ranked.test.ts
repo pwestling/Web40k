@@ -8,10 +8,21 @@ import {
   type GameState,
   type Intent,
 } from "../core";
-import { canonResult, rankedResultOf, type RankedResult } from "../core/ranked";
+import { canonResult, rankedResultOf, type RankedPackage, type RankedResult } from "../core/ranked";
 import { sign, type Identity } from "../mail/keys";
 import { keyOf } from "../player/card";
-import { change, counted, expected, K, ladder, PAIR_CAP, ratingMove, START } from "./ratings";
+import {
+  change,
+  counted,
+  expected,
+  K,
+  ladder,
+  ladderKey,
+  PAIR_CAP,
+  ratingMove,
+  rankedSystems,
+  START,
+} from "./ratings";
 import { signRate } from "./store";
 import {
   checkDeclined,
@@ -263,5 +274,77 @@ describe("a ranked game in the log (#65)", () => {
     expect(s.ranked?.whys).toEqual({ b: "agreed" });
     expect(s.ranked?.declines).toEqual({ b: "d".repeat(88) });
     expect(s.ranked?.fixes).toBe(1);
+  });
+});
+
+describe("ladders by the rules played (docs/compatibility.md)", () => {
+  const A = "a".repeat(43) + "." + "a".repeat(43);
+  const B = "b".repeat(43) + "." + "b".repeat(43);
+  const game = {
+    id: "open-battle.rift-lanterns",
+    name: "Rift Lanterns",
+    version: "1.3.2",
+    hash: "1".repeat(64),
+    game: true as const,
+  };
+  const scars = { id: "you.scars", name: "Scars", version: "1.0.0", hash: "2".repeat(64) };
+  const wind = { id: "me.wind", name: "Wind", version: "0.1.0", hash: "3".repeat(64) };
+  const withRules = (r: SignedResult, packages: RankedPackage[]) => ({
+    ...r,
+    result: { ...r.result, rules: { app: "0.1.0+abc", packages } },
+  });
+
+  it("signs the rules only when a result has them, so older results still verify", () => {
+    const plain = result(A, B, 3, 1);
+    expect(canonResult(plain)).not.toContain("rules");
+    const ruled = { ...plain, rules: { packages: [scars, game] } };
+    const canon = JSON.parse(canonResult(ruled)!);
+    // Sorted by id, whatever order they came in.
+    expect(canon.rules.packages.map((p: { id: string }) => p.id)).toEqual([
+      "open-battle.rift-lanterns",
+      "you.scars",
+    ]);
+    expect(canonResult({ ...plain, rules: { packages: [{ ...scars, hash: "nope" }] } })).toBeNull();
+    expect(canonResult({ ...plain, rules: { packages: [{ ...scars, game: "yes" }] } })).toBeNull();
+  });
+
+  it("records the packages the game ran, the game's own marked", () => {
+    let s = createInitialState();
+    s = {
+      ...s,
+      players: {
+        a: { id: "a", name: "Ana", color: "#00f", seat: 0 },
+        b: { id: "b", name: "Ben", color: "#f00", seat: 1 },
+      },
+    } as GameState;
+    s = { ...s, ranked: { keys: { a: A, b: B }, sigs: {} } };
+    s = {
+      ...s,
+      packages: {
+        app: "0.1.0+abc",
+        system: { id: "rift-lanterns", builtIn: false },
+        packages: [
+          { ...game, bytes: 1, game: undefined },
+          { ...scars, bytes: 1 },
+        ],
+      },
+    } as GameState;
+    const r = rankedResultOf(s, HASH, 5)!;
+    expect(r.rules).toEqual({ app: "0.1.0+abc", packages: [game, scars] });
+    expect(ladderKey(r)).toBe(`${r.system}+${scars.hash}`);
+  });
+
+  it("keeps house rules on their own ladder, but the game's own package doesn't split it", () => {
+    const plain = counts(A, B, 10, 2, 1, 1);
+    const gameOnly = withRules(counts(A, B, 10, 2, 2, 2), [game]);
+    const house = withRules(counts(A, B, 10, 2, 3, 3), [game, scars, wind]);
+    const sameHouse = withRules(counts(A, B, 10, 2, 4, 4), [wind, scars]);
+    expect(ladderKey(gameOnly.result)).toBe("rift-lanterns");
+    expect(ladderKey(house.result)).toBe(ladderKey(sameHouse.result));
+    expect(ladderKey(house.result)).toBe(`rift-lanterns+${"2".repeat(64)}+${"3".repeat(64)}`);
+    const all = [plain, gameOnly, house, sameHouse];
+    expect(ladder(all, "rift-lanterns")[0]!.games).toBe(2);
+    expect(ladder(all, ladderKey(house.result))[0]!.games).toBe(2);
+    expect(rankedSystems(all)).toHaveLength(2);
   });
 });

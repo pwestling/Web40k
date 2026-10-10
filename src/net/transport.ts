@@ -8,6 +8,8 @@ export interface Check {
 
 /** Wire protocol. The host is authoritative: clients send intents, the host
  * broadcasts logged events, and late joiners get the whole record. */
+import type { BuildInfo } from "../protocol";
+
 export type NetMessage =
   /**
    * A non-host greeting a peer: what log it already holds (`seq`, and `tail`
@@ -20,6 +22,8 @@ export type NetMessage =
       role?: "host" | "client" | "spectator";
       /** A spectator's delay (ms): the host holds events back that long before sending them (UX/PX: Live now). */
       delay?: number;
+      /** The sender's protocol and build (src/protocol.ts); older builds don't send it. */
+      v?: BuildInfo;
     }
   /** The host to a spectator: it sends this one events `ms` after they happen. */
   | { t: "delay"; ms: number }
@@ -30,7 +34,7 @@ export type NetMessage =
   | { t: "events"; events: LoggedEvent[]; check?: Check }
   | { t: "record"; record: GameRecord }
   /** "I am the host": sent to each peer met, and when taking over a room. */
-  | { t: "host"; seq: number; resumed?: boolean }
+  | { t: "host"; seq: number; resumed?: boolean; v?: BuildInfo }
   /** A peer's log length and role, shared while choosing a new host. */
   /** `ready`: it holds every rules package the game names, so it could become host. */
   | { t: "sync"; seq: number; role: "host" | "client" | "spectator"; ready?: boolean }

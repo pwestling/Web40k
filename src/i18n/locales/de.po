@@ -1157,7 +1157,7 @@ msgstr "Turnier"
 #: src/campaign/CampaignUI.tsx:571
 #: src/campaign/CampaignUI.tsx:738
 #: src/player/PlayerCard.tsx:180
-#: src/player/PlayerCard.tsx:327
+#: src/player/PlayerCard.tsx:328
 #, fuzzy
 msgid "Games"
 msgstr "Spiele"
@@ -1198,7 +1198,7 @@ msgstr "Noch niemand hat für dieses Buch gespielt."
 #: src/campaign/CampaignUI.tsx:609
 #: src/campaign/EventTab.tsx:268
 #: src/events/EventsUI.tsx:388
-#: src/player/PlayerCard.tsx:325
+#: src/player/PlayerCard.tsx:326
 #, fuzzy
 msgid "Player"
 msgstr "Spieler"
@@ -1818,7 +1818,7 @@ msgstr "Kopiert ✓"
 
 #: src/companion/CompanionScreen.tsx:137
 #: src/mail/MailBar.tsx:236
-#: src/ui/NetBanner.tsx:71
+#: src/ui/NetBanner.tsx:75
 #: src/ui/Room.tsx:107
 #, fuzzy
 msgid "Copy invite link"
@@ -1938,7 +1938,7 @@ msgstr "Protokoll"
 #: src/companion/CompanionScreen.tsx:95
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
-#: src/player/PlayerCard.tsx:310
+#: src/player/PlayerCard.tsx:311
 #: src/tts/TtsWholeTable.tsx:145
 #: src/ui/Lobby.tsx:571
 #, fuzzy
@@ -2899,7 +2899,7 @@ msgid "You're in once {name} confirms it (their device does, when it's on). Your
 msgstr "Du bist dabei, sobald {name} es bestätigt (das macht das Gerät, wenn es an ist). Dann ist deine Armee festgelegt."
 
 #: src/events/EventsUI.tsx:591
-#: src/ui/Packages.tsx:754
+#: src/ui/Packages.tsx:755
 #, fuzzy
 msgid "Withdraw"
 msgstr "Zurückziehen"
@@ -4125,7 +4125,7 @@ msgstr "Offene Tische"
 #: src/opentables/OpenTables.tsx:205
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
-#: src/player/PlayerCard.tsx:302
+#: src/player/PlayerCard.tsx:303
 #, fuzzy
 msgid "Ladder"
 msgstr "Rangliste"
@@ -4200,7 +4200,7 @@ msgstr[0] "Dieser Tisch ist weg: Der Gastgeber ist gegangen. {n} anderer ist off
 msgstr[1] "Dieser Tisch ist weg: Der Gastgeber ist gegangen. {n} andere sind offen."
 
 #: src/opentables/OpenTables.tsx:275
-#: src/ui/Packages.tsx:754
+#: src/ui/Packages.tsx:755
 #, fuzzy
 msgid "OK"
 msgstr "OK"
@@ -4794,42 +4794,42 @@ msgstr "Speichern und ersetzen"
 msgid "Replace"
 msgstr "Ersetzen"
 
-#: src/player/PlayerCard.tsx:269
+#: src/player/PlayerCard.tsx:270
 #, fuzzy
 msgid "{rating} · #{place} of {of} · {n} game ({record})"
 msgid_plural "{rating} · #{place} of {of} · {n} games ({record})"
 msgstr[0] "{rating} · Platz {place} von {of} · {n} Spiel ({record})"
 msgstr[1] "{rating} · Platz {place} von {of} · {n} Spiele ({record})"
 
-#: src/player/PlayerCard.tsx:304
+#: src/player/PlayerCard.tsx:305
 #, fuzzy
 msgid "Worked out on this device from ranked results both players signed. Each pair counts at most three games a day."
 msgstr "Auf diesem Gerät aus gewerteten Ergebnissen berechnet, die beide Spieler unterschrieben haben. Pro Paar zählen höchstens drei Spiele am Tag."
 
-#: src/player/PlayerCard.tsx:326
+#: src/player/PlayerCard.tsx:327
 #, fuzzy
 msgid "Rating"
 msgstr "Wertung"
 
-#: src/player/PlayerCard.tsx:328
+#: src/player/PlayerCard.tsx:329
 #, fuzzy
 msgid "W–L–D"
 msgstr "S–N–U"
 
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
-#: src/player/PlayerCard.tsx:302
+#: src/player/PlayerCard.tsx:303
 #: src/ui/Lobby.tsx:763
 #, fuzzy
 msgid "Your player card"
 msgstr "Deine Spielerkarte"
 
-#: src/player/PlayerCard.tsx:359
+#: src/player/PlayerCard.tsx:360
 #, fuzzy
 msgid "No ranked results yet."
 msgstr "Noch keine gewerteten Ergebnisse."
 
-#: src/player/PlayerCard.tsx:362
+#: src/player/PlayerCard.tsx:363
 #, fuzzy
 msgid "? still finding their level: fewer than five games so far."
 msgstr "? Niveau noch offen: bisher weniger als fünf Spiele."
@@ -5185,7 +5185,11 @@ msgstr "Das Ergebnis passt nicht zum Spiel an diesem Tisch."
 msgid "The result doesn't match the score on the table."
 msgstr "Das Ergebnis passt nicht zum Punktestand am Tisch."
 
-#: src/ranked/store.ts:182
+#: src/ranked/store.ts:140
+msgid "{game} with {rules}"
+msgstr ""
+
+#: src/ranked/store.ts:191
 #, fuzzy
 msgid "signs {signed} of {n} result"
 msgid_plural "signs {signed} of {n} results"
@@ -5821,7 +5825,7 @@ msgid "The review stopped: {why}"
 msgstr "Die Analyse hat angehalten: {why}"
 
 #: src/review/ReviewPanel.tsx:91
-#: src/ui/Packages.tsx:588
+#: src/ui/Packages.tsx:589
 #, fuzzy
 msgid "Try again"
 msgstr "Erneut versuchen"
@@ -6766,7 +6770,7 @@ msgstr "{name} aus deiner Sammlung entfernen?"
 
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:640
-#: src/ui/Packages.tsx:234
+#: src/ui/Packages.tsx:235
 #: src/ui/SystemPanels.tsx:439
 #: src/ui/TeachRule.tsx:543
 #: src/ui/TeachRule.tsx:544
@@ -7175,9 +7179,9 @@ msgid "One figure for the whole unit, or one per kind of model. Everyone in the 
 msgstr "Eine Figur für die ganze Einheit oder eine pro Modellart. Alle im Spiel sehen sie."
 
 #: src/ui/ArmyGuide.tsx:94
-#: src/ui/Packages.tsx:176
-#: src/ui/Packages.tsx:320
-#: src/ui/Packages.tsx:538
+#: src/ui/Packages.tsx:177
+#: src/ui/Packages.tsx:321
+#: src/ui/Packages.tsx:539
 #, fuzzy
 msgid "Rules packages"
 msgstr "Regelpakete"
@@ -8613,6 +8617,7 @@ msgid "Finish"
 msgstr "Beenden"
 
 #: src/ui/Coach.tsx:166
+#: src/ui/NetBanner.tsx:139
 #, fuzzy
 msgid "Got it"
 msgstr "Verstanden"
@@ -10045,48 +10050,66 @@ msgstr "Gesamt"
 msgid "None (score by hand)"
 msgstr "Keine (von Hand werten)"
 
-#: src/ui/NetBanner.tsx:36
+#: src/ui/NetBanner.tsx:108
+#: src/ui/eventText.ts:79
+#: src/ui/gameLog.ts:172
+#: src/ui/gameLog.ts:301
+#: src/ui/gameLog.ts:311
+#: src/ui/highlights.ts:54
+#, fuzzy
+msgid "Someone"
+msgstr "Jemand"
+
+#: src/ui/NetBanner.tsx:117
+msgid "{name} runs a version of Open Battle that can't play with yours ({theirs}; you have {mine}). Both of you should reload."
+msgstr ""
+
+#: src/ui/NetBanner.tsx:125
+msgid "{name} runs another version of Open Battle ({theirs}; you have {mine}). Rules may differ: reload to match."
+msgstr ""
+
+#: src/ui/NetBanner.tsx:39
 #, fuzzy
 msgid "Host disconnected: waiting for it, or for a new host…"
 msgstr "Host getrennt: Warte auf ihn oder auf einen neuen Host…"
 
-#: src/ui/NetBanner.tsx:43
+#: src/ui/NetBanner.tsx:46
 #, fuzzy
 msgid "Your table doesn't match the host's (since \"{since}\")."
 msgstr "Dein Tisch stimmt nicht mit dem des Hosts überein (seit „{since}“)."
 
-#: src/ui/NetBanner.tsx:44
+#: src/ui/NetBanner.tsx:47
 #, fuzzy
 msgid "Your table doesn't match the host's."
 msgstr "Dein Tisch stimmt nicht mit dem des Hosts überein."
 
-#: src/ui/NetBanner.tsx:46
+#: src/ui/NetBanner.tsx:49
 #, fuzzy
 msgid "Your table doesn't match {name}'s (since \"{since}\")."
 msgstr "Dein Tisch stimmt nicht mit dem von {name} überein (seit „{since}“)."
 
-#: src/ui/NetBanner.tsx:47
+#: src/ui/NetBanner.tsx:50
 #, fuzzy
 msgid "Your table doesn't match {name}'s."
 msgstr "Dein Tisch stimmt nicht mit dem von {name} überein."
 
-#: src/ui/NetBanner.tsx:49
+#: src/ui/NetBanner.tsx:52
 #, fuzzy
 msgid "Resync from host"
 msgstr "Vom Host neu synchronisieren"
 
-#: src/ui/NetBanner.tsx:52
+#: src/ui/NetBanner.tsx:55
 #: src/ui/SavedNote.tsx:82
 #, fuzzy
 msgid "Report a problem"
 msgstr "Problem melden"
 
-#: src/ui/NetBanner.tsx:67
+#: src/ui/NetBanner.tsx:71
 #, fuzzy
 msgid "Waiting for someone to take {names} ·"
 msgstr "Warte, dass jemand {names} übernimmt ·"
 
-#: src/ui/NetBanner.tsx:77
+#: src/ui/NetBanner.tsx:81
 #, fuzzy
 msgid "{names} reconnecting…"
 msgstr "{names} verbindet sich neu…"
@@ -10157,7 +10180,7 @@ msgid "Self-host guide"
 msgstr "Anleitung zum Selbsthosten"
 
 #: src/ui/NetCheck.tsx:191
-#: src/ui/Packages.tsx:223
+#: src/ui/Packages.tsx:224
 #, fuzzy
 msgid "Details"
 msgstr "Details"
@@ -10207,123 +10230,123 @@ msgstr "funktioniert"
 msgid "no answer"
 msgstr "keine Antwort"
 
-#: src/ui/Packages.tsx:134
+#: src/ui/Packages.tsx:135
 #, fuzzy
 msgid "Load a rules package"
 msgstr "Regelpaket laden"
 
-#: src/ui/Packages.tsx:138
-#: src/ui/Packages.tsx:261
+#: src/ui/Packages.tsx:139
+#: src/ui/Packages.tsx:262
 #, fuzzy
 msgid "Adds: {what}"
 msgstr "Fügt hinzu: {what}"
 
-#: src/ui/Packages.tsx:149
+#: src/ui/Packages.tsx:150
 #, fuzzy
 msgid "Load it"
 msgstr "Laden"
 
-#: src/ui/Packages.tsx:182
+#: src/ui/Packages.tsx:183
 #, fuzzy
 msgid "Only this game's"
 msgstr "Nur die dieses Spiels"
 
-#: src/ui/Packages.tsx:182
+#: src/ui/Packages.tsx:183
 #, fuzzy
 msgid "Show all ({n} more)"
 msgstr "Alle anzeigen ({n} weitere)"
-
-#: src/ui/Packages.tsx:189
-#, fuzzy
-msgid "built in · app {build}"
-msgstr "integriert · App {build}"
 
 #: src/ui/Packages.tsx:19
 #, fuzzy
 msgid "Rules packages contain code. It runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page."
 msgstr "Regelpakete enthalten Code. Er läuft in einer Sandbox: Er kann das Spiel lesen und Ergebnisse vorschlagen, aber weder das Internet noch deine Dateien noch diese Seite erreichen."
 
-#: src/ui/Packages.tsx:209
+#: src/ui/Packages.tsx:190
+#, fuzzy
+msgid "built in · app {build}"
+msgstr "integriert · App {build}"
+
+#: src/ui/Packages.tsx:210
 #, fuzzy
 msgid "(yours)"
 msgstr "(deins)"
 
-#: src/ui/Packages.tsx:211
+#: src/ui/Packages.tsx:212
 #, fuzzy
 msgid "lessons · in Learn to play"
 msgstr "Lektionen · in Spielen lernen"
 
-#: src/ui/Packages.tsx:213
+#: src/ui/Packages.tsx:214
 #, fuzzy
 msgid "trusted"
 msgstr "vertraut"
 
-#: src/ui/Packages.tsx:216
+#: src/ui/Packages.tsx:217
 #, fuzzy
 msgid "Trust…"
 msgstr "Vertrauen…"
 
-#: src/ui/Packages.tsx:221
+#: src/ui/Packages.tsx:222
 #, fuzzy
 msgid "More for {package}"
 msgstr "Mehr für {package}"
 
-#: src/ui/Packages.tsx:225
+#: src/ui/Packages.tsx:226
 #, fuzzy
 msgid "Stop trusting"
 msgstr "Nicht mehr vertrauen"
 
-#: src/ui/Packages.tsx:230
+#: src/ui/Packages.tsx:231
 #, fuzzy
 msgid "Remove {package}?"
 msgstr "{package} entfernen?"
 
-#: src/ui/Packages.tsx:245
+#: src/ui/Packages.tsx:246
 #, fuzzy
 msgid "Copy"
 msgstr "Kopieren"
 
-#: src/ui/Packages.tsx:249
+#: src/ui/Packages.tsx:250
 #, fuzzy
 msgid "{kind} for {games} · API {api} · {size}"
 msgstr "{kind} für {games} · API {api} · {size}"
 
-#: src/ui/Packages.tsx:252
+#: src/ui/Packages.tsx:253
 #, fuzzy
 msgid "Game system"
 msgstr "Spielsystem"
 
-#: src/ui/Packages.tsx:254
+#: src/ui/Packages.tsx:255
 #, fuzzy
 msgid "Lessons"
 msgstr "Lektionen"
 
-#: src/ui/Packages.tsx:255
+#: src/ui/Packages.tsx:256
 #, fuzzy
 msgid "Extension"
 msgstr "Erweiterung"
 
-#: src/ui/Packages.tsx:256
+#: src/ui/Packages.tsx:257
 #, fuzzy
 msgid "any game"
 msgstr "jedes Spiel"
 
-#: src/ui/Packages.tsx:262
+#: src/ui/Packages.tsx:263
 #, fuzzy
 msgid "Changes: {what}"
 msgstr "Ändert: {what}"
 
-#: src/ui/Packages.tsx:311
+#: src/ui/Packages.tsx:312
 #, fuzzy
 msgid "Rules: {game} (built in), {packages}."
 msgstr "Regeln: {game} (integriert), {packages}."
 
-#: src/ui/Packages.tsx:315
+#: src/ui/Packages.tsx:316
 #, fuzzy
 msgid "Rules: {game} (built in)."
 msgstr "Regeln: {game} (integriert)."
 
-#: src/ui/Packages.tsx:322
+#: src/ui/Packages.tsx:323
 #, fuzzy
 msgid "{game} (built in, always on)"
 msgstr "{game} (integriert, immer aktiv)"
@@ -10333,217 +10356,217 @@ msgstr "{game} (integriert, immer aktiv)"
 msgid "{package} · by {author}"
 msgstr "{package} · von {author}"
 
-#: src/ui/Packages.tsx:346
+#: src/ui/Packages.tsx:347
 #, fuzzy
 msgid "Show all"
 msgstr "Alle anzeigen"
 
-#: src/ui/Packages.tsx:364
+#: src/ui/Packages.tsx:365
 #, fuzzy
 msgid "Change the rules"
 msgstr "Regeln ändern"
 
-#: src/ui/Packages.tsx:364
+#: src/ui/Packages.tsx:365
 #, fuzzy
 msgid "Ask to change the rules"
 msgstr "Regeländerung anfragen"
 
-#: src/ui/Packages.tsx:385
+#: src/ui/Packages.tsx:386
 #, fuzzy
 msgid "{package}, not loaded yet"
 msgstr "{package}, noch nicht geladen"
 
-#: src/ui/Packages.tsx:389
+#: src/ui/Packages.tsx:390
 #, fuzzy
 msgid "Rules: {game}"
 msgstr "Regeln: {game}"
 
-#: src/ui/Packages.tsx:393
+#: src/ui/Packages.tsx:394
 #, fuzzy
 msgid "Not on this device"
 msgstr "Nicht auf diesem Gerät"
 
-#: src/ui/Packages.tsx:504
-#: src/ui/Packages.tsx:504
-#: src/ui/Packages.tsx:748
+#: src/ui/Packages.tsx:505
+#: src/ui/Packages.tsx:505
+#: src/ui/Packages.tsx:749
 #, fuzzy
 msgid "the host"
 msgstr "der Host"
 
-#: src/ui/Packages.tsx:540
+#: src/ui/Packages.tsx:541
 #, fuzzy
 msgid "This replay used rules that aren't on this device"
 msgstr "Diese Wiederholung nutzte Regeln, die nicht auf diesem Gerät sind"
 
-#: src/ui/Packages.tsx:542
+#: src/ui/Packages.tsx:543
 #, fuzzy
 msgid "This replay brought its rules with it"
 msgstr "Diese Wiederholung hat ihre Regeln mitgebracht"
 
-#: src/ui/Packages.tsx:544
+#: src/ui/Packages.tsx:545
 #, fuzzy
 msgid "This game uses rules you don't have"
 msgstr "Dieses Spiel nutzt Regeln, die du nicht hast"
 
-#: src/ui/Packages.tsx:546
+#: src/ui/Packages.tsx:547
 #, fuzzy
 msgid "You have a different version of a package this game uses"
 msgstr "Du hast eine andere Version eines Pakets, das dieses Spiel nutzt"
 
-#: src/ui/Packages.tsx:548
+#: src/ui/Packages.tsx:549
 #, fuzzy
 msgid "New rules packages arrived"
 msgstr "Neue Regelpakete eingetroffen"
 
-#: src/ui/Packages.tsx:550
+#: src/ui/Packages.tsx:551
 #, fuzzy
 msgid "Rules packages ready"
 msgstr "Regelpakete bereit"
 
-#: src/ui/Packages.tsx:561
+#: src/ui/Packages.tsx:562
 #, fuzzy
 msgid "Game: {package}"
 msgstr "Spiel: {package}"
 
-#: src/ui/Packages.tsx:564
+#: src/ui/Packages.tsx:565
 #, fuzzy
 msgid "Yours: {package}"
 msgstr "Deins: {package}"
 
-#: src/ui/Packages.tsx:574
+#: src/ui/Packages.tsx:575
 #, fuzzy
 msgid "Receiving"
 msgstr "Empfange"
 
-#: src/ui/Packages.tsx:576
+#: src/ui/Packages.tsx:577
 #, fuzzy
 msgid "Receiving from {name}… {percent}%"
 msgstr "Empfange von {name}… {percent} %"
 
-#: src/ui/Packages.tsx:583
+#: src/ui/Packages.tsx:584
 #, fuzzy
 msgid "That didn't match what the game expects."
 msgstr "Das passte nicht zu dem, was das Spiel erwartet."
 
-#: src/ui/Packages.tsx:590
+#: src/ui/Packages.tsx:591
 #, fuzzy
 msgid "Use the game's version"
 msgstr "Version des Spiels verwenden"
 
-#: src/ui/Packages.tsx:591
+#: src/ui/Packages.tsx:592
 #, fuzzy
 msgid "Get it from {name}"
 msgstr "Von {name} holen"
 
-#: src/ui/Packages.tsx:596
+#: src/ui/Packages.tsx:597
 #, fuzzy
 msgid "Too big to send ({size}): load it from a file"
 msgstr "Zu groß zum Senden ({size}): Lade es aus einer Datei"
 
-#: src/ui/Packages.tsx:600
+#: src/ui/Packages.tsx:601
 #, fuzzy
 msgid "Load from file…"
 msgstr "Aus Datei laden…"
 
-#: src/ui/Packages.tsx:606
+#: src/ui/Packages.tsx:607
 #, fuzzy
 msgid "Join with mine anyway"
 msgstr "Trotzdem mit meinem beitreten"
 
-#: src/ui/Packages.tsx:618
+#: src/ui/Packages.tsx:619
 #, fuzzy
 msgid "Trust packages {name} sends for this game"
 msgstr "Paketen vertrauen, die {name} für dieses Spiel sendet"
 
-#: src/ui/Packages.tsx:626
+#: src/ui/Packages.tsx:627
 #, fuzzy
 msgid "needs your OK to run."
 msgstr "braucht dein OK, um zu laufen."
 
-#: src/ui/Packages.tsx:629
+#: src/ui/Packages.tsx:630
 #, fuzzy
 msgid "Review…"
 msgstr "Prüfen…"
 
-#: src/ui/Packages.tsx:635
+#: src/ui/Packages.tsx:636
 #, fuzzy
 msgid "{package}: Checked ✓"
 msgstr "{package}: Geprüft ✓"
 
-#: src/ui/Packages.tsx:641
-#: src/ui/Packages.tsx:644
+#: src/ui/Packages.tsx:642
+#: src/ui/Packages.tsx:645
 #, fuzzy
 msgid "Watch without it"
 msgstr "Ohne es zuschauen"
 
-#: src/ui/Packages.tsx:644
+#: src/ui/Packages.tsx:645
 #, fuzzy
 msgid "Watch instead"
 msgstr "Stattdessen zuschauen"
 
-#: src/ui/Packages.tsx:651
+#: src/ui/Packages.tsx:652
 #, fuzzy
 msgid "Without it, moves, dice and results still play; rule hints that need the package are off."
 msgstr "Ohne es laufen Bewegungen, Würfel und Ergebnisse weiter; Regelhinweise, die das Paket brauchen, sind aus."
 
-#: src/ui/Packages.tsx:680
+#: src/ui/Packages.tsx:681
 #: src/ui/ScriptPanel.tsx:39
 #: src/ui/eventText.ts:120
 #, fuzzy
 msgid "A player"
 msgstr "Ein Spieler"
 
-#: src/ui/Packages.tsx:705
+#: src/ui/Packages.tsx:706
 #, fuzzy
 msgid "Rules change"
 msgstr "Regeländerung"
 
-#: src/ui/Packages.tsx:706
+#: src/ui/Packages.tsx:707
 #, fuzzy
 msgid "{name} wants to change the rules for this game"
 msgstr "{name} möchte die Regeln für dieses Spiel ändern"
 
-#: src/ui/Packages.tsx:707
+#: src/ui/Packages.tsx:708
 #, fuzzy
 msgid "Same packages"
 msgstr "Gleiche Pakete"
 
-#: src/ui/Packages.tsx:711
+#: src/ui/Packages.tsx:712
 #, fuzzy
 msgid "Accepting lets {packages} run here."
 msgstr "Wenn du annimmst, laufen {packages} hier."
 
-#: src/ui/Packages.tsx:729
+#: src/ui/Packages.tsx:730
 #, fuzzy
 msgid "Accept"
 msgstr "Annehmen"
 
-#: src/ui/Packages.tsx:732
+#: src/ui/Packages.tsx:733
 #, fuzzy
 msgid "Decline"
 msgstr "Ablehnen"
 
-#: src/ui/Packages.tsx:740
+#: src/ui/Packages.tsx:741
 #, fuzzy
 msgid "Rules change: {change}"
 msgstr "Regeländerung: {change}"
 
-#: src/ui/Packages.tsx:740
+#: src/ui/Packages.tsx:741
 #, fuzzy
 msgid "same packages"
 msgstr "gleiche Pakete"
 
-#: src/ui/Packages.tsx:743
+#: src/ui/Packages.tsx:744
 #, fuzzy
 msgid "{names} declined."
 msgstr "{names} hat abgelehnt."
 
-#: src/ui/Packages.tsx:747
+#: src/ui/Packages.tsx:748
 #, fuzzy
 msgid "Waiting for {names}"
 msgstr "Warte auf {names}"
 
-#: src/ui/Packages.tsx:75
+#: src/ui/Packages.tsx:76
 #, fuzzy
 msgid "Load package…"
 msgstr "Paket laden…"
@@ -15053,15 +15076,6 @@ msgstr "oben"
 #, fuzzy
 msgid "top-right"
 msgstr "rechts oben"
-
-#: src/ui/eventText.ts:79
-#: src/ui/gameLog.ts:172
-#: src/ui/gameLog.ts:301
-#: src/ui/gameLog.ts:311
-#: src/ui/highlights.ts:54
-#, fuzzy
-msgid "Someone"
-msgstr "Jemand"
 
 #: src/ui/eventText.ts:81
 #: src/ui/eventText.ts:398

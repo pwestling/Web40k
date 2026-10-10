@@ -12,14 +12,14 @@ import {
   type RankedState,
 } from "../core/ranked";
 import type { GameState } from "../core";
-import { gameTitle, systemTitle } from "../ui/systemLabels";
+import { gameTitle } from "../ui/systemLabels";
 import { myKey, signAsMe } from "../player/card";
 import { backToEvent } from "../events/play";
 import { useStore } from "../store";
 import { formatNumber, t, tn } from "../i18n";
 import { say } from "../talk/talk";
-import { change, PROVISIONAL } from "./ratings";
-import { publishResult, useRankedResults, useRatingMove } from "./store";
+import { change, ladderKey, PROVISIONAL } from "./ratings";
+import { ladderTitle, publishResult, useRankedResults, useRatingMove } from "./store";
 import { declineText, replayHash, signingText, type DeclinedResult, type SignedResult } from "./verify";
 
 /**
@@ -256,10 +256,10 @@ export function settling(games: number): string | null {
 /** The signed ending for a player: the new rating, the change, why, and something to play for. */
 function RatingLine({ result, me }: { result: RankedResult; me: string }) {
   const results = useRankedResults();
-  const move = useRatingMove(me, result.system, result.replay);
+  const move = useRatingMove(me, ladderKey(result), result.replay);
   const seat = result.players.findIndex((p) => p.key === me);
   if (seat < 0) return null;
-  const game = systemTitle(result.system);
+  const game = ladderTitle(Object.values(results), ladderKey(result));
   if (!move)
     return results[result.replay] ? (
       <p className="small">

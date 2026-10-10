@@ -92,6 +92,12 @@ The file is a replay with extra details: the app build, the rules packages in us
 - [docs/system-modules.md](docs/system-modules.md): write a game system module.
 - [docs/packages.md](docs/packages.md): write a rules package that players load at runtime.
 - [docs/self-host.md](docs/self-host.md): run your own copy of the app, signalling relay and TURN server.
+- [docs/compatibility.md](docs/compatibility.md): how forks, builds and rules packages coexist, and how ranked ladders keep house rules apart.
+- [GOVERNANCE.md](GOVERNANCE.md): who decides, and which changes need a proposal first.
+
+## Working with Claude Code
+
+[CLAUDE.md](CLAUDE.md) gives Claude Code the project's rules, and `.claude/skills/` has guided workflows it picks up on its own: `rules-package` (write a package), `system-module` (add or change a built-in game), `ip-check` (look for publisher IP before committing) and `verify-change` (run the right checks before pushing). They work as plain checklists for people too.
 
 ## Pull requests
 

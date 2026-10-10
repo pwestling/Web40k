@@ -1,11 +1,16 @@
-import type { PlayerKey } from "../core/ranked";
+import type { PlayerKey, RankedPackage, RankedResult } from "../core/ranked";
 import type { SignedResult } from "./verify";
 
 /**
  * Ratings with no server (#65): every client works the ladder out for itself
  * from the signed results it has seen, in one order (time, then replay hash),
  * so two clients with the same results agree to the point. Plain Elo per
- * game system, from 1500, K 32.
+ * ladder, from 1500, K 32.
+ *
+ * A ladder is a game system plus the house rules played with it
+ * (docs/compatibility.md): games with a rules package added count on that
+ * package set's own ladder, never the plain one. The game's own package (a
+ * package that is the whole game) doesn't split it.
  *
  * The abuse floor: only results both players signed get here (verify.ts), a
  * replay counts once, and the same two players count at most PAIR_CAP games
@@ -40,12 +45,36 @@ const order = (x: SignedResult, y: SignedResult) =>
   x.result.at - y.result.at ||
   (x.result.replay < y.result.replay ? -1 : x.result.replay > y.result.replay ? 1 : 0);
 
-/** The results that count for `system`, in counting order: each replay once, the pair cap applied. */
-export function counted(results: SignedResult[], system: string): SignedResult[] {
+/** The rules packages a result added to its game: what puts it on a ladder of its own. */
+const houseRules = (r: RankedResult): RankedPackage[] =>
+  (r.rules?.packages ?? []).filter((p) => !p.game);
+
+/**
+ * The ladder a result counts on: its system, then the hashes of any house
+ * rules (sorted), so the same rules give the same ladder whoever played them.
+ */
+export function ladderKey(r: RankedResult): string {
+  const extra = houseRules(r)
+    .map((p) => p.hash)
+    .sort();
+  return extra.length ? `${r.system}+${extra.join("+")}` : r.system;
+}
+
+/** The system a ladder key is for. */
+export const ladderSystem = (key: string) => key.split("+")[0]!;
+
+/** The house rules a ladder plays with, from any result on it. */
+export function ladderRules(results: SignedResult[], key: string): RankedPackage[] {
+  const one = results.find((r) => ladderKey(r.result) === key);
+  return one ? houseRules(one.result) : [];
+}
+
+/** The results that count on ladder `on` (ladderKey), in counting order: each replay once, the pair cap applied. */
+export function counted(results: SignedResult[], on: string): SignedResult[] {
   const seen = new Set<string>();
   const pairs = new Map<string, number[]>();
   const out: SignedResult[] = [];
-  for (const r of results.filter((x) => x.result.system === system).sort(order)) {
+  for (const r of results.filter((x) => ladderKey(x.result) === on).sort(order)) {
     if (seen.has(r.result.replay)) continue;
     seen.add(r.result.replay);
     const pair = r.result.players
@@ -63,7 +92,7 @@ export function counted(results: SignedResult[], system: string): SignedResult[]
 /** Every rating after each counted game, in order; `each` sees each game's change for its first player. */
 function fold(
   results: SignedResult[],
-  system: string,
+  on: string,
   each?: (result: SignedResult["result"], a: Rating, b: Rating, d: number) => void,
 ): Map<PlayerKey, Rating> {
   const by = new Map<PlayerKey, Rating>();
@@ -73,7 +102,7 @@ function fold(
     by.set(key, r);
     return r;
   };
-  for (const { result } of counted(results, system)) {
+  for (const { result } of counted(results, on)) {
     const [a, b] = [
       get(result.players[0].key, result.players[0].name),
       get(result.players[1].key, result.players[1].name),
@@ -96,9 +125,9 @@ function fold(
   return by;
 }
 
-/** The ladder for one game system, best first. */
-export function ladder(results: SignedResult[], system: string): Rating[] {
-  return [...fold(results, system).values()]
+/** One ladder (ladderKey), best first. */
+export function ladder(results: SignedResult[], on: string): Rating[] {
+  return [...fold(results, on).values()]
     .map((r) => ({ ...r, rating: Math.round(r.rating) }))
     .sort((x, y) => y.rating - x.rating || y.games - x.games || (x.key < y.key ? -1 : 1));
 }
@@ -116,12 +145,12 @@ export interface RatingMove {
 /** How the game with this replay moved `key`'s rating, or null if it didn't count (unsigned, past the pair cap). */
 export function ratingMove(
   results: SignedResult[],
-  system: string,
+  on: string,
   replay: string,
   key: PlayerKey,
 ): RatingMove | null {
   let move: RatingMove | null = null;
-  fold(results, system, (result, a, b, d) => {
+  fold(results, on, (result, a, b, d) => {
     if (result.replay !== replay) return;
     const seat = result.players.findIndex((p) => p.key === key);
     if (seat < 0) return;
@@ -139,9 +168,9 @@ export function ratingMove(
   return move;
 }
 
-/** The game systems with ranked results, most played first. */
+/** The ladders with ranked results, most played first. */
 export function rankedSystems(results: SignedResult[]): string[] {
   const n = new Map<string, number>();
-  for (const r of results) n.set(r.result.system, (n.get(r.result.system) ?? 0) + 1);
+  for (const r of results) n.set(ladderKey(r.result), (n.get(ladderKey(r.result)) ?? 0) + 1);
   return [...n.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).map(([s]) => s);
 }

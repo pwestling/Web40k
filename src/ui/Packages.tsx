@@ -43,6 +43,7 @@ export function refOf(p: StoredPackage): PackageRef {
     bytes: p.bytes,
   };
   if (p.manifest.author) ref.author = p.manifest.author;
+  if (p.manifest.kind === "system") ref.kind = "system";
   return ref;
 }
 

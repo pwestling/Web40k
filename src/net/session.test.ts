@@ -153,3 +153,24 @@ describe("Session", () => {
     expect(host.current.models.b!.bands).toBeUndefined();
   });
 });
+
+describe("builds (docs/compatibility.md)", () => {
+  it("tells each side when the other runs another build", async () => {
+    const net = createLoopbackNetwork();
+    const host = new Session({ transport: net.connect("host"), role: "host", onChange: () => {} });
+    // An old client (no build info) and a client from another build, sending by hand.
+    const old = net.connect("old");
+    const other = net.connect("other");
+    await flush();
+    expect(host.status.otherBuilds).toEqual([]);
+    old.send({ t: "hello", seq: 0, role: "client" }, "host");
+    other.send({ t: "hello", seq: 0, role: "client", v: { protocol: 1, build: "9.9.9+fork" } }, "host");
+    await flush();
+    expect(host.status.otherBuilds).toEqual([{ peer: "other", protocol: 1, build: "9.9.9+fork" }]);
+    // The same build is no news.
+    const same = new Session({ transport: net.connect("same"), role: "client", onChange: () => {} });
+    await flush();
+    expect(host.status.otherBuilds.map((b) => b.peer)).toEqual(["other"]);
+    expect(same.status.otherBuilds).toEqual([]);
+  });
+});

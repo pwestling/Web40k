@@ -34,6 +34,24 @@ export interface RankedResult {
   at: number;
   /** An online event's game (#67): the pairing this result settles. Part of what both sign. */
   event?: { id: string; round: number; table: number };
+  /** The rules the game ran (docs/compatibility.md): ladders keep games with house rules apart. */
+  rules?: RankedRules;
+}
+
+/** One rules package a ranked game ran. `game`: it is the game itself (a package with `kind: "system"`). */
+export interface RankedPackage {
+  id: string;
+  name: string;
+  version: string;
+  hash: string;
+  game?: true;
+}
+
+export interface RankedRules {
+  /** The app build that set the game's packages, when it did: the reducer and built-in modules. */
+  app?: string;
+  /** Every rules package, sorted by id. */
+  packages: RankedPackage[];
 }
 
 /**
@@ -107,6 +125,21 @@ export function rankedResultOf(state: GameState, replay: string, at: number): Ra
   });
   const players: [RankedPlayer, RankedPlayer] = [side(a), side(b)];
   const rounds = Number(systemOf(state).turn.rounds) || 0;
+  const rules: RankedRules = {
+    ...(state.packages?.app ? { app: state.packages.app.slice(0, 80) } : {}),
+    packages: (state.packages?.packages ?? [])
+      .map((p, i) => ({
+        id: p.id,
+        name: p.name.slice(0, 60),
+        version: p.version,
+        hash: p.hash,
+        // A package game names its package first (ui/Lobby namePackage), from before refs said so.
+        ...(p.kind === "system" || (i === 0 && state.packages?.system.builtIn === false)
+          ? { game: true as const }
+          : {}),
+      }))
+      .sort(byId),
+  };
   return {
     v: 1,
     system: state.system ?? DEFAULT_SYSTEM,
@@ -125,7 +158,44 @@ export function rankedResultOf(state: GameState, replay: string, at: number): Ra
           },
         }
       : {}),
+    rules,
   };
+}
+
+const byId = (a: RankedPackage, b: RankedPackage) =>
+  a.id < b.id ? -1 : a.id > b.id ? 1 : a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0;
+
+/** A result's rules in canonical form, null if they're malformed. */
+function canonRules(raw: unknown): RankedRules | null {
+  const r = raw as Partial<RankedRules> | null;
+  if (!r || typeof r !== "object" || !Array.isArray(r.packages) || r.packages.length > 20) return null;
+  if (r.app !== undefined && !(typeof r.app === "string" && r.app.length > 0 && r.app.length <= 80))
+    return null;
+  const packages: RankedPackage[] = [];
+  for (const p of r.packages as Partial<RankedPackage>[]) {
+    if (
+      !p ||
+      typeof p.id !== "string" ||
+      !p.id ||
+      p.id.length > 80 ||
+      typeof p.name !== "string" ||
+      p.name.length > 60 ||
+      typeof p.version !== "string" ||
+      p.version.length > 40 ||
+      typeof p.hash !== "string" ||
+      !/^[a-f0-9]{64}$/.test(p.hash) ||
+      (p.game !== undefined && p.game !== true)
+    )
+      return null;
+    packages.push({
+      id: p.id,
+      name: p.name,
+      version: p.version,
+      hash: p.hash,
+      ...(p.game ? { game: true } : {}),
+    });
+  }
+  return { ...(r.app ? { app: r.app } : {}), packages: packages.sort(byId) };
 }
 
 const winnerOf = (players: [RankedPlayer, RankedPlayer]): 0 | 1 | null =>
@@ -173,6 +243,8 @@ export function canonResult(raw: unknown): string | null {
     )
   )
     return null;
+  const rules = r.rules === undefined ? undefined : canonRules(r.rules);
+  if (rules === null) return null;
   return JSON.stringify({
     v: 1,
     system: r.system,
@@ -184,5 +256,7 @@ export function canonResult(raw: unknown): string | null {
     at: Math.round(r.at!),
     // Only when there is one, so results from before events sign the same.
     ...(e ? { event: { id: e.id, round: e.round, table: e.table } } : {}),
+    // Likewise only when there are some, so results from before rulesets still verify.
+    ...(rules ? { rules } : {}),
   });
 }

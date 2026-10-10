@@ -1,7 +1,10 @@
 import { rankedOver } from "../core/ranked";
 import { saveJson } from "./files";
 import { displayName, playerName } from "../i18n/names";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { NetStatus } from "../net/session";
+import { PROTOCOL } from "../protocol";
+import { APP_BUILD } from "../version";
 import type { GameRecord } from "../core";
 import { formatList, t } from "../i18n";
 import { screenSeat, useJoining, useStore } from "../store";
@@ -54,6 +57,7 @@ export function NetBanner() {
       </div>
     );
   }
+  if (net.otherBuilds.length && buildsKey(net) !== dismissed) return <OtherBuilds net={net} />;
   const gone = Object.values(players).filter(
     (p) => p.seat !== undefined && p.id !== selfId && !net.peers.includes(p.id) && !screenSeat(p.id),
   );
@@ -86,4 +90,54 @@ function downloadReport(
 ) {
   const report = { kind: "open-battle/desync-report", desync, userAgent: navigator.userAgent, record };
   saveJson(`open-battle-desync-${desync.seq}.json`, report);
+}
+
+/** The other builds banner the player closed, so it stays closed until someone else turns up. */
+let dismissed = "";
+const buildsKey = (net: NetStatus) => net.otherBuilds.map((b) => `${b.peer}:${b.build}`).join(",");
+
+/**
+ * Another player runs a different build (docs/compatibility.md): a different
+ * protocol can't keep the same table; a different build of the same protocol
+ * usually can, but its rules may differ.
+ */
+function OtherBuilds({ net }: { net: NetStatus }) {
+  const players = useStore((s) => s.game.players);
+  const [, rerender] = useState(0);
+  if (buildsKey(net) === dismissed) return null;
+  const name = (peer: string) => playerName(players[peer]) ?? t("Someone");
+  const broken = net.otherBuilds.filter((b) => b.protocol !== PROTOCOL);
+  const first = (broken[0] ?? net.otherBuilds[0])!;
+  return (
+    <div
+      className={broken.length ? "net-banner desync" : "net-banner"}
+      role={broken.length ? "alert" : undefined}
+    >
+      {broken.length
+        ? t(
+            "{name} runs a version of Open Battle that can't play with yours ({theirs}; you have {mine}). Both of you should reload.",
+            {
+              name: name(first.peer),
+              theirs: first.build,
+              mine: APP_BUILD,
+            },
+          )
+        : t(
+            "{name} runs another version of Open Battle ({theirs}; you have {mine}). Rules may differ: reload to match.",
+            {
+              name: name(first.peer),
+              theirs: first.build,
+              mine: APP_BUILD,
+            },
+          )}{" "}
+      <button
+        onClick={() => {
+          dismissed = buildsKey(net);
+          rerender((n) => n + 1);
+        }}
+      >
+        {t("Got it")}
+      </button>
+    </div>
+  );
 }

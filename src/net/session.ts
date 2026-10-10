@@ -17,6 +17,7 @@ import {
 } from "../core";
 import { hookIntents } from "../core/script";
 import type { Check, MediaChannel, NetMessage, SideMessage, Transport } from "./transport";
+import { buildInfo, MY_BUILD, type BuildInfo } from "../protocol";
 
 /** Spectators receive the game like clients but never send intents. */
 export type Role = "host" | "client" | "spectator";
@@ -36,6 +37,8 @@ export interface NetStatus {
   desync: { seq: number; count: number; host: number; mine: number } | null;
   /** A spectator: how far behind the game the host sends it events (ms), 0 for live. */
   hostDelay?: number;
+  /** Connected peers running another build than this one (docs/compatibility.md). */
+  otherBuilds: ({ peer: string } & BuildInfo)[];
 }
 
 /** Checkpoints kept for comparing against the host's checksums. */
@@ -127,6 +130,8 @@ export class Session {
   private resumed: boolean;
   private migrating = false;
   private readonly peers = new Map<string, { role?: Role; seq?: number; ready?: boolean }>();
+  /** What each peer said about its build when it greeted us. */
+  private readonly builds = new Map<string, BuildInfo>();
   private readonly isReady: (state: GameState) => boolean;
   private readonly frozen: boolean;
   private queue: Intent[] = [];
@@ -206,6 +211,7 @@ export class Session {
 
     transport.onPeerLeave((peerId) => {
       this.peers.delete(peerId);
+      this.builds.delete(peerId);
       this.behind.delete(peerId);
       if (peerId === this.hostId && this.role !== "host") {
         this.hostId = null;
@@ -242,6 +248,12 @@ export class Session {
       migrating: this.migrating,
       desync: this.desync,
       hostDelay: this.hostDelay,
+      otherBuilds: [...this.builds.entries()]
+        .filter(
+          ([peer, v]) =>
+            this.peers.has(peer) && (v.protocol !== MY_BUILD.protocol || v.build !== MY_BUILD.build),
+        )
+        .map(([peer, v]) => ({ peer, ...v })),
     };
   }
 
@@ -347,6 +359,7 @@ export class Session {
     switch (message.t) {
       case "hello":
         this.peers.set(from, { role: message.role, seq: message.seq });
+        this.heardBuild(from, message.v);
         if (this.role !== "host") return;
         if (message.role === "spectator") {
           const ms = Math.min(600_000, Math.max(this.spectatorFloorMs, Number(message.delay) || 0));
@@ -372,6 +385,7 @@ export class Session {
           this.transport.send({ t: "record", record: this.record }, from);
         return;
       case "host":
+        this.heardBuild(from, message.v);
         this.heardHost(from, message.seq, message.resumed);
         return;
       case "yield":
@@ -423,7 +437,17 @@ export class Session {
       tail: tailOf(this.record, seq),
       role: this.role,
       ...(this.role === "spectator" && this.delay ? { delay: this.delay } : {}),
+      v: MY_BUILD,
     };
+  }
+
+  /** Remember a peer's build, and say so when it's news. */
+  private heardBuild(from: string, raw: unknown): void {
+    const v = buildInfo(raw);
+    if (!v) return;
+    const had = this.builds.get(from);
+    this.builds.set(from, v);
+    if (had?.build !== v.build || had?.protocol !== v.protocol) this.notify();
   }
 
   /**
@@ -484,7 +508,7 @@ export class Session {
   }
 
   private announce(to?: string): void {
-    this.transport.send({ t: "host", seq: lastSeq(this.record), resumed: this.resumed }, to);
+    this.transport.send({ t: "host", seq: lastSeq(this.record), resumed: this.resumed, v: MY_BUILD }, to);
   }
 
   /** Send a peer the events after `seq` if its log matches ours that far, else the whole record. */

@@ -954,7 +954,7 @@ msgstr ""
 #: src/campaign/CampaignUI.tsx:571
 #: src/campaign/CampaignUI.tsx:738
 #: src/player/PlayerCard.tsx:180
-#: src/player/PlayerCard.tsx:327
+#: src/player/PlayerCard.tsx:328
 msgid "Games"
 msgstr ""
 
@@ -988,7 +988,7 @@ msgstr ""
 #: src/campaign/CampaignUI.tsx:609
 #: src/campaign/EventTab.tsx:268
 #: src/events/EventsUI.tsx:388
-#: src/player/PlayerCard.tsx:325
+#: src/player/PlayerCard.tsx:326
 msgid "Player"
 msgstr ""
 
@@ -1494,7 +1494,7 @@ msgstr ""
 
 #: src/companion/CompanionScreen.tsx:137
 #: src/mail/MailBar.tsx:236
-#: src/ui/NetBanner.tsx:71
+#: src/ui/NetBanner.tsx:75
 #: src/ui/Room.tsx:107
 msgid "Copy invite link"
 msgstr ""
@@ -1593,7 +1593,7 @@ msgstr ""
 #: src/companion/CompanionScreen.tsx:95
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
-#: src/player/PlayerCard.tsx:310
+#: src/player/PlayerCard.tsx:311
 #: src/tts/TtsWholeTable.tsx:145
 #: src/ui/Lobby.tsx:571
 msgid "Game"
@@ -2389,7 +2389,7 @@ msgid "You're in once {name} confirms it (their device does, when it's on). Your
 msgstr ""
 
 #: src/events/EventsUI.tsx:591
-#: src/ui/Packages.tsx:754
+#: src/ui/Packages.tsx:755
 msgid "Withdraw"
 msgstr ""
 
@@ -3387,7 +3387,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:205
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
-#: src/player/PlayerCard.tsx:302
+#: src/player/PlayerCard.tsx:303
 msgid "Ladder"
 msgstr ""
 
@@ -3448,7 +3448,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/opentables/OpenTables.tsx:275
-#: src/ui/Packages.tsx:754
+#: src/ui/Packages.tsx:755
 msgid "OK"
 msgstr ""
 
@@ -3934,36 +3934,36 @@ msgstr ""
 msgid "Replace"
 msgstr ""
 
-#: src/player/PlayerCard.tsx:269
+#: src/player/PlayerCard.tsx:270
 msgid "{rating} · #{place} of {of} · {n} game ({record})"
 msgid_plural "{rating} · #{place} of {of} · {n} games ({record})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/player/PlayerCard.tsx:304
+#: src/player/PlayerCard.tsx:305
 msgid "Worked out on this device from ranked results both players signed. Each pair counts at most three games a day."
 msgstr ""
 
-#: src/player/PlayerCard.tsx:326
+#: src/player/PlayerCard.tsx:327
 msgid "Rating"
 msgstr ""
 
-#: src/player/PlayerCard.tsx:328
+#: src/player/PlayerCard.tsx:329
 msgid "W–L–D"
 msgstr ""
 
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
-#: src/player/PlayerCard.tsx:302
+#: src/player/PlayerCard.tsx:303
 #: src/ui/Lobby.tsx:763
 msgid "Your player card"
 msgstr ""
 
-#: src/player/PlayerCard.tsx:359
+#: src/player/PlayerCard.tsx:360
 msgid "No ranked results yet."
 msgstr ""
 
-#: src/player/PlayerCard.tsx:362
+#: src/player/PlayerCard.tsx:363
 msgid "? still finding their level: fewer than five games so far."
 msgstr ""
 
@@ -4249,7 +4249,11 @@ msgstr ""
 msgid "The result doesn't match the score on the table."
 msgstr ""
 
-#: src/ranked/store.ts:182
+#: src/ranked/store.ts:140
+msgid "{game} with {rules}"
+msgstr ""
+
+#: src/ranked/store.ts:191
 msgid "signs {signed} of {n} result"
 msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
@@ -4767,7 +4771,7 @@ msgid "The review stopped: {why}"
 msgstr ""
 
 #: src/review/ReviewPanel.tsx:91
-#: src/ui/Packages.tsx:588
+#: src/ui/Packages.tsx:589
 msgid "Try again"
 msgstr ""
 
@@ -5532,7 +5536,7 @@ msgstr ""
 
 #: src/tables/TableLibrary.tsx:228
 #: src/ui/ArmyImport.tsx:640
-#: src/ui/Packages.tsx:234
+#: src/ui/Packages.tsx:235
 #: src/ui/SystemPanels.tsx:439
 #: src/ui/TeachRule.tsx:543
 #: src/ui/TeachRule.tsx:544
@@ -5867,9 +5871,9 @@ msgid "One figure for the whole unit, or one per kind of model. Everyone in the 
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:94
-#: src/ui/Packages.tsx:176
-#: src/ui/Packages.tsx:320
-#: src/ui/Packages.tsx:538
+#: src/ui/Packages.tsx:177
+#: src/ui/Packages.tsx:321
+#: src/ui/Packages.tsx:539
 msgid "Rules packages"
 msgstr ""
 
@@ -7039,6 +7043,7 @@ msgid "Finish"
 msgstr ""
 
 #: src/ui/Coach.tsx:166
+#: src/ui/NetBanner.tsx:139
 msgid "Got it"
 msgstr ""
 
@@ -8195,40 +8200,57 @@ msgstr ""
 msgid "None (score by hand)"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:36
+#: src/ui/NetBanner.tsx:108
+#: src/ui/eventText.ts:79
+#: src/ui/gameLog.ts:172
+#: src/ui/gameLog.ts:301
+#: src/ui/gameLog.ts:311
+#: src/ui/highlights.ts:54
+msgid "Someone"
+msgstr ""
+
+#: src/ui/NetBanner.tsx:117
+msgid "{name} runs a version of Open Battle that can't play with yours ({theirs}; you have {mine}). Both of you should reload."
+msgstr ""
+
+#: src/ui/NetBanner.tsx:125
+msgid "{name} runs another version of Open Battle ({theirs}; you have {mine}). Rules may differ: reload to match."
+msgstr ""
+
+#: src/ui/NetBanner.tsx:39
 msgid "Host disconnected: waiting for it, or for a new host…"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:43
+#: src/ui/NetBanner.tsx:46
 msgid "Your table doesn't match the host's (since \"{since}\")."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:44
+#: src/ui/NetBanner.tsx:47
 msgid "Your table doesn't match the host's."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:46
+#: src/ui/NetBanner.tsx:49
 msgid "Your table doesn't match {name}'s (since \"{since}\")."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:47
+#: src/ui/NetBanner.tsx:50
 msgid "Your table doesn't match {name}'s."
 msgstr ""
 
-#: src/ui/NetBanner.tsx:49
+#: src/ui/NetBanner.tsx:52
 msgid "Resync from host"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:52
+#: src/ui/NetBanner.tsx:55
 #: src/ui/SavedNote.tsx:82
 msgid "Report a problem"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:67
+#: src/ui/NetBanner.tsx:71
 msgid "Waiting for someone to take {names} ·"
 msgstr ""
 
-#: src/ui/NetBanner.tsx:77
+#: src/ui/NetBanner.tsx:81
 msgid "{names} reconnecting…"
 msgstr ""
 
@@ -8285,7 +8307,7 @@ msgid "Self-host guide"
 msgstr ""
 
 #: src/ui/NetCheck.tsx:191
-#: src/ui/Packages.tsx:223
+#: src/ui/Packages.tsx:224
 msgid "Details"
 msgstr ""
 
@@ -8325,100 +8347,100 @@ msgstr ""
 msgid "no answer"
 msgstr ""
 
-#: src/ui/Packages.tsx:134
+#: src/ui/Packages.tsx:135
 msgid "Load a rules package"
 msgstr ""
 
-#: src/ui/Packages.tsx:138
-#: src/ui/Packages.tsx:261
+#: src/ui/Packages.tsx:139
+#: src/ui/Packages.tsx:262
 msgid "Adds: {what}"
 msgstr ""
 
-#: src/ui/Packages.tsx:149
+#: src/ui/Packages.tsx:150
 msgid "Load it"
 msgstr ""
 
-#: src/ui/Packages.tsx:182
+#: src/ui/Packages.tsx:183
 msgid "Only this game's"
 msgstr ""
 
-#: src/ui/Packages.tsx:182
+#: src/ui/Packages.tsx:183
 msgid "Show all ({n} more)"
-msgstr ""
-
-#: src/ui/Packages.tsx:189
-msgid "built in · app {build}"
 msgstr ""
 
 #: src/ui/Packages.tsx:19
 msgid "Rules packages contain code. It runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page."
 msgstr ""
 
-#: src/ui/Packages.tsx:209
+#: src/ui/Packages.tsx:190
+msgid "built in · app {build}"
+msgstr ""
+
+#: src/ui/Packages.tsx:210
 msgid "(yours)"
 msgstr ""
 
-#: src/ui/Packages.tsx:211
+#: src/ui/Packages.tsx:212
 msgid "lessons · in Learn to play"
 msgstr ""
 
-#: src/ui/Packages.tsx:213
+#: src/ui/Packages.tsx:214
 msgid "trusted"
 msgstr ""
 
-#: src/ui/Packages.tsx:216
+#: src/ui/Packages.tsx:217
 msgid "Trust…"
 msgstr ""
 
-#: src/ui/Packages.tsx:221
+#: src/ui/Packages.tsx:222
 msgid "More for {package}"
 msgstr ""
 
-#: src/ui/Packages.tsx:225
+#: src/ui/Packages.tsx:226
 msgid "Stop trusting"
 msgstr ""
 
-#: src/ui/Packages.tsx:230
+#: src/ui/Packages.tsx:231
 msgid "Remove {package}?"
 msgstr ""
 
-#: src/ui/Packages.tsx:245
+#: src/ui/Packages.tsx:246
 msgid "Copy"
 msgstr ""
 
-#: src/ui/Packages.tsx:249
+#: src/ui/Packages.tsx:250
 msgid "{kind} for {games} · API {api} · {size}"
 msgstr ""
 
-#: src/ui/Packages.tsx:252
+#: src/ui/Packages.tsx:253
 msgid "Game system"
 msgstr ""
 
-#: src/ui/Packages.tsx:254
+#: src/ui/Packages.tsx:255
 msgid "Lessons"
 msgstr ""
 
-#: src/ui/Packages.tsx:255
+#: src/ui/Packages.tsx:256
 msgid "Extension"
 msgstr ""
 
-#: src/ui/Packages.tsx:256
+#: src/ui/Packages.tsx:257
 msgid "any game"
 msgstr ""
 
-#: src/ui/Packages.tsx:262
+#: src/ui/Packages.tsx:263
 msgid "Changes: {what}"
 msgstr ""
 
-#: src/ui/Packages.tsx:311
+#: src/ui/Packages.tsx:312
 msgid "Rules: {game} (built in), {packages}."
 msgstr ""
 
-#: src/ui/Packages.tsx:315
+#: src/ui/Packages.tsx:316
 msgid "Rules: {game} (built in)."
 msgstr ""
 
-#: src/ui/Packages.tsx:322
+#: src/ui/Packages.tsx:323
 msgid "{game} (built in, always on)"
 msgstr ""
 
@@ -8426,176 +8448,176 @@ msgstr ""
 msgid "{package} · by {author}"
 msgstr ""
 
-#: src/ui/Packages.tsx:346
+#: src/ui/Packages.tsx:347
 msgid "Show all"
 msgstr ""
 
-#: src/ui/Packages.tsx:364
+#: src/ui/Packages.tsx:365
 msgid "Change the rules"
 msgstr ""
 
-#: src/ui/Packages.tsx:364
+#: src/ui/Packages.tsx:365
 msgid "Ask to change the rules"
 msgstr ""
 
-#: src/ui/Packages.tsx:385
+#: src/ui/Packages.tsx:386
 msgid "{package}, not loaded yet"
 msgstr ""
 
-#: src/ui/Packages.tsx:389
+#: src/ui/Packages.tsx:390
 msgid "Rules: {game}"
 msgstr ""
 
-#: src/ui/Packages.tsx:393
+#: src/ui/Packages.tsx:394
 msgid "Not on this device"
 msgstr ""
 
-#: src/ui/Packages.tsx:504
-#: src/ui/Packages.tsx:504
-#: src/ui/Packages.tsx:748
+#: src/ui/Packages.tsx:505
+#: src/ui/Packages.tsx:505
+#: src/ui/Packages.tsx:749
 msgid "the host"
 msgstr ""
 
-#: src/ui/Packages.tsx:540
+#: src/ui/Packages.tsx:541
 msgid "This replay used rules that aren't on this device"
 msgstr ""
 
-#: src/ui/Packages.tsx:542
+#: src/ui/Packages.tsx:543
 msgid "This replay brought its rules with it"
 msgstr ""
 
-#: src/ui/Packages.tsx:544
+#: src/ui/Packages.tsx:545
 msgid "This game uses rules you don't have"
 msgstr ""
 
-#: src/ui/Packages.tsx:546
+#: src/ui/Packages.tsx:547
 msgid "You have a different version of a package this game uses"
 msgstr ""
 
-#: src/ui/Packages.tsx:548
+#: src/ui/Packages.tsx:549
 msgid "New rules packages arrived"
 msgstr ""
 
-#: src/ui/Packages.tsx:550
+#: src/ui/Packages.tsx:551
 msgid "Rules packages ready"
 msgstr ""
 
-#: src/ui/Packages.tsx:561
+#: src/ui/Packages.tsx:562
 msgid "Game: {package}"
 msgstr ""
 
-#: src/ui/Packages.tsx:564
+#: src/ui/Packages.tsx:565
 msgid "Yours: {package}"
 msgstr ""
 
-#: src/ui/Packages.tsx:574
+#: src/ui/Packages.tsx:575
 msgid "Receiving"
 msgstr ""
 
-#: src/ui/Packages.tsx:576
+#: src/ui/Packages.tsx:577
 msgid "Receiving from {name}… {percent}%"
 msgstr ""
 
-#: src/ui/Packages.tsx:583
+#: src/ui/Packages.tsx:584
 msgid "That didn't match what the game expects."
 msgstr ""
 
-#: src/ui/Packages.tsx:590
+#: src/ui/Packages.tsx:591
 msgid "Use the game's version"
 msgstr ""
 
-#: src/ui/Packages.tsx:591
+#: src/ui/Packages.tsx:592
 msgid "Get it from {name}"
 msgstr ""
 
-#: src/ui/Packages.tsx:596
+#: src/ui/Packages.tsx:597
 msgid "Too big to send ({size}): load it from a file"
 msgstr ""
 
-#: src/ui/Packages.tsx:600
+#: src/ui/Packages.tsx:601
 msgid "Load from file…"
 msgstr ""
 
-#: src/ui/Packages.tsx:606
+#: src/ui/Packages.tsx:607
 msgid "Join with mine anyway"
 msgstr ""
 
-#: src/ui/Packages.tsx:618
+#: src/ui/Packages.tsx:619
 msgid "Trust packages {name} sends for this game"
 msgstr ""
 
-#: src/ui/Packages.tsx:626
+#: src/ui/Packages.tsx:627
 msgid "needs your OK to run."
 msgstr ""
 
-#: src/ui/Packages.tsx:629
+#: src/ui/Packages.tsx:630
 msgid "Review…"
 msgstr ""
 
-#: src/ui/Packages.tsx:635
+#: src/ui/Packages.tsx:636
 msgid "{package}: Checked ✓"
 msgstr ""
 
-#: src/ui/Packages.tsx:641
-#: src/ui/Packages.tsx:644
+#: src/ui/Packages.tsx:642
+#: src/ui/Packages.tsx:645
 msgid "Watch without it"
 msgstr ""
 
-#: src/ui/Packages.tsx:644
+#: src/ui/Packages.tsx:645
 msgid "Watch instead"
 msgstr ""
 
-#: src/ui/Packages.tsx:651
+#: src/ui/Packages.tsx:652
 msgid "Without it, moves, dice and results still play; rule hints that need the package are off."
 msgstr ""
 
-#: src/ui/Packages.tsx:680
+#: src/ui/Packages.tsx:681
 #: src/ui/ScriptPanel.tsx:39
 #: src/ui/eventText.ts:120
 msgid "A player"
 msgstr ""
 
-#: src/ui/Packages.tsx:705
+#: src/ui/Packages.tsx:706
 msgid "Rules change"
 msgstr ""
 
-#: src/ui/Packages.tsx:706
+#: src/ui/Packages.tsx:707
 msgid "{name} wants to change the rules for this game"
 msgstr ""
 
-#: src/ui/Packages.tsx:707
+#: src/ui/Packages.tsx:708
 msgid "Same packages"
 msgstr ""
 
-#: src/ui/Packages.tsx:711
+#: src/ui/Packages.tsx:712
 msgid "Accepting lets {packages} run here."
 msgstr ""
 
-#: src/ui/Packages.tsx:729
+#: src/ui/Packages.tsx:730
 msgid "Accept"
 msgstr ""
 
-#: src/ui/Packages.tsx:732
+#: src/ui/Packages.tsx:733
 msgid "Decline"
 msgstr ""
 
-#: src/ui/Packages.tsx:740
+#: src/ui/Packages.tsx:741
 msgid "Rules change: {change}"
 msgstr ""
 
-#: src/ui/Packages.tsx:740
+#: src/ui/Packages.tsx:741
 msgid "same packages"
 msgstr ""
 
-#: src/ui/Packages.tsx:743
+#: src/ui/Packages.tsx:744
 msgid "{names} declined."
 msgstr ""
 
-#: src/ui/Packages.tsx:747
+#: src/ui/Packages.tsx:748
 msgid "Waiting for {names}"
 msgstr ""
 
-#: src/ui/Packages.tsx:75
+#: src/ui/Packages.tsx:76
 msgid "Load package…"
 msgstr ""
 
@@ -12226,14 +12248,6 @@ msgstr ""
 
 #: src/ui/eventText.ts:766
 msgid "top-right"
-msgstr ""
-
-#: src/ui/eventText.ts:79
-#: src/ui/gameLog.ts:172
-#: src/ui/gameLog.ts:301
-#: src/ui/gameLog.ts:311
-#: src/ui/highlights.ts:54
-msgid "Someone"
 msgstr ""
 
 #: src/ui/eventText.ts:81

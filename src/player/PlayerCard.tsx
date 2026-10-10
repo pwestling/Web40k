@@ -5,7 +5,7 @@ import { displayName } from "../i18n/names";
 import { useCampaigns } from "../campaign/store";
 import { safeFileName, saveJson } from "../ui/files";
 import { systemTitle } from "../ui/systemLabels";
-import { useLadder, useRankedResults, useSignRate } from "../ranked/store";
+import { ladderTitle, useLadder, useRankedResults, useSignRate } from "../ranked/store";
 import { PROVISIONAL, rankedSystems, type Rating } from "../ranked/ratings";
 import { settling } from "../ranked/RankedGame";
 import { cardFile, keyTag, myKey, readCardFile, takeCardFile, useCard, type CardFile } from "./card";
@@ -257,6 +257,7 @@ function CardView() {
 }
 
 function MyRating({ system, me }: { system: string; me: string | null }) {
+  const results = useRankedResults();
   const rows = useLadder(system);
   const i = rows.findIndex((r) => r.key === me);
   const r = rows[i];
@@ -264,7 +265,7 @@ function MyRating({ system, me }: { system: string; me: string | null }) {
   return (
     <li>
       <button className="link" onClick={() => openLadder(system)}>
-        {systemTitle(system)}
+        {ladderTitle(Object.values(results), system)}
       </button>{" "}
       {tn(
         r.games,
@@ -311,7 +312,7 @@ function LadderView() {
           <select value={shown} onChange={(e) => setSystem(e.target.value)}>
             {systems.map((s) => (
               <option key={s} value={s}>
-                {systemTitle(s)}
+                {ladderTitle(Object.values(results), s)}
               </option>
             ))}
           </select>
