@@ -747,3 +747,12 @@ body.clip-narrow .caption {
   background: rgb(17 19 24 / 90%);
   border: 1px solid #2d3340;
 }
+
+/* Open or share a file by link (src/share/OpenLink.tsx). */
+.open-link input[type="url"] {
+  flex: 1;
+  min-width: 12rem;
+}
+.open-link .share-link {
+  word-break: break-all;
+}

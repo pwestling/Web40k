@@ -393,6 +393,7 @@ msgstr ""
 #: src/GameScreen.tsx:340
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
+#: src/share/OpenLink.tsx:67
 #: src/workshop/Workshop.tsx:387
 msgid "Open"
 msgstr ""
@@ -1595,7 +1596,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:311
 #: src/tts/TtsWholeTable.tsx:186
-#: src/ui/Lobby.tsx:573
+#: src/ui/Lobby.tsx:574
 msgid "Game"
 msgstr ""
 
@@ -2160,7 +2161,7 @@ msgid "Event round {n} of {of} · Table {table}"
 msgstr ""
 
 #: src/events/EventSeat.tsx:117
-#: src/ui/Lobby.tsx:341
+#: src/ui/Lobby.tsx:342
 msgid "Event round {n} · Table {table}"
 msgstr ""
 
@@ -2957,6 +2958,7 @@ msgid "Bring the models from a Tabletop Simulator save or workshop mod into your
 msgstr ""
 
 #: src/figures/pack.ts:103
+#: src/share/links.ts:43
 msgid "Figure pack"
 msgstr ""
 
@@ -3166,7 +3168,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:746
+#: src/ui/Lobby.tsx:748
 msgid "Not now"
 msgstr ""
 
@@ -3211,12 +3213,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:591
+#: src/ui/Lobby.tsx:592
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:590
+#: src/ui/Lobby.tsx:591
 msgid "1 vs 1"
 msgstr ""
 
@@ -3507,7 +3509,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:357
 #: src/opentables/OpenTables.tsx:425
 #: src/ui/Hud.tsx:501
-#: src/ui/Lobby.tsx:622
+#: src/ui/Lobby.tsx:623
 msgid "Watch"
 msgstr ""
 
@@ -3687,7 +3689,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:615
-#: src/ui/Lobby.tsx:619
+#: src/ui/Lobby.tsx:620
 msgid "Join"
 msgstr ""
 
@@ -3848,11 +3850,13 @@ msgid "Use an https:// link to the pack's file."
 msgstr ""
 
 #: src/packages/packPins.ts:85
+#: src/share/links.ts:112
 #: src/workshop/Workshop.tsx:414
 msgid "Couldn't fetch that link (it may not allow other sites to read it)."
 msgstr ""
 
 #: src/packages/packPins.ts:87
+#: src/share/links.ts:114
 #: src/workshop/Workshop.tsx:416
 msgid "That link answered {status}."
 msgstr ""
@@ -3984,7 +3988,7 @@ msgstr ""
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
 #: src/player/PlayerCard.tsx:303
-#: src/ui/Lobby.tsx:765
+#: src/ui/Lobby.tsx:767
 msgid "Your player card"
 msgstr ""
 
@@ -4956,6 +4960,74 @@ msgstr ""
 msgid "{unit}'s {what}"
 msgstr ""
 
+#: src/share/OpenLink.tsx:10
+msgid "{n} MB"
+msgstr ""
+
+#: src/share/OpenLink.tsx:110
+msgid "Open a shared file"
+msgstr ""
+
+#: src/share/OpenLink.tsx:118
+#: src/ui/FactionPacks.tsx:262
+msgid "From {url}"
+msgstr ""
+
+#: src/share/OpenLink.tsx:125
+msgid "This link held a different file when you last opened it ({was})."
+msgstr ""
+
+#: src/share/OpenLink.tsx:128
+msgid "You opened this same file before."
+msgstr ""
+
+#: src/share/OpenLink.tsx:131
+msgid "Rules packages inside a replay stay off until you say yes to them, as with packages from a player."
+msgstr ""
+
+#: src/share/OpenLink.tsx:134
+#: src/ui/FactionPacks.tsx:293
+msgid "It is data only: nothing in it runs."
+msgstr ""
+
+#: src/share/OpenLink.tsx:138
+msgid "Open it"
+msgstr ""
+
+#: src/share/OpenLink.tsx:46
+msgid "Open or share a file by link"
+msgstr ""
+
+#: src/share/OpenLink.tsx:48
+msgid "Figure packs, tables, armies, standees and replays can live anywhere that serves files: GitHub Pages, Codeberg, a cloud drive or your own site. Open Battle hosts none of them."
+msgstr ""
+
+#: src/share/OpenLink.tsx:62
+msgid "Link to an Open Battle file"
+msgstr ""
+
+#: src/share/OpenLink.tsx:67
+#: src/ui/FactionPacks.tsx:170
+msgid "Fetching…"
+msgstr ""
+
+#: src/share/OpenLink.tsx:71
+msgid "Put a file online yourself? Paste its link to get a share link:"
+msgstr ""
+
+#: src/share/OpenLink.tsx:75
+msgid "Where your file is"
+msgstr ""
+
+#: src/share/OpenLink.tsx:84
+#: src/ui/Packages.tsx:246
+msgid "Copy"
+msgstr ""
+
+#: src/share/OpenLink.tsx:9
+msgid "{n} KB"
+msgstr ""
+
 #: src/share/SharePanel.tsx:161
 #: src/share/SharePanel.tsx:416
 msgid "This browser can't record the table."
@@ -5186,6 +5258,63 @@ msgstr ""
 #: src/share/clip.ts:266
 #: src/ui/TopBar.tsx:260
 msgid "Battle over"
+msgstr ""
+
+#: src/share/links.ts:107
+msgid "Use an https:// link to the file."
+msgstr ""
+
+#: src/share/links.ts:116
+#: src/share/links.ts:118
+msgid "That file is too big to open from a link."
+msgstr ""
+
+#: src/share/links.ts:123
+#: src/share/links.ts:126
+msgid "That link isn't an Open Battle file."
+msgstr ""
+
+#: src/share/links.ts:151
+msgid "{name}: {added} new, {already} already here."
+msgstr ""
+
+#: src/share/links.ts:162
+#: src/tables/TableLibrary.tsx:244
+msgid "{name} is in your table library."
+msgstr ""
+
+#: src/share/links.ts:169
+msgid "{name} is on your army shelf."
+msgstr ""
+
+#: src/share/links.ts:178
+msgid "That standee couldn't be read."
+msgstr ""
+
+#: src/share/links.ts:179
+msgid "{name} is in your figure library."
+msgstr ""
+
+#: src/share/links.ts:188
+msgid "Replay opened."
+msgstr ""
+
+#: src/share/links.ts:44
+#: src/tables/TableLibrary.tsx:99
+#: src/workshop/Workshop.tsx:271
+msgid "Table"
+msgstr ""
+
+#: src/share/links.ts:45
+msgid "Army"
+msgstr ""
+
+#: src/share/links.ts:46
+msgid "Standee"
+msgstr ""
+
+#: src/share/links.ts:47
+msgid "Replay"
 msgstr ""
 
 #: src/share/page.ts:17
@@ -5609,10 +5738,6 @@ msgstr ""
 msgid "Open a table file"
 msgstr ""
 
-#: src/tables/TableLibrary.tsx:244
-msgid "{name} is in your table library."
-msgstr ""
-
 #: src/tables/TableLibrary.tsx:63
 #: src/tables/TableLibrary.tsx:134
 msgid "a starter table"
@@ -5620,11 +5745,6 @@ msgstr ""
 
 #: src/tables/TableLibrary.tsx:96
 msgid "This game's table from above"
-msgstr ""
-
-#: src/tables/TableLibrary.tsx:99
-#: src/workshop/Workshop.tsx:271
-msgid "Table"
 msgstr ""
 
 #: src/tables/TableThumb.tsx:57
@@ -7492,10 +7612,6 @@ msgid "Faction pack link"
 msgstr ""
 
 #: src/ui/FactionPacks.tsx:170
-msgid "Fetching…"
-msgstr ""
-
-#: src/ui/FactionPacks.tsx:170
 msgid "Load a pack from a link"
 msgstr ""
 
@@ -7545,10 +7661,6 @@ msgstr ""
 msgid "by {author}"
 msgstr ""
 
-#: src/ui/FactionPacks.tsx:262
-msgid "From {url}"
-msgstr ""
-
 #: src/ui/FactionPacks.tsx:269
 msgid "This link held a different file when you pinned it ({was}). Check what changed before you load it."
 msgstr ""
@@ -7567,10 +7679,6 @@ msgstr[1] ""
 
 #: src/ui/FactionPacks.tsx:290
 msgid "It has code. In a game, that code runs in a sandbox: it can read the game and suggest results, but it can't reach the internet, your files or this page."
-msgstr ""
-
-#: src/ui/FactionPacks.tsx:293
-msgid "It is data only: nothing in it runs."
 msgstr ""
 
 #: src/ui/FactionPacks.tsx:297
@@ -8250,262 +8358,262 @@ msgstr ""
 msgid "Close (Esc)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:140
+#: src/ui/Lobby.tsx:141
 #: src/workshop/Workshop.tsx:709
 msgid "{name} {version}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:265
+#: src/ui/Lobby.tsx:266
 msgid "That is not an Open Battle replay file."
 msgstr ""
 
-#: src/ui/Lobby.tsx:320
+#: src/ui/Lobby.tsx:321
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:339
+#: src/ui/Lobby.tsx:340
 msgid "{event}: back to the event"
 msgstr ""
 
-#: src/ui/Lobby.tsx:350
+#: src/ui/Lobby.tsx:351
 msgid "Back to {game}: Battle over"
 msgstr ""
 
-#: src/ui/Lobby.tsx:352
+#: src/ui/Lobby.tsx:353
 msgid "Resume: {game}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:355
 msgid "Resume: {game}, round {n}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:355
+#: src/ui/Lobby.tsx:356
 msgid "Resume: {game}, deploying"
 msgstr ""
 
-#: src/ui/Lobby.tsx:356
+#: src/ui/Lobby.tsx:357
 msgid "Resume last game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:359
+#: src/ui/Lobby.tsx:360
 msgid "{mode}, {n} event, saved {date}"
 msgid_plural "{mode}, {n} events, saved {date}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:365
+#: src/ui/Lobby.tsx:366
 msgid "Against the computer ({level})"
 msgstr ""
 
-#: src/ui/Lobby.tsx:366
+#: src/ui/Lobby.tsx:367
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:366
+#: src/ui/Lobby.tsx:367
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:366
+#: src/ui/Lobby.tsx:367
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:383
+#: src/ui/Lobby.tsx:384
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:385
+#: src/ui/Lobby.tsx:386
 msgid "From New Recruit, BattleScribe, Yellowscribe or a Tabletop Simulator save, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:393
+#: src/ui/Lobby.tsx:394
 msgid "Find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:394
+#: src/ui/Lobby.tsx:395
 msgid "Join a game someone has put up on Open tables."
 msgstr ""
 
-#: src/ui/Lobby.tsx:402
+#: src/ui/Lobby.tsx:403
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:408
-#: src/ui/Lobby.tsx:431
-#: src/ui/Lobby.tsx:451
-#: src/ui/Lobby.tsx:475
+#: src/ui/Lobby.tsx:409
+#: src/ui/Lobby.tsx:432
+#: src/ui/Lobby.tsx:452
+#: src/ui/Lobby.tsx:476
 msgid "Play now (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:411
-#: src/ui/Lobby.tsx:432
-#: src/ui/Lobby.tsx:454
-#: src/ui/Lobby.tsx:479
-#: src/ui/Lobby.tsx:521
+#: src/ui/Lobby.tsx:412
+#: src/ui/Lobby.tsx:433
+#: src/ui/Lobby.tsx:455
+#: src/ui/Lobby.tsx:480
+#: src/ui/Lobby.tsx:522
 msgid "Play the computer"
 msgstr ""
 
-#: src/ui/Lobby.tsx:415
-#: src/ui/Lobby.tsx:458
+#: src/ui/Lobby.tsx:416
+#: src/ui/Lobby.tsx:459
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr ""
 
-#: src/ui/Lobby.tsx:420
-#: src/ui/Lobby.tsx:433
-#: src/ui/Lobby.tsx:463
-#: src/ui/Lobby.tsx:480
-#: src/ui/Lobby.tsx:626
+#: src/ui/Lobby.tsx:421
+#: src/ui/Lobby.tsx:434
+#: src/ui/Lobby.tsx:464
+#: src/ui/Lobby.tsx:481
+#: src/ui/Lobby.tsx:627
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:423
-#: src/ui/Lobby.tsx:466
+#: src/ui/Lobby.tsx:424
+#: src/ui/Lobby.tsx:467
 msgid "Rules, print and play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:445
+#: src/ui/Lobby.tsx:446
 msgid "Our own skirmish game, free to share (CC BY). Crews of five to ten climb a drowned town's towers at low tide: two actions a go, guards and hidden lurkers. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:487
+#: src/ui/Lobby.tsx:488
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:489
+#: src/ui/Lobby.tsx:490
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:494
+#: src/ui/Lobby.tsx:495
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:511
+#: src/ui/Lobby.tsx:512
 msgid "Learn (guided)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:516
+#: src/ui/Lobby.tsx:517
 msgid "Try (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:531
+#: src/ui/Lobby.tsx:532
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:536
+#: src/ui/Lobby.tsx:537
 msgid "Open tables: find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:538
+#: src/ui/Lobby.tsx:539
 msgid "Games other players have put up. Join one, or post your own."
 msgstr ""
 
-#: src/ui/Lobby.tsx:564
+#: src/ui/Lobby.tsx:565
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:585
+#: src/ui/Lobby.tsx:586
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:587
+#: src/ui/Lobby.tsx:588
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:590
+#: src/ui/Lobby.tsx:591
 msgid "Two players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:591
+#: src/ui/Lobby.tsx:592
 msgid "Four players in two teams; teams share CP and VP"
 msgstr ""
 
-#: src/ui/Lobby.tsx:607
+#: src/ui/Lobby.tsx:608
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:609
+#: src/ui/Lobby.tsx:610
 #: src/ui/Room.tsx:97
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:612
+#: src/ui/Lobby.tsx:613
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:616
+#: src/ui/Lobby.tsx:617
 msgid "Paste a room code or invite link to join."
 msgstr ""
 
-#: src/ui/Lobby.tsx:628
+#: src/ui/Lobby.tsx:629
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:633
+#: src/ui/Lobby.tsx:634
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:636
+#: src/ui/Lobby.tsx:637
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:638
+#: src/ui/Lobby.tsx:639
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:642
+#: src/ui/Lobby.tsx:643
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:649
+#: src/ui/Lobby.tsx:650
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:659
+#: src/ui/Lobby.tsx:660
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:676
+#: src/ui/Lobby.tsx:677
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:679
+#: src/ui/Lobby.tsx:680
 msgid "Open a Tabletop Simulator save as a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:682
+#: src/ui/Lobby.tsx:683
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:685
+#: src/ui/Lobby.tsx:686
 msgid "Open a replay file"
 msgstr ""
 
-#: src/ui/Lobby.tsx:695
+#: src/ui/Lobby.tsx:697
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:700
+#: src/ui/Lobby.tsx:702
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:728
+#: src/ui/Lobby.tsx:730
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:729
+#: src/ui/Lobby.tsx:731
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:730
+#: src/ui/Lobby.tsx:732
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:733
-#: src/ui/Lobby.tsx:734
+#: src/ui/Lobby.tsx:735
+#: src/ui/Lobby.tsx:736
 msgid "How hard?"
 msgstr ""
 
-#: src/ui/Lobby.tsx:761
-#: src/ui/Lobby.tsx:762
+#: src/ui/Lobby.tsx:763
+#: src/ui/Lobby.tsx:764
 msgid "Your player card: name, colours, ranked games"
 msgstr ""
 
@@ -8797,10 +8905,6 @@ msgstr ""
 
 #: src/ui/Packages.tsx:231
 msgid "Remove {package}?"
-msgstr ""
-
-#: src/ui/Packages.tsx:246
-msgid "Copy"
 msgstr ""
 
 #: src/ui/Packages.tsx:250

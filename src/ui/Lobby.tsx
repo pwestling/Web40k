@@ -43,6 +43,7 @@ import { InstallLink, OfflineForFriends, OfflineNote, UpdateToast } from "../sw/
 import { PackageLibrary, refOf } from "./Packages";
 import { FRONT, gameTitle, systemLabel } from "./systemLabels";
 import { stateAt } from "../core/log";
+import { OpenLink } from "../share/OpenLink";
 import { loadRoom, loadSavedGame, useStore, type Mode } from "../store";
 
 /** Play by mail loads after the front door; it sits below the fold. */
@@ -689,6 +690,7 @@ export function Lobby() {
               onChange={(e) => e.target.files?.[0] && loadReplay(e.target.files[0])}
             />
           </label>
+          <OpenLink />
         </div>
       </div>
       <footer className="lobby-foot muted small">
