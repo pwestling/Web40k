@@ -1,11 +1,12 @@
 import { safeFileName, saveJson } from "./files";
 import { create } from "zustand";
-import type { GameState, Intent, PlayerId } from "../core";
+import { DEFAULT_SYSTEM, type GameState, type Intent, type PlayerId } from "../core";
 import { fromBase64, toBase64 } from "../assets/base64";
 import { getCached, putCached } from "../assets/cache";
 import { useAssets } from "../assets/store";
 import {
   armyAssets,
+  ARMY_FORMAT,
   armyFromGame,
   readArmy,
   useShelf,
@@ -14,8 +15,8 @@ import {
 } from "../packages/shelf";
 import { t } from "../i18n";
 import { useStore } from "../store";
-import type { ImportedRoster } from "../systems/wh40k/roster";
-import { toYellowscribe } from "../systems/wh40k/yellowscribe";
+import { isYellowscribe, toYellowscribe } from "../systems/wh40k/yellowscribe";
+import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 
 /** What each player deployed in this game, so it can go on the shelf (and from which shelf entry). */
@@ -152,6 +153,22 @@ export async function importArmyFile(file: File): Promise<SavedArmy | string> {
     data = JSON.parse(await file.text());
   } catch {
     return t("That file isn't an Open Battle army.");
+  }
+  // Yellowscribe army data, which TTS players carry about, goes on the shelf as the list it is (UX 488).
+  if (isYellowscribe(data)) {
+    const roster = await parseRosterFile(file.name, new TextEncoder().encode(JSON.stringify(data)));
+    if (!roster.units.length) return roster.warnings.join(" ") || t("No units found in that list.");
+    const army: SavedArmy = {
+      format: ARMY_FORMAT,
+      id: crypto.randomUUID(),
+      name: roster.name,
+      system: DEFAULT_SYSTEM,
+      savedAt: Date.now(),
+      roster,
+      figures: {},
+    };
+    useShelf.getState().put(army);
+    return army;
   }
   const army = readArmy(data);
   if (!army) return t("That file isn't an Open Battle army.");

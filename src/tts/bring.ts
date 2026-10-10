@@ -10,6 +10,7 @@ import { makePiece, zones } from "../systems/wh40k/layout";
 import { TABLE_FORMAT, useTables, type SavedTable } from "../tables/library";
 import { meshShape } from "../tables/meshShape";
 import { ttsArmies, type TtsAsset } from "./armies";
+import { readScriptedUnit } from "./scripted";
 import {
   armyMiddle,
   bakeObj,
@@ -87,7 +88,11 @@ async function download(url: string): Promise<Blob | undefined> {
  * save, e.g. "Ember Kin, Pyre Warden (Club Night Table)".
  */
 function armyName(table: TtsTable, side: 0 | 1, save: string): string {
-  const names = [...new Set(table.units.filter((u) => u.side === side).map((u) => u.name))];
+  const names = [
+    ...new Set(
+      table.units.filter((u) => u.side === side).map((u) => readScriptedUnit(u.models)?.name || u.name),
+    ),
+  ];
   const shown =
     names.length > 3
       ? t("{names} and {n} more", { names: names.slice(0, 2).join(", "), n: names.length - 2 })

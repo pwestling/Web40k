@@ -279,6 +279,8 @@ describe("Yellowscribe army data (#75)", () => {
     await loadRosterParsers();
     const file = await parseRosterFile("army.txt", new TextEncoder().encode(JSON.stringify(TEN)));
     expect(file.units.map((u) => u.name)).toEqual(["Glimmer Wardens", "Ember Strider"]);
+    // Unnamed data goes by its units' faction (UX 487).
+    expect(file.name).toBe("Lantern Host");
     // yellowscribe.link keeps a code's army with the units under armyData.
     const stored = { edition: "10e", order: TEN.order, armyData: TEN.units, uiHeight: "700" };
     expect(parseRosterText(JSON.stringify(stored)).units[1]!.name).toBe("Ember Strider");

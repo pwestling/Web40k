@@ -9,7 +9,10 @@ const LISTS: Record<string, () => string[]> = {
     t("Build your list in New Recruit or BattleScribe."),
     t("Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in."),
     t("Yellowscribe army data (the JSON TTS army tools use) reads in too."),
-    t("In a game, before the battle starts, press Import army list in the left panel and pick the file."),
+    t("In a game, before the battle starts, press Import a list in the left panel and pick the file."),
+    t(
+      "Playing in TTS? Open your save with Open a Tabletop Simulator save as a game: the table and both armies come in, Yellowscribe models with their stats.",
+    ),
     t("Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy."),
   ],
   "fsd-1.7": () => [
@@ -20,7 +23,7 @@ const LISTS: Record<string, () => string[]> = {
   "tow-hand": () => [
     t("Build your list in New Recruit or BattleScribe."),
     t("Export it as JSON from New Recruit, or as .rosz from BattleScribe."),
-    t("In a game, press Import army list in the left panel and pick the file."),
+    t("In a game, press Import a list in the left panel and pick the file."),
     t("Each regiment comes in as a block. Set its frontage (models in the front rank) on the summary."),
     t(
       "Lists often leave stats out: the summary shows them in yellow for you to fill in. Everyone sees what you typed.",
@@ -28,7 +31,7 @@ const LISTS: Record<string, () => string[]> = {
   ],
   "conquest-hand": () => [
     t("Build your list in New Recruit (or BattleScribe, where its data is available)."),
-    t("Export it as JSON or .rosz, then press Import army list in the left panel."),
+    t("Export it as JSON or .rosz, then press Import a list in the left panel."),
     t("Each regiment comes in as a block of stands. Fill in any stats the summary marks as missing."),
   ],
 };

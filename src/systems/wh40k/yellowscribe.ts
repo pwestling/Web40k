@@ -341,8 +341,13 @@ export function readYellowscribe(
   const read = ids.map((id) => readUnit(units[id] as YsUnit, suggestBase));
   for (const u of read) if (!u.models.length) warnings.push(`Unit ${u.name} has no models.`);
   const points = read.reduce((n, u) => n + (u.sheet.points ?? 0), 0);
+  // Unnamed data goes by its faction, the keyword most of its units share (UX 487); else the file's name.
+  const factions = new Map<string, number>();
+  for (const id of ids)
+    for (const k of (units[id] as YsUnit).factionKeywords ?? []) factions.set(k, (factions.get(k) ?? 0) + 1);
+  const faction = [...factions].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
   return {
-    name: str(doc.name) || "Yellowscribe army",
+    name: str(doc.name) || faction,
     ...(points ? { points } : {}),
     units: read,
     warnings,

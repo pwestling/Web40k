@@ -7,6 +7,7 @@ import { t, tn } from "../i18n";
 import { bringTable, type BroughtTable } from "./bring";
 import { hostTtsOnline } from "./online";
 import { openTtsGame } from "./open";
+import { readScriptedUnit } from "./scripted";
 import { scanTable } from "./table";
 
 /**
@@ -38,6 +39,11 @@ export function TtsWholeTable({
   const [moved, setMoved] = useState<Set<number>>(new Set());
   // What's saved already (UX 484): the next step plays it without importing again.
   const [saved, setSaved] = useState<{ brought: BroughtTable; note: string } | null>(null);
+  // A Yellowscribe unit goes by the name in its script, as the game will call it (UX 490).
+  const names = useMemo(
+    () => scan?.units.map((u) => readScriptedUnit(u.models)?.name || u.name) ?? [],
+    [scan],
+  );
   if (!scan) return null;
   const placed = scan.units.filter((u) => u.placed);
   if (!scan.terrain.length && !scan.units.length) return null;
@@ -134,7 +140,7 @@ export function TtsWholeTable({
                     title={side === 0 ? t("Move to Player 2") : t("Move to Player 1")}
                     onClick={() => move(i)}
                   >
-                    {u.placed ? u.name : t("{name} (in a bag)", { name: u.name })} ⇄
+                    {u.placed ? names[i] : t("{name} (in a bag)", { name: names[i] })} ⇄
                   </button>
                 ) : null,
               )}

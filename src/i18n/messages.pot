@@ -1594,7 +1594,7 @@ msgstr ""
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:311
-#: src/tts/TtsWholeTable.tsx:159
+#: src/tts/TtsWholeTable.tsx:165
 #: src/ui/Lobby.tsx:573
 msgid "Game"
 msgstr ""
@@ -2930,7 +2930,7 @@ msgid "That save has no custom models in it."
 msgstr ""
 
 #: src/figures/TtsImport.tsx:72
-#: src/tts/bring.ts:148
+#: src/tts/bring.ts:153
 msgid "Importing {n} of {total}: {name}"
 msgstr ""
 
@@ -5667,6 +5667,7 @@ msgstr ""
 
 #: src/tts/ListMerge.tsx:28
 #: src/tts/NoStats.tsx:60
+#: src/ui/shelfActions.ts:160
 msgid "No units found in that list."
 msgstr ""
 
@@ -5704,121 +5705,121 @@ msgstr ""
 msgid "No stats yet. Take them from your army list; every model stays where it stands."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:100
+#: src/tts/TtsWholeTable.tsx:102
+msgid "Pick your TTS folder after loading the save in TTS once, and they come from there."
+msgstr ""
+
+#: src/tts/TtsWholeTable.tsx:106
 msgid "{n} thing stood off this game's table."
 msgid_plural "{n} things stood off this game's table."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:109
+#: src/tts/TtsWholeTable.tsx:115
 msgid "The whole table"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:112
+#: src/tts/TtsWholeTable.tsx:118
 msgid "{n} piece of terrain"
 msgid_plural "{n} pieces of terrain"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:113
+#: src/tts/TtsWholeTable.tsx:119
 msgid "{n} unit on the table"
 msgid_plural "{n} units on the table"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:115
+#: src/tts/TtsWholeTable.tsx:121
 msgid "{n} still in a bag"
 msgid_plural "{n} still in bags"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:117
+#: src/tts/TtsWholeTable.tsx:123
 msgid "{n} army"
 msgid_plural "{n} armies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:120
+#: src/tts/TtsWholeTable.tsx:126
 msgid "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:128
+#: src/tts/TtsWholeTable.tsx:134
 msgid "Player 1:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:128
+#: src/tts/TtsWholeTable.tsx:134
 msgid "Player 2:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:134
+#: src/tts/TtsWholeTable.tsx:140
 msgid "Move to Player 2"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:134
+#: src/tts/TtsWholeTable.tsx:140
 msgid "Move to Player 1"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:137
+#: src/tts/TtsWholeTable.tsx:143
 msgid "{name} (in a bag)"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:142
+#: src/tts/TtsWholeTable.tsx:148
 msgid "the game's sample army"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:153
+#: src/tts/TtsWholeTable.tsx:159
 msgid "Swap sides"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:175
+#: src/tts/TtsWholeTable.tsx:181
 msgid "Play it online with a friend"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:178
+#: src/tts/TtsWholeTable.tsx:184
 msgid "Open it as a game"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:182
+#: src/tts/TtsWholeTable.tsx:188
 msgid "Save the table and armies"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:190
+#: src/tts/TtsWholeTable.tsx:196
 msgid "They're in the table library and on your army shelf: play it online or here, or pick them when you host."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:71
+#: src/tts/TtsWholeTable.tsx:77
 msgid "Saved {save} to your tables with {n} piece of terrain"
 msgid_plural "Saved {save} to your tables with {n} pieces of terrain"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:77
+#: src/tts/TtsWholeTable.tsx:83
 msgid "and {n} army to your shelf."
 msgid_plural "and {n} armies to your shelf."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:82
-#: src/tts/bring.ts:93
+#: src/tts/TtsWholeTable.tsx:88
+#: src/tts/bring.ts:98
 msgid "{names} and {n} more"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:88
+#: src/tts/TtsWholeTable.tsx:94
 msgid "{names} couldn't be downloaded or read: a figure stands in on a plain base, terrain is left out."
 msgid_plural "{names} couldn't be downloaded or read: figures stand in on plain bases, terrain is left out."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:96
-msgid "Pick your TTS folder after loading the save in TTS once, and they come from there."
-msgstr ""
-
-#: src/tts/bring.ts:130
-msgid "TTS model"
-msgstr ""
-
-#: src/tts/bring.ts:95
+#: src/tts/bring.ts:100
 msgid "{army} ({save})"
+msgstr ""
+
+#: src/tts/bring.ts:135
+msgid "TTS model"
 msgstr ""
 
 #: src/tts/online.ts:41
@@ -5833,108 +5834,112 @@ msgstr ""
 msgid "Save it as a file: New Recruit exports JSON, BattleScribe saves .ros or .rosz. All three read in."
 msgstr ""
 
+#: src/ui/ArmyGuide.tsx:100
+msgid "A rules package adds a game, or more {army} and rules to one, as a single file. Add it under Rules packages on the start screen. Everyone in a game checks they have the same version, and a package's code only runs once you have said yes to it."
+msgstr ""
+
+#: src/ui/ArmyGuide.tsx:102
+#: src/ui/systemLabels.ts:30
+msgid "units"
+msgstr ""
+
 #: src/ui/ArmyGuide.tsx:11
 msgid "Yellowscribe army data (the JSON TTS army tools use) reads in too."
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:12
-msgid "In a game, before the battle starts, press Import army list in the left panel and pick the file."
+msgid "In a game, before the battle starts, press Import a list in the left panel and pick the file."
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:13
-msgid "Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy."
+msgid "Playing in TTS? Open your save with Open a Tabletop Simulator save as a game: the table and both armies come in, Yellowscribe models with their stats."
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:16
+msgid "Check the summary: bases are guessed from the unit, and you can change any of them. Then deploy."
+msgstr ""
+
+#: src/ui/ArmyGuide.tsx:19
 msgid "There is no list app for this one yet: start from Sample army, or a rules package that brings units."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:17
+#: src/ui/ArmyGuide.tsx:20
 msgid "Any BattleScribe-style file (.ros, .rosz or New Recruit JSON) with model profiles also reads in."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:18
+#: src/ui/ArmyGuide.tsx:21
 msgid "Stats the list leaves out are asked for on the import summary."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:22
+#: src/ui/ArmyGuide.tsx:25
 msgid "Export it as JSON from New Recruit, or as .rosz from BattleScribe."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:23
-msgid "In a game, press Import army list in the left panel and pick the file."
+#: src/ui/ArmyGuide.tsx:26
+msgid "In a game, press Import a list in the left panel and pick the file."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:24
+#: src/ui/ArmyGuide.tsx:27
 msgid "Each regiment comes in as a block. Set its frontage (models in the front rank) on the summary."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:25
+#: src/ui/ArmyGuide.tsx:28
 msgid "Lists often leave stats out: the summary shows them in yellow for you to fill in. Everyone sees what you typed."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:30
+#: src/ui/ArmyGuide.tsx:33
 msgid "Build your list in New Recruit (or BattleScribe, where its data is available)."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:31
-msgid "Export it as JSON or .rosz, then press Import army list in the left panel."
+#: src/ui/ArmyGuide.tsx:34
+msgid "Export it as JSON or .rosz, then press Import a list in the left panel."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:32
+#: src/ui/ArmyGuide.tsx:35
 msgid "Each regiment comes in as a block of stands. Fill in any stats the summary marks as missing."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:48
-#: src/ui/ArmyGuide.tsx:52
+#: src/ui/ArmyGuide.tsx:51
+#: src/ui/ArmyGuide.tsx:55
 msgid "Bring your army"
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:70
+#: src/ui/ArmyGuide.tsx:73
 msgid "Your list"
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:77
+#: src/ui/ArmyGuide.tsx:80
 msgid "Your list stays with you: it goes to the people in your game and nowhere else. Open Battle comes with no armies but its made-up samples."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:81
+#: src/ui/ArmyGuide.tsx:84
 #: src/ui/ArmyImport.tsx:512
 #: src/ui/FigurePicker.tsx:207
 msgid "Your figures"
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:84
+#: src/ui/ArmyGuide.tsx:87
 msgid "Any 3D model file works: .glb, .gltf, .stl, .obj or .ply (a scan, or the file you printed from)."
 msgstr ""
 
-#: src/ui/ArmyGuide.tsx:89
-msgid "Drag the file onto a unit on the table, or select the unit and use Figures on its card."
-msgstr ""
-
 #: src/ui/ArmyGuide.tsx:9
-#: src/ui/ArmyGuide.tsx:21
+#: src/ui/ArmyGuide.tsx:24
 msgid "Build your list in New Recruit or BattleScribe."
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:92
-msgid "One figure for the whole unit, or one per kind of model. Everyone in the game sees them."
+msgid "Drag the file onto a unit on the table, or select the unit and use Figures on its card."
 msgstr ""
 
 #: src/ui/ArmyGuide.tsx:95
+msgid "One figure for the whole unit, or one per kind of model. Everyone in the game sees them."
+msgstr ""
+
+#: src/ui/ArmyGuide.tsx:98
 #: src/ui/Packages.tsx:177
 #: src/ui/Packages.tsx:323
 #: src/ui/Packages.tsx:541
 msgid "Rules packages"
-msgstr ""
-
-#: src/ui/ArmyGuide.tsx:97
-msgid "A rules package adds a game, or more {army} and rules to one, as a single file. Add it under Rules packages on the start screen. Everyone in a game checks they have the same version, and a package's code only runs once you have said yes to it."
-msgstr ""
-
-#: src/ui/ArmyGuide.tsx:99
-#: src/ui/systemLabels.ts:30
-msgid "units"
 msgstr ""
 
 #: src/ui/ArmyImport.tsx:212
@@ -11278,7 +11283,7 @@ msgid "Drag your units into your deployment zone, the shaded strip on your side.
 msgstr ""
 
 #: src/ui/WhatNow.tsx:49
-msgid "No army yet? In the left panel, press Sample army, or Import army list for your own."
+msgid "No army yet? In the left panel, press Sample army, or Import a list for your own."
 msgstr ""
 
 #: src/ui/WhatNow.tsx:50
@@ -12677,8 +12682,8 @@ msgstr ""
 msgid "long range"
 msgstr ""
 
-#: src/ui/shelfActions.ts:154
-#: src/ui/shelfActions.ts:157
+#: src/ui/shelfActions.ts:155
+#: src/ui/shelfActions.ts:174
 msgid "That file isn't an Open Battle army."
 msgstr ""
 

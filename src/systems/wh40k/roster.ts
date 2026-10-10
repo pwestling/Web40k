@@ -344,6 +344,12 @@ export async function parseRosterFile(
   }
   const result = parseRosterText(textContent, extract);
   result.warnings.unshift(...pre);
+  // A list with no name of its own goes by its file's (UX 487).
+  if (!result.name && result.units.length)
+    result.name = fileName
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/[-_]+/g, " ")
+      .trim();
   return result;
 }
 
