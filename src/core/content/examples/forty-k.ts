@@ -352,7 +352,8 @@ const unitRules: RuleDef[] = [
   // Lone Operative's range limit is the hit step's impossibleIf below.
   flagRule("loneOperative", "Lone Operative", "^lone operative"),
   flagRule("scouts", "Scouts", "^scouts\\s*(?<x>\\d+)", [{ id: "x", type: "number", default: 6 }]),
-  flagRule("leader", "Leader", "^leader\\b"),
+  // Attaching a leader is the players' to do (units join by hand): a reminder, not "Automatic: Leader" (PX).
+  { ...manualRule("leader", "Leader", "^leader\\b"), appliesTo: ["unit"] },
 ];
 
 /** Lone Operative: out of reach of ranged attacks beyond 12" unless attached to a unit. */
