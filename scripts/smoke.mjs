@@ -2406,10 +2406,13 @@ const checks = {
     await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
     await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
     await page.keyboard.press("Escape");
-    const card = page.locator(".stratagem-hand .hand-card.ready", { hasText: "Re-roll" }).first();
+    // Command Re-roll waits for a roll, so the fan starts folded: open it.
+    await page.locator(".stratagem-hand .hand-strip").hover();
+    const card = page.locator(".stratagem-hand .hand-card", { hasText: "Re-roll" }).first();
     await card.waitFor({ timeout: 10000 });
     const pips = await page.locator(".stratagem-hand .cp-pips .pip").count();
     await card.hover();
+    await card.locator(".full", { hasText: "When" }).waitFor({ timeout: 5000 });
     if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "hand.png") });
     const from = await card.boundingBox();
     const box = await page.locator("canvas").first().boundingBox();

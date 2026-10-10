@@ -432,6 +432,38 @@ body.verb-ok canvas {
 .hand-card .why {
   color: #fca5a5;
 }
+/* The whole card (When, Target, Effect) shows only when it's raised. */
+.hand-card .full {
+  display: none;
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+.hand-card .full dt {
+  display: inline;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+.hand-card .full dt::after {
+  content: " ";
+}
+.hand-card .full dd {
+  display: inline;
+  margin: 0;
+  color: #d1d5db;
+}
+.hand-card .full > div + div {
+  margin-top: 3px;
+}
+.hand-card:is(:hover, :focus-visible, .picked) .full {
+  display: block;
+}
+.hand-card:is(:hover, :focus-visible, .picked) .hint {
+  display: none;
+}
+.hand-ghost .hand-card .full {
+  display: none;
+}
 .hand-card .clip {
   position: absolute;
   top: 6px;
@@ -451,9 +483,13 @@ body.verb-ok canvas {
 .hand-card:focus-visible,
 .hand-card.picked {
   z-index: 2;
+  width: 168px;
   height: auto;
-  min-height: 150px;
-  transform: translateY(-36px) scale(1.5);
+  min-height: 0;
+  max-height: 300px;
+  margin: 0 -42px;
+  overflow-y: auto;
+  transform: translateY(-20px) scale(1.15);
   transition-duration: calc(120ms * var(--hand-speed));
   filter: none;
 }
@@ -531,7 +567,6 @@ body.verb-ok canvas {
 }
 /* A card someone played: face down from the far edge, then flipped (yours just lands). */
 .hand-reveals {
-  --hand-speed: 1;
   position: fixed;
   z-index: 21;
   top: 22%;
@@ -565,6 +600,17 @@ body.verb-ok canvas {
   border: 1px solid #3a4150;
   border-top: 3px solid var(--side, #888);
   font-size: 0.8rem;
+}
+.hand-reveal .face .name {
+  font-size: 1.02rem;
+  line-height: 1.15;
+}
+/* Played on a unit: it lands by the unit. */
+.hand-reveal.at-unit {
+  position: fixed;
+  z-index: 21;
+  margin-left: -75px;
+  pointer-events: none;
 }
 .hand-reveal .face .cost {
   color: #fbbf24;
@@ -633,7 +679,7 @@ body.verb-ok canvas {
   .hand-card:hover,
   .hand-card:focus-visible,
   .hand-card.picked {
-    transform: translateY(-20px) scale(1.25);
+    transform: translateY(-12px);
   }
 }
 /* The replay handle steps aside for the stratagem hand. */

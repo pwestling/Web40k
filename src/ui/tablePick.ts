@@ -9,7 +9,9 @@ import type { UnitId } from "../core";
 export const tablePick: {
   unitAt(x: number, y: number): UnitId | null;
   onTable(x: number, y: number): boolean;
-} = { unitAt: () => null, onTable: () => false };
+  /** Where a unit is on screen (client pixels), if it's in view. */
+  screenOf(unitId: UnitId): { x: number; y: number } | null;
+} = { unitAt: () => null, onTable: () => false, screenOf: () => null };
 
 /** The units a card in hand could be played on: lit on the table under the pointer while it's held. */
 export const useHandTargets = create<{ ids: UnitId[] | null }>(() => ({ ids: null }));

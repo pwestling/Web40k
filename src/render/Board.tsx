@@ -139,6 +139,22 @@ function FigureDrop() {
       return (id && useStore.getState().game.models[id]?.unitId) || null;
     };
     tablePick.onTable = onCanvas;
+    tablePick.screenOf = (unitId) => {
+      const { game } = useStore.getState();
+      const models = (game.units[unitId]?.modelIds ?? []).flatMap((id) => {
+        const m = game.models[id];
+        return m && !m.destroyed ? [m] : [];
+      });
+      if (!models.length) return null;
+      const at = new Vector3(
+        models.reduce((n, m) => n + m.position.x, 0) / models.length,
+        1,
+        models.reduce((n, m) => n + m.position.y, 0) / models.length,
+      ).project(camera);
+      if (at.z > 1 || Math.abs(at.x) > 1 || Math.abs(at.y) > 1) return null;
+      const rect = el.getBoundingClientRect();
+      return { x: rect.left + ((at.x + 1) / 2) * rect.width, y: rect.top + ((1 - at.y) / 2) * rect.height };
+    };
     const over = (e: DragEvent) => {
       if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
     };
@@ -160,6 +176,7 @@ function FigureDrop() {
     return () => {
       tablePick.unitAt = () => null;
       tablePick.onTable = () => false;
+      tablePick.screenOf = () => null;
       el.removeEventListener("dragover", over);
       el.removeEventListener("drop", drop);
     };

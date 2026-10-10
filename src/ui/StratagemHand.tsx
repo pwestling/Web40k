@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { GameState, Player, PlayerId, UnitId } from "../core";
-import { playerActions, type PlayerActionOption } from "../core/content/player";
-import { systemOf } from "../core/content/turn";
+import { armyStratagem, playerActions, type PlayerActionOption } from "../core/content/player";
+import { schedule, systemOf } from "../core/content/turn";
 import { gameText, t } from "../i18n";
 import { displayName } from "../i18n/names";
 import { useCanControl, useStore } from "../store";
@@ -75,6 +75,39 @@ function overAt(game: GameState, option: PlayerActionOption, x: number, y: numbe
   return { unitId: null, ok: true, line: t("Play {name} · {cost}", { name, cost: option.cost }) };
 }
 
+/**
+ * A card with nothing of its own to do (no unit, no effect: a re-roll) waits for
+ * the roll that needs it. It sits down with the rest, so the fan can fold, but
+ * it can still be played (PX feel pass).
+ */
+const standby = (o: PlayerActionOption) =>
+  o.ok && !o.def.target && !o.def.do?.length && !o.def.procedure && !o.def.move && !o.def.endsTurn;
+const playable = (o: PlayerActionOption) => o.ok && !standby(o);
+const whyDown = (o: PlayerActionOption) =>
+  standby(o) ? t("Play it when a roll calls for it") : gameText(o.why ?? "");
+
+/** When, Target and Effect for the raised card: a faction stratagem's own words, else from the rules data. */
+function cardText(game: GameState, o: PlayerActionOption): [string, string][] {
+  const army = armyStratagem(game, o.def.id);
+  const slots = schedule(systemOf(game));
+  const phases = [
+    ...new Set((o.def.phases ?? []).map((id) => gameText(slots.find((s) => s.id === id)?.name ?? id))),
+  ].join(", ");
+  const side = {
+    active: t("Your turn"),
+    inactive: t("Your opponent's turn"),
+    either: t("Either player's turn"),
+  }[o.def.side ?? "either"];
+  const when = army?.when ?? (phases ? `${side}: ${phases}` : side);
+  const target = army?.target ?? (o.def.target ? t("One of your units") : undefined);
+  const effect = army?.effect ?? army?.text ?? (o.def.hint ? gameText(o.def.hint) : undefined);
+  return [
+    [t("When"), when],
+    ...(target ? [[t("Target"), target] as [string, string]] : []),
+    ...(effect ? [[t("Effect"), effect] as [string, string]] : []),
+  ];
+}
+
 export function StratagemHand() {
   const game = useGame();
   const dispatch = useStore((s) => s.dispatch);
@@ -86,9 +119,9 @@ export function StratagemHand() {
   const options = player
     ? playerActions(game, player.id)
         .filter((o) => !o.def.custom)
-        .sort((a, b) => Number(b.ok) - Number(a.ok))
+        .sort((a, b) => Number(playable(b)) - Number(playable(a)) || Number(b.ok) - Number(a.ok))
     : [];
-  const ready = options.filter((o) => o.ok).length;
+  const ready = options.filter(playable).length;
   const [peek, setPeek] = useState(false);
   const [spread, setSpread] = useState(false);
   const [held, setHeld] = useState<Held | null>(null);
@@ -256,9 +289,7 @@ export function StratagemHand() {
         )}
         {folded ? (
           <button className="hand-strip" onClick={() => setPeek(true)} aria-expanded={false}>
-            {ready
-              ? t("Stratagems · {n} ready", { n: ready })
-              : t("Stratagems · {n} ready later", { n: options.length })}
+            {ready ? t("Stratagems · {n} ready", { n: ready }) : t("Stratagems · {n}", { n: options.length })}
           </button>
         ) : (
           <div className="fan" role="group" aria-label={t("Stratagems")}>
@@ -275,10 +306,9 @@ export function StratagemHand() {
               return (
                 <button
                   key={id}
-                  className={`hand-card ${o.ok ? "ready" : "down"} ${o.why?.startsWith("Already used") ? "used" : ""} ${picked === id ? "picked" : ""}`}
+                  className={`hand-card ${playable(o) ? "ready" : "down"} ${o.why?.startsWith("Already used") ? "used" : ""} ${picked === id ? "picked" : ""}`}
                   style={style}
-                  title={o.ok ? undefined : gameText(o.why ?? "")}
-                  aria-label={`${gameText(o.def.name)}, ${o.cost}${o.ok ? "" : `: ${gameText(o.why ?? "")}`}`}
+                  aria-label={`${gameText(o.def.name)}, ${o.cost}${playable(o) ? "" : `: ${whyDown(o)}`}`}
                   aria-pressed={picked === id}
                   onPointerDown={(e) => {
                     if (e.button !== 0) return;
@@ -312,7 +342,16 @@ export function StratagemHand() {
                   <span className="cost">{o.cost}</span>
                   <strong className="name">{gameText(o.def.name)}</strong>
                   {o.def.hint && <span className="hint">{gameText(o.def.hint)}</span>}
-                  {!o.ok && <span className="why">{gameText(o.why ?? "")}</span>}
+                  {!playable(o) && <span className="why">{whyDown(o)}</span>}
+                  {/* Raised: the whole card, When, Target and Effect. */}
+                  <dl className="full">
+                    {cardText(game, o).map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
                   {o.why?.startsWith("Already used") && <span className="clip">{t("used")}</span>}
                 </button>
               );
@@ -383,6 +422,8 @@ type Reveal = {
   unit: string;
   cost: string;
   mine: boolean;
+  /** Played on a unit in view: it lands there, on screen. */
+  at: { x: number; y: number } | null;
 };
 
 /**
@@ -422,6 +463,7 @@ function Reveals() {
           unit: event.targetId ? displayName(game.units[event.targetId]?.name ?? "") : "",
           cost: spent ? t("{n} CP", { n: spent }) : "",
           mine: canControl(event.player),
+          at: event.targetId ? tablePick.screenOf(event.targetId) : null,
         },
       ];
     });
@@ -433,24 +475,32 @@ function Reveals() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top, scrub]);
   if (!shown.length) return null;
+  const card = (r: Reveal) => (
+    <div
+      key={r.seq}
+      className={`hand-reveal ${r.mine ? "mine" : "theirs"} ${r.at ? "at-unit" : ""}`}
+      style={
+        {
+          "--side": r.color,
+          ...(r.at
+            ? { left: Math.max(84, Math.min(innerWidth - 84, r.at.x)), top: Math.max(8, r.at.y - 150) }
+            : {}),
+        } as CSSProperties
+      }
+    >
+      <div className="face">
+        <span className="cost">{r.cost}</span>
+        <strong className="name">{r.name}</strong>
+        <span className="small">{r.unit ? t("{who} on {unit}", { who: r.who, unit: r.unit }) : r.who}</span>
+      </div>
+      <div className="back" />
+    </div>
+  );
+  const speed = { "--hand-speed": fast ? 0.5 : 1 } as CSSProperties;
   return (
-    <div className="hand-reveals" style={{ "--hand-speed": fast ? 0.5 : 1 } as CSSProperties} aria-hidden>
-      {shown.map((r) => (
-        <div
-          key={r.seq}
-          className={`hand-reveal ${r.mine ? "mine" : "theirs"}`}
-          style={{ "--side": r.color } as CSSProperties}
-        >
-          <div className="face">
-            <span className="cost">{r.cost}</span>
-            <strong className="name">{r.name}</strong>
-            <span className="small">
-              {r.unit ? t("{who} on {unit}", { who: r.who, unit: r.unit }) : r.who}
-            </span>
-          </div>
-          <div className="back" />
-        </div>
-      ))}
+    <div style={speed} aria-hidden>
+      <div className="hand-reveals">{shown.filter((r) => !r.at).map(card)}</div>
+      {shown.filter((r) => r.at).map(card)}
     </div>
   );
 }

@@ -2144,6 +2144,7 @@ msgstr "Waffe…"
 
 #: src/companion/TableAttack.tsx:68
 #: src/ui/AttackPanel.tsx:133
+#: src/ui/StratagemHand.tsx:106
 #, fuzzy
 msgid "Target"
 msgstr "Ziel"
@@ -5271,42 +5272,42 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] "unterschreibt {signed} von {n} Ergebnis"
 msgstr[1] "unterschreibt {signed} von {n} Ergebnissen"
 
-#: src/render/Board.tsx:1151
+#: src/render/Board.tsx:1168
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label}: gehalten von {player}"
 
-#: src/render/Board.tsx:1153
+#: src/render/Board.tsx:1170
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label}: umkämpft"
 
-#: src/render/Board.tsx:1154
+#: src/render/Board.tsx:1171
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label}: von niemandem gehalten"
 
-#: src/render/Board.tsx:1215
+#: src/render/Board.tsx:1232
 #, fuzzy
 msgid "Not visible"
 msgstr "Nicht sichtbar"
 
-#: src/render/Board.tsx:1217
+#: src/render/Board.tsx:1234
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} sichtbar · {cover} in Deckung"
 
-#: src/render/Board.tsx:1222
+#: src/render/Board.tsx:1239
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} sichtbar"
 
-#: src/render/Board.tsx:1696
+#: src/render/Board.tsx:1713
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Bewegung {inches}\""
 
-#: src/render/Board.tsx:370
+#: src/render/Board.tsx:387
 #, fuzzy
 msgid "The table"
 msgstr "Der Tisch"
@@ -11609,9 +11610,9 @@ msgid "0 CP left"
 msgstr "0 CP übrig"
 
 #: src/ui/PlayPanel.tsx:196
-#: src/ui/StratagemHand.tsx:250
-#: src/ui/StratagemHand.tsx:250
-#: src/ui/StratagemHand.tsx:254
+#: src/ui/StratagemHand.tsx:283
+#: src/ui/StratagemHand.tsx:283
+#: src/ui/StratagemHand.tsx:287
 #, fuzzy
 msgid "{cp} CP"
 msgstr "{cp} CP"
@@ -12816,37 +12817,53 @@ msgstr "{status} entfernen"
 msgid "Mark {status}"
 msgstr "{status} markieren"
 
-#: src/ui/StratagemHand.tsx:260
+#: src/ui/StratagemHand.tsx:102
+#, fuzzy
+msgid "One of your units"
+msgstr "Eine deiner Einheiten"
+
+#: src/ui/StratagemHand.tsx:105
+#: src/ui/TeachRule.tsx:194
+#, fuzzy
+msgid "When"
+msgstr "Wann"
+
+#: src/ui/StratagemHand.tsx:107
+#, fuzzy
+msgid "Effect"
+msgstr "Wirkung"
+
+#: src/ui/StratagemHand.tsx:292
 #, fuzzy
 msgid "Stratagems · {n} ready"
 msgstr "Strategeme · {n} bereit"
 
-#: src/ui/StratagemHand.tsx:261
+#: src/ui/StratagemHand.tsx:292
 #, fuzzy
-msgid "Stratagems · {n} ready later"
-msgstr "Strategeme · {n} später bereit"
+msgid "Stratagems · {n}"
+msgstr "Strategeme · {n}"
 
-#: src/ui/StratagemHand.tsx:264
+#: src/ui/StratagemHand.tsx:295
 #, fuzzy
 msgid "Stratagems"
 msgstr "Strategeme"
 
-#: src/ui/StratagemHand.tsx:316
+#: src/ui/StratagemHand.tsx:355
 #, fuzzy
 msgid "used"
 msgstr "benutzt"
 
-#: src/ui/StratagemHand.tsx:336
+#: src/ui/StratagemHand.tsx:375
 #, fuzzy
 msgid "Pick a unit for {name} (Esc to cancel)"
 msgstr "Wähle eine Einheit für {name} (Esc bricht ab)"
 
-#: src/ui/StratagemHand.tsx:423
+#: src/ui/StratagemHand.tsx:464
 #, fuzzy
 msgid "{n} CP"
 msgstr "{n} CP"
 
-#: src/ui/StratagemHand.tsx:448
+#: src/ui/StratagemHand.tsx:494
 #, fuzzy
 msgid "{who} on {unit}"
 msgstr "{who} auf {unit}"
@@ -12872,10 +12889,30 @@ msgid "Drop it on the table"
 msgstr "Leg sie auf den Tisch"
 
 #: src/ui/StratagemHand.tsx:75
-#: src/ui/StratagemHand.tsx:346
+#: src/ui/StratagemHand.tsx:385
 #, fuzzy
 msgid "Play {name} · {cost}"
 msgstr "{name} spielen · {cost}"
+
+#: src/ui/StratagemHand.tsx:87
+#, fuzzy
+msgid "Play it when a roll calls for it"
+msgstr "Spiel sie, wenn ein Wurf sie braucht"
+
+#: src/ui/StratagemHand.tsx:97
+#, fuzzy
+msgid "Your turn"
+msgstr "Dein Zug"
+
+#: src/ui/StratagemHand.tsx:98
+#, fuzzy
+msgid "Your opponent's turn"
+msgstr "Zug des Gegners"
+
+#: src/ui/StratagemHand.tsx:99
+#, fuzzy
+msgid "Either player's turn"
+msgstr "Zug eines beliebigen Spielers"
 
 #: src/ui/SystemPanels.tsx:103
 #, fuzzy
@@ -13345,11 +13382,6 @@ msgstr "Phasen"
 #, fuzzy
 msgid "(any phase)"
 msgstr "(jede Phase)"
-
-#: src/ui/TeachRule.tsx:194
-#, fuzzy
-msgid "When"
-msgstr "Wann"
 
 #: src/ui/TeachRule.tsx:215
 #, fuzzy
