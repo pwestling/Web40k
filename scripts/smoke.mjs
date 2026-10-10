@@ -1133,6 +1133,152 @@ const checks = {
     return [...host.page.errors, ...guest.page.errors];
   },
 
+  /**
+   * Match figures from a photo: a player's OpenAI key (kept on the device), a photo of their army,
+   * and the model's answer (stood in for here, at OpenAI's address) lands in the import's Figure column.
+   */
+  async "photo-match"() {
+    const { page, context } = await device();
+    // Two cubes as binary STLs, named so the library has two figures that match no unit by name.
+    const stl = (size) => {
+      const tris = [
+        [
+          [0, 0, 0],
+          [1, 1, 0],
+          [1, 0, 0],
+        ],
+        [
+          [0, 0, 0],
+          [0, 1, 0],
+          [1, 1, 0],
+        ],
+        [
+          [0, 0, 1],
+          [1, 0, 1],
+          [1, 1, 1],
+        ],
+        [
+          [0, 0, 1],
+          [1, 1, 1],
+          [0, 1, 1],
+        ],
+        [
+          [0, 0, 0],
+          [1, 0, 0],
+          [1, 0, 1],
+        ],
+        [
+          [0, 0, 0],
+          [1, 0, 1],
+          [0, 0, 1],
+        ],
+        [
+          [0, 1, 0],
+          [1, 1, 1],
+          [1, 1, 0],
+        ],
+        [
+          [0, 1, 0],
+          [0, 1, 1],
+          [1, 1, 1],
+        ],
+        [
+          [0, 0, 0],
+          [0, 0, 1],
+          [0, 1, 1],
+        ],
+        [
+          [0, 0, 0],
+          [0, 1, 1],
+          [0, 1, 0],
+        ],
+        [
+          [1, 0, 0],
+          [1, 1, 0],
+          [1, 1, 1],
+        ],
+        [
+          [1, 0, 0],
+          [1, 1, 1],
+          [1, 0, 1],
+        ],
+      ];
+      const b = Buffer.alloc(84 + 50 * tris.length);
+      b.writeUInt32LE(tris.length, 80);
+      tris.forEach((t, i) => t.flat().forEach((v, j) => b.writeFloatLE(v * size, 84 + i * 50 + 12 + j * 4)));
+      return b;
+    };
+    await lobby(page);
+    await page.getByRole("button", { name: /^Figure library/ }).click();
+    await page
+      .locator('input[type="file"][multiple]')
+      .first()
+      .setInputFiles([
+        { name: "mini alpha.stl", mimeType: "model/stl", buffer: stl(25) },
+        { name: "mini beta.stl", mimeType: "model/stl", buffer: stl(32) },
+      ]);
+    await page.getByText("mini beta").first().waitFor({ timeout: 30_000 });
+    await page.keyboard.press("Escape");
+    await page.locator("summary", { hasText: "More ways to play" }).click();
+    await page.getByRole("button", { name: /hotseat/ }).click();
+    await page.getByRole("button", { name: "Sample army" }).click();
+    const modal = page.locator(".modal");
+    await modal.getByRole("button", { name: /Match figures from a photo/ }).click();
+    await modal.getByLabel("OpenAI API key").fill("sk-smoke");
+    await modal.getByRole("button", { name: "Keep the key" }).click();
+    const stored = await page.evaluate(() => localStorage.getItem("open-battle:vision"));
+    if (!stored?.includes("sk-smoke")) throw new Error(`the key wasn't kept: ${stored}`);
+    let sent = null;
+    await page.route("https://api.openai.com/v1/responses", async (route) => {
+      sent = route.request().postDataJSON();
+      const figure = sent.input[0].content.find(
+        (c) => c.type === "input_text" && c.text.startsWith("F") && c.text.includes("mini beta"),
+      );
+      const answer = {
+        assignments: [{ unit: "U1", figure: figure.text.split(":")[0], confidence: 0.82, why: "same pose" }],
+      };
+      await route.fulfill({
+        status: 200,
+        headers: { "access-control-allow-origin": "*" },
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "completed",
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(answer) }] }],
+        }),
+      });
+    });
+    await page.evaluate(async () => {
+      const c = document.createElement("canvas");
+      c.width = 2400;
+      c.height = 1800;
+      const g = c.getContext("2d");
+      g.fillStyle = "#ddd";
+      g.fillRect(0, 0, 2400, 1800);
+      g.fillStyle = "#335";
+      for (let i = 0; i < 5; i++) g.fillRect(300 + i * 350, 700, 160, 500);
+      const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85));
+      const input = document.querySelector(".photo-match input[type=file]");
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], "army.jpg", { type: "image/jpeg" }));
+      input.files = dt.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await modal.getByRole("button", { name: "Match", exact: true }).click();
+    await modal.getByText(/The photo matched 1 unit/).waitFor({ timeout: 30_000 });
+    const images = sent.input[0].content.filter((c) => c.type === "input_image");
+    if (sent.model !== "gpt-5" || images.length < 1 || !images[0].image_url.startsWith("data:image/jpeg"))
+      throw new Error(`odd request: model ${sent.model}, ${images.length} images`);
+    const pick = modal.locator(".figure-pick select").first();
+    const label = await pick.evaluate((s) => s.selectedOptions[0]?.textContent);
+    if (label !== "mini beta" || !(await pick.getAttribute("class"))?.includes("from-photo"))
+      throw new Error(`the first unit has ${label}`);
+    console.log(`  photo-match: ${images.length} images sent, first unit picked ${label}`);
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "photo-match.png") });
+    await context.close();
+    return page.errors;
+  },
+
   async companion() {
     const { page, context } = await device({
       viewport: { width: 390, height: 844 },

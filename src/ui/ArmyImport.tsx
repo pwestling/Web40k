@@ -1,13 +1,17 @@
 import { createPortal } from "react-dom";
 import { photographNext, undressed } from "../standees/ask";
 import { displayName, playerName } from "../i18n/names";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { armyFromGame, sameArmy, useShelf, type SavedArmy } from "../packages/shelf";
 import { SavedNote } from "./SavedNote";
 import { dressFromShelf, exportArmy, importArmyFile, saveToShelf, useDeployed } from "./shelfActions";
 import { dressFromLibrary } from "../figures/actions";
 import { useFigures } from "../figures/library";
 import { suggestions } from "../figures/match";
+import type { Assignment } from "../figures/vision/types";
+
+// The photo matcher (its key form, worker and thumbnails) loads only when asked for.
+const PhotoMatch = lazy(() => import("../figures/PhotoMatch"));
 import { systemOf, type BaseShape, type PlayerId } from "../core";
 import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import { parseRosterFile, type ImportedRoster } from "../systems/wh40k/roster";
@@ -85,6 +89,10 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const skirmish = (i: number, u: ImportedRoster["units"][number]) => loose[i] ?? isSkirmisher(u);
   // Figures from the library (#33), by unit index: suggested by name, assigned on deploy.
   const [figs, setFigs] = useState<Record<number, string>>({});
+  // Picks the photo matcher made, by unit index, with the model's reason (shown until the player changes them).
+  const [photoPicks, setPhotoPicks] = useState<Record<number, Assignment>>({});
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const fromPhoto = (i: number) => !!figs[i] && photoPicks[i]?.figure === figs[i];
   const entries = useFigures((s) => s.entries);
   useEffect(() => {
     if (roster) void useFigures.getState().load();
@@ -305,6 +313,40 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                   </button>
                 </p>
               )}
+              {library.length > 0 && (
+                <div className="row wrap">
+                  <button
+                    className="quiet small"
+                    aria-expanded={photoOpen}
+                    title={t(
+                      "Use your own OpenAI key to match library figures to units from a photo of your army",
+                    )}
+                    onClick={() => setPhotoOpen(!photoOpen)}
+                  >
+                    📷 {t("Match figures from a photo…")}
+                  </button>
+                </div>
+              )}
+              {photoOpen && library.length > 0 && (
+                <Suspense fallback={<p className="muted small">{t("Loading…")}</p>}>
+                  <PhotoMatch
+                    units={roster.units.flatMap((u, i) =>
+                      dressed(i) ? [] : [{ index: i, name: u.name, models: u.models.length }],
+                    )}
+                    library={library}
+                    onMatch={(assignments) => {
+                      const next = { ...figs };
+                      const picks: Record<number, Assignment> = {};
+                      for (const a of assignments) {
+                        next[a.unit] = a.figure;
+                        picks[a.unit] = a;
+                      }
+                      setFigs(next);
+                      setPhotoPicks(picks);
+                    }}
+                  />
+                </Suspense>
+              )}
               {Object.values(figs).some(Boolean) && open.length === 0 && (
                 <p className="row wrap small">
                   <span className="muted">{t("Picked figures go on when the army is deployed.")}</span>
@@ -410,6 +452,15 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                               <select
                                 aria-label={t("{unit} figure", { unit: u.name })}
                                 value={figs[i] ?? ""}
+                                title={
+                                  fromPhoto(i)
+                                    ? t("From the photo ({sure}% sure): {why}", {
+                                        sure: Math.round(photoPicks[i]!.confidence * 100),
+                                        why: photoPicks[i]!.why,
+                                      })
+                                    : undefined
+                                }
+                                className={fromPhoto(i) ? "from-photo" : undefined}
                                 onChange={(e) => setFigs({ ...figs, [i]: e.target.value })}
                               >
                                 <option value="">

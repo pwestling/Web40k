@@ -189,3 +189,18 @@
   border: 1px solid #2d3340;
   border-radius: 8px;
 }
+
+/* Match figures from a photo with the player's own key. */
+.photo-match {
+  border-left: 3px solid var(--accent, #6aa0ff);
+  padding: 4px 0 4px 10px;
+  margin: 6px 0;
+}
+.photo-match input[type="password"],
+.photo-match-model {
+  min-width: 16ch;
+}
+.import-units .figure-pick select.from-photo {
+  outline: 2px dashed var(--accent, #6aa0ff);
+  outline-offset: 1px;
+}
