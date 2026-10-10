@@ -87,9 +87,14 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
         continue;
       }
       added++;
+      // TTS's own names let army units find the figure by name; no picture matching needed.
       const { entries, patch } = useFigures.getState();
-      const tags = entries[asset.id]?.tags ?? [];
-      patch(asset.id, { tags: [...new Set([...tags, "tts", scan.title])] });
+      const entry = entries[asset.id];
+      patch(asset.id, {
+        tags: [...new Set([...(entry?.tags ?? []), "tts", scan.title.toLowerCase()])],
+        units: [...new Set([...(entry?.units ?? []), ...m.names])].slice(0, 40),
+        ...(m.description && !entry?.description ? { description: m.description } : {}),
+      });
     }
     setProgress(null);
     const parts = [

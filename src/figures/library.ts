@@ -18,8 +18,10 @@ export interface FigureEntry {
   name: string;
   kind: AssetKind;
   tags: string[];
-  /** Unit and model names this figure has dressed, for suggestions. */
+  /** Unit and model names this figure has dressed, or its source named it by (a TTS nickname or bag), for suggestions. */
   units: string[];
+  /** What its source says about it (a TTS description). */
+  description?: string;
   /** Bytes the processed asset takes on this device. */
   bytes: number;
   triangles: number;
@@ -134,6 +136,7 @@ const pick = (e: FigureEntry): Partial<FigureEntry> => ({
   tags: e.tags,
   units: e.units,
   addedAt: e.addedAt,
+  ...(e.description ? { description: e.description } : {}),
   ...(e.thumb ? { thumb: e.thumb } : {}),
 });
 

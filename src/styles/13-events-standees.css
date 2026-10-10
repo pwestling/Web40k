@@ -204,3 +204,9 @@
   outline: 2px dashed var(--accent, #6aa0ff);
   outline-offset: 1px;
 }
+.figure-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

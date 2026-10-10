@@ -13,7 +13,12 @@ import type { AssetKind } from "../assets/types";
 /** One distinct custom model in a save: the same mesh, image and size counts once. */
 export interface TtsModel {
   key: string;
+  /** The name it goes by most, for the library. */
   name: string;
+  /** Every name the save gives it: its nicknames, then the bags it sits in. Matched against army units. */
+  names: string[];
+  /** Its TTS description, without markup. */
+  description?: string;
   mesh: string;
   diffuse?: string;
   /** Inches per mesh unit: TTS tables measure one unit to the inch, so this is the object's scale. */
@@ -34,6 +39,7 @@ export interface TtsScan {
 interface TtsObject {
   Name?: string;
   Nickname?: string;
+  Description?: string;
   Locked?: boolean;
   Tags?: string[];
   Transform?: { scaleX?: number; scaleY?: number; scaleZ?: number };
@@ -52,11 +58,12 @@ export function scanSave(json: unknown): TtsScan {
   const save = (json ?? {}) as { SaveName?: string; GameMode?: string; ObjectStates?: TtsObject[] };
   if (!Array.isArray(save.ObjectStates))
     throw new Error("This isn't a Tabletop Simulator save: it has no objects.");
-  const found = new Map<string, TtsModel>();
+  const found = new Map<string, TtsModel & { tally: Map<string, number> }>();
   let bundles = 0;
-  const visit = (o: TtsObject) => {
+  const visit = (o: TtsObject, bag?: string) => {
     if (!o || typeof o !== "object") return;
     if (o.Name === "Custom_AssetBundle") bundles++;
+    const nickname = cleanText(o.Nickname);
     const mesh = o.CustomMesh?.MeshURL?.trim();
     if (mesh) {
       const diffuse = o.CustomMesh?.DiffuseURL?.trim() || undefined;
@@ -64,36 +71,63 @@ export function scanSave(json: unknown): TtsScan {
       const scale =
         round((Math.abs(t.scaleX ?? 1) + Math.abs(t.scaleY ?? 1) + Math.abs(t.scaleZ ?? 1)) / 3) || 1;
       const key = `${mesh}|${diffuse ?? ""}|${scale}`;
-      const seen = found.get(key);
-      if (seen) seen.count++;
+      let m = found.get(key);
+      if (m) m.count++;
       else {
-        const name = o.Nickname?.trim() || fileStem(mesh) || "TTS model";
         const terrain =
           o.CustomMesh?.TypeIndex === BOARD ||
           !!o.Locked ||
-          TERRAIN_WORDS.test(name) ||
+          TERRAIN_WORDS.test(nickname) ||
           (o.Tags ?? []).some((tag) => TERRAIN_WORDS.test(tag));
-        found.set(key, {
+        m = {
           key,
-          name,
+          name: "",
+          names: [],
           mesh,
           diffuse,
           scale,
           count: 1,
           kind: terrain ? "terrain" : "miniature",
-        });
+          tally: new Map(),
+        };
+        found.set(key, m);
       }
+      for (const n of [nickname, bag])
+        if (n) m.tally.set(n, (m.tally.get(n) ?? 0) + (n === nickname ? 2 : 1));
+      const description = cleanText(o.Description).slice(0, MAX_DESCRIPTION);
+      if (description && !m.description) m.description = description;
     }
-    for (const c of o.ContainedObjects ?? []) visit(c);
-    for (const c of o.ChildObjects ?? []) visit(c);
-    for (const s of Object.values(o.States ?? {})) visit(s);
+    // A bag's name is usually the unit its models make up ("Intercessor Squad").
+    const holder = nickname && !GENERIC_BAG.test(nickname) ? nickname : bag;
+    for (const c of o.ContainedObjects ?? []) visit(c, holder);
+    for (const c of o.ChildObjects ?? []) visit(c, bag);
+    for (const s of Object.values(o.States ?? {})) visit(s, bag);
   };
   for (const o of save.ObjectStates) visit(o);
+  const models = [...found.values()].map(({ tally, ...m }) => {
+    const names = [...tally.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
+    return { ...m, names, name: names[0] ?? fileStem(m.mesh) ?? "TTS model" };
+  });
   return {
-    title: save.SaveName?.trim() || save.GameMode?.trim() || "Tabletop Simulator save",
-    models: [...found.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    title: cleanText(save.SaveName) || cleanText(save.GameMode) || "Tabletop Simulator save",
+    models: models.sort((a, b) => a.name.localeCompare(b.name)),
     bundles,
   };
+}
+
+const MAX_DESCRIPTION = 400;
+const GENERIC_BAG = /^(bag|infinite bag|deck|box|container)$/i;
+
+/**
+ * TTS text without its markup: BBCode and colours ("[b]", "[ff0000]", "[-]")
+ * and wound counters some mods keep in names ("10/10").
+ */
+export function cleanText(text: string | undefined): string {
+  return (text ?? "")
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\b\d+\s*\/\s*\d+\b/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s\-:|,]+|[\s\-:|,]+$/g, "");
 }
 
 const round = (x: number) => Math.round(x * 1000) / 1000;

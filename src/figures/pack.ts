@@ -22,6 +22,7 @@ export interface PackFigure {
   kind: AssetKind;
   tags: string[];
   units: string[];
+  description?: string;
   thumb?: string;
   /** The processed asset, encoded (src/assets/codec.ts), base64. */
   data: string;
@@ -59,6 +60,7 @@ export async function makePack(name: string, entries: FigureEntry[]): Promise<Fi
       kind: e.kind,
       tags: e.tags,
       units: e.units,
+      ...(e.description ? { description: e.description } : {}),
       ...(e.thumb ? { thumb: e.thumb } : {}),
       data: toBase64(await encodeAsset(asset)),
     });
@@ -121,6 +123,7 @@ export async function openPack(text: string): Promise<PackResult | string> {
         name: String(f.name || asset.name).slice(0, 80),
         tags: (Array.isArray(f.tags) ? f.tags : []).map(String).slice(0, 20),
         units: (Array.isArray(f.units) ? f.units : []).map(String).slice(0, 40),
+        ...(typeof f.description === "string" ? { description: f.description.slice(0, 400) } : {}),
         ...(typeof f.thumb === "string" && f.thumb.startsWith("data:image/") ? { thumb: f.thumb } : {}),
       });
       result.added++;

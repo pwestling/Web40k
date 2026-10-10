@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cacheName, downloadUrl, indexFolder, scanSave } from "./tts";
+import { fit } from "./match";
+import { cacheName, cleanText, downloadUrl, indexFolder, scanSave } from "./tts";
 
 const STEAM = "http://cloud-3.steamusercontent.com/ugc/1234567890/ABCDEF0123456789ABCDEF0123456789ABCDEF01/";
 const model = (extra: Record<string, unknown>) => ({
@@ -44,6 +45,40 @@ describe("Tabletop Simulator saves", () => {
       ["Ruined wall", 1, 0.5, "terrain"],
     ]);
     expect(() => scanSave({ hello: 1 })).toThrow();
+  });
+
+  it("keeps TTS's names, bags and descriptions, so army units find the figure by name", () => {
+    expect(cleanText("[b][56f442]Intercessor[-][/b] 2/2")).toBe("Intercessor");
+    const scan = scanSave({
+      ObjectStates: [
+        {
+          Name: "Bag",
+          Nickname: "[b]Intercessor Squad[/b]",
+          ContainedObjects: [
+            model({ Nickname: "Intercessor 2/2", Description: "[i]Bolt rifle[/i]" }),
+            model({ Nickname: "Intercessor 2/2" }),
+            model({ Nickname: "Intercessor Sergeant" }),
+          ],
+        },
+      ],
+    });
+    const [m] = scan.models;
+    expect(scan.models).toHaveLength(1);
+    expect(m!.name).toBe("Intercessor");
+    expect(m!.names).toEqual(["Intercessor", "Intercessor Squad", "Intercessor Sergeant"]);
+    expect(m!.description).toBe("Bolt rifle");
+    const entry = {
+      id: "x",
+      name: m!.name,
+      kind: m!.kind,
+      tags: [],
+      units: m!.names,
+      bytes: 1,
+      triangles: 1,
+      height: 1,
+      addedAt: 0,
+    };
+    expect(fit(entry, "Intercessor Squad")).toBe(1);
   });
 
   it("finds TTS's cached copies by the URL, under either Steam host", () => {

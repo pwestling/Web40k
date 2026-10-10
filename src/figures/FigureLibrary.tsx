@@ -418,6 +418,11 @@ function FigureCard({
               : t("Will dress {units}", { units: entry.units.slice(0, 6).join(", ") })}
           </span>
         )}
+        {entry.description && (
+          <span className="muted small figure-description" title={entry.description}>
+            {entry.description}
+          </span>
+        )}
         <span className="muted small">
           {where.length ? where.join(" · ") : t("Not used in a saved army, table or game")}
         </span>

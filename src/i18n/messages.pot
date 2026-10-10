@@ -2512,7 +2512,7 @@ msgid "Find a model"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:199
-#: src/figures/TtsImport.tsx:195
+#: src/figures/TtsImport.tsx:200
 msgid "Kind"
 msgstr ""
 
@@ -2522,7 +2522,7 @@ msgstr ""
 
 #: src/figures/FigureLibrary.tsx:205
 #: src/figures/FigureLibrary.tsx:390
-#: src/figures/TtsImport.tsx:200
+#: src/figures/TtsImport.tsx:205
 msgid "Terrain"
 msgstr ""
 
@@ -2631,7 +2631,7 @@ msgid "Pick for a pack"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:390
-#: src/figures/TtsImport.tsx:199
+#: src/figures/TtsImport.tsx:204
 #: src/ui/ArmyImport.tsx:367
 msgid "Figure"
 msgstr ""
@@ -2661,86 +2661,86 @@ msgstr ""
 msgid "Will dress {units}"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:422
+#: src/figures/FigureLibrary.tsx:427
 msgid "Not used in a saved army, table or game"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:427
+#: src/figures/FigureLibrary.tsx:432
 msgid "Delete this model from this device"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:430
-#: src/figures/FigureLibrary.tsx:544
+#: src/figures/FigureLibrary.tsx:435
+#: src/figures/FigureLibrary.tsx:549
 msgid "Delete {name} from this device?"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:431
+#: src/figures/FigureLibrary.tsx:436
 msgid "Delete {name} from this device? It's still used, and those figures will show plain stand-ins until it comes back."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:476
+#: src/figures/FigureLibrary.tsx:481
 msgid "Storage used"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:480
+#: src/figures/FigureLibrary.tsx:485
 msgid "This browser doesn't say how much space it allows."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:483
+#: src/figures/FigureLibrary.tsx:488
 msgid "Models: {count}, {size} (their meshes, simplified; your original files aren't kept)."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:490
+#: src/figures/FigureLibrary.tsx:495
 msgid "The browser may clear this when space runs low."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:492
+#: src/figures/FigureLibrary.tsx:497
 msgid "Ask it to keep Open Battle's data"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:496
+#: src/figures/FigureLibrary.tsx:501
 msgid "The browser will keep this data until you clear it."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:503
+#: src/figures/FigureLibrary.tsx:508
 msgid "Delete {n} unused model ({size})?"
 msgid_plural "Delete {n} unused models ({size})?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/FigureLibrary.tsx:516
+#: src/figures/FigureLibrary.tsx:521
 msgid "Delete {n} unused model ({size})"
 msgid_plural "Delete {n} unused models ({size})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/FigureLibrary.tsx:519
+#: src/figures/FigureLibrary.tsx:524
 msgid "No unused models"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:523
+#: src/figures/FigureLibrary.tsx:528
 msgid "Clear {n} outdated copy"
 msgid_plural "Clear {n} outdated copies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/FigureLibrary.tsx:528
+#: src/figures/FigureLibrary.tsx:533
 msgid "Unused means no saved army, saved table or game in progress on this device needs it. Outdated copies are from an older version of the app, which makes them again when needed."
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:538
+#: src/figures/FigureLibrary.tsx:543
 msgid "unused"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:538
+#: src/figures/FigureLibrary.tsx:543
 msgid "in use"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:542
+#: src/figures/FigureLibrary.tsx:547
 msgid "Delete from this device"
 msgstr ""
 
-#: src/figures/FigureLibrary.tsx:561
+#: src/figures/FigureLibrary.tsx:566
 msgid "Open Battle is using {used} of the {quota} this browser lets it keep."
 msgstr ""
 
@@ -2848,71 +2848,77 @@ msgstr ""
 msgid "Matching from the photo didn't work."
 msgstr ""
 
-#: src/figures/TtsImport.tsx:100
+#: src/figures/TtsImport.tsx:101
+msgid "Added {n} model from {save}."
+msgid_plural "Added {n} models from {save}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/figures/TtsImport.tsx:105
 msgid "{n} wasn't in your TTS folder and couldn't be downloaded: load the save in TTS once, then pick the folder again."
 msgid_plural "{n} weren't in your TTS folder and couldn't be downloaded: load the save in TTS once, then pick the folder again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:106
+#: src/figures/TtsImport.tsx:111
 msgid "{n} couldn't be read."
 msgid_plural "{n} couldn't be read."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:114
+#: src/figures/TtsImport.tsx:119
 msgid "Bring the models from a Tabletop Simulator save or workshop mod into your library. Pick your Tabletop Simulator folder (Documents, My Games) so the files TTS already downloaded are read from your computer; with only a save, each model is downloaded if its host allows it."
 msgstr ""
 
-#: src/figures/TtsImport.tsx:120
+#: src/figures/TtsImport.tsx:125
 msgid "Pick your TTS folder…"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:133
+#: src/figures/TtsImport.tsx:138
 msgid "Save or mod"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:141
+#: src/figures/TtsImport.tsx:146
 msgid "Choose from {n} save or mod…"
 msgid_plural "Choose from {n} saves and mods…"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:151
+#: src/figures/TtsImport.tsx:156
 msgid "Open a save file…"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:165
+#: src/figures/TtsImport.tsx:170
 msgid "Your TTS folder has {n} cached file."
 msgid_plural "Your TTS folder has {n} cached files."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:193
+#: src/figures/TtsImport.tsx:198
 msgid "on this computer"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:193
+#: src/figures/TtsImport.tsx:198
 msgid "to download"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:208
+#: src/figures/TtsImport.tsx:213
 msgid "{n} object is a Unity asset bundle, which only TTS can read; it's left out."
 msgid_plural "{n} objects are Unity asset bundles, which only TTS can read; they're left out."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:217
+#: src/figures/TtsImport.tsx:222
 msgid "Add {n} model to the library"
 msgid_plural "Add {n} models to the library"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:224
+#: src/figures/TtsImport.tsx:229
 msgid "Pick none"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:224
+#: src/figures/TtsImport.tsx:229
 msgid "Pick all"
 msgstr ""
 
@@ -2928,21 +2934,15 @@ msgstr ""
 msgid "Importing {n} of {total}: {name}"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:96
-msgid "Added {n} model from {save}."
-msgid_plural "Added {n} models from {save}."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/figures/pack.ts:101
+#: src/figures/pack.ts:103
 msgid "Figure pack"
 msgstr ""
 
-#: src/figures/pack.ts:93
+#: src/figures/pack.ts:95
 msgid "That isn't a figure pack (it doesn't read as JSON)."
 msgstr ""
 
-#: src/figures/pack.ts:95
+#: src/figures/pack.ts:97
 msgid "That isn't a figure pack."
 msgstr ""
 
