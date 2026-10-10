@@ -3116,8 +3116,9 @@ msgid "Pack name"
 msgstr "Nom du pack"
 
 #: src/figures/FigureLibrary.tsx:300
+#, fuzzy
 msgid "Pack name, e.g. our club's Scrappers"
-msgstr ""
+msgstr "Nom du pack, p. ex. les Scrappers de notre club"
 
 #: src/figures/FigureLibrary.tsx:306
 #, fuzzy
@@ -3220,8 +3221,9 @@ msgid "Tags"
 msgstr "Tags"
 
 #: src/figures/FigureLibrary.tsx:397
+#, fuzzy
 msgid "Tags, e.g. scrappers, painted"
-msgstr ""
+msgstr "Étiquettes, p. ex. scrappers, peint"
 
 #: src/figures/FigureLibrary.tsx:417
 #, fuzzy
@@ -6060,24 +6062,29 @@ msgid "{unit}'s {what}"
 msgstr "{unit} – {what}"
 
 #: src/share/OpenLink.tsx:104
+#, fuzzy
 msgid "No seed node keeps a copy here: the link works while this tab, or someone who opened it, stays open."
-msgstr ""
+msgstr "Aucun nœud de partage n'en garde de copie ici : le lien fonctionne tant que cet onglet, ou quelqu'un qui l'a ouvert, reste ouvert."
 
 #: src/share/OpenLink.tsx:109
+#, fuzzy
 msgid "That file couldn't be shared."
-msgstr ""
+msgstr "Ce fichier n'a pas pu être partagé."
 
 #: src/share/OpenLink.tsx:119
+#, fuzzy
 msgid "Open or share a file by link"
-msgstr ""
+msgstr "Ouvrir ou partager un fichier par lien"
 
 #: src/share/OpenLink.tsx:121
+#, fuzzy
 msgid "Figure packs, tables, armies, standees and replays travel between players' browsers, and can live anywhere that serves files. Open Battle hosts and lists none of them."
-msgstr ""
+msgstr "Les packs de figurines, tables, armées, silhouettes et rediffusions circulent entre les navigateurs des joueurs et peuvent être hébergés partout où l'on sert des fichiers. Open Battle n'en héberge ni n'en répertorie aucun."
 
 #: src/share/OpenLink.tsx:136
+#, fuzzy
 msgid "Link to an Open Battle file"
-msgstr ""
+msgstr "Lien vers un fichier Open Battle"
 
 #: src/share/OpenLink.tsx:141
 #: src/ui/FactionPacks.tsx:170
@@ -6086,16 +6093,19 @@ msgid "Fetching…"
 msgstr "Récupération…"
 
 #: src/share/OpenLink.tsx:146
+#, fuzzy
 msgid "Share a file from this device"
-msgstr ""
+msgstr "Partager un fichier depuis cet appareil"
 
 #: src/share/OpenLink.tsx:159
+#, fuzzy
 msgid "Private: encrypt it, with the key only in the link"
-msgstr ""
+msgstr "Privé : le chiffrer, la clé n'étant que dans le lien"
 
 #: src/share/OpenLink.tsx:165
+#, fuzzy
 msgid "Also keep a copy in my bucket"
-msgstr ""
+msgstr "Garder aussi une copie dans mon bucket"
 
 #: src/share/OpenLink.tsx:173
 #: src/share/OpenLink.tsx:194
@@ -6105,36 +6115,43 @@ msgid "Copy"
 msgstr "Copier"
 
 #: src/share/OpenLink.tsx:180
+#, fuzzy
 msgid "Put a file online yourself? Paste its link to get a share link:"
-msgstr ""
+msgstr "Vous avez mis un fichier en ligne vous-même ? Collez son lien pour obtenir un lien de partage :"
 
 #: src/share/OpenLink.tsx:185
+#, fuzzy
 msgid "Where your file is"
-msgstr ""
+msgstr "Où se trouve votre fichier"
 
 #: src/share/OpenLink.tsx:19
+#, fuzzy
 msgid "{n} KB"
-msgstr ""
+msgstr "{n} Ko"
 
 #: src/share/OpenLink.tsx:20
+#, fuzzy
 msgid "{n} MB"
-msgstr ""
+msgstr "{n} Mo"
 
 #: src/share/OpenLink.tsx:201
+#, fuzzy
 msgid "This tab is sharing {n} file"
 msgid_plural "This tab is sharing {n} files"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Cet onglet partage {n} fichier"
+msgstr[1] "Cet onglet partage {n} fichiers"
 
 #: src/share/OpenLink.tsx:202
+#, fuzzy
 msgid "{n} player connected"
 msgid_plural "{n} players connected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{n} joueur connecté"
+msgstr[1] "{n} joueurs connectés"
 
 #: src/share/OpenLink.tsx:226
+#, fuzzy
 msgid "Open a shared file"
-msgstr ""
+msgstr "Ouvrir un fichier partagé"
 
 #: src/share/OpenLink.tsx:234
 #: src/ui/FactionPacks.tsx:262
@@ -6143,20 +6160,24 @@ msgid "From {url}"
 msgstr "Depuis {url}"
 
 #: src/share/OpenLink.tsx:241
+#, fuzzy
 msgid "This link held a different file when you last opened it ({was})."
-msgstr ""
+msgstr "Ce lien contenait un autre fichier la dernière fois que vous l'avez ouvert ({was})."
 
 #: src/share/OpenLink.tsx:245
+#, fuzzy
 msgid "It was shared privately: only people with this link can open it."
-msgstr ""
+msgstr "Il a été partagé en privé : seules les personnes ayant ce lien peuvent l'ouvrir."
 
 #: src/share/OpenLink.tsx:247
+#, fuzzy
 msgid "You opened this same file before."
-msgstr ""
+msgstr "Vous avez déjà ouvert ce même fichier."
 
 #: src/share/OpenLink.tsx:250
+#, fuzzy
 msgid "Rules packages inside a replay stay off until you say yes to them, as with packages from a player."
-msgstr ""
+msgstr "Les paquets de règles d'une rediffusion restent désactivés tant que vous ne les acceptez pas, comme les paquets venant d'un joueur."
 
 #: src/share/OpenLink.tsx:253
 #: src/ui/FactionPacks.tsx:293
@@ -6165,78 +6186,96 @@ msgid "It is data only: nothing in it runs."
 msgstr "Il ne contient que des données : rien ne s'y exécute."
 
 #: src/share/OpenLink.tsx:257
+#, fuzzy
 msgid "Open it"
-msgstr ""
+msgstr "L'ouvrir"
 
 #: src/share/OpenLink.tsx:292
+#, fuzzy
 msgid "Your own storage bucket (R2, S3, B2, MinIO)"
-msgstr ""
+msgstr "Votre propre bucket de stockage (R2, S3, B2, MinIO)"
 
 #: src/share/OpenLink.tsx:294
+#, fuzzy
 msgid "Shared files are uploaded to your bucket too, and it becomes one of their sources. The keys stay on this device and sign each upload here; use keys that can only write to this bucket. The bucket must allow PUT from this site (CORS) and be readable at its public address."
-msgstr ""
+msgstr "Les fichiers partagés sont aussi envoyés dans votre bucket, qui devient l'une de leurs sources. Les clés restent sur cet appareil et signent chaque envoi ici ; utilisez des clés qui ne peuvent écrire que dans ce bucket. Le bucket doit autoriser PUT depuis ce site (CORS) et être lisible à son adresse publique."
 
 #: src/share/OpenLink.tsx:298
+#, fuzzy
 msgid "S3 endpoint (https://…)"
-msgstr ""
+msgstr "Point d'accès S3 (https://…)"
 
 #: src/share/OpenLink.tsx:299
+#, fuzzy
 msgid "Bucket"
-msgstr ""
+msgstr "Bucket"
 
 #: src/share/OpenLink.tsx:300
+#, fuzzy
 msgid "Region (auto for R2)"
-msgstr ""
+msgstr "Région (auto pour R2)"
 
 #: src/share/OpenLink.tsx:301
+#, fuzzy
 msgid "Access key ID"
-msgstr ""
+msgstr "ID de clé d'accès"
 
 #: src/share/OpenLink.tsx:302
+#, fuzzy
 msgid "Secret access key"
-msgstr ""
+msgstr "Clé d'accès secrète"
 
 #: src/share/OpenLink.tsx:303
+#, fuzzy
 msgid "Public address of the bucket (https://…)"
-msgstr ""
+msgstr "Adresse publique du bucket (https://…)"
 
 #: src/share/OpenLink.tsx:306
+#, fuzzy
 msgid "Save changes"
-msgstr ""
+msgstr "Enregistrer les modifications"
 
 #: src/share/OpenLink.tsx:306
+#, fuzzy
 msgid "Use this bucket"
-msgstr ""
+msgstr "Utiliser ce bucket"
 
 #: src/share/OpenLink.tsx:316
+#, fuzzy
 msgid "Forget this bucket"
-msgstr ""
+msgstr "Oublier ce bucket"
 
 #: src/share/OpenLink.tsx:41
+#, fuzzy
 msgid "Fetching from {n} players and seeds: {pct}%"
-msgstr ""
+msgstr "Récupération auprès de {n} joueurs et sources : {pct} %"
 
 #: src/share/OpenLink.tsx:44
+#, fuzzy
 msgid "Looking for the file…"
-msgstr ""
+msgstr "Recherche du fichier…"
 
 #: src/share/OpenLink.tsx:80
+#, fuzzy
 msgid "Share a file saved from Open Battle: a figure pack, table, army, standee or replay."
-msgstr ""
+msgstr "Partagez un fichier enregistré depuis Open Battle : un pack de figurines, une table, une armée, une silhouette ou une rediffusion."
 
 #: src/share/OpenLink.tsx:93
+#, fuzzy
 msgid "Your bucket didn't take it ({error}): check its keys and CORS settings."
-msgstr ""
+msgstr "Votre bucket ne l'a pas accepté ({error}) : vérifiez ses clés et ses réglages CORS."
 
 #: src/share/OpenLink.tsx:97
+#, fuzzy
 msgid "Your bucket keeps a copy, so the link works after you close this tab."
-msgstr ""
+msgstr "Votre bucket en garde une copie : le lien fonctionnera après la fermeture de cet onglet."
 
 #: src/share/OpenLink.tsx:99
+#, fuzzy
 msgid "A seed node keeps a copy, so the link works after you close this tab."
 msgid_plural "{n} seed nodes keep a copy, so the link works after you close this tab."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Un nœud de partage en garde une copie : le lien fonctionnera après la fermeture de cet onglet."
+msgstr[1] "{n} nœuds de partage en gardent une copie : le lien fonctionnera après la fermeture de cet onglet."
 
 #: src/share/SharePanel.tsx:161
 #: src/share/SharePanel.tsx:416
@@ -6525,47 +6564,57 @@ msgid "Battle over"
 msgstr "Bataille terminée"
 
 #: src/share/links.ts:123
+#, fuzzy
 msgid "That magnet link has no torrent in it."
-msgstr ""
+msgstr "Ce lien magnet ne contient aucun torrent."
 
 #: src/share/links.ts:129
 #: src/share/links.ts:145
 #: src/share/links.ts:147
+#, fuzzy
 msgid "That file is too big to open from a link."
-msgstr ""
+msgstr "Ce fichier est trop gros pour être ouvert depuis un lien."
 
 #: src/share/links.ts:131
+#, fuzzy
 msgid "Nobody is sharing that file right now, and no seed node has it."
-msgstr ""
+msgstr "Personne ne partage ce fichier en ce moment, et aucun nœud de partage ne l'a."
 
 #: src/share/links.ts:132
+#, fuzzy
 msgid "That torrent couldn't be fetched."
-msgstr ""
+msgstr "Ce torrent n'a pas pu être récupéré."
 
 #: src/share/links.ts:136
+#, fuzzy
 msgid "Use an https:// link to the file."
-msgstr ""
+msgstr "Utilisez un lien https:// vers le fichier."
 
 #: src/share/links.ts:152
+#, fuzzy
 msgid "That file is private: open it with the whole share link, which carries its key."
-msgstr ""
+msgstr "Ce fichier est privé : ouvrez-le avec le lien de partage complet, qui contient sa clé."
 
 #: src/share/links.ts:154
+#, fuzzy
 msgid "That key doesn't open this file."
-msgstr ""
+msgstr "Cette clé n'ouvre pas ce fichier."
 
 #: src/share/links.ts:161
 #: src/share/links.ts:164
+#, fuzzy
 msgid "That link isn't an Open Battle file."
-msgstr ""
+msgstr "Ce lien n'est pas un fichier Open Battle."
 
 #: src/share/links.ts:171
+#, fuzzy
 msgid "a torrent"
-msgstr ""
+msgstr "un torrent"
 
 #: src/share/links.ts:192
+#, fuzzy
 msgid "{name}: {added} new, {already} already here."
-msgstr ""
+msgstr "{name} : {added} nouveaux, {already} déjà présents."
 
 #: src/share/links.ts:203
 #: src/tables/TableLibrary.tsx:244
@@ -6574,20 +6623,24 @@ msgid "{name} is in your table library."
 msgstr "{name} est dans ta bibliothèque de tables."
 
 #: src/share/links.ts:210
+#, fuzzy
 msgid "{name} is on your army shelf."
-msgstr ""
+msgstr "{name} est sur votre étagère d'armées."
 
 #: src/share/links.ts:219
+#, fuzzy
 msgid "That standee couldn't be read."
-msgstr ""
+msgstr "Cette silhouette n'a pas pu être lue."
 
 #: src/share/links.ts:220
+#, fuzzy
 msgid "{name} is in your figure library."
-msgstr ""
+msgstr "{name} est dans votre bibliothèque de figurines."
 
 #: src/share/links.ts:229
+#, fuzzy
 msgid "Replay opened."
-msgstr ""
+msgstr "Rediffusion ouverte."
 
 #: src/share/links.ts:45
 #: src/tables/TableLibrary.tsx:99
@@ -6597,16 +6650,19 @@ msgid "Table"
 msgstr "Table"
 
 #: src/share/links.ts:46
+#, fuzzy
 msgid "Army"
-msgstr ""
+msgstr "Armée"
 
 #: src/share/links.ts:47
+#, fuzzy
 msgid "Standee"
-msgstr ""
+msgstr "Silhouette"
 
 #: src/share/links.ts:48
+#, fuzzy
 msgid "Replay"
-msgstr ""
+msgstr "Rediffusion"
 
 #: src/share/page.ts:17
 #, fuzzy
