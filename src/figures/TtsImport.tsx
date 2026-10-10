@@ -209,7 +209,7 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
             </button>
           </div>
           {progress && <p className="muted small">{progress}</p>}
-          <TtsWholeTable key={save?.n} save={save?.json} folder={folder} busy={!!progress} onDone={onDone} />
+          <TtsWholeTable key={save?.n} save={save?.json} folder={folder} busy={!!progress} />
         </>
       )}
     </div>

@@ -81,7 +81,13 @@ export type SideMessage =
   | { t: "review/hello" }
   | { t: "review/note"; note: unknown }
   | { t: "review/unnote"; id: string; author?: string }
-  | { t: "review/notes"; notes: unknown[] };
+  | { t: "review/notes"; notes: unknown[] }
+  /**
+   * An army the host brought for this player from a TTS table (src/tts/BroughtOffer.tsx, UX 481): offered by the
+   * host by its shelf id, and taken by the player it was offered to.
+   */
+  | { t: "army/offer"; id: string; name: string; units: string[]; by?: string }
+  | { t: "army/take"; id: string };
 
 /** A short-lived message over the table, from whoever sent it. */
 export type TalkItem = { id: string } & (

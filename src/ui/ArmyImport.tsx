@@ -10,6 +10,7 @@ import {
   exportYellowscribe,
   importArmyFile,
   saveToShelf,
+  unitsToDeploy,
   useDeployed,
 } from "./shelfActions";
 import { dressFromLibrary } from "../figures/actions";
@@ -140,12 +141,17 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
   const deploy = () => {
     if (!roster) return;
     const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
+    // A TTS army on its own table stands where it stood; anywhere else it deploys in its zone (UX 480).
+    const placed = fromShelf
+      ? unitsToDeploy({ ...fromShelf, roster }, game, owner)
+      : { units: roster.units, keepPlaces: false };
     const units = ranked
-      ? roster.units.map((u, i) =>
+      ? placed.units.map((u, i) =>
           skirmish(i, u) ? { ...u, files: undefined } : { ...u, files: frontage(i, u.models.length) },
         )
-      : roster.units;
-    for (const intent of spawnIntents(game, owner, units, prefix, roster.name)) dispatch(intent, owner);
+      : placed.units;
+    for (const intent of spawnIntents(game, owner, units, prefix, roster.name, placed.keepPlaces))
+      dispatch(intent, owner);
     // The detachment's rules and stratagems (#49): the text is the player's, shared with the table like their units.
     if (roster.army) dispatch({ type: "player/army", army: roster.army }, owner);
     // A faction pack's code runs in the game, like any rules package's (#76).
@@ -275,14 +281,14 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
       )}
       {!(game.system && isPlaceholder(game.system)) && (
         <ShelfSelect
-          system={game.system ?? ""}
+          system={game.system ?? DEFAULT_SYSTEM}
           onPick={(army) => {
             setFromShelf(army);
             setRoster(withPinnedPacks(army.roster, game.system ?? DEFAULT_SYSTEM, systemOf(game)));
           }}
         />
       )}
-      <ShelfManager system={game.system ?? ""} />
+      <ShelfManager system={game.system ?? DEFAULT_SYSTEM} />
       <PackChecks />
       {players.map((p) => (
         <SaveToShelf key={p.id} owner={p.id} name={players.length > 1 ? p.name : null} />

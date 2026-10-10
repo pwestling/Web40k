@@ -1,14 +1,11 @@
 import { sides } from "../core";
-import type { PlayerId } from "../core";
 import { NET_PARAMS } from "../net/config";
 import { useLibrary } from "../packages/library";
-import { useShelf, type SavedArmy } from "../packages/shelf";
+import { shelfSystem, useShelf, type SavedArmy } from "../packages/shelf";
 import { myKey } from "../player/card";
 import { useStore } from "../store";
 import { gameModule, systemModule } from "../systems";
-import { armyColor, spawnIntents } from "../systems/wh40k/deploy";
 import { installOwnGame, ownGame } from "../games/riftLanterns";
-import { dressFromShelf, useDeployed } from "../ui/shelfActions";
 import { refOf } from "../ui/Packages";
 import { APP_BUILD } from "../version";
 import { armyHash, roomFor, type EventDoc } from "./event";
@@ -102,24 +99,9 @@ export function registeredArmy(event: EventDoc, key: string | null): SavedArmy |
   if (!me) return null;
   return (
     Object.values(useShelf.getState().armies).find(
-      (a) => a.system === event.system && armyHash(a.roster) === me.army,
+      (a) => a.system === shelfSystem(event.system) && armyHash(a.roster) === me.army,
     ) ?? null
   );
-}
-
-/** Put a shelf army on the table for a player, as the army panel would. */
-export function deployShelfArmy(army: SavedArmy, owner: PlayerId): void {
-  const { game, dispatch } = useStore.getState();
-  const prefix = `${owner}-${crypto.randomUUID().slice(0, 6)}`;
-  for (const intent of spawnIntents(game, owner, army.roster.units, prefix, army.roster.name))
-    dispatch(intent, owner);
-  if (army.roster.army) dispatch({ type: "player/army", army: army.roster.army }, owner);
-  if (!army.color) {
-    const color = armyColor(game, owner, army.roster.color);
-    if (color) dispatch(color, owner);
-  }
-  useDeployed.setState({ [owner]: { roster: army.roster, prefix, shelfId: army.id } });
-  void dressFromShelf(army, owner, prefix);
 }
 
 /** Leave the game for the event's page. */

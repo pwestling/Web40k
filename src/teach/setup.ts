@@ -14,7 +14,7 @@ import type { Lesson } from "./lesson";
 import type { ImportedRoster } from "../systems/wh40k/roster";
 import { automateArmy } from "../systems/wh40k/recognize";
 import type { OwnArmy } from "../bot/startSolo";
-import { dressFromShelf, useDeployed } from "../ui/shelfActions";
+import { dressFromShelf, unitsToDeploy, useDeployed } from "../ui/shelfActions";
 
 type Send = (intent: Intent, as: PlayerId) => void;
 
@@ -65,7 +65,19 @@ export function deployOwn(mine: OwnArmy, get: () => GameState, send: Send, their
     mine.shelf || !mine.roster.army
       ? mine.roster
       : { ...mine.roster, army: automateArmy(mine.roster.army, systemOf(game)) };
-  deploySamples(get, send, tag, [roster, theirs ?? systemModule(game.system ?? DEFAULT_SYSTEM).sample(1)]);
+  // A TTS army stands where it stood only on its own table (UX 480).
+  const near = sidePlayers(game, 0)[0]?.id;
+  const placed = mine.shelf && near ? unitsToDeploy({ ...mine.shelf, roster }, game, near) : null;
+  deploySamples(
+    get,
+    send,
+    tag,
+    [
+      placed ? { ...roster, units: placed.units } : roster,
+      theirs ?? systemModule(game.system ?? DEFAULT_SYSTEM).sample(1),
+    ],
+    placed?.keepPlaces,
+  );
   const owner = sidePlayers(get(), 0)[0]?.id;
   if (!owner) return;
   const prefix = `${owner}-${tag}`;
