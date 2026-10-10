@@ -1139,7 +1139,7 @@ const checks = {
    */
   async "photo-match"() {
     const { page, context } = await device();
-    // Two cubes as binary STLs, named so the library has two figures that match no unit by name.
+    // Cubes as binary STLs: two named so they match no unit by name.
     const stl = (size) => {
       const tris = [
         [
@@ -1216,6 +1216,8 @@ const checks = {
       .setInputFiles([
         { name: "mini alpha.stl", mimeType: "model/stl", buffer: stl(25) },
         { name: "mini beta.stl", mimeType: "model/stl", buffer: stl(32) },
+        // Named for a unit, as TTS figures mostly are: name matching dresses that unit, not the photo.
+        { name: "Field Marshal.stl", mimeType: "model/stl", buffer: stl(40) },
       ]);
     await page.getByText("mini beta").first().waitFor({ timeout: 30_000 });
     await page.keyboard.press("Escape");
@@ -1265,6 +1267,8 @@ const checks = {
     });
     await modal.getByRole("button", { name: "Match", exact: true }).click();
     await modal.getByText(/The photo matched 1 unit/).waitFor({ timeout: 30_000 });
+    if (sent.input[0].content[0].text.includes("Field Marshal"))
+      throw new Error("the photo was asked about a unit its name already matched");
     const images = sent.input[0].content.filter((c) => c.type === "input_image");
     if (sent.model !== "gpt-5" || images.length < 1 || !images[0].image_url.startsWith("data:image/jpeg"))
       throw new Error(`odd request: model ${sent.model}, ${images.length} images`);

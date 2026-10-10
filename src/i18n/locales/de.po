@@ -1121,7 +1121,7 @@ msgstr "Kampagnenbuch: {book}"
 
 #: src/campaign/CampaignUI.tsx:546
 #: src/tables/TableLibrary.tsx:220
-#: src/ui/ArmyImport.tsx:622
+#: src/ui/ArmyImport.tsx:632
 #: src/workshop/Workshop.tsx:329
 #, fuzzy
 msgid "Export"
@@ -1280,7 +1280,7 @@ msgstr "3 für einen Sieg, 1 für ein Unentschieden"
 
 #: src/campaign/CampaignUI.tsx:616
 #: src/campaign/EventTab.tsx:272
-#: src/ui/ArmyImport.tsx:362
+#: src/ui/ArmyImport.tsx:372
 #, fuzzy
 msgid "Pts"
 msgstr "Pkt."
@@ -1363,7 +1363,7 @@ msgid "Edit"
 msgstr "Bearbeiten"
 
 #: src/campaign/CampaignUI.tsx:736
-#: src/ui/ArmyImport.tsx:361
+#: src/ui/ArmyImport.tsx:371
 #: src/ui/StatsScreen.tsx:162
 #, fuzzy
 msgid "Unit"
@@ -3196,7 +3196,7 @@ msgstr "Für ein Paket auswählen"
 
 #: src/figures/FigureLibrary.tsx:390
 #: src/figures/TtsImport.tsx:204
-#: src/ui/ArmyImport.tsx:367
+#: src/ui/ArmyImport.tsx:377
 #, fuzzy
 msgid "Figure"
 msgstr "Figur"
@@ -3353,75 +3353,99 @@ msgstr "Figuren"
 msgid "Storage"
 msgstr "Speicher"
 
-#: src/figures/PhotoMatch.tsx:104
+#: src/figures/PhotoMatch.tsx:111
 #, fuzzy
 msgid "The photo matched {n} unit. Check the Figure column before deploying."
 msgid_plural "The photo matched {n} units. Check the Figure column before deploying."
 msgstr[0] "Das Foto hat {n} Einheit zugeordnet. Prüfe die Spalte Figur vor dem Aufstellen."
 msgstr[1] "Das Foto hat {n} Einheiten zugeordnet. Prüfe die Spalte Figur vor dem Aufstellen."
 
-#: src/figures/PhotoMatch.tsx:109
+#: src/figures/PhotoMatch.tsx:116
 #, fuzzy
 msgid "No library figure looked like the units in the photo."
 msgstr "Keine Figur aus deiner Bibliothek sah wie die Einheiten auf dem Foto aus."
 
-#: src/figures/PhotoMatch.tsx:121
+#: src/figures/PhotoMatch.tsx:128
 #, fuzzy
 msgid "Paste an OpenAI API key and a photo of your painted army can pick library figures for its units. The key stays on this device and goes only to OpenAI; matching costs a little on your OpenAI account."
 msgstr "Füge einen OpenAI-API-Schlüssel ein, dann kann ein Foto deiner bemalten Armee Figuren aus der Bibliothek für ihre Einheiten auswählen. Der Schlüssel bleibt auf diesem Gerät und geht nur an OpenAI; das Zuordnen kostet ein wenig auf deinem OpenAI-Konto."
 
-#: src/figures/PhotoMatch.tsx:125
+#: src/figures/PhotoMatch.tsx:132
 #, fuzzy
 msgid "Get a key"
 msgstr "Schlüssel holen"
 
-#: src/figures/PhotoMatch.tsx:141
+#: src/figures/PhotoMatch.tsx:148
 #, fuzzy
 msgid "OpenAI API key"
 msgstr "OpenAI-API-Schlüssel"
 
-#: src/figures/PhotoMatch.tsx:146
+#: src/figures/PhotoMatch.tsx:153
 #, fuzzy
 msgid "Keep the key"
 msgstr "Schlüssel behalten"
 
-#: src/figures/PhotoMatch.tsx:156
+#: src/figures/PhotoMatch.tsx:163
 #, fuzzy
 msgid "Photos of your army"
 msgstr "Fotos deiner Armee"
 
-#: src/figures/PhotoMatch.tsx:166
+#: src/figures/PhotoMatch.tsx:177
 #, fuzzy
 msgid "Looking at the photo…"
 msgstr "Foto wird angesehen…"
 
-#: src/figures/PhotoMatch.tsx:166
+#: src/figures/PhotoMatch.tsx:177
 #, fuzzy
 msgid "Match"
 msgstr "Zuordnen"
 
-#: src/figures/PhotoMatch.tsx:170
+#: src/figures/PhotoMatch.tsx:181
 #: src/share/SharePanel.tsx:457
 #, fuzzy
 msgid "Stop"
 msgstr "Stopp"
 
-#: src/figures/PhotoMatch.tsx:176
+#: src/figures/PhotoMatch.tsx:189
+#, fuzzy
+msgid "{n} unit has a figure by its name; the photo may change it."
+msgid_plural "{n} units have figures by their names; the photo may change them."
+msgstr[0] "{n} Einheit hat eine Figur über ihren Namen; das Foto kann sie ändern."
+msgstr[1] "{n} Einheiten haben Figuren über ihre Namen; das Foto kann sie ändern."
+
+#: src/figures/PhotoMatch.tsx:195
+#, fuzzy
+msgid "{n} unit already has a figure by its name; the photo leaves it be."
+msgid_plural "{n} units already have figures by their names; the photo leaves them be."
+msgstr[0] "{n} Einheit hat schon eine Figur über ihren Namen; das Foto lässt sie in Ruhe."
+msgstr[1] "{n} Einheiten haben schon Figuren über ihre Namen; das Foto lässt sie in Ruhe."
+
+#: src/figures/PhotoMatch.tsx:200
+#, fuzzy
+msgid "Every unit already has a figure by its name."
+msgstr "Jede Einheit hat schon eine Figur über ihren Namen."
+
+#: src/figures/PhotoMatch.tsx:209
+#, fuzzy
+msgid "Match those from the photo too"
+msgstr "Diese auch per Foto zuordnen"
+
+#: src/figures/PhotoMatch.tsx:215
 #, fuzzy
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: src/figures/PhotoMatch.tsx:179
+#: src/figures/PhotoMatch.tsx:218
 #, fuzzy
 msgid "Model"
 msgstr "Modell"
 
-#: src/figures/PhotoMatch.tsx:188
+#: src/figures/PhotoMatch.tsx:227
 #, fuzzy
 msgid "Forget the key"
 msgstr "Schlüssel vergessen"
 
-#: src/figures/PhotoMatch.tsx:192
+#: src/figures/PhotoMatch.tsx:231
 #, fuzzy
 msgid "The photos, the unit names and pictures of up to {n} library figures go to OpenAI with your key. Nothing goes to the other players."
 msgstr "Die Fotos, die Einheitennamen und Bilder von bis zu {n} Bibliotheksfiguren gehen mit deinem Schlüssel an OpenAI. Nichts davon geht an die anderen Spieler."
@@ -6680,7 +6704,7 @@ msgid "Save table"
 msgstr "Tisch speichern"
 
 #: src/tables/TableLibrary.tsx:19
-#: src/ui/ArmyImport.tsx:617
+#: src/ui/ArmyImport.tsx:627
 #, fuzzy
 msgid "another game"
 msgstr "ein anderes Spiel"
@@ -6720,7 +6744,7 @@ msgid "Take {name} out of your library?"
 msgstr "{name} aus deiner Sammlung entfernen?"
 
 #: src/tables/TableLibrary.tsx:228
-#: src/ui/ArmyImport.tsx:628
+#: src/ui/ArmyImport.tsx:638
 #: src/ui/Packages.tsx:234
 #: src/ui/SystemPanels.tsx:437
 #: src/ui/TeachRule.tsx:543
@@ -6919,7 +6943,7 @@ msgid "Your list stays with you: it goes to the people in your game and nowhere 
 msgstr "Deine Liste bleibt bei dir: Sie geht an die Leute in deinem Spiel und sonst nirgendwohin. Open Battle enthält keine Armeen außer seinen erfundenen Beispielen."
 
 #: src/ui/ArmyGuide.tsx:80
-#: src/ui/ArmyImport.tsx:480
+#: src/ui/ArmyImport.tsx:490
 #: src/ui/FigurePicker.tsx:207
 #, fuzzy
 msgid "Your figures"
@@ -7011,7 +7035,7 @@ msgstr[0] "Deine Figurensammlung hat Figuren, die zu {n} Einheit passen."
 msgstr[1] "Deine Figurensammlung hat Figuren, die zu {n} Einheiten passen."
 
 #: src/ui/ArmyImport.tsx:30
-#: src/ui/ArmyImport.tsx:759
+#: src/ui/ArmyImport.tsx:769
 #, fuzzy
 msgid "{d}mm round"
 msgstr "{d} mm rund"
@@ -7036,140 +7060,140 @@ msgstr "Figuren per Foto zuordnen…"
 msgid "Loading…"
 msgstr "Wird geladen…"
 
-#: src/ui/ArmyImport.tsx:352
+#: src/ui/ArmyImport.tsx:362
 #, fuzzy
 msgid "Picked figures go on when the army is deployed."
 msgstr "Ausgewählte Figuren kommen beim Aufstellen der Armee dazu."
 
-#: src/ui/ArmyImport.tsx:354
+#: src/ui/ArmyImport.tsx:364
 #, fuzzy
 msgid "Clear the figures"
 msgstr "Figuren entfernen"
 
-#: src/ui/ArmyImport.tsx:363
+#: src/ui/ArmyImport.tsx:373
 #, fuzzy
 msgid "Troop type"
 msgstr "Truppentyp"
 
-#: src/ui/ArmyImport.tsx:364
+#: src/ui/ArmyImport.tsx:374
 #: src/ui/TemplateTools.tsx:89
 #, fuzzy
 msgid "Models"
 msgstr "Modelle"
 
-#: src/ui/ArmyImport.tsx:365
+#: src/ui/ArmyImport.tsx:375
 #, fuzzy
 msgid "Base"
 msgstr "Base"
 
-#: src/ui/ArmyImport.tsx:366
+#: src/ui/ArmyImport.tsx:376
 #, fuzzy
 msgid "Models in the front rank"
 msgstr "Modelle im ersten Glied"
 
-#: src/ui/ArmyImport.tsx:366
+#: src/ui/ArmyImport.tsx:376
 #: src/ui/RegimentPanel.tsx:95
 #: src/ui/RegimentPanel.tsx:336
 #, fuzzy
 msgid "Frontage"
 msgstr "Frontbreite"
 
-#: src/ui/ArmyImport.tsx:379
+#: src/ui/ArmyImport.tsx:389
 #, fuzzy
 msgid "Level {level} wizard:"
 msgstr "Zauberer der Stufe {level}:"
 
-#: src/ui/ArmyImport.tsx:382
+#: src/ui/ArmyImport.tsx:392
 #, fuzzy
 msgid "no spells yet"
 msgstr "noch keine Zauber"
 
 #: src/ui/ArmyImport.tsx:41
-#: src/ui/ArmyImport.tsx:761
+#: src/ui/ArmyImport.tsx:771
 #, fuzzy
 msgid "{w}×{d}mm oval"
 msgstr "{w}×{d} mm oval"
 
-#: src/ui/ArmyImport.tsx:411
+#: src/ui/ArmyImport.tsx:421
 #, fuzzy
 msgid "single"
 msgstr "einzeln"
 
-#: src/ui/ArmyImport.tsx:417
+#: src/ui/ArmyImport.tsx:427
 #, fuzzy
 msgid "{unit} frontage"
 msgstr "Frontbreite von {unit}"
 
-#: src/ui/ArmyImport.tsx:434
+#: src/ui/ArmyImport.tsx:444
 #, fuzzy
 msgid "Deploy as a loose spread instead of a block"
 msgstr "Als lockere Formation statt als Block aufstellen"
 
-#: src/ui/ArmyImport.tsx:441
+#: src/ui/ArmyImport.tsx:451
 #: src/ui/RegimentPanel.tsx:26
 #: src/workshop/Workshop.tsx:51
 #, fuzzy
 msgid "Skirmish"
 msgstr "Plänkler"
 
-#: src/ui/ArmyImport.tsx:450
-#: src/ui/ArmyImport.tsx:572
+#: src/ui/ArmyImport.tsx:460
+#: src/ui/ArmyImport.tsx:582
 #, fuzzy
 msgid "From your shelf"
 msgstr "Aus deinem Regal"
 
-#: src/ui/ArmyImport.tsx:453
+#: src/ui/ArmyImport.tsx:463
 #, fuzzy
 msgid "{unit} figure"
 msgstr "Figur für {unit}"
 
-#: src/ui/ArmyImport.tsx:457
+#: src/ui/ArmyImport.tsx:467
 #, fuzzy
 msgid "From the photo ({sure}% sure): {why}"
 msgstr "Vom Foto ({sure} % sicher): {why}"
 
-#: src/ui/ArmyImport.tsx:468
+#: src/ui/ArmyImport.tsx:478
 #, fuzzy
 msgid "Suggested: {name}"
 msgstr "Vorschlag: {name}"
 
-#: src/ui/ArmyImport.tsx:469
+#: src/ui/ArmyImport.tsx:479
 #, fuzzy
 msgid "Stand-ins"
 msgstr "Platzhalter"
 
-#: src/ui/ArmyImport.tsx:472
+#: src/ui/ArmyImport.tsx:482
 #: src/ui/FigurePicker.tsx:199
 #, fuzzy
 msgid "Fits this unit"
 msgstr "Passt zu dieser Einheit"
 
-#: src/ui/ArmyImport.tsx:495
+#: src/ui/ArmyImport.tsx:505
 #, fuzzy
 msgid "Not in the list, fill in:"
 msgstr "Fehlt in der Liste, bitte ausfüllen:"
 
-#: src/ui/ArmyImport.tsx:520
+#: src/ui/ArmyImport.tsx:530
 #, fuzzy
 msgid "Bases are a guess from each unit's troop type; check them against your models."
 msgstr "Die Bases sind anhand des Truppentyps jeder Einheit geschätzt; vergleiche sie mit deinen Modellen."
 
-#: src/ui/ArmyImport.tsx:521
+#: src/ui/ArmyImport.tsx:531
 #, fuzzy
 msgid "Bases are a guess from keywords and wounds; check them against your models."
 msgstr "Die Bases sind anhand von Schlüsselwörtern und Lebenspunkten geschätzt; vergleiche sie mit deinen Modellen."
 
-#: src/ui/ArmyImport.tsx:529
+#: src/ui/ArmyImport.tsx:539
 #, fuzzy
 msgid "A spell list file: names, casting values, ranges and kinds"
 msgstr "Eine Zauberlisten-Datei: Namen, Komplexitätswerte, Reichweiten und Arten"
 
-#: src/ui/ArmyImport.tsx:531
+#: src/ui/ArmyImport.tsx:541
 #, fuzzy
 msgid "Add spells from a list"
 msgstr "Zauber aus einer Liste hinzufügen"
 
-#: src/ui/ArmyImport.tsx:547
+#: src/ui/ArmyImport.tsx:557
 #, fuzzy
 msgid "Deploy for {name}"
 msgstr "Für {name} aufstellen"
@@ -7180,128 +7204,128 @@ msgid "{w}mm square"
 msgstr "{w} mm quadratisch"
 
 #: src/ui/ArmyImport.tsx:56
-#: src/ui/ArmyImport.tsx:762
+#: src/ui/ArmyImport.tsx:772
 #, fuzzy
 msgid "{w}×{d}mm"
 msgstr "{w}×{d} mm"
 
-#: src/ui/ArmyImport.tsx:580
+#: src/ui/ArmyImport.tsx:590
 #, fuzzy
 msgid "From your shelf…"
 msgstr "Aus deinem Regal…"
 
-#: src/ui/ArmyImport.tsx:602
+#: src/ui/ArmyImport.tsx:612
 #, fuzzy
 msgid "Your army shelf ({count})"
 msgstr "Dein Armeeregal ({count})"
 
-#: src/ui/ArmyImport.tsx:602
+#: src/ui/ArmyImport.tsx:612
 #, fuzzy
 msgid "Your army shelf"
 msgstr "Dein Armeeregal"
 
-#: src/ui/ArmyImport.tsx:605
+#: src/ui/ArmyImport.tsx:615
 #, fuzzy
 msgid "Armies saved on this device. Save one after deploying it; pass one on as a file, figures included."
 msgstr "Auf diesem Gerät gespeicherte Armeen. Speichere eine nach dem Aufstellen; gib eine als Datei weiter, Figuren inklusive."
 
-#: src/ui/ArmyImport.tsx:626
+#: src/ui/ArmyImport.tsx:636
 #, fuzzy
 msgid "Take {name} off your shelf?"
 msgstr "{name} aus deinem Regal nehmen?"
-
-#: src/ui/ArmyImport.tsx:635
-#, fuzzy
-msgid "Open an army file"
-msgstr "Armeedatei öffnen"
 
 #: src/ui/ArmyImport.tsx:64
 #, fuzzy
 msgid "{w}×{d}mm hull"
 msgstr "{w}×{d} mm Rumpf"
 
-#: src/ui/ArmyImport.tsx:643
+#: src/ui/ArmyImport.tsx:645
+#, fuzzy
+msgid "Open an army file"
+msgstr "Armeedatei öffnen"
+
+#: src/ui/ArmyImport.tsx:653
 #, fuzzy
 msgid "{name} is on your shelf."
 msgstr "{name} ist in deinem Regal."
 
-#: src/ui/ArmyImport.tsx:665
+#: src/ui/ArmyImport.tsx:675
 #, fuzzy
 msgid "{n} unit · saved {when}"
 msgid_plural "{n} units · saved {when}"
 msgstr[0] "{n} Einheit · gespeichert {when}"
 msgstr[1] "{n} Einheiten · gespeichert {when}"
 
-#: src/ui/ArmyImport.tsx:680
+#: src/ui/ArmyImport.tsx:690
 #, fuzzy
 msgid "{name}'s army is on your shelf as it is now."
 msgstr "Die Armee von {name} ist in ihrem jetzigen Stand in deinem Regal."
 
-#: src/ui/ArmyImport.tsx:681
+#: src/ui/ArmyImport.tsx:691
 #, fuzzy
 msgid "This army is on your shelf as it is now."
 msgstr "Diese Armee ist in ihrem jetzigen Stand in deinem Regal."
 
-#: src/ui/ArmyImport.tsx:688
+#: src/ui/ArmyImport.tsx:698
 #, fuzzy
 msgid "Keep this army on this device for later games, with its unit names, figures, dice and colour"
 msgstr "Diese Armee für spätere Spiele auf diesem Gerät behalten, mit Einheitennamen, Figuren, Würfeln und Farbe"
 
-#: src/ui/ArmyImport.tsx:695
+#: src/ui/ArmyImport.tsx:705
 #, fuzzy
 msgid "Update {name}'s army on your shelf"
 msgstr "Armee von {name} in deinem Regal aktualisieren"
 
-#: src/ui/ArmyImport.tsx:696
+#: src/ui/ArmyImport.tsx:706
 #, fuzzy
 msgid "Update it on your shelf"
 msgstr "Im Regal aktualisieren"
 
-#: src/ui/ArmyImport.tsx:698
+#: src/ui/ArmyImport.tsx:708
 #, fuzzy
 msgid "Save {name}'s army to your shelf"
 msgstr "Armee von {name} in deinem Regal speichern"
 
-#: src/ui/ArmyImport.tsx:699
+#: src/ui/ArmyImport.tsx:709
 #, fuzzy
 msgid "Save army to your shelf"
 msgstr "Armee in deinem Regal speichern"
 
-#: src/ui/ArmyImport.tsx:714
+#: src/ui/ArmyImport.tsx:724
 #: src/ui/FigurePicker.tsx:120
 #, fuzzy
 msgid "Photograph your painted miniature and stand it on its base"
 msgstr "Fotografiere deine bemalte Miniatur und stell sie auf ihre Base"
 
-#: src/ui/ArmyImport.tsx:719
+#: src/ui/ArmyImport.tsx:729
 #, fuzzy
 msgid "Photograph {name}'s painted figures"
 msgstr "Bemalte Figuren von {name} fotografieren"
 
-#: src/ui/ArmyImport.tsx:720
+#: src/ui/ArmyImport.tsx:730
 #, fuzzy
 msgid "Photograph your painted figures"
 msgstr "Deine bemalten Figuren fotografieren"
 
-#: src/ui/ArmyImport.tsx:722
+#: src/ui/ArmyImport.tsx:732
 #, fuzzy
 msgid "{n} unit in its stand-in"
 msgid_plural "{n} units in their stand-ins"
 msgstr[0] "{n} Einheit mit Platzhalter"
 msgstr[1] "{n} Einheiten mit Platzhalter"
 
-#: src/ui/ArmyImport.tsx:745
+#: src/ui/ArmyImport.tsx:755
 #, fuzzy
 msgid "on {mount}"
 msgstr "auf {mount}"
 
-#: src/ui/ArmyImport.tsx:751
-#: src/ui/ArmyImport.tsx:754
+#: src/ui/ArmyImport.tsx:761
+#: src/ui/ArmyImport.tsx:764
 #, fuzzy
 msgid "({points} pts)"
 msgstr "({points} pts)"
 
-#: src/ui/ArmyImport.tsx:753
+#: src/ui/ArmyImport.tsx:763
 #, fuzzy
 msgid "({points} pts; units {units})"
 msgstr "({points} Pkt.; Einheiten {units})"

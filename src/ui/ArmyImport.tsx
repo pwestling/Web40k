@@ -331,7 +331,17 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                 <Suspense fallback={<p className="muted small">{t("Loading…")}</p>}>
                   <PhotoMatch
                     units={roster.units.flatMap((u, i) =>
-                      dressed(i) ? [] : [{ index: i, name: u.name, models: u.models.length }],
+                      dressed(i)
+                        ? []
+                        : [
+                            {
+                              index: i,
+                              name: u.name,
+                              models: u.models.length,
+                              // Picked by hand or found by name (TTS figures mostly carry names): the photo leaves these be.
+                              named: (!!figs[i] && !fromPhoto(i)) || !!suggested[i]?.length,
+                            },
+                          ],
                     )}
                     library={library}
                     onMatch={(assignments) => {
@@ -342,7 +352,7 @@ export function ArmyImport({ players }: { players: { id: PlayerId; name: string;
                         picks[a.unit] = a;
                       }
                       setFigs(next);
-                      setPhotoPicks(picks);
+                      setPhotoPicks({ ...photoPicks, ...picks });
                     }}
                   />
                 </Suspense>

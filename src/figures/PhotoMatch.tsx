@@ -52,7 +52,8 @@ export default function PhotoMatch({
   library,
   onMatch,
 }: {
-  units: MatchUnit[];
+  /** The units without figures yet; `named` ones already have a figure by name or by hand. */
+  units: (MatchUnit & { named?: boolean })[];
   library: FigureEntry[];
   onMatch: (assignments: Assignment[]) => void;
 }) {
@@ -61,11 +62,17 @@ export default function PhotoMatch({
   const [draft, setDraft] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  // Names usually settle it (TTS figures carry theirs); the photo is for the units they don't.
+  const [redo, setRedo] = useState(false);
+  const asked = units
+    .filter((u) => redo || !u.named)
+    .map(({ index, name, models }) => ({ index, name, models }));
+  const named = units.length - units.filter((u) => !u.named).length;
   const [note, setNote] = useState<{ text: string; warn?: boolean } | null>(null);
   const abort = useRef<AbortController | null>(null);
 
   const run = async () => {
-    if (!key || !photos.length) return;
+    if (!key || !photos.length || !asked.length) return;
     setBusy(true);
     setNote(null);
     abort.current = new AbortController();
@@ -82,7 +89,7 @@ export default function PhotoMatch({
           key,
           model: modelOf(vision),
           photos,
-          units,
+          units: asked,
           figures: figures.map((f) => ({
             id: f.id,
             name: f.name,
@@ -162,7 +169,11 @@ export default function PhotoMatch({
             onChange={(e) => setPhotos([...(e.target.files ?? [])].slice(0, 4))}
           />
         </label>
-        <button className="small" disabled={busy || !photos.length} onClick={() => void run()}>
+        <button
+          className="small"
+          disabled={busy || !photos.length || !asked.length}
+          onClick={() => void run()}
+        >
           {busy ? t("Looking at the photo…") : t("Match")}
         </button>
         {busy && (
@@ -171,6 +182,34 @@ export default function PhotoMatch({
           </button>
         )}
       </p>
+      {named > 0 && (
+        <p className="row wrap small">
+          <span className="muted">
+            {redo
+              ? tn(
+                  named,
+                  "{n} unit has a figure by its name; the photo may change it.",
+                  "{n} units have figures by their names; the photo may change them.",
+                )
+              : asked.length
+                ? tn(
+                    named,
+                    "{n} unit already has a figure by its name; the photo leaves it be.",
+                    "{n} units already have figures by their names; the photo leaves them be.",
+                  )
+                : t("Every unit already has a figure by its name.")}
+          </span>
+          <label>
+            <input
+              type="checkbox"
+              checked={redo}
+              disabled={busy}
+              onChange={(e) => setRedo(e.target.checked)}
+            />{" "}
+            {t("Match those from the photo too")}
+          </label>
+        </p>
+      )}
       {note && <p className={note.warn ? "warn small" : "small"}>{note.text}</p>}
       <details className="small">
         <summary>{t("Settings")}</summary>
