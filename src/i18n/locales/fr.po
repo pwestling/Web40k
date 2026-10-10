@@ -5830,7 +5830,7 @@ msgid "Watch it again on the table"
 msgstr "Revoir sur la table"
 
 #: src/review/ReviewPanel.tsx:506
-#: src/ui/Cards.tsx:191
+#: src/ui/Cards.tsx:189
 #, fuzzy
 msgid "Show"
 msgstr "Montrer"
@@ -6670,7 +6670,7 @@ msgid "no stack: any regiment"
 msgstr "pas de pile : n'importe quel régiment"
 
 #: src/systems/conquest/CommandPanel.tsx:88
-#: src/ui/Cards.tsx:166
+#: src/ui/Cards.tsx:164
 #: src/ui/Missions.tsx:245
 #: src/ui/SecretObjectives.tsx:68
 #, fuzzy
@@ -8385,72 +8385,72 @@ msgstr "déploiement"
 msgid "{when}, just after {what}"
 msgstr "{when}, juste après {what}"
 
-#: src/ui/Cards.tsx:113
+#: src/ui/Cards.tsx:111
 #, fuzzy
 msgid "{n} card"
 msgid_plural "{n} cards"
 msgstr[0] "{n} carte"
 msgstr[1] "{n} cartes"
 
-#: src/ui/Cards.tsx:117
+#: src/ui/Cards.tsx:115
 #, fuzzy
 msgid "Put this deck away, for everyone"
 msgstr "Ranger ce paquet, pour tout le monde"
 
-#: src/ui/Cards.tsx:119
+#: src/ui/Cards.tsx:117
 #, fuzzy
 msgid "Put {deck} away for everyone?"
 msgstr "Ranger {deck} pour tout le monde ?"
 
-#: src/ui/Cards.tsx:165
+#: src/ui/Cards.tsx:163
 #, fuzzy
 msgid "{n} left to draw"
 msgid_plural "{n} left to draw"
 msgstr[0] "{n} restante à piocher"
 msgstr[1] "{n} restantes à piocher"
 
-#: src/ui/Cards.tsx:168
+#: src/ui/Cards.tsx:166
 #, fuzzy
 msgid "{n} discarded"
 msgid_plural "{n} discarded"
 msgstr[0] "{n} défaussée"
 msgstr[1] "{n} défaussées"
 
-#: src/ui/Cards.tsx:184
+#: src/ui/Cards.tsx:182
 #: src/ui/Missions.tsx:267
 #, fuzzy
 msgid "(drawn on another device)"
 msgstr "(tirée sur un autre appareil)"
 
-#: src/ui/Cards.tsx:198
+#: src/ui/Cards.tsx:196
 #: src/ui/SystemPanels.tsx:754
 #, fuzzy
 msgid "Discard"
 msgstr "Défausser"
 
-#: src/ui/Cards.tsx:207
+#: src/ui/Cards.tsx:205
 #, fuzzy
 msgid "Last discarded: {card}"
 msgstr "Dernière défaussée : {card}"
 
-#: src/ui/Cards.tsx:212
+#: src/ui/Cards.tsx:210
 #: src/ui/Missions.tsx:318
 #, fuzzy
 msgid "Draw a card"
 msgstr "Tirer une carte"
 
-#: src/ui/Cards.tsx:219
+#: src/ui/Cards.tsx:217
 #, fuzzy
 msgid "Shuffle discards back"
 msgstr "Remélanger la défausse"
 
-#: src/ui/Cards.tsx:65
-#: src/ui/Cards.tsx:66
+#: src/ui/Cards.tsx:63
+#: src/ui/Cards.tsx:64
 #, fuzzy
 msgid "Face down"
 msgstr "Face cachée"
 
-#: src/ui/Cards.tsx:79
+#: src/ui/Cards.tsx:77
 #, fuzzy
 msgid "Cards"
 msgstr "Cartes"
@@ -10604,118 +10604,123 @@ msgstr "En attente que quelqu'un prenne {names} ·"
 msgid "{names} reconnecting…"
 msgstr "{names} se reconnecte…"
 
-#: src/ui/NetCheck.tsx:122
+#: src/ui/NetCheck.tsx:124
 #, fuzzy
 msgid "Online games can't start from this network: it can't reach the place where players meet. Try another network, such as a phone hotspot."
 msgstr "Les parties en ligne ne peuvent pas démarrer depuis ce réseau : il n'atteint pas le point de rencontre des joueurs. Essaie un autre réseau, comme un partage de connexion mobile."
 
-#: src/ui/NetCheck.tsx:127
+#: src/ui/NetCheck.tsx:129
 #, fuzzy
 msgid "Good to play, even with friends on strict networks."
 msgstr "Prêt à jouer, même avec des amis sur des réseaux stricts."
 
-#: src/ui/NetCheck.tsx:132
+#: src/ui/NetCheck.tsx:134
 #, fuzzy
 msgid "You may not be able to connect to some friends, and this site's relay server for strict networks isn't answering. If a friend can't join, try a phone hotspot."
 msgstr "Tu risques de ne pas pouvoir te connecter à certains amis, et le serveur relais de ce site pour les réseaux stricts ne répond pas. Si un ami n'arrive pas à rejoindre, essaie un partage de connexion mobile."
 
-#: src/ui/NetCheck.tsx:135
+#: src/ui/NetCheck.tsx:137
 #, fuzzy
 msgid "You may not be able to connect to some friends from this network. If a friend can't join, try a phone hotspot, or host on a server with TURN."
 msgstr "Tu risques de ne pas pouvoir te connecter à certains amis depuis ce réseau. Si un ami n'arrive pas à rejoindre, essaie un partage de connexion mobile, ou héberge sur un serveur avec TURN."
 
-#: src/ui/NetCheck.tsx:140
+#: src/ui/NetCheck.tsx:142
 #, fuzzy
 msgid "Good to play."
 msgstr "Prêt à jouer."
 
-#: src/ui/NetCheck.tsx:147
+#: src/ui/NetCheck.tsx:149
 #, fuzzy
 msgid "none (public address)"
 msgstr "aucun (adresse publique)"
 
-#: src/ui/NetCheck.tsx:148
+#: src/ui/NetCheck.tsx:150
 #, fuzzy
 msgid "easy"
 msgstr "simple"
 
-#: src/ui/NetCheck.tsx:149
+#: src/ui/NetCheck.tsx:151
 #, fuzzy
 msgid "strict"
 msgstr "strict"
 
-#: src/ui/NetCheck.tsx:150
+#: src/ui/NetCheck.tsx:152
 #, fuzzy
 msgid "unknown"
 msgstr "inconnu"
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 #, fuzzy
 msgid "Checking your connection…"
 msgstr "Vérification de ta connexion…"
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 #, fuzzy
 msgid "Check again"
 msgstr "Vérifier à nouveau"
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 #, fuzzy
 msgid "Check my connection"
 msgstr "Vérifier ma connexion"
 
-#: src/ui/NetCheck.tsx:187
+#: src/ui/NetCheck.tsx:189
 #, fuzzy
 msgid "Self-host guide"
 msgstr "Guide d'auto-hébergement"
 
-#: src/ui/NetCheck.tsx:191
+#: src/ui/NetCheck.tsx:193
 #: src/ui/Packages.tsx:224
 #, fuzzy
 msgid "Details"
 msgstr "Détails"
 
-#: src/ui/NetCheck.tsx:192
+#: src/ui/NetCheck.tsx:194
 #, fuzzy
 msgid "Meeting point: {reached} of {total} reachable"
 msgstr "Point de rencontre : {reached} sur {total} joignables"
 
-#: src/ui/NetCheck.tsx:196
+#: src/ui/NetCheck.tsx:198
 #, fuzzy
 msgid "{ms} ms"
 msgstr "{ms} ms"
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 #, fuzzy
 msgid "Public address: {state}"
 msgstr "Adresse publique : {state}"
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 #, fuzzy
 msgid "found"
 msgstr "trouvée"
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 #, fuzzy
 msgid "not found"
 msgstr "introuvable"
 
-#: src/ui/NetCheck.tsx:198
+#: src/ui/NetCheck.tsx:200
 #, fuzzy
 msgid "NAT: {type}"
 msgstr "NAT : {type}"
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:201
 #, fuzzy
 msgid "TURN: {state}"
 msgstr "TURN : {state}"
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:203
+#, fuzzy
+msgid "none on this site"
+msgstr "aucun sur ce site"
+
+#: src/ui/NetCheck.tsx:203
 #, fuzzy
 msgid "works"
 msgstr "fonctionne"
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:203
 #, fuzzy
 msgid "no answer"
 msgstr "pas de réponse"

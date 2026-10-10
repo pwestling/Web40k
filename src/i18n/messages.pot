@@ -4775,7 +4775,7 @@ msgid "Watch it again on the table"
 msgstr ""
 
 #: src/review/ReviewPanel.tsx:506
-#: src/ui/Cards.tsx:191
+#: src/ui/Cards.tsx:189
 msgid "Show"
 msgstr ""
 
@@ -5455,7 +5455,7 @@ msgid "no stack: any regiment"
 msgstr ""
 
 #: src/systems/conquest/CommandPanel.tsx:88
-#: src/ui/Cards.tsx:166
+#: src/ui/Cards.tsx:164
 #: src/ui/Missions.tsx:245
 #: src/ui/SecretObjectives.tsx:68
 msgid "{n} face down"
@@ -6858,61 +6858,61 @@ msgstr ""
 msgid "{when}, just after {what}"
 msgstr ""
 
-#: src/ui/Cards.tsx:113
+#: src/ui/Cards.tsx:111
 msgid "{n} card"
 msgid_plural "{n} cards"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:117
+#: src/ui/Cards.tsx:115
 msgid "Put this deck away, for everyone"
 msgstr ""
 
-#: src/ui/Cards.tsx:119
+#: src/ui/Cards.tsx:117
 msgid "Put {deck} away for everyone?"
 msgstr ""
 
-#: src/ui/Cards.tsx:165
+#: src/ui/Cards.tsx:163
 msgid "{n} left to draw"
 msgid_plural "{n} left to draw"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:168
+#: src/ui/Cards.tsx:166
 msgid "{n} discarded"
 msgid_plural "{n} discarded"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:184
+#: src/ui/Cards.tsx:182
 #: src/ui/Missions.tsx:267
 msgid "(drawn on another device)"
 msgstr ""
 
-#: src/ui/Cards.tsx:198
+#: src/ui/Cards.tsx:196
 #: src/ui/SystemPanels.tsx:754
 msgid "Discard"
 msgstr ""
 
-#: src/ui/Cards.tsx:207
+#: src/ui/Cards.tsx:205
 msgid "Last discarded: {card}"
 msgstr ""
 
-#: src/ui/Cards.tsx:212
+#: src/ui/Cards.tsx:210
 #: src/ui/Missions.tsx:318
 msgid "Draw a card"
 msgstr ""
 
-#: src/ui/Cards.tsx:219
+#: src/ui/Cards.tsx:217
 msgid "Shuffle discards back"
 msgstr ""
 
-#: src/ui/Cards.tsx:65
-#: src/ui/Cards.tsx:66
+#: src/ui/Cards.tsx:63
+#: src/ui/Cards.tsx:64
 msgid "Face down"
 msgstr ""
 
-#: src/ui/Cards.tsx:79
+#: src/ui/Cards.tsx:77
 msgid "Cards"
 msgstr ""
 
@@ -8654,96 +8654,100 @@ msgstr ""
 msgid "{names} reconnecting…"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:122
+#: src/ui/NetCheck.tsx:124
 msgid "Online games can't start from this network: it can't reach the place where players meet. Try another network, such as a phone hotspot."
 msgstr ""
 
-#: src/ui/NetCheck.tsx:127
+#: src/ui/NetCheck.tsx:129
 msgid "Good to play, even with friends on strict networks."
 msgstr ""
 
-#: src/ui/NetCheck.tsx:132
+#: src/ui/NetCheck.tsx:134
 msgid "You may not be able to connect to some friends, and this site's relay server for strict networks isn't answering. If a friend can't join, try a phone hotspot."
 msgstr ""
 
-#: src/ui/NetCheck.tsx:135
+#: src/ui/NetCheck.tsx:137
 msgid "You may not be able to connect to some friends from this network. If a friend can't join, try a phone hotspot, or host on a server with TURN."
 msgstr ""
 
-#: src/ui/NetCheck.tsx:140
+#: src/ui/NetCheck.tsx:142
 msgid "Good to play."
 msgstr ""
 
-#: src/ui/NetCheck.tsx:147
+#: src/ui/NetCheck.tsx:149
 msgid "none (public address)"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:148
+#: src/ui/NetCheck.tsx:150
 msgid "easy"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:149
+#: src/ui/NetCheck.tsx:151
 msgid "strict"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:150
+#: src/ui/NetCheck.tsx:152
 msgid "unknown"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 msgid "Checking your connection…"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 msgid "Check again"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:180
+#: src/ui/NetCheck.tsx:182
 msgid "Check my connection"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:187
+#: src/ui/NetCheck.tsx:189
 msgid "Self-host guide"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:191
+#: src/ui/NetCheck.tsx:193
 #: src/ui/Packages.tsx:224
 msgid "Details"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:192
+#: src/ui/NetCheck.tsx:194
 msgid "Meeting point: {reached} of {total} reachable"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:196
+#: src/ui/NetCheck.tsx:198
 msgid "{ms} ms"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 msgid "Public address: {state}"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 msgid "found"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:197
+#: src/ui/NetCheck.tsx:199
 msgid "not found"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:198
+#: src/ui/NetCheck.tsx:200
 msgid "NAT: {type}"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:201
 msgid "TURN: {state}"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:203
+msgid "none on this site"
+msgstr ""
+
+#: src/ui/NetCheck.tsx:203
 msgid "works"
 msgstr ""
 
-#: src/ui/NetCheck.tsx:200
+#: src/ui/NetCheck.tsx:203
 msgid "no answer"
 msgstr ""
 

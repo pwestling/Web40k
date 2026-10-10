@@ -8,7 +8,8 @@ small jobs:
    No game data passes through it.
 3. **Relays traffic for players who can't connect directly** (TURN). Some networks block direct links:
    many offices, schools, hotels and mobile carriers. [coturn](https://github.com/coturn/coturn) relays
-   for them.
+   for them. (The hosted site uses Cloudflare's TURN service instead: see
+   [cloudflare-turn.md](cloudflare-turn.md).)
 4. **Holds play-by-mail turns** until the other player picks them up. That's `server/mailbox.mjs`. It
    keeps signed files and checks nothing about the game: each player's app checks them (see
    [correspondence.md](correspondence.md)).

@@ -26,6 +26,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          # The TURN login service (docs/cloudflare-turn.md): a repository variable; unset, the site is STUN only.
+          VITE_TURN_CONFIG: ${{ vars.TURN_CONFIG_URL }}
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

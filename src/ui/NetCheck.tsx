@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n";
-import { netConfig } from "../net/config";
+import { netConfig, turnLoginsLoaded } from "../net/config";
 
 /**
  * The lobby's connection check (playtest kit, roadmap #21): can this browser
@@ -79,6 +79,8 @@ async function gather(servers: RTCIceServer[], relayOnly = false): Promise<RTCIc
 
 /** Run every check. */
 async function checkNetwork(): Promise<NetReport> {
+  // The site's TURN logins, if it has a login service, may still be on their way (#77).
+  await turnLoginsLoaded();
   const config = netConfig();
   // Only load the relay library's defaults when someone asks for a check.
   const urls = config.signal.length
@@ -196,9 +198,10 @@ export function NetCheck({ auto = false }: { auto?: boolean }) {
             {result.rttMs !== null ? ` (${t("{ms} ms", { ms: result.rttMs })})` : ""} ·{" "}
             {t("Public address: {state}", { state: result.stun ? t("found") : t("not found") })} ·{" "}
             {t("NAT: {type}", { type: natText(result.nat) })}
-            {result.turn !== null
-              ? ` · ${t("TURN: {state}", { state: result.turn ? t("works") : t("no answer") })}`
-              : ""}
+            {` · ${t("TURN: {state}", {
+              state:
+                result.turn === null ? t("none on this site") : result.turn ? t("works") : t("no answer"),
+            })}`}
           </details>
         </div>
       )}

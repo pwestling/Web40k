@@ -12,6 +12,10 @@
  *   ?turn=turn:host:3478&turnUser=u&turnPass=p
  *                                          VITE_TURN_URL, VITE_TURN_USER, VITE_TURN_PASS
  *   ?forceTurn=1   send everything through TURN, to test a TURN server
+ *   VITE_TURN_CONFIG=https://turn.example.workers.dev/
+ *                  a TURN login service (server/turn-worker.mjs, #77): fresh,
+ *                  short-lived logins fetched as the page opens; without it,
+ *                  or while it doesn't answer, there's no TURN (STUN only)
  *   ?mailbox=https://battle.example.com/mailbox
  *                  where play-by-mail turns are posted (server/mailbox.mjs)
  *                                          VITE_MAILBOX_URL
@@ -83,6 +87,44 @@ export async function loadSiteConfig(
   }
 }
 
+/** TURN logins from the login service (VITE_TURN_CONFIG), and when they were fetched. */
+let minted: { turn: RTCIceServer[]; at: number; ttl: number } | null = null;
+let minting: Promise<void> | null = null;
+
+function mint(url: string): Promise<void> {
+  minting = (async () => {
+    try {
+      const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      const body = (await res.json()) as { turn?: RTCIceServer[]; ttl?: number };
+      const turn = Array.isArray(body.turn)
+        ? body.turn.filter((s) => s && s.urls && typeof s.username === "string")
+        : [];
+      if (turn.length) minted = { turn, at: Date.now(), ttl: Math.max(600, Number(body.ttl) || 3600) };
+    } catch {
+      // No logins: games still connect wherever STUN is enough.
+    }
+  })();
+  return minting;
+}
+
+/**
+ * Fetch TURN logins from the site's login service (#77), if this build has
+ * one, and fetch fresh ones before they run out while the page stays open.
+ * Never throws and never holds up the page.
+ */
+export function loadTurnLogins(url = import.meta.env.VITE_TURN_CONFIG as string | undefined): void {
+  if (!url || minting) return;
+  void mint(url);
+  setInterval(() => {
+    if (!minted || Date.now() - minted.at > (minted.ttl * 1000) / 2) void mint(url);
+  }, 60_000);
+}
+
+/** Once the first fetch of TURN logins has settled (the connection check waits for it). */
+export function turnLoginsLoaded(): Promise<void> {
+  return minting ?? Promise.resolve();
+}
+
 /** For tests. */
 export function setSiteConfig(config: SiteConfig, hosted = true): void {
   site = config;
@@ -110,7 +152,7 @@ export function netConfig(search = typeof location === "undefined" ? "" : locati
     nostr: fromUrl("nostr") ?? site.nostr ?? list(env.VITE_NOSTR_RELAYS),
     turn: turnUrls.length
       ? [{ urls: turnUrls, ...(username ? { username, credential } : {}) }]
-      : (site.turn ?? []),
+      : (site.turn ?? minted?.turn ?? []),
     ...(q.get("forceTurn") === "1" ? { forceTurn: true } : {}),
     ...(mailbox ? { mailbox } : {}),
     openTables,

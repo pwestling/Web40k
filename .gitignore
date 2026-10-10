@@ -10,3 +10,4 @@ mailbox-data/
 
 # Real rosters built from public BSData catalogues (scripts/bsdata.mjs); never committed
 .bsdata/
+.wrangler/

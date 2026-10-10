@@ -1,0 +1,12 @@
+# The TURN login service (#77): see docs/cloudflare-turn.md.
+# TURN_KEY_ID and TURN_KEY_API_TOKEN are secrets (wrangler secret put), never written here.
+name = "open-battle-turn"
+main = "../../server/turn-worker.mjs"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[vars]
+# The pages allowed to ask for logins: the hosted site, and a local dev server.
+ALLOWED_ORIGINS = "https://pwestling.github.io,http://localhost:5173,http://localhost:4173"
+# How long each login lasts, in seconds; the page fetches fresh ones halfway through.
+TTL_SECONDS = "14400"

@@ -1,0 +1,19 @@
+# Deploys the TURN login service (server/turn-worker.mjs) to Cloudflare, by hand
+# ("Run workflow"). Needs the repository secrets CLOUDFLARE_API_TOKEN and
+# CLOUDFLARE_ACCOUNT_ID, and the Worker's own secrets set once (docs/cloudflare-turn.md).
+name: TURN worker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: deploy/cloudflare-turn
+          command: deploy

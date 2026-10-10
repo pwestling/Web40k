@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { netConfig, setSiteConfig } from "./config";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { loadTurnLogins, netConfig, setSiteConfig, turnLoginsLoaded } from "./config";
 
 describe("netConfig", () => {
   afterEach(() => setSiteConfig({}, false));
@@ -36,5 +36,24 @@ describe("netConfig", () => {
       board: "https://battle.example/relay/board",
     });
     expect(netConfig("")).toMatchObject({ openTables: true, board: "https://battle.example/relay/board" });
+  });
+});
+
+describe("TURN logins from the login service (#77)", () => {
+  it("uses them when nothing else gives TURN, and stays STUN-only while it doesn't answer", async () => {
+    const turn = [{ urls: ["turns:turn.cloudflare.com:443?transport=tcp"], username: "u", credential: "c" }];
+    vi.useFakeTimers({ toFake: ["setInterval"] });
+    vi.stubGlobal("fetch", async () => Response.json({ turn, ttl: 14400 }));
+    try {
+      expect(netConfig("").turn).toEqual([]);
+      loadTurnLogins("https://turn.example.workers.dev/");
+      await turnLoginsLoaded();
+      expect(netConfig("").turn).toEqual(turn);
+      // The page's own ?turn= still wins.
+      expect(netConfig("?turn=turn:other:3478").turn[0]!.urls).toEqual(["turn:other:3478"]);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
   });
 });

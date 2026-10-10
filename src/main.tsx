@@ -6,7 +6,7 @@ import { useAssets } from "./assets/store";
 import * as core from "./core";
 import { useStore } from "./store";
 import "./styles.css";
-import { loadSiteConfig } from "./net/config";
+import { loadSiteConfig, loadTurnLogins } from "./net/config";
 import { loadLanguage } from "./i18n";
 import { watchFigures } from "./figures/library";
 import { listenForInstall, registerServiceWorker } from "./sw/register";
@@ -36,6 +36,8 @@ if (import.meta.env.PROD) {
 }
 listenForInstall();
 
+// The hosted site's TURN logins come from its login service, in the background (#77).
+loadTurnLogins();
 // A self-hosted build reads its relay and TURN logins from the server first (src/net/config.ts).
 // …and the player's language (#35), so the first render is already in it.
 void Promise.all([loadSiteConfig(), loadLanguage()]).then(() =>
