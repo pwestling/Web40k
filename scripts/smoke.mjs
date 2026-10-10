@@ -1068,10 +1068,22 @@ const checks = {
         input.dispatchEvent(new Event("change", { bubbles: true }));
       }, seed);
       await maker.locator(".cutout-editor canvas").waitFor();
+      // The page behind the maker is inert (UX 472): the dialog's Undo is the only one a screen reader finds.
+      const undos = await page.evaluate(
+        () =>
+          [...document.querySelectorAll("button")].filter(
+            (b) => b.textContent.trim() === "Undo" && !b.closest("[inert]"),
+          ).length,
+      );
+      if (undos !== 1) throw new Error(`${undos} Undo buttons reachable while the standee maker is open`);
+      if ((await maker.getAttribute("aria-modal")) !== "true")
+        throw new Error("the standee maker isn't aria-modal");
       if (process.env.SMOKE_SHOTS)
         await page.screenshot({ path: join(process.env.SMOKE_SHOTS, `standee-maker-${seed}.png`) });
       await maker.getByRole("button", { name: /^Use for/ }).click();
       await maker.waitFor({ state: "detached", timeout: 30_000 });
+      if (await page.locator("[inert]").count())
+        throw new Error("the page stayed inert after the standee maker closed");
       if ((await figures.getAttribute("open")) === null) await figures.locator("> summary").click();
       await card.locator('button[title="Back to the stand-in"]').first().waitFor({ timeout: 30_000 });
     };

@@ -36,7 +36,7 @@ interface AssetStore {
 }
 
 /** What a source beyond the file itself says: an OBJ's diffuse image, its size in inches (TTS). */
-export interface ImportExtra {
+interface ImportExtra {
   texture?: Blob;
   unitScale?: number;
 }

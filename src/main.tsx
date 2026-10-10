@@ -12,11 +12,14 @@ import { watchFigures } from "./figures/library";
 import { listenForInstall, registerServiceWorker } from "./sw/register";
 import { watchErrors } from "./ui/report";
 import { applyTextSize } from "./ui/textSize";
+import { watchModals } from "./ui/modalInert";
 
 // Recent errors go into a problem report (src/ui/report.ts).
 watchErrors();
 // The player's text size (#25).
 applyTextSize();
+// The page behind an open modal is inert (UX 472).
+watchModals();
 // Models joining this browser go into the figure library (#33).
 watchFigures();
 // The app kept on the device, for offline play and installing (#34). Not in development, where it
