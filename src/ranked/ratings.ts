@@ -25,7 +25,7 @@ const PAIR_WINDOW_MS = 24 * 3600_000;
 /** Fewer games than this and the rating is still finding its level. */
 export const PROVISIONAL = 5;
 /** Different opponents a player must have met before beating them moves anyone's rating (keys cost nothing to make). */
-export const ESTABLISHED_OPPONENTS = 3;
+const ESTABLISHED_OPPONENTS = 3;
 
 /** When a player's games start moving their opponents' ratings. */
 interface Bar {
@@ -68,10 +68,10 @@ interface Ruleset {
   packages: string[][];
 }
 
-export const RULESETS: Ruleset[] = (rulesetsFile as { rulesets: Ruleset[] }).rulesets;
+const RULESETS: Ruleset[] = (rulesetsFile as { rulesets: Ruleset[] }).rulesets;
 
 /** A build's version: "0.1.0+abc1234" is "0.1.0"; a fork's "0.1.0-fork.name+abc" is "0.1.0-fork.name". */
-export const versionOf = (build: string) => build.split("+")[0]!;
+const versionOf = (build: string) => build.split("+")[0]!;
 
 const sameSet = (a: string[], b: string[]) =>
   a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
