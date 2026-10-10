@@ -131,6 +131,8 @@ async function device(options = {}) {
 /** A sample game's "Try (both sides)", from its card's ⋯ where Learn leads (UX 83). */
 async function tryDemo(page, card, tap = false) {
   const go = (l) => (tap ? l.tap() : l.click());
+  // The other sample games fold under More games (UX 504).
+  if (!(await card.isVisible())) await go(page.locator(".more-games > summary"));
   if (!(await card.locator(".try").isVisible())) await go(card.getByRole("button", { name: "⋯" }));
   await go(card.locator(".try"));
 }
@@ -1729,6 +1731,29 @@ const checks = {
     return page.errors;
   },
 
+  // "Open a file…" given a TTS save opens the TTS import with it loaded (UX 503).
+  async "open-tts-file"() {
+    const { page, context } = await device();
+    const save = {
+      SaveName: "Smoke Open",
+      ObjectStates: [
+        {
+          Name: "Custom_Model",
+          Nickname: "Warden",
+          Transform: { posX: 0, posY: 1, posZ: 10, rotY: 0, scaleX: 1, scaleY: 1, scaleZ: 1 },
+          CustomMesh: { MeshURL: "https://example.com/none.obj", TypeIndex: 1 },
+        },
+      ],
+    };
+    const path = join(files, "tts-open.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.locator("label.file", { hasText: "Open a file…" }).locator("input").setInputFiles(path);
+    await page.locator(".tts-import .tts-table").waitFor({ timeout: 10_000 });
+    await context.close();
+    return page.errors;
+  },
+
   async "tts-table"() {
     const { page, context } = await device();
     // A box OBJ: `w` × `h` × `d`, its footprint centred `dx` along x from the file's origin.
@@ -2303,7 +2328,7 @@ const checks = {
     };
     await lobby(page);
     await page.waitForTimeout(1000);
-    await check("lobby", 35);
+    await check("lobby", 28);
     await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
     await page.locator(".topbar").waitFor();
     for (let i = 0; i < 60 && (await page.evaluate(() => document.body.classList.contains("showcase"))); i++)

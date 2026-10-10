@@ -870,6 +870,7 @@ function Scene() {
           y: d.y,
           at: model ? model.position : { x: hit.x, y: hit.z },
           ...(model?.unitId ? { unitId: model.unitId } : {}),
+          mouse: true,
         },
       });
     };

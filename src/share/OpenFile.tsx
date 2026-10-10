@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { t } from "../i18n";
 import { openBytes, sharedKind } from "./links";
+import { openTts } from "../figures/open";
 
 /**
  * "Open a file…" (UX 83): one button for every file Open Battle saves (a
@@ -18,12 +19,12 @@ export function OpenFile() {
       // Not JSON: nothing here opens it.
     }
     const kind = sharedKind(data);
-    if (!kind)
-      return setNote(
-        (data as { ObjectStates?: unknown } | null)?.ObjectStates
-          ? t("That's a Tabletop Simulator save: open it with the button above.")
-          : t("That isn't a file Open Battle saves."),
-      );
+    // A Tabletop Simulator save opens in the TTS import, already loaded (UX 503).
+    if (!kind && (data as { ObjectStates?: unknown } | null)?.ObjectStates) {
+      setNote("");
+      return openTts(file);
+    }
+    if (!kind) return setNote(t("That isn't a file Open Battle saves."));
     const name = file.name.replace(/\.(army|table|figures)?\.?(json|standee)$/i, "");
     setNote((await openBytes(kind, name, bytes)) ?? t("That file couldn't be opened."));
   };

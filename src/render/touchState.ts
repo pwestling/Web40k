@@ -13,7 +13,8 @@ export const useTouch = create<{
   /** Units picked by the box: dragging one of them moves them all. */
   picked: string[];
   /** The context menu of a long press: where it was (client pixels and on the table), on which unit. */
-  menu: { x: number; y: number; at: { x: number; y: number }; unitId?: string } | null;
+  /** `mouse`: opened by a right-click rather than a finger, so its hints are a mouse's. */
+  menu: { x: number; y: number; at: { x: number; y: number }; unitId?: string; mouse?: boolean } | null;
   /** A two-finger twist on a unit: the turn so far (radians, screen clockwise), shown by the fingers. */
   twist: { unitId: string; angle: number; x: number; y: number } | null;
 }>(() => ({

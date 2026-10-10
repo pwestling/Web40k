@@ -14,7 +14,7 @@ import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
 import { touch } from "./touch";
 import { eyeView, rotateUnit } from "./UnitCard";
-import { isBlock } from "../core";
+import { isBlock, opposed } from "../core";
 
 /**
  * Touch play (#60), around the board: the box Select several draws, the turn a twist will set down, the
@@ -90,9 +90,15 @@ function TouchMenu() {
   const menu = useTouch((s) => s.menu)!;
   const game = useGame();
   const canControl = useCanControl();
-  const { view, select, setView, resetView, scrub } = useStore();
+  const { view, select, setView, resetView, scrub, selected } = useStore();
   const unit = menu.unitId ? game.units[menu.unitId] : undefined;
-  const mine = !!unit && canControl(unit.owner) && scrub === null;
+  // An enemy: not yours, or (hotseat) the other side from the unit you have picked (UX 502).
+  const picked = selected && selected !== unit?.id ? game.units[selected] : undefined;
+  const enemy =
+    !!unit &&
+    (!canControl(unit.owner) ||
+      (!!picked && canControl(picked.owner) && opposed(game, unit.owner, picked.owner)));
+  const mine = !!unit && !enemy && scrub === null;
   const close = () => useTouch.setState({ menu: null });
   const run = (f: () => void) => () => {
     f();
@@ -150,19 +156,29 @@ function TouchMenu() {
         >
           {unit ? t("Ping this unit") : t("Ping here")}
         </button>
-        <button
-          role="menuitem"
-          onClick={run(() => useTouch.setState((s) => ({ boxMode: !s.boxMode, oneModel: false })))}
-        >
-          {t("Select several")}
-        </button>
-        <button role="menuitem" onClick={run(() => setView(view === "top" ? "3d" : "top"))}>
-          {view === "top" ? t("3D view") : t("Top-down view")}
-        </button>
-        <button role="menuitem" onClick={run(resetView)}>
-          {t("Reset view")}
-        </button>
-        <p className="muted small">{t("Hold, then drag, to measure.")}</p>
+        {unit && enemy && (
+          <button role="menuitem" onClick={run(() => select(unit.id))}>
+            {t("Its card")}
+          </button>
+        )}
+        {/* The camera and box selection belong to a spot, not a unit (UX 502). */}
+        {!unit && (
+          <>
+            <button
+              role="menuitem"
+              onClick={run(() => useTouch.setState((s) => ({ boxMode: !s.boxMode, oneModel: false })))}
+            >
+              {t("Select several")}
+            </button>
+            <button role="menuitem" onClick={run(() => setView(view === "top" ? "3d" : "top"))}>
+              {view === "top" ? t("3D view") : t("Top-down view")}
+            </button>
+            <button role="menuitem" onClick={run(resetView)}>
+              {t("Reset view")}
+            </button>
+          </>
+        )}
+        <p className="muted small">{menu.mouse ? t("M to measure.") : t("Hold, then drag, to measure.")}</p>
       </div>
     </>
   );

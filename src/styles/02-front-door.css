@@ -77,6 +77,17 @@
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
+/* The other sample games, one click in (UX 504). */
+.lobby .more-games {
+  grid-column: 1 / -1;
+}
+.lobby .more-games > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.lobby .more-games[open] > summary {
+  margin-bottom: 6px;
+}
 .lobby .demo {
   display: flex;
   flex-direction: column;

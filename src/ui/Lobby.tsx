@@ -67,6 +67,8 @@ const OpenTablesBoard = lazy(() =>
 );
 /** Live now on the front door (PX): read once the lobby has settled. */
 const LiveStrip = lazy(() => import("../opentables/OpenTables").then((m) => ({ default: m.LiveStrip })));
+/** The sample game that stays in sight beside our own two; the rest fold under More games (UX 504). */
+const FIRST = new Set(["forty-k-11"]);
 
 /** Run `then` once the game's session exists: at once, or when an online start has loaded WebRTC. */
 function whenStarted(then: () => void): void {
@@ -316,6 +318,56 @@ export function Lobby() {
       })),
   ];
 
+  const gameCard = (g: (typeof games)[number]) => (
+    <div key={g.id} className="demo">
+      <strong>{g.title}</strong>
+      <span className="muted small">{g.blurb}</span>
+      {/* One main button and Play the computer; the rest one click in (UX 83). */}
+      <div className="row wrap">
+        {g.lessons.slice(0, 1).map((l) => (
+          <button
+            key={l.id}
+            className="primary small learn"
+            title={gameText(l.summary)}
+            onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+          >
+            {t("Learn (guided)")}
+          </button>
+        ))}
+        {g.demo && !g.lessons.length && (
+          <button className="primary small try" onClick={() => startDemo(g.id)}>
+            {t("Try (both sides)")}
+          </button>
+        )}
+        {g.demo && (
+          <button className="small solo" onClick={() => setAsking(g.id)}>
+            {t("Play the computer")}
+          </button>
+        )}
+        {(g.lessons.length > 1 || (g.demo && g.lessons.length > 0)) && (
+          <PopMenu label="⋯" title={t("More for this game")} className="small">
+            {g.demo && g.lessons.length > 0 && (
+              <button className="try" onClick={() => startDemo(g.id)}>
+                {t("Try (both sides)")}
+              </button>
+            )}
+            {g.lessons.slice(1).map((l) => (
+              <button
+                key={l.id}
+                className="learn"
+                title={gameText(l.summary)}
+                onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
+              >
+                {gameText(l.title)}
+              </button>
+            ))}
+          </PopMenu>
+        )}
+      </div>
+      {asking === g.id && <HowHard system={g.id} onCancel={() => setAsking(null)} />}
+    </div>
+  );
+
   return (
     <div className="panel lobby">
       <div className="lobby-head">
@@ -509,55 +561,14 @@ export function Lobby() {
             )}
           </p>
           <div className="demos">
-            {games.map((g) => (
-              <div key={g.id} className="demo">
-                <strong>{g.title}</strong>
-                <span className="muted small">{g.blurb}</span>
-                {/* One main button and Play the computer; the rest one click in (UX 83). */}
-                <div className="row wrap">
-                  {g.lessons.slice(0, 1).map((l) => (
-                    <button
-                      key={l.id}
-                      className="primary small learn"
-                      title={gameText(l.summary)}
-                      onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
-                    >
-                      {t("Learn (guided)")}
-                    </button>
-                  ))}
-                  {g.demo && !g.lessons.length && (
-                    <button className="primary small try" onClick={() => startDemo(g.id)}>
-                      {t("Try (both sides)")}
-                    </button>
-                  )}
-                  {g.demo && (
-                    <button className="small solo" onClick={() => setAsking(g.id)}>
-                      {t("Play the computer")}
-                    </button>
-                  )}
-                  {(g.lessons.length > 1 || (g.demo && g.lessons.length > 0)) && (
-                    <PopMenu label="⋯" title={t("More for this game")} className="small">
-                      {g.demo && g.lessons.length > 0 && (
-                        <button className="try" onClick={() => startDemo(g.id)}>
-                          {t("Try (both sides)")}
-                        </button>
-                      )}
-                      {g.lessons.slice(1).map((l) => (
-                        <button
-                          key={l.id}
-                          className="learn"
-                          title={gameText(l.summary)}
-                          onClick={() => void import("../teach/store").then((m) => m.startLesson(l))}
-                        >
-                          {gameText(l.title)}
-                        </button>
-                      ))}
-                    </PopMenu>
-                  )}
-                </div>
-                {asking === g.id && <HowHard system={g.id} onCancel={() => setAsking(null)} />}
-              </div>
-            ))}
+            {games.filter((g) => FIRST.has(g.id)).map(gameCard)}
+            {/* The other sample games one click in, the sci-fi battle beside our own two (UX 504). */}
+            {games.some((g) => !FIRST.has(g.id)) && (
+              <details className="more-games">
+                <summary>{t("More games")}</summary>
+                <div className="demos">{games.filter((g) => !FIRST.has(g.id)).map(gameCard)}</div>
+              </details>
+            )}
           </div>
         </div>
         <div className="lobby-col">
@@ -734,7 +745,7 @@ export function Lobby() {
           <InstallLink />
           <hr />
           {/* New, and Porter's focus: kept in sight for now (UX 83). */}
-          <button className="tts-entry" onClick={openTts}>
+          <button className="tts-entry" onClick={() => openTts()}>
             {t("Open a Tabletop Simulator save as a game")}
           </button>
           <OpenFile />

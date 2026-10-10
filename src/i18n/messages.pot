@@ -1597,7 +1597,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:311
 #: src/tts/TtsWholeTable.tsx:186
-#: src/ui/Lobby.tsx:609
+#: src/ui/Lobby.tsx:620
 msgid "Game"
 msgstr ""
 
@@ -1719,7 +1719,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:161
 #: src/ui/AttackPanel.tsx:319
-#: src/ui/TouchLayer.tsx:200
+#: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
 #: src/ui/tableVerbs.ts:112
@@ -2164,7 +2164,7 @@ msgid "Event round {n} of {of} · Table {table}"
 msgstr ""
 
 #: src/events/EventSeat.tsx:117
-#: src/ui/Lobby.tsx:356
+#: src/ui/Lobby.tsx:408
 msgid "Event round {n} · Table {table}"
 msgstr ""
 
@@ -2517,7 +2517,7 @@ msgid "Find a model"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:199
-#: src/figures/TtsImport.tsx:179
+#: src/figures/TtsImport.tsx:188
 msgid "Kind"
 msgstr ""
 
@@ -2527,7 +2527,7 @@ msgstr ""
 
 #: src/figures/FigureLibrary.tsx:205
 #: src/figures/FigureLibrary.tsx:390
-#: src/figures/TtsImport.tsx:184
+#: src/figures/TtsImport.tsx:193
 msgid "Terrain"
 msgstr ""
 
@@ -2636,7 +2636,7 @@ msgid "Pick for a pack"
 msgstr ""
 
 #: src/figures/FigureLibrary.tsx:390
-#: src/figures/TtsImport.tsx:183
+#: src/figures/TtsImport.tsx:192
 #: src/ui/ArmyImport.tsx:399
 msgid "Figure"
 msgstr ""
@@ -2873,92 +2873,92 @@ msgstr ""
 msgid "Matching from the photo didn't work."
 msgstr ""
 
-#: src/figures/TtsImport.tsx:104
+#: src/figures/TtsImport.tsx:107
+msgid "Bring the models from a Tabletop Simulator save or workshop mod into your library. Pick your Tabletop Simulator folder (Documents, My Games) so the files TTS already downloaded are read from your computer; with only a save, each model is downloaded if its host allows it."
+msgstr ""
+
+#: src/figures/TtsImport.tsx:113
 msgid "Pick your TTS folder…"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:117
+#: src/figures/TtsImport.tsx:126
 msgid "Save or mod"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:125
+#: src/figures/TtsImport.tsx:134
 msgid "Choose from {n} save or mod…"
 msgid_plural "Choose from {n} saves and mods…"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:135
+#: src/figures/TtsImport.tsx:144
 msgid "Open a save file…"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:149
+#: src/figures/TtsImport.tsx:158
 msgid "Your TTS folder has {n} cached file."
 msgid_plural "Your TTS folder has {n} cached files."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:177
+#: src/figures/TtsImport.tsx:186
 msgid "on this computer"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:177
+#: src/figures/TtsImport.tsx:186
 msgid "to download"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:192
+#: src/figures/TtsImport.tsx:201
 msgid "{n} object is a Unity asset bundle, which only TTS can read; it's left out."
 msgid_plural "{n} objects are Unity asset bundles, which only TTS can read; they're left out."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:201
+#: src/figures/TtsImport.tsx:210
 msgid "Add {n} model to the library"
 msgid_plural "Add {n} models to the library"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:208
+#: src/figures/TtsImport.tsx:217
 msgid "Pick none"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:208
+#: src/figures/TtsImport.tsx:217
 msgid "Pick all"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:42
+#: src/figures/TtsImport.tsx:43
 msgid "No Tabletop Simulator files there. Pick the folder called Tabletop Simulator, in Documents, My Games."
 msgstr ""
 
-#: src/figures/TtsImport.tsx:57
+#: src/figures/TtsImport.tsx:58
 msgid "That save has no custom models in it."
 msgstr ""
 
-#: src/figures/TtsImport.tsx:72
+#: src/figures/TtsImport.tsx:81
 #: src/tts/bring.ts:153
 msgid "Importing {n} of {total}: {name}"
 msgstr ""
 
-#: src/figures/TtsImport.tsx:80
+#: src/figures/TtsImport.tsx:89
 msgid "Added {n} model from {save}."
 msgid_plural "Added {n} models from {save}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:84
+#: src/figures/TtsImport.tsx:93
 msgid "{n} wasn't in your TTS folder and couldn't be downloaded: load the save in TTS once, then pick the folder again."
 msgid_plural "{n} weren't in your TTS folder and couldn't be downloaded: load the save in TTS once, then pick the folder again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/figures/TtsImport.tsx:90
+#: src/figures/TtsImport.tsx:99
 msgid "{n} couldn't be read."
 msgid_plural "{n} couldn't be read."
 msgstr[0] ""
 msgstr[1] ""
-
-#: src/figures/TtsImport.tsx:98
-msgid "Bring the models from a Tabletop Simulator save or workshop mod into your library. Pick your Tabletop Simulator folder (Documents, My Games) so the files TTS already downloaded are read from your computer; with only a save, each model is downloaded if its host allows it."
-msgstr ""
 
 #: src/figures/pack.ts:103
 #: src/share/links.ts:46
@@ -3171,7 +3171,7 @@ msgid "Join the game"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:113
-#: src/ui/Lobby.tsx:796
+#: src/ui/Lobby.tsx:807
 msgid "Not now"
 msgstr ""
 
@@ -3216,12 +3216,12 @@ msgid "Remove this mail game from this device?"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:631
+#: src/ui/Lobby.tsx:642
 msgid "2 vs 2"
 msgstr ""
 
 #: src/mail/MailLobby.tsx:210
-#: src/ui/Lobby.tsx:630
+#: src/ui/Lobby.tsx:641
 msgid "1 vs 1"
 msgstr ""
 
@@ -3512,7 +3512,7 @@ msgstr ""
 #: src/opentables/OpenTables.tsx:357
 #: src/opentables/OpenTables.tsx:425
 #: src/ui/Hud.tsx:552
-#: src/ui/Lobby.tsx:675
+#: src/ui/Lobby.tsx:686
 msgid "Watch"
 msgstr ""
 
@@ -3692,7 +3692,7 @@ msgid "Your table"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:615
-#: src/ui/Lobby.tsx:673
+#: src/ui/Lobby.tsx:684
 msgid "Join"
 msgstr ""
 
@@ -3991,7 +3991,7 @@ msgstr ""
 #: src/player/PlayerCard.tsx:34
 #: src/player/PlayerCard.tsx:121
 #: src/player/PlayerCard.tsx:303
-#: src/ui/Lobby.tsx:815
+#: src/ui/Lobby.tsx:826
 msgid "Your player card"
 msgstr ""
 
@@ -4321,31 +4321,31 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1150
+#: src/render/Board.tsx:1151
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1152
+#: src/render/Board.tsx:1153
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1153
+#: src/render/Board.tsx:1154
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1214
+#: src/render/Board.tsx:1215
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1216
+#: src/render/Board.tsx:1217
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1221
+#: src/render/Board.tsx:1222
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1695
+#: src/render/Board.tsx:1696
 msgid "Move {inches}\""
 msgstr ""
 
@@ -4967,24 +4967,20 @@ msgstr ""
 msgid "{unit}'s {what}"
 msgstr ""
 
-#: src/share/OpenFile.tsx:24
-msgid "That's a Tabletop Simulator save: open it with the button above."
-msgstr ""
-
-#: src/share/OpenFile.tsx:25
+#: src/share/OpenFile.tsx:27
 msgid "That isn't a file Open Battle saves."
 msgstr ""
 
-#: src/share/OpenFile.tsx:28
+#: src/share/OpenFile.tsx:29
 #: src/share/links.ts:187
 msgid "That file couldn't be opened."
 msgstr ""
 
-#: src/share/OpenFile.tsx:34
+#: src/share/OpenFile.tsx:35
 msgid "A replay, army, Yellowscribe list, table, figure pack or standee saved from Open Battle"
 msgstr ""
 
-#: src/share/OpenFile.tsx:36
+#: src/share/OpenFile.tsx:37
 msgid "Open a file…"
 msgstr ""
 
@@ -8118,12 +8114,12 @@ msgid "Spectating."
 msgstr ""
 
 #: src/ui/Hud.tsx:143
-#: src/ui/TouchLayer.tsx:160
+#: src/ui/TouchLayer.tsx:174
 msgid "3D view"
 msgstr ""
 
 #: src/ui/Hud.tsx:143
-#: src/ui/TouchLayer.tsx:160
+#: src/ui/TouchLayer.tsx:174
 msgid "Top-down view"
 msgstr ""
 
@@ -8154,7 +8150,7 @@ msgid "Home"
 msgstr ""
 
 #: src/ui/Hud.tsx:165
-#: src/ui/TouchLayer.tsx:163
+#: src/ui/TouchLayer.tsx:177
 msgid "Reset view"
 msgstr ""
 
@@ -8604,7 +8600,7 @@ msgid "More: turn, ping, look from here, views"
 msgstr ""
 
 #: src/ui/Keys.tsx:79
-#: src/ui/TouchLayer.tsx:157
+#: src/ui/TouchLayer.tsx:171
 msgid "Select several"
 msgstr ""
 
@@ -8628,289 +8624,293 @@ msgstr ""
 msgid "Put it away (tap a unit to bring it back)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:144
+#: src/ui/Lobby.tsx:146
 #: src/workshop/Workshop.tsx:709
 msgid "{name} {version}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:328
+#: src/ui/Lobby.tsx:334
+msgid "Learn (guided)"
+msgstr ""
+
+#: src/ui/Lobby.tsx:339
+#: src/ui/Lobby.tsx:351
+msgid "Try (both sides)"
+msgstr ""
+
+#: src/ui/Lobby.tsx:344
+#: src/ui/Lobby.tsx:478
+#: src/ui/Lobby.tsx:498
+#: src/ui/Lobby.tsx:520
+#: src/ui/Lobby.tsx:544
+msgid "Play the computer"
+msgstr ""
+
+#: src/ui/Lobby.tsx:348
+#: src/ui/Lobby.tsx:480
+#: src/ui/Lobby.tsx:522
+msgid "More for this game"
+msgstr ""
+
+#: src/ui/Lobby.tsx:380
 msgid "Aa ▾"
 msgstr ""
 
-#: src/ui/Lobby.tsx:328
+#: src/ui/Lobby.tsx:380
 msgid "Text size and language"
 msgstr ""
 
-#: src/ui/Lobby.tsx:335
+#: src/ui/Lobby.tsx:387
 msgid "Tabletop battles on a 3D table in your browser. Bring your army; the rules keep count."
 msgstr ""
 
-#: src/ui/Lobby.tsx:354
+#: src/ui/Lobby.tsx:406
 msgid "{event}: back to the event"
 msgstr ""
 
-#: src/ui/Lobby.tsx:365
+#: src/ui/Lobby.tsx:417
 msgid "Back to {game}: Battle over"
 msgstr ""
 
-#: src/ui/Lobby.tsx:367
+#: src/ui/Lobby.tsx:419
 msgid "Resume: {game}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:369
+#: src/ui/Lobby.tsx:421
 msgid "Resume: {game}, round {n}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:370
+#: src/ui/Lobby.tsx:422
 msgid "Resume: {game}, deploying"
 msgstr ""
 
-#: src/ui/Lobby.tsx:371
+#: src/ui/Lobby.tsx:423
 msgid "Resume last game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:374
+#: src/ui/Lobby.tsx:426
 msgid "{mode}, {n} event, saved {date}"
 msgid_plural "{mode}, {n} events, saved {date}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Lobby.tsx:380
+#: src/ui/Lobby.tsx:432
 msgid "Against the computer ({level})"
 msgstr ""
 
-#: src/ui/Lobby.tsx:381
+#: src/ui/Lobby.tsx:433
 msgid "online"
 msgstr ""
 
-#: src/ui/Lobby.tsx:381
+#: src/ui/Lobby.tsx:433
 msgid "local"
 msgstr ""
 
-#: src/ui/Lobby.tsx:381
+#: src/ui/Lobby.tsx:433
 msgid "hotseat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:398
+#: src/ui/Lobby.tsx:450
 msgid "Play your own army: import a list"
 msgstr ""
 
-#: src/ui/Lobby.tsx:400
+#: src/ui/Lobby.tsx:452
 msgid "From New Recruit, BattleScribe, Yellowscribe or a Tabletop Simulator save, with your own figures if you have them."
 msgstr ""
 
-#: src/ui/Lobby.tsx:408
+#: src/ui/Lobby.tsx:460
 msgid "Find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:409
+#: src/ui/Lobby.tsx:461
 msgid "Join a game someone has put up on Open tables."
 msgstr ""
 
-#: src/ui/Lobby.tsx:417
+#: src/ui/Lobby.tsx:469
 msgid "Our own skirmish game, free to share (CC BY). Four warbands fight over lanterns fallen into a rift. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:423
-#: src/ui/Lobby.tsx:445
-#: src/ui/Lobby.tsx:465
-#: src/ui/Lobby.tsx:488
+#: src/ui/Lobby.tsx:475
+#: src/ui/Lobby.tsx:497
+#: src/ui/Lobby.tsx:517
+#: src/ui/Lobby.tsx:540
 msgid "Play now (both sides)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:426
-#: src/ui/Lobby.tsx:446
-#: src/ui/Lobby.tsx:468
-#: src/ui/Lobby.tsx:492
-#: src/ui/Lobby.tsx:535
-msgid "Play the computer"
-msgstr ""
-
-#: src/ui/Lobby.tsx:428
-#: src/ui/Lobby.tsx:470
-#: src/ui/Lobby.tsx:539
-msgid "More for this game"
-msgstr ""
-
-#: src/ui/Lobby.tsx:430
-#: src/ui/Lobby.tsx:472
+#: src/ui/Lobby.tsx:482
+#: src/ui/Lobby.tsx:524
 msgid "Printed or real models on your table: this phone keeps the cards, rolls and scores"
 msgstr ""
 
-#: src/ui/Lobby.tsx:435
-#: src/ui/Lobby.tsx:447
-#: src/ui/Lobby.tsx:477
-#: src/ui/Lobby.tsx:493
-#: src/ui/Lobby.tsx:681
+#: src/ui/Lobby.tsx:487
+#: src/ui/Lobby.tsx:499
+#: src/ui/Lobby.tsx:529
+#: src/ui/Lobby.tsx:545
+#: src/ui/Lobby.tsx:692
 msgid "At a real table"
 msgstr ""
 
-#: src/ui/Lobby.tsx:437
-#: src/ui/Lobby.tsx:479
+#: src/ui/Lobby.tsx:489
+#: src/ui/Lobby.tsx:531
 msgid "Rules, print and play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:459
+#: src/ui/Lobby.tsx:511
 msgid "Our own skirmish game, free to share (CC BY). Crews of five to ten climb a drowned town's towers at low tide: two actions a go, guards and hidden lurkers. Nothing to import."
 msgstr ""
 
-#: src/ui/Lobby.tsx:500
+#: src/ui/Lobby.tsx:552
 msgid "Pick a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:502
+#: src/ui/Lobby.tsx:554
 msgid "Learn: a guided first game against the computer, with a coach. Try: two sample armies set up, and you play both sides."
 msgstr ""
 
-#: src/ui/Lobby.tsx:507
+#: src/ui/Lobby.tsx:559
 msgid "These are built-in sample rules. For your own game system, load its rules package under More ways to play."
 msgstr ""
 
-#: src/ui/Lobby.tsx:525
-msgid "Learn (guided)"
+#: src/ui/Lobby.tsx:568
+msgid "More games"
 msgstr ""
 
-#: src/ui/Lobby.tsx:530
-#: src/ui/Lobby.tsx:542
-msgid "Try (both sides)"
-msgstr ""
-
-#: src/ui/Lobby.tsx:564
+#: src/ui/Lobby.tsx:575
 msgid "Play with friends"
 msgstr ""
 
-#: src/ui/Lobby.tsx:569
+#: src/ui/Lobby.tsx:580
 msgid "Open tables: find an opponent"
 msgstr ""
 
-#: src/ui/Lobby.tsx:571
+#: src/ui/Lobby.tsx:582
 msgid "Games other players have put up. Join one, or post your own."
 msgstr ""
 
-#: src/ui/Lobby.tsx:599
+#: src/ui/Lobby.tsx:610
 msgid "Player 1 or 2, by seat"
 msgstr ""
 
-#: src/ui/Lobby.tsx:621
+#: src/ui/Lobby.tsx:632
 msgid "Host a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:625
+#: src/ui/Lobby.tsx:636
 msgid "Options: 2 vs 2"
 msgstr ""
 
-#: src/ui/Lobby.tsx:625
+#: src/ui/Lobby.tsx:636
 msgid "Options"
 msgstr ""
 
-#: src/ui/Lobby.tsx:627
+#: src/ui/Lobby.tsx:638
 msgid "Players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:630
+#: src/ui/Lobby.tsx:641
 msgid "Two players"
 msgstr ""
 
-#: src/ui/Lobby.tsx:631
+#: src/ui/Lobby.tsx:642
 msgid "Four players in two teams; teams share CP and VP"
 msgstr ""
 
-#: src/ui/Lobby.tsx:648
+#: src/ui/Lobby.tsx:659
 msgid "You get a link to send; whoever opens it joins your table."
 msgstr ""
 
-#: src/ui/Lobby.tsx:651
+#: src/ui/Lobby.tsx:662
 msgid "Host on this site's server"
 msgstr ""
 
-#: src/ui/Lobby.tsx:654
+#: src/ui/Lobby.tsx:665
 msgid "The server couldn't host it: {reason}"
 msgstr ""
 
-#: src/ui/Lobby.tsx:655
+#: src/ui/Lobby.tsx:666
 msgid "The game runs on the server, not in a browser, so nobody's tab has to stay open."
 msgstr ""
 
-#: src/ui/Lobby.tsx:661
+#: src/ui/Lobby.tsx:672
 msgid "Have an invite? Paste it here"
 msgstr ""
 
-#: src/ui/Lobby.tsx:664
+#: src/ui/Lobby.tsx:675
 msgid "a room code or invite link"
 msgstr ""
 
-#: src/ui/Lobby.tsx:665
+#: src/ui/Lobby.tsx:676
 #: src/ui/Room.tsx:114
 msgid "Room"
 msgstr ""
 
-#: src/ui/Lobby.tsx:683
+#: src/ui/Lobby.tsx:694
 msgid "Playing with your own models? Open Battle keeps the unit cards, wounds, CP, VP and mission, and works out each attack. Roll on screen or roll your own dice and type them in."
 msgstr ""
 
-#: src/ui/Lobby.tsx:688
+#: src/ui/Lobby.tsx:699
 msgid "One phone for both of us"
 msgstr ""
 
-#: src/ui/Lobby.tsx:691
+#: src/ui/Lobby.tsx:702
 msgid "You get a link to send; the other player opens it on their phone"
 msgstr ""
 
-#: src/ui/Lobby.tsx:693
+#: src/ui/Lobby.tsx:704
 msgid "A phone each"
 msgstr ""
 
-#: src/ui/Lobby.tsx:697
+#: src/ui/Lobby.tsx:708
 msgid "More ways to play"
 msgstr ""
 
-#: src/ui/Lobby.tsx:704
+#: src/ui/Lobby.tsx:715
 msgid "Same browser (play between two tabs, no network)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:714
+#: src/ui/Lobby.tsx:725
 msgid "Set up a game on this screen (hotseat)"
 msgstr ""
 
-#: src/ui/Lobby.tsx:728
+#: src/ui/Lobby.tsx:739
 msgid "Figure library: your models, packs and storage"
 msgstr ""
 
-#: src/ui/Lobby.tsx:731
+#: src/ui/Lobby.tsx:742
 msgid "Module workshop: write your own game system"
 msgstr ""
 
-#: src/ui/Lobby.tsx:738
+#: src/ui/Lobby.tsx:749
 msgid "Open a Tabletop Simulator save as a game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:745
+#: src/ui/Lobby.tsx:756
 msgid "No account: games run between your browsers."
 msgstr ""
 
-#: src/ui/Lobby.tsx:750
+#: src/ui/Lobby.tsx:761
 msgid "Source code"
 msgstr ""
 
-#: src/ui/Lobby.tsx:778
+#: src/ui/Lobby.tsx:789
 msgid "plays loosely; good for a first game"
 msgstr ""
 
-#: src/ui/Lobby.tsx:779
+#: src/ui/Lobby.tsx:790
 msgid "plays to win"
 msgstr ""
 
-#: src/ui/Lobby.tsx:780
+#: src/ui/Lobby.tsx:791
 msgid "thinks harder about every move"
 msgstr ""
 
-#: src/ui/Lobby.tsx:783
-#: src/ui/Lobby.tsx:784
+#: src/ui/Lobby.tsx:794
+#: src/ui/Lobby.tsx:795
 msgid "How hard?"
 msgstr ""
 
-#: src/ui/Lobby.tsx:811
-#: src/ui/Lobby.tsx:812
+#: src/ui/Lobby.tsx:822
+#: src/ui/Lobby.tsx:823
 msgid "Your player card: name, colours, ranked games"
 msgstr ""
 
@@ -11551,78 +11551,86 @@ msgstr ""
 msgid "{name} isn't ready yet"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:110
-#: src/ui/TouchLayer.tsx:113
+#: src/ui/TouchLayer.tsx:116
+#: src/ui/TouchLayer.tsx:119
 msgid "This spot"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:130
+#: src/ui/TouchLayer.tsx:136
 msgid "Move one model at a time"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:142
+#: src/ui/TouchLayer.tsx:148
 msgid "Look from here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:151
+#: src/ui/TouchLayer.tsx:157
 msgid "Ping this unit"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:151
+#: src/ui/TouchLayer.tsx:157
 msgid "Ping here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:165
+#: src/ui/TouchLayer.tsx:161
+msgid "Its card"
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:181
+msgid "M to measure."
+msgstr ""
+
+#: src/ui/TouchLayer.tsx:181
 msgid "Hold, then drag, to measure."
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:198
+#: src/ui/TouchLayer.tsx:214
 msgid "{verb}: {unit}"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:199
+#: src/ui/TouchLayer.tsx:215
 msgid "{verb} anyway ({why})"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:200
+#: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
 #: src/ui/tableVerbs.ts:81
 msgid "Shoot"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:200
+#: src/ui/TouchLayer.tsx:216
 #: src/ui/tableVerbs.ts:99
 msgid "Charge"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:227
+#: src/ui/TouchLayer.tsx:243
 msgid "Shoot…"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:233
+#: src/ui/TouchLayer.tsx:249
 #: src/ui/UnitCard.tsx:305
 msgid "Advance (D6)"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:241
+#: src/ui/TouchLayer.tsx:257
 msgid "Then click the enemy to charge"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:247
+#: src/ui/TouchLayer.tsx:263
 msgid "Charge…"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:254
+#: src/ui/TouchLayer.tsx:270
 msgid "Fight…"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:260
+#: src/ui/TouchLayer.tsx:276
 #: src/ui/UnitCard.tsx:313
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:269
+#: src/ui/TouchLayer.tsx:285
 msgid "Out of phase ▸"
 msgstr ""
 
@@ -11639,12 +11647,12 @@ msgid "Wheel {n}° left"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:60
-#: src/ui/TouchLayer.tsx:122
+#: src/ui/TouchLayer.tsx:128
 msgid "Turn {n}° right"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:61
-#: src/ui/TouchLayer.tsx:119
+#: src/ui/TouchLayer.tsx:125
 msgid "Turn {n}° left"
 msgstr ""
 

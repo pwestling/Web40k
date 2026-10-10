@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLibraryOpen } from "./open";
 import type { AssetKind } from "../assets/types";
 import { t, tn } from "../i18n";
 import { importTtsModel } from "../tts/bring";
@@ -60,6 +61,14 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
       setError(err instanceof Error ? err.message : String(err));
     }
   };
+
+  // A save handed over by "Open a file…" (UX 503): loaded as the import opens.
+  useEffect(() => {
+    const file = useLibraryOpen.getState().ttsSave;
+    if (!file) return;
+    useLibraryOpen.setState({ ttsSave: undefined });
+    void Promise.resolve(file).then(openSave);
+  }, []);
 
   const chosen = scan?.models.filter((m) => !skip.has(m.key)) ?? [];
 
