@@ -295,7 +295,10 @@ const checks = {
   async "play-now"() {
     const { page, context } = await device();
     await lobby(page);
-    await page.getByRole("button", { name: /Play now/ }).click();
+    await page
+      .locator(".demo.ours", { hasText: "Rift Lanterns" })
+      .getByRole("button", { name: /Play now/ })
+      .click();
     await page.locator(".topbar").waitFor();
     await page.locator("canvas").first().waitFor();
     // The battle starts by itself, Lantern Grab set, and "What can I do now?" open on round 1.
@@ -1433,7 +1436,10 @@ const checks = {
     const { page, context } = await device(IPAD);
     const t = await touch(page);
     await lobby(page);
-    await page.getByRole("button", { name: "Play now (both sides)" }).tap();
+    await page
+      .locator(".demo.ours", { hasText: "Rift Lanterns" })
+      .getByRole("button", { name: "Play now (both sides)" })
+      .tap();
     await touchTable(page, t);
     const primary = page.locator(".topbar .turn button.primary");
     const u = await tapOwnUnit(page, t);
@@ -1813,6 +1819,78 @@ const checks = {
     await page.locator(".panel.unitcard .no-stats").waitFor();
     await context.close();
     return page.errors;
+  },
+
+  /**
+   * TTS reflexes (PX): Tab lands on the table first; the ? sheet's TTS block switches on TTS controls; then
+   * a left drag on the table picks units with a box, D slides the camera and Delete takes a model off.
+   */
+  async "tts-controls"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await page.locator(".demos .demo", { hasText: "Sci-fi battle" }).locator(".try").click();
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const focused = () => page.evaluate(() => document.activeElement?.tagName);
+    if ((await focused()) !== "CANVAS")
+      throw new Error(`the game opened with ${await focused()} focused, not the table`);
+    await page.keyboard.press("?");
+    await page.getByText("Coming from Tabletop Simulator?").waitFor();
+    await page.getByLabel("TTS controls (just on this device)").check();
+    await page.keyboard.press("Escape");
+    await sleep(500);
+    // With TTS controls, Tab on the table measures (while held) rather than going to the score steppers.
+    await page.locator("canvas").first().focus();
+    await page.keyboard.down("Tab");
+    await sleep(200);
+    if ((await focused()) !== "CANVAS") throw new Error(`Tab went to ${await focused()}, not measuring`);
+    await page.keyboard.up("Tab");
+    // A left drag from empty table draws a box: tried from a few spots, as a model may stand on one.
+    const { width: w, height: h } = page.viewportSize();
+    let boxed = false;
+    for (const [x, y] of [
+      [0.42, 0.85],
+      [0.3, 0.8],
+      [0.55, 0.88],
+      [0.35, 0.62],
+    ]) {
+      await page.mouse.move(w * x, h * y);
+      await page.mouse.down();
+      await page.mouse.move(w * x + 30, h * y - 30, { steps: 4 });
+      boxed = (await page.locator(".touch-box").count()) > 0;
+      if (boxed) {
+        await page.mouse.move(w * 0.98, h * 0.12, { steps: 10 });
+        await page.mouse.up();
+        break;
+      }
+      await page.mouse.up();
+      await page.keyboard.press("Escape");
+    }
+    if (!boxed) throw new Error("a left drag on the table drew no box");
+    await page.locator(".touch-tools", { hasText: "units picked" }).waitFor({ timeout: 3000 });
+    await page.keyboard.press("Escape");
+    // D slides the camera: the plates move across the screen.
+    const plate = page.locator(".plate [data-unit]").first();
+    const p0 = await plate.boundingBox();
+    await page.mouse.move(w / 2, 10);
+    await page.keyboard.down("d");
+    await sleep(700);
+    await page.keyboard.up("d");
+    await sleep(300);
+    const p1 = await plate.boundingBox();
+    if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < 20) throw new Error("holding D didn't slide the camera");
+    // Delete, with a unit selected and nothing under the pointer: its last model goes, after asking.
+    await page.keyboard.press("]");
+    await page.locator(".unitcard").first().waitFor();
+    const dead = () => page.locator(".unitcard li.dead").count();
+    const before = await dead();
+    await page.keyboard.press("Delete");
+    await sleep(800);
+    if ((await dead()) !== before + 1)
+      throw new Error(`Delete took ${(await dead()) - before} models off, not 1`);
+    if (page.errors.length) throw new Error(page.errors[0]);
+    await context.close();
   },
 
   async "tts-board-turn"() {

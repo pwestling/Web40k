@@ -25,7 +25,7 @@ export function TouchLayer() {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [menu]);
-  if (!touch() && !menu && !box && !twist) return null;
+  if (!touch() && !menu && !box && !twist && picked.length < 2) return null;
   const twisted = twist ? game.units[twist.unitId] : undefined;
   const degrees = twist ? Math.round((snapTurn(twist.angle) * 180) / Math.PI) : 0;
   return (
@@ -56,14 +56,15 @@ export function TouchLayer() {
       )}
       {menu && <TouchMenu />}
       {/* Select several and One model are switched on from a long press's menu; while one is on, it says so here. */}
-      {live && (boxMode || oneModel) && (
+      {/* A box drawn with TTS controls picks several too: it says so the same way. */}
+      {live && (boxMode || oneModel || picked.length > 1) && (
         <div className="touch-tools" role="status">
           <span>
-            {boxMode
-              ? picked.length > 1
-                ? t("{n} units picked: drag one to move them all", { n: picked.length })
-                : t("Draw a box on the table around your units")
-              : t("Dragging moves one model at a time")}
+            {picked.length > 1
+              ? t("{n} units picked: drag one to move them all", { n: picked.length })
+              : boxMode
+                ? t("Draw a box on the table around your units")
+                : t("Dragging moves one model at a time")}
           </span>
           <button
             className="primary"

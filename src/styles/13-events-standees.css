@@ -247,3 +247,12 @@
   background: rgb(17 19 24 / 96%);
   box-shadow: 0 6px 24px rgb(0 0 0 / 40%);
 }
+
+/* The table takes keyboard focus first in a game (PX TTS): a quiet ring when it has it. */
+canvas:focus {
+  outline: none;
+}
+canvas:focus-visible {
+  outline: 2px solid var(--accent, #60a5fa);
+  outline-offset: -2px;
+}

@@ -52,6 +52,8 @@ import { RankedKeeper } from "./ranked/RankedGame";
 import { SharedDiceKeeper } from "./ranked/dice";
 import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
+import { deleteKey } from "./ui/ttsControls";
+import { useTouch } from "./render/touchState";
 
 /** three.js and the 3D table load on their own: the table companion (#37) never draws them. */
 export const loadBoard = () => import("./render/Board");
@@ -60,7 +62,7 @@ const Board = lazy(() => loadBoard().then((m) => ({ default: m.Board })));
 
 /**
  * Keyboard: [ ] pick a unit, arrows move it, Enter opens its card; ? shows every control; Esc clears; M toggles the ruler; Q/E rotate; R/F move a unit up or down a floor;
- * Delete removes the selected terrain piece while editing; Home resets the camera.
+ * Delete removes the selected terrain piece while editing, else a model as a casualty (asking); Home resets the camera.
  */
 function onKey(e: KeyboardEvent) {
   const target = e.target;
@@ -91,6 +93,7 @@ function onKey(e: KeyboardEvent) {
     s.setDraft(null);
     s.select(null);
     s.set({ selectedTerrain: null, losFrom: null });
+    if (useTouch.getState().picked.length) useTouch.setState({ picked: [] });
     return;
   }
   // Keyboard play (#25): [ and ] step through your units (with Shift, the other side's).
@@ -115,6 +118,11 @@ function onKey(e: KeyboardEvent) {
     if (key === "q") rotateTerrain(s.selectedTerrain, -15);
     if (key === "e") rotateTerrain(s.selectedTerrain, 15);
     if (key === "delete" || key === "backspace") removeTerrain(s.selectedTerrain);
+    return;
+  }
+  // As in Tabletop Simulator: the model under the pointer (or the selected unit's last) goes, after asking.
+  if (key === "delete" || key === "backspace") {
+    if (deleteKey()) e.preventDefault();
     return;
   }
   const unit = s.selected ? s.game.units[s.selected] : undefined;

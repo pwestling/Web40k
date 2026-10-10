@@ -374,38 +374,38 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:324
+#: src/GameScreen.tsx:332
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:325
+#: src/GameScreen.tsx:333
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:326
+#: src/GameScreen.tsx:334
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:327
+#: src/GameScreen.tsx:335
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:332
+#: src/GameScreen.tsx:340
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:387
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:333
+#: src/GameScreen.tsx:341
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:334
+#: src/GameScreen.tsx:342
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:339
+#: src/GameScreen.tsx:347
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -1594,7 +1594,7 @@ msgstr ""
 #: src/events/EventsUI.tsx:242
 #: src/opentables/OpenTables.tsx:216
 #: src/player/PlayerCard.tsx:311
-#: src/tts/TtsWholeTable.tsx:177
+#: src/tts/TtsWholeTable.tsx:176
 #: src/ui/Lobby.tsx:573
 msgid "Game"
 msgstr ""
@@ -2398,7 +2398,7 @@ msgid "Checking your shelf…"
 msgstr ""
 
 #: src/events/EventsUI.tsx:609
-#: src/ui/Keys.tsx:12
+#: src/ui/Keys.tsx:13
 msgid "Enter"
 msgstr ""
 
@@ -4314,32 +4314,36 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1059
-msgid "Not visible"
-msgstr ""
-
-#: src/render/Board.tsx:1061
-msgid "{visible}/{n} visible · {cover} in cover"
-msgstr ""
-
-#: src/render/Board.tsx:1066
-msgid "{visible}/{n} visible"
-msgstr ""
-
-#: src/render/Board.tsx:1513
-msgid "Move {inches}\""
-msgstr ""
-
-#: src/render/Board.tsx:995
+#: src/render/Board.tsx:1023
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:997
+#: src/render/Board.tsx:1025
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:998
+#: src/render/Board.tsx:1026
 msgid "{label}: nobody holds it"
+msgstr ""
+
+#: src/render/Board.tsx:1087
+msgid "Not visible"
+msgstr ""
+
+#: src/render/Board.tsx:1089
+msgid "{visible}/{n} visible · {cover} in cover"
+msgstr ""
+
+#: src/render/Board.tsx:1094
+msgid "{visible}/{n} visible"
+msgstr ""
+
+#: src/render/Board.tsx:1554
+msgid "Move {inches}\""
+msgstr ""
+
+#: src/render/Board.tsx:351
+msgid "The table"
 msgstr ""
 
 #: src/render/Casualties.tsx:220
@@ -4492,7 +4496,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:186
-#: src/ui/Keys.tsx:27
+#: src/ui/Keys.tsx:29
+#: src/ui/Keys.tsx:40
 #: src/ui/TerrainPanel.tsx:342
 #: src/workshop/Workshop.tsx:297
 msgid "Delete"
@@ -5786,51 +5791,51 @@ msgid_plural "{n} armies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/tts/TtsWholeTable.tsx:138
+#: src/tts/TtsWholeTable.tsx:137
 msgid "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in."
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:146
+#: src/tts/TtsWholeTable.tsx:145
 msgid "Player 1:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:146
+#: src/tts/TtsWholeTable.tsx:145
 msgid "Player 2:"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:152
+#: src/tts/TtsWholeTable.tsx:151
 msgid "Move to Player 2"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:152
+#: src/tts/TtsWholeTable.tsx:151
 msgid "Move to Player 1"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:155
+#: src/tts/TtsWholeTable.tsx:154
 msgid "{name} (in a bag)"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:160
+#: src/tts/TtsWholeTable.tsx:159
 msgid "the game's sample army"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:171
+#: src/tts/TtsWholeTable.tsx:170
 msgid "Swap sides"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:193
+#: src/tts/TtsWholeTable.tsx:192
 msgid "Play it online with a friend"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:196
+#: src/tts/TtsWholeTable.tsx:195
 msgid "Open it as a game"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:200
+#: src/tts/TtsWholeTable.tsx:199
 msgid "Save the table and armies"
 msgstr ""
 
-#: src/tts/TtsWholeTable.tsx:208
+#: src/tts/TtsWholeTable.tsx:207
 msgid "They're in the table library and on your army shelf: play it online or here, or pick them when you host."
 msgstr ""
 
@@ -6590,7 +6595,7 @@ msgstr ""
 #: src/ui/ProcedurePanels.tsx:421
 #: src/ui/TerrainPanel.tsx:163
 #: src/ui/TopBar.tsx:614
-#: src/ui/TouchLayer.tsx:72
+#: src/ui/TouchLayer.tsx:73
 msgid "Done"
 msgstr ""
 
@@ -7633,100 +7638,108 @@ msgstr ""
 msgid "{name}: {triangles} triangles, drawn at {levels} depending on distance"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:104
+#: src/ui/GameSettings.tsx:105
 msgid "Stand-in heights line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:106
+#: src/ui/GameSettings.tsx:107
 msgid "Footprint line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:107
+#: src/ui/GameSettings.tsx:108
 msgid "True line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:108
+#: src/ui/GameSettings.tsx:109
 msgid "Cover: {cover}."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:110
+#: src/ui/GameSettings.tsx:111
 msgid "Models see in a {degrees}° front arc."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:113
+#: src/ui/GameSettings.tsx:114
 msgid "Other units' models block line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:114
+#: src/ui/GameSettings.tsx:115
 msgid "Other units' models don't block line of sight."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:21
+#: src/ui/GameSettings.tsx:130
+msgid "TTS controls"
+msgstr ""
+
+#: src/ui/GameSettings.tsx:133
+msgid "Just on this device. Left drag on the table picks units with a box, right drag turns the camera, WASD slides it and holding Tab measures."
+msgstr ""
+
+#: src/ui/GameSettings.tsx:22
 msgid "The battle has started. Change this rule for both players?"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:27
+#: src/ui/GameSettings.tsx:28
 msgid "Game settings"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:32
+#: src/ui/GameSettings.tsx:33
 msgid "Cover"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:34
-#: src/ui/GameSettings.tsx:108
+#: src/ui/GameSettings.tsx:35
+#: src/ui/GameSettings.tsx:109
 msgid "Ballistic Skill 1 worse"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:35
-#: src/ui/GameSettings.tsx:108
+#: src/ui/GameSettings.tsx:36
+#: src/ui/GameSettings.tsx:109
 msgid "+1 to save"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:39
+#: src/ui/GameSettings.tsx:40
 #: src/ui/SystemPanels.tsx:352
 #: src/ui/UnitCard.tsx:411
 msgid "Line of sight"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:44
+#: src/ui/GameSettings.tsx:45
 msgid "True line of sight"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:45
+#: src/ui/GameSettings.tsx:46
 msgid "Stand-in heights"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:46
+#: src/ui/GameSettings.tsx:47
 msgid "Footprints, no height"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:51
+#: src/ui/GameSettings.tsx:52
 msgid "Heights don't count. Sight runs from the centre of a model's base to any part of the target's base. Each terrain piece is open, obscuring (gives cover) or blocking; set it in the terrain editor."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:58
+#: src/ui/GameSettings.tsx:59
 msgid "Each terrain piece counts as a block of its stand-in height, and models see each other if the line between their tops clears it. Set heights in the terrain editor; X-ray shows them."
 msgstr ""
 
-#: src/ui/GameSettings.tsx:64
+#: src/ui/GameSettings.tsx:65
 msgid "Models see"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:70
+#: src/ui/GameSettings.tsx:71
 msgid "All around"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:71
 #: src/ui/GameSettings.tsx:72
+#: src/ui/GameSettings.tsx:73
 msgid "In a {degrees}° front arc"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:78
+#: src/ui/GameSettings.tsx:79
 msgid "Game size (points)"
 msgstr ""
 
-#: src/ui/GameSettings.tsx:98
+#: src/ui/GameSettings.tsx:99
 msgid "Other units' models block line of sight"
 msgstr ""
 
@@ -7755,22 +7768,22 @@ msgid "Spectating."
 msgstr ""
 
 #: src/ui/Hud.tsx:138
-#: src/ui/TouchLayer.tsx:151
+#: src/ui/TouchLayer.tsx:152
 msgid "3D view"
 msgstr ""
 
 #: src/ui/Hud.tsx:138
-#: src/ui/TouchLayer.tsx:151
+#: src/ui/TouchLayer.tsx:152
 msgid "Top-down view"
 msgstr ""
 
 #: src/ui/Hud.tsx:140
-#: src/ui/Keys.tsx:25
+#: src/ui/Keys.tsx:26
 msgid "Home"
 msgstr ""
 
 #: src/ui/Hud.tsx:141
-#: src/ui/TouchLayer.tsx:154
+#: src/ui/TouchLayer.tsx:155
 msgid "Reset view"
 msgstr ""
 
@@ -7908,220 +7921,261 @@ msgid "Review ready"
 msgstr ""
 
 #: src/ui/Keys.tsx:10
-msgid "Select your previous or next unit (Shift: the other side's)"
-msgstr ""
-
-#: src/ui/Keys.tsx:11
-msgid "Arrow keys"
-msgstr ""
-
-#: src/ui/Keys.tsx:11
-msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:12
-msgid "Go from the table into the selected unit's card"
-msgstr ""
-
-#: src/ui/Keys.tsx:13
-msgid "Tab"
-msgstr ""
-
-#: src/ui/Keys.tsx:13
-msgid "Move between buttons; Enter or Space presses one"
-msgstr ""
-
-#: src/ui/Keys.tsx:14
-#: src/ui/Keys.tsx:34
-msgid "Drag a unit"
-msgstr ""
-
-#: src/ui/Keys.tsx:14
-msgid "Move it; the ruler shows how far against its limit"
-msgstr ""
-
-#: src/ui/Keys.tsx:15
-msgid "Alt + drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:15
-msgid "Move a unit, stopping at its limit"
-msgstr ""
-
-#: src/ui/Keys.tsx:16
-msgid "Shift + drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:16
-msgid "Move a regiment block freely, not just straight ahead"
-msgstr ""
-
-#: src/ui/Keys.tsx:17
-msgid "Turn the selected unit (or terrain piece while editing)"
-msgstr ""
-
-#: src/ui/Keys.tsx:18
-msgid "Move the selected unit up or down a floor"
-msgstr ""
-
-#: src/ui/Keys.tsx:19
-msgid "Measure: then drag across the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:20
-msgid "Alt + click"
-msgstr ""
-
-#: src/ui/Keys.tsx:20
-msgid "Ping a spot for everyone"
-msgstr ""
-
-#: src/ui/Keys.tsx:21
-msgid "Hold V"
-msgstr ""
-
-#: src/ui/Keys.tsx:21
-msgid "Talk, once your mic is on (Voice, bottom left)"
-msgstr ""
-
-#: src/ui/Keys.tsx:22
-msgid "Left drag on the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:22
-msgid "Turn the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:23
-msgid "Right drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:23
-#: src/ui/Keys.tsx:35
-msgid "Slide the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:24
-msgid "Wheel"
-msgstr ""
-
-#: src/ui/Keys.tsx:24
-msgid "Zoom"
-msgstr ""
-
-#: src/ui/Keys.tsx:25
-msgid "Reset the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:26
-msgid "Esc"
-msgstr ""
-
-#: src/ui/Keys.tsx:26
-msgid "Clear: selection, ruler, pen"
-msgstr ""
-
-#: src/ui/Keys.tsx:27
-msgid "Remove the selected terrain piece (while editing)"
-msgstr ""
-
-#: src/ui/Keys.tsx:28
-msgid "This sheet"
-msgstr ""
-
-#: src/ui/Keys.tsx:33
-msgid "Tap a unit"
-msgstr ""
-
-#: src/ui/Keys.tsx:33
-msgid "Select it: its card shows what it can do"
-msgstr ""
-
-#: src/ui/Keys.tsx:34
-msgid "Move it (hold the table for one model at a time)"
-msgstr ""
-
-#: src/ui/Keys.tsx:35
-msgid "One finger on the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:36
-msgid "Two fingers"
-msgstr ""
-
-#: src/ui/Keys.tsx:36
-msgid "Pinch to zoom, twist to turn the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:37
-msgid "Two fingers on the selected unit"
-msgstr ""
-
-#: src/ui/Keys.tsx:37
-msgid "Twist to turn it (a regiment block wheels)"
-msgstr ""
-
-#: src/ui/Keys.tsx:38
-msgid "Hold, then drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:38
-msgid "Measure"
-msgstr ""
-
-#: src/ui/Keys.tsx:39
-msgid "Hold and let go"
-msgstr ""
-
-#: src/ui/Keys.tsx:39
-msgid "More: turn, ping, look from here, views"
-msgstr ""
-
-#: src/ui/Keys.tsx:40
-#: src/ui/TouchLayer.tsx:148
-msgid "Select several"
-msgstr ""
-
-#: src/ui/Keys.tsx:40
-msgid "Draw a box on the table, then drag one unit to move them all"
-msgstr ""
-
-#: src/ui/Keys.tsx:41
-msgid "A stylus on the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:41
-msgid "Draw a line everyone sees"
-msgstr ""
-
-#: src/ui/Keys.tsx:42
-msgid "Flick the unit card right"
-msgstr ""
-
-#: src/ui/Keys.tsx:42
-msgid "Put it away (tap a unit to bring it back)"
-msgstr ""
-
-#: src/ui/Keys.tsx:60
-#: src/ui/Keys.tsx:64
-msgid "Controls"
-msgstr ""
-
-#: src/ui/Keys.tsx:67
-#: src/ui/TeachRule.tsx:99
-msgid "Close (Esc)"
-msgstr ""
-
-#: src/ui/Keys.tsx:87
-msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
-msgstr ""
-
-#: src/ui/Keys.tsx:9
 msgid "Click a unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:9
+#: src/ui/Keys.tsx:10
 msgid "Select it: its card on the right shows what it can do"
+msgstr ""
+
+#: src/ui/Keys.tsx:100
+msgid "Coming from Tabletop Simulator?"
+msgstr ""
+
+#: src/ui/Keys.tsx:11
+msgid "Select your previous or next unit (Shift: the other side's)"
+msgstr ""
+
+#: src/ui/Keys.tsx:115
+msgid "TTS controls (just on this device)"
+msgstr ""
+
+#: src/ui/Keys.tsx:119
+msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
+msgstr ""
+
+#: src/ui/Keys.tsx:12
+msgid "Arrow keys"
+msgstr ""
+
+#: src/ui/Keys.tsx:12
+msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:13
+msgid "Go from the table into the selected unit's card"
+msgstr ""
+
+#: src/ui/Keys.tsx:14
+msgid "Tab"
+msgstr ""
+
+#: src/ui/Keys.tsx:14
+msgid "Move between buttons; Enter or Space presses one"
+msgstr ""
+
+#: src/ui/Keys.tsx:15
+#: src/ui/Keys.tsx:37
+#: src/ui/Keys.tsx:48
+msgid "Drag a unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:15
+msgid "Move it; the ruler shows how far against its limit"
+msgstr ""
+
+#: src/ui/Keys.tsx:16
+msgid "Alt + drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:16
+msgid "Move a unit, stopping at its limit"
+msgstr ""
+
+#: src/ui/Keys.tsx:17
+msgid "Shift + drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:17
+msgid "Move a regiment block freely, not just straight ahead"
+msgstr ""
+
+#: src/ui/Keys.tsx:18
+msgid "Turn the selected unit (or terrain piece while editing)"
+msgstr ""
+
+#: src/ui/Keys.tsx:19
+msgid "Move the selected unit up or down a floor"
+msgstr ""
+
+#: src/ui/Keys.tsx:20
+msgid "Measure: then drag across the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:21
+msgid "Alt + click"
+msgstr ""
+
+#: src/ui/Keys.tsx:21
+msgid "Ping a spot for everyone"
+msgstr ""
+
+#: src/ui/Keys.tsx:22
+msgid "Hold V"
+msgstr ""
+
+#: src/ui/Keys.tsx:22
+msgid "Talk, once your mic is on (Voice, bottom left)"
+msgstr ""
+
+#: src/ui/Keys.tsx:23
+msgid "Left drag on the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:23
+msgid "Turn the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:24
+msgid "Right drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:24
+#: src/ui/Keys.tsx:49
+msgid "Slide the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:25
+msgid "Wheel"
+msgstr ""
+
+#: src/ui/Keys.tsx:25
+msgid "Zoom"
+msgstr ""
+
+#: src/ui/Keys.tsx:26
+msgid "Reset the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:27
+msgid "Esc"
+msgstr ""
+
+#: src/ui/Keys.tsx:27
+msgid "Clear: selection, ruler, pen"
+msgstr ""
+
+#: src/ui/Keys.tsx:30
+msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
+msgstr ""
+
+#: src/ui/Keys.tsx:32
+msgid "This sheet"
+msgstr ""
+
+#: src/ui/Keys.tsx:37
+msgid "Moves the whole unit; Shift + drag moves just the one model"
+msgstr ""
+
+#: src/ui/Keys.tsx:38
+msgid "Turn, as in Tabletop Simulator"
+msgstr ""
+
+#: src/ui/Keys.tsx:39
+msgid "Measure (with TTS controls, hold Tab)"
+msgstr ""
+
+#: src/ui/Keys.tsx:40
+msgid "Remove the model under the pointer as a casualty"
+msgstr ""
+
+#: src/ui/Keys.tsx:41
+msgid "Drop a model off the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:41
+msgid "Remove it as a casualty (asking first)"
+msgstr ""
+
+#: src/ui/Keys.tsx:42
+msgid "Camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:42
+msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
+msgstr ""
+
+#: src/ui/Keys.tsx:47
+msgid "Tap a unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:47
+msgid "Select it: its card shows what it can do"
+msgstr ""
+
+#: src/ui/Keys.tsx:48
+msgid "Move it (hold the table for one model at a time)"
+msgstr ""
+
+#: src/ui/Keys.tsx:49
+msgid "One finger on the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:50
+msgid "Two fingers"
+msgstr ""
+
+#: src/ui/Keys.tsx:50
+msgid "Pinch to zoom, twist to turn the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:51
+msgid "Two fingers on the selected unit"
+msgstr ""
+
+#: src/ui/Keys.tsx:51
+msgid "Twist to turn it (a regiment block wheels)"
+msgstr ""
+
+#: src/ui/Keys.tsx:52
+msgid "Hold, then drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:52
+msgid "Measure"
+msgstr ""
+
+#: src/ui/Keys.tsx:53
+msgid "Hold and let go"
+msgstr ""
+
+#: src/ui/Keys.tsx:53
+msgid "More: turn, ping, look from here, views"
+msgstr ""
+
+#: src/ui/Keys.tsx:54
+#: src/ui/TouchLayer.tsx:149
+msgid "Select several"
+msgstr ""
+
+#: src/ui/Keys.tsx:54
+msgid "Draw a box on the table, then drag one unit to move them all"
+msgstr ""
+
+#: src/ui/Keys.tsx:55
+msgid "A stylus on the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:55
+msgid "Draw a line everyone sees"
+msgstr ""
+
+#: src/ui/Keys.tsx:56
+msgid "Flick the unit card right"
+msgstr ""
+
+#: src/ui/Keys.tsx:56
+msgid "Put it away (tap a unit to bring it back)"
+msgstr ""
+
+#: src/ui/Keys.tsx:75
+#: src/ui/Keys.tsx:79
+msgid "Controls"
+msgstr ""
+
+#: src/ui/Keys.tsx:82
+#: src/ui/TeachRule.tsx:99
+msgid "Close (Esc)"
 msgstr ""
 
 #: src/ui/Lobby.tsx:140
@@ -10925,28 +10979,28 @@ msgstr ""
 msgid "{name} isn't ready yet"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:102
-#: src/ui/TouchLayer.tsx:105
+#: src/ui/TouchLayer.tsx:103
+#: src/ui/TouchLayer.tsx:106
 msgid "This spot"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:121
+#: src/ui/TouchLayer.tsx:122
 msgid "Move one model at a time"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:133
+#: src/ui/TouchLayer.tsx:134
 msgid "Look from here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:142
+#: src/ui/TouchLayer.tsx:143
 msgid "Ping this unit"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:142
+#: src/ui/TouchLayer.tsx:143
 msgid "Ping here"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:156
+#: src/ui/TouchLayer.tsx:157
 msgid "Hold, then drag, to measure."
 msgstr ""
 
@@ -10963,12 +11017,12 @@ msgid "Wheel {n}° left"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:53
-#: src/ui/TouchLayer.tsx:113
+#: src/ui/TouchLayer.tsx:114
 msgid "Turn {n}° right"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:54
-#: src/ui/TouchLayer.tsx:110
+#: src/ui/TouchLayer.tsx:111
 msgid "Turn {n}° left"
 msgstr ""
 
@@ -10976,11 +11030,11 @@ msgstr ""
 msgid "{n} units picked: drag one to move them all"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:65
+#: src/ui/TouchLayer.tsx:66
 msgid "Draw a box on the table around your units"
 msgstr ""
 
-#: src/ui/TouchLayer.tsx:66
+#: src/ui/TouchLayer.tsx:67
 msgid "Dragging moves one model at a time"
 msgstr ""
 
@@ -12820,6 +12874,16 @@ msgstr ""
 #: src/ui/textSize.ts:8
 msgid "Larger"
 msgstr ""
+
+#: src/ui/ttsControls.ts:56
+msgid "Remove {model} as a casualty?"
+msgstr ""
+
+#: src/ui/ttsControls.ts:57
+msgid "Remove {n} model as a casualty?"
+msgid_plural "Remove {n} models as casualties?"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/ui/volley.ts:37
 msgid "can't see it"

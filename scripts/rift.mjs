@@ -107,7 +107,9 @@ try {
 
     const t0 = Date.now();
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: "commit" });
-    const play = page.getByRole("button", { name: "Play now (both sides)" });
+    const play = page
+      .locator(".demo.ours", { hasText: "Rift Lanterns" })
+      .getByRole("button", { name: "Play now (both sides)" });
     await play.waitFor();
     const lobbyMs = Date.now() - t0;
     const tap = await page.evaluate(() => performance.now());

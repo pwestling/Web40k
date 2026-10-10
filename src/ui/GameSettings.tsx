@@ -5,6 +5,7 @@ import { systemOf } from "../core/content/turn";
 import { useStore } from "../store";
 import { useGame } from "./hooks";
 import { GamePackagesSettings } from "./Packages";
+import { setTtsControls, useTtsControls } from "./ttsControls";
 
 /** Rule options for this game. Set during deployment; shown read-only once the battle starts. */
 export function GameSettings() {
@@ -114,6 +115,25 @@ export function GameSettings() {
             : t("Other units' models don't block line of sight.")}
         </p>
       )}
+      <TtsControlsRow />
     </details>
+  );
+}
+
+/** This device's own choice, not the game's: Tabletop Simulator's mouse and keys (PX TTS reflexes). */
+function TtsControlsRow() {
+  const on = useTtsControls((s) => s.on);
+  return (
+    <>
+      <label className="check">
+        <input type="checkbox" checked={on} onChange={(e) => setTtsControls(e.target.checked)} />
+        {t("TTS controls")}
+      </label>
+      <p className="muted small">
+        {t(
+          "Just on this device. Left drag on the table picks units with a box, right drag turns the camera, WASD slides it and holding Tab measures.",
+        )}
+      </p>
+    </>
   );
 }

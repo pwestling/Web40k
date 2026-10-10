@@ -2,6 +2,7 @@ import { toggleGroup, updatePieces, useTableEdit } from "../tables/edit";
 import { tableDrag } from "./dragging";
 import { Sightlines } from "../tables/Sightlines";
 import { FocusCamera } from "./FocusCamera";
+import { TtsKeys } from "./TtsKeys";
 import { TableOnScreen } from "./TableOnScreen";
 import { playerShape } from "../ui/sides";
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
@@ -9,7 +10,8 @@ import { ShowcaseCamera } from "./ShowcaseCamera";
 import { openingPosition, openingScale } from "./openingView";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
+import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
+import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
 import {
   baseSizeInches,
   modelHeight,
@@ -332,6 +334,8 @@ function Scene() {
     canControlNow.current = canControl;
   });
   const [drag, setDrag] = useState<Drag | null>(null);
+  // TTS controls (PX): left drag picks with a box, right drag turns the camera.
+  const tts = useTtsControls((s) => s.on);
   const [hoverModel, setHoverModel] = useState<string | null>(null);
   const [templateDrag, setTemplateDrag] = useState(false);
   const dragRef = useRef<Drag | null>(null);
@@ -339,6 +343,15 @@ function Scene() {
     dragRef.current = drag;
   });
   const { camera, gl, size } = useThree();
+  // A game opens with the keyboard on the table, not the score steppers (PX TTS): arrows, Enter and (with TTS
+  // controls) Tab work there. The front door's backdrop isn't a stop at all.
+  const inGame = useStore((s) => s.session !== null);
+  useEffect(() => {
+    gl.domElement.setAttribute("tabindex", inGame ? "0" : "-1");
+    gl.domElement.setAttribute("aria-label", t("The table"));
+    const el = document.activeElement;
+    if (inGame && (!el || el === document.body)) gl.domElement.focus({ preventScroll: true });
+  }, [gl, inGame]);
   const controls = useThree((s) => s.controls) as {
     enabled?: boolean;
     getAzimuthalAngle?: () => number;
@@ -463,8 +476,23 @@ function Scene() {
       const dy = d.to.y - d.grab.y;
       const terrain = useStore.getState().game.terrain;
       if (d.kind === "models") {
-        // Set down where they were let go; an over-limit drop knocks duller (advisory only).
         const game = useStore.getState().game;
+        // Dropped off the table, as in Tabletop Simulator: a casualty, if the player says so (PX TTS).
+        const { width, depth } = game.table;
+        // A regiment block can flee off the table (The Old World): it moves as ever.
+        const block = !!d.unitId && isBlock(game.units[d.unitId]);
+        const off =
+          !block &&
+          d.ids.some((id) => {
+            const p = d.starts[id]!;
+            return Math.abs(p.x + dx) > width / 2 || Math.abs(p.y + dy) > depth / 2;
+          });
+        if (off) {
+          setDown(d.ids, () => null, { sound: false });
+          removeAsCasualties(d.ids);
+          return;
+        }
+        // Set down where they were let go; an over-limit drop knocks duller (advisory only).
         const unit = d.unitId ? game.units[d.unitId] : undefined;
         const limit = unit ? moveAllowance(game, unit) : null;
         // How far it has come this phase, as the move label measures it.
@@ -1198,10 +1226,19 @@ function Scene() {
     <>
       {/* Remount on view change so the controls bind to the new camera. */}
       <OrbitControls
-        key={`${view}-${eye?.modelId ?? ""}-${cameraReset}-${width}x${depth}`}
+        key={`${view}-${eye?.modelId ?? ""}-${cameraReset}-${width}x${depth}-${tts}`}
         enabled={!drag && !templateDrag && !twisting}
         // Fingers (#60): one pans the table, two pan and pinch (a twist orbits: TouchTwist).
         touches={{ ONE: view === "eye" ? TOUCH.ROTATE : TOUCH.PAN, TWO: TOUCH.DOLLY_PAN }}
+        {...(tts && view !== "eye"
+          ? {
+              mouseButtons: {
+                LEFT: -1 as MOUSE,
+                MIDDLE: MOUSE.PAN,
+                RIGHT: view === "top" ? MOUSE.PAN : MOUSE.ROTATE,
+              },
+            }
+          : {})}
         enableRotate={view !== "top"}
         // Never lower than about 25 degrees above the table, so the camera can't end up level with it.
         maxPolarAngle={view === "eye" ? Math.PI : (65 * Math.PI) / 180}
@@ -1242,10 +1279,11 @@ function Scene() {
               setDrag({ kind: "stroke", points: [at], grab: at, to: at, moved: false, planeZ: 0 });
               return;
             }
-            if (e.nativeEvent.pointerType === "touch") {
+            const mouseBox = tts && e.nativeEvent.pointerType === "mouse" && view !== "eye";
+            if (e.nativeEvent.pointerType === "touch" || mouseBox) {
               if (touchCount.current > 1) return;
               useTouch.setState({ menu: null });
-              if (useTouch.getState().boxMode) {
+              if (useTouch.getState().boxMode || mouseBox) {
                 e.stopPropagation();
                 const from = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };
                 useTouch.setState({ box: { x0: from.x, y0: from.y, x1: from.x, y1: from.y } });
@@ -1267,6 +1305,7 @@ function Scene() {
           }
           if (tool || e.altKey || measuring || e.delta >= 3) return;
           select(null);
+          if (useTouch.getState().picked.length) useTouch.setState({ picked: [] });
           if (editing) setUi({ selectedTerrain: null });
         }}
       >
@@ -1364,6 +1403,7 @@ function Scene() {
           // No hover tooltips mid-drag: they would sit on the drag's own label.
           if (dragRef.current) return;
           setHoverModel(model?.id ?? null);
+          pointerModel.id = model?.id ?? null;
           setUi({ hoverUnit: model?.unitId ?? null });
         }}
       />
@@ -1464,6 +1504,7 @@ function Scene() {
       <CasterCamera />
       <ShowcaseCamera />
       <FocusCamera />
+      <TtsKeys />
       <TableOnScreen />
 
       {/* The ruler being dragged, else the last one shared. */}

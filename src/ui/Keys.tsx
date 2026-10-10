@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import { useHelp } from "./help";
 import { TextSizePicker } from "./TextSizePicker";
 import { touch } from "./touch";
+import { setTtsControls, useTtsControls } from "./ttsControls";
 
 /** Each control and what it does; a function so the text is in the chosen language. */
 const keys = (): [string, string][] => [
@@ -24,8 +25,21 @@ const keys = (): [string, string][] => [
   [t("Wheel"), t("Zoom")],
   [t("Home"), t("Reset the camera")],
   [t("Esc"), t("Clear: selection, ruler, pen")],
-  [t("Delete"), t("Remove the selected terrain piece (while editing)")],
+  [
+    t("Delete"),
+    t("Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"),
+  ],
   ["?", t("This sheet")],
+];
+
+/** What a Tabletop Simulator player reaches for, and where it is here (PX TTS reflexes). */
+const fromTts = (): [string, string][] => [
+  [t("Drag a unit"), t("Moves the whole unit; Shift + drag moves just the one model")],
+  ["Q / E", t("Turn, as in Tabletop Simulator")],
+  ["M", t("Measure (with TTS controls, hold Tab)")],
+  [t("Delete"), t("Remove the model under the pointer as a casualty")],
+  [t("Drop a model off the table"), t("Remove it as a casualty (asking first)")],
+  [t("Camera"), t("With TTS controls: right drag turns, WASD slides, left drag picks with a box")],
 ];
 
 /** The same for fingers (#60): a tablet or phone gets these first. */
@@ -45,6 +59,7 @@ const gestures = (): [string, string][] => [
 /** The "?" sheet (front door): every control in one place. */
 export function KeysSheet() {
   const open = useHelp((s) => s.keys);
+  const tts = useTtsControls((s) => s.on);
   useEffect(() => {
     if (!open) return;
     const close = (e: KeyboardEvent) => e.key === "Escape" && useHelp.setState({ keys: false });
@@ -82,6 +97,23 @@ export function KeysSheet() {
             ))}
           </tbody>
         </table>
+        <h3>{t("Coming from Tabletop Simulator?")}</h3>
+        <table className="from-tts">
+          <tbody>
+            {fromTts().map(([k, what]) => (
+              <tr key={k}>
+                <td>
+                  <kbd>{k}</kbd>
+                </td>
+                <td>{what}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <label className="check">
+          <input type="checkbox" checked={tts} onChange={(e) => setTtsControls(e.target.checked)} />
+          {t("TTS controls (just on this device)")}
+        </label>
         <TextSizePicker />
         <p className="muted small">
           {t("The ▶ at the top moves the game on. Everything can be undone from the left panel.")}
