@@ -102,7 +102,7 @@ function audio(): AudioContext | null {
   return ac.state === "running" ? ac : null;
 }
 
-/** The shared context and master bus, for the room's ambience (src/ui/ambience.ts); null while muted or asleep. */
+/** The shared context and master bus, for the room's ambience (src/ui/roomTone.ts); null while muted or asleep. */
 export function audioOut(): { ac: AudioContext; master: GainNode; noise: AudioBuffer } | null {
   const a = audio();
   return a && master && noise ? { ac: a, master, noise } : null;
