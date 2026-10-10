@@ -2,6 +2,7 @@ import { useSolo } from "./bot/solo";
 import type { Level } from "./bot/player";
 import { create } from "zustand";
 import { useLibrary } from "./packages/library";
+import { sharedSecret } from "./ranked/diceSecrets";
 import {
   createInitialState,
   createRecord,
@@ -355,6 +356,7 @@ export const useStore = create<Store>((set, get) => ({
       resumed,
       ...(rng ? { rng } : {}),
       ...(onIntent ? { onIntent } : {}),
+      sharedSecret,
       // A watcher behind the game (?delay=, useBroadcast): the host holds its events back that long.
       ...(role === "spectator" ? { delay: spectatorDelayMs() } : {}),
       // A peer missing one of the game's rules packages can't host it.

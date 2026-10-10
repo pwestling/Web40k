@@ -374,38 +374,38 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:321
+#: src/GameScreen.tsx:323
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:322
+#: src/GameScreen.tsx:324
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:323
+#: src/GameScreen.tsx:325
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:328
+#: src/GameScreen.tsx:330
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:387
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:329
+#: src/GameScreen.tsx:331
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:330
+#: src/GameScreen.tsx:332
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:335
+#: src/GameScreen.tsx:337
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -508,7 +508,7 @@ msgstr ""
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
-#: src/ranked/RankedGame.tsx:500
+#: src/ranked/RankedGame.tsx:514
 #: src/standees/StandeeMaker.tsx:243
 #: src/ui/RegimentPanel.tsx:274
 msgid "Back"
@@ -2173,7 +2173,7 @@ msgid "Your registered army ({army}) isn't on this device's shelf."
 msgstr ""
 
 #: src/events/EventSeat.tsx:140
-#: src/ranked/RankedGame.tsx:455
+#: src/ranked/RankedGame.tsx:469
 msgid "Back to the event"
 msgstr ""
 
@@ -3348,12 +3348,12 @@ msgid "{name} wants to play this game ranked: at the end you both sign the resul
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1041
-#: src/ranked/RankedGame.tsx:212
+#: src/ranked/RankedGame.tsx:225
 msgid "Play ranked"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1044
-#: src/ranked/RankedGame.tsx:214
+#: src/ranked/RankedGame.tsx:227
 msgid "Not this time"
 msgstr ""
 
@@ -3553,7 +3553,7 @@ msgstr[1] ""
 #: src/opentables/OpenTables.tsx:463
 #: src/opentables/OpenTables.tsx:476
 #: src/player/PlayerCard.tsx:159
-#: src/ranked/RankedGame.tsx:226
+#: src/ranked/RankedGame.tsx:239
 #: src/workshop/Workshop.tsx:57
 msgid "Ranked"
 msgstr ""
@@ -4049,219 +4049,229 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:105
+#: src/ranked/RankedGame.tsx:107
+msgid "Waiting for the host to show the seed behind this round's dice…"
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:109
+msgid "{n} roll didn't come from the shared dice: the host's dice weren't fair."
+msgid_plural "{n} rolls didn't come from the shared dice: the host's dice weren't fair."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ranked/RankedGame.tsx:118
 msgid "The result doesn't match the score on the table."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:179
+#: src/ranked/RankedGame.tsx:192
 msgid "Event game: the signed result counts for {event}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:186
+#: src/ranked/RankedGame.tsx:199
 msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:189
+#: src/ranked/RankedGame.tsx:202
 msgid "You play this game ranked. Waiting for your opponent to say yes."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:194
+#: src/ranked/RankedGame.tsx:207
 msgid "Unranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:202
+#: src/ranked/RankedGame.tsx:215
 msgid "{name} wants to play this game ranked. At the end you both sign the result, and it counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:225
+#: src/ranked/RankedGame.tsx:238
 msgid "Both players play this game ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:234
+#: src/ranked/RankedGame.tsx:247
 msgid "{a} {va} – {vb} {b}, a draw"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:235
+#: src/ranked/RankedGame.tsx:248
 msgid "{a} {va} – {vb} {b}, {winner} wins"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:252
+#: src/ranked/RankedGame.tsx:265
 msgid "Against an even opponent a win gains {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:254
+#: src/ranked/RankedGame.tsx:267
 msgid "Against an even opponent a loss costs {n}; beat a stronger player and you gain more."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:255
+#: src/ranked/RankedGame.tsx:268
 msgid "A draw between even players moves little."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:258
+#: src/ranked/RankedGame.tsx:271
 msgid "Beating a stronger player gains more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:260
+#: src/ranked/RankedGame.tsx:273
 msgid "Losing to a stronger player costs less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:261
+#: src/ranked/RankedGame.tsx:274
 msgid "A draw against a stronger player gains you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:263
+#: src/ranked/RankedGame.tsx:276
 msgid "Beating a lower-rated player gains less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:265
+#: src/ranked/RankedGame.tsx:278
 msgid "Losing to a lower-rated player costs more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:266
+#: src/ranked/RankedGame.tsx:279
 msgid "A draw against a lower-rated player costs you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:272
+#: src/ranked/RankedGame.tsx:285
 msgid "Still finding your level: {n} more game."
 msgid_plural "Still finding your level: {n} more games."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ranked/RankedGame.tsx:290
+#: src/ranked/RankedGame.tsx:303
 msgid "You two have played three ranked games today, so this one doesn't move the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:295
-#: src/ranked/RankedGame.tsx:450
+#: src/ranked/RankedGame.tsx:308
+#: src/ranked/RankedGame.tsx:464
 msgid "It counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:300
+#: src/ranked/RankedGame.tsx:313
 msgid "It counts on the {game} ladder, but doesn't move your rating yet: {name} is new and hasn't played five games against three different players."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:311
+#: src/ranked/RankedGame.tsx:324
 msgid "You're now {rating} ({change}) on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:320
+#: src/ranked/RankedGame.tsx:333
 msgid "A win against {name} wins back {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:348
+#: src/ranked/RankedGame.tsx:361
 msgid "Fixing the score"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:350
+#: src/ranked/RankedGame.tsx:363
 msgid "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:353
+#: src/ranked/RankedGame.tsx:366
 msgid "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:360
+#: src/ranked/RankedGame.tsx:373
 msgid "Score fixed: write it up"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:369
+#: src/ranked/RankedGame.tsx:382
 msgid "The score is wrong"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:370
+#: src/ranked/RankedGame.tsx:383
 msgid "We agreed it wouldn't count"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:371
+#: src/ranked/RankedGame.tsx:384
 msgid "Something went wrong at the table"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:396
+#: src/ranked/RankedGame.tsx:410
 msgid "Writing up the ranked result…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:406
-#: src/ranked/RankedGame.tsx:415
+#: src/ranked/RankedGame.tsx:420
+#: src/ranked/RankedGame.tsx:429
 msgid "Not ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:407
+#: src/ranked/RankedGame.tsx:421
 msgid "You didn't sign, so this game doesn't count for either of you."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:408
+#: src/ranked/RankedGame.tsx:422
 msgid "You said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:417
+#: src/ranked/RankedGame.tsx:431
 msgid "{name} didn't sign the result, so this game doesn't count."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:419
+#: src/ranked/RankedGame.tsx:433
 msgid "You won {va}–{vb}. {name} didn't sign, so it won't move the ladder, but the win stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:427
+#: src/ranked/RankedGame.tsx:441
 msgid "{name} didn't sign, so it won't move the ladder. The game stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:432
+#: src/ranked/RankedGame.tsx:446
 msgid "{name} said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:436
+#: src/ranked/RankedGame.tsx:450
 msgid "{a} {va} – {vb} {b}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:446
+#: src/ranked/RankedGame.tsx:460
 msgid "Ranked result signed"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:484
+#: src/ranked/RankedGame.tsx:498
 msgid "Sign the ranked result"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:487
+#: src/ranked/RankedGame.tsx:501
 msgid "Signed. Waiting for your opponent to sign."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:490
+#: src/ranked/RankedGame.tsx:504
 msgid "Why not? It goes on the result, and both of you see it."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:507
+#: src/ranked/RankedGame.tsx:521
 msgid "Sign: good game 🤝"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:507
+#: src/ranked/RankedGame.tsx:521
 msgid "Sign: that's right"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:510
+#: src/ranked/RankedGame.tsx:524
 msgid "Don't sign"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:515
+#: src/ranked/RankedGame.tsx:529
 msgid "A game counts only when both players sign. Not signing means it doesn't count for either of you, and your card shows how often you sign."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:77
+#: src/ranked/RankedGame.tsx:78
 msgid "No result yet"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:79
+#: src/ranked/RankedGame.tsx:80
 msgid "The result doesn't match this table's game."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:81
+#: src/ranked/RankedGame.tsx:82
 msgid "It was written on another version of Open Battle ({theirs}; you have {mine}): ranked games need you both on the same one."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:94
+#: src/ranked/RankedGame.tsx:95
 msgid "You don't have {name}, which this game played with, so the result can't be checked."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:98
+#: src/ranked/RankedGame.tsx:99
 msgid "The result treats {name} as the wrong kind of package: its file says otherwise."
 msgstr ""
 

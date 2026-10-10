@@ -19,6 +19,13 @@ export interface LoggedEvent {
   host?: PlayerId;
   /** Its dice were rolled at the table and typed in, not rolled by the host (#37). */
   told?: true;
+  /**
+   * Under shared dice (core/sharedDice.ts): the intent it came from, so the
+   * other player can roll it again once the host reveals its seed.
+   */
+  intent?: Intent;
+  /** Under shared dice, a rules package's event: the seed its sandbox was given. */
+  seed?: number;
 }
 
 /**
@@ -159,6 +166,10 @@ export function canUndo(record: GameRecord, seq: number): boolean {
   const target = record.events.find((e) => e.seq === seq);
   // A code procedure's steps can't be taken back one by one: its replay would no longer match.
   if (target?.event.type === "script/step" || target?.event.type === "module/set") return false;
+  // Shared dice (core/sharedDice.ts) and ranked bookkeeping are promises, not moves.
+  const kind = target?.event.type;
+  if (kind === "dice/commit" || kind === "dice/seed" || kind === "dice/reveal" || kind?.startsWith("ranked/"))
+    return false;
   return !!target && target.event.type !== "undo" && !undoneSeqs(record).has(seq);
 }
 

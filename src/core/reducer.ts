@@ -295,6 +295,42 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ranked: { ...ranked, keys: event.key ? { ...keys, [event.player]: event.key } : keys },
       };
     }
+    case "dice/commit":
+      return {
+        ...state,
+        sharedDice: {
+          by: event.player,
+          commit: event.hash,
+          seeds: {},
+          round: state.turn.round,
+          from: state.seq + 1,
+        },
+      };
+    case "dice/seed":
+      return state.sharedDice
+        ? {
+            ...state,
+            sharedDice: {
+              ...state.sharedDice,
+              seeds: { ...state.sharedDice.seeds, [event.player]: event.seed },
+            },
+          }
+        : state;
+    case "dice/reveal": {
+      const { sharedDice: _done, ...rest } = state;
+      return event.next
+        ? {
+            ...rest,
+            sharedDice: {
+              by: event.player,
+              commit: event.next,
+              seeds: {},
+              round: state.turn.round,
+              from: state.seq + 1,
+            },
+          }
+        : rest;
+    }
     case "ranked/result":
       return state.ranked ? { ...state, ranked: { ...state.ranked, result: event.result, sigs: {} } } : state;
     case "ranked/sign": {

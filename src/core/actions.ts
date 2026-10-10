@@ -1,3 +1,4 @@
+import { commitTo, isSeed } from "./sharedDice";
 import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
 import {
   canonResult,
@@ -136,6 +137,12 @@ export type Intent =
     }
   /** Play this game ranked (#65) with this player key, or not (null). Before the result only. */
   | { type: "ranked/card"; key: PlayerKey | null }
+  /** Shared dice (core/sharedDice.ts): the host's commitment to a secret seed. */
+  | { type: "dice/commit"; hash: string }
+  /** Shared dice: another ranked player's seed, sent once the host has committed. */
+  | { type: "dice/seed"; seed: string }
+  /** Shared dice: the host shows the seed it committed to, and commits to the next one (none once the battle is over). */
+  | { type: "dice/reveal"; seed: string; next?: string }
   /** The result both players are asked to sign, once the battle is over (core/ranked.ts). */
   | { type: "ranked/result"; result: RankedResult }
   /** This player's signature on the result, or null: they don't agree with it. */
@@ -312,6 +319,9 @@ export type GameEvent =
   | { type: "layout/set"; layout: Layout; source?: TableSource }
   | { type: "player/ready"; player: PlayerId; ready: boolean }
   | { type: "ranked/card"; player: PlayerId; key: PlayerKey | null }
+  | { type: "dice/commit"; player: PlayerId; hash: string }
+  | { type: "dice/seed"; player: PlayerId; seed: string }
+  | { type: "dice/reveal"; player: PlayerId; seed: string; next?: string }
   | { type: "ranked/result"; result: RankedResult; by: PlayerId }
   | { type: "ranked/sign"; player: PlayerId; sig: string | null; why?: DeclineWhy; decline?: string }
   | { type: "ranked/fixed"; player: PlayerId }
@@ -555,6 +565,29 @@ export function resolveIntent(
       if (typeof state?.players[from]?.seat !== "number" || state.ranked?.result) return null;
       if (intent.key !== null && !isPlayerKey(intent.key)) return null;
       return { type: "ranked/card", player: from, key: intent.key };
+    }
+    case "dice/commit": {
+      // A ranked game's host (the session only takes this from itself). A new host, or one that
+      // lost its seed, starts afresh: the stretch it never revealed can't be checked, and says so.
+      if (!state?.ranked?.keys[from] || !isSeed(intent.hash)) return null;
+      return { type: "dice/commit", player: from, hash: intent.hash };
+    }
+    case "dice/seed": {
+      const d = state?.sharedDice;
+      if (!d || d.by === from || !state.ranked?.keys[from] || d.seeds[from] || !isSeed(intent.seed))
+        return null;
+      return { type: "dice/seed", player: from, seed: intent.seed };
+    }
+    case "dice/reveal": {
+      const d = state?.sharedDice;
+      if (!d || d.by !== from || !isSeed(intent.seed) || commitTo(intent.seed) !== d.commit) return null;
+      if (intent.next !== undefined && !isSeed(intent.next)) return null;
+      return {
+        type: "dice/reveal",
+        player: from,
+        seed: intent.seed,
+        ...(intent.next ? { next: intent.next } : {}),
+      };
     }
     case "ranked/result": {
       // Once, after the battle, from one of the two players, and only the result the table shows.

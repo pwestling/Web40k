@@ -48,6 +48,7 @@ import { Showcase } from "./ui/Showcase";
 import { TopBar } from "./ui/TopBar";
 import { ReportBanner } from "./ui/Crash";
 import { RankedKeeper } from "./ranked/RankedGame";
+import { SharedDiceKeeper } from "./ranked/dice";
 import { OnAir, VoiceRoom } from "./voice/VoiceBar";
 import { climbUnit, rotateUnit, UnitCard } from "./ui/UnitCard";
 
@@ -309,6 +310,7 @@ export function GameScreen({ started }: { started: boolean }) {
           <MyTableKeeper />
           <TableArrivals />
           <RankedKeeper />
+          <SharedDiceKeeper />
           <KeysSheet />
           <CampaignKeeper />
           <ClockKeeper />

@@ -1,5 +1,6 @@
 import { APP_BUILD } from "../version";
 import { useLibrary } from "../packages/library";
+import { diceProblem } from "./dice";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import {
@@ -98,6 +99,18 @@ async function resultWrong(game: GameState): Promise<string> {
       return t("The result treats {name} as the wrong kind of package: its file says otherwise.", {
         name: p.name,
       });
+  }
+  // Shared dice: every stretch the host revealed must roll the same here.
+  const self = useStore.getState().session?.selfId;
+  if (self) {
+    const dice = diceProblem(useStore.getState().record, self);
+    if (dice.open) return t("Waiting for the host to show the seed behind this round's dice…");
+    if (dice.wrong)
+      return tn(
+        dice.wrong,
+        "{n} roll didn't come from the shared dice: the host's dice weren't fair.",
+        "{n} rolls didn't come from the shared dice: the host's dice weren't fair.",
+      );
   }
   const want = rankedResultOf(game, r.replay, r.at, APP_BUILD);
   return want && canonResult(want) === canonResult(r)
@@ -378,6 +391,7 @@ export function RankedSign() {
   const ranked: RankedState | undefined = game.ranked;
   const result = ranked?.result;
   const [wrong, setWrong] = useState<string | null>(null);
+  const sharedOpen = game.sharedDice?.commit;
   const [busy, setBusy] = useState(false);
   const [asking, setAsking] = useState(false);
   const me = self ? ranked?.keys[self] : undefined;
@@ -387,7 +401,7 @@ export function RankedSign() {
     return () => {
       live = false;
     };
-  }, [result]);
+  }, [result, sharedOpen]);
   if (!ranked || !rankedReady(game) || !rankedOver(game)) return null;
   const nameOf = (id: string) => game.players[id]?.name ?? "?";
   if (!result && ranked.fixing)

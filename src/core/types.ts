@@ -1,3 +1,4 @@
+import type { SharedDice } from "./sharedDice";
 import type { BranchInfo } from "./branch";
 import type { Effect } from "./content/schema";
 import type { Secrets } from "./secrets";
@@ -536,6 +537,8 @@ export interface GameState {
   campaign?: CampaignRef;
   /** A ranked game (#65): the players' keys, the result and their signatures (core/ranked.ts). */
   ranked?: RankedState;
+  /** A ranked game's shared dice for this stretch (core/sharedDice.ts). */
+  sharedDice?: SharedDice;
   /** An event game's armies (#67): each player's deployed army hash, checked against what they registered. */
   eventArmies?: Record<PlayerId, string>;
   /** Table options the players agreed on. */

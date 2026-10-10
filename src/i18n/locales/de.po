@@ -448,27 +448,27 @@ msgstr "Sie haben standgehalten. Ein Nahkampf kann sich bis in den nächsten Spi
 msgid "Setting up the table…"
 msgstr "Der Tisch wird aufgebaut …"
 
-#: src/GameScreen.tsx:320
+#: src/GameScreen.tsx:322
 #, fuzzy
 msgid "Fully visible"
 msgstr "Voll sichtbar"
 
-#: src/GameScreen.tsx:321
+#: src/GameScreen.tsx:323
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Teilweise sichtbar oder in Deckung"
 
-#: src/GameScreen.tsx:322
+#: src/GameScreen.tsx:324
 #, fuzzy
 msgid "Hidden"
 msgstr "Verborgen"
 
-#: src/GameScreen.tsx:323
+#: src/GameScreen.tsx:325
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 
-#: src/GameScreen.tsx:328
+#: src/GameScreen.tsx:330
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/workshop/Workshop.tsx:387
@@ -476,17 +476,17 @@ msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 msgid "Open"
 msgstr "Offen"
 
-#: src/GameScreen.tsx:329
+#: src/GameScreen.tsx:331
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Verdeckend: Deckung"
 
-#: src/GameScreen.tsx:330
+#: src/GameScreen.tsx:332
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Blockierend: keine Sicht"
 
-#: src/GameScreen.tsx:335
+#: src/GameScreen.tsx:337
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Modellperspektive verlassen (Esc)"
@@ -609,7 +609,7 @@ msgstr "Im Regal speichern"
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
-#: src/ranked/RankedGame.tsx:500
+#: src/ranked/RankedGame.tsx:514
 #: src/standees/StandeeMaker.tsx:243
 #: src/ui/RegimentPanel.tsx:274
 #, fuzzy
@@ -2634,7 +2634,7 @@ msgid "Your registered army ({army}) isn't on this device's shelf."
 msgstr "Deine angemeldete Armee ({army}) ist nicht im Regal dieses Geräts."
 
 #: src/events/EventSeat.tsx:140
-#: src/ranked/RankedGame.tsx:455
+#: src/ranked/RankedGame.tsx:469
 #, fuzzy
 msgid "Back to the event"
 msgstr "Zurück zum Event"
@@ -4078,13 +4078,13 @@ msgid "{name} wants to play this game ranked: at the end you both sign the resul
 msgstr "{name} möchte dieses Spiel gewertet spielen: Am Ende unterschreibt ihr beide das Ergebnis."
 
 #: src/opentables/OpenTables.tsx:1041
-#: src/ranked/RankedGame.tsx:212
+#: src/ranked/RankedGame.tsx:225
 #, fuzzy
 msgid "Play ranked"
 msgstr "Gewertet spielen"
 
 #: src/opentables/OpenTables.tsx:1044
-#: src/ranked/RankedGame.tsx:214
+#: src/ranked/RankedGame.tsx:227
 #, fuzzy
 msgid "Not this time"
 msgstr "Diesmal nicht"
@@ -4326,7 +4326,7 @@ msgstr[1] "{rating} ({n} Spiele)"
 #: src/opentables/OpenTables.tsx:463
 #: src/opentables/OpenTables.tsx:476
 #: src/player/PlayerCard.tsx:159
-#: src/ranked/RankedGame.tsx:226
+#: src/ranked/RankedGame.tsx:239
 #: src/workshop/Workshop.tsx:57
 #, fuzzy
 msgid "Ranked"
@@ -4936,268 +4936,278 @@ msgstr "Figuren werden gezeichnet…"
 msgid "Saving page {n} of {total}…"
 msgstr "Seite {n} von {total} wird gespeichert…"
 
-#: src/ranked/RankedGame.tsx:105
+#: src/ranked/RankedGame.tsx:107
+msgid "Waiting for the host to show the seed behind this round's dice…"
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:109
+msgid "{n} roll didn't come from the shared dice: the host's dice weren't fair."
+msgid_plural "{n} rolls didn't come from the shared dice: the host's dice weren't fair."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ranked/RankedGame.tsx:118
 #, fuzzy
 msgid "The result doesn't match the score on the table."
 msgstr "Das Ergebnis passt nicht zum Punktestand am Tisch."
 
-#: src/ranked/RankedGame.tsx:179
+#: src/ranked/RankedGame.tsx:192
 #, fuzzy
 msgid "Event game: the signed result counts for {event}."
 msgstr "Event-Partie: Das unterschriebene Ergebnis zählt für {event}."
 
-#: src/ranked/RankedGame.tsx:186
+#: src/ranked/RankedGame.tsx:199
 #, fuzzy
 msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
 msgstr "Gewertetes Spiel: Sobald ihr beide das Ergebnis unterschreibt, zählt es für die {game}-Rangliste."
 
-#: src/ranked/RankedGame.tsx:189
+#: src/ranked/RankedGame.tsx:202
 #, fuzzy
 msgid "You play this game ranked. Waiting for your opponent to say yes."
 msgstr "Du spielst dieses Spiel gewertet. Warte auf die Zusage deines Gegners."
 
-#: src/ranked/RankedGame.tsx:194
+#: src/ranked/RankedGame.tsx:207
 #, fuzzy
 msgid "Unranked"
 msgstr "Ungewertet"
 
-#: src/ranked/RankedGame.tsx:202
+#: src/ranked/RankedGame.tsx:215
 #, fuzzy
 msgid "{name} wants to play this game ranked. At the end you both sign the result, and it counts on the {game} ladder."
 msgstr "{name} möchte dieses Spiel gewertet spielen. Am Ende unterschreibt ihr beide das Ergebnis, und es zählt für die {game}-Rangliste."
 
-#: src/ranked/RankedGame.tsx:225
+#: src/ranked/RankedGame.tsx:238
 #, fuzzy
 msgid "Both players play this game ranked"
 msgstr "Beide Spieler spielen dieses Spiel gewertet"
 
-#: src/ranked/RankedGame.tsx:234
+#: src/ranked/RankedGame.tsx:247
 #, fuzzy
 msgid "{a} {va} – {vb} {b}, a draw"
 msgstr "{a} {va} – {vb} {b}, unentschieden"
 
-#: src/ranked/RankedGame.tsx:235
+#: src/ranked/RankedGame.tsx:248
 #, fuzzy
 msgid "{a} {va} – {vb} {b}, {winner} wins"
 msgstr "{a} {va} – {vb} {b}, {winner} gewinnt"
 
-#: src/ranked/RankedGame.tsx:252
+#: src/ranked/RankedGame.tsx:265
 #, fuzzy
 msgid "Against an even opponent a win gains {n}."
 msgstr "Gegen einen gleich starken Gegner bringt ein Sieg {n}."
 
-#: src/ranked/RankedGame.tsx:254
+#: src/ranked/RankedGame.tsx:267
 #, fuzzy
 msgid "Against an even opponent a loss costs {n}; beat a stronger player and you gain more."
 msgstr "Gegen einen gleich starken Gegner kostet eine Niederlage {n}; schlägst du einen stärkeren, gewinnst du mehr."
 
-#: src/ranked/RankedGame.tsx:255
+#: src/ranked/RankedGame.tsx:268
 #, fuzzy
 msgid "A draw between even players moves little."
 msgstr "Ein Unentschieden zwischen gleich Starken ändert wenig."
 
-#: src/ranked/RankedGame.tsx:258
+#: src/ranked/RankedGame.tsx:271
 #, fuzzy
 msgid "Beating a stronger player gains more: {n}."
 msgstr "Ein Sieg gegen einen Stärkeren bringt mehr: {n}."
 
-#: src/ranked/RankedGame.tsx:260
+#: src/ranked/RankedGame.tsx:273
 #, fuzzy
 msgid "Losing to a stronger player costs less: {n}."
 msgstr "Gegen einen Stärkeren zu verlieren kostet weniger: {n}."
 
-#: src/ranked/RankedGame.tsx:261
+#: src/ranked/RankedGame.tsx:274
 #, fuzzy
 msgid "A draw against a stronger player gains you {n}."
 msgstr "Ein Unentschieden gegen einen Stärkeren bringt dir {n}."
 
-#: src/ranked/RankedGame.tsx:263
+#: src/ranked/RankedGame.tsx:276
 #, fuzzy
 msgid "Beating a lower-rated player gains less: {n}."
 msgstr "Ein Sieg gegen einen schwächer Bewerteten bringt weniger: {n}."
 
-#: src/ranked/RankedGame.tsx:265
+#: src/ranked/RankedGame.tsx:278
 #, fuzzy
 msgid "Losing to a lower-rated player costs more: {n}."
 msgstr "Gegen einen schwächer Bewerteten zu verlieren kostet mehr: {n}."
 
-#: src/ranked/RankedGame.tsx:266
+#: src/ranked/RankedGame.tsx:279
 #, fuzzy
 msgid "A draw against a lower-rated player costs you {n}."
 msgstr "Ein Unentschieden gegen einen schwächer Bewerteten kostet dich {n}."
 
-#: src/ranked/RankedGame.tsx:272
+#: src/ranked/RankedGame.tsx:285
 #, fuzzy
 msgid "Still finding your level: {n} more game."
 msgid_plural "Still finding your level: {n} more games."
 msgstr[0] "Dein Niveau steht noch nicht fest: noch {n} Spiel."
 msgstr[1] "Dein Niveau steht noch nicht fest: noch {n} Spiele."
 
-#: src/ranked/RankedGame.tsx:290
+#: src/ranked/RankedGame.tsx:303
 #, fuzzy
 msgid "You two have played three ranked games today, so this one doesn't move the {game} ladder."
 msgstr "Ihr zwei habt heute schon drei gewertete Spiele gespielt, daher bewegt dieses die {game}-Rangliste nicht."
 
-#: src/ranked/RankedGame.tsx:295
-#: src/ranked/RankedGame.tsx:450
+#: src/ranked/RankedGame.tsx:308
+#: src/ranked/RankedGame.tsx:464
 #, fuzzy
 msgid "It counts on the {game} ladder."
 msgstr "Es zählt für die {game}-Rangliste."
 
-#: src/ranked/RankedGame.tsx:300
+#: src/ranked/RankedGame.tsx:313
 msgid "It counts on the {game} ladder, but doesn't move your rating yet: {name} is new and hasn't played five games against three different players."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:311
+#: src/ranked/RankedGame.tsx:324
 #, fuzzy
 msgid "You're now {rating} ({change}) on the {game} ladder."
 msgstr "Du stehst jetzt bei {rating} ({change}) in der {game}-Rangliste."
 
-#: src/ranked/RankedGame.tsx:320
+#: src/ranked/RankedGame.tsx:333
 #, fuzzy
 msgid "A win against {name} wins back {n}."
 msgstr "Ein Sieg gegen {name} holt {n} zurück."
 
-#: src/ranked/RankedGame.tsx:348
+#: src/ranked/RankedGame.tsx:361
 #, fuzzy
 msgid "Fixing the score"
 msgstr "Punktestand wird korrigiert"
 
-#: src/ranked/RankedGame.tsx:350
+#: src/ranked/RankedGame.tsx:363
 #, fuzzy
 msgid "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again."
 msgstr "Du hast gesagt, der Spielstand stimmt nicht. Korrigiere ihn mit VP − und + bei jedem Namen in der oberen Leiste und schreib das Ergebnis dann neu auf."
 
-#: src/ranked/RankedGame.tsx:353
+#: src/ranked/RankedGame.tsx:366
 #, fuzzy
 msgid "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again."
 msgstr "{name} sagt, der Spielstand stimmt nicht. Korrigiert ihn gemeinsam mit VP − und + bei jedem Namen in der oberen Leiste und schreibt das Ergebnis dann neu auf."
 
-#: src/ranked/RankedGame.tsx:360
+#: src/ranked/RankedGame.tsx:373
 #, fuzzy
 msgid "Score fixed: write it up"
 msgstr "Punktestand korrigiert: neu erstellen"
 
-#: src/ranked/RankedGame.tsx:369
+#: src/ranked/RankedGame.tsx:382
 #, fuzzy
 msgid "The score is wrong"
 msgstr "Der Punktestand stimmt nicht"
 
-#: src/ranked/RankedGame.tsx:370
+#: src/ranked/RankedGame.tsx:383
 #, fuzzy
 msgid "We agreed it wouldn't count"
 msgstr "Wir haben vereinbart, dass es nicht zählt"
 
-#: src/ranked/RankedGame.tsx:371
+#: src/ranked/RankedGame.tsx:384
 #, fuzzy
 msgid "Something went wrong at the table"
 msgstr "Am Tisch ist etwas schiefgelaufen"
 
-#: src/ranked/RankedGame.tsx:396
+#: src/ranked/RankedGame.tsx:410
 #, fuzzy
 msgid "Writing up the ranked result…"
 msgstr "Gewertetes Ergebnis wird erstellt…"
 
-#: src/ranked/RankedGame.tsx:406
-#: src/ranked/RankedGame.tsx:415
+#: src/ranked/RankedGame.tsx:420
+#: src/ranked/RankedGame.tsx:429
 #, fuzzy
 msgid "Not ranked"
 msgstr "Nicht gewertet"
 
-#: src/ranked/RankedGame.tsx:407
+#: src/ranked/RankedGame.tsx:421
 #, fuzzy
 msgid "You didn't sign, so this game doesn't count for either of you."
 msgstr "Du hast nicht unterschrieben, daher zählt dieses Spiel für keinen von euch."
 
-#: src/ranked/RankedGame.tsx:408
+#: src/ranked/RankedGame.tsx:422
 #, fuzzy
 msgid "You said: {why}"
 msgstr "Du hast angegeben: {why}"
 
-#: src/ranked/RankedGame.tsx:417
+#: src/ranked/RankedGame.tsx:431
 #, fuzzy
 msgid "{name} didn't sign the result, so this game doesn't count."
 msgstr "{name} hat das Ergebnis nicht unterschrieben, daher zählt dieses Spiel nicht."
 
-#: src/ranked/RankedGame.tsx:419
+#: src/ranked/RankedGame.tsx:433
 #, fuzzy
 msgid "You won {va}–{vb}. {name} didn't sign, so it won't move the ladder, but the win stays in your replays and campaign book."
 msgstr "Du hast {va}–{vb} gewonnen. {name} hat nicht unterschrieben, daher bewegt es die Rangliste nicht, aber der Sieg bleibt in deinen Wiederholungen und im Kampagnenbuch."
 
-#: src/ranked/RankedGame.tsx:427
+#: src/ranked/RankedGame.tsx:441
 #, fuzzy
 msgid "{name} didn't sign, so it won't move the ladder. The game stays in your replays and campaign book."
 msgstr "{name} hat nicht unterschrieben, daher bewegt es die Rangliste nicht. Das Spiel bleibt in deinen Wiederholungen und im Kampagnenbuch."
 
-#: src/ranked/RankedGame.tsx:432
+#: src/ranked/RankedGame.tsx:446
 #, fuzzy
 msgid "{name} said: {why}"
 msgstr "{name} hat angegeben: {why}"
 
-#: src/ranked/RankedGame.tsx:436
+#: src/ranked/RankedGame.tsx:450
 #, fuzzy
 msgid "{a} {va} – {vb} {b}"
 msgstr "{a} {va} – {vb} {b}"
 
-#: src/ranked/RankedGame.tsx:446
+#: src/ranked/RankedGame.tsx:460
 #, fuzzy
 msgid "Ranked result signed"
 msgstr "Gewertetes Ergebnis unterschrieben"
 
-#: src/ranked/RankedGame.tsx:484
+#: src/ranked/RankedGame.tsx:498
 #, fuzzy
 msgid "Sign the ranked result"
 msgstr "Gewertetes Ergebnis unterschreiben"
 
-#: src/ranked/RankedGame.tsx:487
+#: src/ranked/RankedGame.tsx:501
 #, fuzzy
 msgid "Signed. Waiting for your opponent to sign."
 msgstr "Unterschrieben. Warte auf die Unterschrift deines Gegners."
 
-#: src/ranked/RankedGame.tsx:490
+#: src/ranked/RankedGame.tsx:504
 #, fuzzy
 msgid "Why not? It goes on the result, and both of you see it."
 msgstr "Warum nicht? Es steht beim Ergebnis, und ihr seht es beide."
 
-#: src/ranked/RankedGame.tsx:507
+#: src/ranked/RankedGame.tsx:521
 #, fuzzy
 msgid "Sign: good game 🤝"
 msgstr "Unterschreiben: gutes Spiel 🤝"
 
-#: src/ranked/RankedGame.tsx:507
+#: src/ranked/RankedGame.tsx:521
 #, fuzzy
 msgid "Sign: that's right"
 msgstr "Unterschreiben: stimmt so"
 
-#: src/ranked/RankedGame.tsx:510
+#: src/ranked/RankedGame.tsx:524
 #, fuzzy
 msgid "Don't sign"
 msgstr "Nicht unterschreiben"
 
-#: src/ranked/RankedGame.tsx:515
+#: src/ranked/RankedGame.tsx:529
 #, fuzzy
 msgid "A game counts only when both players sign. Not signing means it doesn't count for either of you, and your card shows how often you sign."
 msgstr "Ein Spiel zählt nur, wenn beide unterschreiben. Wer nicht unterschreibt, sorgt dafür, dass es für keinen zählt, und deine Karte zeigt, wie oft du unterschreibst."
 
-#: src/ranked/RankedGame.tsx:77
+#: src/ranked/RankedGame.tsx:78
 #, fuzzy
 msgid "No result yet"
 msgstr "Noch kein Ergebnis"
 
-#: src/ranked/RankedGame.tsx:79
+#: src/ranked/RankedGame.tsx:80
 #, fuzzy
 msgid "The result doesn't match this table's game."
 msgstr "Das Ergebnis passt nicht zum Spiel an diesem Tisch."
 
-#: src/ranked/RankedGame.tsx:81
+#: src/ranked/RankedGame.tsx:82
 msgid "It was written on another version of Open Battle ({theirs}; you have {mine}): ranked games need you both on the same one."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:94
+#: src/ranked/RankedGame.tsx:95
 msgid "You don't have {name}, which this game played with, so the result can't be checked."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:98
+#: src/ranked/RankedGame.tsx:99
 msgid "The result treats {name} as the wrong kind of package: its file says otherwise."
 msgstr ""
 

@@ -18,6 +18,7 @@ import {
 import { hookIntents } from "../core/script";
 import type { Check, MediaChannel, NetMessage, SideMessage, Transport } from "./transport";
 import { buildInfo, MY_BUILD, type BuildInfo } from "../protocol";
+import { sharedRng } from "../core/sharedDice";
 
 /** Spectators receive the game like clients but never send intents. */
 export type Role = "host" | "client" | "spectator";
@@ -89,6 +90,8 @@ interface SessionOptions {
   frozen?: boolean;
   /** A spectator: how far behind the game it watches (ms); the host holds the events back. */
   delay?: number;
+  /** Shared dice (core/sharedDice.ts): this host's secret seed for a commitment it made, if it has it. */
+  sharedSecret?: (commit: string) => string | undefined;
 }
 
 /** A short fingerprint of the log up to `seq`, so a peer can tell it holds the same history. */
@@ -168,6 +171,7 @@ export class Session {
   /** Spectator: how far behind it asked to watch; the host's answer is `hostDelay`. */
   private readonly delay: number;
   private hostDelay = 0;
+  private readonly sharedSecret?: (commit: string) => string | undefined;
 
   constructor({
     transport,
@@ -183,7 +187,9 @@ export class Session {
     onIntent,
     frozen,
     delay,
+    sharedSecret,
   }: SessionOptions) {
+    this.sharedSecret = sharedSecret;
     this.delay = Math.max(0, Math.round(delay ?? 0));
     this.onIntent = onIntent;
     this.frozen = !!frozen;
@@ -630,23 +636,49 @@ export class Session {
       this.waiting.push([intent, from]);
       return;
     }
+    // Only the host commits to and reveals shared dice, for itself.
+    if ((intent.type === "dice/commit" || intent.type === "dice/reveal") && from !== this.selfId) return;
+    const shared = this.sharedDiceFor(intent);
+    const rng = shared.rng ?? this.rng;
     const routed = router?.(intent, from, this.state);
     if (routed) {
       this.resolving = true;
-      const seed = Math.floor(this.rng() * 2 ** 32);
+      const seed = Math.floor(rng() * 2 ** 32);
       void routed(seed)
         .catch(() => null)
         .then((event) => {
           this.resolving = false;
           if (event && this.role === "host")
-            this.hostLog({ seq: lastSeq(this.record) + 1, by: from, at: this.now(), event });
+            this.hostLog({
+              seq: lastSeq(this.record) + 1,
+              by: from,
+              at: this.now(),
+              event,
+              ...shared.note,
+              ...(shared.note ? { seed } : {}),
+            });
           for (const [i, f] of this.waiting.splice(0)) this.hostApply(i, f);
           this.runHooks();
         });
       return;
     }
-    const resolved = resolveLogged(this.record, intent, from, this.rng, this.now(), this.state);
-    if (resolved) this.hostLog(resolved);
+    const resolved = resolveLogged(this.record, intent, from, rng, this.now(), this.state);
+    if (resolved) this.hostLog({ ...resolved, ...shared.note });
+  }
+
+  /**
+   * Under shared dice: the dice for the next event (if this host made the
+   * commitment in force) and what the log keeps so the other player can roll
+   * it again.
+   */
+  private sharedDiceFor(intent: Intent): { rng?: Rng; note?: { intent: Intent } } {
+    const d = this.state.sharedDice;
+    if (!d) return {};
+    const secret = d.by === this.selfId ? this.sharedSecret?.(d.commit) : undefined;
+    return {
+      ...(secret ? { rng: sharedRng(secret, d.seeds, lastSeq(this.record) + 1) } : {}),
+      note: { intent },
+    };
   }
 
   /** Turn hooks an event set off, started one at a time once no rule is waiting (core/script.ts). */
