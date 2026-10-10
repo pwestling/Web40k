@@ -1,3 +1,4 @@
+import rulesetsFile from "../../rulesets.json";
 import type { PlayerKey, RankedPackage, RankedResult } from "../core/ranked";
 import type { SignedResult } from "./verify";
 
@@ -23,9 +24,20 @@ export const PAIR_CAP = 3;
 const PAIR_WINDOW_MS = 24 * 3600_000;
 /** Fewer games than this and the rating is still finding its level. */
 export const PROVISIONAL = 5;
+/** Different opponents a player must have met before beating them moves anyone's rating (keys cost nothing to make). */
+export const ESTABLISHED_OPPONENTS = 3;
+
+/** When a player's games start moving their opponents' ratings. */
+interface Bar {
+  games: number;
+  opponents: number;
+}
+const BAR: Bar = { games: PROVISIONAL, opponents: ESTABLISHED_OPPONENTS };
 
 export interface Rating {
   key: PlayerKey;
+  /** Played PROVISIONAL counted games against at least ESTABLISHED_OPPONENTS different keys: their games move other ratings. */
+  established: boolean;
   /** The name on their latest counted result. */
   name: string;
   rating: number;
@@ -45,27 +57,69 @@ const order = (x: SignedResult, y: SignedResult) =>
   x.result.at - y.result.at ||
   (x.result.replay < y.result.replay ? -1 : x.result.replay > y.result.replay ? 1 : 0);
 
-/** The rules packages a result added to its game: what puts it on a ladder of its own. */
-const houseRules = (r: RankedResult): RankedPackage[] => (r.rules?.packages ?? []).filter((p) => !p.game);
-
-/**
- * The ladder a result counts on: its system, then the hashes of any house
- * rules (sorted), so the same rules give the same ladder whoever played them.
- */
-export function ladderKey(r: RankedResult): string {
-  const extra = houseRules(r)
-    .map((p) => p.hash)
-    .sort();
-  return extra.length ? `${r.system}+${extra.join("+")}` : r.system;
+/** A named ruleset (rulesets.json): one ladder for these rules, across the builds and package versions listed. */
+interface Ruleset {
+  id: string;
+  name: string;
+  system: string;
+  /** App versions (the build before "+"), e.g. "0.1.0". */
+  versions: string[];
+  /** Each a set of package hashes that plays as this ruleset; [] for a built-in game with none. */
+  packages: string[][];
 }
 
-/** The system a ladder key is for. */
-export const ladderSystem = (key: string) => key.split("+")[0]!;
+export const RULESETS: Ruleset[] = (rulesetsFile as { rulesets: Ruleset[] }).rulesets;
 
-/** The house rules a ladder plays with, from any result on it. */
-export function ladderRules(results: SignedResult[], key: string): RankedPackage[] {
-  const one = results.find((r) => ladderKey(r.result) === key);
-  return one ? houseRules(one.result) : [];
+/** A build's version: "0.1.0+abc1234" is "0.1.0"; a fork's "0.1.0-fork.name+abc" is "0.1.0-fork.name". */
+export const versionOf = (build: string) => build.split("+")[0]!;
+
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
+
+/** The named ruleset a result was played under, if it is one. */
+export function rulesetOf(r: RankedResult, rulesets: Ruleset[] = RULESETS): Ruleset | undefined {
+  const app = r.rules?.app;
+  if (!r.rules || !app) return undefined;
+  const hashes = r.rules.packages.map((p) => p.hash);
+  return rulesets.find(
+    (x) =>
+      x.system === r.system &&
+      x.versions.includes(versionOf(app)) &&
+      x.packages.some((set) => sameSet(set, hashes)),
+  );
+}
+
+/**
+ * The ladder a result counts on (docs/compatibility.md): a named ruleset's
+ * id, or else the system with the app version and the sorted hashes of every
+ * package, so different rules never share a ladder. Results from before
+ * rulesets say no rules and go on a ladder of their own.
+ */
+export function ladderKey(r: RankedResult, rulesets: Ruleset[] = RULESETS): string {
+  if (!r.rules) return `${r.system}+legacy`;
+  const named = rulesetOf(r, rulesets);
+  if (named) return named.id;
+  const hashes = r.rules.packages.map((p) => p.hash).sort();
+  return [`${r.system}@${versionOf(r.rules.app ?? "?")}`, ...hashes].join("+");
+}
+
+/** The ladder a game of `system` with no house rules counts on, played on `build`. */
+export function plainLadder(system: string, build: string, rulesets: Ruleset[] = RULESETS): string {
+  const named = rulesets.find((x) => x.system === system && x.versions.includes(versionOf(build)));
+  return named?.id ?? `${system}@${versionOf(build)}`;
+}
+
+/** A ladder's name parts, from any result on it: a named ruleset, or the system, version and packages. */
+export function ladderAbout(
+  results: SignedResult[],
+  key: string,
+): { name?: string; system: string; version?: string; packages: RankedPackage[] } {
+  const named = RULESETS.find((x) => x.id === key);
+  if (named) return { name: named.name, system: named.system, packages: [] };
+  const one = results.find((r) => ladderKey(r.result) === key)?.result;
+  const [head] = key.split("+");
+  const [system, version] = head!.split("@");
+  return { system: one?.system ?? system!, version, packages: one?.rules?.packages ?? [] };
 }
 
 /** The results that count on ladder `on` (ladderKey), in counting order: each replay once, the pair cap applied. */
@@ -92,11 +146,31 @@ export function counted(results: SignedResult[], on: string): SignedResult[] {
 function fold(
   results: SignedResult[],
   on: string,
-  each?: (result: SignedResult["result"], a: Rating, b: Rating, d: number) => void,
+  bar: Bar,
+  each?: (
+    result: SignedResult["result"],
+    a: Rating,
+    b: Rating,
+    da: number,
+    db: number,
+    /** Each side's change was held at 0: its opponent isn't established yet. */
+    heldA: boolean,
+    heldB: boolean,
+  ) => void,
 ): Map<PlayerKey, Rating> {
   const by = new Map<PlayerKey, Rating>();
+  const met = new Map<PlayerKey, Set<PlayerKey>>();
   const get = (key: PlayerKey, name: string) => {
-    const r = by.get(key) ?? { key, name, rating: START, games: 0, wins: 0, losses: 0, draws: 0 };
+    const r = by.get(key) ?? {
+      key,
+      name,
+      rating: START,
+      games: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      established: bar.games === 0 && bar.opponents === 0,
+    };
     r.name = name;
     by.set(key, r);
     return r;
@@ -107,9 +181,12 @@ function fold(
       get(result.players[1].key, result.players[1].name),
     ];
     const score = result.winner === null ? 0.5 : result.winner === 0 ? 1 : 0;
+    // A side's rating moves only against an established opponent, so a new key can't feed anyone.
     const d = change(a.rating, b.rating, score);
-    a.rating += d;
-    b.rating -= d;
+    const [ea, eb] = [a.established, b.established];
+    const [da, db] = [eb ? d : 0, ea ? -d : 0];
+    a.rating += da;
+    b.rating += db;
     for (const [p, s] of [
       [a, score],
       [b, 1 - score],
@@ -119,14 +196,22 @@ function fold(
       else if (s === 0) p.losses++;
       else p.draws++;
     }
-    each?.(result, a, b, d);
+    for (const [p, q] of [
+      [a, b],
+      [b, a],
+    ] as const) {
+      const seen = met.get(p.key) ?? new Set();
+      met.set(p.key, seen.add(q.key));
+      p.established = p.games >= bar.games && seen.size >= bar.opponents;
+    }
+    each?.(result, a, b, da, db, !eb, !ea);
   }
   return by;
 }
 
 /** One ladder (ladderKey), best first. */
-export function ladder(results: SignedResult[], on: string): Rating[] {
-  return [...fold(results, on).values()]
+export function ladder(results: SignedResult[], on: string, bar: Bar = BAR): Rating[] {
+  return [...fold(results, on, bar).values()]
     .map((r) => ({ ...r, rating: Math.round(r.rating) }))
     .sort((x, y) => y.rating - x.rating || y.games - x.games || (x.key < y.key ? -1 : 1));
 }
@@ -139,6 +224,8 @@ export interface RatingMove {
   delta: number;
   games: number;
   them: { name: string; rating: number };
+  /** It didn't move: the opponent hadn't played enough different players yet. */
+  held?: true;
 }
 
 /** How the game with this replay moved `key`'s rating, or null if it didn't count (unsigned, past the pair cap). */
@@ -147,13 +234,14 @@ export function ratingMove(
   on: string,
   replay: string,
   key: PlayerKey,
+  bar: Bar = BAR,
 ): RatingMove | null {
   let move: RatingMove | null = null;
-  fold(results, on, (result, a, b, d) => {
+  fold(results, on, bar, (result, a, b, da, db, heldA, heldB) => {
     if (result.replay !== replay) return;
     const seat = result.players.findIndex((p) => p.key === key);
     if (seat < 0) return;
-    const [me, them, mine] = seat === 0 ? [a, b, d] : [b, a, -d];
+    const [me, them, mine, held] = seat === 0 ? [a, b, da, heldA] : [b, a, db, heldB];
     const after = Math.round(me.rating);
     const before = Math.round(me.rating - mine);
     move = {
@@ -162,6 +250,7 @@ export function ratingMove(
       delta: after - before,
       games: me.games,
       them: { name: them.name, rating: Math.round(them.rating) },
+      ...(held ? { held: true } : {}),
     };
   });
   return move;

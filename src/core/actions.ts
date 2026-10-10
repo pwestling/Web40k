@@ -561,7 +561,8 @@ export function resolveIntent(
       if (!state || !rankedOver(state) || !rankedReady(state) || state.ranked?.result) return null;
       if (state.ranked?.fixing) return null;
       if (!state.ranked?.keys[from]) return null;
-      const want = rankedResultOf(state, intent.result?.replay, intent.result?.at);
+      // The writer names its build; the other player checks it is theirs too before signing.
+      const want = rankedResultOf(state, intent.result?.replay, intent.result?.at, intent.result?.rules?.app);
       const text = canonResult(intent.result);
       if (!want || !text || text !== canonResult(want)) return null;
       return { type: "ranked/result", result: JSON.parse(text) as RankedResult, by: from };

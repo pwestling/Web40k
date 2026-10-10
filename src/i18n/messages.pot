@@ -508,7 +508,7 @@ msgstr ""
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
-#: src/ranked/RankedGame.tsx:467
+#: src/ranked/RankedGame.tsx:500
 #: src/standees/StandeeMaker.tsx:243
 #: src/ui/RegimentPanel.tsx:274
 msgid "Back"
@@ -1813,178 +1813,178 @@ msgstr ""
 msgid "This battle round is over its time: finish it off."
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1011
-#: src/core/content/examples/forty-k.ts:1092
+#: src/core/content/examples/forty-k.ts:1012
+#: src/core/content/examples/forty-k.ts:1093
 #: src/core/content/examples/rank-and-flank.ts:287
 msgctxt "game"
 msgid "Charge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1041
+#: src/core/content/examples/forty-k.ts:1042
 msgctxt "game"
 msgid "Pile in"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1044
-#: src/core/content/examples/forty-k.ts:1093
+#: src/core/content/examples/forty-k.ts:1045
+#: src/core/content/examples/forty-k.ts:1094
 #: src/core/content/examples/rank-and-flank.ts:183
 msgctxt "game"
 msgid "Fight"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1056
+#: src/core/content/examples/forty-k.ts:1057
 msgctxt "game"
 msgid "Consolidate"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1072
+#: src/core/content/examples/forty-k.ts:1073
 msgctxt "game"
 msgid "Command"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1088
+#: src/core/content/examples/forty-k.ts:1089
 #: src/core/content/examples/rank-and-flank.ts:194
 msgctxt "game"
 msgid "Movement"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1091
+#: src/core/content/examples/forty-k.ts:1092
 #: src/core/content/examples/rank-and-flank.ts:195
 msgctxt "game"
 msgid "Shooting"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:561
+#: src/core/content/examples/forty-k.ts:562
 msgctxt "game"
 msgid "Command Re-roll"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:566
+#: src/core/content/examples/forty-k.ts:567
 msgctxt "game"
 msgid "Re-roll one roll"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:570
+#: src/core/content/examples/forty-k.ts:571
 msgctxt "game"
 msgid "Insane Bravery"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:579
+#: src/core/content/examples/forty-k.ts:580
 msgctxt "game"
 msgid "Pass a Battle-shock test"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:583
+#: src/core/content/examples/forty-k.ts:584
 msgctxt "game"
 msgid "Explosives"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:590
+#: src/core/content/examples/forty-k.ts:591
 msgctxt "game"
 msgid "Roll 6D6 at a visible unengaged unit within 8\": each 4+ is a mortal wound"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:594
+#: src/core/content/examples/forty-k.ts:595
 msgctxt "game"
 msgid "Crushing Impact"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:602
+#: src/core/content/examples/forty-k.ts:603
 msgctxt "game"
 msgid "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:606
+#: src/core/content/examples/forty-k.ts:607
 msgctxt "game"
 msgid "Rapid Ingress"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:614
+#: src/core/content/examples/forty-k.ts:615
 msgctxt "game"
 msgid "End of the opponent's Movement phase: arrive from reserves"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:618
+#: src/core/content/examples/forty-k.ts:619
 msgctxt "game"
 msgid "Fire Overwatch"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:625
+#: src/core/content/examples/forty-k.ts:626
 msgctxt "game"
 msgid "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:629
+#: src/core/content/examples/forty-k.ts:630
 msgctxt "game"
 msgid "Smokescreen"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:637
+#: src/core/content/examples/forty-k.ts:638
 msgctxt "game"
 msgid "Cover against ranged attacks this phase"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:641
+#: src/core/content/examples/forty-k.ts:642
 msgctxt "game"
 msgid "Heroic Intervention"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:648
+#: src/core/content/examples/forty-k.ts:649
 msgctxt "game"
 msgid "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:652
+#: src/core/content/examples/forty-k.ts:653
 msgctxt "game"
 msgid "Counter-offensive"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:659
+#: src/core/content/examples/forty-k.ts:660
 msgctxt "game"
 msgid "Fight next, after an enemy unit has fought"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:663
+#: src/core/content/examples/forty-k.ts:664
 msgctxt "game"
 msgid "Epic Challenge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:670
+#: src/core/content/examples/forty-k.ts:671
 msgctxt "game"
 msgid "A character's melee attacks get Precision"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:673
+#: src/core/content/examples/forty-k.ts:674
 msgctxt "game"
 msgid "Other stratagem"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:912
+#: src/core/content/examples/forty-k.ts:913
 msgctxt "game"
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:926
+#: src/core/content/examples/forty-k.ts:927
 msgctxt "game"
 msgid "Remain stationary"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:934
+#: src/core/content/examples/forty-k.ts:935
 msgctxt "game"
 msgid "Normal move"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:945
+#: src/core/content/examples/forty-k.ts:946
 msgctxt "game"
 msgid "Advance"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:955
+#: src/core/content/examples/forty-k.ts:956
 msgctxt "game"
 msgid "Fall back"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:965
+#: src/core/content/examples/forty-k.ts:966
 #: src/core/content/examples/rank-and-flank.ts:182
 msgctxt "game"
 msgid "Shoot"
@@ -2173,7 +2173,7 @@ msgid "Your registered army ({army}) isn't on this device's shelf."
 msgstr ""
 
 #: src/events/EventSeat.tsx:140
-#: src/ranked/RankedGame.tsx:422
+#: src/ranked/RankedGame.tsx:455
 msgid "Back to the event"
 msgstr ""
 
@@ -3348,12 +3348,12 @@ msgid "{name} wants to play this game ranked: at the end you both sign the resul
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1041
-#: src/ranked/RankedGame.tsx:188
+#: src/ranked/RankedGame.tsx:212
 msgid "Play ranked"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:1044
-#: src/ranked/RankedGame.tsx:190
+#: src/ranked/RankedGame.tsx:214
 msgid "Not this time"
 msgstr ""
 
@@ -3553,7 +3553,7 @@ msgstr[1] ""
 #: src/opentables/OpenTables.tsx:463
 #: src/opentables/OpenTables.tsx:476
 #: src/player/PlayerCard.tsx:159
-#: src/ranked/RankedGame.tsx:202
+#: src/ranked/RankedGame.tsx:226
 #: src/workshop/Workshop.tsx:57
 msgid "Ranked"
 msgstr ""
@@ -4049,211 +4049,227 @@ msgstr ""
 msgid "Saving page {n} of {total}…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:155
+#: src/ranked/RankedGame.tsx:105
+msgid "The result doesn't match the score on the table."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:179
 msgid "Event game: the signed result counts for {event}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:162
+#: src/ranked/RankedGame.tsx:186
 msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:165
+#: src/ranked/RankedGame.tsx:189
 msgid "You play this game ranked. Waiting for your opponent to say yes."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:170
+#: src/ranked/RankedGame.tsx:194
 msgid "Unranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:178
+#: src/ranked/RankedGame.tsx:202
 msgid "{name} wants to play this game ranked. At the end you both sign the result, and it counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:201
+#: src/ranked/RankedGame.tsx:225
 msgid "Both players play this game ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:210
+#: src/ranked/RankedGame.tsx:234
 msgid "{a} {va} – {vb} {b}, a draw"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:211
+#: src/ranked/RankedGame.tsx:235
 msgid "{a} {va} – {vb} {b}, {winner} wins"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:228
+#: src/ranked/RankedGame.tsx:252
 msgid "Against an even opponent a win gains {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:230
+#: src/ranked/RankedGame.tsx:254
 msgid "Against an even opponent a loss costs {n}; beat a stronger player and you gain more."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:231
+#: src/ranked/RankedGame.tsx:255
 msgid "A draw between even players moves little."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:234
+#: src/ranked/RankedGame.tsx:258
 msgid "Beating a stronger player gains more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:236
+#: src/ranked/RankedGame.tsx:260
 msgid "Losing to a stronger player costs less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:237
+#: src/ranked/RankedGame.tsx:261
 msgid "A draw against a stronger player gains you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:239
+#: src/ranked/RankedGame.tsx:263
 msgid "Beating a lower-rated player gains less: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:241
+#: src/ranked/RankedGame.tsx:265
 msgid "Losing to a lower-rated player costs more: {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:242
+#: src/ranked/RankedGame.tsx:266
 msgid "A draw against a lower-rated player costs you {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:248
+#: src/ranked/RankedGame.tsx:272
 msgid "Still finding your level: {n} more game."
 msgid_plural "Still finding your level: {n} more games."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ranked/RankedGame.tsx:266
+#: src/ranked/RankedGame.tsx:290
 msgid "You two have played three ranked games today, so this one doesn't move the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:271
-#: src/ranked/RankedGame.tsx:417
+#: src/ranked/RankedGame.tsx:295
+#: src/ranked/RankedGame.tsx:450
 msgid "It counts on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:278
+#: src/ranked/RankedGame.tsx:300
+msgid "It counts on the {game} ladder, but doesn't move your rating yet: {name} is new and hasn't played five games against three different players."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:311
 msgid "You're now {rating} ({change}) on the {game} ladder."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:287
+#: src/ranked/RankedGame.tsx:320
 msgid "A win against {name} wins back {n}."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:315
+#: src/ranked/RankedGame.tsx:348
 msgid "Fixing the score"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:317
+#: src/ranked/RankedGame.tsx:350
 msgid "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:320
+#: src/ranked/RankedGame.tsx:353
 msgid "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:327
+#: src/ranked/RankedGame.tsx:360
 msgid "Score fixed: write it up"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:336
+#: src/ranked/RankedGame.tsx:369
 msgid "The score is wrong"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:337
+#: src/ranked/RankedGame.tsx:370
 msgid "We agreed it wouldn't count"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:338
+#: src/ranked/RankedGame.tsx:371
 msgid "Something went wrong at the table"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:363
+#: src/ranked/RankedGame.tsx:396
 msgid "Writing up the ranked result…"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:373
-#: src/ranked/RankedGame.tsx:382
+#: src/ranked/RankedGame.tsx:406
+#: src/ranked/RankedGame.tsx:415
 msgid "Not ranked"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:374
+#: src/ranked/RankedGame.tsx:407
 msgid "You didn't sign, so this game doesn't count for either of you."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:375
+#: src/ranked/RankedGame.tsx:408
 msgid "You said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:384
+#: src/ranked/RankedGame.tsx:417
 msgid "{name} didn't sign the result, so this game doesn't count."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:386
+#: src/ranked/RankedGame.tsx:419
 msgid "You won {va}–{vb}. {name} didn't sign, so it won't move the ladder, but the win stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:394
+#: src/ranked/RankedGame.tsx:427
 msgid "{name} didn't sign, so it won't move the ladder. The game stays in your replays and campaign book."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:399
+#: src/ranked/RankedGame.tsx:432
 msgid "{name} said: {why}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:403
+#: src/ranked/RankedGame.tsx:436
 msgid "{a} {va} – {vb} {b}"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:413
+#: src/ranked/RankedGame.tsx:446
 msgid "Ranked result signed"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:451
+#: src/ranked/RankedGame.tsx:484
 msgid "Sign the ranked result"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:454
+#: src/ranked/RankedGame.tsx:487
 msgid "Signed. Waiting for your opponent to sign."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:457
+#: src/ranked/RankedGame.tsx:490
 msgid "Why not? It goes on the result, and both of you see it."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:474
+#: src/ranked/RankedGame.tsx:507
 msgid "Sign: good game 🤝"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:474
+#: src/ranked/RankedGame.tsx:507
 msgid "Sign: that's right"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:477
+#: src/ranked/RankedGame.tsx:510
 msgid "Don't sign"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:482
+#: src/ranked/RankedGame.tsx:515
 msgid "A game counts only when both players sign. Not signing means it doesn't count for either of you, and your card shows how often you sign."
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:75
+#: src/ranked/RankedGame.tsx:77
 msgid "No result yet"
 msgstr ""
 
-#: src/ranked/RankedGame.tsx:77
+#: src/ranked/RankedGame.tsx:79
 msgid "The result doesn't match this table's game."
 msgstr ""
 
 #: src/ranked/RankedGame.tsx:81
-msgid "The result doesn't match the score on the table."
+msgid "It was written on another version of Open Battle ({theirs}; you have {mine}): ranked games need you both on the same one."
 msgstr ""
 
-#: src/ranked/store.ts:140
+#: src/ranked/RankedGame.tsx:94
+msgid "You don't have {name}, which this game played with, so the result can't be checked."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:98
+msgid "The result treats {name} as the wrong kind of package: its file says otherwise."
+msgstr ""
+
+#: src/ranked/store.ts:146
 msgid "{game} with {rules}"
 msgstr ""
 
-#: src/ranked/store.ts:191
+#: src/ranked/store.ts:198
 msgid "signs {signed} of {n} result"
 msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""

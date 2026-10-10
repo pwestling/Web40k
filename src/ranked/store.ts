@@ -2,9 +2,10 @@ import { useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { board } from "../opentables/board";
 import type { PlayerKey } from "../core/ranked";
-import { ladder, ladderRules, ladderSystem, ratingMove, type Rating, type RatingMove } from "./ratings";
+import { ladder, ladderAbout, plainLadder, ratingMove, type Rating, type RatingMove } from "./ratings";
 import { systemTitle } from "../ui/systemLabels";
 import { t, tn } from "../i18n";
+import { APP_BUILD } from "../version";
 import { checkDeclined, checkSigned, type DeclinedResult, type SignedResult } from "./verify";
 
 /**
@@ -134,10 +135,16 @@ export function useRankedResults(): Record<string, SignedResult> {
 
 /** A ladder's name: its game, and the house rules it plays with if any ("Rift Lanterns with Battle Scars 1.0.0"). */
 export function ladderTitle(results: SignedResult[], key: string): string {
-  const game = systemTitle(ladderSystem(key));
-  const rules = ladderRules(results, key);
-  if (!rules.length) return game;
-  return t("{game} with {rules}", { game, rules: rules.map((p) => `${p.name} ${p.version}`).join(", ") });
+  const about = ladderAbout(results, key);
+  if (about.name) return about.name;
+  const game = systemTitle(about.system);
+  // The game's own package is the game; anything else is house rules.
+  const rules = about.packages.filter((p) => !p.game);
+  const own = about.packages.find((p) => p.game);
+  const named = own ? `${game} ${own.version}` : about.version ? `${game} (${about.version})` : game;
+  return rules.length
+    ? t("{game} with {rules}", { game: named, rules: rules.map((p) => `${p.name} ${p.version}`).join(", ") })
+    : named;
 }
 
 /** One ladder's ratings (ratings.ts ladderKey), from every result this browser has. */
@@ -146,9 +153,9 @@ export function useLadder(system: string): Rating[] {
   return useMemo(() => ladder(Object.values(results), system), [results, system]);
 }
 
-/** A player's standing in one system, or null before their first counted game. */
+/** A player's standing on the plain ladder of a system played on this build, or null before their first counted game. */
 export function useRating(key: PlayerKey | undefined, system: string | undefined): Rating | null {
-  const rows = useLadder(system ?? "");
+  const rows = useLadder(system ? plainLadder(system, APP_BUILD) : "");
   return (key && rows.find((r) => r.key === key)) || null;
 }
 

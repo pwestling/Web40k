@@ -173,4 +173,39 @@ describe("builds (docs/compatibility.md)", () => {
     expect(host.status.otherBuilds.map((b) => b.peer)).toEqual(["other"]);
     expect(same.status.otherBuilds).toEqual([]);
   });
+
+  it("parks a peer on another protocol: no log for it, no intents from it", async () => {
+    const net = createLoopbackNetwork();
+    const host = new Session({ transport: net.connect("host"), role: "host", onChange: () => {} });
+    const got: unknown[] = [];
+    const future = net.connect("future");
+    future.onMessage((m) => got.push(m));
+    await flush();
+    future.send({ t: "hello", seq: 0, role: "client", v: { protocol: 99, build: "9.0.0+x" } }, "host");
+    await flush();
+    const before = host.log.events.length;
+    future.send(
+      {
+        t: "intent",
+        intent: { type: "player/join", player: { id: "future", name: "F", color: "#000", seat: 0 } },
+      },
+      "host",
+    );
+    host.dispatch({
+      type: "model/add",
+      model: {
+        id: "m1",
+        owner: "host",
+        label: "T",
+        position: { x: 0, y: 0 },
+        facing: 0,
+        base: { shape: "round", diameterMm: 32 },
+      },
+    });
+    await flush();
+    expect(host.status.otherBuilds).toEqual([{ peer: "future", protocol: 99, build: "9.0.0+x" }]);
+    expect(host.log.events.some((e) => e.by === "future")).toBe(false);
+    expect(got.filter((m) => (m as { t: string }).t !== "host")).toEqual([]);
+    expect(host.log.events.length).toBe(before + 1);
+  });
 });

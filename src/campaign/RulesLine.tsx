@@ -44,7 +44,7 @@ export function turnOnRules(game: GameState, packages: StoredPackage[]): void {
   }
   const event: GamePackages = {
     app: APP_BUILD,
-    system: { id: game.system ?? DEFAULT_SYSTEM, builtIn: true },
+    system: { id: game.system ?? DEFAULT_SYSTEM, builtIn: !next.some((p) => p.kind === "system") },
     packages: next,
   };
   if (game.turn.round > 0)

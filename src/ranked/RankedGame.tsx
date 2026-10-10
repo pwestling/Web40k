@@ -1,3 +1,5 @@
+import { APP_BUILD } from "../version";
+import { useLibrary } from "../packages/library";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import {
@@ -75,7 +77,29 @@ async function resultWrong(game: GameState): Promise<string> {
   if (!r) return t("No result yet");
   if ((await replayHash(useStore.getState().record)) !== r.replay)
     return t("The result doesn't match this table's game.");
-  const want = rankedResultOf(game, r.replay, r.at);
+  if (r.rules?.app !== APP_BUILD)
+    return t(
+      "It was written on another version of Open Battle ({theirs}; you have {mine}): ranked games need you both on the same one.",
+      {
+        theirs: r.rules?.app ?? "?",
+        mine: APP_BUILD,
+      },
+    );
+  // Whether each package is the game itself comes from the host; check it against the file's own manifest.
+  await useLibrary.getState().load();
+  const library = useLibrary.getState().packages;
+  for (const p of r.rules.packages) {
+    const mine = library[p.hash];
+    if (!mine)
+      return t("You don't have {name}, which this game played with, so the result can't be checked.", {
+        name: p.name,
+      });
+    if ((mine.manifest.kind === "system") !== !!p.game)
+      return t("The result treats {name} as the wrong kind of package: its file says otherwise.", {
+        name: p.name,
+      });
+  }
+  const want = rankedResultOf(game, r.replay, r.at, APP_BUILD);
   return want && canonResult(want) === canonResult(r)
     ? ""
     : t("The result doesn't match the score on the table.");
@@ -100,7 +124,7 @@ export function RankedKeeper() {
         const s = useStore.getState();
         if (s.game.ranked?.result) return;
         void replayHash(s.record).then((replay) => {
-          const result = rankedResultOf(useStore.getState().game, replay, Date.now());
+          const result = rankedResultOf(useStore.getState().game, replay, Date.now(), APP_BUILD);
           if (result) useStore.getState().dispatch({ type: "ranked/result", result });
         });
       },
@@ -269,6 +293,15 @@ function RatingLine({ result, me }: { result: RankedResult; me: string }) {
       </p>
     ) : (
       <p className="small">{t("It counts on the {game} ladder.", { game })}</p>
+    );
+  if (move.held)
+    return (
+      <p className="small">
+        {t(
+          "It counts on the {game} ladder, but doesn't move your rating yet: {name} is new and hasn't played five games against three different players.",
+          { game, name: move.them.name },
+        )}
+      </p>
     );
   const score = result.winner === null ? 0.5 : result.winner === seat ? 1 : 0;
   const back = Math.round(change(move.after, move.them.rating, 1));

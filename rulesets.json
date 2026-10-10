@@ -1,0 +1,19 @@
+{
+  "about": "Named rulesets for ranked ladders (docs/compatibility.md). A ranked result whose system, app version and exact set of package hashes match an entry counts on that entry's ladder; anything else counts on a ladder named by its exact rules. Changes go through a proposal (GOVERNANCE.md). A balance change starts a new season with a new id; a change that plays the same (a typo, a label) adds its hash to the current season.",
+  "rulesets": [
+    {
+      "id": "rift-lanterns-s1",
+      "name": "Rift Lanterns, season 1",
+      "system": "rift-lanterns",
+      "versions": ["0.1.0"],
+      "packages": [["34d0ff137ec252cb2bf8201c17f8799c80086ebb59f84c2666b77cffcabe6c3d"]]
+    },
+    {
+      "id": "brinewatch-s1",
+      "name": "Brinewatch, season 1",
+      "system": "brinewatch",
+      "versions": ["0.1.0"],
+      "packages": [["1e58a93b3311541290af77b1c5898c1dbc0213af9de4ea5acfee78ad33d3dd4d"]]
+    }
+  ]
+}

@@ -291,7 +291,7 @@ export function GamePackagesSettings({ editable }: { editable: boolean }) {
   const apply = (next: PackageRef[], agreed?: PlayerId[]) => {
     const event: GamePackages = {
       app: APP_BUILD,
-      system: { id: system, builtIn: true },
+      system: { id: system, builtIn: !next.some((p) => p.kind === "system") },
       packages: next,
     };
     if (agreed) event.agreed = agreed;
@@ -482,7 +482,7 @@ function useApplyAgreed(isHost: boolean) {
     dispatch({
       type: "game/packages",
       app: APP_BUILD,
-      system: { id: system ?? DEFAULT_SYSTEM, builtIn: true },
+      system: { id: system ?? DEFAULT_SYSTEM, builtIn: !proposal.packages.some((p) => p.kind === "system") },
       packages: proposal.packages,
       agreed: seated,
     });

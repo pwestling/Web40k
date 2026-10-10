@@ -609,7 +609,7 @@ msgstr "Ranger sur l'étagère"
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
 #: src/companion/RealDice.tsx:242
-#: src/ranked/RankedGame.tsx:467
+#: src/ranked/RankedGame.tsx:500
 #: src/standees/StandeeMaker.tsx:243
 #: src/ui/RegimentPanel.tsx:274
 #, fuzzy
@@ -2207,207 +2207,207 @@ msgstr "Dernier tour : il reste le temps de finir ce round de bataille, pas un a
 msgid "This battle round is over its time: finish it off."
 msgstr "Ce round de bataille a dépassé son temps : le terminer."
 
-#: src/core/content/examples/forty-k.ts:1011
-#: src/core/content/examples/forty-k.ts:1092
+#: src/core/content/examples/forty-k.ts:1012
+#: src/core/content/examples/forty-k.ts:1093
 #: src/core/content/examples/rank-and-flank.ts:287
 #, fuzzy
 msgctxt "game"
 msgid "Charge"
 msgstr "Charge"
 
-#: src/core/content/examples/forty-k.ts:1041
+#: src/core/content/examples/forty-k.ts:1042
 #, fuzzy
 msgctxt "game"
 msgid "Pile in"
 msgstr "Engagement"
 
-#: src/core/content/examples/forty-k.ts:1044
-#: src/core/content/examples/forty-k.ts:1093
+#: src/core/content/examples/forty-k.ts:1045
+#: src/core/content/examples/forty-k.ts:1094
 #: src/core/content/examples/rank-and-flank.ts:183
 #, fuzzy
 msgctxt "game"
 msgid "Fight"
 msgstr "Combat"
 
-#: src/core/content/examples/forty-k.ts:1056
+#: src/core/content/examples/forty-k.ts:1057
 #, fuzzy
 msgctxt "game"
 msgid "Consolidate"
 msgstr "Consolidation"
 
-#: src/core/content/examples/forty-k.ts:1072
+#: src/core/content/examples/forty-k.ts:1073
 #, fuzzy
 msgctxt "game"
 msgid "Command"
 msgstr "Commandement"
 
-#: src/core/content/examples/forty-k.ts:1088
+#: src/core/content/examples/forty-k.ts:1089
 #: src/core/content/examples/rank-and-flank.ts:194
 #, fuzzy
 msgctxt "game"
 msgid "Movement"
 msgstr "Mouvement"
 
-#: src/core/content/examples/forty-k.ts:1091
+#: src/core/content/examples/forty-k.ts:1092
 #: src/core/content/examples/rank-and-flank.ts:195
 #, fuzzy
 msgctxt "game"
 msgid "Shooting"
 msgstr "Tir"
 
-#: src/core/content/examples/forty-k.ts:561
+#: src/core/content/examples/forty-k.ts:562
 #, fuzzy
 msgctxt "game"
 msgid "Command Re-roll"
 msgstr "Relance de commandement"
 
-#: src/core/content/examples/forty-k.ts:566
+#: src/core/content/examples/forty-k.ts:567
 #, fuzzy
 msgctxt "game"
 msgid "Re-roll one roll"
 msgstr "Relance un jet"
 
-#: src/core/content/examples/forty-k.ts:570
+#: src/core/content/examples/forty-k.ts:571
 #, fuzzy
 msgctxt "game"
 msgid "Insane Bravery"
 msgstr "Bravoure insensée"
 
-#: src/core/content/examples/forty-k.ts:579
+#: src/core/content/examples/forty-k.ts:580
 #, fuzzy
 msgctxt "game"
 msgid "Pass a Battle-shock test"
 msgstr "Réussit un test de choc"
 
-#: src/core/content/examples/forty-k.ts:583
+#: src/core/content/examples/forty-k.ts:584
 msgctxt "game"
 msgid "Explosives"
 msgstr "Explosives"
 
-#: src/core/content/examples/forty-k.ts:590
+#: src/core/content/examples/forty-k.ts:591
 #, fuzzy
 msgctxt "game"
 msgid "Roll 6D6 at a visible unengaged unit within 8\": each 4+ is a mortal wound"
 msgstr "Lance 6D6 contre une unité visible non engagée à 8\" ou moins : chaque 4+ inflige une blessure mortelle"
 
-#: src/core/content/examples/forty-k.ts:594
+#: src/core/content/examples/forty-k.ts:595
 #, fuzzy
 msgctxt "game"
 msgid "Crushing Impact"
 msgstr "Crushing Impact"
 
-#: src/core/content/examples/forty-k.ts:602
+#: src/core/content/examples/forty-k.ts:603
 #, fuzzy
 msgctxt "game"
 msgid "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)"
 msgstr "Après un mouvement de charge : lance autant de D6 que l'Endurance ; chaque 5+ blesse l'ennemi, chaque 1 ton unité (6 au plus)"
 
-#: src/core/content/examples/forty-k.ts:606
+#: src/core/content/examples/forty-k.ts:607
 #, fuzzy
 msgctxt "game"
 msgid "Rapid Ingress"
 msgstr "Entrée rapide"
 
-#: src/core/content/examples/forty-k.ts:614
+#: src/core/content/examples/forty-k.ts:615
 #, fuzzy
 msgctxt "game"
 msgid "End of the opponent's Movement phase: arrive from reserves"
 msgstr "Fin de la phase de mouvement adverse : arrive des réserves"
 
-#: src/core/content/examples/forty-k.ts:618
+#: src/core/content/examples/forty-k.ts:619
 #, fuzzy
 msgctxt "game"
 msgid "Fire Overwatch"
 msgstr "Tir en état d'alerte"
 
-#: src/core/content/examples/forty-k.ts:625
+#: src/core/content/examples/forty-k.ts:626
 msgctxt "game"
 msgid "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s"
 msgstr "Fin de la phase de Mouvement adverse : tire sur une unité à 24\" ou moins ; touche seulement sur des 6 non modifiés"
 
-#: src/core/content/examples/forty-k.ts:629
+#: src/core/content/examples/forty-k.ts:630
 #, fuzzy
 msgctxt "game"
 msgid "Smokescreen"
 msgstr "Écran de fumée"
 
-#: src/core/content/examples/forty-k.ts:637
+#: src/core/content/examples/forty-k.ts:638
 msgctxt "game"
 msgid "Cover against ranged attacks this phase"
 msgstr "Couvert contre les attaques à distance pendant cette phase"
 
-#: src/core/content/examples/forty-k.ts:641
+#: src/core/content/examples/forty-k.ts:642
 #, fuzzy
 msgctxt "game"
 msgid "Heroic Intervention"
 msgstr "Intervention héroïque"
 
-#: src/core/content/examples/forty-k.ts:648
+#: src/core/content/examples/forty-k.ts:649
 msgctxt "game"
 msgid "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged"
 msgstr "Fin de la phase de Charge adverse : une unité à 12\" ou moins charge un ennemi qui vient de charger"
 
-#: src/core/content/examples/forty-k.ts:652
+#: src/core/content/examples/forty-k.ts:653
 #, fuzzy
 msgctxt "game"
 msgid "Counter-offensive"
 msgstr "Contre-offensive"
 
-#: src/core/content/examples/forty-k.ts:659
+#: src/core/content/examples/forty-k.ts:660
 #, fuzzy
 msgctxt "game"
 msgid "Fight next, after an enemy unit has fought"
 msgstr "Combat ensuite, après qu'une unité ennemie a combattu"
 
-#: src/core/content/examples/forty-k.ts:663
+#: src/core/content/examples/forty-k.ts:664
 #, fuzzy
 msgctxt "game"
 msgid "Epic Challenge"
 msgstr "Défi épique"
 
-#: src/core/content/examples/forty-k.ts:670
+#: src/core/content/examples/forty-k.ts:671
 #, fuzzy
 msgctxt "game"
 msgid "A character's melee attacks get Precision"
 msgstr "Les attaques de mêlée d'un personnage gagnent Précision"
 
-#: src/core/content/examples/forty-k.ts:673
+#: src/core/content/examples/forty-k.ts:674
 #, fuzzy
 msgctxt "game"
 msgid "Other stratagem"
 msgstr "Autre stratagème"
 
-#: src/core/content/examples/forty-k.ts:912
+#: src/core/content/examples/forty-k.ts:913
 #, fuzzy
 msgctxt "game"
 msgid "Battle-shock test"
 msgstr "Test de choc"
 
-#: src/core/content/examples/forty-k.ts:926
+#: src/core/content/examples/forty-k.ts:927
 #, fuzzy
 msgctxt "game"
 msgid "Remain stationary"
 msgstr "Rester immobile"
 
-#: src/core/content/examples/forty-k.ts:934
+#: src/core/content/examples/forty-k.ts:935
 #, fuzzy
 msgctxt "game"
 msgid "Normal move"
 msgstr "Mouvement normal"
 
-#: src/core/content/examples/forty-k.ts:945
+#: src/core/content/examples/forty-k.ts:946
 #, fuzzy
 msgctxt "game"
 msgid "Advance"
 msgstr "Avance"
 
-#: src/core/content/examples/forty-k.ts:955
+#: src/core/content/examples/forty-k.ts:956
 #, fuzzy
 msgctxt "game"
 msgid "Fall back"
 msgstr "Retraite"
 
-#: src/core/content/examples/forty-k.ts:965
+#: src/core/content/examples/forty-k.ts:966
 #: src/core/content/examples/rank-and-flank.ts:182
 #, fuzzy
 msgctxt "game"
@@ -2634,7 +2634,7 @@ msgid "Your registered army ({army}) isn't on this device's shelf."
 msgstr "Ton armée inscrite ({army}) n'est pas sur l'étagère de cet appareil."
 
 #: src/events/EventSeat.tsx:140
-#: src/ranked/RankedGame.tsx:422
+#: src/ranked/RankedGame.tsx:455
 #, fuzzy
 msgid "Back to the event"
 msgstr "Retour à l'événement"
@@ -4078,13 +4078,13 @@ msgid "{name} wants to play this game ranked: at the end you both sign the resul
 msgstr "{name} veut jouer cette partie en classée : à la fin, vous signez tous les deux le résultat."
 
 #: src/opentables/OpenTables.tsx:1041
-#: src/ranked/RankedGame.tsx:188
+#: src/ranked/RankedGame.tsx:212
 #, fuzzy
 msgid "Play ranked"
 msgstr "Jouer en classée"
 
 #: src/opentables/OpenTables.tsx:1044
-#: src/ranked/RankedGame.tsx:190
+#: src/ranked/RankedGame.tsx:214
 #, fuzzy
 msgid "Not this time"
 msgstr "Pas cette fois"
@@ -4326,7 +4326,7 @@ msgstr[1] "{rating} ({n} parties)"
 #: src/opentables/OpenTables.tsx:463
 #: src/opentables/OpenTables.tsx:476
 #: src/player/PlayerCard.tsx:159
-#: src/ranked/RankedGame.tsx:202
+#: src/ranked/RankedGame.tsx:226
 #: src/workshop/Workshop.tsx:57
 #, fuzzy
 msgid "Ranked"
@@ -4936,260 +4936,276 @@ msgstr "Dessin des figurines…"
 msgid "Saving page {n} of {total}…"
 msgstr "Enregistrement de la page {n} sur {total}…"
 
-#: src/ranked/RankedGame.tsx:155
+#: src/ranked/RankedGame.tsx:105
+#, fuzzy
+msgid "The result doesn't match the score on the table."
+msgstr "Le résultat ne correspond pas au score de la table."
+
+#: src/ranked/RankedGame.tsx:179
 #, fuzzy
 msgid "Event game: the signed result counts for {event}."
 msgstr "Partie d'événement : le résultat signé compte pour {event}."
 
-#: src/ranked/RankedGame.tsx:162
+#: src/ranked/RankedGame.tsx:186
 #, fuzzy
 msgid "Ranked game: once you both sign the result, it counts on the {game} ladder."
 msgstr "Partie classée : dès que vous signez tous les deux le résultat, elle compte au classement {game}."
 
-#: src/ranked/RankedGame.tsx:165
+#: src/ranked/RankedGame.tsx:189
 #, fuzzy
 msgid "You play this game ranked. Waiting for your opponent to say yes."
 msgstr "Tu joues cette partie en classée. En attente de l’accord de ton adversaire."
 
-#: src/ranked/RankedGame.tsx:170
+#: src/ranked/RankedGame.tsx:194
 #, fuzzy
 msgid "Unranked"
 msgstr "Non classée"
 
-#: src/ranked/RankedGame.tsx:178
+#: src/ranked/RankedGame.tsx:202
 #, fuzzy
 msgid "{name} wants to play this game ranked. At the end you both sign the result, and it counts on the {game} ladder."
 msgstr "{name} veut jouer cette partie en classée. À la fin, vous signez tous les deux le résultat, et il compte au classement {game}."
 
-#: src/ranked/RankedGame.tsx:201
+#: src/ranked/RankedGame.tsx:225
 #, fuzzy
 msgid "Both players play this game ranked"
 msgstr "Les deux joueurs jouent cette partie en classée"
 
-#: src/ranked/RankedGame.tsx:210
+#: src/ranked/RankedGame.tsx:234
 #, fuzzy
 msgid "{a} {va} – {vb} {b}, a draw"
 msgstr "{a} {va} – {vb} {b}, match nul"
 
-#: src/ranked/RankedGame.tsx:211
+#: src/ranked/RankedGame.tsx:235
 #, fuzzy
 msgid "{a} {va} – {vb} {b}, {winner} wins"
 msgstr "{a} {va} – {vb} {b}, {winner} gagne"
 
-#: src/ranked/RankedGame.tsx:228
+#: src/ranked/RankedGame.tsx:252
 #, fuzzy
 msgid "Against an even opponent a win gains {n}."
 msgstr "Contre un adversaire de même niveau, une victoire rapporte {n}."
 
-#: src/ranked/RankedGame.tsx:230
+#: src/ranked/RankedGame.tsx:254
 #, fuzzy
 msgid "Against an even opponent a loss costs {n}; beat a stronger player and you gain more."
 msgstr "Contre un adversaire de même niveau, une défaite coûte {n} ; bats un joueur plus fort et tu gagnes davantage."
 
-#: src/ranked/RankedGame.tsx:231
+#: src/ranked/RankedGame.tsx:255
 #, fuzzy
 msgid "A draw between even players moves little."
 msgstr "Un nul entre joueurs de même niveau change peu de choses."
 
-#: src/ranked/RankedGame.tsx:234
+#: src/ranked/RankedGame.tsx:258
 #, fuzzy
 msgid "Beating a stronger player gains more: {n}."
 msgstr "Battre un joueur plus fort rapporte plus : {n}."
 
-#: src/ranked/RankedGame.tsx:236
+#: src/ranked/RankedGame.tsx:260
 #, fuzzy
 msgid "Losing to a stronger player costs less: {n}."
 msgstr "Perdre contre un joueur plus fort coûte moins : {n}."
 
-#: src/ranked/RankedGame.tsx:237
+#: src/ranked/RankedGame.tsx:261
 #, fuzzy
 msgid "A draw against a stronger player gains you {n}."
 msgstr "Un nul contre un joueur plus fort te rapporte {n}."
 
-#: src/ranked/RankedGame.tsx:239
+#: src/ranked/RankedGame.tsx:263
 #, fuzzy
 msgid "Beating a lower-rated player gains less: {n}."
 msgstr "Battre un joueur moins bien classé rapporte moins : {n}."
 
-#: src/ranked/RankedGame.tsx:241
+#: src/ranked/RankedGame.tsx:265
 #, fuzzy
 msgid "Losing to a lower-rated player costs more: {n}."
 msgstr "Perdre contre un joueur moins bien classé coûte plus : {n}."
 
-#: src/ranked/RankedGame.tsx:242
+#: src/ranked/RankedGame.tsx:266
 #, fuzzy
 msgid "A draw against a lower-rated player costs you {n}."
 msgstr "Un nul contre un joueur moins bien classé te coûte {n}."
 
-#: src/ranked/RankedGame.tsx:248
+#: src/ranked/RankedGame.tsx:272
 #, fuzzy
 msgid "Still finding your level: {n} more game."
 msgid_plural "Still finding your level: {n} more games."
 msgstr[0] "Ton niveau n’est pas encore fixé : encore {n} partie."
 msgstr[1] "Ton niveau n’est pas encore fixé : encore {n} parties."
 
-#: src/ranked/RankedGame.tsx:266
+#: src/ranked/RankedGame.tsx:290
 #, fuzzy
 msgid "You two have played three ranked games today, so this one doesn't move the {game} ladder."
 msgstr "Vous avez déjà joué trois parties classées aujourd’hui, donc celle-ci ne bouge pas le classement {game}."
 
-#: src/ranked/RankedGame.tsx:271
-#: src/ranked/RankedGame.tsx:417
+#: src/ranked/RankedGame.tsx:295
+#: src/ranked/RankedGame.tsx:450
 #, fuzzy
 msgid "It counts on the {game} ladder."
 msgstr "Elle compte au classement {game}."
 
-#: src/ranked/RankedGame.tsx:278
+#: src/ranked/RankedGame.tsx:300
+msgid "It counts on the {game} ladder, but doesn't move your rating yet: {name} is new and hasn't played five games against three different players."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:311
 #, fuzzy
 msgid "You're now {rating} ({change}) on the {game} ladder."
 msgstr "Tu es maintenant à {rating} ({change}) au classement {game}."
 
-#: src/ranked/RankedGame.tsx:287
+#: src/ranked/RankedGame.tsx:320
 #, fuzzy
 msgid "A win against {name} wins back {n}."
 msgstr "Une victoire contre {name} te rend {n}."
 
-#: src/ranked/RankedGame.tsx:315
+#: src/ranked/RankedGame.tsx:348
 #, fuzzy
 msgid "Fixing the score"
 msgstr "Correction du score"
 
-#: src/ranked/RankedGame.tsx:317
+#: src/ranked/RankedGame.tsx:350
 #, fuzzy
 msgid "You said the score is wrong. Fix it with the VP − and + by each name in the top bar, then write the result up again."
 msgstr "Tu as dit que le score est faux. Corrige-le avec les VP − et + à côté de chaque nom dans la barre du haut, puis rédige à nouveau le résultat."
 
-#: src/ranked/RankedGame.tsx:320
+#: src/ranked/RankedGame.tsx:353
 #, fuzzy
 msgid "{name} says the score is wrong. Fix it together with the VP − and + by each name in the top bar, then write the result up again."
 msgstr "{name} dit que le score est faux. Corrigez-le ensemble avec les VP − et + à côté de chaque nom dans la barre du haut, puis rédigez à nouveau le résultat."
 
-#: src/ranked/RankedGame.tsx:327
+#: src/ranked/RankedGame.tsx:360
 #, fuzzy
 msgid "Score fixed: write it up"
 msgstr "Score corrigé : rédiger le résultat"
 
-#: src/ranked/RankedGame.tsx:336
+#: src/ranked/RankedGame.tsx:369
 #, fuzzy
 msgid "The score is wrong"
 msgstr "Le score est faux"
 
-#: src/ranked/RankedGame.tsx:337
+#: src/ranked/RankedGame.tsx:370
 #, fuzzy
 msgid "We agreed it wouldn't count"
 msgstr "On a convenu que ça ne compterait pas"
 
-#: src/ranked/RankedGame.tsx:338
+#: src/ranked/RankedGame.tsx:371
 #, fuzzy
 msgid "Something went wrong at the table"
 msgstr "Quelque chose a mal tourné à la table"
 
-#: src/ranked/RankedGame.tsx:363
+#: src/ranked/RankedGame.tsx:396
 #, fuzzy
 msgid "Writing up the ranked result…"
 msgstr "Rédaction du résultat classé…"
 
-#: src/ranked/RankedGame.tsx:373
-#: src/ranked/RankedGame.tsx:382
+#: src/ranked/RankedGame.tsx:406
+#: src/ranked/RankedGame.tsx:415
 #, fuzzy
 msgid "Not ranked"
 msgstr "Non classée"
 
-#: src/ranked/RankedGame.tsx:374
+#: src/ranked/RankedGame.tsx:407
 #, fuzzy
 msgid "You didn't sign, so this game doesn't count for either of you."
 msgstr "Tu n’as pas signé, donc cette partie ne compte pour aucun de vous."
 
-#: src/ranked/RankedGame.tsx:375
+#: src/ranked/RankedGame.tsx:408
 #, fuzzy
 msgid "You said: {why}"
 msgstr "Tu as dit : {why}"
 
-#: src/ranked/RankedGame.tsx:384
+#: src/ranked/RankedGame.tsx:417
 #, fuzzy
 msgid "{name} didn't sign the result, so this game doesn't count."
 msgstr "{name} n’a pas signé le résultat, donc cette partie ne compte pas."
 
-#: src/ranked/RankedGame.tsx:386
+#: src/ranked/RankedGame.tsx:419
 #, fuzzy
 msgid "You won {va}–{vb}. {name} didn't sign, so it won't move the ladder, but the win stays in your replays and campaign book."
 msgstr "Tu as gagné {va}–{vb}. {name} n’a pas signé, donc ça ne bouge pas le classement, mais la victoire reste dans tes replays et ton livre de campagne."
 
-#: src/ranked/RankedGame.tsx:394
+#: src/ranked/RankedGame.tsx:427
 #, fuzzy
 msgid "{name} didn't sign, so it won't move the ladder. The game stays in your replays and campaign book."
 msgstr "{name} n’a pas signé, donc ça ne bouge pas le classement. La partie reste dans tes replays et ton livre de campagne."
 
-#: src/ranked/RankedGame.tsx:399
+#: src/ranked/RankedGame.tsx:432
 #, fuzzy
 msgid "{name} said: {why}"
 msgstr "{name} a dit : {why}"
 
-#: src/ranked/RankedGame.tsx:403
+#: src/ranked/RankedGame.tsx:436
 #, fuzzy
 msgid "{a} {va} – {vb} {b}"
 msgstr "{a} {va} – {vb} {b}"
 
-#: src/ranked/RankedGame.tsx:413
+#: src/ranked/RankedGame.tsx:446
 #, fuzzy
 msgid "Ranked result signed"
 msgstr "Résultat classé signé"
 
-#: src/ranked/RankedGame.tsx:451
+#: src/ranked/RankedGame.tsx:484
 #, fuzzy
 msgid "Sign the ranked result"
 msgstr "Signer le résultat classé"
 
-#: src/ranked/RankedGame.tsx:454
+#: src/ranked/RankedGame.tsx:487
 #, fuzzy
 msgid "Signed. Waiting for your opponent to sign."
 msgstr "Signé. En attente de la signature de ton adversaire."
 
-#: src/ranked/RankedGame.tsx:457
+#: src/ranked/RankedGame.tsx:490
 #, fuzzy
 msgid "Why not? It goes on the result, and both of you see it."
 msgstr "Pourquoi pas ? C’est noté sur le résultat, et vous le voyez tous les deux."
 
-#: src/ranked/RankedGame.tsx:474
+#: src/ranked/RankedGame.tsx:507
 #, fuzzy
 msgid "Sign: good game 🤝"
 msgstr "Signer : bonne partie 🤝"
 
-#: src/ranked/RankedGame.tsx:474
+#: src/ranked/RankedGame.tsx:507
 #, fuzzy
 msgid "Sign: that's right"
 msgstr "Signer : c’est juste"
 
-#: src/ranked/RankedGame.tsx:477
+#: src/ranked/RankedGame.tsx:510
 #, fuzzy
 msgid "Don't sign"
 msgstr "Ne pas signer"
 
-#: src/ranked/RankedGame.tsx:482
+#: src/ranked/RankedGame.tsx:515
 #, fuzzy
 msgid "A game counts only when both players sign. Not signing means it doesn't count for either of you, and your card shows how often you sign."
 msgstr "Une partie ne compte que si les deux joueurs signent. Ne pas signer veut dire qu’elle ne compte pour aucun de vous, et ta carte montre à quelle fréquence tu signes."
 
-#: src/ranked/RankedGame.tsx:75
+#: src/ranked/RankedGame.tsx:77
 #, fuzzy
 msgid "No result yet"
 msgstr "Pas encore de résultat"
 
-#: src/ranked/RankedGame.tsx:77
+#: src/ranked/RankedGame.tsx:79
 #, fuzzy
 msgid "The result doesn't match this table's game."
 msgstr "Le résultat ne correspond pas à la partie de cette table."
 
 #: src/ranked/RankedGame.tsx:81
-#, fuzzy
-msgid "The result doesn't match the score on the table."
-msgstr "Le résultat ne correspond pas au score de la table."
+msgid "It was written on another version of Open Battle ({theirs}; you have {mine}): ranked games need you both on the same one."
+msgstr ""
 
-#: src/ranked/store.ts:140
+#: src/ranked/RankedGame.tsx:94
+msgid "You don't have {name}, which this game played with, so the result can't be checked."
+msgstr ""
+
+#: src/ranked/RankedGame.tsx:98
+msgid "The result treats {name} as the wrong kind of package: its file says otherwise."
+msgstr ""
+
+#: src/ranked/store.ts:146
 msgid "{game} with {rules}"
 msgstr ""
 
-#: src/ranked/store.ts:191
+#: src/ranked/store.ts:198
 #, fuzzy
 msgid "signs {signed} of {n} result"
 msgid_plural "signs {signed} of {n} results"

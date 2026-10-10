@@ -1,3 +1,6 @@
+import riftSource from "../../games/rift-lanterns/rift-lanterns.js?raw";
+import brineSource from "../../games/brinewatch/brinewatch.js?raw";
+import pkg from "../../package.json";
 import { describe, expect, it } from "vitest";
 import "../systems";
 import {
@@ -21,6 +24,7 @@ import {
   PAIR_CAP,
   ratingMove,
   rankedSystems,
+  rulesetOf,
   START,
 } from "./ratings";
 import { signRate } from "./store";
@@ -60,6 +64,7 @@ function result(a: string, b: string, va: number, vb: number, at = 1_000_000, re
     winner: va === vb ? null : va > vb ? 0 : 1,
     replay,
     at,
+    rules: { app: "0.1.0+test", packages: [] },
   };
 }
 
@@ -143,6 +148,7 @@ describe("ranked results (#65)", () => {
       rounds: r.rounds,
       points: r.points,
       system: r.system,
+      rules: r.rules,
       v: 1,
     };
     expect(canonResult(shuffled)).toBe(canonResult(r));
@@ -170,6 +176,10 @@ describe("ranked results (#65)", () => {
   });
 });
 
+const RL = "rift-lanterns@0.1.0";
+/** The Elo maths alone: every key counts from its first game. */
+const OPEN = { games: 0, opponents: 0 };
+
 describe("ratings with no server (#65)", () => {
   const A = "a".repeat(43) + "." + "a".repeat(43);
   const B = "b".repeat(43) + "." + "b".repeat(43);
@@ -178,24 +188,24 @@ describe("ratings with no server (#65)", () => {
   it("moves Elo by K times the surprise", () => {
     expect(expected(START, START)).toBe(0.5);
     expect(change(START, START, 1)).toBe(K / 2);
-    const [a, b] = ladder([counts(A, B, 10, 2, 1)], "rift-lanterns");
+    const [a, b] = ladder([counts(A, B, 10, 2, 1)], RL, OPEN);
     expect([a!.key, a!.rating, a!.wins]).toEqual([A, START + 16, 1]);
     expect([b!.key, b!.rating, b!.losses]).toEqual([B, START - 16, 1]);
     // A draw between equals changes nothing.
-    expect(ladder([counts(A, B, 4, 4, 1)], "rift-lanterns").map((r) => r.rating)).toEqual([START, START]);
+    expect(ladder([counts(A, B, 4, 4, 1)], RL, OPEN).map((r) => r.rating)).toEqual([START, START]);
   });
 
   it("says how one game moved each player (PX ranked 2)", () => {
     const first = counts(A, B, 10, 2, 1, 1);
     const second = counts(B, A, 3, 1, 2 * 24 * 3600_000, 2);
     const results = [first, second];
-    const win = ratingMove(results, "rift-lanterns", first.result.replay, A)!;
+    const win = ratingMove(results, RL, first.result.replay, A, OPEN)!;
     expect(win).toMatchObject({ before: START, after: START + 16, delta: 16, games: 1 });
     expect(win.them).toEqual({ name: "Ben", rating: START - 16 });
-    const back = ratingMove(results, "rift-lanterns", second.result.replay, A)!;
+    const back = ratingMove(results, RL, second.result.replay, A, OPEN)!;
     expect(back.before).toBe(START + 16);
     expect(back.delta).toBeLessThan(-16);
-    expect(ratingMove(results, "rift-lanterns", "f".repeat(64), A)).toBeNull();
+    expect(ratingMove(results, RL, "f".repeat(64), A, OPEN)).toBeNull();
   });
 
   it("agrees on the ladder whatever order the results arrived in, each replay once", () => {
@@ -206,19 +216,38 @@ describe("ratings with no server (#65)", () => {
       counts(C, A, 5, 1, 3 * day, 3),
       counts(A, C, 5, 1, 4 * day, 4),
     ];
-    const one = ladder(all, "rift-lanterns");
-    const other = ladder([...all].reverse().concat(all[0]!), "rift-lanterns");
+    const one = ladder(all, RL, OPEN);
+    const other = ladder([...all].reverse().concat(all[0]!), RL, OPEN);
     expect(other).toEqual(one);
     expect(one.reduce((n, r) => n + r.games, 0)).toBe(8);
   });
 
   it("counts at most PAIR_CAP games a day between the same two players", () => {
     const games = Array.from({ length: 6 }, (_, i) => counts(A, B, 5, 1, 1000 + i * 60_000, i));
-    expect(counted(games, "rift-lanterns")).toHaveLength(PAIR_CAP);
+    expect(counted(games, RL)).toHaveLength(PAIR_CAP);
     // A day later the pair counts again; other systems don't mix in.
     const later = counts(B, A, 5, 1, 1000 + 25 * 3600_000, 99);
-    expect(counted([...games, later], "rift-lanterns")).toHaveLength(PAIR_CAP + 1);
-    expect(ladder(games, "forty-k-11")).toEqual([]);
+    expect(counted([...games, later], RL)).toHaveLength(PAIR_CAP + 1);
+    expect(ladder(games, "forty-k-11@0.1.0")).toEqual([]);
+  });
+
+  it("moves no rating against a key that hasn't met enough players (farming)", () => {
+    const day = 24 * 3600_000;
+    // A beats a fresh key three times: nothing moves for A, though the games count.
+    const farm = Array.from({ length: 3 }, (_, i) => counts(A, B, 5, 1, i * day, i));
+    const [a] = ladder(farm, RL);
+    expect([a!.key, a!.rating, a!.games]).toEqual([A, START, 3]);
+    // Once B has played five games against three players, beating B counts.
+    const D = "d".repeat(43) + "." + "d".repeat(43);
+    const rounds = [
+      counts(B, C, 5, 1, 4 * day, 10),
+      counts(B, D, 5, 1, 5 * day, 11),
+      counts(A, B, 5, 1, 6 * day, 12),
+    ];
+    const moved = ladder([...farm, ...rounds], RL).find((r) => r.key === A)!;
+    expect(moved.rating).toBeGreaterThan(START);
+    const held = ratingMove([...farm, ...rounds], RL, farm[0]!.result.replay, A)!;
+    expect(held).toMatchObject({ delta: 0, held: true });
   });
 });
 
@@ -288,14 +317,13 @@ describe("ladders by the rules played (docs/compatibility.md)", () => {
     game: true as const,
   };
   const scars = { id: "you.scars", name: "Scars", version: "1.0.0", hash: "2".repeat(64) };
-  const wind = { id: "me.wind", name: "Wind", version: "0.1.0", hash: "3".repeat(64) };
   const withRules = (r: SignedResult, packages: RankedPackage[]) => ({
     ...r,
     result: { ...r.result, rules: { app: "0.1.0+abc", packages } },
   });
 
   it("signs the rules only when a result has them, so older results still verify", () => {
-    const plain = result(A, B, 3, 1);
+    const plain = { ...result(A, B, 3, 1), rules: undefined };
     expect(canonResult(plain)).not.toContain("rules");
     const ruled = { ...plain, rules: { packages: [scars, game] } };
     const canon = JSON.parse(canonResult(ruled)!);
@@ -308,7 +336,7 @@ describe("ladders by the rules played (docs/compatibility.md)", () => {
     expect(canonResult({ ...plain, rules: { packages: [{ ...scars, game: "yes" }] } })).toBeNull();
   });
 
-  it("records the packages the game ran, the game's own marked", () => {
+  it("records the packages the game ran, the game's own marked, and the writer's build", () => {
     let s = createInitialState();
     s = {
       ...s,
@@ -324,27 +352,58 @@ describe("ladders by the rules played (docs/compatibility.md)", () => {
         app: "0.1.0+abc",
         system: { id: "rift-lanterns", builtIn: false },
         packages: [
-          { ...game, bytes: 1, game: undefined },
+          { ...game, bytes: 1, game: undefined, kind: "system" },
           { ...scars, bytes: 1 },
         ],
       },
     } as GameState;
-    const r = rankedResultOf(s, HASH, 5)!;
-    expect(r.rules).toEqual({ app: "0.1.0+abc", packages: [game, scars] });
-    expect(ladderKey(r)).toBe(`${r.system}+${scars.hash}`);
+    expect(rankedResultOf(s, HASH, 5)!.rules).toEqual({ app: "0.1.0+abc", packages: [game, scars] });
+    expect(rankedResultOf(s, HASH, 5, "0.2.0+def")!.rules!.app).toBe("0.2.0+def");
   });
 
-  it("keeps house rules on their own ladder, but the game's own package doesn't split it", () => {
-    const plain = counts(A, B, 10, 2, 1, 1);
-    const gameOnly = withRules(counts(A, B, 10, 2, 2, 2), [game]);
-    const house = withRules(counts(A, B, 10, 2, 3, 3), [game, scars, wind]);
-    const sameHouse = withRules(counts(A, B, 10, 2, 4, 4), [wind, scars]);
-    expect(ladderKey(gameOnly.result)).toBe("rift-lanterns");
-    expect(ladderKey(house.result)).toBe(ladderKey(sameHouse.result));
-    expect(ladderKey(house.result)).toBe(`rift-lanterns+${"2".repeat(64)}+${"3".repeat(64)}`);
-    const all = [plain, gameOnly, house, sameHouse];
-    expect(ladder(all, "rift-lanterns")[0]!.games).toBe(2);
-    expect(ladder(all, ladderKey(house.result))[0]!.games).toBe(2);
+  it("gives different rules different ladders, and a named ruleset one ladder", () => {
+    const rulesets = [
+      {
+        id: "rl-s1",
+        name: "Rift Lanterns, season 1",
+        system: "rift-lanterns",
+        versions: ["0.1.0"],
+        packages: [[game.hash], ["4".repeat(64)]],
+      },
+    ];
+    const key = (packages: RankedPackage[], app = "0.1.0+abc") =>
+      ladderKey({ ...result(A, B, 1, 0), rules: { app, packages } }, rulesets);
+    // Two copies of the season's game, a typo fix apart, share its ladder.
+    expect(key([game])).toBe("rl-s1");
+    expect(key([{ ...game, hash: "4".repeat(64) }])).toBe("rl-s1");
+    // A buffed copy of the game, house rules, or another app version don't.
+    expect(key([{ ...game, hash: "5".repeat(64) }])).toBe(`rift-lanterns@0.1.0+${"5".repeat(64)}`);
+    expect(key([game, scars])).toBe(`rift-lanterns@0.1.0+${"1".repeat(64)}+${"2".repeat(64)}`);
+    expect(key([game, scars])).toBe(key([scars, game]));
+    expect(key([game], "0.1.0-fork.mine+abc")).toBe(`rift-lanterns@0.1.0-fork.mine+${"1".repeat(64)}`);
+    // Results from before rulesets keep to themselves.
+    expect(ladderKey({ ...result(A, B, 1, 0), rules: undefined }, rulesets)).toBe("rift-lanterns+legacy");
+    const all = [counts(A, B, 1, 0, 1, 1), withRules(counts(A, B, 1, 0, 2, 2), [scars])];
     expect(rankedSystems(all)).toHaveLength(2);
+  });
+
+  it("lists the shipped games' current files in rulesets.json", async () => {
+    for (const [system, source] of [
+      ["rift-lanterns", riftSource],
+      ["brinewatch", brineSource],
+    ] as const) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
+      const hash = [...new Uint8Array(digest)].map((x) => x.toString(16).padStart(2, "0")).join("");
+      const named = rulesetOf({
+        ...result(A, B, 1, 0),
+        system,
+        rules: {
+          app: `${pkg.version}+x`,
+          packages: [{ id: "x", name: "x", version: "1", hash, game: true }],
+        },
+      });
+      // Changed the game? Add its hash to its season (plays the same) or start a new one (docs/compatibility.md).
+      expect(named?.system, `${system} (${hash}) isn't in rulesets.json for ${pkg.version}`).toBe(system);
+    }
   });
 });

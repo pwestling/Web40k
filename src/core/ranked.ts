@@ -115,7 +115,16 @@ export function rankedReady(state: GameState): boolean {
 }
 
 /** The result as it stands: VP from the log's resources, the winner from them. */
-export function rankedResultOf(state: GameState, replay: string, at: number): RankedResult | null {
+/**
+ * `app`: the build writing the result (each signer checks it is their own, so
+ * a signed result means both ran it); the game's packages event's otherwise.
+ */
+export function rankedResultOf(
+  state: GameState,
+  replay: string,
+  at: number,
+  app: string | undefined = state.packages?.app,
+): RankedResult | null {
   if (!rankedReady(state)) return null;
   const [a, b] = rankedSeats(state) as [PlayerId, PlayerId];
   const side = (p: PlayerId): RankedPlayer => ({
@@ -126,17 +135,15 @@ export function rankedResultOf(state: GameState, replay: string, at: number): Ra
   const players: [RankedPlayer, RankedPlayer] = [side(a), side(b)];
   const rounds = Number(systemOf(state).turn.rounds) || 0;
   const rules: RankedRules = {
-    ...(state.packages?.app ? { app: state.packages.app.slice(0, 80) } : {}),
+    ...(app ? { app: app.slice(0, 80) } : {}),
     packages: (state.packages?.packages ?? [])
-      .map((p, i) => ({
+      .map((p) => ({
         id: p.id,
         name: p.name.slice(0, 60),
         version: p.version,
         hash: p.hash,
-        // A package game names its package first (ui/Lobby namePackage), from before refs said so.
-        ...(p.kind === "system" || (i === 0 && state.packages?.system.builtIn === false)
-          ? { game: true as const }
-          : {}),
+        // Each signer checks this against the package's own manifest (src/ranked/RankedGame.tsx).
+        ...(p.kind === "system" ? { game: true as const } : {}),
       }))
       .sort(byId),
   };

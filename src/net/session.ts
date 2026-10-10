@@ -360,7 +360,7 @@ export class Session {
       case "hello":
         this.peers.set(from, { role: message.role, seq: message.seq });
         this.heardBuild(from, message.v);
-        if (this.role !== "host") return;
+        if (this.role !== "host" || this.parked(from)) return;
         if (message.role === "spectator") {
           const ms = Math.min(600_000, Math.max(this.spectatorFloorMs, Number(message.delay) || 0));
           if (ms > 0) return this.catchUpBehind(from, ms, message.seq, message.tail);
@@ -378,7 +378,7 @@ export class Session {
         this.peers.set(from, { role: message.role, seq: message.seq, ready: message.ready !== false });
         return;
       case "intent":
-        if (this.role !== "host") return;
+        if (this.role !== "host" || this.parked(from)) return;
         this.hostApply(message.intent, from);
         // A resync is logged first, so the record sent includes it.
         if (message.intent.type === "player/resync")
@@ -386,6 +386,8 @@ export class Session {
         return;
       case "host":
         this.heardBuild(from, message.v);
+        // A host on another protocol would send a log this build folds wrongly: don't follow it.
+        if (this.parked(from)) return;
         this.heardHost(from, message.seq, message.resumed);
         return;
       case "yield":
@@ -473,7 +475,17 @@ export class Session {
 
   /** A peer that doesn't get events as they happen: a watcher behind, or anyone not known as a player yet. */
   private heldBack(peer: string): boolean {
-    return this.behind.has(peer) || (this.spectatorFloorMs > 0 && this.peers.get(peer)?.role !== "client");
+    return (
+      this.behind.has(peer) ||
+      this.parked(peer) ||
+      (this.spectatorFloorMs > 0 && this.peers.get(peer)?.role !== "client")
+    );
+  }
+
+  /** A peer on another protocol (docs/compatibility.md): it gets no events and its intents are dropped. */
+  private parked(peer: string): boolean {
+    const v = this.builds.get(peer);
+    return !!v && v.protocol !== MY_BUILD.protocol;
   }
 
   /** The game is over (or the host is going): every watcher behind it gets the rest now. */
@@ -586,7 +598,7 @@ export class Session {
     if (this.left || this.hostId !== null || this.role === "host") return;
     // Only a peer holding every rules package can host; if none can, the room waits.
     const candidates = [...this.peers.entries()]
-      .filter(([, p]) => p.role === "client" && p.ready !== false)
+      .filter(([id, p]) => p.role === "client" && p.ready !== false && !this.parked(id))
       .map(([id, p]) => ({ id, seq: p.seq ?? 0 }));
     if (this.role === "client" && this.isReady(this.state))
       candidates.push({ id: this.selfId, seq: lastSeq(this.record) });
@@ -662,7 +674,8 @@ export class Session {
       ...(hash !== undefined ? { check: { seq: due!, hash } } : {}),
     };
     // Watchers behind the game get it later (sendBehind); everyone else now.
-    if (!this.behind.size && !this.spectatorFloorMs) this.transport.send(message);
+    if (!this.behind.size && !this.spectatorFloorMs && ![...this.builds.keys()].some((p) => this.parked(p)))
+      this.transport.send(message);
     else for (const peer of this.peers.keys()) if (!this.heldBack(peer)) this.transport.send(message, peer);
     // Battle over: nothing is left to keep from watchers, and they shouldn't miss the end (PX).
     if (this.behind.size && rankedOver(this.state)) {
