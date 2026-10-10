@@ -42,6 +42,8 @@ export interface TtsObject {
   Description?: string;
   Locked?: boolean;
   Tags?: string[];
+  /** Its script: Yellowscribe writes the unit's datasheet into a leader model's (#75). */
+  LuaScript?: string;
   Transform?: {
     posX?: number;
     posY?: number;

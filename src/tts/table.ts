@@ -40,6 +40,10 @@ export interface TtsThing {
   pose: TtsPose;
   /** A TTS board model (CustomMesh type 4): a table mat when it's big and flat. */
   board?: boolean;
+  /** Its LuaScript, when it has one: Yellowscribe's leader models carry the unit's data there (#75). */
+  script?: string;
+  /** The unit Yellowscribe tagged it with ("uuid:…"): the models of one unit share it. */
+  unit?: string;
 }
 
 export interface TtsUnit {
@@ -79,12 +83,15 @@ const round = (x: number) => Math.round(x * 1000) / 1000 || 0;
 function thing(o: TtsObject): TtsThing | null {
   const custom = customOf(o);
   if (!custom) return null;
+  const unitTag = o.Tags?.find((t) => t.startsWith("uuid:"));
   return {
     ...custom,
     nickname: cleanText(o.Nickname),
     description: (o.Description ?? "").trim(),
     pose: poseOf(o),
     ...(o.CustomMesh?.TypeIndex === 4 ? { board: true } : {}),
+    ...(o.LuaScript?.trim() ? { script: o.LuaScript } : {}),
+    ...(unitTag ? { unit: unitTag.slice(5) } : {}),
   };
 }
 
@@ -122,9 +129,20 @@ export function scanTable(json: unknown): TtsTable {
     });
   }
   // Figures standing on the table: by name, then into groups standing together.
+  // Models Yellowscribe tagged with one unit are that unit, whatever their names (#75).
   const byName = new Map<string, TtsThing[]>();
-  for (const t of loose) byName.set(t.nickname, [...(byName.get(t.nickname) ?? []), t]);
+  const tagged = new Map<string, TtsThing[]>();
+  for (const t of loose)
+    if (t.unit) tagged.set(t.unit, [...(tagged.get(t.unit) ?? []), t]);
+    else byName.set(t.nickname, [...(byName.get(t.nickname) ?? []), t]);
   const placed: TtsUnit[] = [];
+  for (const group of tagged.values())
+    placed.push({
+      name: (group.find((m) => m.script) ?? group[0]!).nickname || "Unit",
+      side: 0,
+      models: group,
+      placed: true,
+    });
   for (const [name, all] of byName)
     for (const group of clusters(all))
       placed.push({ name: name || "Unit", side: 0, models: group, placed: true });

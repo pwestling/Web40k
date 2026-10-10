@@ -50,7 +50,7 @@ export function ttsArmies(
       const read = unitFromTts({
         system,
         name: u.name,
-        models: things.map((m) => ({ nickname: m.nickname, description: m.description })),
+        models: things.map((m) => ({ nickname: m.nickname, description: m.description, script: m.script })),
       });
       const models: ImportedModel[] = things.map((m, i) => {
         const a = assets.get(m.key);
