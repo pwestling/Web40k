@@ -44,6 +44,12 @@ So a mod can never quietly change someone's rating on the plain ladder, and a co
 
 The code is MIT; fork freely. A fork that keeps `PROTOCOL` unchanged and plays by it can join Open Battle tables and post ranked results, which carry its build. A fork that changes the protocol must change `PROTOCOL`, so players see a clear "can't play together" message instead of a table that drifts. See [GOVERNANCE.md](../GOVERNANCE.md#the-open-battle-name) for when a fork should use its own name.
 
+## Shared servers
+
+Every server the app talks to is open source and lives in this repository (`server/`): the signalling relay, the open tables and ranked results board, and the play-by-mail mailbox. Anyone can run their own with the [self-host kit](self-host.md).
+
+They serve modded clients too. The board stores any result that is shaped right and signed, whatever build or packages it came from; it never decides what counts. Each client sorts results into ladders by the rules they record, so a modded client's games land on their own ladder and never change ratings on the plain one. A future server feature must keep both properties: open source here, and open to any client that speaks the protocol.
+
 ## Changing any of this
 
 Changes to the protocol, the module API, or what a ranked result signs need a proposal first. See [GOVERNANCE.md](../GOVERNANCE.md#changes-that-need-a-proposal).
