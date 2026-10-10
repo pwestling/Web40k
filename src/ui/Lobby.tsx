@@ -673,7 +673,7 @@ export function Lobby() {
           <button className="link" onClick={() => openLibrary()}>
             {t("Figure library: your models, packs and storage")}
           </button>
-          <button className="link" onClick={openTts}>
+          <button className="tts-entry" onClick={openTts}>
             {t("Open a Tabletop Simulator save as a game")}
           </button>
           <button className="link" onClick={openWorkshop}>

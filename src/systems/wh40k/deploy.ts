@@ -77,9 +77,10 @@ export function spawnIntents(
     });
 
   // Models that bring where they stood (a TTS table, #73) stand there, turned through the centre
-  // when the army stood on the other side's half.
+  // when the whole army stood on the other side's half. An army along a short edge spans both halves
+  // and stays where it was (UX 473).
   const stood = units.flatMap((u) => (u.files ? [] : u.models.flatMap((m) => (m.at ? [m.at] : []))));
-  const flip = stood.length > 0 && sign * stood.reduce((s, a) => s + a.y, 0) < 0;
+  const flip = stood.length > 0 && stood.every((a) => sign * a.y < 0);
   const standing = (at: { x: number; y: number; facing: number }) =>
     flip
       ? { position: { x: -at.x, y: -at.y }, facing: at.facing + Math.PI }

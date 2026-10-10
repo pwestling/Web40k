@@ -1,3 +1,4 @@
+import { NoStats } from "../tts/NoStats";
 import { swipeAway } from "./swipe";
 import { CampaignUnitLine } from "../campaign/CampaignUI";
 import { focusSoon } from "./focusSoon";
@@ -435,6 +436,7 @@ export function UnitCard() {
         </div>
       )}
 
+      <NoStats unit={unit} />
       {profiles.size > 0 && (
         <table className="stats">
           <thead>

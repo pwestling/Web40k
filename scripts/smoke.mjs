@@ -1748,6 +1748,68 @@ const checks = {
     return page.errors;
   },
 
+  async "tts-short-edges"() {
+    // UX 473–476: armies on the short edges, a bag of reserves, a model whose file is gone, Swap, no stats.
+    const { page, context } = await device();
+    const box = "v -0.6 0 -0.6\nv 0.6 0 -0.6\nv 0.6 1.6 0.6\nv -0.6 1.6 0.6\nf 1 2 3 4\n";
+    await context.route("https://example.com/**", (route) =>
+      route.request().url().endsWith("gone.obj")
+        ? route.fulfill({ status: 404, headers: { "access-control-allow-origin": "*" }, body: "" })
+        : route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*" }, body: box }),
+    );
+    const fig = (nickname, x, z, mesh = "https://example.com/fig.obj") => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY: 90, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: mesh, TypeIndex: 1 },
+    });
+    const save = {
+      SaveName: "Hammer and Anvil",
+      ObjectStates: [
+        fig("Ork Boy", -26, -1),
+        fig("Ork Boy", -26, 1),
+        fig("Broken Thing", -24, 6, "https://example.com/gone.obj"),
+        fig("Intercessor", 26, 0),
+        fig("Intercessor", 26, 2),
+        {
+          Name: "Bag",
+          Nickname: "Reserves",
+          Transform: { posX: 28, posZ: 18 },
+          ContainedObjects: [fig("Hellblaster", 0, 0)],
+        },
+      ],
+    };
+    const path = join(files, "tts-short.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    const sides = page.locator(".tts-sides");
+    const line = async (n) => (await sides.locator(".row").nth(n).innerText()).replace(/\s+/g, " ");
+    await sides.waitFor();
+    const before = [await line(0), await line(1)];
+    if (
+      !/Player 1:.*Ork Boy.*Broken Thing/.test(before[0]) ||
+      !/Player 2:.*Intercessor.*Reserves \(in a bag\)/.test(before[1])
+    )
+      throw new Error(`split as ${before.join(" | ")}`);
+    await sides.getByRole("button", { name: "Swap sides" }).click();
+    if (!/Player 1:.*Intercessor/.test(await line(0))) throw new Error("Swap sides didn't swap");
+    await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
+    await page.getByText("Broken Thing couldn't be downloaded or read").waitFor({ timeout: 30_000 });
+    await page.keyboard.press("Escape");
+    await page.locator(".plate", { hasText: "Broken Thing" }).first().waitFor({ timeout: 30_000 });
+    await page.locator(".plate", { hasText: "Intercessor" }).first().waitFor();
+    // Player 1 (blue, the swapped Marines) stand where TTS had them, on the right.
+    await page.keyboard.press("]");
+    await page.locator(".panel.unitcard .no-stats").waitFor();
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

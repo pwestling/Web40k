@@ -3,7 +3,7 @@ import { createInitialState } from "../core";
 import { DEFAULT_SYSTEM } from "../core/content/turn";
 import { spawnIntents } from "../systems/wh40k/deploy";
 import { ttsArmies, type TtsAsset } from "./armies";
-import { baseFor, objCentre, placeOnTable, scanTable } from "./table";
+import { armyMiddle, baseFor, objCentre, placeOnTable, scanTable, turnTable } from "./table";
 
 const fig = (nickname: string, x: number, z: number, rotY = 0, mesh = "https://example.com/boy.obj") => ({
   Name: "Custom_Model",
@@ -112,5 +112,41 @@ describe("a whole TTS table (#73)", () => {
     const m = turned!.type === "unit/add" ? turned!.models[0]! : null;
     expect([m!.position.x, m!.position.y]).toEqual([10, -15]);
     expect(m!.facing).toBeCloseTo(2 * Math.PI);
+  });
+
+  it("splits armies on the short edges by where they stand, and bags join the army beside them (UX 473, 474)", () => {
+    const table = scanTable({
+      ObjectStates: [
+        fig("Ember Kin", -26, -5),
+        fig("Pyre Warden", -24, 6),
+        fig("Ork Boy", 25, 0),
+        fig("Ork Boy", 26, 1),
+        {
+          Name: "Bag",
+          Nickname: "Reserves",
+          Transform: { posX: 28, posZ: 18 },
+          ContainedObjects: [fig("Ork Boy", 0, 0)],
+        },
+      ],
+    });
+    const sides = Object.fromEntries(table.units.map((u) => [u.name, u.side]));
+    expect(sides).toEqual({ "Ember Kin": 0, "Pyre Warden": 0, "Ork Boy": 1, Reserves: 1 });
+    // Turning the table turns the bag with it, and nobody changes army.
+    const turned = turnTable(table, Math.PI / 2);
+    expect(turned.units.map((u) => u.side)).toEqual(table.units.map((u) => u.side));
+    const bag = turned.units.find((u) => !u.placed)!.bag!;
+    expect([bag.x, bag.y]).toEqual([18, 28]);
+    expect(armyMiddle(turned, 1)!.y).toBeGreaterThan(20);
+  });
+
+  it("keeps a figure whose files never came as a stand-in (UX 475)", () => {
+    const table = scanTable({
+      ObjectStates: [fig("Broken Thing", 0, -10, 0, "https://example.com/gone.obj")],
+    });
+    const [army] = ttsArmies(table, new Map(), DEFAULT_SYSTEM, () => "A");
+    const model = army!.roster.units[0]!.models[0]!;
+    expect(model.base).toEqual({ shape: "round", diameterMm: 32 });
+    expect([model.at!.x, model.at!.y]).toEqual([0, 10]);
+    expect(army!.figures[0]).toEqual({});
   });
 });

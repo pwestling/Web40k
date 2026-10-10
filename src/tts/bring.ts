@@ -10,7 +10,7 @@ import { makePiece } from "../systems/wh40k/layout";
 import { TABLE_FORMAT, useTables, type SavedTable } from "../tables/library";
 import { meshShape } from "../tables/meshShape";
 import { ttsArmies, type TtsAsset } from "./armies";
-import { objCentre, placeOnTable, turnTable, type TtsTable, type TtsThing } from "./table";
+import { armyMiddle, objCentre, placeOnTable, turnTable, type TtsTable, type TtsThing } from "./table";
 
 /**
  * Bring a TTS table over (#73): its models into the figure library (as #71
@@ -82,6 +82,8 @@ export interface BroughtTable {
   /** Models that weren't in the TTS folder and couldn't be downloaded, or couldn't be read. */
   missing: number;
   failed: number;
+  /** The names of models that didn't come: figures stay as stand-ins, terrain is left out (UX 475). */
+  lost: string[];
   /** Pieces standing off this game's table. */
   off: number;
 }
@@ -116,12 +118,15 @@ export async function bringTable(
   const got = new Map<string, TtsAsset & { asset: ModelAsset }>();
   let missing = 0;
   let failed = 0;
+  const lost: string[] = [];
   for (const [i, m] of [...wanted.values()].entries()) {
     progress(t("Importing {n} of {total}: {name}", { n: i + 1, total: wanted.size, name: m.name }));
     const r = await importTtsModel(m, folder, scan.title);
-    if (r === "missing") missing++;
-    else if (r === "failed") failed++;
-    else {
+    if (r === "missing" || r === "failed") {
+      if (r === "missing") missing++;
+      else failed++;
+      if (!lost.includes(m.name)) lost.push(m.name);
+    } else {
       const { min, max } = r.asset.bounds;
       got.set(m.key, {
         asset: r.asset,
@@ -154,7 +159,15 @@ export async function bringTable(
     const reach = (k: "x" | "y") => Math.max(0, ...all.map((th) => Math.abs(th.pose[k])));
     return reach("y") > size.depth / 2 + 1 && reach("x") <= size.depth / 2;
   })();
-  const table = turned ? turnTable(scan, Math.PI / 2) : scan;
+  const fitted = turned ? turnTable(scan, Math.PI / 2) : scan;
+  // Player 1 sits on the +y edge: when the two armies face each other across y the wrong way round, the table turns
+  // round to bring them there, terrain and all (UX 473).
+  const m0 = armyMiddle(fitted, 0);
+  const m1 = armyMiddle(fitted, 1);
+  const table =
+    m0 && m1 && Math.abs(m0.y - m1.y) > Math.abs(m0.x - m1.x) && m0.y < m1.y
+      ? turnTable(fitted, Math.PI)
+      : fitted;
 
   const mod = systemModule(system);
   const base = mod.layout(size);
@@ -199,5 +212,5 @@ export async function bringTable(
   useTables.getState().put(saved);
   await useShelf.getState().load();
   for (const a of armies) useShelf.getState().put(a.army);
-  return { table: saved, armies, missing, failed, off };
+  return { table: saved, armies, missing, failed, lost, off };
 }

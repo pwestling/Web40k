@@ -33,15 +33,27 @@ export function TtsWholeTable({
   }, [save]);
   const [system, setSystem] = useState(DEFAULT_SYSTEM);
   const [progress, setProgress] = useState<string | null>(null);
+  // Which army each unit is in, as the player has it: the split as read, swapped, units moved across (UX 473).
+  // A new save mounts a new component (TtsImport keys it), so these start fresh.
+  const [swapped, setSwapped] = useState(false);
+  const [moved, setMoved] = useState<Set<number>>(new Set());
   if (!scan) return null;
   const placed = scan.units.filter((u) => u.placed);
-  const sides = new Set(scan.units.map((u) => u.side)).size;
   if (!scan.terrain.length && !scan.units.length) return null;
+  const sideOf = (i: number): 0 | 1 => (scan.units[i]!.side ^ +swapped ^ +moved.has(i)) as 0 | 1;
+  const chosen = { ...scan, units: scan.units.map((u, i) => ({ ...u, side: sideOf(i) })) };
+  const sides = new Set(chosen.units.map((u) => u.side)).size;
+  const move = (i: number) => {
+    const next = new Set(moved);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    setMoved(next);
+  };
 
   const bring = async (play: boolean) => {
     let brought: BroughtTable;
     try {
-      brought = await bringTable(scan, system, folder, setProgress);
+      brought = await bringTable(chosen, system, folder, setProgress);
     } finally {
       setProgress(null);
     }
@@ -54,22 +66,33 @@ export function TtsWholeTable({
       ),
       tn(brought.armies.length, "and {n} army to your shelf.", "and {n} armies to your shelf.", {}),
     ];
-    if (brought.missing)
+    if (brought.lost.length) {
+      const names =
+        brought.lost.length > 4
+          ? t("{names} and {n} more", {
+              names: brought.lost.slice(0, 4).join(", "),
+              n: brought.lost.length - 4,
+            })
+          : brought.lost.join(", ");
       parts.push(
         tn(
-          brought.missing,
-          "{n} model wasn't in your TTS folder and couldn't be downloaded.",
-          "{n} models weren't in your TTS folder and couldn't be downloaded.",
+          brought.lost.length,
+          "{names} couldn't be downloaded or read: a figure stands in on a plain base, terrain is left out.",
+          "{names} couldn't be downloaded or read: figures stand in on plain bases, terrain is left out.",
+          { names },
         ),
       );
-    if (brought.failed) parts.push(tn(brought.failed, "{n} couldn't be read.", "{n} couldn't be read."));
+      if (brought.missing && !folder)
+        parts.push(t("Pick your TTS folder after loading the save in TTS once, and they come from there."));
+    }
     if (brought.off)
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
       );
     onDone(parts.join(" "));
     if (play) {
-      closeLibrary();
+      // The game opens behind the library; with something to tell the player, the note stays up until they close it.
+      if (!brought.lost.length && !brought.off) closeLibrary();
       openTtsGame(brought);
     }
   };
@@ -91,6 +114,33 @@ export function TtsWholeTable({
           "Terrain and armies come in where they stand in TTS. Stats come from the models' descriptions where they can be read; anything else is for you to fill in.",
         )}
       </p>
+      {chosen.units.length > 0 && (
+        <div className="tts-sides">
+          {([0, 1] as const).map((side) => (
+            <div key={side} className="row wrap small">
+              <strong>{side === 0 ? t("Player 1:") : t("Player 2:")}</strong>
+              {chosen.units.map((u, i) =>
+                u.side === side ? (
+                  <button
+                    key={i}
+                    className="chip small"
+                    title={side === 0 ? t("Move to Player 2") : t("Move to Player 1")}
+                    onClick={() => move(i)}
+                  >
+                    {u.placed ? u.name : t("{name} (in a bag)", { name: u.name })} ⇄
+                  </button>
+                ) : null,
+              )}
+              {!chosen.units.some((u) => u.side === side) && (
+                <span className="muted">{t("the game's sample army")}</span>
+              )}
+            </div>
+          ))}
+          <button className="small" onClick={() => setSwapped(!swapped)}>
+            {t("Swap sides")}
+          </button>
+        </div>
+      )}
       <div className="row wrap">
         <label>
           {t("Game")}{" "}

@@ -16,7 +16,7 @@ import { indexFolder, scanSave, type TtsFolder, type TtsScan } from "./tts";
 export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
   const [folder, setFolder] = useState<TtsFolder | null>(null);
   const [scan, setScan] = useState<TtsScan | null>(null);
-  const [save, setSave] = useState<unknown>(null);
+  const [save, setSave] = useState<{ json: unknown; n: number } | null>(null);
   const [skip, setSkip] = useState<Set<string>>(new Set());
   const [kinds, setKinds] = useState<Record<string, AssetKind>>({});
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
       const json: unknown = JSON.parse(await file.text());
       const next = scanSave(json);
       setScan(next);
-      setSave(json);
+      setSave((s) => ({ json, n: (s?.n ?? 0) + 1 }));
       setSkip(new Set());
       setKinds({});
       if (!next.models.length) setError(t("That save has no custom models in it."));
@@ -209,7 +209,7 @@ export function TtsImport({ onDone }: { onDone: (note: string) => void }) {
             </button>
           </div>
           {progress && <p className="muted small">{progress}</p>}
-          <TtsWholeTable save={save} folder={folder} busy={!!progress} onDone={onDone} />
+          <TtsWholeTable key={save?.n} save={save?.json} folder={folder} busy={!!progress} onDone={onDone} />
         </>
       )}
     </div>

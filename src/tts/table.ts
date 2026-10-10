@@ -44,11 +44,13 @@ export interface TtsThing {
 
 export interface TtsUnit {
   name: string;
-  /** 0: the +y half (seat 0's side), 1: the −y half. */
+  /** Which army: 0 is Player 1's (it ends up on the +y half), 1 is Player 2's. See splitSides. */
   side: 0 | 1;
   models: TtsThing[];
   /** On the table where they stand, or still in a bag (deployed as usual). */
   placed: boolean;
+  /** Where its bag sits, for a unit still in one. */
+  bag?: TtsPose;
 }
 
 export interface TtsTable {
@@ -113,9 +115,10 @@ export function scanTable(json: unknown): TtsTable {
     const bag = cleanText(o.Nickname);
     units.push({
       name: bag && !GENERIC_BAG.test(bag) ? bag : (inside[0]!.nickname ?? "") || "Unit",
-      side: pose.y >= 0 ? 0 : 1,
+      side: 0,
       models: inside,
       placed: false,
+      bag: pose,
     });
   }
   // Figures standing on the table: by name, then into groups standing together.
@@ -123,16 +126,72 @@ export function scanTable(json: unknown): TtsTable {
   for (const t of loose) byName.set(t.nickname, [...(byName.get(t.nickname) ?? []), t]);
   const placed: TtsUnit[] = [];
   for (const [name, all] of byName)
-    for (const group of clusters(all)) {
-      const y = group.reduce((s, m) => s + m.pose.y, 0) / group.length;
-      placed.push({ name: name || "Unit", side: y >= 0 ? 0 : 1, models: group, placed: true });
-    }
-  // Across the table from the near edge, so an army's units keep an order players recognise.
-  placed.sort((a, b) => a.side - b.side || centreX(a) - centreX(b));
-  return { title, terrain, units: [...placed, ...units] };
+    for (const group of clusters(all))
+      placed.push({ name: name || "Unit", side: 0, models: group, placed: true });
+  const all = splitSides([...placed, ...units]);
+  // Each army's units across the table, so they keep an order players recognise; bags last.
+  return {
+    title,
+    terrain,
+    units: all.sort((a, b) => +!a.placed - +!b.placed || a.side - b.side || whereIs(a).x - whereIs(b).x),
+  };
 }
 
-const centreX = (u: TtsUnit) => u.models.reduce((s, m) => s + m.pose.x, 0) / u.models.length;
+/** A unit's middle, or its bag's place. */
+function whereIs(u: TtsUnit): { x: number; y: number } {
+  if (!u.placed && u.bag) return u.bag;
+  const n = u.models.length || 1;
+  return {
+    x: u.models.reduce((s, m) => s + m.pose.x, 0) / n,
+    y: u.models.reduce((s, m) => s + m.pose.y, 0) / n,
+  };
+}
+
+/** Two groups standing further apart than this along an axis are two armies. */
+const ARMY_GAP = 6;
+
+/**
+ * Which army each unit is in (UX 473): the two groups of figures as they
+ * stand, split across the widest gap between unit middles along either
+ * axis, so armies on the short edges split as well as on the long ones. The
+ * group further along +y (or −x, for a split across x) is Player 1's. With
+ * no clear gap, the table's halves decide. A bag joins the army nearest it.
+ */
+function splitSides(units: TtsUnit[]): TtsUnit[] {
+  const placed = units.filter((u) => u.placed);
+  const gapOn = (k: "x" | "y") => {
+    const vs = placed.map((u) => whereIs(u)[k]).sort((a, b) => a - b);
+    let best = { gap: 0, at: 0 };
+    for (let i = 1; i < vs.length; i++)
+      if (vs[i]! - vs[i - 1]! > best.gap) best = { gap: vs[i]! - vs[i - 1]!, at: (vs[i]! + vs[i - 1]!) / 2 };
+    return best;
+  };
+  const gx = gapOn("x");
+  const gy = gapOn("y");
+  const sideOf: (p: { x: number; y: number }) => 0 | 1 =
+    gx.gap >= ARMY_GAP && gx.gap > gy.gap
+      ? (p) => (p.x < gx.at ? 0 : 1)
+      : gy.gap >= ARMY_GAP
+        ? (p) => (p.y > gy.at ? 0 : 1)
+        : (p) => (p.y >= 0 ? 0 : 1);
+  const out = units.map((u) => (u.placed ? { ...u, side: sideOf(whereIs(u)) } : u));
+  const middle = (side: 0 | 1) => {
+    const us = out.filter((u) => u.placed && u.side === side).map(whereIs);
+    return us.length
+      ? { x: us.reduce((s, p) => s + p.x, 0) / us.length, y: us.reduce((s, p) => s + p.y, 0) / us.length }
+      : null;
+  };
+  const m0 = middle(0);
+  const m1 = middle(1);
+  const far = (p: { x: number; y: number }, m: { x: number; y: number } | null) =>
+    m ? Math.hypot(p.x - m.x, p.y - m.y) : Infinity;
+  return out.map((u) => {
+    if (u.placed) return u;
+    const p = whereIs(u);
+    const side: 0 | 1 = m0 || m1 ? (far(p, m0) <= far(p, m1) ? 0 : 1) : sideOf(p);
+    return { ...u, side };
+  });
+}
 
 /** Single-linkage groups: models within SAME_UNIT of one another, chained. */
 function clusters(models: TtsThing[]): TtsThing[][] {
@@ -210,14 +269,21 @@ export function turnTable(table: TtsTable, angle: number): TtsTable {
       facing: wrap(t.pose.facing - angle),
     },
   });
+  // Which army a unit is in doesn't change as the table turns: everything turns, bags too (UX 474).
   return {
     ...table,
     terrain: table.terrain.map(turn),
-    units: table.units.map((u) => {
-      const models = u.models.map(turn);
-      if (!u.placed) return { ...u, models };
-      const y = models.reduce((sum, m) => sum + m.pose.y, 0) / models.length;
-      return { ...u, models, side: y >= 0 ? 0 : 1 };
-    }),
+    units: table.units.map((u) => ({
+      ...u,
+      models: u.models.map(turn),
+      ...(u.bag ? { bag: turn({ pose: u.bag } as TtsThing).pose } : {}),
+    })),
   };
+}
+
+/** Each army's middle on the table, or null for an army with nothing standing. */
+export function armyMiddle(table: TtsTable, side: 0 | 1): { x: number; y: number } | null {
+  const us = table.units.filter((u) => u.placed && u.side === side).map(whereIs);
+  if (!us.length) return null;
+  return { x: us.reduce((s, p) => s + p.x, 0) / us.length, y: us.reduce((s, p) => s + p.y, 0) / us.length };
 }

@@ -1,3 +1,4 @@
+import { NoStats } from "../tts/NoStats";
 import { swipeAway } from "./swipe";
 import { UnitWarnings } from "./TableWarnings";
 import { RulesText } from "./RulesText";
@@ -188,6 +189,7 @@ export function SystemUnitCard({ unit, children }: { unit: Unit; children?: Reac
         {owner?.name} · {tn(all.length, "{alive}/{n} model", "{alive}/{n} bases", { alive: alive.length })}
         {unit.sheet?.points ? " · " + t("{points} pts", { points: unit.sheet.points }) : ""}
       </p>
+      <NoStats unit={unit} />
       {/* The stats straight under the name, above the actions (UX 401). */}
       {/* Never wider than the card (UX 400): at most STAT_COLUMNS to a row, and numbered groups
           (FSD's System 1-4) as rows of their own, only those the unit has. */}

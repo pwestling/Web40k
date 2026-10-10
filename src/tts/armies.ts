@@ -27,7 +27,8 @@ interface TtsArmy {
  * The armies on a TTS table (#73), one per half: each unit's models with
  * their figures, standing where TTS had them (`at`), or deployed as usual
  * when they were still in a bag. Stats come from the descriptions when the
- * profile reader can read them (#74); otherwise names only, to fill in.
+ * profile reader can read them (#74); otherwise names only, to fill in. A
+ * model whose files never came stays as a stand-in on a plain base (UX 475).
  */
 export function ttsArmies(
   table: TtsTable,
@@ -40,26 +41,27 @@ export function ttsArmies(
     .map((c) => c.id);
   const out: TtsArmy[] = [];
   for (const side of [0, 1] as const) {
-    const units = table.units.filter((u) => u.side === side && u.models.some((m) => assets.has(m.key)));
+    const units = table.units.filter((u) => u.side === side && u.models.length);
     if (!units.length) continue;
     const roster: ImportedRoster = { name: name(side), units: [], warnings: [] };
     const figures: TtsArmy["figures"] = {};
     for (const u of units) {
-      const things = u.models.filter((m) => assets.has(m.key));
+      const things = u.models;
       const read = unitFromTts({
         system,
         name: u.name,
         models: things.map((m) => ({ nickname: m.nickname, description: m.description })),
       });
       const models: ImportedModel[] = things.map((m, i) => {
-        const a = assets.get(m.key)!;
+        const a = assets.get(m.key);
         const own = read?.models?.[i];
+        const height = own?.height ?? (a ? Math.round(a.height * 10) / 10 : undefined);
         return {
           profile: own?.profile ?? { name: m.nickname || u.name, chars: {} },
           weapons: own?.weapons ?? [],
-          base: own?.base ?? baseFor(a.width, a.depth),
-          height: own?.height ?? Math.round(a.height * 10) / 10,
-          ...(u.placed ? { at: placeOnTable(m.pose, a.centre, m.scale) } : {}),
+          base: own?.base ?? (a ? baseFor(a.width, a.depth) : STAND_IN_BASE),
+          ...(height ? { height } : {}),
+          ...(u.placed ? { at: placeOnTable(m.pose, a?.centre ?? [0, 0, 0], m.scale) } : {}),
         };
       });
       const unit: ImportedUnit = {
@@ -78,6 +80,9 @@ export function ttsArmies(
   return out;
 }
 
+/** A model whose files never came: the common infantry base. */
+const STAND_IN_BASE = { shape: "round", diameterMm: 32 } as const;
+
 /** Each profile wears the figure most of its models had in TTS. */
 function dress(
   things: TtsThing[],
@@ -86,8 +91,9 @@ function dress(
 ): Record<string, ShelfFigure> {
   const tally = new Map<string, Map<string, number>>();
   models.forEach((m, i) => {
+    const id = assets.get(things[i]!.key)?.id;
+    if (!id) return;
     const by = tally.get(m.profile.name) ?? new Map<string, number>();
-    const id = assets.get(things[i]!.key)!.id;
     by.set(id, (by.get(id) ?? 0) + 1);
     tally.set(m.profile.name, by);
   });
