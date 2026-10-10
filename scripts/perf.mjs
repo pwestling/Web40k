@@ -44,6 +44,8 @@ try {
   await page.goto(`http://localhost:${PORT}/`);
   await page.waitForFunction(() => window.openBattlePerf);
   const models = await page.evaluate(() => window.openBattlePerf.setup(3));
+  // The table's renderer registers once the canvas mounts: the first scenario measures nothing before it.
+  await page.waitForFunction(() => window.openBattlePerf.gpu().geometries !== undefined);
   const run = async (name, fn, frames = 60, warmup = 10) => {
     if (only && !name.includes(only)) return;
     const prep = await page.evaluate(fn);
@@ -60,13 +62,14 @@ try {
   await run("painted, 1M sculpts + 2K textures", () => window.openBattlePerf.dress(1_000_000, false, true));
   if (process.env.PAINT_SCREENSHOT && (!only || "painted, 1M sculpts + 2K textures".includes(only)))
     await page.screenshot({ path: process.env.PAINT_SCREENSHOT });
+  // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
+  await run("terrain-heavy: uploaded terrain + 1M figures", () => window.openBattlePerf.terrain(500_000));
+  if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
+  // After terrain-heavy, so that scenario keeps its 1M-sculpt figures to compare day to day.
   // Photo standees (#68): 24 distinct cut-out cards (the budget's most before textures drop a size) round the table.
   await run("standees, 24 distinct", () => window.openBattlePerf.standees(24));
   if (process.env.STANDEE_SCREENSHOT && (!only || "standees, 24 distinct".includes(only)))
     await page.screenshot({ path: process.env.STANDEE_SCREENSHOT });
-  // Every terrain piece an uploaded model (three distinct 500k-triangle sculpts), figures on.
-  await run("terrain-heavy: uploaded terrain + 1M figures", () => window.openBattlePerf.terrain(500_000));
-  if (process.env.PERF_SCREENSHOT) await page.screenshot({ path: process.env.PERF_SCREENSHOT });
   // Full detail is slow enough under SwiftShader that a few frames will do.
   await run("no pipeline, 100k sculpts", () => window.openBattlePerf.dress(100_000, true), 3, 1);
   // A big rank-and-flank game: about 200 models in blocks (The Old World style).
