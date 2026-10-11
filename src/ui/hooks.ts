@@ -1,7 +1,32 @@
 import { useMemo } from "react";
-import { rareMoments, stateAt, type GameState, type RareOutcome } from "../core";
+import { rareMoments, stateAt, type GameRecord, type GameState, type RareOutcome } from "../core";
 import { useStore } from "../store";
 import { useHold } from "./hold";
+
+/** The last few tables shown at a seq: every useGame (dozens of components) shares one replay. */
+const shown: { record: GameRecord; seq: number; state: GameState }[] = [];
+
+/**
+ * The table as it stood at `seq`. A state there depends only on the events up
+ * to it (an undo only counts from where it is logged), so a newer record that
+ * logged events after `seq` reuses the replay: the dice tray's hold no longer
+ * replays the whole log once per component and per event (#80 slowdown).
+ */
+function tableAt(record: GameRecord, seq: number): GameState {
+  const upTo = (r: GameRecord) => r.events.findLast((e) => e.seq <= seq);
+  const last = upTo(record);
+  const hit = shown.find(
+    (c) =>
+      c.seq === seq &&
+      c.record.initial === record.initial &&
+      (c.record === record || upTo(c.record) === last),
+  );
+  if (hit) return hit.state;
+  const state = stateAt(record, seq);
+  shown.unshift({ record, seq, state });
+  shown.length = Math.min(shown.length, 4);
+  return state;
+}
 
 /** The table to show: live, or as it stood at the replay scrubber's position. */
 export function useGame(): GameState {
@@ -10,9 +35,9 @@ export function useGame(): GameState {
   const scrub = useStore((s) => s.scrub);
   const held = useHold((s) => s.held);
   return useMemo(() => {
-    if (scrub !== null) return stateAt(record, scrub);
+    if (scrub !== null) return tableAt(record, scrub);
     // The dice tray is still rolling: show the table from before the roll.
-    return held !== null ? stateAt(record, held - 1) : game;
+    return held !== null ? tableAt(record, held - 1) : game;
   }, [game, record, scrub, held]);
 }
 
@@ -21,7 +46,7 @@ export function useLiveGame(): GameState {
   const game = useStore((s) => s.game);
   const record = useStore((s) => s.record);
   const scrub = useStore((s) => s.scrub);
-  return useMemo(() => (scrub === null ? game : stateAt(record, scrub)), [game, record, scrub]);
+  return useMemo(() => (scrub === null ? game : tableAt(record, scrub)), [game, record, scrub]);
 }
 
 /** This browser's seat, or the active seat in hotseat; spectators see seat 0's side. */
