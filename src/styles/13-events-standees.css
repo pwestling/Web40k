@@ -688,3 +688,33 @@ body.verb-ok canvas {
     left: calc(50% + 330px);
   }
 }
+/* A stratagem on the unit this phase, by its name plate (UX 499 effect tab). */
+.plate .strat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+.plate .strat-tab {
+  padding: 0 5px;
+  border: 1px solid;
+  border-top-width: 3px;
+  border-radius: 3px;
+  background: #1e2430;
+  color: #fde68a;
+  font-size: 0.68rem;
+  white-space: nowrap;
+  animation: strat-tab-in calc(200ms * var(--hand-speed, 1)) ease-out both;
+}
+@keyframes strat-tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) rotate(-6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate .strat-tab {
+    animation: none;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { GameState, Player, PlayerId, UnitId } from "../core";
-import { armyStratagem, playerActions, type PlayerActionOption } from "../core/content/player";
+import { armyStratagem, findAction, playerActions, type PlayerActionOption } from "../core/content/player";
 import { schedule, systemOf } from "../core/content/turn";
 import { gameText, t } from "../i18n";
 import { displayName } from "../i18n/names";
@@ -481,10 +481,9 @@ function Reveals() {
     last.current = top;
     if (!fresh.length) return;
     const game = useStore.getState().game;
-    const system = systemOf(game);
     const items = fresh.flatMap(({ seq, event }): Reveal[] => {
       if (event.type !== "player/action") return [];
-      const def = system.actions.find((a) => a.id === event.action);
+      const def = findAction(game, event.action);
       const p = game.players[event.player];
       const spent = event.payment.reduce((n, x) => n + (x.amount ?? x.indices?.length ?? 0), 0);
       return [

@@ -2532,6 +2532,35 @@ const checks = {
     return page.errors;
   },
 
+  // A card for a unit, the long way (click it, then pick the unit): its tab shows by the unit's plate.
+  async "stratagem-tab"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    for (let i = 0; i < 2; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    }
+    await page.locator(".stratagem-hand .hand-strip, .stratagem-hand .fan").first().hover();
+    const ready = page.locator(".stratagem-hand .hand-card.ready").first();
+    await ready.waitFor({ timeout: 5000 });
+    await ready.click();
+    const pickUnit = page.locator(".stratagem-hand .hand-ask button.small:not(.quiet):not(.primary)").first();
+    await pickUnit.waitFor({ timeout: 3000 });
+    await pickUnit.click();
+    await page.locator(".plate .strat-tab").first().waitFor({ timeout: 5000 });
+    await page.waitForTimeout(500);
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "strat-tab.png") });
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

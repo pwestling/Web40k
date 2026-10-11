@@ -14,6 +14,7 @@ import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Obj
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
 import { doTableVerb, tableVerb } from "../ui/tableVerbs";
 import { tablePick, useHandTargets } from "../ui/tablePick";
+import { useStratagemTabs } from "../ui/stratagemTabs";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
 import type { GameState } from "../core";
 import {
@@ -1326,6 +1327,7 @@ function Scene() {
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
   const handTargets = useHandTargets((s) => s.ids);
+  const tabs = useStratagemTabs();
   const handColor = useHandTargets((s) => s.color ?? "#facc15");
 
   // Every model on the table as drawn this frame (dragged ones where they're held).
@@ -1597,6 +1599,16 @@ function Scene() {
             </div>
           )}
           {l.sight && <div className={`sightlabel ${l.sight.state}`}>{l.sight.text}</div>}
+          {/* Stratagems on it this phase, face up (UX 499): both players see what's in play. */}
+          {l.name && tabs.get(l.unitId) && (
+            <div className="strat-tabs">
+              {tabs.get(l.unitId)!.map((tab) => (
+                <span key={tab.seq} className="strat-tab" style={{ borderColor: tab.color }}>
+                  {tab.name}
+                </span>
+              ))}
+            </div>
+          )}
         </Html>
       ))}
       {hoverUnit &&
