@@ -40,6 +40,7 @@ import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
 import { RerollCard } from "./ui/RerollCard";
+import { useTableKeys } from "./ui/peekKeys";
 import { OthersShaking } from "./companion/Shake";
 import { StratagemHand } from "./ui/StratagemHand";
 import { DragTag, TableTag } from "./ui/TableTag";
@@ -252,6 +253,7 @@ export function GameScreen({ started }: { started: boolean }) {
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, []);
+  useTableKeys();
   const companion = useStore((s) => !!s.game.settings.companion);
   // Real models on a real table (#37): no board, the phone screen instead.
   if (started && companion && !BROADCAST)

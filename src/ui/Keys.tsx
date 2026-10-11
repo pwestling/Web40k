@@ -28,8 +28,17 @@ const keys = (): [string, string][] => [
   ],
   [t("Shift + drag"), t("Move a regiment block freely, not just straight ahead")],
   ["Q / E", t("Turn the selected unit (or terrain piece while editing)")],
-  ["R / F", t("Move the selected unit up or down a floor")],
+  ["R / F", t("Move the selected unit up or down a floor (F in the Fight phase: fight)")],
   ["M", t("Measure: then drag across the table")],
+  [
+    "S / A / C / F",
+    t(
+      "With your unit picked: Shoot, Advance, Charge or Fight, each in its own phase (S otherwise: the stratagem hand)",
+    ),
+  ],
+  [t("Hold X"), t("See through terrain while held")],
+  [t("Hold N"), t("Show every unit's name while held")],
+  [t("Hold L"), t("Look from the eyes of the unit under the pointer while held")],
   [t("Alt + click"), t("Ping a spot for everyone")],
   [t("Hold V"), t("Talk, once your mic is on (Voice, bottom left)")],
   [t("Left drag on the table"), t("Turn the camera")],

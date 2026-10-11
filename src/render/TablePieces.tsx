@@ -242,16 +242,26 @@ export function ObjectiveMarker({
   position,
   color,
   onDown,
+  onHover,
 }: {
   position: Vec2;
   color: string;
   onDown?: () => void;
+  /** The pointer over it, or gone: who controls it, and the OC on each side (UX 84 §7). */
+  onHover?: (on: boolean) => void;
 }) {
   const r = OBJECTIVE_MARKER_MM / 25.4 / 2;
+  const hover = onHover
+    ? {
+        onPointerOver: () => onHover(true),
+        onPointerOut: () => onHover(false),
+      }
+    : {};
   return (
     <group position={[position.x, 0, position.y]}>
       <mesh
         position-y={0.05}
+        {...hover}
         {...(onDown
           ? {
               onPointerDown: (e: ThreeEvent<PointerEvent>) => {
@@ -260,7 +270,9 @@ export function ObjectiveMarker({
               },
               onClick: (e: ThreeEvent<MouseEvent>) => e.stopPropagation(),
             }
-          : { raycast: () => null })}
+          : onHover
+            ? {}
+            : { raycast: () => null })}
       >
         <cylinderGeometry args={[r, r, 0.1, 32]} />
         <meshStandardMaterial color={color} />

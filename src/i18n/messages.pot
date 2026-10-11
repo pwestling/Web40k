@@ -374,23 +374,23 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:343
+#: src/GameScreen.tsx:345
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:346
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:347
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:346
+#: src/GameScreen.tsx:348
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:351
+#: src/GameScreen.tsx:353
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -398,15 +398,15 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:352
+#: src/GameScreen.tsx:354
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:353
+#: src/GameScreen.tsx:355
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:358
+#: src/GameScreen.tsx:360
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -508,7 +508,7 @@ msgstr ""
 
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
-#: src/companion/RealDice.tsx:347
+#: src/companion/RealDice.tsx:352
 #: src/ranked/RankedGame.tsx:514
 #: src/standees/StandeeMaker.tsx:243
 #: src/ui/RegimentPanel.tsx:274
@@ -1461,7 +1461,7 @@ msgid "Add a player"
 msgstr ""
 
 #: src/campaign/EventTab.tsx:98
-#: src/companion/RealDice.tsx:376
+#: src/companion/RealDice.tsx:381
 #: src/ui/AutoAbilities.tsx:157
 msgid "Add"
 msgstr ""
@@ -1602,117 +1602,117 @@ msgstr ""
 msgid "Game"
 msgstr ""
 
-#: src/companion/RealDice.tsx:102
+#: src/companion/RealDice.tsx:100
+msgid "I roll real dice and type them in"
+msgstr ""
+
+#: src/companion/RealDice.tsx:103
+msgid "The game still rolls the dice; you choose when."
+msgstr ""
+
+#: src/companion/RealDice.tsx:107
 msgid "This game rolls on screen: nobody can check a real roll over the internet in a ranked or event game."
 msgstr ""
 
-#: src/companion/RealDice.tsx:118
+#: src/companion/RealDice.tsx:123
 msgid "You roll your own dice and tap in the faces"
 msgstr ""
 
-#: src/companion/RealDice.tsx:118
+#: src/companion/RealDice.tsx:123
 msgid "Dice roll on screen"
 msgstr ""
 
-#: src/companion/RealDice.tsx:121
+#: src/companion/RealDice.tsx:126
 msgid "✋ My dice"
 msgstr ""
 
-#: src/companion/RealDice.tsx:121
+#: src/companion/RealDice.tsx:126
 msgid "🎲 Screen dice"
 msgstr ""
 
-#: src/companion/RealDice.tsx:180
+#: src/companion/RealDice.tsx:185
 msgid "Hold to shake, let go to roll"
 msgstr ""
 
-#: src/companion/RealDice.tsx:203
+#: src/companion/RealDice.tsx:208
 msgid "Sent: {face}"
 msgstr ""
 
-#: src/companion/RealDice.tsx:262
+#: src/companion/RealDice.tsx:267
 #: src/ui/DicePicker.tsx:57
 msgid "Your dice"
 msgstr ""
 
-#: src/companion/RealDice.tsx:265
+#: src/companion/RealDice.tsx:270
 msgid "Those don't fit: start this roll again."
 msgstr ""
 
-#: src/companion/RealDice.tsx:267
+#: src/companion/RealDice.tsx:272
 msgid "That's every die."
 msgstr ""
 
-#: src/companion/RealDice.tsx:270
+#: src/companion/RealDice.tsx:275
 msgid "Roll {n} D{sides}"
 msgid_plural "Roll {n} D{sides}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/companion/RealDice.tsx:274
+#: src/companion/RealDice.tsx:279
 msgid "Roll {n} more D{sides}"
 msgid_plural "Roll {n} more D{sides}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/companion/RealDice.tsx:279
+#: src/companion/RealDice.tsx:284
 msgid "{have} of {all}, {n} too many"
 msgstr ""
 
-#: src/companion/RealDice.tsx:283
+#: src/companion/RealDice.tsx:288
 msgid "{have} of {all}: how many show each face?"
 msgstr ""
 
-#: src/companion/RealDice.tsx:302
+#: src/companion/RealDice.tsx:307
 msgid "One more {face}"
 msgstr ""
 
-#: src/companion/RealDice.tsx:310
+#: src/companion/RealDice.tsx:315
 msgid "One fewer {face}"
 msgstr ""
 
-#: src/companion/RealDice.tsx:318
+#: src/companion/RealDice.tsx:323
 msgid "Dice showing {face}"
 msgstr ""
 
-#: src/companion/RealDice.tsx:333
+#: src/companion/RealDice.tsx:338
 msgid "Use these dice"
 msgstr ""
 
-#: src/companion/RealDice.tsx:342
+#: src/companion/RealDice.tsx:347
 #: src/standees/StandeeMaker.tsx:479
 msgid "Start again"
 msgstr ""
 
-#: src/companion/RealDice.tsx:345
+#: src/companion/RealDice.tsx:350
 msgid "Roll on screen instead"
 msgstr ""
 
-#: src/companion/RealDice.tsx:371
+#: src/companion/RealDice.tsx:376
 msgid "Face"
 msgstr ""
 
-#: src/companion/RealDice.tsx:84
+#: src/companion/RealDice.tsx:89
 #: src/ui/DicePicker.tsx:59
 #: src/ui/Hud.tsx:249
 #: src/ui/StatsScreen.tsx:219
 msgid "Dice"
 msgstr ""
 
-#: src/companion/RealDice.tsx:87
+#: src/companion/RealDice.tsx:92
 msgid "The game rolls at a click"
 msgstr ""
 
-#: src/companion/RealDice.tsx:91
+#: src/companion/RealDice.tsx:96
 msgid "Roll the dice myself: hold to shake, let go to roll"
-msgstr ""
-
-#: src/companion/RealDice.tsx:95
-msgid "I roll real dice and type them in"
-msgstr ""
-
-#: src/companion/RealDice.tsx:98
-msgid "The game still rolls the dice; you choose when."
 msgstr ""
 
 #: src/companion/Shake.tsx:157
@@ -4375,32 +4375,48 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1245
+#: src/render/Board.tsx:1246
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1247
+#: src/render/Board.tsx:1248
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1248
+#: src/render/Board.tsx:1249
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1309
+#: src/render/Board.tsx:1310
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1311
+#: src/render/Board.tsx:1312
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1316
+#: src/render/Board.tsx:1317
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1811
+#: src/render/Board.tsx:1828
 msgid "Move {inches}\""
+msgstr ""
+
+#: src/render/Board.tsx:1994
+msgid "{player} controls it: OC {oc}"
+msgstr ""
+
+#: src/render/Board.tsx:1995
+msgid "Contested: OC {oc}"
+msgstr ""
+
+#: src/render/Board.tsx:1996
+msgid "Nobody controls it: OC {oc}"
+msgstr ""
+
+#: src/render/Board.tsx:1997
+msgid "Nobody controls it: no models in range"
 msgstr ""
 
 #: src/render/Board.tsx:389
@@ -4561,8 +4577,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/replay/NotesPanel.tsx:186
-#: src/ui/Keys.tsx:41
-#: src/ui/Keys.tsx:52
+#: src/ui/Keys.tsx:50
+#: src/ui/Keys.tsx:61
 #: src/ui/TerrainPanel.tsx:342
 #: src/workshop/Workshop.tsx:325
 msgid "Delete"
@@ -8082,7 +8098,7 @@ msgid "The battle has started. Change this rule for both players?"
 msgstr ""
 
 #: src/ui/GameSettings.tsx:29
-#: src/ui/Keys.tsx:62
+#: src/ui/Keys.tsx:71
 msgid "Game settings"
 msgstr ""
 
@@ -8194,12 +8210,12 @@ msgid "Clear ruler"
 msgstr ""
 
 #: src/ui/Hud.tsx:163
-#: src/ui/Keys.tsx:59
+#: src/ui/Keys.tsx:68
 msgid "View ▾"
 msgstr ""
 
 #: src/ui/Hud.tsx:164
-#: src/ui/Keys.tsx:38
+#: src/ui/Keys.tsx:47
 msgid "Home"
 msgstr ""
 
@@ -8231,7 +8247,7 @@ msgstr ""
 
 #: src/ui/Hud.tsx:220
 #: src/ui/Hud.tsx:232
-#: src/ui/Keys.tsx:61
+#: src/ui/Keys.tsx:70
 msgid "Armies"
 msgstr ""
 
@@ -8249,7 +8265,7 @@ msgid "Leave this game? The others can't go on without you."
 msgstr ""
 
 #: src/ui/Hud.tsx:314
-#: src/ui/Keys.tsx:60
+#: src/ui/Keys.tsx:69
 msgid "⋯ Game"
 msgstr ""
 
@@ -8339,18 +8355,18 @@ msgstr ""
 msgid "Select it: its card on the right shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:100
-#: src/ui/Keys.tsx:104
+#: src/ui/Keys.tsx:109
+#: src/ui/Keys.tsx:113
 msgid "Controls"
-msgstr ""
-
-#: src/ui/Keys.tsx:107
-#: src/ui/TeachRule.tsx:99
-msgid "Close (Esc)"
 msgstr ""
 
 #: src/ui/Keys.tsx:11
 msgid "Select your previous or next unit (Shift: the other side's)"
+msgstr ""
+
+#: src/ui/Keys.tsx:116
+#: src/ui/TeachRule.tsx:99
+msgid "Close (Esc)"
 msgstr ""
 
 #: src/ui/Keys.tsx:12
@@ -8361,27 +8377,27 @@ msgstr ""
 msgid "Move the selected unit 1\" (Shift: ¼\"), up being away from the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:125
+#: src/ui/Keys.tsx:134
 msgid "Where things are"
-msgstr ""
-
-#: src/ui/Keys.tsx:138
-msgid "Coming from Tabletop Simulator?"
 msgstr ""
 
 #: src/ui/Keys.tsx:14
 msgid "Click an enemy"
 msgstr ""
 
+#: src/ui/Keys.tsx:147
+msgid "Coming from Tabletop Simulator?"
+msgstr ""
+
 #: src/ui/Keys.tsx:15
 msgid "With your unit picked: shoot, charge or fight it, as the phase says (the tag by the pointer says what)"
 msgstr ""
 
-#: src/ui/Keys.tsx:153
+#: src/ui/Keys.tsx:162
 msgid "TTS controls (just on this device)"
 msgstr ""
 
-#: src/ui/Keys.tsx:157
+#: src/ui/Keys.tsx:166
 msgid "The ▶ at the top moves the game on. Everything can be undone from the left panel."
 msgstr ""
 
@@ -8414,8 +8430,8 @@ msgid "Move between buttons; Enter or Space presses one"
 msgstr ""
 
 #: src/ui/Keys.tsx:23
-#: src/ui/Keys.tsx:49
-#: src/ui/Keys.tsx:72
+#: src/ui/Keys.tsx:58
+#: src/ui/Keys.tsx:81
 msgid "Drag a unit"
 msgstr ""
 
@@ -8452,229 +8468,257 @@ msgid "Turn the selected unit (or terrain piece while editing)"
 msgstr ""
 
 #: src/ui/Keys.tsx:31
-msgid "Move the selected unit up or down a floor"
+msgid "Move the selected unit up or down a floor (F in the Fight phase: fight)"
 msgstr ""
 
 #: src/ui/Keys.tsx:32
 msgid "Measure: then drag across the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:33
-msgid "Alt + click"
-msgstr ""
-
-#: src/ui/Keys.tsx:33
-msgid "Ping a spot for everyone"
-msgstr ""
-
-#: src/ui/Keys.tsx:34
-msgid "Hold V"
-msgstr ""
-
-#: src/ui/Keys.tsx:34
-msgid "Talk, once your mic is on (Voice, bottom left)"
-msgstr ""
-
 #: src/ui/Keys.tsx:35
-msgid "Left drag on the table"
-msgstr ""
-
-#: src/ui/Keys.tsx:35
-msgid "Turn the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:36
-msgid "Right drag"
-msgstr ""
-
-#: src/ui/Keys.tsx:36
-#: src/ui/Keys.tsx:73
-msgid "Slide the camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:37
-msgid "Wheel"
-msgstr ""
-
-#: src/ui/Keys.tsx:37
-msgid "Zoom"
-msgstr ""
-
-#: src/ui/Keys.tsx:38
-msgid "Reset the camera"
+msgid "With your unit picked: Shoot, Advance, Charge or Fight, each in its own phase (S otherwise: the stratagem hand)"
 msgstr ""
 
 #: src/ui/Keys.tsx:39
-msgid "Esc"
+msgid "Hold X"
 msgstr ""
 
 #: src/ui/Keys.tsx:39
-msgid "Clear: selection, ruler, pen"
+msgid "See through terrain while held"
+msgstr ""
+
+#: src/ui/Keys.tsx:40
+msgid "Hold N"
+msgstr ""
+
+#: src/ui/Keys.tsx:40
+msgid "Show every unit's name while held"
+msgstr ""
+
+#: src/ui/Keys.tsx:41
+msgid "Hold L"
+msgstr ""
+
+#: src/ui/Keys.tsx:41
+msgid "Look from the eyes of the unit under the pointer while held"
 msgstr ""
 
 #: src/ui/Keys.tsx:42
-msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
+msgid "Alt + click"
+msgstr ""
+
+#: src/ui/Keys.tsx:42
+msgid "Ping a spot for everyone"
+msgstr ""
+
+#: src/ui/Keys.tsx:43
+msgid "Hold V"
+msgstr ""
+
+#: src/ui/Keys.tsx:43
+msgid "Talk, once your mic is on (Voice, bottom left)"
 msgstr ""
 
 #: src/ui/Keys.tsx:44
-msgid "This sheet"
+msgid "Left drag on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:49
-msgid "Moves the whole unit; Shift + drag moves just the one model"
+#: src/ui/Keys.tsx:44
+msgid "Turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:50
-msgid "Turn, as in Tabletop Simulator"
+#: src/ui/Keys.tsx:45
+msgid "Right drag"
+msgstr ""
+
+#: src/ui/Keys.tsx:45
+#: src/ui/Keys.tsx:82
+msgid "Slide the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:46
+msgid "Wheel"
+msgstr ""
+
+#: src/ui/Keys.tsx:46
+msgid "Zoom"
+msgstr ""
+
+#: src/ui/Keys.tsx:47
+msgid "Reset the camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:48
+msgid "Esc"
+msgstr ""
+
+#: src/ui/Keys.tsx:48
+msgid "Clear: selection, ruler, pen"
 msgstr ""
 
 #: src/ui/Keys.tsx:51
-msgid "Measure (with TTS controls, hold Tab)"
-msgstr ""
-
-#: src/ui/Keys.tsx:52
-msgid "Remove the model under the pointer as a casualty"
+msgid "Remove the model under the pointer as a casualty, asking first (editing: the terrain piece)"
 msgstr ""
 
 #: src/ui/Keys.tsx:53
-msgid "Drop a model off the table"
+msgid "This sheet"
 msgstr ""
 
-#: src/ui/Keys.tsx:53
-msgid "Remove it as a casualty (asking first)"
-msgstr ""
-
-#: src/ui/Keys.tsx:54
-msgid "Camera"
-msgstr ""
-
-#: src/ui/Keys.tsx:54
-msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
+#: src/ui/Keys.tsx:58
+msgid "Moves the whole unit; Shift + drag moves just the one model"
 msgstr ""
 
 #: src/ui/Keys.tsx:59
-msgid "Left panel: Reset view, Unit names, X-ray terrain, Follow action"
+msgid "Turn, as in Tabletop Simulator"
 msgstr ""
 
 #: src/ui/Keys.tsx:60
-msgid "Left panel, top: Download replay, Copy invite link, Report a problem, Leave game"
+msgid "Measure (with TTS controls, hold Tab)"
 msgstr ""
 
 #: src/ui/Keys.tsx:61
-msgid "Left panel, in battle: add an army, the army shelf, photograph figures"
+msgid "Remove the model under the pointer as a casualty"
 msgstr ""
 
 #: src/ui/Keys.tsx:62
-msgid "Left panel: Unlock terrain (in battle), the campaign book"
+msgid "Drop a model off the table"
+msgstr ""
+
+#: src/ui/Keys.tsx:62
+msgid "Remove it as a casualty (asking first)"
 msgstr ""
 
 #: src/ui/Keys.tsx:63
+msgid "Camera"
+msgstr ""
+
+#: src/ui/Keys.tsx:63
+msgid "With TTS controls: right drag turns, WASD slides, left drag picks with a box"
+msgstr ""
+
+#: src/ui/Keys.tsx:68
+msgid "Left panel: Reset view, Unit names, X-ray terrain, Follow action"
+msgstr ""
+
+#: src/ui/Keys.tsx:69
+msgid "Left panel, top: Download replay, Copy invite link, Report a problem, Leave game"
+msgstr ""
+
+#: src/ui/Keys.tsx:70
+msgid "Left panel, in battle: add an army, the army shelf, photograph figures"
+msgstr ""
+
+#: src/ui/Keys.tsx:71
+msgid "Left panel: Unlock terrain (in battle), the campaign book"
+msgstr ""
+
+#: src/ui/Keys.tsx:72
 msgid "Top bar: sound, voice and Fast dice"
 msgstr ""
 
-#: src/ui/Keys.tsx:64
+#: src/ui/Keys.tsx:73
 msgid "✏ Draw ▾ · 😀"
 msgstr ""
 
-#: src/ui/Keys.tsx:64
+#: src/ui/Keys.tsx:73
 msgid "Talk bar, online: arrows, areas and reactions"
 msgstr ""
 
-#: src/ui/Keys.tsx:65
+#: src/ui/Keys.tsx:74
 #: src/ui/ReplayBar.tsx:202
 msgid "⟲ Replay"
 msgstr ""
 
-#: src/ui/Keys.tsx:65
+#: src/ui/Keys.tsx:74
 msgid "Bottom: look back over the game so far"
 msgstr ""
 
-#: src/ui/Keys.tsx:66
+#: src/ui/Keys.tsx:75
 msgid "VP / CP"
 msgstr ""
 
-#: src/ui/Keys.tsx:66
+#: src/ui/Keys.tsx:75
 msgid "Point at a score to change it with − and +"
 msgstr ""
 
-#: src/ui/Keys.tsx:71
+#: src/ui/Keys.tsx:80
 msgid "Tap a unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:71
+#: src/ui/Keys.tsx:80
 msgid "Select it: its card shows what it can do"
 msgstr ""
 
-#: src/ui/Keys.tsx:72
+#: src/ui/Keys.tsx:81
 msgid "Move it (hold the table for one model at a time)"
 msgstr ""
 
-#: src/ui/Keys.tsx:73
+#: src/ui/Keys.tsx:82
 msgid "One finger on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:74
+#: src/ui/Keys.tsx:83
 msgid "Two fingers"
 msgstr ""
 
-#: src/ui/Keys.tsx:74
+#: src/ui/Keys.tsx:83
 msgid "Pinch to zoom, twist to turn the camera"
 msgstr ""
 
-#: src/ui/Keys.tsx:75
+#: src/ui/Keys.tsx:84
 msgid "Two fingers on the selected unit"
 msgstr ""
 
-#: src/ui/Keys.tsx:75
+#: src/ui/Keys.tsx:84
 msgid "Twist to turn it (a regiment block wheels)"
 msgstr ""
 
-#: src/ui/Keys.tsx:76
+#: src/ui/Keys.tsx:85
 msgid "Hold, then drag"
 msgstr ""
 
-#: src/ui/Keys.tsx:76
+#: src/ui/Keys.tsx:85
 msgid "Measure"
 msgstr ""
 
-#: src/ui/Keys.tsx:77
+#: src/ui/Keys.tsx:86
 msgid "A second finger's tap while dragging"
 msgstr ""
 
-#: src/ui/Keys.tsx:77
+#: src/ui/Keys.tsx:86
 msgid "Turn a corner: the move is measured along its legs"
 msgstr ""
 
-#: src/ui/Keys.tsx:78
+#: src/ui/Keys.tsx:87
 msgid "Hold and let go"
 msgstr ""
 
-#: src/ui/Keys.tsx:78
+#: src/ui/Keys.tsx:87
 msgid "More: turn, ping, look from here, views"
 msgstr ""
 
-#: src/ui/Keys.tsx:79
+#: src/ui/Keys.tsx:88
 #: src/ui/TouchLayer.tsx:171
 msgid "Select several"
 msgstr ""
 
-#: src/ui/Keys.tsx:79
+#: src/ui/Keys.tsx:88
 msgid "Draw a box on the table, then drag one unit to move them all"
 msgstr ""
 
-#: src/ui/Keys.tsx:80
+#: src/ui/Keys.tsx:89
 msgid "A stylus on the table"
 msgstr ""
 
-#: src/ui/Keys.tsx:80
+#: src/ui/Keys.tsx:89
 msgid "Draw a line everyone sees"
 msgstr ""
 
-#: src/ui/Keys.tsx:81
+#: src/ui/Keys.tsx:90
 msgid "Flick the unit card right"
 msgstr ""
 
-#: src/ui/Keys.tsx:81
+#: src/ui/Keys.tsx:90
 msgid "Put it away (tap a unit to bring it back)"
 msgstr ""
 

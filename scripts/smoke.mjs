@@ -2547,6 +2547,48 @@ const checks = {
     return page.errors;
   },
 
+  // UX 84 §5, §8: hold X to see through terrain; S shoots with the picked unit in the Shooting phase.
+  async "table-keys"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    // Hold X: X-ray on while held, off on letting go (the View menu's tick says so).
+    const xray = async () => {
+      await page.getByRole("button", { name: "View ▾" }).click();
+      const on = await page
+        .getByRole("menuitemcheckbox", { name: /X-ray terrain/ })
+        .getAttribute("aria-checked");
+      await page.getByRole("button", { name: "View ▾" }).click();
+      return on === "true";
+    };
+    await page.keyboard.down("x");
+    const held = await xray();
+    await page.keyboard.up("x");
+    if (!held) throw new Error("holding X didn't turn X-ray on");
+    if (await xray()) throw new Error("X-ray stayed on after letting go of X");
+    for (let i = 0; i < 2; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    }
+    await page.keyboard.press("]");
+    await page
+      .locator(".canvas-wrap canvas, canvas")
+      .first()
+      .focus()
+      .catch(() => {});
+    await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+    await page.keyboard.press("s");
+    await page.locator(".panel.attack").waitFor({ timeout: 5000 });
+    if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "key-s.png") });
+    await context.close();
+    return page.errors;
+  },
+
   // UX 84 #4: after a roll with failures, the re-roll card pops up by the dice; Yes re-rolls one die.
   async "reroll-card"() {
     const { page, context } = await device();

@@ -608,3 +608,15 @@ details p {
 .pop-menu .menu button {
   text-align: left;
 }
+
+/* Who holds an objective, with the OC on each side, while the pointer is over its marker (UX 84 §7). */
+.objective-tag {
+  padding: 3px 8px;
+  border: 1px solid #3a4150;
+  border-radius: 6px;
+  background: rgb(17 20 27 / 92%);
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+}

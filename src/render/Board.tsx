@@ -1224,6 +1224,7 @@ function Scene() {
   const selectedUnit = selected ? game.units[selected] : undefined;
   const dragUnit = drag?.kind === "models" && drag.unitId ? game.units[drag.unitId] : undefined;
   const control = useMemo(() => objectiveControl(game), [game]);
+  const [hoverObjective, setHoverObjective] = useState<string | null>(null);
   // Lantern objectives (Rift Lanterns) draw together, in the holder's colour, pale when contested.
   const draggedObjective = drag?.kind === "objective" ? drag : null;
   const lanterns = useMemo<LanternItem[]>(
@@ -1583,6 +1584,7 @@ function Scene() {
             key={o.id}
             position={position}
             color={color}
+            onHover={(on) => setHoverObjective((h) => (on ? o.id : h === o.id ? null : h))}
             onDown={
               canEdit
                 ? () =>
@@ -1601,6 +1603,21 @@ function Scene() {
         );
       })}
 
+      {(() => {
+        const o = hoverObjective && !drag ? game.objectives.find((x) => x.id === hoverObjective) : undefined;
+        const c = o && control.find((x) => x.id === o.id);
+        if (!o || !c) return null;
+        return (
+          <Html
+            zIndexRange={LABEL_Z}
+            position={[o.position.x, 0.6, o.position.y]}
+            center
+            className="objective-tag"
+          >
+            {controlLine(game, c)}
+          </Html>
+        );
+      })()}
       <Lanterns
         items={lanterns}
         reach={OBJECTIVE_MARKER_MM / 25.4 / 2 + OBJECTIVE_RANGE}
@@ -1965,4 +1982,17 @@ function besideDrop(
     x: under.position.x + (dx / len) * gap - from.x,
     y: under.position.y + (dy / len) * gap - from.y,
   };
+}
+
+/** Who controls an objective, and the OC on each side: "Player 1 controls it: OC 6 vs 2". */
+function controlLine(game: GameState, c: { oc: Record<string, number>; controller: string | null }): string {
+  const sides = Object.entries(c.oc)
+    .filter(([, v]) => v > 0)
+    .sort(([a], [b]) => Number(b === c.controller) - Number(a === c.controller));
+  const name = (id: string) => displayName(game.players[id]?.name ?? "?");
+  const oc = sides.map(([, v]) => v).join(" vs ");
+  if (c.controller) return t("{player} controls it: OC {oc}", { player: name(c.controller), oc });
+  if (sides.length > 1) return t("Contested: OC {oc}", { oc });
+  if (sides.length === 1) return t("Nobody controls it: OC {oc}", { oc });
+  return t("Nobody controls it: no models in range");
 }

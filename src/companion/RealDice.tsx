@@ -55,6 +55,11 @@ function realDiceAllowed(game: GameState): boolean {
 }
 
 /** Real dice in this game: chosen on this device, and allowed here. */
+/** The same, outside React (keys on the table). */
+export function realDiceOn(): boolean {
+  return useOwnDice.getState().own && realDiceAllowed(useStore.getState().game);
+}
+
 export function useRealDice(): boolean {
   const own = useOwnDice((s) => s.own);
   const allowed = useStore((s) => realDiceAllowed(s.game));
