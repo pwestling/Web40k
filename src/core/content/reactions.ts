@@ -4,6 +4,7 @@ import { sidePlayers } from "../teams";
 import type { GameState, OpenReaction, PlayerId, ReactionTrigger, UnitId } from "../types";
 import { isAlive } from "../units";
 import { num } from "./expr";
+import type { ProcedureRun } from "./runner";
 import { evalCtx, safeBool, seatName, unitActions, type Payment } from "./play";
 import { armyStratagem, playerActions } from "./player";
 import { tableGeometry, unitView } from "./runtime";
@@ -245,9 +246,17 @@ function windowReactions(state: GameState, player: PlayerId, open: OpenReaction)
     // Range is to the enemy's units (a charge's targets are the reactor's own).
     return u && isAlive(at, u) && seatOf(at, u.owner) !== open.seat ? [unitView(at, system, u)] : [];
   });
+  // Played since the phase ended (it is recorded in this phase), it was played in the window.
+  const { round, phase, activeSeat } = state.turn;
+  const playedNow = (id: string) =>
+    at !== state &&
+    (state.used?.[player] ?? []).some(
+      (u) => u.action === id && u.round === round && u.phase === phase && u.seat === activeSeat,
+    );
   const out: PlayableReaction[] = [];
   for (const o of playerActions(at, player)) {
     if (!o.ok || o.def.custom) continue;
+    if (playedNow(o.def.id)) continue;
     const entry = answers(at, o.def, win, open.window);
     if (!entry) continue;
     let units: UnitId[] = [];
@@ -368,14 +377,44 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
         break;
       }
       case "attackDeclared": {
-        if (event.type !== "attack/declare" || !inPhase(def)) break;
-        const spec = event.attack.spec;
-        const target = next.units[spec.targetUnitId];
-        add(seatOf(next, target?.owner), { unitId: spec.attackerUnitId, targetId: spec.targetUnitId, seq });
+        if (!inPhase(def)) break;
+        if (event.type === "attack/declare") {
+          const spec = event.attack.spec;
+          const target = next.units[spec.targetUnitId];
+          add(seatOf(next, target?.owner), { unitId: spec.attackerUnitId, targetId: spec.targetUnitId, seq });
+        }
+        // A data action's attack (the bot's, or any game's own), not held for another reaction.
+        if (event.type === "action/take" && event.targetId && !event.hold) {
+          const action = system.actions.find((x) => x.id === event.action);
+          if (!action?.procedure || action.sets?.includes("fought")) break;
+          add(seatOf(next, next.units[event.targetId]?.owner), {
+            unitId: event.unitId,
+            targetId: event.targetId,
+            ...(event.more?.length ? { units: event.more } : {}),
+            seq,
+          });
+        }
         break;
       }
       case "beforeSaves": {
-        if (event.type !== "attack/roll" || event.reroll || !inPhase(def)) break;
+        if (!inPhase(def)) break;
+        // A data procedure's run: the wound roll is done and its save step is next.
+        const run = next.procedure?.run;
+        if ((event.type === "procedure/set" || event.type === "action/take") && run && !run.done) {
+          const was = prev.procedure?.run;
+          if (was && was.next === run.next && was.procedure === run.procedure) break;
+          if (!run.tokens.length || nextTest(system, run) !== (def.step ?? "save")) break;
+          const role = run.roles.target;
+          const target = role && "unit" in role ? role.unit : next.procedure?.targetId;
+          if (!target || !next.procedure) break;
+          add(seatOf(next, next.units[target]?.owner), {
+            unitId: next.procedure.unitId,
+            targetId: target,
+            seq,
+          });
+          break;
+        }
+        if (event.type !== "attack/roll" || event.reroll) break;
         if (event.attack.stage !== "save" || prev.attack?.stage === "save") break;
         const spec = event.attack.spec;
         add(seatOf(next, next.units[spec.targetUnitId]?.owner), {
@@ -388,6 +427,8 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
       case "attackRolled": {
         if (event.type !== "attack/roll" || event.reroll || !inPhase(def)) break;
         const attack = event.attack;
+        // A finished attack can't be re-rolled into (attack/reroll needs the roll still in front of everyone).
+        if (attack.stage === "done") break;
         const step = attack.run?.records.findLast((r) => r.kind === "test" && r.dice?.length);
         if (!step?.dice || step.plan.kind !== "test") break;
         const dice: { die: number; value: number }[] = [];
@@ -428,7 +469,23 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
         break;
       }
       case "chargeRolled": {
-        if (event.type !== "dice/roll" || !event.roll.targets?.length || !inPhase(def)) break;
+        if (!inPhase(def)) break;
+        // A data action's charge (one that sets "charged"), its distance rolled as it is taken.
+        if (event.type === "action/take" && event.targetId) {
+          const action = system.actions.find((x) => x.id === event.action);
+          if (!action?.sets?.includes("charged")) break;
+          const allowance = Number(next.units[event.unitId]?.status?.allowance ?? 0);
+          add(seatOf(next, next.units[event.targetId]?.owner), {
+            unitId: event.unitId,
+            targetId: event.targetId,
+            units: [event.targetId, ...(event.more ?? [])],
+            ...(allowance ? { total: allowance } : {}),
+            step: "charge",
+            seq,
+          });
+          break;
+        }
+        if (event.type !== "dice/roll" || !event.roll.targets?.length) break;
         const targets = event.roll.targets;
         const charger = event.roll.unitId;
         const total = event.roll.results.reduce((a, b) => a + b, 0);
@@ -447,6 +504,17 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
   return out;
 }
 
+/** The id of the next test a run will roll, past steps that roll nothing (allocating wounds). */
+function nextTest(system: GameSystem, run: ProcedureRun): string | undefined {
+  const steps = system.procedures.find((p) => p.id === run.procedure)?.steps ?? [];
+  for (let i = run.next; i < steps.length; i++) {
+    const step = steps[i]!;
+    if (step.kind === "test") return step.id;
+    if (step.kind !== "allocate" && step.kind !== "do") return undefined;
+  }
+  return undefined;
+}
+
 /** Whether any player at the window's seat has something to play there they haven't muted. */
 function anyPlayable(state: GameState, open: OpenReaction): boolean {
   const probe: GameState = { ...state, reaction: open };
@@ -460,24 +528,35 @@ function anyPlayable(state: GameState, open: OpenReaction): boolean {
  * close it otherwise.
  */
 export function foldReaction(prev: GameState, next: GameState, event: GameEvent): GameState {
-  if (event.type === "reaction/close") return next.reaction ? { ...next, reaction: null } : next;
   const hold = next.settings.reactionHold ?? REACTION_HOLD;
-  for (const c of candidates(prev, next, event)) {
-    const open: OpenReaction = {
-      window: c.def.id,
-      seat: c.seat,
-      trigger: c.trigger,
-      opened: prev.seq + 1,
-      phase: c.phase,
-      hold,
-    };
-    if (anyPlayable(next, open)) return { ...next, reaction: open };
-  }
+  const opens = candidates(prev, next, event).map((c): OpenReaction => ({
+    window: c.def.id,
+    seat: c.seat,
+    trigger: c.trigger,
+    opened: prev.seq + 1,
+    phase: c.phase,
+    hold,
+  }));
+  const fresh = opens.length ? firstPlayable(next, opens) : null;
+  if (fresh) return { ...next, reaction: fresh };
   const was = next.reaction;
   if (!was) return next;
+  // Passed: the next window of the same moment, if anyone can play in it.
+  if (event.type === "reaction/close") return { ...next, reaction: firstPlayable(next, was.then ?? []) };
   const reactorPlay =
     (event.type === "player/action" && seatOf(next, event.player) === was.seat) ||
     (event.type === "attack/roll" && !!event.reroll);
-  if ((KEEP.has(event.type) || reactorPlay) && anyPlayable(next, was)) return next;
+  if (KEEP.has(event.type) || reactorPlay)
+    return anyPlayable(next, was) ? next : { ...next, reaction: firstPlayable(next, was.then ?? []) };
   return { ...next, reaction: null };
+}
+
+/** The first of these windows someone can play in, with the rest queued behind it. */
+function firstPlayable(state: GameState, list: OpenReaction[]): OpenReaction | null {
+  for (let i = 0; i < list.length; i++) {
+    const { then: _then, ...open } = list[i]!;
+    const rest = list.slice(i + 1);
+    if (anyPlayable(state, open)) return { ...open, ...(rest.length ? { then: rest } : {}) };
+  }
+  return null;
 }

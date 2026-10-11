@@ -52,6 +52,7 @@ Status key: **automated** (the app does it), **advisory check** (the app measure
 | Dangerous terrain tests                                                               | automated       | terrainTests.ts:`dangerous`                            | T > a model whose move crossed dangerous terrain tests; 1s lose a Wound                                                 | Offered on the card; warning until taken.                                                        |
 | Impassable terrain                                                                    | advisory check  | system.ts `terrain` (`blocksMovement`)                 | —                                                                                                                       |                                                                                                  |
 | Characters join a regiment within 2", and leave in a later Movement phase             | automated       | characters.ts:`join`, `leave`                          | CH > joins the front rank, and leaves again as it was                                                                   | Unverified detail.                                                                               |
+| Charge reaction asked as a reaction window (#80)                                      | automated       | breaks.ts:`chargeReaction`                             | A > new: the charge reaction is a chargeDeclared reaction window for the unit charged                                   | ctx.ask names "chargeDeclared"                                                                   |
 
 ## Shooting phase
 
@@ -167,7 +168,7 @@ Keyed by name on the imported list (`src/systems/tow/universalRules.ts`), from t
 
 ## Summary
 
-- **automated:** 95 · **advisory check:** 12 · **manual reminder:** 13 · **missing:** 0
+- **automated:** 96 · **advisory check:** 12 · **manual reminder:** 13 · **missing:** 0
 - **Known wrong:** none left. Fixed in this audit: charge targets not needing sight; a fleeing unit offered Hold when charged; Stand & Shoot while in combat and with flat cover; fleeing, marched and fighting units allowed to shoot; combat ignoring weapon Strength and AP; a 1+ armour save skipped; challenges skipping regeneration.
 - **Unverified (from general knowledge, flagged in Notes):** casting and dispel details, Massed Infantry, the quarter-strength rally rule, character joining detail.
 - **Closed in #57:** weapon special rules are found by name (`RuleDef.match`, with X from the name), and the new `{ hasRule: ref, rule | match }` expression tests for one, so Multiple Shots and Armour Bane play themselves. Killing Blow and Poisoned Attacks can be added the same way. The Command sub-phase runs as a step of the Strategy hook, and abilities that name it come up then.

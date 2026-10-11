@@ -148,6 +148,8 @@ describe("faction packs (#76)", () => {
     expect(army.stratagems.find((s) => s.name === "Banked Embers")).toMatchObject({ notYet: "shot" });
     expect(army.stratagems.find((s) => s.name === "Kiln-Hardened")).toMatchObject({
       targetKeywords: "Infantry",
+      // The reaction window it answers (#80).
+      reacts: ["beforeSaves"],
     });
     expect(army.stratagems.find((s) => s.name === "Drifting Cinders")?.targetsUnit).toBeUndefined();
     // The army names the pack it was made with, by hash and link.

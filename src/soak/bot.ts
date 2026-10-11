@@ -25,6 +25,7 @@ import {
   unitActions,
 } from "../core/content/play";
 import { playerActions } from "../core/content/player";
+import { playableReactions } from "../core/content/reactions";
 import { currentSlot, plainActivations, systemOf } from "../core/content/turn";
 import { gameView } from "../core/script";
 import { pendingScores } from "../missions/scoring";
@@ -156,6 +157,10 @@ export const lastRound = (state: GameState): number => {
 
 export const battleOver = (state: GameState) => state.turn.round > lastRound(state);
 
+/** The state with no engine reaction window open (#80): what the active side goes on with meanwhile. */
+export const withoutWindow = (state: GameState): GameState =>
+  state.reaction ? { ...state, reaction: null } : state;
+
 /**
  * What the game is waiting on, if anything: the moves that answer it, the
  * likeliest first. The bot plays the first legal one; if none is legal the
@@ -223,6 +228,27 @@ export function waitingOn(
         "roll",
         (!run.done && nextRoller(state, run)) || proc.by,
       ),
+    };
+  }
+
+  // A reaction window (#80): the reacting side plays a reaction now and then, else passes.
+  const open = state.reaction;
+  if (open) {
+    const seat = sidePlayers(state, open.seat);
+    const plays: BotMove[] = [];
+    if (ctx.weighing || ctx.rng() < 0.4)
+      for (const p of seat)
+        for (const r of playableReactions(state, p.id)) {
+          const unit = r.units.length ? r.units[Math.floor(ctx.rng() * r.units.length)] : undefined;
+          const intent = (r.needsUnit && unit ? { ...r.play, targetId: unit } : r.play) as Intent;
+          plays.push({ intent, as: p.id, kind: "react" });
+        }
+    return {
+      what: `the ${open.window} reaction window`,
+      moves: [
+        ...plays,
+        ...seat.map((p) => ({ intent: { type: "reaction/pass" } as Intent, as: p.id, kind: "pass" })),
+      ],
     };
   }
 

@@ -9,9 +9,9 @@ reminder** (the app shows it at the right time, the player resolves it), **missi
 
 | System        | automated | advisory check | manual reminder | missing | rows |
 | ------------- | --------- | -------------- | --------------- | ------- | ---- |
-| 40k           | 73        | 13             | 24              | 0       | 110  |
-| The Old World | 95        | 12             | 13              | 0       | 120  |
-| FSD           | 105       | 11             | 31              | 0       | 147  |
+| 40k           | 81        | 13             | 24              | 0       | 118  |
+| The Old World | 96        | 12             | 13              | 0       | 121  |
+| FSD           | 106       | 11             | 31              | 0       | 148  |
 | Conquest      | 77        | 14             | 7               | 0       | 98   |
 | Rift Lanterns | 31        | 3              | 0               | 0       | 34   |
 | Brinewatch    | 49        | 2              | 1               | 0       | 52   |

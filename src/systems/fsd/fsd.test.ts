@@ -10,6 +10,7 @@ import {
 } from "../../core";
 import { actionTargets, cantPlace, unitActions } from "../../core/content/play";
 import { poolUsed } from "../../core/content/player";
+import { playableReactions, reactionWindow } from "../../core/content/reactions";
 import { spawnIntents } from "../wh40k/deploy";
 import { fsdLayout } from "./layout";
 import { fsdBehemothSample, fsdSample } from "./sample";
@@ -98,6 +99,36 @@ describe("Full Spectrum Dominance in play", () => {
     expect(currentSlot(s)?.name).toBe("Pre-assign ADs");
     expect(s.pools?.p1?.readyDice).toHaveLength(8);
     expect(s.pools?.p2?.readyDice).toHaveLength(8);
+  });
+
+  it("reads its held reactions as reaction windows: moveEnded and targetDeclared", () => {
+    let s = setup();
+    const tank = unitNamed(s, "Lancer Tank", "p1");
+    const gang = unitNamed(s, "Raider Gang", "p2");
+    s = place(s, tank.id, 0, 4);
+    s = place(s, gang.id, -1.5, -2);
+    s = toActivations(s);
+    s = play(s, { type: "action/take", unitId: tank.id, action: "activate" }, "p1");
+    s = play(s, { type: "action/take", unitId: tank.id, action: "move" }, "p1");
+    expect(reactionWindow(s)).toMatchObject({
+      window: "moveEnded",
+      seat: 1,
+      source: "pending",
+      blocking: true,
+    });
+    const react = playableReactions(s, "p2").find((r) => r.units[0] === gang.id);
+    expect(react?.play).toEqual({ type: "action/take", unitId: gang.id, action: react?.id });
+    s = play(s, { type: "reaction/pass" }, "p2");
+    expect(reactionWindow(s)).toBeNull();
+    s = play(
+      s,
+      { type: "action/take", unitId: tank.id, action: "fire", weapon: "coax-mg", targetId: gang.id },
+      "p1",
+    );
+    expect(reactionWindow(s)).toMatchObject({
+      window: "targetDeclared",
+      trigger: { unitId: tank.id, targetId: gang.id },
+    });
   });
 
   it("activates, moves, fires with a reaction window, and alternates", () => {

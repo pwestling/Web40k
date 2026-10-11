@@ -5,6 +5,7 @@ import { actingSeat, sidePlayers, type GameState, type Intent, type Unit } from 
 import { clearDrawings, hear } from "../talk/talk";
 import { explain } from "./explain";
 import { pendingScores } from "../missions/scoring";
+import { reactionHoldUntil } from "../core/content/reactions";
 import { sandboxBotMove } from "../sandbox/runtime";
 import { legal, type BotMove } from "../soak/bot";
 import { useStore } from "../store";
@@ -135,7 +136,8 @@ async function play(): Promise<void> {
   // An exhibition (#64): it plays whichever side the game waits on, each with its own memory.
   if (useSolo.getState().both) {
     const { seat } = useSolo.getState();
-    const next = [seat, 1 - seat].find((x) => waitsOn(game, x)) ?? seat;
+    // A reaction window (#80) is answered first, by the side it is open for.
+    const next = game.reaction?.seat ?? [seat, 1 - seat].find((x) => waitsOn(game, x)) ?? seat;
     if (next !== seat) switchSeat(next);
   }
   const solo = useSolo.getState();
@@ -160,6 +162,12 @@ async function play(): Promise<void> {
       player,
     );
     return;
+  }
+  // A reaction window for the player (#80): it holds its next step until they answer or the hold runs out.
+  if (game.reaction && game.reaction.seat !== solo.seat) {
+    const until = reactionHoldUntil(record, game);
+    const left = until === null ? 0 : until - Date.now();
+    if (left > 0) return void window.setTimeout(() => void play(), left + 50);
   }
   // The player's own roll (their saves), left to them for a while: the computer rolls it for them now.
   // The Easy opponent never rolls a learner's dice by itself, so it would wait on them for ever (UX 404).

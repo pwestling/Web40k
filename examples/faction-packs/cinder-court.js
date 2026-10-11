@@ -128,6 +128,8 @@ export const faction = {
           side: "either",
           phases: ["fight"],
           target: { keywords: "Infantry" },
+          // Offered by the dice when the unit is about to save (a reaction window, docs/reactions.md).
+          reacts: ["beforeSaves"],
           summary: "Your Infantry unit has a 4+ invulnerable save this phase.",
           teach: { when: { kind: "attacks" }, who: { kind: "self" }, what: [{ kind: "invuln", x: 4 }] },
         },

@@ -237,7 +237,11 @@ export async function playMatch(
       }
       let move: BotMove | null = null;
       let mover = -1;
-      for (const p of players) {
+      // A side with a reaction window open answers it first (#80).
+      const open = state.reaction?.seat;
+      for (const p of open === undefined
+        ? players
+        : [...players].sort((a, b) => Number(b.seat === open) - Number(a.seat === open))) {
         const t0 = performance.now();
         const m = policies[p.seat]!.move(record, state, p);
         const took = performance.now() - t0;

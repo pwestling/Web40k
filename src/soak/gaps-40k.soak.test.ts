@@ -25,6 +25,9 @@ const watch = (s: GameState, events: GameEvent[], before: GameState): string[] =
       if (u.action === "rapidIngress" && u.round <= 1) tags.push("Rapid Ingress in round 1");
       if (u.action === "goToGround") tags.push("Go to Ground");
     }
+  // Reaction windows (#80) opened in play.
+  if (s.reaction && s.reaction.opened !== before.reaction?.opened)
+    tags.push(`reaction window ${s.reaction.window}`);
   const outcomes = s.procedure?.run.outcomes ?? [];
   if (outcomes.some((o) => o.kind === "note" && /^Hazardous: rolled \d/.test(o.text)))
     tags.push("Hazardous roll");
@@ -72,7 +75,8 @@ const armies = (seat: 0 | 1) =>
     seat === 0
       ? {
           "Lance Team": { weapons: { "Arc Lance": { keywords: ["Hazardous"] } } },
-          "Line Troopers": { weapons: { "Fusion Caster": { keywords: ["Hazardous"] } } },
+          // Smoke: Smokescreen when they're shot at (a reaction window, #80).
+          "Line Troopers": { keywords: ["Smoke"], weapons: { "Fusion Caster": { keywords: ["Hazardous"] } } },
           "Rampart Battle Tank": {
             keywords: ["Transport"],
             weapons: { "Siege Cannon": { keywords: ["Indirect Fire"] } },
@@ -92,7 +96,8 @@ describe("rules gaps: 40k", () =>
   scenarioSuite(
     "40k damage and saves",
     "forty-k-11",
-    { automate: true, watch, armies },
+    // Six games: reaction windows (#80) change the dice path, and an out-of-order fight pick needs more of them.
+    { automate: true, watch, armies, minSeeds: 6 },
     [
       "Armoured Hull: damage",
       "Searing Grip: damage",
@@ -107,6 +112,10 @@ describe("rules gaps: 40k", () =>
       "fought out of order (pick)",
       "rule reminder: Transport",
       "warning terrain",
+      // #80 (fightPick, beforeSaves and rerollable come up too rarely in bot play; unit tests cover them)
+      "reaction window targetDeclared",
+      "reaction window moveEnded",
+      "reaction window chargeRolled",
     ],
     ["Rapid Ingress in round 1", "Go to Ground", 'charge at a target over 12"'],
   ));

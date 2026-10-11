@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { GameState, WeaponProfile } from "../../core";
 import { gameView } from "../../core/script";
 import { abilityReminders } from "../../core/content/player";
+import { mayReact, playableReactions, reactionWindow } from "../../core/content/reactions";
 import { towActions } from "./combat";
 import { weaponStrength, weaponAp } from "./wounds";
 import { oldWorld } from "./system";
@@ -441,6 +442,30 @@ describe("Old World rules audit (#55)", () => {
     }
     expect(seen).toBe(1);
   });
+  it("new: the charge reaction is a chargeDeclared reaction window for the unit charged", () => {
+    const { t, warband } = setup();
+    const bows = unitNamed(t.s, "Fen Bowmen").id;
+    block(t, bows, -10, 5, 0);
+    block(t, warband, 4, 6, Math.PI);
+    toPhase(t, "movement");
+    t.play(
+      { type: "script/start", procedure: "chargeReaction", args: { unit: warband, target: bows } },
+      "p2",
+    );
+    const open = reactionWindow(t.s);
+    expect(open).toMatchObject({
+      window: "chargeDeclared",
+      seat: 0,
+      source: "script",
+      blocking: true,
+      trigger: { unitId: warband, targetId: bows },
+    });
+    const answers = playableReactions(t.s, "p1");
+    expect(answers.map((r) => r.id)).toEqual(expect.arrayContaining(["hold", "flee"]));
+    expect(answers.find((r) => r.id === "hold")?.play).toEqual({ type: "script/answer", answer: "hold" });
+    expect(mayReact(t.s, "p2")?.seat).toBe(0);
+  });
+
   it("fix: stand and shoot uses graded cover (partial -1, full -2)", () => {
     const label = (x: number | null, width: number) => {
       const { t, warband } = setup();

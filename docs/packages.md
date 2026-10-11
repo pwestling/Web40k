@@ -32,6 +32,7 @@ export default {
   hooks: {}, // procedures run when phases and rounds start and end
   rules: [], // data: rules (keywords, abilities) in the system's rules schema
   abilityTimings: [], // data: when abilities matching some text come up
+  reactionWindows: [], // data: when the other side may react (docs/reactions.md)
 };
 ```
 
@@ -143,7 +144,25 @@ invented ones that work in any game.
 
 ## Data rules
 
-`rules`, `abilityTimings`, and `actions` entries without a `run`, are plain data in the system's rules schema (`src/core/content/schema.ts`). They are added to the system on every player's screen that runs the package, so previews and panels show them as well. A data rule with the same id as a built-in one replaces it.
+`rules`, `abilityTimings`, `reactionWindows` and `actions` entries without a `run`, are plain data in the system's rules schema (`src/core/content/schema.ts`). They are added to the system on every player's screen that runs the package, so previews and panels show them as well. A data rule with the same id as a built-in one replaces it.
+
+## Reaction windows
+
+A package can say when the side whose turn it isn't may answer (#80, [reactions.md](reactions.md)). Each window names an engine moment it opens at (`phaseEnd`, `attackDeclared`, `beforeSaves`, `attackRolled`, `unitFought`, `chargeRolled`), and a data player action answers it with `reacts`:
+
+```js
+reactionWindows: [{ id: "ambush", opens: "attackDeclared", units: { same: ["it.id", "event.target.id"] } }],
+actions: [
+  {
+    id: "ambush", name: "Ambush", by: "player", side: "inactive",
+    cost: [{ resource: "CP", amount: 1 }], limit: { count: 1, per: "phase" },
+    target: { filter: { same: ["it.owner", "player.id"] } },
+    reacts: [{ window: "ambush", range: 12 }], // only units within 12 of the attacker
+  },
+],
+```
+
+The window opens only when the reacting player can play something in it (they can pay, it is within its limits and phase, and a unit qualifies), so it never asks for nothing. A window with the id of a built-in one replaces it. A code procedure's question becomes a window by naming one: `ctx.ask(player, question, options, "chargeDeclared")`.
 
 ## Data calling code
 

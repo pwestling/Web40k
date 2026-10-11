@@ -75,6 +75,7 @@ Status key: **automated** (the app does it), **advisory check** (the app warns, 
 | 7. Cleanup: units ready again, ADs on cards may be discarded, Ready ADs placed                        | automated       | fsd:`cleanup` (`placeDice`), `resets`                                                              | F > keeps placed dice over the round, rolling fewer, and discards them at cleanup                                                               |                                                                                                                                                  |
 | 8. End of round: Ready ADs to Spent; round effects end                                                | automated       | fsd:`readyDice.reset: "round"`, `resets`                                                           | F > commands nearby units and ends the round when both players pass                                                                             |                                                                                                                                                  |
 | Six rounds                                                                                            | automated       | fsd:`turn.rounds`                                                                                  | A > the game lasts six rounds; 1 DU is 3"; the AD Pool is 12 with a capacity of 8                                                               | Scenarios may end earlier (by hand)                                                                                                              |
+| Reactions read as reaction windows (a move: moveEnded; fire: targetDeclared)                          | automated       | content/reactions.ts:`reactionWindow`, `playableReactions`                                         | F > reads its held reactions as reaction windows: moveEnded and targetDeclared                                                                  | **New** (#80)                                                                                                                                    |
 
 ## Combat
 
@@ -210,7 +211,7 @@ density advice.
 
 ## Summary
 
-Counts (rows above): **automated 105**, **advisory check 11**, **manual reminder 31**, **missing 0**.
+Counts (rows above): **automated 106**, **advisory check 11**, **manual reminder 31**, **missing 0**.
 
 Real rosters (#66): there is no public community catalogue for FSD (the BSData gallery lists none), so the measure
 is the rulebook's Special Rules chapter, 43 rules by name. Before: 8 played themselves (AP X, IC, Per Base, Short

@@ -13,6 +13,7 @@ import {
 } from "../core";
 import { actingUnits, placeablePool, unitActions } from "../core/content/play";
 import { armyStratagem, playerActions } from "../core/content/player";
+import { playableReactions } from "../core/content/reactions";
 import { fightOrder } from "../systems/wh40k/fight";
 import { fightPick } from "./fightPick";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
@@ -33,6 +34,7 @@ import {
   reaches,
   takenKey,
   waitingOn,
+  withoutWindow,
   wrongKind,
   type BotContext,
   type BotMove,
@@ -329,7 +331,9 @@ export class Thinker implements Policy, Analyst {
     this.sim.update(record, state);
     if (state.turn.round === 0) return setupMove(record, state, this.ctx, me);
     const mine = new Set(sidePlayers(state, this.seat).map((p) => p.id));
-    const waiting = waitingOn(record, state, this.weigh);
+    // A reaction window (#80): ours to answer at once, or the other side's, which doesn't stop our play.
+    if (state.reaction?.seat === this.seat) return this.react(state, mine);
+    const waiting = waitingOn(record, withoutWindow(state), this.weigh);
     if (waiting) {
       // An enemy attack on one of ours: a stratagem that protects it, if it's worth its CP.
       const guard = this.guard(record, state, mine);
@@ -377,6 +381,31 @@ export class Thinker implements Policy, Analyst {
     if (chosen?.key) this.done.keys.add(chosen.key);
     noteTaken(this.ctx, state, pick);
     return pick;
+  }
+
+  /**
+   * Its answer in a reaction window (#80), made quickly: Command Re-roll (or
+   * any re-roll card) on its own failed dice when it has CP to spare or the
+   * dice are its saves, then the die; anything else it passes on (their
+   * effects are played by hand).
+   */
+  private react(state: GameState, mine: Set<PlayerId>): BotMove | null {
+    const as = [...mine][0];
+    if (!as) return null;
+    for (const p of mine)
+      for (const r of playableReactions(state, p)) {
+        const die = r.reroll?.dice[0];
+        if (!r.reroll || !die || r.needsUnit) continue;
+        const cp = state.resources[p]?.CP ?? 0;
+        if (cp < 2 && r.trigger.step !== "save") continue;
+        return {
+          intent: r.play,
+          as: p,
+          kind: "react",
+          then: { intent: { type: "attack/reroll", seq: r.reroll.seq, die: die.die }, as: p, kind: "reroll" },
+        };
+      }
+    return { intent: { type: "reaction/pass" }, as, kind: "pass" };
   }
 
   /** Calls in a row, at one table, that it let the other player pick a fight first. */

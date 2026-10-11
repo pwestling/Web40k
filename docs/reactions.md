@@ -25,6 +25,37 @@ Standard ids (a system, package or faction pack may add its own):
 | `chargeDeclared` | an enemy declares a charge (The Old World's charge reactions)      | the side charged                   |
 | `rerollable`     | a roll left failed dice the roller could re-roll ("Re-roll this?") | the side that rolled (either side) |
 
+### Where they open
+
+**40k** (`forty-k.ts` `reactionWindows`; each core stratagem's `reacts` names its window):
+
+| Window           | Opens at                                                                                                    | Core stratagems (and range)                    |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `moveEnded`      | `turn/next` out of the enemy's Movement phase, if any enemy unit moved; trigger `units` = those units       | Fire Overwatch (24"), Rapid Ingress            |
+| `targetDeclared` | `attack/declare` (the attack panel) or a data `action/take` with a procedure and a target (the bot's shots) | Smokescreen (the unit attacked)                |
+| `rerollable`     | `attack/roll` with failed dice, the attack not done (attack panel only: attack/reroll needs `state.attack`) | Command Re-roll (`reroll` carries the dice)    |
+| `beforeSaves`    | `attack/roll` that reaches the save stage, or a procedure step whose next test is `save`                    | none core; imported ones by When text          |
+| `fightPick`      | `attack/clear` of a melee attack, or `procedure/clear` of an action that sets `fought`; Fight phase only    | Counter-offensive (an engaged unit not fought) |
+| `chargeRolled`   | `dice/roll` with charge `targets`, or a data `action/take` that sets `charged`; Charge phase only           | Heroic Intervention (12" of the charger)       |
+
+Imported army stratagems answer a window by `reacts` (faction packs) or by the
+window's `match` on their When text.
+
+**FSD**: its held action (`state.pending`) reads as `moveEnded` (a move) or
+`targetDeclared` (a fire action); `playableReactions` lists each unit's `react`
+as `action/take`. **The Old World**: the charge reaction question reads as
+`chargeDeclared` (`source: "script"`), its options (Hold, Stand and shoot,
+Flee) as `script/answer`. **Conquest** declares none yet.
+
+### The bot
+
+The reacting bot answers at once: it plays a re-roll card on its own failed
+dice when it has 2 CP or more (or the dice are its saves) and sends
+`attack/reroll` straight after; otherwise it passes. Playing the active side,
+it doesn't wait on the other side's window (the solo bot waits out the
+hold), and in bot-versus-bot matches the reacting side moves first. The soak
+bot plays a reaction now and then and otherwise passes.
+
 ## State (synced, read on every screen)
 
 ```ts
@@ -46,6 +77,9 @@ interface OpenReaction {
   phase: number;
   /** How long (ms) the active side's screen holds for an answer; from settings.reactionHold, host-set. 0: no hold. */
   hold: number;
+  /** Added after the first commit: windows the same moment opened for later (the attacker's re-roll first, then
+   *  the defender's beforeSaves). Each opens when the one before closes, if its seat can play in it. */
+  then?: OpenReaction[];
 }
 
 interface ReactionTrigger {
@@ -124,6 +158,9 @@ nags.
   when `needsUnit`). For a re-roll, then `attack/reroll { seq, die }`. FSD
   reactions are `action/take` (per unit); a code procedure's are
   `script/answer`.
+- A `player/action` that `playableReactions` lists is accepted as played in the
+  window, even when the phase has moved on since it opened (Fire Overwatch as
+  the enemy's Movement phase ends, played once Shooting has begun).
 - **Pass**: `{ type: "reaction/pass" }` from a player of the reacting seat. It
   closes an engine window (event `reaction/close`) or, as before, ends FSD's
   held reaction. For a code procedure's question, answer it (`script/answer`
@@ -159,6 +196,8 @@ interface ReactionWindowDef {
   phases?: string[];
   /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */
   who?: "opponent" | "roller";
+  /** Added after the first commit: for beforeSaves in a data procedure, the test step it opens before (default "save"). */
+  step?: string;
   /** Case-insensitive regex tried on an imported stratagem's When text: a match says it answers this window. */
   match?: string;
   /** Default filter on the reacting player's units ("it"), with the trigger as "event" (e.g. only the unit attacked). */

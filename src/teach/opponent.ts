@@ -8,6 +8,7 @@ import {
   offTurnMoves,
   unitMoves,
   waitingOn,
+  withoutWindow,
   type BotContext,
   type BotMove,
 } from "../soak/bot";
@@ -30,7 +31,14 @@ export function opponentMove(
 ): BotMove | null {
   if (state.turn.round === 0) return null;
   const mine = new Set(sidePlayers(state, seat).map((p) => p.id));
-  const waiting = waitingOn(record, state, ctx);
+  // A reaction window (#80): the opponent passes on its own; the learner's doesn't stop its play.
+  if (state.reaction && mine.has(sidePlayers(state, state.reaction.seat)[0]?.id ?? ""))
+    return {
+      intent: { type: "reaction/pass" },
+      as: sidePlayers(state, state.reaction.seat)[0]!.id,
+      kind: "pass",
+    };
+  const waiting = waitingOn(record, withoutWindow(state), ctx);
   const asked = state.script?.waiting;
   if (asked && mine.has(asked.player) && !asked.secret && asked.reveal === undefined) {
     const id = answers.find((x) => asked.options.some((o) => o.id === x));

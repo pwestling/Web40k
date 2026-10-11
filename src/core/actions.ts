@@ -37,6 +37,7 @@ import {
 } from "./content/play";
 import { advance, respond, type Outcome, type ProcedureRun } from "./content/runner";
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
+import { playableReactions } from "./content/reactions";
 import { getSystem } from "./content/systems";
 import { currentSlot, systemOf } from "./content/turn";
 import { die, parseDice, rollDice } from "./dice";
@@ -922,8 +923,18 @@ export function resolveIntent(
     }
     case "player/action": {
       if (!state) return null;
-      const option = playerActions(state, from).find((o) => o.def.id === intent.action);
+      let option = playerActions(state, from).find((o) => o.def.id === intent.action);
       if (!option) return null;
+      // Played in the reaction window it answers (#80), as things stood when it opened (the phase that just ended).
+      const reaction = option.ok
+        ? undefined
+        : playableReactions(state, from).find(
+            (r) => r.id === intent.action && r.play.type === "player/action",
+          );
+      if (reaction) {
+        const { why: _why, ...rest } = option;
+        option = { ...rest, ok: true, payment: reaction.payment, targets: reaction.units };
+      }
       if (!option.ok && !intent.force) return null;
       let payment = option.payment;
       if (option.def.custom) {

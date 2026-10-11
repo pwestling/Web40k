@@ -757,6 +757,8 @@ export interface OpenReaction {
   phase: number;
   /** How long (ms) the active side's screen holds for an answer; 0 for no hold. */
   hold: number;
+  /** Windows the same moment opened for later (a re-roll before the defender's saves): each opens when this one closes, if playable. */
+  then?: OpenReaction[];
 }
 
 export interface PendingReaction {

@@ -97,12 +97,15 @@ A stratagem adds what the play panel needs to offer it:
   phases: ["shooting"], // the system's phase ids; none for any phase
   once: "turn", // "phase" (the default), "turn" or "battle"
   target: { keywords: "Infantry", notYet: "shot" }, // one of the player's units (the default); false for none
+  reacts: ["beforeSaves"], // reaction windows it answers (docs/reactions.md); else read from its When text
   summary: "Your own one line.",
   teach: { ... }, // or auto or effects: what it does to its target until the end of the phase
 }
 ```
 
 A stratagem the list already has (by name) takes the pack's cost, timing and target, and its effect; the list's own text stays. Stratagems the list doesn't have are added. One with no effect costs its CP and the players play it. The computer opponent spends CP on pack stratagems the same way it does on taught ones.
+
+`reacts` lists the [reaction windows](reactions.md) the stratagem answers, by id (`moveEnded`, `targetDeclared`, `beforeSaves`, `fightPick`, `chargeRolled`, `rerollable`). When the moment comes in the opponent's turn and the player can pay for it, the app offers it by the dice instead of waiting for them to open the hand. Without `reacts`, the system's own patterns are tried on the stratagem's When text from the list.
 
 ## Code
 

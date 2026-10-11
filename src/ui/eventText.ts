@@ -591,6 +591,12 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
     }
     case "reaction/end":
       return t("Reaction over");
+    case "reaction/close":
+      return t("{name} doesn't react", { name: who });
+    case "reaction/mute":
+      return event.mute
+        ? t("{name} won't be asked to react", { name: who })
+        : t("{name} will be asked to react", { name: who });
     case "procedure/clear":
       return t("Roll closed");
     case "turn/pass":

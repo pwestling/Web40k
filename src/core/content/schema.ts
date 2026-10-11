@@ -851,6 +851,8 @@ export interface ReactionWindowDef {
   phases?: Id[];
   /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */
   who?: "opponent" | "roller";
+  /** For beforeSaves in a data procedure: the test step it opens before (default "save"). */
+  step?: Id;
   /** Case-insensitive regular expression tried on an imported stratagem's When text: it answers this window. */
   match?: string;
   /**
