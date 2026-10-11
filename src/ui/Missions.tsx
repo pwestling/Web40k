@@ -79,19 +79,73 @@ export function MissionPicker() {
  * VP from the mission, and a player of that side confirms it (or changes it,
  * or passes). Nothing is added to the score until someone does.
  */
-export function ScorePanel({ inline }: { inline?: boolean }) {
+function usePending(): Pending[] {
   const game = useGame();
   const record = useStore((s) => s.record);
-  const { dispatch, scrub, role, stats } = useStore();
-  const canControl = useCanControl();
   const mission = missionOf(game);
   // A package mission's suggestions arrive from its sandbox after the event that asked for them.
   const answers = useSandbox((s) => s.app);
-  const pending = useMemo(
+  return useMemo(
     () => pendingScores(record, game, mission),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [record, game, mission, answers],
   );
+}
+
+/**
+ * A side's plain score ask, by its VP in the top bar (PX A3): "+10 VP? ✓ ✕",
+ * pulsing once when it comes. The other side sees whose score it waits on.
+ * Asks with answers to pick (and the result screen) stay in the score panel.
+ */
+export function ScoreChips({ seat }: { seat: number }) {
+  const game = useGame();
+  const { dispatch, scrub, role, stats } = useStore();
+  const canControl = useCanControl();
+  const pending = usePending().filter((p) => p.seat === seat && !p.ask);
+  if (!pending.length || scrub !== null || (stats ?? battleOver(game))) return null;
+  const mine = role !== "spectator" ? sidePlayers(game, seat).find((x) => canControl(x.id)) : undefined;
+  const name = displayName(sidePlayers(game, seat)[0]?.name ?? "") || sideName(game, seat);
+  return (
+    <>
+      {pending.map((p) => {
+        const about = `${t("Round {n}", { n: p.round })} · ${p.rule}: ${p.why}`;
+        return mine ? (
+          <span key={p.key} className="score-chip" role="status" title={about}>
+            {t("+{vp} VP?", { vp: p.vp })}
+            <button
+              className="quiet"
+              title={t("Score it")}
+              aria-label={t("Score it")}
+              onClick={() => confirmScore(dispatch, p, mine.id, p.vp)}
+            >
+              ✓
+            </button>
+            <button
+              className="quiet"
+              title={t("Don't score it")}
+              aria-label={t("Don't score it")}
+              onClick={() => confirmScore(dispatch, p, mine.id)}
+            >
+              ✕
+            </button>
+          </span>
+        ) : (
+          <span key={p.key} className="score-chip waiting muted small" title={about}>
+            {t("waiting for {name} to score", { name })}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+export function ScorePanel({ inline }: { inline?: boolean }) {
+  const game = useGame();
+  const { dispatch, scrub, role, stats } = useStore();
+  const canControl = useCanControl();
+  const all = usePending();
+  // During play the plain asks sit by each side's VP in the top bar (ScoreChips); the panel keeps the rest.
+  const pending = inline ? all : all.filter((p) => p.ask);
   const [edits, setEdits] = useState<Record<string, number>>({});
   // One screen for both sides (hotseat, Play now): the mission's suggestion counts straight away, and
   // the top bar's − and + correct it (UX 333). At a real table the players say what they hold.
@@ -99,11 +153,11 @@ export function ScorePanel({ inline }: { inline?: boolean }) {
   useEffect(() => {
     // The floating panel does it; the result screen's copy of it doesn't, so nothing goes twice.
     if (!auto || inline || scrub !== null) return;
-    for (const p of pending) {
+    for (const p of all) {
       const by = p.guessed && !p.ask ? sidePlayers(game, p.seat)[0]?.id : undefined;
       if (by) confirmScore(dispatch, p, by, p.vp);
     }
-  }, [auto, inline, scrub, pending, game, dispatch]);
+  }, [auto, inline, scrub, all, game, dispatch]);
   if (!pending.length || scrub !== null) return null;
   // Once the battle is over the result screen lists them (inline), not the floating panel.
   if (!inline && (stats ?? battleOver(game))) return null;

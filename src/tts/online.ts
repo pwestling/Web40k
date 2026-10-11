@@ -49,6 +49,12 @@ export function hostTtsOnline(brought: BroughtTable, note = ""): Promise<boolean
           .filter(Boolean)
           .join(" "),
       });
+      // The invite has done its job once the friend sits down: the rest of the note stays (PX A4).
+      const seated = useStore.subscribe(({ game, session }) => {
+        if (!Object.keys(game.players).some((id) => id !== session?.selfId)) return;
+        seated();
+        if (useTtsNote.getState().table === brought.table.id) useTtsNote.setState({ note });
+      });
       const self = useStore.getState().session?.selfId;
       const mine = brought.armies.find((a) => a.side === 0)?.army;
       if (self && mine && useStore.getState().game.players[self]) deployShelfArmy(mine, self);

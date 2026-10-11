@@ -2314,6 +2314,46 @@ const checks = {
       if (!(Math.max(...a) + 40 < Math.min(...b) || Math.max(...b) + 40 < Math.min(...a)))
         throw new Error(`armies overlap: ${a.map(Math.round)} / ${b.map(Math.round)} (Player 1 had ${p1})`);
     }
+    // PX A4: the invite note goes once the friend has sat down.
+    await host.page
+      .locator(".tts-note", { hasText: "invite link" })
+      .waitFor({ state: "detached", timeout: 10_000 });
+    // PX A3: the primary's score ask comes by the side's VP; the other screen says whose score it waits on.
+    for (const { page } of [host, guest]) await page.keyboard.press("Escape");
+    await host.page.getByRole("button", { name: /Start battle/ }).click();
+    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+    if (await anyway.count()) await anyway.first().click();
+    const deadline = Date.now() + 90_000;
+    let asked;
+    // PX B3: the turn passing to Ben flashes "Your turn" on his card, and only on his screen.
+    let flashed = false;
+    while (!asked) {
+      if (!flashed && (await guest.page.locator(".topbar .your-turn-flash").count())) {
+        if (await host.page.locator(".topbar .your-turn-flash").count())
+          throw new Error("Ben's turn flashed on Ana's screen too");
+        flashed = true;
+      }
+      if (Date.now() > deadline) throw new Error("no score ask came to the top bar");
+      for (const d of [host, guest]) {
+        if (await d.page.locator(".topbar .score-chip:not(.waiting)").count()) asked = d;
+        else {
+          const next = d.page.locator('.topbar button[title="Next phase"]');
+          if (await next.count()) await next.click({ timeout: 1500 }).catch(() => {});
+        }
+      }
+      await host.page.waitForTimeout(400);
+    }
+    if (!flashed) throw new Error("Ben's turn never flashed on his card");
+    const other = asked === host ? guest : host;
+    await other.page.locator(".topbar .score-chip.waiting", { hasText: "to score" }).first().waitFor();
+    if (process.env.SMOKE_SHOTS)
+      await asked.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-online-score.png") });
+    await asked.page
+      .locator(".topbar .score-chip")
+      .first()
+      .getByRole("button", { name: "Score it", exact: true })
+      .click();
+    await other.page.locator(".topbar .score-chip.waiting").first().waitFor({ state: "detached" });
     await host.context.close();
     await guest.context.close();
     return [...host.page.errors, ...guest.page.errors];

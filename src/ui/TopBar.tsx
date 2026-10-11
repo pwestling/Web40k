@@ -20,6 +20,8 @@ import { characterName, levelName, useSolo } from "../bot/solo";
 import { useGame } from "./hooks";
 import { NetBanner } from "./NetBanner";
 import { useMail } from "../mail/store";
+import { ScoreChips } from "./Missions";
+import { useYourTurn } from "./Ambience";
 
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
@@ -178,6 +180,8 @@ export function TopBar() {
                 }
               />
             ))}
+            {mine && <YourTurnFlash />}
+            <ScoreChips seat={seat} />
             <SideClock seat={seat} />
             {team.flatMap((p) =>
               pools.map((pool) => (
@@ -617,6 +621,17 @@ function Counter({
           ✓
         </button>
       )}
+    </span>
+  );
+}
+
+/** "Your turn", flashing once on your own card when the turn comes to you (PX B3). */
+function YourTurnFlash() {
+  const { at, on } = useYourTurn();
+  if (!on) return null;
+  return (
+    <span key={at} className="your-turn-flash" role="status">
+      {t("Your turn")}
     </span>
   );
 }

@@ -346,6 +346,17 @@ export function turnBell() {
   tone(a, t + 0.22, { freq: 1760, dur: 0.6, gain: 0.012 });
 }
 
+/** The turn coming to you (PX B3): two knuckle raps on the table's wood, brighter than a sit-down knock. */
+export function turnKnock() {
+  const a = audio();
+  if (!a) return;
+  for (const at of [0, 0.16]) {
+    const t = a.currentTime + at;
+    tone(a, t, { freq: 190, to: 120, dur: 0.12, gain: 0.3 });
+    burst(a, t, { freq: 900, q: 1.2, dur: 0.03, gain: 0.18, type: "lowpass" });
+  }
+}
+
 /** A low drum hit: a new round (twice), an army's card in the showcase (once). */
 export function drum(times = 1) {
   const a = audio();
