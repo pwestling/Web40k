@@ -47,6 +47,8 @@ interface TalkState {
   reel: { index: number; host: boolean; at: number } | null;
   /** Models other players are dragging now, by peer: where each is in their hand (PX E1). */
   drags: Record<string, { models: Record<string, { x: number; y: number }>; at: number }>;
+  /** Players planning their next turn on their own screen, by peer, since when (#81). */
+  planning: Record<string, number>;
 }
 
 interface Caster {
@@ -68,6 +70,7 @@ export const useTalk = create<TalkState>(() => ({
   shaking: {},
   reel: null,
   drags: {},
+  planning: {},
 }));
 
 const vec3 = (v: unknown): v is [number, number, number] =>
@@ -89,6 +92,11 @@ export function sendShaking(on: boolean): void {
 /** Show the table the models in this player's hand, or that they let go (null). */
 export function sendDrag(models: [string, number, number][] | null): void {
   useStore.getState().session?.sendSide({ t: "talk/drag", models });
+}
+
+/** Tell the table this player is planning their next turn, or stopped (never what they plan). */
+export function sendPlanning(on: boolean): void {
+  useStore.getState().session?.sendSide({ t: "talk/plan", on });
 }
 
 /** Move everyone's end-of-game reel to this card. */
@@ -271,6 +279,13 @@ function receive(message: SideMessage, from: string): void {
     useTalk.setState((s) => {
       const { [from]: _gone, ...rest } = s.shaking;
       return { shaking: message.on === true ? { ...rest, [from]: Date.now() } : rest };
+    });
+  } else if (message.t === "talk/plan") {
+    // Only a player at the table plans a turn.
+    if (!useStore.getState().game.players[from]) return;
+    useTalk.setState((s) => {
+      const { [from]: _gone, ...rest } = s.planning;
+      return { planning: message.on === true ? { ...rest, [from]: Date.now() } : rest };
     });
   } else if (message.t === "talk/drag") {
     // Only a player at the table moves models; at most a big unit's worth, on the table.

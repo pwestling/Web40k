@@ -859,3 +859,84 @@ body.verb-ok canvas {
     bottom: 120px;
   }
 }
+
+/* Planning your next turn on the other's (#81): ghosts' labels, the panel, "X is planning…". */
+.plan-label {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgb(17 20 27 / 82%);
+  color: #c7d2fe;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.plan-label.aim {
+  color: #fcd34d;
+}
+
+.plan-panel {
+  position: absolute;
+  z-index: 22;
+  top: 96px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgb(17 20 27 / 88%);
+  transform: translateX(-50%);
+}
+
+.plan-panel.on {
+  outline: 2px solid #a5b4fc;
+}
+
+.plan-panel.go {
+  flex-direction: row;
+}
+
+.plan-hint {
+  color: var(--muted, #9ca3af);
+  font-size: 12px;
+  text-align: center;
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.plan-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.others-planning {
+  position: absolute;
+  z-index: 23;
+  top: 56px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgb(17 20 27 / 88%);
+  font-weight: 600;
+}
+
+/* A phase both sides play at once (#81): "Done ▶", or who it waits for. */
+.topbar .together {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

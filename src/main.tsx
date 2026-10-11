@@ -56,6 +56,7 @@ if (import.meta.env.DEV) {
     openBattleAssets: useAssets,
     openBattleTouch: useTouch,
   });
+  void import("./ui/plan").then((plan) => Object.assign(window, { openBattlePlan: plan }));
   void import("./dev/perf").then(({ perf }) => Object.assign(window, { openBattlePerf: perf }));
   void import("./dev/soak").then(({ soakBrowser }) => Object.assign(window, { openBattleSoak: soakBrowser }));
 }

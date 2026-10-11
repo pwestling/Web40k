@@ -13,6 +13,7 @@ import { useSound } from "./sound";
 import { useEffect, useRef, useState } from "react";
 import { sideName, sidePlayers, sides, systemOf, turnView } from "../core";
 import { actingUnits } from "../core/content/play";
+import { simultaneousPhase } from "../core/content/simultaneous";
 import { poolUsed } from "../core/content/player";
 import { formatList, t, tn, gameText } from "../i18n";
 import { useWatching } from "../opentables/live";
@@ -110,6 +111,16 @@ export function TopBar() {
     .filter(Boolean)
     .join(" · ");
   const [asking, setAsking] = useState(false);
+  // A phase both sides play at once (#81, 40k's Command): each screen says "Done" for its own player.
+  const selfId = useStore((s) => s.session?.selfId ?? null);
+  const together = live && !deploying && mode !== "hotseat" ? simultaneousPhase(game) : null;
+  const me =
+    together && selfId && (together.waiting.includes(selfId) || together.ready.includes(selfId))
+      ? selfId
+      : null;
+  const waitingNames = together
+    ? together.waiting.filter((p) => p !== me).map((p) => playerName(game.players[p]) ?? "")
+    : [];
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
   const myTurn = live && (deploying || (activeSide.length ? activeSide.some((p) => canControl(p.id)) : true));
@@ -345,7 +356,48 @@ export function TopBar() {
               : t("Waiting for {name} to start", { name: host })}
           </span>
         )}
-        {myTurn && !over && !mailGuest && !(view.alternating && !deploying) && (
+        {together && me && !over && (
+          <span className="together">
+            {together.waiting.includes(me) ? (
+              <button
+                disabled={held}
+                className="next-phase primary"
+                title={t("I'm done with this phase")}
+                onClick={() => dispatch({ type: "turn/ready" }, me)}
+              >
+                {t("Done ▶")}
+              </button>
+            ) : (
+              <>
+                <span className="muted small">
+                  {t("Waiting for {names}", { names: formatList(waitingNames) })}
+                </span>
+                <button
+                  className="quiet small"
+                  title={t("Not done after all")}
+                  onClick={() => dispatch({ type: "turn/ready", ready: false }, me)}
+                >
+                  {t("Not done")}
+                </button>
+                {myTurn && (
+                  <button
+                    className="small"
+                    onClick={() => {
+                      const question =
+                        waitingNames.length > 1
+                          ? t("{names} aren't done yet. Go on anyway?", { names: formatList(waitingNames) })
+                          : t("{name} isn't done yet. Go on anyway?", { name: waitingNames[0] ?? "" });
+                      if (confirm(question)) dispatch({ type: "turn/next" });
+                    }}
+                  >
+                    {t("Go on anyway")}
+                  </button>
+                )}
+              </>
+            )}
+          </span>
+        )}
+        {!(together && me) && myTurn && !over && !mailGuest && !(view.alternating && !deploying) && (
           <button
             disabled={held}
             className={`next-phase ${view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}`}

@@ -119,6 +119,46 @@ async function rankedToResult() {
   return { host, guest, tables };
 }
 
+/** Ana hosts 40k, Ben joins, both with sample armies, into Round 1 past the showcase. */
+async function twoAt40k() {
+  const host = await device();
+  const guest = await device();
+  await lobby(host.page, `?${SIGNAL}`);
+  await host.page.locator(".lobby input").first().fill("Ana");
+  const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
+  await game.locator('option[value="forty-k-11"]').waitFor({ state: "attached", timeout: 20_000 });
+  await game.selectOption("forty-k-11");
+  await host.page.getByRole("button", { name: "Host a game", exact: true }).click();
+  await host.page.locator(".room").waitFor();
+  await guest.page.goto(host.page.url());
+  await guest.page.getByText(/What should the others call you/).waitFor({ timeout: 10_000 });
+  await guest.page.getByPlaceholder("Your name").fill("Ben");
+  await guest.page.getByRole("button", { name: "Use this name" }).click();
+  await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 30_000 });
+  for (const [i, { page }] of [host, guest].entries()) {
+    const pick = page.locator('.panel.hud select[aria-label="Sample army"]');
+    if (await pick.count()) await pick.selectOption({ index: i + 1 });
+    else await page.locator(".panel.hud").getByRole("button", { name: "Sample army" }).click();
+    const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+    if (await deploy.count()) await deploy.click();
+  }
+  await host.page.getByRole("button", { name: /Start battle/ }).click();
+  const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+  if (await anyway.count()) await anyway.first().click();
+  await host.page
+    .locator(".topbar")
+    .getByText(/Round 1/)
+    .first()
+    .waitFor({ timeout: 15_000 });
+  for (const { page } of [host, guest]) {
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, {
+      timeout: 30_000,
+    });
+    await page.keyboard.press("Escape");
+  }
+  return { host, guest };
+}
+
 async function device(options = {}) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, ...options });
   const page = await context.newPage();
@@ -2857,41 +2897,7 @@ const checks = {
   // ended, a target declared), the active player sees "Ben may react…" with Roll and ▶ held, and
   // "Don't ask me this game" reaches both screens.
   async reactions() {
-    const host = await device();
-    const guest = await device();
-    await lobby(host.page, `?${SIGNAL}`);
-    await host.page.locator(".lobby input").first().fill("Ana");
-    const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
-    await game.locator('option[value="forty-k-11"]').waitFor({ state: "attached", timeout: 20_000 });
-    await game.selectOption("forty-k-11");
-    await host.page.getByRole("button", { name: "Host a game", exact: true }).click();
-    await host.page.locator(".room").waitFor();
-    await guest.page.goto(host.page.url());
-    await guest.page.getByText(/What should the others call you/).waitFor({ timeout: 10_000 });
-    await guest.page.getByPlaceholder("Your name").fill("Ben");
-    await guest.page.getByRole("button", { name: "Use this name" }).click();
-    await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 30_000 });
-    for (const [i, { page }] of [host, guest].entries()) {
-      const pick = page.locator('.panel.hud select[aria-label="Sample army"]');
-      if (await pick.count()) await pick.selectOption({ index: i + 1 });
-      else await page.locator(".panel.hud").getByRole("button", { name: "Sample army" }).click();
-      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
-      if (await deploy.count()) await deploy.click();
-    }
-    await host.page.getByRole("button", { name: /Start battle/ }).click();
-    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
-    if (await anyway.count()) await anyway.first().click();
-    await host.page
-      .locator(".topbar")
-      .getByText(/Round 1/)
-      .first()
-      .waitFor({ timeout: 15_000 });
-    for (const { page } of [host, guest]) {
-      await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, {
-        timeout: 30_000,
-      });
-      await page.keyboard.press("Escape");
-    }
+    const { host, guest } = await twoAt40k();
     const card = guest.page.locator(".reaction-cards");
     const seen = { card: false, may: false, held: false };
     const look = async () => {
@@ -2982,6 +2988,85 @@ const checks = {
     await card.waitFor({ state: "detached", timeout: 10_000 });
     await host.page.locator(".may-react").waitFor({ state: "detached", timeout: 10_000 });
     console.log(`  reactions: Ana's ▶ held: ${seen.held}`);
+    await host.context.close();
+    await guest.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
+  // #81: Ben plans his turn on Ana's (a ghost move, nothing logged, Ana sees only that he's planning), then moves as planned.
+  async planning() {
+    const { host, guest } = await twoAt40k();
+    const g = guest.page;
+    await g.getByRole("button", { name: "Plan my turn" }).click();
+    await host.page.locator(".others-planning", { hasText: "Ben is planning" }).waitFor({ timeout: 10_000 });
+    await g
+      .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+      .first()
+      .click();
+    await g.waitForTimeout(800);
+    const before = await host.page.locator(".panel.hud").innerText();
+    // Feel for one of Ben's models around his plates, and drag it a little.
+    let picked = null;
+    for (const plate of await g.locator(".plate").all()) {
+      const box = await plate.boundingBox().catch(() => null);
+      if (!box) continue;
+      for (let dy = -16; dy <= 30 && !picked; dy += 8)
+        for (let dx = 0; dx <= box.width + 50 && !picked; dx += 8) {
+          const [x, y] = [box.x + dx, box.y + box.height / 2 + dy];
+          await g.mouse.move(x, y);
+          await g.mouse.down();
+          if (await g.evaluate(() => document.body.dataset.drag === "models")) picked = { x, y };
+          else await g.mouse.up();
+        }
+      if (picked) break;
+    }
+    if (!picked) throw new Error("couldn't pick up one of Ben's models");
+    await g.mouse.move(picked.x, picked.y + 40, { steps: 6 });
+    await g.mouse.up();
+    await g.waitForFunction(() => document.body.dataset.planned === "1", null, { timeout: 5000 });
+    await g
+      .getByText(/Planned move/)
+      .first()
+      .waitFor({ timeout: 5000 });
+    if (process.env.SMOKE_SHOTS) {
+      await g.screenshot({ path: join(process.env.SMOKE_SHOTS, "planning-ben.png") });
+      await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "planning-ana.png") });
+    }
+    await g.waitForTimeout(500);
+    if ((await host.page.locator(".panel.hud").innerText()) !== before)
+      throw new Error("the plan reached the log");
+    // Ana plays her turn out; Ben says No to anything he's asked.
+    for (let i = 0; i < 20 && !(await g.getByRole("button", { name: /^Move as planned/ }).count()); i++) {
+      const no = g.locator(".reaction-cards").getByRole("button", { name: "No", exact: true });
+      if (await no.count()) await no.click().catch(() => {});
+      const next = host.page.locator('.topbar button[title="Next phase"]:enabled');
+      const mine = g.locator('.topbar button[title="Next phase"]:enabled');
+      // Ben's turn: his plan panel stops offering to plan.
+      const yours = !(await g.getByRole("button", { name: /^(Plan my turn|Done planning)$/ }).count());
+      if (yours && (await mine.count())) await mine.click().catch(() => {});
+      else if (await next.count()) await next.click().catch(() => {});
+      for (const page of [host.page, g]) {
+        const ask = page.locator(".topbar .ask button.primary");
+        if (await ask.count())
+          await ask
+            .first()
+            .click()
+            .catch(() => {});
+      }
+      await g.waitForTimeout(1200);
+    }
+    if (await host.page.locator(".others-planning").count())
+      throw new Error("Ana still sees Ben planning on his turn");
+    const go = g.getByRole("button", { name: /^Move as planned/ });
+    await go.waitFor({ timeout: 10_000 });
+    const was = await g.locator(".panel.hud").innerText();
+    await go.click();
+    await g.waitForFunction(() => document.body.dataset.planned === "0", null, { timeout: 5000 });
+    await g.waitForTimeout(500);
+    if ((await g.locator(".panel.hud").innerText()) === was)
+      throw new Error("Move as planned logged nothing");
+    if (process.env.SMOKE_SHOTS)
+      await g.screenshot({ path: join(process.env.SMOKE_SHOTS, "planning-moved.png") });
     await host.context.close();
     await guest.context.close();
     return [...host.page.errors, ...guest.page.errors];

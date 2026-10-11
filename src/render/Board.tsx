@@ -60,6 +60,8 @@ import { TalkLayer } from "./TalkLayer";
 import { DragPreview } from "./DragPreview";
 import { carry, pickUp, setDown } from "./feel";
 import { FeelLayer } from "./FeelLayer";
+import { planMove, planShot, usePlan } from "../ui/plan";
+import { PlanGhosts } from "./PlanGhosts";
 import { MAX_LINE, sendDrag, useTalk, type Said } from "../talk/talk";
 import { HOLD_MS, SLOP_PX, STILL_PX, useTouch } from "./touchState";
 import { turnByTwist } from "./touchTurn";
@@ -579,8 +581,8 @@ function Scene() {
       }
       // Kept at once, not at the next render: a drop straight after reads it (catch-up below).
       setDrag((dragRef.current = { ...d, to, moved }));
-      // The other players see the models in hand, about ten times a second (PX E1).
-      if (d.kind === "models" && moved && e.timeStamp - shown.at > 100) {
+      // The other players see the models in hand, about ten times a second (PX E1); never a plan (#81).
+      if (d.kind === "models" && moved && !usePlan.getState().on && e.timeStamp - shown.at > 100) {
         shown.at = e.timeStamp;
         shown.sent = true;
         sendDrag(
@@ -618,6 +620,25 @@ function Scene() {
       hand.current = null;
       const charge = useDragVerb.getState().drag;
       if (charge) useDragVerb.setState({ drag: null });
+      // Planning the next turn (#81): the models go back, and ghosts stay where they were let go.
+      if (d?.kind === "models" && d.moved && !d.place && d.unitId && usePlan.getState().on) {
+        const dx = d.to.x - d.grab.x;
+        const dy = d.to.y - d.grab.y;
+        planMove(
+          d.unitId,
+          Object.fromEntries(
+            d.ids.map((id) => [
+              id,
+              {
+                x: Math.round((d.starts[id]!.x + dx) * 100) / 100,
+                y: Math.round((d.starts[id]!.y + dy) * 100) / 100,
+              },
+            ]),
+          ),
+        );
+        setDown(d.ids, () => null, { sound: false });
+        return;
+      }
       // A leader let go on a unit: it stands beside the model it was dropped on, and leads the unit.
       if (charge?.verb.verb === "attach" && d?.kind === "models" && d.moved && d.unitId === charge.unitId) {
         const game = useStore.getState().game;
@@ -1255,6 +1276,18 @@ function Scene() {
     if (draft?.picking) {
       if (m.unitId && m.unitId !== draft.attackerId)
         setDraft({ ...draft, targetId: m.unitId, picking: false });
+      return;
+    }
+    // Planning the next turn (#81): one of your units picked and an enemy clicked is its planned target.
+    if (
+      usePlan.getState().on &&
+      selected &&
+      m.unitId &&
+      game.units[selected] &&
+      canControl(game.units[selected]!.owner) &&
+      opposed(game, m.owner, game.units[selected]!.owner)
+    ) {
+      planShot(selected, m.unitId);
       return;
     }
     // An attack being set up: another enemy tapped is a new target, not a new selection that drops the attack (UX 417).
@@ -1902,6 +1935,7 @@ function Scene() {
 
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
       <DragPreview game={game} />
+      <PlanGhosts game={game} />
       <NotesLayer />
       <FeelLayer />
       <CasterCamera />

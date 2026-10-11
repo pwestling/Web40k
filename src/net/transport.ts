@@ -80,6 +80,8 @@ export type SideMessage =
    * still the logged event when it lands.
    */
   | { t: "talk/drag"; models: [string, number, number][] | null }
+  /** A player is planning their next turn on their own screen, or stopped (src/ui/plan.ts): only that, never the plan. */
+  | { t: "talk/plan"; on: boolean }
   /** Voice at the table (src/voice): this peer's mic is on or off. The audio itself is a media stream. */
   | { t: "talk/voice"; on: boolean; name?: string }
   /**

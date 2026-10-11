@@ -41,6 +41,7 @@ import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
 import { RerollCard } from "./ui/RerollCard";
 import { MayReact, ReactionCard } from "./ui/ReactionCard";
+import { OthersPlanning, PlanPanel } from "./ui/PlanPanel";
 import { useTableKeys } from "./ui/peekKeys";
 import { OthersShaking } from "./companion/Shake";
 import { StratagemHand } from "./ui/StratagemHand";
@@ -319,6 +320,8 @@ export function GameScreen({ started }: { started: boolean }) {
           {!editing && !VIEWER && <RerollCard />}
           {!editing && !VIEWER && <ReactionCard />}
           {!editing && !VIEWER && <MayReact />}
+          {!editing && !VIEWER && !hotseat && <PlanPanel />}
+          {!VIEWER && <OthersPlanning />}
           {!VIEWER && <OthersShaking />}
           {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
