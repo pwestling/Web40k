@@ -15,7 +15,7 @@ interface StratagemTab {
 const TURNS = new Set(["turn/next", "turn/prev", "turn/first"]);
 
 /** The stratagems played on each unit since the phase began, from the log (undone ones left out). */
-export function stratagemTabs(
+function stratagemTabs(
   record: GameRecord,
   game: GameState,
   upto = Infinity,
