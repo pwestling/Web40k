@@ -41,6 +41,8 @@ export interface TurnSlot {
   placeDice?: boolean;
   /** The phase's reminder (Segment.hint). */
   hint?: string;
+  /** Both sides act at once; it moves on when every seated player is ready (Segment.simultaneous, #81). */
+  simultaneous?: boolean;
 }
 
 const cache = new WeakMap<GameSystem, TurnSlot[]>();
@@ -70,6 +72,7 @@ function flatten(segments: Segment[], playerTurn: boolean): TurnSlot[] {
           onEnter,
           ...(seg.placeDice ? { placeDice: true } : {}),
           ...(seg.hint ? { hint: seg.hint } : {}),
+          ...(seg.simultaneous ? { simultaneous: true } : {}),
         });
         out.push(
           ...flatten(

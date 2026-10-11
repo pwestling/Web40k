@@ -148,7 +148,7 @@ invented ones that work in any game.
 
 ## Reaction windows
 
-A package can say when the side whose turn it isn't may answer (#80, [reactions.md](reactions.md)). Each window names an engine moment it opens at (`phaseEnd`, `attackDeclared`, `beforeSaves`, `attackRolled`, `unitFought`, `chargeRolled`), and a data player action answers it with `reacts`:
+A package can say when the side whose turn it isn't may answer (#80, [reactions.md](reactions.md)). Each window names an engine moment it opens at (`phaseEnd`, `unitMoved` (#81: as each enemy unit's move ends), `attackDeclared`, `beforeSaves`, `attackRolled`, `unitFought`, `chargeRolled`), and a data player action answers it with `reacts`:
 
 ```js
 reactionWindows: [{ id: "ambush", opens: "attackDeclared", units: { same: ["it.id", "event.target.id"] } }],

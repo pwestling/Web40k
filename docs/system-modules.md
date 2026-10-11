@@ -64,7 +64,7 @@ It has these parts:
 - `constants`: named numbers rules can read as `const.<id>`.
 - `settings`: table settings the system plays with by default, such as its line of sight mode.
 
-The turn structure is a list of segments. A phase is a window where listed actions are offered. `playerTurns` gives each player a full turn of the nested segments (I go, you go). `alternate` has players take turns activating one thing from a pool. Here is Full Spectrum Dominance's round: roll a pool of activation dice, place some on cards' slots ahead of time, alternate spending them, then score and tidy up. A phase with `placeDice` opens a window for placing pool dice on cards; a dice pool with a `total` counts dice still on cards against the next roll.
+The turn structure is a list of segments. A phase is a window where listed actions are offered. `playerTurns` gives each player a full turn of the nested segments (I go, you go). `alternate` has players take turns activating one thing from a pool. Here is Full Spectrum Dominance's round: roll a pool of activation dice, place some on cards' slots ahead of time, alternate spending them, then score and tidy up. A phase with `placeDice` opens a window for placing pool dice on cards; a dice pool with a `total` counts dice still on cards against the next roll. A phase with `simultaneous: true` (#81, [simultaneous.md](simultaneous.md)) has both sides act at once and moves on when every seated player has sent `turn/ready` (40k's Command phase).
 
 ```ts
 // src/core/content/examples/fsd.ts

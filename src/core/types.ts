@@ -473,6 +473,12 @@ export interface TurnState {
   passes?: number;
   /** Seat that takes the first turn each round. */
   firstSeat: number;
+  /**
+   * In a simultaneous phase (#81, docs/simultaneous.md): the players who
+   * said they are done with it. The phase moves on when every seated player
+   * is; any change of phase clears it.
+   */
+  ready?: PlayerId[];
 }
 
 export interface Table {
@@ -521,6 +527,12 @@ export interface GameState {
   reaction?: OpenReaction | null;
   /** Reactions each player said not to be asked about this game (action ids; "*" for all). */
   reactionMute?: Record<PlayerId, string[]>;
+  /**
+   * Per-unit windows already opened this phase (#81: a moveEnded window opens
+   * once per enemy unit's move, not on every drag after). `at` is
+   * "round:activeSeat:phase"; `keys` are "window:unitId".
+   */
+  reactionAsked?: { at: string; keys: string[] };
   /**
    * A reaction's results, waiting for the action it answered: both land
    * together (FSD resolves the two at the same time).

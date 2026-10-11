@@ -481,6 +481,16 @@ export type Segment =
       placeDice?: boolean;
       /** A reminder shown while the phase is on, in the system author's own words (FSD scoring). */
       hint?: string;
+      /**
+       * Both sides act at once (#81, docs/simultaneous.md): every seated
+       * player does their own part of the phase at the same time, and the
+       * phase moves on once each of them has said they are done
+       * (`turn/ready`); ▶ (`turn/next`) still moves it on at once, as rules
+       * are advisory. Inside `playerTurns` an action's `side` still says
+       * whose turn it belongs to; outside them every player counts as
+       * active (a phase with no one's turn, such as a shared Command phase).
+       */
+      simultaneous?: boolean;
     }
   /** Each player takes a full turn of the nested segments (IGOUGO). */
   | { kind: "playerTurns"; segments: Segment[] }
@@ -843,10 +853,24 @@ export interface GameSystem {
 
 /** A moment the other side may react at (#80). */
 export interface ReactionWindowDef {
-  /** A standard id ("moveEnded", "targetDeclared", "beforeSaves", "fightPick", "chargeRolled", "rerollable") or the system's own. */
+  /**
+   * A standard id ("moveEnded", "movementEnded", "targetDeclared", "beforeSaves", "fightPick",
+   * "chargeRolled", "rerollable") or the system's own.
+   */
   id: Id;
-  /** The engine moment that opens it. */
-  opens: "phaseEnd" | "attackDeclared" | "beforeSaves" | "attackRolled" | "unitFought" | "chargeRolled";
+  /**
+   * The engine moment that opens it. "unitMoved" (#81): as each enemy unit's
+   * move ends (its whole unit moved, by a `models/move` or `unit/move` of the
+   * active side), once per unit a phase.
+   */
+  opens:
+    | "phaseEnd"
+    | "unitMoved"
+    | "attackDeclared"
+    | "beforeSaves"
+    | "attackRolled"
+    | "unitFought"
+    | "chargeRolled";
   /** Only in these phases (for phaseEnd, the phase that is ending). */
   phases?: Id[];
   /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */

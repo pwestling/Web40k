@@ -19,6 +19,7 @@ import {
 } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
 import { foldReaction } from "./content/reactions";
+import { markReady } from "./content/simultaneous";
 import {
   advanceTurn,
   endActivation,
@@ -523,6 +524,8 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return { ...state, settings: { ...state.settings, ...event.settings } };
     case "turn/next":
       return advanceTurn(state, 1, event.seed);
+    case "turn/ready":
+      return markReady(state, event.player, event.ready, event.seed);
     case "turn/prev":
       return advanceTurn(state, -1);
     case "turn/pass":

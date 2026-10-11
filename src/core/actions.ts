@@ -38,6 +38,7 @@ import {
 import { advance, respond, type Outcome, type ProcedureRun } from "./content/runner";
 import { playerActions, poolUsed, type PlayerActionTaken } from "./content/player";
 import { playableReactions } from "./content/reactions";
+import { isReady, simultaneousNow, waitingFor } from "./content/simultaneous";
 import { getSystem } from "./content/systems";
 import { currentSlot, systemOf } from "./content/turn";
 import { die, parseDice, rollDice } from "./dice";
@@ -224,6 +225,12 @@ export type Intent =
   | { type: "turn/next" }
   | { type: "turn/prev" }
   | { type: "turn/pass" }
+  /**
+   * In a simultaneous phase (#81, docs/simultaneous.md): this player is done
+   * with it (`ready: false` takes it back). The phase moves on once every
+   * seated player is ready.
+   */
+  | { type: "turn/ready"; ready?: boolean }
   /** `unit`: the unit whose go it was, when it only moved (a real table, where moves aren't on the board). */
   | { type: "turn/endActivation"; unit?: UnitId }
   | { type: "turn/first"; seat: number }
@@ -427,6 +434,8 @@ export type GameEvent =
     }
   /** `seed` drives any dice rolled on the way, e.g. activation dice at the start of a round. */
   | { type: "turn/next"; seed?: number }
+  /** A player is done with a simultaneous phase (#81); `seed` is set when it moves the phase on. */
+  | { type: "turn/ready"; player: PlayerId; ready: boolean; seed?: number }
   | { type: "turn/prev" }
   | { type: "turn/pass"; seed?: number }
   /** `unit`: the unit whose go it was, when it only moved (a real table, where moves aren't on the board). */
@@ -791,6 +800,19 @@ export function resolveIntent(
       const rounds = state ? systemOf(state).turn.rounds : undefined;
       if (state && typeof rounds === "number" && state.turn.round > rounds) return null;
       return { ...intent, seed: Math.floor(rng() * 2 ** 31) };
+    }
+    case "turn/ready": {
+      // Only a seated player, in a simultaneous phase, saying something new.
+      if (!state || state.players[from]?.seat === undefined || !simultaneousNow(state)) return null;
+      const ready = intent.ready !== false;
+      if (isReady(state, from) === ready) return null;
+      const last = ready && waitingFor(state).every((p) => p === from);
+      return {
+        type: "turn/ready",
+        player: from,
+        ready,
+        ...(last ? { seed: Math.floor(rng() * 2 ** 31) } : {}),
+      };
     }
     case "game/system":
       try {

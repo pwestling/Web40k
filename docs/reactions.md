@@ -15,31 +15,60 @@ fields in `src/core/content/schema.ts`, state in `src/core/types.ts`.
 
 Standard ids (a system, package or faction pack may add its own):
 
-| id               | Opens when                                                         | Who reacts                         |
-| ---------------- | ------------------------------------------------------------------ | ---------------------------------- |
-| `moveEnded`      | an enemy move ends (40k: as the enemy's Movement phase ends)       | the other side                     |
-| `targetDeclared` | an enemy declares an attack on one of your units                   | the side attacked                  |
-| `beforeSaves`    | the wound roll is done and your saves are next                     | the defender                       |
-| `fightPick`      | an enemy unit has just fought                                      | the other side                     |
-| `chargeRolled`   | an enemy charge roll was made                                      | the side charged                   |
-| `chargeDeclared` | an enemy declares a charge (The Old World's charge reactions)      | the side charged                   |
-| `rerollable`     | a roll left failed dice the roller could re-roll ("Re-roll this?") | the side that rolled (either side) |
+| id               | Opens when                                                             | Who reacts                         |
+| ---------------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| `moveEnded`      | an enemy unit's move ends (#81: each move, not each drag)              | the other side                     |
+| `movementEnded`  | the enemy's Movement phase ends (#81; before #81 this was `moveEnded`) | the other side                     |
+| `targetDeclared` | an enemy declares an attack on one of your units                       | the side attacked                  |
+| `beforeSaves`    | the wound roll is done and your saves are next                         | the defender                       |
+| `fightPick`      | an enemy unit has just fought                                          | the other side                     |
+| `chargeRolled`   | an enemy charge roll was made                                          | the side charged                   |
+| `chargeDeclared` | an enemy declares a charge (The Old World's charge reactions)          | the side charged                   |
+| `rerollable`     | a roll left failed dice the roller could re-roll ("Re-roll this?")     | the side that rolled (either side) |
 
 ### Where they open
 
 **40k** (`forty-k.ts` `reactionWindows`; each core stratagem's `reacts` names its window):
 
-| Window           | Opens at                                                                                                    | Core stratagems (and range)                    |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `moveEnded`      | `turn/next` out of the enemy's Movement phase, if any enemy unit moved; trigger `units` = those units       | Fire Overwatch (24"), Rapid Ingress            |
-| `targetDeclared` | `attack/declare` (the attack panel) or a data `action/take` with a procedure and a target (the bot's shots) | Smokescreen (the unit attacked)                |
-| `rerollable`     | `attack/roll` with failed dice, the attack not done (attack panel only: attack/reroll needs `state.attack`) | Command Re-roll (`reroll` carries the dice)    |
-| `beforeSaves`    | `attack/roll` that reaches the save stage, or a procedure step whose next test is `save`                    | none core; imported ones by When text          |
-| `fightPick`      | `attack/clear` of a melee attack, or `procedure/clear` of an action that sets `fought`; Fight phase only    | Counter-offensive (an engaged unit not fought) |
-| `chargeRolled`   | `dice/roll` with charge `targets`, or a data `action/take` that sets `charged`; Charge phase only           | Heroic Intervention (12" of the charger)       |
+| Window           | Opens at                                                                                                     | Core stratagems (and range)                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `moveEnded`      | an enemy unit's move ends in its Movement phase (see "When a move ends"); trigger `unitId` = that unit       | none core; imported ones by When text ("ends a Normal, Advance or Fall Back move") |
+| `movementEnded`  | the turn moving on out of the enemy's Movement phase, if any enemy unit moved; trigger `units` = those units | Fire Overwatch (24" of a unit that moved), Rapid Ingress                           |
+| `targetDeclared` | `attack/declare` (the attack panel) or a data `action/take` with a procedure and a target (the bot's shots)  | Smokescreen (the unit attacked)                                                    |
+| `rerollable`     | `attack/roll` with failed dice, the attack not done (attack panel only: attack/reroll needs `state.attack`)  | Command Re-roll (`reroll` carries the dice)                                        |
+| `beforeSaves`    | `attack/roll` that reaches the save stage, or a procedure step whose next test is `save`                     | none core; imported ones by When text                                              |
+| `fightPick`      | `attack/clear` of a melee attack, or `procedure/clear` of an action that sets `fought`; Fight phase only     | Counter-offensive (an engaged unit not fought)                                     |
+| `chargeRolled`   | `dice/roll` with charge `targets`, or a data `action/take` that sets `charged`; Charge phase only            | Heroic Intervention (12" of the charger)                                           |
 
 Imported army stratagems answer a window by `reacts` (faction packs) or by the
 window's `match` on their When text.
+
+### When a move ends (#81)
+
+A window with `opens: "unitMoved"` (40k's `moveEnded`) opens on the event that
+finishes an enemy unit's move, in a phase the window lists:
+
+- a `models/move` (not `setup`) or `unit/move` of a unit of the side whose turn
+  it is, not in reserve,
+- after which every model of the unit still on the table has moved this phase
+  (moved by this event, or away from where it stood as the phase began).
+
+So a whole unit dragged at once (or the bot's move, or a regiment's) ends its
+move with that drag; a unit moved model by model ends its move with the last
+model. A unit's later drags in the same phase (straightening a line) don't
+open it again: `state.reactionAsked` remembers each unit a per-unit window
+opened for this phase. Like every window it opens only when the other side
+holds something playable for that unit, range and filters checked against the
+unit that just moved (`trigger.unitId`; `trigger.seq` is the move's event). A
+unit left partly where it stood never ends a move this way; the phase-end
+window still lists it.
+
+40k (11th edition, as this app reads it) has Fire Overwatch only at the end of
+the opponent's Movement phase, so its core stratagems answer `movementEnded`;
+`moveEnded` is for imported or faction stratagems whose When text says "just
+after an enemy unit ends a Normal, Advance or Fall Back move" (or a faction
+pack's `reacts: ["moveEnded"]`). A rules package can move Fire Overwatch to
+each move with `reacts: [{ window: "moveEnded", range: 24 }]`.
 
 **FSD**: its held action (`state.pending`) reads as `moveEnded` (a move) or
 `targetDeclared` (a fire action); `playableReactions` lists each unit's `react`
@@ -65,6 +94,8 @@ interface GameState {
   reaction?: OpenReaction | null;
   /** Per player: reactions they said not to be asked about this game ("Don't ask me this game"). "*" = all. */
   reactionMute?: Record<PlayerId, string[]>;
+  /** #81: per-unit windows opened this phase ("moveEnded:<unitId>"), so a unit's move is asked about once. */
+  reactionAsked?: { at: string; keys: string[] };
 }
 
 interface OpenReaction {
@@ -191,7 +222,7 @@ reactionWindows?: ReactionWindowDef[];
 interface ReactionWindowDef {
   id: string; // a standard id above, or your own
   /** The engine moment that opens it. */
-  opens: "phaseEnd" | "attackDeclared" | "beforeSaves" | "attackRolled" | "unitFought" | "chargeRolled";
+  opens: "phaseEnd" | "unitMoved" | "attackDeclared" | "beforeSaves" | "attackRolled" | "unitFought" | "chargeRolled";
   /** Only in these phases (phaseEnd: the phase that is ending). */
   phases?: string[];
   /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */
