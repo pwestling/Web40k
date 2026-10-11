@@ -72,6 +72,14 @@ export type SideMessage =
   | { t: "talk/moment"; seq: number; kind: string }
   /** A player holds their dice to shake them, or let go (src/companion/Shake.tsx): "Ana is shaking…". */
   | { t: "talk/shake"; on: boolean }
+  /** The end-of-game reel's card on show (src/broadcast/Moments.tsx): the host leads, Next anywhere moves all. */
+  | { t: "talk/reel"; index: number }
+  /**
+   * Models being dragged, about ten times a second (src/render/DragPreview.tsx): where each is in the hand
+   * now, as [model id, x, y]; null when let go. Ephemeral like the talk bar's arrows: the move itself is
+   * still the logged event when it lands.
+   */
+  | { t: "talk/drag"; models: [string, number, number][] | null }
   /** Voice at the table (src/voice): this peer's mic is on or off. The audio itself is a media stream. */
   | { t: "talk/voice"; on: boolean; name?: string }
   /**

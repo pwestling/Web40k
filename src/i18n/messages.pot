@@ -725,15 +725,32 @@ msgstr ""
 msgid "Delay"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:375
+#: src/broadcast/Moments.tsx:327
+msgid "Final score · {mission}"
+msgstr ""
+
+#: src/broadcast/Moments.tsx:327
+msgid "Final score"
+msgstr ""
+
+#: src/broadcast/Moments.tsx:329
+#: src/share/cards.ts:295
+msgid "{side} wins {score}"
+msgstr ""
+
+#: src/broadcast/Moments.tsx:330
+msgid "{score} · A draw"
+msgstr ""
+
+#: src/broadcast/Moments.tsx:441
 msgid "{i} of {n}"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:379
+#: src/broadcast/Moments.tsx:451
 msgid "Next"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:381
+#: src/broadcast/Moments.tsx:454
 msgid "Skip to stats"
 msgstr ""
 
@@ -1491,7 +1508,7 @@ msgid "Send them this link to open on their phone:"
 msgstr ""
 
 #: src/companion/CompanionScreen.tsx:138
-#: src/ui/Room.tsx:126
+#: src/ui/Room.tsx:127
 msgid "Copied ✓"
 msgstr ""
 
@@ -1499,7 +1516,7 @@ msgstr ""
 #: src/mail/MailBar.tsx:236
 #: src/ui/Hud.tsx:320
 #: src/ui/NetBanner.tsx:75
-#: src/ui/Room.tsx:126
+#: src/ui/Room.tsx:127
 msgid "Copy invite link"
 msgstr ""
 
@@ -3207,7 +3224,7 @@ msgstr ""
 
 #: src/mail/MailBar.tsx:99
 #: src/mail/MailLobby.tsx:159
-#: src/ui/TopBar.tsx:62
+#: src/ui/TopBar.tsx:66
 msgid "your opponent"
 msgstr ""
 
@@ -3593,8 +3610,8 @@ msgid "round {n}"
 msgstr ""
 
 #: src/opentables/OpenTables.tsx:406
-#: src/ui/Room.tsx:199
-#: src/ui/TopBar.tsx:646
+#: src/ui/Room.tsx:200
+#: src/ui/TopBar.tsx:650
 msgid "{n} watching"
 msgid_plural "{n} watching"
 msgstr[0] ""
@@ -4731,7 +4748,7 @@ msgstr ""
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:59
 #: src/ui/TerrainPanel.tsx:353
-#: src/ui/TopBar.tsx:236
+#: src/ui/TopBar.tsx:240
 #: src/ui/WhatNow.tsx:46
 #: src/ui/gameLog.ts:449
 msgid "Deployment"
@@ -5422,10 +5439,6 @@ msgstr ""
 msgid "You win on losses: {score}"
 msgstr ""
 
-#: src/share/cards.ts:295
-msgid "{side} wins {score}"
-msgstr ""
-
 #: src/share/cards.ts:296
 msgid "{side} wins on losses: {score}"
 msgstr ""
@@ -5457,7 +5470,7 @@ msgid "What happened"
 msgstr ""
 
 #: src/share/clip.ts:266
-#: src/ui/TopBar.tsx:265
+#: src/ui/TopBar.tsx:269
 msgid "Battle over"
 msgstr ""
 
@@ -6031,12 +6044,12 @@ msgstr ""
 msgid "Room to manoeuvre: a few hills, woods and walls"
 msgstr ""
 
-#: src/talk/talk.ts:141
-#: src/talk/talk.ts:148
+#: src/talk/talk.ts:149
+#: src/talk/talk.ts:156
 msgid "{name} (watching)"
 msgstr ""
 
-#: src/talk/talk.ts:141
+#: src/talk/talk.ts:149
 msgid "Spectator {n}"
 msgstr ""
 
@@ -6800,7 +6813,7 @@ msgstr ""
 #: src/ui/AttackPanel.tsx:366
 #: src/ui/AttackPanel.tsx:375
 #: src/ui/AttackPanel.tsx:476
-#: src/ui/TopBar.tsx:471
+#: src/ui/TopBar.tsx:475
 msgid "none"
 msgstr ""
 
@@ -6969,7 +6982,7 @@ msgstr ""
 #: src/ui/Coach.tsx:87
 #: src/ui/ProcedurePanels.tsx:421
 #: src/ui/TerrainPanel.tsx:163
-#: src/ui/TopBar.tsx:620
+#: src/ui/TopBar.tsx:624
 #: src/ui/TouchLayer.tsx:80
 msgid "Done"
 msgstr ""
@@ -7649,7 +7662,7 @@ msgid "Redo this step"
 msgstr ""
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:347
+#: src/ui/TopBar.tsx:351
 #: src/ui/WhatNow.tsx:398
 msgid "Next phase"
 msgstr ""
@@ -7716,7 +7729,7 @@ msgstr ""
 msgid "can lead"
 msgstr ""
 
-#: src/ui/CoreAbilities.tsx:220
+#: src/ui/CoreAbilities.tsx:228
 msgid "Lead {unit}, which it stands with"
 msgstr ""
 
@@ -8990,7 +9003,7 @@ msgid "a room code or invite link"
 msgstr ""
 
 #: src/ui/Lobby.tsx:723
-#: src/ui/Room.tsx:114
+#: src/ui/Room.tsx:115
 msgid "Room"
 msgstr ""
 
@@ -9096,7 +9109,7 @@ msgstr ""
 #: src/ui/Missions.tsx:204
 #: src/ui/Missions.tsx:343
 #: src/ui/ProcedurePanels.tsx:387
-#: src/ui/TopBar.tsx:331
+#: src/ui/TopBar.tsx:335
 msgid "Pass"
 msgstr ""
 
@@ -10235,134 +10248,148 @@ msgstr ""
 msgid "{name}?"
 msgstr ""
 
-#: src/ui/Room.tsx:104
+#: src/ui/Room.tsx:105
 msgid "you"
 msgstr ""
 
-#: src/ui/Room.tsx:106
+#: src/ui/Room.tsx:107
 msgid "connected"
 msgstr ""
 
-#: src/ui/Room.tsx:108
+#: src/ui/Room.tsx:109
 msgid "waiting for someone to take this seat"
 msgstr ""
 
-#: src/ui/Room.tsx:109
+#: src/ui/Room.tsx:110
 msgid "reconnecting…"
 msgstr ""
 
-#: src/ui/Room.tsx:115
+#: src/ui/Room.tsx:116
 msgid "(this browser)"
 msgstr ""
 
-#: src/ui/Room.tsx:116
+#: src/ui/Room.tsx:117
 msgid "hosted by this site's server"
 msgstr ""
 
-#: src/ui/Room.tsx:138
+#: src/ui/Room.tsx:139
 msgid "A replay, watched together. {names} played it."
 msgstr ""
 
-#: src/ui/Room.tsx:150
+#: src/ui/Room.tsx:151
 msgid "host"
 msgstr ""
 
-#: src/ui/Room.tsx:151
+#: src/ui/Room.tsx:152
 msgid "ready"
 msgstr ""
 
-#: src/ui/Room.tsx:152
+#: src/ui/Room.tsx:153
 msgid "getting rules…"
 msgstr ""
 
-#: src/ui/Room.tsx:157
+#: src/ui/Room.tsx:158
 msgid "Playing without {rules}: their table may disagree"
 msgstr ""
 
-#: src/ui/Room.tsx:162
+#: src/ui/Room.tsx:163
 msgid "some of the game's rules"
 msgstr ""
 
-#: src/ui/Room.tsx:166
+#: src/ui/Room.tsx:167
 msgid "⚠ different rules"
 msgstr ""
 
-#: src/ui/Room.tsx:175
+#: src/ui/Room.tsx:176
 msgid "Joining {name}'s game…"
 msgstr ""
 
-#: src/ui/Room.tsx:176
+#: src/ui/Room.tsx:177
 msgid "Joining the host's game…"
 msgstr ""
 
-#: src/ui/Room.tsx:177
+#: src/ui/Room.tsx:178
 msgid "Looking for the game's host…"
 msgstr ""
 
-#: src/ui/Room.tsx:179
+#: src/ui/Room.tsx:180
 msgid "Back to the lobby"
 msgstr ""
 
-#: src/ui/Room.tsx:184
+#: src/ui/Room.tsx:185
 msgid "Waiting for an opponent to join…"
 msgstr ""
 
-#: src/ui/Room.tsx:188
+#: src/ui/Room.tsx:189
 msgid "Someone joining is getting the rules…"
 msgid_plural "{n} people joining are getting the rules…"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:198
+#: src/ui/Room.tsx:199
 msgid "{n} watching (you included)"
 msgid_plural "{n} watching (you included)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:232
+#: src/ui/Room.tsx:233
 msgid "{name}: {n} to place"
 msgid_plural "{name}: {n} to place"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:235
+#: src/ui/Room.tsx:236
 msgid "{name}: All placed"
 msgstr ""
 
-#: src/ui/Room.tsx:237
+#: src/ui/Room.tsx:238
 msgid "{n} to place"
 msgid_plural "{n} to place"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:238
+#: src/ui/Room.tsx:239
 msgid "All placed"
 msgstr ""
 
-#: src/ui/Room.tsx:240
+#: src/ui/Room.tsx:241
 msgid "Tell the other player you've finished deploying"
 msgstr ""
 
-#: src/ui/Room.tsx:248
-#: src/ui/TopBar.tsx:503
+#: src/ui/Room.tsx:249
+#: src/ui/TopBar.tsx:507
 msgid "Ready"
 msgstr ""
 
-#: src/ui/Room.tsx:259
+#: src/ui/Room.tsx:260
 msgid "outside your zone"
 msgstr ""
 
-#: src/ui/Room.tsx:259
+#: src/ui/Room.tsx:260
 msgid "not placed yet"
 msgstr ""
 
-#: src/ui/Room.tsx:266
+#: src/ui/Room.tsx:267
 msgid "{n} unit in reserve"
 msgid_plural "{n} units in reserve"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Room.tsx:45
+#: src/ui/Room.tsx:305
+msgid "{leader} stands with {unit}"
+msgstr ""
+
+#: src/ui/Room.tsx:307
+msgid "Lead it"
+msgstr ""
+
+#: src/ui/Room.tsx:314
+msgid "Lead all {n}"
+msgid_plural "Lead all {n}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui/Room.tsx:46
 msgid "Still looking. The host may have closed their page, or the link is from an old game. If the host is there, your connection may be the problem:"
 msgstr ""
 
@@ -10629,7 +10656,7 @@ msgid "Mark {status}"
 msgstr ""
 
 #: src/ui/StratagemHand.tsx:100
-#: src/ui/TopBar.tsx:634
+#: src/ui/TopBar.tsx:638
 msgid "Your turn"
 msgstr ""
 
@@ -10831,12 +10858,12 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:542
-#: src/ui/TopBar.tsx:312
+#: src/ui/TopBar.tsx:316
 msgid "End this activation; the other player goes next"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:548
-#: src/ui/TopBar.tsx:319
+#: src/ui/TopBar.tsx:323
 msgid "End activation"
 msgstr ""
 
@@ -11171,7 +11198,7 @@ msgid "after it charged"
 msgstr ""
 
 #: src/ui/TeachRule.tsx:27
-#: src/ui/TopBar.tsx:511
+#: src/ui/TopBar.tsx:515
 msgid "Re-roll"
 msgstr ""
 
@@ -11576,225 +11603,225 @@ msgstr ""
 msgid "Text size"
 msgstr ""
 
-#: src/ui/TopBar.tsx:101
-msgid "{names} aren't ready yet"
-msgstr ""
-
-#: src/ui/TopBar.tsx:102
-msgid "{name} isn't ready yet"
-msgstr ""
-
-#: src/ui/TopBar.tsx:104
-msgid "No mission: you'll score by hand"
-msgstr ""
-
-#: src/ui/TopBar.tsx:128
-msgid "Advance a phase during {side}'s turn?"
-msgstr ""
-
-#: src/ui/TopBar.tsx:129
-msgid "Advance a phase during the other player's turn?"
-msgstr ""
-
-#: src/ui/TopBar.tsx:131
-msgid "Go back a phase during {side}'s turn?"
-msgstr ""
-
-#: src/ui/TopBar.tsx:132
-msgid "Go back a phase during the other player's turn?"
-msgstr ""
-
-#: src/ui/TopBar.tsx:216
-msgid "{name} is playing…"
-msgstr ""
-
-#: src/ui/TopBar.tsx:223
-msgid "Let the computer play"
-msgstr ""
-
-#: src/ui/TopBar.tsx:227
-msgid "Previous phase"
-msgstr ""
-
-#: src/ui/TopBar.tsx:240
-msgid "First turn:"
-msgstr ""
-
-#: src/ui/TopBar.tsx:253
-msgid "Place your units in your zone"
-msgstr ""
-
-#: src/ui/TopBar.tsx:255
-msgid "Joining the game…"
-msgstr ""
-
-#: src/ui/TopBar.tsx:257
-msgid "Players are deploying"
-msgstr ""
-
-#: src/ui/TopBar.tsx:267
-msgid "Round {round} of {rounds} · {side}"
-msgstr ""
-
-#: src/ui/TopBar.tsx:272
-msgid "Round {round} · {side}"
-msgstr ""
-
-#: src/ui/TopBar.tsx:293
-msgid "The roll-off lets you pick who goes first this round"
-msgstr ""
-
-#: src/ui/TopBar.tsx:296
-msgid "Let {side} go first"
-msgstr ""
-
-#: src/ui/TopBar.tsx:311
-msgid "Answer the open question first"
-msgstr ""
-
-#: src/ui/TopBar.tsx:326
-msgid "Both passed: the round moves on"
-msgstr ""
-
-#: src/ui/TopBar.tsx:327
-msgid "Pass; the other player goes next"
-msgstr ""
-
-#: src/ui/TopBar.tsx:337
-msgid "Deploy, then Send to {name}"
-msgstr ""
-
-#: src/ui/TopBar.tsx:338
-msgid "Waiting for {name} to start"
-msgstr ""
-
-#: src/ui/TopBar.tsx:346
-msgid "Waiting for {names} to be ready"
-msgstr ""
-
-#: src/ui/TopBar.tsx:358
-msgid "Start battle ▶"
-msgstr ""
-
-#: src/ui/TopBar.tsx:373
-msgid "Pick one"
-msgstr ""
-
-#: src/ui/TopBar.tsx:383
-msgid "Start anyway"
-msgstr ""
-
-#: src/ui/TopBar.tsx:383
-msgid "Go on anyway"
-msgstr ""
-
-#: src/ui/TopBar.tsx:385
-msgid "Not yet"
-msgstr ""
-
-#: src/ui/TopBar.tsx:392
-msgid "Phase options"
-msgstr ""
-
-#: src/ui/TopBar.tsx:404
-msgid "Skip to the next phase"
-msgstr ""
-
-#: src/ui/TopBar.tsx:416
-msgid "Pause the computer"
-msgstr ""
-
-#: src/ui/TopBar.tsx:419
-msgid "Advance their phase"
-msgstr ""
-
-#: src/ui/TopBar.tsx:420
-msgid "Back a phase"
-msgstr ""
-
-#: src/ui/TopBar.tsx:430
-msgid "Controls (?)"
-msgstr ""
-
-#: src/ui/TopBar.tsx:489
-msgid "Already re-rolled this round"
-msgstr ""
-
-#: src/ui/TopBar.tsx:491
-msgid "Re-roll the picked dice: once a round"
-msgstr ""
-
-#: src/ui/TopBar.tsx:492
-msgid "Pick dice to re-roll first"
-msgstr ""
-
-#: src/ui/TopBar.tsx:496
-msgid "Re-roll (once)"
-msgstr ""
-
-#: src/ui/TopBar.tsx:500
-msgid "Keep these dice as they are: you give up this round's re-roll"
-msgstr ""
-
-#: src/ui/TopBar.tsx:510
-msgid "Spend"
-msgstr ""
-
-#: src/ui/TopBar.tsx:552
-#: src/ui/TopBar.tsx:553
-msgid "Sound and dice"
-msgstr ""
-
-#: src/ui/TopBar.tsx:553
-msgid "Sound muted"
-msgstr ""
-
-#: src/ui/TopBar.tsx:561
-msgid "Sound"
-msgstr ""
-
-#: src/ui/TopBar.tsx:564
-msgid "Volume"
-msgstr ""
-
-#: src/ui/TopBar.tsx:575
-msgid "A quiet room under the game; the turn bell follows Sound"
-msgstr ""
-
-#: src/ui/TopBar.tsx:577
-msgid "Table ambience"
-msgstr ""
-
-#: src/ui/TopBar.tsx:580
-msgid "Fast dice"
-msgstr ""
-
-#: src/ui/TopBar.tsx:608
-msgid "Change {label}"
-msgstr ""
-
-#: src/ui/TopBar.tsx:645
-msgid "People watching this game, running a little behind it"
-msgstr ""
-
-#: src/ui/TopBar.tsx:74
-msgid "Waiting for {name} to answer: {question}"
-msgstr ""
-
-#: src/ui/TopBar.tsx:75
-msgid "a player"
-msgstr ""
-
-#: src/ui/TopBar.tsx:95
-msgid "{names} have no army yet"
-msgstr ""
-
-#: src/ui/TopBar.tsx:96
+#: src/ui/TopBar.tsx:100
 msgid "{name} has no army yet"
 msgstr ""
 
-#: src/ui/TopBar.tsx:99
+#: src/ui/TopBar.tsx:103
 msgid "{n} players aren't ready yet"
+msgstr ""
+
+#: src/ui/TopBar.tsx:105
+msgid "{names} aren't ready yet"
+msgstr ""
+
+#: src/ui/TopBar.tsx:106
+msgid "{name} isn't ready yet"
+msgstr ""
+
+#: src/ui/TopBar.tsx:108
+msgid "No mission: you'll score by hand"
+msgstr ""
+
+#: src/ui/TopBar.tsx:132
+msgid "Advance a phase during {side}'s turn?"
+msgstr ""
+
+#: src/ui/TopBar.tsx:133
+msgid "Advance a phase during the other player's turn?"
+msgstr ""
+
+#: src/ui/TopBar.tsx:135
+msgid "Go back a phase during {side}'s turn?"
+msgstr ""
+
+#: src/ui/TopBar.tsx:136
+msgid "Go back a phase during the other player's turn?"
+msgstr ""
+
+#: src/ui/TopBar.tsx:220
+msgid "{name} is playing…"
+msgstr ""
+
+#: src/ui/TopBar.tsx:227
+msgid "Let the computer play"
+msgstr ""
+
+#: src/ui/TopBar.tsx:231
+msgid "Previous phase"
+msgstr ""
+
+#: src/ui/TopBar.tsx:244
+msgid "First turn:"
+msgstr ""
+
+#: src/ui/TopBar.tsx:257
+msgid "Place your units in your zone"
+msgstr ""
+
+#: src/ui/TopBar.tsx:259
+msgid "Joining the game…"
+msgstr ""
+
+#: src/ui/TopBar.tsx:261
+msgid "Players are deploying"
+msgstr ""
+
+#: src/ui/TopBar.tsx:271
+msgid "Round {round} of {rounds} · {side}"
+msgstr ""
+
+#: src/ui/TopBar.tsx:276
+msgid "Round {round} · {side}"
+msgstr ""
+
+#: src/ui/TopBar.tsx:297
+msgid "The roll-off lets you pick who goes first this round"
+msgstr ""
+
+#: src/ui/TopBar.tsx:300
+msgid "Let {side} go first"
+msgstr ""
+
+#: src/ui/TopBar.tsx:315
+msgid "Answer the open question first"
+msgstr ""
+
+#: src/ui/TopBar.tsx:330
+msgid "Both passed: the round moves on"
+msgstr ""
+
+#: src/ui/TopBar.tsx:331
+msgid "Pass; the other player goes next"
+msgstr ""
+
+#: src/ui/TopBar.tsx:341
+msgid "Deploy, then Send to {name}"
+msgstr ""
+
+#: src/ui/TopBar.tsx:342
+msgid "Waiting for {name} to start"
+msgstr ""
+
+#: src/ui/TopBar.tsx:350
+msgid "Waiting for {names} to be ready"
+msgstr ""
+
+#: src/ui/TopBar.tsx:362
+msgid "Start battle ▶"
+msgstr ""
+
+#: src/ui/TopBar.tsx:377
+msgid "Pick one"
+msgstr ""
+
+#: src/ui/TopBar.tsx:387
+msgid "Start anyway"
+msgstr ""
+
+#: src/ui/TopBar.tsx:387
+msgid "Go on anyway"
+msgstr ""
+
+#: src/ui/TopBar.tsx:389
+msgid "Not yet"
+msgstr ""
+
+#: src/ui/TopBar.tsx:396
+msgid "Phase options"
+msgstr ""
+
+#: src/ui/TopBar.tsx:408
+msgid "Skip to the next phase"
+msgstr ""
+
+#: src/ui/TopBar.tsx:420
+msgid "Pause the computer"
+msgstr ""
+
+#: src/ui/TopBar.tsx:423
+msgid "Advance their phase"
+msgstr ""
+
+#: src/ui/TopBar.tsx:424
+msgid "Back a phase"
+msgstr ""
+
+#: src/ui/TopBar.tsx:434
+msgid "Controls (?)"
+msgstr ""
+
+#: src/ui/TopBar.tsx:493
+msgid "Already re-rolled this round"
+msgstr ""
+
+#: src/ui/TopBar.tsx:495
+msgid "Re-roll the picked dice: once a round"
+msgstr ""
+
+#: src/ui/TopBar.tsx:496
+msgid "Pick dice to re-roll first"
+msgstr ""
+
+#: src/ui/TopBar.tsx:500
+msgid "Re-roll (once)"
+msgstr ""
+
+#: src/ui/TopBar.tsx:504
+msgid "Keep these dice as they are: you give up this round's re-roll"
+msgstr ""
+
+#: src/ui/TopBar.tsx:514
+msgid "Spend"
+msgstr ""
+
+#: src/ui/TopBar.tsx:556
+#: src/ui/TopBar.tsx:557
+msgid "Sound and dice"
+msgstr ""
+
+#: src/ui/TopBar.tsx:557
+msgid "Sound muted"
+msgstr ""
+
+#: src/ui/TopBar.tsx:565
+msgid "Sound"
+msgstr ""
+
+#: src/ui/TopBar.tsx:568
+msgid "Volume"
+msgstr ""
+
+#: src/ui/TopBar.tsx:579
+msgid "A quiet room under the game; the turn bell follows Sound"
+msgstr ""
+
+#: src/ui/TopBar.tsx:581
+msgid "Table ambience"
+msgstr ""
+
+#: src/ui/TopBar.tsx:584
+msgid "Fast dice"
+msgstr ""
+
+#: src/ui/TopBar.tsx:612
+msgid "Change {label}"
+msgstr ""
+
+#: src/ui/TopBar.tsx:649
+msgid "People watching this game, running a little behind it"
+msgstr ""
+
+#: src/ui/TopBar.tsx:78
+msgid "Waiting for {name} to answer: {question}"
+msgstr ""
+
+#: src/ui/TopBar.tsx:79
+msgid "a player"
+msgstr ""
+
+#: src/ui/TopBar.tsx:99
+msgid "{names} have no army yet"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:116

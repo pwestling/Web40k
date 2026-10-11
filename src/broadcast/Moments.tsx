@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
-import type { GameRecord } from "../core";
+import { sideName, sidePlayers, sides, type GameRecord, type GameState } from "../core";
 import { momentsOf, type Moment } from "../core/moments";
 import { useStore } from "../store";
 import { battleOver } from "../ui/StatsScreen";
@@ -8,7 +8,7 @@ import { pace } from "../ui/pace";
 import { clearTray } from "../ui/DiceTray";
 import { quietRolls, useHold } from "../ui/hold";
 import { legendSting, whoosh } from "../ui/sound";
-import { sendMoment, useTalk } from "../talk/talk";
+import { sendMoment, sendReel, useTalk } from "../talk/talk";
 import { useBroadcast } from "./broadcast";
 import { useReel } from "./reel";
 import { t } from "../i18n";
@@ -260,7 +260,9 @@ export function playCondensed(beats: Beat[], done: () => void): void {
 
 /** About how long the highlights reel runs (ms). */
 export function reelLength(record: GameRecord): number {
-  return momentsOf(record).reduce((n, m) => n + momentLength(record, m), 0);
+  const moments = momentsOf(record);
+  // The result card opens it (PX B4).
+  return moments.length ? moments.reduce((n, m) => n + momentLength(record, m), CARD_MS) : 0;
 }
 
 /** Start the highlights reel, as at the end of a game (the replay page's first button, a clip). */
@@ -307,6 +309,32 @@ function finishReel(director: boolean | null): void {
   if (s.session) s.setScrub(null);
 }
 
+/**
+ * The reel's first card (PX B4): the result, before the moments that led to
+ * it. "Ana wins 31 – 24", or "12 – 12 · A draw".
+ */
+function resultCard(game: GameState, seq: number): Moment {
+  const vp = (seat: number) => game.resources[sidePlayers(game, seat)[0]?.id ?? ""]?.VP ?? 0;
+  const seats = [...sides(game)].sort((a, b) => vp(b) - vp(a));
+  const score = seats.map(vp).join(" – ");
+  const won = seats.length > 1 && vp(seats[0]!) > vp(seats[1]!);
+  return {
+    // Not one to play through: the card stays up a few seconds.
+    kind: "turning",
+    seq,
+    end: seq,
+    round: game.turn.round,
+    when: game.mission ? t("Final score · {mission}", { mission: game.mission.name }) : t("Final score"),
+    title: won
+      ? t("{side} wins {score}", { side: sideName(game, seats[0]!), score })
+      : t("{score} · A draw", { score }),
+    line: seats.map((seat) => `${sideName(game, seat)} ${vp(seat)}`).join(" · "),
+    ...(won ? { player: sidePlayers(game, seats[0]!)[0]?.id } : {}),
+    units: [],
+    score: 0,
+  };
+}
+
 /** The reel at the end of a game, and moment cards while a replay plays. */
 export function Moments() {
   const record = useStore((s) => s.record);
@@ -316,7 +344,22 @@ export function Moments() {
   const allowed = useMomentsAllowed();
   const { index, done } = useReel();
   const moments = useMemo(() => (allowed ? momentsOf(record) : []), [allowed, record]);
+  // The reel opens on the result (PX B4), from the game as it ended.
+  const final = useStore((s) => s.game);
+  const reel = useMemo(
+    () =>
+      moments.length && battleOver(final)
+        ? [resultCard(final, record.events.at(-1)?.seq ?? 0), ...moments]
+        : moments,
+    [moments, final, record],
+  );
   const director = useRef<boolean | null>(null);
+  // Online, the host's screen leads the reel; another player's waits for it (PX B4).
+  const led = useRef(false);
+  const leads = () => {
+    const s = useStore.getState();
+    return !s.session || s.role === "host" || !led.current;
+  };
 
   // The game just ended (on this screen): start the reel, once.
   useEffect(() => {
@@ -326,7 +369,17 @@ export function Moments() {
     useStore.getState().set({ director: true });
     useStore.getState().select(null);
     useReel.setState({ index: 0 });
+    if (useStore.getState().role === "host") sendReel(0);
   }, [over, done, index, moments.length]);
+
+  // Another screen moved the reel on: the host as it plays, or a player's Next (never back).
+  const heard = useTalk((s) => s.reel);
+  useEffect(() => {
+    if (!heard) return;
+    if (heard.host) led.current = true;
+    const at = useReel.getState().index;
+    if (at !== null && heard.index > at) useReel.setState({ index: heard.index });
+  }, [heard]);
 
   // A clean stage while the reel runs: no panels, caption or replay bar.
   useEffect(() => {
@@ -338,7 +391,7 @@ export function Moments() {
   // Each card: play the moment through, then on to the next.
   useEffect(() => {
     if (index === null) return;
-    const m = moments[index];
+    const m = reel[index];
     if (!m) {
       finishReel(director.current);
       return;
@@ -347,9 +400,22 @@ export function Moments() {
     clearTray();
     if (m.kind === "rare") legendSting();
     else whoosh();
-    playMoment(m, () => useReel.setState({ index: index + 1 }));
-    return stopMoment;
-  }, [index, moments]);
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    playMoment(m, () => {
+      // The host moves everyone on; a screen following it moves on alone only if the host goes quiet.
+      if (leads()) {
+        useReel.setState({ index: index + 1 });
+        if (useStore.getState().role === "host") sendReel(index + 1);
+      } else
+        wait = setTimeout(() => {
+          if (useReel.getState().index === index) useReel.setState({ index: index + 1 });
+        }, 8000);
+    });
+    return () => {
+      clearTimeout(wait);
+      stopMoment();
+    };
+  }, [index, reel]);
 
   // In a replay, a moment's card comes up as playback reaches it.
   const replayCard = useReel((s) => s.replay);
@@ -369,14 +435,21 @@ export function Moments() {
   }, [cue, allowed, moments]);
 
   const watching = useStore((s) => s.role === "spectator");
-  if (index !== null && moments[index]) {
-    const m = moments[index];
+  if (index !== null && reel[index]) {
+    const m = reel[index];
     return (
-      <MomentCard moment={m} step={t("{i} of {n}", { i: index + 1, n: moments.length })}>
-        {/* Players can hurry their own reel; viewers watch it play (UX 143). */}
+      <MomentCard moment={m} step={t("{i} of {n}", { i: index + 1, n: reel.length })}>
+        {/* Players can hurry the reel, on every player's screen (PX B4); viewers watch it play (UX 143). */}
         {!watching && (
           <>
-            <button onClick={() => useReel.setState({ index: index + 1 })}>{t("Next")}</button>
+            <button
+              onClick={() => {
+                useReel.setState({ index: index + 1 });
+                sendReel(index + 1);
+              }}
+            >
+              {t("Next")}
+            </button>
             <button className="quiet" onClick={() => finishReel(director.current)}>
               {t("Skip to stats")}
             </button>

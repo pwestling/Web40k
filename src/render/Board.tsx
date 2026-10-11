@@ -57,9 +57,10 @@ import { setTableCanvas } from "../share/capture";
 import { displayName } from "../i18n/names";
 import { Lanterns, type LanternItem } from "./Lanterns";
 import { TalkLayer } from "./TalkLayer";
+import { DragPreview } from "./DragPreview";
 import { carry, pickUp, setDown } from "./feel";
 import { FeelLayer } from "./FeelLayer";
-import { MAX_LINE, useTalk, type Said } from "../talk/talk";
+import { MAX_LINE, sendDrag, useTalk, type Said } from "../talk/talk";
 import { HOLD_MS, SLOP_PX, STILL_PX, useTouch } from "./touchState";
 import { turnByTwist } from "./touchTurn";
 import { talkOrNote } from "../replay/notes";
@@ -477,6 +478,7 @@ function Scene() {
   // Track the pointer on a horizontal plane while dragging, wherever it is.
   useEffect(() => {
     if (!drag) return;
+    const shown = { at: -Infinity, sent: false };
     const ray = new Raycaster();
     const hit = new Vector3();
     const plane = new Plane(new Vector3(0, 1, 0), -drag.planeZ);
@@ -562,6 +564,20 @@ function Scene() {
       }
       // Kept at once, not at the next render: a drop straight after reads it (catch-up below).
       setDrag((dragRef.current = { ...d, to, moved }));
+      // The other players see the models in hand, about ten times a second (PX E1).
+      if (d.kind === "models" && moved && e.timeStamp - shown.at > 100) {
+        shown.at = e.timeStamp;
+        shown.sent = true;
+        sendDrag(
+          d.ids
+            .slice(0, 60)
+            .map((id): [string, number, number] => [
+              id,
+              Math.round((d.starts[id]!.x + to.x - d.grab.x) * 100) / 100,
+              Math.round((d.starts[id]!.y + to.y - d.grab.y) * 100) / 100,
+            ]),
+        );
+      }
     };
     // Arrive's squad (PX B1) stays up when a button lifts: it goes down on a click on the table.
     const drop = () => {
@@ -804,6 +820,7 @@ function Scene() {
     if (r.move && r.move.timeStamp > r.down) move(r.move);
     if (r.up && r.up.timeStamp > r.down) drop();
     return () => {
+      if (shown.sent) sendDrag(null);
       window.removeEventListener("pointerdown", press, { capture: true });
       window.removeEventListener("keydown", key, { capture: true });
       window.removeEventListener("contextmenu", menu);
@@ -1857,6 +1874,7 @@ function Scene() {
           ))}
 
       <TalkLayer game={game} preview={talkPreview(drag, game)} />
+      <DragPreview game={game} />
       <NotesLayer />
       <FeelLayer />
       <CasterCamera />

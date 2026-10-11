@@ -43,6 +43,10 @@ interface TalkState {
   cue: { seq: number; kind: string; by: string; at: number } | null;
   /** Players holding their dice to shake them, by peer, with when they started ("Ana is shaking…"). */
   shaking: Record<string, number>;
+  /** The end-of-game reel's card another player moved to, with whether the host sent it. */
+  reel: { index: number; host: boolean; at: number } | null;
+  /** Models other players are dragging now, by peer: where each is in their hand (PX E1). */
+  drags: Record<string, { models: Record<string, { x: number; y: number }>; at: number }>;
 }
 
 interface Caster {
@@ -62,6 +66,8 @@ export const useTalk = create<TalkState>(() => ({
   casters: {},
   cue: null,
   shaking: {},
+  reel: null,
+  drags: {},
 }));
 
 const vec3 = (v: unknown): v is [number, number, number] =>
@@ -78,6 +84,16 @@ export function sendCamera(
 /** Tell the table this player is shaking their dice, or has let go. */
 export function sendShaking(on: boolean): void {
   useStore.getState().session?.sendSide({ t: "talk/shake", on });
+}
+
+/** Show the table the models in this player's hand, or that they let go (null). */
+export function sendDrag(models: [string, number, number][] | null): void {
+  useStore.getState().session?.sendSide({ t: "talk/drag", models });
+}
+
+/** Move everyone's end-of-game reel to this card. */
+export function sendReel(index: number): void {
+  useStore.getState().session?.sendSide({ t: "talk/reel", index });
 }
 
 /** Bring up a moment card for everyone following this commentator. */
@@ -256,6 +272,28 @@ function receive(message: SideMessage, from: string): void {
       const { [from]: _gone, ...rest } = s.shaking;
       return { shaking: message.on === true ? { ...rest, [from]: Date.now() } : rest };
     });
+  } else if (message.t === "talk/drag") {
+    // Only a player at the table moves models; at most a big unit's worth, on the table.
+    const game = useStore.getState().game;
+    if (!game.players[from]) return;
+    const list = Array.isArray(message.models) ? message.models.slice(0, 60) : [];
+    const models: Record<string, { x: number; y: number }> = {};
+    for (const m of list) {
+      if (!Array.isArray(m) || typeof m[0] !== "string" || !game.models[m[0]]) continue;
+      const p = { x: m[1], y: m[2] };
+      if (point(p)) models[m[0]] = p;
+    }
+    useTalk.setState((s) => {
+      const { [from]: _gone, ...rest } = s.drags;
+      return { drags: Object.keys(models).length ? { ...rest, [from]: { models, at: Date.now() } } : rest };
+    });
+  } else if (message.t === "talk/reel") {
+    // From a player at the table (or the host), never a watcher.
+    const s = useStore.getState();
+    const host = s.net?.hostId === from;
+    if (!host && !s.game.players[from]) return;
+    if (Number.isInteger(message.index) && message.index >= 0 && message.index < 1000)
+      useTalk.setState({ reel: { index: message.index, host, at: Date.now() } });
   } else if (message.t === "talk/clear") clearDrawings(from);
   else if (message.t === "talk") {
     const item = cleanItem(message.item);

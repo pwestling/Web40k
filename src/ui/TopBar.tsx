@@ -22,6 +22,7 @@ import { NetBanner } from "./NetBanner";
 import { useMail } from "../mail/store";
 import { ScoreChips } from "./Missions";
 import { useYourTurn } from "./Ambience";
+import { useReel } from "../broadcast/reel";
 
 /** Round, phase and whose turn it is, plus each player's counters (CP, VP) and dice pools. */
 export function TopBar() {
@@ -43,6 +44,9 @@ export function TopBar() {
     };
   }, []);
   const { dispatch, scrub, role, setDraft } = useStore();
+  // While the end-of-game reel replays its moments, the counters keep the final score (PX B4).
+  const reeling = useReel((s) => s.index !== null);
+  const final = useStore((s) => s.game);
   const canControl = useCanControl();
   // Someone still joining watches until seated: no Start battle, no "place your units".
   const joining = useJoining();
@@ -171,7 +175,7 @@ export function TopBar() {
               <Counter
                 key={r}
                 label={r}
-                value={game.resources[lead.id]?.[r] ?? 0}
+                value={(reeling ? final : game).resources[lead.id]?.[r] ?? 0}
                 step={
                   live && mine
                     ? (delta) =>

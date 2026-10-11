@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { untakenSeat } from "./Branch";
 import type { Player } from "../core";
 import { formatList, t, tn } from "../i18n";
-import { serverHost, useHostPowers, useJoining, useStore } from "../store";
+import { serverHost, useCanControl, useHostPowers, useJoining, useStore } from "../store";
+import { standingWith } from "./CoreAbilities";
 import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
@@ -265,9 +266,55 @@ export function DeployTray({ players }: { players: Player[] }) {
             {reserves > 0 && (
               <p className="muted small">{tn(reserves, "{n} unit in reserve", "{n} units in reserve")}</p>
             )}
+            <LeadOffers player={player} />
           </div>
         );
       })}
     </>
+  );
+}
+
+/**
+ * Characters set up standing with a squad (a TTS table brings them as units of
+ * their own, PX D1): "Warden Captain stands with Warden · Lead it", and Lead
+ * all for several.
+ */
+function LeadOffers({ player }: { player: Player }) {
+  const { game, dispatch } = useStore();
+  const canControl = useCanControl();
+  if (!canControl(player.id)) return null;
+  const pairs = Object.values(game.units).flatMap((u) => {
+    if (u.owner !== player.id) return [];
+    const near = standingWith(game, u);
+    return near ? [{ leader: u, near }] : [];
+  });
+  if (!pairs.length) return null;
+  const lead = (ps: typeof pairs) => {
+    // One leader to a unit: a second standing with the same unit waits to be asked again.
+    const taken = new Set<string>();
+    for (const { leader, near } of ps) {
+      if (taken.has(near.id)) continue;
+      taken.add(near.id);
+      dispatch({ type: "unit/attach", id: leader.id, to: near.id }, player.id);
+    }
+  };
+  return (
+    <ul className="tray lead-offers">
+      {pairs.map((p) => (
+        <li key={p.leader.id}>
+          {t("{leader} stands with {unit}", { leader: p.leader.name, unit: p.near.name })}{" "}
+          <button className="small" onClick={() => lead([p])}>
+            {t("Lead it")}
+          </button>
+        </li>
+      ))}
+      {pairs.length > 1 && (
+        <li>
+          <button className="small" onClick={() => lead(pairs)}>
+            {tn(pairs.length, "Lead all {n}", "Lead all {n}")}
+          </button>
+        </li>
+      )}
+    </ul>
   );
 }

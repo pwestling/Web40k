@@ -1986,6 +1986,10 @@ const checks = {
         fig("Warden", 26, 0),
         fig("Warden", 26, 2),
         {
+          ...fig("Warden Captain", 26, 3.6),
+          Description: 'M: 6" | T: 4 | SV: 3+ | W: 5 | LD: 6+ | OC: 1\nAbilities: Leader',
+        },
+        {
           Name: "Bag",
           Nickname: "Reserves",
           Transform: { posX: 28, posZ: 18 },
@@ -2005,6 +2009,11 @@ const checks = {
     await page.locator(".plate", { hasText: "Warden" }).first().waitFor({ timeout: 30_000 });
     if (process.env.SMOKE_SHOTS)
       await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-open.png") });
+    // PX D1: a character standing with a squad is offered to lead it, at deployment.
+    const offer = page.locator(".lead-offers li", { hasText: "Warden Captain stands with Warden" });
+    await offer.waitFor({ timeout: 10_000 });
+    await offer.getByRole("button", { name: "Lead it" }).click();
+    await page.locator(".plate", { hasText: "Warden + Warden Captain" }).first().waitFor({ timeout: 5000 });
     for (const b of [/Start battle/, /Start anyway/]) {
       const button = page.getByRole("button", { name: b });
       if (await button.count()) await button.first().click();
@@ -2431,6 +2440,31 @@ const checks = {
       const b = await xs("Scrap Brute");
       if (!(Math.max(...a) + 40 < Math.min(...b) || Math.max(...b) + 40 < Math.min(...a)))
         throw new Error(`armies overlap: ${a.map(Math.round)} / ${b.map(Math.round)} (Player 1 had ${p1})`);
+    }
+    // PX E1: while Ana drags her unit, Ben sees it in her hand; when she lets go, it's gone.
+    {
+      const plate = await host.page.locator(".plate", { hasText: "Ember Kin" }).first().boundingBox();
+      let picked = false;
+      search: for (let dy = -16; dy <= 30; dy += 8)
+        for (let dx = 0; dx <= plate.width + 50; dx += 8) {
+          const [x, y] = [plate.x + dx, plate.y + plate.height / 2 + dy];
+          await host.page.mouse.move(x, y);
+          await host.page.mouse.down();
+          if (await host.page.evaluate(() => document.body.dataset.drag === "models")) {
+            await host.page.mouse.move(x + 30, y - 20, { steps: 8 });
+            picked = true;
+            break search;
+          }
+          await host.page.mouse.up();
+        }
+      if (!picked) throw new Error("couldn't pick up Ember Kin");
+      await guest.page.waitForFunction(() => document.body.dataset.peerHands === "1", null, {
+        timeout: 5000,
+      });
+      await host.page.mouse.up();
+      await guest.page.waitForFunction(() => document.body.dataset.peerHands === "0", null, {
+        timeout: 5000,
+      });
     }
     // PX A4: the invite note goes once the friend has sat down.
     await host.page

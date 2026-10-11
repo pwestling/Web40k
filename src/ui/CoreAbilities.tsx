@@ -189,20 +189,18 @@ export function AttachSelect({ unit }: { unit: Unit }) {
 /** How near (edge to edge) a leader stands to the unit it was set up to lead. */
 const STANDING_WITH = 2;
 
+/** Whether a unit can lead another (a Leader ability on its sheet). */
+const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
+
 /**
- * A leader set up standing with a unit (a TTS table, PX TTS 3): before the
- * battle, one button to lead the unit it stands with, the one its Leader
- * ability names first. Nothing when it stands with none.
+ * Before the battle, the unit a leader stands with (within 2" of it): the one
+ * its Leader ability names first, else the nearest. None when it stands alone.
  */
-export function StandingWith({ unit }: { unit: Unit }) {
-  const game = useGame();
-  const { dispatch } = useStore();
-  if (game.turn.round > 0) return null;
-  const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
-  if (!isLeader(unit)) return null;
+export function standingWith(game: GameState, unit: Unit): Unit | undefined {
+  if (game.turn.round > 0 || !isLeader(unit) || unit.status?.reserves) return undefined;
   const names = leaderOf(unit).map((n) => n.toLowerCase());
   const mine = aliveModels(game, unit);
-  const near = Object.values(game.units)
+  return Object.values(game.units)
     .filter((u) => u.owner === unit.owner && u.id !== unit.id && !isLeader(u) && !u.status?.reserves)
     .map((u) => ({ u, d: unitDistance(mine, aliveModels(game, u)) }))
     .filter((x) => x.d <= STANDING_WITH)
@@ -211,6 +209,16 @@ export function StandingWith({ unit }: { unit: Unit }) {
         Number(names.some((n) => b.u.name.toLowerCase().startsWith(n))) -
           Number(names.some((n) => a.u.name.toLowerCase().startsWith(n))) || a.d - b.d,
     )[0]?.u;
+}
+
+/**
+ * A leader set up standing with a unit (a TTS table, PX TTS 3): before the
+ * battle, one button to lead the unit it stands with. Nothing when it stands with none.
+ */
+export function StandingWith({ unit }: { unit: Unit }) {
+  const game = useGame();
+  const { dispatch } = useStore();
+  const near = standingWith(game, unit);
   if (!near) return null;
   return (
     <button
