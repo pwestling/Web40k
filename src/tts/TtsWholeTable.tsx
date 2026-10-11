@@ -121,11 +121,20 @@ export function TtsWholeTable({
           "Its {n} decks of cards come with the table: Cards, on the left, once a game is on it.",
         ),
       );
+    parts.push(
+      brought.objectives
+        ? tn(
+            brought.objectives,
+            "Its objective marker is the game's objective.",
+            "Its {n} objective markers are the game's objectives.",
+          )
+        : t("It had no objective markers on it, so the game's own objectives go on it."),
+    );
     if (brought.off)
       parts.push(
         tn(brought.off, "{n} thing stood off this game's table.", "{n} things stood off this game's table."),
       );
-    const note = brought.lost.length || brought.off || bundle ? parts.slice(2).join(" ") : "";
+    const note = parts.slice(2).join(" ");
     if (how === "save") setSaved({ brought, note: parts.join(" ") });
     else play(how, brought, note);
   };

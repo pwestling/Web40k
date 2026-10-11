@@ -69,6 +69,8 @@ export interface TtsTable {
   bundles?: string[];
   /** Its card decks: mission cards and the like (#75). */
   decks?: CardDeck[];
+  /** Objective markers standing on it (tokens, tiles or models named as objectives), with their names. */
+  objectives?: { pose: TtsPose; label: string }[];
 }
 
 /** Models of a name this close (edge to edge, roughly) belong to one unit. */
@@ -111,14 +113,32 @@ function bagged(o: TtsObject): TtsThing[] {
   });
 }
 
+/** Cards and decks are never markers, whatever they're called ("Objective: Take and Hold"). */
+const CARDS = /^(card|cardcustom|deck|deckcustom)$/i;
+/** "Objective", "Objective 3", "Obj marker", "Objective token (Alpha)". */
+const OBJECTIVE = /\bobj(ective)?s?\b(?!\s*(card|deck|secondary|primary|mission))/i;
+
+/** An objective marker on the table: named or tagged as one, not a card, deck or bag. */
+function isObjective(o: TtsObject): boolean {
+  if (CARDS.test(o.Name ?? "") || o.ContainedObjects?.length) return false;
+  const name = cleanText(o.Nickname);
+  return OBJECTIVE.test(name) || (o.Tags ?? []).some((tag) => /^objective/i.test(tag));
+}
+
 export function scanTable(json: unknown): TtsTable {
   const { title, objects } = saveObjects(json);
   const terrain: TtsThing[] = [];
   const loose: TtsThing[] = [];
   const units: TtsUnit[] = [];
   const bundles: string[] = [];
+  const objectives: { pose: TtsPose; label: string }[] = [];
   for (const o of objects) {
     if (!o || typeof o !== "object") continue;
+    // An objective marker is the game's objective, not terrain or a unit (#78 rehearsal).
+    if (isObjective(o)) {
+      objectives.push({ pose: poseOf(o), label: cleanText(o.Nickname) });
+      continue;
+    }
     if (o.Name === "Custom_AssetBundle") bundles.push(cleanText(o.Nickname));
     const t = thing(o);
     if (t) {
@@ -171,6 +191,7 @@ export function scanTable(json: unknown): TtsTable {
     terrain,
     ...(bundles.length ? { bundles } : {}),
     ...(decks.length ? { decks } : {}),
+    ...(objectives.length ? { objectives } : {}),
     units: all.sort((a, b) => +!a.placed - +!b.placed || a.side - b.side || whereIs(a).x - whereIs(b).x),
   };
 }
@@ -391,6 +412,9 @@ export function turnTable(table: TtsTable, angle: number): TtsTable {
   return {
     ...table,
     terrain: table.terrain.map(turn),
+    ...(table.objectives
+      ? { objectives: table.objectives.map((o) => ({ ...o, pose: turn({ pose: o.pose } as TtsThing).pose })) }
+      : {}),
     units: table.units.map((u) => ({
       ...u,
       models: u.models.map(turn),

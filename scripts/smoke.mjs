@@ -1460,10 +1460,13 @@ const checks = {
     const link = await host.page.locator(".invite-link").textContent();
     if (!link?.includes("room=")) throw new Error(`no invite link: ${link}`);
     await guest.page.goto(link);
+    // Asked before joining, as the host was (#78).
+    await guest.page.getByPlaceholder("Your name").fill("Ben");
+    await guest.page.getByRole("button", { name: "Use this name" }).click();
     await guest.page.locator(".companion").waitFor();
     await host.page.locator(".invite").waitFor({ state: "detached", timeout: 30_000 });
-    // The guest is asked for a name (UX 271).
-    await guest.page.getByPlaceholder("Your name").first().waitFor();
+    // The guest's name reaches the host's table (UX 271).
+    await host.page.getByText("Ben").first().waitFor({ timeout: 15_000 });
     await host.context.close();
     await guest.context.close();
     return [...host.page.errors, ...guest.page.errors];
@@ -2169,6 +2172,9 @@ const checks = {
         ...[0, 1, 2].map((i) => fig("Scrap Brute", -2 + i * 1.5, 18)),
         deck,
         { Name: "Bag", Nickname: "Player 2 cards", ContainedObjects: [deck] },
+        // The save's own objective markers are the game's (#78 rehearsal).
+        { Name: "Custom_Token", Nickname: "Objective 1", Transform: { posX: -10, posZ: 0 } },
+        { Name: "Custom_Token", Nickname: "Objective 2", Transform: { posX: 10, posZ: 0 } },
       ],
     };
     const path = join(files, "tts-cards.json");
@@ -2183,6 +2189,7 @@ const checks = {
     await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
     const cards = page.locator(".card-decks");
     await cards.waitFor({ timeout: 30_000 });
+    await page.getByText("Its 2 objective markers are the game's objectives.").waitFor({ timeout: 10_000 });
     await cards.locator("summary").click();
     await cards.getByText("Secondary Missions").waitFor();
     await cards.getByText("3 left to draw").first().waitFor();
@@ -2276,9 +2283,14 @@ const checks = {
     await shelf.filter({ hasText: "Scrap Brute (Club Night)" }).first().waitFor({ state: "attached" });
     const p1 = (await host.page.locator(".plate").first().textContent()) ?? "";
     await guest.page.goto(link);
+    // The guest is asked their name before joining (#78 rehearsal), and the log uses it.
+    await guest.page.getByText(/What should the others call you/).waitFor({ timeout: 10_000 });
+    await guest.page.getByPlaceholder("Your name").fill("Ben");
+    await guest.page.getByRole("button", { name: "Use this name" }).click();
     const offer = guest.page.locator(".brought-offer");
     await offer.waitFor({ timeout: 30_000 });
     await offer.getByRole("button", { name: "Use this army" }).click();
+    await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 15_000 });
     for (const { page } of [host, guest]) {
       await page.locator(".plate", { hasText: "Ember Kin" }).first().waitFor({ timeout: 30_000 });
       await page.locator(".plate", { hasText: "Scrap Brute" }).first().waitFor({ timeout: 30_000 });

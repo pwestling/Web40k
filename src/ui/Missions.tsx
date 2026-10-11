@@ -218,6 +218,10 @@ export function SecretMissions({ players }: { players: { id: string; name: strin
     const cards = secretsWithPrefix(game, id, "mission:");
     return cards.filter(([, e]) => !e.revealed).length < (mission.hand ?? 1) && cards.length < deck.length;
   };
+  // The table brought its own mission deck (a TTS save's "Secondary Missions", #78): that's the one played, so
+  // the built-in cards stay away, unless someone has drawn from them already.
+  const tableDeck = game.decks?.some((d) => /\b(missions?|secondar(y|ies)|objectives?)\b/i.test(d.name));
+  if (tableDeck && seated.every((p) => !secretsWithPrefix(game, p.id, "mission:").length)) return null;
   const due = live && !over && players.some((p) => canDraw(p.id));
   const toScore = players.some((p) => pending.some((x) => x.key.startsWith(`card:${p.id}:`)));
   return (

@@ -249,6 +249,8 @@ export function Lobby() {
     // The computer takes its side again, at the level it played (UX 439).
     if (saved.computer) armSolo(saved.computer.level, saved.computer.seat);
   };
+  // An invite link from a player with no name yet: asked first, as the host was (#78 rehearsal).
+  const [askName, setAskName] = useState<{ roomId: string; mode: Mode } | null>(null);
   // A tab reloaded in the middle of a game goes straight back into its room.
   useEffect(() => {
     if (autoJoined) return;
@@ -279,6 +281,11 @@ export function Lobby() {
     }
     // An invite link goes straight into the room: a free seat is taken, a game in progress offers Rejoin or Watch.
     if (!back?.role) {
+      if (!who.trim() && !useCard.getState().name.trim()) {
+        // Set from the link, once: not a cascade of renders.
+        queueMicrotask(() => setAskName({ roomId, mode: m }));
+        return;
+      }
       start({ role: "client", mode: m, roomId, name: who });
       return;
     }
@@ -367,6 +374,46 @@ export function Lobby() {
       {asking === g.id && <HowHard system={g.id} onCancel={() => setAsking(null)} />}
     </div>
   );
+
+  if (askName)
+    return (
+      <div className="panel lobby">
+        <form
+          className="join-name"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = name.trim();
+            if (!n) return;
+            localStorage.setItem("open-battle:name", n);
+            start({ role: "client", mode: askName.mode, roomId: askName.roomId, name: n });
+          }}
+        >
+          {/* i18n-ignore */}
+          <h1>Open Battle</h1>
+          <p>{t("You've been invited to a game. What should the others call you?")}</p>
+          <div className="row">
+            <input
+              value={name}
+              placeholder={t("Your name")}
+              aria-label={t("Your name")}
+              autoFocus
+              maxLength={32}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <button className="primary" disabled={!name.trim()}>
+              {t("Use this name")}
+            </button>
+          </div>
+          <button
+            type="button"
+            className="link quiet small"
+            onClick={() => start({ role: "spectator", mode: askName.mode, roomId: askName.roomId, name: "" })}
+          >
+            {t("Just watch")}
+          </button>
+        </form>
+      </div>
+    );
 
   return (
     <div className="panel lobby">

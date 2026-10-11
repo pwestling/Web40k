@@ -115,6 +115,8 @@ export interface BroughtTable {
   lost: string[];
   /** Pieces standing off this game's table. */
   off: number;
+  /** Objective markers from the save, used as the table's objectives (0: the system's own). */
+  objectives: number;
 }
 
 export async function bringTable(
@@ -210,6 +212,13 @@ export async function bringTable(
     // A piece TTS never named isn't called by a fragment of its Steam address (PX TTS 3).
     return [{ ...piece, name: th.nickname || t("Unnamed terrain"), ...meshShape(a.asset, 1) }];
   });
+  const marked = (table.objectives ?? [])
+    .filter((o) => Math.abs(o.pose.x) <= size.width / 2 && Math.abs(o.pose.y) <= size.depth / 2)
+    .map((o, i) => ({
+      id: `obj-tts-${i + 1}`,
+      position: { x: o.pose.x, y: o.pose.y },
+      ...(o.label && !/^obj(ective)?s?$/i.test(o.label) ? { label: o.label } : {}),
+    }));
   const saved: SavedTable = {
     format: TABLE_FORMAT,
     id: crypto.randomUUID(),
@@ -221,7 +230,8 @@ export async function bringTable(
     layout: {
       terrain,
       zones: across && base.zones.length === 2 ? zones("short", size.width, size.depth) : base.zones,
-      objectives: base.objectives,
+      // The save's own objective markers where it has them (#78), else the system's.
+      objectives: marked.length ? marked : base.objectives,
       ...(scan.decks?.length ? { decks: scan.decks } : {}),
     },
   };
@@ -247,5 +257,5 @@ export async function bringTable(
   useTables.getState().put(saved);
   await useShelf.getState().load();
   for (const a of armies) useShelf.getState().put(a.army);
-  return { table: saved, armies, missing, failed, lost, off };
+  return { table: saved, armies, missing, failed, lost, off, objectives: marked.length };
 }

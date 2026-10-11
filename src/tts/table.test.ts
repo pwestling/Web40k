@@ -218,10 +218,13 @@ describe("what a TTS veteran laid out on purpose (PX TTS 3)", () => {
     const table = scanTable({
       ObjectStates: [
         fig("Scrap Brute", 0, -15),
+        { Name: "Custom_AssetBundle", Nickname: "Gothic cathedral" },
+        // A marker in a bundle is still where an objective goes (#78).
         { Name: "Custom_AssetBundle", Nickname: "Objective marker" },
       ],
     });
-    expect(table.bundles).toEqual(["Objective marker"]);
+    expect(table.bundles).toEqual(["Gothic cathedral"]);
+    expect(table.objectives?.map((o) => o.label)).toEqual(["Objective marker"]);
   });
 
   it("sends a unit still in its bag into reserves", async () => {
@@ -236,5 +239,30 @@ describe("what a TTS veteran laid out on purpose (PX TTS 3)", () => {
     } as unknown as typeof state.players;
     const intents = spawnIntents(state, "p2", [bagged], "p2-r");
     expect(intents.map((i) => i.type)).toEqual(["unit/add", "unit/reserve"]);
+  });
+});
+
+describe("objective markers in a TTS save (#78 rehearsal)", () => {
+  it("keeps them as objectives, not terrain or units; cards and decks named for objectives aren't markers", () => {
+    const table = scanTable({
+      SaveName: "Objectives",
+      ObjectStates: [
+        fig("Warden", 0, 15),
+        { ...fig("Objective 1", -12, 0, 0, "https://example.com/token.obj"), Locked: true },
+        { Name: "Custom_Token", Nickname: "Objective Marker", Transform: { posX: 12, posZ: 6 } },
+        { Name: "Custom_Tile", Nickname: "obj", Tags: [], Transform: { posX: 0, posZ: -6 } },
+        { Name: "Card", Nickname: "Objective: Take and Hold", Transform: { posX: 30, posZ: 0 } },
+        { Name: "DeckCustom", Nickname: "Objectives", Transform: { posX: 30, posZ: 4 } },
+      ],
+    });
+    expect(table.objectives).toEqual([
+      { pose: { x: -12, y: 0, facing: Math.PI }, label: "Objective 1" },
+      { pose: { x: 12, y: -6, facing: Math.PI }, label: "Objective Marker" },
+      { pose: { x: 0, y: 6, facing: Math.PI }, label: "obj" },
+    ]);
+    expect(table.terrain).toHaveLength(0);
+    expect(table.units.map((u) => u.name)).toEqual(["Warden"]);
+    // They turn with the table.
+    expect(turnTable(table, Math.PI).objectives?.[0]?.pose).toMatchObject({ x: 12, y: 0 });
   });
 });
