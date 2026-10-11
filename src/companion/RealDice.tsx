@@ -28,7 +28,7 @@ const keep = (key: string, on: boolean) => {
  * the game rolls at a click (both off), you hold to shake and let go
  * (`shake`), or you roll real dice and type them in (`own`).
  */
-export const useOwnDice = create<{
+const useOwnDice = create<{
   own: boolean;
   shake: boolean;
   set: (own: boolean) => void;
@@ -49,7 +49,7 @@ export const useOwnDice = create<{
 }));
 
 /** Real dice can't be checked over the internet, so ranked and event games roll on screen (UX 501). */
-export function realDiceAllowed(game: GameState): boolean {
+function realDiceAllowed(game: GameState): boolean {
   return !game.ranked && !game.settings.event;
 }
 
