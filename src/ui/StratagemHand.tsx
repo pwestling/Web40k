@@ -9,6 +9,7 @@ import { useGame } from "./hooks";
 import { narrow } from "./narrow";
 import { coin, flip, pick, thunk, useSound } from "./sound";
 import { tablePick, useHandTargets } from "./tablePick";
+import { focusOn } from "../render/focus";
 
 /**
  * Stratagems as a hand of cards (UX 499, PX stratagem-hand.md): a low fan
@@ -129,6 +130,7 @@ export function StratagemHand() {
   const [back, setBack] = useState<{ id: string; x: number; y: number } | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [step, setStep] = useState<UnitId | null>(null);
   const hand = useRef<HTMLDivElement>(null);
   const live = useRef({ game, player, options });
   useEffect(() => {
@@ -159,7 +161,7 @@ export function StratagemHand() {
         const moved = h.moved || Math.hypot(e.clientX - h.ox, e.clientY - h.oy) > SLOP;
         if (moved && !h.moved) {
           pick();
-          useHandTargets.setState({ ids: h.option.targets ?? null });
+          useHandTargets.setState({ ids: h.option.targets ?? null, color: live.current.player?.color });
         }
         if (moved) setOver(overAt(live.current.game, h.option, e.clientX, e.clientY));
         return { ...h, x: e.clientX, y: e.clientY, moved };
@@ -213,8 +215,32 @@ export function StratagemHand() {
       useHandTargets.setState({ ids: null });
       return;
     }
-    useHandTargets.setState({ ids: choice.targets ?? null });
-    const key = (e: KeyboardEvent) => e.key === "Escape" && setPicked(null);
+    useHandTargets.setState({ ids: choice.targets ?? null, color: live.current.player?.color });
+    // [ and ] step through the units it can go on, Enter plays it there (spec §4).
+    let at = -1;
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setPicked(null);
+      const ids = choice.targets;
+      if (!ids?.length || (e.target as HTMLElement | null)?.closest?.("input, textarea, select")) return;
+      if (e.key === "[" || e.key === "]") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        at = (at + (e.key === "]" ? 1 : -1) + ids.length) % ids.length;
+        const unit = live.current.game.units[ids[at]!];
+        useStore.getState().set({ hoverUnit: ids[at]! });
+        const models = unit ? unit.modelIds.flatMap((m) => live.current.game.models[m] ?? []) : [];
+        if (models.length)
+          focusOn(
+            models.reduce((n, m) => n + m.position.x, 0) / models.length,
+            models.reduce((n, m) => n + m.position.y, 0) / models.length,
+          );
+        setStep(ids[at]!);
+      } else if (e.key === "Enter" && at >= 0 && choice.ok) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        play(choice, ids[at]!);
+      }
+    };
     const down = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLCanvasElement) || !choice.targets) return;
       const unitId = tablePick.unitAt(e.clientX, e.clientY);
@@ -225,12 +251,13 @@ export function StratagemHand() {
       if (choice.targets.includes(unitId) && choice.ok) play(choice, unitId);
       else tell(overAt(live.current.game, choice, e.clientX, e.clientY).line);
     };
-    addEventListener("keydown", key);
+    addEventListener("keydown", key, { capture: true });
     addEventListener("pointerdown", down, { capture: true });
     return () => {
-      removeEventListener("keydown", key);
+      removeEventListener("keydown", key, { capture: true });
       removeEventListener("pointerdown", down, { capture: true });
       useHandTargets.setState({ ids: null });
+      setStep(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [choice?.def.id, choice?.ok, choice?.targets?.join()]);
@@ -372,10 +399,16 @@ export function StratagemHand() {
             {choice.targets ? (
               <>
                 <span>
-                  {t("Pick a unit for {name} (Esc to cancel)", { name: gameText(choice.def.name) })}
+                  {t("Pick a unit for {name}, or [ ] then Enter (Esc to cancel)", {
+                    name: gameText(choice.def.name),
+                  })}
                 </span>
                 {choice.targets.map((u) => (
-                  <button key={u} className="small" onClick={() => play(choice, u)}>
+                  <button
+                    key={u}
+                    className={`small ${step === u ? "on" : ""}`}
+                    onClick={() => play(choice, u)}
+                  >
                     {unitName(game, u)}
                   </button>
                 ))}

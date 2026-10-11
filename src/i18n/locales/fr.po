@@ -2192,7 +2192,7 @@ msgstr "Arme…"
 
 #: src/companion/TableAttack.tsx:68
 #: src/ui/AttackPanel.tsx:133
-#: src/ui/StratagemHand.tsx:106
+#: src/ui/StratagemHand.tsx:107
 #, fuzzy
 msgid "Target"
 msgstr "Cible"
@@ -5350,7 +5350,7 @@ msgstr "{visible}/{n} visibles · {cover} à couvert"
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} visibles"
 
-#: src/render/Board.tsx:1713
+#: src/render/Board.tsx:1723
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Mouvement {inches}\""
@@ -11651,9 +11651,9 @@ msgid "0 CP left"
 msgstr "Plus de CP"
 
 #: src/ui/PlayPanel.tsx:196
-#: src/ui/StratagemHand.tsx:283
-#: src/ui/StratagemHand.tsx:283
-#: src/ui/StratagemHand.tsx:287
+#: src/ui/StratagemHand.tsx:310
+#: src/ui/StratagemHand.tsx:310
+#: src/ui/StratagemHand.tsx:314
 #, fuzzy
 msgid "{cp} CP"
 msgstr "{cp} CP"
@@ -12858,102 +12858,102 @@ msgstr "Retirer {status}"
 msgid "Mark {status}"
 msgstr "Marquer {status}"
 
-#: src/ui/StratagemHand.tsx:102
+#: src/ui/StratagemHand.tsx:100
+#, fuzzy
+msgid "Either player's turn"
+msgstr "Tour de n'importe quel joueur"
+
+#: src/ui/StratagemHand.tsx:103
 #, fuzzy
 msgid "One of your units"
 msgstr "Une de tes unités"
 
-#: src/ui/StratagemHand.tsx:105
+#: src/ui/StratagemHand.tsx:106
 #: src/ui/TeachRule.tsx:194
 #, fuzzy
 msgid "When"
 msgstr "Quand"
 
-#: src/ui/StratagemHand.tsx:107
+#: src/ui/StratagemHand.tsx:108
 #, fuzzy
 msgid "Effect"
 msgstr "Effet"
 
-#: src/ui/StratagemHand.tsx:292
+#: src/ui/StratagemHand.tsx:319
 #, fuzzy
 msgid "Stratagems · {n} ready"
 msgstr "Stratagèmes · {n} prêts"
 
-#: src/ui/StratagemHand.tsx:292
+#: src/ui/StratagemHand.tsx:319
 #, fuzzy
 msgid "Stratagems · {n}"
 msgstr "Stratagèmes · {n}"
 
-#: src/ui/StratagemHand.tsx:295
+#: src/ui/StratagemHand.tsx:322
 #, fuzzy
 msgid "Stratagems"
 msgstr "Stratagèmes"
 
-#: src/ui/StratagemHand.tsx:355
+#: src/ui/StratagemHand.tsx:382
 #, fuzzy
 msgid "used"
 msgstr "utilisé"
 
-#: src/ui/StratagemHand.tsx:375
+#: src/ui/StratagemHand.tsx:402
 #, fuzzy
-msgid "Pick a unit for {name} (Esc to cancel)"
-msgstr "Choisis une unité pour {name} (Échap pour annuler)"
+msgid "Pick a unit for {name}, or [ ] then Enter (Esc to cancel)"
+msgstr "Choisis une unité pour {name}, ou [ ] puis Entrée (Échap pour annuler)"
 
-#: src/ui/StratagemHand.tsx:464
+#: src/ui/StratagemHand.tsx:497
 #, fuzzy
 msgid "{n} CP"
 msgstr "{n} CP"
 
-#: src/ui/StratagemHand.tsx:494
+#: src/ui/StratagemHand.tsx:527
 #, fuzzy
 msgid "{who} on {unit}"
 msgstr "{who} sur {unit}"
 
-#: src/ui/StratagemHand.tsx:66
+#: src/ui/StratagemHand.tsx:67
 #, fuzzy
 msgid "Drop it on a unit"
 msgstr "Pose-la sur une unité"
 
-#: src/ui/StratagemHand.tsx:69
+#: src/ui/StratagemHand.tsx:70
 #, fuzzy
 msgid "{name} can't go on {unit}"
 msgstr "{name} ne peut pas aller sur {unit}"
 
-#: src/ui/StratagemHand.tsx:71
+#: src/ui/StratagemHand.tsx:72
 #, fuzzy
 msgid "Play on {unit} · {cost}"
 msgstr "Jouer sur {unit} · {cost}"
 
-#: src/ui/StratagemHand.tsx:73
+#: src/ui/StratagemHand.tsx:74
 #, fuzzy
 msgid "Drop it on the table"
 msgstr "Pose-la sur la table"
 
-#: src/ui/StratagemHand.tsx:75
-#: src/ui/StratagemHand.tsx:385
+#: src/ui/StratagemHand.tsx:76
+#: src/ui/StratagemHand.tsx:418
 #, fuzzy
 msgid "Play {name} · {cost}"
 msgstr "Jouer {name} · {cost}"
 
-#: src/ui/StratagemHand.tsx:87
+#: src/ui/StratagemHand.tsx:88
 #, fuzzy
 msgid "Play it when a roll calls for it"
 msgstr "Joue-la quand un jet en a besoin"
 
-#: src/ui/StratagemHand.tsx:97
+#: src/ui/StratagemHand.tsx:98
 #, fuzzy
 msgid "Your turn"
 msgstr "Ton tour"
 
-#: src/ui/StratagemHand.tsx:98
+#: src/ui/StratagemHand.tsx:99
 #, fuzzy
 msgid "Your opponent's turn"
 msgstr "Tour de l'adversaire"
-
-#: src/ui/StratagemHand.tsx:99
-#, fuzzy
-msgid "Either player's turn"
-msgstr "Tour de n'importe quel joueur"
 
 #: src/ui/SystemPanels.tsx:103
 #, fuzzy

@@ -1802,7 +1802,7 @@ msgstr ""
 
 #: src/companion/TableAttack.tsx:68
 #: src/ui/AttackPanel.tsx:133
-#: src/ui/StratagemHand.tsx:106
+#: src/ui/StratagemHand.tsx:107
 msgid "Target"
 msgstr ""
 
@@ -4385,7 +4385,7 @@ msgstr ""
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1713
+#: src/render/Board.tsx:1723
 msgid "Move {inches}\""
 msgstr ""
 
@@ -9503,9 +9503,9 @@ msgid "0 CP left"
 msgstr ""
 
 #: src/ui/PlayPanel.tsx:196
-#: src/ui/StratagemHand.tsx:283
-#: src/ui/StratagemHand.tsx:283
-#: src/ui/StratagemHand.tsx:287
+#: src/ui/StratagemHand.tsx:310
+#: src/ui/StratagemHand.tsx:310
+#: src/ui/StratagemHand.tsx:314
 msgid "{cp} CP"
 msgstr ""
 
@@ -10479,82 +10479,82 @@ msgstr ""
 msgid "Mark {status}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:102
+#: src/ui/StratagemHand.tsx:100
+msgid "Either player's turn"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:103
 msgid "One of your units"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:105
+#: src/ui/StratagemHand.tsx:106
 #: src/ui/TeachRule.tsx:194
 msgid "When"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:107
+#: src/ui/StratagemHand.tsx:108
 msgid "Effect"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:292
+#: src/ui/StratagemHand.tsx:319
 msgid "Stratagems · {n} ready"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:292
+#: src/ui/StratagemHand.tsx:319
 msgid "Stratagems · {n}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:295
+#: src/ui/StratagemHand.tsx:322
 msgid "Stratagems"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:355
+#: src/ui/StratagemHand.tsx:382
 msgid "used"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:375
-msgid "Pick a unit for {name} (Esc to cancel)"
+#: src/ui/StratagemHand.tsx:402
+msgid "Pick a unit for {name}, or [ ] then Enter (Esc to cancel)"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:464
+#: src/ui/StratagemHand.tsx:497
 msgid "{n} CP"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:494
+#: src/ui/StratagemHand.tsx:527
 msgid "{who} on {unit}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:66
+#: src/ui/StratagemHand.tsx:67
 msgid "Drop it on a unit"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:69
+#: src/ui/StratagemHand.tsx:70
 msgid "{name} can't go on {unit}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:71
+#: src/ui/StratagemHand.tsx:72
 msgid "Play on {unit} · {cost}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:73
+#: src/ui/StratagemHand.tsx:74
 msgid "Drop it on the table"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:75
-#: src/ui/StratagemHand.tsx:385
+#: src/ui/StratagemHand.tsx:76
+#: src/ui/StratagemHand.tsx:418
 msgid "Play {name} · {cost}"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:87
+#: src/ui/StratagemHand.tsx:88
 msgid "Play it when a roll calls for it"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:97
+#: src/ui/StratagemHand.tsx:98
 msgid "Your turn"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:98
-msgid "Your opponent's turn"
-msgstr ""
-
 #: src/ui/StratagemHand.tsx:99
-msgid "Either player's turn"
+msgid "Your opponent's turn"
 msgstr ""
 
 #: src/ui/SystemPanels.tsx:103

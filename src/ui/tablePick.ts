@@ -13,5 +13,5 @@ export const tablePick: {
   screenOf(unitId: UnitId): { x: number; y: number } | null;
 } = { unitAt: () => null, onTable: () => false, screenOf: () => null };
 
-/** The units a card in hand could be played on: lit on the table under the pointer while it's held. */
-export const useHandTargets = create<{ ids: UnitId[] | null }>(() => ({ ids: null }));
+/** The units a card in hand could be played on, ringed in the player's colour while it's held or picked. */
+export const useHandTargets = create<{ ids: UnitId[] | null; color?: string }>(() => ({ ids: null }));

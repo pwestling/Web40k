@@ -1326,6 +1326,7 @@ function Scene() {
   const eyeTarget = eye?.at;
   const eyeUnit = eye ? game.models[eye.modelId]?.unitId : undefined;
   const handTargets = useHandTargets((s) => s.ids);
+  const handColor = useHandTargets((s) => s.color ?? "#facc15");
 
   // Every model on the table as drawn this frame (dragged ones where they're held).
   const modelDraws = useMemo(
@@ -1610,6 +1611,15 @@ function Scene() {
           ? [<Ring key={`point-${id}`} model={placed(m)} radius={0.2} color="#facc15" opacity={0.95} />]
           : [];
       })}
+
+      {/* The units a stratagem card in hand could be played on (UX 499, PX: target rings). */}
+      {handTargets?.flatMap((id) =>
+        game.units[id]
+          ? aliveModels(game, game.units[id]).map((m) => (
+              <Ring key={`hand-${m.id}`} model={placed(m)} radius={0.18} color={handColor} opacity={0.85} />
+            ))
+          : [],
+      )}
 
       {/* Where the selected unit started this phase. */}
       {selectedUnit &&
