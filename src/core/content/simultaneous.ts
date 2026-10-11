@@ -10,6 +10,7 @@ import { advanceTurn, currentSlot } from "./turn";
  * ▶ (`turn/next`) still moves the phase on at once: rules are advisory.
  */
 
+/** What a screen shows about the simultaneous phase on now. @public */
 export interface SimultaneousPhase {
   /** The phase's id and name. */
   phase: string;
@@ -27,7 +28,7 @@ export function simultaneousNow(state: GameState): boolean {
   return !!currentSlot(state)?.simultaneous;
 }
 
-/** The simultaneous phase on now, with who is ready and who it waits for, or null. */
+/** The simultaneous phase on now, with who is ready and who it waits for, or null. @public */
 export function simultaneousPhase(state: GameState): SimultaneousPhase | null {
   const slot = currentSlot(state);
   if (!slot?.simultaneous) return null;
@@ -58,6 +59,7 @@ export function waitingFor(state: GameState): PlayerId[] {
  * Whether every player counts as the active one now: a simultaneous phase
  * outside player turns, which is nobody's turn. Inside player turns the
  * active side stays the active side, acting alongside the other.
+ * @public
  */
 export function sharedPhase(state: GameState): boolean {
   const slot = currentSlot(state);
