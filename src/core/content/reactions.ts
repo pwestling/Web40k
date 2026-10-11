@@ -7,7 +7,7 @@ import { num } from "./expr";
 import type { ProcedureRun } from "./runner";
 import { evalCtx, safeBool, seatName, unitActions, type Payment } from "./play";
 import { armyStratagem, playerActions } from "./player";
-import { tableGeometry, unitView } from "./runtime";
+import { tableGeometry, unitView, type UnitView } from "./runtime";
 import type { ActionDef, Expr, GameSystem, ReactionWindowDef } from "./schema";
 import { currentSlot, systemOf } from "./turn";
 
@@ -154,11 +154,22 @@ function answers(
   if (!army) return null;
   if (army.reacts) return army.reacts.includes(window) ? {} : null;
   if (!win?.match) return null;
-  try {
-    return new RegExp(win.match, "i").test(army.when ?? army.text) ? {} : null;
-  } catch {
-    return null;
+  return matcher(win.match)?.test(army.when ?? army.text) ? {} : null;
+}
+
+const matchers = new Map<string, RegExp | null>();
+/** A window's `match`, compiled once (null when it isn't a valid regex). */
+function matcher(source: string): RegExp | null {
+  let re = matchers.get(source);
+  if (re === undefined) {
+    try {
+      re = new RegExp(source, "i");
+    } catch {
+      re = null;
+    }
+    matchers.set(source, re);
   }
+  return re;
 }
 
 /** The trigger as expressions see it: "event.unit", "event.target", "event.units". */
@@ -189,6 +200,11 @@ function triggerUnits(t: ReactionTrigger): UnitId[] {
  * window is open for their seat.
  */
 export function playableReactions(state: GameState, player: PlayerId): PlayableReaction[] {
+  return reactionsFor(state, player, false);
+}
+
+/** `first`: stop at the first one they haven't muted (enough to know a window should open). */
+function reactionsFor(state: GameState, player: PlayerId, first: boolean): PlayableReaction[] {
   const open = reactionWindow(state);
   if (!open || seatOf(state, player) !== open.seat) return [];
   const muted = (id: string) => isMuted(state, player, id);
@@ -229,23 +245,21 @@ export function playableReactions(state: GameState, player: PlayerId): PlayableR
           })),
       );
   }
-  return windowReactions(state, player, open);
+  return windowReactions(state, player, open, first);
 }
 
 /** Player actions answering an engine window, as the state stood at its phase. */
-function windowReactions(state: GameState, player: PlayerId, open: OpenReaction): PlayableReaction[] {
+function windowReactions(
+  state: GameState,
+  player: PlayerId,
+  open: OpenReaction,
+  first: boolean,
+): PlayableReaction[] {
   const system = systemOf(state);
   const win = windowDef(state, open.window);
   // A window opened as its phase ended answers that phase.
   const at: GameState =
     open.phase === state.turn.phase ? state : { ...state, turn: { ...state.turn, phase: open.phase } };
-  const event = triggerScope(at, system, open.trigger);
-  const geometry = tableGeometry(at, system);
-  const near = triggerUnits(open.trigger).flatMap((id) => {
-    const u = at.units[id];
-    // Range is to the enemy's units (a charge's targets are the reactor's own).
-    return u && isAlive(at, u) && seatOf(at, u.owner) !== open.seat ? [unitView(at, system, u)] : [];
-  });
   // Played since the phase ended (it is recorded in this phase), it was played in the window.
   const { round, phase, activeSeat } = state.turn;
   const playedNow = (id: string) =>
@@ -253,35 +267,57 @@ function windowReactions(state: GameState, player: PlayerId, open: OpenReaction)
     (state.used?.[player] ?? []).some(
       (u) => u.action === id && u.round === round && u.phase === phase && u.seat === activeSeat,
     );
-  const out: PlayableReaction[] = [];
-  for (const o of playerActions(at, player)) {
-    if (!o.ok || o.def.custom) continue;
-    if (playedNow(o.def.id)) continue;
-    const entry = answers(at, o.def, win, open.window);
-    if (!entry) continue;
-    let units: UnitId[] = [];
-    if (o.def.target) {
-      const filter = entry.units ?? win?.units;
-      units = (o.targets ?? []).filter((id) => {
+  // The trigger as the filters see it, worked out once and only if a filter asks.
+  let scope: {
+    event: ReturnType<typeof triggerScope>;
+    geometry: ReturnType<typeof tableGeometry>;
+    near: UnitView[];
+  };
+  const seen = () =>
+    (scope ??= {
+      event: triggerScope(at, system, open.trigger),
+      geometry: tableGeometry(at, system),
+      near: triggerUnits(open.trigger).flatMap((id) => {
         const u = at.units[id];
-        if (!u) return false;
-        const it = unitView(at, system, u);
-        const ctx = evalCtx(at, system, { it, self: it, event, player: { id: player } });
-        if (filter !== undefined && !safeBool(filter, ctx)) return false;
-        if (entry.range === undefined) return true;
-        let range: number;
-        try {
-          range = num(entry.range, ctx);
-        } catch {
-          return false;
-        }
-        return near.some((other) => {
-          const c = { ...ctx, scope: { ...ctx.scope, self: it, it: other } };
-          return Number(geometry({ kind: "distance", from: "self", to: "it" }, c)) <= range;
-        });
-      });
-      if (!units.length) continue;
+        // Range is to the enemy's units (a charge's targets are the reactor's own).
+        return u && isAlive(at, u) && seatOf(at, u.owner) !== open.seat ? [unitView(at, system, u)] : [];
+      }),
+    });
+  /** The window's and the action's filters, and range, for a unit it could be used on. */
+  const fits = (def: ActionDef, _id: UnitId, it: UnitView): boolean => {
+    const entry = answers(at, def, win, open.window);
+    if (!entry) return false;
+    const filter = entry.units ?? win?.units;
+    if (filter === undefined && entry.range === undefined) return true;
+    const { event, geometry, near } = seen();
+    const ctx = evalCtx(at, system, { it, self: it, event, player: { id: player } });
+    if (filter !== undefined && !safeBool(filter, ctx)) return false;
+    if (entry.range === undefined) return true;
+    let range: number;
+    try {
+      range = num(entry.range, ctx);
+    } catch {
+      return false;
     }
+    return near.some((other) => {
+      const c = { ...ctx, scope: { ...ctx.scope, self: it, it: other } };
+      return Number(geometry({ kind: "distance", from: "self", to: "it" }, c)) <= range;
+    });
+  };
+  // Only the actions that answer this window are checked: most moments have none in hand.
+  const options = playerActions(at, player, {
+    only: (def) =>
+      !def.custom &&
+      !playedNow(def.id) &&
+      !(first && isMuted(state, player, def.id)) &&
+      !!answers(at, def, win, open.window),
+    fits,
+    first,
+  });
+  const out: PlayableReaction[] = [];
+  for (const o of options) {
+    if (!o.ok) continue;
+    const units = o.def.target ? (o.targets ?? []) : [];
     const dice = open.trigger.dice;
     out.push({
       id: o.def.id,
@@ -298,6 +334,7 @@ function windowReactions(state: GameState, player: PlayerId, open: OpenReaction)
         : {}),
       muted: isMuted(state, player, o.def.id),
     });
+    if (first) break;
   }
   return out;
 }
@@ -518,7 +555,7 @@ function nextTest(system: GameSystem, run: ProcedureRun): string | undefined {
 /** Whether any player at the window's seat has something to play there they haven't muted. */
 function anyPlayable(state: GameState, open: OpenReaction): boolean {
   const probe: GameState = { ...state, reaction: open };
-  return sidePlayers(probe, open.seat).some((p) => playableReactions(probe, p.id).some((r) => !r.muted));
+  return sidePlayers(probe, open.seat).some((p) => reactionsFor(probe, p.id, true).some((r) => !r.muted));
 }
 
 /**

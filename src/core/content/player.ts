@@ -3,7 +3,7 @@ import { isAlive } from "../units";
 import type { Ability, ArmyStratagem, GameState, PlayerActionUse, PlayerId, Unit, UnitId } from "../types";
 import { bool } from "./expr";
 import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type Payment } from "./play";
-import { bindRules, hasKeywordPhrase, lookupRules, pattern, unitView } from "./runtime";
+import { bindRules, hasKeywordPhrase, lookupRules, pattern, unitView, type UnitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
 import { currentSlot, endActivation, systemOf } from "./turn";
 
@@ -101,13 +101,26 @@ export function findAction(state: GameState, id: string): ActionDef | undefined 
 }
 
 /** The player actions (stratagems) a player could use now, with why not. */
-export function playerActions(state: GameState, player: PlayerId): PlayerActionOption[] {
+export function playerActions(
+  state: GameState,
+  player: PlayerId,
+  /**
+   * For reaction windows: `only` these actions (the rest aren't checked), units
+   * that also `fit` the window, and with `first`, one unit is enough.
+   */
+  opts: {
+    only?: (def: ActionDef) => boolean;
+    fits?: (def: ActionDef, unit: UnitId, it: UnitView) => boolean;
+    first?: boolean;
+  } = {},
+): PlayerActionOption[] {
   const system = systemOf(state);
   const slot = currentSlot(state);
   const me = playerScope(state, player);
   const out: PlayerActionOption[] = [];
   for (const def of playerActionDefs(state, player)) {
     if (def.by !== "player") continue;
+    if (opts.only && !opts.only(def)) continue;
     const ctx = evalCtx(state, system, { player: me, turn: { round: state.turn.round } });
     const why = ((): string | undefined => {
       if (!slot || state.turn.round === 0) return "Once the battle starts";
@@ -134,20 +147,23 @@ export function playerActions(state: GameState, player: PlayerId): PlayerActionO
     };
     if (def.target) {
       const army = armyStratagem(state, def.id);
-      option.targets = Object.values(state.units)
-        .filter((u) => {
-          const it = unitView(state, system, u);
-          if (
-            army?.targetKeywords &&
-            !army.targetKeywords.split(/\s+or\s+/i).some((k) => hasKeywordPhrase(u, k))
-          )
-            return false;
-          if (army?.notYet && u.status?.[army.notYet]) return false;
-          return (
-            it.models.length > 0 && safeBool(def.target!.filter, { ...ctx, scope: { ...ctx.scope, it } })
-          );
-        })
-        .map((u) => u.id);
+      option.targets = [];
+      for (const u of Object.values(state.units)) {
+        if (
+          army?.targetKeywords &&
+          !army.targetKeywords.split(/\s+or\s+/i).some((k) => hasKeywordPhrase(u, k))
+        )
+          continue;
+        if (army?.notYet && u.status?.[army.notYet]) continue;
+        // A unit with no models left is never a target: skip building its view.
+        if (!isAlive(state, u)) continue;
+        const it = unitView(state, system, u);
+        if (!it.models.length || !safeBool(def.target.filter, { ...ctx, scope: { ...ctx.scope, it } }))
+          continue;
+        if (opts.fits && !opts.fits(def, u.id, it)) continue;
+        option.targets.push(u.id);
+        if (opts.first) break;
+      }
       if (option.ok && !option.targets.length) {
         option.ok = false;
         option.why = "No eligible unit";
