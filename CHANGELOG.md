@@ -9,6 +9,8 @@ What changed in each release of Open Battle. The in-app **What's new** on the st
 - **No farming the ladder.** A rating moves only against an opponent who has played five games against three different players.
 - **Different versions at one table.** Players' apps say which version they run when they meet, and a banner names both when they differ. A player whose version can't share the table is kept out of the game rather than shown a table that drifts.
 - **The board checks signatures.** A self-hosted board keeps a ranked result only if both signatures hold, and answers under `/v1`. Its protocol is in [docs/board-protocol.md](docs/board-protocol.md).
+- **Stratagems as a hand of cards.** Drag a card onto a unit to play it, or click it and then the unit. A card the rules say no to asks "Play it anyway?", and the log says it was played anyway. After a roll with failed dice, a re-roll card pops up by the dice ("Re-roll a 2? · 1 CP") and re-rolls just that die.
+- **Roll the dice yourself.** Under 🔊, hold to shake your dice in the tray and let go to throw them, or roll real dice and tap in the faces. Other players see "Ana is shaking…" while you shake.
 - **For contributors.** [GOVERNANCE.md](GOVERNANCE.md), a code of conduct, a security policy, a pull request template, [docs/compatibility.md](docs/compatibility.md), and [CLAUDE.md](CLAUDE.md) with Claude Code skills for writing packages and modules, checking for publisher IP, verifying a change and drafting a proposal, and a Proposal issue form.
 
 ## 0.1.0 (2026-10-10)

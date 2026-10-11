@@ -718,3 +718,79 @@ body.verb-ok canvas {
     animation: none;
   }
 }
+
+/* "Play it anyway?": the rules said no where the card was dropped. */
+.hand-anyway {
+  position: fixed;
+  z-index: 45;
+  transform: translate(-50%, calc(-100% - 14px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid #7f1d1d;
+  border-radius: 10px;
+  background: rgb(17 20 27 / 96%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+  font-size: 0.9rem;
+}
+.hand-anyway p {
+  margin: 0;
+}
+.hand-anyway .row {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* The re-roll card by the dice: a stratagem card that pops up from the hand after a roll with failures. */
+.reroll-card {
+  position: fixed;
+  z-index: 36;
+  /* Just above the dice tray. */
+  right: 12px;
+  bottom: calc(70px + min(220px, 34vh));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 12px 8px;
+  border: 1px solid var(--side, #3a4150);
+  border-top-width: 4px;
+  border-radius: 10px;
+  background: linear-gradient(#1d2230, #141821);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 50%);
+  animation: reroll-up 0.25s ease-out;
+}
+.reroll-card .cost {
+  align-self: flex-end;
+  margin-bottom: -22px;
+  font-weight: 700;
+  color: #f2c94c;
+}
+.reroll-card .row {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.reroll-card .die-face {
+  min-width: 2.2em;
+}
+@keyframes reroll-up {
+  from {
+    transform: translateY(24px) rotate(2deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reroll-card {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .reroll-card {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 120px;
+  }
+}

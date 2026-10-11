@@ -2458,7 +2458,85 @@ const checks = {
     );
     // Nothing left to play: the fan folds to a strip; opened, the card is still there, greyed with its clip.
     await page.locator(".stratagem-hand .hand-strip").hover();
-    await page.locator(".stratagem-hand .hand-card.used", { hasText: "Re-roll" }).waitFor({ timeout: 5000 });
+    const used = page.locator(".stratagem-hand .hand-card.used", { hasText: "Re-roll" });
+    await used.waitFor({ timeout: 5000 });
+    // The rules say no now; it's the player's table: "Play it anyway?", and the log says so.
+    // Let it rise out of the fan first, so the press and the release land on it.
+    await used.hover();
+    await page.waitForTimeout(400);
+    await used.click();
+    await page.locator(".hand-anyway").waitFor({ timeout: 3000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "hand-anyway.png") });
+    await page.locator(".hand-anyway button.primary").click();
+    await page.locator(".hand-anyway").waitFor({ state: "detached", timeout: 3000 });
+    await page.waitForFunction(
+      () => /anyway \(/.test(document.querySelector(".panel.hud")?.innerText ?? ""),
+      null,
+      {
+        timeout: 5000,
+      },
+    );
+    await context.close();
+    return page.errors;
+  },
+
+  // UX 84 #4: after a roll with failures, the re-roll card pops up by the dice; Yes re-rolls one die.
+  async "reroll-card"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    for (let i = 0; i < 2; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    }
+    await page
+      .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+      .first()
+      .click();
+    const canvas = await page.locator("canvas").first().boundingBox();
+    let found = false;
+    for (let u = 0; u < 6 && !found; u++) {
+      await page.keyboard.press("]");
+      await page.waitForTimeout(300);
+      for (let y = 0.1; y < 0.55 && !found; y += 0.04)
+        for (let x = 0.1; x < 0.95 && !found; x += 0.03) {
+          await page.mouse.move(canvas.x + canvas.width * x, canvas.y + canvas.height * y);
+          if (await page.locator(".table-tag.ok").count()) found = true;
+        }
+    }
+    if (!found) throw new Error("no enemy offered a shot from the table");
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.locator(".panel.attack").waitFor({ timeout: 5000 });
+    const card = page.locator(".reroll-card");
+    // Roll step by step until one has a failure to re-roll.
+    for (let i = 0; i < 4 && !(await card.count()); i++) {
+      const roll = page.locator(".panel.attack button.primary").first();
+      if (!(await roll.count())) break;
+      await roll.click();
+      await card.waitFor({ timeout: 4000 }).catch(() => {});
+    }
+    await card.waitFor({ timeout: 1000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "reroll-card.png") });
+    const pips = await page.locator(".stratagem-hand .cp-pips .pip").count();
+    await card.locator("button.primary").first().click();
+    await page.locator(".dice-tray", { hasText: "re-rolled a" }).waitFor({ timeout: 8000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "rerolled.png") });
+    // Command Re-roll is spent for the phase: the card goes, and a CP with it.
+    await card.waitFor({ state: "detached", timeout: 5000 });
+    await page.waitForFunction(
+      (n) => document.querySelectorAll(".stratagem-hand .cp-pips .pip").length === n - 1,
+      pips,
+      { timeout: 5000 },
+    );
     await context.close();
     return page.errors;
   },

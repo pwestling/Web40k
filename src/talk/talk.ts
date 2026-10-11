@@ -41,6 +41,8 @@ interface TalkState {
   casters: Record<string, Caster>;
   /** The moment card a commentator last brought up (src/broadcast/Moments.tsx shows it). */
   cue: { seq: number; kind: string; by: string; at: number } | null;
+  /** Players holding their dice to shake them, by peer, with when they started ("Ana is shaking…"). */
+  shaking: Record<string, number>;
 }
 
 interface Caster {
@@ -59,6 +61,7 @@ export const useTalk = create<TalkState>(() => ({
   tool: null,
   casters: {},
   cue: null,
+  shaking: {},
 }));
 
 const vec3 = (v: unknown): v is [number, number, number] =>
@@ -70,6 +73,11 @@ export function sendCamera(
 ) {
   const name = myName();
   useStore.getState().session?.sendSide({ t: "talk/cam", cam, ...(name ? { name } : {}) });
+}
+
+/** Tell the table this player is shaking their dice, or has let go. */
+export function sendShaking(on: boolean): void {
+  useStore.getState().session?.sendSide({ t: "talk/shake", on });
 }
 
 /** Bring up a moment card for everyone following this commentator. */
@@ -241,6 +249,13 @@ function receive(message: SideMessage, from: string): void {
   } else if (message.t === "talk/moment") {
     if (Number.isInteger(message.seq) && typeof message.kind === "string")
       useTalk.setState({ cue: { seq: message.seq, kind: message.kind, by: from, at: Date.now() } });
+  } else if (message.t === "talk/shake") {
+    // Only a player at the table shakes dice.
+    if (!useStore.getState().game.players[from]) return;
+    useTalk.setState((s) => {
+      const { [from]: _gone, ...rest } = s.shaking;
+      return { shaking: message.on === true ? { ...rest, [from]: Date.now() } : rest };
+    });
   } else if (message.t === "talk/clear") clearDrawings(from);
   else if (message.t === "talk") {
     const item = cleanItem(message.item);
@@ -264,7 +279,7 @@ export function useTableTalk(): void {
     return () => {
       session.listenSide(null, null, "talk");
       clearInterval(timer);
-      useTalk.setState({ items: [], chat: [], unread: 0, tool: null, casters: {} });
+      useTalk.setState({ items: [], chat: [], unread: 0, tool: null, casters: {}, shaking: {} });
     };
   }, [session]);
 }

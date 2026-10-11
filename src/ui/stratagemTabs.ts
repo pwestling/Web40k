@@ -15,11 +15,7 @@ interface StratagemTab {
 const TURNS = new Set(["turn/next", "turn/prev", "turn/first"]);
 
 /** The stratagems played on each unit since the phase began, from the log (undone ones left out). */
-function stratagemTabs(
-  record: GameRecord,
-  game: GameState,
-  upto = Infinity,
-): Map<UnitId, StratagemTab[]> {
+function stratagemTabs(record: GameRecord, game: GameState, upto = Infinity): Map<UnitId, StratagemTab[]> {
   const out = new Map<UnitId, StratagemTab[]>();
   const undone = undoneSeqs(record, upto);
   for (let i = record.events.length - 1; i >= 0; i--) {

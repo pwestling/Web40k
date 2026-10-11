@@ -70,6 +70,8 @@ export type SideMessage =
     }
   /** A commentator brings up a moment-of-the-game card (after the game), by its seq and kind. */
   | { t: "talk/moment"; seq: number; kind: string }
+  /** A player holds their dice to shake them, or let go (src/companion/Shake.tsx): "Ana is shaking…". */
+  | { t: "talk/shake"; on: boolean }
   /** Voice at the table (src/voice): this peer's mic is on or off. The audio itself is a media stream. */
   | { t: "talk/voice"; on: boolean; name?: string }
   /**

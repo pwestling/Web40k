@@ -53,7 +53,9 @@ export function useHandShown(): boolean {
 }
 
 type Held = { option: PlayerActionOption; x: number; y: number; ox: number; oy: number; moved: boolean };
-type Over = { unitId: UnitId | null; ok: boolean; line: string };
+/** `anyway`: it's on a unit (or the table) the rules say no to, so it can be played anyway. */
+type Over = { unitId: UnitId | null; ok: boolean; line: string; anyway?: boolean };
+type Anyway = { option: PlayerActionOption; unitId: UnitId | null; line: string; x: number; y: number };
 
 function unitName(game: GameState, id: UnitId): string {
   return displayName(game.units[id]?.name ?? "");
@@ -67,12 +69,12 @@ function overAt(game: GameState, option: PlayerActionOption, x: number, y: numbe
     if (!unitId) return { unitId, ok: false, line: t("Drop it on a unit") };
     const unit = unitName(game, unitId);
     if (!option.targets.includes(unitId))
-      return { unitId, ok: false, line: t("{name} can't go on {unit}", { name, unit }) };
-    if (!option.ok) return { unitId, ok: false, line: gameText(option.why ?? "") };
+      return { unitId, ok: false, line: t("{name} can't go on {unit}", { name, unit }), anyway: true };
+    if (!option.ok) return { unitId, ok: false, line: gameText(option.why ?? ""), anyway: true };
     return { unitId, ok: true, line: t("Play on {unit} · {cost}", { unit, cost: option.cost }) };
   }
   if (!tablePick.onTable(x, y)) return { unitId: null, ok: false, line: t("Drop it on the table") };
-  if (!option.ok) return { unitId: null, ok: false, line: gameText(option.why ?? "") };
+  if (!option.ok) return { unitId: null, ok: false, line: gameText(option.why ?? ""), anyway: true };
   return { unitId: null, ok: true, line: t("Play {name} · {cost}", { name, cost: option.cost }) };
 }
 
@@ -131,6 +133,7 @@ export function StratagemHand() {
   const [picked, setPicked] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [step, setStep] = useState<UnitId | null>(null);
+  const [anyway, setAnyway] = useState<Anyway | null>(null);
   const hand = useRef<HTMLDivElement>(null);
   const live = useRef({ game, player, options });
   useEffect(() => {
@@ -138,13 +141,22 @@ export function StratagemHand() {
   });
   const choice = options.find((o) => o.def.id === picked) ?? null;
 
-  const play = (option: PlayerActionOption, targetId?: UnitId) => {
+  const play = (option: PlayerActionOption, targetId?: UnitId, force?: boolean) => {
     const who = live.current.player;
     if (!who) return;
-    dispatch({ type: "player/action", action: option.def.id, ...(targetId ? { targetId } : {}) }, who.id);
+    dispatch(
+      {
+        type: "player/action",
+        action: option.def.id,
+        ...(targetId ? { targetId } : {}),
+        ...(force ? { force: true } : {}),
+      },
+      who.id,
+    );
     coin();
     thunk(1);
     setPicked(null);
+    setAnyway(null);
   };
   const tell = (line: string) => {
     setNote(line);
@@ -174,7 +186,10 @@ export function StratagemHand() {
           if (at.ok) play(h.option, at.unitId ?? undefined);
           else {
             setBack({ id: h.option.def.id, x: e.clientX - h.ox, y: e.clientY - h.oy });
-            if (at.line) tell(at.line);
+            // The rules say no, but it's the player's table: ask (rules are advisory).
+            if (at.anyway)
+              setAnyway({ option: h.option, unitId: at.unitId, line: at.line, x: e.clientX, y: e.clientY });
+            else if (at.line) tell(at.line);
           }
         }
         return null;
@@ -235,10 +250,18 @@ export function StratagemHand() {
             models.reduce((n, m) => n + m.position.y, 0) / models.length,
           );
         setStep(ids[at]!);
-      } else if (e.key === "Enter" && at >= 0 && choice.ok) {
+      } else if (e.key === "Enter" && at >= 0) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        play(choice, ids[at]!);
+        if (choice.ok) play(choice, ids[at]!);
+        else
+          setAnyway({
+            option: choice,
+            unitId: ids[at]!,
+            line: gameText(choice.why ?? ""),
+            x: innerWidth / 2,
+            y: innerHeight / 2,
+          });
       }
     };
     const down = (e: PointerEvent) => {
@@ -249,7 +272,10 @@ export function StratagemHand() {
       e.stopPropagation();
       e.preventDefault();
       if (choice.targets.includes(unitId) && choice.ok) play(choice, unitId);
-      else tell(overAt(live.current.game, choice, e.clientX, e.clientY).line);
+      else {
+        const at = overAt(live.current.game, choice, e.clientX, e.clientY);
+        setAnyway({ option: choice, unitId, line: at.line, x: e.clientX, y: e.clientY });
+      }
     };
     addEventListener("keydown", key, { capture: true });
     addEventListener("pointerdown", down, { capture: true });
@@ -352,7 +378,17 @@ export function StratagemHand() {
                   onClick={() => {
                     if (held?.moved) return;
                     if (!o.ok) {
-                      tell(`${gameText(o.def.name)}: ${gameText(o.why ?? "")}`);
+                      const r = hand.current?.getBoundingClientRect();
+                      // One with a unit is picked as ever, to ask on the unit; one without asks here.
+                      if (o.targets) setPicked(picked === id ? null : id);
+                      else
+                        setAnyway({
+                          option: o,
+                          unitId: null,
+                          line: `${gameText(o.def.name)}: ${gameText(o.why ?? "")}`,
+                          x: (r?.left ?? 0) + (r?.width ?? 0) / 2,
+                          y: r?.top ?? 0,
+                        });
                       return;
                     }
                     setPicked(picked === id ? null : id);
@@ -407,7 +443,17 @@ export function StratagemHand() {
                   <button
                     key={u}
                     className={`small ${step === u ? "on" : ""}`}
-                    onClick={() => play(choice, u)}
+                    onClick={(e) =>
+                      choice.ok
+                        ? play(choice, u)
+                        : setAnyway({
+                            option: choice,
+                            unitId: u,
+                            line: gameText(choice.why ?? ""),
+                            x: e.clientX,
+                            y: e.clientY,
+                          })
+                    }
                   >
                     {unitName(game, u)}
                   </button>
@@ -429,6 +475,13 @@ export function StratagemHand() {
           </div>
         )}
       </div>
+      {anyway && (
+        <PlayAnyway
+          ask={anyway}
+          onPlay={() => play(anyway.option, anyway.unitId ?? undefined, true)}
+          onBack={() => setAnyway(null)}
+        />
+      )}
       {held?.moved && (
         <div
           className={`hand-ghost ${over?.ok ? "over" : ""}`}
@@ -444,6 +497,42 @@ export function StratagemHand() {
       )}
       <Reveals />
     </>
+  );
+}
+
+/**
+ * The rules say no to a card where it was dropped: say why, and offer to play
+ * it anyway (rules are advisory; everyone sees "anyway" in the log).
+ */
+function PlayAnyway({ ask, onPlay, onBack }: { ask: Anyway; onPlay: () => void; onBack: () => void }) {
+  const first = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    first.current?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onBack();
+    };
+    addEventListener("keydown", key);
+    return () => removeEventListener("keydown", key);
+  }, [onBack]);
+  const style = {
+    left: Math.max(12, Math.min(ask.x, innerWidth - 12)),
+    top: Math.max(12, ask.y),
+  } as CSSProperties;
+  return (
+    <div className="hand-anyway" role="alertdialog" aria-label={t("Play it anyway?")} style={style}>
+      <p>{ask.line}</p>
+      <div className="row">
+        <button className="small" onClick={onBack}>
+          {t("Put it back")}
+        </button>
+        <button ref={first} className="small primary" onClick={onPlay}>
+          {/* What it can't pay for stays unpaid. */}
+          {ask.option.payment.length
+            ? t("Play it anyway · {cost}", { cost: ask.option.cost })
+            : t("Play it anyway")}
+        </button>
+      </div>
+    </div>
   );
 }
 

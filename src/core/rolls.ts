@@ -38,6 +38,8 @@ export interface TrayRoll {
   /** The unit on the receiving end, when the roll is part of an attack or action against one. */
   targetId?: string;
   label?: string;
+  /** One die a player re-rolled, and what it was. */
+  rerolledFrom?: number;
 }
 
 export interface TrayDie {
@@ -65,6 +67,15 @@ export function rollsIn(before: GameState, after: GameState, events: GameEvent[]
       const roll = recordRoll(after, run, r, `${seq}:${slot}:${from + i}`);
       if (roll) out.push({ ...roll, chain: key });
     });
+  }
+  // One die a player re-rolled: just that die, on its own.
+  for (const e of events) {
+    const run = after.attack?.run;
+    if (e.type !== "attack/roll" || !e.reroll || !run) continue;
+    const r = run.records.findLast((x) => x.id === e.reroll!.step);
+    const d = r?.dice?.[e.reroll.die];
+    const roll = r && d && recordRoll(after, run, { ...r, dice: [d] }, `${seq}:reroll`);
+    if (roll) out.push({ ...roll, rerolledFrom: e.reroll.from });
   }
   flat(events).forEach((e, i) => {
     if (e.type !== "dice/roll" || e.roll.faces?.length) return;

@@ -211,6 +211,8 @@ export interface RunEnv {
   rng?: () => number;
   /** Answer windows with their default instead of waiting (solo play, simulations). */
   autoAnswer?: boolean;
+  /** Dice a player re-rolled (Command Re-roll), by test and index: each comes up `to` instead, and isn't re-rolled again. */
+  rerolls?: { step: Id; die: number; to: number }[];
 }
 
 export interface StartOptions {
@@ -1044,6 +1046,12 @@ function runTest(
     if (again) {
       rerolledFrom = r.value;
       r = roll();
+      j = judge(r.value, target);
+    }
+    const forced = env.rerolls?.find((x) => x.step === step.id && x.die === dice.length);
+    if (forced) {
+      rerolledFrom = r.value;
+      r = { value: forced.to };
       j = judge(r.value, target);
     }
     let followUp: number | undefined;

@@ -462,6 +462,12 @@ class Stage {
           ? t("{title}: {n} of {total} saved", counts)
           : t("{title}: {n} of {total} pass", counts);
     }
+    if (roll.rerolledFrom !== undefined)
+      this.caption.textContent = t("{title}: re-rolled a {from}, now {to}", {
+        title: roll.title,
+        from: roll.rerolledFrom,
+        to: roll.dice[0]?.value ?? "",
+      });
     // The table shows this stage's result now, with the banner, not after it.
     settle();
     if (stakes) {

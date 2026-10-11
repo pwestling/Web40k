@@ -715,11 +715,14 @@ function describeEvent({ by, event }: LoggedEvent, before: GameState, game: Game
         unit: event.targetId ? unitName(event.targetId) : "",
         spent,
       };
+      const anyway = event.forced !== undefined ? t(", anyway ({why})", { why: gameText(event.forced) }) : "";
       if (event.targetId)
-        return spent
-          ? t("{name} used {action} on {unit} ({spent})", p)
-          : t("{name} used {action} on {unit}", p);
-      return spent ? t("{name} used {action} ({spent})", p) : t("{name} used {action}", p);
+        return (
+          (spent
+            ? t("{name} used {action} on {unit} ({spent})", p)
+            : t("{name} used {action} on {unit}", p)) + anyway
+        );
+      return (spent ? t("{name} used {action} ({spent})", p) : t("{name} used {action}", p)) + anyway;
     }
     case "ability/apply":
       return t("{unit}: {ability} applied", { unit: unitName(event.unitId), ability: event.ability });

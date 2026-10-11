@@ -32,6 +32,8 @@ export interface PlayerActionTaken {
   targetId?: UnitId;
   /** For a custom action: the name the player gave it. */
   label?: string;
+  /** Used anyway, against the rules' word (why not); shown to everyone. */
+  forced?: string;
 }
 
 function seatOf(state: GameState, player: PlayerId): number | undefined {

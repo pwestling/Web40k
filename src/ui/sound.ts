@@ -174,12 +174,12 @@ export function click(strength: number, pitch: number, crowd: number) {
 }
 
 /** Dice shaken in a hand. */
-export function rattle() {
+export function rattle(level = 1) {
   const a = audio();
   if (!a) return;
   const t = a.currentTime;
   for (let i = 0; i < 3; i++)
-    burst(a, t + i * 0.012, { freq: 2200 + Math.random() * 1800, q: 5, dur: 0.015, gain: 0.12 });
+    burst(a, t + i * 0.012, { freq: 2200 + Math.random() * 1800, q: 5, dur: 0.015, gain: 0.12 * level });
 }
 
 /** A critical success glinting; `i` staggers a run of them. */

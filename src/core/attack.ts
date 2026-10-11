@@ -20,6 +20,7 @@ import {
   type StepRecord,
   type TestPlan,
 } from "./content";
+import { die as rollDie, toldRng } from "./dice";
 import { createInitialState, type GameState, type Model, type ModelId, type UnitId } from "./types";
 
 /**
@@ -129,6 +130,8 @@ export interface AttackState {
    * resolve (Hazardous), worked out by the host when it ends.
    */
   resolved?: Outcome[];
+  /** Dice of the last stage that players re-rolled (Command Re-roll), so it can be replayed. */
+  rerolls?: DieReroll[];
 }
 
 /** Applies the always-fails-on-1 rule and the ±1 cap used by most d6 games. */
@@ -183,8 +186,13 @@ export function specToRun(spec: AttackSpec): StartOptions {
   };
 }
 
-function env(state: GameState, rng?: Rng): RunEnv {
-  return { system: getSystem(ATTACK_SYSTEM), state, ...(rng ? { rng } : {}) };
+function env(state: GameState, rng?: Rng, rerolls?: DieReroll[]): RunEnv {
+  return {
+    system: getSystem(ATTACK_SYSTEM),
+    state,
+    ...(rng ? { rng } : {}),
+    ...(rerolls?.length ? { rerolls } : {}),
+  };
 }
 
 /** The attack as the panel shows it, read from the run's step records. */
@@ -254,7 +262,13 @@ export function startAttack(
 }
 
 /** Host side: roll the dice for the attack's current stage. */
-export function rollStage(state: GameState, attack: AttackState, rng: Rng): AttackState {
+export function rollStage(
+  state: GameState,
+  attack: AttackState,
+  rng: Rng,
+  /** Dice of the stage a player re-rolled (`rerollDie`). */
+  rerolls?: DieReroll[],
+): AttackState {
   if (attack.stage === "done") return attack;
   // Attacks saved before the runner existed carry no run: restart it from the rolled count.
   const run =
@@ -268,12 +282,80 @@ export function rollStage(state: GameState, attack: AttackState, rng: Rng): Atta
         overrides: { ...specToRun(attack.spec).overrides, attacks: { count: String(attack.attackCount) } },
       },
     );
-  const next = projectAttack(attack.spec, advance(env(state, rng), run));
+  const projected = projectAttack(attack.spec, advance(env(state, rng, rerolls), run));
+  const next = rerolls?.length ? { ...projected, rerolls } : projected;
   if (next.stage !== "done" || !next.run) return next;
   // The panel's run has only its own numbers: the weapon's bound rules fire now it's over.
   const action = attack.spec.kind === "melee" ? "fight" : "shoot";
   const resolved = resolvedOutcomes(env(state, rng), { ...next.run, action });
   return resolved.length ? { ...next, resolved } : next;
+}
+
+/** One die a player re-rolled, as the log keeps it. */
+export interface DieReroll {
+  /** The test step, e.g. "hit". */
+  step: string;
+  /** Which of its dice. */
+  die: number;
+  from: number;
+  to: number;
+}
+
+const refuse = () => {
+  throw new Error("no fresh dice here");
+};
+
+/**
+ * A player re-rolls one die of the stage just rolled (Command Re-roll). The
+ * stage is rolled again from where it stood, with the faces it rolled read
+ * back from its records, except that die, which comes up fresh. Null when it
+ * can't be: the die was re-rolled already, it's a summed or follow-up roll,
+ * or the faces don't replay the stage exactly as it was logged.
+ */
+export function rerollDie(
+  /** The state before the stage was rolled. */
+  state: GameState,
+  before: AttackState,
+  after: AttackState,
+  index: number,
+  rng: Rng,
+): { attack: AttackState; reroll: DieReroll } | null {
+  if (!before.run || !after.run || after.stage === "done") return null;
+  const prior = after.rerolls ?? [];
+  const records = after.run.records.slice(before.run.records.length);
+  const faces: number[] = [];
+  for (const r of records) {
+    faces.push(...(r.rolls ?? []));
+    (r.dice ?? []).forEach((d, i) => {
+      // A player's re-roll was told to the stage, not rolled in it.
+      if (prior.some((x) => x.step === r.id && x.die === i)) faces.push(d.rerolledFrom ?? d.value);
+      else {
+        if (d.rerolledFrom !== undefined) faces.push(d.rerolledFrom);
+        faces.push(...(d.dice && d.rerolledFrom === undefined ? d.dice : [d.value]));
+        if (d.followUp !== undefined) faces.push(d.followUp);
+      }
+    });
+  }
+  const step = records.findLast((r) => r.kind === "test" && r.dice?.length);
+  const die = step?.dice?.[index];
+  if (!step || !die || die.rerolledFrom !== undefined || die.dice || die.followUp !== undefined) return null;
+  if (records.some((r) => r.dice?.some((d) => d.dice && d.rerolledFrom !== undefined))) return null;
+  // Dice past the logged faces (a re-rolled hit that now goes on) come fresh, but only once it's re-rolled.
+  const replay = (rerolls: DieReroll[], fresh: boolean) => {
+    try {
+      const told = toldRng(faces, refuse, fresh ? (sides) => rollDie(rng, sides) : undefined);
+      return rollStage(state, before, told, rerolls);
+    } catch {
+      return null;
+    }
+  };
+  // The faces must replay the stage as it was, or the re-roll would change more than one die.
+  const again = replay(prior, false);
+  if (!again || JSON.stringify(again) !== JSON.stringify(after)) return null;
+  const to = rollDie(rng, (step.plan as TestPlan).sides);
+  const reroll = { step: step.id, die: index, from: die.value, to };
+  const attack = replay([...prior, reroll], true);
+  return attack && { attack, reroll };
 }
 
 /** What the data says an attack should be, before any player edits. */

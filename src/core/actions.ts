@@ -1,5 +1,12 @@
 import { commitTo, isSeed } from "./sharedDice";
-import { rollStage, startAttack, type AttackSpec, type AttackState } from "./attack";
+import {
+  rerollDie,
+  rollStage,
+  startAttack,
+  type AttackSpec,
+  type AttackState,
+  type DieReroll,
+} from "./attack";
 import {
   canonResult,
   DECLINE_WHYS,
@@ -227,6 +234,8 @@ export type Intent =
   | { type: "pool/spend"; player: PlayerId; resource: string; indices: number[] }
   | { type: "attack/declare"; spec: AttackSpec }
   | { type: "attack/roll" }
+  /** Re-roll one die of the attack's last roll (event `seq`): Command Re-roll, paid for by its own player/action. */
+  | { type: "attack/reroll"; seq: number; die: number }
   /** The defender declares the order their models take wounds in. */
   | { type: "attack/allocate"; order: string[] }
   | { type: "attack/clear" }
@@ -267,6 +276,8 @@ export type Intent =
       cost?: number;
       /** For a custom action paid from a dice pool: which dice (else the lowest). */
       dice?: number[];
+      /** Use it although the rules say not now, or on a unit they don't list ("Play it anyway?"); logged for everyone. */
+      force?: boolean;
     }
   /** Mark an ability the players resolved by hand as used this phase. */
   | { type: "ability/apply"; unitId: UnitId; ability: string }
@@ -429,7 +440,8 @@ export type GameEvent =
   | { type: "dice/discard"; player: PlayerId; unitId: UnitId; weapon: string }
   /** The attack after this step: declared (attacks rolled) or one stage rolled. */
   | { type: "attack/declare"; attack: AttackState }
-  | { type: "attack/roll"; attack: AttackState }
+  /** `reroll`: a player re-rolled one die of the last roll (attack/reroll); the stage is shown again with it. */
+  | { type: "attack/roll"; attack: AttackState; reroll?: DieReroll }
   | { type: "attack/allocate"; order: string[] }
   | { type: "attack/clear" }
   /** A system action, paid for; any procedure it starts is already rolled up to its first pause. */
@@ -796,6 +808,24 @@ export function resolveIntent(
       if (!state || !attack || attack.stage === "done") return null;
       return { type: "attack/roll", attack: rollStage(state, attack, rng) };
     }
+    case "attack/reroll": {
+      if (!state?.attack?.run || !history || !state.players[from] || intent.seq < 1) return null;
+      // Only the roll in front of everyone, unchanged since.
+      const after = history(intent.seq).attack;
+      if (!after?.run || JSON.stringify(after) !== JSON.stringify(state.attack)) return null;
+      // The stage as it stood before it was rolled (and before any re-rolls of it).
+      let at = intent.seq - 1;
+      while (
+        at > 0 &&
+        intent.seq - at < 200 &&
+        history(at).attack?.run?.records.length === after.run.records.length
+      )
+        at--;
+      const before = history(at).attack;
+      if (!before) return null;
+      const done = rerollDie(history(at), before, after, intent.die, rng);
+      return done && { type: "attack/roll", attack: done.attack, reroll: done.reroll };
+    }
     case "attack/allocate": {
       const attack = state?.attack;
       const target = attack && state?.units[attack.spec.targetUnitId];
@@ -888,7 +918,7 @@ export function resolveIntent(
       if (!state) return null;
       const option = playerActions(state, from).find((o) => o.def.id === intent.action);
       if (!option) return null;
-      if (!option.ok) return null;
+      if (!option.ok && !intent.force) return null;
       let payment = option.payment;
       if (option.def.custom) {
         // The player names the stratagem and its cost; the engine only checks they can pay.
@@ -913,14 +943,22 @@ export function resolveIntent(
           payment = cost ? [{ resource, amount: cost }] : [];
         }
       }
-      if (intent.targetId && !option.targets?.includes(intent.targetId)) return null;
-      if (option.targets && !intent.targetId) return null;
+      // Forced, any unit on the table will do; what it can't pay for stays unpaid.
+      const listed = intent.targetId && option.targets?.includes(intent.targetId);
+      if (intent.targetId && !listed && !(intent.force && state.units[intent.targetId])) return null;
+      if (option.def.target && !intent.targetId) return null;
+      const forced = !option.ok
+        ? (option.why ?? "")
+        : intent.targetId && !listed
+          ? "Not an eligible unit"
+          : undefined;
       return {
         type: "player/action",
         player: from,
         action: intent.action,
         payment,
         ...(intent.targetId ? { targetId: intent.targetId } : {}),
+        ...(forced !== undefined ? { forced } : {}),
         ...(option.def.custom && intent.label ? { label: intent.label.trim().slice(0, 60) } : {}),
       };
     }

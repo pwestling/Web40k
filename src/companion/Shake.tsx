@@ -6,6 +6,7 @@ import { trayHand } from "../ui/DiceTray";
 import { tableDrag } from "../render/dragging";
 import { diceLook } from "../ui/diceSets";
 import { whoosh, rattle } from "../ui/sound";
+import { sendShaking, useTalk } from "../talk/talk";
 
 /**
  * Hold to shake (PX-1f, hold-to-shake.md; mode A of UX 501): with "Roll the
@@ -78,6 +79,7 @@ export function useHoldToShake(on: boolean, intent: Intent, as: PlayerId | undef
   // While held: the rattle and the jostle, faster as the shake builds, and after a while a word to let go.
   useEffect(() => {
     if (!holding) return;
+    sendShaking(true);
     let timer: ReturnType<typeof setTimeout>;
     const began = performance.now();
     const tick = () => {
@@ -89,7 +91,11 @@ export function useHoldToShake(on: boolean, intent: Intent, as: PlayerId | undef
       timer = setTimeout(tick, 230 - 140 * built);
     };
     tick();
-    return () => clearTimeout(timer);
+    // Let go, or gone: the table stops hearing it.
+    return () => {
+      clearTimeout(timer);
+      sendShaking(false);
+    };
   }, [holding]);
   useEffect(
     () => () => {
@@ -190,4 +196,38 @@ export function WaitingDice({ intent, as, roll }: { intent: Intent; as?: PlayerI
     };
   }, []);
   return null;
+}
+
+/** Shaking this long with no word is a lost "let go": it stops showing. */
+const SHAKE_STALE_MS = 12000;
+
+/**
+ * Another player shaking their dice (talk/shake): "Ana is shaking…" where
+ * the dice will land, and their rattle, quieter than your own.
+ */
+export function OthersShaking() {
+  const shaking = useTalk((s) => s.shaking);
+  const players = useStore((s) => s.game.players);
+  const self = useStore((s) => s.session?.selfId);
+  const [now, setNow] = useState(() => Date.now());
+  const who = Object.entries(shaking).filter(([id, at]) => id !== self && now - at < SHAKE_STALE_MS);
+  const any = who.length > 0;
+  useEffect(() => {
+    if (!any) return;
+    const timer = setInterval(() => {
+      rattle(0.5);
+      setNow(Date.now());
+    }, 260);
+    return () => clearInterval(timer);
+  }, [any]);
+  if (!any) return null;
+  return (
+    <div className="others-shaking" role="status">
+      {who.map(([id]) => (
+        <span key={id} style={{ color: players[id]?.color }}>
+          {t("{name} is shaking…", { name: players[id]?.name ?? "" })}
+        </span>
+      ))}
+    </div>
+  );
 }
