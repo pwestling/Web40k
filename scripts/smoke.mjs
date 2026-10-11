@@ -1963,6 +1963,103 @@ const checks = {
   },
 
   /**
+   * PX B1: Arrive lifts a unit from reserves onto the pointer, with rings round the enemy; Esc puts it back,
+   * and a click on the table sets it down there.
+   */
+  async arrive() {
+    const { page, context } = await device();
+    const box = "v -0.6 0 -0.6\nv 0.6 0 -0.6\nv 0.6 1.6 0.6\nv -0.6 1.6 0.6\nf 1 2 3 4\n";
+    await context.route("https://example.com/**", (route) =>
+      route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*" }, body: box }),
+    );
+    const fig = (nickname, x, z) => ({
+      Name: "Custom_Model",
+      Nickname: nickname,
+      Transform: { posX: x, posY: 1, posZ: z, rotY: 90, scaleX: 1, scaleY: 1, scaleZ: 1 },
+      CustomMesh: { MeshURL: "https://example.com/fig.obj", TypeIndex: 1 },
+    });
+    const save = {
+      SaveName: "Drop Zone",
+      ObjectStates: [
+        fig("Scrap Brute", -26, -1),
+        fig("Scrap Brute", -26, 1),
+        fig("Warden", 26, 0),
+        fig("Warden", 26, 2),
+        {
+          Name: "Bag",
+          Nickname: "Reserves",
+          Transform: { posX: 28, posZ: 18 },
+          ContainedObjects: [fig("Lancer", 0, 0), fig("Lancer", 0, 0), fig("Lancer", 0, 0)],
+        },
+      ],
+    };
+    const path = join(files, "arrive.json");
+    writeFileSync(path, JSON.stringify(save));
+    await lobby(page);
+    await page.getByRole("button", { name: "Open a Tabletop Simulator save as a game" }).click();
+    await page
+      .locator(".tts-import label", { hasText: "Open a save file" })
+      .locator("input")
+      .setInputFiles(path);
+    await page.locator(".tts-table").getByRole("button", { name: "Open it as a game" }).click();
+    await page.locator(".plate", { hasText: "Warden" }).first().waitFor({ timeout: 30_000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-open.png") });
+    for (const b of [/Start battle/, /Start anyway/]) {
+      const button = page.getByRole("button", { name: b });
+      if (await button.count()) await button.first().click();
+      await sleep(300);
+    }
+    await page
+      .locator(".topbar")
+      .getByText(/Round 1/)
+      .first()
+      .waitFor({ timeout: 15_000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    // Pick the bag's unit: its models sit by its plate, off the table, once the view has settled.
+    await sleep(2000);
+    const card = page.locator(".panel.unitcard");
+    const plate = await page.locator(".plate", { hasText: "Reserves" }).first().boundingBox();
+    search: for (const dy of [0, 10, 14, 18, 22, 28, 34])
+      for (const dx of [0, 10, 16, 22, 28, 34, 40, 48]) {
+        await page.mouse.click(plate.x + dx, plate.y + plate.height / 2 + dy);
+        await sleep(300);
+        if (await card.filter({ hasText: "Reserves" }).count()) break search;
+      }
+    const arrive = card.getByRole("button", { name: "Arrive", exact: true });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-card.png") });
+    await arrive.waitFor({ timeout: 5000 });
+    const canvas = await page.locator("canvas").first().boundingBox();
+    const middle = { x: canvas.x + canvas.width / 2, y: canvas.y + canvas.height / 2 };
+    await arrive.click();
+    await page.mouse.move(middle.x, middle.y, { steps: 4 });
+    await page.waitForFunction(() => document.body.dataset.drag === "models", null, { timeout: 5000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-carry.png") });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.body.dataset.drag, null, { timeout: 5000 });
+    await card.getByText("In reserves.").waitFor();
+    await arrive.click();
+    await page.mouse.move(middle.x, middle.y + 20, { steps: 4 });
+    await page.waitForFunction(() => document.body.dataset.drag === "models", null, { timeout: 5000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-carry2.png") });
+    await page.mouse.click(middle.x, middle.y);
+    await card.getByText(/Arrived from reserves/).waitFor({ timeout: 5000 });
+    await sleep(2000);
+    // Where it was set down: under the pointer.
+    const landed = await page.locator(".plate", { hasText: "Reserves" }).first().boundingBox();
+    const off = Math.hypot(landed.x + landed.width / 2 - middle.x, landed.y + landed.height / 2 - middle.y);
+    if (off > 60) throw new Error(`set down ${Math.round(off)}px from where it was clicked`);
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "arrive-down.png") });
+    await context.close();
+    return page.errors;
+  },
+
+  /**
    * TTS reflexes (PX): Tab lands on the table first; the ? sheet's TTS block switches on TTS controls; then
    * a left drag on the table picks units with a box, D slides the camera and Delete takes a model off.
    */

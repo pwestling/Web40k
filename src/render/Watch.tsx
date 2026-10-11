@@ -134,6 +134,10 @@ export function useTween(
           // A jump (scrubbing, a replay opening): no tween, and old trails go.
           show(cur);
           setTrails([]);
+          // A unit set up from reserves, live (PX B1): it still lands, with the thunk and its dust.
+          const landed = moved.filter((id) => color.current(id) === null);
+          if (landed.length && landed.length <= 40 && useStore.getState().scrub === null)
+            setDown(landed, (id) => ({ ...cur.p[id]!, z: cur.z[id] ?? 0, radius: 0.7 }), { now });
         } else {
           anim.current = { from, start: now, moved, charge: shownChargeHits(), glide: computerMoved() };
           // A move always reads as picked up, carried and set down (feel.ts).

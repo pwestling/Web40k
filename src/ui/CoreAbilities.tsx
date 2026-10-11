@@ -7,6 +7,7 @@ import { useCanControl, useStore } from "../store";
 import { aliveModels, unitDistance } from "../systems/wh40k/rules";
 import { useGame } from "./hooks";
 import { opposed } from "../core/teams";
+import { useArriving } from "./tableVerbs";
 import { formatNumber, t } from "../i18n";
 
 /** Rule ids the unit's imported abilities bound to, with their parameters. */
@@ -28,6 +29,12 @@ export function canArrive(game: GameState, unit: Unit): boolean {
   return !systemOf(game).reserves || !!unit.status.acting;
 }
 
+/** How far from every enemy model a unit from reserves is set up, in inches. */
+export function arrivalDistance(game: GameState): number {
+  const system = systemOf(game);
+  return system.reserves ? system.reserves.distance * inchesPerUnit(system) : 9;
+}
+
 /**
  * One line of buttons for the core abilities the engine knows from the
  * imported roster: reserves for deep strike, the scout move before the
@@ -45,7 +52,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
   // Systems where any unit may wait in reserve (FSD) arrive as an activation, this far from enemies.
   const system = systemOf(game);
   const anyReserve = system.reserves;
-  const away = anyReserve ? anyReserve.distance * inchesPerUnit(system) : 9;
+  const away = arrivalDistance(game);
   const awayText = lengthText(system, away);
   const scouts = has("scouts");
   const scoutInches = Number(scouts?.param.x ?? 6);
@@ -63,7 +70,8 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
         .map((r) => r.def.name),
     ),
   ];
-  if (!has("deepStrike") && !anyReserve && !scouts && !automatic.length) return null;
+  // A unit in reserves always says so, and can be brought on (a TTS bag needs no Deep Strike rule).
+  if (!has("deepStrike") && !anyReserve && !scouts && !automatic.length && !status.reserves) return null;
   return (
     <div className="core-abilities small">
       {(has("deepStrike") || anyReserve) && mine && deploying && !status.reserves && (
@@ -83,10 +91,24 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
           {mine && !deploying && (!anyReserve || status.acting) && (
             <button
               className="small"
-              title={t("Then drag the unit onto the table, more than {distance} from every enemy model", {
-                distance: awayText,
-              })}
-              onClick={() => dispatch({ type: "unit/reserve", id: unit.id, reserve: false }, unit.owner)}
+              title={
+                game.settings.companion
+                  ? t("Then drag the unit onto the table, more than {distance} from every enemy model", {
+                      distance: awayText,
+                    })
+                  : t(
+                      "Click the table to set it down, more than {distance} from every enemy model. Esc puts it back.",
+                      {
+                        distance: awayText,
+                      },
+                    )
+              }
+              onClick={() =>
+                // At a real table the models go down by hand; on screen the squad comes up onto the pointer (PX B1).
+                game.settings.companion
+                  ? dispatch({ type: "unit/reserve", id: unit.id, reserve: false }, unit.owner)
+                  : useArriving.setState({ unitId: unit.id })
+              }
             >
               {t("Arrive")}
             </button>

@@ -4375,51 +4375,51 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1246
+#: src/render/Board.tsx:1323
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1248
+#: src/render/Board.tsx:1325
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1249
+#: src/render/Board.tsx:1326
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1310
+#: src/render/Board.tsx:1387
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1312
+#: src/render/Board.tsx:1389
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1317
+#: src/render/Board.tsx:1394
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1828
+#: src/render/Board.tsx:1912
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:1994
+#: src/render/Board.tsx:2079
 msgid "{player} controls it: OC {oc}"
 msgstr ""
 
-#: src/render/Board.tsx:1995
+#: src/render/Board.tsx:2080
 msgid "Contested: OC {oc}"
 msgstr ""
 
-#: src/render/Board.tsx:1996
+#: src/render/Board.tsx:2081
 msgid "Nobody controls it: OC {oc}"
 msgstr ""
 
-#: src/render/Board.tsx:1997
+#: src/render/Board.tsx:2082
 msgid "Nobody controls it: no models in range"
 msgstr ""
 
-#: src/render/Board.tsx:389
+#: src/render/Board.tsx:426
 msgid "The table"
 msgstr ""
 
@@ -7656,64 +7656,68 @@ msgstr ""
 msgid "Not this side's go"
 msgstr ""
 
-#: src/ui/CoreAbilities.tsx:105
-msgid "Arrived from reserves: set up more than {distance} from enemies."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:111
-msgid "Measured from where the unit stands now"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:119
-msgid "Scout move ({inches}\")"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:123
-msgid "Automatic: {abilities}"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:156
-msgid "Lead a unit (Leader)…"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:156
-msgid "Attach to unit (leaders)…"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:160
-msgid "can lead"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:198
-msgid "Lead {unit}, which it stands with"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:74
-msgid "Set up in reserve"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:74
-msgid "Deep Strike: set up in reserves"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:79
-msgid "In reserves."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:81
-msgid "Deploy it as an activation to bring it on."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:86
-msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:91
+#: src/ui/CoreAbilities.tsx:113
 msgid "Arrive"
 msgstr ""
 
-#: src/ui/CoreAbilities.tsx:99
+#: src/ui/CoreAbilities.tsx:121
 msgid "Arrived from reserves: within {distance} of an enemy ({actual})."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:127
+msgid "Arrived from reserves: set up more than {distance} from enemies."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:133
+msgid "Measured from where the unit stands now"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:141
+msgid "Scout move ({inches}\")"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:145
+msgid "Automatic: {abilities}"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:178
+msgid "Lead a unit (Leader)…"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:178
+msgid "Attach to unit (leaders)…"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:182
+msgid "can lead"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:220
+msgid "Lead {unit}, which it stands with"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:82
+msgid "Set up in reserve"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:82
+msgid "Deep Strike: set up in reserves"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:87
+msgid "In reserves."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:89
+msgid "Deploy it as an activation to bring it on."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:96
+msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:99
+msgid "Click the table to set it down, more than {distance} from every enemy model. Esc puts it back."
 msgstr ""
 
 #: src/ui/Crash.tsx:102

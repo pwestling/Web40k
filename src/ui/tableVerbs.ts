@@ -164,6 +164,9 @@ export function dragVerb(game: GameState, unitId: UnitId, targetId: UnitId | und
 }
 
 /** A charge declared from the table, picked up by the unit card's charge (ChargeDeclare). */
+/** Arrive (PX B1): the unit in reserves to lift onto the pointer, for a click on the table to set it down. */
+export const useArriving = create<{ unitId: UnitId | null }>(() => ({ unitId: null }));
+
 export const useChargeAsk = create<{ ask: { unitId: UnitId; targets: UnitId[] } | null }>(() => ({
   ask: null,
 }));

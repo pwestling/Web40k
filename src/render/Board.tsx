@@ -12,8 +12,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
-import { doTableVerb, dragVerb, tableVerb, useDragVerb } from "../ui/tableVerbs";
-import { canArrive, canReserve } from "../ui/CoreAbilities";
+import { doTableVerb, dragVerb, tableVerb, useArriving, useDragVerb } from "../ui/tableVerbs";
+import { arrivalDistance, canArrive, canReserve } from "../ui/CoreAbilities";
 import { tablePick, useHandTargets } from "../ui/tablePick";
 import { useStratagemTabs } from "../ui/stratagemTabs";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
@@ -331,6 +331,8 @@ type Drag = {
       unitId?: string;
       /** Corners turned on this drag (Space, right-click, a second finger), where the pointer was. */
       corners: Vec2[];
+      /** Arrive (PX B1): carried on the pointer with no button held, set down by a click, Esc puts it back. */
+      place?: boolean;
     }
   | { kind: "terrain" | "objective"; id: string; start: Vec2 }
   /** `held`: started by a long press (#60); let go without moving, it opens the press's menu instead. */
@@ -380,6 +382,41 @@ function Scene() {
   useLayoutEffect(() => {
     dragRef.current = drag;
   });
+  // Arrive (PX B1): the squad comes up out of reserves onto the pointer, in formation.
+  useEffect(
+    () =>
+      useArriving.subscribe(({ unitId }) => {
+        if (!unitId) return;
+        useArriving.setState({ unitId: null });
+        const game = useStore.getState().game;
+        const unit = game.units[unitId];
+        if (!unit || !canArrive(game, unit) || dragRef.current) return;
+        const starts = arrivalFormation(aliveModels(game, unit));
+        const ids = Object.keys(starts);
+        if (!ids.length) return;
+        const grab = {
+          x: ids.reduce((a, id) => a + starts[id]!.x, 0) / ids.length,
+          y: ids.reduce((a, id) => a + starts[id]!.y, 0) / ids.length,
+        };
+        pickUp(ids);
+        setDrag(
+          (dragRef.current = {
+            kind: "models",
+            ids,
+            starts,
+            startZ: Object.fromEntries(ids.map((id) => [id, 0])),
+            corners: [],
+            grab,
+            to: grab,
+            moved: true,
+            planeZ: 0,
+            unitId,
+            place: true,
+          }),
+        );
+      }),
+    [],
+  );
   const { camera, gl, size } = useThree();
   // A game opens with the keyboard on the table, not the score steppers (PX TTS): arrows, Enter and (with TTS
   // controls) Tab work there. The front door's backdrop isn't a stop at all.
@@ -526,8 +563,26 @@ function Scene() {
       // Kept at once, not at the next render: a drop straight after reads it (catch-up below).
       setDrag((dragRef.current = { ...d, to, moved }));
     };
+    // Arrive's squad (PX B1) stays up when a button lifts: it goes down on a click on the table.
     const drop = () => {
+      if (dragRef.current?.kind !== "models" || !dragRef.current.place) land();
+    };
+    const putBack = (ids: string[]) => {
+      setDrag((dragRef.current = null));
+      hand.current = null;
+      setDown(ids, () => null, { sound: false });
+    };
+    const land = () => {
       const d = dragRef.current;
+      // Let go off the table (or before it reached the table): back to reserves, as Esc.
+      if (d?.kind === "models" && d.place) {
+        const { width, depth } = useStore.getState().game.table;
+        const off = d.ids.some((id) => {
+          const p = { x: d.starts[id]!.x + d.to.x - d.grab.x, y: d.starts[id]!.y + d.to.y - d.grab.y };
+          return Math.abs(p.x) > width / 2 || Math.abs(p.y) > depth / 2;
+        });
+        if (off) return putBack(d.ids);
+      }
       setDrag(null);
       hand.current = null;
       const charge = useDragVerb.getState().drag;
@@ -699,7 +754,7 @@ function Scene() {
     // move goes on from there and is measured along its legs. Not for a regiment block, which wheels instead.
     const corner = () => {
       const d = dragRef.current;
-      if (d?.kind !== "models" || !d.moved) return false;
+      if (d?.kind !== "models" || !d.moved || d.place) return false;
       if (d.unitId && isBlock(useStore.getState().game.units[d.unitId])) return false;
       const last = d.corners.at(-1) ?? d.grab;
       if (Math.hypot(d.to.x - last.x, d.to.y - last.y) < 0.25) return true;
@@ -707,17 +762,39 @@ function Scene() {
       return true;
     };
     const press = (e: PointerEvent) => {
+      const d = dragRef.current;
+      // Arrive's squad: a click on the table sets it down there, any other button puts it back.
+      if (
+        d?.kind === "models" &&
+        d.place &&
+        e.target instanceof Node &&
+        gl.domElement.parentElement?.contains(e.target)
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        move(e);
+        if (e.button === 0) land();
+        else putBack(d.ids);
+        return;
+      }
       if ((e.button === 2 || (e.pointerType === "touch" && !e.isPrimary)) && corner()) {
         e.preventDefault();
         e.stopPropagation();
       }
     };
     const key = (e: KeyboardEvent) => {
+      const d = dragRef.current;
+      if (e.key === "Escape" && d?.kind === "models" && d.place) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        putBack(d.ids);
+        return;
+      }
       if (e.code === "Space" && !e.repeat && corner()) e.preventDefault();
     };
     const menu = (e: Event) => dragRef.current?.kind === "models" && e.preventDefault();
     window.addEventListener("pointerdown", press, { capture: true });
-    window.addEventListener("keydown", key);
+    window.addEventListener("keydown", key, { capture: true });
     window.addEventListener("contextmenu", menu);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", drop);
@@ -728,7 +805,7 @@ function Scene() {
     if (r.up && r.up.timeStamp > r.down) drop();
     return () => {
       window.removeEventListener("pointerdown", press, { capture: true });
-      window.removeEventListener("keydown", key);
+      window.removeEventListener("keydown", key, { capture: true });
       window.removeEventListener("contextmenu", menu);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", drop);
@@ -1726,8 +1803,9 @@ function Scene() {
           : [],
       )}
 
-      {/* Where the selected unit started this phase. */}
+      {/* Where the selected unit started this phase (not the bag a unit in reserves comes from). */}
       {selectedUnit &&
+        !selectedUnit.status?.reserves &&
         aliveModels(game, selectedUnit).map((m) => {
           const p = positions[m.id]!;
           const s = m.phaseStart;
@@ -1751,11 +1829,17 @@ function Scene() {
           );
         })}
 
-      {/* Engagement range around enemies while dragging. */}
+      {/* Engagement range around enemies while dragging; from reserves, how far away it must arrive (PX B1). */}
       {dragUnit &&
         Object.values(game.models)
           .filter((m) => !m.destroyed && opposed(game, m.owner, dragUnit.owner))
-          .map((m) => <Ring key={m.id} model={m} radius={ENGAGEMENT_RANGE} color="#f97316" opacity={0.25} />)}
+          .map((m) =>
+            canArrive(game, dragUnit) ? (
+              <Ring key={m.id} model={m} radius={arrivalDistance(game)} color="#ef4444" opacity={0.45} />
+            ) : (
+              <Ring key={m.id} model={m} radius={ENGAGEMENT_RANGE} color="#f97316" opacity={0.25} />
+            ),
+          )}
 
       {/* Weapon range around each carrier. */}
       {rangeWeapon &&
@@ -1850,7 +1934,8 @@ function Scene() {
       {drag?.moved && dragUnit && isBlock(dragUnit) && (
         <BlockMoveLabel game={game} unit={dragUnit} grab={drag.grab} at={drag.to} />
       )}
-      {drag?.moved && dragUnit && !isBlock(dragUnit) && (
+      {/* Coming from reserves it's set up, not moved: no distance from the bag (PX B1). */}
+      {drag?.moved && dragUnit && !isBlock(dragUnit) && !canArrive(game, dragUnit) && (
         <MoveLabel
           game={game}
           unitId={dragUnit.id}
@@ -1995,4 +2080,33 @@ function controlLine(game: GameState, c: { oc: Record<string, number>; controlle
   if (sides.length > 1) return t("Contested: OC {oc}", { oc });
   if (sides.length === 1) return t("Nobody controls it: OC {oc}", { oc });
   return t("Nobody controls it: no models in range");
+}
+
+/**
+ * Where a unit's models stand relative to each other as it comes out of
+ * reserves: as they were set up, unless they were piled in the bag or
+ * scattered, then in rows of five, a little apart.
+ */
+function arrivalFormation(models: Model[]): Record<string, Vec2> {
+  const out: Record<string, Vec2> = {};
+  if (!models.length) return out;
+  const size = Math.max(...models.map((m) => Math.max(...Object.values(baseSizeInches(m.base)))));
+  const xs = models.map((m) => m.position.x);
+  const ys = models.map((m) => m.position.y);
+  const spread = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+  const overlapping = models.some((a, i) =>
+    models.some(
+      (b, j) => j > i && Math.hypot(a.position.x - b.position.x, a.position.y - b.position.y) < size * 0.9,
+    ),
+  );
+  if (!overlapping && spread <= Math.max(12, size * 4)) {
+    for (const m of models) out[m.id] = m.position;
+    return out;
+  }
+  const gap = size + 0.5;
+  const row = Math.min(5, models.length);
+  models.forEach((m, i) => {
+    out[m.id] = { x: (i % row) * gap, y: Math.floor(i / row) * gap };
+  });
+  return out;
 }
