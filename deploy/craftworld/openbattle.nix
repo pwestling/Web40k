@@ -71,6 +71,13 @@ let
     } // serviceConfig;
   };
 
+  # A location that sets its own header drops the server's, so each repeats nosniff.
+  nosniff = "add_header X-Content-Type-Options nosniff always;";
+  noCache = ''
+    ${nosniff}
+    add_header Cache-Control "no-cache" always;
+  '';
+
   proxy = port: {
     proxyPass = "http://127.0.0.1:${toString port}";
     extraConfig = ''
@@ -169,6 +176,8 @@ in
       };
     };
 
+    coturn.serviceConfig.Slice = "apps.slice";
+
     # Talks WebRTC to players across the internet, so it keeps outbound access. Its own
     # HTTP port is closed by the host firewall; nginx reaches it on loopback.
     openbattle-host = service {
@@ -225,7 +234,6 @@ in
       denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
     '';
   };
-  systemd.services.coturn.serviceConfig.Slice = lib.mkIf registered "apps.slice";
 
   networking.firewall = lib.mkIf registered {
     allowedTCPPorts = [ turnPort ];
@@ -239,16 +247,17 @@ in
     root = "${release}/dist";
     extraConfig = ''
       access_log off;
-      add_header X-Content-Type-Options nosniff always;
+      ${nosniff}
     '';
     locations = {
       "/".tryFiles = "$uri $uri/ /index.html";
       # Hashed build assets never change; everything else revalidates after a release.
       "/assets/".extraConfig = ''
+        ${nosniff}
         add_header Cache-Control "public, max-age=31536000, immutable" always;
       '';
-      "= /index.html".extraConfig = ''add_header Cache-Control "no-cache" always;'';
-      "= /sw.js".extraConfig = ''add_header Cache-Control "no-cache" always;'';
+      "= /index.html".extraConfig = noCache;
+      "= /sw.js".extraConfig = noCache;
       "= /health".alias = "${release}/health.html";
       # proxyWebsockets sets HTTP/1.1 and the Upgrade headers for the signalling socket.
       "/relay" = (proxy 4400) // { proxyWebsockets = true; };
