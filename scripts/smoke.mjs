@@ -2443,6 +2443,58 @@ const checks = {
     return page.errors;
   },
 
+  // UX 501: "Roll the dice myself" holds to shake and lets go to roll; "I roll real dice" asks for the faces.
+  async "dice-myself"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    const dice = async (label) => {
+      await page.getByRole("button", { name: "Sound and dice" }).click();
+      await page.locator(".dice-choice label", { hasText: label }).locator("input").check();
+      await page.keyboard.press("Escape");
+    };
+    await dice("Roll the dice myself");
+    await page.locator('.topbar button[title="Next phase"]').click();
+    const anyway = page.locator(".topbar .ask button.primary");
+    if (await anyway.count()) await anyway.click();
+    await page.keyboard.press("]");
+    const log = page.locator(".panel.hud");
+    const before = await log.innerText();
+    const advance = page.getByRole("button", { name: /^Advance \(D6\)/ }).first();
+    const box = await advance.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.locator(".shake-tray").waitFor({ timeout: 3000 });
+    await page.waitForTimeout(500);
+    if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "shake.png") });
+    // Held: nothing is rolled until the hand lets go.
+    if ((await log.innerText()) !== before) throw new Error("the roll went before letting go");
+    await page.mouse.up();
+    await page.locator(".shake-tray").waitFor({ state: "detached", timeout: 3000 });
+    await page.waitForFunction((was) => document.querySelector(".panel.hud")?.innerText !== was, before, {
+      timeout: 5000,
+    });
+    // Real dice: the faces are asked for, then sent.
+    await dice("I roll real dice");
+    await page.keyboard.press("]");
+    const real = await log.innerText();
+    await page
+      .getByRole("button", { name: /^Advance \(D6\)/ })
+      .first()
+      .click();
+    await page.locator(".dice-entry").waitFor({ timeout: 3000 });
+    await page.locator(".dice-entry button.face", { hasText: "4" }).click();
+    await page.locator(".dice-entry").getByRole("button", { name: "Use these dice" }).click();
+    await page.waitForFunction((was) => document.querySelector(".panel.hud")?.innerText !== was, real, {
+      timeout: 5000,
+    });
+    await context.close();
+    return page.errors;
+  },
+
   async language() {
     const { page, context } = await device();
     await lobby(page);

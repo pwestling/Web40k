@@ -1,33 +1,105 @@
 import { useState, type ReactNode } from "react";
 import { create } from "zustand";
-import { diceWanted, type Intent, type PlayerId } from "../core";
+import { diceWanted, type GameState, type Intent, type PlayerId } from "../core";
+import { useHoldToShake } from "./Shake";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 
 const KEY = "open-battle:own-dice";
+const SHAKE = "open-battle:shake-dice";
 
-/** Whether this device's player rolls their own dice and types them in (#37), remembered on the device. */
-export const useOwnDice = create<{ own: boolean; set: (own: boolean) => void }>((set) => ({
-  own: (() => {
-    try {
-      return localStorage.getItem(KEY) === "1";
-    } catch {
-      return false;
-    }
-  })(),
+const stored = (key: string) => {
+  try {
+    return localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+};
+const keep = (key: string, on: boolean) => {
+  try {
+    localStorage.setItem(key, on ? "1" : "0");
+  } catch {
+    // Not remembered; it still holds for now.
+  }
+};
+
+/**
+ * How this device's player rolls (#37, UX 501), remembered on the device:
+ * the game rolls at a click (both off), you hold to shake and let go
+ * (`shake`), or you roll real dice and type them in (`own`).
+ */
+export const useOwnDice = create<{
+  own: boolean;
+  shake: boolean;
+  set: (own: boolean) => void;
+  setShake: (shake: boolean) => void;
+}>((set) => ({
+  own: stored(KEY),
+  shake: !stored(KEY) && stored(SHAKE),
   set: (own) => {
-    try {
-      localStorage.setItem(KEY, own ? "1" : "0");
-    } catch {
-      // Not remembered; it still holds for now.
-    }
-    set({ own });
+    keep(KEY, own);
+    if (own) keep(SHAKE, false);
+    set(own ? { own, shake: false } : { own });
+  },
+  setShake: (shake) => {
+    keep(SHAKE, shake);
+    if (shake) keep(KEY, false);
+    set(shake ? { shake, own: false } : { shake });
   },
 }));
 
-/** Only a table companion game offers real dice: on the 3D table the dice roll on screen. */
-function useCompanion(): boolean {
-  return useStore((s) => !!s.game.settings.companion);
+/** Real dice can't be checked over the internet, so ranked and event games roll on screen (UX 501). */
+export function realDiceAllowed(game: GameState): boolean {
+  return !game.ranked && !game.settings.event;
+}
+
+/** Real dice in this game: chosen on this device, and allowed here. */
+export function useRealDice(): boolean {
+  const own = useOwnDice((s) => s.own);
+  const allowed = useStore((s) => realDiceAllowed(s.game));
+  return own && allowed;
+}
+
+/** "Dice" in the 🔊 menu (UX 501): the game rolls, you hold to shake, or you roll real dice. */
+export function DiceChoice() {
+  const { own, shake, set, setShake } = useOwnDice();
+  const allowed = useStore((s) => realDiceAllowed(s.game));
+  const pick = (mode: "game" | "shake" | "real") => {
+    if (mode === "real") set(true);
+    else if (mode === "shake") setShake(true);
+    else {
+      set(false);
+      setShake(false);
+    }
+  };
+  const mode = own ? "real" : shake ? "shake" : "game";
+  return (
+    <fieldset className="dice-choice">
+      <legend>{t("Dice")}</legend>
+      <label className="check">
+        <input type="radio" name="dice-choice" checked={mode === "game"} onChange={() => pick("game")} />{" "}
+        {t("The game rolls at a click")}
+      </label>
+      <label className="check">
+        <input type="radio" name="dice-choice" checked={mode === "shake"} onChange={() => pick("shake")} />{" "}
+        {t("Roll the dice myself: hold to shake, let go to roll")}
+      </label>
+      <label className="check">
+        <input type="radio" name="dice-choice" checked={mode === "real"} onChange={() => pick("real")} />{" "}
+        {t("I roll real dice and type them in")}
+      </label>
+      {mode === "shake" && (
+        <p className="muted small">{t("The game still rolls the dice; you choose when.")}</p>
+      )}
+      {mode === "real" && !allowed && (
+        <p className="muted small">
+          {t(
+            "This game rolls on screen: nobody can check a real roll over the internet in a ranked or event game.",
+          )}
+        </p>
+      )}
+    </fieldset>
+  );
 }
 
 /** On screen or my own dice: the companion's switch for every roll, one small toggle (UX 274). */
@@ -65,13 +137,14 @@ export function RollButton({
   children: ReactNode;
   onRolled?: () => void;
 }) {
-  const companion = useCompanion();
-  const own = useOwnDice((s) => s.own);
+  const own = useRealDice();
+  const shake = useOwnDice((s) => s.shake);
   const [entering, setEntering] = useState(false);
   const roll = () => {
     useStore.getState().dispatch(intent, as);
     onRolled?.();
   };
+  const hold = useHoldToShake(shake && !own, intent, as, roll);
   if (entering)
     return (
       <DiceEntry
@@ -88,20 +161,31 @@ export function RollButton({
         }}
       />
     );
+  if (!own)
+    return (
+      <>
+        <button
+          className={className}
+          title={shake ? (title ? `${title}. ` : "") + t("Hold to shake, let go to roll") : title}
+          {...hold.handlers}
+        >
+          {children}
+        </button>
+        {hold.tray}
+      </>
+    );
   return (
     <button
       className={className}
       title={title}
       onClick={() => {
-        if (!companion || !own) return roll();
         // Nothing to roll after all (a fixed number of attacks): no faces to ask for.
         const { record, game, session } = useStore.getState();
         if (diceWanted(record, intent, as ?? session?.selfId ?? "local", [], game) === null) return roll();
         setEntering(true);
       }}
     >
-      {children}
-      {companion && own ? " ✋" : ""}
+      {children} ✋
     </button>
   );
 }

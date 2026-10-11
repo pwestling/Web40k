@@ -25,7 +25,7 @@ import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./ProcedurePanels";
 import { opposed } from "../core/teams";
 import { t, tn } from "../i18n";
-import { RollButton, useOwnDice } from "../companion/RealDice";
+import { RollButton, useRealDice } from "../companion/RealDice";
 import { TableAttackSetup } from "../companion/TableAttack";
 import { fireNext, useVolley, volleyWeapons } from "./volley";
 import { FightOrderNote } from "../systems/wh40k/FightOrderNote";
@@ -426,8 +426,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const botAttacks = computerPlays(game, attacker?.owner);
   // The computer's attack, your saves: it rolls them for you if you don't (UX 404).
   const yourSaves = botAttacks && !botRolls && attack.stage === "save";
-  // Rolling real dice (#37) goes a stage at a time, so each batch is asked for.
-  const ownDice = useOwnDice((o) => o.own) && !!game.settings.companion;
+  // Rolling real dice (#37, any game since UX 501) goes a stage at a time, so each batch is asked for.
+  const ownDice = useRealDice();
   const rollAll = () => {
     for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
   };
