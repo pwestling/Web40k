@@ -116,6 +116,29 @@
   background: rgb(127 29 29 / 35%);
   border-radius: 6px;
 }
+/* Pack workshop (#79): an army's names, each with how it plays and a Build button; name problems warn only. */
+.workshop-problems.pack-problems {
+  background: rgb(120 53 15 / 35%);
+}
+.pack-names {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pack-name {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid rgb(255 255 255 / 6%);
+}
+.pack-name.ok strong {
+  color: #86efac;
+}
+.workshop-export .pack-hash {
+  word-break: break-all;
+}
 .workshop-log {
   margin: 0;
   padding-left: 0;

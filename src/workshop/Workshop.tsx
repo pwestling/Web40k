@@ -19,6 +19,7 @@ import ranked from "../../examples/workshop/ranked.js?raw";
 import activations from "../../examples/workshop/activations.js?raw";
 import riftLanterns from "../../games/rift-lanterns/rift-lanterns.js?raw";
 import brinewatch from "../../games/brinewatch/brinewatch.js?raw";
+import factionPack from "../../examples/workshop/faction-pack.js?raw";
 import {
   fileName,
   GALLERY,
@@ -35,6 +36,9 @@ import { closeWorkshop, useWorkshopOpen } from "./open";
 import { checkDraft, soakDraft, type SoakResult } from "./soak";
 import { checkAll, problemLine, type CheckStep, type Verdict } from "./check";
 import { CTX, KEYS, VIEW } from "./completions";
+import { PackArmyPane, PackExportPane, PackProblems, PackTableButton } from "./PackPanes";
+import { reloadPackTable } from "./packTable";
+import { readFactionPack } from "../packages/faction";
 import type { Completion } from "@codemirror/autocomplete";
 import type { Loaded } from "../sandbox/protocol";
 
@@ -75,6 +79,13 @@ const TEMPLATES = [
     name: () => "Brinewatch",
     what: () => t("Our second, to take apart: action points, guards, hidden lurkers and a campaign."),
   },
+  {
+    id: "faction-pack",
+    source: factionPack,
+    name: () => t("Faction pack"),
+    what: () =>
+      t("Rules for an army's abilities, detachment and stratagems, by name, built against your own army."),
+  },
 ];
 
 /**
@@ -89,7 +100,7 @@ export function Workshop() {
   const folded = useWorkshopOpen((s) => s.folded);
   const link = useWorkshopOpen((s) => s.link);
   const playing = useStore((s) => s.session !== null);
-  const [pane, setPane] = useState<"table" | "soak" | "export" | "sdk">("table");
+  const [pane, setPane] = useState<"table" | "soak" | "export" | "sdk" | "army">("table");
   const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
 
   /** Where the last problem is in the draft, marked in the editor. */
@@ -113,6 +124,8 @@ export function Workshop() {
   const add = (source: string) => {
     const d = newDraft(source);
     update([...drafts, d], d.id);
+    const m = manifestOf(source);
+    if (typeof m !== "string" && m.kind === "faction") setPane("army");
   };
   const edit = (source: string) => {
     if (!draft) return;
@@ -173,9 +186,12 @@ export function Workshop() {
       bad(t("Not saved: the code doesn't parse at line {line}, column {column}.", syntax), syntax.line);
       return null;
     }
+    // A faction pack (#79) is read as data; only its code, if it has any, loads in the sandbox.
+    const pack = readFactionPack(source);
+    const isPack = !("error" in pack);
     let loaded: Loaded;
     try {
-      loaded = await checkDraft(source);
+      loaded = isPack && !pack.code ? { packages: [], errors: [] } : await checkDraft(source);
     } catch (e) {
       bad(t("Not saved: your rules didn't load: {why}", { why: e instanceof Error ? e.message : String(e) }));
       return null;
@@ -200,6 +216,15 @@ export function Workshop() {
       drafts.map((d) => (d.id === draft.id ? { ...d, saved: r.pkg.hash } : d)),
       draft.id,
     );
+    if (isPack) {
+      setNote({
+        text: reloadPackTable(r.pkg, pack)
+          ? t("Saved, and the pack's rules are on the army on the test table.")
+          : t("Saved."),
+        bad: false,
+      });
+      return r.pkg.hash;
+    }
     const setup = setupOf(loaded);
     rememberSetup(setup);
     const system = r.pkg.manifest.systems[0]!;
@@ -238,6 +263,7 @@ export function Workshop() {
     );
 
   const manifest = draft ? manifestOf(draft.source) : null;
+  const isPack = typeof manifest !== "string" && manifest?.kind === "faction";
   return (
     <section
       className={`workshop${playing ? " over-table" : ""}`}
@@ -284,14 +310,16 @@ export function Workshop() {
               <button className="primary" onClick={() => void save()} title={t("Save (Ctrl+S)")}>
                 {t("Save")}
               </button>
-              <TestTableButton save={save} />
-              <button
-                onClick={() => void check()}
-                disabled={!!checking}
-                title={t("Check the types, load it, and let a bot play two rounds")}
-              >
-                {checking ? t("Checking…") : t("Check")}
-              </button>
+              {isPack ? <PackTableButton draft={draft} save={save} /> : <TestTableButton save={save} />}
+              {!isPack && (
+                <button
+                  onClick={() => void check()}
+                  disabled={!!checking}
+                  title={t("Check the types, load it, and let a bot play two rounds")}
+                >
+                  {checking ? t("Checking…") : t("Check")}
+                </button>
+              )}
               <span className="spacer" />
               <button onClick={() => update(drafts, null)}>{t("New draft")}</button>
               <button onClick={remove}>{t("Delete")}</button>
@@ -301,7 +329,7 @@ export function Workshop() {
                 {note.text}
               </p>
             )}
-            {(checking || verdict) && (
+            {!isPack && (checking || verdict) && (
               <CheckVerdict
                 steps={checking ?? verdict!.steps}
                 verdict={checking ? null : verdict}
@@ -310,6 +338,7 @@ export function Workshop() {
               />
             )}
             <Problems draft={draft} />
+            {isPack && <PackProblems draft={draft} onLine={setMark} />}
             <Suspense fallback={<div className="workshop-editor">{t("Loading the editor…")}</div>}>
               <Editor
                 doc={draft.source}
@@ -322,24 +351,44 @@ export function Workshop() {
           </div>
           <aside className="workshop-side">
             <div className="tabs" role="tablist">
-              {(
-                [
-                  ["table", t("Test table")],
-                  ["soak", t("Soak bot")],
-                  ["export", t("Export")],
-                  ["sdk", t("SDK")],
-                ] as const
+              {(isPack
+                ? ([
+                    ["army", t("Army")],
+                    ["table", t("Test table")],
+                    ["export", t("Export")],
+                  ] as const)
+                : ([
+                    ["table", t("Test table")],
+                    ["soak", t("Soak bot")],
+                    ["export", t("Export")],
+                    ["sdk", t("SDK")],
+                  ] as const)
               ).map(([id, label]) => (
                 <button key={id} role="tab" aria-selected={pane === id} onClick={() => setPane(id)}>
                   {label}
                 </button>
               ))}
             </div>
-            {pane === "table" && <TablePane />}
-            {pane === "soak" && <SoakPane draft={draft} />}
-            {pane === "export" && typeof manifest !== "string" && manifest && <ExportPane draft={draft} />}
+            {pane === "army" && isPack && (
+              <PackArmyPane
+                draft={draft}
+                onEdit={edit}
+                onPick={(army) =>
+                  update(
+                    drafts.map((d) => (d.id === draft.id ? { ...d, army } : d)),
+                    draft.id,
+                  )
+                }
+              />
+            )}
+            {pane === "table" && <TablePane pack={isPack} />}
+            {pane === "soak" && !isPack && <SoakPane draft={draft} />}
+            {pane === "export" && isPack && <PackExportPane draft={draft} />}
+            {pane === "export" && !isPack && typeof manifest !== "string" && manifest && (
+              <ExportPane draft={draft} />
+            )}
             {pane === "export" && typeof manifest === "string" && <p>{manifest}</p>}
-            {pane === "sdk" && <SdkPane />}
+            {pane === "sdk" && !isPack && <SdkPane />}
           </aside>
         </div>
       )}
@@ -588,7 +637,7 @@ function TestTableButton({ save }: { save: () => Promise<string | null> }) {
 }
 
 /** The test table: the sandbox's state, the table's warnings and the latest dice and log lines. */
-function TablePane() {
+function TablePane({ pack }: { pack: boolean }) {
   const playing = useStore((s) => s.session !== null);
   const status = useSandbox((s) => s.status);
   const error = useSandbox((s) => s.error);
@@ -607,19 +656,25 @@ function TablePane() {
   if (!playing)
     return (
       <p>
-        {t(
-          "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there.",
-        )}
+        {pack
+          ? t(
+              "Test table starts a game on this screen: the army you build against, with the pack on it, against a sample army. Every save puts the pack's new rules on it.",
+            )
+          : t(
+              "Test table starts a game of your draft on this screen with each side's sample army. Every save reloads it there.",
+            )}
       </p>
     );
   return (
     <div className="workshop-table">
       <p className={error && status !== "starting" ? "bad" : undefined}>
-        {status === "on" && !error
-          ? t("Your rules are running.")
-          : status === "starting"
-            ? t("Starting your rules…")
-            : t("Your rules aren't running.")}
+        {pack && status !== "starting" && !error
+          ? t("Your army is on the table with the pack on it.")
+          : status === "on" && !error
+            ? t("Your rules are running.")
+            : status === "starting"
+              ? t("Starting your rules…")
+              : t("Your rules aren't running.")}
         {error && status !== "starting" && <> {error}</>}
       </p>
       <p>

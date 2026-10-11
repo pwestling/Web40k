@@ -372,6 +372,26 @@ const checks = {
     await page.locator(".workshop-soak li").nth(2).waitFor({ timeout: 240000 });
     const bad = await page.locator(".workshop-soak li.bad").allTextContents();
     if (bad.length) throw new Error(`soak: ${bad[0]}`);
+    // Pack workshop (#79): the faction pack template against a sample army, a rule built for a
+    // name with Teach it's window, the army on the test table with the pack, and the export's hash.
+    await page.getByRole("button", { name: "New draft" }).click();
+    await page.getByRole("button", { name: /Faction pack/ }).click();
+    await page.locator(".workshop-pack select").selectOption("sample:0");
+    const gait = page.locator(".pack-name", { hasText: "Steady Gait" });
+    await gait.getByRole("button", { name: "Build" }).click();
+    await page.locator(".teach-rule select[aria-label='Add an effect']").selectOption("fnp");
+    await page.locator(".teach-rule").getByRole("button", { name: "Save the rule" }).click();
+    await page.getByText("Steady Gait is in the pack now.").waitFor();
+    await gait.getByRole("button", { name: "Change" }).waitFor();
+    await page.getByRole("button", { name: "Test table" }).first().click();
+    await page.getByRole("tab", { name: "Test table" }).click();
+    await page.getByText("Your army is on the table with the pack on it.").waitFor({ timeout: 20000 });
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Export" }).click();
+    await page
+      .locator(".workshop-export .pack-hash")
+      .getByText(/^[0-9a-f]{64}$/)
+      .waitFor();
     if (page.errors.length) throw new Error(page.errors[0]);
     await context.close();
   },

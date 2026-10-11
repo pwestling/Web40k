@@ -199,7 +199,7 @@ If any call into the package (`available`, `targets`, a step of a rule) takes lo
 
 ## Trying it
 
-The quickest way is the **Module workshop** on the start page: an editor that checks your code against the SDK's types as you type (a wrong key, event type or `ctx` call is underlined with the reason, and hovering shows a type and its comment), starter templates, a test table that reloads your package every time you save (Ctrl+S), the soak bot, a **Check** button that gives one verdict (types, loading with the shape check, and a two-round bot game), and export as a file or as a pull request for the [community modules](community-modules.md) gallery.
+The quickest way is the **Module workshop** on the start page: an editor that checks your code against the SDK's types as you type (a wrong key, event type or `ctx` call is underlined with the reason, and hovering shows a type and its comment), starter templates, a test table that reloads your package every time you save (Ctrl+S), the soak bot, a **Check** button that gives one verdict (types, loading with the shape check, and a two-round bot game), and export as a file or as a pull request for the [community modules](community-modules.md) gallery. Its **Faction pack** template builds a [faction pack](faction-packs.md#building-one-in-the-workshop) against one of your own armies instead, with no code.
 
 By hand:
 

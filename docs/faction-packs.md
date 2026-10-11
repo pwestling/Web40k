@@ -16,6 +16,16 @@ A pack is a rules package (see [packages.md](packages.md)): one JavaScript file,
 
 The army keeps the pack's ref (id, name, version, hash, link), so it travels in the shelf's `.army.json` and in the army the player deploys. The rules a pack put on an army are part of the army's data, so every player at the table sees and plays the same rules. If one player's army was made with other bytes of a pack than another's, or than the copy this device pinned, the import panel warns them to compare. A pack with code joins the game's rules packages when its army is deployed, so its code runs for everyone from the same bytes, with the usual check, peer-to-peer sharing and consent.
 
+## Building one in the workshop
+
+The **Module workshop** on the start page has a **Faction pack** template (an invented pack for the Vanguard Legion sample army, [`examples/workshop/faction-pack.js`](../examples/workshop/faction-pack.js)). A pack draft gets its own tabs:
+
+- **Army**: pick the army to build against, one of your own from the army shelf (import a list in a game and save it there, or open an army file) or a sample army. It lists the army's names (unit abilities, enhancements, army and detachment rules, stratagems), each with how it plays now: by hand, taught, read by the app, by another pack, or by this one. **Build** opens the "Teach it this rule" window for that name; **Save the rule** writes the rule into the draft's `export const faction` as data, keyed by the name (a `teach` entry, or `auto` parts when the builder can't say it). Rules you already taught on that army go in with one button. The workshop writes the whole `faction` literal back each time, so keep your notes in comments above it rather than inside it.
+- **Test table**: saves the draft and starts a hotseat game with your army, the pack on it, against a sample army. Every save puts the pack's new rules on the army on the table (and its code, if it has any, into the game's rules packages).
+- **Export**: downloads the file and shows its SHA-256 and short fingerprint, the same ones a player's consent sheet shows and pins. Host the file anywhere that lets other sites read it and share the link; the project doesn't host, list or link packs.
+
+Under the editor, the workshop checks every name in the pack against the army: a unit ability or enhancement no unit has, a detachment the army isn't in, an army rule for another faction, or a name written twice shows as a problem with its line. Names the pack adds (a detachment's rules and stratagems, the faction's own rules) aren't problems. The Army tab lists the army's names the pack doesn't cover yet. None of this stops a save: a pack can be meant for other lists than the one you build against.
+
 ## The file
 
 ```js

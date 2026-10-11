@@ -1,3 +1,4 @@
+import { readFactionPack } from "../packages/faction";
 import { readManifest, type Manifest } from "../packages/manifest";
 
 /** A package being written in the workshop, kept in this browser. */
@@ -7,6 +8,8 @@ export interface Draft {
   updated: number;
   /** The hash it was last saved to the package library as. */
   saved?: string;
+  /** A faction pack's army to build against (#79): a shelf army's id, or `sample:<seat>`. */
+  army?: string;
 }
 
 const KEY = "open-battle:workshop";
@@ -42,10 +45,15 @@ export function manifestOf(source: string): Manifest | string {
   return "error" in r ? r.error : r.manifest;
 }
 
-/** Things to fix before a draft can run as a whole game. */
+/** Things to fix before a draft can run as a whole game, or be read as a faction pack. */
 export function problems(source: string): string[] {
   const m = manifestOf(source);
   if (typeof m === "string") return [m];
+  // A faction pack (#79) is data keyed by name: it needs only to read as one.
+  if (m.kind === "faction") {
+    const read = readFactionPack(source);
+    return "error" in read ? [read.error] : [];
+  }
   const out: string[] = [];
   if (m.kind !== "system") out.push('The workshop tests whole games: set manifest.kind to "system".');
   if (!m.systems[0]) out.push("Name the game's system id in manifest.systems.");

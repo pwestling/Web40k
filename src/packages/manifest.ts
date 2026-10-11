@@ -42,11 +42,13 @@ export function readManifest(source: string): ManifestResult {
 export function readLiteral(
   source: string,
   name: string,
-): { value: unknown } | { error: string } | undefined {
+): { value: unknown; start: number; end: number } | { error: string } | undefined {
   const m = new RegExp(`export\\s+const\\s+${name}\\s*(?::[^=]+)?=\\s*`).exec(source);
   if (!m) return undefined;
   try {
-    return { value: new LiteralParser(source, m.index + m[0].length).value() };
+    const parser = new LiteralParser(source, m.index + m[0].length);
+    // Where the literal is written (start, end), so the workshop can write it back (#79).
+    return { value: parser.value(), start: m.index + m[0].length, end: parser.at };
   } catch (e) {
     return { error: `${name} must be a plain literal (${e instanceof Error ? e.message : String(e)})` };
   }
@@ -102,6 +104,11 @@ class LiteralParser {
     private readonly s: string,
     private i: number,
   ) {}
+
+  /** Where the parser has read to. */
+  get at(): number {
+    return this.i;
+  }
 
   value(): unknown {
     this.space();
