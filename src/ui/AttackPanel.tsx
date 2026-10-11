@@ -25,7 +25,8 @@ import { useGame } from "./hooks";
 import { ActionSetup, ProcedurePanel } from "./ProcedurePanels";
 import { opposed } from "../core/teams";
 import { t, tn } from "../i18n";
-import { RollButton, useRealDice } from "../companion/RealDice";
+import { RollButton, useRealDice, useShakeDice } from "../companion/RealDice";
+import { WaitingDice } from "../companion/Shake";
 import { TableAttackSetup } from "../companion/TableAttack";
 import { fireNext, useVolley, volleyWeapons } from "./volley";
 import { FightOrderNote } from "../systems/wh40k/FightOrderNote";
@@ -428,6 +429,8 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const yourSaves = botAttacks && !botRolls && attack.stage === "save";
   // Rolling real dice (#37, any game since UX 501) goes a stage at a time, so each batch is asked for.
   const ownDice = useRealDice();
+  // Rolling it yourself (UX 501): your dice wait in the tray for the roll in front of you, your saves included.
+  const shake = useShakeDice() && !ownDice;
   const rollAll = () => {
     for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
   };
@@ -531,6 +534,13 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
           )}
           {attack.stage !== "done" && !botRolls && !theirs && !waiting && (
             <>
+              {shake && (
+                <WaitingDice
+                  intent={{ type: "attack/roll" }}
+                  as={roller}
+                  roll={() => dispatch({ type: "attack/roll" }, roller)}
+                />
+              )}
               <RollButton className="primary attack-roll" intent={{ type: "attack/roll" }} as={roller}>
                 {stageLabel(attack.stage)}
                 {yourSaves && <SelfRollCountdown />}

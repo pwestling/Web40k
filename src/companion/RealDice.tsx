@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { create } from "zustand";
 import { diceWanted, type GameState, type Intent, type PlayerId } from "../core";
 import { useHoldToShake } from "./Shake";
+import { UndoButton } from "../ui/Hud";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 
@@ -58,6 +59,11 @@ export function useRealDice(): boolean {
   const own = useOwnDice((s) => s.own);
   const allowed = useStore((s) => realDiceAllowed(s.game));
   return own && allowed;
+}
+
+/** Rolls held and shaken in this game: chosen on this device, and not real dice. */
+export function useShakeDice(): boolean {
+  return useOwnDice((s) => s.shake);
 }
 
 /** "Dice" in the 🔊 menu (UX 501): the game rolls, you hold to shake, or you roll real dice. */
@@ -140,6 +146,7 @@ export function RollButton({
   const own = useRealDice();
   const shake = useOwnDice((s) => s.shake);
   const [entering, setEntering] = useState(false);
+  const [sent, setSent] = useState<number | null>(null);
   const roll = () => {
     useStore.getState().dispatch(intent, as);
     onRolled?.();
@@ -150,8 +157,12 @@ export function RollButton({
       <DiceEntry
         intent={intent}
         as={as}
-        onDone={() => {
+        onDone={(quick) => {
           setEntering(false);
+          if (quick) {
+            setSent(quick[0] ?? null);
+            setTimeout(() => setSent(null), 6000);
+          }
           onRolled?.();
         }}
         onCancel={() => setEntering(false)}
@@ -171,22 +182,28 @@ export function RollButton({
         >
           {children}
         </button>
-        {hold.tray}
       </>
     );
   return (
-    <button
-      className={className}
-      title={title}
-      onClick={() => {
-        // Nothing to roll after all (a fixed number of attacks): no faces to ask for.
-        const { record, game, session } = useStore.getState();
-        if (diceWanted(record, intent, as ?? session?.selfId ?? "local", [], game) === null) return roll();
-        setEntering(true);
-      }}
-    >
-      {children} ✋
-    </button>
+    <>
+      <button
+        className={className}
+        title={title}
+        onClick={() => {
+          // Nothing to roll after all (a fixed number of attacks): no faces to ask for.
+          const { record, game, session } = useStore.getState();
+          if (diceWanted(record, intent, as ?? session?.selfId ?? "local", [], game) === null) return roll();
+          setEntering(true);
+        }}
+      >
+        {children} ✋
+      </button>
+      {sent !== null && (
+        <span className="sent-die" role="status">
+          {t("Sent: {face}", { face: sent })} <UndoButton />
+        </span>
+      )}
+    </>
   );
 }
 
@@ -205,7 +222,8 @@ function DiceEntry({
 }: {
   intent: Intent;
   as?: PlayerId;
-  onDone: () => void;
+  /** `quick`: a single die sent by its tap, to offer Undo for. */
+  onDone: (quick: number[] | null) => void;
   onCancel: () => void;
   onScreen: () => void;
 }) {
@@ -230,12 +248,15 @@ function DiceEntry({
     const faces = Object.entries(next)
       .flatMap(([f, k]) => Array.from({ length: k }, () => Number(f)))
       .sort((a, b) => b - a);
-    setDone([...done, ...faces]);
+    const all = [...done, ...faces];
+    // One die and it's every die: the tap sends it, with Undo as the safety net (PX 501 pass).
+    if (batch.count === 1 && diceWanted(record, intent, by, all, game) === null) return send(all, true);
+    setDone(all);
     setCounts({});
   };
-  const send = () => {
-    useStore.getState().dispatch({ ...intent, told: done } as unknown as Intent, as);
-    onDone();
+  const send = (faces = done, quick = false) => {
+    useStore.getState().dispatch({ ...intent, told: faces } as unknown as Intent, as);
+    onDone(quick ? faces : null);
   };
   return (
     <div className="dice-entry" role="group" aria-label={t("Your dice")}>
@@ -308,7 +329,7 @@ function DiceEntry({
         <BigDie sides={sides} add={(f) => setCount(f, (counts[f] ?? 0) + 1)} />
       )}
       <div className="row wrap">
-        <button className="primary" disabled={wanted !== null} onClick={send}>
+        <button className="primary" disabled={wanted !== null} onClick={() => send()}>
           {t("Use these dice")}
         </button>
         {(done.length > 0 || have > 0) && (

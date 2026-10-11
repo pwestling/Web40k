@@ -2456,10 +2456,14 @@ const checks = {
       await page.locator(".dice-choice label", { hasText: label }).locator("input").check();
       await page.keyboard.press("Escape");
     };
+    const next = async () => {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    };
     await dice("Roll the dice myself");
-    await page.locator('.topbar button[title="Next phase"]').click();
-    const anyway = page.locator(".topbar .ask button.primary");
-    if (await anyway.count()) await anyway.click();
+    await next();
     await page.keyboard.press("]");
     const log = page.locator(".panel.hud");
     const before = await log.innerText();
@@ -2467,17 +2471,18 @@ const checks = {
     const box = await advance.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
-    await page.locator(".shake-tray").waitFor({ timeout: 3000 });
+    // The dice shake in the felt tray itself.
+    await page.locator(".dice-tray.shaking .die.in-hand").first().waitFor({ timeout: 3000 });
     await page.waitForTimeout(500);
     if (process.env.SMOKE_SHOTS) await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "shake.png") });
     // Held: nothing is rolled until the hand lets go.
     if ((await log.innerText()) !== before) throw new Error("the roll went before letting go");
     await page.mouse.up();
-    await page.locator(".shake-tray").waitFor({ state: "detached", timeout: 3000 });
     await page.waitForFunction((was) => document.querySelector(".panel.hud")?.innerText !== was, before, {
       timeout: 5000,
     });
-    // Real dice: the faces are asked for, then sent.
+    await page.locator(".dice-tray .die.in-hand").first().waitFor({ state: "detached", timeout: 3000 });
+    // Real dice, one die: the tap on its face sends it, with Undo beside.
     await dice("I roll real dice");
     await page.keyboard.press("]");
     const real = await log.innerText();
@@ -2485,12 +2490,44 @@ const checks = {
       .getByRole("button", { name: /^Advance \(D6\)/ })
       .first()
       .click();
-    await page.locator(".dice-entry").waitFor({ timeout: 3000 });
     await page.locator(".dice-entry button.face", { hasText: "4" }).click();
-    await page.locator(".dice-entry").getByRole("button", { name: "Use these dice" }).click();
+    await page.locator(".sent-die").getByRole("button", { name: "Undo" }).waitFor({ timeout: 3000 });
     await page.waitForFunction((was) => document.querySelector(".panel.hud")?.innerText !== was, real, {
       timeout: 5000,
     });
+    // An attack: after the first roll, the next one's dice wait in the tray; holding the tray shakes them.
+    await dice("Roll the dice myself");
+    await next();
+    await page
+      .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+      .first()
+      .click();
+    const canvas = await page.locator("canvas").first().boundingBox();
+    let found = false;
+    for (let u = 0; u < 6 && !found; u++) {
+      await page.keyboard.press("]");
+      await page.waitForTimeout(300);
+      for (let y = 0.1; y < 0.55 && !found; y += 0.04)
+        for (let x = 0.1; x < 0.95 && !found; x += 0.03) {
+          await page.mouse.move(canvas.x + canvas.width * x, canvas.y + canvas.height * y);
+          if (await page.locator(".table-tag.ok").count()) found = true;
+        }
+    }
+    if (!found) throw new Error("no enemy offered a shot from the table");
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.locator(".panel.attack").waitFor({ timeout: 5000 });
+    await page.locator(".panel.attack button.primary").first().click();
+    const waiting = page.locator(".dice-tray.waiting .die.in-hand").first();
+    await waiting.waitFor({ timeout: 15000 });
+    const tray = await page.locator(".dice-tray").boundingBox();
+    await page.mouse.move(tray.x + tray.width / 2, tray.y + tray.height / 2);
+    await page.mouse.down();
+    await page.locator(".dice-tray.shaking").waitFor({ timeout: 3000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "shake-tray.png") });
+    await page.mouse.up();
+    await page.locator(".dice-tray.waiting.shaking").waitFor({ state: "detached", timeout: 3000 });
     await context.close();
     return page.errors;
   },

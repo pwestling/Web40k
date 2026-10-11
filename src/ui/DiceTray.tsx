@@ -118,6 +118,36 @@ export function clearTray(): void {
   current?.reset();
 }
 
+/**
+ * Dice in the roller's hand, in the tray (hold to shake, UX 501): they wait
+ * still, shake while held, and the next roll is thrown from where they are.
+ * Presentation only, on this screen: the roll itself is the host's, as ever.
+ */
+export const trayHand = {
+  /** Dice into the hand: `n` of them (a heap past 12), the roller's own set, from their side of the tray. */
+  take(n: number, sides: number, look: DiceSet, defender: boolean, caption: string): void {
+    current?.take(n, sides, look, defender, caption);
+  },
+  /** How hard they shake, 0 (still) to 1; 0 puts them down. */
+  shake(level: number, caption?: string): void {
+    current?.shakeHand(level, caption);
+  },
+  /** Let go: the next roll is thrown from the hand. If none comes soon, the hand empties. */
+  letGo(): void {
+    current?.letGo();
+  },
+  /** Put the dice down without rolling. */
+  drop(): void {
+    current?.dropHand();
+  },
+  /** Press and release on the tray itself, while dice wait in it (null: the tray is just a tray). */
+  hold: null as null | { down(): void; up(): void },
+  /** Nothing rolling and nothing in hand: dice may be put in it to wait. */
+  free(): boolean {
+    return !!current && current.free();
+  },
+};
+
 /** Marbled dice: turbulence veins, one of a few seeds each, so no two dice in a roll match. */
 const MARBLES = 16;
 const marbles = new Map<number, string>();
@@ -207,6 +237,9 @@ class Stage {
   private caption: HTMLDivElement;
   private banner: HTMLDivElement;
   private felt: HTMLDivElement;
+  /** Dice in the roller's hand (trayHand), and where each sits, for the throw that follows. */
+  private hand: { els: HTMLDivElement[]; at: [number, number][]; size: number; until: number } | null = null;
+  private handTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     private root: HTMLDivElement,
@@ -219,8 +252,17 @@ class Stage {
     this.caption = div("tray-caption");
     this.banner = div("tray-banner");
     root.append(this.felt, this.caption, this.banner);
-    // Clicking skips to the result; clicking a settled tray puts it away.
+    // Clicking skips to the result; clicking a settled tray puts it away. Dice waiting in it are held instead.
+    root.addEventListener("pointerdown", (e) => {
+      if (!this.hand || !trayHand.hold || e.button !== 0) return;
+      root.setPointerCapture?.(e.pointerId);
+      trayHand.hold.down();
+    });
+    root.addEventListener("pointerup", () => {
+      if (this.hand && trayHand.hold) trayHand.hold.up();
+    });
     root.addEventListener("click", () => {
+      if (this.hand) return;
       if (this.active) this.skip = true;
       else this.hideNow();
     });
@@ -269,6 +311,91 @@ class Stage {
     });
   }
 
+  take(n: number, sides: number, look: DiceSet, defender: boolean, caption: string) {
+    if (this.active) return;
+    this.dropHand();
+    this.removeAll();
+    this.show();
+    this.root.classList.add("waiting");
+    this.root.classList.toggle("few", n <= 6);
+    this.banner.className = "tray-banner";
+    this.caption.textContent = caption;
+    const W = this.felt.clientWidth;
+    // The tray may be mid-way through resizing for this many dice: its height as it will be (05-dice.css).
+    const H = n <= 6 ? 160 : Math.min(220, innerHeight * 0.34);
+    const shown = Math.min(n, 12);
+    const size = Math.max(16, Math.min(34, this.size(n) * 0.8));
+    const els: HTMLDivElement[] = [];
+    const at: [number, number][] = [];
+    // A loose cluster at the roller's edge: the attacker's at the bottom, the defender's at the top.
+    const cy = defender ? H * 0.16 : H * 0.84 - size;
+    for (let i = 0; i < shown; i++) {
+      const el = this.makeDie(look, size);
+      el.classList.add("in-hand");
+      el.style.setProperty("--n", String(i));
+      const ring = Math.floor(i / 6);
+      const angle = (i % 6) * (Math.PI / 3) + ring * 0.5;
+      const r = i === 0 ? 0 : size * (0.7 + ring * 0.6);
+      const x = W / 2 - size / 2 + Math.cos(angle) * r * 1.4;
+      const y = cy + Math.sin(angle) * r * 0.45;
+      place(el, x, y, 0, (i * 53) % 360);
+      showFace(el, 1 + ((i * 7 + 3) % Math.min(sides, 6)), sides);
+      els.push(el);
+      at.push([x, y]);
+    }
+    if (n > shown) {
+      const more = div("hand-more");
+      more.textContent = `×${n}`;
+      more.style.transform = `translate(${W / 2 + size * 2.2}px, ${cy}px)`;
+      this.felt.append(more);
+      els.push(more);
+    }
+    this.hand = { els, at, size, until: 0 };
+  }
+
+  shakeHand(level: number, caption?: string) {
+    if (!this.hand) return;
+    this.root.classList.toggle("shaking", level > 0);
+    this.root.style.setProperty("--shake", String(Math.max(0.2, level)));
+    if (caption) this.caption.textContent = caption;
+  }
+
+  letGo() {
+    if (!this.hand) return;
+    this.root.classList.remove("shaking", "waiting");
+    // The roll it sends lands in a moment; if it never does (refused), the hand empties.
+    this.hand.until = performance.now() + 2500;
+    clearTimeout(this.handTimer);
+    this.handTimer = setTimeout(() => {
+      if (this.hand && performance.now() >= this.hand.until) this.dropHand();
+    }, 2600);
+  }
+
+  free() {
+    return !this.active && this.waiting === 0 && !this.hand;
+  }
+
+  dropHand() {
+    clearTimeout(this.handTimer);
+    if (!this.hand) return;
+    this.hand.els.forEach((el) => el.remove());
+    this.hand = null;
+    this.root.classList.remove("shaking", "waiting");
+    if (!this.active && !this.dice.length) this.hideNow();
+  }
+
+  /** The dice in hand, given up to a throw: where each was. */
+  private fromHand(): [number, number][] | null {
+    const h = this.hand;
+    if (!h) return null;
+    clearTimeout(this.handTimer);
+    this.hand = null;
+    this.root.classList.remove("shaking", "waiting");
+    h.els.forEach((el) => el.remove());
+    // Still waiting, not let go: someone else's roll came in, and these dice weren't thrown.
+    return h.until ? h.at : null;
+  }
+
   private show() {
     clearTimeout(this.hideTimer);
     // Sit above the phase's stratagem box, which shares the corner (UX 104).
@@ -289,6 +416,7 @@ class Stage {
 
   private hideNow() {
     clearTimeout(this.hideTimer);
+    if (this.hand) return;
     this.root.classList.remove("on");
     this.dice.forEach((d) => d.el.remove());
     this.dice = [];
@@ -447,6 +575,8 @@ class Stage {
         ]);
       }
       spots.sort(() => Math.random() - 0.5);
+      // Thrown from the hand when the dice were held (UX 501): out from where each sat, not from off the edge.
+      const hand = this.fromHand();
       const base = fast ? 420 : 900;
       const ds = roll.dice.map((d, i) => {
         const el = this.makeDie(look, size);
@@ -456,15 +586,17 @@ class Stage {
           v: d.value,
           ok: d.ok,
           crit: d.crit,
-          sx: W * (0.3 + Math.random() * 0.4),
-          sy: roll.defender ? -size * 2 : H + size,
+          sx: hand ? hand[i % hand.length]![0] : W * (0.3 + Math.random() * 0.4),
+          sy: hand ? hand[i % hand.length]![1] : roll.defender ? -size * 2 : H + size,
           ex: spots[i]![0],
           ey: spots[i]![1],
-          delay: last
-            ? fast
-              ? 120
-              : 260
-            : Math.min(i * (fast ? 8 : 18), fast ? 120 : 260) + Math.random() * 40,
+          delay: hand
+            ? Math.random() * 30
+            : last
+              ? fast
+                ? 120
+                : 260
+              : Math.min(i * (fast ? 8 : 18), fast ? 120 : 260) + Math.random() * 40,
           dur: last ? (fast ? 1100 : 2300) : base + Math.random() * 180,
           bounces: last ? 5 : 3 + (Math.random() < 0.5 ? 1 : 0),
           spin: (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 540),
