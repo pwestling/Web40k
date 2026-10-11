@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { diceWanted, type GameState, type Intent, type PlayerId } from "../core";
 import { useHoldToShake } from "./Shake";
 import { UndoButton } from "../ui/Hud";
+import { useReactionHeld } from "../ui/reactionHold";
 import { t, tn } from "../i18n";
 import { useStore } from "../store";
 
@@ -150,6 +151,8 @@ export function RollButton({
 }) {
   const own = useRealDice();
   const shake = useOwnDice((s) => s.shake);
+  // The other player may react first (#80): a short beat, or Go on.
+  const held = useReactionHeld();
   const [entering, setEntering] = useState(false);
   const [sent, setSent] = useState<number | null>(null);
   const roll = () => {
@@ -182,6 +185,7 @@ export function RollButton({
       <>
         <button
           className={className}
+          disabled={held}
           title={shake ? (title ? `${title}. ` : "") + t("Hold to shake, let go to roll") : title}
           {...hold.handlers}
         >
@@ -193,6 +197,7 @@ export function RollButton({
     <>
       <button
         className={className}
+        disabled={held}
         title={title}
         onClick={() => {
           // Nothing to roll after all (a fixed number of attacks): no faces to ask for.

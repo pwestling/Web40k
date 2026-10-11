@@ -448,27 +448,27 @@ msgstr "Ils ont tenu. Un corps à corps peut se prolonger au tour suivant."
 msgid "Setting up the table…"
 msgstr "Installation de la table…"
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:348
 #, fuzzy
 msgid "Fully visible"
 msgstr "Entièrement visible"
 
-#: src/GameScreen.tsx:346
+#: src/GameScreen.tsx:349
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Partiellement visible ou à couvert"
 
-#: src/GameScreen.tsx:347
+#: src/GameScreen.tsx:350
 #, fuzzy
 msgid "Hidden"
 msgstr "Caché"
 
-#: src/GameScreen.tsx:348
+#: src/GameScreen.tsx:351
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 
-#: src/GameScreen.tsx:353
+#: src/GameScreen.tsx:356
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -477,17 +477,17 @@ msgstr "Survole une unité ennemie pour voir ses lignes de vue"
 msgid "Open"
 msgstr "Dégagé"
 
-#: src/GameScreen.tsx:354
+#: src/GameScreen.tsx:357
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Gênant : couvert"
 
-#: src/GameScreen.tsx:355
+#: src/GameScreen.tsx:358
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Bloquant : pas de vue"
 
-#: src/GameScreen.tsx:360
+#: src/GameScreen.tsx:363
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Quitter la vue de la figurine (Esc)"
@@ -609,10 +609,10 @@ msgstr "Ranger sur l'étagère"
 
 #: src/bot/YourArmy.tsx:135
 #: src/bot/YourArmy.tsx:182
-#: src/companion/RealDice.tsx:352
+#: src/companion/RealDice.tsx:357
 #: src/ranked/RankedGame.tsx:514
 #: src/standees/StandeeMaker.tsx:243
-#: src/ui/RegimentPanel.tsx:274
+#: src/ui/ReactionCard.tsx:129
 #, fuzzy
 msgid "Back"
 msgstr "Reculer"
@@ -1798,7 +1798,7 @@ msgid "Add a player"
 msgstr "Ajouter un joueur"
 
 #: src/campaign/EventTab.tsx:98
-#: src/companion/RealDice.tsx:381
+#: src/companion/RealDice.tsx:386
 #: src/ui/AutoAbilities.tsx:157
 #, fuzzy
 msgid "Add"
@@ -1969,128 +1969,128 @@ msgstr "Journal"
 msgid "Game"
 msgstr "Partie"
 
-#: src/companion/RealDice.tsx:100
+#: src/companion/RealDice.tsx:101
 #, fuzzy
 msgid "I roll real dice and type them in"
 msgstr "Je lance de vrais dés et je les saisis"
 
-#: src/companion/RealDice.tsx:103
+#: src/companion/RealDice.tsx:104
 #, fuzzy
 msgid "The game still rolls the dice; you choose when."
 msgstr "Le jeu lance toujours les dés ; tu choisis quand."
 
-#: src/companion/RealDice.tsx:107
+#: src/companion/RealDice.tsx:108
 #, fuzzy
 msgid "This game rolls on screen: nobody can check a real roll over the internet in a ranked or event game."
 msgstr "Cette partie lance les dés à l'écran : en partie classée ou en tournoi, personne ne peut vérifier un vrai jet par Internet."
 
-#: src/companion/RealDice.tsx:123
+#: src/companion/RealDice.tsx:124
 #, fuzzy
 msgid "You roll your own dice and tap in the faces"
 msgstr "Tu lances tes propres dés et tu saisis les faces"
 
-#: src/companion/RealDice.tsx:123
+#: src/companion/RealDice.tsx:124
 #, fuzzy
 msgid "Dice roll on screen"
 msgstr "Les dés roulent à l'écran"
 
-#: src/companion/RealDice.tsx:126
+#: src/companion/RealDice.tsx:127
 #, fuzzy
 msgid "✋ My dice"
 msgstr "✋ Mes dés"
 
-#: src/companion/RealDice.tsx:126
+#: src/companion/RealDice.tsx:127
 #, fuzzy
 msgid "🎲 Screen dice"
 msgstr "🎲 Dés à l'écran"
 
-#: src/companion/RealDice.tsx:185
+#: src/companion/RealDice.tsx:189
 #, fuzzy
 msgid "Hold to shake, let go to roll"
 msgstr "Maintiens pour secouer, lâche pour lancer"
 
-#: src/companion/RealDice.tsx:208
+#: src/companion/RealDice.tsx:213
 #, fuzzy
 msgid "Sent: {face}"
 msgstr "Envoyé : {face}"
 
-#: src/companion/RealDice.tsx:267
+#: src/companion/RealDice.tsx:272
 #: src/ui/DicePicker.tsx:57
 #, fuzzy
 msgid "Your dice"
 msgstr "Tes dés"
 
-#: src/companion/RealDice.tsx:270
+#: src/companion/RealDice.tsx:275
 #, fuzzy
 msgid "Those don't fit: start this roll again."
 msgstr "Ça ne colle pas : recommence ce jet."
 
-#: src/companion/RealDice.tsx:272
+#: src/companion/RealDice.tsx:277
 #, fuzzy
 msgid "That's every die."
 msgstr "Tous les dés sont saisis."
 
-#: src/companion/RealDice.tsx:275
+#: src/companion/RealDice.tsx:280
 #, fuzzy
 msgid "Roll {n} D{sides}"
 msgid_plural "Roll {n} D{sides}"
 msgstr[0] "Lance {n} D{sides}"
 msgstr[1] "Lance {n} D{sides}"
 
-#: src/companion/RealDice.tsx:279
+#: src/companion/RealDice.tsx:284
 #, fuzzy
 msgid "Roll {n} more D{sides}"
 msgid_plural "Roll {n} more D{sides}"
 msgstr[0] "Lance encore {n} D{sides}"
 msgstr[1] "Lance encore {n} D{sides}"
 
-#: src/companion/RealDice.tsx:284
+#: src/companion/RealDice.tsx:289
 #, fuzzy
 msgid "{have} of {all}, {n} too many"
 msgstr "{have} sur {all}, {n} de trop"
 
-#: src/companion/RealDice.tsx:288
+#: src/companion/RealDice.tsx:293
 #, fuzzy
 msgid "{have} of {all}: how many show each face?"
 msgstr "{have} sur {all} : combien montrent chaque face ?"
 
-#: src/companion/RealDice.tsx:307
+#: src/companion/RealDice.tsx:312
 #, fuzzy
 msgid "One more {face}"
 msgstr "Un {face} de plus"
 
-#: src/companion/RealDice.tsx:315
+#: src/companion/RealDice.tsx:320
 #, fuzzy
 msgid "One fewer {face}"
 msgstr "Un {face} de moins"
 
-#: src/companion/RealDice.tsx:323
+#: src/companion/RealDice.tsx:328
 #, fuzzy
 msgid "Dice showing {face}"
 msgstr "Dés montrant {face}"
 
-#: src/companion/RealDice.tsx:338
+#: src/companion/RealDice.tsx:343
 #, fuzzy
 msgid "Use these dice"
 msgstr "Utiliser ces dés"
 
-#: src/companion/RealDice.tsx:347
+#: src/companion/RealDice.tsx:352
 #: src/standees/StandeeMaker.tsx:479
 #, fuzzy
 msgid "Start again"
 msgstr "Recommencer"
 
-#: src/companion/RealDice.tsx:350
+#: src/companion/RealDice.tsx:355
 #, fuzzy
 msgid "Roll on screen instead"
 msgstr "Lancer plutôt à l'écran"
 
-#: src/companion/RealDice.tsx:376
+#: src/companion/RealDice.tsx:381
 #, fuzzy
 msgid "Face"
 msgstr "Face"
 
-#: src/companion/RealDice.tsx:89
+#: src/companion/RealDice.tsx:90
 #: src/ui/DicePicker.tsx:59
 #: src/ui/Hud.tsx:249
 #: src/ui/StatsScreen.tsx:219
@@ -2098,12 +2098,12 @@ msgstr "Face"
 msgid "Dice"
 msgstr "Dés"
 
-#: src/companion/RealDice.tsx:92
+#: src/companion/RealDice.tsx:93
 #, fuzzy
 msgid "The game rolls at a click"
 msgstr "Le jeu lance les dés en un clic"
 
-#: src/companion/RealDice.tsx:96
+#: src/companion/RealDice.tsx:97
 #, fuzzy
 msgid "Roll the dice myself: hold to shake, let go to roll"
 msgstr "Lancer moi-même : maintiens pour secouer, lâche pour lancer"
@@ -2198,7 +2198,8 @@ msgid "Yes"
 msgstr "Oui"
 
 #: src/companion/TableAttack.tsx:182
-#: src/ui/RerollCard.tsx:111
+#: src/ui/ReactionCard.tsx:169
+#: src/ui/RerollCard.tsx:113
 #, fuzzy
 msgid "No"
 msgstr "Non"
@@ -3922,7 +3923,7 @@ msgstr "En attente · Open Battle"
 
 #: src/mail/MailBar.tsx:99
 #: src/mail/MailLobby.tsx:159
-#: src/ui/TopBar.tsx:66
+#: src/ui/TopBar.tsx:67
 #, fuzzy
 msgid "your opponent"
 msgstr "ton adversaire"
@@ -4397,7 +4398,7 @@ msgstr "tour {n}"
 
 #: src/opentables/OpenTables.tsx:406
 #: src/ui/Room.tsx:200
-#: src/ui/TopBar.tsx:650
+#: src/ui/TopBar.tsx:654
 #, fuzzy
 msgid "{n} watching"
 msgid_plural "{n} watching"
@@ -5795,7 +5796,7 @@ msgstr "Masquer les notes et chapitres"
 #: src/replay/chapters.ts:45
 #: src/ui/PlayPanel.tsx:59
 #: src/ui/TerrainPanel.tsx:353
-#: src/ui/TopBar.tsx:240
+#: src/ui/TopBar.tsx:243
 #: src/ui/WhatNow.tsx:46
 #: src/ui/gameLog.ts:449
 #, fuzzy
@@ -6684,7 +6685,7 @@ msgid "What happened"
 msgstr "Ce qui s'est passé"
 
 #: src/share/clip.ts:266
-#: src/ui/TopBar.tsx:269
+#: src/ui/TopBar.tsx:272
 #, fuzzy
 msgid "Battle over"
 msgstr "Bataille terminée"
@@ -8334,7 +8335,7 @@ msgstr "Dévastatrices"
 #: src/ui/AttackPanel.tsx:368
 #: src/ui/AttackPanel.tsx:377
 #: src/ui/AttackPanel.tsx:478
-#: src/ui/TopBar.tsx:475
+#: src/ui/TopBar.tsx:479
 #, fuzzy
 msgid "none"
 msgstr "aucun"
@@ -8542,7 +8543,7 @@ msgstr "Tout lancer"
 #: src/ui/Coach.tsx:87
 #: src/ui/ProcedurePanels.tsx:421
 #: src/ui/TerrainPanel.tsx:163
-#: src/ui/TopBar.tsx:624
+#: src/ui/TopBar.tsx:628
 #: src/ui/TouchLayer.tsx:80
 #, fuzzy
 msgid "Done"
@@ -9378,7 +9379,7 @@ msgid "Redo this step"
 msgstr "Refaire cette étape"
 
 #: src/ui/Coach.tsx:210
-#: src/ui/TopBar.tsx:351
+#: src/ui/TopBar.tsx:355
 #: src/ui/WhatNow.tsx:398
 #, fuzzy
 msgid "Next phase"
@@ -11166,7 +11167,7 @@ msgstr "Score"
 #: src/ui/Missions.tsx:204
 #: src/ui/Missions.tsx:343
 #: src/ui/ProcedurePanels.tsx:387
-#: src/ui/TopBar.tsx:335
+#: src/ui/TopBar.tsx:338
 #, fuzzy
 msgid "Pass"
 msgstr "Passer"
@@ -12172,6 +12173,91 @@ msgstr "Charge de dos : chaque test de {step} échoue"
 msgid "Every {step} test fails"
 msgstr "Chaque test de {step} échoue"
 
+#: src/ui/ReactionCard.tsx:117
+#: src/ui/RerollCard.tsx:125
+#, fuzzy
+msgid "Roll one die. What did it show?"
+msgstr "Lance un dé. Qu'a-t-il donné ?"
+
+#: src/ui/ReactionCard.tsx:142
+#: src/ui/RerollCard.tsx:109
+#, fuzzy
+msgid "Re-roll a {face}"
+msgstr "Relancer un {face}"
+
+#: src/ui/ReactionCard.tsx:148
+#: src/ui/ReactionCard.tsx:153
+#, fuzzy
+msgid "Play it"
+msgstr "La jouer"
+
+#: src/ui/ReactionCard.tsx:158
+#: src/ui/ReactionCard.tsx:161
+#: src/ui/RerollCard.tsx:120
+#, fuzzy
+msgid "Don't ask me this game"
+msgstr "Ne plus me demander cette partie"
+
+#: src/ui/ReactionCard.tsx:207
+#, fuzzy
+msgid "{name} may react…"
+msgstr "{name} peut réagir…"
+
+#: src/ui/ReactionCard.tsx:212
+#, fuzzy
+msgid "Go on"
+msgstr "Continuer"
+
+#: src/ui/ReactionCard.tsx:47
+#, fuzzy
+msgid "Re-roll this?"
+msgstr "Relancer ?"
+
+#: src/ui/ReactionCard.tsx:49
+#, fuzzy
+msgid "{unit} targets {target}"
+msgstr "{unit} cible {target}"
+
+#: src/ui/ReactionCard.tsx:49
+#, fuzzy
+msgid "{unit} attacks"
+msgstr "{unit} attaque"
+
+#: src/ui/ReactionCard.tsx:51
+#, fuzzy
+msgid "Saves for {unit} next"
+msgstr "Ensuite : sauvegardes pour {unit}"
+
+#: src/ui/ReactionCard.tsx:53
+#, fuzzy
+msgid "{unit} has fought"
+msgstr "{unit} a combattu"
+
+#: src/ui/ReactionCard.tsx:56
+#, fuzzy
+msgid "{unit} rolled {n} to charge"
+msgstr "{unit} a fait {n} pour la charge"
+
+#: src/ui/ReactionCard.tsx:57
+#, fuzzy
+msgid "{unit} charges"
+msgstr "{unit} charge"
+
+#: src/ui/ReactionCard.tsx:59
+#, fuzzy
+msgid "{unit} declares a charge"
+msgstr "{unit} déclare une charge"
+
+#: src/ui/ReactionCard.tsx:61
+#, fuzzy
+msgid "Their moves are done"
+msgstr "Les mouvements adverses sont finis"
+
+#: src/ui/ReactionCard.tsx:63
+#, fuzzy
+msgid "You may react"
+msgstr "Tu peux réagir"
+
 #: src/ui/RegimentPanel.tsx:123
 #, fuzzy
 msgid "Form a block"
@@ -12557,22 +12643,7 @@ msgstr "Et si, Partager, Revoir"
 msgid "Close replay"
 msgstr "Fermer le replay"
 
-#: src/ui/RerollCard.tsx:107
-#, fuzzy
-msgid "Re-roll a {face}"
-msgstr "Relancer un {face}"
-
-#: src/ui/RerollCard.tsx:118
-#, fuzzy
-msgid "Don't ask me this game"
-msgstr "Ne plus me demander cette partie"
-
-#: src/ui/RerollCard.tsx:123
-#, fuzzy
-msgid "Roll one die. What did it show?"
-msgstr "Lance un dé. Qu'a-t-il donné ?"
-
-#: src/ui/RerollCard.tsx:95
+#: src/ui/RerollCard.tsx:97
 #, fuzzy
 msgid "{name}?"
 msgstr "{name} ?"
@@ -12711,7 +12782,7 @@ msgid "Tell the other player you've finished deploying"
 msgstr "Dis à l'autre joueur que tu as fini de te déployer"
 
 #: src/ui/Room.tsx:249
-#: src/ui/TopBar.tsx:507
+#: src/ui/TopBar.tsx:511
 #, fuzzy
 msgid "Ready"
 msgstr "Prêt"
@@ -13086,7 +13157,7 @@ msgid "Mark {status}"
 msgstr "Marquer {status}"
 
 #: src/ui/StratagemHand.tsx:100
-#: src/ui/TopBar.tsx:638
+#: src/ui/TopBar.tsx:642
 #, fuzzy
 msgid "Your turn"
 msgstr "Ton tour"
@@ -13336,13 +13407,13 @@ msgid "Activated: {used} of {budget} actions used."
 msgstr "Activée : {used} actions utilisées sur {budget}."
 
 #: src/ui/SystemPanels.tsx:542
-#: src/ui/TopBar.tsx:316
+#: src/ui/TopBar.tsx:319
 #, fuzzy
 msgid "End this activation; the other player goes next"
 msgstr "Terminer cette activation ; c'est au tour de l'autre joueur"
 
 #: src/ui/SystemPanels.tsx:548
-#: src/ui/TopBar.tsx:323
+#: src/ui/TopBar.tsx:326
 #, fuzzy
 msgid "End activation"
 msgstr "Terminer l'activation"
@@ -13759,7 +13830,7 @@ msgid "after it charged"
 msgstr "après avoir chargé"
 
 #: src/ui/TeachRule.tsx:27
-#: src/ui/TopBar.tsx:515
+#: src/ui/TopBar.tsx:519
 #, fuzzy
 msgid "Re-roll"
 msgstr "Relancer"
@@ -14266,279 +14337,279 @@ msgstr "Taille du texte"
 
 #: src/ui/TopBar.tsx:100
 #, fuzzy
+msgid "{names} have no army yet"
+msgstr "{names} n'ont pas encore d'armée"
+
+#: src/ui/TopBar.tsx:101
+#, fuzzy
 msgid "{name} has no army yet"
 msgstr "{name} n'a pas encore d'armée"
 
-#: src/ui/TopBar.tsx:103
+#: src/ui/TopBar.tsx:104
 #, fuzzy
 msgid "{n} players aren't ready yet"
 msgstr "{n} joueurs ne sont pas encore prêts"
 
-#: src/ui/TopBar.tsx:105
+#: src/ui/TopBar.tsx:106
 #, fuzzy
 msgid "{names} aren't ready yet"
 msgstr "{names} ne sont pas encore prêts"
 
-#: src/ui/TopBar.tsx:106
+#: src/ui/TopBar.tsx:107
 #, fuzzy
 msgid "{name} isn't ready yet"
 msgstr "{name} n'est pas encore prêt"
 
-#: src/ui/TopBar.tsx:108
+#: src/ui/TopBar.tsx:109
 #, fuzzy
 msgid "No mission: you'll score by hand"
 msgstr "Pas de mission : tu comptes les points à la main"
 
-#: src/ui/TopBar.tsx:132
+#: src/ui/TopBar.tsx:135
 #, fuzzy
 msgid "Advance a phase during {side}'s turn?"
 msgstr "Avancer d'une phase pendant le tour de {side} ?"
 
-#: src/ui/TopBar.tsx:133
+#: src/ui/TopBar.tsx:136
 #, fuzzy
 msgid "Advance a phase during the other player's turn?"
 msgstr "Avancer d'une phase pendant le tour de l'autre joueur ?"
 
-#: src/ui/TopBar.tsx:135
+#: src/ui/TopBar.tsx:138
 #, fuzzy
 msgid "Go back a phase during {side}'s turn?"
 msgstr "Revenir d'une phase pendant le tour de {side} ?"
 
-#: src/ui/TopBar.tsx:136
+#: src/ui/TopBar.tsx:139
 #, fuzzy
 msgid "Go back a phase during the other player's turn?"
 msgstr "Revenir d'une phase pendant le tour de l'autre joueur ?"
 
-#: src/ui/TopBar.tsx:220
+#: src/ui/TopBar.tsx:223
 #, fuzzy
 msgid "{name} is playing…"
 msgstr "{name} joue…"
 
-#: src/ui/TopBar.tsx:227
+#: src/ui/TopBar.tsx:230
 #, fuzzy
 msgid "Let the computer play"
 msgstr "Laisser jouer l’ordinateur"
 
-#: src/ui/TopBar.tsx:231
+#: src/ui/TopBar.tsx:234
 #, fuzzy
 msgid "Previous phase"
 msgstr "Phase précédente"
 
-#: src/ui/TopBar.tsx:244
+#: src/ui/TopBar.tsx:247
 #, fuzzy
 msgid "First turn:"
 msgstr "Premier tour :"
 
-#: src/ui/TopBar.tsx:257
+#: src/ui/TopBar.tsx:260
 #, fuzzy
 msgid "Place your units in your zone"
 msgstr "Place tes unités dans ta zone"
 
-#: src/ui/TopBar.tsx:259
+#: src/ui/TopBar.tsx:262
 #, fuzzy
 msgid "Joining the game…"
 msgstr "Connexion à la partie…"
 
-#: src/ui/TopBar.tsx:261
+#: src/ui/TopBar.tsx:264
 #, fuzzy
 msgid "Players are deploying"
 msgstr "Les joueurs se déploient"
 
-#: src/ui/TopBar.tsx:271
+#: src/ui/TopBar.tsx:274
 #, fuzzy
 msgid "Round {round} of {rounds} · {side}"
 msgstr "Round {round} sur {rounds} · {side}"
 
-#: src/ui/TopBar.tsx:276
+#: src/ui/TopBar.tsx:279
 #, fuzzy
 msgid "Round {round} · {side}"
 msgstr "Round {round} · {side}"
 
-#: src/ui/TopBar.tsx:297
+#: src/ui/TopBar.tsx:300
 #, fuzzy
 msgid "The roll-off lets you pick who goes first this round"
 msgstr "Le jet de dés te laisse choisir qui commence ce round"
 
-#: src/ui/TopBar.tsx:300
+#: src/ui/TopBar.tsx:303
 #, fuzzy
 msgid "Let {side} go first"
 msgstr "Laisser {side} commencer"
 
-#: src/ui/TopBar.tsx:315
+#: src/ui/TopBar.tsx:318
 #, fuzzy
 msgid "Answer the open question first"
 msgstr "Répondez d'abord à la question en cours"
 
-#: src/ui/TopBar.tsx:330
+#: src/ui/TopBar.tsx:333
 #, fuzzy
 msgid "Both passed: the round moves on"
 msgstr "Les deux ont passé : le round avance"
 
-#: src/ui/TopBar.tsx:331
+#: src/ui/TopBar.tsx:334
 #, fuzzy
 msgid "Pass; the other player goes next"
 msgstr "Passer ; c'est au tour de l'autre joueur"
 
-#: src/ui/TopBar.tsx:341
+#: src/ui/TopBar.tsx:344
 #, fuzzy
 msgid "Deploy, then Send to {name}"
 msgstr "Déploie, puis Envoyer à {name}"
 
-#: src/ui/TopBar.tsx:342
+#: src/ui/TopBar.tsx:345
 #, fuzzy
 msgid "Waiting for {name} to start"
 msgstr "En attente du début par {name}"
 
-#: src/ui/TopBar.tsx:350
+#: src/ui/TopBar.tsx:354
 #, fuzzy
 msgid "Waiting for {names} to be ready"
 msgstr "En attente que {names} soient prêts"
 
-#: src/ui/TopBar.tsx:362
+#: src/ui/TopBar.tsx:366
 #, fuzzy
 msgid "Start battle ▶"
 msgstr "Lancer la bataille ▶"
 
-#: src/ui/TopBar.tsx:377
+#: src/ui/TopBar.tsx:381
 #, fuzzy
 msgid "Pick one"
 msgstr "En choisir une"
 
-#: src/ui/TopBar.tsx:387
+#: src/ui/TopBar.tsx:391
 #, fuzzy
 msgid "Start anyway"
 msgstr "Lancer quand même"
 
-#: src/ui/TopBar.tsx:387
+#: src/ui/TopBar.tsx:391
 #, fuzzy
 msgid "Go on anyway"
 msgstr "Continuer quand même"
 
-#: src/ui/TopBar.tsx:389
+#: src/ui/TopBar.tsx:393
 #, fuzzy
 msgid "Not yet"
 msgstr "Pas encore"
 
-#: src/ui/TopBar.tsx:396
+#: src/ui/TopBar.tsx:400
 #, fuzzy
 msgid "Phase options"
 msgstr "Options de phase"
 
-#: src/ui/TopBar.tsx:408
+#: src/ui/TopBar.tsx:412
 #, fuzzy
 msgid "Skip to the next phase"
 msgstr "Passer à la phase suivante"
 
-#: src/ui/TopBar.tsx:420
+#: src/ui/TopBar.tsx:424
 #, fuzzy
 msgid "Pause the computer"
 msgstr "Mettre l’ordinateur en pause"
 
-#: src/ui/TopBar.tsx:423
+#: src/ui/TopBar.tsx:427
 #, fuzzy
 msgid "Advance their phase"
 msgstr "Avancer leur phase"
 
-#: src/ui/TopBar.tsx:424
+#: src/ui/TopBar.tsx:428
 #, fuzzy
 msgid "Back a phase"
 msgstr "Revenir d'une phase"
 
-#: src/ui/TopBar.tsx:434
+#: src/ui/TopBar.tsx:438
 #, fuzzy
 msgid "Controls (?)"
 msgstr "Commandes (?)"
 
-#: src/ui/TopBar.tsx:493
+#: src/ui/TopBar.tsx:497
 #, fuzzy
 msgid "Already re-rolled this round"
 msgstr "Déjà relancé ce round"
 
-#: src/ui/TopBar.tsx:495
+#: src/ui/TopBar.tsx:499
 #, fuzzy
 msgid "Re-roll the picked dice: once a round"
 msgstr "Relancer les dés choisis : une fois par round"
 
-#: src/ui/TopBar.tsx:496
+#: src/ui/TopBar.tsx:500
 #, fuzzy
 msgid "Pick dice to re-roll first"
 msgstr "Choisis d'abord des dés à relancer"
 
-#: src/ui/TopBar.tsx:500
+#: src/ui/TopBar.tsx:504
 #, fuzzy
 msgid "Re-roll (once)"
 msgstr "Relancer (une fois)"
 
-#: src/ui/TopBar.tsx:504
+#: src/ui/TopBar.tsx:508
 #, fuzzy
 msgid "Keep these dice as they are: you give up this round's re-roll"
 msgstr "Garder ces dés : tu renonces à la relance de ce round"
 
-#: src/ui/TopBar.tsx:514
+#: src/ui/TopBar.tsx:518
 #, fuzzy
 msgid "Spend"
 msgstr "Dépenser"
 
-#: src/ui/TopBar.tsx:556
-#: src/ui/TopBar.tsx:557
+#: src/ui/TopBar.tsx:560
+#: src/ui/TopBar.tsx:561
 #, fuzzy
 msgid "Sound and dice"
 msgstr "Son et dés"
 
-#: src/ui/TopBar.tsx:557
+#: src/ui/TopBar.tsx:561
 #, fuzzy
 msgid "Sound muted"
 msgstr "Son coupé"
 
-#: src/ui/TopBar.tsx:565
+#: src/ui/TopBar.tsx:569
 #, fuzzy
 msgid "Sound"
 msgstr "Son"
 
-#: src/ui/TopBar.tsx:568
+#: src/ui/TopBar.tsx:572
 #, fuzzy
 msgid "Volume"
 msgstr "Volume"
 
-#: src/ui/TopBar.tsx:579
+#: src/ui/TopBar.tsx:583
 #, fuzzy
 msgid "A quiet room under the game; the turn bell follows Sound"
 msgstr "Une pièce calme sous la partie ; la cloche de tour suit le réglage Son"
 
-#: src/ui/TopBar.tsx:581
+#: src/ui/TopBar.tsx:585
 #, fuzzy
 msgid "Table ambience"
 msgstr "Ambiance de table"
 
-#: src/ui/TopBar.tsx:584
+#: src/ui/TopBar.tsx:588
 #, fuzzy
 msgid "Fast dice"
 msgstr "Dés rapides"
 
-#: src/ui/TopBar.tsx:612
+#: src/ui/TopBar.tsx:616
 #, fuzzy
 msgid "Change {label}"
 msgstr "Modifier {label}"
 
-#: src/ui/TopBar.tsx:649
+#: src/ui/TopBar.tsx:653
 #, fuzzy
 msgid "People watching this game, running a little behind it"
 msgstr "Les personnes qui regardent cette partie, avec un peu de retard"
 
-#: src/ui/TopBar.tsx:78
+#: src/ui/TopBar.tsx:79
 #, fuzzy
 msgid "Waiting for {name} to answer: {question}"
 msgstr "En attente de la réponse de {name} : {question}"
 
-#: src/ui/TopBar.tsx:79
+#: src/ui/TopBar.tsx:80
 #, fuzzy
 msgid "a player"
 msgstr "un joueur"
-
-#: src/ui/TopBar.tsx:99
-#, fuzzy
-msgid "{names} have no army yet"
-msgstr "{names} n'ont pas encore d'armée"
 
 #: src/ui/TouchLayer.tsx:116
 #: src/ui/TouchLayer.tsx:119

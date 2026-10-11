@@ -2853,6 +2853,140 @@ const checks = {
     return page.errors;
   },
 
+  // #80: online, the waiting player gets a reaction card by the dice when one is playable (an enemy move
+  // ended, a target declared), the active player sees "Ben may react…" with Roll and ▶ held, and
+  // "Don't ask me this game" reaches both screens.
+  async reactions() {
+    const host = await device();
+    const guest = await device();
+    await lobby(host.page, `?${SIGNAL}`);
+    await host.page.locator(".lobby input").first().fill("Ana");
+    const game = host.page.locator(".lobby label", { hasText: "Game" }).locator("select");
+    await game.locator('option[value="forty-k-11"]').waitFor({ state: "attached", timeout: 20_000 });
+    await game.selectOption("forty-k-11");
+    await host.page.getByRole("button", { name: "Host a game", exact: true }).click();
+    await host.page.locator(".room").waitFor();
+    await guest.page.goto(host.page.url());
+    await guest.page.getByText(/What should the others call you/).waitFor({ timeout: 10_000 });
+    await guest.page.getByPlaceholder("Your name").fill("Ben");
+    await guest.page.getByRole("button", { name: "Use this name" }).click();
+    await host.page.locator(".topbar").getByText("Ben").first().waitFor({ timeout: 30_000 });
+    for (const [i, { page }] of [host, guest].entries()) {
+      const pick = page.locator('.panel.hud select[aria-label="Sample army"]');
+      if (await pick.count()) await pick.selectOption({ index: i + 1 });
+      else await page.locator(".panel.hud").getByRole("button", { name: "Sample army" }).click();
+      const deploy = page.getByRole("button", { name: /^Deploy for/ }).first();
+      if (await deploy.count()) await deploy.click();
+    }
+    await host.page.getByRole("button", { name: /Start battle/ }).click();
+    const anyway = host.page.getByRole("button", { name: /Start anyway/ });
+    if (await anyway.count()) await anyway.first().click();
+    await host.page
+      .locator(".topbar")
+      .getByText(/Round 1/)
+      .first()
+      .waitFor({ timeout: 15_000 });
+    for (const { page } of [host, guest]) {
+      await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, {
+        timeout: 30_000,
+      });
+      await page.keyboard.press("Escape");
+    }
+    const card = guest.page.locator(".reaction-cards");
+    const seen = { card: false, may: false, held: false };
+    const look = async () => {
+      if (!(await card.count())) return false;
+      seen.card = true;
+      seen.may ||= await host.page
+        .locator(".may-react")
+        .waitFor({ timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      seen.held ||= await host.page
+        .locator('.topbar button[title="Next phase"]')
+        .isDisabled()
+        .catch(() => false);
+      if (process.env.SMOKE_SHOTS) {
+        await guest.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "reaction-card.png") });
+        await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "may-react.png") });
+      }
+      return true;
+    };
+    // Through the Command and Movement phases: Movement's end opens a window for the side that waited.
+    for (let i = 0; i < 2 && !(await look()); i++) {
+      await host.page.locator('.topbar button[title="Next phase"]').click({ timeout: 10_000 });
+      const ask = host.page.locator(".topbar .ask button.primary");
+      if (await ask.count()) await ask.click();
+      await card.waitFor({ timeout: 2500 }).catch(() => {});
+    }
+    // Else shots at Ben's units, one unit after another: a target declared, or a failed save Ben can re-roll.
+    if (!(await look()))
+      await host.page
+        .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+        .first()
+        .click();
+    const canvas = await host.page.locator("canvas").first().boundingBox();
+    for (let shot = 0; shot < 4 && !seen.card; shot++) {
+      let found = false;
+      for (let u = 0; u < 6 && !found; u++) {
+        await host.page.keyboard.press("]");
+        await host.page.waitForTimeout(300);
+        for (let y = 0.1; y < 0.55 && !found; y += 0.04)
+          for (let x = 0.1; x < 0.95 && !found; x += 0.03) {
+            await host.page.mouse.move(canvas.x + canvas.width * x, canvas.y + canvas.height * y);
+            if (await host.page.locator(".table-tag.ok").count()) found = true;
+          }
+      }
+      if (!found) break;
+      await host.page.mouse.down();
+      await host.page.mouse.up();
+      const shoot = host.page.getByRole("button", { name: /^Shoot \d+ weapon/ });
+      await shoot.waitFor({ timeout: 3000 }).catch(() => {});
+      if (await shoot.count()) await shoot.click();
+      // Roll it through: Ana her hits, wounds and damage, Ben his saves.
+      for (let i = 0; i < 10 && !(await look()); i++) {
+        await card.waitFor({ timeout: 2500 }).catch(() => {});
+        if (await look()) break;
+        let rolled = false;
+        for (const { page } of [host, guest]) {
+          const roll = page.locator(".panel.attack button.attack-roll:enabled").first();
+          if (await roll.count())
+            rolled =
+              !!(await roll
+                .click()
+                .then(() => true)
+                .catch(() => false)) || rolled;
+        }
+        if (!rolled && !(await host.page.locator(".panel.attack").count())) break;
+      }
+      const done = host.page.locator(".panel.attack").getByRole("button", { name: /^(Done|Cancel)$/ });
+      if (!seen.card && (await done.count()))
+        await done
+          .first()
+          .click()
+          .catch(() => {});
+      await host.page.keyboard.press("Escape");
+    }
+    if (!seen.card) {
+      if (process.env.SMOKE_SHOTS)
+        await host.page.screenshot({ path: join(process.env.SMOKE_SHOTS, "reactions-none.png") });
+      throw new Error("Ben never got a reaction card");
+    }
+    if (!seen.may) throw new Error("Ana's screen never said Ben may react");
+    // Don't ask me this game: the card goes, and so does Ana's "may react" (the window closes when nothing is left).
+    await card.getByRole("button", { name: "Don't ask me this game" }).first().click();
+    await card
+      .getByRole("button", { name: "No", exact: true })
+      .click({ timeout: 1500 })
+      .catch(() => {});
+    await card.waitFor({ state: "detached", timeout: 10_000 });
+    await host.page.locator(".may-react").waitFor({ state: "detached", timeout: 10_000 });
+    console.log(`  reactions: Ana's ▶ held: ${seen.held}`);
+    await host.context.close();
+    await guest.context.close();
+    return [...host.page.errors, ...guest.page.errors];
+  },
+
   // UX 501: "Roll the dice myself" holds to shake and lets go to roll; "I roll real dice" asks for the faces.
   async "dice-myself"() {
     const { page, context } = await device();

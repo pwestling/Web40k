@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { undoneSeqs, type GameRecord, type GameState, type Intent, type PlayerId } from "../core";
 import { playerActions, type PlayerActionOption } from "../core/content/player";
+import { reactionWindow } from "../core/content/reactions";
 import { useRealDice } from "../companion/RealDice";
 import { gameText, t } from "../i18n";
 import { useCanControl, useStore } from "../store";
@@ -77,7 +78,8 @@ export function RerollCard() {
   const notAsked = useNotAsked((s) => s.games.includes(gameKey(record)));
   const [passed, setPassed] = useState<number | null>(null);
   const [telling, setTelling] = useState<number | null>(null);
-  const offer = shown && !notAsked ? rerollOffer(game, record, canControl) : null;
+  // An engine reaction window has its own cards by the dice (#80): this one is for games without one.
+  const offer = shown && !notAsked && !reactionWindow(game) ? rerollOffer(game, record, canControl) : null;
   if (!offer || passed === offer.seq) return null;
   const name = gameText(offer.option.def.name);
 

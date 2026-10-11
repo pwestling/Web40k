@@ -1,3 +1,4 @@
+import { useReactionHeld } from "./reactionHold";
 import { DiceChoice } from "../companion/RealDice";
 import { RankedChip } from "../ranked/RankedGame";
 import { displayName, playerName } from "../i18n/names";
@@ -112,6 +113,8 @@ export function TopBar() {
   // Only the player whose turn it is gets the phase buttons; the other can still
   // step the phase (rules are advisory) from a quiet menu, after a confirm.
   const myTurn = live && (deploying || (activeSide.length ? activeSide.some((p) => canControl(p.id)) : true));
+  // The other player may react first (#80): a short beat, or Go on on their card.
+  const held = useReactionHeld();
   const [menu, setMenu] = useState(false);
   // Solo against the computer (#45): its go is its own; ⋯ can pause it (UX 347).
   const solo = useSolo((s) => (s.level && s.session === useStore.getState().session ? s : null));
@@ -344,6 +347,7 @@ export function TopBar() {
         )}
         {myTurn && !over && !mailGuest && !(view.alternating && !deploying) && (
           <button
+            disabled={held}
             className={`next-phase ${view.alternating && !deploying ? "" : notReady.length || askedText ? "" : "primary"}`}
             title={
               notReady.length

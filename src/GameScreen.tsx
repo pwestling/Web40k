@@ -40,6 +40,7 @@ import { SandboxNotice } from "./ui/SandboxNotice";
 import { removeTerrain, rotateTerrain, TerrainPanel } from "./ui/TerrainPanel";
 import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
 import { RerollCard } from "./ui/RerollCard";
+import { MayReact, ReactionCard } from "./ui/ReactionCard";
 import { useTableKeys } from "./ui/peekKeys";
 import { OthersShaking } from "./companion/Shake";
 import { StratagemHand } from "./ui/StratagemHand";
@@ -316,6 +317,8 @@ export function GameScreen({ started }: { started: boolean }) {
           {!VIEWER && <DragTag />}
           {!editing && !VIEWER && <StratagemHand />}
           {!editing && !VIEWER && <RerollCard />}
+          {!editing && !VIEWER && <ReactionCard />}
+          {!editing && !VIEWER && <MayReact />}
           {!VIEWER && <OthersShaking />}
           {!editing && !VIEWER && <TouchLayer />}
           <VoiceRoom />
