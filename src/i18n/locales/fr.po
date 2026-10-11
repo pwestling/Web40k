@@ -12110,7 +12110,7 @@ msgid "{successes} of {count} succeed"
 msgstr "{successes} sur {count} réussissent"
 
 #: src/ui/ProcedurePanels.tsx:491
-#: src/ui/eventText.ts:750
+#: src/ui/eventText.ts:756
 #: src/ui/gameLog.ts:288
 #, fuzzy
 msgid "A unit"
@@ -12339,7 +12339,7 @@ msgid "Wheel right"
 msgstr "Pivoter à droite"
 
 #: src/ui/RegimentPanel.tsx:31
-#: src/ui/eventText.ts:795
+#: src/ui/eventText.ts:801
 #, fuzzy
 msgid "left"
 msgstr "gauche"
@@ -12357,7 +12357,7 @@ msgid "Turn left"
 msgstr "Tourner à gauche"
 
 #: src/ui/RegimentPanel.tsx:32
-#: src/ui/eventText.ts:791
+#: src/ui/eventText.ts:797
 #, fuzzy
 msgid "right"
 msgstr "droite"
@@ -16380,7 +16380,7 @@ msgid ", waiting on a reaction"
 msgstr ", en attente d’une réaction"
 
 #: src/ui/eventText.ts:587
-#: src/ui/eventText.ts:718
+#: src/ui/eventText.ts:724
 #, fuzzy
 msgid ", anyway ({why})"
 msgstr ", quand même ({why})"
@@ -16392,56 +16392,71 @@ msgstr "Réaction terminée"
 
 #: src/ui/eventText.ts:595
 #, fuzzy
-msgid "Roll closed"
-msgstr "Jet clos"
+msgid "{name} doesn't react"
+msgstr "{name} ne réagit pas"
 
-#: src/ui/eventText.ts:597
+#: src/ui/eventText.ts:598
 #, fuzzy
-msgid "{name} passed"
-msgstr "{name} a passé"
+msgid "{name} won't be asked to react"
+msgstr "On ne demandera plus à {name} de réagir"
+
+#: src/ui/eventText.ts:599
+#, fuzzy
+msgid "{name} will be asked to react"
+msgstr "On demandera de nouveau à {name} de réagir"
 
 #: src/ui/eventText.ts:60
 #, fuzzy
 msgid "{name} moved {unit} {distance}"
 msgstr "{name} a déplacé {unit} de {distance}"
 
-#: src/ui/eventText.ts:600
+#: src/ui/eventText.ts:601
+#, fuzzy
+msgid "Roll closed"
+msgstr "Jet clos"
+
+#: src/ui/eventText.ts:603
+#, fuzzy
+msgid "{name} passed"
+msgstr "{name} a passé"
+
+#: src/ui/eventText.ts:606
 #, fuzzy
 msgid "{unit} moved and ended its go"
 msgstr "{unit} a bougé et fini son tour"
 
-#: src/ui/eventText.ts:601
+#: src/ui/eventText.ts:607
 #, fuzzy
 msgid "{name} ended the activation"
 msgstr "{name} a terminé l’activation"
 
-#: src/ui/eventText.ts:603
+#: src/ui/eventText.ts:609
 #, fuzzy
 msgid "{name} re-rolled or spent dice"
 msgstr "{name} a relancé ou dépensé des dés"
 
-#: src/ui/eventText.ts:607
-#: src/ui/eventText.ts:622
+#: src/ui/eventText.ts:613
+#: src/ui/eventText.ts:628
 #, fuzzy
 msgid "a card"
 msgstr "une carte"
 
-#: src/ui/eventText.ts:609
+#: src/ui/eventText.ts:615
 #, fuzzy
 msgid "{name} placed a {face} on {unit}'s {weapon}"
 msgstr "{name} a placé un {face} sur {weapon} de {unit}"
-
-#: src/ui/eventText.ts:615
-#, fuzzy
-msgid "{name} placed a die on {unit}'s {weapon}"
-msgstr "{name} a placé un dé sur {weapon} de {unit}"
 
 #: src/ui/eventText.ts:62
 #, fuzzy
 msgid "{name} moved a model of {unit} {distance}"
 msgstr "{name} a déplacé une figurine de {unit} de {distance}"
 
-#: src/ui/eventText.ts:623
+#: src/ui/eventText.ts:621
+#, fuzzy
+msgid "{name} placed a die on {unit}'s {weapon}"
+msgstr "{name} a placé un dé sur {weapon} de {unit}"
+
+#: src/ui/eventText.ts:629
 #, fuzzy
 msgid "{name} discarded the dice on {unit}'s {weapon}"
 msgstr "{name} a défaussé les dés sur {weapon} de {unit}"
@@ -16453,165 +16468,165 @@ msgid_plural "{name} moved {n} models of {unit} {distance}"
 msgstr[0] "{name} a déplacé {n} figurine de {unit} de {distance}"
 msgstr[1] "{name} a déplacé {n} figurines de {unit} de {distance}"
 
-#: src/ui/eventText.ts:632
+#: src/ui/eventText.ts:638
 #, fuzzy
 msgid " {n} secret stayed behind: lock them in again."
 msgid_plural " {n} secrets stayed behind: lock them in again."
 msgstr[0] " {n} secret est resté en arrière : verrouille-le à nouveau."
 msgstr[1] " {n} secrets sont restés en arrière : verrouille-les à nouveau."
 
-#: src/ui/eventText.ts:639
+#: src/ui/eventText.ts:645
 #, fuzzy
 msgid " \"{rule}\" was waiting on a player and didn't carry over."
 msgstr " « {rule} » attendait un joueur et n’a pas été repris."
 
-#: src/ui/eventText.ts:642
+#: src/ui/eventText.ts:648
 #, fuzzy
 msgid "What if: from {moment}.{secrets}{rule}"
 msgstr "Et si : à partir de {moment}.{secrets}{rule}"
 
-#: src/ui/eventText.ts:651
+#: src/ui/eventText.ts:657
 #, fuzzy
 msgid "{name} drew a card from {deck}"
 msgstr "{name} a pioché une carte de {deck}"
 
-#: src/ui/eventText.ts:652
-#: src/ui/eventText.ts:678
+#: src/ui/eventText.ts:658
+#: src/ui/eventText.ts:684
 #, fuzzy
 msgid "a secret"
 msgstr "un secret"
 
-#: src/ui/eventText.ts:654
+#: src/ui/eventText.ts:660
 #, fuzzy
 msgid "{name} locked in {secret}: {n} cards, face down"
 msgstr "{name} a verrouillé {secret} : {n} cartes, face cachée"
 
-#: src/ui/eventText.ts:655
+#: src/ui/eventText.ts:661
 #, fuzzy
 msgid "{name} locked in {secret}"
 msgstr "{name} a verrouillé {secret}"
 
-#: src/ui/eventText.ts:662
+#: src/ui/eventText.ts:668
 #, fuzzy
 msgid "{name} showed {card} from {deck}"
 msgstr "{name} a montré {card} de {deck}"
 
-#: src/ui/eventText.ts:680
+#: src/ui/eventText.ts:686
 #, fuzzy
 msgid "{name} revealed {secret}: {shown}"
 msgstr "{name} a révélé {secret} : {shown}"
 
-#: src/ui/eventText.ts:681
+#: src/ui/eventText.ts:687
 #, fuzzy
 msgid "{name} revealed {secret}: {shown} (didn't match what was locked in)"
 msgstr "{name} a révélé {secret} : {shown} (ne correspondait pas à ce qui était verrouillé)"
 
-#: src/ui/eventText.ts:689
+#: src/ui/eventText.ts:695
 #, fuzzy
 msgid "{name} discarded {card} ({deck})"
 msgstr "{name} a défaussé {card} ({deck})"
 
-#: src/ui/eventText.ts:690
+#: src/ui/eventText.ts:696
 #, fuzzy
 msgid "{name} discarded a card from {deck}, face down"
 msgstr "{name} a défaussé une carte de {deck}, face cachée"
 
-#: src/ui/eventText.ts:693
+#: src/ui/eventText.ts:699
 #, fuzzy
 msgid "{name} shuffled their discards back into {deck}"
 msgstr "{name} a remélangé sa défausse dans {deck}"
 
-#: src/ui/eventText.ts:698
+#: src/ui/eventText.ts:704
 #, fuzzy
 msgid "{name} put the {deck} deck away"
 msgstr "{name} a rangé le paquet {deck}"
 
-#: src/ui/eventText.ts:703
+#: src/ui/eventText.ts:709
 #, fuzzy
 msgid "Game: {system}"
 msgstr "Jeu : {system}"
 
-#: src/ui/eventText.ts:722
+#: src/ui/eventText.ts:728
 #, fuzzy
 msgid "{name} used {action} on {unit} ({spent})"
 msgstr "{name} a utilisé {action} sur {unit} ({spent})"
 
-#: src/ui/eventText.ts:723
+#: src/ui/eventText.ts:729
 #, fuzzy
 msgid "{name} used {action} on {unit}"
 msgstr "{name} a utilisé {action} sur {unit}"
 
-#: src/ui/eventText.ts:725
+#: src/ui/eventText.ts:731
 #, fuzzy
 msgid "{name} used {action} ({spent})"
 msgstr "{name} a utilisé {action} ({spent})"
 
-#: src/ui/eventText.ts:725
+#: src/ui/eventText.ts:731
 #, fuzzy
 msgid "{name} used {action}"
 msgstr "{name} a utilisé {action}"
 
-#: src/ui/eventText.ts:728
+#: src/ui/eventText.ts:734
 #, fuzzy
 msgid "{unit}: {ability} applied"
 msgstr "{unit} : {ability} appliqué"
 
-#: src/ui/eventText.ts:732
+#: src/ui/eventText.ts:738
 #, fuzzy
 msgid "{unit} went into reserves"
 msgstr "{unit} est passée en réserve"
 
-#: src/ui/eventText.ts:734
+#: src/ui/eventText.ts:740
 #, fuzzy
 msgid "{unit} back on the table"
 msgstr "{unit} est de retour sur la table"
 
-#: src/ui/eventText.ts:735
+#: src/ui/eventText.ts:741
 #, fuzzy
 msgid "{unit} arrives from reserves"
 msgstr "{unit} arrive des réserves"
 
-#: src/ui/eventText.ts:738
+#: src/ui/eventText.ts:744
 #, fuzzy
 msgid "{unit} may move up to {inches}\" ({flag})"
 msgstr "{unit} peut se déplacer de {inches}\" au maximum ({flag})"
 
-#: src/ui/eventText.ts:744
+#: src/ui/eventText.ts:750
 #, fuzzy
 msgid "{name} chose the order their models take wounds"
 msgstr "{name} a choisi l’ordre dans lequel ses figurines subissent les blessures"
 
-#: src/ui/eventText.ts:752
+#: src/ui/eventText.ts:758
 #, fuzzy
 msgid "{xp} XP"
 msgstr "{xp} XP"
 
-#: src/ui/eventText.ts:753
+#: src/ui/eventText.ts:759
 #, fuzzy
 msgid "honour: {honour}"
 msgstr "honneur : {honour}"
 
-#: src/ui/eventText.ts:754
+#: src/ui/eventText.ts:760
 #, fuzzy
 msgid "scar: {scar}"
 msgstr "cicatrice : {scar}"
 
-#: src/ui/eventText.ts:766
+#: src/ui/eventText.ts:772
 #, fuzzy
 msgid "{unit} is {status}"
 msgstr "{unit} est {status}"
 
-#: src/ui/eventText.ts:767
+#: src/ui/eventText.ts:773
 #, fuzzy
 msgid "{unit} is no longer {status}"
 msgstr "{unit} n’est plus {status}"
 
-#: src/ui/eventText.ts:770
+#: src/ui/eventText.ts:776
 #, fuzzy
 msgid "{unit} destroyed"
 msgstr "{unit} détruite"
 
-#: src/ui/eventText.ts:775
+#: src/ui/eventText.ts:781
 #: src/ui/gameLog.ts:469
 #: src/ui/gameLog.ts:505
 #, fuzzy
@@ -16620,32 +16635,32 @@ msgid_plural "{n} wounds lost"
 msgstr[0] "{n} PV perdu"
 msgstr[1] "{n} PV perdus"
 
-#: src/ui/eventText.ts:792
+#: src/ui/eventText.ts:798
 #, fuzzy
 msgid "bottom-right"
 msgstr "le bas à droite"
 
-#: src/ui/eventText.ts:793
+#: src/ui/eventText.ts:799
 #, fuzzy
 msgid "bottom"
 msgstr "le bas"
 
-#: src/ui/eventText.ts:794
+#: src/ui/eventText.ts:800
 #, fuzzy
 msgid "bottom-left"
 msgstr "le bas à gauche"
 
-#: src/ui/eventText.ts:796
+#: src/ui/eventText.ts:802
 #, fuzzy
 msgid "top-left"
 msgstr "le haut à gauche"
 
-#: src/ui/eventText.ts:797
+#: src/ui/eventText.ts:803
 #, fuzzy
 msgid "top"
 msgstr "le haut"
 
-#: src/ui/eventText.ts:798
+#: src/ui/eventText.ts:804
 #, fuzzy
 msgid "top-right"
 msgstr "le haut à droite"
