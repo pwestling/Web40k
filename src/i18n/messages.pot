@@ -742,15 +742,15 @@ msgstr ""
 msgid "{score} · A draw"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:441
+#: src/broadcast/Moments.tsx:430
 msgid "{i} of {n}"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:451
+#: src/broadcast/Moments.tsx:440
 msgid "Next"
 msgstr ""
 
-#: src/broadcast/Moments.tsx:454
+#: src/broadcast/Moments.tsx:443
 msgid "Skip to stats"
 msgstr ""
 
@@ -1888,181 +1888,181 @@ msgstr ""
 msgid "This battle round is over its time: finish it off."
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1012
-#: src/core/content/examples/forty-k.ts:1093
+#: src/core/content/examples/forty-k.ts:1005
+msgctxt "game"
+msgid "Normal move"
+msgstr ""
+
+#: src/core/content/examples/forty-k.ts:1016
+msgctxt "game"
+msgid "Advance"
+msgstr ""
+
+#: src/core/content/examples/forty-k.ts:1026
+msgctxt "game"
+msgid "Fall back"
+msgstr ""
+
+#: src/core/content/examples/forty-k.ts:1036
+#: src/core/content/examples/rank-and-flank.ts:182
+msgctxt "game"
+msgid "Shoot"
+msgstr ""
+
+#: src/core/content/examples/forty-k.ts:1082
+#: src/core/content/examples/forty-k.ts:1163
 #: src/core/content/examples/rank-and-flank.ts:287
 msgctxt "game"
 msgid "Charge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1042
+#: src/core/content/examples/forty-k.ts:1112
 msgctxt "game"
 msgid "Pile in"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1045
-#: src/core/content/examples/forty-k.ts:1094
+#: src/core/content/examples/forty-k.ts:1115
+#: src/core/content/examples/forty-k.ts:1164
 #: src/core/content/examples/rank-and-flank.ts:183
 msgctxt "game"
 msgid "Fight"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1057
+#: src/core/content/examples/forty-k.ts:1127
 msgctxt "game"
 msgid "Consolidate"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1073
+#: src/core/content/examples/forty-k.ts:1143
 msgctxt "game"
 msgid "Command"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1089
+#: src/core/content/examples/forty-k.ts:1159
 #: src/core/content/examples/rank-and-flank.ts:194
 msgctxt "game"
 msgid "Movement"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:1092
+#: src/core/content/examples/forty-k.ts:1162
 #: src/core/content/examples/rank-and-flank.ts:195
 msgctxt "game"
 msgid "Shooting"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:562
+#: src/core/content/examples/forty-k.ts:622
 msgctxt "game"
 msgid "Command Re-roll"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:567
+#: src/core/content/examples/forty-k.ts:628
 msgctxt "game"
 msgid "Re-roll one roll"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:571
+#: src/core/content/examples/forty-k.ts:632
 msgctxt "game"
 msgid "Insane Bravery"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:580
+#: src/core/content/examples/forty-k.ts:641
 msgctxt "game"
 msgid "Pass a Battle-shock test"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:584
+#: src/core/content/examples/forty-k.ts:645
 msgctxt "game"
 msgid "Explosives"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:591
+#: src/core/content/examples/forty-k.ts:652
 msgctxt "game"
 msgid "Roll 6D6 at a visible unengaged unit within 8\": each 4+ is a mortal wound"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:595
+#: src/core/content/examples/forty-k.ts:656
 msgctxt "game"
 msgid "Crushing Impact"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:603
+#: src/core/content/examples/forty-k.ts:664
 msgctxt "game"
 msgid "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:607
+#: src/core/content/examples/forty-k.ts:668
 msgctxt "game"
 msgid "Rapid Ingress"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:615
+#: src/core/content/examples/forty-k.ts:677
 msgctxt "game"
 msgid "End of the opponent's Movement phase: arrive from reserves"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:619
+#: src/core/content/examples/forty-k.ts:681
 msgctxt "game"
 msgid "Fire Overwatch"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:626
+#: src/core/content/examples/forty-k.ts:690
 msgctxt "game"
 msgid "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:630
+#: src/core/content/examples/forty-k.ts:694
 msgctxt "game"
 msgid "Smokescreen"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:638
+#: src/core/content/examples/forty-k.ts:704
 msgctxt "game"
 msgid "Cover against ranged attacks this phase"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:642
+#: src/core/content/examples/forty-k.ts:708
 msgctxt "game"
 msgid "Heroic Intervention"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:649
+#: src/core/content/examples/forty-k.ts:717
 msgctxt "game"
 msgid "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:653
+#: src/core/content/examples/forty-k.ts:721
 msgctxt "game"
 msgid "Counter-offensive"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:660
+#: src/core/content/examples/forty-k.ts:729
 msgctxt "game"
 msgid "Fight next, after an enemy unit has fought"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:664
+#: src/core/content/examples/forty-k.ts:733
 msgctxt "game"
 msgid "Epic Challenge"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:671
+#: src/core/content/examples/forty-k.ts:740
 msgctxt "game"
 msgid "A character's melee attacks get Precision"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:674
+#: src/core/content/examples/forty-k.ts:743
 msgctxt "game"
 msgid "Other stratagem"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:913
+#: src/core/content/examples/forty-k.ts:983
 msgctxt "game"
 msgid "Battle-shock test"
 msgstr ""
 
-#: src/core/content/examples/forty-k.ts:927
+#: src/core/content/examples/forty-k.ts:997
 msgctxt "game"
 msgid "Remain stationary"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:935
-msgctxt "game"
-msgid "Normal move"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:946
-msgctxt "game"
-msgid "Advance"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:956
-msgctxt "game"
-msgid "Fall back"
-msgstr ""
-
-#: src/core/content/examples/forty-k.ts:966
-#: src/core/content/examples/rank-and-flank.ts:182
-msgctxt "game"
-msgid "Shoot"
 msgstr ""
 
 #: src/core/content/examples/fsd.ts:1002

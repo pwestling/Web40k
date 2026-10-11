@@ -898,17 +898,17 @@ msgstr "{side} gagne {score}"
 msgid "{score} · A draw"
 msgstr "{score} · Égalité"
 
-#: src/broadcast/Moments.tsx:441
+#: src/broadcast/Moments.tsx:430
 #, fuzzy
 msgid "{i} of {n}"
 msgstr "{i} sur {n}"
 
-#: src/broadcast/Moments.tsx:451
+#: src/broadcast/Moments.tsx:440
 #, fuzzy
 msgid "Next"
 msgstr "Suivant"
 
-#: src/broadcast/Moments.tsx:454
+#: src/broadcast/Moments.tsx:443
 #, fuzzy
 msgid "Skip to stats"
 msgstr "Passer aux stats"
@@ -2298,212 +2298,212 @@ msgstr "Dernier tour : il reste le temps de finir ce round de bataille, pas un a
 msgid "This battle round is over its time: finish it off."
 msgstr "Ce round de bataille a dépassé son temps : le terminer."
 
-#: src/core/content/examples/forty-k.ts:1012
-#: src/core/content/examples/forty-k.ts:1093
+#: src/core/content/examples/forty-k.ts:1005
+#, fuzzy
+msgctxt "game"
+msgid "Normal move"
+msgstr "Mouvement normal"
+
+#: src/core/content/examples/forty-k.ts:1016
+#, fuzzy
+msgctxt "game"
+msgid "Advance"
+msgstr "Avance"
+
+#: src/core/content/examples/forty-k.ts:1026
+#, fuzzy
+msgctxt "game"
+msgid "Fall back"
+msgstr "Retraite"
+
+#: src/core/content/examples/forty-k.ts:1036
+#: src/core/content/examples/rank-and-flank.ts:182
+#, fuzzy
+msgctxt "game"
+msgid "Shoot"
+msgstr "Tirer"
+
+#: src/core/content/examples/forty-k.ts:1082
+#: src/core/content/examples/forty-k.ts:1163
 #: src/core/content/examples/rank-and-flank.ts:287
 #, fuzzy
 msgctxt "game"
 msgid "Charge"
 msgstr "Charge"
 
-#: src/core/content/examples/forty-k.ts:1042
+#: src/core/content/examples/forty-k.ts:1112
 #, fuzzy
 msgctxt "game"
 msgid "Pile in"
 msgstr "Engagement"
 
-#: src/core/content/examples/forty-k.ts:1045
-#: src/core/content/examples/forty-k.ts:1094
+#: src/core/content/examples/forty-k.ts:1115
+#: src/core/content/examples/forty-k.ts:1164
 #: src/core/content/examples/rank-and-flank.ts:183
 #, fuzzy
 msgctxt "game"
 msgid "Fight"
 msgstr "Combat"
 
-#: src/core/content/examples/forty-k.ts:1057
+#: src/core/content/examples/forty-k.ts:1127
 #, fuzzy
 msgctxt "game"
 msgid "Consolidate"
 msgstr "Consolidation"
 
-#: src/core/content/examples/forty-k.ts:1073
+#: src/core/content/examples/forty-k.ts:1143
 #, fuzzy
 msgctxt "game"
 msgid "Command"
 msgstr "Commandement"
 
-#: src/core/content/examples/forty-k.ts:1089
+#: src/core/content/examples/forty-k.ts:1159
 #: src/core/content/examples/rank-and-flank.ts:194
 #, fuzzy
 msgctxt "game"
 msgid "Movement"
 msgstr "Mouvement"
 
-#: src/core/content/examples/forty-k.ts:1092
+#: src/core/content/examples/forty-k.ts:1162
 #: src/core/content/examples/rank-and-flank.ts:195
 #, fuzzy
 msgctxt "game"
 msgid "Shooting"
 msgstr "Tir"
 
-#: src/core/content/examples/forty-k.ts:562
+#: src/core/content/examples/forty-k.ts:622
 #, fuzzy
 msgctxt "game"
 msgid "Command Re-roll"
 msgstr "Relance de commandement"
 
-#: src/core/content/examples/forty-k.ts:567
+#: src/core/content/examples/forty-k.ts:628
 #, fuzzy
 msgctxt "game"
 msgid "Re-roll one roll"
 msgstr "Relance un jet"
 
-#: src/core/content/examples/forty-k.ts:571
+#: src/core/content/examples/forty-k.ts:632
 #, fuzzy
 msgctxt "game"
 msgid "Insane Bravery"
 msgstr "Bravoure insensée"
 
-#: src/core/content/examples/forty-k.ts:580
+#: src/core/content/examples/forty-k.ts:641
 #, fuzzy
 msgctxt "game"
 msgid "Pass a Battle-shock test"
 msgstr "Réussit un test de choc"
 
-#: src/core/content/examples/forty-k.ts:584
+#: src/core/content/examples/forty-k.ts:645
 msgctxt "game"
 msgid "Explosives"
 msgstr "Explosives"
 
-#: src/core/content/examples/forty-k.ts:591
+#: src/core/content/examples/forty-k.ts:652
 #, fuzzy
 msgctxt "game"
 msgid "Roll 6D6 at a visible unengaged unit within 8\": each 4+ is a mortal wound"
 msgstr "Lance 6D6 contre une unité visible non engagée à 8\" ou moins : chaque 4+ inflige une blessure mortelle"
 
-#: src/core/content/examples/forty-k.ts:595
+#: src/core/content/examples/forty-k.ts:656
 #, fuzzy
 msgctxt "game"
 msgid "Crushing Impact"
 msgstr "Crushing Impact"
 
-#: src/core/content/examples/forty-k.ts:603
+#: src/core/content/examples/forty-k.ts:664
 #, fuzzy
 msgctxt "game"
 msgid "After a charge move: roll D6 equal to Toughness; each 5+ wounds the enemy, each 1 your unit (6 at most)"
 msgstr "Après un mouvement de charge : lance autant de D6 que l'Endurance ; chaque 5+ blesse l'ennemi, chaque 1 ton unité (6 au plus)"
 
-#: src/core/content/examples/forty-k.ts:607
+#: src/core/content/examples/forty-k.ts:668
 #, fuzzy
 msgctxt "game"
 msgid "Rapid Ingress"
 msgstr "Entrée rapide"
 
-#: src/core/content/examples/forty-k.ts:615
+#: src/core/content/examples/forty-k.ts:677
 #, fuzzy
 msgctxt "game"
 msgid "End of the opponent's Movement phase: arrive from reserves"
 msgstr "Fin de la phase de mouvement adverse : arrive des réserves"
 
-#: src/core/content/examples/forty-k.ts:619
+#: src/core/content/examples/forty-k.ts:681
 #, fuzzy
 msgctxt "game"
 msgid "Fire Overwatch"
 msgstr "Tir en état d'alerte"
 
-#: src/core/content/examples/forty-k.ts:626
+#: src/core/content/examples/forty-k.ts:690
 msgctxt "game"
 msgid "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s"
 msgstr "Fin de la phase de Mouvement adverse : tire sur une unité à 24\" ou moins ; touche seulement sur des 6 non modifiés"
 
-#: src/core/content/examples/forty-k.ts:630
+#: src/core/content/examples/forty-k.ts:694
 #, fuzzy
 msgctxt "game"
 msgid "Smokescreen"
 msgstr "Écran de fumée"
 
-#: src/core/content/examples/forty-k.ts:638
+#: src/core/content/examples/forty-k.ts:704
 msgctxt "game"
 msgid "Cover against ranged attacks this phase"
 msgstr "Couvert contre les attaques à distance pendant cette phase"
 
-#: src/core/content/examples/forty-k.ts:642
+#: src/core/content/examples/forty-k.ts:708
 #, fuzzy
 msgctxt "game"
 msgid "Heroic Intervention"
 msgstr "Intervention héroïque"
 
-#: src/core/content/examples/forty-k.ts:649
+#: src/core/content/examples/forty-k.ts:717
 msgctxt "game"
 msgid "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged"
 msgstr "Fin de la phase de Charge adverse : une unité à 12\" ou moins charge un ennemi qui vient de charger"
 
-#: src/core/content/examples/forty-k.ts:653
+#: src/core/content/examples/forty-k.ts:721
 #, fuzzy
 msgctxt "game"
 msgid "Counter-offensive"
 msgstr "Contre-offensive"
 
-#: src/core/content/examples/forty-k.ts:660
+#: src/core/content/examples/forty-k.ts:729
 #, fuzzy
 msgctxt "game"
 msgid "Fight next, after an enemy unit has fought"
 msgstr "Combat ensuite, après qu'une unité ennemie a combattu"
 
-#: src/core/content/examples/forty-k.ts:664
+#: src/core/content/examples/forty-k.ts:733
 #, fuzzy
 msgctxt "game"
 msgid "Epic Challenge"
 msgstr "Défi épique"
 
-#: src/core/content/examples/forty-k.ts:671
+#: src/core/content/examples/forty-k.ts:740
 #, fuzzy
 msgctxt "game"
 msgid "A character's melee attacks get Precision"
 msgstr "Les attaques de mêlée d'un personnage gagnent Précision"
 
-#: src/core/content/examples/forty-k.ts:674
+#: src/core/content/examples/forty-k.ts:743
 #, fuzzy
 msgctxt "game"
 msgid "Other stratagem"
 msgstr "Autre stratagème"
 
-#: src/core/content/examples/forty-k.ts:913
+#: src/core/content/examples/forty-k.ts:983
 #, fuzzy
 msgctxt "game"
 msgid "Battle-shock test"
 msgstr "Test de choc"
 
-#: src/core/content/examples/forty-k.ts:927
+#: src/core/content/examples/forty-k.ts:997
 #, fuzzy
 msgctxt "game"
 msgid "Remain stationary"
 msgstr "Rester immobile"
-
-#: src/core/content/examples/forty-k.ts:935
-#, fuzzy
-msgctxt "game"
-msgid "Normal move"
-msgstr "Mouvement normal"
-
-#: src/core/content/examples/forty-k.ts:946
-#, fuzzy
-msgctxt "game"
-msgid "Advance"
-msgstr "Avance"
-
-#: src/core/content/examples/forty-k.ts:956
-#, fuzzy
-msgctxt "game"
-msgid "Fall back"
-msgstr "Retraite"
-
-#: src/core/content/examples/forty-k.ts:966
-#: src/core/content/examples/rank-and-flank.ts:182
-#, fuzzy
-msgctxt "game"
-msgid "Shoot"
-msgstr "Tirer"
 
 #: src/core/content/examples/fsd.ts:1002
 #, fuzzy
