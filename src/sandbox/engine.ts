@@ -147,6 +147,7 @@ export class SandboxEngine {
             rules: contents.rules ?? [],
             actions: (contents.actions ?? []).filter((a) => !("run" in a)),
             abilityTimings: contents.abilityTimings ?? [],
+            reactionWindows: contents.reactionWindows ?? [],
           }),
         );
         // A whole game's hooks were registered with its module; report their ids for the host.

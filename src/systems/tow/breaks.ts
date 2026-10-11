@@ -309,6 +309,7 @@ export const chargeReaction: CodeProcedure = function* (ctx, args) {
       .join(", ")
       .replace(/, ([^,]*)$/, " or $1")}?`,
     options,
+    "chargeDeclared",
   );
   if (pick === "hold") yield ctx.note(`${target.name} holds`);
   if (pick === "shoot") {

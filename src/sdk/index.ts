@@ -95,6 +95,12 @@ export interface PackageContents {
   functions?: Record<Id, PureFn>;
   hooks?: TurnHooks;
   abilityTimings?: GameSystem["abilityTimings"];
+  /**
+   * When the other side may react (#80, docs/reactions.md): windows added to
+   * the system (one of the same id replaces it). Player actions answer them
+   * with `reacts`.
+   */
+  reactionWindows?: GameSystem["reactionWindows"];
   /** A `system` package's whole module. */
   module?: GameModule;
 }
@@ -254,7 +260,7 @@ export interface GameView {
 export type Command =
   | { cmd: "roll"; dice: string; label?: string; unitId?: Id; need?: number }
   | { cmd: "note"; text: string }
-  | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[] }
+  | { cmd: "ask"; player: Id; question: string; options: { id: Id; label: string }[]; window?: Id }
   | { cmd: "run"; procedure: Id; roles: Record<string, Id | RoleRef> }
   | { cmd: "emit"; event: GameEvent }
   | { cmd: "set"; key: string; value: unknown }
@@ -270,7 +276,8 @@ export interface Ctx {
   roll(dice: string, label?: string, unitId?: Id, need?: number): Command;
   /** A line in the game log. */
   note(text: string): Command;
-  ask(player: Id, question: string, options: { id: Id; label: string }[]): Command;
+  /** `window`: the question is a reaction window (#80), e.g. "chargeDeclared", so the UI shows it as one. */
+  ask(player: Id, question: string, options: { id: Id; label: string }[], window?: Id): Command;
   /**
    * Run one of the system's data procedures (an attack sequence, a test) to
    * the end with the host's dice: a unit id fills a role, or pass a RoleRef

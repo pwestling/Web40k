@@ -59,4 +59,6 @@ export interface PackStratagem extends Omit<PackRule, "code"> {
   once?: ArmyStratagem["once"];
   /** One of the player's units (the default), maybe with keywords or an action it mustn't have taken; false for none. */
   target?: false | { keywords?: string; notYet?: ArmyStratagem["notYet"] };
+  /** Reaction windows it answers (#80, docs/reactions.md), e.g. ["fightPick"]; else read from its When text. */
+  reacts?: string[];
 }

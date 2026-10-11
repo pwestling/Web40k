@@ -74,6 +74,7 @@ function armyAction(player: PlayerId, s: ArmyStratagem): ActionDef {
     // On the unit for the phase: it runs when automated, and is a reminder on its attacks when not (UX 370).
     ...(s.targetsUnit ? { do: [{ do: "applyStatus", status: `strat.${s.id}` }] } : {}),
     ...(s.effect || s.text ? { hint: s.effect ?? s.text } : {}),
+    ...(s.reacts?.length ? { reacts: s.reacts.map((window) => ({ window })) } : {}),
   };
 }
 

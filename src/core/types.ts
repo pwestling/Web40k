@@ -180,6 +180,8 @@ export interface ArmyStratagem {
   auto?: AbilityAuto;
   /** Added by a faction pack (#76), by the pack's name: the roster didn't list it. */
   pack?: string;
+  /** The reaction windows it answers (#80, docs/reactions.md); else the system's window `match` on its When text. */
+  reacts?: string[];
 }
 
 /** Army-wide rules from the player's roster (#49), shared with the table when they deploy. */
@@ -513,6 +515,13 @@ export interface GameState {
   /** An action held while the other player decides whether to react. */
   pending?: PendingReaction | null;
   /**
+   * The reaction window the engine opened for the other side (#80): read it
+   * through `reactionWindow()` in content/reactions.ts. It never blocks.
+   */
+  reaction?: OpenReaction | null;
+  /** Reactions each player said not to be asked about this game (action ids; "*" for all). */
+  reactionMute?: Record<PlayerId, string[]>;
+  /**
    * A reaction's results, waiting for the action it answered: both land
    * together (FSD resolves the two at the same time).
    */
@@ -593,6 +602,8 @@ export interface CampaignArmyLink {
 }
 
 export interface GameSettings {
+  /** How long (ms) the active side waits on a reaction window before going on (#80); default 6000, 0 for none. */
+  reactionHold?: number;
   /** How cover helps: a worse hit roll for the attacker, or a better save. */
   cover: "hit" | "save";
   /** Whether models from other units block line of sight. */
@@ -712,6 +723,40 @@ export interface PlayerActionUse {
   round: number;
   phase: number;
   seat: number;
+}
+
+/** What a reaction window answers (#80): the units, dice or roll that opened it. */
+export interface ReactionTrigger {
+  /** The enemy unit whose action opened it: the unit that moved, shot, fought or charged. */
+  unitId?: UnitId;
+  /** The unit it was aimed at: the attack's or the charge's target. */
+  targetId?: UnitId;
+  /** Other units involved: every enemy unit that moved, every unit a charge was declared at. */
+  units?: UnitId[];
+  /** Dice that can be answered (a re-roll: the failed ones; `die` is the index in the roll). */
+  dice?: { die: number; value: number }[];
+  sides?: number;
+  /** The roll's step: "hit", "wound", "save", or "charge". */
+  step?: string;
+  /** The roll's total (a charge roll). */
+  total?: number;
+  /** The seq of the roll the dice are from (what attack/reroll needs). */
+  seq?: number;
+}
+
+/** A reaction window the engine opened (#80, docs/reactions.md). */
+export interface OpenReaction {
+  /** The window's id ("rerollable", "fightPick", ...). */
+  window: string;
+  /** The seat that may react. */
+  seat: number;
+  trigger: ReactionTrigger;
+  /** Seq of the event that opened it; that logged event's `at` is the host's time it opened. */
+  opened: number;
+  /** The phase index it answers (a window opened as a phase ends answers that phase). */
+  phase: number;
+  /** How long (ms) the active side's screen holds for an answer; 0 for no hold. */
+  hold: number;
 }
 
 export interface PendingReaction {

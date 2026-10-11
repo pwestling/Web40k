@@ -260,8 +260,10 @@ export type Intent =
   | { type: "dice/place"; unitId: UnitId; weapon: string; index: number }
   /** Discard the dice placed on a weapon's slots (FSD cleanup). */
   | { type: "dice/discard"; unitId: UnitId; weapon: string }
-  /** Don't react, or finish reacting: the held action goes on. */
+  /** Don't react, or finish reacting: the held action goes on (or the open reaction window closes, #80). */
   | { type: "reaction/pass" }
+  /** "Don't ask me this game" (#80): this reaction ("*" for all) opens no window for the player; mute false undoes it. */
+  | { type: "reaction/mute"; action: string; mute: boolean }
   /** Roll the next step of the procedure in progress. */
   | { type: "procedure/roll" }
   /** Answer the procedure's open window with an option id or "pass". */
@@ -448,6 +450,10 @@ export type GameEvent =
   | ({ type: "action/take" } & ActionTaken)
   /** The reaction is over; the held action goes on, with its procedure started. */
   | { type: "reaction/end"; run?: ProcedureRun }
+  /** The reacting side passed on the open reaction window (#80). */
+  | { type: "reaction/close"; player: PlayerId }
+  /** A player's "Don't ask me this game" for a reaction ("*" for all), or taking it back. */
+  | { type: "reaction/mute"; player: PlayerId; action: string; mute: boolean }
   | { type: "procedure/set"; run: ProcedureRun }
   /** Close the procedure; `end` closes a finished reaction too. */
   /** `script`: a code procedure the closed run asked for (`{ do: "script" }`), started on the state before the clear. */
@@ -1046,9 +1052,24 @@ export function resolveIntent(
     }
     case "reaction/pass": {
       const pending = state?.pending;
+      // An engine window (#80): a player of the reacting side passes.
+      if (state && !pending && state.reaction)
+        return state.players[from]?.seat === state.reaction.seat
+          ? { type: "reaction/close", player: from }
+          : null;
       if (!state || !pending || state.procedure) return null;
       const run = startActionRun(endReaction({ ...state, deferred: null }, null), pending.trigger, rng);
       return { type: "reaction/end", ...(run ? { run } : {}) };
+    }
+    case "reaction/mute": {
+      if (
+        !state?.players[from] ||
+        typeof intent.action !== "string" ||
+        !intent.action ||
+        intent.action.length > 120
+      )
+        return null;
+      return { type: "reaction/mute", player: from, action: intent.action, mute: !!intent.mute };
     }
     case "procedure/roll": {
       const run = state?.procedure?.run;

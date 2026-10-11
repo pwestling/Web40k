@@ -1,0 +1,197 @@
+# Reactions: windows for the waiting player
+
+Roadmap #80. The engine opens a **reaction window** at the moments the other
+side may answer (an enemy move, a target declared, saves about to be rolled,
+an enemy unit that just fought, a charge roll, a failed roll that could be
+re-rolled). The UI asks the reacting player only when something is playable,
+and shows the other player "Ben may react…". The engine never blocks the
+game: rules are advisory, and the hold on the active screen is a UI hold the
+host's clock bounds (see "Holding the active player").
+
+Code: `src/core/content/reactions.ts` (query and window logic), schema
+fields in `src/core/content/schema.ts`, state in `src/core/types.ts`.
+
+## Window ids
+
+Standard ids (a system, package or faction pack may add its own):
+
+| id               | Opens when                                                         | Who reacts                         |
+| ---------------- | ------------------------------------------------------------------ | ---------------------------------- |
+| `moveEnded`      | an enemy move ends (40k: as the enemy's Movement phase ends)       | the other side                     |
+| `targetDeclared` | an enemy declares an attack on one of your units                   | the side attacked                  |
+| `beforeSaves`    | the wound roll is done and your saves are next                     | the defender                       |
+| `fightPick`      | an enemy unit has just fought                                      | the other side                     |
+| `chargeRolled`   | an enemy charge roll was made                                      | the side charged                   |
+| `chargeDeclared` | an enemy declares a charge (The Old World's charge reactions)      | the side charged                   |
+| `rerollable`     | a roll left failed dice the roller could re-roll ("Re-roll this?") | the side that rolled (either side) |
+
+## State (synced, read on every screen)
+
+```ts
+// src/core/types.ts
+interface GameState {
+  /** The reaction window the engine opened, or null. Read it through reactionWindow(). */
+  reaction?: OpenReaction | null;
+  /** Per player: reactions they said not to be asked about this game ("Don't ask me this game"). "*" = all. */
+  reactionMute?: Record<PlayerId, string[]>;
+}
+
+interface OpenReaction {
+  window: string; // a window id above
+  seat: number; // the seat that may react
+  trigger: ReactionTrigger;
+  /** Seq of the event that opened it; that logged event's `at` is the host's time it opened. */
+  opened: number;
+  /** The phase index it answers (a moveEnded window opens as the phase ends). */
+  phase: number;
+  /** How long (ms) the active side's screen holds for an answer; from settings.reactionHold, host-set. 0: no hold. */
+  hold: number;
+}
+
+interface ReactionTrigger {
+  /** The enemy unit whose action opened it: the unit that moved, shot, fought or charged. */
+  unitId?: UnitId;
+  /** The unit it was aimed at: the attack's or the charge's target. */
+  targetId?: UnitId;
+  /** Other units involved: every enemy unit that moved, every unit a charge was declared at. */
+  units?: UnitId[];
+  /** Dice that can be answered (rerollable: the failed ones; die = index in the roll). */
+  dice?: { die: number; value: number }[];
+  sides?: number;
+  /** The roll's step, for rolls: "hit", "wound", "save", or a charge's "charge". */
+  step?: string;
+  /** The roll's total (a charge roll). */
+  total?: number;
+  /** The attack/roll (or dice/roll) seq the dice are from: what attack/reroll needs. */
+  seq?: number;
+}
+```
+
+## The query
+
+```ts
+import { reactionWindow, playableReactions, mayReact, reactionHoldUntil } from "../core/content/reactions";
+
+/** The window open now (engine window, FSD's held action, or a code procedure's reaction question), or null. */
+reactionWindow(state: GameState): ReactionWindowView | null;
+
+interface ReactionWindowView extends OpenReaction {
+  /** "window": a non-blocking engine window (state.reaction); "pending": FSD's held action (state.pending);
+   *  "script": a code procedure waiting on the reacting player (The Old World's charge reaction). */
+  source: "window" | "pending" | "script";
+  /** The game waits on an answer (pending, script): no hold timer, it simply waits. */
+  blocking: boolean;
+}
+
+/** Reactions this player can play in the open window right now (CP, once-per limits, phase, units). Empty if none. */
+playableReactions(state: GameState, player: PlayerId): PlayableReaction[];
+
+interface PlayableReaction {
+  /** The action id (a stratagem, an army stratagem "army:<player>:<slug>", a unit reaction, an option id). */
+  id: string;
+  name: string;
+  /** "1 CP", "AD 4-6", "" when free. */
+  cost: string;
+  window: string;
+  /** The units it can be used on (the player picks one); empty when it takes no unit. */
+  units: UnitId[];
+  /** True when `play` needs a unit added: `{ ...play, targetId }` (player/action) or it is per unit already. */
+  needsUnit: boolean;
+  trigger: ReactionTrigger;
+  /** Dispatch this (as the player). For player/action with needsUnit, add targetId. */
+  play: Intent;
+  /** For re-rolls: after `play`, dispatch { type: "attack/reroll", seq: reroll.seq, die } for the die picked. */
+  reroll?: { seq: number; dice: { die: number; value: number }[] };
+  /** The player said "Don't ask me this game" for this one; still playable from the hand. */
+  muted: boolean;
+}
+
+/** For the other side's screen: "Ben may react…" (who, never which card), or null. */
+mayReact(state: GameState, viewer: PlayerId): { seat: number; name: string } | null;
+
+/** Host time (ms, from the opening event's logged `at`) until which the active side holds; null if no hold. */
+reactionHoldUntil(record: GameRecord, state: GameState): number | null;
+```
+
+The engine opens a window only when the reacting seat has at least one
+playable reaction that isn't muted, so asking whenever `reactionWindow` is
+open and `playableReactions(...).filter(r => !r.muted)` is non-empty never
+nags.
+
+## Intents
+
+- **Play**: dispatch `reaction.play` (usually `player/action`, with `targetId`
+  when `needsUnit`). For a re-roll, then `attack/reroll { seq, die }`. FSD
+  reactions are `action/take` (per unit); a code procedure's are
+  `script/answer`.
+- **Pass**: `{ type: "reaction/pass" }` from a player of the reacting seat. It
+  closes an engine window (event `reaction/close`) or, as before, ends FSD's
+  held reaction. For a code procedure's question, answer it (`script/answer`
+  with its pass option, e.g. "hold").
+- **Don't ask me this game**: `{ type: "reaction/mute", action: id | "*", mute: true }`
+  (synced, `state.reactionMute`). Windows don't open for a seat whose every
+  playable reaction is muted, so the game never waits on a muted player.
+
+The window also closes by itself when the active side moves the game on (any
+event other than table talk, clocks, rulers and the reactor's own plays) and
+when the reacting player has nothing left to play.
+
+## Holding the active player
+
+`reactionHoldUntil(record, game)` is the opening event's host timestamp plus
+`hold` (setting `reactionHold`, default 6000 ms, 0 for none). The active
+side's screen holds its next step (and the solo bot waits) until then or until
+the window closes, whichever is first. Every peer computes the same moment
+from the log, so no timer event is needed; the engine itself never refuses
+the active player's next step.
+
+## Declaring windows (systems, packages, faction packs)
+
+```ts
+// GameSystem
+reactionWindows?: ReactionWindowDef[];
+
+interface ReactionWindowDef {
+  id: string; // a standard id above, or your own
+  /** The engine moment that opens it. */
+  opens: "phaseEnd" | "attackDeclared" | "beforeSaves" | "attackRolled" | "unitFought" | "chargeRolled";
+  /** Only in these phases (phaseEnd: the phase that is ending). */
+  phases?: string[];
+  /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */
+  who?: "opponent" | "roller";
+  /** Case-insensitive regex tried on an imported stratagem's When text: a match says it answers this window. */
+  match?: string;
+  /** Default filter on the reacting player's units ("it"), with the trigger as "event" (e.g. only the unit attacked). */
+  units?: Expr;
+}
+
+// ActionDef (player actions: stratagems, cards)
+reacts?: { window: string; range?: Expr; units?: Expr }[];
+// range: the unit must be within this many (system units) of the trigger's enemy unit(s);
+// units: a filter on the candidate ("it") with the trigger as "event" (event.unit, event.target),
+//        replacing the window's own `units`.
+
+// ArmyStratagem and a faction pack's stratagem
+reacts?: string[]; // window ids; else the window's `match` on its When text decides
+```
+
+A code procedure's question is a window when it names one:
+`ctx.ask(player, question, options, "chargeDeclared")`.
+
+## Usage (UI)
+
+```tsx
+const game = useGame();
+const open = reactionWindow(game);
+if (open && seatOf(me) === open.seat) {
+  const cards = playableReactions(game, me).filter((r) => !r.muted);
+  // show up to 3 cards by the dice; Yes:
+  dispatch(cards[0].needsUnit ? { ...cards[0].play, targetId } : cards[0].play, me);
+  if (cards[0].reroll) dispatch({ type: "attack/reroll", seq: cards[0].reroll.seq, die }, me);
+  // No: dispatch({ type: "reaction/pass" }, me)
+  // Don't ask me this game: dispatch({ type: "reaction/mute", action: cards[0].id, mute: true }, me)
+} else {
+  const other = mayReact(game, me); // "Ben may react…"
+  const until = reactionHoldUntil(record, game); // hold the Roll button until then
+}
+```

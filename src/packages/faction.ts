@@ -255,6 +255,7 @@ function stratagemFrom(p: PackStratagem, s: ArmyStratagem, system: GameSystem, p
     ...(target ? { targetsUnit: true } : {}),
     ...(target?.keywords ? { targetKeywords: target.keywords } : {}),
     ...(target?.notYet ? { notYet: target.notYet } : {}),
+    ...(p.reacts?.length ? { reacts: p.reacts.filter((w) => typeof w === "string").slice(0, 8) } : {}),
     ...(!s.effect && p.summary ? { effect: p.summary } : {}),
   };
   if (!mayReplace(s.auto)) return { ...out, auto: s.auto! };

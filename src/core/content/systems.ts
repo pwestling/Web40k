@@ -31,6 +31,8 @@ export interface SystemAdditions {
   rules?: GameSystem["rules"];
   actions?: GameSystem["actions"];
   abilityTimings?: GameSystem["abilityTimings"];
+  /** Reaction windows (#80): a window of the same id replaces the system's. */
+  reactionWindows?: GameSystem["reactionWindows"];
 }
 
 /** Systems as they were before packages extended them, to put back. */
@@ -49,6 +51,9 @@ export function extendSystem(id: Id, add: SystemAdditions): void {
     actions: merge(s.actions, add.actions) ?? [],
     ...(add.abilityTimings?.length
       ? { abilityTimings: [...(s.abilityTimings ?? []), ...add.abilityTimings] }
+      : {}),
+    ...(add.reactionWindows?.length
+      ? { reactionWindows: merge(s.reactionWindows, add.reactionWindows) }
       : {}),
   });
 }

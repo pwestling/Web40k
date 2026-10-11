@@ -61,6 +61,8 @@ export interface ScriptQuestion {
    */
   secret?: string;
   reveal?: string;
+  /** The reaction window this question is (#80, docs/reactions.md), e.g. "chargeDeclared". */
+  window?: Id;
 }
 
 export interface ScriptResult {
@@ -237,7 +239,8 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
       const next = gen.next(input);
       if (next.done) return { type: "script/step", script: null, events };
       const cmd = next.value;
-      const key = JSON.stringify(cmd);
+      // A question's reaction window (#80) is left out, so games saved before it still replay.
+      const key = JSON.stringify(cmd.cmd === "ask" ? { ...cmd, window: undefined } : cmd);
       if (i < results.length) {
         // Replaying: same command, same result.
         if (results[i]!.command !== key) return stop(`"${script.procedure}" behaved differently on replay`);
@@ -253,7 +256,12 @@ export function stepScript(script: ScriptState, base: GameState, rng: Rng, answe
             script: {
               ...script,
               results,
-              waiting: { player: cmd.player, question: cmd.question, options: cmd.options },
+              waiting: {
+                player: cmd.player,
+                question: cmd.question,
+                options: cmd.options,
+                ...(cmd.window ? { window: cmd.window } : {}),
+              },
             },
             events,
           };
@@ -438,7 +446,13 @@ function makeCtx(current: () => GameState, module: Id): Ctx {
       ...(need ? { need } : {}),
     }),
     note: (text) => ({ cmd: "note", text }),
-    ask: (player, question, options) => ({ cmd: "ask", player, question, options }),
+    ask: (player, question, options, window) => ({
+      cmd: "ask",
+      player,
+      question,
+      options,
+      ...(window ? { window } : {}),
+    }),
     run: (procedure, roles) => ({ cmd: "run", procedure, roles }),
     emit: (event) => ({ cmd: "emit", event }),
     set: (key, value) => ({ cmd: "set", key, value }),

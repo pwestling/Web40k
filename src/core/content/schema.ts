@@ -550,6 +550,13 @@ export interface ActionDef {
   free?: boolean;
   /** Out-of-sequence actions that respond to an event (overwatch, reactions). */
   reactTo?: EventPattern;
+  /**
+   * Player actions (stratagems, cards): the reaction windows it answers
+   * (`GameSystem.reactionWindows`, docs/reactions.md). `range`: only units
+   * within this distance (system units) of the trigger's units; `units`: a
+   * further filter on the candidate ("it"), with the trigger as "event".
+   */
+  reacts?: { window: Id; range?: Expr; units?: Expr }[];
   /** Eligibility, evaluated against the acting unit or player. */
   if?: Expr;
   /**
@@ -827,6 +834,31 @@ export interface GameSystem {
   deploymentHint?: string;
   /** Table settings this system plays with by default, e.g. { los: "footprint" }. */
   settings?: Record<string, unknown>;
+  /**
+   * When the other side may react (#80, docs/reactions.md): the engine opens
+   * a window at these moments if the reacting player has something to play.
+   */
+  reactionWindows?: ReactionWindowDef[];
+}
+
+/** A moment the other side may react at (#80). */
+export interface ReactionWindowDef {
+  /** A standard id ("moveEnded", "targetDeclared", "beforeSaves", "fightPick", "chargeRolled", "rerollable") or the system's own. */
+  id: Id;
+  /** The engine moment that opens it. */
+  opens: "phaseEnd" | "attackDeclared" | "beforeSaves" | "attackRolled" | "unitFought" | "chargeRolled";
+  /** Only in these phases (for phaseEnd, the phase that is ending). */
+  phases?: Id[];
+  /** Who reacts: the other side (default) or, for attackRolled, the side whose dice failed. */
+  who?: "opponent" | "roller";
+  /** Case-insensitive regular expression tried on an imported stratagem's When text: it answers this window. */
+  match?: string;
+  /**
+   * Which of the reacting player's units a reaction here may be used on,
+   * unless the action's own `reacts` entry says: "it" is the candidate and
+   * "event" the trigger (event.unit, event.target), e.g. only the unit attacked.
+   */
+  units?: Expr;
 }
 
 export interface AbilityTiming {

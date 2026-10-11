@@ -18,6 +18,7 @@ import {
   withRun,
 } from "./content/play";
 import { applyPlayerAction, appliedKey, recordUse } from "./content/player";
+import { foldReaction } from "./content/reactions";
 import {
   advanceTurn,
   endActivation,
@@ -42,7 +43,7 @@ import type { GameState, Model, Player, TerrainPiece, Unit, UnitSheet, Vec2 } fr
  */
 export function applyEvent(state: GameState, event: GameEvent): GameState {
   // In a team game a side's counters (CP, VP) are one set (core/teams.ts).
-  return shareSideResources(state, reduce(state, event));
+  return foldReaction(state, shareSideResources(state, reduce(state, event)), event);
 }
 
 function reduce(state: GameState, event: GameEvent): GameState {
@@ -681,6 +682,13 @@ function reduce(state: GameState, event: GameEvent): GameState {
     }
     case "reaction/end":
       return endReaction(state, event.run ?? null);
+    case "reaction/close":
+      return state;
+    case "reaction/mute": {
+      const mine = (state.reactionMute?.[event.player] ?? []).filter((a) => a !== event.action);
+      const next = event.mute ? [...mine, event.action] : mine;
+      return { ...state, reactionMute: { ...state.reactionMute, [event.player]: next } };
+    }
     case "procedure/set":
       return setRun(state, event.run);
     case "script/step": {

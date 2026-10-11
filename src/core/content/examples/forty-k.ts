@@ -1,4 +1,13 @@
-import type { AbilityTiming, ActionDef, Effect, Expr, GameSystem, RuleDef, RuleReminder } from "../schema";
+import type {
+  AbilityTiming,
+  ActionDef,
+  Effect,
+  Expr,
+  GameSystem,
+  ReactionWindowDef,
+  RuleDef,
+  RuleReminder,
+} from "../schema";
 
 /**
  * Example GameSystem: 40k 11th edition core mechanics, encoded as data.
@@ -556,6 +565,57 @@ const movedAlready = {
   },
   why: "Already moved this turn",
 };
+/**
+ * When the other side may answer (#80, docs/reactions.md). Imported
+ * stratagems answer a window when their When text matches (our own patterns
+ * of the usual wording) or a faction pack says so.
+ */
+const notFought: Expr = {
+  all: [{ not: { hasFlag: "it", flag: "fought" } }, { call: "engaged", args: [ref("it.id")] }],
+};
+const reactionWindows: ReactionWindowDef[] = [
+  {
+    id: "moveEnded",
+    opens: "phaseEnd",
+    phases: ["movement"],
+    match: "end of (your )?opponent'?s movement phase|ends? an? (normal|advance|fall back)",
+  },
+  {
+    id: "targetDeclared",
+    opens: "attackDeclared",
+    // The unit attacked.
+    units: { same: ["it.id", "event.target.id"] },
+    match: "(selected|been selected) (as )?the targets?|selects? (one or more of )?your units? as the target",
+  },
+  // A roll with failed dice its roller could re-roll (before the defender's saves, so the attacker goes first).
+  {
+    id: "rerollable",
+    opens: "attackRolled",
+    who: "roller",
+    match: "just after (you|a player) (have|has) made an? .*roll",
+  },
+  {
+    id: "beforeSaves",
+    opens: "beforeSaves",
+    units: { same: ["it.id", "event.target.id"] },
+    match: "saving throws?|allocat",
+  },
+  {
+    id: "fightPick",
+    opens: "unitFought",
+    phases: ["fight"],
+    units: notFought,
+    match: "after an enemy unit has fought|enemy unit (has )?fought",
+  },
+  {
+    id: "chargeRolled",
+    opens: "chargeRolled",
+    phases: ["charge"],
+    units: { same: ["it.id", "event.target.id"] },
+    match: "declares? a charge|charge roll|charge move",
+  },
+];
+
 const stratagems: ActionDef[] = [
   {
     id: "commandReroll",
@@ -564,6 +624,7 @@ const stratagems: ActionDef[] = [
     side: "either",
     cost: cp(1),
     limit: once,
+    reacts: [{ window: "rerollable" }],
     hint: "Re-roll one roll",
   },
   {
@@ -611,6 +672,7 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: once,
     target: { filter: { all: [own, { hasFlag: "it", flag: "reserves" }, { not: kw("it", "AIRCRAFT") }] } },
+    reacts: [{ window: "moveEnded" }],
     notWhen: [{ if: { cmp: "<=", a: ref("turn.round"), b: 1 }, why: "Not in the first battle round" }],
     hint: "End of the opponent's Movement phase: arrive from reserves",
   },
@@ -623,6 +685,8 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: once,
     target: { filter: { all: [own, unengaged, { not: kw("it", "TITANIC") }] } },
+    // Within 24" of an enemy unit that moved.
+    reacts: [{ window: "moveEnded", range: 24 }],
     hint: "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s",
   },
   {
@@ -634,6 +698,8 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: once,
     target: { filter: ownWith("SMOKE") },
+    // The unit just picked as a target.
+    reacts: [{ window: "targetDeclared" }],
     do: [{ do: "applyStatus", status: "smokescreen" }],
     hint: "Cover against ranged attacks this phase",
   },
@@ -646,6 +712,8 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: once,
     target: { filter: { all: [own, unengaged] } },
+    // A unit within 12" of the enemy that charged (any unit, not only the one charged).
+    reacts: [{ window: "chargeRolled", range: 12, units: true }],
     hint: "End of the opponent's Charge phase: a unit within 12\" charges an enemy that just charged",
   },
   {
@@ -657,6 +725,7 @@ const stratagems: ActionDef[] = [
     cost: cp(2),
     limit: once,
     target: { filter: own },
+    reacts: [{ window: "fightPick" }],
     hint: "Fight next, after an enemy unit has fought",
   },
   {
@@ -806,6 +875,7 @@ export const fortyK: GameSystem = {
   // Units moved by hand get "moved" as the phase ends, so Heavy knows (as well as the move actions' sets).
   marksMoved: true,
   abilityTimings,
+  reactionWindows,
   ruleReminders,
   terrain: [
     { id: "exposed", name: "Exposed" },
