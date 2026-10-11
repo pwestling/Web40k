@@ -226,7 +226,9 @@ function VolleyPick({ attackerId, targetId }: { attackerId: string; targetId: st
         className="primary"
         disabled={!on.length}
         onClick={() => {
-          useVolley.setState({ queue: { attackerId, targetId, weapons: on.map((w) => w.id) } });
+          useVolley.setState({
+            queue: { attackerId, targetId, weapons: on.map((w) => w.id), total: on.length },
+          });
           setDraft(null);
           fireNext();
           focusSoon(".panel.attack .attack-roll");
@@ -521,12 +523,12 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
         <p className="muted">{t("The computer is rolling…")}</p>
       )}
       {volley && volley.attackerId === spec.attackerUnitId && (
-        <p className="muted small">
-          {tn(
-            volley.weapons.length,
-            "Then {n} more weapon at this target",
-            "Then {n} more weapons at this target",
-          )}
+        <p className="muted small row">
+          {t("Weapon {i} of {n}", { i: volley.total - volley.weapons.length, n: volley.total })}
+          {/* The rest of the volley can wait: this attack goes on, the next isn't declared (UX 509). */}
+          <button className="quiet small" onClick={() => useVolley.setState({ queue: null })}>
+            {t("Stop here")}
+          </button>
         </p>
       )}
       {canAct && !(botRolls && botAttacks) && (

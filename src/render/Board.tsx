@@ -547,9 +547,24 @@ function Scene() {
         // battle, a leader over one of your units leads it (§6).
         const game = useStore.getState().game;
         const unit = d.unitId ? game.units[d.unitId] : undefined;
-        const whole = !!unit && unit.modelIds.filter((id) => game.models[id]).length === d.ids.length;
-        const under = whole && moved ? modelAt(game, to) : undefined;
-        const verb = unit && under ? dragVerb(game, unit.id, under.unitId) : null;
+        // The whole unit, counting only the living (a casualty doesn't make it part of a unit, UX 506).
+        const whole = !!unit && aliveModels(game, unit).length === d.ids.length;
+        // What it is over: never its own models, and the first one with something to do (a big base can
+        // reach over one of your own models and an enemy at once).
+        let verb: ReturnType<typeof dragVerb> = null;
+        let under: Model | undefined;
+        if (unit && whole && moved)
+          for (const m of Object.values(game.models)) {
+            if (m.destroyed || !m.unitId || m.unitId === unit.id) continue;
+            const { width, depth } = baseSizeInches(m.base);
+            if (Math.hypot(m.position.x - to.x, m.position.y - to.y) > Math.max(width, depth) / 2 + 0.1)
+              continue;
+            verb = dragVerb(game, unit.id, m.unitId);
+            if (verb) {
+              under = m;
+              break;
+            }
+          }
         const was = useDragVerb.getState().drag;
         if (verb && unit && under?.unitId)
           useDragVerb.setState({
@@ -635,8 +650,20 @@ function Scene() {
         return;
       }
       if (d?.kind === "box") pickInBox(camera, gl.domElement, canControl, select);
-      // A tap (no drag) on the neighbour the press was steered away from selects the neighbour (UX 435).
-      if (d?.kind === "models" && !d.moved && d.tapped) select(d.tapped);
+      // A tap (no drag) on the neighbour the press was steered away from selects the neighbour (UX 435); an
+      // enemy there gets the phase's verb instead, as a click on it would (UX 505: fights in melee).
+      if (d?.kind === "models" && !d.moved && d.tapped) {
+        const game = useStore.getState().game;
+        const enemy =
+          recent.current.up?.pointerType !== "touch" &&
+          !!d.unitId &&
+          !!game.units[d.unitId] &&
+          !!game.units[d.tapped] &&
+          opposed(game, game.units[d.tapped]!.owner, game.units[d.unitId]!.owner);
+        const verb = enemy ? tableVerb(game, d.unitId!, d.tapped) : null;
+        if (verb && (verb.ok || recent.current.up?.shiftKey)) doTableVerb(verb, d.unitId!, d.tapped);
+        else select(d.tapped);
+      }
       if (!d || !d.moved) return;
       const dx = d.to.x - d.grab.x;
       const dy = d.to.y - d.grab.y;
@@ -654,7 +681,7 @@ function Scene() {
             return Math.abs(p.x + dx) > width / 2 || Math.abs(p.y + dy) > depth / 2;
           });
         const unitHere = d.unitId ? game.units[d.unitId] : undefined;
-        const whole = !!unitHere && unitHere.modelIds.filter((id) => game.models[id]).length === d.ids.length;
+        const whole = !!unitHere && aliveModels(game, unitHere).length === d.ids.length;
         // Before the battle, a unit that may wait in reserves goes there when taken off the table (UX 84 §6).
         if (off && whole && unitHere && canReserve(game, unitHere)) {
           setDown(d.ids, () => null, { sound: false });

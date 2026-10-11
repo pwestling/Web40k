@@ -13,6 +13,8 @@ interface Volley {
   targetId: string;
   /** The weapons still to fire, in order. */
   weapons: string[];
+  /** How many it started with, for "Weapon 2 of 3". */
+  total: number;
 }
 
 export const useVolley = create<{ queue: Volley | null }>(() => ({ queue: null }));
@@ -52,15 +54,20 @@ export function fireNext(): void {
     rest = more;
     const s = suggestAttack(game, q.attackerId, next!, q.targetId);
     if (!s || s.inRange === 0) continue;
-    useVolley.setState({ queue: more.length ? { ...q, weapons: more } : null });
+    // Kept with none left while the last one fires, so it reads "Weapon 3 of 3"; it ends when that's done.
+    useVolley.setState({ queue: { ...q, weapons: more } });
     dispatch({ type: "attack/declare", spec: s.spec }, attacker.owner);
     return;
   }
   useVolley.setState({ queue: null });
 }
 
-// When one weapon's attack is done (cleared), the next one's is declared.
+// When one weapon's attack is done (cleared), the next one's is declared. Picking another unit ends the
+// volley there (UX 509).
 useStore.subscribe((s, prev) => {
+  const q = useVolley.getState().queue;
+  if (q && s.selected !== prev.selected && s.selected && s.selected !== q.attackerId)
+    useVolley.setState({ queue: null });
   if (
     prev.game.attack &&
     !s.game.attack &&

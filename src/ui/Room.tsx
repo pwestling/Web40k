@@ -4,7 +4,7 @@ import { untakenSeat } from "./Branch";
 import type { Player } from "../core";
 import { formatList, t, tn } from "../i18n";
 import { serverHost, useCanControl, useHostPowers, useJoining, useStore } from "../store";
-import { standingWith } from "./CoreAbilities";
+import { isLeader, standingWith } from "./CoreAbilities";
 import { deployChecks } from "./deployment";
 import { useTransfers } from "../packages/share";
 import { RulesLine } from "./Packages";
@@ -277,7 +277,7 @@ export function DeployTray({ players }: { players: Player[] }) {
 /**
  * Characters set up standing with a squad (a TTS table brings them as units of
  * their own, PX D1): "Warden Captain stands with Warden · Lead it", and Lead
- * all for several.
+ * all for several. A leader standing alone says how to give it a squad (UX 510).
  */
 function LeadOffers({ player }: { player: Player }) {
   const { game, dispatch } = useStore();
@@ -288,7 +288,12 @@ function LeadOffers({ player }: { player: Player }) {
     const near = standingWith(game, u);
     return near ? [{ leader: u, near }] : [];
   });
-  if (!pairs.length) return null;
+  // Leaders standing alone: how to put them with a squad (UX 510).
+  const alone = Object.values(game.units).filter(
+    (u) =>
+      u.owner === player.id && isLeader(u) && !u.status?.reserves && !pairs.some((p) => p.leader.id === u.id),
+  );
+  if (!pairs.length && !alone.length) return null;
   const lead = (ps: typeof pairs) => {
     // One leader to a unit: a second standing with the same unit waits to be asked again.
     const taken = new Set<string>();
@@ -306,6 +311,11 @@ function LeadOffers({ player }: { player: Player }) {
           <button className="small" onClick={() => lead([p])}>
             {t("Lead it")}
           </button>
+        </li>
+      ))}
+      {alone.map((u) => (
+        <li key={u.id} className="muted">
+          {t("{leader} can lead: drag it onto a squad", { leader: u.name })}
         </li>
       ))}
       {pairs.length > 1 && (

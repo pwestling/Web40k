@@ -190,7 +190,7 @@ export function AttachSelect({ unit }: { unit: Unit }) {
 const STANDING_WITH = 2;
 
 /** Whether a unit can lead another (a Leader ability on its sheet). */
-const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
+export const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
 
 /**
  * Before the battle, the unit a leader stands with (within 2" of it): the one

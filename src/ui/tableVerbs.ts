@@ -11,6 +11,7 @@ import { chargeNeeded } from "../systems/wh40k/charge";
 import {
   aliveModels,
   carriers,
+  engagedWith,
   mainWeapon,
   unitDistance,
   unitSight,
@@ -47,13 +48,19 @@ export function tableVerb(game: GameState, attackerId: UnitId, targetId: UnitId)
   const theirs = aliveModels(game, target);
   if (!theirs.length || !aliveModels(game, unit).length) return null;
   const gap = unitGap(game, unit, target);
+  // Locked in combat: it charges nobody, and shoots only its pistols (UX 507, 508).
+  const engaged = engagedWith(game, unit).length > 0;
   switch (phaseName(game)) {
     case "Shooting": {
       const reaching: string[] = [];
       const shooters = new Set<string>();
       let longest = 0;
-      for (const w of Object.values(unit.sheet?.weapons ?? {})) {
-        if (w.kind !== "ranged") continue;
+      const ranged = Object.values(unit.sheet?.weapons ?? {}).filter((w) => w.kind === "ranged");
+      const pistol = (w: (typeof ranged)[number]) => (w.keywords ?? []).some((k) => /^pistol$/i.test(k));
+      if (engaged && ranged.length && !ranged.some(pistol))
+        return { verb: "shoot", ok: false, line: t("In combat: pistols only"), facts: [] };
+      for (const w of ranged) {
+        if (engaged && !pistol(w)) continue;
         const reach = weaponReach(w) ?? 0;
         longest = Math.max(longest, reach);
         const near = carriers(game, unit, w.id).filter((m) => unitDistance([m], theirs) <= reach);
@@ -92,6 +99,7 @@ export function tableVerb(game: GameState, attackerId: UnitId, targetId: UnitId)
       };
     }
     case "Charge": {
+      if (engaged) return { verb: "charge", ok: false, line: t("Already in combat"), facts: [] };
       const fits = actionTargets(game, attackerId, "charge").find((x) => x.unitId === targetId);
       const needed = chargeNeeded(game, attackerId, [targetId]);
       const ok = !!fits?.ok && needed <= 12;
