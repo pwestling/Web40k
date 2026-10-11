@@ -2309,6 +2309,27 @@ const checks = {
     await cards.getByText("1 discarded").first().waitFor();
     await cards.getByRole("button", { name: "Shuffle discards back" }).first().click();
     await cards.getByText("3 left to draw").first().waitFor();
+    // PX B2: in the battle, a card scored from the hand asks its VP and goes face up onto a scored pile.
+    for (const b of [/Start battle/, /Start anyway/]) {
+      const button = page.getByRole("button", { name: b });
+      if (await button.count()) await button.first().click();
+      await sleep(300);
+    }
+    await page
+      .locator(".topbar")
+      .getByText(/Round 1/)
+      .first()
+      .waitFor({ timeout: 15_000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    if (!(await cards.evaluate((e) => e.open))) await cards.locator("summary").click();
+    await cards.getByRole("button", { name: "Draw a card" }).first().click();
+    await hand.first().getByRole("button", { name: "Scored" }).click();
+    await hand.first().getByRole("spinbutton").fill("4");
+    await hand.first().getByRole("button", { name: "✓" }).click();
+    await cards.locator(".scored-pile", { hasText: "(4 VP)" }).waitFor();
+    await page.locator(".topbar .player").first().getByText("VP 4").waitFor();
+    if (await cards.locator(".hand li").count()) throw new Error("the scored card stayed in the hand");
     if (process.env.SMOKE_SHOTS)
       await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "tts-cards.png") });
     await context.close();

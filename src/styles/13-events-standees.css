@@ -278,7 +278,19 @@ canvas:focus-visible {
   gap: 2px;
   width: 92px;
 }
-.card-decks .hand li.shown .card-pic {
+.card-decks .hand li.shown /* "Scored" on a card in hand (PX B2): +N VP? with the number editable. */
+.card-decks .card-score {
+  gap: 2px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.card-decks .card-score input {
+  width: 3em;
+}
+.card-decks .scored-pile {
+  margin: 2px 0;
+}
+.card-pic {
   outline: 2px solid var(--accent, #60a5fa);
 }
 .card-pic {

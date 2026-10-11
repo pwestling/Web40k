@@ -4856,7 +4856,7 @@ msgid "Watch it again on the table"
 msgstr ""
 
 #: src/review/ReviewPanel.tsx:506
-#: src/ui/Cards.tsx:189
+#: src/ui/Cards.tsx:244
 msgid "Show"
 msgstr ""
 
@@ -5811,7 +5811,7 @@ msgid "no stack: any regiment"
 msgstr ""
 
 #: src/systems/conquest/CommandPanel.tsx:88
-#: src/ui/Cards.tsx:164
+#: src/ui/Cards.tsx:186
 #: src/ui/Missions.tsx:313
 #: src/ui/SecretObjectives.tsx:68
 msgid "{n} face down"
@@ -7220,52 +7220,76 @@ msgstr ""
 msgid "{when}, just after {what}"
 msgstr ""
 
-#: src/ui/Cards.tsx:111
+#: src/ui/Cards.tsx:117
 msgid "{n} card"
 msgid_plural "{n} cards"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:115
+#: src/ui/Cards.tsx:121
 msgid "Put this deck away, for everyone"
 msgstr ""
 
-#: src/ui/Cards.tsx:117
+#: src/ui/Cards.tsx:123
 msgid "Put {deck} away for everyone?"
 msgstr ""
 
-#: src/ui/Cards.tsx:163
+#: src/ui/Cards.tsx:185
 msgid "{n} left to draw"
 msgid_plural "{n} left to draw"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:166
+#: src/ui/Cards.tsx:188
 msgid "{n} discarded"
 msgid_plural "{n} discarded"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/Cards.tsx:182
+#: src/ui/Cards.tsx:205
 #: src/ui/Missions.tsx:335
 msgid "(drawn on another device)"
 msgstr ""
 
-#: src/ui/Cards.tsx:196
+#: src/ui/Cards.tsx:214
+msgid "VP for {card}"
+msgstr ""
+
+#: src/ui/Cards.tsx:218
+msgid "VP?"
+msgstr ""
+
+#: src/ui/Cards.tsx:236
+msgid "Score it: it goes face up onto your scored pile"
+msgstr ""
+
+#: src/ui/Cards.tsx:239
+msgid "Scored"
+msgstr ""
+
+#: src/ui/Cards.tsx:251
 #: src/ui/SystemPanels.tsx:754
 msgid "Discard"
 msgstr ""
 
-#: src/ui/Cards.tsx:205
+#: src/ui/Cards.tsx:261
+msgid "Scored: {cards}"
+msgstr ""
+
+#: src/ui/Cards.tsx:265
+msgid "{card} ({n} VP)"
+msgstr ""
+
+#: src/ui/Cards.tsx:272
 msgid "Last discarded: {card}"
 msgstr ""
 
-#: src/ui/Cards.tsx:210
+#: src/ui/Cards.tsx:277
 #: src/ui/Missions.tsx:386
 msgid "Draw a card"
 msgstr ""
 
-#: src/ui/Cards.tsx:217
+#: src/ui/Cards.tsx:284
 msgid "Shuffle discards back"
 msgstr ""
 
@@ -7274,7 +7298,7 @@ msgstr ""
 msgid "Face down"
 msgstr ""
 
-#: src/ui/Cards.tsx:77
+#: src/ui/Cards.tsx:80
 msgid "Cards"
 msgstr ""
 
@@ -10371,6 +10395,7 @@ msgid "Round {n} done"
 msgstr ""
 
 #: src/ui/RoundCard.tsx:50
+#: src/ui/StratagemHand.tsx:589
 msgid "{n} VP"
 msgstr ""
 
@@ -10666,11 +10691,15 @@ msgstr ""
 msgid "Play it anyway"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:585
+#: src/ui/StratagemHand.tsx:586
+msgid "{player} scored"
+msgstr ""
+
+#: src/ui/StratagemHand.tsx:606
 msgid "{n} CP"
 msgstr ""
 
-#: src/ui/StratagemHand.tsx:615
+#: src/ui/StratagemHand.tsx:636
 msgid "{who} on {unit}"
 msgstr ""
 

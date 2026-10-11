@@ -566,11 +566,32 @@ function Reveals() {
       last.current = top;
       return;
     }
-    const fresh = record.events.filter((e) => e.seq > last.current! && e.event.type === "player/action");
+    // A card from a deck scored (PX B2) turns over the same way.
+    const fresh = record.events.filter(
+      (e) =>
+        e.seq > last.current! &&
+        (e.event.type === "player/action" ||
+          (e.event.type === "score/confirm" && e.event.key.startsWith("cards:"))),
+    );
     last.current = top;
     if (!fresh.length) return;
     const game = useStore.getState().game;
     const items = fresh.flatMap(({ seq, event }): Reveal[] => {
+      if (event.type === "score/confirm") {
+        const p = game.players[event.by];
+        return [
+          {
+            seq,
+            name: event.why,
+            who: t("{player} scored", { player: displayName(p?.name ?? "") }),
+            color: p?.color ?? "#999",
+            unit: "",
+            cost: t("{n} VP", { n: event.vp }),
+            mine: canControl(event.by),
+            at: null,
+          },
+        ];
+      }
       if (event.type !== "player/action") return [];
       const def = findAction(game, event.action);
       const p = game.players[event.player];

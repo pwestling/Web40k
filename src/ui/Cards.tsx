@@ -67,6 +67,9 @@ function CardPicture({ card, back, onOpen }: { card: Card; back?: boolean; onOpe
   );
 }
 
+/** The score a card from a deck was scored as (game.scores), by its player and secret key. */
+const scoredKey = (player: string, key: string) => `cards:${player}:${key}`;
+
 export function CardDecks({ players }: { players: { id: string; name: string; color: string }[] }) {
   const game = useGame();
   useLocalSecrets((s) => s.kept);
@@ -104,6 +107,9 @@ function DeckRow({
   const live = useStore((s) => s.scrub === null);
   const seated = Object.values(game.players).filter((p) => p.seat !== undefined);
   const cardOf = (id: unknown) => deck.cards.find((c) => c.id === String(id));
+  // "Scored" on a card in hand (PX B2): the VP asked for, then the card goes face up onto a scored pile.
+  const [scoring, setScoring] = useState<{ key: string; vp: number } | null>(null);
+  const scoreOf = (player: string, key: string) => game.scores?.find((x) => x.key === scoredKey(player, key));
   return (
     <div className="deck">
       <div className="row spread">
@@ -152,6 +158,22 @@ function DeckRow({
               p.id,
             );
         };
+        const score = (key: string, card: Card, vp: number) => {
+          if (!game.secrets?.[p.id]?.[key]?.revealed) show(key);
+          dispatch(
+            {
+              type: "score/confirm",
+              key: scoredKey(p.id, key),
+              seat: p.seat!,
+              round: game.turn.round,
+              vp,
+              why: card.name,
+            },
+            p.id,
+          );
+          setScoring(null);
+        };
+        const scored = hand.filter(([key]) => scoreOf(p.id, key));
         const lastDiscard = pile.discarded.at(-1);
         const top = lastDiscard ? game.secrets?.[p.id]?.[lastDiscard]?.revealed : undefined;
         if (!mine && !hand.length && !pile.discarded.length) return null;
@@ -167,6 +189,7 @@ function DeckRow({
             </span>
             <ul className="hand">
               {hand.map(([key, e]) => {
+                if (scoreOf(p.id, key)) return null;
                 const id = e.revealed
                   ? e.revealed.value
                   : mine
@@ -182,8 +205,40 @@ function DeckRow({
                       <span className="muted small">{t("(drawn on another device)")}</span>
                     )}
                     {card && <span className="small">{card.name}</span>}
-                    {mine && live && (
+                    {mine && live && card && scoring?.key === key && (
+                      <span className="row card-score">
+                        +
+                        <input
+                          type="number"
+                          min={0}
+                          aria-label={t("VP for {card}", { card: card.name })}
+                          value={scoring.vp}
+                          onChange={(ev) => setScoring({ key, vp: Number(ev.target.value) })}
+                        />
+                        {t("VP?")}
+                        <button className="small primary" onClick={() => score(key, card, scoring.vp)}>
+                          ✓
+                        </button>
+                        <button
+                          className="small quiet"
+                          aria-label={t("Cancel")}
+                          onClick={() => setScoring(null)}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    )}
+                    {mine && live && scoring?.key !== key && (
                       <span className="row">
+                        {card && game.turn.round > 0 && (
+                          <button
+                            className="small"
+                            title={t("Score it: it goes face up onto your scored pile")}
+                            onClick={() => setScoring({ key, vp: 3 })}
+                          >
+                            {t("Scored")}
+                          </button>
+                        )}
                         {!e.revealed && card && (
                           <button className="small" onClick={() => show(key)}>
                             {t("Show")}
@@ -201,6 +256,18 @@ function DeckRow({
                 );
               })}
             </ul>
+            {scored.length > 0 && (
+              <p className="small scored-pile">
+                {t("Scored: {cards}", {
+                  cards: scored
+                    .map(([key, e]) => {
+                      const name = cardOf(e.revealed?.value)?.name ?? scoreOf(p.id, key)!.why;
+                      return t("{card} ({n} VP)", { card: name, n: scoreOf(p.id, key)!.vp });
+                    })
+                    .join(", "),
+                })}
+              </p>
+            )}
             {top && cardOf(top.value) && (
               <p className="muted small">{t("Last discarded: {card}", { card: cardOf(top.value)!.name })}</p>
             )}
