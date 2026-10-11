@@ -419,8 +419,13 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   // Online, the saves wait for the defender; the attacker can still roll them, as dice hold no choices (UX 217).
   const canControl = useCanControl();
   const theirs = !!roller && attack.stage === "save" && !canControl(roller);
-  // At a real table each player rolls their own dice on their own phone: the other phone waits (UX 276).
-  const waiting = !!game.settings.companion && !!roller && !canControl(roller) && attack.stage !== "done";
+  // Each player rolls their own steps: the other screen waits (UX 276, PX A1). Online the attacker may
+  // still roll the saves for a slow defender; at a real table each phone rolls its own.
+  const waiting =
+    !!roller &&
+    !canControl(roller) &&
+    attack.stage !== "done" &&
+    (!!game.settings.companion || attack.stage !== "save");
   const rollerName = roller ? playerName(game.players[roller]) || t("Your opponent") : "";
   // In a lesson the computer rolls its own dice: the learner only sees them land.
   const botRolls = computerPlays(game, roller);
@@ -431,8 +436,16 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
   const ownDice = useRealDice();
   // Rolling it yourself (UX 501): your dice wait in the tray for the roll in front of you, your saves included.
   const shake = useShakeDice() && !ownDice;
+  // Online against a person, "Roll everything" stops before the saves: they're the defender's to roll (PX A2).
+  const savesTheirs =
+    !game.settings.companion &&
+    !!target &&
+    !canControl(target.owner) &&
+    !computerPlays(game, target.owner) &&
+    (attack.stage === "hit" || attack.stage === "wound");
   const rollAll = () => {
-    for (let i = 0; i < remaining; i++) dispatch({ type: "attack/roll" }, roller);
+    const count = savesTheirs ? (attack.stage === "hit" ? 2 : 1) : remaining;
+    for (let i = 0; i < count; i++) dispatch({ type: "attack/roll" }, roller);
   };
   // After the last roll its button goes: focus moves on to Done rather than dropping to the page (UX 199).
   const done = useRef<HTMLButtonElement>(null);
@@ -545,7 +558,11 @@ function AttackInProgress({ attack, live }: { attack: AttackState; live: boolean
                 {stageLabel(attack.stage)}
                 {yourSaves && <SelfRollCountdown />}
               </RollButton>
-              {!botAttacks && !ownDice && <button onClick={rollAll}>{t("Roll everything")}</button>}
+              {!botAttacks && !ownDice && (
+                <button onClick={rollAll}>
+                  {savesTheirs ? t("Roll hits and wounds") : t("Roll everything")}
+                </button>
+              )}
               {yourSaves && <RollsMineToggle />}
             </>
           )}
