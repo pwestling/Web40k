@@ -12,7 +12,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
-import { doTableVerb, tableVerb } from "../ui/tableVerbs";
+import { doTableVerb, dragVerb, tableVerb, useDragVerb } from "../ui/tableVerbs";
 import { tablePick, useHandTargets } from "../ui/tablePick";
 import { useStratagemTabs } from "../ui/stratagemTabs";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
@@ -406,10 +406,15 @@ function Scene() {
 
   // A drag clears the hover tooltip (and hover rings) until it ends.
   const dragging = drag !== null;
+  const dragKind = drag?.kind ?? "";
   useEffect(() => {
     tableDrag.active = dragging;
     if (dragging) setUi({ hoverUnit: null });
   }, [dragging, setUi]);
+  // What's in hand, for styles and the smoke checks: "models", "ruler"...
+  useEffect(() => {
+    document.body.dataset.drag = dragKind;
+  }, [dragKind]);
 
   // The pointer's last press, move and lift, always: a drag's listeners catch up from them.
   const recent = useRef<{ down: number; move: PointerEvent | null; up: PointerEvent | null }>({
@@ -498,6 +503,19 @@ function Scene() {
       if (d.kind === "models") {
         // Picked up once it really moves (a click only selects); then it leans into the carry.
         if (moved && !d.moved) pickUp(d.ids);
+        // The whole unit over an enemy in the Charge phase: letting go there charges it (UX 84, #2).
+        const game = useStore.getState().game;
+        const unit = d.unitId ? game.units[d.unitId] : undefined;
+        const whole = !!unit && unit.modelIds.filter((id) => game.models[id]).length === d.ids.length;
+        const under = whole && moved ? modelAt(game, to) : undefined;
+        const verb =
+          unit && under && under.owner !== unit.owner ? dragVerb(game, unit.id, under.unitId) : null;
+        const was = useDragVerb.getState().drag;
+        if (verb && unit && under?.unitId)
+          useDragVerb.setState({
+            drag: { verb, unitId: unit.id, targetId: under.unitId, x: e.clientX, y: e.clientY },
+          });
+        else if (was) useDragVerb.setState({ drag: null });
         const t = performance.now();
         const last = hand.current;
         if (last && t > last.t)
@@ -511,6 +529,19 @@ function Scene() {
       const d = dragRef.current;
       setDrag(null);
       hand.current = null;
+      const charge = useDragVerb.getState().drag;
+      if (charge) useDragVerb.setState({ drag: null });
+      // Let go on an enemy in the Charge phase: back where it stood, and the charge declared at it.
+      if (charge && d?.kind === "models" && d.moved && d.unitId === charge.unitId) {
+        setDown(d.ids, (id) => {
+          const m = useStore.getState().game.models[id];
+          if (!m) return null;
+          const { width, depth } = baseSizeInches(m.base);
+          return { ...d.starts[id]!, z: d.startZ[id] ?? 0, radius: Math.max(width, depth) / 2 };
+        });
+        doTableVerb(charge.verb, charge.unitId, charge.targetId);
+        return;
+      }
       if (d?.kind === "box") pickInBox(camera, gl.domElement, canControl, select);
       // A tap (no drag) on the neighbour the press was steered away from selects the neighbour (UX 435).
       if (d?.kind === "models" && !d.moved && d.tapped) select(d.tapped);

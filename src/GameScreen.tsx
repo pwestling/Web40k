@@ -42,7 +42,7 @@ import { FloatingReactions, TalkPanel } from "./ui/TalkPanel";
 import { RerollCard } from "./ui/RerollCard";
 import { OthersShaking } from "./companion/Shake";
 import { StratagemHand } from "./ui/StratagemHand";
-import { TableTag } from "./ui/TableTag";
+import { DragTag, TableTag } from "./ui/TableTag";
 import { useTableTalk } from "./talk/talk";
 import { BROADCAST, useSpectatorDelay } from "./broadcast/broadcast";
 import { useHotseatMark } from "./ui/resumeHotseat";
@@ -311,6 +311,7 @@ export function GameScreen({ started }: { started: boolean }) {
           {/* Nobody to talk to in hotseat or against the computer (UX 83). */}
           {!editing && !VIEWER && !hotseat && <TalkPanel />}
           {!VIEWER && <TableTag />}
+          {!VIEWER && <DragTag />}
           {!editing && !VIEWER && <StratagemHand />}
           {!editing && !VIEWER && <RerollCard />}
           {!VIEWER && <OthersShaking />}

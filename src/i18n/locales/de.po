@@ -448,27 +448,27 @@ msgstr "Sie haben standgehalten. Ein Nahkampf kann sich bis in den nächsten Spi
 msgid "Setting up the table…"
 msgstr "Der Tisch wird aufgebaut …"
 
-#: src/GameScreen.tsx:342
+#: src/GameScreen.tsx:343
 #, fuzzy
 msgid "Fully visible"
 msgstr "Voll sichtbar"
 
-#: src/GameScreen.tsx:343
+#: src/GameScreen.tsx:344
 #, fuzzy
 msgid "Partly visible or in cover"
 msgstr "Teilweise sichtbar oder in Deckung"
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:345
 #, fuzzy
 msgid "Hidden"
 msgstr "Verborgen"
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:346
 #, fuzzy
 msgid "Hover an enemy unit for its sight lines"
 msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 
-#: src/GameScreen.tsx:350
+#: src/GameScreen.tsx:351
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -477,17 +477,17 @@ msgstr "Fahre über eine feindliche Einheit, um ihre Sichtlinien zu sehen"
 msgid "Open"
 msgstr "Offen"
 
-#: src/GameScreen.tsx:351
+#: src/GameScreen.tsx:352
 #, fuzzy
 msgid "Obscuring: cover"
 msgstr "Verdeckend: Deckung"
 
-#: src/GameScreen.tsx:352
+#: src/GameScreen.tsx:353
 #, fuzzy
 msgid "Blocking: no sight"
 msgstr "Blockierend: keine Sicht"
 
-#: src/GameScreen.tsx:357
+#: src/GameScreen.tsx:358
 #, fuzzy
 msgid "Leave model's eye view (Esc)"
 msgstr "Modellperspektive verlassen (Esc)"
@@ -5337,37 +5337,37 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] "unterschreibt {signed} von {n} Ergebnis"
 msgstr[1] "unterschreibt {signed} von {n} Ergebnissen"
 
-#: src/render/Board.tsx:1169
+#: src/render/Board.tsx:1194
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label}: gehalten von {player}"
 
-#: src/render/Board.tsx:1171
+#: src/render/Board.tsx:1196
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label}: umkämpft"
 
-#: src/render/Board.tsx:1172
+#: src/render/Board.tsx:1197
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label}: von niemandem gehalten"
 
-#: src/render/Board.tsx:1233
+#: src/render/Board.tsx:1258
 #, fuzzy
 msgid "Not visible"
 msgstr "Nicht sichtbar"
 
-#: src/render/Board.tsx:1235
+#: src/render/Board.tsx:1260
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} sichtbar · {cover} in Deckung"
 
-#: src/render/Board.tsx:1240
+#: src/render/Board.tsx:1265
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} sichtbar"
 
-#: src/render/Board.tsx:1735
+#: src/render/Board.tsx:1760
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Bewegung {inches}\""
@@ -13290,6 +13290,16 @@ msgstr "angreifen"
 #, fuzzy
 msgid "fight"
 msgstr "kämpfen"
+
+#: src/ui/TableTag.tsx:71
+#, fuzzy
+msgid "Let go to declare the charge"
+msgstr "Loslassen, um den Angriff anzusagen"
+
+#: src/ui/TableTag.tsx:71
+#, fuzzy
+msgid "Let go to charge anyway"
+msgstr "Loslassen, um trotzdem anzugreifen"
 
 #: src/ui/TableWarnings.tsx:111
 #, fuzzy

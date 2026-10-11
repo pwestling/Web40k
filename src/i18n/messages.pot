@@ -374,23 +374,23 @@ msgstr ""
 msgid "Setting up the table…"
 msgstr ""
 
-#: src/GameScreen.tsx:342
+#: src/GameScreen.tsx:343
 msgid "Fully visible"
 msgstr ""
 
-#: src/GameScreen.tsx:343
+#: src/GameScreen.tsx:344
 msgid "Partly visible or in cover"
 msgstr ""
 
-#: src/GameScreen.tsx:344
+#: src/GameScreen.tsx:345
 msgid "Hidden"
 msgstr ""
 
-#: src/GameScreen.tsx:345
+#: src/GameScreen.tsx:346
 msgid "Hover an enemy unit for its sight lines"
 msgstr ""
 
-#: src/GameScreen.tsx:350
+#: src/GameScreen.tsx:351
 #: src/events/EventsUI.tsx:146
 #: src/mail/MailLobby.tsx:181
 #: src/share/OpenLink.tsx:141
@@ -398,15 +398,15 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: src/GameScreen.tsx:351
+#: src/GameScreen.tsx:352
 msgid "Obscuring: cover"
 msgstr ""
 
-#: src/GameScreen.tsx:352
+#: src/GameScreen.tsx:353
 msgid "Blocking: no sight"
 msgstr ""
 
-#: src/GameScreen.tsx:357
+#: src/GameScreen.tsx:358
 msgid "Leave model's eye view (Esc)"
 msgstr ""
 
@@ -4375,31 +4375,31 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1169
+#: src/render/Board.tsx:1194
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1171
+#: src/render/Board.tsx:1196
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1172
+#: src/render/Board.tsx:1197
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1233
+#: src/render/Board.tsx:1258
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1235
+#: src/render/Board.tsx:1260
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1240
+#: src/render/Board.tsx:1265
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1735
+#: src/render/Board.tsx:1760
 msgid "Move {inches}\""
 msgstr ""
 
@@ -10824,6 +10824,14 @@ msgstr ""
 
 #: src/ui/TableTag.tsx:52
 msgid "fight"
+msgstr ""
+
+#: src/ui/TableTag.tsx:71
+msgid "Let go to declare the charge"
+msgstr ""
+
+#: src/ui/TableTag.tsx:71
+msgid "Let go to charge anyway"
 msgstr ""
 
 #: src/ui/TableWarnings.tsx:111

@@ -117,6 +117,24 @@ export function tableVerb(game: GameState, attackerId: UnitId, targetId: UnitId)
   return null;
 }
 
+/**
+ * Dragging a unit onto an enemy in the Charge phase (UX 84, proposal 2): what
+ * letting go there does, shown by the pointer. Letting go declares the
+ * charge at it instead of moving there; the 2D6 and the move in come after,
+ * as ever.
+ */
+export const useDragVerb = create<{
+  drag: { verb: TableVerb; unitId: UnitId; targetId: UnitId; x: number; y: number } | null;
+}>(() => ({ drag: null }));
+
+/** What dropping `unitId` (all of it, not yet charged) on `targetId` would do: a charge, or nothing. */
+export function dragVerb(game: GameState, unitId: UnitId, targetId: UnitId | undefined): TableVerb | null {
+  const unit = game.units[unitId];
+  if (!targetId || !unit || typeof unit.status?.charge === "number") return null;
+  const verb = tableVerb(game, unitId, targetId);
+  return verb?.verb === "charge" ? verb : null;
+}
+
 /** A charge declared from the table, picked up by the unit card's charge (ChargeDeclare). */
 export const useChargeAsk = create<{ ask: { unitId: UnitId; targets: UnitId[] } | null }>(() => ({
   ask: null,

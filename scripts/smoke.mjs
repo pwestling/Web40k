@@ -2481,6 +2481,72 @@ const checks = {
     return page.errors;
   },
 
+  // UX 84 #2: in the Charge phase, drag a unit onto an enemy: it goes back where it stood and the charge is declared.
+  async "drag-charge"() {
+    const { page, context } = await device();
+    await lobby(page);
+    await tryDemo(page, page.locator(".demos .demo", { hasText: "Sci-fi battle" }));
+    await page.locator(".topbar").getByText("Round 1").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.classList.contains("showcase"), null, { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    for (let i = 0; i < 3; i++) {
+      await page.locator('.topbar button[title="Next phase"]').click();
+      const anyway = page.locator(".topbar .ask button.primary");
+      if (await anyway.count()) await anyway.click();
+      await page.waitForTimeout(200);
+    }
+    await page.locator(".topbar .phases .on, .topbar", { hasText: "Charge" }).first().waitFor();
+    await page
+      .locator('.topbar button[title="Top-down view"], .panel.hud button', { hasText: "Top-down view" })
+      .first()
+      .click();
+    await page.waitForTimeout(800);
+    const log = page.locator(".panel.hud");
+    const before = await log.innerText();
+    // Ours onto theirs.
+    const from = await page.locator(".plate", { hasText: "Line Troopers" }).first().boundingBox();
+    const to = await page.locator(".plate", { hasText: "Ashen Thralls" }).first().boundingBox();
+    // Its models sit around its plate: feel for one.
+    const spots = (box) => {
+      const out = [];
+      for (let dy = -16; dy <= 30; dy += 8)
+        for (let dx = 0; dx <= box.width + 50; dx += 8) out.push([box.x + dx, box.y + box.height / 2 + dy]);
+      return out;
+    };
+    let picked = false;
+    for (const [x, y] of spots(from)) {
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      picked = await page.evaluate(() => document.body.dataset.drag === "models");
+      if (picked) {
+        await page.mouse.move(x + 10, y - 10, { steps: 3 });
+        break;
+      }
+      await page.mouse.up();
+    }
+    if (!picked) {
+      if (process.env.SMOKE_SHOTS)
+        await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "drag-charge-miss.png") });
+      throw new Error(`couldn't pick up Line Troopers (plate ${JSON.stringify(from)})`);
+    }
+    let tagged = false;
+    for (const [x, y] of spots(to)) {
+      await page.mouse.move(x, y, { steps: 2 });
+      tagged = (await page.locator(".table-tag", { hasText: "Let go to" }).count()) > 0;
+      if (tagged) break;
+    }
+    if (!tagged) throw new Error("no charge tag over the enemy");
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "drag-charge.png") });
+    await page.mouse.up();
+    await page.locator(".charge-declare").first().waitFor({ timeout: 5000 });
+    if (process.env.SMOKE_SHOTS)
+      await page.screenshot({ path: join(process.env.SMOKE_SHOTS, "drag-charge-declare.png") });
+    if ((await log.innerText()) !== before) throw new Error("the unit moved instead of declaring the charge");
+    await context.close();
+    return page.errors;
+  },
+
   // UX 84 #4: after a roll with failures, the re-roll card pops up by the dice; Yes re-rolls one die.
   async "reroll-card"() {
     const { page, context } = await device();

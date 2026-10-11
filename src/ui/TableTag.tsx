@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { t } from "../i18n";
 import { useCanControl, useStore } from "../store";
 import { useGame } from "./hooks";
-import { tableVerb } from "./tableVerbs";
+import { tableVerb, useDragVerb } from "./tableVerbs";
 
 /**
  * The tag by the pointer when one of your units is picked and an enemy is
@@ -51,6 +51,24 @@ export function TableTag() {
           : t("Click: its card · Shift+click: {verb} anyway", {
               verb: { shoot: t("shoot"), charge: t("charge"), fight: t("fight") }[verb.verb],
             })}
+      </span>
+    </div>
+  );
+}
+
+/** Dragging a unit onto an enemy in the Charge phase: what letting go there does (UX 84, #2). */
+export function DragTag() {
+  const drag = useDragVerb((s) => s.drag);
+  if (!drag) return null;
+  const { verb } = drag;
+  const left = Math.min(drag.x + 22, innerWidth - 300);
+  const top = Math.min(drag.y + 22, innerHeight - 90);
+  return (
+    <div className={`table-tag ${verb.ok ? "ok" : "no"}`} style={{ left, top }} role="status">
+      <strong>{verb.ok ? `${verb.line} ▸` : verb.line}</strong>
+      {verb.facts.length > 0 && <span className="small">{verb.facts.join(" · ")}</span>}
+      <span className="muted small">
+        {verb.ok ? t("Let go to declare the charge") : t("Let go to charge anyway")}
       </span>
     </div>
   );
