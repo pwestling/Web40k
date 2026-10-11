@@ -27,6 +27,7 @@ import {
 import { playerActions } from "../core/content/player";
 import { playableReactions } from "../core/content/reactions";
 import { currentSlot, plainActivations, systemOf } from "../core/content/turn";
+import { simultaneousNow, waitingFor } from "../core/content/simultaneous";
 import { gameView } from "../core/script";
 import { pendingScores } from "../missions/scoring";
 import { gameModule, systemModule } from "../systems";
@@ -295,7 +296,11 @@ export function waitingOn(
   if (ctx.weighing) return null;
   if (
     mission &&
-    (ctx.scores === undefined || last === "turn/next" || last === "score/confirm" || last === "secret/reveal")
+    (ctx.scores === undefined ||
+      last === "turn/next" ||
+      last === "turn/ready" ||
+      last === "score/confirm" ||
+      last === "secret/reveal")
   )
     ctx.scores = pendingScores(record, state, mission).map((p) => p.key);
   const score = mission && ctx.scores?.length ? pendingScores(record, state, mission)[0] : undefined;
@@ -324,7 +329,11 @@ export function waitingOn(
  */
 export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove> {
   const round = state.turn.round;
-  const side = sidePlayers(state, state.turn.activeSeat);
+  // A simultaneous phase (#81): everyone acts, and each says when they're done.
+  const together = round > 0 && simultaneousNow(state);
+  const side = together
+    ? Object.values(state.players).filter((p) => p.seat !== undefined)
+    : sidePlayers(state, state.turn.activeSeat);
   const mine = (p: PlayerId) =>
     round === 0 ? state.players[p]?.seat !== undefined : side.some((x) => x.id === p);
   const units = shuffle(
@@ -351,7 +360,9 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
           kind: "endActivation",
         },
       ]
-    : side.map((p) => ({ intent: { type: "turn/next" } as Intent, as: p.id, kind: "next" }));
+    : together
+      ? readyMoves(state, ctx)
+      : side.map((p) => ({ intent: { type: "turn/next" } as Intent, as: p.id, kind: "next" }));
 
   // Before the battle: a few moves around the deployment zone, then start.
   if (round === 0) {
@@ -473,6 +484,30 @@ export function* freeMoves(state: GameState, ctx: BotContext): Generator<BotMove
     for (const p of side) yield { intent: { type: "turn/pass" }, as: p.id, kind: "pass" };
   }
   yield* next;
+}
+
+/**
+ * Moving on in a simultaneous phase (#81): each player who isn't done says
+ * so, in a random order; a tidy bot only, the fuzzer now and then moves on
+ * at once with ▶ (the override) or takes a ready back.
+ */
+function readyMoves(state: GameState, ctx: BotContext): BotMove[] {
+  const ready = (p: PlayerId, on = true): BotMove => ({
+    intent: on ? { type: "turn/ready" } : { type: "turn/ready", ready: false },
+    as: p,
+    kind: on ? "ready" : "unready",
+  });
+  const waiting = shuffle(ctx.rng, waitingFor(state)).map((p) => ready(p));
+  if (ctx.tidy) return waiting;
+  const r = ctx.rng();
+  const done = state.turn.ready ?? [];
+  if (r < 0.1)
+    return [
+      { intent: { type: "turn/next" }, as: state.turn.ready?.[0] ?? waitingFor(state)[0]!, kind: "next" },
+      ...waiting,
+    ];
+  if (r < 0.15 && done.length) return [ready(done[0]!, false), ...waiting];
+  return waiting;
 }
 
 /** A unit's actions now: procedure actions with a weapon and target each, others as they are. */

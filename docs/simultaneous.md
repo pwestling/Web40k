@@ -94,9 +94,8 @@ if (together) {
 }
 ```
 
-The minimal UI in the top bar (`TopBar.tsx`): in a simultaneous phase ▶ sends
-`turn/ready` for the player on this screen (any seat, not only the active one)
-and shows who it waits for; on a hotseat screen it sends `turn/next` as before.
+The UI is Sprint's, in the top bar (`TopBar.tsx`: "Done ▶", "Waiting for …",
+"Not done", "Go on anyway"); it is not part of the engine change.
 
 ## Secrets
 

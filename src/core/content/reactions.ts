@@ -152,9 +152,23 @@ function answers(
   if (own) return own;
   const army = armyStratagem(state, def.id);
   if (!army) return null;
-  if (army.reacts) return army.reacts.includes(window) ? {} : null;
+  // "One unit from your army within 9" of that enemy unit" (#81): range to the trigger's unit.
+  const range = rangeOf(army.target);
+  const entry = range === undefined ? {} : { range };
+  if (army.reacts) return army.reacts.includes(window) ? entry : null;
   if (!win?.match) return null;
-  return matcher(win.match)?.test(army.when ?? army.text) ? {} : null;
+  return matcher(win.match)?.test(army.when ?? army.text) ? entry : null;
+}
+
+const ranges = new Map<string, number | undefined>();
+/** The distance an army stratagem's Target line sets from the enemy unit ("within 9" of that enemy unit"). */
+function rangeOf(target: string | undefined): number | undefined {
+  if (!target) return undefined;
+  if (!ranges.has(target)) {
+    const m = /within (\d+(?:\.\d+)?) ?(?:"|”|''|inch(?:es)?) of (?:that|the|an?) enemy unit/i.exec(target);
+    ranges.set(target, m ? Number(m[1]) : undefined);
+  }
+  return ranges.get(target);
 }
 
 const matchers = new Map<string, RegExp | null>();
@@ -390,7 +404,8 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
     };
     switch (def.opens) {
       case "phaseEnd": {
-        if (event.type !== "turn/next" || prev.turn.round === 0) break;
+        // ▶, or the last player ready in a simultaneous phase (#81).
+        if ((event.type !== "turn/next" && event.type !== "turn/ready") || prev.turn.round === 0) break;
         if (prev.turn.phase === next.turn.phase && prev.turn.round === next.turn.round) break;
         if (!inPhase(def)) break;
         const active = prev.turn.activeSeat;
@@ -411,6 +426,13 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
           .map((u) => u.id);
         if (!moved.length) break;
         add(otherSeat(prev, active), { units: moved }, prev.turn.phase);
+        break;
+      }
+      case "unitMoved": {
+        if (!inPhase(def)) break;
+        const unitId = movedUnit(prev, next, event);
+        if (!unitId || asked(next, def.id, unitId)) break;
+        add(otherSeat(next, next.turn.activeSeat), { unitId, seq });
         break;
       }
       case "attackDeclared": {
@@ -541,6 +563,51 @@ function candidates(prev: GameState, next: GameState, event: GameEvent): Candida
   return out;
 }
 
+/**
+ * The unit whose move this event ends (#81, docs/reactions.md "When a move
+ * ends"): a drag or regiment move of a unit of the side whose turn it is,
+ * after which every model it has on the table has moved this phase.
+ */
+function movedUnit(prev: GameState, next: GameState, event: GameEvent): UnitId | undefined {
+  let unitId: UnitId | undefined;
+  let moved: Set<string>;
+  if (event.type === "models/move") {
+    if (event.setup || !event.moves.length) return undefined;
+    unitId = prev.models[event.moves[0]!.id]?.unitId;
+    moved = new Set(event.moves.map((m) => m.id));
+  } else if (event.type === "unit/move") {
+    unitId = event.id;
+    moved = new Set(next.units[unitId]?.modelIds ?? []);
+  } else return undefined;
+  const unit = unitId ? next.units[unitId] : undefined;
+  if (!unit || unit.status?.reserves || seatOf(next, unit.owner) !== next.turn.activeSeat) return undefined;
+  const whole = unit.modelIds.every((id) => {
+    const m = next.models[id];
+    if (!m || m.destroyed || moved.has(id)) return true;
+    const from = m.phaseStart;
+    return !!from && Math.hypot(m.position.x - from.x, m.position.y - from.y) > 0.05;
+  });
+  return whole ? unit.id : undefined;
+}
+
+/** Where `reactionAsked` is kept: the phase it counts for. */
+const askedAt = (state: GameState) => `${state.turn.round}:${state.turn.activeSeat}:${state.turn.phase}`;
+
+/** Whether a per-unit window already opened for this unit this phase. */
+function asked(state: GameState, window: string, unitId: UnitId): boolean {
+  const a = state.reactionAsked;
+  return !!a && a.at === askedAt(state) && a.keys.includes(`${window}:${unitId}`);
+}
+
+/** Note that a per-unit window opened, so the unit's later drags this phase don't open it again. */
+function noteAsked(state: GameState, open: OpenReaction): GameState {
+  const unitId = open.trigger.unitId;
+  if (!unitId || windowDef(state, open.window)?.opens !== "unitMoved") return state;
+  const at = askedAt(state);
+  const keys = state.reactionAsked?.at === at ? state.reactionAsked.keys : [];
+  return { ...state, reactionAsked: { at, keys: [...keys, `${open.window}:${unitId}`] } };
+}
+
 /** The id of the next test a run will roll, past steps that roll nothing (allocating wounds). */
 function nextTest(system: GameSystem, run: ProcedureRun): string | undefined {
   const steps = system.procedures.find((p) => p.id === run.procedure)?.steps ?? [];
@@ -575,7 +642,7 @@ export function foldReaction(prev: GameState, next: GameState, event: GameEvent)
     hold,
   }));
   const fresh = opens.length ? firstPlayable(next, opens) : null;
-  if (fresh) return { ...next, reaction: fresh };
+  if (fresh) return { ...noteAsked(next, fresh), reaction: fresh };
   const was = next.reaction;
   if (!was) return next;
   // Passed: the next window of the same moment, if anyone can play in it.
@@ -583,7 +650,10 @@ export function foldReaction(prev: GameState, next: GameState, event: GameEvent)
   const reactorPlay =
     (event.type === "player/action" && seatOf(next, event.player) === was.seat) ||
     (event.type === "attack/roll" && !!event.reroll);
-  if (KEEP.has(event.type) || reactorPlay)
+  // A player saying they are done (#81) leaves it open, unless that moved the phase on.
+  const ready =
+    event.type === "turn/ready" && next.turn.phase === prev.turn.phase && next.turn.round === prev.turn.round;
+  if (KEEP.has(event.type) || reactorPlay || ready)
     return anyPlayable(next, was) ? next : { ...next, reaction: firstPlayable(next, was.then ?? []) };
   return { ...next, reaction: null };
 }

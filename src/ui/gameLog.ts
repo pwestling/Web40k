@@ -94,7 +94,12 @@ export function buildLog(record: GameRecord, uptoSeq = Infinity): LogItem[] {
     const key = String(logged.seq);
     if (
       !skipped &&
-      (event.type === "turn/next" || event.type === "turn/prev" || event.type === "turn/first")
+      (event.type === "turn/next" ||
+        event.type === "turn/prev" ||
+        event.type === "turn/first" ||
+        // The last player done with a simultaneous phase moves it on (#81).
+        (event.type === "turn/ready" &&
+          (state.turn.phase !== before.turn.phase || state.turn.round !== before.turn.round)))
     ) {
       // Past the last round the battle is over: no "Round 6" that never happens (UX 280).
       const rounds = systemOf(state).turn.rounds;

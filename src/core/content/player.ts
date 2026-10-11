@@ -6,6 +6,7 @@ import { actingUnits, costLabel, evalCtx, pay, payFor, safeBool, setStatus, type
 import { bindRules, hasKeywordPhrase, lookupRules, pattern, unitView, type UnitView } from "./runtime";
 import type { AbilityTiming, ActionDef, GameSystem } from "./schema";
 import { currentSlot, endActivation, systemOf } from "./turn";
+import { sharedPhase } from "./simultaneous";
 
 /**
  * Player-level play: actions a player takes rather than a unit (40k
@@ -55,7 +56,7 @@ function usesInWindow(state: GameState, player: PlayerId, def: ActionDef): Playe
 
 function playerScope(state: GameState, player: PlayerId) {
   const seat = seatOf(state, player);
-  return { id: player, seat, active: seat === state.turn.activeSeat };
+  return { id: player, seat, active: seat === state.turn.activeSeat || sharedPhase(state) };
 }
 
 const ARMY = /^army:(.+):([^:]+)$/;
@@ -330,9 +331,10 @@ export function abilityReminders(state: GameState): AbilityReminder[] {
   const phase = state.turn.round === 0 ? "deployment" : slot?.id;
   if (!phase) return [];
   const out: AbilityReminder[] = [];
+  const shared = sharedPhase(state);
   for (const unit of Object.values(state.units)) {
     if (!isAlive(state, unit)) continue;
-    const active = seatOf(state, unit.owner) === state.turn.activeSeat;
+    const active = seatOf(state, unit.owner) === state.turn.activeSeat || shared;
     const sideFits = (side: AbilityTiming["side"]) =>
       state.turn.round === 0 || !side || side === "either" || (side === "active") === active;
     // The system's own rules that matter for this unit now (a Transport, a unit in reserves).

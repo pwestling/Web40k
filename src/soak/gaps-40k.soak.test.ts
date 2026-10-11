@@ -1,10 +1,11 @@
 import { describe } from "vitest";
-import type { GameEvent, GameState } from "../core";
+import type { ArmyStratagem, GameEvent, GameState } from "../core";
 import { actionTargets } from "../core/content/play";
 import { abilityReminders } from "../core/content/player";
 import { currentSlot } from "../core/content/turn";
 import { unitGap } from "../core/manoeuvre";
 import { sampleRoster } from "../systems/wh40k/sample";
+import { fortyK } from "../core/content/examples/forty-k";
 import { fightOrder, fightOutOfOrder } from "../systems/wh40k/fight";
 import { moveWarnings, scenarioSuite, withRules } from "./suite";
 
@@ -68,10 +69,37 @@ const watch = (s: GameState, events: GameEvent[], before: GameState): string[] =
   return tags;
 };
 
+/**
+ * An invented stratagem that answers each enemy move (#81): its When text is
+ * what the moveEnded window's `match` reads, its Target line sets the range.
+ */
+const sidestep: ArmyStratagem = {
+  id: "sidestep",
+  name: "Sidestep",
+  cp: 1,
+  side: "inactive",
+  phases: ["movement"],
+  targetsUnit: true,
+  when: "Your opponent's Movement phase, just after an enemy unit ends a Normal, Advance or Fall Back move.",
+  // A long reach, so the soak's few moves come in range of it.
+  target: 'One unit from your army within 24" of that enemy unit.',
+  effect: 'Your unit can make a Normal move of up to 3".',
+  text: "Sidestep",
+};
+
+/** The window core Fire Overwatch answers: movementEnded, or moveEnded if forty-k.ts moves it to each move. */
+const overwatchWindow = fortyK.actions.find((a) => a.id === "fireOverwatch")?.reacts?.[0]?.window;
+
+/** With Sidestep in the army's stratagems. */
+const withSidestep = (roster: ReturnType<typeof sampleRoster>) =>
+  roster.army
+    ? { ...roster, army: { ...roster.army, stratagems: [...roster.army.stratagems, sidestep] } }
+    : roster;
+
 /** The sample armies with a few invented rules to exercise: Hazardous guns, a Transport each side, Fights First. */
 const armies = (seat: 0 | 1) =>
   withRules(
-    sampleRoster(seat),
+    withSidestep(sampleRoster(seat)),
     seat === 0
       ? {
           "Lance Team": { weapons: { "Arc Lance": { keywords: ["Hazardous"] } } },
@@ -114,7 +142,8 @@ describe("rules gaps: 40k", () =>
       "warning terrain",
       // #80 (fightPick, beforeSaves and rerollable come up too rarely in bot play; unit tests cover them)
       "reaction window targetDeclared",
-      "reaction window moveEnded",
+      // #81: each enemy move (Sidestep), and wherever Fire Overwatch is (the end of the Movement phase, or each move).
+      ...new Set(["reaction window moveEnded", `reaction window ${overwatchWindow}`]),
       "reaction window chargeRolled",
     ],
     ["Rapid Ingress in round 1", "Go to Ground", 'charge at a target over 12"'],

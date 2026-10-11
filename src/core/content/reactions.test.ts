@@ -14,6 +14,7 @@ import {
 import { createRecord, type GameRecord } from "../log";
 import { extendSystem, restoreSystems } from "./systems";
 import { botPolicy } from "../../bot/player";
+import { fortyK } from "./examples/forty-k";
 import {
   mayReact,
   playableReactions,
@@ -142,6 +143,41 @@ function faces(...list: number[]) {
 
 const ids = (s: GameState, p: PlayerId) => playableReactions(s, p).map((r) => r.id);
 
+/** Move a unit's models (all, or those listed) by dx, dy in one drag. */
+const moveBy = (s: GameState, unit: string, dx: number, dy: number, only?: string[]): Intent => ({
+  type: "models/move",
+  moves: s.units[unit]!.modelIds.filter((id) => !only || only.includes(id)).map((id) => {
+    const at = s.models[id]!.position;
+    return { id, to: { x: at.x + dx, y: at.y + dy } };
+  }),
+});
+
+/** Ann's army gets an invented stratagem answering each enemy move, reaching 9" from the unit that moved. */
+const withSidestep = (s: GameState) =>
+  play(
+    s,
+    {
+      type: "player/army",
+      army: {
+        rules: [],
+        stratagems: [
+          {
+            id: "sidestep",
+            name: "Sidestep",
+            cp: 1,
+            side: "inactive",
+            phases: ["movement"],
+            targetsUnit: true,
+            when: "Your opponent's Movement phase, just after an enemy unit ends a Normal, Advance or Fall Back move.",
+            target: 'One unit from your army within 9" of that enemy unit.',
+            text: "Invented for the test.",
+          },
+        ],
+      },
+    },
+    "p1",
+  );
+
 describe("reaction windows (#80)", () => {
   it("opens targetDeclared for the unit attacked, with Smokescreen on that unit only", () => {
     let s = goTo(setup(), "shooting", 1);
@@ -172,19 +208,79 @@ describe("reaction windows (#80)", () => {
     expect(none).toEqual([]);
   });
 
-  it("moveEnded: Fire Overwatch as the enemy's Movement phase ends, only for units in range", () => {
+  it("movementEnded: Fire Overwatch as the enemy's Movement phase ends, only for units in range", () => {
     let s = goTo(setup({ plain: [-28, -20] }), "movement", 1);
     s = cp(s, "p1", 2);
     s = play(s, { type: "action/take", unitId: "raiders", action: "normalMove" }, "p2");
     expect(reactionWindow(s)).toBeNull();
+    // Overwatch waits for the end of the phase (11th edition): a whole-unit move opens no window for it.
+    s = play(s, moveBy(s, "raiders", 0, -3), "p2");
+    expect(reactionWindow(s)).toBeNull();
     s = play(s, { type: "turn/next" }, "p2");
     const open = reactionWindow(s);
-    expect(open).toMatchObject({ window: "moveEnded", seat: 0, trigger: { units: ["raiders"] } });
+    expect(open).toMatchObject({ window: "movementEnded", seat: 0, trigger: { units: ["raiders"] } });
     // Out of range: the plain unit is 40" away from the raiders.
     expect(playableReactions(s, "p1").find((r) => r.id === "fireOverwatch")?.units).toEqual(["smokers"]);
     // Played now, in the Shooting phase, it counts as played as the Movement phase ended.
     s = play(s, { type: "player/action", action: "fireOverwatch", targetId: "smokers" }, "p1");
     expect(s.resources.p1?.CP).toBe(1);
+    expect(reactionWindow(s)).toBeNull();
+  });
+
+  it("moveEnded: a window as each enemy unit's move ends, for a unit in range of the unit that moved", () => {
+    // Raiders 14" from the smokers, 30" from the plain unit; Sidestep reaches 9".
+    let s = goTo(setup({ smokers: [0, -4], plain: [-28, -10] }), "movement", 1);
+    s = withSidestep(s);
+    s = cp(s, "p1", 2);
+    s = play(s, { type: "action/take", unitId: "raiders", action: "normalMove" }, "p2");
+    expect(reactionWindow(s)).toBeNull();
+    // Model by model: the move ends with the last of the unit's models, not the first.
+    s = play(s, moveBy(s, "raiders", 0, -5, ["t1"]), "p2");
+    expect(reactionWindow(s)).toBeNull();
+    s = play(s, moveBy(s, "raiders", 0, -5, ["t2"]), "p2");
+    const open = reactionWindow(s);
+    expect(open).toMatchObject({ window: "moveEnded", seat: 0, trigger: { unitId: "raiders", seq: s.seq } });
+    const side = playableReactions(s, "p1").find((r) => r.name === "Sidestep")!;
+    // Only the unit within 9" of the unit that moved; Fire Overwatch isn't offered here.
+    expect(side).toMatchObject({ id: "army:p1:sidestep", units: ["smokers"], needsUnit: true });
+    expect(ids(s, "p1")).not.toContain("fireOverwatch");
+    expect(mayReact(s, "p2")).toEqual({ seat: 0, name: "Ann" });
+    // Passed: the same unit straightening up later in the phase isn't asked about again.
+    s = play(s, { type: "reaction/pass" }, "p1");
+    s = play(s, moveBy(s, "raiders", 0.5, 0), "p2");
+    expect(reactionWindow(s)).toBeNull();
+  });
+
+  it("moveEnded: Fire Overwatch moved to each move by one line (reacts moveEnded, range 24) is offered per move", () => {
+    const overwatch = fortyK.actions.find((a) => a.id === "fireOverwatch")!;
+    extendSystem("forty-k-11", { actions: [{ ...overwatch, reacts: [{ window: "moveEnded", range: 24 }] }] });
+    try {
+      let s = goTo(setup({ plain: [-28, -20] }), "movement", 1);
+      s = cp(s, "p1", 2);
+      s = play(s, moveBy(s, "raiders", 0, -3), "p2");
+      expect(reactionWindow(s)).toMatchObject({ window: "moveEnded", trigger: { unitId: "raiders" } });
+      expect(playableReactions(s, "p1").find((r) => r.id === "fireOverwatch")?.units).toEqual(["smokers"]);
+      s = play(s, { type: "reaction/pass" }, "p1");
+      // No second ask at the phase's end: Overwatch no longer answers movementEnded.
+      s = play(s, { type: "turn/next" }, "p2");
+      expect(reactionWindow(s)).toBeNull();
+    } finally {
+      restoreSystems();
+    }
+  });
+
+  it("moveEnded: no window for a move out of range, a waiting side's own move, or with nothing in hand", () => {
+    let s = goTo(setup({ smokers: [0, -4], plain: [-28, -10] }), "movement", 1);
+    s = cp(s, "p1", 2);
+    // Nothing in hand that answers a move (Fire Overwatch waits for the phase's end).
+    s = play(s, moveBy(s, "raiders", 0, -5), "p2");
+    expect(reactionWindow(s)).toBeNull();
+    s = withSidestep(s);
+    // Too far: the raiders end 20" from the smokers.
+    s = play(s, moveBy(s, "raiders", 0, 11), "p2");
+    expect(reactionWindow(s)).toBeNull();
+    // The waiting side's own unit moving (a reaction's move) isn't an enemy move.
+    s = play(s, moveBy(s, "smokers", 0, 2), "p1");
     expect(reactionWindow(s)).toBeNull();
   });
 

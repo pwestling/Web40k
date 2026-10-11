@@ -1,5 +1,6 @@
 import { sidePlayers, type GameRecord, type GameState } from "../core";
 import { currentSlot } from "../core/content/turn";
+import { isReady, simultaneousNow } from "../core/content/simultaneous";
 import { fightPick } from "../bot/fightPick";
 import {
   freeMoves,
@@ -64,6 +65,12 @@ export function opponentMove(
       for (const m of unitMoves(state, state.units[id]!, ctx))
         if (m.intent.type === "action/take" && m.intent.action === "fight" && legal(record, state, m))
           return m;
+  // A simultaneous phase in the learner's turn (#81): it has nothing of its own to do, so it is done.
+  if (state.turn.activeSeat !== seat && simultaneousNow(state))
+    for (const p of mine) {
+      const ready: BotMove = { intent: { type: "turn/ready" }, as: p, kind: "ready" };
+      if (!isReady(state, p) && legal(record, state, ready)) return ready;
+    }
   if (state.turn.activeSeat !== seat) return null;
   for (const m of freeMoves(state, ctx))
     if (mine.has(m.as) && !(hold && moveOn(m)) && legal(record, state, m)) return m;
@@ -71,7 +78,9 @@ export function opponentMove(
 }
 
 function moveOn(m: BotMove): boolean {
-  return m.intent.type === "turn/next" || m.intent.type === "turn/endActivation";
+  return (
+    m.intent.type === "turn/next" || m.intent.type === "turn/endActivation" || m.intent.type === "turn/ready"
+  );
 }
 
 /** After a move: how long the game has sat in one phase or activation, so the bot moves it on in time. */

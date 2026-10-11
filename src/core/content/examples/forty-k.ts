@@ -574,11 +574,19 @@ const notFought: Expr = {
   all: [{ not: { hasFlag: "it", flag: "fought" } }, { call: "engaged", args: [ref("it.id")] }],
 };
 const reactionWindows: ReactionWindowDef[] = [
+  // As each enemy unit's move ends (#81): faction stratagems "just after an enemy unit ends a Normal move".
   {
     id: "moveEnded",
+    opens: "unitMoved",
+    phases: ["movement"],
+    match: "ends? an? (normal|advance|fall back)|(ends|finishes) (a|its) move",
+  },
+  // As the enemy's Movement phase ends: Fire Overwatch and Rapid Ingress (11th edition).
+  {
+    id: "movementEnded",
     opens: "phaseEnd",
     phases: ["movement"],
-    match: "end of (your )?opponent'?s movement phase|ends? an? (normal|advance|fall back)",
+    match: "end of (your )?opponent'?s movement phase",
   },
   {
     id: "targetDeclared",
@@ -672,7 +680,7 @@ const stratagems: ActionDef[] = [
     cost: cp(1),
     limit: once,
     target: { filter: { all: [own, { hasFlag: "it", flag: "reserves" }, { not: kw("it", "AIRCRAFT") }] } },
-    reacts: [{ window: "moveEnded" }],
+    reacts: [{ window: "movementEnded" }],
     notWhen: [{ if: { cmp: "<=", a: ref("turn.round"), b: 1 }, why: "Not in the first battle round" }],
     hint: "End of the opponent's Movement phase: arrive from reserves",
   },
@@ -686,7 +694,7 @@ const stratagems: ActionDef[] = [
     limit: once,
     target: { filter: { all: [own, unengaged, { not: kw("it", "TITANIC") }] } },
     // Within 24" of an enemy unit that moved.
-    reacts: [{ window: "moveEnded", range: 24 }],
+    reacts: [{ window: "movementEnded", range: 24 }],
     hint: "End of the opponent's Movement phase: shoot at a unit within 24\"; hits only on unmodified 6s",
   },
   {
@@ -1141,6 +1149,8 @@ export const fortyK: GameSystem = {
             kind: "phase",
             id: "command",
             name: "Command",
+            // Both sides at once (#81): the other side draws and picks its own mission cards meanwhile.
+            simultaneous: true,
             segments: [
               {
                 kind: "step",

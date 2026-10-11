@@ -21,6 +21,7 @@ import { settleZ } from "../core/terrain";
 import { actingUnits, actionTargets } from "../core/content/play";
 import { fightOrder } from "../systems/wh40k/fight";
 import { currentSlot, plainActivations, schedule, systemOf } from "../core/content/turn";
+import { isReady, sharedPhase, simultaneousNow } from "../core/content/simultaneous";
 import { parseDice, type DiceExpr } from "../core/dice";
 import { gameModule, systemModule } from "../systems";
 import { freeMoves, legal, takenKey, type BotContext, type BotMove } from "../soak/bot";
@@ -57,6 +58,7 @@ export function guarded(p: Policy, seat: number): Policy {
       const m = `${state.turn.round}:${state.turn.activeSeat}:${state.turn.phase}:${acting.map((u) => u.id).join()}`;
       n = m === mark ? n + 1 : 0;
       mark = m;
+      if (simultaneousNow(state)) return together(p.move(record, state, me), record, state, seat, me);
       if (n >= (acting.length ? ACTIVATION_CAP : PHASE_CAP) && !state.script?.waiting) {
         const on: BotMove[] = [
           ...acting.map((u) => ({
@@ -74,6 +76,24 @@ export function guarded(p: Policy, seat: number): Policy {
     },
     saw: (state, move) => p.saw?.(state, move),
   };
+}
+
+/**
+ * A simultaneous phase (#81): both sides act, then each says it is done.
+ * Moving on becomes `turn/ready` for its own player; the side whose turn it
+ * isn't says so once it has nothing else to do; a bot that is ready waits.
+ */
+function together(
+  m: BotMove | null,
+  record: GameRecord,
+  state: GameState,
+  seat: number,
+  me: Seat,
+): BotMove | null {
+  const ready: BotMove = { intent: { type: "turn/ready" }, as: me.player, kind: "ready" };
+  if (m && m.intent.type !== "turn/next") return m;
+  if (!m && state.turn.activeSeat === seat && !sharedPhase(state)) return null;
+  return !isReady(state, me.player) && legal(record, state, ready) ? ready : null;
 }
 
 /** Before the battle: ready up (the armies are already in their zones). */

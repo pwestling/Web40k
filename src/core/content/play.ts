@@ -21,6 +21,7 @@ import {
 } from "./runtime";
 import type { ActionDef, EffectAction, Expr, GameSystem, Id } from "./schema";
 import { currentSlot, systemOf, type TurnSlot } from "./turn";
+import { sharedPhase } from "./simultaneous";
 import { opposed } from "../teams";
 
 /**
@@ -416,7 +417,8 @@ export function unitActions(state: GameState, unitId: UnitId, req: ActionRequest
   const view = unitView(state, system, unit);
   const activations = usesActivations(system, slot);
   const seat = seatOf(state, unit.owner);
-  const active = seat === state.turn.activeSeat;
+  // A simultaneous phase that is nobody's turn (#81): every side counts as the active one.
+  const active = seat === state.turn.activeSeat || sharedPhase(state);
   const pending = state.pending ?? null;
   const acting = !!unit.status?.acting;
   const taken = Number(unit.status?.actionsTaken ?? 0);

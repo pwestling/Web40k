@@ -58,7 +58,7 @@ function why(game: GameState, window: string, trigger: ReactionTrigger): string 
     case "chargeDeclared":
       return t("{unit} declares a charge", { unit });
     case "moveEnded":
-      return t("{unit} has moved", { unit });
+      return unit ? t("{unit} has moved", { unit }) : t("Their moves are done");
     case "movementEnded":
       return t("Their moves are done");
     default:
