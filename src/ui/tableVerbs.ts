@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { opposed, unitGap, type GameState, type UnitId } from "../core";
+import { displayName } from "../i18n/names";
+import { leaderOf } from "./CoreAbilities";
+import { opposed, unitGap, type GameState, type Unit, type UnitId } from "../core";
 import { phaseName } from "../core/content/turn";
 import { actionTargets } from "../core/content/play";
 import { t } from "../i18n";
@@ -124,14 +126,40 @@ export function tableVerb(game: GameState, attackerId: UnitId, targetId: UnitId)
  * as ever.
  */
 export const useDragVerb = create<{
-  drag: { verb: TableVerb; unitId: UnitId; targetId: UnitId; x: number; y: number } | null;
+  drag: { verb: DragVerb; unitId: UnitId; targetId: UnitId; x: number; y: number } | null;
 }>(() => ({ drag: null }));
 
-/** What dropping `unitId` (all of it, not yet charged) on `targetId` would do: a charge, or nothing. */
-export function dragVerb(game: GameState, unitId: UnitId, targetId: UnitId | undefined): TableVerb | null {
+/** A drop's verb: a table verb, or a leader dropped on a unit before the battle. */
+type DragVerb = Omit<TableVerb, "verb"> & { verb: TableVerb["verb"] | "attach" };
+
+const isLeader = (u: Unit) => !!u.sheet?.abilities.some((a) => /^leader\b/i.test(a.name));
+
+/**
+ * What dropping `unitId` (all of it) on `targetId` would do: charge an enemy
+ * (not yet charged, in the Charge phase), or before the battle, a leader
+ * leading one of your units. Null: it just moves there.
+ */
+export function dragVerb(game: GameState, unitId: UnitId, targetId: UnitId | undefined): DragVerb | null {
   const unit = game.units[unitId];
-  if (!targetId || !unit || typeof unit.status?.charge === "number") return null;
-  const verb = tableVerb(game, unitId, targetId);
+  const target = targetId ? game.units[targetId] : undefined;
+  if (!unit || !target || target.id === unit.id) return null;
+  if (target.owner === unit.owner) {
+    if (game.turn.round !== 0 || !isLeader(unit) || isLeader(target) || target.status?.reserves) return null;
+    const names = leaderOf(unit).map((n) => n.toLowerCase());
+    const named = names.some((n) => target.name.toLowerCase().startsWith(n));
+    const name = displayName(target.name);
+    return {
+      verb: "attach",
+      ok: named || !names.length,
+      line:
+        named || !names.length
+          ? t("Lead {unit}", { unit: name })
+          : t("Its Leader ability doesn't name {unit}", { unit: name }),
+      facts: [],
+    };
+  }
+  if (typeof unit.status?.charge === "number") return null;
+  const verb = tableVerb(game, unitId, target.id);
   return verb?.verb === "charge" ? verb : null;
 }
 

@@ -1774,7 +1774,7 @@ msgstr ""
 #: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
-#: src/ui/tableVerbs.ts:112
+#: src/ui/tableVerbs.ts:114
 msgid "Fight"
 msgstr ""
 
@@ -4375,35 +4375,35 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/render/Board.tsx:1194
+#: src/render/Board.tsx:1245
 msgid "{label}: held by {player}"
 msgstr ""
 
-#: src/render/Board.tsx:1196
+#: src/render/Board.tsx:1247
 msgid "{label}: contested"
 msgstr ""
 
-#: src/render/Board.tsx:1197
+#: src/render/Board.tsx:1248
 msgid "{label}: nobody holds it"
 msgstr ""
 
-#: src/render/Board.tsx:1258
+#: src/render/Board.tsx:1309
 msgid "Not visible"
 msgstr ""
 
-#: src/render/Board.tsx:1260
+#: src/render/Board.tsx:1311
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr ""
 
-#: src/render/Board.tsx:1265
+#: src/render/Board.tsx:1316
 msgid "{visible}/{n} visible"
 msgstr ""
 
-#: src/render/Board.tsx:1760
+#: src/render/Board.tsx:1811
 msgid "Move {inches}\""
 msgstr ""
 
-#: src/render/Board.tsx:388
+#: src/render/Board.tsx:389
 msgid "The table"
 msgstr ""
 
@@ -7626,64 +7626,64 @@ msgstr ""
 msgid "Not this side's go"
 msgstr ""
 
-#: src/ui/CoreAbilities.tsx:107
-msgid "Scout move ({inches}\")"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:111
-msgid "Automatic: {abilities}"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:144
-msgid "Lead a unit (Leader)…"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:144
-msgid "Attach to unit (leaders)…"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:148
-msgid "can lead"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:186
-msgid "Lead {unit}, which it stands with"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:62
-msgid "Set up in reserve"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:62
-msgid "Deep Strike: set up in reserves"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:67
-msgid "In reserves."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:69
-msgid "Deploy it as an activation to bring it on."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:74
-msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:79
-msgid "Arrive"
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:87
-msgid "Arrived from reserves: within {distance} of an enemy ({actual})."
-msgstr ""
-
-#: src/ui/CoreAbilities.tsx:93
+#: src/ui/CoreAbilities.tsx:105
 msgid "Arrived from reserves: set up more than {distance} from enemies."
 msgstr ""
 
-#: src/ui/CoreAbilities.tsx:99
+#: src/ui/CoreAbilities.tsx:111
 msgid "Measured from where the unit stands now"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:119
+msgid "Scout move ({inches}\")"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:123
+msgid "Automatic: {abilities}"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:156
+msgid "Lead a unit (Leader)…"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:156
+msgid "Attach to unit (leaders)…"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:160
+msgid "can lead"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:198
+msgid "Lead {unit}, which it stands with"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:74
+msgid "Set up in reserve"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:74
+msgid "Deep Strike: set up in reserves"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:79
+msgid "In reserves."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:81
+msgid "Deploy it as an activation to bring it on."
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:86
+msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:91
+msgid "Arrive"
+msgstr ""
+
+#: src/ui/CoreAbilities.tsx:99
+msgid "Arrived from reserves: within {distance} of an enemy ({actual})."
 msgstr ""
 
 #: src/ui/Crash.tsx:102
@@ -10826,11 +10826,19 @@ msgstr ""
 msgid "fight"
 msgstr ""
 
-#: src/ui/TableTag.tsx:71
+#: src/ui/TableTag.tsx:73
+msgid "Let go to attach it"
+msgstr ""
+
+#: src/ui/TableTag.tsx:74
+msgid "Let go to attach it anyway"
+msgstr ""
+
+#: src/ui/TableTag.tsx:76
 msgid "Let go to declare the charge"
 msgstr ""
 
-#: src/ui/TableTag.tsx:71
+#: src/ui/TableTag.tsx:77
 msgid "Let go to charge anyway"
 msgstr ""
 
@@ -11717,12 +11725,12 @@ msgstr ""
 #: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
-#: src/ui/tableVerbs.ts:81
+#: src/ui/tableVerbs.ts:83
 msgid "Shoot"
 msgstr ""
 
 #: src/ui/TouchLayer.tsx:216
-#: src/ui/tableVerbs.ts:99
+#: src/ui/tableVerbs.ts:101
 msgid "Charge"
 msgstr ""
 
@@ -13656,39 +13664,47 @@ msgid "Regiments by hand, a card stack for activations, clash and volley."
 msgstr ""
 
 #: src/ui/tableVerbs.ts:101
+msgid "Too far to charge"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:103
 msgid "{distance} away"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:102
+#: src/ui/tableVerbs.ts:104
 msgid "needs {n}+"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:102
+#: src/ui/tableVerbs.ts:104
 msgid "already in reach"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:112
+#: src/ui/tableVerbs.ts:114
 msgid "Not in engagement range: {distance}"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:67
+#: src/ui/tableVerbs.ts:156
+msgid "Lead {unit}"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:157
+msgid "Its Leader ability doesn't name {unit}"
+msgstr ""
+
+#: src/ui/tableVerbs.ts:69
 msgid "Out of range: {distance} (its longest reach is {reach})"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:81
+#: src/ui/tableVerbs.ts:83
 msgid "Not in sight"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:86
+#: src/ui/tableVerbs.ts:88
 msgid "{n} of {all} models seen"
 msgstr ""
 
-#: src/ui/tableVerbs.ts:88
+#: src/ui/tableVerbs.ts:90
 msgid "in cover"
-msgstr ""
-
-#: src/ui/tableVerbs.ts:99
-msgid "Too far to charge"
 msgstr ""
 
 #: src/ui/textSize.ts:6

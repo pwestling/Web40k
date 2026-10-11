@@ -2159,7 +2159,7 @@ msgstr "Angriff ansagen"
 #: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
-#: src/ui/tableVerbs.ts:112
+#: src/ui/tableVerbs.ts:114
 #, fuzzy
 msgid "Fight"
 msgstr "Nahkampf"
@@ -5337,42 +5337,42 @@ msgid_plural "signs {signed} of {n} results"
 msgstr[0] "unterschreibt {signed} von {n} Ergebnis"
 msgstr[1] "unterschreibt {signed} von {n} Ergebnissen"
 
-#: src/render/Board.tsx:1194
+#: src/render/Board.tsx:1245
 #, fuzzy
 msgid "{label}: held by {player}"
 msgstr "{label}: gehalten von {player}"
 
-#: src/render/Board.tsx:1196
+#: src/render/Board.tsx:1247
 #, fuzzy
 msgid "{label}: contested"
 msgstr "{label}: umkämpft"
 
-#: src/render/Board.tsx:1197
+#: src/render/Board.tsx:1248
 #, fuzzy
 msgid "{label}: nobody holds it"
 msgstr "{label}: von niemandem gehalten"
 
-#: src/render/Board.tsx:1258
+#: src/render/Board.tsx:1309
 #, fuzzy
 msgid "Not visible"
 msgstr "Nicht sichtbar"
 
-#: src/render/Board.tsx:1260
+#: src/render/Board.tsx:1311
 #, fuzzy
 msgid "{visible}/{n} visible · {cover} in cover"
 msgstr "{visible}/{n} sichtbar · {cover} in Deckung"
 
-#: src/render/Board.tsx:1265
+#: src/render/Board.tsx:1316
 #, fuzzy
 msgid "{visible}/{n} visible"
 msgstr "{visible}/{n} sichtbar"
 
-#: src/render/Board.tsx:1760
+#: src/render/Board.tsx:1811
 #, fuzzy
 msgid "Move {inches}\""
 msgstr "Bewegung {inches}\""
 
-#: src/render/Board.tsx:388
+#: src/render/Board.tsx:389
 #, fuzzy
 msgid "The table"
 msgstr "Der Tisch"
@@ -9330,80 +9330,80 @@ msgstr "Nicht deine Einheit"
 msgid "Not this side's go"
 msgstr "Diese Seite ist nicht am Zug"
 
-#: src/ui/CoreAbilities.tsx:107
-#, fuzzy
-msgid "Scout move ({inches}\")"
-msgstr "Scoutbewegung ({inches}\")"
-
-#: src/ui/CoreAbilities.tsx:111
-#, fuzzy
-msgid "Automatic: {abilities}"
-msgstr "Automatisch: {abilities}"
-
-#: src/ui/CoreAbilities.tsx:144
-#, fuzzy
-msgid "Lead a unit (Leader)…"
-msgstr "Eine Einheit anführen (Anführer)…"
-
-#: src/ui/CoreAbilities.tsx:144
-#, fuzzy
-msgid "Attach to unit (leaders)…"
-msgstr "Einer Einheit anschließen (Anführer)…"
-
-#: src/ui/CoreAbilities.tsx:148
-#, fuzzy
-msgid "can lead"
-msgstr "kann anführen"
-
-#: src/ui/CoreAbilities.tsx:186
-#, fuzzy
-msgid "Lead {unit}, which it stands with"
-msgstr "{unit} anführen (steht dabei)"
-
-#: src/ui/CoreAbilities.tsx:62
-#, fuzzy
-msgid "Set up in reserve"
-msgstr "In Reserve aufstellen"
-
-#: src/ui/CoreAbilities.tsx:62
-#, fuzzy
-msgid "Deep Strike: set up in reserves"
-msgstr "Schocktruppen: in Reserve aufstellen"
-
-#: src/ui/CoreAbilities.tsx:67
-#, fuzzy
-msgid "In reserves."
-msgstr "In Reserve."
-
-#: src/ui/CoreAbilities.tsx:69
-#, fuzzy
-msgid "Deploy it as an activation to bring it on."
-msgstr "Setze sie als Aktivierung ein, um sie aufs Feld zu bringen."
-
-#: src/ui/CoreAbilities.tsx:74
-#, fuzzy
-msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
-msgstr "Ziehe die Einheit dann auf den Tisch, mehr als {distance} von jedem feindlichen Modell entfernt"
-
-#: src/ui/CoreAbilities.tsx:79
-#, fuzzy
-msgid "Arrive"
-msgstr "Ankommen"
-
-#: src/ui/CoreAbilities.tsx:87
-#, fuzzy
-msgid "Arrived from reserves: within {distance} of an enemy ({actual})."
-msgstr "Aus der Reserve eingetroffen: innerhalb von {distance} zu einem Feind ({actual})."
-
-#: src/ui/CoreAbilities.tsx:93
+#: src/ui/CoreAbilities.tsx:105
 #, fuzzy
 msgid "Arrived from reserves: set up more than {distance} from enemies."
 msgstr "Aus der Reserve eingetroffen: mehr als {distance} von Feinden entfernt aufgestellt."
 
-#: src/ui/CoreAbilities.tsx:99
+#: src/ui/CoreAbilities.tsx:111
 #, fuzzy
 msgid "Measured from where the unit stands now"
 msgstr "Gemessen von der aktuellen Position der Einheit"
+
+#: src/ui/CoreAbilities.tsx:119
+#, fuzzy
+msgid "Scout move ({inches}\")"
+msgstr "Scoutbewegung ({inches}\")"
+
+#: src/ui/CoreAbilities.tsx:123
+#, fuzzy
+msgid "Automatic: {abilities}"
+msgstr "Automatisch: {abilities}"
+
+#: src/ui/CoreAbilities.tsx:156
+#, fuzzy
+msgid "Lead a unit (Leader)…"
+msgstr "Eine Einheit anführen (Anführer)…"
+
+#: src/ui/CoreAbilities.tsx:156
+#, fuzzy
+msgid "Attach to unit (leaders)…"
+msgstr "Einer Einheit anschließen (Anführer)…"
+
+#: src/ui/CoreAbilities.tsx:160
+#, fuzzy
+msgid "can lead"
+msgstr "kann anführen"
+
+#: src/ui/CoreAbilities.tsx:198
+#, fuzzy
+msgid "Lead {unit}, which it stands with"
+msgstr "{unit} anführen (steht dabei)"
+
+#: src/ui/CoreAbilities.tsx:74
+#, fuzzy
+msgid "Set up in reserve"
+msgstr "In Reserve aufstellen"
+
+#: src/ui/CoreAbilities.tsx:74
+#, fuzzy
+msgid "Deep Strike: set up in reserves"
+msgstr "Schocktruppen: in Reserve aufstellen"
+
+#: src/ui/CoreAbilities.tsx:79
+#, fuzzy
+msgid "In reserves."
+msgstr "In Reserve."
+
+#: src/ui/CoreAbilities.tsx:81
+#, fuzzy
+msgid "Deploy it as an activation to bring it on."
+msgstr "Setze sie als Aktivierung ein, um sie aufs Feld zu bringen."
+
+#: src/ui/CoreAbilities.tsx:86
+#, fuzzy
+msgid "Then drag the unit onto the table, more than {distance} from every enemy model"
+msgstr "Ziehe die Einheit dann auf den Tisch, mehr als {distance} von jedem feindlichen Modell entfernt"
+
+#: src/ui/CoreAbilities.tsx:91
+#, fuzzy
+msgid "Arrive"
+msgstr "Ankommen"
+
+#: src/ui/CoreAbilities.tsx:99
+#, fuzzy
+msgid "Arrived from reserves: within {distance} of an enemy ({actual})."
+msgstr "Aus der Reserve eingetroffen: innerhalb von {distance} zu einem Feind ({actual})."
 
 #: src/ui/Crash.tsx:102
 #, fuzzy
@@ -13291,12 +13291,22 @@ msgstr "angreifen"
 msgid "fight"
 msgstr "kämpfen"
 
-#: src/ui/TableTag.tsx:71
+#: src/ui/TableTag.tsx:73
+#, fuzzy
+msgid "Let go to attach it"
+msgstr "Loslassen, um ihn anzuschließen"
+
+#: src/ui/TableTag.tsx:74
+#, fuzzy
+msgid "Let go to attach it anyway"
+msgstr "Loslassen, um ihn trotzdem anzuschließen"
+
+#: src/ui/TableTag.tsx:76
 #, fuzzy
 msgid "Let go to declare the charge"
 msgstr "Loslassen, um den Angriff anzusagen"
 
-#: src/ui/TableTag.tsx:71
+#: src/ui/TableTag.tsx:77
 #, fuzzy
 msgid "Let go to charge anyway"
 msgstr "Loslassen, um trotzdem anzugreifen"
@@ -14401,13 +14411,13 @@ msgstr "Trotzdem {verb} ({why})"
 #: src/ui/TouchLayer.tsx:216
 #: src/ui/UnitCard.tsx:284
 #: src/ui/UnitCard.tsx:680
-#: src/ui/tableVerbs.ts:81
+#: src/ui/tableVerbs.ts:83
 #, fuzzy
 msgid "Shoot"
 msgstr "Schießen"
 
 #: src/ui/TouchLayer.tsx:216
-#: src/ui/tableVerbs.ts:99
+#: src/ui/tableVerbs.ts:101
 #, fuzzy
 msgid "Charge"
 msgstr "Angriff"
@@ -16803,48 +16813,58 @@ msgstr "Regimenter von Hand, ein Kartenstapel für Aktivierungen, Nahkampf und S
 
 #: src/ui/tableVerbs.ts:101
 #, fuzzy
+msgid "Too far to charge"
+msgstr "Zu weit für einen Angriff"
+
+#: src/ui/tableVerbs.ts:103
+#, fuzzy
 msgid "{distance} away"
 msgstr "{distance} entfernt"
 
-#: src/ui/tableVerbs.ts:102
+#: src/ui/tableVerbs.ts:104
 #, fuzzy
 msgid "needs {n}+"
 msgstr "braucht {n}+"
 
-#: src/ui/tableVerbs.ts:102
+#: src/ui/tableVerbs.ts:104
 #, fuzzy
 msgid "already in reach"
 msgstr "schon in Reichweite"
 
-#: src/ui/tableVerbs.ts:112
+#: src/ui/tableVerbs.ts:114
 #, fuzzy
 msgid "Not in engagement range: {distance}"
 msgstr "Nicht in Nahkampfreichweite: {distance}"
 
-#: src/ui/tableVerbs.ts:67
+#: src/ui/tableVerbs.ts:156
+#, fuzzy
+msgid "Lead {unit}"
+msgstr "{unit} anführen"
+
+#: src/ui/tableVerbs.ts:157
+#, fuzzy
+msgid "Its Leader ability doesn't name {unit}"
+msgstr "Seine Fähigkeit Leader nennt {unit} nicht"
+
+#: src/ui/tableVerbs.ts:69
 #, fuzzy
 msgid "Out of range: {distance} (its longest reach is {reach})"
 msgstr "Außer Reichweite: {distance} (ihre größte Reichweite ist {reach})"
 
-#: src/ui/tableVerbs.ts:81
+#: src/ui/tableVerbs.ts:83
 #, fuzzy
 msgid "Not in sight"
 msgstr "Nicht in Sicht"
 
-#: src/ui/tableVerbs.ts:86
+#: src/ui/tableVerbs.ts:88
 #, fuzzy
 msgid "{n} of {all} models seen"
 msgstr "{n} von {all} Modellen sichtbar"
 
-#: src/ui/tableVerbs.ts:88
+#: src/ui/tableVerbs.ts:90
 #, fuzzy
 msgid "in cover"
 msgstr "in Deckung"
-
-#: src/ui/tableVerbs.ts:99
-#, fuzzy
-msgid "Too far to charge"
-msgstr "Zu weit für einen Angriff"
 
 #: src/ui/textSize.ts:6
 #, fuzzy

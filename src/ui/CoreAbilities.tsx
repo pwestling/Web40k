@@ -16,6 +16,18 @@ function boundRules(game: GameState, unit: Unit) {
   return lookupRules(system, [...view.rules, ...(view.models[0]?.rules ?? [])]);
 }
 
+/** Before the battle, the unit may wait in reserves (deep strike, or any unit in a system with reserves). */
+export function canReserve(game: GameState, unit: Unit): boolean {
+  if (game.turn.round !== 0 || unit.status?.reserves) return false;
+  return !!systemOf(game).reserves || boundRules(game, unit).some((r) => r.def.id === "deepStrike");
+}
+
+/** In the battle, the unit in reserves may be set down now (in a system with reserve activations, while it acts). */
+export function canArrive(game: GameState, unit: Unit): boolean {
+  if (game.turn.round === 0 || !unit.status?.reserves) return false;
+  return !systemOf(game).reserves || !!unit.status.acting;
+}
+
 /**
  * One line of buttons for the core abilities the engine knows from the
  * imported roster: reserves for deep strike, the scout move before the
@@ -115,7 +127,7 @@ export function CoreAbilities({ unit }: { unit: Unit }) {
 }
 
 /** Unit names listed by a Leader ability ("can be attached to the following units: ..."). */
-function leaderOf(unit: Unit): string[] {
+export function leaderOf(unit: Unit): string[] {
   const text = unit.sheet?.abilities.find((a) => /^leader\b/i.test(a.name))?.text ?? "";
   const list = text.split(/following units?:/i)[1];
   if (!list) return [];

@@ -68,7 +68,13 @@ export function DragTag() {
       <strong>{verb.ok ? `${verb.line} ▸` : verb.line}</strong>
       {verb.facts.length > 0 && <span className="small">{verb.facts.join(" · ")}</span>}
       <span className="muted small">
-        {verb.ok ? t("Let go to declare the charge") : t("Let go to charge anyway")}
+        {verb.verb === "attach"
+          ? verb.ok
+            ? t("Let go to attach it")
+            : t("Let go to attach it anyway")
+          : verb.ok
+            ? t("Let go to declare the charge")
+            : t("Let go to charge anyway")}
       </span>
     </div>
   );

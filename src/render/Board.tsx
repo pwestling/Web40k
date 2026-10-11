@@ -13,6 +13,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { MOUSE, Plane, Raycaster, TOUCH, Vector2, Vector3, type Camera, type Object3D } from "three";
 import { pointerModel, removeAsCasualties, useTtsControls } from "../ui/ttsControls";
 import { doTableVerb, dragVerb, tableVerb, useDragVerb } from "../ui/tableVerbs";
+import { canArrive, canReserve } from "../ui/CoreAbilities";
 import { tablePick, useHandTargets } from "../ui/tablePick";
 import { useStratagemTabs } from "../ui/stratagemTabs";
 import { MAX_CORNERS, movedSoFar } from "../core/path";
@@ -503,13 +504,13 @@ function Scene() {
       if (d.kind === "models") {
         // Picked up once it really moves (a click only selects); then it leans into the carry.
         if (moved && !d.moved) pickUp(d.ids);
-        // The whole unit over an enemy in the Charge phase: letting go there charges it (UX 84, #2).
+        // The whole unit over an enemy in the Charge phase: letting go there charges it (UX 84, #2). Before the
+        // battle, a leader over one of your units leads it (§6).
         const game = useStore.getState().game;
         const unit = d.unitId ? game.units[d.unitId] : undefined;
         const whole = !!unit && unit.modelIds.filter((id) => game.models[id]).length === d.ids.length;
         const under = whole && moved ? modelAt(game, to) : undefined;
-        const verb =
-          unit && under && under.owner !== unit.owner ? dragVerb(game, unit.id, under.unitId) : null;
+        const verb = unit && under ? dragVerb(game, unit.id, under.unitId) : null;
         const was = useDragVerb.getState().drag;
         if (verb && unit && under?.unitId)
           useDragVerb.setState({
@@ -531,6 +532,26 @@ function Scene() {
       hand.current = null;
       const charge = useDragVerb.getState().drag;
       if (charge) useDragVerb.setState({ drag: null });
+      // A leader let go on a unit: it stands beside the model it was dropped on, and leads the unit.
+      if (charge?.verb.verb === "attach" && d?.kind === "models" && d.moved && d.unitId === charge.unitId) {
+        const game = useStore.getState().game;
+        const delta = besideDrop(game, d.ids, d.starts, d.grab, d.to);
+        const moves = d.ids.map((id) => {
+          const to = { x: d.starts[id]!.x + delta.x, y: d.starts[id]!.y + delta.y };
+          return { id, to, z: settleZ(game.terrain, to, d.startZ[id] ?? 0) };
+        });
+        setDown(d.ids, (id) => {
+          const m = game.models[id];
+          const at = moves.find((x) => x.id === id);
+          if (!m || !at) return null;
+          const { width, depth } = baseSizeInches(m.base);
+          return { ...at.to, z: at.z, radius: Math.max(width, depth) / 2 };
+        });
+        const owner = game.units[charge.unitId]?.owner;
+        dispatch({ type: "models/move", moves }, owner);
+        dispatch({ type: "unit/attach", id: charge.unitId, to: charge.targetId }, owner);
+        return;
+      }
       // Let go on an enemy in the Charge phase: back where it stood, and the charge declared at it.
       if (charge && d?.kind === "models" && d.moved && d.unitId === charge.unitId) {
         setDown(d.ids, (id) => {
@@ -539,7 +560,7 @@ function Scene() {
           const { width, depth } = baseSizeInches(m.base);
           return { ...d.starts[id]!, z: d.startZ[id] ?? 0, radius: Math.max(width, depth) / 2 };
         });
-        doTableVerb(charge.verb, charge.unitId, charge.targetId);
+        doTableVerb({ ...charge.verb, verb: "charge" }, charge.unitId, charge.targetId);
         return;
       }
       if (d?.kind === "box") pickInBox(camera, gl.domElement, canControl, select);
@@ -561,9 +582,33 @@ function Scene() {
             const p = d.starts[id]!;
             return Math.abs(p.x + dx) > width / 2 || Math.abs(p.y + dy) > depth / 2;
           });
+        const unitHere = d.unitId ? game.units[d.unitId] : undefined;
+        const whole = !!unitHere && unitHere.modelIds.filter((id) => game.models[id]).length === d.ids.length;
+        // Before the battle, a unit that may wait in reserves goes there when taken off the table (UX 84 §6).
+        if (off && whole && unitHere && canReserve(game, unitHere)) {
+          setDown(d.ids, () => null, { sound: false });
+          dispatch({ type: "unit/reserve", id: unitHere.id, reserve: true }, unitHere.owner);
+          return;
+        }
         if (off) {
           setDown(d.ids, () => null, { sound: false });
           removeAsCasualties(d.ids);
+          return;
+        }
+        // From reserves onto the table: it arrives there (no Arrive button first).
+        if (whole && unitHere && canArrive(game, unitHere)) {
+          const moves = d.ids.map((id) => {
+            const to = { x: d.starts[id]!.x + dx, y: d.starts[id]!.y + dy };
+            return { id, to };
+          });
+          setDown(d.ids, (id) => {
+            const m = game.models[id];
+            const at = moves.find((x) => x.id === id);
+            if (!m || !at) return null;
+            const { width, depth } = baseSizeInches(m.base);
+            return { ...at.to, z: settleZ(terrain, at.to, 0), radius: Math.max(width, depth) / 2 };
+          });
+          dispatch({ type: "unit/reserve", id: unitHere.id, reserve: false, moves }, unitHere.owner);
           return;
         }
         // Set down where they were let go; an over-limit drop knocks duller (advisory only).
@@ -1886,4 +1931,38 @@ function dragVia(game: GameState, d: Extract<Drag, { kind: "models" }>, id: stri
     ...(before ? [s] : []),
     ...d.corners.map((c) => ({ x: s.x + c.x - d.grab.x, y: s.y + c.y - d.grab.y })),
   ];
+}
+
+/**
+ * Where a leader dropped on a unit stands: the model it was carried by goes
+ * just outside the model it was let go on, on the side it came from. The
+ * offset for all of its models.
+ */
+function besideDrop(
+  game: GameState,
+  ids: string[],
+  starts: Record<string, Vec2>,
+  grab: Vec2,
+  to: Vec2,
+): Vec2 {
+  const under = modelAt(game, to);
+  const away = (id: string) => Math.hypot(starts[id]!.x - grab.x, starts[id]!.y - grab.y);
+  const carried = ids
+    .map((id) => game.models[id])
+    .filter((m): m is Model => !!m)
+    .sort((a, b) => away(a.id) - away(b.id))[0];
+  if (!under || !carried) return { x: to.x - grab.x, y: to.y - grab.y };
+  const from = starts[carried.id]!;
+  const dx = from.x - under.position.x;
+  const dy = from.y - under.position.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const r = (m: Model) => {
+    const { width, depth } = baseSizeInches(m.base);
+    return Math.max(width, depth) / 2;
+  };
+  const gap = r(under) + r(carried) + 0.25;
+  return {
+    x: under.position.x + (dx / len) * gap - from.x,
+    y: under.position.y + (dy / len) * gap - from.y,
+  };
 }
