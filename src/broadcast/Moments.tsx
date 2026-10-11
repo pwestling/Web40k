@@ -345,21 +345,17 @@ export function Moments() {
   const { index, done } = useReel();
   const moments = useMemo(() => (allowed ? momentsOf(record) : []), [allowed, record]);
   // The reel opens on the result (PX B4), from the game as it ended.
-  const final = useStore((s) => s.game);
-  const reel = useMemo(
-    () =>
-      moments.length && battleOver(final)
-        ? [resultCard(final, record.events.at(-1)?.seq ?? 0), ...moments]
-        : moments,
-    [moments, final, record],
+  // As text, so the card keeps its identity while the log grows.
+  const resultText = useStore((s) =>
+    battleOver(s.game) ? JSON.stringify(resultCard(s.game, s.record.events.at(-1)?.seq ?? 0)) : "",
   );
+  const result = useMemo(() => (resultText ? (JSON.parse(resultText) as Moment) : null), [resultText]);
+  const reel = useMemo(() => (moments.length && result ? [result, ...moments] : moments), [moments, result]);
   const director = useRef<boolean | null>(null);
-  // Online, the host's screen leads the reel; another player's waits for it (PX B4).
-  const led = useRef(false);
-  const leads = () => {
-    const s = useStore.getState();
-    return !s.session || s.role === "host" || !led.current;
-  };
+  const reelNow = useRef(reel);
+  useEffect(() => {
+    reelNow.current = reel;
+  }, [reel]);
 
   // The game just ended (on this screen): start the reel, once.
   useEffect(() => {
@@ -369,14 +365,14 @@ export function Moments() {
     useStore.getState().set({ director: true });
     useStore.getState().select(null);
     useReel.setState({ index: 0 });
-    if (useStore.getState().role === "host") sendReel(0);
   }, [over, done, index, moments.length]);
 
-  // Another screen moved the reel on: the host as it plays, or a player's Next (never back).
+  // Another player pressed Next: move on to their card (never back). Each screen otherwise plays the reel at
+  // its own pace, since each reaches the end when its own dice tray settles; following the host's timer cut a
+  // later screen's cards short and skipped them (PX B4 re-check).
   const heard = useTalk((s) => s.reel);
   useEffect(() => {
     if (!heard) return;
-    if (heard.host) led.current = true;
     const at = useReel.getState().index;
     if (at !== null && heard.index > at) useReel.setState({ index: heard.index });
   }, [heard]);
@@ -388,10 +384,14 @@ export function Moments() {
     return () => document.body.classList.remove("reeling");
   }, [index]);
 
-  // Each card: play the moment through, then on to the next.
+  // Each card: play the moment through, then on to the next. Keyed on the card, not the list, so an event
+  // logged after the end (a signature, a score) doesn't restart it.
+  const card = index !== null ? reel[index] : undefined;
+  const cardKey =
+    index === null ? "" : card ? `${index}:${card.kind}:${card.seq}:${card.title}` : `${index}:end`;
   useEffect(() => {
     if (index === null) return;
-    const m = reel[index];
+    const m = reelNow.current[index];
     if (!m) {
       finishReel(director.current);
       return;
@@ -400,22 +400,11 @@ export function Moments() {
     clearTray();
     if (m.kind === "rare") legendSting();
     else whoosh();
-    let wait: ReturnType<typeof setTimeout> | undefined;
     playMoment(m, () => {
-      // The host moves everyone on; a screen following it moves on alone only if the host goes quiet.
-      if (leads()) {
-        useReel.setState({ index: index + 1 });
-        if (useStore.getState().role === "host") sendReel(index + 1);
-      } else
-        wait = setTimeout(() => {
-          if (useReel.getState().index === index) useReel.setState({ index: index + 1 });
-        }, 8000);
+      if (useReel.getState().index === index) useReel.setState({ index: index + 1 });
     });
-    return () => {
-      clearTimeout(wait);
-      stopMoment();
-    };
-  }, [index, reel]);
+    return () => stopMoment();
+  }, [index, cardKey]);
 
   // In a replay, a moment's card comes up as playback reaches it.
   const replayCard = useReel((s) => s.replay);

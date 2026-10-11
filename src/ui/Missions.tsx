@@ -101,7 +101,7 @@ export function ScoreChips({ seat }: { seat: number }) {
   const game = useGame();
   const { dispatch, scrub, role, stats } = useStore();
   const canControl = useCanControl();
-  const pending = usePending().filter((p) => p.seat === seat && !p.ask);
+  const pending = usePending().filter((p) => p.seat === seat && !p.ask && p.vp > 0);
   if (!pending.length || scrub !== null || (stats ?? battleOver(game))) return null;
   const mine = role !== "spectator" ? sidePlayers(game, seat).find((x) => canControl(x.id)) : undefined;
   const name = displayName(sidePlayers(game, seat)[0]?.name ?? "") || sideName(game, seat);

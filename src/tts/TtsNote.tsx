@@ -8,12 +8,14 @@ export const useTtsNote = create<{ note: string; table: string }>(() => ({ note:
 /**
  * The library's note about a TTS table (models that couldn't be read, things
  * off the table), on the game it opened (UX 478): the library closes so the
- * table can be touched, and the note stays until the player closes it.
+ * table can be touched, and the note stays until the player closes it or the
+ * battle starts (PX re-check of #78).
  */
 export function TtsNote() {
   const { note, table } = useTtsNote();
   const here = useStore((s) => !!table && s.game.tableSource?.key === `table:${table}`);
-  if (!note || !here) return null;
+  const started = useStore((s) => s.game.turn.round > 0);
+  if (!note || !here || started) return null;
   return (
     <div className="tts-note small" role="status">
       <span>{note}</span>
